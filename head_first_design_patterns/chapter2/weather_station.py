@@ -34,7 +34,7 @@ from display import (
 
 """
 Notes:
-- All instantied displays register on subject(topic).
+- All instantied displays are registred in a subject(topic).
 - When the states changes(set_measurements), all display are notified.
 - We can register and unregister a observer as
 we can see in the last two lines.
