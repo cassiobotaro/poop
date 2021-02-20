@@ -17,7 +17,8 @@ Notes:
       abstractions of each of the ingredients 🤯
     - UnknownPizza implements the abstraction of a Pizza,
       eliminating several if's in the implementation
-
+    - Although concrete factories instantiate concrete products, signatures of
+      their methods of creation must return corresponding abstract products.
 """
 from abc import ABC, abstractmethod
 
