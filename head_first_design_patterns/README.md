@@ -14,6 +14,7 @@
 - Program to interfaces, not implementations
 - Strive for loosely coupled designs between objects that interact
 - Classes should be open for extension but closed for modification
+- Depend on abstractions. Do not depend on concrete classes.
 
 ## OO Patterns
 
@@ -27,3 +28,10 @@ notified and updated automatically.
 
 **Decorator** - Attach additional responsibilities to an object dynamically.
 Decorators provide a flexible alternative to subclassing for extending functionality.
+
+**Factory Method** - Defines an interface for creating an object, but let
+subclasses decide which classes to instantiate. Factory Method lets a class
+defer instantiation to the subclasses.
+
+**Abstract Factory** - Provides an interface for creating families of related or
+dependent objects without specifying their concrete classes.
