@@ -1,11 +1,10 @@
-from weather_data import WeatherData
 from display import (
     CurrentConditionsDisplay,
-    StatisticsDisplay,
     ForecastDisplay,
     HeatIndexDisplay,
+    StatisticsDisplay,
 )
-
+from weather_data import WeatherData
 
 """
 Notes:

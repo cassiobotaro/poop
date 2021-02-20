@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
+
 """
 Notes:
     - enum SIZE represents allowed sizes of BEVERAGE
@@ -11,7 +12,7 @@ Notes:
 
 
 class Beverage:
-    SIZE = Enum('SIZE', 'TALL GRANDE VENTI')
+    SIZE = Enum("SIZE", "TALL GRANDE VENTI")
 
     size = SIZE.TALL
     description = "Unknown Beverage"
@@ -35,7 +36,7 @@ class DarkRoast(Beverage):
         self.description = "Dark Roast Coffee"
 
     def cost(self):
-        return .99
+        return 0.99
 
 
 class Decaf(Beverage):
@@ -59,4 +60,4 @@ class HouseBlend(Beverage):
         self.description = "House Blend Coffee"
 
     def cost(self):
-        return .89
+        return 0.89

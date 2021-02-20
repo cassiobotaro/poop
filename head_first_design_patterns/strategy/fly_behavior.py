@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 # ABC is used to formalize an interface.
 # Given the dynamic nature of python, this definition would not be necessary,
 # every instance of a class that has the quack method could be
@@ -29,6 +30,7 @@ class FlyNoWay(FlyBehavior):
 class FlyRocketPowered(FlyBehavior):
     def fly(self):
         print("I'm flying with a rocket")
+
 
 # FlyBehavior is easy to extend.
 # Instead of conditional (if) use a class to represent

@@ -1,5 +1,5 @@
-from beverages import DarkRoast, Espresso, HouseBlend, Decaf
-from condiments import Mocha, Soy, Whip, Milk
+from beverages import DarkRoast, Decaf, Espresso, HouseBlend
+from condiments import Milk, Mocha, Soy, Whip
 
 # beverages have description and cost
 beverage = Espresso()

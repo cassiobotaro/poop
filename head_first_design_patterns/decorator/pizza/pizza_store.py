@@ -1,7 +1,6 @@
 from pizza import ThickcrustPizza, ThincrustPizza
 from topping import Cheese, Olives
 
-
 # create a pizza
 pizza = ThincrustPizza()
 # decorate with free cheese

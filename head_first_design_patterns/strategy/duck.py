@@ -67,6 +67,7 @@ class RubberDuck(Duck):
     Specializes the method display with your own implementation.
     As a Duck, RubberDucks also can swin.
     """
+
     def __init__(self):
         # override the method with pre defined values
         self.fly_behavior = FlyNoWay()
@@ -103,6 +104,7 @@ class ModelDuck(Duck):
     Specializes the method display with your own implementation.
     As a Duck, ModelDucks also can swin.
     """
+
     def __init__(self):
         # override the method with pre defined values
         self.fly_behavior = FlyNoWay()
@@ -110,5 +112,6 @@ class ModelDuck(Duck):
 
     def display(self):
         print("I'm a model duck")
+
 
 # Easy to create new ducks without change the legacy code.

@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 from pizza import Pizza
+
 """
 Notes:
     - cheese and olives are toppings, they implement get_description
@@ -21,18 +22,16 @@ class ToppingDecorator(Pizza):
 
 
 class Cheese(ToppingDecorator):
-
     def get_description(self):
-        return self.pizza.get_description() + ', Cheese'
+        return self.pizza.get_description() + ", Cheese"
 
     def cost(self):
         return self.pizza.cost()  # cheese is free
 
 
 class Olives(ToppingDecorator):
-
     def get_description(self):
-        return self.pizza.get_description() + ', Olives'
+        return self.pizza.get_description() + ", Olives"
 
     def cost(self):
-        return self.pizza.cost() + .30
+        return self.pizza.cost() + 0.30

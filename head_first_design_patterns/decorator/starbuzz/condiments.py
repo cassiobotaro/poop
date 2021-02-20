@@ -1,5 +1,7 @@
 from abc import abstractmethod
+
 from beverages import Beverage
+
 """
 NOTES:
     - Instead of use inheritance and made a lot of combinations of
@@ -18,7 +20,6 @@ NOTES:
 
 
 class CondimentDecorator(Beverage):
-
     def __init__(self, beverage):
         self.beverage = beverage
 
@@ -31,41 +32,37 @@ class CondimentDecorator(Beverage):
 
 
 class Milk(CondimentDecorator):
-
     def get_description(self):
         return self.beverage.get_description() + ", Milk"
 
     def cost(self):
-        return self.beverage.cost() + .10
+        return self.beverage.cost() + 0.10
 
 
 class Mocha(CondimentDecorator):
-
     def get_description(self):
         return self.beverage.get_description() + ", Mocha"
 
     def cost(self):
-        return self.beverage.cost() + .20
+        return self.beverage.cost() + 0.20
 
 
 class Soy(CondimentDecorator):
-
     def get_description(self):
         return self.beverage.get_description() + ", Soy"
 
     def cost(self):
         condiment_cost = {
-            self.beverage.size.TALL: .10,
-            self.beverage.size.GRANDE: .15,
-            self.beverage.size.VENTI: .20,
+            self.beverage.size.TALL: 0.10,
+            self.beverage.size.GRANDE: 0.15,
+            self.beverage.size.VENTI: 0.20,
         }[self.beverage.get_size()]
         return self.beverage.cost() + condiment_cost
 
 
 class Whip(CondimentDecorator):
-
     def get_description(self):
         return self.beverage.get_description() + ", Whip"
 
     def cost(self):
-        return .10 + self.beverage.cost()
+        return 0.10 + self.beverage.cost()

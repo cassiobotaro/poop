@@ -1,4 +1,5 @@
 from abc import abstractmethod
+
 """
 NOTES:
     - Thickcrust and Thincrust are pizza, changing description and implement
