@@ -35,3 +35,5 @@ defer instantiation to the subclasses.
 
 **Abstract Factory** - Provides an interface for creating families of related or
 dependent objects without specifying their concrete classes.
+
+**Singleton** - Ensure a class only has one instance and provide a global point of access to it.
