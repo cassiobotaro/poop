@@ -3,8 +3,7 @@ Notes:
     - instances share the same Lock
     - uses lock to prevent running conditions
 """
-from threading import Lock
-import asyncio
+from threading import Lock, Thread
 
 
 class SafeSingletonMeta(type):
@@ -20,7 +19,7 @@ class SafeSingletonMeta(type):
         return cls._instances[cls]
 
 
-class Singleton():
+class Singleton(metaclass=SafeSingletonMeta):
     def __init__(self, value):
         self.value = value
 
@@ -28,12 +27,12 @@ class Singleton():
         return f"I'm a classic Singleton {self.value}"
 
 
-async def test_multithread(value):
-    print(Singleton(value).value)
+def test_singleton(value):
+    singleton = Singleton(value)
+    print(singleton.value)
 
 
-async def main():
-    await asyncio.gather(*(test_multithread(value) for value in range(1, 11)))
-
-
-asyncio.run(main())
+process1 = Thread(target=test_singleton, args=("FOO",))
+process2 = Thread(target=test_singleton, args=("BAR",))
+process1.start()
+process2.start()
