@@ -37,3 +37,5 @@ defer instantiation to the subclasses.
 dependent objects without specifying their concrete classes.
 
 **Singleton** - Ensure a class only has one instance and provide a global point of access to it.
+
+**Command** - Encapsulates a request as an object, thereby letting you parametrize clients with different requests, queue or log requests, and support undoable operations.
