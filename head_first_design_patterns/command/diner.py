@@ -41,6 +41,7 @@ class Customer:
         def burger_and_fries():
             self.cook.make_burger()
             self.cook.make_fries()
+
         self.order = burger_and_fries
 
     def hungry(self):
