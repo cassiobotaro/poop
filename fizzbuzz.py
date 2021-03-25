@@ -1,6 +1,7 @@
 # smalltalk infected fizzbuzz version
-from forbiddenfruit import curse
 from collections import deque
+
+from forbiddenfruit import curse
 
 
 def if_true(self, block):
