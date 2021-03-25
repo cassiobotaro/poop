@@ -18,5 +18,5 @@ if __name__ == "__main__":
     foo = CoolerSingleton()
     spam = CoolerSingleton()
     bar = HotterSingleton()
-    print(f'{foo=} is not {bar=}')
-    print(f'{foo=} is {spam=}')
+    print(f"{foo=} is not {bar=}")
+    print(f"{foo=} is {spam=}")

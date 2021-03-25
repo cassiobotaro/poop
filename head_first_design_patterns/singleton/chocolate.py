@@ -45,4 +45,4 @@ boiler.drain()
 # will return the existing instance
 boiler2 = ChocolateBoiler()
 
-print(f'{id(boiler)=} == {id(boiler2)=}')
+print(f"{id(boiler)=} == {id(boiler2)=}")
