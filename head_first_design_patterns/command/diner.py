@@ -1,20 +1,17 @@
 """
 Notes:
-    - use Protocol as an interface definition
-    - use __call__ instead of order_up, or other name to allow a function
-    to be passed as a parameter
     - Order is command interface
+    - Order should be a callable, a class that implements __call__
+    or  a function
     - Customer can create an order(simplified here for just one order)
     - Customer take order using waitress instance
     - Waitress take order without know the order implementation
     - When you order something, cook is called to make your diner
 """
-from typing import Protocol
+from collections.abc import Callable
 
-
-class Order(Protocol):
-    def __call__(self):
-        ...
+# just an alias
+Order = Callable
 
 
 class Cook:
