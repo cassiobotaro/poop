@@ -1,17 +1,14 @@
 """
 Notes:
-    - Order is command interface
-    - Order should be a callable, a class that implements __call__
+    - Order (line 24) should be a callable, a class that implements __call__
     or  a function
-    - Customer can create an order(simplified here for just one order)
+    - Customer can create an order (simplified here for just one order)
     - Customer take order using waitress instance
     - Waitress take order without know the order implementation
     - When you order something, cook is called to make your diner
+    - Note that the kitchen invokes the preparation of the order without
+    knowing how it will be prepared by the cook
 """
-from collections.abc import Callable
-
-# just an alias
-Order = Callable
 
 
 class Cook:
@@ -26,13 +23,13 @@ class Waitress:
     def __init__(self):
         self.order = None
 
-    def take_order(self, order: Order):
+    def take_order(self, order):
         self.order = order
         order()
 
 
 class Customer:
-    def __init__(self, waitress: Waitress, cook: Cook):
+    def __init__(self, waitress, cook):
         self.waitress = waitress
         self.cook = cook
         self.order = None

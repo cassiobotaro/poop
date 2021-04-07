@@ -1,16 +1,23 @@
-from typing import Protocol
-from equipament import Light, TV, Hottub, Stereo
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+
+from equipament import TV, Hottub, Light, Stereo
 
 
-class ReversibleCommand(Protocol):
-    def __call__(self):
-        ...
-
+class Undoable(ABC):
+    @abstractmethod
     def undo(self):
-        ...
+        raise NotImplementedError
 
 
-class NoCommand:
+class ReversibleCommand(Callable, Undoable):
+    ...
+
+    def __str__(self):
+        return f"{self.__class__.__name__}"
+
+
+class NoCommand(ReversibleCommand):
     def __call__(self):
         pass
 
@@ -18,7 +25,7 @@ class NoCommand:
         pass
 
 
-class MacroCommand:
+class MacroCommand(ReversibleCommand):
     def __init__(self, commands: list[ReversibleCommand]):
         self._commands = commands
 
@@ -31,7 +38,7 @@ class MacroCommand:
             command.undo()
 
 
-class LightOnCommand:
+class LightOnCommand(ReversibleCommand):
     def __init__(self, light: Light):
         self.light = light
 
@@ -42,7 +49,7 @@ class LightOnCommand:
         self.light.off()
 
 
-class LightOffCommand:
+class LightOffCommand(ReversibleCommand):
     def __init__(self, light: Light):
         self.light = light
 
@@ -53,7 +60,7 @@ class LightOffCommand:
         self.light.on()
 
 
-class TVOnCommand:
+class TVOnCommand(ReversibleCommand):
     def __init__(self, tv: TV):
         self.tv = tv
 
@@ -65,7 +72,7 @@ class TVOnCommand:
         self.tv.off()
 
 
-class TVOffCommand:
+class TVOffCommand(ReversibleCommand):
     def __init__(self, tv: TV):
         self.tv = tv
 
@@ -76,7 +83,7 @@ class TVOffCommand:
         self.tv.on()
 
 
-class HottubOffCommand:
+class HottubOffCommand(ReversibleCommand):
     def __init__(self, hottub: Hottub):
         self.hottub = hottub
 
@@ -88,7 +95,7 @@ class HottubOffCommand:
         self.hottub.on()
 
 
-class HottubOnCommand:
+class HottubOnCommand(ReversibleCommand):
     def __init__(self, hottub: Hottub):
         self.hottub = hottub
 
@@ -101,7 +108,7 @@ class HottubOnCommand:
         self.hottub.off()
 
 
-class StereoOnCommand:
+class StereoOnCommand(ReversibleCommand):
     def __init__(self, stereo: Stereo):
         self.stereo = stereo
 
@@ -112,7 +119,7 @@ class StereoOnCommand:
         self.stereo.off()
 
 
-class StereoOffCommand:
+class StereoOffCommand(ReversibleCommand):
     def __init__(self, stereo: Stereo):
         self.stereo = stereo
 
