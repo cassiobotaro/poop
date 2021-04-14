@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
-from equipament import TV, Hottub, Light, Stereo
+from equipament import TV, Hottub, Light, Stereo, CeilingFan
 
 
 class Undoable(ABC):
@@ -128,3 +128,75 @@ class StereoOffCommand(ReversibleCommand):
 
     def undo(self):
         self.stereo.on()
+
+
+class CeilingFanHighCommand(ReversibleCommand):
+    def __init__(self, ceiling_fan: CeilingFan):
+        self.ceiling_fan = ceiling_fan
+        self.previous_speed = self.ceiling_fan.SPEED.OFF
+
+    def __call__(self):
+        self.previous_speed = self.ceiling_fan.get_speed()
+        self.ceiling_fan.high()
+
+    def undo(self):
+        {
+         self.ceiling_fan.SPEED.HIGH: self.ceiling_fan.high,
+         self.ceiling_fan.SPEED.MEDIUM: self.ceiling_fan.medium,
+         self.ceiling_fan.SPEED.LOW: self.ceiling_fan.low,
+         self.ceiling_fan.SPEED.OFF: self.ceiling_fan.off,
+        }.get(self.previous_speed)()
+
+
+class CeilingFanMediumCommand(ReversibleCommand):
+    def __init__(self, ceiling_fan: CeilingFan):
+        self.ceiling_fan = ceiling_fan
+        self.previous_speed = self.ceiling_fan.SPEED.OFF
+
+    def __call__(self):
+        self.previous_speed = self.ceiling_fan.get_speed()
+        self.ceiling_fan.medium()
+
+    def undo(self):
+        {
+         self.ceiling_fan.SPEED.HIGH: self.ceiling_fan.high,
+         self.ceiling_fan.SPEED.MEDIUM: self.ceiling_fan.medium,
+         self.ceiling_fan.SPEED.LOW: self.ceiling_fan.low,
+         self.ceiling_fan.SPEED.OFF: self.ceiling_fan.off,
+        }.get(self.previous_speed)()
+
+
+class CeilingFanLowCommand(ReversibleCommand):
+    def __init__(self, ceiling_fan: CeilingFan):
+        self.ceiling_fan = ceiling_fan
+        self.previous_speed = self.ceiling_fan.SPEED.OFF
+
+    def __call__(self):
+        self.previous_speed = self.ceiling_fan.get_speed()
+        self.ceiling_fan.low()
+
+    def undo(self):
+        {
+         self.ceiling_fan.SPEED.HIGH: self.ceiling_fan.high,
+         self.ceiling_fan.SPEED.MEDIUM: self.ceiling_fan.medium,
+         self.ceiling_fan.SPEED.LOW: self.ceiling_fan.low,
+         self.ceiling_fan.SPEED.OFF: self.ceiling_fan.off,
+        }.get(self.previous_speed)()
+
+
+class CeilingFanOffCommand(ReversibleCommand):
+    def __init__(self, ceiling_fan: CeilingFan):
+        self.ceiling_fan = ceiling_fan
+        self.previous_speed = self.ceiling_fan.SPEED.OFF
+
+    def __call__(self):
+        self.previous_speed = self.ceiling_fan.get_speed()
+        self.ceiling_fan.off()
+
+    def undo(self):
+        {
+         self.ceiling_fan.SPEED.HIGH: self.ceiling_fan.high,
+         self.ceiling_fan.SPEED.MEDIUM: self.ceiling_fan.medium,
+         self.ceiling_fan.SPEED.LOW: self.ceiling_fan.low,
+         self.ceiling_fan.SPEED.OFF: self.ceiling_fan.off,
+        }.get(self.previous_speed)()

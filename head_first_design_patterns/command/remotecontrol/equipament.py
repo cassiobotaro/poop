@@ -1,28 +1,45 @@
 from enum import Enum
 
 
+class GarageDoor:
+    def __init__(self, location):
+        self.__location = location
+
+    def up(self):
+        print(f"{self.__location} garage door is up")
+
+    def down(self):
+        print(f"{self.__location} garage door is up")
+
+    def light_on(self):
+        print(f"{self.__location} garage light is on")
+
+    def light_off(self):
+        print(f"{self.__location} garage light is off")
+
+
 class CeilingFan:
     SPEED = Enum("SPEED", "HIGH MEDIUM LOW OFF")
     speed = SPEED.OFF
 
-    def __init__(self, location: str):
-        self.location = location
+    def __init__(self, location):
+        self.__location = location
 
     def high(self):
         self.speed = self.SPEED.HIGH
-        print(f"{self.location} ceiling fan is on high")
+        print(f"{self.__location} ceiling fan is on high")
 
     def medium(self):
         self.speed = self.SPEED.MEDIUM
-        print(f"{self.location} ceiling fan is on medium")
+        print(f"{self.__location} ceiling fan is on medium")
 
     def low(self):
         self.speed = self.SPEED.LOW
-        print(f"{self.location} ceiling fan is on low")
+        print(f"{self.__location} ceiling fan is on low")
 
     def off(self):
         self.speed = self.SPEED.OFF
-        print(f"{self.location} ceiling fan is on low")
+        print(f"{self.__location} ceiling fan is off")
 
     def get_speed(self):
         return self.speed
@@ -62,19 +79,19 @@ class Light:
     OFF_LEVEL = 0
     ON_LEVEL = 0
 
-    def __init__(self, location: str):
+    def __init__(self, location):
         self.__level = self.OFF_LEVEL
         self.__location = location
 
     def on(self):
         self.__level = self.ON_LEVEL
-        print("Light is on")
+        print(f"{self.__location} light is on")
 
     def off(self):
         self.__level = self.OFF_LEVEL
-        print("Light is off")
+        print(f"{self.__location} light is off")
 
-    def dim(self, level: int):
+    def dim(self, level):
         self.__level = level
         if level == self.OFF_LEVEL:
             self.off()
@@ -88,7 +105,7 @@ class Light:
 class Stereo:
     TURNED_OFF = 0
 
-    def __init__(self, location: str):
+    def __init__(self, location):
         self.__location = location
         self.__volume = self.TURNED_OFF
 

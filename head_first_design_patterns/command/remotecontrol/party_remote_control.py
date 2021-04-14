@@ -34,7 +34,7 @@ class RemoteControl:
         self._undo_command = command
 
     def undo_button_was_pushed(self):
-        self._undo_command()
+        self._undo_command.undo()
 
     def __str__(self) -> str:
         title = "\n------ Remote Control ------\n"
