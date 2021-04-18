@@ -9,15 +9,15 @@ Notes:
     - This example demonstates how we can do reversible commands, and shows
     that unfornately we can't simplify using functions (or lambdas)
 """
-from equipament import Light, CeilingFan
+from equipament import CeilingFan, Light
 from reversible_command import (
+    CeilingFanHighCommand,
+    CeilingFanLowCommand,
+    CeilingFanMediumCommand,
+    CeilingFanOffCommand,
     LightOffCommand,
     LightOnCommand,
     NoCommand,
-    CeilingFanMediumCommand,
-    CeilingFanHighCommand,
-    CeilingFanLowCommand,
-    CeilingFanOffCommand,
 )
 
 

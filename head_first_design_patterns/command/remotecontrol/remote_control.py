@@ -8,7 +8,7 @@ Notes:
     - Decouple object making a request(RemoteControl)
     from the one that knows how to peform it (equipament)
 """
-from equipament import CeilingFan, Light, Stereo, GarageDoor
+from equipament import CeilingFan, GarageDoor, Light, Stereo
 
 
 class RemoteControl:
