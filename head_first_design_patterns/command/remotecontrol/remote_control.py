@@ -1,3 +1,13 @@
+"""
+Notes:
+    - Usage of functions/methods are a convenience rather than defining a lot
+    of classes
+    - no_command is a way to define a null object
+    - Methods can be used as commands because they are also callable,
+    they are functions linked to data structure (classes)
+    - Decouple object making a request(RemoteControl)
+    from the one that knows how to peform it (equipament)
+"""
 from equipament import CeilingFan, Light, Stereo, GarageDoor
 
 

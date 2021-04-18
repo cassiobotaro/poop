@@ -1,15 +1,19 @@
-from equipament import TV, Hottub, Light, Stereo, CeilingFan
+"""
+Notes:
+    - A remote control contains 7 slots for "on" commands,
+    and 7 for "off" commands
+    - Each command (on or off) is a ReversibleCommand, this means
+    that the command can be invoked and also have an undo method
+    to revert your state
+    - NoCommand is used as a Null Object
+    - This example demonstates how we can do reversible commands, and shows
+    that unfornately we can't simplify using functions (or lambdas)
+"""
+from equipament import Light, CeilingFan
 from reversible_command import (
-    HottubOffCommand,
-    HottubOnCommand,
     LightOffCommand,
     LightOnCommand,
-    MacroCommand,
     NoCommand,
-    StereoOffCommand,
-    StereoOnCommand,
-    TVOffCommand,
-    TVOnCommand,
     CeilingFanMediumCommand,
     CeilingFanHighCommand,
     CeilingFanLowCommand,

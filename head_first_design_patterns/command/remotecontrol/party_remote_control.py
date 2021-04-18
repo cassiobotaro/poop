@@ -1,3 +1,12 @@
+"""
+Notes:
+    - Remote Control will be configured with commands
+    to turn on/off equipaments, but can undo last action
+    - We use MacroCommand (special command who group a lot of commands),
+    to start/end a party
+    - RemoteControl is decoupled of real equipaments, it invokes commands that
+    perform this interaction
+"""
 from equipament import TV, Hottub, Light, Stereo
 from reversible_command import (
     HottubOffCommand,

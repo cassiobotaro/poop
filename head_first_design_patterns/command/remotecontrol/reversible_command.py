@@ -1,3 +1,16 @@
+"""
+Notes:
+    - Undoable is an interface that defines what "undoable"
+    should implement the undo method
+    - Callable is an interface that defines what "callable"
+    should implement the __call__ method
+    - ReversibleCommand combines both interfaces
+    - MacroCommand is just a ReversibleCommand Agreggator,
+    it will consist of several commands that will be executed together
+    - NoCommand is a null object command 9do nothing)
+    - Commands will be used to decouple the invocator of a command from
+    the objects that will actually perform the task.
+"""
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 

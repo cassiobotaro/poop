@@ -1,3 +1,9 @@
+"""
+Notes:
+    - Each class represents a piece of equipment.
+    - An equipment will have its methods invoked through commands, so whoever
+    invokes does not need to know the implementation of the same.
+"""
 from enum import Enum
 
 
