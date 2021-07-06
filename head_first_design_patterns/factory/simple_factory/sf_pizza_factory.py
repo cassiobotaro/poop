@@ -4,7 +4,7 @@ Notes:
     - remove creation logic from Pizza
     - factory contains logic to create products (Pizza)
 """
-from pizza import (
+from sf_pizza import (
     CheesePizza,
     ClamPizza,
     PepperoniPizza,

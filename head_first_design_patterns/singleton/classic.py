@@ -15,7 +15,7 @@ Notes:
 
 class SingletonMeta(type):
 
-    _instances = {}
+    _instances: dict[type["Singleton"], "Singleton"] = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:

@@ -11,26 +11,25 @@ Notes:
     - Commands will be used to decouple the invocator of a command from
     the objects that will actually perform the task.
 """
-from abc import ABC, abstractmethod
-from collections.abc import Callable
+from typing import Protocol
 
 from equipament import TV, CeilingFan, Hottub, Light, Stereo
 
 
-class Undoable(ABC):
-    @abstractmethod
+class ReversibleCommand(Protocol):
     def undo(self):
-        raise NotImplementedError
+        ...
+
+    def __call__(self):
+        ...
 
 
-class ReversibleCommand(Callable, Undoable):
-    ...
-
+class Command:
     def __str__(self):
         return f"{self.__class__.__name__}"
 
 
-class NoCommand(ReversibleCommand):
+class NoCommand(Command):
     def __call__(self):
         pass
 
@@ -38,7 +37,7 @@ class NoCommand(ReversibleCommand):
         pass
 
 
-class MacroCommand(ReversibleCommand):
+class MacroCommand(Command):
     def __init__(self, commands: list[ReversibleCommand]):
         self._commands = commands
 
@@ -51,7 +50,7 @@ class MacroCommand(ReversibleCommand):
             command.undo()
 
 
-class LightOnCommand(ReversibleCommand):
+class LightOnCommand(Command):
     def __init__(self, light: Light):
         self.light = light
 
@@ -62,7 +61,7 @@ class LightOnCommand(ReversibleCommand):
         self.light.off()
 
 
-class LightOffCommand(ReversibleCommand):
+class LightOffCommand(Command):
     def __init__(self, light: Light):
         self.light = light
 
@@ -73,7 +72,7 @@ class LightOffCommand(ReversibleCommand):
         self.light.on()
 
 
-class TVOnCommand(ReversibleCommand):
+class TVOnCommand(Command):
     def __init__(self, tv: TV):
         self.tv = tv
 
@@ -85,7 +84,7 @@ class TVOnCommand(ReversibleCommand):
         self.tv.off()
 
 
-class TVOffCommand(ReversibleCommand):
+class TVOffCommand(Command):
     def __init__(self, tv: TV):
         self.tv = tv
 
@@ -96,7 +95,7 @@ class TVOffCommand(ReversibleCommand):
         self.tv.on()
 
 
-class HottubOffCommand(ReversibleCommand):
+class HottubOffCommand(Command):
     def __init__(self, hottub: Hottub):
         self.hottub = hottub
 
@@ -108,7 +107,7 @@ class HottubOffCommand(ReversibleCommand):
         self.hottub.on()
 
 
-class HottubOnCommand(ReversibleCommand):
+class HottubOnCommand(Command):
     def __init__(self, hottub: Hottub):
         self.hottub = hottub
 
@@ -121,7 +120,7 @@ class HottubOnCommand(ReversibleCommand):
         self.hottub.off()
 
 
-class StereoOnCommand(ReversibleCommand):
+class StereoOnCommand(Command):
     def __init__(self, stereo: Stereo):
         self.stereo = stereo
 
@@ -132,7 +131,7 @@ class StereoOnCommand(ReversibleCommand):
         self.stereo.off()
 
 
-class StereoOffCommand(ReversibleCommand):
+class StereoOffCommand(Command):
     def __init__(self, stereo: Stereo):
         self.stereo = stereo
 
@@ -143,7 +142,7 @@ class StereoOffCommand(ReversibleCommand):
         self.stereo.on()
 
 
-class CeilingFanHighCommand(ReversibleCommand):
+class CeilingFanHighCommand(Command):
     def __init__(self, ceiling_fan: CeilingFan):
         self.ceiling_fan = ceiling_fan
         self.previous_speed = self.ceiling_fan.SPEED.OFF
@@ -161,7 +160,7 @@ class CeilingFanHighCommand(ReversibleCommand):
         }.get(self.previous_speed)()
 
 
-class CeilingFanMediumCommand(ReversibleCommand):
+class CeilingFanMediumCommand(Command):
     def __init__(self, ceiling_fan: CeilingFan):
         self.ceiling_fan = ceiling_fan
         self.previous_speed = self.ceiling_fan.SPEED.OFF
@@ -179,7 +178,7 @@ class CeilingFanMediumCommand(ReversibleCommand):
         }.get(self.previous_speed)()
 
 
-class CeilingFanLowCommand(ReversibleCommand):
+class CeilingFanLowCommand(Command):
     def __init__(self, ceiling_fan: CeilingFan):
         self.ceiling_fan = ceiling_fan
         self.previous_speed = self.ceiling_fan.SPEED.OFF
@@ -197,7 +196,7 @@ class CeilingFanLowCommand(ReversibleCommand):
         }.get(self.previous_speed)()
 
 
-class CeilingFanOffCommand(ReversibleCommand):
+class CeilingFanOffCommand(Command):
     def __init__(self, ceiling_fan: CeilingFan):
         self.ceiling_fan = ceiling_fan
         self.previous_speed = self.ceiling_fan.SPEED.OFF

@@ -1,21 +1,20 @@
 """
 Notes:
-    - We use the factories, without needing to know their internal behavior
-    - We only call the method "order_pizza" which is the common
-    interface of pizza factories
-    - A pizza is an abstraction of a pizza of a certain flavor,
-    with its respective ingredients
+    - The method is defined in an abstract way, so it can be specialized with
+    what varies (object creation)
+    - Store classes inherit from abstract classes
+    - pass the flavour (str) to a fabric and wait for a pizza
 """
-from pizza import Pizza
-from pizza_store import ChicagoPizzaStore, NYPizzaStore, PizzaStore
+from fm_pizza import Pizza
+from fm_pizza_store import ChicagoPizzaStore, NYPizzaStore
 
-ny_store: PizzaStore = NYPizzaStore()
-chicago_store: PizzaStore = ChicagoPizzaStore()
+ny_store: NYPizzaStore = NYPizzaStore()
+chicago_store: ChicagoPizzaStore = ChicagoPizzaStore()
 
 pizza: Pizza = ny_store.order_pizza("cheese")
 print(f"Ethan ordered a {pizza.get_name()}")
 
-pizza = chicago_store.order_pizza("chease")
+pizza = chicago_store.order_pizza("cheese")
 print(f"Joel ordered a {pizza.get_name()}")
 
 pizza = ny_store.order_pizza("clam")

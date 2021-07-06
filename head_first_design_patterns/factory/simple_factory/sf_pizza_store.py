@@ -5,8 +5,8 @@ Notes:
     type of pizza (abstraction of this example)
     - still depends on concrete SimplePizzaFactory, but moves the logic
 """
-from pizza import Pizza
-from pizza_factory import SimplePizzaFactory
+from sf_pizza import Pizza
+from sf_pizza_factory import SimplePizzaFactory
 
 
 class PizzaStore:

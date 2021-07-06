@@ -15,6 +15,7 @@ from reversible_command import (
     LightOnCommand,
     MacroCommand,
     NoCommand,
+    ReversibleCommand,
     StereoOffCommand,
     StereoOnCommand,
     TVOffCommand,
@@ -24,20 +25,29 @@ from reversible_command import (
 
 class RemoteControl:
     def __init__(self):
-        self._on_commands = [NoCommand() for _ in range(7)]
-        self._off_commands = [NoCommand() for _ in range(7)]
-        self._undo_command = NoCommand()
+        self._on_commands: list[ReversibleCommand] = [
+            NoCommand() for _ in range(7)
+        ]
+        self._off_commands: list[ReversibleCommand] = [
+            NoCommand() for _ in range(7)
+        ]
+        self._undo_command: ReversibleCommand = NoCommand()
 
-    def set_command(self, slot, on_command, off_command):
+    def set_command(
+        self,
+        slot,
+        on_command: ReversibleCommand,
+        off_command: ReversibleCommand,
+    ):
         self._on_commands[slot] = on_command
         self._off_commands[slot] = off_command
 
-    def on_button_was_pushed(self, slot):
+    def on_button_was_pushed(self, slot: int):
         command = self._on_commands[slot]
         command()
         self._undo_command = command
 
-    def off_button_was_pushed(self, slot):
+    def off_button_was_pushed(self, slot: int):
         command = self._off_commands[slot]
         command()
         self._undo_command = command
@@ -62,13 +72,13 @@ if __name__ == "__main__":
     stereo = Stereo("Living Room")
     hottub = Hottub()
 
-    party_on = [
+    party_on: list[ReversibleCommand] = [
         LightOnCommand(light),
         StereoOnCommand(stereo),
         TVOnCommand(tv),
         HottubOnCommand(hottub),
     ]
-    party_off = [
+    party_off: list[ReversibleCommand] = [
         LightOffCommand(light),
         StereoOffCommand(stereo),
         TVOffCommand(tv),

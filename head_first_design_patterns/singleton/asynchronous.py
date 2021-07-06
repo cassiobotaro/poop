@@ -9,7 +9,7 @@ import asyncio
 
 class SafeSingletonMeta(type):
 
-    _instances = {}
+    _instances: dict[type["Singleton"], "Singleton"] = {}
     _lock = asyncio.Lock()
 
     async def __call__(cls, *args, **kwargs):
