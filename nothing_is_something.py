@@ -46,7 +46,7 @@ def if_false(self, block):
 
 
 # let's curse booleans
-from forbiddenfruit import curse
+from forbiddenfruit import curse  # noqa: E402
 
 # We are adding two new methods for builtin bool class
 curse(bool, "if_true", if_true)
@@ -182,8 +182,7 @@ for animal in animals:
 # print(House().line(12))
 # print(House().recite())
 
-import random
-from functools import cached_property
+import random  # noqa: E402
 
 
 def shuffle(self):
@@ -250,7 +249,7 @@ curse(list, "shuffle", shuffle)
 # print(House().recite())
 
 
-from itertools import chain
+from itertools import chain  # noqa: E402
 
 
 def zip_(self, iterable):

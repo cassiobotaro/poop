@@ -45,6 +45,10 @@ jobs:
         shell: bash
         run: python -m poetry run python -m black --check .
       
+      - name: Run flake8
+        shell: bash
+        run: python -m poetry run python -m flake8 .
+      
       - name: Run mypy
         shell: bash
         run: python -m poetry run python -m mypy .
