@@ -47,7 +47,7 @@ jobs:
       
       - name: Run flake8
         shell: bash
-        run: python -m poetry run python -m flake8 .
+        run: python -m poetry run python -m flake8 . --exclude=.venv
       
       - name: Run mypy
         shell: bash
