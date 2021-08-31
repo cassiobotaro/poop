@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from fly_behavior import FlyNoWay, FlyWithWings
-from quack_behavior import MuteQuack, Quack, Squeak
+from fly_behavior import FlyBehavior, FlyNoWay, FlyWithWings
+from quack_behavior import MuteQuack, Quack, QuackBehavior, Squeak
 
 
 class Duck(ABC):
@@ -14,7 +14,9 @@ class Duck(ABC):
     all ducks should have a display method with your own implementation.
     """
 
-    def __init__(self, fly_behavior, quack_behavior):
+    def __init__(
+        self, fly_behavior: FlyBehavior, quack_behavior: QuackBehavior
+    ):
         self.fly_behavior = fly_behavior
         self.quack_behavior = quack_behavior
 
@@ -33,10 +35,10 @@ class Duck(ABC):
         print("All ducks float, even decoys!")
 
     # setter methods
-    def set_quack_behavior(self, qb):
+    def set_quack_behavior(self, qb: QuackBehavior):
         self.quack_behavior = qb
 
-    def set_fly_behavior(self, fb):
+    def set_fly_behavior(self, fb: FlyBehavior):
         self.fly_behavior = fb
 
 

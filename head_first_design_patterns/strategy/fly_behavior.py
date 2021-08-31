@@ -1,33 +1,30 @@
-from abc import ABC, abstractmethod
+from typing import Protocol
 
-# ABC is used to formalize an interface.
-# Given the dynamic nature of python, this definition would not be necessary,
-# every instance of a class that has the quack method could be
-# considered a quacking behavior.
 # Each class have your own implementation of method quack.
 # Program to interface not the implementation.
 # Do not confuse with the reserved word interface of some languages.
 # The concept here has to do with the way in which
 # objects communicate (messages).
+# All classes are FlyBehavior due to the fly method. No inheritance is needed.
+# Structural typing is used here.
 
 
-class FlyBehavior(ABC):
-    @abstractmethod
+class FlyBehavior(Protocol):
     def fly(self):
-        raise NotImplementedError
+        ...
 
 
-class FlyWithWings(FlyBehavior):
+class FlyWithWings:
     def fly(self):
         print("I'm flying")
 
 
-class FlyNoWay(FlyBehavior):
+class FlyNoWay:
     def fly(self):
         print("I can't fly")
 
 
-class FlyRocketPowered(FlyBehavior):
+class FlyRocketPowered:
     def fly(self):
         print("I'm flying with a rocket")
 
