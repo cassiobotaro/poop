@@ -3,8 +3,9 @@
 # No inheritance is needed.
 # Structural typing is used here.
 # They are also called as observers (they have update method).
-from head_first_design_patterns.observer.weather_data import Subject
 from typing import Protocol
+
+from head_first_design_patterns.observer.weather_data import Subject
 
 
 class DisplayElement(Protocol):
