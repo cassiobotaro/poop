@@ -1,10 +1,10 @@
-from display import (
+from head_first_design_patterns.observer.display import (
     CurrentConditionsDisplay,
     ForecastDisplay,
     HeatIndexDisplay,
     StatisticsDisplay,
 )
-from weather_data import WeatherData
+from head_first_design_patterns.observer.weather_data import WeatherData
 
 """
 Notes:

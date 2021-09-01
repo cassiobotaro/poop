@@ -98,7 +98,7 @@ class HeatIndexDisplay:
 class StatisticsDisplay:
     def __init__(self, weather_data: Subject):
         self._max_temp = 0.0
-        self._min_temp = 200
+        self._min_temp = 200.0
         self._temp_sum = 0.0
         self._num_readings = 0
         self._weather_data = weather_data

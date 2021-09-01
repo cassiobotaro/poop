@@ -15,7 +15,9 @@ from typing import Protocol
 
 
 class Observer(Protocol):
-    def update(self, temperature, humidity, pressure: float) -> None:
+    def update(
+        self, temperature: float, humidity: float, pressure: float
+    ) -> None:
         ...
 
 
@@ -32,12 +34,12 @@ class Subject(Protocol):
 
 class WeatherData:
     def __init__(self):
-        self.observers = []
+        self.observers: list[Observer] = []
         # abstracts states that when modified
         # will notify their subscribers
-        self._temperature = 0.0
-        self._humidity = 0.0
-        self._pressure = 0.0
+        self._temperature: float = 0.0
+        self._humidity: float = 0.0
+        self._pressure: float = 0.0
 
     def register_observer(self, observer: Observer) -> None:
         self.observers.append(observer)
