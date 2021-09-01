@@ -24,12 +24,12 @@ class ReversibleCommand(Protocol):
         ...
 
 
-class Command:
+class Presentable:
     def __str__(self):
         return f"{self.__class__.__name__}"
 
 
-class NoCommand(Command):
+class NoCommand(Presentable):
     def __call__(self):
         pass
 
@@ -37,7 +37,7 @@ class NoCommand(Command):
         pass
 
 
-class MacroCommand(Command):
+class MacroCommand(Presentable):
     def __init__(self, commands: list[ReversibleCommand]):
         self._commands = commands
 
@@ -50,7 +50,7 @@ class MacroCommand(Command):
             command.undo()
 
 
-class LightOnCommand(Command):
+class LightOnCommand(Presentable):
     def __init__(self, light: Light):
         self.light = light
 
@@ -61,7 +61,7 @@ class LightOnCommand(Command):
         self.light.off()
 
 
-class LightOffCommand(Command):
+class LightOffCommand(Presentable):
     def __init__(self, light: Light):
         self.light = light
 
@@ -72,7 +72,7 @@ class LightOffCommand(Command):
         self.light.on()
 
 
-class TVOnCommand(Command):
+class TVOnCommand(Presentable):
     def __init__(self, tv: TV):
         self.tv = tv
 
@@ -84,7 +84,7 @@ class TVOnCommand(Command):
         self.tv.off()
 
 
-class TVOffCommand(Command):
+class TVOffCommand(Presentable):
     def __init__(self, tv: TV):
         self.tv = tv
 
@@ -95,7 +95,7 @@ class TVOffCommand(Command):
         self.tv.on()
 
 
-class HottubOffCommand(Command):
+class HottubOffCommand(Presentable):
     def __init__(self, hottub: Hottub):
         self.hottub = hottub
 
@@ -107,7 +107,7 @@ class HottubOffCommand(Command):
         self.hottub.on()
 
 
-class HottubOnCommand(Command):
+class HottubOnCommand(Presentable):
     def __init__(self, hottub: Hottub):
         self.hottub = hottub
 
@@ -120,7 +120,7 @@ class HottubOnCommand(Command):
         self.hottub.off()
 
 
-class StereoOnCommand(Command):
+class StereoOnCommand(Presentable):
     def __init__(self, stereo: Stereo):
         self.stereo = stereo
 
@@ -131,7 +131,7 @@ class StereoOnCommand(Command):
         self.stereo.off()
 
 
-class StereoOffCommand(Command):
+class StereoOffCommand(Presentable):
     def __init__(self, stereo: Stereo):
         self.stereo = stereo
 
@@ -142,7 +142,7 @@ class StereoOffCommand(Command):
         self.stereo.on()
 
 
-class CeilingFanHighCommand(Command):
+class CeilingFanHighCommand(Presentable):
     def __init__(self, ceiling_fan: CeilingFan):
         self.ceiling_fan = ceiling_fan
         self.previous_speed = self.ceiling_fan.SPEED.OFF
@@ -160,7 +160,7 @@ class CeilingFanHighCommand(Command):
         }.get(self.previous_speed)()
 
 
-class CeilingFanMediumCommand(Command):
+class CeilingFanMediumCommand(Presentable):
     def __init__(self, ceiling_fan: CeilingFan):
         self.ceiling_fan = ceiling_fan
         self.previous_speed = self.ceiling_fan.SPEED.OFF
@@ -178,7 +178,7 @@ class CeilingFanMediumCommand(Command):
         }.get(self.previous_speed)()
 
 
-class CeilingFanLowCommand(Command):
+class CeilingFanLowCommand(Presentable):
     def __init__(self, ceiling_fan: CeilingFan):
         self.ceiling_fan = ceiling_fan
         self.previous_speed = self.ceiling_fan.SPEED.OFF
@@ -196,7 +196,7 @@ class CeilingFanLowCommand(Command):
         }.get(self.previous_speed)()
 
 
-class CeilingFanOffCommand(Command):
+class CeilingFanOffCommand(Presentable):
     def __init__(self, ceiling_fan: CeilingFan):
         self.ceiling_fan = ceiling_fan
         self.previous_speed = self.ceiling_fan.SPEED.OFF
