@@ -5,7 +5,7 @@
 # They are also called as observers (they have update method).
 from typing import Protocol
 
-from head_first_design_patterns.observer.weather_data import Subject
+from weather_data import Subject
 
 
 class DisplayElement(Protocol):

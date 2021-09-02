@@ -1,10 +1,10 @@
-from head_first_design_patterns.observer.display import (
+from display import (
     CurrentConditionsDisplay,
     ForecastDisplay,
     HeatIndexDisplay,
     StatisticsDisplay,
 )
-from head_first_design_patterns.observer.weather_data import WeatherData
+from weather_data import WeatherData
 
 """
 Notes:
@@ -13,15 +13,15 @@ Notes:
 - We can register and unregister a observer as
 we can see in the last two lines.
 """
-weather_data = WeatherData()
-current_Display = CurrentConditionsDisplay(weather_data)
-statistics_display = StatisticsDisplay(weather_data)
-forecast_display = ForecastDisplay(weather_data)
-heat_index_display = HeatIndexDisplay(weather_data)
+data = WeatherData()
+current_Display = CurrentConditionsDisplay(data)
+statistics_display = StatisticsDisplay(data)
+forecast_display = ForecastDisplay(data)
+heat_index_display = HeatIndexDisplay(data)
 
-weather_data.set_measurements(80, 65, 30.4)
-weather_data.set_measurements(82, 70, 29.2)
-weather_data.set_measurements(78, 90, 29.2)
+data.set_measurements(80, 65, 30.4)
+data.set_measurements(82, 70, 29.2)
+data.set_measurements(78, 90, 29.2)
 
-weather_data.remove_observer(forecast_display)
-weather_data.set_measurements(62.0, 90.0, 28.1)
+data.remove_observer(forecast_display)
+data.set_measurements(62.0, 90.0, 28.1)
