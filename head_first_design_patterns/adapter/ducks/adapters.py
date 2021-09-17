@@ -1,3 +1,10 @@
+"""Notes:
+- DuckAdapter is a class that implements the Turkey interface.
+- DuckAdapter adapts a Duck to beheave like a Turkey.
+- TurkeyAdapter is a class that implements the Duck interface.
+- TurkeyAdapter adapts a Turkey to beheave like a Duck.
+- Don't have inheritance because of structural subtyping.
+"""
 from random import randint
 
 from ducks import Duck

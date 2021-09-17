@@ -1,3 +1,18 @@
+"""
+- _T_co is a covariant type used to specify the type used
+in the Enumeration protocol
+Great explanation about covariance:
+https://blog.daftcode.pl/covariance-contravariance-and-invariance-the-ultimate-python-guide-8fabc0c24278
+- To keep the code like the original, I have to define Enumeration Protocol
+In Java this protocol exists.
+- ConcreteEnumeration is a class that implements the Enumeration Protocol
+- EnumerationIterator  is a wrapper in which the enumeration is stored
+- Iterator interface is used to get values from the enumeration
+- It's is generic and can contains any type T of enumeration
+- Inherit from Iterator and win the method __iter__ returning itself
+- EnumerationIterator is an adapter that adapts the Enumeration
+to the Iterator protocol
+"""
 from collections.abc import Iterator, Iterable
 from typing import Generic, Protocol, TypeVar
 

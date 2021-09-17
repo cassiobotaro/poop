@@ -1,3 +1,8 @@
+"""Notes:
+- Duck is a protocol with methods: quack() and fly().
+- MallardDuck is an implementation of Duck.
+- Don't need to inherit from Duck, because of structural subtyping.
+"""
 from typing import Protocol
 
 

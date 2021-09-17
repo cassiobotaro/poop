@@ -1,3 +1,8 @@
+"""Notes:
+- Turkey is a protocol with methods: gobble() and fly().
+- WildTurkey is an implementation of Turkey.
+- Don't need to inherit from Turkey, because of structural subtyping.
+"""
 from typing import Protocol
 
 

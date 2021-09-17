@@ -1,3 +1,10 @@
+"""Notes
+- Drone is a protocol that defines the interface for a drone.
+- SuperDrone is a concrete implementation of the Drone protocol.
+- Don't need inheritance because of structural typing.
+- DroneAdapter is a concrete implementation of the Duck protocol.
+- Even it sounds confuse, we are adapting a Drone to beheave like a Duck.
+"""
 from typing import Protocol
 
 
