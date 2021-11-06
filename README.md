@@ -1,26 +1,25 @@
-# poop
-💩 Python Object Oriented Programming :snake:
+# POOP
+💩 **P**rogramação **O**rientada a **O**bjetos em **P**ython :snake:
 
-Principles to follow:
+Princípios a serem seguidos:
 
-- Prefer composition over inheritance
+- Prefira composição à herança;
 
-- Avoid `if`'s
+- Evite condicionais (`if`), polimorfismo pode ajudar aqui; 
 
-- Code for interface rather than implementation
+- Programe para interface ao invés da implementação;
 
-- Use Dependency inversion
+- Utilize inversão de dependência;
 
-- `OOP` is about objects and messages.
+- `POO` é sobre objetos e mensagens.
 
-## Usage
+## Sobre o repositório
 
-Each code has comments regarding some aspect to be discussed. They were written for study and may contain experiments, so be careful when examining the codes.
+Cada código possui comentários a respeito de algum aspecto a ser discutido. Eles foram escritos para estudo e podem conter experimentos, então tome cuidado ao examinar os códigos.
 
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+## Contribuindo
 
-Please make sure to update tests as appropriate.
+*Pull requests* são bem-vindos. Para mudanças importantes, [abra uma *issue*](https://github.com/cassiobotaro/poop/issues/new) primeiro para discutir o que você gostaria de mudar.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
