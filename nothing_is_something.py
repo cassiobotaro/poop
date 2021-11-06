@@ -1,26 +1,27 @@
-# based on talk Nothing is something - Sandi Metz
+# baseado na palestra: Nothing is something - Sandi Metz
 # https://www.youtube.com/watch?v=OMPfEXIlTVE&t=562s&ab_channel=Confreaks
 
-# send message to object 1 to call method bit_length
+# envia mensagem ao objeto 1 para invocar o método bit_length
 (1).bit_length()
-# another way to do the same
+# outra maneira de fazer o mesmo
 getattr(1, "bit_length")()
-# call builtin str on number 1, returning a string object
+# invoca a função embutida str() sobre o número 1, retornando um objeto string
 str(1)
-# we can call dunder str, it's equivalent, but it's not recommended
+# Nós podemos também chamar o método dunder str, é equivalente,
+# mas não é recomendado
 (1).__str__()
-# send message __str__ to object and call method
+# envia a mensagem __str__ para o objeto e chama o método
 getattr(1, "__str__")()
 
-# access object class
+# acessa a classe do objeto
 (1).__class__
 
-# different from ruby, True and False are instances of bool
+# diferente do ruby, True e False são instâncias de bool
 (True).__class__
 (False).__class__
 
-# truthy objects in python are objects that __bool__ returns True
-# falsy returns False
+# objetos truthy em Python são objetos que __bool__ retorna True
+# falsy returna False
 
 
 class Truthy:
@@ -28,42 +29,41 @@ class Truthy:
         return True
 
 
-# messsage sending syntax for booleans
-
-
 def if_true(self, block):
-    # simulate blocks using functions
+    # somente executa a função caso self
+    # seja algo avaliado como verdadeiro (truthy)
+    # isto é chamado de curto circuito
     self and block()
-    # close circuit when object is truthy
     return self
 
 
 def if_false(self, block):
-    # simulate blocks using functions
+    # somente executa a função caso self
+    # seja algo avaliado como falso (falsy)
+    # isto é chamado de curto circuito
     not self and block()
-    # close circuit when object is falsy
     return self
 
 
-# let's curse booleans
+# vamos amaldiçoar os booleanos
 from forbiddenfruit import curse  # noqa: E402
 
-# We are adding two new methods for builtin bool class
+# Vamos adicionar dois novos métodos para a classe bool
 curse(bool, "if_true", if_true)
 curse(bool, "if_false", if_false)
 
-# use message instead of conditional
-# As the expression is truthy, block is evaluated
+# Vamos utilizar mensagens ao invés de condicionais
+# Como a expressão é verdadeira, o bloco é avaliado
 (1 == 1).if_true(lambda: print("evaluated block"))
-# Not evaluated because expression is truthy
+# Não é avaliado porque a expressão é verdadeira
 (1 == 1).if_false(lambda: print("block is ignored"))
-# As the expression is false, block is not evaluated
+# Como a expressão é falsa, o bloco não é avaliado
 (1 == 2).if_true(lambda: print("block is ignored"))
-# Evaluated beacuse expression is falsy
+# Avaliado porque a expressão é falsa
 (1 == 2).if_false(lambda: print("evaluated block"))
 
-# remembering that any object can be truthy or falsy
-# let's curse object class
+# Lembrando que qualquer objeto pode ser avaliado como verdadeiro ou falso
+# vamos amaldiçoar a classe object
 curse(object, "if_true", if_true)
 curse(object, "if_false", if_false)
 
@@ -73,15 +73,15 @@ curse(object, "if_false", if_false)
 None.if_true(lambda: print("ignored block"))
 None.if_false(lambda: print("evaluated block"))
 
-# It's not about change Python
-# It's a question of avoid if's and change your mindset
+# Não é sobre mudar o Python
+# É uma questão de evitar if's e mudar sua mentalidade
 
-# This class emulate something that looks like an ORM
+# Esta classe simula algo que parece uma ORM
 
 
 class Animal:
 
-    # just to emulate some content
+    # apenas para simular um conteúdo
     repository = ["pig", "sheep"]
 
     def __init__(self, name):
@@ -97,36 +97,37 @@ class Animal:
         return f"Animal({self.name})"
 
 
-# returns an animal if it exists else None
+# retorna um animal se existir, senão None
 print(Animal.find("pig"))
 print(Animal.find(""))
 
 ids = ["pig", "", "sheep"]
 
-# In python, sequence objets like list don't have
-# a map method, instead we have a builtin function
-# map that receives one or many iterables(objects that
-# follow iterable protocol)
+# Em Python, objetos de sequência como lista não tem
+# um método map, ao invés disto, temos uma função embutida
+# map que recebe uma função e um ou
+# vários iteráveis (objetos que seguem o protocolo de iterável)
 animals = map(Animal.find, ids)
 
-# we also don't have an each method
-# code below will fail
+# nós também não temos um método "each"
+# o código abaixo irá falhar
 # for animal in animals:
 #     print(animal.name)
 
-# note: map and for are not SmallTalk infected but
-# I decided to maintain it for now
+# nota: map e for não são infectados por SmallTalk mas
+# eu decidi manter isso por enquanto
 
 # If you send it a message, nil is something. - Sandi Metz
+# Se você enviar uma mensagem, nil é algo. - Sandi Metz
 
-# using try
+# Poderiamos utilizar a captura de exceções
 # for animal in animals:
 #     try:
 #         print(animal.name)
 #     except AttributeError:
 #         print("no animal")
-# try is an if that depends on code execution
-# and then maybe I have this conditional in a lot of places
+# try é um if que depende de execução de código
+# e então talvez eu tenha isso em muitas partes
 
 
 class MissingAnimal:
@@ -135,22 +136,25 @@ class MissingAnimal:
         return "no animal"
 
 
-# wrap to avoid repeat if
-# in many places
+# envolvido para evitar repetir if
+# em alguns lugares
 class GuaranteedAnimal:
     @classmethod
     def find(cls, id_):
         return Animal.find(id_) or MissingAnimal()
 
 
-# use guaranteed animals and sure that an animal will be returned
+# utilize GuaranteedAnimal e tenha certeza de que um animal será retornado
 animals = map(GuaranteedAnimal.find, ids)
 for animal in animals:
     print(animal.name)
 
-# OOP is about objects and messages
+# Orientação a objetos é sobre objetos e mensagens
 
-# A class house that recites the text
+# O código abaixo está comentado para não conflitar com
+# sua respectiva refatoração que aparece mais abaixo
+
+# A classe house que recita o texto
 # class House:
 #     @property
 #     def data(self):
@@ -196,10 +200,11 @@ def shuffle(self):
     return data
 
 
-# just for fun, I'll add a shuffle method on lists
+# apenas para diversão, eu adicionarei um método de embaralhamento
+# em listas
 curse(list, "shuffle", shuffle)
 
-# RandomHouse IS-A house that randomize the text
+# RandomHouse "é uma" casa que embaralha o texto
 # class RandomHouse(House):
 #     @cached_property
 #     def data(self):
@@ -273,11 +278,11 @@ def flatten(self):
     return list(chain.from_iterable(self))
 
 
-# just for fun again
+# apenas por diversão novamente
 curse(list, "zip", zip_)
 curse(list, "flatten", flatten)
 
-# EchoHouse IS-A House that echo parts
+# EchoHouse "é uma" casa que ecoa partes
 # class EchoHouse(House):
 #     def parts(self, number):
 #         data = super().parts(number)
@@ -289,8 +294,8 @@ curse(list, "flatten", flatten)
 # print(EchoHouse().line(3))
 # print(EchoHouse().line(12))
 
-# more classes, less if's
-# abstract behavior
+# mais classes, menos ifs
+# comportamento abstrato
 
 
 class DefaultOrder:
@@ -350,17 +355,17 @@ print(House().line(12))
 print(House(RandomOrder()).line(12))
 print(House(formatter=EchoFormatter()).line(12))
 
-# inject an object to play the role of the thing that varies
+# injeta um objeto para desempenhar o papel da coisa que varia
 
-# House HAVE an ORDERER ROLE
-# House HAVE a  FORMATTER ROLE
+# House TEM um ORDENADOR
+# House TEM um FORMATADOR
 
-# It's composition + dependency injection
-# abstraction seeking!!!
+# É uma composição + injeção de dependência
+# busca de abstração!!!
 
-# inheritance is not for sharing behavior
+# herança não é para compartilhar comportamento
 
-# isolate the thing that varies
-# name the concept
-# define the rola
-# inject the players
+# isole a coisa que varia
+# nomeie o conceito
+# defina o papel
+# injete os jogadores
