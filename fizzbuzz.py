@@ -9,7 +9,7 @@ from forbiddenfruit import curse
 
 
 def if_true(self, block):
-    # somente executa a função caso self 
+    # somente executa a função caso self
     # seja algo avaliado como verdadeiro (truthy)
     # isto é chamado de curto circuito
     self and block()
@@ -17,7 +17,7 @@ def if_true(self, block):
 
 
 def if_false(self, block):
-    # somente executa a função caso self 
+    # somente executa a função caso self
     # seja algo avaliado como falso (falsy)
     # isto é chamado de curto circuito
     not self and block()
@@ -43,6 +43,7 @@ def do(self, block):
     deque(map(block, self), maxlen=0)
     return self
 
+
 # curse é uma maneira de modificar tipos builtins da linguagem
 curse(bool, "if_true", if_true)
 curse(bool, "if_false", if_false)
@@ -53,20 +54,25 @@ curse(range, "do", do)
 """
 Explicação:
 Nós adicionamos um método "do" em objetos do tipo "range" que avalia um bloco
-para cada elemento no intervalo. 
-Este bloco faz a avaliação de um número verificando se o mesmo 
+para cada elemento no intervalo.
+Este bloco faz a avaliação de um número verificando se o mesmo
 é divisível por 15, e isto resulta em um objeto booleano.
-Para este objeto booleano, duas mensagens são enviadas, uma que diz que caso sua avaliação
-seja verdadeira, o valor "FizzBuzz" deve ser exibido em tela. A outra informa que se o objeto é 
-avaliado como falso, um novo objeto booleano deve ser retornado. Este novo objeto
-booleano recebe duas mensagens, uma informando ao objeto que caso sua avaliação seja verdadeira,
-a mensagem "Buzz" deve ser exibida na tela e outra que caso sua avaliação seja falsa um 
-novo objeto booleano deve ser retornado.
-Por fim este novo objeto booleano também recebe duas mensagens, uma informando que se sua avaliação for verdadeira
-"Fizz" deve ser exibido em tela e outra que caso seja avaliado como falso, o número deve ser exibido na tela.
+Para este objeto booleano, duas mensagens são enviadas,
+uma que diz que caso sua avaliação seja verdadeira,
+o valor "FizzBuzz" deve ser exibido em tela.
+A outra informa que se o objeto é
+avaliado como falso, um novo objeto booleano deve ser retornado.
+Este novo objeto booleano recebe duas mensagens,
+uma informando ao objeto que caso sua avaliação seja verdadeira,
+a mensagem "Buzz" deve ser exibida na tela e outra que caso sua avaliação
+seja falsa um novo objeto booleano deve ser retornado.
+Por fim este novo objeto booleano também recebe duas mensagens,
+uma informando que se sua avaliação for verdadeira
+"Fizz" deve ser exibido em tela e outra que caso seja avaliado como falso,
+o número deve ser exibido na tela.
 """
-range(1, 101).do( 
-    # lambdas também são utilizadas para simular blocos 
+range(1, 101).do(
+    # lambdas também são utilizadas para simular blocos
     lambda number: (number % 15 == 0)
     .if_true("FizzBuzz".print)
     .if_false(
@@ -79,4 +85,5 @@ range(1, 101).do(
         )
     )
 )
-# Nota: É importante notar que no fim o que temos são objetos trocando mensagens entre si.
+# Nota: É importante notar que no fim o que temos são objetos
+# trocando mensagens entre si.
