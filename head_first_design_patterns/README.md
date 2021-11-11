@@ -9,12 +9,19 @@
 
 ## OO Principles
 
-- Encapsulate what varies.
-- Favor composition over inheritance
-- Program to interfaces, not implementations
-- Strive for loosely coupled designs between objects that interact
-- Classes should be open for extension but closed for modification
-- Depend on abstractions. Do not depend on concrete classes.
+Encapsulate what varies
+
+Favor composition over inheritance
+
+Program to interfaces, not implementations
+
+Strive for loosely coupled designs between objects that interact
+
+Classes should be open for extension but closed for modification
+
+Depend on abstractions. Do not depend on concrete classes
+
+Talk only to your friends
 
 ## OO Patterns
 
@@ -39,3 +46,7 @@ dependent objects without specifying their concrete classes.
 **Singleton** - Ensure a class only has one instance and provide a global point of access to it.
 
 **Command** - Encapsulates a request as an object, thereby letting you parametrize clients with different requests, queue or log requests, and support undoable operations.
+
+**Adapter** - Converts the interface of a class into another interface the clients expect. Let's classes work together that couldn't otherwise because of incompatible interfaces.
+
+**Facade** - Provides a unified interface to a set of interfaces in a subsystem. Facade defines a higher-level interface that makes the subsystem easier to use.
