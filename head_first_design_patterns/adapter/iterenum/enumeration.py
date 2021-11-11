@@ -13,7 +13,7 @@ In Java this protocol exists.
 - EnumerationIterator is an adapter that adapts the Enumeration
 to the Iterator protocol
 """
-from collections.abc import Iterator, Iterable
+from collections.abc import Iterable, Iterator
 from typing import Generic, Protocol, TypeVar
 
 _T_co = TypeVar("_T_co", covariant=True)
