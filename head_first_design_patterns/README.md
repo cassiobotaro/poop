@@ -1,52 +1,53 @@
-# HEAD FIRST: DESIGN PATTERN
+# HEAD FIRST: DESIGN PATTERNS
 
-## OO Basics
+## Básico da programação orientada a objetos
 
-- Abstraction
-- Encapsulation
-- Polymorphism
-- Inheritance
+- Abstração
+- Encapsulamento
+- Polimorfismo
+- Herança
 
-## OO Principles
+## Princípios OO
 
-Encapsulate what varies
+Encapsule o que varia
 
-Favor composition over inheritance
+Prefira composição a herança
 
-Program to interfaces, not implementations
+Programe para interfaces, não para implementações
 
-Strive for loosely coupled designs between objects that interact
+Esforce-se para obter designs fracamente acoplados entre objetos que interagem
 
-Classes should be open for extension but closed for modification
+Classes devem ser abertas para extensão, mas fechadas para modificação
 
-Depend on abstractions. Do not depend on concrete classes
+Depende de abstrações. Não dependa de classes concretas
 
-Talk only to your friends
+Fale apenas com seus amigos
 
-## OO Patterns
+## Padrões OO
 
-**Strategy** - Defines a family of algorithms, encapsulates each one,
-and makes them interchangeable.
-Strategy lets the algorithm vary independently from clients that use it.
+**Strategy** - Define uma família de algoritmos, encapsula cada um,
+e os torna intercambiáveis.
+A estratégia permite que o algoritmo varie independentemente dos clientes que o utilizam.
 
-**Observer** - Defines a one-to-many dependency between objects
-so that when one object changes state, all its dependents are
-notified and updated automatically.
+**Observer** - Define uma dependência um-para-muitos entre objetos
+de modo que quando um objeto muda de estado, todos os seus dependentes são
+notificado e atualizado automaticamente.
 
-**Decorator** - Attach additional responsibilities to an object dynamically.
-Decorators provide a flexible alternative to subclassing for extending functionality.
+**Decorator** - Anexe responsabilidades adicionais a um objeto dinamicamente.
+Os decoradores fornecem uma alternativa flexível à criação de subclasses para estender a funcionalidade.
 
 **Factory Method** - Defines an interface for creating an object, but let
 subclasses decide which classes to instantiate. Factory Method lets a class
 defer instantiation to the subclasses.
+Define uma interface para a criação de um objeto, mas permite que as subclasses decidam qual objeto instanciar.
+_Factory Method_ permite a uma classe adiar a instanciação para as subclasses.
 
-**Abstract Factory** - Provides an interface for creating families of related or
-dependent objects without specifying their concrete classes.
+**Abstract Factory** - Fornece uma interface para a criação de famílias de objetos relacionados ou dependentes sem especificar suas classes concretas.
 
-**Singleton** - Ensure a class only has one instance and provide a global point of access to it.
+**Singleton** - Certifique-se de que uma classe tenha apenas uma instância e forneça um ponto global de acesso a ela.
 
-**Command** - Encapsulates a request as an object, thereby letting you parametrize clients with different requests, queue or log requests, and support undoable operations.
+**Command** - Encapusula uma requisição como um objeto, permitindo que você parametrize os clientes com diferentes requisições, fila ou requisições de _log_, e suporte operações desfazíveis.
 
-**Adapter** - Converts the interface of a class into another interface the clients expect. Let's classes work together that couldn't otherwise because of incompatible interfaces.
+**Adapter** - Converte a interface de uma classe para a interface que os clientes esperam. Permite que classes trabalhem em conjunto que não podiam fazer antes por incompatibilidade de interfaces.
 
-**Facade** - Provides a unified interface to a set of interfaces in a subsystem. Facade defines a higher-level interface that makes the subsystem easier to use.
+**Facade** - Provê uma interface unificada para um conjunto de interfaces em um subsistema. _Facade_ define uma interface mais alta que torna o subsistema mais fácil de usar.
