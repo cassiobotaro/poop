@@ -1,11 +1,3 @@
-"""Notes:
-- IteratorEnumeration is a wrapper in which the iterator is stored.
-- Enumeration interface is used to get values from the iterator.
-- It's is generic and can contains any type T of iterator.
-- We don't need to inherit from Enumeration because of structural typing.
-- IteratorEnumeration is an adapter which adapts the iterator to the
- Enumeration interface.
-"""
 from collections.abc import Iterator
 from typing import Generic, TypeVar
 
