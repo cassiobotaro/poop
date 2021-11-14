@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Python Object-Oriented Programming"
 authors = ["cassiobotaro <cassiobotaro@gmail.com>"]
 license = "MIT"
+keywords = ["oop", "object-oriented", "programming"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -14,6 +15,15 @@ isort = "^5.8.0"
 mypy = "^0.910"
 flake8 = "^3.9.2"
 black = "^21.10b0"
+
+[tool.poetry.scripts]
+duck_test_drive = "poop.hfdp.adapter.ducks.duck_test_drive:main"
+turkey_test_drive = "poop.hfdp.adapter.ducks.turkey_test_drive:main"
+enumeration_iterator_test_drive = "poop.hfdp.adapter.iterenum.enumeration_iterator_test_drive:main"
+iterator_enumeration_test_drive = "poop.hfdp.adapter.iterenum.iterator_enumeration_test_drive:main"
+diner = "poop.hfdp.command.diner.diner:main"
+diner_lambda = "poop.hfdp.command.diner_lambda.diner:main"
+party = "poop.hfdp.command.party.remote_loader: main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

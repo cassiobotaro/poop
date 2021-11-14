@@ -1,17 +1,17 @@
 from collections.abc import Iterator
 from typing import TypeVar
 
-from head_first_design_patterns.adapter.iterenum.enumeration import Enumeration
+from poop.hfdp.adapter.iterenum.enumeration import Enumeration
 
 _T = TypeVar("_T")
 
 
 class EnumerationIterator(Iterator[_T]):
     def __init__(self, enumeration: Enumeration[_T]) -> None:
-        self.enumeration = enumeration
+        self.__enumeration = enumeration
 
     def __next__(self) -> _T:
-        if self.enumeration.has_more_elements():
-            return self.enumeration.next_element()
+        if self.__enumeration.has_more_elements():
+            return self.__enumeration.next_element()
         else:
             raise StopIteration
