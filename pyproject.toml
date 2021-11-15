@@ -29,6 +29,7 @@ remote_wl = "poop.hfdp.command.remote_wl.remote_loader:main"
 simpleremote = "poop.hfdp.command.simpleremote.remote_control_test:main"
 simpleremote_wl = "poop.hfdp.command.simpleremote_wl.remote_control_test:main"
 tkinter = "poop.hfdp.command.tkinter.tkinter_example:main"
+undo = "poop.hfdp.command.undo.remote_loader:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
