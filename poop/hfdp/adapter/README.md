@@ -1,5 +1,20 @@
 # Adapter
 
+## Como executar os exemplos
+
+```bash
+# exemplo de adapdatação de um peru em um pato
+poetry run duck_test_drive
+# exemplo de adapdatação de um pato em um peru
+poetry run turkey_test_drive
+# exemplo de adapdatação de uma enumeração em um iterador
+poetry run enumeration_iterator_test_drive
+# exemplo de adapdatação de um iterador em uma enumeração
+poetry run iterator_enumeration_test_drive
+```
+
+## Notas
+
 O padrão de adaptador é usado para converter a interface de uma classe para
 outra interface que os clientes esperam.
 
