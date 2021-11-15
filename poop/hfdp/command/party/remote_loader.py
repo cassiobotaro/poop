@@ -15,7 +15,7 @@ from poop.hfdp.command.party.tv_off_command import TVOffCommand
 from poop.hfdp.command.party.tv_on_command import TVOnCommand
 
 
-def main():
+def main() -> None:
     remote_control = RemoteControl()
 
     light = Light("Living Room")

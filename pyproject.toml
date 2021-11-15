@@ -23,7 +23,12 @@ enumeration_iterator_test_drive = "poop.hfdp.adapter.iterenum.enumeration_iterat
 iterator_enumeration_test_drive = "poop.hfdp.adapter.iterenum.iterator_enumeration_test_drive:main"
 diner = "poop.hfdp.command.diner.diner:main"
 diner_lambda = "poop.hfdp.command.diner_lambda.diner:main"
-party = "poop.hfdp.command.party.remote_loader: main"
+party = "poop.hfdp.command.party.remote_loader:main"
+remote = "poop.hfdp.command.remote.remote_loader:main"
+remote_wl = "poop.hfdp.command.remote_wl.remote_loader:main"
+simpleremote = "poop.hfdp.command.simpleremote.remote_control_test:main"
+simpleremote_wl = "poop.hfdp.command.simpleremote_wl.remote_control_test:main"
+tkinter = "poop.hfdp.command.tkinter.tkinter_example:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -35,7 +40,6 @@ line-length = 79
 [tool.isort]
 profile = "black"
 line_length = 79
-
 
 [tool.mypy]
 warn_return_any = true
