@@ -130,3 +130,6 @@ dmypy.json
 
 # vscode config
 .vscode/
+
+# hfdp
+test.txt

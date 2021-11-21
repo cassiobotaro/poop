@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 
 
-class Pizza(ABC):
-    description = "Basic Pizza"
+class Beverage(ABC):
+
+    description = "Unknown Beverage"
 
     def get_description(self) -> str:
         return self.description
