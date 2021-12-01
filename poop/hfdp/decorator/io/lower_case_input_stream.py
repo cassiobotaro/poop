@@ -1,5 +1,5 @@
 from types import TracebackType
-from typing import IO, Optional
+from typing import IO
 
 
 class LowerCaseInputStream:
@@ -15,9 +15,9 @@ class LowerCaseInputStream:
 
     def __exit__(
         self,
-        exctype: Optional[type[BaseException]],
-        excinst: Optional[BaseException],
-        exctb: Optional[TracebackType],
+        exctype: type[BaseException] | None,
+        excinst: BaseException | None,
+        exctb: TracebackType | None,
     ) -> bool:
         self.stream.close()
         return exctype is None

@@ -11,11 +11,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: "3.10"
       - name: Set up poetry
-        uses: abatilo/actions-poetry@v2.1.0
+        uses: abatilo/actions-poetry@v2.1.4
         with:
-          poetry-version: 1.1.5
+          poetry-version: 1.1.11
 
       - name: Configure poetry
         shell: bash
@@ -44,11 +44,11 @@ jobs:
       - name: Run black
         shell: bash
         run: python -m poetry run python -m black --check .
-      
+
       - name: Run flake8
         shell: bash
         run: python -m poetry run python -m flake8 . --exclude=.venv
-      
+
       - name: Run mypy
         shell: bash
         run: python -m poetry run python -m mypy .

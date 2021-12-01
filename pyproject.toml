@@ -7,7 +7,7 @@ license = "MIT"
 keywords = ["oop", "object-oriented", "programming"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 forbiddenfruit = "^0.1.3"
 
 [tool.poetry.dev-dependencies]

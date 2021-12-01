@@ -14,7 +14,6 @@ Notes:
 """
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import Optional
 
 from cheese import Cheese
 from clams import Clams
@@ -30,12 +29,12 @@ class Pizza(ABC):
     def __init__(self):
         self.name: str = ""
 
-        self.dough: Optional[Dough] = None
-        self.sauce: Optional[Sauce] = None
+        self.dough: Dough | None = None
+        self.sauce: Sauce | None = None
         self.veggies: Iterable[Veggies] = []
-        self.cheese: Optional[Cheese] = None
-        self.pepperoni: Optional[Pepperoni] = None
-        self.clams: Optional[Clams] = None
+        self.cheese: Cheese | None = None
+        self.pepperoni: Pepperoni | None = None
+        self.clams: Clams | None = None
 
     @abstractmethod
     def prepare(self) -> None:
