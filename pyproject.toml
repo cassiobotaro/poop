@@ -34,6 +34,7 @@ input_test = "poop.hfdp.decorator.io.input_test:main"
 pizza_store = "poop.hfdp.decorator.pizza.pizza_store:main"
 starbuzz_coffee = "poop.hfdp.decorator.starbuzz.starbuzz_coffee:main"
 starbuzz_coffee_with_sizes = "poop.hfdp.decorator.starbuzz_with_sizes.starbuzz_coffee:main"
+home_theater = "poop.hfdp.facade.home_theater.home_theater_test_drive:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

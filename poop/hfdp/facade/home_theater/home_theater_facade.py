@@ -1,13 +1,11 @@
-from home_theater import (
-    Amplifier,
-    CDPlayer,
-    PopcornPopper,
-    Projector,
-    Screen,
-    StreamingPlayer,
-    TheaterLights,
-    Tuner,
-)
+from poop.hfdp.facade.home_theater.amplifier import Amplifier
+from poop.hfdp.facade.home_theater.cd_player import CDPlayer
+from poop.hfdp.facade.home_theater.popcorn_popper import PopcornPopper
+from poop.hfdp.facade.home_theater.projector import Projector
+from poop.hfdp.facade.home_theater.screen import Screen
+from poop.hfdp.facade.home_theater.streaming_player import StreamingPlayer
+from poop.hfdp.facade.home_theater.theater_lights import TheaterLights
+from poop.hfdp.facade.home_theater.tuner import Tuner
 
 
 class HomeTheaterFacade:
@@ -31,7 +29,7 @@ class HomeTheaterFacade:
         self._screen = screen
         self._pooper = pooper
 
-    def watch_movie(self, movie):
+    def watch_movie(self, movie: str) -> None:
         print("Get ready to watch a movie...")
         self._pooper.on()
         self._pooper.pop()
@@ -46,7 +44,7 @@ class HomeTheaterFacade:
         self._player.on()
         self._player.play_movie(movie)
 
-    def end_movie(self):
+    def end_movie(self) -> None:
         print("Shutting movie theater down...")
         self._pooper.off()
         self._lights.on()
@@ -56,7 +54,7 @@ class HomeTheaterFacade:
         self._player.stop()
         self._player.off()
 
-    def listen_to_radio(self, frequency: float):
+    def listen_to_radio(self, frequency: float) -> None:
         print("Tuning in the airwaves...")
         self._tuner.on()
         self._tuner.set_frequency(frequency)
@@ -64,7 +62,7 @@ class HomeTheaterFacade:
         self._amp.set_volume(5)
         self._amp.set_tuner(self._tuner)
 
-    def end_radio(self):
+    def end_radio(self) -> None:
         print("Shutting down the tuner...")
         self._tuner.off()
         self._amp.off()
