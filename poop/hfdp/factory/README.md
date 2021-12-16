@@ -3,27 +3,26 @@
 ## Como executar os exemplos
 
 ```bash
-# exemplo home theater
-poetry run home_theater
+# exemplo fábrica simples
+poetry run pizza_test_drive
+# exemplo calendário
+poetry run calendar_test_drive = "poop.hfdp.factory.challenge.calendar_test_drive:main"
+# exemplo fábrica abstrata
+poetry run pizza_af = "poop.hfdp.factory.pizzaaf.pizza_test_drive:main"
+# exemplo método fábrica abstrato
+poetry run pizza_fm = "poop.hfdp.factory.pizzafm.pizza_test_drive:main"
 ```
 
 ## Notas
 
-Notes:
+O Abstract Factory é um padrão de projeto criacional que permite que você produza famílias de objetos relacionados sem ter que especificar suas classes concretas.
 
-    - use ABC to formalize that is an abstract method
-    - only inheriting from ABC does not guarantee that it cannot be
-    instantiated
-    - @abstractmethod on __init__ guarantees that the class cannot be
-    instantiated, only your specialization
+Nos exemplos foi utilizado tipagem nomimal (herança simples) para representar o padrão fábrica.
 
-    - super().__init__() guarantees that the instance have all
-    required attributes
-    - we are in the pizza namespace, Pizza sufix is redundant
-    - Each pizza has its own characteristics
+No exemplo de método fábrica (pizza_fm), a classe deve ser extendida e seus métodos devem ser implementados. O método fábrica `create_pizza` é uma método fábrica, para uma determinada família de pizzas.
 
-    when I ran mypy, I got a lot of errors, so I decided to create an
-    invalid flavor pizza, respecting the pizza type interface.
-    It's a Null object Pattern.
-    Helps to avoid multiple ifs (including exceptions) when an item is not
-    found.
+No exemplo da fábrica abstrata, temos um conjunto de métodos que devem ser implementados para criar uma família de itens relacionados. Um exemplo é fábrica de ingredientes (ingredient_factory) que possui um método para cada item (dough, sauce, cheese, veggies etc).
+
+Um problema que pode ser reparado na implementação da fábrica abstrata é que se eu adicionar um novo ingrediente, eu preciso alterar todas as classes adicionando o novo ingrediente.
+
+No exemplo da fábrica abstrata a classe PizzaStore tem um método fábrica que é implementado utilizando uma abstração da fábrica de ingredientes (por exemplo NYPizzaIngredientStore) que está abstraído em uma fábrica abstrata 🤯.
