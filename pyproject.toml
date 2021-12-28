@@ -39,6 +39,7 @@ pizza_test_drive = "poop.hfdp.factory.pizzas.pizza_test_drive:main"
 calendar_test_drive = "poop.hfdp.factory.challenge.calendar_test_drive:main"
 pizza_af = "poop.hfdp.factory.pizzaaf.pizza_test_drive:main"
 pizza_fm = "poop.hfdp.factory.pizzafm.pizza_test_drive:main"
+simple_observer = "poop.hfdp.observer.simple.example:main"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
