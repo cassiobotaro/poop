@@ -18,7 +18,7 @@ poetry run simpleremote
 # exemplo de um controle remoto simples utilizando lambdas
 poetry run simpleremote_wl
 # exemplo de comando em interface gráfica
-poetry run tkinter
+poetry run tkinter_command
 # exemplo de controle remoto com opção de desfazer o comando
 poetry run undo
 ```
