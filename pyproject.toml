@@ -42,6 +42,10 @@ pizza_fm = "poop.hfdp.factory.pizzafm.pizza_test_drive:main"
 simple_observer = "poop.hfdp.observer.simple.example:main"
 simple_observable = "poop.hfdp.observer.simpleobservable.example:main"
 tkinter_observer = "poop.hfdp.observer.tkinter.tkinter_example:main"
+weather_station = "poop.hfdp.observer.weather.weather_station:main"
+weather_station_heat_index = "poop.hfdp.observer.weather.weather_station_heat_index:main"
+weather_station_observable = "poop.hfdp.observer.weather_observable.weather_station:main"
+weather_station_heat_index_observable = "poop.hfdp.observer.weather_observable.weather_station_heat_index:main"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
