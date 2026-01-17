@@ -5,6 +5,7 @@ Notes:
     single instance is in the metaclass (class used to create the class)
     - Chocolate Boiler has it own attributes and behaviors
 """
+
 from classic import SingletonMeta
 
 

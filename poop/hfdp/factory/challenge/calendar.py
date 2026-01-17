@@ -15,5 +15,4 @@ class Calendar(ABC):
         print(f"Offset from GMT: {self._zone.get_offset()}")
 
     @abstractmethod
-    def create_calendar(self, appointments: list[str]) -> None:
-        ...
+    def create_calendar(self, appointments: list[str]) -> None: ...

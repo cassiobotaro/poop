@@ -4,6 +4,7 @@ Notes:
     - uses lock to prevent running conditions
     - just for fun with async
 """
+
 import asyncio
 
 

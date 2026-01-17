@@ -3,6 +3,7 @@ Notes:
     - implementation allow inheritance
     - each subclass have your own unique instance
 """
+
 from classic import Singleton
 
 

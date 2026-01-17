@@ -3,6 +3,7 @@ Notes:
     - instances share the same Lock
     - uses lock to prevent running conditions
 """
+
 from threading import Lock, Thread
 
 
