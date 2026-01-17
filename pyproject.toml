@@ -1,22 +1,14 @@
-[tool.poetry]
+[project]
 name = "poop"
 version = "0.1.0"
 description = "Python Object-Oriented Programming"
-authors = ["cassiobotaro <cassiobotaro@gmail.com>"]
 license = "MIT"
-keywords = ["oop", "object-oriented", "programming"]
+requires-python = ">=3.14"
+dependencies = [
+    "forbiddenfruit>=0.1.3",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-forbiddenfruit = "^0.1.3"
-
-[tool.poetry.dev-dependencies]
-isort = "^5.8.0"
-mypy = "^0.942"
-flake8 = "^4.0.1"
-black = "^24.3.0"
-
-[tool.poetry.scripts]
+[project.scripts]
 duck_test_drive = "poop.hfdp.adapter.ducks.duck_test_drive:main"
 turkey_test_drive = "poop.hfdp.adapter.ducks.turkey_test_drive:main"
 enumeration_iterator_test_drive = "poop.hfdp.adapter.iterenum.enumeration_iterator_test_drive:main"
@@ -46,9 +38,17 @@ weather_station = "poop.hfdp.observer.weather.weather_station:main"
 weather_station_heat_index = "poop.hfdp.observer.weather.weather_station_heat_index:main"
 weather_station_observable = "poop.hfdp.observer.weather_observable.weather_station:main"
 weather_station_heat_index_observable = "poop.hfdp.observer.weather_observable.weather_station_heat_index:main"
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "isort>=5.8.0",
+    "mypy>=0.942",
+    "flake8>=4.0.1",
+    "black>=24.3.0",
+]
+
+[tool.uv]
+package = true
 
 [tool.black]
 line-length = 79
