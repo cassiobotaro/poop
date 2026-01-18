@@ -6,7 +6,7 @@ Notes:
     - Chocolate Boiler has it own attributes and behaviors
 """
 
-from classic import SingletonMeta
+from .classic import SingletonMeta
 
 
 class ChocolateBoiler(metaclass=SingletonMeta):

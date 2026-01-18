@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from fly_behavior import FlyBehavior, FlyNoWay, FlyWithWings
-from quack_behavior import MuteQuack, Quack, QuackBehavior, Squeak
+from .fly_behavior import FlyBehavior, FlyNoWay, FlyWithWings
+from .quack_behavior import MuteQuack, Quack, QuackBehavior, Squeak
 
 
 class Duck(ABC):

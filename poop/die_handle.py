@@ -1,4 +1,4 @@
-from forbiddenfruit import curse
+from forbiddenfruit import curse  # type: ignore[import-untyped]
 
 from .die import Die
 

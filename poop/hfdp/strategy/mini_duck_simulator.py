@@ -1,5 +1,5 @@
-from duck import DecoyDuck, Duck, MallardDuck, ModelDuck, RubberDuck
-from fly_behavior import FlyRocketPowered
+from .duck import DecoyDuck, Duck, MallardDuck, ModelDuck, RubberDuck
+from .fly_behavior import FlyRocketPowered
 
 if __name__ == "__main__":
     # Instatiate ducks

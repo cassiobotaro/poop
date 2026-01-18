@@ -4,7 +4,7 @@ Notes:
     - each subclass have your own unique instance
 """
 
-from classic import Singleton
+from .classic import Singleton
 
 
 class CoolerSingleton(Singleton):
