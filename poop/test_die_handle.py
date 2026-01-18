@@ -1,7 +1,7 @@
 import unittest
 
 from poop.die import Die
-from poop.die_handle import DieHandle
+from poop.die_handle import D4, D6, D8, D20, DieHandle
 
 
 class TestDieHandle(unittest.TestCase):
@@ -34,7 +34,11 @@ class TestDieHandle(unittest.TestCase):
             self.assertTrue(handle.dice_number() <= res <= handle.max_value())
 
     def test_sample_handle(self):
-        self.assertEqual((2).D20.dice_number(), 2)
+        self.assertEqual((2 * D20).dice_number(), 2)
 
     def test_summing(self):
-        self.assertEqual(((3).D4 + (2).D6).dice_number(), 5)
+        self.assertEqual((3 * D4 + 2 * D6).dice_number(), 5)
+
+    def test_multiplying(self):
+        self.assertEqual((4 * D8).dice_number(), 4)
+        self.assertEqual((D8 * 4).dice_number(), 4)
