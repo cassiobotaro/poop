@@ -47,9 +47,34 @@ Funções dentro de classes (`class_depth > 0`) são permitidas como métodos.
 
 ## Tipos ativos
 
+### Object — `poop/types/object.py`
+
+Raiz concreta de todos os tipos POOP. Fornece implementações default para métodos universais:
+
+| Smalltalk | Python | Comportamento |
+|---|---|---|
+| `isNil` | `is_none()` | sempre `false` para Object |
+| `notNil` | `not_none()` | sempre `true` para Object |
+| `not` | `not_()` | `false if bool(self) else true` |
+| `class` | `class_name()` | `type(self).__name__` |
+| `respondsTo:` | `responds_to(symbol)` | `hasattr` como base |
+
+`__str__` retorna `"<ClassName>"` como fallback; `__repr__` delega para `__str__`.
+
+### NoneClass — `poop/types/none.py`
+
+`NoneClass(Object)` com singleton `none`. Transformer reescreve `ast.Constant(value=None)` → `_poop_none`. Sobrescreve `is_none`/`not_none` de `Object`:
+
+| Método | `Object` | `NoneClass` |
+|---|---|---|
+| `is_none()` | `false` | `true` |
+| `not_none()` | `true` | `false` |
+
+`__bool__` retorna `False` (falsy, como `None` em Python). `__str__` retorna `"None"`.
+
 ### Boolean — `poop/types/boolean.py`
 
-`Boolean` (ABC) com subclasses privadas `_TrueClass` e `_FalseClass`. Singletons `true`/`false` internos, substituem `True`/`False` via transformer. Métodos Smalltalk implementados:
+`Boolean(Object, ABC)` com subclasses privadas `_TrueClass` e `_FalseClass`. Herda `is_nil`, `not_nil` de `Object`. Singletons `true`/`false` internos, substituem `True`/`False` via transformer. Métodos Smalltalk implementados:
 
 | Smalltalk | Python |
 |---|---|
@@ -90,14 +115,19 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ## Backlog
 
+### No `try` — `poop/validators/no_try.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.Try` | `try/except/finally` são estruturas de controle; Smalltalk usa `on:do:` |
+| `ast.TryStar` | Variante `try/except*` (exception groups) |
+
 ### Próximas infecções (validators)
-- **`try/except`** (`ast.Try`): Smalltalk trata erros com `on:do:` — candidato imediato.
 - **Operador `not`** (`ast.UnaryOp` com `ast.Not`): `not x` é estrutura de controle; substituir por `x.not_()`. Requer que todos os objetos POOP implementem `not_()` — `Boolean` já tem; demais tipos precisam herdar de `Object`.
 - **Operadores `is` / `is not`** (`ast.Is`, `ast.IsNot`): mapeamento Smalltalk pendente de decisão. Candidatos: `x.is_nil()` / `x.not_nil()` para o caso `None`; `x.is_identical(y)` / `x.not_identical(y)` (usando `id()` internamente) para identidade geral — equivalentes a `==` / `~~` do Smalltalk. Implementação depende de `Object` como base.
 
 ### Próximos tipos
-- **`Object`**: raiz de todos os tipos POOP; métodos universais `is_nil()`, `not_nil()`, `class_name()`, `responds_to(symbol)`, `__str__` e `__repr__`. Deve incluir `not_()` retornando `TrueClass`/`FalseClass` com base em `__bool__` — mantém o conceito de falsy/truthy via mensagem em vez de operador.
-- **`NilClass`**: singleton `nil`; responde a `is_nil()` → `true`, `if_nil(block)`, `if_not_nil(block)`. `NilTransformer` reescreve `ast.Constant(value=None)` → `_poop_nil`. Requer `Object` como base para que todos os objetos respondam a `if_nil`/`if_not_nil` (não-nil sempre executa `if_not_nil`). `is_nil()` deve retornar instâncias de `TrueClass`/`FalseClass`.
+- **`NoneClass` — `if_none`/`if_not_none`**: adicionar mensagens `if_none(block)` e `if_not_none(block)` como blocos condicionais análogos ao `ifNil:`/`ifNotNil:` do Smalltalk.
 - **`SmallInt` / `Float`**: números com mensagens `times_repeat(block)`, `to_do(limit, block)`, `max(other)`, `min(other)`, `__str__`.
 - **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`.
@@ -117,6 +147,6 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ## Decisões em aberto
 
-- **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — provavelmente **permitidos**.
+- **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — **permitidos**.
 - **Compreensões** (`ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`): contêm iteração implícita — avaliar se devem ser banidas junto com loops.
 - **Atribuição aumentada / múltipla**: avaliar consistência com o modelo de objetos.
