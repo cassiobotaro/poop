@@ -12,6 +12,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - Não existem estruturas de controle de fluxo — condicionais e iterações são mensagens enviadas a objetos.
 - Não existem funções livres — todo comportamento vive em métodos de classes.
 - **Representação**: todos os tipos POOP implementam `__str__` (e `__repr__` delega para ele) — mantém o modelo pythônico em vez de `printString` do Smalltalk. `Transcript.show` chama `str(obj)` internamente.
+- **`__slots__` em todos os tipos POOP**: variáveis de instância em Smalltalk são declaradas na definição da classe e fixas — nunca adicionadas dinamicamente a instâncias. `__slots__` reflete isso: previne atributos arbitrários em instâncias e reduz consumo de memória. Extensão de *métodos* em runtime (open classes) continua funcionando normalmente, pois `__slots__` não afeta atributos de classe. Subclasses que precisarem de novas variáveis de instância podem declarar seus próprios `__slots__` ou omiti-los (ganhando `__dict__` próprio).
 
 ## Infecções ativas
 
@@ -44,6 +45,33 @@ Funções dentro de classes (`class_depth > 0`) são permitidas como métodos.
 | Chamada | Motivo |
 |---|---|
 | `print(...)` | Saída padrão em Smalltalk é via `Transcript show:`; use `Transcript.show(obj)` |
+
+### No `try` — `poop/validators/no_try.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.Try` | `try/except/finally` são estruturas de controle; Smalltalk usa `on:do:` |
+| `ast.TryStar` | Variante `try/except*` (exception groups) |
+
+### No `not` — `poop/validators/no_not.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.UnaryOp` com `ast.Not` | `not x` é estrutura de controle; use `x.not_()` |
+
+### No unary minus — `poop/validators/no_unary_minus.py`
+
+| Nó AST | Condição | Motivo |
+|---|---|---|
+| `ast.UnaryOp` com `ast.USub` | operando não é `ast.Constant` | `-x` não existe em Smalltalk; use `x.negated()` |
+
+Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-expressao` são bloqueados.
+
+### No bitwise invert — `poop/validators/no_invert.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.UnaryOp` com `ast.Invert` | `~x` não existe em Smalltalk; use `x.bit_invert()` |
 
 ## Tipos ativos
 
@@ -173,11 +201,23 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - ~~**Operador unário `-`**~~ ✓ implementado em `poop/validators/no_unary_minus.py`.
 - ~~**Operador unário `~`**~~ ✓ implementado em `poop/validators/no_invert.py`.
 - **Operadores `is` / `is not`** (`ast.Is`, `ast.IsNot`): mapeamento Smalltalk pendente de decisão. Candidatos: `x.is_nil()` / `x.not_nil()` para o caso `None`; `x.is_identical(y)` / `x.not_identical(y)` (usando `id()` internamente) para identidade geral — equivalentes a `==` / `~~` do Smalltalk. Implementação depende de `Object` como base.
+- **`match/case`** (`ast.Match`): pattern matching estrutural é control flow — Smalltalk usa polimorfismo e despacho de mensagens.
+- **`with`/`async with`** (`ast.With`, `ast.AsyncWith`): context managers são Python-específicos; sem equivalente em Smalltalk.
+- **`raise`** (`ast.Raise`): Smalltalk lança exceções via `signal` em objetos de erro (`Error signal: 'msg'`); `raise` expõe a estrutura de controle diretamente.
+- **`del`** (`ast.Delete`): destruição explícita de variável não existe em Smalltalk.
+- **`assert`** (`ast.Assert`): Python-específico; asserções em Smalltalk são mensagens (`assert:` em TestCase etc.).
+- **`global`/`nonlocal`** (`ast.Global`, `ast.Nonlocal`): manipulação de escopo explícita não existe em Smalltalk — estado vive em instâncias.
+- **`yield`/`yield from`** (`ast.Yield`, `ast.YieldFrom`): geradores são Python-específicos; Smalltalk usa blocos e mensagens de coleção.
+- **`:=` (walrus operator)** (`ast.NamedExpr`): atribuição dentro de expressão é Python-específico.
 
 ### Próximos tipos
 - **`NoneClass` — `if_none`/`if_not_none`**: adicionar mensagens `if_none(block)` e `if_not_none(block)` como blocos condicionais análogos ao `ifNil:`/`ifNotNil:` do Smalltalk.
 - **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`. Transformer reescreve literais string → `StringObject`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
+- **`Int` — métodos ausentes**: `abs()`, `sqrt()` → `Float`, `as_float()` → `Float`, `factorial()`, `gcd(other)`, `lcm(other)`.
+- **`Float` — métodos ausentes**: `truncated()` → `Int`, `rounded()` → `Int`, `ceiling()` → `Int`, `floor()` → `Int`, `abs()`, `sqrt()`.
+- **`Object` — métodos ausentes**: `yourself()` (retorna `self`, essencial para cascatas), `print_string()` (alias legível para `__str__`).
+- **`Interval` — métodos ausentes**: `includes(x)`, `reversed()`, `first()`, `last()`, `to_by_(limit, step)` (Smalltalk `to:by:`).
 
 ### Próximos transformers
 - ~~Literais inteiros (`ast.Constant` int) → `Int`.~~ ✓ implementado.
@@ -186,6 +226,18 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - Literais lista (`ast.List`) → `OrderedCollection`.
 - Chamada `range(...)` (`ast.Call` com `func.id == "range"`) → instância de `Interval`. O usuário escreve `range(1, 10)` e recebe um `Interval` POOP com mensagens `do`, `collect`, etc. Requer `Interval` implementado.
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` → retornar `TrueClass`/`FalseClass`.
+- Chamada `len(x)` (`ast.Call` com `func.id == "len"`) → reescrever para `x.size()` (ou banir via validator).
+- Chamadas `isinstance(x, T)`, `hasattr(x, s)`, `callable(x)` → devem retornar `Boolean` POOP em vez de `bool` nativo.
+
+### Bugs / inconsistências
+- **`Interval.detect` retorna `None` nativo** em vez do singleton `none` POOP quando nenhum elemento satisfaz o bloco.
+- **`Object.class_name()` retorna `str` nativo** — deveria retornar `StringObject` quando o tipo estiver implementado.
+- **Funções built-in** (`len`, `isinstance`, `hasattr`, `callable`) vazam tipos Python nativos (`int`, `bool`) para dentro do modelo POOP.
+
+### Arquitetura / DX
+- **REPL**: loop interativo estilo Smalltalk workspace — `poop` sem argumentos abre o REPL.
+- **Mensagens de erro mais ricas**: `ValidationError` poderia sugerir o equivalente POOP (ex.: `"use x.not_() instead of 'not x'"`).
+- **`Transcript.show` retornar `self`**: permitiria cascatas futuras (`Transcript.show(x).nl()`).
 
 ### Exemplos de código
 - Expandir `examples/` à medida que novas funcionalidades forem implementadas.
@@ -198,3 +250,4 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — **permitidos**.
 - **Compreensões** (`ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`): contêm iteração implícita — avaliar se devem ser banidas junto com loops.
 - **Atribuição aumentada / múltipla**: avaliar consistência com o modelo de objetos.
+- **`import`** (`ast.Import`, `ast.ImportFrom`): Smalltalk não tem sistema de módulos equivalente — avaliar se deve ser banido ou restrito (ex.: permitir apenas imports de módulos POOP).
