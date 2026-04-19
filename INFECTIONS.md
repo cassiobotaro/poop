@@ -140,6 +140,12 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ## Backlog
 
+### No bitwise invert — `poop/validators/no_invert.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.UnaryOp` com `ast.Invert` | `~x` não existe em Smalltalk; use `x.bit_invert()` |
+
 ### No unary minus — `poop/validators/no_unary_minus.py`
 
 | Nó AST | Condição | Motivo |
@@ -165,7 +171,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 
 ### Próximas infecções (validators)
 - ~~**Operador unário `-`**~~ ✓ implementado em `poop/validators/no_unary_minus.py`.
-- **Operador unário `~`** (`ast.UnaryOp` com `ast.Invert`): `~x` não existe em Smalltalk; substituir por `x.bit_invert()`. Requer `Int` implementando `bit_invert()` antes de ativar o validator.
+- ~~**Operador unário `~`**~~ ✓ implementado em `poop/validators/no_invert.py`.
 - **Operadores `is` / `is not`** (`ast.Is`, `ast.IsNot`): mapeamento Smalltalk pendente de decisão. Candidatos: `x.is_nil()` / `x.not_nil()` para o caso `None`; `x.is_identical(y)` / `x.not_identical(y)` (usando `id()` internamente) para identidade geral — equivalentes a `==` / `~~` do Smalltalk. Implementação depende de `Object` como base.
 
 ### Próximos tipos
