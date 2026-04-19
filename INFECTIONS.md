@@ -110,6 +110,9 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 ### Exemplos de código
 - Expandir `examples/` à medida que novas funcionalidades forem implementadas.
 
+### CLI como entry point instalável
+- Expor `poop` como comando de linha via `[project.scripts]` no `pyproject.toml`, permitindo `poop examples/hello_world.py` após `uv sync`.
+
 ## Decisões em aberto
 
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — provavelmente **permitidos**.
