@@ -140,6 +140,14 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ## Backlog
 
+### No unary minus — `poop/validators/no_unary_minus.py`
+
+| Nó AST | Condição | Motivo |
+|---|---|---|
+| `ast.UnaryOp` com `ast.USub` | operando não é `ast.Constant` | `-x` não existe em Smalltalk; use `x.negated()` |
+
+Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-expressao` são bloqueados.
+
 ### No `not` — `poop/validators/no_not.py`
 
 | Nó AST | Motivo |
@@ -156,7 +164,7 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 | `ast.TryStar` | Variante `try/except*` (exception groups) |
 
 ### Próximas infecções (validators)
-- **Operador unário `-`** (`ast.UnaryOp` com `ast.USub`): `-x` não existe em Smalltalk; substituir por `x.negated()`. Requer `Int` e `Float` implementando `negated()` antes de ativar o validator. Nota: `-1` (operando `ast.Constant`) é válido como literal negativo — o validator deve bloquear apenas quando o operando é uma variável ou expressão (`ast.Name`, `ast.Call`, etc.).
+- ~~**Operador unário `-`**~~ ✓ implementado em `poop/validators/no_unary_minus.py`.
 - **Operador unário `~`** (`ast.UnaryOp` com `ast.Invert`): `~x` não existe em Smalltalk; substituir por `x.bit_invert()`. Requer `Int` implementando `bit_invert()` antes de ativar o validator.
 - **Operadores `is` / `is not`** (`ast.Is`, `ast.IsNot`): mapeamento Smalltalk pendente de decisão. Candidatos: `x.is_nil()` / `x.not_nil()` para o caso `None`; `x.is_identical(y)` / `x.not_identical(y)` (usando `id()` internamente) para identidade geral — equivalentes a `==` / `~~` do Smalltalk. Implementação depende de `Object` como base.
 
