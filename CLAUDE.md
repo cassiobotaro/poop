@@ -38,4 +38,13 @@ uv run pytest tests/test_file.py::test_name
 
 ## Architecture
 
-Entry point is `main.py` with a `main()` function. The project is in early stages.
+Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate → transform → execute(namespace)`.
+
+- `poop/parser.py` — wraps `ast.parse`
+- `poop/validators/` — AST validators (reject forbidden constructs); registered in `DEFAULT_VALIDATORS`
+- `poop/transformers/` — AST transformers (rewrite nodes before execution); registered in `DEFAULT_TRANSFORMERS`
+- `poop/types/` — Smalltalk-style types (`boolean.py`, `transcript.py`)
+- `poop/executor.py` — compiles and executes AST with an injectable namespace
+- `poop/interpreter.py` — orchestrates the full pipeline
+
+`examples/` contains valid POOP programs. Files there use names injected at runtime (`Transcript`, `True`→POOP boolean, etc.) so they are excluded from `ty` and ruff `F821`.

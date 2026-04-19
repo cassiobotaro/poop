@@ -39,6 +39,35 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 
 Funções dentro de classes (`class_depth > 0`) são permitidas como métodos.
 
+### No `print` — `poop/validators/no_print.py`
+
+| Chamada | Motivo |
+|---|---|
+| `print(...)` | Saída padrão em Smalltalk é via `Transcript show:`; use `Transcript.show(obj)` |
+
+## Tipos ativos
+
+### Boolean — `poop/types/boolean.py`
+
+`Boolean` (ABC) com subclasses privadas `_TrueClass` e `_FalseClass`. Singletons `true`/`false` internos, substituem `True`/`False` via transformer. Métodos Smalltalk implementados:
+
+| Smalltalk | Python |
+|---|---|
+| `ifTrue:` / `ifFalse:` | `if_true(block)` / `if_false(block)` |
+| `ifTrue:ifFalse:` / `ifFalse:ifTrue:` | `if_true_if_false(t, f)` / `if_false_if_true(f, t)` |
+| `and:` / `or:` (lazy) | `and_(block)` / `or_(block)` |
+| `not` / `xor:` / `eqv:` | `not_()` / `xor(other)` / `eqv(other)` |
+| `&` / `\|` (eager) | `__and__(other)` / `__or__(other)` |
+
+### Transcript — `poop/types/transcript.py`
+
+Singleton `_TranscriptClass` injetado no namespace de execução como `Transcript`. Métodos:
+
+| Smalltalk | Python |
+|---|---|
+| `Transcript show: obj` | `Transcript.show(obj)` — chama `str(obj)` |
+| `Transcript nl` | `Transcript.nl()` — imprime linha vazia |
+
 ## Transformers ativos
 
 ### Boolean — `poop/transformers/boolean.py`
@@ -63,7 +92,6 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ### Próximas infecções (validators)
 - **`try/except`** (`ast.Try`): Smalltalk trata erros com `on:do:` — candidato imediato.
-- **Chamadas a `print`**: banir como builtin proibido; requer validator de chamadas a nomes específicos.
 
 ### Próximos tipos
 - **`Object`**: raiz de todos os tipos POOP; métodos universais `is_nil()`, `not_nil()`, `class_name()`, `responds_to(symbol)`, `__str__` e `__repr__`.
@@ -72,7 +100,6 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 - **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`.
 - **`Interval`**: substitui `range`; mensagens `do(block)`, `collect(block)`, `select(block)`, `detect(block)`, `inject_into(init, block)`, `size()`.
-- **`Transcript`**: singleton de saída padrão; injetado no namespace com `show(obj)` (chama `str(obj)`), `nl()`; substitui `print` após seu banimento.
 
 ### Próximos transformers
 - Literais numéricos (`ast.Constant` int/float) → `SmallInt` / `Float`.
@@ -81,7 +108,7 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` → retornar `TrueClass`/`FalseClass`.
 
 ### Exemplos de código
-- Criar exemplos em `examples/` demonstrando o uso do intérprete POOP à medida que as funcionalidades forem implementadas.
+- Expandir `examples/` à medida que novas funcionalidades forem implementadas.
 
 ## Decisões em aberto
 

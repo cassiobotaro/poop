@@ -19,11 +19,17 @@ uv run python main.py
 uv run ruff check --fix
 uv run ruff format
 
-# Type check
-uv run ty check
+# Type check (examples/ excluded — uses runtime-injected names)
+uv run ty check poop/ tests/
 
 # Tests with coverage
 uv run pytest
 ```
 
 Git hooks are managed by [prek](https://prek.j178.dev) and run ruff and ty on every commit.
+
+## Usage
+
+```bash
+uv run python main.py examples/hello_world.py
+```
