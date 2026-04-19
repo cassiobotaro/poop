@@ -39,36 +39,36 @@ class Float(Object):
     def __pow__(self, other: Float) -> Float:
         return Float(self._value**other._value)
 
-    def __eq__(self, other: object) -> Boolean:  # type: ignore[invalid-method-override]
+    def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true
 
         if isinstance(other, Float):
             return true if self._value == other._value else false
         return false
 
-    def __ne__(self, other: object) -> Boolean:  # type: ignore[invalid-method-override]
+    def __ne__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true
 
         if isinstance(other, Float):
             return false if self._value == other._value else true
         return true
 
-    def __lt__(self, other: Float) -> Boolean:  # type: ignore[invalid-method-override]
+    def __lt__(self, other: Float) -> Boolean:
         from poop.types.boolean import false, true
 
         return true if self._value < other._value else false
 
-    def __le__(self, other: Float) -> Boolean:  # type: ignore[invalid-method-override]
+    def __le__(self, other: Float) -> Boolean:
         from poop.types.boolean import false, true
 
         return true if self._value <= other._value else false
 
-    def __gt__(self, other: Float) -> Boolean:  # type: ignore[invalid-method-override]
+    def __gt__(self, other: Float) -> Boolean:
         from poop.types.boolean import false, true
 
         return true if self._value > other._value else false
 
-    def __ge__(self, other: Float) -> Boolean:  # type: ignore[invalid-method-override]
+    def __ge__(self, other: Float) -> Boolean:
         from poop.types.boolean import false, true
 
         return true if self._value >= other._value else false
