@@ -1,10 +1,11 @@
 import ast
+from typing import ClassVar
 
 from poop.types.none import none
 
 
 class NoneTransformer:
-    BINDINGS: dict[str, object] = {"_poop_none": none}
+    BINDINGS: ClassVar[dict[str, object]] = {"_poop_none": none}
 
     def transform(self, tree: ast.Module) -> ast.Module:
         tree = _NoneRewriter().visit(tree)

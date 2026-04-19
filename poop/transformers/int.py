@@ -1,10 +1,11 @@
 import ast
+from typing import ClassVar
 
 from poop.types.int import Int
 
 
 class IntTransformer:
-    BINDINGS: dict[str, object] = {"_poop_int": Int}
+    BINDINGS: ClassVar[dict[str, object]] = {"_poop_int": Int}
 
     def transform(self, tree: ast.Module) -> ast.Module:
         tree = _IntRewriter().visit(tree)

@@ -1,10 +1,11 @@
 import ast
+from typing import ClassVar
 
 from poop.types.float import Float
 
 
 class FloatTransformer:
-    BINDINGS: dict[str, object] = {"_poop_float": Float}
+    BINDINGS: ClassVar[dict[str, object]] = {"_poop_float": Float}
 
     def transform(self, tree: ast.Module) -> ast.Module:
         tree = _FloatRewriter().visit(tree)

@@ -1,10 +1,11 @@
 import ast
+from typing import ClassVar
 
 from poop.types.boolean import false, true
 
 
 class BooleanTransformer:
-    BINDINGS: dict[str, object] = {"_poop_true": true, "_poop_false": false}
+    BINDINGS: ClassVar[dict[str, object]] = {"_poop_true": true, "_poop_false": false}
 
     def transform(self, tree: ast.Module) -> ast.Module:
         tree = _BooleanRewriter().visit(tree)
