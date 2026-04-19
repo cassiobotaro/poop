@@ -80,6 +80,9 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 - Literais lista (`ast.List`) → `OrderedCollection`.
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` → retornar `TrueClass`/`FalseClass`.
 
+### Exemplos de código
+- Criar exemplos em `examples/` demonstrando o uso do intérprete POOP à medida que as funcionalidades forem implementadas.
+
 ## Decisões em aberto
 
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — provavelmente **permitidos**.
