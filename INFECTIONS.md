@@ -93,6 +93,7 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 ### Próximas infecções (validators)
 - **`try/except`** (`ast.Try`): Smalltalk trata erros com `on:do:` — candidato imediato.
 - **Operador `not`** (`ast.UnaryOp` com `ast.Not`): `not x` é estrutura de controle; substituir por `x.not_()`. Requer que todos os objetos POOP implementem `not_()` — `Boolean` já tem; demais tipos precisam herdar de `Object`.
+- **Operadores `is` / `is not`** (`ast.Is`, `ast.IsNot`): mapeamento Smalltalk pendente de decisão. Candidatos: `x.is_nil()` / `x.not_nil()` para o caso `None`; `x.is_identical(y)` / `x.not_identical(y)` (usando `id()` internamente) para identidade geral — equivalentes a `==` / `~~` do Smalltalk. Implementação depende de `Object` como base.
 
 ### Próximos tipos
 - **`Object`**: raiz de todos os tipos POOP; métodos universais `is_nil()`, `not_nil()`, `class_name()`, `responds_to(symbol)`, `__str__` e `__repr__`. Deve incluir `not_()` retornando `TrueClass`/`FalseClass` com base em `__bool__` — mantém o conceito de falsy/truthy via mensagem em vez de operador.
