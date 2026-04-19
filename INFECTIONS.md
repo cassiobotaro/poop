@@ -58,9 +58,22 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 - Operador `not`
 - Funções built-in: `isinstance`, `hasattr`, `callable`, etc.
 
+## Backlog
+
+### Próximas infecções (validators)
+- **`try/except`** (`ast.Try`): Smalltalk trata erros com `on:do:` — candidato imediato.
+- **Chamadas a `print`**: banir como builtin proibido; requer validator de chamadas a nomes específicos.
+
+### Próximos tipos
+- **`NilClass`**: objeto que responde a `isNil`, `ifNil:`, `ifNotNil:`; injetado como `nil` no namespace.
+- **`Interval`**: substitui `range`; métodos `do:`, `collect:`, `select:`, `detect:`, `inject:into:`.
+- **`Transcript`**: objeto de saída padrão (análogo ao `Transcript` Smalltalk); injetado no namespace com métodos `show(text)`, `print(obj)`, `nl()`; substitui `print` após seu banimento.
+
+### Próximos transformers
+- Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` devem retornar instâncias de `TrueClass`/`FalseClass`.
+
 ## Decisões em aberto
 
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — provavelmente **permitidos**.
 - **Compreensões** (`ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`): contêm iteração implícita — avaliar se devem ser banidas junto com loops.
-- **`try/except`** (`ast.Try`): Smalltalk trata erros com `on:do:` — candidato a próxima infecção.
 - **Atribuição aumentada / múltipla**: avaliar consistência com o modelo de objetos.
