@@ -11,6 +11,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - Em Smalltalk, **tudo é objeto** e toda operação é **passagem de mensagem**.
 - Não existem estruturas de controle de fluxo — condicionais e iterações são mensagens enviadas a objetos.
 - Não existem funções livres — todo comportamento vive em métodos de classes.
+- **Representação**: todos os tipos POOP implementam `__str__` (e `__repr__` delega para ele) — mantém o modelo pythônico em vez de `printString` do Smalltalk. `Transcript.show` chama `str(obj)` internamente.
 
 ## Infecções ativas
 
@@ -65,12 +66,19 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 - **Chamadas a `print`**: banir como builtin proibido; requer validator de chamadas a nomes específicos.
 
 ### Próximos tipos
-- **`NilClass`**: objeto que responde a `isNil`, `ifNil:`, `ifNotNil:`; injetado como `nil` no namespace.
-- **`Interval`**: substitui `range`; métodos `do:`, `collect:`, `select:`, `detect:`, `inject:into:`.
-- **`Transcript`**: objeto de saída padrão (análogo ao `Transcript` Smalltalk); injetado no namespace com métodos `show(text)`, `print(obj)`, `nl()`; substitui `print` após seu banimento.
+- **`Object`**: raiz de todos os tipos POOP; métodos universais `is_nil()`, `not_nil()`, `class_name()`, `responds_to(symbol)`, `__str__` e `__repr__`.
+- **`NilClass`**: singleton `nil`; responde a `is_nil()` → `true`, `if_nil(block)`, `if_not_nil(block)`.
+- **`SmallInt` / `Float`**: números com mensagens `times_repeat(block)`, `to_do(limit, block)`, `max(other)`, `min(other)`, `__str__`.
+- **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
+- **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`.
+- **`Interval`**: substitui `range`; mensagens `do(block)`, `collect(block)`, `select(block)`, `detect(block)`, `inject_into(init, block)`, `size()`.
+- **`Transcript`**: singleton de saída padrão; injetado no namespace com `show(obj)` (chama `str(obj)`), `nl()`; substitui `print` após seu banimento.
 
 ### Próximos transformers
-- Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` devem retornar instâncias de `TrueClass`/`FalseClass`.
+- Literais numéricos (`ast.Constant` int/float) → `SmallInt` / `Float`.
+- Literais string (`ast.Constant` str) → `StringObject`.
+- Literais lista (`ast.List`) → `OrderedCollection`.
+- Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` → retornar `TrueClass`/`FalseClass`.
 
 ## Decisões em aberto
 
