@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import final
 
 from poop.types.object import Object
 
@@ -60,6 +61,7 @@ class Boolean(Object, ABC):
     def __str__(self) -> str: ...
 
 
+@final
 class _TrueClass(Boolean):
     __slots__ = ()
 
@@ -114,6 +116,7 @@ class _TrueClass(Boolean):
         return hash(True)
 
 
+@final
 class _FalseClass(Boolean):
     __slots__ = ()
 

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 from poop.types.object import Object
 
@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
 
+@final
 class NoneClass(Object):
     __slots__ = ()
 
