@@ -166,3 +166,19 @@ def test_true_is_hashable() -> None:
 
 def test_false_is_hashable() -> None:
     assert hash(false) == hash(False)
+
+
+def test_true_is_none_returns_false() -> None:
+    assert true.is_none() is false
+
+
+def test_true_not_none_returns_true() -> None:
+    assert true.not_none() is true
+
+
+def test_false_is_none_returns_false() -> None:
+    assert false.is_none() is false
+
+
+def test_false_not_none_returns_true() -> None:
+    assert false.not_none() is true

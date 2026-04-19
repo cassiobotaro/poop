@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
+from poop.types.object import Object
 
-class Boolean(ABC):
+
+class Boolean(Object, ABC):
     """Abstract base for Smalltalk-style boolean objects."""
 
     def __repr__(self) -> str:
