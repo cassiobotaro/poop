@@ -9,6 +9,8 @@ if TYPE_CHECKING:
 
 
 class Int(Object):
+    __slots__ = ("_value",)
+
     def __init__(self, value: int) -> None:
         self._value = value
 

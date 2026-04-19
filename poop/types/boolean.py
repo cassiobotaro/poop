@@ -7,6 +7,8 @@ from poop.types.object import Object
 class Boolean(Object, ABC):
     """Abstract base for Smalltalk-style boolean objects."""
 
+    __slots__ = ()
+
     def __repr__(self) -> str:
         return str(self)
 
@@ -59,6 +61,8 @@ class Boolean(Object, ABC):
 
 
 class _TrueClass(Boolean):
+    __slots__ = ()
+
     def if_true[T](self, block: Callable[[], T]) -> T:
         return block()
 
@@ -111,6 +115,8 @@ class _TrueClass(Boolean):
 
 
 class _FalseClass(Boolean):
+    __slots__ = ()
+
     def if_true[T](self, block: Callable[[], T]) -> None:
         return None
 

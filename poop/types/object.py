@@ -5,6 +5,8 @@ if TYPE_CHECKING:
 
 
 class Object:
+    __slots__ = ()
+
     def is_none(self) -> Boolean:
         from poop.types.boolean import false
 

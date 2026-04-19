@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 
 
 class Interval(Object):
+    __slots__ = ("_start", "_stop")
+
     def __init__(self, start: Int, stop: Int) -> None:
         self._start = start
         self._stop = stop

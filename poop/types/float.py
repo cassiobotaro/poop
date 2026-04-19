@@ -7,6 +7,8 @@ if TYPE_CHECKING:
 
 
 class Float(Object):
+    __slots__ = ("_value",)
+
     def __init__(self, value: float) -> None:
         self._value = value
 
