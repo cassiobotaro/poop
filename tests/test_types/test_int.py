@@ -48,10 +48,10 @@ def test_times_repeat_zero() -> None:
     assert calls == []
 
 
-def test_to_do() -> None:
-    results: list[int] = []
-    Int(1).to_do(Int(4), lambda i: results.append(int(i)))
-    assert results == [1, 2, 3, 4]
+def test_to_returns_interval() -> None:
+    from poop.types.interval import Interval
+
+    assert isinstance(Int(1).to_(Int(5)), Interval)
 
 
 def test_max_returns_larger() -> None:

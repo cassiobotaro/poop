@@ -1,0 +1,76 @@
+from poop.types.int import Int
+from poop.types.interval import Interval
+
+
+def _interval(start: int, stop: int) -> Interval:
+    return Interval(Int(start), Int(stop))
+
+
+def test_str() -> None:
+    assert str(_interval(1, 3)) == "(1..3)"
+
+
+def test_repr_delegates_to_str() -> None:
+    iv = _interval(1, 3)
+    assert repr(iv) == str(iv)
+
+
+def test_size() -> None:
+    assert _interval(1, 3).size() == Int(3)
+    assert _interval(1, 1).size() == Int(1)
+
+
+def test_do_iterates_all_elements() -> None:
+    results: list[int] = []
+    _interval(1, 3).do(lambda i: results.append(int(i)))
+    assert results == [1, 2, 3]
+
+
+def test_do_empty_interval() -> None:
+    results: list[int] = []
+    _interval(5, 4).do(lambda i: results.append(int(i)))
+    assert results == []
+
+
+def test_collect_transforms_elements() -> None:
+    result = _interval(1, 3).collect(lambda i: i + Int(10))
+    assert result == [Int(11), Int(12), Int(13)]
+
+
+def test_select_filters_elements() -> None:
+    result = _interval(1, 5).select(lambda i: i % Int(2) == Int(0))
+    assert result == [Int(2), Int(4)]
+
+
+def test_reject_filters_elements() -> None:
+    result = _interval(1, 5).reject(lambda i: i % Int(2) == Int(0))
+    assert result == [Int(1), Int(3), Int(5)]
+
+
+def test_detect_finds_first_match() -> None:
+    result = _interval(1, 5).detect(lambda i: i > Int(3))
+    assert result == Int(4)
+
+
+def test_detect_returns_none_when_not_found() -> None:
+    assert _interval(1, 5).detect(lambda i: i > Int(9)) is None
+
+
+def test_inject_into_sums() -> None:
+    result = _interval(1, 5).inject_into(Int(0), lambda acc, i: acc + i)
+    assert result == Int(15)
+
+
+def test_inject_into_product() -> None:
+    result = _interval(1, 4).inject_into(Int(1), lambda acc, i: acc * i)
+    assert result == Int(24)
+
+
+def test_is_none_inherited() -> None:
+    from poop.types.boolean import false
+
+    assert _interval(1, 3).is_none() is false
+
+
+def test_class_name() -> None:
+    assert _interval(1, 3).class_name() == "Interval"

@@ -7,6 +7,7 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.interval import Interval
 
 
 class Int(Object):
@@ -23,9 +24,10 @@ class Int(Object):
         for _ in range(self._value):
             block()
 
-    def to_do[T](self, limit: Int, block: Callable[[Int], T]) -> None:
-        for i in range(self._value, limit._value + 1):
-            block(Int(i))
+    def to_(self, limit: Int) -> Interval:
+        from poop.types.interval import Interval
+
+        return Interval(self, limit)
 
     def max(self, other: Int) -> Int:
         return self if self._value >= other._value else other

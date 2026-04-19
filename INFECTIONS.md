@@ -84,6 +84,20 @@ Raiz concreta de todos os tipos POOP. Fornece implementações default para mét
 | `not` / `xor:` / `eqv:` | `not_()` / `xor(other)` / `eqv(other)` |
 | `&` / `\|` (eager) | `__and__(other)` / `__or__(other)` |
 
+### Interval — `poop/types/interval.py`
+
+`Interval(Object)` representa um intervalo inteiro fechado [start, stop]. Criado via `Int.to_(limit)`. Implementa mensagens de coleção Smalltalk:
+
+| Smalltalk | Python | Comportamento |
+|---|---|---|
+| `do:` | `do(block)` | itera com deque hack — sem alocar lista |
+| `collect:` | `collect(block)` | transforma → `list` (futuro: `OrderedCollection`) |
+| `select:` | `select(block)` | filtra → `list` |
+| `reject:` | `reject(block)` | filtra inverso → `list` |
+| `detect:` | `detect(block)` | primeiro que satisfaz, ou `None` |
+| `inject:into:` | `inject_into(init, block)` | reduce |
+| `size` | `size()` | retorna `Int` |
+
 ### Transcript — `poop/types/transcript.py`
 
 Singleton `_TranscriptClass` injetado no namespace de execução como `Transcript`. Métodos:
@@ -148,10 +162,8 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ### Próximos tipos
 - **`NoneClass` — `if_none`/`if_not_none`**: adicionar mensagens `if_none(block)` e `if_not_none(block)` como blocos condicionais análogos ao `ifNil:`/`ifNotNil:` do Smalltalk.
-- **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
-- **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
-- **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`.
-- **`Interval`**: substitui `range`; mensagens `do(block)`, `collect(block)`, `select(block)`, `detect(block)`, `inject_into(init, block)`, `size()`.
+- **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`. Transformer reescreve literais string → `StringObject`.
+- **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
 
 ### Próximos transformers
 - ~~Literais inteiros (`ast.Constant` int) → `Int`.~~ ✓ implementado.
