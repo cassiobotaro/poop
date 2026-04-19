@@ -115,6 +115,14 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ## Backlog
 
+### No `not` — `poop/validators/no_not.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.UnaryOp` com `ast.Not` | `not x` é estrutura de controle; use `x.not_()` |
+
+`-x` (`ast.USub`) e `~x` (`ast.Invert`) são permitidos — apenas `not` é bloqueado.
+
 ### No `try` — `poop/validators/no_try.py`
 
 | Nó AST | Motivo |
@@ -123,7 +131,6 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 | `ast.TryStar` | Variante `try/except*` (exception groups) |
 
 ### Próximas infecções (validators)
-- **Operador `not`** (`ast.UnaryOp` com `ast.Not`): `not x` é estrutura de controle; substituir por `x.not_()`. Requer que todos os objetos POOP implementem `not_()` — `Boolean` já tem; demais tipos precisam herdar de `Object`.
 - **Operadores `is` / `is not`** (`ast.Is`, `ast.IsNot`): mapeamento Smalltalk pendente de decisão. Candidatos: `x.is_nil()` / `x.not_nil()` para o caso `None`; `x.is_identical(y)` / `x.not_identical(y)` (usando `id()` internamente) para identidade geral — equivalentes a `==` / `~~` do Smalltalk. Implementação depende de `Object` como base.
 
 ### Próximos tipos
