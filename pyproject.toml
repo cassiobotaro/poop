@@ -53,3 +53,7 @@ quote-style = "double"
   # use of assert detected
   "S101"
 ]
+"examples/*" = [
+  # names injected at runtime by the POOP interpreter namespace
+  "F821"
+]

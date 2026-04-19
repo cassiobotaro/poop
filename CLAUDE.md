@@ -19,8 +19,8 @@ uv run python main.py
 uv run ruff check --fix
 uv run ruff format
 
-# Type check
-uv run ty check
+# Type check (examples/ excluded — uses runtime-injected names)
+uv run ty check poop/ tests/
 
 # Run tests with coverage
 uv run pytest

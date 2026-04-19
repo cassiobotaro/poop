@@ -13,7 +13,7 @@ repos:
         types: [python]
       - id: ty
         name: ty check
-        entry: uv run ty check
+        entry: uv run ty check poop/ tests/
         language: system
         types: [python]
         pass_filenames: false

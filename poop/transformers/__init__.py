@@ -1,7 +1,11 @@
 from poop.transformers.base import Transformer
 from poop.transformers.boolean import BooleanTransformer
+from poop.types.transcript import transcript
 
 DEFAULT_TRANSFORMERS: list[Transformer] = [BooleanTransformer()]
-DEFAULT_NAMESPACE: dict[str, object] = {**BooleanTransformer.BINDINGS}
+DEFAULT_NAMESPACE: dict[str, object] = {
+    **BooleanTransformer.BINDINGS,
+    "Transcript": transcript,
+}
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
