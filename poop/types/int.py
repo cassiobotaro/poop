@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
 
 
 class Int(Object):
@@ -47,22 +51,39 @@ class Int(Object):
     def __pow__(self, other: Int) -> Int:
         return Int(self._value**other._value)
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: object) -> Boolean:  # type: ignore[invalid-method-override]
+        from poop.types.boolean import false, true
+
         if isinstance(other, Int):
-            return self._value == other._value
-        return NotImplemented
+            return true if self._value == other._value else false
+        return false
 
-    def __lt__(self, other: Int) -> bool:
-        return self._value < other._value
+    def __ne__(self, other: object) -> Boolean:  # type: ignore[invalid-method-override]
+        from poop.types.boolean import false, true
 
-    def __le__(self, other: Int) -> bool:
-        return self._value <= other._value
+        if isinstance(other, Int):
+            return false if self._value == other._value else true
+        return true
 
-    def __gt__(self, other: Int) -> bool:
-        return self._value > other._value
+    def __lt__(self, other: Int) -> Boolean:  # type: ignore[invalid-method-override]
+        from poop.types.boolean import false, true
 
-    def __ge__(self, other: Int) -> bool:
-        return self._value >= other._value
+        return true if self._value < other._value else false
+
+    def __le__(self, other: Int) -> Boolean:  # type: ignore[invalid-method-override]
+        from poop.types.boolean import false, true
+
+        return true if self._value <= other._value else false
+
+    def __gt__(self, other: Int) -> Boolean:  # type: ignore[invalid-method-override]
+        from poop.types.boolean import false, true
+
+        return true if self._value > other._value else false
+
+    def __ge__(self, other: Int) -> Boolean:  # type: ignore[invalid-method-override]
+        from poop.types.boolean import false, true
+
+        return true if self._value >= other._value else false
 
     def __hash__(self) -> int:
         return hash(self._value)

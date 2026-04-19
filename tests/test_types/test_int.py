@@ -88,33 +88,58 @@ def test_pow() -> None:
     assert Int(2) ** Int(10) == Int(1024)
 
 
-def test_eq() -> None:
-    assert Int(5) == Int(5)
-    assert Int(5) != Int(6)
+def test_eq_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Int(5).__eq__(Int(5)) is true
+    assert Int(5).__eq__(Int(6)) is false
 
 
-def test_eq_with_non_int_returns_not_implemented() -> None:
-    assert Int(5).__eq__(42) is NotImplemented
+def test_eq_with_non_int_returns_false() -> None:
+    from poop.types.boolean import false
+
+    assert Int(5).__eq__(42) is false
 
 
-def test_lt() -> None:
-    assert Int(3) < Int(5)
-    assert not (Int(5) < Int(3))
+def test_ne_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Int(5).__ne__(Int(6)) is true
+    assert Int(5).__ne__(Int(5)) is false
 
 
-def test_le() -> None:
-    assert Int(3) <= Int(3)
-    assert Int(3) <= Int(5)
+def test_ne_with_non_int_returns_true() -> None:
+    from poop.types.boolean import true
+
+    assert Int(5).__ne__(42) is true
 
 
-def test_gt() -> None:
-    assert Int(5) > Int(3)
-    assert not (Int(3) > Int(5))
+def test_lt_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Int(3).__lt__(Int(5)) is true
+    assert Int(5).__lt__(Int(3)) is false
 
 
-def test_ge() -> None:
-    assert Int(5) >= Int(5)
-    assert Int(5) >= Int(3)
+def test_le_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Int(3).__le__(Int(3)) is true
+    assert Int(5).__le__(Int(3)) is false
+
+
+def test_gt_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Int(5).__gt__(Int(3)) is true
+    assert Int(3).__gt__(Int(5)) is false
+
+
+def test_ge_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Int(5).__ge__(Int(5)) is true
+    assert Int(3).__ge__(Int(5)) is false
 
 
 def test_hashable() -> None:

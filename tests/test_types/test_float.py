@@ -63,33 +63,58 @@ def test_pow() -> None:
     assert Float(2.0) ** Float(3.0) == Float(8.0)
 
 
-def test_eq() -> None:
-    assert Float(1.5) == Float(1.5)
-    assert Float(1.5) != Float(2.5)
+def test_eq_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Float(1.5).__eq__(Float(1.5)) is true
+    assert Float(1.5).__eq__(Float(2.5)) is false
 
 
-def test_eq_with_non_float_returns_not_implemented() -> None:
-    assert Float(1.5).__eq__(1.5) is NotImplemented
+def test_eq_with_non_float_returns_false() -> None:
+    from poop.types.boolean import false
+
+    assert Float(1.5).__eq__(1.5) is false
 
 
-def test_lt() -> None:
-    assert Float(1.0) < Float(2.0)
-    assert not (Float(2.0) < Float(1.0))
+def test_ne_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Float(1.5).__ne__(Float(2.5)) is true
+    assert Float(1.5).__ne__(Float(1.5)) is false
 
 
-def test_le() -> None:
-    assert Float(1.0) <= Float(1.0)
-    assert Float(1.0) <= Float(2.0)
+def test_ne_with_non_float_returns_true() -> None:
+    from poop.types.boolean import true
+
+    assert Float(1.5).__ne__(1.5) is true
 
 
-def test_gt() -> None:
-    assert Float(2.0) > Float(1.0)
-    assert not (Float(1.0) > Float(2.0))
+def test_lt_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Float(1.0).__lt__(Float(2.0)) is true
+    assert Float(2.0).__lt__(Float(1.0)) is false
 
 
-def test_ge() -> None:
-    assert Float(2.0) >= Float(2.0)
-    assert Float(2.0) >= Float(1.0)
+def test_le_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Float(1.0).__le__(Float(1.0)) is true
+    assert Float(2.0).__le__(Float(1.0)) is false
+
+
+def test_gt_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Float(2.0).__gt__(Float(1.0)) is true
+    assert Float(1.0).__gt__(Float(2.0)) is false
+
+
+def test_ge_returns_boolean() -> None:
+    from poop.types.boolean import false, true
+
+    assert Float(2.0).__ge__(Float(2.0)) is true
+    assert Float(1.0).__ge__(Float(2.0)) is false
 
 
 def test_hashable() -> None:

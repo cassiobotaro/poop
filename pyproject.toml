@@ -27,6 +27,11 @@ dev = [
 addopts = "--cov=poop"
 testpaths = "tests/"
 
+[tool.ty.rules]
+# POOP intentionally overrides __eq__/__ne__/__lt__ etc. to return Boolean
+# (Smalltalk semantics) instead of bool — LSP violation is by design.
+invalid-method-override = "ignore"
+
 [tool.ruff.lint]
 select = [
   # pycodestyle

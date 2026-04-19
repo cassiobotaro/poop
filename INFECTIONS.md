@@ -120,9 +120,8 @@ Os nomes `_poop_true` e `_poop_false` são injetados no namespace interno do exe
 
 As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem retornar instâncias de `TrueClass`/`FalseClass`:
 
-- Comparações: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- ~~Comparações em `Int`/`Float`: `==`, `!=`, `<`, `>`, `<=`, `>=`~~ ✓ implementado.
 - Operador `is` / `is not`
-- Operador `not`
 - Funções built-in: `isinstance`, `hasattr`, `callable`, etc.
 
 ## Backlog
