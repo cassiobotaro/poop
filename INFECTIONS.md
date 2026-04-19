@@ -95,6 +95,12 @@ Singleton `_TranscriptClass` injetado no namespace de execução como `Transcrip
 
 ## Transformers ativos
 
+### Int — `poop/transformers/int.py`
+
+| Nó AST | Substituição | Motivo |
+|---|---|---|
+| `ast.Constant(value=int)` (exceto `bool`) | `ast.Call(_poop_int, [n])` | Literais inteiros tornam-se instâncias de `Int` |
+
 ### Boolean — `poop/transformers/boolean.py`
 
 | Nó AST | Substituição | Motivo |
@@ -121,7 +127,7 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 |---|---|
 | `ast.UnaryOp` com `ast.Not` | `not x` é estrutura de controle; use `x.not_()` |
 
-`-x` (`ast.USub`) e `~x` (`ast.Invert`) são permitidos — apenas `not` é bloqueado.
+`-x` (`ast.USub`) e `~x` (`ast.Invert`) são permitidos por ora — apenas `not` é bloqueado.
 
 ### No `try` — `poop/validators/no_try.py`
 
@@ -131,19 +137,23 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 | `ast.TryStar` | Variante `try/except*` (exception groups) |
 
 ### Próximas infecções (validators)
+- **Operador unário `-`** (`ast.UnaryOp` com `ast.USub`): `-x` não existe em Smalltalk; substituir por `x.negated()`. Requer `Int` e `Float` implementando `negated()` antes de ativar o validator. Nota: `-1` (operando `ast.Constant`) é válido como literal negativo — o validator deve bloquear apenas quando o operando é uma variável ou expressão (`ast.Name`, `ast.Call`, etc.).
+- **Operador unário `~`** (`ast.UnaryOp` com `ast.Invert`): `~x` não existe em Smalltalk; substituir por `x.bit_invert()`. Requer `Int` implementando `bit_invert()` antes de ativar o validator.
 - **Operadores `is` / `is not`** (`ast.Is`, `ast.IsNot`): mapeamento Smalltalk pendente de decisão. Candidatos: `x.is_nil()` / `x.not_nil()` para o caso `None`; `x.is_identical(y)` / `x.not_identical(y)` (usando `id()` internamente) para identidade geral — equivalentes a `==` / `~~` do Smalltalk. Implementação depende de `Object` como base.
 
 ### Próximos tipos
 - **`NoneClass` — `if_none`/`if_not_none`**: adicionar mensagens `if_none(block)` e `if_not_none(block)` como blocos condicionais análogos ao `ifNil:`/`ifNotNil:` do Smalltalk.
-- **`SmallInt` / `Float`**: números com mensagens `times_repeat(block)`, `to_do(limit, block)`, `max(other)`, `min(other)`, `__str__`.
+- **`Float`**: números de ponto flutuante com mensagens `negated()`, `max(other)`, `min(other)`, `__str__`. Transformer reescreve `ast.Constant` float → `_poop_float(n)`.
 - **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`.
 - **`Interval`**: substitui `range`; mensagens `do(block)`, `collect(block)`, `select(block)`, `detect(block)`, `inject_into(init, block)`, `size()`.
 
 ### Próximos transformers
-- Literais numéricos (`ast.Constant` int/float) → `SmallInt` / `Float`.
+- ~~Literais inteiros (`ast.Constant` int) → `Int`.~~ ✓ implementado.
+- Literais float (`ast.Constant` float) → `Float`.
 - Literais string (`ast.Constant` str) → `StringObject`.
 - Literais lista (`ast.List`) → `OrderedCollection`.
+- Chamada `range(...)` (`ast.Call` com `func.id == "range"`) → instância de `Interval`. O usuário escreve `range(1, 10)` e recebe um `Interval` POOP com mensagens `do`, `collect`, etc. Requer `Interval` implementado.
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` → retornar `TrueClass`/`FalseClass`.
 
 ### Exemplos de código
