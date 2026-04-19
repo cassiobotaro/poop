@@ -95,6 +95,12 @@ Singleton `_TranscriptClass` injetado no namespace de execução como `Transcrip
 
 ## Transformers ativos
 
+### Float — `poop/transformers/float.py`
+
+| Nó AST | Substituição | Motivo |
+|---|---|---|
+| `ast.Constant(value=float)` | `ast.Call(_poop_float, [n])` | Literais float tornam-se instâncias de `Float` |
+
 ### Int — `poop/transformers/int.py`
 
 | Nó AST | Substituição | Motivo |
@@ -143,14 +149,14 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ### Próximos tipos
 - **`NoneClass` — `if_none`/`if_not_none`**: adicionar mensagens `if_none(block)` e `if_not_none(block)` como blocos condicionais análogos ao `ifNil:`/`ifNotNil:` do Smalltalk.
-- **`Float`**: números de ponto flutuante com mensagens `negated()`, `max(other)`, `min(other)`, `__str__`. Transformer reescreve `ast.Constant` float → `_poop_float(n)`.
+- **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
 - **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`.
 - **`Interval`**: substitui `range`; mensagens `do(block)`, `collect(block)`, `select(block)`, `detect(block)`, `inject_into(init, block)`, `size()`.
 
 ### Próximos transformers
 - ~~Literais inteiros (`ast.Constant` int) → `Int`.~~ ✓ implementado.
-- Literais float (`ast.Constant` float) → `Float`.
+- ~~Literais float (`ast.Constant` float) → `Float`.~~ ✓ implementado.
 - Literais string (`ast.Constant` str) → `StringObject`.
 - Literais lista (`ast.List`) → `OrderedCollection`.
 - Chamada `range(...)` (`ast.Call` com `func.id == "range"`) → instância de `Interval`. O usuário escreve `range(1, 10)` e recebe um `Interval` POOP com mensagens `do`, `collect`, etc. Requer `Interval` implementado.
