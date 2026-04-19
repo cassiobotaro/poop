@@ -1,9 +1,12 @@
+import ast
 from pathlib import Path
 
 import pytest
 
 from poop import Interpreter
 from poop.errors import ExecutionError, ParseError, ValidationError
+from poop.transformers.boolean import BooleanTransformer
+from poop.types.boolean import Boolean
 
 
 def test_valid_code_runs_successfully() -> None:
@@ -46,3 +49,20 @@ def test_run_file_reads_and_executes(tmp_path: Path) -> None:
     f = tmp_path / "hello.py"
     f.write_text("x = 42\n", encoding="utf-8")
     Interpreter().run_file(f)
+
+
+def test_true_literal_becomes_boolean_instance() -> None:
+    assert isinstance(BooleanTransformer.BINDINGS["_poop_true"], Boolean)
+
+
+def test_false_literal_becomes_boolean_instance() -> None:
+    assert isinstance(BooleanTransformer.BINDINGS["_poop_false"], Boolean)
+
+
+def test_custom_transformers_bypass_boolean_substitution() -> None:
+    tree = ast.parse("x = True")
+    compiled = compile(tree, "<string>", mode="exec")
+    ns: dict[str, object] = {}
+    exec(compiled, ns)  # noqa: S102
+    assert ns["x"] is True
+    assert not isinstance(ns["x"], Boolean)

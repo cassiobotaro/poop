@@ -1,6 +1,10 @@
 # Smalltalk Infections
 
-Each infection is an AST validation that rejects Python constructs incompatible with Smalltalk's philosophy. New infections follow the same pattern: a `Validator` class in `poop/validators/`, registered in `DEFAULT_VALIDATORS`.
+Infections come in two kinds:
+- **Validators** (`poop/validators/`) — rejeitam código incompatível com Smalltalk; seguem o padrão `Validator` + `ast.NodeVisitor`.
+- **Transformers** (`poop/transformers/`) — reescrevem o AST antes da execução para substituir construtos Python por equivalentes POOP; seguem o padrão `Transformer` + `ast.NodeTransformer`.
+
+Pipeline: `parse → validate → transform → execute(namespace)`
 
 ## Princípios
 
@@ -33,6 +37,26 @@ Each infection is an AST validation that rejects Python constructs incompatible 
 | `ast.AsyncFunctionDef` | fora de classe | Variante assíncrona |
 
 Funções dentro de classes (`class_depth > 0`) são permitidas como métodos.
+
+## Transformers ativos
+
+### Boolean — `poop/transformers/boolean.py`
+
+| Nó AST | Substituição | Motivo |
+|---|---|---|
+| `ast.Constant(value=True)` | `ast.Name(id="_poop_true")` | `True` passa a ser instância de `TrueClass` (estilo Smalltalk) |
+| `ast.Constant(value=False)` | `ast.Name(id="_poop_false")` | `False` passa a ser instância de `FalseClass` (estilo Smalltalk) |
+
+Os nomes `_poop_true` e `_poop_false` são injetados no namespace interno do executor — invisíveis para o código do usuário. `TrueClass` e `FalseClass` implementam os métodos Smalltalk (`ifTrue:`, `ifFalse:`, `and:`, `or:`, `not`, `xor:`, `eqv:`) em `poop/types/boolean.py`.
+
+### TODO — operações que retornam booleano
+
+As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem retornar instâncias de `TrueClass`/`FalseClass`:
+
+- Comparações: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- Operador `is` / `is not`
+- Operador `not`
+- Funções built-in: `isinstance`, `hasattr`, `callable`, etc.
 
 ## Decisões em aberto
 

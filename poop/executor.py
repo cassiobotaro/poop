@@ -3,10 +3,14 @@ import ast
 from poop.errors import ExecutionError
 
 
-def execute(tree: ast.Module, filename: str = "<unknown>") -> None:
+def execute(
+    tree: ast.Module,
+    filename: str = "<unknown>",
+    namespace: dict[str, object] | None = None,
+) -> None:
     code = compile(tree, filename=filename, mode="exec")
-    namespace: dict[str, object] = {}
+    ns: dict[str, object] = dict(namespace) if namespace else {}
     try:
-        exec(code, namespace)  # noqa: S102
+        exec(code, ns)  # noqa: S102
     except Exception as exc:
         raise ExecutionError(str(exc)) from exc

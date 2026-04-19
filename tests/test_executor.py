@@ -22,3 +22,8 @@ def test_execute_uses_isolated_namespace() -> None:
     tree2 = ast.parse("assert 'x' not in dir()")
     execute(tree1)
     execute(tree2)
+
+
+def test_execute_namespace_is_available_in_code() -> None:
+    tree = ast.parse("assert _sentinel == 99")
+    execute(tree, namespace={"_sentinel": 99})
