@@ -95,7 +95,7 @@ As operações abaixo ainda retornam `bool` Python nativo. Futuramente devem ret
 
 ### Próximos tipos
 - **`Object`**: raiz de todos os tipos POOP; métodos universais `is_nil()`, `not_nil()`, `class_name()`, `responds_to(symbol)`, `__str__` e `__repr__`.
-- **`NilClass`**: singleton `nil`; responde a `is_nil()` → `true`, `if_nil(block)`, `if_not_nil(block)`.
+- **`NilClass`**: singleton `nil`; responde a `is_nil()` → `true`, `if_nil(block)`, `if_not_nil(block)`. `NilTransformer` reescreve `ast.Constant(value=None)` → `_poop_nil`. Requer `Object` como base para que todos os objetos respondam a `if_nil`/`if_not_nil` (não-nil sempre executa `if_not_nil`). `is_nil()` deve retornar instâncias de `TrueClass`/`FalseClass`.
 - **`SmallInt` / `Float`**: números com mensagens `times_repeat(block)`, `to_do(limit, block)`, `max(other)`, `min(other)`, `__str__`.
 - **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`.
