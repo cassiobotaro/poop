@@ -31,5 +31,5 @@ Git hooks are managed by [prek](https://prek.j178.dev) and run ruff and ty on ev
 ## Usage
 
 ```bash
-uv run python main.py examples/hello_world.py
+poop examples/hello_world.py
 ```

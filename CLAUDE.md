@@ -13,7 +13,8 @@ POOP (Python Object Oriented Programming) is a Python 3.14 interpreter infected 
 uv sync --dev
 
 # Run
-uv run python main.py
+poop <file.py>
+uv run python main.py <file.py>  # alternativa sem instalar
 
 # Lint and format
 uv run ruff check --fix
