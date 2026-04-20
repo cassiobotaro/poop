@@ -42,9 +42,9 @@ uv run pytest tests/test_file.py::test_name
 Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate → transform → execute(namespace)`.
 
 - `poop/parser.py` — wraps `ast.parse`
-- `poop/validators/` — AST validators (reject forbidden constructs); registered in `DEFAULT_VALIDATORS`
-- `poop/transformers/` — AST transformers (rewrite nodes before execution); registered in `DEFAULT_TRANSFORMERS`
-- `poop/types/` — Smalltalk-style types (`boolean.py`, `transcript.py`)
+- `poop/validators/` — AST validators (reject forbidden constructs); registered in `DEFAULT_VALIDATORS`: `no_if`, `no_loops`, `no_free_functions`, `no_print`, `no_try`, `no_not`, `no_unary_minus`, `no_invert`
+- `poop/transformers/` — AST transformers (rewrite nodes before execution); registered in `DEFAULT_TRANSFORMERS`: `boolean`, `int`, `float`, `none`
+- `poop/types/` — Smalltalk-style types: `object.py` (root), `boolean.py`, `none.py`, `int.py`, `float.py`, `interval.py`, `transcript.py`
 - `poop/executor.py` — compiles and executes AST with an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
 
