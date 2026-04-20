@@ -214,7 +214,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - ~~**`NoneClass` — `if_none`/`if_not_none`**~~ ✓ implementado — `none.if_none(block)` executa o bloco; `obj.if_not_none(block)` executa passando `self`; comportamentos inversos em `Object`.
 - ~~**`Str`**~~ ✓ implementado — `size()`, `at(index)` (0-based), `includes(char)`, `reversed()`, `__add__`, `__eq__`/`__ne__`. Transformer reescreve literais string → `Str`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
-- **`Int` — métodos ausentes**: `abs()`, `sqrt()` → `Float`, `as_float()` → `Float`, `factorial()`, `gcd(other)`, `lcm(other)`.
+- **`Int` — métodos ausentes**: `abs()`, `sqrt()` → `Float`, `as_float()` → `Float`, `factorial()`, `gcd(other)`, `lcm(other)`. **Nota:** `as_string()` não será implementado — usar `str(obj)` via `__str__`.
 - **`Float` — métodos ausentes**: `truncated()` → `Int`, `rounded()` → `Int`, `ceiling()` → `Int`, `floor()` → `Int`, `abs()`, `sqrt()`.
 - **`Object` — métodos ausentes**: `yourself()` (retorna `self`, essencial para cascatas), `print_string()` (alias legível para `__str__`).
 - **`Interval` — métodos ausentes**: `includes(x)`, `reversed()`, `first()`, `last()`, `to_by_(limit, step)` (Smalltalk `to:by:`).
@@ -247,6 +247,8 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 
 ## Decisões em aberto
 
+- **`isEmpty` não será implementado em `Str`**: usar `obj == ''` — chama `Str.__eq__` e retorna `Boolean` POOP. Mantém o modelo Python sem métodos redundantes.
+- **`as_string()` / `printString` não serão implementados**: usar `str(obj)` — chama `__str__` de cada tipo POOP. Mantém representação pythônica conforme princípio definido em Princípios.
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — **permitidos**.
 - **Compreensões** (`ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`): contêm iteração implícita — avaliar se devem ser banidas junto com loops.
 - **Atribuição aumentada / múltipla**: avaliar consistência com o modelo de objetos.
