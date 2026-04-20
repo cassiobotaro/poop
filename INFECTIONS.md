@@ -217,9 +217,17 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - **`Array`**: substitui `tuple`; imutável, acesso por índice; mensagens `size()`, `at(index)` (0-based), `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Array`.
 - **`Dictionary`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `size()`. Transformer reescreve literais `{k: v}` → `Dictionary`.
 - **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `size()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
-- **`Int` — métodos ausentes**: `abs()`, `sqrt()` → `Float`, `as_float()` → `Float`, `factorial()`, `gcd(other)`, `lcm(other)`. **Nota:** `as_string()` não será implementado — usar `str(obj)` via `__str__`.
-- **`Float` — métodos ausentes**: `truncated()` → `Int`, `rounded()` → `Int`, `ceiling()` → `Int`, `floor()` → `Int`, `abs()`, `sqrt()`.
-- **`Object` — métodos ausentes**: `yourself()` (retorna `self`, essencial para cascatas), `print_string()` (alias legível para `__str__`).
+- **`Int` — métodos ausentes (paridade Python)**:
+  - Dunders: `__abs__`, `__pos__`, `__truediv__`, `__lshift__`, `__rshift__`, `__and__` (bitwise), `__or__` (bitwise), `__xor__`, `__ceil__`, `__floor__`, `__trunc__`, `__round__`
+  - Métodos públicos: `bit_count()`, `bit_length()`, `is_integer()` (sempre `True`)
+  - **Nota:** `as_string()` não será implementado — usar `str(obj)` via `__str__`.
+- **`Float` — métodos ausentes (paridade Python)**:
+  - Dunders: `__abs__`, `__int__`, `__ceil__`, `__floor__`, `__trunc__`, `__round__`
+  - Métodos públicos: `is_integer()`, `as_integer_ratio()`
+- **`Str` — métodos ausentes (paridade Python)** — maior gap:
+  - Dunders: `__contains__`, `__len__`, `__getitem__`, `__iter__`, `__mul__`, `__lt__`, `__le__`, `__gt__`, `__ge__`
+  - Métodos públicos mais relevantes: `upper()`, `lower()`, `strip()`, `lstrip()`, `rstrip()`, `split()` → `list` nativo por ora (futuro: `OrderedCollection`), `replace()`, `startswith()`, `endswith()`, `find()`, `index()`, `count()`, `join()`, `capitalize()`, `title()`, `swapcase()`, `isalpha()`, `isdigit()`, `isalnum()`, `isspace()`, `isupper()`, `islower()`
+- **`Object` — métodos ausentes**: `yourself()` (retorna `self`, essencial para cascatas).
 - **`Interval` — métodos ausentes**: `includes(x)`, `reversed()`, `first()`, `last()`, `to_by_(limit, step)` (Smalltalk `to:by:`).
 
 ### Próximos transformers
