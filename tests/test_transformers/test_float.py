@@ -35,5 +35,17 @@ def test_string_literal_is_not_rewritten() -> None:
     assert isinstance(assign.value, ast.Constant)
 
 
+def test_negative_float_literal_is_collapsed() -> None:
+    tree = _transform("x = -3.14")
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    call = assign.value
+    assert isinstance(call, ast.Call)
+    assert isinstance(call.func, ast.Name)
+    assert call.func.id == "_poop_float"
+    assert isinstance(call.args[0], ast.Constant)
+    assert call.args[0].value == -3.14
+
+
 def test_bindings_contains_float_class() -> None:
     assert FloatTransformer.BINDINGS["_poop_float"] is Float

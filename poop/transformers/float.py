@@ -14,6 +14,22 @@ class FloatTransformer:
 
 
 class _FloatRewriter(ast.NodeTransformer):
+    def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
+        if isinstance(node.op, ast.USub) and isinstance(node.operand, ast.Constant):
+            if isinstance(node.operand.value, float):
+                collapsed = ast.copy_location(
+                    ast.Constant(value=-node.operand.value), node
+                )
+                return ast.copy_location(
+                    ast.Call(
+                        func=ast.Name(id="_poop_float", ctx=ast.Load()),
+                        args=[collapsed],
+                        keywords=[],
+                    ),
+                    node,
+                )
+        return self.generic_visit(node)
+
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
         if isinstance(node.value, float):
             return ast.copy_location(

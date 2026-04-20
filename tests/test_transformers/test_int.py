@@ -36,5 +36,17 @@ def test_string_literal_is_not_rewritten() -> None:
     assert isinstance(assign.value, ast.Constant)
 
 
+def test_negative_int_literal_is_collapsed() -> None:
+    tree = _transform("x = -1")
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    call = assign.value
+    assert isinstance(call, ast.Call)
+    assert isinstance(call.func, ast.Name)
+    assert call.func.id == "_poop_int"
+    assert isinstance(call.args[0], ast.Constant)
+    assert call.args[0].value == -1
+
+
 def test_bindings_contains_int_class() -> None:
     assert IntTransformer.BINDINGS["_poop_int"] is Int
