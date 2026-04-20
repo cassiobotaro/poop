@@ -6,6 +6,7 @@ from poop.validators.no_hash import NoHashValidator
 from poop.validators.no_if import NoIfValidator
 from poop.validators.no_invert import NoInvertValidator
 from poop.validators.no_is import NoIsValidator
+from poop.validators.no_isinstance import NoIsinstanceValidator
 from poop.validators.no_len import NoLenValidator
 from poop.validators.no_loops import NoLoopsValidator
 from poop.validators.no_match import NoMatchValidator
@@ -33,6 +34,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoLenValidator(),
     NoAbsValidator(),
     NoHashValidator(),
+    NoIsinstanceValidator(),
 ]
 
 __all__ = ["DEFAULT_VALIDATORS", "Validator"]
