@@ -214,6 +214,9 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - ~~**`NoneClass` — `if_none`/`if_not_none`**~~ ✓ implementado — `none.if_none(block)` executa o bloco; `obj.if_not_none(block)` executa passando `self`; comportamentos inversos em `Object`.
 - ~~**`Str`**~~ ✓ implementado — `size()`, `at(index)` (0-based), `includes(char)`, `reversed()`, `__add__`, `__eq__`/`__ne__`. Transformer reescreve literais string → `Str`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
+- **`Array`**: substitui `tuple`; imutável, acesso por índice; mensagens `size()`, `at(index)` (0-based), `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Array`.
+- **`Dictionary`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `size()`. Transformer reescreve literais `{k: v}` → `Dictionary`.
+- **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `size()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
 - **`Int` — métodos ausentes**: `abs()`, `sqrt()` → `Float`, `as_float()` → `Float`, `factorial()`, `gcd(other)`, `lcm(other)`. **Nota:** `as_string()` não será implementado — usar `str(obj)` via `__str__`.
 - **`Float` — métodos ausentes**: `truncated()` → `Int`, `rounded()` → `Int`, `ceiling()` → `Int`, `floor()` → `Int`, `abs()`, `sqrt()`.
 - **`Object` — métodos ausentes**: `yourself()` (retorna `self`, essencial para cascatas), `print_string()` (alias legível para `__str__`).
@@ -224,6 +227,9 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - ~~Literais float (`ast.Constant` float) → `Float`.~~ ✓ implementado.
 - ~~Literais string (`ast.Constant` str) → `Str`.~~ ✓ implementado.
 - Literais lista (`ast.List`) → `OrderedCollection`.
+- Literais tupla (`ast.Tuple`) → `Array`.
+- Literais dict (`ast.Dict`) → `Dictionary`.
+- Literais set (`ast.Set`) → `Set`.
 - Chamada `range(...)` (`ast.Call` com `func.id == "range"`) → instância de `Interval`. O usuário escreve `range(1, 10)` e recebe um `Interval` POOP com mensagens `do`, `collect`, etc. Requer `Interval` implementado.
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` → retornar `TrueClass`/`FalseClass`.
 - Chamada `len(x)` (`ast.Call` com `func.id == "len"`) → reescrever para `x.size()` (ou banir via validator).
