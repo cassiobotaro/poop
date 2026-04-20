@@ -312,6 +312,31 @@ Singleton injetado no namespace de execução.
 - ~~**`Object.class_name()` retorna `str` nativo**~~ ✓ corrigido.
 - **Funções built-in** (`len`, `isinstance`, `hasattr`, `callable`) vazam tipos Python nativos para dentro do modelo POOP.
 
+### Renomeações pendentes (nomes Smalltalk → nomes Python)
+
+Métodos já implementados que usam nomes Smalltalk em vez do nome Python correspondente:
+
+| Tipo | Método atual | Deveria ser | Motivo |
+|---|---|---|---|
+| `Object` | `responds_to(s)` | `has_attr(s)` | `hasattr` → `has_attr` |
+| `Int` | `as_float()` | `float()` | `float(x)` → `x.float()` |
+
+Backlog (ainda não implementados — usar nome correto quando implementar):
+
+| Builtin | Nome errado | Nome correto |
+|---|---|---|
+| `int(x)` | `as_int()` | `int()` |
+| `id(x)` | `identity_hash()` | `id()` |
+| `all(col, block)` | `all_satisfy(block)` | `all(block)` |
+| `any(col, block)` | `any_satisfy(block)` | `any(block)` |
+| `pow(a, b)` | `raised_to(b)` | `pow(b)` |
+| `bin(n)` | `as_binary()` | `bin()` |
+| `hex(n)` | `as_hex()` | `hex()` |
+| `oct(n)` | `as_octal()` | `oct()` |
+| `chr(n)` | `as_char()` | `chr()` |
+| `ord(c)` | `ascii_value()` | `ord()` |
+| `callable(x)` | `is_callable()` | `callable()` — avaliar; `is_callable()` lê melhor |
+
 ### Arquitetura / DX
 
 - **REPL**: loop interativo — `poop` sem argumentos abre o REPL.
