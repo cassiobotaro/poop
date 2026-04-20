@@ -9,6 +9,7 @@ from poop.validators.no_not import NoNotValidator
 from poop.validators.no_print import NoPrintValidator
 from poop.validators.no_try import NoTryValidator
 from poop.validators.no_unary_minus import NoUnaryMinusValidator
+from poop.validators.no_yield import NoYieldValidator
 
 DEFAULT_VALIDATORS: list[Validator] = [
     NoIfValidator(),
@@ -21,6 +22,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoInvertValidator(),
     NoIsValidator(),
     NoGlobalValidator(),
+    NoYieldValidator(),
 ]
 
 __all__ = ["DEFAULT_VALIDATORS", "Validator"]
