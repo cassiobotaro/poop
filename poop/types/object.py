@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
@@ -6,6 +7,12 @@ if TYPE_CHECKING:
 
 class Object:
     __slots__ = ()
+
+    def if_none(self, block: Callable[[], Any]) -> Object:
+        return self
+
+    def if_not_none[T](self, block: Callable[[Object], T]) -> T:
+        return block(self)
 
     def is_none(self) -> Boolean:
         from poop.types.boolean import false

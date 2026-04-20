@@ -211,7 +211,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - **`:=` (walrus operator)** (`ast.NamedExpr`): atribuição dentro de expressão é Python-específico.
 
 ### Próximos tipos
-- **`NoneClass` — `if_none`/`if_not_none`**: adicionar mensagens `if_none(block)` e `if_not_none(block)` como blocos condicionais análogos ao `ifNil:`/`ifNotNil:` do Smalltalk.
+- ~~**`NoneClass` — `if_none`/`if_not_none`**~~ ✓ implementado — `none.if_none(block)` executa o bloco; `obj.if_not_none(block)` executa passando `self`; comportamentos inversos em `Object`.
 - **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`. Transformer reescreve literais string → `StringObject`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
 - **`Int` — métodos ausentes**: `abs()`, `sqrt()` → `Float`, `as_float()` → `Float`, `factorial()`, `gcd(other)`, `lcm(other)`.

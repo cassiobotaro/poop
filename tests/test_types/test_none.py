@@ -46,3 +46,25 @@ def test_bool_none_is_false() -> None:
 
 def test_class_name() -> None:
     assert none.class_name() == "NoneClass"
+
+
+def test_if_none_executes_block() -> None:
+    assert none.if_none(lambda: 42) == 42
+
+
+def test_if_none_does_not_execute_block_on_object() -> None:
+    from poop.types.object import Object
+
+    obj = Object()
+    assert obj.if_none(lambda: 42) is obj
+
+
+def test_if_not_none_does_not_execute_block() -> None:
+    assert none.if_not_none(lambda v: v) is none
+
+
+def test_if_not_none_executes_block_on_object() -> None:
+    from poop.types.object import Object
+
+    obj = Object()
+    assert obj.if_not_none(lambda v: v) is obj
