@@ -3,6 +3,7 @@ from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.int import IntTransformer
 from poop.transformers.none import NoneTransformer
+from poop.transformers.string import StrTransformer
 from poop.types.transcript import transcript
 
 DEFAULT_TRANSFORMERS: list[Transformer] = [
@@ -10,12 +11,14 @@ DEFAULT_TRANSFORMERS: list[Transformer] = [
     NoneTransformer(),
     IntTransformer(),
     FloatTransformer(),
+    StrTransformer(),
 ]
 DEFAULT_NAMESPACE: dict[str, object] = {
     **BooleanTransformer.BINDINGS,
     **NoneTransformer.BINDINGS,
     **IntTransformer.BINDINGS,
     **FloatTransformer.BINDINGS,
+    **StrTransformer.BINDINGS,
     "Transcript": transcript,
 }
 
