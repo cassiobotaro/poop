@@ -237,7 +237,7 @@ Singleton injetado no namespace de execução.
 - `range(...)` → `Interval`.
 - ~~`len(x)` → `x.len()`~~ — banir via validator com sugestão; ver seção Builtins.
 - ~~`abs(x)` → `x.abs()`~~ — banir via validator com sugestão; ver seção Builtins.
-- `isinstance(x, T)` → `x.is_kind_of(T)` retornando `Boolean` POOP.
+- `isinstance(x, T)` → `x.is_instance(T)` retornando `Boolean` POOP.
 - `hasattr(x, s)` → `x.responds_to(s)` retornando `Boolean` POOP.
 - `callable(x)` → `x.is_callable()` retornando `Boolean` POOP.
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`) → retornar `TrueClass`/`FalseClass`.
@@ -271,7 +271,7 @@ Singleton injetado no namespace de execução.
 | `all(col)` | função livre — use `col.all_satisfy(block)` |
 | `any(col)` | função livre — use `col.any_satisfy(block)` |
 | `min(a, b)` / `max(a, b)` | função livre — use `a.min(b)` / `a.max(b)` |
-| `isinstance(x, T)` | função livre — use `x.is_kind_of(T)` |
+| `isinstance(x, T)` | função livre — use `x.is_instance(T)` |
 | `hasattr(x, s)` | função livre — use `x.responds_to(s)` |
 | `callable(x)` | função livre — use `x.is_callable()` |
 | `divmod(a, b)` | função livre — use `a.divmod(b)` |

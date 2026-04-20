@@ -20,7 +20,7 @@ def test_isinstance_call_raises_validation_error() -> None:
 
 def test_error_message_suggests_method() -> None:
     tree = ast.parse("isinstance(x, int)")
-    with pytest.raises(ValidationError, match="is_kind_of"):
+    with pytest.raises(ValidationError, match="is_instance"):
         NoIsinstanceValidator().validate(tree)
 
 
