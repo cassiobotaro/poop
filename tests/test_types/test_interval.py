@@ -75,4 +75,6 @@ def test_is_none_inherited() -> None:
 
 
 def test_class_name() -> None:
-    assert _interval(1, 3).class_name() == "Interval"
+    from poop.types.string import Str
+
+    assert _interval(1, 3).class_name() == Str("Interval")

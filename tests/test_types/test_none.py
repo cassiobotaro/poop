@@ -45,7 +45,9 @@ def test_bool_none_is_false() -> None:
 
 
 def test_class_name() -> None:
-    assert none.class_name() == "NoneClass"
+    from poop.types.string import Str
+
+    assert none.class_name() == Str("NoneClass")
 
 
 def test_if_none_executes_block() -> None:

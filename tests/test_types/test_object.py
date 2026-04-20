@@ -27,7 +27,9 @@ def test_not_falsy_object_returns_true() -> None:
 
 
 def test_class_name_returns_type_name() -> None:
-    assert Object().class_name() == "Object"
+    from poop.types.string import Str
+
+    assert Object().class_name() == Str("Object")
 
 
 def test_responds_to_existing_method() -> None:

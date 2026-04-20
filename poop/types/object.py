@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.string import Str
 
 
 class Object:
@@ -29,8 +30,10 @@ class Object:
 
         return false if bool(self) else true
 
-    def class_name(self) -> str:
-        return type(self).__name__
+    def class_name(self) -> Str:
+        from poop.types.string import Str
+
+        return Str(type(self).__name__)
 
     def responds_to(self, symbol: str) -> Boolean:
         from poop.types.boolean import false, true

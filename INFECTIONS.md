@@ -231,7 +231,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 
 ### Bugs / inconsistências
 - ~~**`Interval.detect` retorna `None` nativo**~~ ✓ corrigido — retorna `none` POOP.
-- **`Object.class_name()` retorna `str` nativo** — deveria retornar `Str` quando o tipo estiver implementado.
+- ~~**`Object.class_name()` retorna `str` nativo**~~ ✓ corrigido — retorna `Str`.
 - **Funções built-in** (`len`, `isinstance`, `hasattr`, `callable`) vazam tipos Python nativos (`int`, `bool`) para dentro do modelo POOP.
 
 ### Arquitetura / DX
