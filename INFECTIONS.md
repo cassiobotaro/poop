@@ -212,7 +212,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 
 ### Próximos tipos
 - ~~**`NoneClass` — `if_none`/`if_not_none`**~~ ✓ implementado — `none.if_none(block)` executa o bloco; `obj.if_not_none(block)` executa passando `self`; comportamentos inversos em `Object`.
-- **`StringObject`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`. Transformer reescreve literais string → `StringObject`.
+- **`Str`**: string com mensagens `size()`, `at(index)`, `includes(char)`, `reversed()`, `__str__`. Transformer reescreve literais string → `Str`.
 - **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
 - **`Int` — métodos ausentes**: `abs()`, `sqrt()` → `Float`, `as_float()` → `Float`, `factorial()`, `gcd(other)`, `lcm(other)`.
 - **`Float` — métodos ausentes**: `truncated()` → `Int`, `rounded()` → `Int`, `ceiling()` → `Int`, `floor()` → `Int`, `abs()`, `sqrt()`.
@@ -222,7 +222,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 ### Próximos transformers
 - ~~Literais inteiros (`ast.Constant` int) → `Int`.~~ ✓ implementado.
 - ~~Literais float (`ast.Constant` float) → `Float`.~~ ✓ implementado.
-- Literais string (`ast.Constant` str) → `StringObject`.
+- Literais string (`ast.Constant` str) → `Str`.
 - Literais lista (`ast.List`) → `OrderedCollection`.
 - Chamada `range(...)` (`ast.Call` com `func.id == "range"`) → instância de `Interval`. O usuário escreve `range(1, 10)` e recebe um `Interval` POOP com mensagens `do`, `collect`, etc. Requer `Interval` implementado.
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`), `is`/`is not` e `not` → retornar `TrueClass`/`FalseClass`.
@@ -231,7 +231,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 
 ### Bugs / inconsistências
 - ~~**`Interval.detect` retorna `None` nativo**~~ ✓ corrigido — retorna `none` POOP.
-- **`Object.class_name()` retorna `str` nativo** — deveria retornar `StringObject` quando o tipo estiver implementado.
+- **`Object.class_name()` retorna `str` nativo** — deveria retornar `Str` quando o tipo estiver implementado.
 - **Funções built-in** (`len`, `isinstance`, `hasattr`, `callable`) vazam tipos Python nativos (`int`, `bool`) para dentro do modelo POOP.
 
 ### Arquitetura / DX
