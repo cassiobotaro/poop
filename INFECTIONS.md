@@ -200,7 +200,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 ### Próximas infecções (validators)
 - ~~**Operador unário `-`**~~ ✓ implementado em `poop/validators/no_unary_minus.py`.
 - ~~**Operador unário `~`**~~ ✓ implementado em `poop/validators/no_invert.py`.
-- **Operadores `is` / `is not`** (`ast.Is`, `ast.IsNot`): mapeamento Smalltalk pendente de decisão. Candidatos: `x.is_nil()` / `x.not_nil()` para o caso `None`; `x.is_identical(y)` / `x.not_identical(y)` (usando `id()` internamente) para identidade geral — equivalentes a `==` / `~~` do Smalltalk. Implementação depende de `Object` como base.
+- ~~**Operadores `is` / `is not`**~~ ✓ implementado em `poop/validators/no_is.py` — `is` → use `.is_none()` ou `.is_identical(other)`; `is not` → use `.not_none()` ou `.not_identical(other)`.
 - **`match/case`** (`ast.Match`): pattern matching estrutural é control flow — Smalltalk usa polimorfismo e despacho de mensagens.
 - **`with`/`async with`** (`ast.With`, `ast.AsyncWith`): context managers são Python-específicos; sem equivalente em Smalltalk.
 - **`raise`** (`ast.Raise`): Smalltalk lança exceções via `signal` em objetos de erro (`Error signal: 'msg'`); `raise` expõe a estrutura de controle diretamente.
