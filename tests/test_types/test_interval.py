@@ -53,7 +53,9 @@ def test_detect_finds_first_match() -> None:
 
 
 def test_detect_returns_none_when_not_found() -> None:
-    assert _interval(1, 5).detect(lambda i: i > Int(9)) is None
+    from poop.types.none import none
+
+    assert _interval(1, 5).detect(lambda i: i > Int(9)) is none
 
 
 def test_inject_into_sums() -> None:

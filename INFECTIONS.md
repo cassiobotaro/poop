@@ -230,7 +230,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - Chamadas `isinstance(x, T)`, `hasattr(x, s)`, `callable(x)` → devem retornar `Boolean` POOP em vez de `bool` nativo.
 
 ### Bugs / inconsistências
-- **`Interval.detect` retorna `None` nativo** em vez do singleton `none` POOP quando nenhum elemento satisfaz o bloco.
+- ~~**`Interval.detect` retorna `None` nativo**~~ ✓ corrigido — retorna `none` POOP.
 - **`Object.class_name()` retorna `str` nativo** — deveria retornar `StringObject` quando o tipo estiver implementado.
 - **Funções built-in** (`len`, `isinstance`, `hasattr`, `callable`) vazam tipos Python nativos (`int`, `bool`) para dentro do modelo POOP.
 

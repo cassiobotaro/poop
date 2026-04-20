@@ -7,6 +7,7 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.int import Int
+    from poop.types.none import NoneClass
 
 
 class Interval(Object):
@@ -34,11 +35,13 @@ class Interval(Object):
     def reject(self, block: Callable[[Int], Any]) -> list[Int]:
         return [i for i in self._iter() if not bool(block(i))]
 
-    def detect(self, block: Callable[[Int], Any]) -> Int | None:
+    def detect(self, block: Callable[[Int], Any]) -> Int | NoneClass:
+        from poop.types.none import none
+
         for i in self._iter():
             if bool(block(i)):
                 return i
-        return None
+        return none
 
     def inject_into[T](self, init: T, block: Callable[[T, Int], T]) -> T:
         return reduce(block, self._iter(), init)
