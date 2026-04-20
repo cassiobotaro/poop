@@ -131,3 +131,65 @@ def test_class_name() -> None:
     from poop.types.string import Str
 
     assert Float(1.0).class_name() == Str("Float")
+
+
+def test_abs_positive() -> None:
+    assert Float(3.5).abs() == Float(3.5)
+
+
+def test_abs_negative() -> None:
+    assert Float(-3.5).abs() == Float(3.5)
+
+
+def test_dunder_abs() -> None:
+    assert abs(Float(-2.0)) == Float(2.0)
+
+
+def test_ceil_returns_int() -> None:
+    from poop.types.int import Int
+
+    assert Float(2.3).ceil() == Int(3)
+
+
+def test_floor_returns_int() -> None:
+    from poop.types.int import Int
+
+    assert Float(2.7).floor() == Int(2)
+
+
+def test_trunc_returns_int() -> None:
+    from poop.types.int import Int
+
+    assert Float(2.9).trunc() == Int(2)
+    assert Float(-2.9).trunc() == Int(-2)
+
+
+def test_round_no_digits_returns_int() -> None:
+    from poop.types.int import Int
+
+    assert Float(2.5).round() == Int(2)
+    assert Float(3.5).round() == Int(4)
+
+
+def test_round_with_digits_returns_float() -> None:
+    assert Float(3.14159).round(2) == Float(3.14)
+
+
+def test_int_conversion() -> None:
+    assert int(Float(3.9)) == 3
+
+
+def test_is_integer_true() -> None:
+    from poop.types.boolean import true
+
+    assert Float(3.0).is_integer() is true
+
+
+def test_is_integer_false() -> None:
+    from poop.types.boolean import false
+
+    assert Float(3.5).is_integer() is false
+
+
+def test_floordiv() -> None:
+    assert Float(7.0) // Float(2.0) == Float(3.0)

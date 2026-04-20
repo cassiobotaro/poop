@@ -217,13 +217,8 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 - **`Array`**: substitui `tuple`; imutável, acesso por índice; mensagens `size()`, `at(index)` (0-based), `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Array`.
 - **`Dictionary`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `size()`. Transformer reescreve literais `{k: v}` → `Dictionary`.
 - **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `size()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
-- **`Int` — métodos ausentes (paridade Python)**:
-  - Dunders: `__abs__`, `__pos__`, `__truediv__`, `__lshift__`, `__rshift__`, `__and__` (bitwise), `__or__` (bitwise), `__xor__`, `__ceil__`, `__floor__`, `__trunc__`, `__round__`
-  - Métodos públicos: `bit_count()`, `bit_length()`, `is_integer()` (sempre `True`)
-  - **Nota:** `as_string()` não será implementado — usar `str(obj)` via `__str__`.
-- **`Float` — métodos ausentes (paridade Python)**:
-  - Dunders: `__abs__`, `__int__`, `__ceil__`, `__floor__`, `__trunc__`, `__round__`
-  - Métodos públicos: `is_integer()`, `as_integer_ratio()`
+- ~~**`Int` — métodos ausentes (paridade Python)**~~ ✓ implementado — `__abs__`/`abs()`, `__pos__`/`pos()`, `__truediv__`, `__lshift__`, `__rshift__`, `__and__`/`__or__`/`__xor__` (bitwise), `__ceil__`/`ceil()`, `__floor__`/`floor()`, `__trunc__`/`trunc()`, `__round__`/`round()`, `bit_count()`, `bit_length()`, `is_integer()`, `as_float()`.
+- ~~**`Float` — métodos ausentes (paridade Python)**~~ ✓ implementado — `__abs__`/`abs()`, `__int__`, `__ceil__`/`ceil()`, `__floor__`/`floor()`, `__trunc__`/`trunc()`, `__round__`/`round()`, `__floordiv__`, `is_integer()`, `as_integer_ratio()`.
 - **`Str` — métodos ausentes (paridade Python)** — maior gap:
   - Dunders: `__contains__`, `__len__`, `__getitem__`, `__iter__`, `__mul__`, `__lt__`, `__le__`, `__gt__`, `__ge__`
   - Métodos públicos mais relevantes: `upper()`, `lower()`, `strip()`, `lstrip()`, `rstrip()`, `split()` → `list` nativo por ora (futuro: `OrderedCollection`), `replace()`, `startswith()`, `endswith()`, `find()`, `index()`, `count()`, `join()`, `capitalize()`, `title()`, `swapcase()`, `isalpha()`, `isdigit()`, `isalnum()`, `isspace()`, `isupper()`, `islower()`
@@ -261,6 +256,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 
 ## Decisões em aberto
 
+- **Dunders expostos como métodos regulares**: todo dunder relevante de um tipo POOP ganha um alias sem dunder — `__len__` → `len()`, `__abs__` → `abs()`, `__contains__` → `contains()`, etc. Isso transforma builtins Python em mensagens ao objeto. Complementado por transformers que reescrevem `len(x)` → `x.len()`, `abs(x)` → `x.abs()`, etc.
 - **`isEmpty` não será implementado em `Str`**: usar `obj == ''` — chama `Str.__eq__` e retorna `Boolean` POOP. Mantém o modelo Python sem métodos redundantes.
 - **`as_string()` / `printString` não serão implementados**: usar `str(obj)` — chama `__str__` de cada tipo POOP. Mantém representação pythônica conforme princípio definido em Princípios.
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — **permitidos**.

@@ -161,3 +161,81 @@ def test_class_name() -> None:
 @pytest.mark.parametrize("value", [0, 1, -1, 100])
 def test_roundtrip_str(value: int) -> None:
     assert str(Int(value)) == str(value)
+
+
+def test_abs_positive() -> None:
+    assert Int(5).abs() == Int(5)
+
+
+def test_abs_negative() -> None:
+    assert Int(-5).abs() == Int(5)
+
+
+def test_dunder_abs() -> None:
+    assert abs(Int(-3)) == Int(3)
+
+
+def test_pos() -> None:
+    assert Int(7).pos() == Int(7)
+
+
+def test_truediv_returns_float() -> None:
+    from poop.types.float import Float
+
+    assert Int(7) / Int(2) == Float(3.5)
+
+
+def test_lshift() -> None:
+    assert Int(1) << Int(3) == Int(8)
+
+
+def test_rshift() -> None:
+    assert Int(8) >> Int(2) == Int(2)
+
+
+def test_bitwise_and() -> None:
+    assert Int(0b1100) & Int(0b1010) == Int(0b1000)
+
+
+def test_bitwise_or() -> None:
+    assert Int(0b1100) | Int(0b1010) == Int(0b1110)
+
+
+def test_bitwise_xor() -> None:
+    assert Int(0b1100) ^ Int(0b1010) == Int(0b0110)
+
+
+def test_ceil_returns_self() -> None:
+    assert Int(5).ceil() == Int(5)
+
+
+def test_floor_returns_self() -> None:
+    assert Int(5).floor() == Int(5)
+
+
+def test_trunc_returns_self() -> None:
+    assert Int(5).trunc() == Int(5)
+
+
+def test_round_returns_self() -> None:
+    assert Int(5).round() == Int(5)
+
+
+def test_bit_count() -> None:
+    assert Int(0b1011).bit_count() == Int(3)
+
+
+def test_bit_length() -> None:
+    assert Int(8).bit_length() == Int(4)
+
+
+def test_is_integer_always_true() -> None:
+    from poop.types.boolean import true
+
+    assert Int(42).is_integer() is true
+
+
+def test_as_float() -> None:
+    from poop.types.float import Float
+
+    assert Int(3).as_float() == Float(3.0)

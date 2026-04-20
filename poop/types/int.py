@@ -5,6 +5,7 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.float import Float
     from poop.types.interval import Interval
 
 
@@ -35,6 +36,34 @@ class Int(Object):
     def min(self, other: Int) -> Int:
         return self if self._value <= other._value else other
 
+    def bit_count(self) -> Int:
+        return Int(self._value.bit_count())
+
+    def bit_length(self) -> Int:
+        return Int(self._value.bit_length())
+
+    def is_integer(self) -> Boolean:
+        from poop.types.boolean import true
+
+        return true
+
+    def as_float(self) -> Float:
+        from poop.types.float import Float
+
+        return Float(float(self._value))
+
+    def __abs__(self) -> Int:
+        return Int(abs(self._value))
+
+    def abs(self) -> Int:
+        return self.__abs__()
+
+    def __pos__(self) -> Int:
+        return Int(+self._value)
+
+    def pos(self) -> Int:
+        return self.__pos__()
+
     def __add__(self, other: Int) -> Int:
         return Int(self._value + other._value)
 
@@ -44,6 +73,11 @@ class Int(Object):
     def __mul__(self, other: Int) -> Int:
         return Int(self._value * other._value)
 
+    def __truediv__(self, other: Int) -> Float:
+        from poop.types.float import Float
+
+        return Float(self._value / other._value)
+
     def __floordiv__(self, other: Int) -> Int:
         return Int(self._value // other._value)
 
@@ -52,6 +86,45 @@ class Int(Object):
 
     def __pow__(self, other: Int) -> Int:
         return Int(self._value**other._value)
+
+    def __lshift__(self, other: Int) -> Int:
+        return Int(self._value << other._value)
+
+    def __rshift__(self, other: Int) -> Int:
+        return Int(self._value >> other._value)
+
+    def __and__(self, other: Int) -> Int:
+        return Int(self._value & other._value)
+
+    def __or__(self, other: Int) -> Int:
+        return Int(self._value | other._value)
+
+    def __xor__(self, other: Int) -> Int:
+        return Int(self._value ^ other._value)
+
+    def __ceil__(self) -> Int:
+        return self
+
+    def ceil(self) -> Int:
+        return self.__ceil__()
+
+    def __floor__(self) -> Int:
+        return self
+
+    def floor(self) -> Int:
+        return self.__floor__()
+
+    def __trunc__(self) -> Int:
+        return self
+
+    def trunc(self) -> Int:
+        return self.__trunc__()
+
+    def __round__(self, ndigits: int | None = None) -> Int:
+        return Int(round(self._value, ndigits))
+
+    def round(self, ndigits: int | None = None) -> Int:
+        return self.__round__(ndigits)
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true
