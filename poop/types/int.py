@@ -9,11 +9,13 @@ if TYPE_CHECKING:
     from poop.types.interval import Interval
     from poop.types.string import Str
 
+_int = int  # alias to avoid shadowing by Int.int() method
+
 
 class Int(Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: int) -> None:
+    def __init__(self, value: _int) -> None:
         self._value = value
 
     def negated(self) -> Int:
@@ -52,6 +54,9 @@ class Int(Object):
         from poop.types.boolean import true
 
         return true
+
+    def int(self) -> Int:
+        return self
 
     def float(self) -> Float:
         from poop.types.float import Float
@@ -129,10 +134,10 @@ class Int(Object):
     def trunc(self) -> Int:
         return self.__trunc__()
 
-    def __round__(self, ndigits: int | None = None) -> Int:
+    def __round__(self, ndigits: _int | None = None) -> Int:
         return Int(round(self._value, ndigits))
 
-    def round(self, ndigits: int | None = None) -> Int:
+    def round(self, ndigits: _int | None = None) -> Int:
         return self.__round__(ndigits)
 
     def __eq__(self, other: object) -> Boolean:
@@ -169,7 +174,7 @@ class Int(Object):
 
         return true if self._value >= other._value else false
 
-    def __hash__(self) -> int:
+    def __hash__(self) -> _int:
         return hash(self._value)
 
     def bin(self) -> Str:
@@ -192,7 +197,7 @@ class Int(Object):
 
         return Str(chr(self._value))
 
-    def __int__(self) -> int:
+    def __int__(self) -> _int:
         return self._value
 
     def __bool__(self) -> bool:

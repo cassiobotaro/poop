@@ -235,6 +235,10 @@ def test_is_integer_always_true() -> None:
     assert Int(42).is_integer() is true
 
 
+def test_int() -> None:
+    assert Int(3).int() is Int(3) or Int(3).int() == Int(3)
+
+
 def test_float() -> None:
     from poop.types.float import Float
 
