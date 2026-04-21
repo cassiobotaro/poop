@@ -53,6 +53,11 @@ class Object:
 
         return true if builtins.callable(self) else false
 
+    def is_instance(self, type_: type) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if isinstance(self, type_) else false
+
     def responds_to(self, symbol: str) -> Boolean:
         from poop.types.boolean import false, true
 

@@ -40,6 +40,14 @@ def test_responds_to_missing_method() -> None:
     assert Object().responds_to("nonexistent") is false
 
 
+def test_is_instance_returns_true_for_matching_type() -> None:
+    assert Object().is_instance(Object) is true
+
+
+def test_is_instance_returns_false_for_non_matching_type() -> None:
+    assert Object().is_instance(int) is false
+
+
 def test_callable_returns_false_for_plain_object() -> None:
     assert Object().callable() is false
 
