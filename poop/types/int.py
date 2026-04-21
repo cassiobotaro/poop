@@ -48,7 +48,7 @@ class Int(Object):
 
         return true
 
-    def as_float(self) -> Float:
+    def float(self) -> Float:
         from poop.types.float import Float
 
         return Float(float(self._value))
