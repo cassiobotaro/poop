@@ -242,3 +242,15 @@ def test_split_sep() -> None:
 
 def test_join() -> None:
     assert Str(", ").join([Str("a"), Str("b"), Str("c")]) == Str("a, b, c")
+
+
+def test_int_parses_integer_string() -> None:
+    from poop.types.int import Int
+
+    assert Str("42").int() == Int(42)
+
+
+def test_float_parses_float_string() -> None:
+    from poop.types.float import Float
+
+    assert Str("3.14").float() == Float(3.14)

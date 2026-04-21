@@ -5,13 +5,17 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.float import Float
     from poop.types.int import Int
+
+_int = int  # alias to avoid shadowing by Str.int() method
+_str = str  # alias to avoid shadowing in annotations
 
 
 class Str(Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: str) -> None:
+    def __init__(self, value: _str) -> None:
         self._value = value
 
     def len(self) -> Int:
@@ -19,13 +23,23 @@ class Str(Object):
 
         return Int(len(self._value))
 
-    def __len__(self) -> int:
+    def __len__(self) -> _int:
         return len(self._value)
 
     def ord(self) -> Int:
         from poop.types.int import Int
 
         return Int(ord(self._value))
+
+    def int(self) -> Int:
+        from poop.types.int import Int
+
+        return Int(_int(self._value))
+
+    def float(self) -> Float:
+        from poop.types.float import Float
+
+        return Float(float(self._value))
 
     def at(self, index: Int) -> Str:
         return Str(self._value[index._value])
@@ -180,8 +194,8 @@ class Str(Object):
 
         return true if self._value >= other._value else false
 
-    def __hash__(self) -> int:
+    def __hash__(self) -> _int:
         return hash(self._value)
 
-    def __str__(self) -> str:
+    def __str__(self) -> _str:
         return self._value
