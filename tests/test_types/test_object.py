@@ -32,12 +32,12 @@ def test_class_name_returns_type_name() -> None:
     assert Object().class_name() == Str("Object")
 
 
-def test_responds_to_existing_method() -> None:
-    assert Object().responds_to("class_name") is true
+def test_has_attr_existing_method() -> None:
+    assert Object().has_attr("class_name") is true
 
 
-def test_responds_to_missing_method() -> None:
-    assert Object().responds_to("nonexistent") is false
+def test_has_attr_missing_method() -> None:
+    assert Object().has_attr("nonexistent") is false
 
 
 def test_is_instance_returns_true_for_matching_type() -> None:

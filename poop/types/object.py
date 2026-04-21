@@ -58,7 +58,7 @@ class Object:
 
         return true if isinstance(self, type_) else false
 
-    def responds_to(self, symbol: str) -> Boolean:
+    def has_attr(self, symbol: str) -> Boolean:
         from poop.types.boolean import false, true
 
         return true if hasattr(self, symbol) else false
