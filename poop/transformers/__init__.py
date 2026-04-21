@@ -11,7 +11,6 @@ from poop.transformers.none import NoneTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.string import StrTransformer
 from poop.transformers.tuple import TupleTransformer
-from poop.types.transcript import transcript
 
 DEFAULT_TRANSFORMERS: _list[Transformer] = [
     BooleanTransformer(),
@@ -32,7 +31,6 @@ DEFAULT_NAMESPACE: dict[str, object] = {
     **RangeTransformer.BINDINGS,
     **ListTransformer.BINDINGS,
     **TupleTransformer.BINDINGS,
-    "Transcript": transcript,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]

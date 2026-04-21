@@ -11,7 +11,7 @@ def test_cli_runs_valid_file(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     f = tmp_path / "ok.py"
-    f.write_text('Transcript.show("hi")\n', encoding="utf-8")
+    f.write_text('"hi".print()\n', encoding="utf-8")
     with patch.object(sys, "argv", ["poop", str(f)]):
         main()
     assert capsys.readouterr().out == "hi\n"

@@ -103,6 +103,14 @@ class List(Object):
             return false if self._items == other._items else true
         return true
 
+    def print(self, sep: str = " ", end: str = "\n", flush: bool = False) -> List:
+        from builtins import print as _builtins_print
+
+        _builtins_print(
+            *[str(item) for item in self._items], sep=sep, end=end, flush=flush
+        )  # noqa: T201
+        return self
+
     def __str__(self) -> str:
         return f"[{', '.join(str(item) for item in self._items)}]"
 

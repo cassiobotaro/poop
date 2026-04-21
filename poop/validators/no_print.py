@@ -12,7 +12,7 @@ class _NoPrintVisitor(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Name) and node.func.id == "print":
             raise ValidationError(
-                "print is forbidden — use Transcript.show instead",
+                "print is forbidden — use obj.print() instead",
                 lineno=node.lineno,
                 col_offset=node.col_offset,
             )

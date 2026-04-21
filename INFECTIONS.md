@@ -47,7 +47,7 @@ Funções dentro de classes (`class_depth > 0`) são permitidas como métodos.
 
 | Chamada | Motivo | Substituto |
 |---|---|---|
-| `print(...)` | Função livre com aparência procedural | `Transcript.show(obj)` |
+| `print(...)` | Função livre com aparência procedural | `obj.print()` |
 
 ### No `try` — `poop/validators/no_try.py`
 
@@ -329,14 +329,17 @@ Raiz concreta de todos os tipos POOP. Fornece implementações default para mét
 | `inject:into:` | `reduce(init, block)` | reduce |
 | `len` | `len()` | retorna `Int` |
 
-### Transcript — `poop/types/transcript.py`
+### Object.print — `poop/types/object.py`
 
-Singleton injetado no namespace de execução.
+Todo objeto POOP herda `print()` de `Object`. `List` e `Tuple` sobrescrevem para suportar `sep`.
 
-| Mensagem | Método |
+| Mensagem | Comportamento |
 |---|---|
-| `Transcript show: obj` | `Transcript.show(obj)` — chama `str(obj)` |
-| `Transcript nl` | `Transcript.nl()` — imprime linha vazia |
+| `obj.print()` | imprime `str(obj)` seguido de `\n` e retorna `self` |
+| `obj.print(end="")` | controla o terminador |
+| `list.print(sep=", ")` | `List`/`Tuple`: une elementos com `sep` (padrão `" "`) |
+
+`"".print()` imprime uma linha em branco. O retorno `self` permite cascatas: `x.print().print()`.
 
 ## Transformers ativos
 
@@ -444,7 +447,7 @@ Nenhum pendente.
 
 | Builtin | Motivo |
 |---|---|
-| `print` | ✓ bloqueado — use `Transcript.show` |
+| `print` | ✓ bloqueado — use `obj.print()` |
 | `len(x)` | ✓ bloqueado — use `x.len()` |
 | `abs(x)` | ✓ bloqueado — use `x.abs()` |
 | `range(n)` | ✓ reescrito → `Interval` via RangeTransformer |
@@ -525,7 +528,6 @@ Nenhuma pendente.
 
 - **REPL**: loop interativo — `poop` sem argumentos abre o REPL.
 - **Mensagens de erro mais ricas**: `ValidationError` poderia sugerir o equivalente POOP (ex.: `"use x.not_() instead of 'not x'"`).
-- **`Transcript.show` retornar `self`**: mudança de uma linha; permitiria cascatas (`Transcript.show(x).nl()`), que é idioma Smalltalk central.
 
 ### Exemplos de código
 

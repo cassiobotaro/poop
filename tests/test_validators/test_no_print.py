@@ -18,9 +18,9 @@ def test_print_call_raises_validation_error() -> None:
     assert "print" in str(exc_info.value)
 
 
-def test_error_message_mentions_transcript() -> None:
+def test_error_message_mentions_obj_print() -> None:
     tree = ast.parse('print("hello")')
-    with pytest.raises(ValidationError, match="Transcript"):
+    with pytest.raises(ValidationError, match="obj.print"):
         NoPrintValidator().validate(tree)
 
 
@@ -36,8 +36,3 @@ def test_print_carries_line_number() -> None:
     with pytest.raises(ValidationError) as exc_info:
         NoPrintValidator().validate(tree)
     assert exc_info.value.lineno == 2
-
-
-def test_transcript_show_call_passes() -> None:
-    tree = ast.parse('Transcript.show("hello")')
-    NoPrintValidator().validate(tree)

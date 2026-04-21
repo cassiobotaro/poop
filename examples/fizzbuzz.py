@@ -20,12 +20,12 @@ class FizzBuzz:
     def run(self) -> None:
         (1).to_(100).for_each(
             lambda i: (i % 15 == 0).if_true_if_false(
-                lambda: Transcript.show("FizzBuzz"),
+                lambda: "FizzBuzz".print(),
                 lambda: (i % 3 == 0).if_true_if_false(
-                    lambda: Transcript.show("Fizz"),
+                    lambda: "Fizz".print(),
                     lambda: (i % 5 == 0).if_true_if_false(
-                        lambda: Transcript.show("Buzz"),
-                        lambda: Transcript.show(i),
+                        lambda: "Buzz".print(),
+                        lambda: i.print(),
                     ),
                 ),
             ),

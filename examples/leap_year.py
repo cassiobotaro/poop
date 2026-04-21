@@ -35,7 +35,7 @@ class Year:
         )
 
 
-Transcript.show(Year(2000).is_leap())  # true  — divisible by 400
-Transcript.show(Year(1900).is_leap())  # false — divisible by 100 but not 400
-Transcript.show(Year(2008).is_leap())  # true  — divisible by 4 but not 100
-Transcript.show(Year(2017).is_leap())  # false — not divisible by 4
+Year(2000).is_leap().print()  # true  — divisible by 400
+Year(1900).is_leap().print()  # false — divisible by 100 but not 400
+Year(2008).is_leap().print()  # true  — divisible by 4 but not 100
+Year(2017).is_leap().print()  # false — not divisible by 4

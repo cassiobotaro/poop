@@ -1,3 +1,4 @@
+from builtins import print as _builtins_print
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -62,6 +63,10 @@ class Object:
         from poop.types.boolean import false, true
 
         return true if hasattr(self, symbol) else false
+
+    def print(self, end: str = "\n", flush: bool = False) -> Object:
+        _builtins_print(str(self), end=end, flush=flush)  # noqa: T201
+        return self
 
     def __str__(self) -> str:
         return f"<{self.class_name()}>"

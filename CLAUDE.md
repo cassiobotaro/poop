@@ -48,8 +48,8 @@ Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate →
 - `poop/parser.py` — wraps `ast.parse`
 - `poop/validators/` — AST validators (reject forbidden constructs); registered in `DEFAULT_VALIDATORS`: `no_if`, `no_loops`, `no_free_functions`, `no_print`, `no_try`, `no_not`, `no_unary_minus`, `no_invert`, `no_is`
 - `poop/transformers/` — AST transformers (rewrite nodes before execution); registered in `DEFAULT_TRANSFORMERS`: `boolean`, `int`, `float`, `none`, `str`
-- `poop/types/` — Smalltalk-style types: `object.py` (root), `boolean.py`, `none.py`, `int.py`, `float.py`, `interval.py`, `string.py`, `transcript.py`
+- `poop/types/` — Smalltalk-style types: `object.py` (root), `boolean.py`, `none.py`, `int.py`, `float.py`, `interval.py`, `string.py`, `list.py`, `tuple.py`
 - `poop/executor.py` — compiles and executes AST with an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
 
-`examples/` contains valid POOP programs. Files there use names injected at runtime (`Transcript`, `True`→POOP boolean, etc.) so they are excluded from `ty` and ruff `F821`.
+`examples/` contains valid POOP programs. Files there use names injected at runtime (`True`→POOP boolean, etc.) so they are excluded from `ty` and ruff `F821`.
