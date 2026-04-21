@@ -322,9 +322,9 @@ Raiz concreta de todos os tipos POOP. Fornece implementações default para mét
 | Mensagem | Método | Comportamento |
 |---|---|---|
 | `do:` | `do(block)` | itera sem alocar lista |
-| `collect:` | `collect(block)` | transforma → `list` (futuro: `OrderedCollection`) |
-| `select:` | `select(block)` | filtra → `list` |
-| `reject:` | `reject(block)` | filtra inverso → `list` |
+| `collect:` | `collect(block)` | transforma → `list` (futuro: `List`) |
+| `select:` | `select(block)` | filtra → `list` (futuro: `List`) |
+| `reject:` | `reject(block)` | filtra inverso → `list` (futuro: `List`) |
 | `detect:` | `detect(block)` | primeiro que satisfaz, ou `none` POOP |
 | `inject:into:` | `inject_into(init, block)` | reduce |
 | `len` | `len()` | retorna `Int` |
@@ -400,9 +400,9 @@ Nenhum pendente.
 
 ### Próximos tipos
 
-- **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `len()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
-- **`Array`**: substitui `tuple`; imutável; mensagens `len()`, `at(index)`, `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Array`.
-- **`Dictionary`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `len()`. Transformer reescreve literais `{k: v}` → `Dictionary`.
+- **`List`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `len()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `List`.
+- **`Tuple`**: substitui `tuple`; imutável; mensagens `len()`, `at(index)`, `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Tuple`.
+- **`Dict`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `len()`. Transformer reescreve literais `{k: v}` → `Dict`.
 - **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `len()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
 - **`Error`**: classe base para exceções POOP; método `signal()` e `signal_with(msg)` como mensagens ao objeto de erro. Desbloqueia `no_raise` e `no_with`.
 - **`Str` — métodos ausentes**: nenhum. Todos os dunders e métodos de string estão implementados.
@@ -410,9 +410,9 @@ Nenhum pendente.
 
 ### Próximos transformers
 
-- Literais lista (`ast.List`) → `OrderedCollection`.
-- Literais tupla (`ast.Tuple`) → `Array`.
-- Literais dict (`ast.Dict`) → `Dictionary`.
+- Literais lista (`ast.List`) → `List`.
+- Literais tupla (`ast.Tuple`) → `Tuple`.
+- Literais dict (`ast.Dict`) → `Dict`.
 - Literais set (`ast.Set`) → `Set`.
 - ~~`range(...)` → `Interval`.~~ — implementado via RangeTransformer.
 - ~~`len(x)` → `x.len()`~~ — banir via validator com sugestão; ver seção Builtins.
@@ -434,7 +434,7 @@ Nenhum pendente.
 | `float(x)` | `x.float()` | ✓ em Int, Float, Str |
 | `type(x)` | `x.class_name()` | ✓ em Object |
 | `reversed(x)` | `x.reversed()` | ✓ em Interval |
-| `sorted(x)` | `x.sorted()` | futuro (depende de OrderedCollection) |
+| `sorted(x)` | `x.sorted()` | futuro (depende de `List`) |
 | `map(f, col)` | `col.collect(f)` | ✓ collect existe |
 | `filter(f, col)` | `col.select(f)` | ✓ select existe |
 
