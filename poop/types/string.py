@@ -13,13 +13,10 @@ class Str(Object):
     def __init__(self, value: str) -> None:
         self._value = value
 
-    def size(self) -> Int:
+    def len(self) -> Int:
         from poop.types.int import Int
 
         return Int(len(self._value))
-
-    def len(self) -> Int:
-        return self.size()
 
     def ord(self) -> Int:
         from poop.types.int import Int

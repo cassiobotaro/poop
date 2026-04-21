@@ -15,9 +15,9 @@ def test_repr_delegates_to_str() -> None:
     assert repr(iv) == str(iv)
 
 
-def test_size() -> None:
-    assert _interval(1, 3).size() == Int(3)
-    assert _interval(1, 1).size() == Int(1)
+def test_len() -> None:
+    assert _interval(1, 3).len() == Int(3)
+    assert _interval(1, 1).len() == Int(1)
 
 
 def test_do_iterates_all_elements() -> None:
@@ -130,9 +130,5 @@ def test_reversed_iterates_in_reverse() -> None:
     assert results == [3, 2, 1]
 
 
-def test_reversed_size_is_same() -> None:
-    assert _interval(1, 5).reversed().size() == Int(5)
-
-
-def test_len_equals_size() -> None:
-    assert _interval(1, 5).len() == _interval(1, 5).size()
+def test_reversed_len_is_same() -> None:
+    assert _interval(1, 5).reversed().len() == Int(5)

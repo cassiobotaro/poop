@@ -75,13 +75,10 @@ class Interval(Object):
     def reversed(self) -> Interval:
         return Interval(self._stop, self._start)
 
-    def size(self) -> Int:
+    def len(self) -> Int:
         from poop.types.int import Int
 
         return Int(abs(self._stop._value - self._start._value) + 1)
-
-    def len(self) -> Int:
-        return self.size()
 
     def __str__(self) -> str:
         return f"({self._start}..{self._stop})"

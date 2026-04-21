@@ -9,12 +9,12 @@ def test_str_wraps_value() -> None:
     assert str(Str("hello")) == "hello"
 
 
-def test_size() -> None:
-    assert Str("hello").size() == Int(5)
+def test_len() -> None:
+    assert Str("hello").len() == Int(5)
 
 
-def test_size_empty() -> None:
-    assert Str("").size() == Int(0)
+def test_len_empty() -> None:
+    assert Str("").len() == Int(0)
 
 
 def test_at_returns_char() -> None:
