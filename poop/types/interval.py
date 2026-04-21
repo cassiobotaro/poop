@@ -80,5 +80,8 @@ class Interval(Object):
 
         return Int(abs(self._stop._value - self._start._value) + 1)
 
+    def len(self) -> Int:
+        return self.size()
+
     def __str__(self) -> str:
         return f"({self._start}..{self._stop})"

@@ -132,3 +132,7 @@ def test_reversed_iterates_in_reverse() -> None:
 
 def test_reversed_size_is_same() -> None:
     assert _interval(1, 5).reversed().size() == Int(5)
+
+
+def test_len_equals_size() -> None:
+    assert _interval(1, 5).len() == _interval(1, 5).size()
