@@ -68,3 +68,16 @@ class Object:
 
     def __repr__(self) -> str:
         return str(self)
+
+    def __eq__(self, other: object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self is other else false
+
+    def __ne__(self, other: object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return false if self is other else true
+
+    def __hash__(self) -> int:
+        return id(self)

@@ -85,3 +85,36 @@ def test_str_default() -> None:
 def test_repr_delegates_to_str() -> None:
     obj = Object()
     assert repr(obj) == str(obj)
+
+
+def test_eq_same_object_returns_true() -> None:
+    from poop.types.boolean import true
+
+    obj = Object()
+    assert obj == obj
+    result = obj.__eq__(obj)
+    assert result is true
+
+
+def test_eq_different_objects_returns_false() -> None:
+    from poop.types.boolean import false
+
+    a, b = Object(), Object()
+    result = a.__eq__(b)
+    assert result is false
+
+
+def test_ne_same_object_returns_false() -> None:
+    from poop.types.boolean import false
+
+    obj = Object()
+    result = obj.__ne__(obj)
+    assert result is false
+
+
+def test_ne_different_objects_returns_true() -> None:
+    from poop.types.boolean import true
+
+    a, b = Object(), Object()
+    result = a.__ne__(b)
+    assert result is true
