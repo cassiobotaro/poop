@@ -367,6 +367,12 @@ Singleton injetado no namespace de execução.
 |---|---|
 | `ast.Constant(value=None)` | `_poop_none` |
 
+### No `del` — `poop/validators/no_del.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.Delete` | objetos não têm destruição explícita — simplesmente não deletar |
+
 ### Str — `poop/transformers/str.py`
 
 | Nó AST | Substituição |
@@ -381,9 +387,7 @@ Singleton injetado no namespace de execução.
 
 ### Validators — aguardando implementação
 
-| Construct | Validator | Motivo |
-|---|---|---|
-| `del x` | `no_del.py` | objetos não têm destruição explícita — simplesmente não deletar |
+Nenhum pendente.
 
 ### Validators — aguardando substituto
 
