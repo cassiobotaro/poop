@@ -1,4 +1,5 @@
 from poop.types.boolean import Boolean, false, true
+from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.interval import Interval
@@ -8,6 +9,7 @@ from poop.types.string import Str
 
 __all__ = [
     "Boolean",
+    "Dict",
     "Float",
     "Int",
     "Interval",

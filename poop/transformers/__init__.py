@@ -1,9 +1,13 @@
 from builtins import (
+    dict as _dict,  # preserve builtin before poop.transformers.dict shadows it
+)
+from builtins import (
     list as _list,  # preserve builtin before poop.transformers.list shadows it
 )
 
 from poop.transformers.base import Transformer
 from poop.transformers.boolean import BooleanTransformer
+from poop.transformers.dict import DictTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
@@ -21,8 +25,9 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     RangeTransformer(),
     ListTransformer(),
     TupleTransformer(),
+    DictTransformer(),
 ]
-DEFAULT_NAMESPACE: dict[str, object] = {
+DEFAULT_NAMESPACE: _dict[str, object] = {
     **BooleanTransformer.BINDINGS,
     **NoneTransformer.BINDINGS,
     **IntTransformer.BINDINGS,
@@ -31,6 +36,7 @@ DEFAULT_NAMESPACE: dict[str, object] = {
     **RangeTransformer.BINDINGS,
     **ListTransformer.BINDINGS,
     **TupleTransformer.BINDINGS,
+    **DictTransformer.BINDINGS,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]

@@ -414,7 +414,7 @@ Nenhum pendente.
 - ~~**`List`**: substitui `list`; mensagens `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`, `add(obj)`, `len()`, `includes(obj)`. Quando implementado, `Interval.map`/`filter`/`filter_false` passam a retornar `List`.~~ — implementado (nomes Smalltalk — renomear, ver Renomeações pendentes).
 - ~~**`Tuple`**: substitui `tuple`; imutável; mensagens `len()`, `at(index)`, `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Tuple`.~~ — implementado (nomes Smalltalk — renomear, ver Renomeações pendentes).
 - **[ALTA PRIORIDADE] `Error`**: classe base para exceções POOP; método `signal()` e `signal_with(msg)` como mensagens ao objeto de erro. **Dependência crítica**: desbloqueia `no_raise`, `no_with` e `no_assert` — enquanto `Error` não existe, código POOP pode usar `raise` e `with` livremente, sem proteção dos princípios.
-- **`Dict`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `for_each(block)`, `len()`. Transformer reescreve literais `{k: v}` → `Dict`.
+- ~~**`Dict`**~~: implementado — `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `for_each(block)` (recebe `Tuple(key, value)`), `len()`. Transformer reescreve literais `{k: v}` → `Dict`.
 - **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `len()`, `for_each(block)`. Transformer reescreve literais `{a, b}` → `Set`.
 - **`FrozenSet`**: substitui `frozenset`; versão imutável de `Set` — relação análoga a `Tuple`/`List`. Mensagens `includes(obj)`, `len()`, `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`. Implementar após `Set`.
 - **`Complex`**: substitui `complex`; mensagens `real()`, `imag()`, `conjugate()`, `abs()`. Literais `complex(r, i)` → `Complex`. Transformer reescreve `j`-literals (`1+2j`) → `Complex`. Baixa prioridade — uso científico/nicho.
@@ -425,7 +425,7 @@ Nenhum pendente.
 
 - ~~Literais lista (`ast.List`) → `List`.~~ — implementado via ListTransformer.
 - ~~Literais tupla (`ast.Tuple`) → `Tuple`.~~ — implementado via TupleTransformer.
-- Literais dict (`ast.Dict`) → `Dict`.
+- ~~Literais dict (`ast.Dict`) → `Dict`.~~
 - Literais set (`ast.Set`) → `Set`.
 - ~~`range(...)` → `Interval`.~~ — implementado via RangeTransformer.
 - ~~`len(x)` → `x.len()`~~ — banir via validator com sugestão; ver seção Builtins.
