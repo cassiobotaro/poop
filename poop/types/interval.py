@@ -98,3 +98,5 @@ class Interval(Object):
 
     def __str__(self) -> str:
         return f"({self._start}..{self._stop})"
+
+    __repr__ = __str__

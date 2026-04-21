@@ -30,6 +30,8 @@ class NoneClass(Object):
     def __str__(self) -> str:
         return "None"
 
+    __repr__ = __str__
+
     def __bool__(self) -> bool:
         return False
 

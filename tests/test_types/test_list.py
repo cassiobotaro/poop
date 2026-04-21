@@ -151,3 +151,7 @@ def test_str_empty() -> None:
 def test_not_hashable() -> None:
     with pytest.raises(TypeError):
         hash(List())
+
+
+def test_repr_equals_str() -> None:
+    assert repr(List(Int(1), Int(2))) == str(List(Int(1), Int(2)))

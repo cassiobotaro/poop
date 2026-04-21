@@ -202,3 +202,5 @@ class Str(Object):
 
     def __str__(self) -> _str:
         return self._value
+
+    __repr__ = __str__

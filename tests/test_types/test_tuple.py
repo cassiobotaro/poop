@@ -168,3 +168,7 @@ def test_not_equal_to_list() -> None:
     from poop.types.list import List
 
     assert (Tuple(Int(1)) == List(Int(1))) is false
+
+
+def test_repr_equals_str() -> None:
+    assert repr(Tuple(Int(1), Int(2))) == str(Tuple(Int(1), Int(2)))

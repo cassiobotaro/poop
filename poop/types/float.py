@@ -158,3 +158,5 @@ class Float(Object):
 
     def __str__(self) -> str:
         return str(self._value)
+
+    __repr__ = __str__

@@ -106,3 +106,5 @@ class Tuple(Object):
         if len(self._items) == 1:
             return f"({self._items[0]},)"
         return f"({', '.join(str(item) for item in self._items)})"
+
+    __repr__ = __str__
