@@ -1,0 +1,194 @@
+import pytest
+
+from poop.types.boolean import false, true
+from poop.types.int import Int
+from poop.types.none import none
+from poop.types.set import Set
+
+
+def test_empty_set() -> None:
+    assert Set().len() == Int(0)
+
+
+def test_len() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    assert s.len() == Int(3)
+
+
+def test_dunder_len() -> None:
+    assert len(Set(Int(1), Int(2))) == 2
+
+
+def test_add_returns_self() -> None:
+    s = Set()
+    result = s.add(Int(1))
+    assert result is s
+
+
+def test_add_increases_len() -> None:
+    s = Set()
+    s.add(Int(1))
+    s.add(Int(2))
+    assert s.len() == Int(2)
+
+
+def test_add_duplicate_keeps_unique() -> None:
+    s = Set(Int(1))
+    s.add(Int(1))
+    assert s.len() == Int(1)
+
+
+def test_remove_returns_self() -> None:
+    s = Set(Int(1))
+    result = s.remove(Int(1))
+    assert result is s
+
+
+def test_remove_decreases_len() -> None:
+    s = Set(Int(1), Int(2))
+    s.remove(Int(1))
+    assert s.len() == Int(1)
+
+
+def test_remove_missing_does_not_raise() -> None:
+    s = Set()
+    s.remove(Int(99))  # discard semantics — no error
+    assert s.len() == Int(0)
+
+
+def test_includes_true() -> None:
+    s = Set(Int(1), Int(2))
+    assert s.includes(Int(1)) is true
+
+
+def test_includes_false() -> None:
+    assert Set().includes(Int(1)) is false
+
+
+def test_contains_dunder() -> None:
+    s = Set(Int(1), Int(2))
+    assert Int(1) in s
+    assert Int(99) not in s
+
+
+def test_for_each_visits_all_elements() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    seen: list[Int] = []
+    s.for_each(lambda x: seen.append(x))  # type: ignore[arg-type]
+    assert len(seen) == 3
+
+
+def test_map_returns_set() -> None:
+    s = Set(Int(1), Int(2))
+    result = s.map(lambda x: x)
+    assert isinstance(result, Set)
+
+
+def test_map_transforms_elements() -> None:
+    s = Set(Int(2))
+    result = s.map(lambda x: Int(x._value * 2))  # type: ignore[attr-defined]
+    assert result.includes(Int(4)) is true
+
+
+def test_filter_keeps_matching() -> None:
+    s = Set(Int(1), Int(2), Int(3), Int(4))
+    result = s.filter(lambda x: x._value % 2 == 0)  # type: ignore[attr-defined]
+    assert result.len() == Int(2)
+    assert result.includes(Int(2)) is true
+    assert result.includes(Int(4)) is true
+
+
+def test_filter_false_keeps_non_matching() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    result = s.filter_false(lambda x: x._value % 2 == 0)  # type: ignore[attr-defined]
+    assert result.len() == Int(2)
+
+
+def test_find_returns_matching_element() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    result = s.find(lambda x: x._value > 2)  # type: ignore[attr-defined]
+    assert result == Int(3)
+
+
+def test_find_returns_none_when_not_found() -> None:
+    s = Set(Int(1), Int(2))
+    assert s.find(lambda x: x._value > 99) is none  # type: ignore[attr-defined]
+
+
+def test_reduce_accumulates() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    result = s.reduce(Int(0), lambda acc, x: Int(acc._value + x._value))  # type: ignore[attr-defined]
+    assert result == Int(6)
+
+
+def test_all_true_when_all_match() -> None:
+    s = Set(Int(2), Int(4))
+    assert s.all(lambda x: x._value % 2 == 0) is true  # type: ignore[attr-defined]
+
+
+def test_all_false_when_any_mismatch() -> None:
+    s = Set(Int(2), Int(3))
+    assert s.all(lambda x: x._value % 2 == 0) is false  # type: ignore[attr-defined]
+
+
+def test_any_true_when_some_match() -> None:
+    s = Set(Int(1), Int(2))
+    assert s.any(lambda x: x._value % 2 == 0) is true  # type: ignore[attr-defined]
+
+
+def test_any_false_when_none_match() -> None:
+    s = Set(Int(1), Int(3))
+    assert s.any(lambda x: x._value % 2 == 0) is false  # type: ignore[attr-defined]
+
+
+def test_eq_equal_sets() -> None:
+    assert Set(Int(1), Int(2)) == Set(Int(2), Int(1))
+
+
+def test_eq_different_sets() -> None:
+    assert (Set(Int(1)) == Set(Int(2))) is false
+
+
+def test_ne_different_sets() -> None:
+    assert (Set(Int(1)) != Set(Int(2))) is true
+
+
+def test_iter_yields_all_elements() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    items = list(s)
+    assert len(items) == 3
+
+
+def test_str_empty() -> None:
+    assert str(Set()) == "set()"
+
+
+def test_str_contains_elements() -> None:
+    s = Set(Int(1))
+    assert "1" in str(s)
+
+
+def test_repr_equals_str() -> None:
+    s = Set(Int(1))
+    assert repr(s) == str(s)
+
+
+def test_not_hashable() -> None:
+    with pytest.raises(TypeError):
+        hash(Set())
+
+
+def test_transformer_literal() -> None:
+    from poop.parser import parse
+    from poop.transformers.int import IntTransformer
+    from poop.transformers.set import SetTransformer, _poop_set
+    from poop.types.int import Int as _Int
+
+    tree = parse("s = {1, 2, 3}")
+    tree = IntTransformer().transform(tree)
+    tree = SetTransformer().transform(tree)
+    ns: dict[str, object] = {"_poop_set": _poop_set, "_poop_int": _Int}
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    result = ns["s"]
+    assert isinstance(result, Set)
+    assert result.len() == Int(3)

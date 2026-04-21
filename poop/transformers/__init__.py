@@ -13,6 +13,7 @@ from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
 from poop.transformers.none import NoneTransformer
 from poop.transformers.range import RangeTransformer
+from poop.transformers.set import SetTransformer
 from poop.transformers.string import StrTransformer
 from poop.transformers.tuple import TupleTransformer
 
@@ -26,6 +27,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     ListTransformer(),
     TupleTransformer(),
     DictTransformer(),
+    SetTransformer(),
 ]
 DEFAULT_NAMESPACE: _dict[str, object] = {
     **BooleanTransformer.BINDINGS,
@@ -37,6 +39,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **ListTransformer.BINDINGS,
     **TupleTransformer.BINDINGS,
     **DictTransformer.BINDINGS,
+    **SetTransformer.BINDINGS,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]

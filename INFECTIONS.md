@@ -415,9 +415,12 @@ Nenhum pendente.
 - ~~**`Tuple`**: substitui `tuple`; imutável; mensagens `len()`, `at(index)`, `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Tuple`.~~ — implementado (nomes Smalltalk — renomear, ver Renomeações pendentes).
 - **[ALTA PRIORIDADE] `Error`**: classe base para exceções POOP; método `signal()` e `signal_with(msg)` como mensagens ao objeto de erro. **Dependência crítica**: desbloqueia `no_raise`, `no_with` e `no_assert` — enquanto `Error` não existe, código POOP pode usar `raise` e `with` livremente, sem proteção dos princípios.
 - ~~**`Dict`**~~: implementado — `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `for_each(block)` (recebe `Tuple(key, value)`), `len()`. Transformer reescreve literais `{k: v}` → `Dict`.
-- **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `len()`, `for_each(block)`. Transformer reescreve literais `{a, b}` → `Set`.
+- ~~**`Set`**~~: implementado — `includes(obj)`, `add(obj)`, `remove(obj)` (semântica `discard`, sem erro se ausente), `len()`, `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`, `all(block)`, `any(block)`. Transformer reescreve literais `{a, b}` → `Set`. Literal `{}` vazio é dict — usar `_poop_set()` para set vazio.
 - **`FrozenSet`**: substitui `frozenset`; versão imutável de `Set` — relação análoga a `Tuple`/`List`. Mensagens `includes(obj)`, `len()`, `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`. Implementar após `Set`.
 - **`Complex`**: substitui `complex`; mensagens `real()`, `imag()`, `conjugate()`, `abs()`. Literais `complex(r, i)` → `Complex`. Transformer reescreve `j`-literals (`1+2j`) → `Complex`. Baixa prioridade — uso científico/nicho.
+- **`Bytes`**: substitui `bytes`; mensagens `len()`, `at(index)`, `includes(byte)`, `decode(encoding)`, `hex()`, `for_each(block)`, `map(block)`. Transformer reescreve literais `b"..."` → `Bytes`. Implementar após `Set`/`FrozenSet`.
+- **`ByteArray`**: substitui `bytearray`; versão mutável de `Bytes` — relação análoga a `List`/`Tuple`. Mensagens `len()`, `at(index)`, `at_put(index, byte)`, `includes(byte)`, `decode(encoding)`, `hex()`, `for_each(block)`. Implementar após `Bytes`.
+- **`MemoryView`**: substitui `memoryview`; wrapper sobre buffer de bytes. Mensagens `len()`, `at(index)`, `for_each(block)`. Baixa prioridade — uso científico/nicho. Implementar após `Bytes`/`ByteArray`.
 - **`Str` — métodos ausentes**: nenhum. Todos os dunders e métodos de string estão implementados.
 - **`Interval` — métodos ausentes**: nenhum. Todos os métodos estão implementados.
 
@@ -426,7 +429,7 @@ Nenhum pendente.
 - ~~Literais lista (`ast.List`) → `List`.~~ — implementado via ListTransformer.
 - ~~Literais tupla (`ast.Tuple`) → `Tuple`.~~ — implementado via TupleTransformer.
 - ~~Literais dict (`ast.Dict`) → `Dict`.~~
-- Literais set (`ast.Set`) → `Set`.
+- ~~Literais set (`ast.Set`) → `Set`.~~
 - ~~`range(...)` → `Interval`.~~ — implementado via RangeTransformer.
 - ~~`len(x)` → `x.len()`~~ — banir via validator com sugestão; ver seção Builtins.
 - ~~`abs(x)` → `x.abs()`~~ — banir via validator com sugestão; ver seção Builtins.
@@ -495,7 +498,7 @@ Nenhum pendente.
 | `int` / `float` / `str` / `bool` | construtores cobertos por transformers |
 | `complex` | substituído por `Complex` — ver Próximos tipos |
 | `frozenset` | substituído por `FrozenSet` — ver Próximos tipos |
-| `bytes` / `bytearray` / `memoryview` | baixo nível sem semântica de mensagem — banir via validator sem substituto |
+| `bytes` / `bytearray` / `memoryview` | substituídos por `Bytes`/`ByteArray`/`MemoryView` — ver Próximos tipos |
 | `issubclass` | avaliar junto com `isinstance` |
 | `repr` | delega para `__repr__` → `__str__` |
 | `sum` | usar `reduce(0, block)` — banir quando transformer existir |
@@ -518,7 +521,7 @@ Nenhum pendente.
 - **[MÉDIA PRIORIDADE] `no_augmented_assign`**: `x += 1`, `x -= 1` etc. não são bloqueados — `ast.AugAssign`. Construto muito frequente; a ausência de bloqueio cria uma exceção implícita ao modelo de mensagens.
 - **`no_import`**: `import os` dentro de código POOP não é bloqueado — decidir se deve ser banido ou restrito.
 - **`no_raise`** e **`no_assert`**: bloqueados por `Error` — os validators não podem ser ativados antes do tipo `Error` existir (ver seção Próximos tipos).
-- **`no_bytes`**: `bytes(...)`, `bytearray(...)`, `memoryview(...)` — tipos de baixo nível sem semântica de mensagem; banir sem substituto POOP.
+- **`no_bytes`**: `bytes(...)`, `bytearray(...)`, `memoryview(...)` — aguardando implementação de `Bytes`/`ByteArray`/`MemoryView` (ver Próximos tipos).
 
 ### Métodos faltando em tipos existentes
 

@@ -5,6 +5,7 @@ from poop.types.int import Int
 from poop.types.interval import Interval
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
+from poop.types.set import Set
 from poop.types.string import Str
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "Interval",
     "NoneClass",
     "Object",
+    "Set",
     "Str",
     "false",
     "none",
