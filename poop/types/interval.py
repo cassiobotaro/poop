@@ -14,18 +14,23 @@ if TYPE_CHECKING:
 
 
 class Interval(Object):
-    __slots__ = ("_start", "_stop")
+    __slots__ = ("_start", "_step", "_stop")
 
-    def __init__(self, start: Int, stop: Int) -> None:
+    def __init__(self, start: Int, stop: Int, step: Int | None = None) -> None:
+        from poop.types.int import Int
+
         self._start = start
         self._stop = stop
+        self._step = (
+            step if step is not None else Int(1 if start._value <= stop._value else -1)
+        )
 
     def _iter(self) -> Any:
         from poop.types.int import Int
 
-        start, stop = self._start._value, self._stop._value
-        step = 1 if start <= stop else -1
-        for i in range(start, stop + step, step):
+        start, stop, step = self._start._value, self._stop._value, self._step._value
+        sign = 1 if step > 0 else -1
+        for i in range(start, stop + sign, step):
             yield Int(i)
 
     def do[T](self, block: Callable[[Int], T]) -> None:
@@ -73,12 +78,16 @@ class Interval(Object):
         return self._stop
 
     def reversed(self) -> Interval:
-        return Interval(self._stop, self._start)
+        from poop.types.int import Int
+
+        return Interval(self._stop, self._start, Int(-self._step._value))
 
     def len(self) -> Int:
         from poop.types.int import Int
 
-        return Int(abs(self._stop._value - self._start._value) + 1)
+        start, stop, step = self._start._value, self._stop._value, self._step._value
+        sign = 1 if step > 0 else -1
+        return Int(len(range(start, stop + sign, step)))
 
     def __str__(self) -> str:
         return f"({self._start}..{self._stop})"

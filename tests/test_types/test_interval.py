@@ -132,3 +132,25 @@ def test_reversed_iterates_in_reverse() -> None:
 
 def test_reversed_len_is_same() -> None:
     assert _interval(1, 5).reversed().len() == Int(5)
+
+
+def test_to_by_ascending_step() -> None:
+    results: list[int] = []
+    Int(1).to_by_(Int(9), Int(2)).do(lambda i: results.append(int(i)))
+    assert results == [1, 3, 5, 7, 9]
+
+
+def test_to_by_descending_step() -> None:
+    results: list[int] = []
+    Int(9).to_by_(Int(1), Int(-2)).do(lambda i: results.append(int(i)))
+    assert results == [9, 7, 5, 3, 1]
+
+
+def test_to_by_len() -> None:
+    assert Int(1).to_by_(Int(9), Int(2)).len() == Int(5)
+
+
+def test_reversed_with_step() -> None:
+    results: list[int] = []
+    Int(1).to_by_(Int(9), Int(2)).reversed().do(lambda i: results.append(int(i)))
+    assert results == [9, 7, 5, 3, 1]

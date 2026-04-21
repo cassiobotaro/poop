@@ -31,6 +31,11 @@ class Int(Object):
 
         return Interval(self, limit)
 
+    def to_by_(self, limit: Int, step: Int) -> Interval:
+        from poop.types.interval import Interval
+
+        return Interval(self, limit, step)
+
     def max(self, other: Int) -> Int:
         return self if self._value >= other._value else other
 
