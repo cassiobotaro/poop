@@ -82,6 +82,87 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 | `ast.Compare` com `ast.Is` | `is` tem aparência de operador | `x.is_none()` ou `x.is_identical(other)` |
 | `ast.Compare` com `ast.IsNot` | `is not` tem aparência de operador | `x.not_none()` ou `x.not_identical(other)` |
 
+### No `global`/`nonlocal` — `poop/validators/no_global.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.Global` | `global` rompe o encapsulamento — estado vive em instâncias, não em escopo global |
+| `ast.Nonlocal` | `nonlocal` manipula escopo externo — use variáveis de instância |
+
+### No `yield` — `poop/validators/no_yield.py`
+
+| Nó AST | Motivo | Substituto |
+|---|---|---|
+| `ast.Yield` | gerador tem aparência procedural de iteração | `col.do(block)`, `col.collect(block)` |
+| `ast.YieldFrom` | idem | idem |
+
+### No walrus (`:=`) — `poop/validators/no_walrus.py`
+
+| Nó AST | Motivo |
+|---|---|
+| `ast.NamedExpr` | `:=` combina atribuição e expressão — use atribuição separada |
+
+### No `match/case` — `poop/validators/no_match.py`
+
+| Nó AST | Motivo | Substituto |
+|---|---|---|
+| `ast.Match` | estrutura de controle com aparência procedural | polimorfismo + `if_true(block)`/`if_false(block)` |
+
+### No `len` — `poop/validators/no_len.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `len(x)` | função livre com aparência procedural | `x.len()` |
+
+### No `abs` — `poop/validators/no_abs.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `abs(x)` | função livre com aparência procedural | `x.abs()` |
+
+### No `hash` — `poop/validators/no_hash.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `hash(x)` | função livre com aparência procedural | `x.hash()` |
+
+### No `isinstance` — `poop/validators/no_isinstance.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `isinstance(x, T)` | função livre com aparência procedural | `x.is_instance(T)` |
+
+### No `callable` — `poop/validators/no_callable.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `callable(x)` | função livre com aparência procedural | `x.callable()` |
+
+### No `id` — `poop/validators/no_id.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `id(x)` | função livre com aparência procedural | `x.id()` |
+
+### No `all` — `poop/validators/no_all.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `all(col)` | função livre com aparência procedural | `col.all(block)` |
+
+### No `any` — `poop/validators/no_any.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `any(col)` | função livre com aparência procedural | `col.any(block)` |
+
+### No `min`/`max` — `poop/validators/no_min.py`, `poop/validators/no_max.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `min(a, b)` | função livre com aparência procedural | `a.min(b)` |
+| `max(a, b)` | função livre com aparência procedural | `a.max(b)` |
+
 ## Tipos ativos
 
 ### Object — `poop/types/object.py`
@@ -183,30 +264,36 @@ Singleton injetado no namespace de execução.
 
 ### TODO — operações que retornam booleano nativo
 
-- Operador `is` / `is not`
-- Funções built-in: `isinstance`, `hasattr`, `callable`, etc.
+- Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`) — ainda retornam `bool` Python nativo em vez de `Boolean` POOP
 
 ## Backlog
 
-### Validators — com substituto pronto (pode ativar)
+### Validators — implementados, aguardando registro em `DEFAULT_VALIDATORS`
 
-| Construct | Validator | Substituto disponível |
+| Construct | Validator | Nota |
 |---|---|---|
-| `global` / `nonlocal` | `no_global.py` | use variáveis de instância |
-| `del x` | `no_del.py` | simplesmente não deletar — objetos não têm destruição explícita |
-| `yield` / `yield from` | `no_yield.py` | `do(block)`, `collect(block)`, `select(block)` |
-| `:=` walrus | `no_walrus.py` | reestruturar como atribuição separada |
-| `match/case` | `no_match.py` | polimorfismo + `if_true`/`if_false` |
-| `input(...)` | `no_builtins.py` | sem substituto POOP necessário — banir |
-| `exec` / `eval` / `compile` | `no_builtins.py` | sem substituto — banir |
-| `breakpoint` | `no_builtins.py` | sem substituto — banir |
-| `exit` / `quit` | `no_builtins.py` | sem substituto — banir |
-| `globals` / `locals` / `vars` / `dir` | `no_builtins.py` | use instâncias e `responds_to` |
-| `setattr` / `delattr` | `no_builtins.py` | use métodos da classe |
-| `iter` / `next` / `aiter` / `anext` | `no_builtins.py` | `do(block)` |
-| `enumerate` / `zip` | `no_builtins.py` | `collect`, `inject_into` |
-| `slice` | `no_builtins.py` | use `at(index)` |
-| `format` | `no_builtins.py` | futuro `Str.format(spec)` |
+| `input(...)` | `no_input.py` | sem substituto POOP necessário — banir |
+| `exec` / `eval` / `compile` | `no_exec.py` | metaprogramação — banir |
+| `breakpoint` | `no_breakpoint.py` | debug Python-específico — banir |
+| `exit` / `quit` | `no_exit.py` | controle de processo — banir |
+| `globals` / `locals` / `vars` / `dir` | `no_introspection.py` | use instâncias |
+| `setattr` / `delattr` | `no_setattr.py` | use métodos da classe |
+| `iter` / `next` / `aiter` / `anext` | `no_iter.py` | `col.do(block)` |
+| `enumerate` / `zip` | `no_enumerate.py` | `collect`, `inject_into` |
+| `slice` | `no_slice.py` | `obj.at(index)` |
+| `format` | `no_format.py` | futuro `obj.format(spec)` |
+| `hasattr(x, s)` | `no_hasattr.py` | `x.has_attr(s)` |
+| `divmod(a, b)` | `no_divmod.py` | `a.divmod(b)` |
+| `pow(a, b)` | `no_pow.py` | `a.pow(b)` |
+| `bin(n)` / `hex(n)` / `oct(n)` | `no_bin.py` | `n.bin()` / `n.hex()` / `n.oct()` |
+| `chr(n)` / `ord(c)` | `no_chr.py` | `n.chr()` / `c.ord()` |
+| `open(...)` | `no_open.py` | sem substituto POOP — banir |
+
+### Validators — aguardando implementação
+
+| Construct | Validator | Motivo |
+|---|---|---|
+| `del x` | `no_del.py` | objetos não têm destruição explícita — simplesmente não deletar |
 
 ### Validators — aguardando substituto
 
@@ -263,21 +350,21 @@ Singleton injetado no namespace de execução.
 | Builtin | Motivo |
 |---|---|
 | `print` | ✓ bloqueado — use `Transcript.show` |
-| `len(x)` | função livre — use `x.len()` |
-| `abs(x)` | função livre — use `x.abs()` |
+| `len(x)` | ✓ bloqueado — use `x.len()` |
+| `abs(x)` | ✓ bloqueado — use `x.abs()` |
 | `range(n)` | função livre — use `(1).to_(n)` ou similar |
-| `hash(x)` | função livre — use `x.hash()` |
-| `id(x)` | função livre — use `x.identity_hash()` |
-| `all(col)` | função livre — use `col.all_satisfy(block)` |
-| `any(col)` | função livre — use `col.any_satisfy(block)` |
-| `min(a, b)` / `max(a, b)` | função livre — use `a.min(b)` / `a.max(b)` |
-| `isinstance(x, T)` | função livre — use `x.is_instance(T)` |
-| `hasattr(x, s)` | função livre — use `x.responds_to(s)` |
-| `callable(x)` | função livre — use `x.is_callable()` |
+| `hash(x)` | ✓ bloqueado — use `x.hash()` |
+| `id(x)` | ✓ bloqueado — use `x.id()` |
+| `all(col)` | ✓ bloqueado — use `col.all(block)` |
+| `any(col)` | ✓ bloqueado — use `col.any(block)` |
+| `min(a, b)` / `max(a, b)` | ✓ bloqueado — use `a.min(b)` / `a.max(b)` |
+| `isinstance(x, T)` | ✓ bloqueado — use `x.is_instance(T)` |
+| `hasattr(x, s)` | função livre — use `x.has_attr(s)` |
+| `callable(x)` | ✓ bloqueado — use `x.callable()` |
 | `divmod(a, b)` | função livre — use `a.divmod(b)` |
-| `pow(a, b)` | função livre — use `a.raised_to(b)` |
-| `bin(n)` / `hex(n)` / `oct(n)` | função livre — use `n.as_binary()` / `n.as_hex()` / `n.as_octal()` |
-| `chr(n)` / `ord(c)` | função livre — futuro `n.as_char()` / `c.ascii_value()` |
+| `pow(a, b)` | função livre — use `a.pow(b)` |
+| `bin(n)` / `hex(n)` / `oct(n)` | função livre — use `n.bin()` / `n.hex()` / `n.oct()` |
+| `chr(n)` / `ord(c)` | função livre — use `n.chr()` / `c.ord()` |
 | `input` | I/O sem substituto POOP |
 | `open` | I/O sem substituto POOP |
 | `exec` / `eval` / `compile` | metaprogramação — banir |
