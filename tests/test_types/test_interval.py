@@ -78,3 +78,27 @@ def test_class_name() -> None:
     from poop.types.string import Str
 
     assert _interval(1, 3).class_name() == Str("Interval")
+
+
+def test_all_returns_true_when_all_match() -> None:
+    from poop.types.boolean import true
+
+    assert _interval(2, 4).all(lambda i: i > Int(1)) is true
+
+
+def test_all_returns_false_when_some_dont_match() -> None:
+    from poop.types.boolean import false
+
+    assert _interval(1, 4).all(lambda i: i > Int(2)) is false
+
+
+def test_any_returns_true_when_some_match() -> None:
+    from poop.types.boolean import true
+
+    assert _interval(1, 4).any(lambda i: i > Int(3)) is true
+
+
+def test_any_returns_false_when_none_match() -> None:
+    from poop.types.boolean import false
+
+    assert _interval(1, 3).any(lambda i: i > Int(5)) is false

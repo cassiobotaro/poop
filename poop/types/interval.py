@@ -1,3 +1,5 @@
+from builtins import all as builtins_all
+from builtins import any as builtins_any
 from collections import deque
 from collections.abc import Callable
 from functools import reduce
@@ -6,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
     from poop.types.int import Int
     from poop.types.none import NoneClass
 
@@ -45,6 +48,16 @@ class Interval(Object):
 
     def inject_into[T](self, init: T, block: Callable[[T, Int], T]) -> T:
         return reduce(block, self._iter(), init)
+
+    def all(self, block: Callable[[Int], Any]) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if builtins_all(bool(block(i)) for i in self._iter()) else false
+
+    def any(self, block: Callable[[Int], Any]) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if builtins_any(bool(block(i)) for i in self._iter()) else false
 
     def size(self) -> Int:
         from poop.types.int import Int
