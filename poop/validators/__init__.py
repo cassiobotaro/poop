@@ -6,6 +6,7 @@ from poop.validators.no_bin import NoBinValidator
 from poop.validators.no_breakpoint import NoBreakpointValidator
 from poop.validators.no_callable import NoCallableValidator
 from poop.validators.no_chr import NoChrValidator
+from poop.validators.no_comprehension import NoComprehensionValidator
 from poop.validators.no_del import NoDelValidator
 from poop.validators.no_divmod import NoDivmodValidator
 from poop.validators.no_enumerate import NoEnumerateValidator
@@ -44,6 +45,7 @@ from poop.validators.no_yield import NoYieldValidator
 DEFAULT_VALIDATORS: list[Validator] = [
     NoIfValidator(),
     NoLoopsValidator(),
+    NoComprehensionValidator(),
     NoFreeFunctionsValidator(),
     NoPrintValidator(),
     NoTryValidator(),
