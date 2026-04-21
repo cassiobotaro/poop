@@ -14,6 +14,7 @@ from poop.validators.no_isinstance import NoIsinstanceValidator
 from poop.validators.no_len import NoLenValidator
 from poop.validators.no_loops import NoLoopsValidator
 from poop.validators.no_match import NoMatchValidator
+from poop.validators.no_min import NoMinValidator
 from poop.validators.no_not import NoNotValidator
 from poop.validators.no_print import NoPrintValidator
 from poop.validators.no_try import NoTryValidator
@@ -43,6 +44,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoIdValidator(),
     NoAllValidator(),
     NoAnyValidator(),
+    NoMinValidator(),
 ]
 
 __all__ = ["DEFAULT_VALIDATORS", "Validator"]
