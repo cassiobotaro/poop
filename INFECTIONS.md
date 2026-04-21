@@ -503,7 +503,9 @@ Nenhum pendente.
 
 ### Validators ausentes
 
-- **[ALTA PRIORIDADE] `no_subscript`**: `obj[key]` e `obj[1:3]` têm aparência de operador, não de mensagem — mesma lógica que baniu `len(x)` e `not x`. O substituto `obj.at(key)` já existe em `List`, `Tuple` e está previsto em `Dict`. Implementar assim que `no_subscript` for ativado. **Atenção**: fatiamento `obj[1:3]` não tem equivalente definido — decidir o nome antes (`obj.from_to(start, stop)`?) para não bloquear sem alternativa.
+- ~~**[ALTA PRIORIDADE] `no_subscript`**~~: implementado — bloqueia `obj[key]`, fatiamento `obj[1:3]` permitido por ora (ver item abaixo).
+- **`no_slice`**: fatiamento `obj[1:3]` tem aparência de operador mas ainda não tem substituto definido — candidato: `obj.from_to(start, stop)`. Ativar após decidir o nome e implementar o método.
+- **`slice` como classe Python**: `slice` é uma classe built-in (`slice(1, 3, 2)` cria um objeto com `.start`, `.stop`, `.step`). Vale pensar se POOP deveria ter um tipo `Slice` próprio, ou se o fatiamento deve simplesmente ser banido sem substituto de objeto. O `no_slice` atual bloqueia apenas a chamada `slice(...)`, não o uso do tipo em anotações ou `isinstance`.
 - **[MÉDIA PRIORIDADE] `no_comprehension`**: loops `for` são bloqueados mas `[x for x in col]`, `{k: v for ...}` etc. contêm a mesma iteração implícita — `ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`. Substitutos: `col.map(block)`, `col.filter(block)` (após renomear).
 - **[MÉDIA PRIORIDADE] `no_augmented_assign`**: `x += 1`, `x -= 1` etc. não são bloqueados — `ast.AugAssign`. Construto muito frequente; a ausência de bloqueio cria uma exceção implícita ao modelo de mensagens.
 - **`no_import`**: `import os` dentro de código POOP não é bloqueado — decidir se deve ser banido ou restrito.

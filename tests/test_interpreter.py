@@ -87,3 +87,15 @@ def test_float_divmod_returns_tuple_of_floats() -> None:
     assert isinstance(result, Tuple)
     assert result.at(Int(0)) == Float(3.0)
     assert result.at(Int(1)) == Float(2.0)
+
+
+def test_subscript_raises_validation_error() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source("x = [1, 2, 3]\ny = x[0]")
+    assert "obj.at(key)" in str(exc_info.value)
+
+
+def test_slice_subscript_is_allowed() -> None:
+    # no_subscript permite fatiamento — pode falhar em execução, mas não em validação
+    with pytest.raises(ExecutionError):
+        Interpreter().run_source("x = [1, 2, 3]\ny = x[1:2]")
