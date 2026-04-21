@@ -379,9 +379,10 @@ Singleton injetado no namespace de execução.
 |---|---|
 | `ast.Constant(value=str)` | `_poop_str(s)` |
 
-### TODO — operações que retornam booleano nativo
+### ~~TODO — operações que retornam booleano nativo~~
 
-- Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`) — ainda retornam `bool` Python nativo em vez de `Boolean` POOP
+- ~~Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`) — ainda retornam `bool` Python nativo em vez de `Boolean` POOP~~
+- Resolvido: `Object.__eq__`/`__ne__` retornam `Boolean` por identidade; subclasses (`Int`, `Float`, `Str`, `Interval`) sobrescrevem com lógica de valor.
 
 ## Backlog
 
@@ -419,7 +420,7 @@ Nenhum pendente.
 - ~~`isinstance(x, T)` → `x.is_instance(T)`~~ — banir via validator; use `x.is_instance(T)`.
 - ~~`hasattr(x, s)` → `x.has_attr(s)`~~ — banir via validator; use `x.has_attr(s)`.
 - ~~`callable(x)` → `x.callable()`~~ — banir via validator; use `x.callable()`.
-- Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`) → retornar `TrueClass`/`FalseClass`.
+- ~~Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`) → retornar `TrueClass`/`FalseClass`.~~ — implementado via `Object.__eq__`/`__ne__` e overrides em subclasses.
 
 ### Builtins Python — mapa completo
 
@@ -429,8 +430,8 @@ Nenhum pendente.
 |---|---|---|
 | `round(x)` | `x.round()` | ✓ em Int/Float |
 | `str(x)` | chama `__str__` | ✓ funciona |
-| `int(x)` | `x.int()` | ✓ em Int |
-| `float(x)` | `x.float()` | ✓ em Int |
+| `int(x)` | `x.int()` | ✓ em Int, Float, Str |
+| `float(x)` | `x.float()` | ✓ em Int, Float, Str |
 | `type(x)` | `x.class_name()` | ✓ em Object |
 | `reversed(x)` | `x.reversed()` | ✓ em Interval |
 | `sorted(x)` | `x.sorted()` | futuro (depende de OrderedCollection) |
