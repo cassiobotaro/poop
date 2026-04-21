@@ -404,9 +404,7 @@ Nenhum pendente.
 - **`Dictionary`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `len()`. Transformer reescreve literais `{k: v}` → `Dictionary`.
 - **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `len()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
 - **`Error`**: classe base para exceções POOP; método `signal()` e `signal_with(msg)` como mensagens ao objeto de erro. Desbloqueia `no_raise` e `no_with`.
-- **`Str` — métodos ausentes**:
-  - Dunders: `__contains__`, `__len__`, `__getitem__`, `__iter__`, `__mul__`, `__lt__`, `__le__`, `__gt__`, `__ge__`
-  - Métodos: `upper()`, `lower()`, `strip()`, `lstrip()`, `rstrip()`, `split()`, `replace()`, `startswith()`, `endswith()`, `find()`, `index()`, `count()`, `join()`, `capitalize()`, `title()`, `swapcase()`, `isalpha()`, `isdigit()`, `isalnum()`, `isspace()`, `isupper()`, `islower()`
+- **`Str` — métodos ausentes**: nenhum. Todos os dunders e métodos de string estão implementados.
 - **`Interval` — métodos ausentes**: `to_by_(limit, step)`.
 
 ### Próximos transformers
