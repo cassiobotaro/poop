@@ -416,9 +416,9 @@ Nenhum pendente.
 - `range(...)` → `Interval`.
 - ~~`len(x)` → `x.len()`~~ — banir via validator com sugestão; ver seção Builtins.
 - ~~`abs(x)` → `x.abs()`~~ — banir via validator com sugestão; ver seção Builtins.
-- `isinstance(x, T)` → `x.is_instance(T)` retornando `Boolean` POOP.
-- `hasattr(x, s)` → `x.has_attr(s)` retornando `Boolean` POOP.
-- `callable(x)` → `x.callable()` retornando `Boolean` POOP.
+- ~~`isinstance(x, T)` → `x.is_instance(T)`~~ — banir via validator; use `x.is_instance(T)`.
+- ~~`hasattr(x, s)` → `x.has_attr(s)`~~ — banir via validator; use `x.has_attr(s)`.
+- ~~`callable(x)` → `x.callable()`~~ — banir via validator; use `x.callable()`.
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`) → retornar `TrueClass`/`FalseClass`.
 
 ### Builtins Python — mapa completo
