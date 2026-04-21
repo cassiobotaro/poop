@@ -12,7 +12,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - Não existem estruturas de controle de fluxo — condicionais e iterações são mensagens enviadas a objetos.
 - Não existem funções livres — todo comportamento vive em métodos de classes.
 - **Estética de mensagem**: o critério central de uma infecção não é "existe em Smalltalk?" mas sim "parece um objeto recebendo uma mensagem?". Operadores (`-x`, `not x`, `~x`) e funções livres (`len(x)`, `abs(x)`) têm aparência procedural mesmo quando chamam métodos internamente — devem ser substituídos por `x.negated()`, `x.not_()`, `x.bit_invert()`, `x.len()`, `x.abs()`. O código POOP deve parecer uma conversa entre objetos, não uma sequência de operações.
-- **Nomes de métodos em Python, não Smalltalk**: métodos seguem o nome Python correspondente (`len()` não `size()`, `hash()` não `identity_hash()`, `float()` não `as_float()`). Nomes Smalltalk não são implementados.
+- **Nomes de métodos em Python, não Smalltalk**: todos os métodos seguem o nome Python correspondente — builtins, dunders e API de coleções. `for_each` não `do`, `map` não `collect`, `filter` não `select`, `filter_false` não `reject`, `find` não `detect`, `reduce` não `inject_into`. Nomes Smalltalk não são implementados.
 - **Ativar validator apenas quando o substituto existe**: bloquear sem oferecer alternativa só quebra código sem ensinar nada. Validators sem substituto implementado vivem no backlog até a alternativa estar pronta.
 - **Representação**: todos os tipos POOP implementam `__str__` (e `__repr__` delega para ele). `Transcript.show` chama `str(obj)` internamente.
 - **`__slots__` em todos os tipos POOP**: variáveis de instância são declaradas na definição da classe e fixas — nunca adicionadas dinamicamente a instâncias. Extensão de *métodos* em runtime continua funcionando normalmente. Subclasses que precisarem de novas variáveis de instância podem declarar seus próprios `__slots__` ou omiti-los.
@@ -30,7 +30,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 
 | Nó AST | Motivo |
 |---|---|
-| `ast.For` | Loop tem aparência procedural; use `col.do(block)`, `col.collect(block)`, recursão |
+| `ast.For` | Loop tem aparência procedural; use `col.for_each(block)`, `col.map(block)`, recursão |
 | `ast.While` | Idem; use `cond.while_true(block)` |
 | `ast.AsyncFor` | Variante assíncrona do `for` |
 
@@ -94,7 +94,7 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 
 | Nó AST | Motivo | Substituto |
 |---|---|---|
-| `ast.Yield` | gerador tem aparência procedural de iteração | `col.do(block)`, `col.collect(block)` |
+| `ast.Yield` | gerador tem aparência procedural de iteração | `col.for_each(block)`, `col.map(block)` |
 | `ast.YieldFrom` | idem | idem |
 
 ### No walrus (`:=`) — `poop/validators/no_walrus.py`
@@ -213,14 +213,14 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 
 | Chamada | Motivo | Substituto |
 |---|---|---|
-| `enumerate(col)` | função livre com aparência procedural | `col.collect(block)`, `col.inject_into(init, block)` |
+| `enumerate(col)` | função livre com aparência procedural | `col.map(block)`, `col.reduce(init, block)` |
 | `zip(a, b)` | função livre com aparência procedural | idem |
 
 ### No `iter`/`next` — `poop/validators/no_iter.py`
 
 | Chamada | Motivo | Substituto |
 |---|---|---|
-| `iter(col)` | protocolo iterator com aparência procedural | `col.do(block)` |
+| `iter(col)` | protocolo iterator com aparência procedural | `col.for_each(block)` |
 | `next(it)` | idem | idem |
 | `aiter(col)` | variante assíncrona | idem |
 | `anext(it)` | variante assíncrona | idem |
@@ -319,14 +319,14 @@ Raiz concreta de todos os tipos POOP. Fornece implementações default para mét
 
 `Interval(Object)` representa um intervalo inteiro fechado [start, stop]. Criado via `Int.to_(limit)`.
 
-| Mensagem | Método | Comportamento |
+| Mensagem Smalltalk | Método POOP | Comportamento |
 |---|---|---|
-| `do:` | `do(block)` | itera sem alocar lista |
-| `collect:` | `collect(block)` | transforma → `List` |
-| `select:` | `select(block)` | filtra → `List` |
-| `reject:` | `reject(block)` | filtra inverso → `List` |
-| `detect:` | `detect(block)` | primeiro que satisfaz, ou `none` POOP |
-| `inject:into:` | `inject_into(init, block)` | reduce |
+| `do:` | `for_each(block)` | itera sem alocar lista |
+| `collect:` | `map(block)` | transforma → `List` |
+| `select:` | `filter(block)` | filtra → `List` |
+| `reject:` | `filter_false(block)` | filtra inverso → `List` |
+| `detect:` | `find(block)` | primeiro que satisfaz, ou `none` POOP |
+| `inject:into:` | `reduce(init, block)` | reduce |
 | `len` | `len()` | retorna `Int` |
 
 ### Transcript — `poop/types/transcript.py`
@@ -400,11 +400,13 @@ Nenhum pendente.
 
 ### Próximos tipos
 
-- ~~**`List`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `len()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `List`.~~ — implementado.
-- ~~**`Tuple`**: substitui `tuple`; imutável; mensagens `len()`, `at(index)`, `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Tuple`.~~ — implementado.
-- **`Dict`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `len()`. Transformer reescreve literais `{k: v}` → `Dict`.
-- **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `len()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
-- **`Error`**: classe base para exceções POOP; método `signal()` e `signal_with(msg)` como mensagens ao objeto de erro. Desbloqueia `no_raise` e `no_with`.
+- ~~**`List`**: substitui `list`; mensagens `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`, `add(obj)`, `len()`, `includes(obj)`. Quando implementado, `Interval.map`/`filter`/`filter_false` passam a retornar `List`.~~ — implementado (nomes Smalltalk — renomear, ver Renomeações pendentes).
+- ~~**`Tuple`**: substitui `tuple`; imutável; mensagens `len()`, `at(index)`, `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Tuple`.~~ — implementado (nomes Smalltalk — renomear, ver Renomeações pendentes).
+- **[ALTA PRIORIDADE] `Error`**: classe base para exceções POOP; método `signal()` e `signal_with(msg)` como mensagens ao objeto de erro. **Dependência crítica**: desbloqueia `no_raise`, `no_with` e `no_assert` — enquanto `Error` não existe, código POOP pode usar `raise` e `with` livremente, sem proteção dos princípios.
+- **`Dict`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `for_each(block)`, `len()`. Transformer reescreve literais `{k: v}` → `Dict`.
+- **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `len()`, `for_each(block)`. Transformer reescreve literais `{a, b}` → `Set`.
+- **`FrozenSet`**: substitui `frozenset`; versão imutável de `Set` — relação análoga a `Tuple`/`List`. Mensagens `includes(obj)`, `len()`, `for_each(block)`, `map(block)`, `filter(block)`, `filter_false(block)`, `find(block)`, `reduce(init, block)`. Implementar após `Set`.
+- **`Complex`**: substitui `complex`; mensagens `real()`, `imag()`, `conjugate()`, `abs()`. Literais `complex(r, i)` → `Complex`. Transformer reescreve `j`-literals (`1+2j`) → `Complex`. Baixa prioridade — uso científico/nicho.
 - **`Str` — métodos ausentes**: nenhum. Todos os dunders e métodos de string estão implementados.
 - **`Interval` — métodos ausentes**: nenhum. Todos os métodos estão implementados.
 
@@ -435,8 +437,8 @@ Nenhum pendente.
 | `type(x)` | `x.class_name()` | ✓ em Object |
 | `reversed(x)` | `x.reversed()` | ✓ em Interval |
 | `sorted(x)` | `x.sorted()` | futuro (depende de `List`) |
-| `map(f, col)` | `col.collect(f)` | ✓ collect existe |
-| `filter(f, col)` | `col.select(f)` | ✓ select existe |
+| `map(f, col)` | `col.map(f)` | ✓ (renomear — ver Renomeações pendentes) |
+| `filter(f, col)` | `col.filter(f)` | ✓ (renomear — ver Renomeações pendentes) |
 
 #### Banir (validator)
 
@@ -465,8 +467,8 @@ Nenhum pendente.
 | `exit` / `quit` | ✓ bloqueado — controle de processo |
 | `globals` / `locals` / `vars` / `dir` | ✓ bloqueado — use instâncias |
 | `setattr` / `delattr` | ✓ bloqueado — use métodos da classe |
-| `iter` / `next` / `aiter` / `anext` | ✓ bloqueado — use `col.do(block)` |
-| `enumerate` / `zip` | ✓ bloqueado — use mensagens de coleção |
+| `iter` / `next` / `aiter` / `anext` | ✓ bloqueado — use `col.for_each(block)` |
+| `enumerate` / `zip` | ✓ bloqueado — use `col.map(block)` / `col.reduce(init, block)` |
 | `slice` | ✓ bloqueado — use `obj.at(index)` |
 | `format` | ✓ bloqueado — use `obj.format(spec)` |
 | `ascii` | Python-específico |
@@ -480,56 +482,63 @@ Nenhum pendente.
 | `getattr` | usado internamente por `responds_to` |
 | `list` / `dict` / `set` / `tuple` | serão substituídos pelos tipos POOP |
 | `int` / `float` / `str` / `bool` | construtores cobertos por transformers |
-| `complex` / `bytes` / `bytearray` / `memoryview` | baixo nível — provavelmente banir |
-| `frozenset` | avaliar quando `Set` for implementado |
+| `complex` | substituído por `Complex` — ver Próximos tipos |
+| `frozenset` | substituído por `FrozenSet` — ver Próximos tipos |
+| `bytes` / `bytearray` / `memoryview` | baixo nível sem semântica de mensagem — banir via validator sem substituto |
 | `issubclass` | avaliar junto com `isinstance` |
 | `repr` | delega para `__repr__` → `__str__` |
-| `sum` | usar `inject_into(0, block)` — banir quando transformer existir |
+| `sum` | usar `reduce(0, block)` — banir quando transformer existir |
 
 ### Bugs / inconsistências
 
 - ~~**`Interval.detect` retorna `None` nativo**~~ ✓ corrigido.
 - ~~**`Object.class_name()` retorna `str` nativo**~~ ✓ corrigido.
 - **Funções built-in** (`len`, `isinstance`, `hasattr`, `callable`) vazam tipos Python nativos para dentro do modelo POOP.
-- **`Str.split()` retorna `list` Python** — deveria retornar `List` POOP.
-- **`Str.join()` aceita `list[Str]` Python** — deveria aceitar `List` POOP.
-- **`__repr__` ausente em Int, Float, Str, Interval, List, Tuple, NoneClass** — `Object.__repr__` delega para `__str__`, mas nenhuma subclasse define `__repr__` explicitamente.
+- ~~**`Str.split()` retorna `list` Python**~~ ✓ corrigido — retorna `List` POOP.
+- ~~**`Str.join()` aceita `list[Str]` Python**~~ ✓ corrigido — aceita `List` POOP.
+- **`__repr__` ausente em Int, Float, Str, Interval, List, Tuple, NoneClass** — correção trivial: adicionar `__repr__ = __str__` em cada classe. `Object.__repr__` já delega para `__str__`, mas a ausência explícita pode causar surpresas em contextos de debug.
 
 ### Validators ausentes
 
-- **`no_augmented_assign`**: `x += 1`, `x -= 1` etc. não são bloqueados — `ast.AugAssign`.
-- **`no_comprehension`**: `[x for x in col]`, `{k: v for ...}` etc. contêm iteração implícita — `ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`.
-- **`no_subscript` ou transformer `[]` → `.at()`**: `obj[key]` via `__getitem__` nunca foi explicitamente permitido ou bloqueado.
+- **[ALTA PRIORIDADE] `no_subscript`**: `obj[key]` e `obj[1:3]` têm aparência de operador, não de mensagem — mesma lógica que baniu `len(x)` e `not x`. O substituto `obj.at(key)` já existe em `List`, `Tuple` e está previsto em `Dict`. Implementar assim que `no_subscript` for ativado. **Atenção**: fatiamento `obj[1:3]` não tem equivalente definido — decidir o nome antes (`obj.from_to(start, stop)`?) para não bloquear sem alternativa.
+- **[MÉDIA PRIORIDADE] `no_comprehension`**: loops `for` são bloqueados mas `[x for x in col]`, `{k: v for ...}` etc. contêm a mesma iteração implícita — `ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`. Substitutos: `col.map(block)`, `col.filter(block)` (após renomear).
+- **[MÉDIA PRIORIDADE] `no_augmented_assign`**: `x += 1`, `x -= 1` etc. não são bloqueados — `ast.AugAssign`. Construto muito frequente; a ausência de bloqueio cria uma exceção implícita ao modelo de mensagens.
 - **`no_import`**: `import os` dentro de código POOP não é bloqueado — decidir se deve ser banido ou restrito.
-- **`no_raise`** e **`no_assert`**: mencionados no backlog como bloqueados por `Error`, mas os validators ainda não existem.
+- **`no_raise`** e **`no_assert`**: bloqueados por `Error` — os validators não podem ser ativados antes do tipo `Error` existir (ver seção Próximos tipos).
+- **`no_bytes`**: `bytes(...)`, `bytearray(...)`, `memoryview(...)` — tipos de baixo nível sem semântica de mensagem; banir sem substituto POOP.
 
 ### Métodos faltando em tipos existentes
 
-- **`List.sorted()` / `List.reversed()`**: retornam nova cópia ordenada/invertida. `Interval` tem `reversed()`; coleções não têm.
+- **`List.sorted()` / `List.reversed()`**: retornam nova cópia ordenada/invertida. `Interval` tem `reversed()`; `List` e `Tuple` não têm.
 - **`Tuple.sorted()` / `Tuple.reversed()`**: idem.
 - **`List.as_tuple()` / `Tuple.as_list()`**: conversão entre tipos de coleção.
 - **`Interval.as_list()` / `Interval.as_tuple()`**: materializa o intervalo em coleção.
-- **`Int.times(block)`**: `Int(5).times(lambda: ...)` — executa o bloco n vezes.
+- **`Int.times(block)`**: `5.times(lambda: ...)` — executa o bloco n vezes. Idioma Smalltalk fundamental; elegante e natural.
 - **`Int.factorial()` / `Int.gcd(other)`**: utilitários matemáticos naturais.
 - **`Int.divmod(other)` / `Float.divmod(other)` → `Tuple`**: `no_divmod` já bloqueia — agora que `Tuple` existe, o método pode ser implementado.
 
 ### Renomeações pendentes (nomes Smalltalk → nomes Python)
 
-Backlog (ainda não implementados — usar nome correto quando implementar):
+Métodos já implementados com nomes Smalltalk que precisam ser renomeados:
 
-| Builtin | Nome correto |
-|---|---|
-| `int(x)` | `int()` |
+| Tipo | Nome atual (Smalltalk) | Nome correto (Python) |
+|---|---|---|
+| `List`, `Tuple`, `Interval` | `do(block)` | `for_each(block)` |
+| `List`, `Tuple`, `Interval` | `collect(block)` | `map(block)` |
+| `List`, `Tuple`, `Interval` | `select(block)` | `filter(block)` |
+| `List`, `Tuple`, `Interval` | `reject(block)` | `filter_false(block)` |
+| `List`, `Tuple`, `Interval` | `detect(block)` | `find(block)` |
+| `List`, `Tuple`, `Interval` | `inject_into(init, block)` | `reduce(init, block)` |
 
 ### Arquitetura / DX
 
 - **REPL**: loop interativo — `poop` sem argumentos abre o REPL.
 - **Mensagens de erro mais ricas**: `ValidationError` poderia sugerir o equivalente POOP (ex.: `"use x.not_() instead of 'not x'"`).
-- **`Transcript.show` retornar `self`**: permitiria cascatas (`Transcript.show(x).nl()`).
+- **`Transcript.show` retornar `self`**: mudança de uma linha; permitiria cascatas (`Transcript.show(x).nl()`), que é idioma Smalltalk central.
 
 ### Exemplos de código
 
-- Expandir `examples/` com coleções: `List`, `Tuple`, `Interval` com `collect`/`select`/`reject`.
+- Expandir `examples/` com coleções: `List`, `Tuple`, `Interval` com `map`/`filter`/`filter_false`.
 
 ### ~~CLI como entry point instalável~~ ✓ (concluído)
 
@@ -538,6 +547,7 @@ Backlog (ainda não implementados — usar nome correto quando implementar):
 
 - **Dunders expostos como métodos regulares**: todo dunder relevante de um tipo POOP ganha um alias com o nome Python sem underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__contains__` → `contains()`, `__iter__` → `iter()`, `__hash__` → `hash()`, etc. A regra é: remover os underscores, manter o nome Python — não traduzir para Smalltalk. Nomes Smalltalk (`size()`, `identity_hash()`, etc.) não são implementados.
 - **`isEmpty` não será implementado em `Str`**: usar `obj == ''` — chama `Str.__eq__` e retorna `Boolean` POOP.
+- **`List.join` / `Tuple.join` não serão implementados**: `list` Python não tem `join` — o idioma correto é `Str(sep).join(lista)`, que já existe.
 - **`as_string()` / `printString` não serão implementados**: usar `str(obj)` — chama `__str__` de cada tipo POOP.
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — **permitidos**.
 - **Compreensões** (`ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`): contêm iteração implícita — avaliar se devem ser banidas junto com loops.
