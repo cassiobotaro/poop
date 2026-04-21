@@ -18,6 +18,14 @@ class Str(Object):
 
         return Int(len(self._value))
 
+    def len(self) -> Int:
+        return self.size()
+
+    def ord(self) -> Int:
+        from poop.types.int import Int
+
+        return Int(ord(self._value))
+
     def at(self, index: Int) -> Str:
         return Str(self._value[index._value])
 
