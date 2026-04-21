@@ -1,6 +1,7 @@
 from poop.types.boolean import Boolean, false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
+from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.frozen_set import FrozenSet
@@ -15,6 +16,7 @@ __all__ = [
     "Boolean",
     "ByteArray",
     "Bytes",
+    "Complex",
     "Dict",
     "Float",
     "FrozenSet",
