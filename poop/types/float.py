@@ -6,11 +6,14 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
 
+_float = float  # alias to avoid shadowing by Float.float() method
+_int = int  # alias to avoid shadowing by annotations
+
 
 class Float(Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: float) -> None:
+    def __init__(self, value: _float) -> None:
         self._value = value
 
     def negated(self) -> Float:
@@ -22,12 +25,20 @@ class Float(Object):
     def min(self, other: Float) -> Float:
         return self if self._value <= other._value else other
 
+    def int(self) -> Int:
+        from poop.types.int import Int
+
+        return Int(_int(self._value))
+
+    def float(self) -> Float:
+        return self
+
     def is_integer(self) -> Boolean:
         from poop.types.boolean import false, true
 
         return true if self._value.is_integer() else false
 
-    def as_integer_ratio(self) -> tuple[int, int]:
+    def as_integer_ratio(self) -> tuple[_int, _int]:
         return self._value.as_integer_ratio()
 
     def __abs__(self) -> Float:
@@ -90,17 +101,17 @@ class Float(Object):
     def trunc(self) -> Int:
         return self.__trunc__()
 
-    def __round__(self, ndigits: int | None = None) -> Int | Float:
+    def __round__(self, ndigits: _int | None = None) -> Int | Float:
         from poop.types.int import Int
 
         result = round(self._value, ndigits)
-        return Int(result) if isinstance(result, int) else Float(result)
+        return Int(result) if isinstance(result, _int) else Float(result)
 
-    def round(self, ndigits: int | None = None) -> Int | Float:
+    def round(self, ndigits: _int | None = None) -> Int | Float:
         return self.__round__(ndigits)
 
-    def __int__(self) -> int:
-        return int(self._value)
+    def __int__(self) -> _int:
+        return _int(self._value)
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true
@@ -136,10 +147,10 @@ class Float(Object):
 
         return true if self._value >= other._value else false
 
-    def __hash__(self) -> int:
+    def __hash__(self) -> _int:
         return hash(self._value)
 
-    def __float__(self) -> float:
+    def __float__(self) -> _float:
         return self._value
 
     def __bool__(self) -> bool:

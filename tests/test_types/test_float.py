@@ -193,3 +193,15 @@ def test_is_integer_false() -> None:
 
 def test_floordiv() -> None:
     assert Float(7.0) // Float(2.0) == Float(3.0)
+
+
+def test_int_truncates() -> None:
+    from poop.types.int import Int
+
+    assert Float(3.7).int() == Int(3)
+    assert Float(-2.9).int() == Int(-2)
+
+
+def test_float_identity() -> None:
+    f = Float(1.5)
+    assert f.float() is f
