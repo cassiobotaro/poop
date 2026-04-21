@@ -1,6 +1,7 @@
 from poop.types.boolean import Boolean, false, true
 from poop.types.dict import Dict
 from poop.types.float import Float
+from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.interval import Interval
 from poop.types.none import NoneClass, none
@@ -12,6 +13,7 @@ __all__ = [
     "Boolean",
     "Dict",
     "Float",
+    "FrozenSet",
     "Int",
     "Interval",
     "NoneClass",

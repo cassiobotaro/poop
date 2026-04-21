@@ -1,0 +1,182 @@
+from poop.types.boolean import false, true
+from poop.types.frozen_set import FrozenSet
+from poop.types.int import Int
+from poop.types.none import none
+
+
+def test_empty_frozenset() -> None:
+    assert FrozenSet().len() == Int(0)
+
+
+def test_len() -> None:
+    assert FrozenSet(Int(1), Int(2), Int(3)).len() == Int(3)
+
+
+def test_dunder_len() -> None:
+    assert len(FrozenSet(Int(1), Int(2))) == 2
+
+
+def test_duplicate_elements_kept_unique() -> None:
+    assert FrozenSet(Int(1), Int(1)).len() == Int(1)
+
+
+def test_includes_true() -> None:
+    assert FrozenSet(Int(1), Int(2)).includes(Int(1)) is true
+
+
+def test_includes_false() -> None:
+    assert FrozenSet().includes(Int(1)) is false
+
+
+def test_contains_dunder() -> None:
+    fs = FrozenSet(Int(1), Int(2))
+    assert Int(1) in fs
+    assert Int(99) not in fs
+
+
+def test_for_each_visits_all_elements() -> None:
+    fs = FrozenSet(Int(1), Int(2), Int(3))
+    seen: list[Int] = []
+    fs.for_each(lambda x: seen.append(x))  # type: ignore[arg-type]
+    assert len(seen) == 3
+
+
+def test_map_returns_frozenset() -> None:
+    result = FrozenSet(Int(1), Int(2)).map(lambda x: x)
+    assert isinstance(result, FrozenSet)
+
+
+def test_map_transforms_elements() -> None:
+    result = FrozenSet(Int(2)).map(lambda x: Int(x._value * 3))  # type: ignore[attr-defined]
+    assert result.includes(Int(6)) is true
+
+
+def test_filter_keeps_matching() -> None:
+    fs = FrozenSet(Int(1), Int(2), Int(3), Int(4))
+    result = fs.filter(lambda x: x._value % 2 == 0)  # type: ignore[attr-defined]
+    assert result.len() == Int(2)
+    assert result.includes(Int(2)) is true
+    assert result.includes(Int(4)) is true
+
+
+def test_filter_false_keeps_non_matching() -> None:
+    fs = FrozenSet(Int(1), Int(2), Int(3))
+    result = fs.filter_false(lambda x: x._value % 2 == 0)  # type: ignore[attr-defined]
+    assert result.len() == Int(2)
+
+
+def test_find_returns_matching_element() -> None:
+    fs = FrozenSet(Int(5))
+    result = fs.find(lambda x: x._value > 3)  # type: ignore[attr-defined]
+    assert result == Int(5)
+
+
+def test_find_returns_none_when_not_found() -> None:
+    assert FrozenSet(Int(1)).find(lambda x: x._value > 99) is none  # type: ignore[attr-defined]
+
+
+def test_reduce_accumulates() -> None:
+    fs = FrozenSet(Int(1), Int(2), Int(3))
+    result = fs.reduce(Int(0), lambda acc, x: Int(acc._value + x._value))  # type: ignore[attr-defined]
+    assert result == Int(6)
+
+
+def test_all_true_when_all_match() -> None:
+    assert FrozenSet(Int(2), Int(4)).all(lambda x: x._value % 2 == 0) is true  # type: ignore[attr-defined]
+
+
+def test_all_false_when_any_mismatch() -> None:
+    assert FrozenSet(Int(2), Int(3)).all(lambda x: x._value % 2 == 0) is false  # type: ignore[attr-defined]
+
+
+def test_any_true_when_some_match() -> None:
+    assert FrozenSet(Int(1), Int(2)).any(lambda x: x._value % 2 == 0) is true  # type: ignore[attr-defined]
+
+
+def test_any_false_when_none_match() -> None:
+    assert FrozenSet(Int(1), Int(3)).any(lambda x: x._value % 2 == 0) is false  # type: ignore[attr-defined]
+
+
+def test_eq_equal_frozensets() -> None:
+    assert FrozenSet(Int(1), Int(2)) == FrozenSet(Int(2), Int(1))
+
+
+def test_eq_different_frozensets() -> None:
+    assert (FrozenSet(Int(1)) == FrozenSet(Int(2))) is false
+
+
+def test_ne_different_frozensets() -> None:
+    assert (FrozenSet(Int(1)) != FrozenSet(Int(2))) is true
+
+
+def test_iter_yields_all_elements() -> None:
+    assert len(list(FrozenSet(Int(1), Int(2), Int(3)))) == 3
+
+
+def test_hashable() -> None:
+    fs = FrozenSet(Int(1), Int(2))
+    assert isinstance(hash(fs), int)
+
+
+def test_equal_frozensets_have_equal_hash() -> None:
+    fs1 = FrozenSet(Int(1), Int(2))
+    fs2 = FrozenSet(Int(2), Int(1))
+    assert hash(fs1) == hash(fs2)
+
+
+def test_frozenset_can_be_dict_key() -> None:
+    from poop.types.dict import Dict
+    from poop.types.string import Str
+
+    d = Dict()
+    fs = FrozenSet(Int(1))
+    d.at_put(fs, Str("value"))
+    assert d.at(fs) == Str("value")
+
+
+def test_str_empty() -> None:
+    assert str(FrozenSet()) == "frozenset()"
+
+
+def test_str_contains_elements() -> None:
+    assert "1" in str(FrozenSet(Int(1)))
+
+
+def test_repr_equals_str() -> None:
+    fs = FrozenSet(Int(1))
+    assert repr(fs) == str(fs)
+
+
+def test_transformer_frozenset_call() -> None:
+    from poop.parser import parse
+    from poop.transformers.frozen_set import FrozenSetTransformer, _poop_frozenset_from
+    from poop.transformers.int import IntTransformer
+    from poop.transformers.set import SetTransformer, _poop_set
+    from poop.types.int import Int as _Int
+
+    tree = parse("fs = frozenset({1, 2, 3})")
+    tree = IntTransformer().transform(tree)
+    tree = SetTransformer().transform(tree)
+    tree = FrozenSetTransformer().transform(tree)
+    ns: dict[str, object] = {
+        "_poop_frozenset_from": _poop_frozenset_from,
+        "_poop_set": _poop_set,
+        "_poop_int": _Int,
+    }
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    result = ns["fs"]
+    assert isinstance(result, FrozenSet)
+    assert result.len() == Int(3)
+
+
+def test_transformer_frozenset_empty_call() -> None:
+    from poop.parser import parse
+    from poop.transformers.frozen_set import FrozenSetTransformer, _poop_frozenset_from
+
+    tree = parse("fs = frozenset()")
+    tree = FrozenSetTransformer().transform(tree)
+    ns: dict[str, object] = {"_poop_frozenset_from": _poop_frozenset_from}
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    result = ns["fs"]
+    assert isinstance(result, FrozenSet)
+    assert result.len() == Int(0)
