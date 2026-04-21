@@ -405,7 +405,7 @@ Nenhum pendente.
 - **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `len()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
 - **`Error`**: classe base para exceções POOP; método `signal()` e `signal_with(msg)` como mensagens ao objeto de erro. Desbloqueia `no_raise` e `no_with`.
 - **`Str` — métodos ausentes**: nenhum. Todos os dunders e métodos de string estão implementados.
-- **`Interval` — métodos ausentes**: `to_by_(limit, step)`.
+- **`Interval` — métodos ausentes**: nenhum. Todos os métodos estão implementados.
 
 ### Próximos transformers
 
@@ -413,7 +413,7 @@ Nenhum pendente.
 - Literais tupla (`ast.Tuple`) → `Array`.
 - Literais dict (`ast.Dict`) → `Dictionary`.
 - Literais set (`ast.Set`) → `Set`.
-- `range(...)` → `Interval`.
+- ~~`range(...)` → `Interval`.~~ — implementado via RangeTransformer.
 - ~~`len(x)` → `x.len()`~~ — banir via validator com sugestão; ver seção Builtins.
 - ~~`abs(x)` → `x.abs()`~~ — banir via validator com sugestão; ver seção Builtins.
 - ~~`isinstance(x, T)` → `x.is_instance(T)`~~ — banir via validator; use `x.is_instance(T)`.
@@ -429,7 +429,7 @@ Nenhum pendente.
 |---|---|---|
 | `round(x)` | `x.round()` | ✓ em Int/Float |
 | `str(x)` | chama `__str__` | ✓ funciona |
-| `int(x)` | `x.int()` | pendente |
+| `int(x)` | `x.int()` | ✓ em Int |
 | `float(x)` | `x.float()` | ✓ em Int |
 | `type(x)` | `x.class_name()` | ✓ em Object |
 | `reversed(x)` | `x.reversed()` | ✓ em Interval |
@@ -444,7 +444,7 @@ Nenhum pendente.
 | `print` | ✓ bloqueado — use `Transcript.show` |
 | `len(x)` | ✓ bloqueado — use `x.len()` |
 | `abs(x)` | ✓ bloqueado — use `x.abs()` |
-| `range(n)` | função livre — use `(1).to_(n)` ou similar |
+| `range(n)` | ✓ reescrito → `Interval` via RangeTransformer |
 | `hash(x)` | ✓ bloqueado — use `x.hash()` |
 | `id(x)` | ✓ bloqueado — use `x.id()` |
 | `all(col)` | ✓ bloqueado — use `col.all(block)` |
