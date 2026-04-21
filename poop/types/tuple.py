@@ -1,0 +1,108 @@
+from builtins import all as builtins_all
+from builtins import any as builtins_any
+from collections import deque
+from collections.abc import Callable, Iterator
+from functools import reduce
+from typing import TYPE_CHECKING, Any
+
+from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
+    from poop.types.int import Int
+    from poop.types.none import NoneClass
+
+_tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
+
+
+class Tuple(Object):
+    __slots__ = ("_items",)
+
+    def __init__(self, *elements: Object) -> None:
+        self._items: _tuple[Object, ...] = _tuple(elements)
+
+    def len(self) -> Int:
+        from poop.types.int import Int
+
+        return Int(len(self._items))
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def at(self, index: Int) -> Object:
+        return self._items[index._value]
+
+    def __getitem__(self, index: Int) -> Object:
+        return self.at(index)
+
+    def __iter__(self) -> Iterator[Object]:
+        return iter(self._items)
+
+    def includes(self, obj: Object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if obj in self._items else false
+
+    def __contains__(self, item: object) -> bool:
+        return item in self._items
+
+    def do(self, block: Callable[[Object], Any]) -> None:
+        deque(map(block, self._items), maxlen=0)
+
+    def collect(self, block: Callable[[Object], Any]) -> Tuple:
+        return Tuple(*map(block, self._items))
+
+    def select(self, block: Callable[[Object], Any]) -> Tuple:
+        return Tuple(*[x for x in self._items if bool(block(x))])
+
+    def reject(self, block: Callable[[Object], Any]) -> Tuple:
+        return Tuple(*[x for x in self._items if not bool(block(x))])
+
+    def detect(self, block: Callable[[Object], Any]) -> Object | NoneClass:
+        from poop.types.none import none
+
+        for item in self._items:
+            if bool(block(item)):
+                return item
+        return none
+
+    def inject_into(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
+        return reduce(block, self._items, init)
+
+    def all(self, block: Callable[[Object], Any]) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if builtins_all(bool(block(x)) for x in self._items) else false
+
+    def any(self, block: Callable[[Object], Any]) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if builtins_any(bool(block(x)) for x in self._items) else false
+
+    def first(self) -> Object:
+        return self._items[0]
+
+    def last(self) -> Object:
+        return self._items[-1]
+
+    def __eq__(self, other: object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        if isinstance(other, Tuple):
+            return true if self._items == other._items else false
+        return false
+
+    def __ne__(self, other: object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        if isinstance(other, Tuple):
+            return false if self._items == other._items else true
+        return true
+
+    def __hash__(self) -> int:
+        return hash(self._items)
+
+    def __str__(self) -> str:
+        if len(self._items) == 1:
+            return f"({self._items[0]},)"
+        return f"({', '.join(str(item) for item in self._items)})"
