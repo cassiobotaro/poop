@@ -6,6 +6,7 @@ from poop.validators.no_bin import NoBinValidator
 from poop.validators.no_breakpoint import NoBreakpointValidator
 from poop.validators.no_callable import NoCallableValidator
 from poop.validators.no_chr import NoChrValidator
+from poop.validators.no_del import NoDelValidator
 from poop.validators.no_divmod import NoDivmodValidator
 from poop.validators.no_enumerate import NoEnumerateValidator
 from poop.validators.no_exec import NoExecValidator
@@ -79,6 +80,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoPowValidator(),
     NoSetattrValidator(),
     NoSliceValidator(),
+    NoDelValidator(),
 ]
 
 __all__ = ["DEFAULT_VALIDATORS", "Validator"]
