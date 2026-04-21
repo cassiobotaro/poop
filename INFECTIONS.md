@@ -11,7 +11,8 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - **Tudo é objeto** e toda operação é **passagem de mensagem**.
 - Não existem estruturas de controle de fluxo — condicionais e iterações são mensagens enviadas a objetos.
 - Não existem funções livres — todo comportamento vive em métodos de classes.
-- **Estética de mensagem**: o critério central de uma infecção não é "existe em Smalltalk?" mas sim "parece um objeto recebendo uma mensagem?". Operadores (`-x`, `not x`, `~x`) e funções livres (`len(x)`, `abs(x)`) têm aparência procedural mesmo quando chamam métodos internamente — devem ser substituídos por `x.negated()`, `x.not_()`, `x.bit_invert()`, `x.size()`, `x.abs()`. O código POOP deve parecer uma conversa entre objetos, não uma sequência de operações.
+- **Estética de mensagem**: o critério central de uma infecção não é "existe em Smalltalk?" mas sim "parece um objeto recebendo uma mensagem?". Operadores (`-x`, `not x`, `~x`) e funções livres (`len(x)`, `abs(x)`) têm aparência procedural mesmo quando chamam métodos internamente — devem ser substituídos por `x.negated()`, `x.not_()`, `x.bit_invert()`, `x.len()`, `x.abs()`. O código POOP deve parecer uma conversa entre objetos, não uma sequência de operações.
+- **Nomes de métodos em Python, não Smalltalk**: métodos seguem o nome Python correspondente (`len()` não `size()`, `hash()` não `identity_hash()`, `float()` não `as_float()`). Nomes Smalltalk não são implementados.
 - **Ativar validator apenas quando o substituto existe**: bloquear sem oferecer alternativa só quebra código sem ensinar nada. Validators sem substituto implementado vivem no backlog até a alternativa estar pronta.
 - **Representação**: todos os tipos POOP implementam `__str__` (e `__repr__` delega para ele). `Transcript.show` chama `str(obj)` internamente.
 - **`__slots__` em todos os tipos POOP**: variáveis de instância são declaradas na definição da classe e fixas — nunca adicionadas dinamicamente a instâncias. Extensão de *métodos* em runtime continua funcionando normalmente. Subclasses que precisarem de novas variáveis de instância podem declarar seus próprios `__slots__` ou omiti-los.
@@ -326,7 +327,7 @@ Raiz concreta de todos os tipos POOP. Fornece implementações default para mét
 | `reject:` | `reject(block)` | filtra inverso → `list` |
 | `detect:` | `detect(block)` | primeiro que satisfaz, ou `none` POOP |
 | `inject:into:` | `inject_into(init, block)` | reduce |
-| `size` | `size()` | retorna `Int` |
+| `len` | `len()` | retorna `Int` |
 
 ### Transcript — `poop/types/transcript.py`
 
@@ -394,10 +395,10 @@ Singleton injetado no namespace de execução.
 
 ### Próximos tipos
 
-- **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `size()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
-- **`Array`**: substitui `tuple`; imutável; mensagens `size()`, `at(index)`, `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Array`.
-- **`Dictionary`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `size()`. Transformer reescreve literais `{k: v}` → `Dictionary`.
-- **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `size()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
+- **`OrderedCollection`**: substitui `list`; mensagens `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `add(obj)`, `len()`, `includes(obj)`. Quando implementado, `Interval.collect`/`select`/`reject` passam a retornar `OrderedCollection`.
+- **`Array`**: substitui `tuple`; imutável; mensagens `len()`, `at(index)`, `do(block)`, `collect(block)`, `select(block)`, `reject(block)`, `detect(block)`, `inject_into(init, block)`, `includes(obj)`. Transformer reescreve literais `(a, b, c)` → `Array`.
+- **`Dictionary`**: substitui `dict`; mensagens `at(key)`, `at_put(key, val)`, `includes_key(key)`, `keys()`, `values()`, `do(block)`, `len()`. Transformer reescreve literais `{k: v}` → `Dictionary`.
+- **`Set`**: substitui `set`; mensagens `includes(obj)`, `add(obj)`, `remove(obj)`, `len()`, `do(block)`. Transformer reescreve literais `{a, b}` → `Set`.
 - **`Error`**: classe base para exceções POOP; método `signal()` e `signal_with(msg)` como mensagens ao objeto de erro. Desbloqueia `no_raise` e `no_with`.
 - **`Str` — métodos ausentes**:
   - Dunders: `__contains__`, `__len__`, `__getitem__`, `__iter__`, `__mul__`, `__lt__`, `__le__`, `__gt__`, `__ge__`
@@ -511,7 +512,7 @@ Backlog (ainda não implementados — usar nome correto quando implementar):
 
 ## Decisões em aberto
 
-- **Dunders expostos como métodos regulares**: todo dunder relevante de um tipo POOP ganha um alias com o nome Python sem underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__contains__` → `contains()`, `__iter__` → `iter()`, `__hash__` → `hash()`, etc. A regra é: remover os underscores, manter o nome Python — não traduzir para Smalltalk. Transformers reescrevem `len(x)` → `x.len()`, `abs(x)` → `x.abs()`, etc. Métodos Smalltalk como `size()` e `includes()` continuam existindo como mensagens adicionais — os aliases dunder são um complemento, não um substituto.
+- **Dunders expostos como métodos regulares**: todo dunder relevante de um tipo POOP ganha um alias com o nome Python sem underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__contains__` → `contains()`, `__iter__` → `iter()`, `__hash__` → `hash()`, etc. A regra é: remover os underscores, manter o nome Python — não traduzir para Smalltalk. Nomes Smalltalk (`size()`, `identity_hash()`, etc.) não são implementados.
 - **`isEmpty` não será implementado em `Str`**: usar `obj == ''` — chama `Str.__eq__` e retorna `Boolean` POOP.
 - **`as_string()` / `printString` não serão implementados**: usar `str(obj)` — chama `__str__` de cada tipo POOP.
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — **permitidos**.
