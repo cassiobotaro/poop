@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from poop.types.object import Object
@@ -24,10 +23,6 @@ class Int(Object):
 
     def bit_invert(self) -> Int:
         return Int(~self._value)
-
-    def times_repeat[T](self, block: Callable[[], T]) -> None:
-        for _ in range(self._value):
-            block()
 
     def to_(self, limit: Int) -> Interval:
         from poop.types.interval import Interval

@@ -526,7 +526,7 @@ Nenhum pendente.
 - **`Tuple.sorted()` / `Tuple.reversed()`**: idem.
 - **`List.as_tuple()` / `Tuple.as_list()`**: conversão entre tipos de coleção.
 - **`Interval.as_list()` / `Interval.as_tuple()`**: materializa o intervalo em coleção.
-- **`Int.times(block)`**: `5.times(lambda: ...)` — executa o bloco n vezes. Existe hoje como `times_repeat(block)` — decidir se `times` é um alias desejado ou se `times_repeat` é o nome definitivo (nenhum dos dois é nome Python).
+- ~~**`Int.times(block)`**~~: removido — `times` e `timesRepeat:` são nomes Smalltalk sem equivalente em `int` Python.
 - ~~**`Int.divmod(other)` / `Float.divmod(other)` → `Tuple`**~~: implementado.
 
 ### Renomeações pendentes (nomes Smalltalk → nomes Python)

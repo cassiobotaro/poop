@@ -36,18 +36,6 @@ def test_bit_invert() -> None:
     assert Int(1).bit_invert() == Int(-2)
 
 
-def test_times_repeat() -> None:
-    calls: list[None] = []
-    Int(3).times_repeat(lambda: calls.append(None))
-    assert len(calls) == 3
-
-
-def test_times_repeat_zero() -> None:
-    calls: list[None] = []
-    Int(0).times_repeat(lambda: calls.append(None))
-    assert calls == []
-
-
 def test_to_returns_interval() -> None:
     from poop.types.interval import Interval
 
