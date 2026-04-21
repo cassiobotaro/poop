@@ -87,6 +87,9 @@ class Int(Object):
     def __pow__(self, other: Int) -> Int:
         return Int(self._value**other._value)
 
+    def pow(self, other: Int) -> Int:
+        return self.__pow__(other)
+
     def __lshift__(self, other: Int) -> Int:
         return Int(self._value << other._value)
 

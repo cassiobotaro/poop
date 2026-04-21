@@ -57,6 +57,9 @@ class Float(Object):
     def __pow__(self, other: Float) -> Float:
         return Float(self._value**other._value)
 
+    def pow(self, other: Float) -> Float:
+        return self.__pow__(other)
+
     def __ceil__(self) -> Int:
         import math
 
