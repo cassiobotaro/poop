@@ -402,7 +402,7 @@ Singleton injetado no namespace de execução.
 - **`Str` — métodos ausentes**:
   - Dunders: `__contains__`, `__len__`, `__getitem__`, `__iter__`, `__mul__`, `__lt__`, `__le__`, `__gt__`, `__ge__`
   - Métodos: `upper()`, `lower()`, `strip()`, `lstrip()`, `rstrip()`, `split()`, `replace()`, `startswith()`, `endswith()`, `find()`, `index()`, `count()`, `join()`, `capitalize()`, `title()`, `swapcase()`, `isalpha()`, `isdigit()`, `isalnum()`, `isspace()`, `isupper()`, `islower()`
-- **`Interval` — métodos ausentes**: `includes(x)`, `reversed()`, `first()`, `last()`, `to_by_(limit, step)`.
+- **`Interval` — métodos ausentes**: `to_by_(limit, step)`.
 
 ### Próximos transformers
 
@@ -414,8 +414,8 @@ Singleton injetado no namespace de execução.
 - ~~`len(x)` → `x.len()`~~ — banir via validator com sugestão; ver seção Builtins.
 - ~~`abs(x)` → `x.abs()`~~ — banir via validator com sugestão; ver seção Builtins.
 - `isinstance(x, T)` → `x.is_instance(T)` retornando `Boolean` POOP.
-- `hasattr(x, s)` → `x.responds_to(s)` retornando `Boolean` POOP.
-- `callable(x)` → `x.is_callable()` retornando `Boolean` POOP.
+- `hasattr(x, s)` → `x.has_attr(s)` retornando `Boolean` POOP.
+- `callable(x)` → `x.callable()` retornando `Boolean` POOP.
 - Comparações (`==`, `!=`, `<`, `>`, `<=`, `>=`) → retornar `TrueClass`/`FalseClass`.
 
 ### Builtins Python — mapa completo
@@ -426,8 +426,8 @@ Singleton injetado no namespace de execução.
 |---|---|---|
 | `round(x)` | `x.round()` | ✓ em Int/Float |
 | `str(x)` | chama `__str__` | ✓ funciona |
-| `int(x)` | `x.as_int()` | pendente |
-| `float(x)` | `x.as_float()` | ✓ em Int |
+| `int(x)` | `x.int()` | pendente |
+| `float(x)` | `x.float()` | ✓ em Int |
 | `type(x)` | `x.class_name()` | ✓ em Object |
 | `reversed(x)` | `x.reversed()` | ✓ em Interval |
 | `sorted(x)` | `x.sorted()` | futuro (depende de OrderedCollection) |
@@ -490,28 +490,11 @@ Singleton injetado no namespace de execução.
 
 ### Renomeações pendentes (nomes Smalltalk → nomes Python)
 
-Métodos já implementados que usam nomes Smalltalk em vez do nome Python correspondente:
-
-| Tipo | Método atual | Deveria ser | Motivo |
-|---|---|---|---|
-| `Object` | `responds_to(s)` | `has_attr(s)` | `hasattr` → `has_attr` |
-| `Int` | `as_float()` | `float()` | `float(x)` → `x.float()` |
-
 Backlog (ainda não implementados — usar nome correto quando implementar):
 
-| Builtin | Nome errado | Nome correto |
-|---|---|---|
-| `int(x)` | `as_int()` | `int()` |
-| `id(x)` | `identity_hash()` | `id()` |
-| `all(col, block)` | `all_satisfy(block)` | `all(block)` |
-| `any(col, block)` | `any_satisfy(block)` | `any(block)` |
-| `pow(a, b)` | `raised_to(b)` | `pow(b)` |
-| `bin(n)` | `as_binary()` | `bin()` |
-| `hex(n)` | `as_hex()` | `hex()` |
-| `oct(n)` | `as_octal()` | `oct()` |
-| `chr(n)` | `as_char()` | `chr()` |
-| `ord(c)` | `ascii_value()` | `ord()` |
-| `callable(x)` | `is_callable()` | `callable()` — avaliar; `is_callable()` lê melhor |
+| Builtin | Nome correto |
+|---|---|
+| `int(x)` | `int()` |
 
 ### Arquitetura / DX
 
