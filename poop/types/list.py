@@ -50,19 +50,19 @@ class List(Object):
     def __contains__(self, item: object) -> bool:
         return item in self._items
 
-    def do(self, block: Callable[[Object], Any]) -> None:
+    def for_each(self, block: Callable[[Object], Any]) -> None:
         deque(map(block, self._items), maxlen=0)
 
-    def collect(self, block: Callable[[Object], Any]) -> List:
+    def map(self, block: Callable[[Object], Any]) -> List:
         return List(*map(block, self._items))
 
-    def select(self, block: Callable[[Object], Any]) -> List:
+    def filter(self, block: Callable[[Object], Any]) -> List:
         return List(*[x for x in self._items if bool(block(x))])
 
-    def reject(self, block: Callable[[Object], Any]) -> List:
+    def filter_false(self, block: Callable[[Object], Any]) -> List:
         return List(*[x for x in self._items if not bool(block(x))])
 
-    def detect(self, block: Callable[[Object], Any]) -> Object | NoneClass:
+    def find(self, block: Callable[[Object], Any]) -> Object | NoneClass:
         from poop.types.none import none
 
         for item in self._items:
@@ -70,7 +70,7 @@ class List(Object):
                 return item
         return none
 
-    def inject_into(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
+    def reduce(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
         return reduce(block, self._items, init)
 
     def all(self, block: Callable[[Object], Any]) -> Boolean:

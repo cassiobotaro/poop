@@ -14,7 +14,7 @@ class _NoIterVisitor(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Name) and node.func.id in _FORBIDDEN:
             raise ValidationError(
-                f"{node.func.id}() is forbidden — use col.do(block) instead",
+                f"{node.func.id}() is forbidden — use col.for_each(block) instead",
                 lineno=node.lineno,
                 col_offset=node.col_offset,
             )

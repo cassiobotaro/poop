@@ -57,45 +57,45 @@ def test_contains_dunder() -> None:
 
 def test_do_iterates() -> None:
     results: list[Int] = []
-    List(Int(1), Int(2), Int(3)).do(lambda x: results.append(x))
+    List(Int(1), Int(2), Int(3)).for_each(lambda x: results.append(x))
     assert results == [Int(1), Int(2), Int(3)]
 
 
 def test_collect_maps() -> None:
-    result = List(Int(1), Int(2), Int(3)).collect(lambda x: x + Int(10))
+    result = List(Int(1), Int(2), Int(3)).map(lambda x: x + Int(10))
     assert result == List(Int(11), Int(12), Int(13))
 
 
 def test_collect_returns_list() -> None:
-    assert isinstance(List(Int(1)).collect(lambda x: x), List)
+    assert isinstance(List(Int(1)).map(lambda x: x), List)
 
 
 def test_select_filters() -> None:
-    result = List(Int(1), Int(2), Int(3), Int(4)).select(lambda x: x % Int(2) == Int(0))
+    result = List(Int(1), Int(2), Int(3), Int(4)).filter(lambda x: x % Int(2) == Int(0))
     assert result == List(Int(2), Int(4))
 
 
 def test_reject_filters_inverse() -> None:
-    result = List(Int(1), Int(2), Int(3), Int(4)).reject(lambda x: x % Int(2) == Int(0))
+    result = List(Int(1), Int(2), Int(3), Int(4)).filter_false(
+        lambda x: x % Int(2) == Int(0)
+    )
     assert result == List(Int(1), Int(3))
 
 
 def test_detect_finds_first() -> None:
-    result = List(Int(1), Int(2), Int(3)).detect(lambda x: x > Int(1))
+    result = List(Int(1), Int(2), Int(3)).find(lambda x: x > Int(1))
     assert result == Int(2)
 
 
 def test_detect_returns_none_when_not_found() -> None:
     from poop.types.none import none
 
-    result = List(Int(1), Int(2)).detect(lambda x: x > Int(10))
+    result = List(Int(1), Int(2)).find(lambda x: x > Int(10))
     assert result is none
 
 
 def test_inject_into_reduces() -> None:
-    result = List(Int(1), Int(2), Int(3), Int(4)).inject_into(
-        Int(0), lambda acc, x: acc + x
-    )
+    result = List(Int(1), Int(2), Int(3), Int(4)).reduce(Int(0), lambda acc, x: acc + x)
     assert result == Int(10)
 
 

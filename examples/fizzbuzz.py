@@ -18,7 +18,7 @@ Smalltalk:
 
 class FizzBuzz:
     def run(self) -> None:
-        (1).to_(100).do(
+        (1).to_(100).for_each(
             lambda i: (i % 15 == 0).if_true_if_false(
                 lambda: Transcript.show("FizzBuzz"),
                 lambda: (i % 3 == 0).if_true_if_false(

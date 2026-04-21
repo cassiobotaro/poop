@@ -519,16 +519,7 @@ Nenhum pendente.
 
 ### Renomeações pendentes (nomes Smalltalk → nomes Python)
 
-Métodos já implementados com nomes Smalltalk que precisam ser renomeados:
-
-| Tipo | Nome atual (Smalltalk) | Nome correto (Python) |
-|---|---|---|
-| `List`, `Tuple`, `Interval` | `do(block)` | `for_each(block)` |
-| `List`, `Tuple`, `Interval` | `collect(block)` | `map(block)` |
-| `List`, `Tuple`, `Interval` | `select(block)` | `filter(block)` |
-| `List`, `Tuple`, `Interval` | `reject(block)` | `filter_false(block)` |
-| `List`, `Tuple`, `Interval` | `detect(block)` | `find(block)` |
-| `List`, `Tuple`, `Interval` | `inject_into(init, block)` | `reduce(init, block)` |
+Nenhuma pendente.
 
 ### Arquitetura / DX
 

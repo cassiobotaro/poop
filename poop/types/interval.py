@@ -34,25 +34,25 @@ class Interval(Object):
         for i in range(start, stop + sign, step):
             yield Int(i)
 
-    def do[T](self, block: Callable[[Int], T]) -> None:
+    def for_each[T](self, block: Callable[[Int], T]) -> None:
         deque(map(block, self._iter()), maxlen=0)
 
-    def collect(self, block: Callable[[Int], Any]) -> List:
+    def map(self, block: Callable[[Int], Any]) -> List:
         from poop.types.list import List
 
         return List(*map(block, self._iter()))
 
-    def select(self, block: Callable[[Int], Any]) -> List:
+    def filter(self, block: Callable[[Int], Any]) -> List:
         from poop.types.list import List
 
         return List(*[i for i in self._iter() if bool(block(i))])
 
-    def reject(self, block: Callable[[Int], Any]) -> List:
+    def filter_false(self, block: Callable[[Int], Any]) -> List:
         from poop.types.list import List
 
         return List(*[i for i in self._iter() if not bool(block(i))])
 
-    def detect(self, block: Callable[[Int], Any]) -> Int | NoneClass:
+    def find(self, block: Callable[[Int], Any]) -> Int | NoneClass:
         from poop.types.none import none
 
         for i in self._iter():
@@ -60,7 +60,7 @@ class Interval(Object):
                 return i
         return none
 
-    def inject_into[T](self, init: T, block: Callable[[T, Int], T]) -> T:
+    def reduce[T](self, init: T, block: Callable[[T, Int], T]) -> T:
         return reduce(block, self._iter(), init)
 
     def all(self, block: Callable[[Int], Any]) -> Boolean:

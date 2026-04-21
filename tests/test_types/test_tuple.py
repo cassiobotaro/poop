@@ -42,47 +42,47 @@ def test_contains_dunder() -> None:
 
 def test_do_iterates() -> None:
     results: list[Int] = []
-    Tuple(Int(1), Int(2), Int(3)).do(lambda x: results.append(x))
+    Tuple(Int(1), Int(2), Int(3)).for_each(lambda x: results.append(x))
     assert results == [Int(1), Int(2), Int(3)]
 
 
 def test_collect_maps() -> None:
-    result = Tuple(Int(1), Int(2), Int(3)).collect(lambda x: x + Int(10))
+    result = Tuple(Int(1), Int(2), Int(3)).map(lambda x: x + Int(10))
     assert result == Tuple(Int(11), Int(12), Int(13))
 
 
 def test_collect_returns_tuple() -> None:
-    assert isinstance(Tuple(Int(1)).collect(lambda x: x), Tuple)
+    assert isinstance(Tuple(Int(1)).map(lambda x: x), Tuple)
 
 
 def test_select_filters() -> None:
-    result = Tuple(Int(1), Int(2), Int(3), Int(4)).select(
+    result = Tuple(Int(1), Int(2), Int(3), Int(4)).filter(
         lambda x: x % Int(2) == Int(0)
     )
     assert result == Tuple(Int(2), Int(4))
 
 
 def test_reject_filters_inverse() -> None:
-    result = Tuple(Int(1), Int(2), Int(3), Int(4)).reject(
+    result = Tuple(Int(1), Int(2), Int(3), Int(4)).filter_false(
         lambda x: x % Int(2) == Int(0)
     )
     assert result == Tuple(Int(1), Int(3))
 
 
 def test_detect_finds_first() -> None:
-    result = Tuple(Int(1), Int(2), Int(3)).detect(lambda x: x > Int(1))
+    result = Tuple(Int(1), Int(2), Int(3)).find(lambda x: x > Int(1))
     assert result == Int(2)
 
 
 def test_detect_returns_none_when_not_found() -> None:
     from poop.types.none import none
 
-    result = Tuple(Int(1), Int(2)).detect(lambda x: x > Int(10))
+    result = Tuple(Int(1), Int(2)).find(lambda x: x > Int(10))
     assert result is none
 
 
 def test_inject_into_reduces() -> None:
-    result = Tuple(Int(1), Int(2), Int(3), Int(4)).inject_into(
+    result = Tuple(Int(1), Int(2), Int(3), Int(4)).reduce(
         Int(0), lambda acc, x: acc + x
     )
     assert result == Int(10)
@@ -160,7 +160,7 @@ def test_immutable_no_add() -> None:
 
 def test_no_mutate_original() -> None:
     t = Tuple(Int(1), Int(2), Int(3))
-    t.select(lambda x: x > Int(1))
+    t.filter(lambda x: x > Int(1))
     assert t == Tuple(Int(1), Int(2), Int(3))
 
 

@@ -22,55 +22,55 @@ def test_len() -> None:
 
 def test_do_iterates_all_elements() -> None:
     results: list[int] = []
-    _interval(1, 3).do(lambda i: results.append(int(i)))
+    _interval(1, 3).for_each(lambda i: results.append(int(i)))
     assert results == [1, 2, 3]
 
 
 def test_do_descending_interval() -> None:
     results: list[int] = []
-    _interval(5, 3).do(lambda i: results.append(int(i)))
+    _interval(5, 3).for_each(lambda i: results.append(int(i)))
     assert results == [5, 4, 3]
 
 
 def test_collect_transforms_elements() -> None:
     from poop.types.list import List
 
-    result = _interval(1, 3).collect(lambda i: i + Int(10))
+    result = _interval(1, 3).map(lambda i: i + Int(10))
     assert result == List(Int(11), Int(12), Int(13))
 
 
 def test_select_filters_elements() -> None:
     from poop.types.list import List
 
-    result = _interval(1, 5).select(lambda i: i % Int(2) == Int(0))
+    result = _interval(1, 5).filter(lambda i: i % Int(2) == Int(0))
     assert result == List(Int(2), Int(4))
 
 
 def test_reject_filters_elements() -> None:
     from poop.types.list import List
 
-    result = _interval(1, 5).reject(lambda i: i % Int(2) == Int(0))
+    result = _interval(1, 5).filter_false(lambda i: i % Int(2) == Int(0))
     assert result == List(Int(1), Int(3), Int(5))
 
 
 def test_detect_finds_first_match() -> None:
-    result = _interval(1, 5).detect(lambda i: i > Int(3))
+    result = _interval(1, 5).find(lambda i: i > Int(3))
     assert result == Int(4)
 
 
 def test_detect_returns_none_when_not_found() -> None:
     from poop.types.none import none
 
-    assert _interval(1, 5).detect(lambda i: i > Int(9)) is none
+    assert _interval(1, 5).find(lambda i: i > Int(9)) is none
 
 
 def test_inject_into_sums() -> None:
-    result = _interval(1, 5).inject_into(Int(0), lambda acc, i: acc + i)
+    result = _interval(1, 5).reduce(Int(0), lambda acc, i: acc + i)
     assert result == Int(15)
 
 
 def test_inject_into_product() -> None:
-    result = _interval(1, 4).inject_into(Int(1), lambda acc, i: acc * i)
+    result = _interval(1, 4).reduce(Int(1), lambda acc, i: acc * i)
     assert result == Int(24)
 
 
@@ -132,7 +132,7 @@ def test_last_returns_stop() -> None:
 
 def test_reversed_iterates_in_reverse() -> None:
     results: list[int] = []
-    _interval(1, 3).reversed().do(lambda i: results.append(int(i)))
+    _interval(1, 3).reversed().for_each(lambda i: results.append(int(i)))
     assert results == [3, 2, 1]
 
 
@@ -142,13 +142,13 @@ def test_reversed_len_is_same() -> None:
 
 def test_to_by_ascending_step() -> None:
     results: list[int] = []
-    Int(1).to_by_(Int(9), Int(2)).do(lambda i: results.append(int(i)))
+    Int(1).to_by_(Int(9), Int(2)).for_each(lambda i: results.append(int(i)))
     assert results == [1, 3, 5, 7, 9]
 
 
 def test_to_by_descending_step() -> None:
     results: list[int] = []
-    Int(9).to_by_(Int(1), Int(-2)).do(lambda i: results.append(int(i)))
+    Int(9).to_by_(Int(1), Int(-2)).for_each(lambda i: results.append(int(i)))
     assert results == [9, 7, 5, 3, 1]
 
 
@@ -158,5 +158,5 @@ def test_to_by_len() -> None:
 
 def test_reversed_with_step() -> None:
     results: list[int] = []
-    Int(1).to_by_(Int(9), Int(2)).reversed().do(lambda i: results.append(int(i)))
+    Int(1).to_by_(Int(9), Int(2)).reversed().for_each(lambda i: results.append(int(i)))
     assert results == [9, 7, 5, 3, 1]
