@@ -41,6 +41,11 @@ class Object:
 
         return Int(hash(self))
 
+    def id(self) -> Int:
+        from poop.types.int import Int
+
+        return Int(id(self))
+
     def responds_to(self, symbol: str) -> Boolean:
         from poop.types.boolean import false, true
 
