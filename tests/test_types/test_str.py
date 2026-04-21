@@ -2,6 +2,7 @@ import pytest
 
 from poop.types.boolean import false, true
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.string import Str
 
 
@@ -233,15 +234,15 @@ def test_count() -> None:
 
 
 def test_split_whitespace() -> None:
-    assert Str("a b c").split() == [Str("a"), Str("b"), Str("c")]
+    assert Str("a b c").split() == List(Str("a"), Str("b"), Str("c"))
 
 
 def test_split_sep() -> None:
-    assert Str("a,b,c").split(Str(",")) == [Str("a"), Str("b"), Str("c")]
+    assert Str("a,b,c").split(Str(",")) == List(Str("a"), Str("b"), Str("c"))
 
 
 def test_join() -> None:
-    assert Str(", ").join([Str("a"), Str("b"), Str("c")]) == Str("a, b, c")
+    assert Str(", ").join(List(Str("a"), Str("b"), Str("c"))) == Str("a, b, c")
 
 
 def test_int_parses_integer_string() -> None:

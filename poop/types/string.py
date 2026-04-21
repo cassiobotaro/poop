@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.float import Float
     from poop.types.int import Int
+    from poop.types.list import List
 
 _int = int  # alias to avoid shadowing by Str.int() method
 _str = str  # alias to avoid shadowing in annotations
@@ -91,13 +92,15 @@ class Str(Object):
     def replace(self, old: Str, new: Str) -> Str:
         return Str(self._value.replace(old._value, new._value))
 
-    def split(self, sep: Str | None = None) -> list[Str]:
-        if sep is None:
-            return [Str(p) for p in self._value.split()]
-        return [Str(p) for p in self._value.split(sep._value)]
+    def split(self, sep: Str | None = None) -> List:
+        from poop.types.list import List
 
-    def join(self, parts: list[Str]) -> Str:
-        return Str(self._value.join(p._value for p in parts))
+        if sep is None:
+            return List(*(Str(p) for p in self._value.split()))
+        return List(*(Str(p) for p in self._value.split(sep._value)))
+
+    def join(self, parts: List) -> Str:
+        return Str(self._value.join(str(p) for p in parts))
 
     def find(self, sub: Str) -> Int:
         from poop.types.int import Int
