@@ -26,10 +26,10 @@ def test_do_iterates_all_elements() -> None:
     assert results == [1, 2, 3]
 
 
-def test_do_empty_interval() -> None:
+def test_do_descending_interval() -> None:
     results: list[int] = []
-    _interval(5, 4).do(lambda i: results.append(int(i)))
-    assert results == []
+    _interval(5, 3).do(lambda i: results.append(int(i)))
+    assert results == [5, 4, 3]
 
 
 def test_collect_transforms_elements() -> None:
@@ -102,3 +102,33 @@ def test_any_returns_false_when_none_match() -> None:
     from poop.types.boolean import false
 
     assert _interval(1, 3).any(lambda i: i > Int(5)) is false
+
+
+def test_includes_returns_true_for_element_in_range() -> None:
+    from poop.types.boolean import true
+
+    assert _interval(1, 5).includes(Int(3)) is true
+
+
+def test_includes_returns_false_for_element_outside_range() -> None:
+    from poop.types.boolean import false
+
+    assert _interval(1, 5).includes(Int(6)) is false
+
+
+def test_first_returns_start() -> None:
+    assert _interval(3, 7).first() == Int(3)
+
+
+def test_last_returns_stop() -> None:
+    assert _interval(3, 7).last() == Int(7)
+
+
+def test_reversed_iterates_in_reverse() -> None:
+    results: list[int] = []
+    _interval(1, 3).reversed().do(lambda i: results.append(int(i)))
+    assert results == [3, 2, 1]
+
+
+def test_reversed_size_is_same() -> None:
+    assert _interval(1, 5).reversed().size() == Int(5)

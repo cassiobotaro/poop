@@ -23,7 +23,9 @@ class Interval(Object):
     def _iter(self) -> Any:
         from poop.types.int import Int
 
-        for i in range(self._start._value, self._stop._value + 1):
+        start, stop = self._start._value, self._stop._value
+        step = 1 if start <= stop else -1
+        for i in range(start, stop + step, step):
             yield Int(i)
 
     def do[T](self, block: Callable[[Int], T]) -> None:
@@ -59,10 +61,24 @@ class Interval(Object):
 
         return true if builtins_any(bool(block(i)) for i in self._iter()) else false
 
+    def includes(self, item: Int) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._start._value <= item._value <= self._stop._value else false
+
+    def first(self) -> Int:
+        return self._start
+
+    def last(self) -> Int:
+        return self._stop
+
+    def reversed(self) -> Interval:
+        return Interval(self._stop, self._start)
+
     def size(self) -> Int:
         from poop.types.int import Int
 
-        return Int(self._stop._value - self._start._value + 1)
+        return Int(abs(self._stop._value - self._start._value) + 1)
 
     def __str__(self) -> str:
         return f"({self._start}..{self._stop})"
