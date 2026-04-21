@@ -10,6 +10,7 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
+    from poop.types.list import List
     from poop.types.none import NoneClass
 
 
@@ -36,14 +37,20 @@ class Interval(Object):
     def do[T](self, block: Callable[[Int], T]) -> None:
         deque(map(block, self._iter()), maxlen=0)
 
-    def collect[T](self, block: Callable[[Int], T]) -> list[T]:
-        return list(map(block, self._iter()))
+    def collect(self, block: Callable[[Int], Any]) -> List:
+        from poop.types.list import List
 
-    def select(self, block: Callable[[Int], Any]) -> list[Int]:
-        return [i for i in self._iter() if bool(block(i))]
+        return List(*map(block, self._iter()))
 
-    def reject(self, block: Callable[[Int], Any]) -> list[Int]:
-        return [i for i in self._iter() if not bool(block(i))]
+    def select(self, block: Callable[[Int], Any]) -> List:
+        from poop.types.list import List
+
+        return List(*[i for i in self._iter() if bool(block(i))])
+
+    def reject(self, block: Callable[[Int], Any]) -> List:
+        from poop.types.list import List
+
+        return List(*[i for i in self._iter() if not bool(block(i))])
 
     def detect(self, block: Callable[[Int], Any]) -> Int | NoneClass:
         from poop.types.none import none

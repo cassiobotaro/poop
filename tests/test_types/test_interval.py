@@ -33,18 +33,24 @@ def test_do_descending_interval() -> None:
 
 
 def test_collect_transforms_elements() -> None:
+    from poop.types.list import List
+
     result = _interval(1, 3).collect(lambda i: i + Int(10))
-    assert result == [Int(11), Int(12), Int(13)]
+    assert result == List(Int(11), Int(12), Int(13))
 
 
 def test_select_filters_elements() -> None:
+    from poop.types.list import List
+
     result = _interval(1, 5).select(lambda i: i % Int(2) == Int(0))
-    assert result == [Int(2), Int(4)]
+    assert result == List(Int(2), Int(4))
 
 
 def test_reject_filters_elements() -> None:
+    from poop.types.list import List
+
     result = _interval(1, 5).reject(lambda i: i % Int(2) == Int(0))
-    assert result == [Int(1), Int(3), Int(5)]
+    assert result == List(Int(1), Int(3), Int(5))
 
 
 def test_detect_finds_first_match() -> None:
