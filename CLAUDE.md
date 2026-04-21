@@ -37,6 +37,10 @@ uv run pytest tests/test_file.py::test_name
 - **pytest-cov** — test coverage reporting for the `poop` module (`tests/`)
 - **prek** — git hook runner using `.pre-commit-config.yaml`; hooks run `ruff check --fix`, `ruff format`, and `ty check` on every commit
 
+## Workflow
+
+Após cada funcionalidade ou correção implementada, fazer commit das mudanças com mensagem descritiva. Cada commit deve ser atômico — um validator, um tipo, um bug fix — nunca agrupar mudanças não relacionadas.
+
 ## Architecture
 
 Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate → transform → execute(namespace)`.
