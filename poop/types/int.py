@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.float import Float
     from poop.types.interval import Interval
+    from poop.types.string import Str
 
 
 class Int(Object):
@@ -165,6 +166,26 @@ class Int(Object):
 
     def __hash__(self) -> int:
         return hash(self._value)
+
+    def bin(self) -> Str:
+        from poop.types.string import Str
+
+        return Str(bin(self._value))
+
+    def hex(self) -> Str:
+        from poop.types.string import Str
+
+        return Str(hex(self._value))
+
+    def oct(self) -> Str:
+        from poop.types.string import Str
+
+        return Str(oct(self._value))
+
+    def chr(self) -> Str:
+        from poop.types.string import Str
+
+        return Str(chr(self._value))
 
     def __int__(self) -> int:
         return self._value
