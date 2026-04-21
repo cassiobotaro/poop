@@ -541,6 +541,7 @@ Nenhuma pendente.
 - **Dunders expostos como métodos regulares**: todo dunder relevante de um tipo POOP ganha um alias com o nome Python sem underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__contains__` → `contains()`, `__iter__` → `iter()`, `__hash__` → `hash()`, etc. A regra é: remover os underscores, manter o nome Python — não traduzir para Smalltalk. Nomes Smalltalk (`size()`, `identity_hash()`, etc.) não são implementados.
 - **`isEmpty` não será implementado em `Str`**: usar `obj == ''` — chama `Str.__eq__` e retorna `Boolean` POOP.
 - **`List.join` / `Tuple.join` não serão implementados**: `list` Python não tem `join` — o idioma correto é `Str(sep).join(lista)`, que já existe.
+- **`Transcript` removido**: era um remanescente Smalltalk sem equivalente Python. O idioma POOP correto é o objeto receber a mensagem: `obj.print()`. `Object.print()` retorna `self` para cascatas; `List`/`Tuple` sobrescrevem com parâmetro `sep`. `"".print()` substitui `Transcript.nl()`.
 - **`as_string()` / `printString` não serão implementados**: usar `str(obj)` — chama `__str__` de cada tipo POOP.
 - **Lambdas** (`ast.Lambda`): análogos aos blocos Smalltalk — **permitidos**.
 - **Compreensões** (`ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`): contêm iteração implícita — avaliar se devem ser banidas junto com loops.
