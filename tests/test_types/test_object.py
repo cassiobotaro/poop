@@ -40,6 +40,15 @@ def test_responds_to_missing_method() -> None:
     assert Object().responds_to("nonexistent") is false
 
 
+def test_hash_returns_int() -> None:
+    from poop.types.int import Int
+
+    obj = Object()
+    result = obj.hash()
+    assert isinstance(result, Int)
+    assert result == Int(hash(obj))
+
+
 def test_str_default() -> None:
     assert str(Object()) == "<Object>"
 
