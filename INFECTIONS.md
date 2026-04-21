@@ -517,7 +517,7 @@ Nenhum pendente.
 - **`List.as_tuple()` / `Tuple.as_list()`**: conversão entre tipos de coleção.
 - **`Interval.as_list()` / `Interval.as_tuple()`**: materializa o intervalo em coleção.
 - **`Int.times(block)`**: `5.times(lambda: ...)` — executa o bloco n vezes. Idioma Smalltalk fundamental; elegante e natural.
-- **`Int.divmod(other)` / `Float.divmod(other)` → `Tuple`**: `no_divmod` já bloqueia — agora que `Tuple` existe, o método pode ser implementado.
+- ~~**`Int.divmod(other)` / `Float.divmod(other)` → `Tuple`**~~: implementado.
 
 ### Renomeações pendentes (nomes Smalltalk → nomes Python)
 

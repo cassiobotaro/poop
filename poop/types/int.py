@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from poop.types.float import Float
     from poop.types.interval import Interval
     from poop.types.string import Str
+    from poop.types.tuple import Tuple
 
 _int = int  # alias to avoid shadowing by Int.int() method
 
@@ -100,6 +101,15 @@ class Int(Object):
 
     def pow(self, other: Int) -> Int:
         return self.__pow__(other)
+
+    def __divmod__(self, other: Int) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        q, r = divmod(self._value, other._value)
+        return Tuple(Int(q), Int(r))
+
+    def divmod(self, other: Int) -> Tuple:
+        return self.__divmod__(other)
 
     def __lshift__(self, other: Int) -> Int:
         return Int(self._value << other._value)

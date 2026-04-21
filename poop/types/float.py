@@ -5,6 +5,7 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
+    from poop.types.tuple import Tuple
 
 _float = float  # alias to avoid shadowing by Float.float() method
 _int = int  # alias to avoid shadowing by annotations
@@ -70,6 +71,15 @@ class Float(Object):
 
     def pow(self, other: Float) -> Float:
         return self.__pow__(other)
+
+    def __divmod__(self, other: Float) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        q, r = divmod(self._value, other._value)
+        return Tuple(Float(q), Float(r))
+
+    def divmod(self, other: Float) -> Tuple:
+        return self.__divmod__(other)
 
     def __ceil__(self) -> Int:
         import math
