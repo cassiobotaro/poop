@@ -163,6 +163,116 @@ Literais negativos (`-1`, `-3.14`) são permitidos — apenas `-variavel` e `-ex
 | `min(a, b)` | função livre com aparência procedural | `a.min(b)` |
 | `max(a, b)` | função livre com aparência procedural | `a.max(b)` |
 
+### No `bin`/`hex`/`oct` — `poop/validators/no_bin.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `bin(n)` | função livre com aparência procedural | `n.bin()` |
+| `hex(n)` | função livre com aparência procedural | `n.hex()` |
+| `oct(n)` | função livre com aparência procedural | `n.oct()` |
+
+### No `chr`/`ord` — `poop/validators/no_chr.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `chr(n)` | função livre com aparência procedural | `n.chr()` |
+| `ord(c)` | função livre com aparência procedural | `c.ord()` |
+
+### No `divmod` — `poop/validators/no_divmod.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `divmod(a, b)` | função livre com aparência procedural | `a.divmod(b)` |
+
+### No `pow` — `poop/validators/no_pow.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `pow(a, b)` | função livre com aparência procedural | `a.pow(b)` |
+
+### No `hasattr` — `poop/validators/no_hasattr.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `hasattr(x, s)` | função livre com aparência procedural | `x.has_attr(s)` |
+
+### No `format` — `poop/validators/no_format.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `format(x, spec)` | função livre com aparência procedural | `x.format(spec)` |
+
+### No `slice` — `poop/validators/no_slice.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `slice(...)` | construto Python-específico | `obj.at(index)` |
+
+### No `enumerate`/`zip` — `poop/validators/no_enumerate.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `enumerate(col)` | função livre com aparência procedural | `col.collect(block)`, `col.inject_into(init, block)` |
+| `zip(a, b)` | função livre com aparência procedural | idem |
+
+### No `iter`/`next` — `poop/validators/no_iter.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `iter(col)` | protocolo iterator com aparência procedural | `col.do(block)` |
+| `next(it)` | idem | idem |
+| `aiter(col)` | variante assíncrona | idem |
+| `anext(it)` | variante assíncrona | idem |
+
+### No `setattr`/`delattr` — `poop/validators/no_setattr.py`
+
+| Chamada | Motivo | Substituto |
+|---|---|---|
+| `setattr(obj, name, val)` | manipulação explícita de atributos | use métodos da classe |
+| `delattr(obj, name)` | idem | idem |
+
+### No introspecção — `poop/validators/no_introspection.py`
+
+| Chamada | Motivo |
+|---|---|
+| `globals()` | introspecção de escopo — estado vive em instâncias |
+| `locals()` | idem |
+| `vars(obj)` | idem |
+| `dir(obj)` | idem |
+
+### No `exec`/`eval`/`compile` — `poop/validators/no_exec.py`
+
+| Chamada | Motivo |
+|---|---|
+| `exec(code)` | metaprogramação — não permitida em POOP |
+| `eval(expr)` | idem |
+| `compile(src, ...)` | idem |
+
+### No `exit`/`quit` — `poop/validators/no_exit.py`
+
+| Chamada | Motivo |
+|---|---|
+| `exit()` | controle de processo — sem equivalente POOP |
+| `quit()` | idem |
+
+### No `breakpoint` — `poop/validators/no_breakpoint.py`
+
+| Chamada | Motivo |
+|---|---|
+| `breakpoint()` | debug Python-específico — sem equivalente POOP |
+
+### No `input` — `poop/validators/no_input.py`
+
+| Chamada | Motivo |
+|---|---|
+| `input(prompt)` | I/O interativo — sem equivalente POOP |
+
+### No `open` — `poop/validators/no_open.py`
+
+| Chamada | Motivo |
+|---|---|
+| `open(path, ...)` | I/O de arquivo — sem equivalente POOP |
+
 ## Tipos ativos
 
 ### Object — `poop/types/object.py`
@@ -268,27 +378,6 @@ Singleton injetado no namespace de execução.
 
 ## Backlog
 
-### Validators — implementados, aguardando registro em `DEFAULT_VALIDATORS`
-
-| Construct | Validator | Nota |
-|---|---|---|
-| `input(...)` | `no_input.py` | sem substituto POOP necessário — banir |
-| `exec` / `eval` / `compile` | `no_exec.py` | metaprogramação — banir |
-| `breakpoint` | `no_breakpoint.py` | debug Python-específico — banir |
-| `exit` / `quit` | `no_exit.py` | controle de processo — banir |
-| `globals` / `locals` / `vars` / `dir` | `no_introspection.py` | use instâncias |
-| `setattr` / `delattr` | `no_setattr.py` | use métodos da classe |
-| `iter` / `next` / `aiter` / `anext` | `no_iter.py` | `col.do(block)` |
-| `enumerate` / `zip` | `no_enumerate.py` | `collect`, `inject_into` |
-| `slice` | `no_slice.py` | `obj.at(index)` |
-| `format` | `no_format.py` | futuro `obj.format(spec)` |
-| `hasattr(x, s)` | `no_hasattr.py` | `x.has_attr(s)` |
-| `divmod(a, b)` | `no_divmod.py` | `a.divmod(b)` |
-| `pow(a, b)` | `no_pow.py` | `a.pow(b)` |
-| `bin(n)` / `hex(n)` / `oct(n)` | `no_bin.py` | `n.bin()` / `n.hex()` / `n.oct()` |
-| `chr(n)` / `ord(c)` | `no_chr.py` | `n.chr()` / `c.ord()` |
-| `open(...)` | `no_open.py` | sem substituto POOP — banir |
-
 ### Validators — aguardando implementação
 
 | Construct | Validator | Motivo |
@@ -359,23 +448,23 @@ Singleton injetado no namespace de execução.
 | `any(col)` | ✓ bloqueado — use `col.any(block)` |
 | `min(a, b)` / `max(a, b)` | ✓ bloqueado — use `a.min(b)` / `a.max(b)` |
 | `isinstance(x, T)` | ✓ bloqueado — use `x.is_instance(T)` |
-| `hasattr(x, s)` | função livre — use `x.has_attr(s)` |
+| `hasattr(x, s)` | ✓ bloqueado — use `x.has_attr(s)` |
 | `callable(x)` | ✓ bloqueado — use `x.callable()` |
-| `divmod(a, b)` | função livre — use `a.divmod(b)` |
-| `pow(a, b)` | função livre — use `a.pow(b)` |
-| `bin(n)` / `hex(n)` / `oct(n)` | função livre — use `n.bin()` / `n.hex()` / `n.oct()` |
-| `chr(n)` / `ord(c)` | função livre — use `n.chr()` / `c.ord()` |
-| `input` | I/O sem substituto POOP |
-| `open` | I/O sem substituto POOP |
-| `exec` / `eval` / `compile` | metaprogramação — banir |
-| `breakpoint` | debug Python-específico |
-| `exit` / `quit` | controle de processo |
-| `globals` / `locals` / `vars` / `dir` | introspecção de escopo — use instâncias |
-| `setattr` / `delattr` | manipulação explícita de atributos — use métodos |
-| `iter` / `next` / `aiter` / `anext` | protocolo iterator — use `do(block)` |
-| `enumerate` / `zip` | iteração procedural — use mensagens de coleção |
-| `slice` | Python-específico — use `at(index)` |
-| `format` | função livre — use `x.format(spec)` |
+| `divmod(a, b)` | ✓ bloqueado — use `a.divmod(b)` |
+| `pow(a, b)` | ✓ bloqueado — use `a.pow(b)` |
+| `bin(n)` / `hex(n)` / `oct(n)` | ✓ bloqueado — use `n.bin()` / `n.hex()` / `n.oct()` |
+| `chr(n)` / `ord(c)` | ✓ bloqueado — use `n.chr()` / `c.ord()` |
+| `input` | ✓ bloqueado — I/O sem substituto POOP |
+| `open` | ✓ bloqueado — I/O sem substituto POOP |
+| `exec` / `eval` / `compile` | ✓ bloqueado — metaprogramação |
+| `breakpoint` | ✓ bloqueado — debug Python-específico |
+| `exit` / `quit` | ✓ bloqueado — controle de processo |
+| `globals` / `locals` / `vars` / `dir` | ✓ bloqueado — use instâncias |
+| `setattr` / `delattr` | ✓ bloqueado — use métodos da classe |
+| `iter` / `next` / `aiter` / `anext` | ✓ bloqueado — use `col.do(block)` |
+| `enumerate` / `zip` | ✓ bloqueado — use mensagens de coleção |
+| `slice` | ✓ bloqueado — use `obj.at(index)` |
+| `format` | ✓ bloqueado — use `obj.format(spec)` |
 | `ascii` | Python-específico |
 
 #### Permitir / Decidir depois
