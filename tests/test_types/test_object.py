@@ -40,6 +40,18 @@ def test_responds_to_missing_method() -> None:
     assert Object().responds_to("nonexistent") is false
 
 
+def test_callable_returns_false_for_plain_object() -> None:
+    assert Object().callable() is false
+
+
+def test_callable_returns_true_for_callable_object() -> None:
+    class CallableObj(Object):
+        def __call__(self) -> None:
+            pass
+
+    assert CallableObj().callable() is true
+
+
 def test_id_returns_int() -> None:
     from poop.types.int import Int
 
