@@ -66,5 +66,7 @@ quote-style = "double"
 ]
 "examples/*" = [
   # names injected at runtime by the POOP interpreter namespace
-  "F821"
+  "F821",
+  # POOP programs are not annotated with Python types
+  "ANN",
 ]
