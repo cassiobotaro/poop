@@ -376,6 +376,14 @@ Todo objeto POOP herda `print()` de `Object`. `List` e `Tuple` sobrescrevem para
 |---|---|
 | `ast.Delete` | objetos não têm destruição explícita — simplesmente não deletar |
 
+### No subscript — `poop/validators/no_subscript.py`
+
+| Nó AST | Condição | Motivo | Substituto |
+|---|---|---|---|
+| `ast.Subscript` | slice não é `ast.Slice` | `obj[key]` tem aparência de operador | `obj.at(key)` |
+
+Fatiamento `obj[1:3]` (`ast.Slice`) é permitido por ora — ver backlog (`no_slice`).
+
 ### Str — `poop/transformers/str.py`
 
 | Nó AST | Substituição |
@@ -438,8 +446,8 @@ Nenhum pendente.
 | `int(x)` | `x.int()` | ✓ em Int, Float, Str |
 | `float(x)` | `x.float()` | ✓ em Int, Float, Str |
 | `type(x)` | `x.class_name()` | ✓ em Object |
-| `reversed(x)` | `x.reversed()` | ✓ em Interval |
-| `sorted(x)` | `x.sorted()` | futuro (depende de `List`) |
+| `reversed(x)` | `x.reversed()` | ✓ em Interval, Str |
+| `sorted(x)` | `x.sorted()` | pendente em List, Tuple |
 | `map(f, col)` | `col.map(f)` | ✓ (renomear — ver Renomeações pendentes) |
 | `filter(f, col)` | `col.filter(f)` | ✓ (renomear — ver Renomeações pendentes) |
 
@@ -499,7 +507,7 @@ Nenhum pendente.
 - **Funções built-in** (`len`, `isinstance`, `hasattr`, `callable`) vazam tipos Python nativos para dentro do modelo POOP.
 - ~~**`Str.split()` retorna `list` Python**~~ ✓ corrigido — retorna `List` POOP.
 - ~~**`Str.join()` aceita `list[Str]` Python**~~ ✓ corrigido — aceita `List` POOP.
-- **`__repr__` ausente em Int, Float, Str, Interval, List, Tuple, NoneClass** — correção trivial: adicionar `__repr__ = __str__` em cada classe. `Object.__repr__` já delega para `__str__`, mas a ausência explícita pode causar surpresas em contextos de debug.
+- ~~**`__repr__` ausente em Int, Float, Str, Interval, List, Tuple, NoneClass**~~ — corrigido: `__repr__ = __str__` presente em todos os tipos.
 
 ### Validators ausentes
 
@@ -518,7 +526,7 @@ Nenhum pendente.
 - **`Tuple.sorted()` / `Tuple.reversed()`**: idem.
 - **`List.as_tuple()` / `Tuple.as_list()`**: conversão entre tipos de coleção.
 - **`Interval.as_list()` / `Interval.as_tuple()`**: materializa o intervalo em coleção.
-- **`Int.times(block)`**: `5.times(lambda: ...)` — executa o bloco n vezes. Idioma Smalltalk fundamental; elegante e natural.
+- **`Int.times(block)`**: `5.times(lambda: ...)` — executa o bloco n vezes. Existe hoje como `times_repeat(block)` — decidir se `times` é um alias desejado ou se `times_repeat` é o nome definitivo (nenhum dos dois é nome Python).
 - ~~**`Int.divmod(other)` / `Float.divmod(other)` → `Tuple`**~~: implementado.
 
 ### Renomeações pendentes (nomes Smalltalk → nomes Python)
