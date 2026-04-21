@@ -491,6 +491,27 @@ Nenhum pendente.
 - ~~**`Interval.detect` retorna `None` nativo**~~ ✓ corrigido.
 - ~~**`Object.class_name()` retorna `str` nativo**~~ ✓ corrigido.
 - **Funções built-in** (`len`, `isinstance`, `hasattr`, `callable`) vazam tipos Python nativos para dentro do modelo POOP.
+- **`Str.split()` retorna `list` Python** — deveria retornar `List` POOP.
+- **`Str.join()` aceita `list[Str]` Python** — deveria aceitar `List` POOP.
+- **`__repr__` ausente em Int, Float, Str, Interval, List, Tuple, NoneClass** — `Object.__repr__` delega para `__str__`, mas nenhuma subclasse define `__repr__` explicitamente.
+
+### Validators ausentes
+
+- **`no_augmented_assign`**: `x += 1`, `x -= 1` etc. não são bloqueados — `ast.AugAssign`.
+- **`no_comprehension`**: `[x for x in col]`, `{k: v for ...}` etc. contêm iteração implícita — `ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`.
+- **`no_subscript` ou transformer `[]` → `.at()`**: `obj[key]` via `__getitem__` nunca foi explicitamente permitido ou bloqueado.
+- **`no_import`**: `import os` dentro de código POOP não é bloqueado — decidir se deve ser banido ou restrito.
+- **`no_raise`** e **`no_assert`**: mencionados no backlog como bloqueados por `Error`, mas os validators ainda não existem.
+
+### Métodos faltando em tipos existentes
+
+- **`List.sorted()` / `List.reversed()`**: retornam nova cópia ordenada/invertida. `Interval` tem `reversed()`; coleções não têm.
+- **`Tuple.sorted()` / `Tuple.reversed()`**: idem.
+- **`List.as_tuple()` / `Tuple.as_list()`**: conversão entre tipos de coleção.
+- **`Interval.as_list()` / `Interval.as_tuple()`**: materializa o intervalo em coleção.
+- **`Int.times(block)`**: `Int(5).times(lambda: ...)` — executa o bloco n vezes.
+- **`Int.factorial()` / `Int.gcd(other)`**: utilitários matemáticos naturais.
+- **`Int.divmod(other)` / `Float.divmod(other)` → `Tuple`**: `no_divmod` já bloqueia — agora que `Tuple` existe, o método pode ser implementado.
 
 ### Renomeações pendentes (nomes Smalltalk → nomes Python)
 
@@ -508,7 +529,7 @@ Backlog (ainda não implementados — usar nome correto quando implementar):
 
 ### Exemplos de código
 
-- Expandir `examples/` à medida que novas funcionalidades forem implementadas.
+- Expandir `examples/` com coleções: `List`, `Tuple`, `Interval` com `collect`/`select`/`reject`.
 
 ### ~~CLI como entry point instalável~~ ✓ (concluído)
 
