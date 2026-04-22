@@ -7,6 +7,7 @@ from poop.types.float import Float
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.interval import Interval
+from poop.types.memory_view import MemoryView
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.set import Set
@@ -22,6 +23,7 @@ __all__ = [
     "FrozenSet",
     "Int",
     "Interval",
+    "MemoryView",
     "NoneClass",
     "Object",
     "Set",

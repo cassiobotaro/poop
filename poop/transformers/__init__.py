@@ -15,6 +15,7 @@ from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
+from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.set import SetTransformer
@@ -27,6 +28,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     ComplexTransformer(),
     BytesTransformer(),
     ByteArrayTransformer(),
+    MemoryViewTransformer(),
     IntTransformer(),
     FloatTransformer(),
     StrTransformer(),
@@ -43,6 +45,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **ComplexTransformer.BINDINGS,
     **BytesTransformer.BINDINGS,
     **ByteArrayTransformer.BINDINGS,
+    **MemoryViewTransformer.BINDINGS,
     **IntTransformer.BINDINGS,
     **FloatTransformer.BINDINGS,
     **StrTransformer.BINDINGS,
