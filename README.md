@@ -1,6 +1,6 @@
-# POOP
+# POOP 💩
 
-**P**ython **O**bject **O**riented **P**rogramming
+**POOP** is an acronym for **P**ython **O**bject **O**riented **P**rogramming.
 
 A Python interpreter infected by Smalltalk.
 
@@ -13,7 +13,8 @@ Requires Python 3.14 and [uv](https://docs.astral.sh/uv/).
 uv sync --dev
 
 # Run
-uv run python main.py
+poop <file.py>
+uv run python main.py <file.py>  # alternative without installing
 
 # Lint and format
 uv run ruff check --fix

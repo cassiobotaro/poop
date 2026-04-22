@@ -46,9 +46,9 @@ Após cada funcionalidade ou correção implementada, fazer commit das mudanças
 Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate → transform → execute(namespace)`.
 
 - `poop/parser.py` — wraps `ast.parse`
-- `poop/validators/` — AST validators (reject forbidden constructs); registered in `DEFAULT_VALIDATORS`: `no_if`, `no_loops`, `no_free_functions`, `no_print`, `no_try`, `no_not`, `no_unary_minus`, `no_invert`, `no_is`
-- `poop/transformers/` — AST transformers (rewrite nodes before execution); registered in `DEFAULT_TRANSFORMERS`: `boolean`, `int`, `float`, `none`, `str`
-- `poop/types/` — Smalltalk-style types: `object.py` (root), `boolean.py`, `none.py`, `int.py`, `float.py`, `interval.py`, `string.py`, `list.py`, `tuple.py`
+- `poop/validators/` — AST validators (reject forbidden constructs); registered in `DEFAULT_VALIDATORS`: `no_if`, `no_loops`, `no_comprehension`, `no_free_functions`, `no_print`, `no_try`, `no_not`, `no_unary_minus`, `no_invert`, `no_is`, `no_global`, `no_yield`, `no_walrus`, `no_match`, `no_len`, `no_abs`, `no_hash`, `no_isinstance`, `no_callable`, `no_id`, `no_all`, `no_any`, `no_min`, `no_max`, `no_bin`, `no_breakpoint`, `no_chr`, `no_divmod`, `no_enumerate`, `no_exec`, `no_exit`, `no_format`, `no_hasattr`, `no_input`, `no_introspection`, `no_iter`, `no_open`, `no_pow`, `no_setattr`, `no_slice`, `no_subscript`, `no_del`
+- `poop/transformers/` — AST transformers (rewrite nodes before execution); registered in `DEFAULT_TRANSFORMERS`: `boolean`, `none`, `complex`, `bytes`, `byte_array`, `memory_view`, `int`, `float`, `str`, `range`, `list`, `tuple`, `dict`, `set`, `frozen_set`
+- `poop/types/` — Smalltalk-style types: `object.py` (root), `boolean.py`, `none.py`, `complex.py`, `bytes.py`, `byte_array.py`, `memory_view.py`, `int.py`, `float.py`, `interval.py`, `string.py`, `range` (via `interval.py`), `list.py`, `tuple.py`, `dict.py`, `set.py`, `frozen_set.py`
 - `poop/executor.py` — compiles and executes AST with an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
 
