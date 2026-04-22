@@ -6,6 +6,7 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.bytes import Bytes
     from poop.types.int import Int
     from poop.types.list import List
 
@@ -52,8 +53,10 @@ class MemoryView(Object):
 
         return (Int(b) for b in self._value)
 
-    def tobytes(self) -> bytes:
-        return self._value.tobytes()
+    def tobytes(self) -> Bytes:
+        from poop.types.bytes import Bytes
+
+        return Bytes(self._value.tobytes())
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true

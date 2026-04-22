@@ -55,7 +55,7 @@ def test_iter_yields_int_values() -> None:
 
 
 def test_tobytes() -> None:
-    assert _mv(b"hi").tobytes() == b"hi"
+    assert _mv(b"hi").tobytes() == Bytes(b"hi")
 
 
 def test_eq_equal() -> None:
