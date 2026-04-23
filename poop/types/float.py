@@ -39,8 +39,12 @@ class Float(Object):
 
         return true if self._value.is_integer() else false
 
-    def as_integer_ratio(self) -> tuple[_int, _int]:
-        return self._value.as_integer_ratio()
+    def as_integer_ratio(self) -> Tuple:
+        from poop.types.int import Int
+        from poop.types.tuple import Tuple
+
+        n, d = self._value.as_integer_ratio()
+        return Tuple(Int(n), Int(d))
 
     def __abs__(self) -> Float:
         return Float(abs(self._value))
