@@ -205,3 +205,23 @@ def test_int_truncates() -> None:
 def test_float_identity() -> None:
     f = Float(1.5)
     assert f.float() is f
+
+
+def test_conjugate_returns_self() -> None:
+    f = Float(3.5)
+    assert f.conjugate() is f
+
+
+def test_hex_returns_str() -> None:
+    from poop.types.string import Str
+
+    assert Float(1.0).hex() == Str("0x1.0000000000000p+0")
+
+
+def test_real_returns_self() -> None:
+    f = Float(2.5)
+    assert f.real is f
+
+
+def test_imag_returns_zero() -> None:
+    assert Float(2.5).imag == Float(0.0)

@@ -5,6 +5,7 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
+    from poop.types.string import Str
     from poop.types.tuple import Tuple
 
 _float = float  # alias to avoid shadowing by Float.float() method
@@ -45,6 +46,22 @@ class Float(Object):
 
         n, d = self._value.as_integer_ratio()
         return Tuple(Int(n), Int(d))
+
+    def conjugate(self) -> Float:
+        return self
+
+    def hex(self) -> Str:
+        from poop.types.string import Str
+
+        return Str(_float(self._value).hex())
+
+    @property
+    def real(self) -> Float:
+        return self
+
+    @property
+    def imag(self) -> Float:
+        return Float(0.0)
 
     def __abs__(self) -> Float:
         return Float(abs(self._value))
