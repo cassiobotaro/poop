@@ -211,3 +211,30 @@ def test_reversed_does_not_mutate() -> None:
 
 def test_reversed_empty() -> None:
     assert Tuple().reversed() == Tuple()
+
+
+def test_count_found() -> None:
+    assert Tuple(Int(1), Int(2), Int(1), Int(3)).count(Int(1)) == Int(2)
+
+
+def test_count_not_found() -> None:
+    assert Tuple(Int(1), Int(2)).count(Int(9)) == Int(0)
+
+
+def test_count_empty() -> None:
+    assert Tuple().count(Int(1)) == Int(0)
+
+
+def test_index_first_occurrence() -> None:
+    assert Tuple(Int(10), Int(20), Int(10)).index(Int(10)) == Int(0)
+
+
+def test_index_middle() -> None:
+    assert Tuple(Int(1), Int(2), Int(3)).index(Int(2)) == Int(1)
+
+
+def test_index_not_found_raises() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        Tuple(Int(1), Int(2)).index(Int(9))

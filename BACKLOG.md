@@ -31,7 +31,7 @@ These validators are not yet active because the POOP substitute does not exist y
   - **`Float`**: `conjugate()` → self, `hex()` → `Str`, `imag()` → `Float(0.0)`, `real()` → self.
   - **`Str`**: `casefold()`, `center(width)`, `encode(encoding)` → `Bytes`, `expandtabs()`, `isascii()`, `isdecimal()`, `isidentifier()`, `isnumeric()`, `isprintable()`, `istitle()`, `ljust(width)`, `partition(sep)` → `Tuple`, `removeprefix(prefix)`, `removesuffix(suffix)`, `rfind(sub)`, `rindex(sub)`, `rjust(width)`, `rpartition(sep)` → `Tuple`, `rsplit(sep)`, `splitlines()`, `zfill(width)`.
   - **`List`**: `clear()`, `copy()` → `List`, `count(obj)` → `Int`, `extend(other)`, `index(obj)` → `Int`, `insert(i, obj)`, `remove(obj)`, `reverse()`, `sort(key, reverse)`.
-  - **`Tuple`**: `count(obj)` → `Int`, `index(obj)` → `Int`.
+  - **`Tuple`**: ~~`count(obj)` → `Int`, `index(obj)` → `Int`~~ ✓
   - **`Dict`**: `clear()`, `copy()` → `Dict`, `items()` → `List` of `Tuple(key, val)`, `pop(key)`, `popitem()` → `Tuple`, `setdefault(key, default)`, `update(other)`.
   - **`Set`**: `clear()`, `copy()` → `Set`, `difference(*others)`, `difference_update(*others)`, `discard(obj)`, `intersection(*others)`, `intersection_update(*others)`, `isdisjoint(other)` → `Boolean`, `issubset(other)` → `Boolean`, `issuperset(other)` → `Boolean`, `pop()`, `symmetric_difference(other)`, `symmetric_difference_update(other)`, `union(*others)`, `update(*others)`.
   - **`FrozenSet`**: `copy()` → `FrozenSet`, `difference(*others)`, `intersection(*others)`, `isdisjoint(other)` → `Boolean`, `issubset(other)` → `Boolean`, `issuperset(other)` → `Boolean`, `symmetric_difference(other)`, `union(*others)`.

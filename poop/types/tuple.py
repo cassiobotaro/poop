@@ -87,6 +87,16 @@ class Tuple(Object):
     def reversed(self) -> Tuple:
         return Tuple(*builtins_reversed(self._items))
 
+    def count(self, obj: Object) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._items.count(obj))
+
+    def index(self, obj: Object) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._items.index(obj))
+
     def first(self) -> Object:
         return self._items[0]
 
