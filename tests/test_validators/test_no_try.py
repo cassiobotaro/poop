@@ -44,12 +44,12 @@ def test_nested_try_inside_class_is_rejected() -> None:
 def test_try_except_star_raises_validation_error() -> None:
     source = "try:\n    pass\nexcept* Exception:\n    pass"
     tree = ast.parse(source)
-    with pytest.raises(ValidationError, match="on:do:"):
+    with pytest.raises(ValidationError, match="on_error"):
         NoTryValidator().validate(tree)
 
 
-def test_error_message_mentions_on_do() -> None:
+def test_error_message_mentions_on_error() -> None:
     source = "try:\n    pass\nexcept Exception:\n    pass"
     tree = ast.parse(source)
-    with pytest.raises(ValidationError, match="on:do:"):
+    with pytest.raises(ValidationError, match="on_error"):
         NoTryValidator().validate(tree)

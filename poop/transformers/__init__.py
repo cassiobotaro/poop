@@ -17,6 +17,7 @@ from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
+from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.string import StrTransformer
@@ -38,6 +39,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     DictTransformer(),
     SetTransformer(),
     FrozenSetTransformer(),
+    RaiseTransformer(),
 ]
 DEFAULT_NAMESPACE: _dict[str, object] = {
     **BooleanTransformer.BINDINGS,
@@ -55,6 +57,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **DictTransformer.BINDINGS,
     **SetTransformer.BINDINGS,
     **FrozenSetTransformer.BINDINGS,
+    **RaiseTransformer.BINDINGS,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]

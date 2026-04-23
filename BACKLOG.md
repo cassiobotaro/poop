@@ -8,13 +8,12 @@ These validators are not yet active because the POOP substitute does not exist y
 
 | Construct | Validator | Pending substitute |
 |---|---|---|
-| `raise` | `no_raise.py` | `Error` with `.signal()` |
 | `with` / `async with` | `no_with.py` | `on_do` mechanism |
 | `assert` | `no_assert.py` | `assert_:` in test framework |
 
 ## Next types
 
-- **[HIGH PRIORITY] `Error`**: base class for POOP exceptions. **Critical dependency**: unblocks `no_raise`, `no_with` and `no_assert` — while `Error` does not exist, POOP code can freely use `raise` and `with`, without protection from the principles. Design decisions still open — see Open decisions section.
+- **[MEDIUM PRIORITY] Python API parity audit**: see below.
 
 ## Missing validators
 
@@ -73,12 +72,7 @@ These validators are not yet active because the POOP substitute does not exist y
 
 - **Python operator taxonomy — full review needed**: Python operators fall into two categories with different semantics: (1) operators that dispatch to dunders (`+` → `__add__`, `*` → `__mul__`, `&` → `__and__`, `|` → `__or__`, `==` → `__eq__`, etc.) — these are overridable and already behave as message sends; (2) operators that do NOT dispatch to dunders and cannot be overridden (`and`, `or`, `not`, `is`, `in`) — these are language-level constructs with fixed semantics. POOP already blocks some of the second group (`not` → `not_()`, `is` → `is_none()`/`is_identical()`) but not `and`/`or`/`in`. The first group (dunder-based operators) is mostly unblocked — open question is whether their operator syntax (`x + y`, `x == y`, `x & y`) is acceptable as implicit message sends or should also be blocked. A coherent policy for both categories is needed before adding more validators.
 
-- **Exception system design**: POOP blocks `raise`/`try` but the `Error` type and its interaction with Python's existing exception hierarchy is unresolved. Three strategies were considered:
-  - **A — Generic wrapper**: `on_error` wraps any caught exception in a single `Error(e)` POOP object. Simple, but loses hierarchy — cannot distinguish `ValueError` from `KeyError` in the handler.
-  - **B — Mirrored POOP hierarchy**: POOP defines its own `ValueError`, `KeyError`, `TypeError` etc., each inheriting from both `Error` (POOP) and the corresponding Python exception. Preserves hierarchy and `isinstance` checks, but requires wrapping every Python exception class — impractical given the size of the hierarchy.
-  - **C — Python types as selector, POOP wrapper in handler** *(recommended)*: `on_error(exc_type, handler)` accepts a native Python exception class as the type selector (used directly in `except`), but wraps the caught exception in a POOP `Error` object before passing to the handler. Pragmatic and compatible with the full Python exception ecosystem; the only leak is the exception class reference used as argument.
-  - For raising: `Error("msg", ValueError).raise_()` — `Error` wraps a Python exception instance and `raise_()` re-raises it. Avoids transforming every exception constructor; the `Error` constructor accepts an optional Python exception class as kind. The keyword `raise` is banned by `no_raise`; `raise_` follows PEP 8 keyword escape.
-  - For resumable exceptions (Smalltalk-style `e resume: value`): not planned — Python's exception model does not support resumption natively.
+- **Exception system design**: ~~POOP blocks `raise`/`try` but the `Error` type and its interaction with Python's existing exception hierarchy is unresolved.~~ ✓ implemented with Strategy C: `ExcType.raise_('msg')` for raising (transformer rewrites to `_poop_raise(ExcType, 'msg')`), `obj.on_error(block, ExcType, handler)` for catching. `exc_type` is a native Python class — the only deliberate primitive leak.
 
 - **`while_true` not yet implemented**: ~~`no_loops` blocks `ast.While` and documents `cond.while_true(block)` as the substitute, but `Boolean` does not implement `while_true`. The validator is active without a working substitute — violates the principle "activate validator only when the substitute exists". Implement `while_true(block)` on `Boolean` (and decide what it returns) before this is considered complete.~~ ✓ implemented (`while_true` and `while_false` on `Boolean`, both returning `none`).
 

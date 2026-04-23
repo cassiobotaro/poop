@@ -3,6 +3,7 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.complex import Complex
 from poop.types.dict import Dict
+from poop.types.error import Error
 from poop.types.float import Float
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
@@ -19,6 +20,7 @@ __all__ = [
     "Bytes",
     "Complex",
     "Dict",
+    "Error",
     "Float",
     "FrozenSet",
     "Int",

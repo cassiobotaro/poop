@@ -38,7 +38,7 @@ def test_error_message_includes_line_number() -> None:
 
 def test_runtime_error_raises_execution_error() -> None:
     with pytest.raises(ExecutionError):
-        Interpreter().run_source("raise ValueError('runtime failure')")
+        Interpreter().run_source("x = 1 / 0")
 
 
 def test_custom_validators_replace_defaults() -> None:
