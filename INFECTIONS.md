@@ -589,6 +589,17 @@ Constructors (`int`, `float`, `bool`, `str`, `bytes`, `list`, …) are **not ban
 ### Missing methods in existing types
 
 - **[MEDIUM PRIORITY] Python API parity audit**: review every POOP type against its Python counterpart and add any missing methods. Each POOP type should expose all meaningful methods of the Python class it wraps, following the naming rule (Python names, not Smalltalk). Types to audit: `Int` (`int`), `Float` (`float`), `Str` (`str`), `List` (`list`), `Tuple` (`tuple`), `Dict` (`dict`), `Set` (`set`), `FrozenSet` (`frozenset`), `Bytes` (`bytes`), `ByteArray` (`bytearray`), `Complex` (`complex`), `Interval` (`range`).
+  - **`Int`**: `as_integer_ratio()` → `Tuple(Int, Int)`, `conjugate()` → self, `denominator()` → `Int(1)`, `imag()` → `Int(0)`, `numerator()` → self, `real()` → self, `to_bytes(length, byteorder)` → `Bytes`.
+  - **`Float`**: `conjugate()` → self, `hex()` → `Str`, `imag()` → `Float(0.0)`, `real()` → self.
+  - **`Str`**: `casefold()`, `center(width)`, `encode(encoding)` → `Bytes`, `expandtabs()`, `isascii()`, `isdecimal()`, `isidentifier()`, `isnumeric()`, `isprintable()`, `istitle()`, `ljust(width)`, `partition(sep)` → `Tuple`, `removeprefix(prefix)`, `removesuffix(suffix)`, `rfind(sub)`, `rindex(sub)`, `rjust(width)`, `rpartition(sep)` → `Tuple`, `rsplit(sep)`, `splitlines()`, `zfill(width)`.
+  - **`List`**: `clear()`, `copy()` → `List`, `count(obj)` → `Int`, `extend(other)`, `index(obj)` → `Int`, `insert(i, obj)`, `remove(obj)`, `reverse()`, `sort(key, reverse)`.
+  - **`Tuple`**: `count(obj)` → `Int`, `index(obj)` → `Int`.
+  - **`Dict`**: `clear()`, `copy()` → `Dict`, `items()` → `List` of `Tuple(key, val)`, `pop(key)`, `popitem()` → `Tuple`, `setdefault(key, default)`, `update(other)`.
+  - **`Set`**: `clear()`, `copy()` → `Set`, `difference(*others)`, `difference_update(*others)`, `discard(obj)`, `intersection(*others)`, `intersection_update(*others)`, `isdisjoint(other)` → `Boolean`, `issubset(other)` → `Boolean`, `issuperset(other)` → `Boolean`, `pop()`, `symmetric_difference(other)`, `symmetric_difference_update(other)`, `union(*others)`, `update(*others)`.
+  - **`FrozenSet`**: `copy()` → `FrozenSet`, `difference(*others)`, `intersection(*others)`, `isdisjoint(other)` → `Boolean`, `issubset(other)` → `Boolean`, `issuperset(other)` → `Boolean`, `symmetric_difference(other)`, `union(*others)`.
+  - **`Bytes`**: `capitalize()`, `center(width)`, `count(sub)`, `endswith(suffix)`, `expandtabs()`, `find(sub)`, `index(sub)`, `isalnum()`, `isalpha()`, `isascii()`, `isdigit()`, `islower()`, `isspace()`, `istitle()`, `isupper()`, `join(iterable)`, `ljust(width)`, `lower()`, `lstrip()`, `partition(sep)`, `removeprefix(prefix)`, `removesuffix(suffix)`, `replace(old, new)`, `rfind(sub)`, `rindex(sub)`, `rjust(width)`, `rpartition(sep)`, `rsplit(sep)`, `rstrip()`, `split(sep)`, `splitlines()`, `startswith(prefix)`, `strip()`, `swapcase()`, `title()`, `upper()`, `zfill(width)`.
+  - **`ByteArray`**: tudo acima de `Bytes`, mais: `append(byte)`, `clear()`, `copy()` → `ByteArray`, `extend(iterable)`, `insert(i, byte)`, `pop(index)`, `remove(byte)`, `resize(size)`, `reverse()`.
+  - **`Interval`**: `count(value)` → `Int`, `index(value)` → `Int`, `start()` → `Int`, `stop()` → `Int`, `step()` → `Int`.
 - **`List.sorted()` / `List.reversed()`**: return a new sorted/reversed copy. `Interval` has `reversed()`; `List` and `Tuple` do not.
 - **`Tuple.sorted()` / `Tuple.reversed()`**: same.
 - ~~**`Int.times(block)`**~~: removed — `times` and `timesRepeat:` are Smalltalk names with no Python `int` equivalent.
@@ -611,6 +622,16 @@ None pending.
 
 
 ## Open decisions
+
+- **Naming strategy for Python keyword → method**: `for`, `while`, `in` are Python keywords that cannot be used as method names. POOP currently handles them inconsistently: `for` → `for_each` (Java/JS compound), `while` → `while_true` (descriptive compound), `in` → `includes` (semantic equivalent from `__contains__`). Three approaches exist: (1) PEP 8 trailing underscore — `for_`, `while_`, `in_` — mechanical but ugly; (2) descriptive compound — `for_each`, `while_true` — readable but not Python names; (3) semantic equivalent — `includes`, `contains` — most Pythonic but requires case-by-case judgment. A consistent rule should be decided before adding new keyword-derived methods.
+
+- **`while_true` not yet implemented**: `no_loops` blocks `ast.While` and documents `cond.while_true(block)` as the substitute, but `Boolean` does not implement `while_true`. The validator is active without a working substitute — violates the principle "activate validator only when the substitute exists". Implement `while_true(block)` on `Boolean` (and decide what it returns) before this is considered complete.
+
+- **`in` operator not blocked**: `x in col` uses `__contains__` internally and is not rejected by any validator. POOP has `col.includes(x)` as the message-passing equivalent, but the operator form still works — a silent inconsistency. Decide: add a `no_in` validator (blocked until `includes` is confirmed as the canonical substitute on all collection types), or explicitly allow `in` as syntactic sugar for `__contains__`.
+
+- **`for_each` vs `for_`**: iteration method is named `for_each` because `for` is a Python keyword and `def for(...)` is a syntax error. `for_` (PEP 8 trailing-underscore convention) was rejected because it reads awkwardly (`col.for_(block)`). `for_each` is semantically clear but not a Python builtin name — it comes from Java/JavaScript tradition, which is a mild violation of the "Python names, not Smalltalk" principle. Worth revisiting when the broader keyword naming strategy (see above) is decided.
+
+- **Classmethods as POOP messages**: some Python built-in types expose useful classmethods — `int.from_bytes(b, byteorder)`, `float.fromhex(s)`, `bytes.fromhex(s)`, `dict.fromkeys(keys)`. These cannot be expressed as messages to an instance; the receiver would be the class itself. Two questions to resolve: (1) should POOP support sending messages to class objects at all, and (2) if so, should the transformer pipeline intercept `Int.from_bytes(...)` as a special call form (attribute access on a class name) and rewrite it to a factory function? Until decided, these methods are excluded from the Python API parity audit.
 
 - **Constructor builtins are intercepted, not banned**: `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` etc. are class constructors — they ARE object instantiation and fit the OO model. The rule is: each transformer intercepts the bare call (no method receiver) and rewrites it to return the POOP type. The factory function (`_poop_X_from`) handles type dispatch and raises `TypeError` for unsupported input types.
 
