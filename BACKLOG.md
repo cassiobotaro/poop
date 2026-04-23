@@ -16,7 +16,6 @@ These validators are not yet active because the POOP substitute does not exist y
 
 ## Missing validators
 
-- **`no_import`**: `import os` inside POOP code is not blocked — decide whether to ban or restrict.
 - **`no_type_alias`**: `type X = int` (`ast.TypeAlias`, Python 3.12+) is not evaluated — decide whether to allow (type annotations are harmless) or ban for consistency.
 
 ## Missing methods in existing types
@@ -74,4 +73,4 @@ These validators are not yet active because the POOP substitute does not exist y
 
 - **Classmethods as POOP messages**: some Python built-in types expose useful classmethods — `int.from_bytes(b, byteorder)`, `float.fromhex(s)`, `bytes.fromhex(s)`, `dict.fromkeys(keys)`. These cannot be expressed as messages to an instance. Two questions: (1) should POOP support sending messages to class objects at all, and (2) if so, should the transformer pipeline intercept `Int.from_bytes(...)` and rewrite it to a factory function? Until decided, these methods are excluded from the Python API parity audit.
 
-- **`import`** (`ast.Import`, `ast.ImportFrom`): evaluate whether to ban or restrict to POOP module imports.
+- **`import`** (`ast.Import`, `ast.ImportFrom`): ✓ **Decisão**: `import` é permitido — necessário para projetos com múltiplos arquivos POOP. Importar módulos Python built-in (`os`, `sys`, `json`, etc.) não é bloqueado mas produzirá erros em runtime, pois as funções retornam tipos primitivos Python, não POOP types. Regra documental: apenas módulos escritos em estilo POOP são compatíveis.
