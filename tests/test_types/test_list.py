@@ -174,3 +174,44 @@ def test_not_hashable() -> None:
 
 def test_repr_equals_str() -> None:
     assert repr(List(Int(1), Int(2))) == str(List(Int(1), Int(2)))
+
+
+def test_sorted_ascending() -> None:
+    lst = List(Int(3), Int(1), Int(2))
+    assert lst.sorted() == List(Int(1), Int(2), Int(3))
+
+
+def test_sorted_returns_new_list() -> None:
+    lst = List(Int(3), Int(1), Int(2))
+    result = lst.sorted()
+    assert isinstance(result, List)
+    assert lst == List(Int(3), Int(1), Int(2))
+
+
+def test_sorted_empty() -> None:
+    assert List().sorted() == List()
+
+
+def test_sorted_with_key() -> None:
+    from poop.types.int import Int
+
+    lst = List(Int(-3), Int(1), Int(-2))
+    result = lst.sorted(key=lambda x: x.abs())
+    assert result == List(Int(1), Int(-2), Int(-3))
+
+
+def test_reversed_returns_new_list() -> None:
+    lst = List(Int(1), Int(2), Int(3))
+    result = lst.reversed()
+    assert isinstance(result, List)
+    assert result == List(Int(3), Int(2), Int(1))
+
+
+def test_reversed_does_not_mutate() -> None:
+    lst = List(Int(1), Int(2), Int(3))
+    lst.reversed()
+    assert lst == List(Int(1), Int(2), Int(3))
+
+
+def test_reversed_empty() -> None:
+    assert List().reversed() == List()

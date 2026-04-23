@@ -1,5 +1,7 @@
 from builtins import all as builtins_all
 from builtins import any as builtins_any
+from builtins import reversed as builtins_reversed
+from builtins import sorted as builtins_sorted
 from collections import deque
 from collections.abc import Callable, Iterator
 from functools import reduce
@@ -82,6 +84,12 @@ class List(Object):
         from poop.types.boolean import false, true
 
         return true if builtins_any(bool(block(x)) for x in self._items) else false
+
+    def sorted(self, key: Callable[[Object], Any] | None = None) -> List:
+        return List(*builtins_sorted(self._items, key=key))
+
+    def reversed(self) -> List:
+        return List(*builtins_reversed(self._items))
 
     def pop(self) -> Object:
         return self._items.pop()

@@ -172,3 +172,42 @@ def test_not_equal_to_list() -> None:
 
 def test_repr_equals_str() -> None:
     assert repr(Tuple(Int(1), Int(2))) == str(Tuple(Int(1), Int(2)))
+
+
+def test_sorted_ascending() -> None:
+    t = Tuple(Int(3), Int(1), Int(2))
+    assert t.sorted() == Tuple(Int(1), Int(2), Int(3))
+
+
+def test_sorted_returns_new_tuple() -> None:
+    t = Tuple(Int(3), Int(1), Int(2))
+    result = t.sorted()
+    assert isinstance(result, Tuple)
+    assert t == Tuple(Int(3), Int(1), Int(2))
+
+
+def test_sorted_empty() -> None:
+    assert Tuple().sorted() == Tuple()
+
+
+def test_sorted_with_key() -> None:
+    t = Tuple(Int(-3), Int(1), Int(-2))
+    result = t.sorted(key=lambda x: x.abs())
+    assert result == Tuple(Int(1), Int(-2), Int(-3))
+
+
+def test_reversed_returns_new_tuple() -> None:
+    t = Tuple(Int(1), Int(2), Int(3))
+    result = t.reversed()
+    assert isinstance(result, Tuple)
+    assert result == Tuple(Int(3), Int(2), Int(1))
+
+
+def test_reversed_does_not_mutate() -> None:
+    t = Tuple(Int(1), Int(2), Int(3))
+    t.reversed()
+    assert t == Tuple(Int(1), Int(2), Int(3))
+
+
+def test_reversed_empty() -> None:
+    assert Tuple().reversed() == Tuple()
