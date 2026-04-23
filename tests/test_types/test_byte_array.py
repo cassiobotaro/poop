@@ -176,3 +176,300 @@ def test_bytearray_mutable_via_at_put() -> None:
     ba = ByteArray(bytearray(3))  # [0, 0, 0]
     ba.at_put(Int(1), Int(42))
     assert ba.at(Int(1)) == Int(42)
+
+
+def test_append_adds_byte() -> None:
+    ba = ByteArray()
+    ba.append(Int(65))
+    assert ba.len() == Int(1)
+    assert ba.at(Int(0)) == Int(65)
+
+
+def test_append_returns_self() -> None:
+    ba = ByteArray()
+    assert ba.append(Int(1)) is ba
+
+
+def test_clear_empties() -> None:
+    ba = ByteArray(bytearray(b"hello"))
+    ba.clear()
+    assert ba.len() == Int(0)
+
+
+def test_clear_returns_self() -> None:
+    ba = ByteArray(bytearray(b"hi"))
+    assert ba.clear() is ba
+
+
+def test_copy_returns_new_bytearray() -> None:
+    ba = ByteArray(bytearray(b"hi"))
+    c = ba.copy()
+    assert c is not ba
+    assert c == ba
+
+
+def test_copy_is_shallow() -> None:
+    ba = ByteArray(bytearray(b"hi"))
+    c = ba.copy()
+    ba.clear()
+    assert c.len() == Int(2)
+
+
+def test_extend_mutates() -> None:
+    ba = ByteArray(bytearray(b"ab"))
+    ba.extend(ByteArray(bytearray(b"cd")))
+    assert ba.len() == Int(4)
+
+
+def test_extend_returns_self() -> None:
+    ba = ByteArray()
+    assert ba.extend(ByteArray(bytearray(b"x"))) is ba
+
+
+def test_insert_adds_at_position() -> None:
+    ba = ByteArray(bytearray(b"ac"))
+    ba.insert(Int(1), Int(98))  # ord('b') == 98
+    assert ba.at(Int(1)) == Int(98)
+    assert ba.len() == Int(3)
+
+
+def test_insert_returns_self() -> None:
+    ba = ByteArray(bytearray(b"a"))
+    assert ba.insert(Int(0), Int(65)) is ba
+
+
+def test_pop_last() -> None:
+    ba = ByteArray(bytearray(b"ab"))
+    val = ba.pop()
+    assert val == Int(98)  # ord('b')
+    assert ba.len() == Int(1)
+
+
+def test_pop_at_index() -> None:
+    ba = ByteArray(bytearray(b"abc"))
+    val = ba.pop(Int(0))
+    assert val == Int(97)  # ord('a')
+    assert ba.len() == Int(2)
+
+
+def test_remove_first_occurrence() -> None:
+    ba = ByteArray(bytearray(b"abab"))
+    ba.remove(Int(97))  # ord('a')
+    assert ba.len() == Int(3)
+    assert ba.at(Int(0)) == Int(98)
+
+
+def test_remove_returns_self() -> None:
+    ba = ByteArray(bytearray(b"a"))
+    assert ba.remove(Int(97)) is ba
+
+
+def test_reverse_mutates() -> None:
+    ba = ByteArray(bytearray(b"abc"))
+    ba.reverse()
+    assert ba.at(Int(0)) == Int(99)  # ord('c')
+    assert ba.at(Int(2)) == Int(97)  # ord('a')
+
+
+def test_reverse_returns_self() -> None:
+    ba = ByteArray(bytearray(b"hi"))
+    assert ba.reverse() is ba
+
+
+def test_capitalize() -> None:
+    assert ByteArray(bytearray(b"hello world")).capitalize() == ByteArray(
+        bytearray(b"Hello world")
+    )
+
+
+def test_center_no_fill() -> None:
+    assert ByteArray(bytearray(b"hi")).center(Int(6)) == ByteArray(bytearray(b"  hi  "))
+
+
+def test_count() -> None:
+    assert ByteArray(bytearray(b"abcabc")).count(ByteArray(bytearray(b"ab"))) == Int(2)
+
+
+def test_endswith_true() -> None:
+    assert ByteArray(bytearray(b"hello")).endswith(ByteArray(bytearray(b"lo"))) is true
+
+
+def test_endswith_false() -> None:
+    assert ByteArray(bytearray(b"hello")).endswith(ByteArray(bytearray(b"hi"))) is false
+
+
+def test_expandtabs_default() -> None:
+    assert ByteArray(bytearray(b"a\tb")).expandtabs() == ByteArray(
+        bytearray(b"a       b")
+    )
+
+
+def test_find_found() -> None:
+    assert ByteArray(bytearray(b"hello")).find(ByteArray(bytearray(b"ll"))) == Int(2)
+
+
+def test_find_not_found() -> None:
+    assert ByteArray(bytearray(b"hello")).find(ByteArray(bytearray(b"xyz"))) == Int(-1)
+
+
+def test_index_found() -> None:
+    assert ByteArray(bytearray(b"hello")).index(ByteArray(bytearray(b"ll"))) == Int(2)
+
+
+def test_isalnum_true() -> None:
+    assert ByteArray(bytearray(b"abc123")).isalnum() is true
+
+
+def test_isalpha_true() -> None:
+    assert ByteArray(bytearray(b"abc")).isalpha() is true
+
+
+def test_isascii_true() -> None:
+    assert ByteArray(bytearray(b"hello")).isascii() is true
+
+
+def test_isdigit_true() -> None:
+    assert ByteArray(bytearray(b"123")).isdigit() is true
+
+
+def test_islower_true() -> None:
+    assert ByteArray(bytearray(b"hello")).islower() is true
+
+
+def test_isspace_true() -> None:
+    assert ByteArray(bytearray(b"   ")).isspace() is true
+
+
+def test_istitle_true() -> None:
+    assert ByteArray(bytearray(b"Hello World")).istitle() is true
+
+
+def test_isupper_true() -> None:
+    assert ByteArray(bytearray(b"HELLO")).isupper() is true
+
+
+def test_join() -> None:
+    sep = ByteArray(bytearray(b"-"))
+    parts = List(ByteArray(bytearray(b"a")), ByteArray(bytearray(b"b")))
+    assert sep.join(parts) == ByteArray(bytearray(b"a-b"))
+
+
+def test_ljust() -> None:
+    assert ByteArray(bytearray(b"hi")).ljust(Int(5)) == ByteArray(bytearray(b"hi   "))
+
+
+def test_lower() -> None:
+    assert ByteArray(bytearray(b"HELLO")).lower() == ByteArray(bytearray(b"hello"))
+
+
+def test_lstrip_default() -> None:
+    assert ByteArray(bytearray(b"  hello")).lstrip() == ByteArray(bytearray(b"hello"))
+
+
+def test_partition() -> None:
+    from poop.types.tuple import Tuple
+
+    result = ByteArray(bytearray(b"hello world")).partition(ByteArray(bytearray(b" ")))
+    assert isinstance(result, Tuple)
+    assert result.at(Int(0)) == ByteArray(bytearray(b"hello"))
+    assert result.at(Int(2)) == ByteArray(bytearray(b"world"))
+
+
+def test_removeprefix() -> None:
+    assert ByteArray(bytearray(b"hello")).removeprefix(
+        ByteArray(bytearray(b"hel"))
+    ) == ByteArray(bytearray(b"lo"))
+
+
+def test_removesuffix() -> None:
+    assert ByteArray(bytearray(b"hello")).removesuffix(
+        ByteArray(bytearray(b"lo"))
+    ) == ByteArray(bytearray(b"hel"))
+
+
+def test_replace() -> None:
+    assert ByteArray(bytearray(b"aabb")).replace(
+        ByteArray(bytearray(b"aa")), ByteArray(bytearray(b"XX"))
+    ) == ByteArray(bytearray(b"XXbb"))
+
+
+def test_rfind() -> None:
+    assert ByteArray(bytearray(b"abcabc")).rfind(ByteArray(bytearray(b"ab"))) == Int(3)
+
+
+def test_rindex() -> None:
+    assert ByteArray(bytearray(b"abcabc")).rindex(ByteArray(bytearray(b"ab"))) == Int(3)
+
+
+def test_rjust() -> None:
+    assert ByteArray(bytearray(b"hi")).rjust(Int(5)) == ByteArray(bytearray(b"   hi"))
+
+
+def test_rpartition() -> None:
+    from poop.types.tuple import Tuple
+
+    result = ByteArray(bytearray(b"hello world")).rpartition(ByteArray(bytearray(b" ")))
+    assert isinstance(result, Tuple)
+    assert result.at(Int(2)) == ByteArray(bytearray(b"world"))
+
+
+def test_rsplit() -> None:
+    result = ByteArray(bytearray(b"a b c")).rsplit()
+    assert isinstance(result, List)
+    assert result.len() == Int(3)
+
+
+def test_rstrip_default() -> None:
+    assert ByteArray(bytearray(b"hello  ")).rstrip() == ByteArray(bytearray(b"hello"))
+
+
+def test_split_no_sep() -> None:
+    result = ByteArray(bytearray(b"a b c")).split()
+    assert isinstance(result, List)
+    assert result.len() == Int(3)
+
+
+def test_split_with_sep() -> None:
+    result = ByteArray(bytearray(b"a,b,c")).split(ByteArray(bytearray(b",")))
+    assert isinstance(result, List)
+    assert result.at(Int(0)) == ByteArray(bytearray(b"a"))
+
+
+def test_splitlines() -> None:
+    result = ByteArray(bytearray(b"a\nb\nc")).splitlines()
+    assert isinstance(result, List)
+    assert result.len() == Int(3)
+
+
+def test_startswith_true() -> None:
+    assert (
+        ByteArray(bytearray(b"hello")).startswith(ByteArray(bytearray(b"hel"))) is true
+    )
+
+
+def test_startswith_false() -> None:
+    assert (
+        ByteArray(bytearray(b"hello")).startswith(ByteArray(bytearray(b"xyz"))) is false
+    )
+
+
+def test_strip_default() -> None:
+    assert ByteArray(bytearray(b"  hello  ")).strip() == ByteArray(bytearray(b"hello"))
+
+
+def test_swapcase() -> None:
+    assert ByteArray(bytearray(b"Hello")).swapcase() == ByteArray(bytearray(b"hELLO"))
+
+
+def test_title() -> None:
+    assert ByteArray(bytearray(b"hello world")).title() == ByteArray(
+        bytearray(b"Hello World")
+    )
+
+
+def test_upper() -> None:
+    assert ByteArray(bytearray(b"hello")).upper() == ByteArray(bytearray(b"HELLO"))
+
+
+def test_zfill() -> None:
+    assert ByteArray(bytearray(b"42")).zfill(Int(5)) == ByteArray(bytearray(b"00042"))
