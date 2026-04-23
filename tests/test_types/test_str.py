@@ -255,3 +255,178 @@ def test_float_parses_float_string() -> None:
     from poop.types.float import Float
 
     assert Str("3.14").float() == Float(3.14)
+
+
+def test_casefold() -> None:
+    assert Str("Hello WORLD").casefold() == Str("hello world")
+
+
+def test_center_no_fillchar() -> None:
+    assert Str("hi").center(Int(6)) == Str("  hi  ")
+
+
+def test_center_with_fillchar() -> None:
+    assert Str("hi").center(Int(6), Str("*")) == Str("**hi**")
+
+
+def test_encode_returns_bytes() -> None:
+    from poop.types.bytes import Bytes
+
+    assert Str("hello").encode(Str("utf-8")) == Bytes(b"hello")
+
+
+def test_expandtabs_default() -> None:
+    assert Str("a\tb").expandtabs() == Str("a       b")
+
+
+def test_expandtabs_with_size() -> None:
+    assert Str("a\tb").expandtabs(Int(4)) == Str("a   b")
+
+
+def test_isascii_true() -> None:
+    from poop.types.boolean import true
+
+    assert Str("hello").isascii() is true
+
+
+def test_isascii_false() -> None:
+    from poop.types.boolean import false
+
+    assert Str("héllo").isascii() is false
+
+
+def test_isdecimal_true() -> None:
+    from poop.types.boolean import true
+
+    assert Str("123").isdecimal() is true
+
+
+def test_isdecimal_false() -> None:
+    from poop.types.boolean import false
+
+    assert Str("12.3").isdecimal() is false
+
+
+def test_isidentifier_true() -> None:
+    from poop.types.boolean import true
+
+    assert Str("my_var").isidentifier() is true
+
+
+def test_isidentifier_false() -> None:
+    from poop.types.boolean import false
+
+    assert Str("1var").isidentifier() is false
+
+
+def test_isnumeric_true() -> None:
+    from poop.types.boolean import true
+
+    assert Str("123").isnumeric() is true
+
+
+def test_isprintable_true() -> None:
+    from poop.types.boolean import true
+
+    assert Str("hello").isprintable() is true
+
+
+def test_isprintable_false() -> None:
+    from poop.types.boolean import false
+
+    assert Str("hello\x00").isprintable() is false
+
+
+def test_istitle_true() -> None:
+    from poop.types.boolean import true
+
+    assert Str("Hello World").istitle() is true
+
+
+def test_istitle_false() -> None:
+    from poop.types.boolean import false
+
+    assert Str("hello world").istitle() is false
+
+
+def test_ljust() -> None:
+    assert Str("hi").ljust(Int(5)) == Str("hi   ")
+
+
+def test_ljust_with_fillchar() -> None:
+    assert Str("hi").ljust(Int(5), Str("-")) == Str("hi---")
+
+
+def test_rjust() -> None:
+    assert Str("hi").rjust(Int(5)) == Str("   hi")
+
+
+def test_rjust_with_fillchar() -> None:
+    assert Str("hi").rjust(Int(5), Str("-")) == Str("---hi")
+
+
+def test_zfill() -> None:
+    assert Str("42").zfill(Int(5)) == Str("00042")
+
+
+def test_partition() -> None:
+    from poop.types.tuple import Tuple
+
+    assert Str("hello world foo").partition(Str(" ")) == Tuple(
+        Str("hello"), Str(" "), Str("world foo")
+    )
+
+
+def test_rpartition() -> None:
+    from poop.types.tuple import Tuple
+
+    assert Str("hello world foo").rpartition(Str(" ")) == Tuple(
+        Str("hello world"), Str(" "), Str("foo")
+    )
+
+
+def test_removeprefix() -> None:
+    assert Str("hello world").removeprefix(Str("hello ")) == Str("world")
+
+
+def test_removeprefix_no_match() -> None:
+    assert Str("hello world").removeprefix(Str("bye")) == Str("hello world")
+
+
+def test_removesuffix() -> None:
+    assert Str("hello world").removesuffix(Str(" world")) == Str("hello")
+
+
+def test_removesuffix_no_match() -> None:
+    assert Str("hello world").removesuffix(Str("bye")) == Str("hello world")
+
+
+def test_rfind_found() -> None:
+    assert Str("hello hello").rfind(Str("hello")) == Int(6)
+
+
+def test_rfind_not_found() -> None:
+    assert Str("hello").rfind(Str("xyz")) == Int(-1)
+
+
+def test_rindex_found() -> None:
+    assert Str("hello hello").rindex(Str("hello")) == Int(6)
+
+
+def test_rindex_not_found_raises() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        Str("hello").rindex(Str("xyz"))
+
+
+def test_rsplit() -> None:
+    from poop.types.list import List
+
+    assert Str("a b c").rsplit(Str(" ")) == List(Str("a"), Str("b"), Str("c"))
+
+
+def test_splitlines() -> None:
+    from poop.types.list import List
+
+    assert Str("a\nb\nc").splitlines() == List(Str("a"), Str("b"), Str("c"))

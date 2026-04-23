@@ -5,9 +5,11 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.bytes import Bytes
     from poop.types.float import Float
     from poop.types.int import Int
     from poop.types.list import List
+    from poop.types.tuple import Tuple
 
 _int = int  # alias to avoid shadowing by Str.int() method
 _str = str  # alias to avoid shadowing in annotations
@@ -156,6 +158,108 @@ class Str(Object):
         from poop.types.boolean import false, true
 
         return true if self._value.islower() else false
+
+    def casefold(self) -> Str:
+        return Str(self._value.casefold())
+
+    def center(self, width: Int, fillchar: Str | None = None) -> Str:
+        if fillchar is None:
+            return Str(self._value.center(width._value))
+        return Str(self._value.center(width._value, fillchar._value))
+
+    def encode(self, encoding: Str) -> Bytes:
+        from poop.types.bytes import Bytes
+
+        return Bytes(self._value.encode(encoding._value))
+
+    def expandtabs(self, tabsize: Int | None = None) -> Str:
+        if tabsize is None:
+            return Str(self._value.expandtabs())
+        return Str(self._value.expandtabs(tabsize._value))
+
+    def isascii(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isascii() else false
+
+    def isdecimal(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isdecimal() else false
+
+    def isidentifier(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isidentifier() else false
+
+    def isnumeric(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isnumeric() else false
+
+    def isprintable(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isprintable() else false
+
+    def istitle(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.istitle() else false
+
+    def ljust(self, width: Int, fillchar: Str | None = None) -> Str:
+        if fillchar is None:
+            return Str(self._value.ljust(width._value))
+        return Str(self._value.ljust(width._value, fillchar._value))
+
+    def rjust(self, width: Int, fillchar: Str | None = None) -> Str:
+        if fillchar is None:
+            return Str(self._value.rjust(width._value))
+        return Str(self._value.rjust(width._value, fillchar._value))
+
+    def zfill(self, width: Int) -> Str:
+        return Str(self._value.zfill(width._value))
+
+    def partition(self, sep: Str) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        return Tuple(*[Str(s) for s in self._value.partition(sep._value)])
+
+    def rpartition(self, sep: Str) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        return Tuple(*[Str(s) for s in self._value.rpartition(sep._value)])
+
+    def removeprefix(self, prefix: Str) -> Str:
+        return Str(self._value.removeprefix(prefix._value))
+
+    def removesuffix(self, suffix: Str) -> Str:
+        return Str(self._value.removesuffix(suffix._value))
+
+    def rfind(self, sub: Str) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._value.rfind(sub._value))
+
+    def rindex(self, sub: Str) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._value.rindex(sub._value))
+
+    def rsplit(self, sep: Str | None = None) -> List:
+        from poop.types.list import List
+
+        return List(
+            *[
+                Str(s)
+                for s in self._value.rsplit(sep._value if sep is not None else None)
+            ]
+        )
+
+    def splitlines(self) -> List:
+        from poop.types.list import List
+
+        return List(*[Str(s) for s in self._value.splitlines()])
 
     def __add__(self, other: Str) -> Str:
         return Str(self._value + other._value)
