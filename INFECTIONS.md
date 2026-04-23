@@ -65,7 +65,7 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 
 | AST node | Reason | Substitute |
 |---|---|---|
-| `ast.Try` | Control structure — procedural look | `obj.on_error(block, ExcType, handler)` |
+| `ast.Try` | Control structure — procedural look | `Try(block).except_(ExcType, handler).run()` |
 | `ast.TryStar` | `try/except*` variant (exception groups) | same |
 
 ### No `not` — `poop/validators/no_not.py`
@@ -341,9 +341,6 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `not` | `not_()` | `false if bool(self) else true` |
 | `class` | `class_name()` | `type(self).__name__` as `Str` |
 | `respondsTo:` | `responds_to(symbol)` | `hasattr` as base |
-| `on:do:` | `on_error(block, exc_type, handler)` | executes `block()`; on `exc_type` wraps in `Error` and calls `handler(error)` |
-
-> **Tradeoff**: `exc_type` in `on_error` is a native Python class (`ValueError`, `KeyError`, …), not a POOP object. This is the only deliberate primitive leak — mirroring the full Python exception hierarchy (~100+ classes) is impractical (Strategy B), and a generic wrapper loses hierarchy (Strategy A). Strategy C is the pragmatic choice.
 
 `__str__` returns `"<ClassName>"` as fallback; `__repr__` delegates to `__str__`.
 
@@ -401,7 +398,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 ### Error — `poop/types/error.py`
 
-`Error(Object)` wraps a caught Python exception. Handlers in `on_error` always receive an `Error` object.
+`Error(Object)` wraps a caught Python exception. Handlers in `Try.except_` always receive an `Error` object.
 
 | Method | Behavior |
 |---|---|
@@ -409,6 +406,20 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 | `kind()` | returns exception class name as `Str` |
 
 `__str__` returns `"Error(<exception>)"`.
+
+### Try — `poop/types/try_.py`
+
+`Try(Object)` implements deferred try/except/finally as a message-passing builder. The block is executed lazily — only when `.run()` or `.finally_()` is called.
+
+| Message | Method | Behavior |
+|---|---|---|
+| `[block] on: ExcType do: handler` | `Try(block).except_(ExcType, handler)` | registers a handler; chainable |
+| `[block] ensure: finallyBlock` | `Try(block).finally_(block)` | sets finally block **and** executes |
+| *(terminal)* | `.run()` | executes without finally block |
+
+`exc_type` is a native Python class (`ValueError`, `KeyError`, …) — the only deliberate primitive leak. Unhandled exceptions are always re-raised. Multiple `.except_()` calls are matched in order.
+
+> **Tradeoff**: `exc_type` must be a native Python exception class. Mirroring Python's full hierarchy (~100+ classes) into POOP types is impractical. The handler always receives an `Error` wrapper regardless.
 
 ## Active transformers
 
@@ -524,7 +535,7 @@ Intercepts `UppercaseName.raise_(args)` (where `UppercaseName` starts with a cap
 |---|---|
 | `ExcType.raise_('msg')` | `_poop_raise(ExcType, 'msg')` |
 
-> **Why not `ast.Raise`?** The transformer generates a function call (`_poop_raise(...)`) instead of an `ast.Raise` statement. Statements are illegal inside `lambda` expressions — POOP's primary block mechanism. This design allows `on_error` to use `lambda: KeyError.raise_("msg")` as its body block.
+> **Why not `ast.Raise`?** The transformer generates a function call (`_poop_raise(...)`) instead of an `ast.Raise` statement. Statements are illegal inside `lambda` expressions — POOP's primary block mechanism. This design allows `Try(lambda: KeyError.raise_("msg")).except_(...)` to work correctly.
 
 > **Tradeoff**: `ExcType` must be a Python exception class (not a POOP object). Only uppercase-named receivers are intercepted; lowercase `obj.raise_()` is passed through to the object's own method at runtime.
 

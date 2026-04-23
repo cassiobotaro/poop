@@ -13,6 +13,7 @@ from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.set import Set
 from poop.types.string import Str
+from poop.types.try_ import Try
 
 __all__ = [
     "Boolean",
@@ -30,6 +31,7 @@ __all__ = [
     "Object",
     "Set",
     "Str",
+    "Try",
     "false",
     "none",
     "true",

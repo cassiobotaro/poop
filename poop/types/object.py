@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
-    from poop.types.error import Error
     from poop.types.int import Int
     from poop.types.string import Str
 
@@ -64,19 +63,6 @@ class Object:
         from poop.types.boolean import false, true
 
         return true if hasattr(self, symbol) else false
-
-    def on_error(
-        self,
-        block: Callable[[], Any],
-        exc_type: type[BaseException],
-        handler: Callable[[Error], Any],
-    ) -> Any:
-        from poop.types.error import Error
-
-        try:
-            return block()
-        except exc_type as e:
-            return handler(Error(e))
 
     def print(self, end: str = "\n", flush: bool = False) -> Object:
         _builtins_print(str(self), end=end, flush=flush)  # noqa: T201

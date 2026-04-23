@@ -2,8 +2,8 @@
 Bank Account
 
 A BankAccount raises ValueError when a withdrawal exceeds the balance.
-The caller handles the error gracefully using on_error, reading the
-wrapped Error object's message and kind.
+Try(block).except_(ExcType, handler).run() replaces try/except.
+Error.message() and Error.kind() inspect the wrapped exception.
 
 Smalltalk:
     | account |
@@ -20,10 +20,6 @@ Smalltalk:
     account withdraw: 50.
 
     Transcript showCr: account balance printString.
-
-Note: in POOP, on_error is a method on any POOP object (Object subclass).
-Since BankAccount is a plain Python class, True (transformed to the POOP
-Boolean singleton) is used as a neutral receiver.
 """
 
 
@@ -49,11 +45,10 @@ class BankAccount:
 account = BankAccount()
 account.deposit(100)
 
-True.on_error(
-    lambda: account.withdraw(150),
+Try(lambda: account.withdraw(150)).except_(
     ValueError,
     lambda e: ("Error [" + e.kind() + "]: " + e.message()).print(),
-)
+).run()
 
 account.balance().print()
 
