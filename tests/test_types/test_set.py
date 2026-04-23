@@ -50,10 +50,12 @@ def test_remove_decreases_len() -> None:
     assert s.len() == Int(1)
 
 
-def test_remove_missing_does_not_raise() -> None:
+def test_remove_missing_raises() -> None:
+    import pytest
+
     s = Set()
-    s.remove(Int(99))  # discard semantics — no error
-    assert s.len() == Int(0)
+    with pytest.raises(KeyError):
+        s.remove(Int(99))
 
 
 def test_includes_true() -> None:
@@ -192,3 +194,141 @@ def test_transformer_literal() -> None:
     result = ns["s"]
     assert isinstance(result, Set)
     assert result.len() == Int(3)
+
+
+def test_discard_removes_element() -> None:
+    s = Set(Int(1), Int(2))
+    s.discard(Int(1))
+    assert s.len() == Int(1)
+
+
+def test_discard_missing_does_not_raise() -> None:
+    s = Set(Int(1))
+    s.discard(Int(99))
+    assert s.len() == Int(1)
+
+
+def test_discard_returns_self() -> None:
+    s = Set(Int(1))
+    assert s.discard(Int(1)) is s
+
+
+def test_clear_empties_set() -> None:
+    s = Set(Int(1), Int(2))
+    s.clear()
+    assert s.len() == Int(0)
+
+
+def test_clear_returns_self() -> None:
+    s = Set(Int(1))
+    assert s.clear() is s
+
+
+def test_copy_returns_new_set() -> None:
+    s = Set(Int(1), Int(2))
+    c = s.copy()
+    assert c is not s
+    assert c == s
+
+
+def test_copy_is_shallow() -> None:
+    s = Set(Int(1))
+    c = s.copy()
+    s.clear()
+    assert c.len() == Int(1)
+
+
+def test_pop_removes_an_element() -> None:
+    s = Set(Int(1))
+    val = s.pop()
+    assert val == Int(1)
+    assert s.len() == Int(0)
+
+
+def test_union_returns_combined_set() -> None:
+    assert Set(Int(1), Int(2)).union(Set(Int(2), Int(3))) == Set(Int(1), Int(2), Int(3))
+
+
+def test_union_multiple_others() -> None:
+    assert Set(Int(1)).union(Set(Int(2)), Set(Int(3))) == Set(Int(1), Int(2), Int(3))
+
+
+def test_intersection() -> None:
+    assert Set(Int(1), Int(2), Int(3)).intersection(Set(Int(2), Int(3), Int(4))) == Set(
+        Int(2), Int(3)
+    )
+
+
+def test_difference() -> None:
+    assert Set(Int(1), Int(2), Int(3)).difference(Set(Int(2), Int(3))) == Set(Int(1))
+
+
+def test_symmetric_difference() -> None:
+    assert Set(Int(1), Int(2), Int(3)).symmetric_difference(
+        Set(Int(2), Int(3), Int(4))
+    ) == Set(Int(1), Int(4))
+
+
+def test_update_mutates() -> None:
+    s = Set(Int(1))
+    s.update(Set(Int(2), Int(3)))
+    assert s == Set(Int(1), Int(2), Int(3))
+
+
+def test_update_returns_self() -> None:
+    s = Set(Int(1))
+    assert s.update(Set(Int(2))) is s
+
+
+def test_intersection_update() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    s.intersection_update(Set(Int(2), Int(3), Int(4)))
+    assert s == Set(Int(2), Int(3))
+
+
+def test_difference_update() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    s.difference_update(Set(Int(2), Int(3)))
+    assert s == Set(Int(1))
+
+
+def test_symmetric_difference_update() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    s.symmetric_difference_update(Set(Int(2), Int(3), Int(4)))
+    assert s == Set(Int(1), Int(4))
+
+
+def test_isdisjoint_true() -> None:
+    from poop.types.boolean import true
+
+    assert Set(Int(1), Int(2)).isdisjoint(Set(Int(3), Int(4))) is true
+
+
+def test_isdisjoint_false() -> None:
+    from poop.types.boolean import false
+
+    assert Set(Int(1), Int(2)).isdisjoint(Set(Int(2), Int(3))) is false
+
+
+def test_issubset_true() -> None:
+    from poop.types.boolean import true
+
+    assert Set(Int(1), Int(2)).issubset(Set(Int(1), Int(2), Int(3))) is true
+
+
+def test_issubset_false() -> None:
+    from poop.types.boolean import false
+
+    assert Set(Int(1), Int(4)).issubset(Set(Int(1), Int(2), Int(3))) is false
+
+
+def test_issuperset_true() -> None:
+    from poop.types.boolean import true
+
+    assert Set(Int(1), Int(2), Int(3)).issuperset(Set(Int(1), Int(2))) is true
+
+
+def test_issuperset_false() -> None:
+    from poop.types.boolean import false
+
+    assert Set(Int(1), Int(2)).issuperset(Set(Int(1), Int(3))) is false

@@ -26,8 +26,65 @@ class Set(Object):
         return self
 
     def remove(self, obj: Object) -> Set:
+        self._data.remove(obj)
+        return self
+
+    def discard(self, obj: Object) -> Set:
         self._data.discard(obj)
         return self
+
+    def clear(self) -> Set:
+        self._data.clear()
+        return self
+
+    def copy(self) -> Set:
+        return Set(*self._data)
+
+    def pop(self) -> Object:
+        return self._data.pop()
+
+    def union(self, *others: Set) -> Set:
+        return Set(*self._data.union(*[o._data for o in others]))
+
+    def intersection(self, *others: Set) -> Set:
+        return Set(*self._data.intersection(*[o._data for o in others]))
+
+    def difference(self, *others: Set) -> Set:
+        return Set(*self._data.difference(*[o._data for o in others]))
+
+    def symmetric_difference(self, other: Set) -> Set:
+        return Set(*self._data.symmetric_difference(other._data))
+
+    def update(self, *others: Set) -> Set:
+        self._data.update(*[o._data for o in others])
+        return self
+
+    def intersection_update(self, *others: Set) -> Set:
+        self._data.intersection_update(*[o._data for o in others])
+        return self
+
+    def difference_update(self, *others: Set) -> Set:
+        self._data.difference_update(*[o._data for o in others])
+        return self
+
+    def symmetric_difference_update(self, other: Set) -> Set:
+        self._data.symmetric_difference_update(other._data)
+        return self
+
+    def isdisjoint(self, other: Set) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._data.isdisjoint(other._data) else false
+
+    def issubset(self, other: Set) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._data.issubset(other._data) else false
+
+    def issuperset(self, other: Set) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._data.issuperset(other._data) else false
 
     def includes(self, obj: Object) -> Boolean:
         from poop.types.boolean import false, true
