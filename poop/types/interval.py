@@ -40,6 +40,13 @@ class Interval(Object):
     def do[T](self, block: Callable[[Int], T]) -> None:
         deque(map(block, self._iter()), maxlen=0)
 
+    def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> List:
+        from poop.types.list import List
+
+        s = step._value if step is not None else None
+        items = list(self._iter())
+        return List(*items[start._value : stop._value : s])
+
     def map(self, block: Callable[[Int], Any]) -> List:
         from poop.types.list import List
 

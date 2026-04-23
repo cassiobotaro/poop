@@ -95,7 +95,7 @@ def test_subscript_raises_validation_error() -> None:
     assert "obj.at(key)" in str(exc_info.value)
 
 
-def test_slice_subscript_is_allowed() -> None:
-    # no_subscript permite fatiamento — pode falhar em execução, mas não em validação
-    with pytest.raises(ExecutionError):
+def test_slice_subscript_is_forbidden() -> None:
+    # no_subscript now also blocks slice notation
+    with pytest.raises(ValidationError):
         Interpreter().run_source("x = [1, 2, 3]\ny = x[1:2]")

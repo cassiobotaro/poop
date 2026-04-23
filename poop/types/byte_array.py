@@ -33,6 +33,10 @@ class ByteArray(Object):
 
         return Int(self._value[index._value])
 
+    def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> ByteArray:
+        s = step._value if step is not None else None
+        return ByteArray(bytearray(self._value[start._value : stop._value : s]))
+
     def __getitem__(self, index: Int) -> Int:
         return self.at(index)
 

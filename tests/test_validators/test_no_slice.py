@@ -17,9 +17,9 @@ def test_slice_raises_validation_error() -> None:
         NoSliceValidator().validate(tree)
 
 
-def test_error_suggests_at() -> None:
+def test_error_suggests_copy_from_to() -> None:
     tree = ast.parse("slice(1, 10)")
-    with pytest.raises(ValidationError, match="at"):
+    with pytest.raises(ValidationError, match="copy_from_to"):
         NoSliceValidator().validate(tree)
 
 

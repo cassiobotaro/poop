@@ -12,7 +12,7 @@ class _NoSliceVisitor(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Name) and node.func.id == "slice":
             raise ValidationError(
-                "slice() is forbidden — use obj.at(index) instead",
+                "slice() is forbidden — use obj.copy_from_to(start, stop) or obj.copy_from_to(start, stop, step) instead",
                 lineno=node.lineno,
                 col_offset=node.col_offset,
             )
