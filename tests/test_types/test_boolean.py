@@ -1,4 +1,5 @@
 from poop.types.boolean import Boolean, false, true
+from poop.types.none import NoneClass
 
 
 def test_true_is_instance_of_boolean() -> None:
@@ -182,3 +183,43 @@ def test_false_is_none_returns_false() -> None:
 
 def test_false_not_none_returns_true() -> None:
     assert false.not_none() is true
+
+
+def test_while_true_executes_body_while_condition_is_true() -> None:
+    counter = [0]
+    true.while_true(
+        lambda: true if counter[0] < 3 else false,
+        lambda: counter.__setitem__(0, counter[0] + 1),
+    )
+    assert counter[0] == 3
+
+
+def test_while_true_does_not_execute_if_condition_starts_false() -> None:
+    called = []
+    true.while_true(lambda: false, lambda: called.append(1))
+    assert called == []
+
+
+def test_while_true_returns_none() -> None:
+    result = true.while_true(lambda: false, lambda: None)
+    assert isinstance(result, NoneClass)
+
+
+def test_while_false_executes_body_while_condition_is_false() -> None:
+    counter = [0]
+    true.while_false(
+        lambda: false if counter[0] < 3 else true,
+        lambda: counter.__setitem__(0, counter[0] + 1),
+    )
+    assert counter[0] == 3
+
+
+def test_while_false_does_not_execute_if_condition_starts_true() -> None:
+    called = []
+    true.while_false(lambda: true, lambda: called.append(1))
+    assert called == []
+
+
+def test_while_false_returns_none() -> None:
+    result = true.while_false(lambda: true, lambda: None)
+    assert isinstance(result, NoneClass)

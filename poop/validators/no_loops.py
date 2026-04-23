@@ -18,7 +18,7 @@ class _NoLoopsVisitor(ast.NodeVisitor):
 
     def visit_While(self, node: ast.While) -> None:
         raise ValidationError(
-            "while loops are forbidden — use recursion or message passing instead",
+            "while loops are forbidden — use cond.while_true(cond_block, body_block) or cond.while_false(cond_block, body_block) instead",
             lineno=node.lineno,
             col_offset=node.col_offset,
         )

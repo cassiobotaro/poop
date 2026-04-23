@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import final
+from typing import TYPE_CHECKING, Any, final
 
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.none import NoneClass
 
 
 class Boolean(Object, ABC):
@@ -47,6 +50,20 @@ class Boolean(Object, ABC):
 
     @abstractmethod
     def eqv(self, other: Boolean) -> Boolean: ...
+
+    @abstractmethod
+    def while_true(
+        self,
+        cond_block: Callable[[], Boolean],
+        body_block: Callable[[], Any],
+    ) -> NoneClass: ...
+
+    @abstractmethod
+    def while_false(
+        self,
+        cond_block: Callable[[], Boolean],
+        body_block: Callable[[], Any],
+    ) -> NoneClass: ...
 
     @abstractmethod
     def __and__(self, other: Boolean) -> Boolean: ...
@@ -106,6 +123,28 @@ class _TrueClass(Boolean):
     def __or__(self, other: Boolean) -> Boolean:
         return self
 
+    def while_true(
+        self,
+        cond_block: Callable[[], Boolean],
+        body_block: Callable[[], Any],
+    ) -> NoneClass:
+        from poop.types.none import none
+
+        while bool(cond_block()):
+            body_block()
+        return none
+
+    def while_false(
+        self,
+        cond_block: Callable[[], Boolean],
+        body_block: Callable[[], Any],
+    ) -> NoneClass:
+        from poop.types.none import none
+
+        while not bool(cond_block()):
+            body_block()
+        return none
+
     def __bool__(self) -> bool:
         return True
 
@@ -160,6 +199,28 @@ class _FalseClass(Boolean):
 
     def __or__(self, other: Boolean) -> Boolean:
         return other
+
+    def while_true(
+        self,
+        cond_block: Callable[[], Boolean],
+        body_block: Callable[[], Any],
+    ) -> NoneClass:
+        from poop.types.none import none
+
+        while bool(cond_block()):
+            body_block()
+        return none
+
+    def while_false(
+        self,
+        cond_block: Callable[[], Boolean],
+        body_block: Callable[[], Any],
+    ) -> NoneClass:
+        from poop.types.none import none
+
+        while not bool(cond_block()):
+            body_block()
+        return none
 
     def __bool__(self) -> bool:
         return False
