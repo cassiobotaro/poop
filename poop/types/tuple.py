@@ -38,6 +38,12 @@ class Tuple(Object):
         s = step._value if step is not None else None
         return Tuple(*self._items[start._value : stop._value : s])
 
+    def __add__(self, other: Tuple) -> Tuple:
+        return Tuple(*self._items + other._items)
+
+    def __mul__(self, other: Int) -> Tuple:
+        return Tuple(*self._items * other._value)
+
     def __getitem__(self, index: Int) -> Object:
         return self.at(index)
 

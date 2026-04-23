@@ -152,6 +152,18 @@ class Set(Object):
             return false if self._data == other._data else true
         return true
 
+    def __and__(self, other: Set) -> Set:
+        return Set(*self._data & other._data)
+
+    def __or__(self, other: Set) -> Set:
+        return Set(*self._data | other._data)
+
+    def __sub__(self, other: Set) -> Set:
+        return Set(*self._data - other._data)
+
+    def __xor__(self, other: Set) -> Set:
+        return Set(*self._data ^ other._data)
+
     def __str__(self) -> str:
         if not self._data:
             return "set()"

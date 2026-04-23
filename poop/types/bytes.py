@@ -95,6 +95,12 @@ class Bytes(Object):
     def __hash__(self) -> int:
         return hash(self._value)
 
+    def __add__(self, other: Bytes) -> Bytes:
+        return Bytes(self._value + other._value)
+
+    def __mul__(self, other: Int) -> Bytes:
+        return Bytes(self._value * other._value)
+
     def capitalize(self) -> Bytes:
         return Bytes(self._value.capitalize())
 

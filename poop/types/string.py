@@ -271,6 +271,9 @@ class Str(Object):
     def __mul__(self, other: Int) -> Str:
         return Str(self._value * other._value)
 
+    def __rmul__(self, other: Int) -> Str:
+        return Str(self._value * other._value)
+
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true
 

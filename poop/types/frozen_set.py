@@ -117,6 +117,18 @@ class FrozenSet(Object):
             return false if self._data == other._data else true
         return true
 
+    def __and__(self, other: FrozenSet) -> FrozenSet:
+        return FrozenSet(*self._data & other._data)
+
+    def __or__(self, other: FrozenSet) -> FrozenSet:
+        return FrozenSet(*self._data | other._data)
+
+    def __sub__(self, other: FrozenSet) -> FrozenSet:
+        return FrozenSet(*self._data - other._data)
+
+    def __xor__(self, other: FrozenSet) -> FrozenSet:
+        return FrozenSet(*self._data ^ other._data)
+
     def __hash__(self) -> int:
         return hash(self._data)
 

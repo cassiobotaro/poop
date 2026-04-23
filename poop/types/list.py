@@ -42,6 +42,12 @@ class List(Object):
         s = step._value if step is not None else None
         return List(*self._items[start._value : stop._value : s])
 
+    def __add__(self, other: List) -> List:
+        return List(*self._items + other._items)
+
+    def __mul__(self, other: Int) -> List:
+        return List(*self._items * other._value)
+
     def __getitem__(self, index: Int) -> Object:
         return self.at(index)
 

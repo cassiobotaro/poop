@@ -96,6 +96,12 @@ class ByteArray(Object):
             return false if self._value == other._value else true
         return true
 
+    def __add__(self, other: ByteArray) -> ByteArray:
+        return ByteArray(_bytearray(self._value + other._value))
+
+    def __mul__(self, other: Int) -> ByteArray:
+        return ByteArray(_bytearray(self._value * other._value))
+
     def append(self, byte: Int) -> ByteArray:
         self._value.append(byte._value)
         return self
