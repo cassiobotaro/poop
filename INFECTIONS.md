@@ -565,3 +565,17 @@ Intercepts `UppercaseName.raise_(args)` (where `UppercaseName` starts with a cap
 
 > **Tradeoff**: `ExcType` must be a Python exception class (not a POOP object). Only uppercase-named receivers are intercepted; lowercase `obj.raise_()` is passed through to the object's own method at runtime.
 
+### Class — `poop/transformers/class_.py`
+
+Implicitly injects `Object` as the base class of every user-defined class that has no explicit base, mirroring how Python 3 makes every class implicitly inherit from `object`.
+
+| Pattern | Replacement |
+|---|---|
+| `class Foo:` | `class Foo(Object):` |
+| `class Foo(object):` | `class Foo(Object):` |
+| `class Foo(Bar):` | unchanged — already has a base |
+
+`Object` is injected into `DEFAULT_NAMESPACE` via `ClassTransformer.BINDINGS` so the rewritten AST resolves it at runtime. User-defined classes automatically gain all `Object` methods: `print()`, `is_none()`, `not_none()`, `assert_()`, `class_name()`, `responds_to()`, etc.
+
+> **Tradeoff**: classes that explicitly inherit from native Python types (e.g. `class Foo(Exception):`) are left unchanged — they do not gain POOP `Object` methods, consistent with how `Try` and `Error` interact with the native exception hierarchy.
+
