@@ -16,11 +16,8 @@ These validators are not yet active because the POOP substitute does not exist y
 
 ## Missing validators
 
-- **`no_slice`**: slicing `obj[1:3]` looks like an operator but has no defined substitute yet — candidate: `obj.from_to(start, stop)`. Activate after deciding the name and implementing the method.
-- **`slice` as a Python class**: `slice(1, 3, 2)` creates an object with `.start`, `.stop`, `.step`. Decide whether POOP should have its own `Slice` type, or if slicing should simply be banned without an object substitute.
 - **`no_import`**: `import os` inside POOP code is not blocked — decide whether to ban or restrict.
 - **`no_type_alias`**: `type X = int` (`ast.TypeAlias`, Python 3.12+) is not evaluated — decide whether to allow (type annotations are harmless) or ban for consistency.
-- **`while_true` missing on `Boolean`**: ~~`no_loops` blocks `ast.While` and documents `cond.while_true(block)` as the substitute, but `Boolean` does not implement it. The validator is active without a working substitute — violates the principle "activate validator only when the substitute exists".~~ ✓ implemented.
 
 ## Missing methods in existing types
 

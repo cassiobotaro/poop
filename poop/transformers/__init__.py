@@ -9,6 +9,7 @@ from poop.transformers.base import Transformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
 from poop.transformers.bytes import BytesTransformer
+from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.dict import DictTransformer
 from poop.transformers.float import FloatTransformer
@@ -42,6 +43,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     SetTransformer(),
     FrozenSetTransformer(),
     RaiseTransformer(),
+    ClassTransformer(),
 ]
 DEFAULT_NAMESPACE: _dict[str, object] = {
     **BooleanTransformer.BINDINGS,
@@ -60,6 +62,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **SetTransformer.BINDINGS,
     **FrozenSetTransformer.BINDINGS,
     **RaiseTransformer.BINDINGS,
+    **ClassTransformer.BINDINGS,
     **Try.BINDINGS,
     **With.BINDINGS,
 }
