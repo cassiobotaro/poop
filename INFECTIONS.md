@@ -286,6 +286,13 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|
 | `ast.Delete` | objects have no explicit destruction — simply do not delete |
 
+### No `in` / `not in` — `poop/validators/no_in.py`
+
+| AST node | Condition | Reason | Substitute |
+|---|---|---|---|
+| `ast.Compare` | op is `ast.In` | `x in col` has a procedural look | `col.includes(x)` |
+| `ast.Compare` | op is `ast.NotIn` | `x not in col` has a procedural look | `col.includes(x).not_()` |
+
 ### No subscript — `poop/validators/no_subscript.py`
 
 | AST node | Condition | Reason | Substitute |

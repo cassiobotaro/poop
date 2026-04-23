@@ -19,6 +19,7 @@ from poop.validators.no_hasattr import NoHasattrValidator
 from poop.validators.no_hash import NoHashValidator
 from poop.validators.no_id import NoIdValidator
 from poop.validators.no_if import NoIfValidator
+from poop.validators.no_in import NoInValidator
 from poop.validators.no_input import NoInputValidator
 from poop.validators.no_introspection import NoIntrospectionValidator
 from poop.validators.no_invert import NoInvertValidator
@@ -53,6 +54,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoUnaryMinusValidator(),
     NoInvertValidator(),
     NoIsValidator(),
+    NoInValidator(),
     NoGlobalValidator(),
     NoYieldValidator(),
     NoWalrusValidator(),
