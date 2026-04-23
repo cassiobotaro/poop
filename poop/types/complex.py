@@ -111,12 +111,6 @@ class Complex(Object):
     def negated(self) -> Complex:
         return Complex(-self._value)
 
-    def __neg__(self) -> Complex:
-        return Complex(-self._value)
-
-    def __pos__(self) -> Complex:
-        return Complex(self._value)
-
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true
 

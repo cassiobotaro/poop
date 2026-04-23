@@ -104,6 +104,12 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 
 Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-expression` are blocked.
 
+### No unary plus — `poop/validators/no_unary_plus.py`
+
+| AST node | Reason |
+|---|---|
+| `ast.UnaryOp` with `ast.UAdd` | `+x` is semantically a no-op and has no message-send equivalent — write the value directly |
+
 ### No bitwise invert — `poop/validators/no_invert.py`
 
 | AST node | Reason | Substitute |

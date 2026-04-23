@@ -72,9 +72,6 @@ class Float(Object):
     def __add__(self, other: Float) -> Float:
         return Float(self._value + other._value)
 
-    def __pos__(self) -> Float:
-        return Float(self._value)
-
     def __sub__(self, other: Float) -> Float:
         return Float(self._value - other._value)
 

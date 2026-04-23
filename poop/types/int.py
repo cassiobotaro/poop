@@ -99,12 +99,6 @@ class Int(Object):
     def abs(self) -> Int:
         return self.__abs__()
 
-    def __pos__(self) -> Int:
-        return Int(+self._value)
-
-    def pos(self) -> Int:
-        return self.__pos__()
-
     def __add__(self, other: Int) -> Int:
         return Int(self._value + other._value)
 

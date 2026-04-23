@@ -163,10 +163,6 @@ def test_dunder_abs() -> None:
     assert abs(Int(-3)) == Int(3)
 
 
-def test_pos() -> None:
-    assert Int(7).pos() == Int(7)
-
-
 def test_truediv_returns_float() -> None:
     from poop.types.float import Float
 
