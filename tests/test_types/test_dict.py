@@ -175,3 +175,118 @@ def test_transformer_empty_literal() -> None:
     ns: dict[str, object] = {"_poop_dict_from_pairs": _poop_dict_from_pairs}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
     assert isinstance(ns["d"], Dict)
+
+
+def _dict_with(pairs: list[tuple[object, object]]) -> Dict:
+    from poop.types.int import Int
+    from poop.types.string import Str
+
+    d = Dict()
+    for k, v in pairs:
+        key = Int(k) if isinstance(k, int) else Str(str(k))
+        val = Int(v) if isinstance(v, int) else Str(str(v))
+        d.at_put(key, val)
+    return d
+
+
+def test_clear_empties_dict() -> None:
+    from poop.types.int import Int
+
+    d = _dict_with([(1, 10), (2, 20)])
+    d.clear()
+    assert d.len() == Int(0)
+
+
+def test_clear_returns_self() -> None:
+    d = _dict_with([(1, 10)])
+    assert d.clear() is d
+
+
+def test_copy_returns_new_dict() -> None:
+    d = _dict_with([(1, 10)])
+    c = d.copy()
+    assert c is not d
+    assert c == d
+
+
+def test_copy_is_shallow() -> None:
+    from poop.types.int import Int
+
+    d = _dict_with([(1, 10)])
+    c = d.copy()
+    d.clear()
+    assert c.len() == Int(1)
+
+
+def test_items_returns_list_of_tuples() -> None:
+    from poop.types.int import Int
+    from poop.types.list import List
+    from poop.types.tuple import Tuple
+
+    d = Dict()
+    d.at_put(Int(1), Int(10))
+    assert d.items() == List(Tuple(Int(1), Int(10)))
+
+
+def test_pop_removes_and_returns_value() -> None:
+    from poop.types.int import Int
+
+    d = _dict_with([(1, 10), (2, 20)])
+    val = d.pop(Int(1))
+    assert val == Int(10)
+    assert d.len() == Int(1)
+
+
+def test_pop_missing_key_raises() -> None:
+    import pytest
+
+    from poop.types.int import Int
+
+    d = _dict_with([(1, 10)])
+    with pytest.raises(KeyError):
+        d.pop(Int(99))
+
+
+def test_popitem_returns_last_pair() -> None:
+    from poop.types.int import Int
+    from poop.types.tuple import Tuple
+
+    d = Dict()
+    d.at_put(Int(1), Int(10))
+    d.at_put(Int(2), Int(20))
+    result = d.popitem()
+    assert result == Tuple(Int(2), Int(20))
+    assert d.len() == Int(1)
+
+
+def test_setdefault_existing_key() -> None:
+    from poop.types.int import Int
+
+    d = _dict_with([(1, 10)])
+    val = d.setdefault(Int(1), Int(99))
+    assert val == Int(10)
+
+
+def test_setdefault_missing_key_inserts() -> None:
+    from poop.types.int import Int
+
+    d = _dict_with([(1, 10)])
+    val = d.setdefault(Int(2), Int(99))
+    assert val == Int(99)
+    assert d.at(Int(2)) == Int(99)
+
+
+def test_update_merges_dicts() -> None:
+    from poop.types.int import Int
+
+    d1 = _dict_with([(1, 10)])
+    d2 = _dict_with([(2, 20)])
+    d1.update(d2)
+    assert d1.len() == Int(2)
+    assert d1.at(Int(2)) == Int(20)
+
+
+def test_update_returns_self() -> None:
+    d1 = _dict_with([(1, 10)])
+    d2 = _dict_with([(2, 20)])
+    assert d1.update(d2) is d1

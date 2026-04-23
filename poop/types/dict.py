@@ -63,6 +63,37 @@ class Dict(Object):
     def __contains__(self, item: object) -> bool:
         return item in self._data
 
+    def clear(self) -> Dict:
+        self._data.clear()
+        return self
+
+    def copy(self) -> Dict:
+        new = Dict()
+        new._data = self._data.copy()
+        return new
+
+    def items(self) -> List:
+        from poop.types.list import List
+        from poop.types.tuple import Tuple
+
+        return List(*[Tuple(k, v) for k, v in self._data.items()])
+
+    def pop(self, key: Object) -> Object:
+        return self._data.pop(key)
+
+    def popitem(self) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        k, v = self._data.popitem()
+        return Tuple(k, v)
+
+    def setdefault(self, key: Object, default: Object) -> Object:
+        return self._data.setdefault(key, default)
+
+    def update(self, other: Dict) -> Dict:
+        self._data.update(other._data)
+        return self
+
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true
 
