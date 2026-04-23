@@ -226,6 +226,72 @@ def test_not_equal_to_non_complex() -> None:
     assert (Complex(1 + 2j) == Int(1)) is false
 
 
+def test_ne_non_complex() -> None:
+    assert (Complex(1 + 2j) != Int(1)) is true
+
+
+# Reverse operators
+
+
+def test_rsub_int() -> None:
+    assert Complex(5 + 0j).__rsub__(Int(10)) == Complex(5 + 0j)
+
+
+def test_rmul_int() -> None:
+    assert Complex(1 + 2j).__rmul__(Int(3)) == Complex(3 + 6j)
+
+
+def test_rtruediv_int() -> None:
+    assert Complex(2 + 0j).__rtruediv__(Int(4)) == Complex(2 + 0j)
+
+
+def test_rpow_int() -> None:
+    assert Complex(1 + 0j).__rpow__(Int(2)) == Complex(2 + 0j)
+
+
+# NotImplemented paths — unsupported operand type
+
+
+def test_add_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__add__(Str("x")) is NotImplemented
+
+
+def test_radd_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__radd__(Str("x")) is NotImplemented
+
+
+def test_sub_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__sub__(Str("x")) is NotImplemented
+
+
+def test_rsub_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__rsub__(Str("x")) is NotImplemented
+
+
+def test_mul_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__mul__(Str("x")) is NotImplemented
+
+
+def test_rmul_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__rmul__(Str("x")) is NotImplemented
+
+
+def test_truediv_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__truediv__(Str("x")) is NotImplemented
+
+
+def test_rtruediv_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__rtruediv__(Str("x")) is NotImplemented
+
+
+def test_pow_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__pow__(Str("x")) is NotImplemented
+
+
+def test_rpow_unsupported_returns_not_implemented() -> None:
+    assert Complex(1 + 2j).__rpow__(Str("x")) is NotImplemented
+
+
 @pytest.mark.parametrize(
     ("c", "expected"),
     [
