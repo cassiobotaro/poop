@@ -591,8 +591,6 @@ Constructors (`int`, `float`, `bool`, `str`, `bytes`, `list`, …) are **not ban
 - **[MEDIUM PRIORITY] Python API parity audit**: review every POOP type against its Python counterpart and add any missing methods. Each POOP type should expose all meaningful methods of the Python class it wraps, following the naming rule (Python names, not Smalltalk). Types to audit: `Int` (`int`), `Float` (`float`), `Str` (`str`), `List` (`list`), `Tuple` (`tuple`), `Dict` (`dict`), `Set` (`set`), `FrozenSet` (`frozenset`), `Bytes` (`bytes`), `ByteArray` (`bytearray`), `Complex` (`complex`), `Interval` (`range`).
 - **`List.sorted()` / `List.reversed()`**: return a new sorted/reversed copy. `Interval` has `reversed()`; `List` and `Tuple` do not.
 - **`Tuple.sorted()` / `Tuple.reversed()`**: same.
-- **`List.as_tuple()` / `Tuple.as_list()`**: conversion between collection types.
-- **`Interval.as_list()` / `Interval.as_tuple()`**: materializes the interval into a collection.
 - ~~**`Int.times(block)`**~~: removed — `times` and `timesRepeat:` are Smalltalk names with no Python `int` equivalent.
 - ~~**`Int.divmod(other)` / `Float.divmod(other)` → `Tuple`**~~: implemented.
 
