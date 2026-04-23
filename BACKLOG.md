@@ -22,8 +22,6 @@ These validators are not yet active because the POOP substitute does not exist y
 - **`slice` as a Python class**: `slice(1, 3, 2)` creates an object with `.start`, `.stop`, `.step`. Decide whether POOP should have its own `Slice` type, or if slicing should simply be banned without an object substitute.
 - **[MEDIUM PRIORITY] `no_augmented_assign`**: `x += 1`, `x -= 1` etc. are not blocked — `ast.AugAssign`. Very frequent construct; the absence of blocking creates an implicit exception to the message model.
 - **`no_import`**: `import os` inside POOP code is not blocked — decide whether to ban or restrict.
-- **`no_raise`** and **`no_assert`**: blocked by `Error` — validators cannot be activated before the `Error` type exists.
-
 ## Missing methods in existing types
 
 - **[MEDIUM PRIORITY] Python API parity audit**: review every POOP type against its Python counterpart and add any missing methods. Each POOP type should expose all meaningful methods of the Python class it wraps, following the naming rule (Python names, not Smalltalk). Types to audit: `Int` (`int`), `Float` (`float`), `Str` (`str`), `List` (`list`), `Tuple` (`tuple`), `Dict` (`dict`), `Set` (`set`), `FrozenSet` (`frozenset`), `Bytes` (`bytes`), `ByteArray` (`bytearray`), `Complex` (`complex`), `Interval` (`range`).
@@ -54,10 +52,6 @@ These validators are not yet active because the POOP substitute does not exist y
 | `repr` | delegates to `__repr__` → `__str__` — allow |
 | `ascii` | Python-specific — decide |
 
-## Bugs / inconsistencies
-
-- **Built-in functions** (`len`, `isinstance`, `hasattr`, `callable`) leak native Python types into the POOP model when used inside POOP type implementations.
-
 ## Architecture / DX
 
 - **REPL**: interactive loop — `poop` with no arguments opens the REPL.
@@ -85,9 +79,5 @@ These validators are not yet active because the POOP substitute does not exist y
 - **`for_each` vs `for_`**: iteration method is named `for_each` because `for` is a Python keyword. `for_` (PEP 8 trailing-underscore convention) was rejected because it reads awkwardly. `for_each` is semantically clear but not a Python builtin name — worth revisiting when the broader keyword naming strategy is decided.
 
 - **Classmethods as POOP messages**: some Python built-in types expose useful classmethods — `int.from_bytes(b, byteorder)`, `float.fromhex(s)`, `bytes.fromhex(s)`, `dict.fromkeys(keys)`. These cannot be expressed as messages to an instance. Two questions: (1) should POOP support sending messages to class objects at all, and (2) if so, should the transformer pipeline intercept `Int.from_bytes(...)` and rewrite it to a factory function? Until decided, these methods are excluded from the Python API parity audit.
-
-- **Comprehensions** (`ast.ListComp`, `ast.SetComp`, `ast.DictComp`, `ast.GeneratorExp`): blocked by `no_comprehension`. Substitutes: `col.map(block)`, `col.filter(block)`.
-
-- **Augmented / multiple assignment**: `x += 1` not yet blocked — evaluate consistency with the object model.
 
 - **`import`** (`ast.Import`, `ast.ImportFrom`): evaluate whether to ban or restrict to POOP module imports.
