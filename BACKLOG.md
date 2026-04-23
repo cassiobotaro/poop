@@ -37,7 +37,7 @@ These validators are not yet active because the POOP substitute does not exist y
   - **`FrozenSet`**: `copy()` → `FrozenSet`, `difference(*others)`, `intersection(*others)`, `isdisjoint(other)` → `Boolean`, `issubset(other)` → `Boolean`, `issuperset(other)` → `Boolean`, `symmetric_difference(other)`, `union(*others)`.
   - **`Bytes`**: `capitalize()`, `center(width)`, `count(sub)`, `endswith(suffix)`, `expandtabs()`, `find(sub)`, `index(sub)`, `isalnum()`, `isalpha()`, `isascii()`, `isdigit()`, `islower()`, `isspace()`, `istitle()`, `isupper()`, `join(iterable)`, `ljust(width)`, `lower()`, `lstrip()`, `partition(sep)`, `removeprefix(prefix)`, `removesuffix(suffix)`, `replace(old, new)`, `rfind(sub)`, `rindex(sub)`, `rjust(width)`, `rpartition(sep)`, `rsplit(sep)`, `rstrip()`, `split(sep)`, `splitlines()`, `startswith(prefix)`, `strip()`, `swapcase()`, `title()`, `upper()`, `zfill(width)`.
   - **`ByteArray`**: everything above from `Bytes`, plus: `append(byte)`, `clear()`, `copy()` → `ByteArray`, `extend(iterable)`, `insert(i, byte)`, `pop(index)`, `remove(byte)`, `resize(size)`, `reverse()`.
-  - **`Interval`**: ~~`count(value)` → `Int`, `index(value)` → `Int`, `start()` → `Int`, `stop()` → `Int`, `step()` → `Int`~~ ✓
+  - **`Interval`**: ~~`count(value)` → `Int`, `index(value)` → `Int`, `start` → `Int`, `stop` → `Int`, `step` → `Int`~~ ✓ (`start`/`stop`/`step` são `@property`, como em `range`)
 
 ## Python builtins — remaining decisions
 

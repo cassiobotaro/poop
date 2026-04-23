@@ -163,23 +163,23 @@ def test_reversed_with_step() -> None:
 
 
 def test_start() -> None:
-    assert _interval(3, 7).start() == Int(3)
+    assert _interval(3, 7).start == Int(3)
 
 
 def test_stop() -> None:
-    assert _interval(3, 7).stop() == Int(7)
+    assert _interval(3, 7).stop == Int(7)
 
 
 def test_step_default_ascending() -> None:
-    assert _interval(1, 5).step() == Int(1)
+    assert _interval(1, 5).step == Int(1)
 
 
 def test_step_default_descending() -> None:
-    assert _interval(5, 1).step() == Int(-1)
+    assert _interval(5, 1).step == Int(-1)
 
 
 def test_step_explicit() -> None:
-    assert Int(1).to_by_(Int(9), Int(2)).step() == Int(2)
+    assert Int(1).to_by_(Int(9), Int(2)).step == Int(2)
 
 
 def test_count_present() -> None:

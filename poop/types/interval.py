@@ -91,12 +91,15 @@ class Interval(Object):
 
         return Int(self._range().index(value._value))
 
+    @property
     def start(self) -> Int:
         return self._start
 
+    @property
     def stop(self) -> Int:
         return self._stop
 
+    @property
     def step(self) -> Int:
         return self._step
 
