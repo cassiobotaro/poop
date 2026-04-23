@@ -94,6 +94,45 @@ class List(Object):
     def pop(self) -> Object:
         return self._items.pop()
 
+    def clear(self) -> List:
+        self._items.clear()
+        return self
+
+    def copy(self) -> List:
+        return List(*self._items)
+
+    def count(self, obj: Object) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._items.count(obj))
+
+    def extend(self, other: List) -> List:
+        self._items.extend(other._items)
+        return self
+
+    def index(self, obj: Object) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._items.index(obj))
+
+    def insert(self, i: Int, obj: Object) -> List:
+        self._items.insert(i._value, obj)
+        return self
+
+    def remove(self, obj: Object) -> List:
+        self._items.remove(obj)
+        return self
+
+    def reverse(self) -> List:
+        self._items.reverse()
+        return self
+
+    def sort(
+        self, key: Callable[[Object], Any] | None = None, reverse: bool = False
+    ) -> List:
+        self._items[:] = builtins_sorted(self._items, key=key, reverse=reverse)
+        return self
+
     def first(self) -> Object:
         return self._items[0]
 

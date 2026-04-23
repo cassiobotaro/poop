@@ -215,3 +215,121 @@ def test_reversed_does_not_mutate() -> None:
 
 def test_reversed_empty() -> None:
     assert List().reversed() == List()
+
+
+def test_clear_empties_list() -> None:
+    lst = List(Int(1), Int(2), Int(3))
+    lst.clear()
+    assert lst.len() == Int(0)
+
+
+def test_clear_returns_self() -> None:
+    lst = List(Int(1))
+    assert lst.clear() is lst
+
+
+def test_copy_returns_new_list() -> None:
+    lst = List(Int(1), Int(2))
+    c = lst.copy()
+    assert c is not lst
+    assert c == lst
+
+
+def test_copy_is_shallow() -> None:
+    lst = List(Int(1), Int(2))
+    c = lst.copy()
+    lst.clear()
+    assert c.len() == Int(2)
+
+
+def test_count_found() -> None:
+    assert List(Int(1), Int(2), Int(1)).count(Int(1)) == Int(2)
+
+
+def test_count_not_found() -> None:
+    assert List(Int(1), Int(2)).count(Int(9)) == Int(0)
+
+
+def test_extend_appends_all() -> None:
+    lst = List(Int(1), Int(2))
+    lst.extend(List(Int(3), Int(4)))
+    assert lst == List(Int(1), Int(2), Int(3), Int(4))
+
+
+def test_extend_returns_self() -> None:
+    lst = List(Int(1))
+    assert lst.extend(List(Int(2))) is lst
+
+
+def test_index_found() -> None:
+    assert List(Int(10), Int(20), Int(30)).index(Int(20)) == Int(1)
+
+
+def test_index_not_found_raises() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        List(Int(1), Int(2)).index(Int(9))
+
+
+def test_insert_at_position() -> None:
+    lst = List(Int(1), Int(3))
+    lst.insert(Int(1), Int(2))
+    assert lst == List(Int(1), Int(2), Int(3))
+
+
+def test_insert_returns_self() -> None:
+    lst = List(Int(1))
+    assert lst.insert(Int(0), Int(0)) is lst
+
+
+def test_remove_first_occurrence() -> None:
+    lst = List(Int(1), Int(2), Int(1))
+    lst.remove(Int(1))
+    assert lst == List(Int(2), Int(1))
+
+
+def test_remove_returns_self() -> None:
+    lst = List(Int(1))
+    assert lst.remove(Int(1)) is lst
+
+
+def test_remove_not_found_raises() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        List(Int(1)).remove(Int(9))
+
+
+def test_reverse_mutates_in_place() -> None:
+    lst = List(Int(1), Int(2), Int(3))
+    lst.reverse()
+    assert lst == List(Int(3), Int(2), Int(1))
+
+
+def test_reverse_returns_self() -> None:
+    lst = List(Int(1), Int(2))
+    assert lst.reverse() is lst
+
+
+def test_sort_mutates_in_place() -> None:
+    lst = List(Int(3), Int(1), Int(2))
+    lst.sort()
+    assert lst == List(Int(1), Int(2), Int(3))
+
+
+def test_sort_returns_self() -> None:
+    lst = List(Int(3), Int(1))
+    assert lst.sort() is lst
+
+
+def test_sort_with_key() -> None:
+    lst = List(Int(-3), Int(1), Int(-2))
+    lst.sort(key=lambda x: x.abs())
+    assert lst == List(Int(1), Int(-2), Int(-3))
+
+
+def test_sort_reverse() -> None:
+    lst = List(Int(1), Int(2), Int(3))
+    lst.sort(reverse=True)
+    assert lst == List(Int(3), Int(2), Int(1))
