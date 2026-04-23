@@ -55,6 +55,12 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 |---|---|---|
 | `print(...)` | Free function with procedural look | `obj.print()` |
 
+### No `assert` — `poop/validators/no_assert.py`
+
+| AST node | Reason | Substitute |
+|---|---|---|
+| `ast.Assert` | Statement — not a message to any object | `condition.assert_('message')` |
+
 ### No `raise` — `poop/validators/no_raise.py`
 
 | AST node | Reason | Substitute |
@@ -369,6 +375,7 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `not` / `xor:` / `eqv:` | `not_()` / `xor(other)` / `eqv(other)` |
 | `&` / `\|` (eager) | `__and__(other)` / `__or__(other)` |
 | `whileTrue:` / `whileFalse:` | `while_true(cond_block, body_block)` / `while_false(cond_block, body_block)` |
+| `assert:` | `assert_(message)` | raises `AssertionError(message)` if `false`; returns `self` if `true` |
 
 ### Interval — `poop/types/interval.py`
 

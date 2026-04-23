@@ -66,6 +66,9 @@ class Boolean(Object, ABC):
     ) -> NoneClass: ...
 
     @abstractmethod
+    def assert_(self, message: object = "") -> Boolean: ...
+
+    @abstractmethod
     def __and__(self, other: Boolean) -> Boolean: ...
 
     @abstractmethod
@@ -116,6 +119,9 @@ class _TrueClass(Boolean):
 
     def eqv(self, other: Boolean) -> Boolean:
         return other
+
+    def assert_(self, message: object = "") -> Boolean:
+        return self
 
     def __and__(self, other: Boolean) -> Boolean:
         return other
@@ -193,6 +199,9 @@ class _FalseClass(Boolean):
 
     def eqv(self, other: Boolean) -> Boolean:
         return other.not_()
+
+    def assert_(self, message: object = "") -> Boolean:
+        raise AssertionError(str(message))
 
     def __and__(self, other: Boolean) -> Boolean:
         return self
