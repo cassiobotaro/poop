@@ -83,6 +83,9 @@ class List(Object):
 
         return true if builtins_any(bool(block(x)) for x in self._items) else false
 
+    def pop(self) -> Object:
+        return self._items.pop()
+
     def first(self) -> Object:
         return self._items[0]
 

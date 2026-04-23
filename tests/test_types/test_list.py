@@ -123,6 +123,25 @@ def test_last() -> None:
     assert List(Int(10), Int(20), Int(30)).last() == Int(30)
 
 
+def test_pop_returns_last_element() -> None:
+    lst = List(Int(10), Int(20), Int(30))
+    assert lst.pop() == Int(30)
+
+
+def test_pop_removes_last_element() -> None:
+    lst = List(Int(10), Int(20), Int(30))
+    lst.pop()
+    assert lst.len() == Int(2)
+    assert lst.last() == Int(20)
+
+
+def test_pop_successive_calls() -> None:
+    lst = List(Int(1), Int(2), Int(3))
+    assert lst.pop() == Int(3)
+    assert lst.pop() == Int(2)
+    assert lst.pop() == Int(1)
+
+
 def test_iter() -> None:
     items = list(List(Int(1), Int(2), Int(3)))
     assert items == [Int(1), Int(2), Int(3)]
