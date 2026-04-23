@@ -25,7 +25,7 @@ def test_next_raises_validation_error() -> None:
 
 def test_error_suggests_do() -> None:
     tree = ast.parse("iter(x)")
-    with pytest.raises(ValidationError, match="for_each"):
+    with pytest.raises(ValidationError, match=r"\.do\("):
         NoIterValidator().validate(tree)
 
 

@@ -71,10 +71,10 @@ def test_contains_dunder() -> None:
     assert Int(99) not in s
 
 
-def test_for_each_visits_all_elements() -> None:
+def test_do_visits_all_elements() -> None:
     s = Set(Int(1), Int(2), Int(3))
     seen: list[Int] = []
-    s.for_each(lambda x: seen.append(x))  # type: ignore[arg-type]
+    s.do(lambda x: seen.append(x))  # type: ignore[arg-type]
     assert len(seen) == 3
 
 

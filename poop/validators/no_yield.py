@@ -11,14 +11,14 @@ class NoYieldValidator:
 class _NoYieldVisitor(ast.NodeVisitor):
     def visit_Yield(self, node: ast.Yield) -> None:
         raise ValidationError(
-            "yield is forbidden — use collection messages for_each(block), map(block) instead",
+            "yield is forbidden — use collection messages do(block), map(block) instead",
             lineno=node.lineno,
             col_offset=node.col_offset,
         )
 
     def visit_YieldFrom(self, node: ast.YieldFrom) -> None:
         raise ValidationError(
-            "yield from is forbidden — use collection messages for_each(block), map(block) instead",
+            "yield from is forbidden — use collection messages do(block), map(block) instead",
             lineno=node.lineno,
             col_offset=node.col_offset,
         )

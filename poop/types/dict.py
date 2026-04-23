@@ -44,7 +44,7 @@ class Dict(Object):
 
         return List(*self._data.values())
 
-    def for_each(self, block: Callable[[Tuple], Any]) -> None:
+    def do(self, block: Callable[[Tuple], Any]) -> None:
         from poop.types.tuple import Tuple
 
         deque((block(Tuple(k, v)) for k, v in self._data.items()), maxlen=0)

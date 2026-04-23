@@ -22,13 +22,13 @@ def test_len() -> None:
 
 def test_do_iterates_all_elements() -> None:
     results: list[int] = []
-    _interval(1, 3).for_each(lambda i: results.append(int(i)))
+    _interval(1, 3).do(lambda i: results.append(int(i)))
     assert results == [1, 2, 3]
 
 
 def test_do_descending_interval() -> None:
     results: list[int] = []
-    _interval(5, 3).for_each(lambda i: results.append(int(i)))
+    _interval(5, 3).do(lambda i: results.append(int(i)))
     assert results == [5, 4, 3]
 
 
@@ -132,7 +132,7 @@ def test_last_returns_stop() -> None:
 
 def test_reversed_iterates_in_reverse() -> None:
     results: list[int] = []
-    _interval(1, 3).reversed().for_each(lambda i: results.append(int(i)))
+    _interval(1, 3).reversed().do(lambda i: results.append(int(i)))
     assert results == [3, 2, 1]
 
 
@@ -142,13 +142,13 @@ def test_reversed_len_is_same() -> None:
 
 def test_to_by_ascending_step() -> None:
     results: list[int] = []
-    Int(1).to_by_(Int(9), Int(2)).for_each(lambda i: results.append(int(i)))
+    Int(1).to_by_(Int(9), Int(2)).do(lambda i: results.append(int(i)))
     assert results == [1, 3, 5, 7, 9]
 
 
 def test_to_by_descending_step() -> None:
     results: list[int] = []
-    Int(9).to_by_(Int(1), Int(-2)).for_each(lambda i: results.append(int(i)))
+    Int(9).to_by_(Int(1), Int(-2)).do(lambda i: results.append(int(i)))
     assert results == [9, 7, 5, 3, 1]
 
 
@@ -158,5 +158,5 @@ def test_to_by_len() -> None:
 
 def test_reversed_with_step() -> None:
     results: list[int] = []
-    Int(1).to_by_(Int(9), Int(2)).reversed().for_each(lambda i: results.append(int(i)))
+    Int(1).to_by_(Int(9), Int(2)).reversed().do(lambda i: results.append(int(i)))
     assert results == [9, 7, 5, 3, 1]

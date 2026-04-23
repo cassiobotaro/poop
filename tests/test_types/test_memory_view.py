@@ -32,9 +32,9 @@ def test_getitem_dunder() -> None:
     assert _mv(b"Z")[Int(0)] == Int(90)
 
 
-def test_for_each_yields_int_values() -> None:
+def test_do_yields_int_values() -> None:
     seen: list[Int] = []
-    _mv(b"\x01\x02\x03").for_each(lambda b: seen.append(b))  # type: ignore[arg-type]
+    _mv(b"\x01\x02\x03").do(lambda b: seen.append(b))  # type: ignore[arg-type]
     assert seen == [Int(1), Int(2), Int(3)]
 
 

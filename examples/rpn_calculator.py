@@ -47,7 +47,7 @@ class RPN:
             "/": lambda a, b: a / b,
         }
         stack = []
-        expression.split().for_each(
+        expression.split().do(
             lambda token: ops.includes_key(token).if_true_if_false(
                 lambda: self._apply(ops, token, stack),
                 lambda: stack.add(int(token)),

@@ -61,7 +61,7 @@ class ByteArray(Object):
 
         return Str(self._value.hex())
 
-    def for_each(self, block: Callable[[Int], Any]) -> None:
+    def do(self, block: Callable[[Int], Any]) -> None:
         from poop.types.int import Int
 
         deque((block(Int(b)) for b in self._value), maxlen=0)

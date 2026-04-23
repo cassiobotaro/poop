@@ -54,9 +54,9 @@ def test_hex() -> None:
     assert result == Str("ff00")
 
 
-def test_for_each_yields_int_byte_values() -> None:
+def test_do_yields_int_byte_values() -> None:
     seen: list[Int] = []
-    Bytes(b"\x01\x02\x03").for_each(lambda b: seen.append(b))  # type: ignore[arg-type]
+    Bytes(b"\x01\x02\x03").do(lambda b: seen.append(b))  # type: ignore[arg-type]
     assert seen == [Int(1), Int(2), Int(3)]
 
 

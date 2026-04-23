@@ -50,7 +50,7 @@ class List(Object):
     def __contains__(self, item: object) -> bool:
         return item in self._items
 
-    def for_each(self, block: Callable[[Object], Any]) -> None:
+    def do(self, block: Callable[[Object], Any]) -> None:
         deque(map(block, self._items), maxlen=0)
 
     def map(self, block: Callable[[Object], Any]) -> List:

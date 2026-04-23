@@ -57,7 +57,7 @@ def test_contains_dunder() -> None:
 
 def test_do_iterates() -> None:
     results: list[Int] = []
-    List(Int(1), Int(2), Int(3)).for_each(lambda x: results.append(x))
+    List(Int(1), Int(2), Int(3)).do(lambda x: results.append(x))
     assert results == [Int(1), Int(2), Int(3)]
 
 

@@ -34,7 +34,7 @@ class Interval(Object):
         for i in range(start, stop + sign, step):
             yield Int(i)
 
-    def for_each[T](self, block: Callable[[Int], T]) -> None:
+    def do[T](self, block: Callable[[Int], T]) -> None:
         deque(map(block, self._iter()), maxlen=0)
 
     def map(self, block: Callable[[Int], Any]) -> List:

@@ -34,10 +34,10 @@ def test_contains_dunder() -> None:
     assert Int(99) not in fs
 
 
-def test_for_each_visits_all_elements() -> None:
+def test_do_visits_all_elements() -> None:
     fs = FrozenSet(Int(1), Int(2), Int(3))
     seen: list[Int] = []
-    fs.for_each(lambda x: seen.append(x))  # type: ignore[arg-type]
+    fs.do(lambda x: seen.append(x))  # type: ignore[arg-type]
     assert len(seen) == 3
 
 

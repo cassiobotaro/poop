@@ -78,12 +78,12 @@ def test_values_returns_list() -> None:
     assert d.values().includes(Int(2)) is true
 
 
-def test_for_each_receives_tuple_pairs() -> None:
+def test_do_receives_tuple_pairs() -> None:
     d = Dict()
     d.at_put(Str("x"), Int(10))
     d.at_put(Str("y"), Int(20))
     pairs: list[Tuple] = []
-    d.for_each(lambda pair: pairs.append(pair))  # type: ignore[arg-type]
+    d.do(lambda pair: pairs.append(pair))  # type: ignore[arg-type]
     assert len(pairs) == 2
     assert all(isinstance(p, Tuple) for p in pairs)
 
