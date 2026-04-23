@@ -16,6 +16,10 @@ These validators are not yet active because the POOP substitute does not exist y
 
 - **[HIGH PRIORITY] `Error`**: base class for POOP exceptions. **Critical dependency**: unblocks `no_raise`, `no_with` and `no_assert` — while `Error` does not exist, POOP code can freely use `raise` and `with`, without protection from the principles. Design decisions still open — see Open decisions section.
 
+## Pending renames
+
+- **`for_each` → `do`**: all collection types (`List`, `Tuple`, `Set`, `FrozenSet`, `Dict`, `Bytes`, `ByteArray`, `MemoryView`, `Interval`, `Str`) and any other type with `for_each` must be renamed to `do`. Decision recorded in Principles — `do` is the canonical Smalltalk iteration message and an explicit exception to the "Python names" rule.
+
 ## Missing validators
 
 - **`no_slice`**: slicing `obj[1:3]` looks like an operator but has no defined substitute yet — candidate: `obj.from_to(start, stop)`. Activate after deciding the name and implementing the method.
@@ -73,13 +77,9 @@ These validators are not yet active because the POOP substitute does not exist y
   - For raising: `Error("msg", ValueError).raise_()` — `Error` wraps a Python exception instance and `raise_()` re-raises it. Avoids transforming every exception constructor; the `Error` constructor accepts an optional Python exception class as kind. The keyword `raise` is banned by `no_raise`; `raise_` follows PEP 8 keyword escape.
   - For resumable exceptions (Smalltalk-style `e resume: value`): not planned — Python's exception model does not support resumption natively.
 
-- **Naming strategy for Python keyword → method**: `for`, `while`, `in` are Python keywords that cannot be used as method names. POOP currently handles them inconsistently: `for` → `for_each` (Java/JS compound), `while` → `while_true` (descriptive compound), `in` → `includes` (semantic equivalent from `__contains__`). Three approaches exist: (1) PEP 8 trailing underscore — `for_`, `while_`, `in_` — mechanical but ugly; (2) descriptive compound — `for_each`, `while_true` — readable but not Python names; (3) semantic equivalent — `includes`, `contains` — most Pythonic but requires case-by-case judgment. A consistent rule should be decided before adding new keyword-derived methods.
-
 - **`while_true` not yet implemented**: `no_loops` blocks `ast.While` and documents `cond.while_true(block)` as the substitute, but `Boolean` does not implement `while_true`. The validator is active without a working substitute — violates the principle "activate validator only when the substitute exists". Implement `while_true(block)` on `Boolean` (and decide what it returns) before this is considered complete.
 
 - **`in` operator not blocked**: `x in col` uses `__contains__` internally and is not rejected by any validator. POOP has `col.includes(x)` as the message-passing equivalent, but the operator form still works — a silent inconsistency. Decide: add a `no_in` validator, or explicitly allow `in` as syntactic sugar for `__contains__`.
-
-- **`for_each` vs `for_`**: iteration method is named `for_each` because `for` is a Python keyword. `for_` (PEP 8 trailing-underscore convention) was rejected because it reads awkwardly. `for_each` is semantically clear but not a Python builtin name — worth revisiting when the broader keyword naming strategy is decided.
 
 - **Classmethods as POOP messages**: some Python built-in types expose useful classmethods — `int.from_bytes(b, byteorder)`, `float.fromhex(s)`, `bytes.fromhex(s)`, `dict.fromkeys(keys)`. These cannot be expressed as messages to an instance. Two questions: (1) should POOP support sending messages to class objects at all, and (2) if so, should the transformer pipeline intercept `Int.from_bytes(...)` and rewrite it to a factory function? Until decided, these methods are excluded from the Python API parity audit.
 
