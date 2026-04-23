@@ -36,7 +36,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 
 | AST node | Reason |
 |---|---|
-| `ast.For` | Loop looks procedural; use `col.for_each(block)`, `col.map(block)`, recursion |
+| `ast.For` | Loop looks procedural; use `col.do(block)`, `col.map(block)`, recursion |
 | `ast.While` | Same; use `cond.while_true(block)` |
 | `ast.AsyncFor` | Async variant of `for` |
 
@@ -100,7 +100,7 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 | AST node | Reason | Substitute |
 |---|---|---|
-| `ast.Yield` | generator has a procedural look for iteration | `col.for_each(block)`, `col.map(block)` |
+| `ast.Yield` | generator has a procedural look for iteration | `col.do(block)`, `col.map(block)` |
 | `ast.YieldFrom` | same | same |
 
 ### No walrus (`:=`) — `poop/validators/no_walrus.py`
@@ -226,7 +226,7 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `iter(col)` | iterator protocol with procedural look | `col.for_each(block)` |
+| `iter(col)` | iterator protocol with procedural look | `col.do(block)` |
 | `next(it)` | same | same |
 | `aiter(col)` | async variant | same |
 | `anext(it)` | async variant | same |
@@ -300,6 +300,14 @@ Slicing `obj[1:3]` (`ast.Slice`) is allowed for now — see backlog (`no_slice`)
 |---|---|---|
 | `ast.ListComp` / `ast.SetComp` / `ast.DictComp` / `ast.GeneratorExp` | implicit iteration with procedural look | `col.map(block)`, `col.filter(block)` |
 
+## Explicitly allowed
+
+Constructs considered for blocking but decided to allow by design.
+
+### Augmented assignment (`+=`, `-=`, `*=`, …)
+
+`x += 1` is syntactic sugar for `x = x + 1`. Both forms rebind the variable using the same arithmetic operation — there is no message-passing substitute that would be more idiomatic. Blocking `+=` would be a purely cosmetic restriction without a principled rationale. `ast.AugAssign` is intentionally not blocked.
+
 ## Active types
 
 ### Object — `poop/types/object.py`
@@ -347,7 +355,7 @@ Concrete root of all POOP types. Provides default implementations for universal 
 
 | Smalltalk message | POOP method | Behavior |
 |---|---|---|
-| `do:` | `for_each(block)` | iterates without allocating a list |
+| `do:` | `do(block)` | iterates without allocating a list |
 | `collect:` | `map(block)` | transforms → `List` |
 | `select:` | `filter(block)` | filters → `List` |
 | `reject:` | `filter_false(block)` | filters inverse → `List` |
