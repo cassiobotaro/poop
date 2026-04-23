@@ -81,6 +81,15 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 | `ast.With` | Control structure — procedural look | `With(lambda: cm()).do(lambda resource: body)` |
 | `ast.AsyncWith` | `async with` variant | same |
 
+### No `and`/`or` — `poop/validators/no_and_or.py`
+
+| AST node | Reason | Substitute |
+|---|---|---|
+| `ast.BoolOp` with `ast.And` | `x and y` looks like an operator | `x.and_(lambda: y)` |
+| `ast.BoolOp` with `ast.Or` | `x or y` looks like an operator | `x.or_(lambda: y)` |
+
+`and_` and `or_` receive a block so evaluation is lazy — the right-hand side is only evaluated if needed, preserving the short-circuit semantics of Python's `and`/`or`.
+
 ### No `not` — `poop/validators/no_not.py`
 
 | AST node | Reason | Substitute |
