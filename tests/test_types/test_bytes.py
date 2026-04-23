@@ -152,3 +152,270 @@ def test_transformer_does_not_affect_str_literals() -> None:
 def test_not_mutable_no_set_item() -> None:
     b = Bytes(b"abc")
     assert not hasattr(b, "at_put")
+
+
+def test_capitalize() -> None:
+    assert Bytes(b"hello world").capitalize() == Bytes(b"Hello world")
+
+
+def test_center_no_fill() -> None:
+    assert Bytes(b"hi").center(Int(6)) == Bytes(b"  hi  ")
+
+
+def test_center_with_fill() -> None:
+    assert Bytes(b"hi").center(Int(6), Bytes(b"*")) == Bytes(b"**hi**")
+
+
+def test_count() -> None:
+    assert Bytes(b"abcabc").count(Bytes(b"ab")) == Int(2)
+
+
+def test_endswith_true() -> None:
+    assert Bytes(b"hello").endswith(Bytes(b"lo")) is true
+
+
+def test_endswith_false() -> None:
+    assert Bytes(b"hello").endswith(Bytes(b"hi")) is false
+
+
+def test_expandtabs_default() -> None:
+    assert Bytes(b"a\tb").expandtabs() == Bytes(b"a       b")
+
+
+def test_expandtabs_custom() -> None:
+    assert Bytes(b"a\tb").expandtabs(Int(4)) == Bytes(b"a   b")
+
+
+def test_find_found() -> None:
+    assert Bytes(b"hello").find(Bytes(b"ll")) == Int(2)
+
+
+def test_find_not_found() -> None:
+    assert Bytes(b"hello").find(Bytes(b"xyz")) == Int(-1)
+
+
+def test_index_found() -> None:
+    assert Bytes(b"hello").index(Bytes(b"ll")) == Int(2)
+
+
+def test_isalnum_true() -> None:
+    assert Bytes(b"abc123").isalnum() is true
+
+
+def test_isalnum_false() -> None:
+    assert Bytes(b"abc!").isalnum() is false
+
+
+def test_isalpha_true() -> None:
+    assert Bytes(b"abc").isalpha() is true
+
+
+def test_isalpha_false() -> None:
+    assert Bytes(b"abc1").isalpha() is false
+
+
+def test_isascii_true() -> None:
+    assert Bytes(b"hello").isascii() is true
+
+
+def test_isdigit_true() -> None:
+    assert Bytes(b"123").isdigit() is true
+
+
+def test_isdigit_false() -> None:
+    assert Bytes(b"12a").isdigit() is false
+
+
+def test_islower_true() -> None:
+    assert Bytes(b"hello").islower() is true
+
+
+def test_islower_false() -> None:
+    assert Bytes(b"Hello").islower() is false
+
+
+def test_isspace_true() -> None:
+    assert Bytes(b"   ").isspace() is true
+
+
+def test_isspace_false() -> None:
+    assert Bytes(b" a ").isspace() is false
+
+
+def test_istitle_true() -> None:
+    assert Bytes(b"Hello World").istitle() is true
+
+
+def test_istitle_false() -> None:
+    assert Bytes(b"hello world").istitle() is false
+
+
+def test_isupper_true() -> None:
+    assert Bytes(b"HELLO").isupper() is true
+
+
+def test_isupper_false() -> None:
+    assert Bytes(b"Hello").isupper() is false
+
+
+def test_join() -> None:
+    from poop.types.list import List
+
+    parts = List(Bytes(b"a"), Bytes(b"b"), Bytes(b"c"))
+    assert Bytes(b"-").join(parts) == Bytes(b"a-b-c")
+
+
+def test_ljust_no_fill() -> None:
+    assert Bytes(b"hi").ljust(Int(5)) == Bytes(b"hi   ")
+
+
+def test_ljust_with_fill() -> None:
+    assert Bytes(b"hi").ljust(Int(5), Bytes(b"*")) == Bytes(b"hi***")
+
+
+def test_lower() -> None:
+    assert Bytes(b"HELLO").lower() == Bytes(b"hello")
+
+
+def test_lstrip_default() -> None:
+    assert Bytes(b"  hello").lstrip() == Bytes(b"hello")
+
+
+def test_lstrip_chars() -> None:
+    assert Bytes(b"xxxhello").lstrip(Bytes(b"x")) == Bytes(b"hello")
+
+
+def test_partition() -> None:
+    from poop.types.tuple import Tuple
+
+    result = Bytes(b"hello world").partition(Bytes(b" "))
+    assert isinstance(result, Tuple)
+    assert result.at(Int(0)) == Bytes(b"hello")
+    assert result.at(Int(1)) == Bytes(b" ")
+    assert result.at(Int(2)) == Bytes(b"world")
+
+
+def test_removeprefix() -> None:
+    assert Bytes(b"hello").removeprefix(Bytes(b"hel")) == Bytes(b"lo")
+
+
+def test_removeprefix_no_match() -> None:
+    assert Bytes(b"hello").removeprefix(Bytes(b"xyz")) == Bytes(b"hello")
+
+
+def test_removesuffix() -> None:
+    assert Bytes(b"hello").removesuffix(Bytes(b"lo")) == Bytes(b"hel")
+
+
+def test_replace() -> None:
+    assert Bytes(b"aabbcc").replace(Bytes(b"bb"), Bytes(b"XX")) == Bytes(b"aaXXcc")
+
+
+def test_rfind() -> None:
+    assert Bytes(b"abcabc").rfind(Bytes(b"ab")) == Int(3)
+
+
+def test_rfind_not_found() -> None:
+    assert Bytes(b"hello").rfind(Bytes(b"xyz")) == Int(-1)
+
+
+def test_rindex() -> None:
+    assert Bytes(b"abcabc").rindex(Bytes(b"ab")) == Int(3)
+
+
+def test_rjust_no_fill() -> None:
+    assert Bytes(b"hi").rjust(Int(5)) == Bytes(b"   hi")
+
+
+def test_rjust_with_fill() -> None:
+    assert Bytes(b"hi").rjust(Int(5), Bytes(b"*")) == Bytes(b"***hi")
+
+
+def test_rpartition() -> None:
+    from poop.types.tuple import Tuple
+
+    result = Bytes(b"hello world").rpartition(Bytes(b" "))
+    assert isinstance(result, Tuple)
+    assert result.at(Int(0)) == Bytes(b"hello")
+    assert result.at(Int(2)) == Bytes(b"world")
+
+
+def test_rsplit_no_sep() -> None:
+    from poop.types.list import List
+
+    result = Bytes(b"a b c").rsplit()
+    assert isinstance(result, List)
+    assert result.len() == Int(3)
+
+
+def test_rsplit_with_sep() -> None:
+    from poop.types.list import List
+
+    result = Bytes(b"a,b,c").rsplit(Bytes(b","))
+    assert isinstance(result, List)
+    assert result.at(Int(0)) == Bytes(b"a")
+
+
+def test_rstrip_default() -> None:
+    assert Bytes(b"hello  ").rstrip() == Bytes(b"hello")
+
+
+def test_rstrip_chars() -> None:
+    assert Bytes(b"helloxx").rstrip(Bytes(b"x")) == Bytes(b"hello")
+
+
+def test_split_no_sep() -> None:
+    from poop.types.list import List
+
+    result = Bytes(b"a b c").split()
+    assert isinstance(result, List)
+    assert result.len() == Int(3)
+
+
+def test_split_with_sep() -> None:
+    from poop.types.list import List
+
+    result = Bytes(b"a,b,c").split(Bytes(b","))
+    assert isinstance(result, List)
+    assert result.at(Int(0)) == Bytes(b"a")
+    assert result.at(Int(2)) == Bytes(b"c")
+
+
+def test_splitlines() -> None:
+    from poop.types.list import List
+
+    result = Bytes(b"a\nb\nc").splitlines()
+    assert isinstance(result, List)
+    assert result.len() == Int(3)
+
+
+def test_startswith_true() -> None:
+    assert Bytes(b"hello").startswith(Bytes(b"hel")) is true
+
+
+def test_startswith_false() -> None:
+    assert Bytes(b"hello").startswith(Bytes(b"xyz")) is false
+
+
+def test_strip_default() -> None:
+    assert Bytes(b"  hello  ").strip() == Bytes(b"hello")
+
+
+def test_strip_chars() -> None:
+    assert Bytes(b"xxhelloxx").strip(Bytes(b"x")) == Bytes(b"hello")
+
+
+def test_swapcase() -> None:
+    assert Bytes(b"Hello World").swapcase() == Bytes(b"hELLO wORLD")
+
+
+def test_title() -> None:
+    assert Bytes(b"hello world").title() == Bytes(b"Hello World")
+
+
+def test_upper() -> None:
+    assert Bytes(b"hello").upper() == Bytes(b"HELLO")
+
+
+def test_zfill() -> None:
+    assert Bytes(b"42").zfill(Int(5)) == Bytes(b"00042")

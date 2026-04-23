@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from poop.types.int import Int
     from poop.types.list import List
     from poop.types.string import Str
+    from poop.types.tuple import Tuple
 
 _bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
 
@@ -89,6 +90,179 @@ class Bytes(Object):
 
     def __hash__(self) -> int:
         return hash(self._value)
+
+    def capitalize(self) -> Bytes:
+        return Bytes(self._value.capitalize())
+
+    def center(self, width: Int, fillchar: Bytes | None = None) -> Bytes:
+        if fillchar is None:
+            return Bytes(self._value.center(width._value))
+        return Bytes(self._value.center(width._value, fillchar._value))
+
+    def count(self, sub: Bytes) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._value.count(sub._value))
+
+    def endswith(self, suffix: Bytes) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.endswith(suffix._value) else false
+
+    def expandtabs(self, tabsize: Int | None = None) -> Bytes:
+        if tabsize is None:
+            return Bytes(self._value.expandtabs())
+        return Bytes(self._value.expandtabs(tabsize._value))
+
+    def find(self, sub: Bytes) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._value.find(sub._value))
+
+    def index(self, sub: Bytes) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._value.index(sub._value))
+
+    def isalnum(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isalnum() else false
+
+    def isalpha(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isalpha() else false
+
+    def isascii(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isascii() else false
+
+    def isdigit(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isdigit() else false
+
+    def islower(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.islower() else false
+
+    def isspace(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isspace() else false
+
+    def istitle(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.istitle() else false
+
+    def isupper(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.isupper() else false
+
+    def join(self, parts: List) -> Bytes:
+        pieces: list[_bytes] = [p._value for p in parts if isinstance(p, Bytes)]  # type: ignore[unresolved-attribute]
+        return Bytes(self._value.join(pieces))
+
+    def ljust(self, width: Int, fillchar: Bytes | None = None) -> Bytes:
+        if fillchar is None:
+            return Bytes(self._value.ljust(width._value))
+        return Bytes(self._value.ljust(width._value, fillchar._value))
+
+    def lower(self) -> Bytes:
+        return Bytes(self._value.lower())
+
+    def lstrip(self, chars: Bytes | None = None) -> Bytes:
+        if chars is None:
+            return Bytes(self._value.lstrip())
+        return Bytes(self._value.lstrip(chars._value))
+
+    def partition(self, sep: Bytes) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        return Tuple(*[Bytes(p) for p in self._value.partition(sep._value)])
+
+    def removeprefix(self, prefix: Bytes) -> Bytes:
+        return Bytes(self._value.removeprefix(prefix._value))
+
+    def removesuffix(self, suffix: Bytes) -> Bytes:
+        return Bytes(self._value.removesuffix(suffix._value))
+
+    def replace(self, old: Bytes, new: Bytes) -> Bytes:
+        return Bytes(self._value.replace(old._value, new._value))
+
+    def rfind(self, sub: Bytes) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._value.rfind(sub._value))
+
+    def rindex(self, sub: Bytes) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._value.rindex(sub._value))
+
+    def rjust(self, width: Int, fillchar: Bytes | None = None) -> Bytes:
+        if fillchar is None:
+            return Bytes(self._value.rjust(width._value))
+        return Bytes(self._value.rjust(width._value, fillchar._value))
+
+    def rpartition(self, sep: Bytes) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        return Tuple(*[Bytes(p) for p in self._value.rpartition(sep._value)])
+
+    def rsplit(self, sep: Bytes | None = None) -> List:
+        from poop.types.list import List
+
+        return List(
+            *[
+                Bytes(p)
+                for p in self._value.rsplit(sep._value if sep is not None else None)
+            ]
+        )
+
+    def rstrip(self, chars: Bytes | None = None) -> Bytes:
+        if chars is None:
+            return Bytes(self._value.rstrip())
+        return Bytes(self._value.rstrip(chars._value))
+
+    def split(self, sep: Bytes | None = None) -> List:
+        from poop.types.list import List
+
+        if sep is None:
+            return List(*[Bytes(p) for p in self._value.split()])
+        return List(*[Bytes(p) for p in self._value.split(sep._value)])
+
+    def splitlines(self) -> List:
+        from poop.types.list import List
+
+        return List(*[Bytes(p) for p in self._value.splitlines()])
+
+    def startswith(self, prefix: Bytes) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._value.startswith(prefix._value) else false
+
+    def strip(self, chars: Bytes | None = None) -> Bytes:
+        if chars is None:
+            return Bytes(self._value.strip())
+        return Bytes(self._value.strip(chars._value))
+
+    def swapcase(self) -> Bytes:
+        return Bytes(self._value.swapcase())
+
+    def title(self) -> Bytes:
+        return Bytes(self._value.title())
+
+    def upper(self) -> Bytes:
+        return Bytes(self._value.upper())
+
+    def zfill(self, width: Int) -> Bytes:
+        return Bytes(self._value.zfill(width._value))
 
     def __str__(self) -> str:
         return repr(self._value)
