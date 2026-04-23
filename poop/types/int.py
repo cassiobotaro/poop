@@ -1,9 +1,10 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, cast
 
 from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.bytes import Bytes
     from poop.types.float import Float
     from poop.types.interval import Interval
     from poop.types.string import Str
@@ -50,6 +51,39 @@ class Int(Object):
         from poop.types.boolean import true
 
         return true
+
+    @property
+    def real(self) -> Int:
+        return self
+
+    @property
+    def imag(self) -> Int:
+        return Int(0)
+
+    @property
+    def numerator(self) -> Int:
+        return self
+
+    @property
+    def denominator(self) -> Int:
+        return Int(1)
+
+    def conjugate(self) -> Int:
+        return self
+
+    def as_integer_ratio(self) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        return Tuple(self, Int(1))
+
+    def to_bytes(self, length: Int, byteorder: Str) -> Bytes:
+        from poop.types.bytes import Bytes
+
+        return Bytes(
+            self._value.to_bytes(
+                length._value, cast(Literal["little", "big"], byteorder._value)
+            )
+        )
 
     def int(self) -> Int:
         return self

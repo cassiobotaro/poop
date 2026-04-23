@@ -231,3 +231,46 @@ def test_float() -> None:
     from poop.types.float import Float
 
     assert Int(3).float() == Float(3.0)
+
+
+def test_real_returns_self() -> None:
+    n = Int(5)
+    assert n.real is n
+
+
+def test_imag_returns_zero() -> None:
+    assert Int(5).imag == Int(0)
+
+
+def test_numerator_returns_self() -> None:
+    n = Int(7)
+    assert n.numerator is n
+
+
+def test_denominator_returns_one() -> None:
+    assert Int(5).denominator == Int(1)
+
+
+def test_conjugate_returns_self() -> None:
+    n = Int(5)
+    assert n.conjugate() is n
+
+
+def test_as_integer_ratio() -> None:
+    from poop.types.tuple import Tuple
+
+    assert Int(5).as_integer_ratio() == Tuple(Int(5), Int(1))
+
+
+def test_to_bytes_big_endian() -> None:
+    from poop.types.bytes import Bytes
+    from poop.types.string import Str
+
+    assert Int(255).to_bytes(Int(2), Str("big")) == Bytes(b"\x00\xff")
+
+
+def test_to_bytes_little_endian() -> None:
+    from poop.types.bytes import Bytes
+    from poop.types.string import Str
+
+    assert Int(255).to_bytes(Int(2), Str("little")) == Bytes(b"\xff\x00")
