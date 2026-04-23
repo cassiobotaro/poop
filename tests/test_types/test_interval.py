@@ -160,3 +160,50 @@ def test_reversed_with_step() -> None:
     results: list[int] = []
     Int(1).to_by_(Int(9), Int(2)).reversed().do(lambda i: results.append(int(i)))
     assert results == [9, 7, 5, 3, 1]
+
+
+def test_start() -> None:
+    assert _interval(3, 7).start() == Int(3)
+
+
+def test_stop() -> None:
+    assert _interval(3, 7).stop() == Int(7)
+
+
+def test_step_default_ascending() -> None:
+    assert _interval(1, 5).step() == Int(1)
+
+
+def test_step_default_descending() -> None:
+    assert _interval(5, 1).step() == Int(-1)
+
+
+def test_step_explicit() -> None:
+    assert Int(1).to_by_(Int(9), Int(2)).step() == Int(2)
+
+
+def test_count_present() -> None:
+    assert _interval(1, 5).count(Int(3)) == Int(1)
+
+
+def test_count_absent() -> None:
+    assert _interval(1, 5).count(Int(9)) == Int(0)
+
+
+def test_count_with_step_not_hit() -> None:
+    assert Int(1).to_by_(Int(9), Int(2)).count(Int(4)) == Int(0)
+
+
+def test_index_found() -> None:
+    assert _interval(1, 5).index(Int(3)) == Int(2)
+
+
+def test_index_first_element() -> None:
+    assert _interval(1, 5).index(Int(1)) == Int(0)
+
+
+def test_index_not_found_raises() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        _interval(1, 5).index(Int(9))

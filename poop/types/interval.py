@@ -26,12 +26,15 @@ class Interval(Object):
             step if step is not None else Int(1 if start._value <= stop._value else -1)
         )
 
+    def _range(self) -> range:
+        start, stop, step = self._start._value, self._stop._value, self._step._value
+        sign = 1 if step > 0 else -1
+        return range(start, stop + sign, step)
+
     def _iter(self) -> Any:
         from poop.types.int import Int
 
-        start, stop, step = self._start._value, self._stop._value, self._step._value
-        sign = 1 if step > 0 else -1
-        for i in range(start, stop + sign, step):
+        for i in self._range():
             yield Int(i)
 
     def do[T](self, block: Callable[[Int], T]) -> None:
@@ -78,6 +81,25 @@ class Interval(Object):
 
         return true if self._start._value <= item._value <= self._stop._value else false
 
+    def count(self, value: Int) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._range().count(value._value))
+
+    def index(self, value: Int) -> Int:
+        from poop.types.int import Int
+
+        return Int(self._range().index(value._value))
+
+    def start(self) -> Int:
+        return self._start
+
+    def stop(self) -> Int:
+        return self._stop
+
+    def step(self) -> Int:
+        return self._step
+
     def first(self) -> Int:
         return self._start
 
@@ -92,9 +114,7 @@ class Interval(Object):
     def len(self) -> Int:
         from poop.types.int import Int
 
-        start, stop, step = self._start._value, self._stop._value, self._step._value
-        sign = 1 if step > 0 else -1
-        return Int(len(range(start, stop + sign, step)))
+        return Int(len(self._range()))
 
     def __str__(self) -> str:
         return f"({self._start}..{self._stop})"
