@@ -74,6 +74,13 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 | `ast.Try` | Control structure — procedural look | `Try(block).except_(ExcType, handler).run()` |
 | `ast.TryStar` | `try/except*` variant (exception groups) | same |
 
+### No `with` — `poop/validators/no_with.py`
+
+| AST node | Reason | Substitute |
+|---|---|---|
+| `ast.With` | Control structure — procedural look | `With(lambda: cm()).do(lambda resource: body)` |
+| `ast.AsyncWith` | `async with` variant | same |
+
 ### No `not` — `poop/validators/no_not.py`
 
 | AST node | Reason | Substitute |
@@ -427,6 +434,18 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 `exc_type` is a native Python class (`ValueError`, `KeyError`, …) — the only deliberate primitive leak. Unhandled exceptions are always re-raised. Multiple `.except_()` calls are matched in order.
 
 > **Tradeoff**: `exc_type` must be a native Python exception class. Mirroring Python's full hierarchy (~100+ classes) into POOP types is impractical. The handler always receives an `Error` wrapper regardless.
+
+### With — `poop/types/with_.py`
+
+`With(Object)` implements the context manager protocol as a message-passing builder. The context manager block is executed lazily — only when `.do()` is called.
+
+| Message | Method | Behavior |
+|---|---|---|
+| `[block] value: aResource` | `With(lambda: cm).do(lambda resource: body)` | acquires resource via `__enter__`, runs body, calls `__exit__` |
+
+The context manager object must implement Python's `__enter__`/`__exit__` protocol — a deliberate primitive leak, consistent with `Try` using native exception types. Exceptions propagate via the standard `__exit__` return value: if `__exit__` returns falsy, the exception is re-raised; truthy suppresses it.
+
+> **Tradeoff**: context managers must implement Python's native protocol (`__enter__`/`__exit__`). POOP cannot redefine resource acquisition semantics without reimplementing every standard context manager (files, locks, etc.), which is impractical.
 
 ## Active transformers
 

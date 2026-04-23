@@ -45,6 +45,7 @@ from poop.validators.no_subscript import NoSubscriptValidator
 from poop.validators.no_try import NoTryValidator
 from poop.validators.no_unary_minus import NoUnaryMinusValidator
 from poop.validators.no_walrus import NoWalrusValidator
+from poop.validators.no_with import NoWithValidator
 from poop.validators.no_yield import NoYieldValidator
 
 DEFAULT_VALIDATORS: list[Validator] = [
@@ -56,6 +57,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoAssertValidator(),
     NoRaiseValidator(),
     NoTryValidator(),
+    NoWithValidator(),
     NoNotValidator(),
     NoUnaryMinusValidator(),
     NoInvertValidator(),

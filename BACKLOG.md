@@ -8,7 +8,7 @@ These validators are not yet active because the POOP substitute does not exist y
 
 | Construct | Validator | Pending substitute |
 |---|---|---|
-| `with` / `async with` | `no_with.py` | `on_do` mechanism |
+| *(none)* | — | — |
 
 ## Next types
 
