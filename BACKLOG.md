@@ -20,6 +20,7 @@ These validators are not yet active because the POOP substitute does not exist y
 
 - **`no_slice`**: slicing `obj[1:3]` looks like an operator but has no defined substitute yet — candidate: `obj.from_to(start, stop)`. Activate after deciding the name and implementing the method.
 - **`slice` as a Python class**: `slice(1, 3, 2)` creates an object with `.start`, `.stop`, `.step`. Decide whether POOP should have its own `Slice` type, or if slicing should simply be banned without an object substitute.
+- **`no_in`**: `x in col` uses `__contains__` internally and is not rejected by any validator. Decision: block it — `col.includes(x)` is the substitute and is already implemented on all collection types. Blocks `ast.Compare` with `ast.In` and `ast.NotIn` operators; substitute for `not in` is `col.includes(x).not_()`.
 - **`no_import`**: `import os` inside POOP code is not blocked — decide whether to ban or restrict.
 - **`no_type_alias`**: `type X = int` (`ast.TypeAlias`, Python 3.12+) is not evaluated — decide whether to allow (type annotations are harmless) or ban for consistency.
 - **`while_true` missing on `Boolean`**: `no_loops` blocks `ast.While` and documents `cond.while_true(block)` as the substitute, but `Boolean` does not implement it. The validator is active without a working substitute — violates the principle "activate validator only when the substitute exists".
@@ -71,8 +72,6 @@ These validators are not yet active because the POOP substitute does not exist y
   - For resumable exceptions (Smalltalk-style `e resume: value`): not planned — Python's exception model does not support resumption natively.
 
 - **`while_true` not yet implemented**: `no_loops` blocks `ast.While` and documents `cond.while_true(block)` as the substitute, but `Boolean` does not implement `while_true`. The validator is active without a working substitute — violates the principle "activate validator only when the substitute exists". Implement `while_true(block)` on `Boolean` (and decide what it returns) before this is considered complete.
-
-- **`in` operator not blocked**: `x in col` uses `__contains__` internally and is not rejected by any validator. POOP has `col.includes(x)` as the message-passing equivalent, but the operator form still works — a silent inconsistency. Decide: add a `no_in` validator, or explicitly allow `in` as syntactic sugar for `__contains__`.
 
 - **Classmethods as POOP messages**: some Python built-in types expose useful classmethods — `int.from_bytes(b, byteorder)`, `float.fromhex(s)`, `bytes.fromhex(s)`, `dict.fromkeys(keys)`. These cannot be expressed as messages to an instance. Two questions: (1) should POOP support sending messages to class objects at all, and (2) if so, should the transformer pipeline intercept `Int.from_bytes(...)` and rewrite it to a factory function? Until decided, these methods are excluded from the Python API parity audit.
 
