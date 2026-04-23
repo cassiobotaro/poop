@@ -286,6 +286,12 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|
 | `ast.Delete` | objects have no explicit destruction — simply do not delete |
 
+### No `sorted` — `poop/validators/no_sorted.py`
+
+| Call | Reason | Substitute |
+|---|---|---|
+| `sorted(col)` | free function with procedural look | `col.sorted()` |
+
 ### No `in` / `not in` — `poop/validators/no_in.py`
 
 | AST node | Condition | Reason | Substitute |
