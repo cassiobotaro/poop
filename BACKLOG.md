@@ -16,10 +16,6 @@ These validators are not yet active because the POOP substitute does not exist y
 
 - **[HIGH PRIORITY] `Error`**: base class for POOP exceptions. **Critical dependency**: unblocks `no_raise`, `no_with` and `no_assert` — while `Error` does not exist, POOP code can freely use `raise` and `with`, without protection from the principles. Design decisions still open — see Open decisions section.
 
-## Pending renames
-
-- **`for_each` → `do`**: all collection types (`List`, `Tuple`, `Set`, `FrozenSet`, `Dict`, `Bytes`, `ByteArray`, `MemoryView`, `Interval`, `Str`) and any other type with `for_each` must be renamed to `do`. Decision recorded in Principles — `do` is the canonical Smalltalk iteration message and an explicit exception to the "Python names" rule.
-
 ## Missing validators
 
 - **`no_slice`**: slicing `obj[1:3]` looks like an operator but has no defined substitute yet — candidate: `obj.from_to(start, stop)`. Activate after deciding the name and implementing the method.
