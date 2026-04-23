@@ -64,6 +64,8 @@ source → parse → validate → transform → execute(namespace)
 
 **Every literal is transformed.** `1`, `3.14`, `"hello"`, `True`, `False`, `None`, `[1,2]`, `(1,2)`, `{1,2}`, `{k:v}`, `b"..."`, `1+2j` are all rewritten to their POOP equivalents before execution. No naked Python primitive reaches runtime.
 
+**Class inheritance is implicit.** `class Foo:` is rewritten to `class Foo(Object):` by `ClassTransformer`. `class Foo(object):` is also rewritten to `class Foo(Object):`. Classes with an explicit non-`object` base are left unchanged. `Object` is injected into `DEFAULT_NAMESPACE`.
+
 **Constructor builtins are intercepted, not banned.** `int()`, `str()`, `list()`, etc. are object instantiation — transformers rewrite them to POOP factory functions (`_poop_int_from`, `_poop_str_from`, …).
 
 **Singletons.** `true`, `false`, and `none` are unique objects. Identity checks rely on this — there is exactly one instance of each.

@@ -232,7 +232,7 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `slice(...)` | Python-specific construct | `obj.at(index)` |
+| `slice(...)` | Python-specific construct | `obj.copy_from_to(start, stop)` |
 
 ### No `enumerate`/`zip` — `poop/validators/no_enumerate.py`
 
@@ -324,8 +324,7 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 | AST node | Condition | Reason | Substitute |
 |---|---|---|---|
 | `ast.Subscript` | slice is not `ast.Slice` | `obj[key]` looks like an operator | `obj.at(key)` |
-
-Slicing `obj[1:3]` (`ast.Slice`) is allowed for now — see backlog (`no_slice`).
+| `ast.Subscript` | slice is `ast.Slice` | `obj[1:3]` looks like an operator | `obj.copy_from_to(start, stop)` |
 
 ### No comprehension — `poop/validators/no_comprehension.py`
 
@@ -397,6 +396,7 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `detect:` | `find(block)` | first satisfying, or POOP `none` |
 | `inject:into:` | `reduce(init, block)` | reduce |
 | `len` | `len()` | returns `Int` |
+| `copyFrom:to:` | `copy_from_to(start, stop, step=None)` | slice → `List` |
 
 ### Object.print — `poop/types/object.py`
 
@@ -579,3 +579,17 @@ Implicitly injects `Object` as the base class of every user-defined class that h
 
 > **Tradeoff**: classes that explicitly inherit from native Python types (e.g. `class Foo(Exception):`) are left unchanged — they do not gain POOP `Object` methods, consistent with how `Try` and `Error` interact with the native exception hierarchy.
 
+## Slicing — `copy_from_to`
+
+`copy_from_to(start, stop, step=None)` replaces the `obj[start:stop:step]` slice syntax on all sequence types. Indices are 0-based; `stop` is exclusive — identical semantics to Python's slice. `step` is optional (`None` means step 1).
+
+| Type | Returns |
+|---|---|
+| `Str` | `Str` |
+| `List` | `List` |
+| `Tuple` | `Tuple` |
+| `Bytes` | `Bytes` |
+| `ByteArray` | `ByteArray` |
+| `Interval` | `List` |
+
+> `Interval.copy_from_to` returns `List` (not `Interval`) because reconstructing a valid closed interval from sliced `Int` POOP values would require unpacking assumptions about the underlying range step.
