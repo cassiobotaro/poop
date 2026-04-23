@@ -398,6 +398,27 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 | `ast.List` (Load context) | `_poop_list(*elts)` |
 | `ast.Call` with `list(x)` | `_poop_list_from(x)` |
 
+### Tuple — `poop/transformers/tuple.py`
+
+| AST node | Replacement |
+|---|---|
+| `ast.Tuple` (Load context) | `_poop_tuple(*elts)` |
+| `ast.Call` with `tuple(x)` | `_poop_tuple_from(x)` |
+
+### Set — `poop/transformers/set.py`
+
+| AST node | Replacement |
+|---|---|
+| `ast.Set` | `_poop_set(*elts)` |
+| `ast.Call` with `set(x)` | `_poop_set_from(x)` |
+
+### Dict — `poop/transformers/dict.py`
+
+| AST node | Replacement |
+|---|---|
+| `ast.Dict` (no unpacking) | `_poop_dict_from_pairs(k1, v1, k2, v2, …)` |
+| `ast.Call` with `dict(x)` | `_poop_dict_from(x)` — `x` must be `Dict` or iterable of 2-element `Tuple`/`List` pairs |
+
 ### No `del` — `poop/validators/no_del.py`
 
 | AST node | Reason |
@@ -527,9 +548,9 @@ Constructors (`int`, `float`, `bool`, `str`, `bytes`, `list`, …) are **not ban
 | `str(x)` | ✓ rewritten → `_poop_str_from(x)` (StrTransformer) |
 | `bytes(x)` / `bytes(s, enc)` | ✓ rewritten → `_poop_bytes_from(x)` (BytesTransformer) |
 | `list(x)` | ✓ rewritten → `_poop_list_from(x)` (ListTransformer) |
-| `tuple(x)` | pending |
-| `set(x)` | pending |
-| `dict(x)` | pending |
+| `tuple(x)` | ✓ rewritten → `_poop_tuple_from(x)` (TupleTransformer) |
+| `set(x)` | ✓ rewritten → `_poop_set_from(x)` (SetTransformer) |
+| `dict(x)` | ✓ rewritten → `_poop_dict_from(x)` (DictTransformer) |
 | `frozenset(x)` | ✓ rewritten by FrozenSetTransformer |
 | `complex(r, i)` | ✓ rewritten by ComplexTransformer |
 | `bytearray(x)` | ✓ rewritten by ByteArrayTransformer |
