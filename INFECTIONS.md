@@ -353,6 +353,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 |---|---|
 | `ast.Constant(value=int)` (except `bool`) | `_poop_int(n)` |
 | `ast.UnaryOp(USub, Constant(int))` | `_poop_int(-n)` — collapsed negative literal |
+| `ast.Call` with `int(x)` or `int(s, base)` | `_poop_int_from(x)` / `_poop_int_from(s, base)` |
 
 ### Float — `poop/transformers/float.py`
 
@@ -360,6 +361,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 |---|---|
 | `ast.Constant(value=float)` | `_poop_float(n)` |
 | `ast.UnaryOp(USub, Constant(float))` | `_poop_float(-n)` — collapsed negative literal |
+| `ast.Call` with `float(x)` | `_poop_float_from(x)` |
 
 ### Boolean — `poop/transformers/boolean.py`
 
@@ -367,12 +369,34 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 |---|---|
 | `ast.Constant(value=True)` | `_poop_true` |
 | `ast.Constant(value=False)` | `_poop_false` |
+| `ast.Call` with `bool(x)` | `_poop_bool_from(x)` |
 
 ### None — `poop/transformers/none.py`
 
 | AST node | Replacement |
 |---|---|
 | `ast.Constant(value=None)` | `_poop_none` |
+
+### Str — `poop/transformers/string.py`
+
+| AST node | Replacement |
+|---|---|
+| `ast.Constant(value=str)` | `_poop_str(s)` |
+| `ast.Call` with `str(x)` | `_poop_str_from(x)` |
+
+### Bytes — `poop/transformers/bytes.py`
+
+| AST node | Replacement |
+|---|---|
+| `ast.Constant(value=bytes)` | `_poop_bytes(b)` |
+| `ast.Call` with `bytes(x)` or `bytes(s, enc)` | `_poop_bytes_from(x)` / `_poop_bytes_from(s, enc)` |
+
+### List — `poop/transformers/list.py`
+
+| AST node | Replacement |
+|---|---|
+| `ast.List` (Load context) | `_poop_list(*elts)` |
+| `ast.Call` with `list(x)` | `_poop_list_from(x)` |
 
 ### No `del` — `poop/validators/no_del.py`
 
@@ -491,6 +515,26 @@ None pending.
 | `format` | ✓ blocked — use `obj.format(spec)` |
 | `ascii` | Python-specific |
 
+#### Constructor builtins (intercepted by transformers)
+
+Constructors (`int`, `float`, `bool`, `str`, `bytes`, `list`, …) are **not banned** — they are OO (class instantiation). Instead, each transformer intercepts the call and returns the POOP equivalent. See each transformer section in "Active transformers" for details.
+
+| Builtin | Status |
+|---|---|
+| `int(x)` / `int(s, base)` | ✓ rewritten → `_poop_int_from(x)` (IntTransformer) |
+| `float(x)` | ✓ rewritten → `_poop_float_from(x)` (FloatTransformer) |
+| `bool(x)` | ✓ rewritten → `_poop_bool_from(x)` (BooleanTransformer) |
+| `str(x)` | ✓ rewritten → `_poop_str_from(x)` (StrTransformer) |
+| `bytes(x)` / `bytes(s, enc)` | ✓ rewritten → `_poop_bytes_from(x)` (BytesTransformer) |
+| `list(x)` | ✓ rewritten → `_poop_list_from(x)` (ListTransformer) |
+| `tuple(x)` | pending |
+| `set(x)` | pending |
+| `dict(x)` | pending |
+| `frozenset(x)` | ✓ rewritten by FrozenSetTransformer |
+| `complex(r, i)` | ✓ rewritten by ComplexTransformer |
+| `bytearray(x)` | ✓ rewritten by ByteArrayTransformer |
+| `memoryview(x)` | ✓ rewritten by MemoryViewTransformer |
+
 #### Allow / Decide later
 
 | Builtin | Note |
@@ -498,11 +542,6 @@ None pending.
 | `super` | needed for inheritance |
 | `property` / `classmethod` / `staticmethod` | class definition |
 | `getattr` | used internally by `responds_to` |
-| `list` / `dict` / `set` / `tuple` | will be replaced by POOP types |
-| `int` / `float` / `str` / `bool` | constructors covered by transformers |
-| `complex` | replaced by `Complex` — see Next types |
-| `frozenset` | replaced by `FrozenSet` — see Next types |
-| `bytes` / `bytearray` / `memoryview` | replaced by `Bytes`/`ByteArray`/`MemoryView` — see Next types |
 | `issubclass` | evaluate alongside `isinstance` |
 | `repr` | delegates to `__repr__` → `__str__` |
 | `sum` | use `reduce(0, block)` — ban when transformer exists |
@@ -525,7 +564,6 @@ None pending.
 - **[MEDIUM PRIORITY] `no_augmented_assign`**: `x += 1`, `x -= 1` etc. are not blocked — `ast.AugAssign`. Very frequent construct; the absence of blocking creates an implicit exception to the message model.
 - **`no_import`**: `import os` inside POOP code is not blocked — decide whether to ban or restrict.
 - **`no_raise`** and **`no_assert`**: blocked by `Error` — validators cannot be activated before the `Error` type exists (see Next types section).
-- **`no_bytes`**: `bytes(...)`, `bytearray(...)`, `memoryview(...)` — awaiting implementation of `Bytes`/`ByteArray`/`MemoryView` (see Next types).
 
 ### Missing methods in existing types
 
@@ -554,6 +592,8 @@ None pending.
 
 
 ## Open decisions
+
+- **Constructor builtins are intercepted, not banned**: `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` etc. are class constructors — they ARE object instantiation and fit the OO model. The rule is: each transformer intercepts the bare call (no method receiver) and rewrites it to return the POOP type. The factory function (`_poop_X_from`) handles type dispatch and raises `TypeError` for unsupported input types.
 
 - **Dunders exposed as regular methods**: every relevant dunder on a POOP type gets an alias with the Python name without underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__contains__` → `contains()`, `__iter__` → `iter()`, `__hash__` → `hash()`, etc. The rule is: remove the underscores, keep the Python name — do not translate to Smalltalk. Smalltalk names (`size()`, `identity_hash()`, etc.) are not implemented.
 - **`isEmpty` will not be implemented in `Str`**: use `obj == ''` — calls `Str.__eq__` and returns POOP `Boolean`.
