@@ -55,7 +55,11 @@ These validators are not yet active because the POOP substitute does not exist y
 
 ## Architecture / DX
 
-- **REPL**: interactive loop — `poop` with no arguments opens the REPL.
+- **REPL**: interactive loop — `poop` with no arguments opens the REPL. Complexity is medium. Skeleton is trivial (Python has `code.InteractiveConsole`), but integrating with the validator/transformer pipeline requires some changes:
+  - **Persistent namespace** (blocker): `executor.py` currently copies the namespace on every call (`ns = dict(namespace)`), so variables defined in one input are lost in the next. The executor needs to accept a mutable namespace passed by reference and update it in place.
+  - **Multi-line input** (medium): detecting incomplete input (e.g., `class Foo:` without a body). Python's `compile(..., mode='single')` raises `SyntaxError` to distinguish "incomplete" from "invalid", but the POOP pipeline adds validators/transformers in between.
+  - **Expression printing** (medium): `compile(mode='exec')` never prints results. `compile(mode='single')` auto-prints expression values — the executor would need a REPL mode that uses `'single'` instead of `'exec'`.
+  - **Error recovery** (easy): `ValidationError`, `ParseError`, and `ExecutionError` must be caught and displayed without killing the process.
 - **Richer error messages**: `ValidationError` could suggest the POOP equivalent (e.g., `"use x.not_() instead of 'not x'"`).
 
 ## Code examples
@@ -63,6 +67,12 @@ These validators are not yet active because the POOP substitute does not exist y
 - Expand `examples/` with collections: `List`, `Tuple`, `Interval` with `map`/`filter`/`filter_false`.
 
 ## Open decisions
+
+- **`and_`/`or_` vs `and`/`or` keyword**: `and_` and `or_` receive a block (`Callable`) to defer evaluation — the Smalltalk justification. But Python's `and`/`or` are already short-circuit evaluated natively, so the block adds verbosity (`x.and_(lambda: y)`) without a real lazy-evaluation benefit. `and`/`or` are not currently blocked by any validator. Three options to decide: (1) block `and`/`or` and keep `and_`/`or_` as the message-send substitute; (2) remove `and_`/`or_` and leave `and`/`or` free (accepting the non-message aesthetic); (3) block `and`/`or` and replace with eager `&`/`|` only — dropping the lazy variant entirely.
+
+- **`&` and `|` on `Boolean`**: `__and__` and `__or__` implement eager evaluation — both sides are always evaluated before the call. This is the classic bitwise-vs-logical ambiguity from Python. Questions to decide: (1) should `&`/`|` be blocked by a validator (since they look like operators, not messages)? (2) if kept, are they redundant with `and_`/`or_`? (3) is there a real POOP use case for eager boolean evaluation that justifies both variants?
+
+- **Python operator taxonomy — full review needed**: Python operators fall into two categories with different semantics: (1) operators that dispatch to dunders (`+` → `__add__`, `*` → `__mul__`, `&` → `__and__`, `|` → `__or__`, `==` → `__eq__`, etc.) — these are overridable and already behave as message sends; (2) operators that do NOT dispatch to dunders and cannot be overridden (`and`, `or`, `not`, `is`, `in`) — these are language-level constructs with fixed semantics. POOP already blocks some of the second group (`not` → `not_()`, `is` → `is_none()`/`is_identical()`) but not `and`/`or`/`in`. The first group (dunder-based operators) is mostly unblocked — open question is whether their operator syntax (`x + y`, `x == y`, `x & y`) is acceptable as implicit message sends or should also be blocked. A coherent policy for both categories is needed before adding more validators.
 
 - **Exception system design**: POOP blocks `raise`/`try` but the `Error` type and its interaction with Python's existing exception hierarchy is unresolved. Three strategies were considered:
   - **A — Generic wrapper**: `on_error` wraps any caught exception in a single `Error(e)` POOP object. Simple, but loses hierarchy — cannot distinguish `ValueError` from `KeyError` in the handler.
