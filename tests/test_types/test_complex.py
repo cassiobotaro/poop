@@ -8,16 +8,16 @@ from poop.types.string import Str
 
 
 def test_real() -> None:
-    assert Complex(1 + 2j).real() == Float(1.0)
+    assert Complex(1 + 2j).real == Float(1.0)
 
 
 def test_imag() -> None:
-    assert Complex(1 + 2j).imag() == Float(2.0)
+    assert Complex(1 + 2j).imag == Float(2.0)
 
 
 def test_real_zero_imag() -> None:
-    assert Complex(3j).real() == Float(0.0)
-    assert Complex(3j).imag() == Float(3.0)
+    assert Complex(3j).real == Float(0.0)
+    assert Complex(3j).imag == Float(3.0)
 
 
 def test_conjugate() -> None:

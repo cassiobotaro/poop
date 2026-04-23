@@ -27,8 +27,8 @@ These validators are not yet active because the POOP substitute does not exist y
 ## Missing methods in existing types
 
 - **[MEDIUM PRIORITY] Python API parity audit**: review every POOP type against its Python counterpart and add any missing methods. Each POOP type should expose all meaningful methods of the Python class it wraps, following the naming rule (Python names, not Smalltalk). Types to audit: `Int` (`int`), `Float` (`float`), `Str` (`str`), `List` (`list`), `Tuple` (`tuple`), `Dict` (`dict`), `Set` (`set`), `FrozenSet` (`frozenset`), `Bytes` (`bytes`), `ByteArray` (`bytearray`), `Complex` (`complex`), `Interval` (`range`).
-  - **`Int`**: `as_integer_ratio()` → `Tuple(Int, Int)`, `conjugate()` → self, `denominator()` → `Int(1)`, `imag()` → `Int(0)`, `numerator()` → self, `real()` → self, `to_bytes(length, byteorder)` → `Bytes`.
-  - **`Float`**: `conjugate()` → self, `hex()` → `Str`, `imag()` → `Float(0.0)`, `real()` → self.
+  - **`Int`**: `as_integer_ratio()` → `Tuple(Int, Int)`, `conjugate()` → self, `denominator` → `Int(1)` (@property), `imag` → `Int(0)` (@property), `numerator` → self (@property), `real` → self (@property), `to_bytes(length, byteorder)` → `Bytes`.
+  - **`Float`**: `conjugate()` → self, `hex()` → `Str`, `imag` → `Float(0.0)` (@property), `real` → self (@property).
   - **`Str`**: `casefold()`, `center(width)`, `encode(encoding)` → `Bytes`, `expandtabs()`, `isascii()`, `isdecimal()`, `isidentifier()`, `isnumeric()`, `isprintable()`, `istitle()`, `ljust(width)`, `partition(sep)` → `Tuple`, `removeprefix(prefix)`, `removesuffix(suffix)`, `rfind(sub)`, `rindex(sub)`, `rjust(width)`, `rpartition(sep)` → `Tuple`, `rsplit(sep)`, `splitlines()`, `zfill(width)`.
   - **`List`**: `clear()`, `copy()` → `List`, `count(obj)` → `Int`, `extend(other)`, `index(obj)` → `Int`, `insert(i, obj)`, `remove(obj)`, `reverse()`, `sort(key, reverse)`.
   - **`Tuple`**: ~~`count(obj)` → `Int`, `index(obj)` → `Int`~~ ✓

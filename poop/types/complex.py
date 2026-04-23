@@ -15,11 +15,13 @@ class Complex(Object):
     def __init__(self, value: _complex) -> None:
         self._value = value
 
+    @property
     def real(self) -> Float:
         from poop.types.float import Float
 
         return Float(self._value.real)
 
+    @property
     def imag(self) -> Float:
         from poop.types.float import Float
 
