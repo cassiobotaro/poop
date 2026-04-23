@@ -180,3 +180,81 @@ def test_transformer_frozenset_empty_call() -> None:
     result = ns["fs"]
     assert isinstance(result, FrozenSet)
     assert result.len() == Int(0)
+
+
+def test_copy_returns_new_frozenset() -> None:
+    fs = FrozenSet(Int(1), Int(2))
+    c = fs.copy()
+    assert c is not fs
+    assert c == fs
+
+
+def test_union() -> None:
+    assert FrozenSet(Int(1), Int(2)).union(FrozenSet(Int(2), Int(3))) == FrozenSet(
+        Int(1), Int(2), Int(3)
+    )
+
+
+def test_union_multiple_others() -> None:
+    assert FrozenSet(Int(1)).union(FrozenSet(Int(2)), FrozenSet(Int(3))) == FrozenSet(
+        Int(1), Int(2), Int(3)
+    )
+
+
+def test_intersection() -> None:
+    assert FrozenSet(Int(1), Int(2), Int(3)).intersection(
+        FrozenSet(Int(2), Int(3), Int(4))
+    ) == FrozenSet(Int(2), Int(3))
+
+
+def test_difference() -> None:
+    assert FrozenSet(Int(1), Int(2), Int(3)).difference(
+        FrozenSet(Int(2), Int(3))
+    ) == FrozenSet(Int(1))
+
+
+def test_symmetric_difference() -> None:
+    result = FrozenSet(Int(1), Int(2), Int(3)).symmetric_difference(
+        FrozenSet(Int(2), Int(3), Int(4))
+    )
+    assert result == FrozenSet(Int(1), Int(4))
+
+
+def test_isdisjoint_true() -> None:
+    from poop.types.boolean import true
+
+    assert FrozenSet(Int(1), Int(2)).isdisjoint(FrozenSet(Int(3), Int(4))) is true
+
+
+def test_isdisjoint_false() -> None:
+    from poop.types.boolean import false
+
+    assert FrozenSet(Int(1), Int(2)).isdisjoint(FrozenSet(Int(2), Int(3))) is false
+
+
+def test_issubset_true() -> None:
+    from poop.types.boolean import true
+
+    assert FrozenSet(Int(1), Int(2)).issubset(FrozenSet(Int(1), Int(2), Int(3))) is true
+
+
+def test_issubset_false() -> None:
+    from poop.types.boolean import false
+
+    assert (
+        FrozenSet(Int(1), Int(4)).issubset(FrozenSet(Int(1), Int(2), Int(3))) is false
+    )
+
+
+def test_issuperset_true() -> None:
+    from poop.types.boolean import true
+
+    assert (
+        FrozenSet(Int(1), Int(2), Int(3)).issuperset(FrozenSet(Int(1), Int(2))) is true
+    )
+
+
+def test_issuperset_false() -> None:
+    from poop.types.boolean import false
+
+    assert FrozenSet(Int(1), Int(2)).issuperset(FrozenSet(Int(1), Int(3))) is false

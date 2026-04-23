@@ -67,6 +67,36 @@ class FrozenSet(Object):
 
         return true if builtins_any(bool(block(x)) for x in self._data) else false
 
+    def copy(self) -> FrozenSet:
+        return FrozenSet(*self._data)
+
+    def union(self, *others: FrozenSet) -> FrozenSet:
+        return FrozenSet(*self._data.union(*[o._data for o in others]))
+
+    def intersection(self, *others: FrozenSet) -> FrozenSet:
+        return FrozenSet(*self._data.intersection(*[o._data for o in others]))
+
+    def difference(self, *others: FrozenSet) -> FrozenSet:
+        return FrozenSet(*self._data.difference(*[o._data for o in others]))
+
+    def symmetric_difference(self, other: FrozenSet) -> FrozenSet:
+        return FrozenSet(*self._data.symmetric_difference(other._data))
+
+    def isdisjoint(self, other: FrozenSet) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._data.isdisjoint(other._data) else false
+
+    def issubset(self, other: FrozenSet) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._data.issubset(other._data) else false
+
+    def issuperset(self, other: FrozenSet) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._data.issuperset(other._data) else false
+
     def __iter__(self) -> Iterator[Object]:
         return iter(self._data)
 
