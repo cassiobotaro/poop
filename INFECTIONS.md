@@ -173,6 +173,12 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|---|
 | `isinstance(x, T)` | free function with procedural look | `x.is_instance(T)` |
 
+### No `ascii` — `poop/validators/no_ascii.py`
+
+| Call | Reason | Substitute |
+|---|---|---|
+| `ascii(x)` | free function with procedural look | `x.ascii()` |
+
 ### No `issubclass` — `poop/validators/no_issubclass.py`
 
 | Call | Reason | Substitute |

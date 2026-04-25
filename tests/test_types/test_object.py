@@ -122,6 +122,31 @@ def test_hash_returns_int() -> None:
     assert result == Int(hash(obj))
 
 
+def test_ascii_returns_str_type() -> None:
+    from poop.types.string import Str
+
+    result = Object().ascii()
+    assert isinstance(result, Str)
+
+
+def test_ascii_ascii_only_object() -> None:
+    from poop.types.string import Str
+
+    result = Object().ascii()
+    assert result == Str("<Object>")
+
+
+def test_ascii_escapes_non_ascii_chars() -> None:
+    from poop.types.string import Str
+
+    class Exotic(Object):
+        def __str__(self) -> str:
+            return "café"
+
+    result = Exotic().ascii()
+    assert result == Str("caf\\xe9")
+
+
 def test_str_default() -> None:
     assert str(Object()) == "<Object>"
 

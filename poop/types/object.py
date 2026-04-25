@@ -1,3 +1,4 @@
+import builtins
 from builtins import print as _builtins_print
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
@@ -64,6 +65,11 @@ class Object:
         from poop.types.boolean import false, true
 
         return true if issubclass(cls, other) else false
+
+    def ascii(self) -> Str:
+        from poop.types.string import Str
+
+        return Str(builtins.ascii(self))
 
     def has_attr(self, symbol: str) -> Boolean:
         from poop.types.boolean import false, true
