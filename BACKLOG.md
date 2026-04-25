@@ -23,7 +23,6 @@ These validators are not yet active because the POOP substitute does not exist y
 | `super` | needed for inheritance — allow |
 | `property` / `classmethod` / `staticmethod` | class definition — allow |
 | `getattr` | used internally by `responds_to` — allow |
-| `repr` | delegates to `__repr__` → `__str__` — allow |
 
 ## Architecture / DX
 

@@ -122,6 +122,30 @@ def test_hash_returns_int() -> None:
     assert result == Int(hash(obj))
 
 
+def test_repr_method_returns_str_type() -> None:
+    from poop.types.string import Str
+
+    result = Object().repr()
+    assert isinstance(result, Str)
+
+
+def test_repr_method_matches_builtin_repr() -> None:
+    from poop.types.string import Str
+
+    obj = Object()
+    assert obj.repr() == Str(repr(obj))
+
+
+def test_repr_method_custom_str() -> None:
+    from poop.types.string import Str
+
+    class Named(Object):
+        def __str__(self) -> str:
+            return "Named!"
+
+    assert Named().repr() == Str("Named!")
+
+
 def test_ascii_returns_str_type() -> None:
     from poop.types.string import Str
 

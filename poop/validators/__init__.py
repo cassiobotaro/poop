@@ -40,6 +40,7 @@ from poop.validators.no_open import NoOpenValidator
 from poop.validators.no_pow import NoPowValidator
 from poop.validators.no_print import NoPrintValidator
 from poop.validators.no_raise import NoRaiseValidator
+from poop.validators.no_repr import NoReprValidator
 from poop.validators.no_reversed import NoReversedValidator
 from poop.validators.no_setattr import NoSetattrValidator
 from poop.validators.no_slice import NoSliceValidator
@@ -99,6 +100,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoIterValidator(),
     NoOpenValidator(),
     NoPowValidator(),
+    NoReprValidator(),
     NoSetattrValidator(),
     NoSliceValidator(),
     NoSortedValidator(),

@@ -66,6 +66,11 @@ class Object:
 
         return true if issubclass(cls, other) else false
 
+    def repr(self) -> Str:
+        from poop.types.string import Str
+
+        return Str(builtins.repr(self))
+
     def ascii(self) -> Str:
         from poop.types.string import Str
 
