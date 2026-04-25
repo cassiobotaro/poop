@@ -12,8 +12,6 @@ These validators are not yet active because the POOP substitute does not exist y
 
 ## Missing validators
 
-- **`no_type_alias`**: `type X = int` (`ast.TypeAlias`, Python 3.12+) is not evaluated — decide whether to allow (type annotations are harmless) or ban for consistency.
-
 ## Python builtins — remaining decisions
 
 | Builtin | Note |

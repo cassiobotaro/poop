@@ -34,3 +34,13 @@ Git hooks are managed by [prek](https://prek.j178.dev) and run ruff and ty on ev
 ```bash
 poop examples/hello_world.py
 ```
+
+## Type annotations
+
+Type annotations (`x: int`, `def f(x: int) -> str:`) are not evaluated at
+runtime in Python and do not cause errors in POOP programs. However, they are
+misleading: POOP transforms all literals to its own types (`Int`, `Str`, …),
+so a variable annotated as `int` will hold an `Int` at runtime.
+
+Avoid type annotations in POOP programs. The `type` keyword (`type X = int`)
+is explicitly banned by the validator pipeline.

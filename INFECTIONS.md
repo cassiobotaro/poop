@@ -143,6 +143,12 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|
 | `ast.NamedExpr` | `:=` combines assignment and expression — use separate assignment |
 
+### No `type` alias — `poop/validators/no_type_alias.py`
+
+| Construct | Reason |
+|---|---|
+| `type X = int` | Creates an alias for a Python builtin type — incompatible with POOP runtime types |
+
 ### No `match/case` — `poop/validators/no_match.py`
 
 | AST node | Reason | Substitute |
