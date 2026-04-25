@@ -2,7 +2,7 @@ import ast
 
 from poop.errors import ValidationError
 
-_FORBIDDEN = frozenset({"globals", "locals", "vars", "dir"})
+_FORBIDDEN = frozenset({"globals", "locals", "vars"})
 
 
 class NoIntrospectionValidator:

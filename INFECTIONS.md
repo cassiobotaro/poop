@@ -310,7 +310,12 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 | `globals()` | scope introspection — state lives in instances |
 | `locals()` | same |
 | `vars(obj)` | same |
-| `dir(obj)` | same |
+
+### No `dir` — `poop/validators/no_dir.py`
+
+| Call | Reason | Substitute |
+|---|---|---|
+| `dir(obj)` | free function with procedural look | `obj.dir()` |
 
 ### No `exec`/`eval`/`compile` — `poop/validators/no_exec.py`
 
@@ -402,6 +407,10 @@ Constructs considered for blocking but decided to allow by design.
 
 These are class-definition decorators, not runtime operations on values. They define how a method is bound, not what it does. Blocking them would prevent idiomatic class definitions without a principled POOP substitute. Allowed.
 
+### `help`
+
+`help()` is a development tool — it prints documentation for inspection at the REPL or during exploration. It carries no program logic and has no message-passing equivalent that would be more expressive. Allowed.
+
 ## Active types
 
 ### Object — `poop/types/object.py`
@@ -415,6 +424,7 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `not` | `not_()` | `false if bool(self) else true` |
 | `class` | `class_name()` | `type(self).__name__` as `Str` |
 | `perform:` | `get_attr(name)` | `getattr` with optional default |
+| — | `dir()` | sorted `List` of `Str` attribute names (`builtins.dir(self)`) |
 
 `__str__` returns `"<ClassName>"` as fallback; `__repr__` delegates to `__str__`.
 

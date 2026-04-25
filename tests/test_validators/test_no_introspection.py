@@ -29,12 +29,6 @@ def test_vars_raises_validation_error() -> None:
         NoIntrospectionValidator().validate(tree)
 
 
-def test_dir_raises_validation_error() -> None:
-    tree = ast.parse("dir(x)")
-    with pytest.raises(ValidationError, match="dir()"):
-        NoIntrospectionValidator().validate(tree)
-
-
 def test_carries_line_number() -> None:
     tree = ast.parse("x = 1\nglobals()")
     with pytest.raises(ValidationError) as exc_info:

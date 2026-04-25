@@ -123,7 +123,6 @@ def test_hash_returns_int() -> None:
 
 
 def test_get_attr_existing_attribute() -> None:
-    from poop.types.string import Str
 
     result = Object().get_attr("class_name")
     assert callable(result)
@@ -189,6 +188,22 @@ def test_ascii_escapes_non_ascii_chars() -> None:
 
     result = Exotic().ascii()
     assert result == Str("caf\\xe9")
+
+
+def test_dir_returns_list_of_str() -> None:
+    from poop.types.list import List
+    from poop.types.string import Str
+
+    result = Object().dir()
+    assert isinstance(result, List)
+    assert all(isinstance(item, Str) for item in result._items)
+
+
+def test_dir_contains_known_method() -> None:
+    from poop.types.string import Str
+
+    result = Object().dir()
+    assert Str("class_name") in result._items
 
 
 def test_str_default() -> None:

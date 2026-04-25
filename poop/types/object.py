@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
+    from poop.types.list import List
     from poop.types.string import Str
 
 
@@ -75,6 +76,12 @@ class Object:
         from poop.types.string import Str
 
         return Str(builtins.ascii(self))
+
+    def dir(self) -> List:
+        from poop.types.list import List
+        from poop.types.string import Str
+
+        return List(*(Str(name) for name in builtins.dir(self)))
 
     def get_attr(self, name: str, *default: Any) -> Any:
         return builtins.getattr(self, name, *default)
