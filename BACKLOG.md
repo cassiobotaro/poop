@@ -23,10 +23,6 @@ These validators are not yet active because the POOP substitute does not exist y
   - **Error recovery** (easy): `ValidationError`, `ParseError`, and `ExecutionError` must be caught and displayed without killing the process.
 - **Richer error messages**: `ValidationError` could suggest the POOP equivalent (e.g., `"use x.not_() instead of 'not x'"`).
 
-## Code examples
-
-- Expand `examples/` with collections: `List`, `Tuple`, `Interval` with `map`/`filter`/`filter_false`.
-
 ## Open decisions
 
 *(none)*
