@@ -54,7 +54,7 @@ def test_async_for_loop_raises_validation_error() -> None:
     assert "async for loops" in str(exc_info.value)
 
 
-def test_error_message_mentions_recursion() -> None:
+def test_error_message_suggests_do_block() -> None:
     tree = ast.parse("for i in range(10):\n    pass")
-    with pytest.raises(ValidationError, match="recursion"):
+    with pytest.raises(ValidationError, match="do"):
         NoLoopsValidator().validate(tree)

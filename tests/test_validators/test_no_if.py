@@ -39,7 +39,7 @@ def test_nested_if_inside_function_is_rejected() -> None:
         NoIfValidator().validate(tree)
 
 
-def test_error_message_mentions_polymorphism() -> None:
+def test_error_message_suggests_if_true_if_false() -> None:
     tree = ast.parse("x = 1 if True else 2")
-    with pytest.raises(ValidationError, match="polymorphism"):
+    with pytest.raises(ValidationError, match="if_true_if_false"):
         NoIfValidator().validate(tree)

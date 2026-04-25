@@ -11,7 +11,7 @@ class NoLoopsValidator:
 class _NoLoopsVisitor(ast.NodeVisitor):
     def visit_For(self, node: ast.For) -> None:
         raise ValidationError(
-            "for loops are forbidden — use recursion or message passing instead",
+            "for loops are forbidden — use col.do(block) instead",
             lineno=node.lineno,
             col_offset=node.col_offset,
         )
@@ -25,7 +25,7 @@ class _NoLoopsVisitor(ast.NodeVisitor):
 
     def visit_AsyncFor(self, node: ast.AsyncFor) -> None:
         raise ValidationError(
-            "async for loops are forbidden — use recursion or message passing instead",
+            "async for loops are forbidden — use col.do(block) instead",
             lineno=node.lineno,
             col_offset=node.col_offset,
         )
