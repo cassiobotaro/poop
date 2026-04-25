@@ -104,7 +104,7 @@ def test_sum_returns_total() -> None:
 
 
 def test_sum_empty_returns_zero() -> None:
-    assert List().sum() == 0
+    assert List().sum() == Int(0)
 
 
 def test_all_true() -> None:

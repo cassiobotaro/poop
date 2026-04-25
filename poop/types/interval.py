@@ -73,9 +73,13 @@ class Interval(Object):
     def reduce[T](self, init: T, block: Callable[[T, Int], T]) -> T:
         return reduce(block, self._iter(), init)
 
-    def sum(self) -> Any:
+    def sum(self) -> Object:
+        from poop.types.int import Int
+
         items = list(self._iter())
-        return reduce(lambda a, b: a + b, items) if items else 0
+        if not items:
+            return Int(0)
+        return reduce(lambda a, b: a + b, items)
 
     def all(self, block: Callable[[Int], Any]) -> Boolean:
         from poop.types.boolean import false, true

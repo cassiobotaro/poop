@@ -122,9 +122,13 @@ class Set(Object):
     def reduce(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
         return reduce(block, self._data, init)
 
-    def sum(self) -> Any:
+    def sum(self) -> Object:
+        from poop.types.int import Int
+
         items = list(self._data)
-        return reduce(lambda a, b: a + b, items) if items else 0
+        if not items:
+            return Int(0)
+        return reduce(lambda a, b: a + b, items)
 
     def all(self, block: Callable[[Object], Any]) -> Boolean:
         from poop.types.boolean import false, true

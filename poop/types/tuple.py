@@ -81,8 +81,12 @@ class Tuple(Object):
     def reduce(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
         return reduce(block, self._items, init)
 
-    def sum(self) -> Any:
-        return reduce(lambda a, b: a + b, self._items) if self._items else 0
+    def sum(self) -> Object:
+        from poop.types.int import Int
+
+        if not self._items:
+            return Int(0)
+        return reduce(lambda a, b: a + b, self._items)
 
     def all(self, block: Callable[[Object], Any]) -> Boolean:
         from poop.types.boolean import false, true

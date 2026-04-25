@@ -86,7 +86,7 @@ def test_sum_returns_total() -> None:
 
 
 def test_sum_empty_returns_zero() -> None:
-    assert FrozenSet().sum() == 0
+    assert FrozenSet().sum() == Int(0)
 
 
 def test_all_true_when_all_match() -> None:
