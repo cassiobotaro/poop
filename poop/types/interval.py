@@ -90,7 +90,7 @@ class Interval(Object):
     def includes(self, item: Int) -> Boolean:
         from poop.types.boolean import false, true
 
-        return true if self._start._value <= item._value <= self._stop._value else false
+        return true if item._value in self._range() else false
 
     def count(self, value: Int) -> Int:
         from poop.types.int import Int
