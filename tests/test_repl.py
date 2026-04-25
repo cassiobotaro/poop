@@ -4,7 +4,15 @@ import pytest
 
 from poop.errors import ExecutionError, ParseError, ValidationError
 from poop.interpreter import Interpreter
-from poop.repl import Repl, _indent_for, _save_history, _setup_readline
+from poop.repl import (
+    Repl,
+    _color,
+    _colorize_value,
+    _indent_for,
+    _PoopCompleter,
+    _save_history,
+    _setup_readline,
+)
 from poop.transformers import DEFAULT_NAMESPACE
 
 
@@ -206,3 +214,96 @@ def test_run_poop_error_printed_to_stderr(
     )
     Repl(Interpreter()).run()
     assert "poop:" in capsys.readouterr().err
+
+
+# --- _PoopCompleter ---
+
+
+def test_poop_completer_name_matches_user_vars() -> None:
+    ns: dict[str, object] = {"foo": 1, "bar": 2}
+    c = _PoopCompleter(ns)
+    assert c.complete("fo", 0) == "foo"
+    assert c.complete("fo", 1) is None
+
+
+def test_poop_completer_hides_poop_internals() -> None:
+    ns: dict[str, object] = {"_poop_true": True, "x": 1}
+    c = _PoopCompleter(ns)
+    assert c.complete("_poop", 0) is None
+
+
+def test_poop_completer_no_builtins_leak() -> None:
+    ns: dict[str, object] = {}
+    c = _PoopCompleter(ns)
+    assert c.complete("pri", 0) is None
+    assert c.complete("len", 0) is None
+
+
+def test_poop_completer_callable_gets_paren() -> None:
+    ns: dict[str, object] = {"my_fn": lambda: None}
+    c = _PoopCompleter(ns)
+    assert c.complete("my", 0) == "my_fn("
+
+
+def test_poop_completer_attr_matches() -> None:
+    from poop.types.int import Int
+
+    ns: dict[str, object] = {"n": Int(1)}
+    c = _PoopCompleter(ns)
+    result = c.complete("n.ab", 0)
+    assert result == "n.abs("
+
+
+def test_poop_completer_attr_hides_dunder() -> None:
+    from poop.types.int import Int
+
+    ns: dict[str, object] = {"n": Int(1)}
+    c = _PoopCompleter(ns)
+    assert c.complete("n.__", 0) is None
+
+
+def test_poop_completer_attr_bad_expr_returns_none() -> None:
+    ns: dict[str, object] = {}
+    c = _PoopCompleter(ns)
+    assert c.complete("nonexistent.foo", 0) is None
+
+
+# --- _colorize_value ---
+
+
+def test_colorize_value_no_color_when_not_tty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdout.isatty", lambda: False)
+    from poop.types.int import Int
+
+    assert _colorize_value(Int(1)) == "1"
+
+
+def test_colorize_value_int_contains_ansi_when_tty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+    from poop.types.int import Int
+
+    result = _colorize_value(Int(1))
+    assert "\x1b[" in result
+    assert "1" in result
+
+
+def test_colorize_value_str_uses_quoted_repr(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+    from poop.types.string import Str
+
+    result = _colorize_value(Str("hello"))
+    assert "'hello'" in result
+
+
+def test_color_no_ansi_when_not_tty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdout.isatty", lambda: False)
+    assert _color("text", "\x1b[31m") == "text"
+
+
+def test_color_wraps_ansi_when_tty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+    result = _color("text", "\x1b[31m")
+    assert result.startswith("\x1b[31m")
+    assert "text" in result
