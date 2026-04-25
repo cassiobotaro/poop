@@ -298,3 +298,25 @@ def test_chr_returns_character() -> None:
 
 def test_pow_method() -> None:
     assert Int(2).pow(Int(10)) == Int(1024)
+
+
+def test_from_bytes_big_endian() -> None:
+    from poop.types.bytes import Bytes
+    from poop.types.string import Str
+
+    assert Int.from_bytes(Bytes(b"\x00\xff"), Str("big")) == Int(255)
+
+
+def test_from_bytes_little_endian() -> None:
+    from poop.types.bytes import Bytes
+    from poop.types.string import Str
+
+    assert Int.from_bytes(Bytes(b"\xff\x00"), Str("little")) == Int(255)
+
+
+def test_from_bytes_roundtrips_with_to_bytes() -> None:
+    from poop.types.string import Str
+
+    n = Int(12345)
+    b = n.to_bytes(Int(4), Str("big"))
+    assert Int.from_bytes(b, Str("big")) == n

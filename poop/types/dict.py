@@ -1,5 +1,5 @@
 from collections import deque
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types.object import Object
@@ -33,6 +33,16 @@ class Dict(Object):
         from poop.types.boolean import false, true
 
         return true if key in self._data else false
+
+    @classmethod
+    def fromkeys(cls, keys: Iterable[Object], value: Object | None = None) -> Dict:
+        from poop.types.none import none
+
+        fill: Object = none if value is None else value
+        d = cls()
+        for k in keys:
+            d._data[k] = fill
+        return d
 
     def keys(self) -> List:
         from poop.types.list import List

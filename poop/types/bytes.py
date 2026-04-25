@@ -62,6 +62,10 @@ class Bytes(Object):
 
         return Str(self._value.hex())
 
+    @classmethod
+    def fromhex(cls, s: Str) -> Bytes:
+        return cls(bytes.fromhex(s._value))
+
     def do(self, block: Callable[[Int], Any]) -> None:
         from poop.types.int import Int
 

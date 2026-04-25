@@ -298,3 +298,22 @@ def test_eq_with_non_dict_returns_false() -> None:
 
 def test_ne_with_non_dict_returns_true() -> None:
     assert Dict().__ne__(Int(1)) is true
+
+
+def test_fromkeys_with_default_none() -> None:
+    result = Dict.fromkeys(List(Str("a"), Str("b"), Str("c")))
+    assert result.at(Str("a")) is none
+    assert result.at(Str("b")) is none
+    assert result.at(Str("c")) is none
+    assert result.len() == Int(3)
+
+
+def test_fromkeys_with_explicit_value() -> None:
+    result = Dict.fromkeys(List(Str("x"), Str("y")), Int(0))
+    assert result.at(Str("x")) == Int(0)
+    assert result.at(Str("y")) == Int(0)
+
+
+def test_fromkeys_empty_keys() -> None:
+    result = Dict.fromkeys(List())
+    assert result.len() == Int(0)

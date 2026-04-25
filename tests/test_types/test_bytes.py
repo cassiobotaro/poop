@@ -443,3 +443,12 @@ def test_add_concatenates() -> None:
 
 def test_mul_repeats() -> None:
     assert Bytes(b"ab") * Int(3) == Bytes(b"ababab")
+
+
+def test_fromhex_parses_hex_string() -> None:
+    assert Bytes.fromhex(Str("deadbeef")) == Bytes(bytes.fromhex("deadbeef"))
+
+
+def test_fromhex_roundtrips_with_hex() -> None:
+    b = Bytes(b"\xde\xad\xbe\xef")
+    assert Bytes.fromhex(b.hex()) == b

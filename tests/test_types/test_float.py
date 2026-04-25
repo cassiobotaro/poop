@@ -238,3 +238,18 @@ def test_as_integer_ratio() -> None:
 
 def test_pow_method() -> None:
     assert Float(2.0).pow(Float(3.0)) == Float(8.0)
+
+
+def test_fromhex_parses_hex_string() -> None:
+    import pytest
+
+    from poop.types.string import Str
+
+    result = Float.fromhex(Str("0x1.8p+0"))
+    assert isinstance(result, Float)
+    assert result._value == pytest.approx(1.5)
+
+
+def test_fromhex_roundtrips_with_hex() -> None:
+    f = Float(3.14)
+    assert Float.fromhex(f.hex()) == f

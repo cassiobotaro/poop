@@ -55,6 +55,10 @@ class Float(Object):
 
         return Str(_float(self._value).hex())
 
+    @classmethod
+    def fromhex(cls, s: Str) -> Float:
+        return cls(_float.fromhex(s._value))
+
     @property
     def real(self) -> Float:
         return self
