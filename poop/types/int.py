@@ -87,12 +87,9 @@ class Int(Object):
 
     @classmethod
     def from_bytes(cls, b: Bytes, byteorder: Str) -> Int:
-        from poop.types.bytes import Bytes as _Bytes
 
         return cls(
-            _int.from_bytes(
-                b._value, cast(Literal["little", "big"], byteorder._value)
-            )
+            _int.from_bytes(b._value, cast(Literal["little", "big"], byteorder._value))
         )
 
     def int(self) -> Int:

@@ -344,11 +344,15 @@ def test_sort_reverse() -> None:
 
 
 def test_copy_from_to_with_step() -> None:
-    assert List(Int(0), Int(1), Int(2), Int(3), Int(4)).copy_from_to(Int(0), Int(5), Int(2)) == List(Int(0), Int(2), Int(4))
+    assert List(Int(0), Int(1), Int(2), Int(3), Int(4)).copy_from_to(
+        Int(0), Int(5), Int(2)
+    ) == List(Int(0), Int(2), Int(4))
 
 
 def test_add_concatenates() -> None:
-    assert List(Int(1), Int(2)) + List(Int(3), Int(4)) == List(Int(1), Int(2), Int(3), Int(4))
+    assert List(Int(1), Int(2)) + List(Int(3), Int(4)) == List(
+        Int(1), Int(2), Int(3), Int(4)
+    )
 
 
 def test_mul_repeats() -> None:

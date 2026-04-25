@@ -25,21 +25,17 @@ Smalltalk:
 class ProductCatalog:
     def run(self):
         products = [
-            ("Apple",   120, True),
+            ("Apple", 120, True),
             ("Laptop", 3500, True),
-            ("Banana",   80, False),
+            ("Banana", 80, False),
             ("Headset", 450, True),
-            ("Phone",  2200, True),
-            ("Cable",    30, False),
+            ("Phone", 2200, True),
+            ("Cable", 30, False),
         ]
 
-        products.filter(lambda p: p.at(2)).filter_false(
-            lambda p: p.at(1) > 1000
-        ).map(
+        products.filter(lambda p: p.at(2)).filter_false(lambda p: p.at(1) > 1000).map(
             lambda p: p.at(0) + " $" + p.at(1).repr()
-        ).do(
-            lambda line: line.print()
-        )
+        ).do(lambda line: line.print())
 
 
 ProductCatalog().run()

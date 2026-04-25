@@ -26,12 +26,12 @@ class SocialGraph:
 
     def run(self):
         alice = {"python", "music", "hiking", "coffee"}
-        bob   = {"rust",   "music", "gaming", "coffee"}
+        bob = {"rust", "music", "gaming", "coffee"}
 
         self._section("Common interests:", alice.intersection(bob))
-        self._section("Alice only:",       alice.difference(bob))
-        self._section("Bob only:",         bob.difference(alice))
-        self._section("All interests:",    alice.union(bob))
+        self._section("Alice only:", alice.difference(bob))
+        self._section("Bob only:", bob.difference(alice))
+        self._section("All interests:", alice.union(bob))
 
         "Alice is subset of all interests: ".print()
         alice.issubset(alice.union(bob)).print()

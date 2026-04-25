@@ -254,7 +254,9 @@ def test_copy_from_to_with_step() -> None:
 
 
 def test_add_concatenates() -> None:
-    assert Tuple(Int(1), Int(2)) + Tuple(Int(3), Int(4)) == Tuple(Int(1), Int(2), Int(3), Int(4))
+    assert Tuple(Int(1), Int(2)) + Tuple(Int(3), Int(4)) == Tuple(
+        Int(1), Int(2), Int(3), Int(4)
+    )
 
 
 def test_mul_repeats() -> None:

@@ -229,7 +229,6 @@ def test_imag_returns_zero() -> None:
 
 def test_as_integer_ratio() -> None:
     from poop.types.int import Int
-    from poop.types.tuple import Tuple
 
     n, d = Float(0.5).as_integer_ratio()._items
     assert n == Int(1)

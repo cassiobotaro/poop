@@ -351,7 +351,9 @@ def test_ne_with_non_set_returns_true() -> None:
 
 
 def test_dunder_and_intersection() -> None:
-    assert Set(Int(1), Int(2), Int(3)) & Set(Int(2), Int(3), Int(4)) == Set(Int(2), Int(3))
+    assert Set(Int(1), Int(2), Int(3)) & Set(Int(2), Int(3), Int(4)) == Set(
+        Int(2), Int(3)
+    )
 
 
 def test_dunder_or_union() -> None:
