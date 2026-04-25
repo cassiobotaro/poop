@@ -14,11 +14,6 @@ These validators are not yet active because the POOP substitute does not exist y
 
 ## Python builtins — remaining decisions
 
-| Builtin | Note |
-|---|---|
-| `super` | needed for inheritance — allow |
-| `property` / `classmethod` / `staticmethod` | class definition — allow |
-
 ## Architecture / DX
 
 - **REPL**: interactive loop — `poop` with no arguments opens the REPL. Complexity is medium. Skeleton is trivial (Python has `code.InteractiveConsole`), but integrating with the validator/transformer pipeline requires some changes:
