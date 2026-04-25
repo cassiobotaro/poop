@@ -9,7 +9,7 @@ def execute(
     namespace: dict[str, object] | None = None,
 ) -> None:
     code = compile(tree, filename=filename, mode="exec")
-    ns: dict[str, object] = dict(namespace) if namespace else {}
+    ns: dict[str, object] = namespace if namespace is not None else {}
     try:
         exec(code, ns)  # noqa: S102
     except Exception as exc:

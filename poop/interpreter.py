@@ -34,4 +34,12 @@ class Interpreter:
             validator.validate(tree)
         for transformer in self._transformers:
             tree = transformer.transform(tree)
-        execute(tree, filename=filename, namespace=self._namespace)
+        execute(tree, filename=filename, namespace=dict(self._namespace))
+
+    def run_source_repl(self, source: str, namespace: dict[str, object]) -> None:
+        tree: ast.Module = parse(source, filename="<repl>")
+        for validator in self._validators:
+            validator.validate(tree)
+        for transformer in self._transformers:
+            tree = transformer.transform(tree)
+        execute(tree, filename="<repl>", namespace=namespace)

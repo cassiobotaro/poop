@@ -17,11 +17,18 @@ def test_execute_raises_execution_error_on_runtime_exception() -> None:
         execute(tree)
 
 
-def test_execute_uses_isolated_namespace() -> None:
+def test_execute_mutates_provided_namespace() -> None:
+    ns: dict[str, object] = {}
+    tree = ast.parse("x = 42")
+    execute(tree, namespace=ns)
+    assert ns["x"] == 42
+
+
+def test_execute_separate_namespaces_are_isolated() -> None:
     tree1 = ast.parse("x = 42")
     tree2 = ast.parse("assert 'x' not in dir()")
-    execute(tree1)
-    execute(tree2)
+    execute(tree1, namespace={})
+    execute(tree2, namespace={})
 
 
 def test_execute_namespace_is_available_in_code() -> None:
