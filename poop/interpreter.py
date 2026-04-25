@@ -42,4 +42,4 @@ class Interpreter:
             validator.validate(tree)
         for transformer in self._transformers:
             tree = transformer.transform(tree)
-        execute(tree, filename="<repl>", namespace=namespace)
+        execute(tree, filename="<repl>", namespace=namespace, interactive=True)
