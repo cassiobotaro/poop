@@ -10,28 +10,9 @@ These validators are not yet active because the POOP substitute does not exist y
 |---|---|---|
 | *(none)* | — | — |
 
-## Next types
-
-- **[MEDIUM PRIORITY] Python API parity audit**: see below.
-
 ## Missing validators
 
 - **`no_type_alias`**: `type X = int` (`ast.TypeAlias`, Python 3.12+) is not evaluated — decide whether to allow (type annotations are harmless) or ban for consistency.
-
-## Missing methods in existing types
-
-- **[MEDIUM PRIORITY] Python API parity audit**: review every POOP type against its Python counterpart and add any missing methods. Each POOP type should expose all meaningful methods of the Python class it wraps, following the naming rule (Python names, not Smalltalk). Types to audit: `Int` (`int`), `Float` (`float`), `Str` (`str`), `List` (`list`), `Tuple` (`tuple`), `Dict` (`dict`), `Set` (`set`), `FrozenSet` (`frozenset`), `Bytes` (`bytes`), `ByteArray` (`bytearray`), `Complex` (`complex`), `Interval` (`range`).
-  - **`Int`**: ~~`as_integer_ratio()` → `Tuple(Int, Int)`, `conjugate()` → self, `denominator` → `Int(1)` (@property), `imag` → `Int(0)` (@property), `numerator` → self (@property), `real` → self (@property), `to_bytes(length, byteorder)` → `Bytes`~~ ✓
-  - **`Float`**: ~~`conjugate()` → self, `hex()` → `Str`, `imag` → `Float(0.0)` (@property), `real` → self (@property)~~ ✓
-  - **`Str`**: ~~`casefold()`, `center(width)`, `encode(encoding)` → `Bytes`, `expandtabs()`, `isascii()`, `isdecimal()`, `isidentifier()`, `isnumeric()`, `isprintable()`, `istitle()`, `ljust(width)`, `partition(sep)` → `Tuple`, `removeprefix(prefix)`, `removesuffix(suffix)`, `rfind(sub)`, `rindex(sub)`, `rjust(width)`, `rpartition(sep)` → `Tuple`, `rsplit(sep)`, `splitlines()`, `zfill(width)`~~ ✓
-  - **`List`**: ~~`clear()`, `copy()` → `List`, `count(obj)` → `Int`, `extend(other)`, `index(obj)` → `Int`, `insert(i, obj)`, `remove(obj)`, `reverse()`, `sort(key, reverse)`~~ ✓
-  - **`Tuple`**: ~~`count(obj)` → `Int`, `index(obj)` → `Int`~~ ✓
-  - **`Dict`**: ~~`clear()`, `copy()` → `Dict`, `items()` → `List` of `Tuple(key, val)`, `pop(key)`, `popitem()` → `Tuple`, `setdefault(key, default)`, `update(other)`~~ ✓
-  - **`Set`**: ~~`clear()`, `copy()` → `Set`, `difference(*others)`, `difference_update(*others)`, `discard(obj)`, `intersection(*others)`, `intersection_update(*others)`, `isdisjoint(other)` → `Boolean`, `issubset(other)` → `Boolean`, `issuperset(other)` → `Boolean`, `pop()`, `symmetric_difference(other)`, `symmetric_difference_update(other)`, `union(*others)`, `update(*others)`~~ ✓ (also fixed `remove()` to raise `KeyError` instead of silently discarding)
-  - **`FrozenSet`**: ~~`copy()` → `FrozenSet`, `difference(*others)`, `intersection(*others)`, `isdisjoint(other)` → `Boolean`, `issubset(other)` → `Boolean`, `issuperset(other)` → `Boolean`, `symmetric_difference(other)`, `union(*others)`~~ ✓
-  - **`Bytes`**: ~~`capitalize()`, `center(width)`, `count(sub)`, `endswith(suffix)`, `expandtabs()`, `find(sub)`, `index(sub)`, `isalnum()`, `isalpha()`, `isascii()`, `isdigit()`, `islower()`, `isspace()`, `istitle()`, `isupper()`, `join(iterable)`, `ljust(width)`, `lower()`, `lstrip()`, `partition(sep)`, `removeprefix(prefix)`, `removesuffix(suffix)`, `replace(old, new)`, `rfind(sub)`, `rindex(sub)`, `rjust(width)`, `rpartition(sep)`, `rsplit(sep)`, `rstrip()`, `split(sep)`, `splitlines()`, `startswith(prefix)`, `strip()`, `swapcase()`, `title()`, `upper()`, `zfill(width)`~~ ✓
-  - **`ByteArray`**: ~~everything above from `Bytes`, plus: `append(byte)`, `clear()`, `copy()` → `ByteArray`, `extend(iterable)`, `insert(i, byte)`, `pop(index)`, `remove(byte)`, `reverse()`~~ ✓ (`resize` does not exist on Python `bytearray`)
-  - **`Interval`**: ~~`count(value)` → `Int`, `index(value)` → `Int`, `start` → `Int`, `stop` → `Int`, `step` → `Int`~~ ✓ (`start`/`stop`/`step` são `@property`, como em `range`)
 
 ## Python builtins — remaining decisions
 
@@ -61,16 +42,4 @@ These validators are not yet active because the POOP substitute does not exist y
 
 ## Open decisions
 
-- **`and_`/`or_` vs `and`/`or` keyword**: ~~`and_` and `or_` receive a block (`Callable`) to defer evaluation — the Smalltalk justification. But Python's `and`/`or` are already short-circuit evaluated natively, so the block adds verbosity (`x.and_(lambda: y)`) without a real lazy-evaluation benefit. `and`/`or` are not currently blocked by any validator. Three options to decide: (1) block `and`/`or` and keep `and_`/`or_` as the message-send substitute; (2) remove `and_`/`or_` and leave `and`/`or` free (accepting the non-message aesthetic); (3) block `and`/`or` and replace with eager `&`/`|` only — dropping the lazy variant entirely.~~ ✓ `and`/`or` are blocked by `no_and_or`; use `x.and_(lambda: y)` / `x.or_(lambda: y)`.
-
-- **`&` and `|` on `Boolean`**: ✓ **Decisão**: `&` e `|` se comportam como em Python — `__and__`/`__or__` em `Boolean` implementam avaliação eager (não curto-circuito), exatamente como `&`/`|` de bool em Python. São complementares a `and_`/`or_` (lazy): use `&`/`|` quando precisar avaliar ambos os lados.
-
-- **Python operator taxonomy — full review needed**: ~~Python operators fall into two categories with different semantics: (1) operators that dispatch to dunders (`+` → `__add__`, `*` → `__mul__`, `&` → `__and__`, `|` → `__or__`, `==` → `__eq__`, etc.) — these are overridable and already behave as message sends; (2) operators that do NOT dispatch to dunders and cannot be overridden (`and`, `or`, `not`, `is`, `in`) — these are language-level constructs with fixed semantics. POOP already blocks some of the second group (`not` → `not_()`, `is` → `is_none()`/`is_identical()`) but not `and`/`or`/`in`. The first group (dunder-based operators) is mostly unblocked — open question is whether their operator syntax (`x + y`, `x == y`, `x & y`) is acceptable as implicit message sends or should also be blocked. A coherent policy for both categories is needed before adding more validators.~~ ✓ **Decisão**: dunder-based operators are allowed — they are implicit message sends, analogous to Smalltalk binary messages. All basic types were audited and implement the relevant dunders returning POOP types. Non-overridable operators (`and`, `or`, `not`, `is`, `in`) are blocked by validators.
-
-- **Exception system design**: ~~POOP blocks `raise`/`try` but the `Error` type and its interaction with Python's existing exception hierarchy is unresolved.~~ ✓ implemented: `ExcType.raise_('msg')` for raising (transformer rewrites to `_poop_raise(ExcType, 'msg')`), `Try(block).except_(ExcType, handler).run()` for catching. `exc_type` is a native Python class — the only deliberate primitive leak.
-
-- **`while_true` not yet implemented**: ~~`no_loops` blocks `ast.While` and documents `cond.while_true(block)` as the substitute, but `Boolean` does not implement `while_true`. The validator is active without a working substitute — violates the principle "activate validator only when the substitute exists". Implement `while_true(block)` on `Boolean` (and decide what it returns) before this is considered complete.~~ ✓ implemented (`while_true` and `while_false` on `Boolean`, both returning `none`).
-
 - **Classmethods as POOP messages**: some Python built-in types expose useful classmethods — `int.from_bytes(b, byteorder)`, `float.fromhex(s)`, `bytes.fromhex(s)`, `dict.fromkeys(keys)`. These cannot be expressed as messages to an instance. Two questions: (1) should POOP support sending messages to class objects at all, and (2) if so, should the transformer pipeline intercept `Int.from_bytes(...)` and rewrite it to a factory function? Until decided, these methods are excluded from the Python API parity audit.
-
-- **`import`** (`ast.Import`, `ast.ImportFrom`): ✓ **Decisão**: `import` é permitido — necessário para projetos com múltiplos arquivos POOP. Importar módulos Python built-in (`os`, `sys`, `json`, etc.) não é bloqueado mas produzirá erros em runtime, pois as funções retornam tipos primitivos Python, não POOP types. Regra documental: apenas módulos escritos em estilo POOP são compatíveis.
