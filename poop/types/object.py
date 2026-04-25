@@ -59,6 +59,12 @@ class Object:
 
         return true if isinstance(self, type_) else false
 
+    @classmethod
+    def is_subclass(cls, other: type) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if issubclass(cls, other) else false
+
     def has_attr(self, symbol: str) -> Boolean:
         from poop.types.boolean import false, true
 

@@ -48,6 +48,50 @@ def test_is_instance_returns_false_for_non_matching_type() -> None:
     assert Object().is_instance(int) is false
 
 
+def test_is_subclass_returns_true_for_direct_subclass() -> None:
+    class Animal(Object):
+        pass
+
+    class Dog(Animal):
+        pass
+
+    assert Dog.is_subclass(Animal) is true
+
+
+def test_is_subclass_returns_false_for_unrelated_class() -> None:
+    class A(Object):
+        pass
+
+    class B(Object):
+        pass
+
+    assert A.is_subclass(B) is false
+
+
+def test_is_subclass_returns_true_for_self() -> None:
+    class Foo(Object):
+        pass
+
+    assert Foo.is_subclass(Foo) is true
+
+
+def test_is_subclass_returns_true_for_object_root() -> None:
+    class Foo(Object):
+        pass
+
+    assert Foo.is_subclass(Object) is true
+
+
+def test_is_subclass_via_instance_also_works() -> None:
+    class Animal(Object):
+        pass
+
+    class Dog(Animal):
+        pass
+
+    assert Dog().is_subclass(Animal) is true
+
+
 def test_callable_returns_false_for_plain_object() -> None:
     assert Object().callable() is false
 

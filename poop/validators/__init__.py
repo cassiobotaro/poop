@@ -27,6 +27,7 @@ from poop.validators.no_introspection import NoIntrospectionValidator
 from poop.validators.no_invert import NoInvertValidator
 from poop.validators.no_is import NoIsValidator
 from poop.validators.no_isinstance import NoIsinstanceValidator
+from poop.validators.no_issubclass import NoIssubclassValidator
 from poop.validators.no_iter import NoIterValidator
 from poop.validators.no_len import NoLenValidator
 from poop.validators.no_loops import NoLoopsValidator
@@ -75,6 +76,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoAbsValidator(),
     NoHashValidator(),
     NoIsinstanceValidator(),
+    NoIssubclassValidator(),
     NoCallableValidator(),
     NoIdValidator(),
     NoAllValidator(),
