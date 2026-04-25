@@ -249,6 +249,13 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|---|
 | `pow(a, b)` | free function with procedural look | `a.pow(b)` |
 
+### No `getattr` — `poop/validators/no_getattr.py`
+
+| Call | Reason | Substitute |
+|---|---|---|
+| `getattr(x, name)` | free function with procedural look | `x.get_attr(name)` |
+| `getattr(x, name, default)` | free function with procedural look | `x.get_attr(name, default)` |
+
 ### No `hasattr` — `poop/validators/no_hasattr.py`
 
 | Call | Reason | Substitute |
@@ -385,7 +392,7 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `notNil` | `not_none()` | always `true` for Object |
 | `not` | `not_()` | `false if bool(self) else true` |
 | `class` | `class_name()` | `type(self).__name__` as `Str` |
-| `respondsTo:` | `responds_to(symbol)` | `hasattr` as base |
+| `perform:` | `get_attr(name)` | `getattr` with optional default |
 
 `__str__` returns `"<ClassName>"` as fallback; `__repr__` delegates to `__str__`.
 
@@ -608,7 +615,7 @@ Implicitly injects `Object` as the base class of every user-defined class that h
 | `class Foo(object):` | `class Foo(Object):` |
 | `class Foo(Bar):` | unchanged — already has a base |
 
-`Object` is injected into `DEFAULT_NAMESPACE` via `ClassTransformer.BINDINGS` so the rewritten AST resolves it at runtime. User-defined classes automatically gain all `Object` methods: `print()`, `is_none()`, `not_none()`, `assert_()`, `class_name()`, `responds_to()`, etc.
+`Object` is injected into `DEFAULT_NAMESPACE` via `ClassTransformer.BINDINGS` so the rewritten AST resolves it at runtime. User-defined classes automatically gain all `Object` methods: `print()`, `is_none()`, `not_none()`, `assert_()`, `class_name()`, `get_attr()`, etc.
 
 > **Tradeoff**: classes that explicitly inherit from native Python types (e.g. `class Foo(Exception):`) are left unchanged — they do not gain POOP `Object` methods, consistent with how `Try` and `Error` interact with the native exception hierarchy.
 

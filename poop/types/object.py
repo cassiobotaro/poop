@@ -76,6 +76,9 @@ class Object:
 
         return Str(builtins.ascii(self))
 
+    def get_attr(self, name: str, *default: Any) -> Any:
+        return builtins.getattr(self, name, *default)
+
     def has_attr(self, symbol: str) -> Boolean:
         from poop.types.boolean import false, true
 

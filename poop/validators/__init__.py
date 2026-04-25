@@ -17,6 +17,7 @@ from poop.validators.no_exec import NoExecValidator
 from poop.validators.no_exit import NoExitValidator
 from poop.validators.no_format import NoFormatValidator
 from poop.validators.no_free_functions import NoFreeFunctionsValidator
+from poop.validators.no_getattr import NoGetattrValidator
 from poop.validators.no_global import NoGlobalValidator
 from poop.validators.no_hasattr import NoHasattrValidator
 from poop.validators.no_hash import NoHashValidator
@@ -94,6 +95,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoExecValidator(),
     NoExitValidator(),
     NoFormatValidator(),
+    NoGetattrValidator(),
     NoHasattrValidator(),
     NoInputValidator(),
     NoIntrospectionValidator(),

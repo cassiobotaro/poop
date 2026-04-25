@@ -122,6 +122,26 @@ def test_hash_returns_int() -> None:
     assert result == Int(hash(obj))
 
 
+def test_get_attr_existing_attribute() -> None:
+    from poop.types.string import Str
+
+    result = Object().get_attr("class_name")
+    assert callable(result)
+
+
+def test_get_attr_missing_raises_attribute_error() -> None:
+    import pytest
+
+    with pytest.raises(AttributeError):
+        Object().get_attr("nonexistent")
+
+
+def test_get_attr_missing_with_default_returns_default() -> None:
+    sentinel = object()
+    result = Object().get_attr("nonexistent", sentinel)
+    assert result is sentinel
+
+
 def test_repr_method_returns_str_type() -> None:
     from poop.types.string import Str
 
