@@ -290,3 +290,11 @@ def test_update_returns_self() -> None:
     d1 = _dict_with([(1, 10)])
     d2 = _dict_with([(2, 20)])
     assert d1.update(d2) is d1
+
+
+def test_eq_with_non_dict_returns_false() -> None:
+    assert Dict().__eq__(Int(1)) is false
+
+
+def test_ne_with_non_dict_returns_true() -> None:
+    assert Dict().__ne__(Int(1)) is true

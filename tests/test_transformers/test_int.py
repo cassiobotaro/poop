@@ -120,3 +120,28 @@ def test_int_from_str_with_base() -> None:
     result = _poop_int_from(Str("ff"), Int(16))
     assert isinstance(result, Int)
     assert result._value == 255
+
+
+def test_int_from_str_with_non_int_base_raises() -> None:
+    import pytest
+
+    from poop.types.string import Str
+
+    with pytest.raises(TypeError, match="base must be Int"):
+        _poop_int_from(Str("10"), "invalid_base")
+
+
+def test_int_from_unsupported_type_raises() -> None:
+    import pytest
+
+    from poop.types.complex import Complex
+
+    with pytest.raises(TypeError, match="cannot convert"):
+        _poop_int_from(Complex(complex(1, 2)))
+
+
+def test_negative_variable_not_collapsed() -> None:
+    tree = _transform("x = -y")
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.UnaryOp)

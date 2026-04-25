@@ -127,3 +127,10 @@ def test_list_from_bytes() -> None:
     result = _poop_list_from(Bytes(b"\x01\x02"))
     assert isinstance(result, List)
     assert result == List(Int(1), Int(2))
+
+
+def test_list_from_unsupported_type_raises() -> None:
+    import pytest
+
+    with pytest.raises(TypeError, match="cannot convert"):
+        _poop_list_from(Int(5))

@@ -302,3 +302,11 @@ def test_rpow_unsupported_returns_not_implemented() -> None:
 )
 def test_str_various(c: Complex, expected: str) -> None:
     assert str(c) == expected
+
+
+def test_complex_from_unsupported_real_type_returns_zero() -> None:
+    from poop.transformers.complex import _poop_complex_from
+    from poop.types.dict import Dict
+
+    result = _poop_complex_from(Dict())
+    assert result == Complex(complex(0, 0))

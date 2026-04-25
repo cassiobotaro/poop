@@ -473,3 +473,71 @@ def test_upper() -> None:
 
 def test_zfill() -> None:
     assert ByteArray(bytearray(b"42")).zfill(Int(5)) == ByteArray(bytearray(b"00042"))
+
+
+def test_copy_from_to_with_step() -> None:
+    ba = ByteArray(bytearray(b"abcdef"))
+    assert ba.copy_from_to(Int(0), Int(6), Int(2)) == ByteArray(bytearray(b"ace"))
+
+
+def test_contains_non_int_returns_false() -> None:
+    assert (Str("a") in ByteArray(bytearray(b"abc"))) is False
+
+
+def test_eq_with_non_byte_array_returns_false() -> None:
+    assert ByteArray(bytearray(b"x")).__eq__(Int(1)) is false
+
+
+def test_ne_with_non_byte_array_returns_true() -> None:
+    assert ByteArray(bytearray(b"x")).__ne__(Int(1)) is true
+
+
+def test_add_concatenates() -> None:
+    a = ByteArray(bytearray(b"ab"))
+    b = ByteArray(bytearray(b"cd"))
+    assert a + b == ByteArray(bytearray(b"abcd"))
+
+
+def test_mul_repeats() -> None:
+    assert ByteArray(bytearray(b"ab")) * Int(3) == ByteArray(bytearray(b"ababab"))
+
+
+def test_center_with_fillchar() -> None:
+    ba = ByteArray(bytearray(b"hi"))
+    fill = ByteArray(bytearray(b"*"))
+    assert ba.center(Int(6), fill) == ByteArray(bytearray(b"**hi**"))
+
+
+def test_ljust_with_fillchar() -> None:
+    ba = ByteArray(bytearray(b"hi"))
+    fill = ByteArray(bytearray(b"*"))
+    assert ba.ljust(Int(5), fill) == ByteArray(bytearray(b"hi***"))
+
+
+def test_lstrip_with_chars() -> None:
+    ba = ByteArray(bytearray(b"xxxhi"))
+    chars = ByteArray(bytearray(b"x"))
+    assert ba.lstrip(chars) == ByteArray(bytearray(b"hi"))
+
+
+def test_rjust_with_fillchar() -> None:
+    ba = ByteArray(bytearray(b"hi"))
+    fill = ByteArray(bytearray(b"*"))
+    assert ba.rjust(Int(5), fill) == ByteArray(bytearray(b"***hi"))
+
+
+def test_rstrip_with_chars() -> None:
+    ba = ByteArray(bytearray(b"hixxx"))
+    chars = ByteArray(bytearray(b"x"))
+    assert ba.rstrip(chars) == ByteArray(bytearray(b"hi"))
+
+
+def test_strip_with_chars() -> None:
+    ba = ByteArray(bytearray(b"xxhixx"))
+    chars = ByteArray(bytearray(b"x"))
+    assert ba.strip(chars) == ByteArray(bytearray(b"hi"))
+
+
+def test_expandtabs_with_tabsize() -> None:
+    ba = ByteArray(bytearray(b"a\tb"))
+    assert ba.expandtabs(Int(4)) == ByteArray(bytearray(b"a   b"))

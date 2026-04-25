@@ -48,3 +48,10 @@ def test_with_without_as_raises_validation_error() -> None:
     tree = ast.parse(source)
     with pytest.raises(ValidationError):
         NoWithValidator().validate(tree)
+
+
+def test_async_with_raises_validation_error() -> None:
+    source = "async def f():\n    async with lock:\n        pass"
+    tree = ast.parse(source)
+    with pytest.raises(ValidationError, match="async with"):
+        NoWithValidator().validate(tree)

@@ -430,3 +430,27 @@ def test_splitlines() -> None:
     from poop.types.list import List
 
     assert Str("a\nb\nc").splitlines() == List(Str("a"), Str("b"), Str("c"))
+
+
+def test_ord_returns_code_point() -> None:
+    assert Str("A").ord() == Int(65)
+
+
+def test_copy_from_to_with_step() -> None:
+    assert Str("abcdef").copy_from_to(Int(0), Int(6), Int(2)) == Str("ace")
+
+
+def test_contains_non_str_returns_false() -> None:
+    assert (Int(1) in Str("123")) is False
+
+
+def test_rmul_returns_repeated_string() -> None:
+    assert Str("ab").__rmul__(Int(3)) == Str("ababab")
+
+
+def test_eq_with_non_str_returns_false() -> None:
+    assert Str("hello").__eq__(Int(1)) is false
+
+
+def test_ne_with_non_str_returns_true() -> None:
+    assert Str("hello").__ne__(Int(1)) is true

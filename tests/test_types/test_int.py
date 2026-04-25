@@ -270,3 +270,31 @@ def test_to_bytes_little_endian() -> None:
     from poop.types.string import Str
 
     assert Int(255).to_bytes(Int(2), Str("little")) == Bytes(b"\xff\x00")
+
+
+def test_bin_returns_binary_string() -> None:
+    from poop.types.string import Str
+
+    assert Int(10).bin() == Str("0b1010")
+
+
+def test_hex_returns_hex_string() -> None:
+    from poop.types.string import Str
+
+    assert Int(255).hex() == Str("0xff")
+
+
+def test_oct_returns_octal_string() -> None:
+    from poop.types.string import Str
+
+    assert Int(8).oct() == Str("0o10")
+
+
+def test_chr_returns_character() -> None:
+    from poop.types.string import Str
+
+    assert Int(65).chr() == Str("A")
+
+
+def test_pow_method() -> None:
+    assert Int(2).pow(Int(10)) == Int(1024)

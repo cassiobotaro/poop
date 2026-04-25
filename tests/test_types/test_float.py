@@ -225,3 +225,16 @@ def test_real_returns_self() -> None:
 
 def test_imag_returns_zero() -> None:
     assert Float(2.5).imag == Float(0.0)
+
+
+def test_as_integer_ratio() -> None:
+    from poop.types.int import Int
+    from poop.types.tuple import Tuple
+
+    n, d = Float(0.5).as_integer_ratio()._items
+    assert n == Int(1)
+    assert d == Int(2)
+
+
+def test_pow_method() -> None:
+    assert Float(2.0).pow(Float(3.0)) == Float(8.0)

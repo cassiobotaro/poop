@@ -103,3 +103,17 @@ def test_float_from_str_parses() -> None:
     result = _poop_float_from(Str("3.14"))
     assert isinstance(result, Float)
     assert result._value == pytest.approx(3.14)
+
+
+def test_float_from_unsupported_type_raises() -> None:
+    from poop.types.complex import Complex
+
+    with pytest.raises(TypeError, match="cannot convert"):
+        _poop_float_from(Complex(complex(1, 2)))
+
+
+def test_negative_variable_not_collapsed() -> None:
+    tree = _transform("x = -y")
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.UnaryOp)

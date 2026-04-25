@@ -223,3 +223,43 @@ def test_while_false_does_not_execute_if_condition_starts_true() -> None:
 def test_while_false_returns_none() -> None:
     result = true.while_false(lambda: true, lambda: None)
     assert isinstance(result, NoneClass)
+
+
+def test_false_while_true_executes_body_while_condition_is_true() -> None:
+    counter = [0]
+    false.while_true(
+        lambda: true if counter[0] < 3 else false,
+        lambda: counter.__setitem__(0, counter[0] + 1),
+    )
+    assert counter[0] == 3
+
+
+def test_false_while_true_does_not_execute_if_condition_starts_false() -> None:
+    called = []
+    false.while_true(lambda: false, lambda: called.append(1))
+    assert called == []
+
+
+def test_false_while_true_returns_none() -> None:
+    result = false.while_true(lambda: false, lambda: None)
+    assert isinstance(result, NoneClass)
+
+
+def test_false_while_false_executes_body_while_condition_is_false() -> None:
+    counter = [0]
+    false.while_false(
+        lambda: false if counter[0] < 3 else true,
+        lambda: counter.__setitem__(0, counter[0] + 1),
+    )
+    assert counter[0] == 3
+
+
+def test_false_while_false_does_not_execute_if_condition_starts_true() -> None:
+    called = []
+    false.while_false(lambda: true, lambda: called.append(1))
+    assert called == []
+
+
+def test_false_while_false_returns_none() -> None:
+    result = false.while_false(lambda: true, lambda: None)
+    assert isinstance(result, NoneClass)

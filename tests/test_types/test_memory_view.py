@@ -147,3 +147,11 @@ def test_factory_fallback_empty() -> None:
     mv = _poop_memoryview_from(None)
     assert isinstance(mv, MemoryView)
     assert mv.len() == Int(0)
+
+
+def test_eq_with_non_memory_view_returns_false() -> None:
+    assert _mv(b"abc").__eq__(Int(1)) is false
+
+
+def test_ne_with_non_memory_view_returns_true() -> None:
+    assert _mv(b"abc").__ne__(Int(1)) is true

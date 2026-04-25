@@ -98,3 +98,10 @@ def test_set_from_tuple() -> None:
     result = _poop_set_from(Tuple(Int(10), Int(20)))
     assert isinstance(result, Set)
     assert result == Set(Int(10), Int(20))
+
+
+def test_set_from_unsupported_type_raises() -> None:
+    import pytest
+
+    with pytest.raises(TypeError, match="cannot convert"):
+        _poop_set_from(Int(5))

@@ -207,3 +207,10 @@ def test_index_not_found_raises() -> None:
 
     with pytest.raises(ValueError):
         _interval(1, 5).index(Int(9))
+
+
+def test_copy_from_to_with_step() -> None:
+    from poop.types.list import List
+
+    result = _interval(0, 10).copy_from_to(Int(0), Int(5), Int(2))
+    assert result == List(Int(0), Int(2), Int(4))

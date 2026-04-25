@@ -93,3 +93,7 @@ def test_try_finally_no_arg_executes_block() -> None:
     called: list[bool] = []
     Try(lambda: called.append(True)).finally_()
     assert called == [True]
+
+
+def test_try_repr_delegates_to_str() -> None:
+    assert repr(Try(lambda: None)) == "Try"

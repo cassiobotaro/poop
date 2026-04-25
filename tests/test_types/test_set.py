@@ -332,3 +332,27 @@ def test_issuperset_false() -> None:
     from poop.types.boolean import false
 
     assert Set(Int(1), Int(2)).issuperset(Set(Int(1), Int(3))) is false
+
+
+def test_eq_with_non_set_returns_false() -> None:
+    assert Set(Int(1)).__eq__(Int(1)) is false
+
+
+def test_ne_with_non_set_returns_true() -> None:
+    assert Set(Int(1)).__ne__(Int(1)) is true
+
+
+def test_dunder_and_intersection() -> None:
+    assert Set(Int(1), Int(2), Int(3)) & Set(Int(2), Int(3), Int(4)) == Set(Int(2), Int(3))
+
+
+def test_dunder_or_union() -> None:
+    assert Set(Int(1), Int(2)) | Set(Int(2), Int(3)) == Set(Int(1), Int(2), Int(3))
+
+
+def test_dunder_sub_difference() -> None:
+    assert Set(Int(1), Int(2), Int(3)) - Set(Int(2)) == Set(Int(1), Int(3))
+
+
+def test_dunder_xor_symmetric_difference() -> None:
+    assert Set(Int(1), Int(2)) ^ Set(Int(2), Int(3)) == Set(Int(1), Int(3))

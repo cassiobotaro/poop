@@ -333,3 +333,23 @@ def test_sort_reverse() -> None:
     lst = List(Int(1), Int(2), Int(3))
     lst.sort(reverse=True)
     assert lst == List(Int(3), Int(2), Int(1))
+
+
+def test_copy_from_to_with_step() -> None:
+    assert List(Int(0), Int(1), Int(2), Int(3), Int(4)).copy_from_to(Int(0), Int(5), Int(2)) == List(Int(0), Int(2), Int(4))
+
+
+def test_add_concatenates() -> None:
+    assert List(Int(1), Int(2)) + List(Int(3), Int(4)) == List(Int(1), Int(2), Int(3), Int(4))
+
+
+def test_mul_repeats() -> None:
+    assert List(Int(1), Int(2)) * Int(2) == List(Int(1), Int(2), Int(1), Int(2))
+
+
+def test_eq_with_non_list_returns_false() -> None:
+    assert List(Int(1)).__eq__(Int(1)) is false
+
+
+def test_ne_with_non_list_returns_true() -> None:
+    assert List(Int(1)).__ne__(Int(1)) is true

@@ -100,3 +100,12 @@ def test_bytes_from_list_of_ints() -> None:
     result = _poop_bytes_from(List(Int(72), Int(101), Int(108)))
     assert isinstance(result, Bytes)
     assert result._value == b"Hel"
+
+
+def test_bytes_from_unsupported_type_raises() -> None:
+    import pytest
+
+    from poop.types.float import Float
+
+    with pytest.raises(TypeError, match="cannot convert"):
+        _poop_bytes_from(Float(3.14))

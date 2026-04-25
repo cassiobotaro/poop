@@ -419,3 +419,27 @@ def test_upper() -> None:
 
 def test_zfill() -> None:
     assert Bytes(b"42").zfill(Int(5)) == Bytes(b"00042")
+
+
+def test_copy_from_to_with_step() -> None:
+    assert Bytes(b"abcdef").copy_from_to(Int(0), Int(6), Int(2)) == Bytes(b"ace")
+
+
+def test_contains_non_int_returns_false() -> None:
+    assert (Str("a") in Bytes(b"abc")) is False
+
+
+def test_eq_with_non_bytes_returns_false() -> None:
+    assert Bytes(b"x").__eq__(Int(1)) is false
+
+
+def test_ne_with_non_bytes_returns_true() -> None:
+    assert Bytes(b"x").__ne__(Int(1)) is true
+
+
+def test_add_concatenates() -> None:
+    assert Bytes(b"ab") + Bytes(b"cd") == Bytes(b"abcd")
+
+
+def test_mul_repeats() -> None:
+    assert Bytes(b"ab") * Int(3) == Bytes(b"ababab")

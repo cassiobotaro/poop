@@ -115,3 +115,39 @@ def test_dict_from_entry_wrong_size_raises() -> None:
 
     with pytest.raises(TypeError):
         _poop_dict_from(List(Tuple(Str("a"), Int(1), Int(2))))
+
+
+def test_dict_from_list_of_lists() -> None:
+    from poop.types.list import List
+
+    pairs = List(List(Str("a"), Int(1)), List(Str("b"), Int(2)))
+    result = _poop_dict_from(pairs)
+    assert isinstance(result, Dict)
+    assert result.at(Str("a")) == Int(1)
+    assert result.at(Str("b")) == Int(2)
+
+
+def test_dict_from_list_of_lists_wrong_size_raises() -> None:
+    from poop.types.list import List
+
+    with pytest.raises(TypeError):
+        _poop_dict_from(List(List(Str("a"), Int(1), Int(2))))
+
+
+def test_dict_from_invalid_item_type_raises() -> None:
+    from poop.types.list import List
+
+    with pytest.raises(TypeError, match="cannot use"):
+        _poop_dict_from(List(Int(1)))
+
+
+def test_dict_from_unsupported_type_raises() -> None:
+    with pytest.raises(TypeError, match="cannot convert"):
+        _poop_dict_from(Int(42))
+
+
+def test_dict_literal_with_unpacking_not_rewritten() -> None:
+    tree = _transform("x = {**d, 'a': 1}")
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.Dict)

@@ -122,3 +122,10 @@ def test_tuple_from_bytes() -> None:
     result = _poop_tuple_from(Bytes(b"\x01\x02"))
     assert isinstance(result, Tuple)
     assert result == Tuple(Int(1), Int(2))
+
+
+def test_tuple_from_unsupported_type_raises() -> None:
+    import pytest
+
+    with pytest.raises(TypeError, match="cannot convert"):
+        _poop_tuple_from(Int(5))
