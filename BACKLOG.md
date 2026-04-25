@@ -19,7 +19,6 @@ These validators are not yet active because the POOP substitute does not exist y
 | Builtin | Note |
 |---|---|
 | `sorted(x)` | blocked by `no_sorted` — use `col.sorted()` |
-| `sum` | use `reduce(0, block)` — ban when transformer exists |
 | `super` | needed for inheritance — allow |
 | `property` / `classmethod` / `staticmethod` | class definition — allow |
 

@@ -123,6 +123,14 @@ def test_reduce_accumulates() -> None:
     assert result == Int(6)
 
 
+def test_sum_returns_total() -> None:
+    assert Set(Int(1), Int(2), Int(3)).sum() == Int(6)
+
+
+def test_sum_empty_returns_zero() -> None:
+    assert Set().sum() == 0
+
+
 def test_all_true_when_all_match() -> None:
     s = Set(Int(2), Int(4))
     assert s.all(lambda x: x._value % 2 == 0) is true  # type: ignore[attr-defined]

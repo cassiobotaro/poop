@@ -85,6 +85,9 @@ class List(Object):
     def reduce(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
         return reduce(block, self._items, init)
 
+    def sum(self) -> Any:
+        return reduce(lambda a, b: a + b, self._items) if self._items else 0
+
     def all(self, block: Callable[[Object], Any]) -> Boolean:
         from poop.types.boolean import false, true
 

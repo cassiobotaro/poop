@@ -214,3 +214,11 @@ def test_copy_from_to_with_step() -> None:
 
     result = _interval(0, 10).copy_from_to(Int(0), Int(5), Int(2))
     assert result == List(Int(0), Int(2), Int(4))
+
+
+def test_sum_returns_total() -> None:
+    assert _interval(1, 4).sum() == Int(10)
+
+
+def test_sum_single_element() -> None:
+    assert _interval(5, 5).sum() == Int(5)

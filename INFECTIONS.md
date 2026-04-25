@@ -345,6 +345,14 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|
 | `ast.Delete` | objects have no explicit destruction — simply do not delete |
 
+### No `sum` — `poop/validators/no_sum.py`
+
+| Call | Reason | Substitute |
+|---|---|---|
+| `sum(col)` | free function with procedural look | `col.sum()` |
+
+Available on `List`, `Tuple`, `Set`, `FrozenSet`, and `Interval`.
+
 ### No `sorted` / `reversed` — `poop/validators/no_sorted.py`, `poop/validators/no_reversed.py`
 
 | Call | Reason | Substitute |
