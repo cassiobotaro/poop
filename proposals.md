@@ -3,21 +3,7 @@
 Review feita por Claude (Opus 4.7) considerando `INFECTIONS.md` e o pipeline `parse → validate → transform → execute`. Cada item indica caminho, linhas relevantes e uma sugestão concreta. Itens estão agrupados por intenção: refatoração, bug/inconsistência, alinhamento filosófico e novas funcionalidades.
 
 ---
-## 1. Filosofia — REPL imprime resultado mas não armazena `_`
-
-CPython REPL armazena o último valor avaliado em `_`. Ao escrever uma expressão simples, o REPL POOP imprime o resultado (via commit `1488677`), mas não popula `_` no namespace. Adicionar isso eleva muito a usabilidade em sessão interativa:
-
-```python
-# poop/repl.py — após execução
-if isinstance(last_node, ast.Expr):
-    self._ns["_"] = last_value
-```
-
-Requer um pouco de cooperação no executor (`mode="single"` já imprime via `displayhook`).
-
----
-
-## 2. Filosofia — `Boolean.while_true(cond_block, body_block)` é uma mensagem para o objeto errado
+## 1. Filosofia — `Boolean.while_true(cond_block, body_block)` é uma mensagem para o objeto errado
 
 Em Smalltalk, `whileTrue:` é mensagem para um **block**, não para o booleano: `[cond] whileTrue: [body]`. O receiver é o block que retorna o booleano, não um bool literal.
 
@@ -33,7 +19,7 @@ Hoje, ler `true.while_true(lambda: x < 10, lambda: x.print())` é confuso porque
 
 ---
 
-## 3. Filosofia — duplicação `_TrueClass.while_true` vs `_FalseClass.while_true`
+## 2. Filosofia — duplicação `_TrueClass.while_true` vs `_FalseClass.while_true`
 
 `poop/types/boolean.py:132-152` e `212-232`. As duas implementações de `while_true` (e `while_false`) são **idênticas**. Movê-las para a base `Boolean` elimina ~40 linhas duplicadas. O receiver não altera o comportamento (ver item 17), portanto:
 
@@ -56,7 +42,7 @@ Igualmente, `_TrueClass.if_true_if_false`/`if_false_if_true` poderiam compartilh
 
 ---
 
-## 4. Performance — `from poop.types.boolean import false, true` em todo método
+## 3. Performance — `from poop.types.boolean import false, true` em todo método
 
 Cada método que retorna Boolean importa `false, true` no body. Isso é necessário por causa do ciclo `Object → Boolean → Object`. Mas os imports lazy são executados a cada chamada — não é grande custo (Python cacheia o módulo), mas o ruído visual é considerável.
 
@@ -98,7 +84,7 @@ E usar `t, f = _bools()` no body. Funciona, mas o real ganho é estético.
 
 ---
 
-## 5. Performance / ergonomia — `singletons` para Int(0), Int(1), Str("")
+## 4. Performance / ergonomia — `singletons` para Int(0), Int(1), Str("")
 
 Cada `Int(0)` aloca um novo objeto. Isso é custo desprezível para Python normal, mas em código POOP que faz `numbers.sum()` sobre coleção vazia, ou contadores em loops, há alocações repetidas. Smalltalk tradicionalmente faz cache de inteiros pequenos (semelhante a CPython com -5..256). Proposta: cache de `Int(-5)..Int(256)` no módulo `int.py`, retornado por `_poop_int(n)` quando aplicável.
 
@@ -106,7 +92,7 @@ Custo: pequena complexidade no factory. Ganho: alocação reduzida em hot loops.
 
 ---
 
-## 6. Refatoração — `poop/transformers/dict.py:_poop_dict_from` tem ramos quase idênticos para Tuple/List
+## 5. Refatoração — `poop/transformers/dict.py:_poop_dict_from` tem ramos quase idênticos para Tuple/List
 
 ```python
 if isinstance(item, Tuple):
@@ -133,7 +119,7 @@ else:
 
 ---
 
-## 7. Funcionalidade nova — `Transcript`
+## 6. Funcionalidade nova — `Transcript`
 
 Smalltalk tem `Transcript` como objeto global de saída. POOP hoje usa `obj.print()`. **Proposta**: adicionar um objeto `Transcript` no namespace padrão com `show`, `show_cr` (newline), `clear`. Não substitui `obj.print()` — coexiste. Útil para programas que fazem muito output de tipos diferentes:
 
@@ -145,7 +131,7 @@ Permite cascade sem que cada objeto saiba como se imprimir junto a outros. Já �
 
 ---
 
-## 8. Funcionalidade nova — `Block` como tipo de primeira classe
+## 7. Funcionalidade nova — `Block` como tipo de primeira classe
 
 Hoje "block" = `lambda` Python. Smalltalk tem blocks com mensagens próprias: `[1+2] value`, `[:x | x*2] value: 5`, `[cond] whileTrue: [body]`.
 
@@ -178,13 +164,13 @@ Resolve o item 17 (`while_true` mora no objeto certo). Ergonomia depende de tran
 
 ---
 
-## 9. Funcionalidade nova — `Symbol` (Smalltalk imutável e único)
+## 8. Funcionalidade nova — `Symbol` (Smalltalk imutável e único)
 
 `Symbol("foo")` é canonical e singleton em Smalltalk — `#foo == #foo` é sempre `true`. POOP poderia adicionar `Symbol` para chaves de Dict, mensagens passadas a `perform`, etc. Reduz alocações e ajuda a transmitir intenção. A implementação Python: cache em `Symbol("name")` que retorna a mesma instância para o mesmo nome.
 
 ---
 
-## 10. Funcionalidade nova — `Object.respond_to(message: Str) -> Boolean`
+## 9. Funcionalidade nova — `Object.respond_to(message: Str) -> Boolean`
 
 Existe `has_attr` (atalho de `hasattr`). Smalltalk tem `respondsTo:` que verifica se o objeto responde àquela mensagem (basicamente o mesmo que `hasattr` mais `callable`). Adicionar:
 
@@ -198,7 +184,7 @@ def respond_to(self, name: Str) -> Boolean:
 
 ---
 
-## 11. Funcionalidade nova — `Object.perform(message_name, *args)`
+## 10. Funcionalidade nova — `Object.perform(message_name, *args)`
 
 Smalltalk: `obj perform: #foo with: 1 with: 2`. Equivalente a `getattr(obj, name)(*args)`. Hoje POOP tem `get_attr` mas não há atalho para "envia mensagem por nome". Proposta:
 
@@ -210,7 +196,7 @@ def perform(self, name: Str, *args: Object) -> Object:
 
 ---
 
-## 12. Funcionalidade nova — `times` em Int
+## 11. Funcionalidade nova — `times` em Int
 
 Smalltalk: `5 timesRepeat: [Transcript show: 'hi']`. Equivalente em POOP:
 
@@ -226,7 +212,7 @@ class Int(Object):
 
 ---
 
-## 13. Funcionalidade nova — `--validators-only` / `--transformers-only` / `--explain` no CLI
+## 12. Funcionalidade nova — `--validators-only` / `--transformers-only` / `--explain` no CLI
 
 `poop/cli.py` aceita apenas o arquivo. Para depuração, seria útil:
 
@@ -236,13 +222,13 @@ class Int(Object):
 
 ---
 
-## 14. Funcionalidade nova — fail-fast vs collect-all em Validator
+## 13. Funcionalidade nova — fail-fast vs collect-all em Validator
 
 Hoje cada validator lança `ValidationError` no primeiro problema. Programas grandes recebem feedback um erro por vez. **Proposta**: `Validator.validate` poderia retornar `list[ValidationError]` em vez de levantar, e o `Interpreter` decide o que fazer (printar todos, ou levantar o primeiro). Isso quebra a API atual — pode ser opt-in via `Interpreter(collect_all=True)`.
 
 ---
 
-## 15. Funcionalidade nova — `ast.AsyncFunctionDef` está bloqueado mas `async`/`await` não têm validator próprio
+## 14. Funcionalidade nova — `ast.AsyncFunctionDef` está bloqueado mas `async`/`await` não têm validator próprio
 
 `no_free_functions` bloqueia `AsyncFunctionDef` no top-level, mas dentro de classes, `async def` métodos seriam aceitos. Idem `await expr`, `async for`, `async with` — `async for`/`async with` têm validator (`no_loops`, `no_with`), mas `await` não. Em uma linguagem que não tem `Future` nem event loop POOP, `async`/`await` não fazem sentido. Adicionar `no_async`:
 
@@ -257,13 +243,13 @@ class _NoAsyncVisitor(ast.NodeVisitor):
 
 ---
 
-## 16. Funcionalidade nova — `Number` mixin para `Int` + `Float` + `Complex`
+## 15. Funcionalidade nova — `Number` mixin para `Int` + `Float` + `Complex`
 
 Hoje as três classes duplicam `negated`, `__add__`, `__sub__`, etc. com tipos diferentes. Uma classe-base `Number` com hooks `_wrap(value)` por subclasse reduz ~150 linhas e abre porta para coerções `Int + Float → Float`, etc.
 
 ---
 
-## 17. Filosofia — `properties` (`@property`) em tipos POOP contradizem "everything is a message"
+## 16. Filosofia — `properties` (`@property`) em tipos POOP contradizem "everything is a message"
 
 `Int.real`, `Int.imag`, `Float.real`, `Complex.real`, `Interval.start` etc. são `@property`. Quem escreve `interval.start` está acessando um atributo, não enviando uma mensagem. Em Smalltalk, `start` seria um getter sem parens (mensagem unária). Em Python, sem parens vira atributo.
 
@@ -279,7 +265,7 @@ Padronizar tudo em métodos (com parens) é mais coerente.
 
 ---
 
-## 18. Renomeação — `Interval` → `Range`
+## 17. Renomeação — `Interval` → `Range`
 
 `poop/types/interval.py` expõe o tipo como `Interval`, mas o conceito é idêntico ao `range` do Python e ao `Range` de outras linguagens. Em POOP, o tipo é criado via `Int.to_(limit)` e representa uma sequência inteira — semanticamente um intervalo, mas o nome `Range` é mais reconhecível e alinhado com o vocabulário do domínio.
 
@@ -298,10 +284,10 @@ Impacto da renomeação:
 
 **Bugs corrigidos.** Nenhum pendente — todos foram resolvidos. (Dict.pop, Interval.includes, sum() return type, etc.).
 
-**Refatorações de alto impacto completadas.** ✅ 6 (while_* na base de Boolean), 16 (Number mixin).
+**Refatorações de alto impacto completadas.** ✅ 5 (while_* na base de Boolean), 15 (Number mixin).
 
-**Decisões filosóficas a documentar em INFECTIONS.md.** 2 (while_true e o receiver irrelevante), 17 (properties).
+**Decisões filosóficas a documentar em INFECTIONS.md.** 1 (while_true e o receiver irrelevante), 16 (properties).
 
-**Funcionalidades novas com bom retorno por esforço.** 7 (Transcript), 8 (Block), 10 (respond_to), 11 (perform), 12 (Int.times), 15 (no_async).
+**Funcionalidades novas com bom retorno por esforço.** 6 (Transcript), 7 (Block), 9 (respond_to), 10 (perform), 11 (Int.times), 14 (no_async).
 
-**Renomeações.** 18 (`Interval` → `Range`).
+**Renomeações.** 17 (`Interval` → `Range`).
