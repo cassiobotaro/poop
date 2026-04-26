@@ -7,7 +7,7 @@ requires-python = ">=3.14"
 authors = [
     { name = "Cassio Botaro", email = "cassiobotaro@gmail.com" },
 ]
-dependencies = []
+dependencies = ["typer>=0.15"]
 
 [project.scripts]
 poop = "poop.cli:main"
