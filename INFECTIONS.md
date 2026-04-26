@@ -37,7 +37,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 | AST node | Reason |
 |---|---|
 | `ast.For` | Loop looks procedural; use `col.do(block)`, `col.map(block)`, recursion |
-| `ast.While` | Same; use `Block(lambda: cond).while_true(Block(lambda: body))` |
+| `ast.While` | Same; use `(lambda: cond).while_true(lambda: body)` |
 | `ast.AsyncFor` | Async variant of `for` |
 
 ### No free functions — `poop/validators/no_free_functions.py`
@@ -478,14 +478,14 @@ Concrete root of all POOP types. Provides default implementations for universal 
 
 `while_true` and `while_false` live on `Block`, not on `Boolean`. The receiver is the condition block — the object whose value determines whether the loop continues. This matches Smalltalk semantics (`[cond] whileTrue: [body]`) and eliminates the philosophical problem of the receiver being irrelevant.
 
-| Smalltalk message | Method |
+| Smalltalk message | POOP idiom |
 |---|---|
-| `[cond] whileTrue: [body]` | `Block(cond).while_true(Block(body))` |
-| `[cond] whileFalse: [body]` | `Block(cond).while_false(Block(body))` |
-| `[block] value` | `Block(block)()` |
-| `[block] value: arg` | `Block(block)(arg)` |
+| `[cond] whileTrue: [body]` | `(lambda: cond).while_true(lambda: body)` |
+| `[cond] whileFalse: [body]` | `(lambda: cond).while_false(lambda: body)` |
+| `[block] value` | `(lambda: expr)()` |
+| `[block] value: arg` | `(lambda x: expr)(arg)` |
 
-> **Why lambda, not `[...]`?** Python has no block literal syntax. `lambda` is the closest equivalent — a deferred expression. The transformer intercepts every `ast.Lambda` and wraps it in `Block(...)`, so programmers write natural Python lambdas and get first-class POOP blocks automatically.
+> **Why lambda, not `[...]`?** Python has no block literal syntax. `lambda` is the closest equivalent — a deferred expression. The transformer intercepts every `ast.Lambda` and wraps it in `Block(...)` transparently, so the programmer writes plain lambdas and gets first-class POOP block objects without ever naming `Block` explicitly.
 
 ### Collection iterable methods — `poop/types/_iterable_mixin.py`
 
