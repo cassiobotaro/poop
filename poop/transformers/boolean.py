@@ -1,4 +1,5 @@
 import ast
+from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
 from poop.types.boolean import Boolean, false, true
@@ -8,20 +9,6 @@ def _poop_bool_from(value: object = None) -> Boolean:
     if isinstance(value, Boolean):
         return value
     return true if bool(value) else false
-
-
-class BooleanTransformer:
-    BINDINGS: ClassVar[dict[str, object]] = {
-        "_poop_true": true,
-        "_poop_false": false,
-        "_poop_bool_from": _poop_bool_from,
-    }
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _BooleanRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-
 
 class _BooleanRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -43,3 +30,16 @@ class _BooleanRewriter(ast.NodeTransformer):
         if node.value is False:
             return ast.copy_location(ast.Name(id="_poop_false", ctx=ast.Load()), node)
         return node
+
+
+
+class BooleanTransformer(BaseTransformer):
+    rewriter = _BooleanRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_true": true,
+        "_poop_false": false,
+        "_poop_bool_from": _poop_bool_from,
+    }
+
+
+

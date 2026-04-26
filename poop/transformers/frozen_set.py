@@ -1,4 +1,5 @@
 import ast
+from poop.transformers.base import BaseTransformer
 from collections.abc import Iterable
 from typing import ClassVar
 
@@ -10,18 +11,6 @@ def _poop_frozenset_from(iterable: Iterable[Object] | None = None) -> FrozenSet:
     if iterable is not None:
         return FrozenSet(*iterable)
     return FrozenSet()
-
-
-class FrozenSetTransformer:
-    BINDINGS: ClassVar[dict[str, object]] = {
-        "_poop_frozenset_from": _poop_frozenset_from
-    }
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _FrozenSetRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-
 
 class _FrozenSetRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -41,3 +30,14 @@ class _FrozenSetRewriter(ast.NodeTransformer):
                 node,
             )
         return node
+
+
+
+class FrozenSetTransformer(BaseTransformer):
+    rewriter = _FrozenSetRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_frozenset_from": _poop_frozenset_from
+    }
+
+
+

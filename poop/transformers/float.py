@@ -1,4 +1,5 @@
 import ast
+from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
 from poop.types.float import Float
@@ -17,19 +18,6 @@ def _poop_float_from(value: object = None) -> Float:
     if isinstance(value, Str):
         return Float(float(value._value))
     raise TypeError(f"cannot convert {type(value).__name__} to Float")
-
-
-class FloatTransformer:
-    BINDINGS: ClassVar[dict[str, object]] = {
-        "_poop_float": Float,
-        "_poop_float_from": _poop_float_from,
-    }
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _FloatRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-
 
 class _FloatRewriter(ast.NodeTransformer):
     def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
@@ -72,3 +60,15 @@ class _FloatRewriter(ast.NodeTransformer):
                 node,
             )
         return node
+
+
+
+class FloatTransformer(BaseTransformer):
+    rewriter = _FloatRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_float": Float,
+        "_poop_float_from": _poop_float_from,
+    }
+
+
+

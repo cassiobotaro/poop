@@ -1,28 +1,8 @@
 import ast
+from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
 from poop.types.object import Object
-
-
-class ClassTransformer:
-    """Implicitly injects Object as base class when none is specified.
-
-    Rewrites:
-        class Foo:         → class Foo(Object):
-        class Foo(object): → class Foo(Object):
-        class Foo(Bar):    → unchanged (already has a POOP or custom base)
-
-    This mirrors Python 3's implicit inheritance from `object`, but uses
-    POOP's Object so user classes gain print(), responds_to(), is_nil(), etc.
-    """
-
-    BINDINGS: ClassVar[dict[str, object]] = {"Object": Object}
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _ClassRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-
 
 class _ClassRewriter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
@@ -42,3 +22,23 @@ class _ClassRewriter(ast.NodeTransformer):
                 new_bases.append(base)
         node.bases = new_bases
         return node
+
+
+
+class ClassTransformer(BaseTransformer):
+    """Implicitly injects Object as base class when none is specified.
+
+    Rewrites:
+        class Foo:         → class Foo(Object):
+        class Foo(object): → class Foo(Object):
+        class Foo(Bar):    → unchanged (already has a POOP or custom base)
+
+    This mirrors Python 3's implicit inheritance from `object`, but uses
+    POOP's Object so user classes gain print(), responds_to(), is_nil(), etc.
+    """
+
+    rewriter = _ClassRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {"Object": Object}
+
+
+

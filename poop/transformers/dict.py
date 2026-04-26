@@ -1,4 +1,5 @@
 import ast
+from poop.transformers.base import BaseTransformer
 from collections.abc import Iterable
 from typing import ClassVar, cast
 
@@ -42,19 +43,6 @@ def _poop_dict_from(arg: object = None) -> Dict:
         return d
     raise TypeError(f"cannot convert {type(arg).__name__} to Dict")
 
-
-class DictTransformer:
-    BINDINGS: ClassVar[dict[str, object]] = {
-        "_poop_dict_from_pairs": _poop_dict_from_pairs,
-        "_poop_dict_from": _poop_dict_from,
-    }
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _DictRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-
-
 class _DictRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
         self.generic_visit(node)
@@ -92,3 +80,15 @@ class _DictRewriter(ast.NodeTransformer):
             ),
             node,
         )
+
+
+
+class DictTransformer(BaseTransformer):
+    rewriter = _DictRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_dict_from_pairs": _poop_dict_from_pairs,
+        "_poop_dict_from": _poop_dict_from,
+    }
+
+
+

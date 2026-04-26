@@ -1,31 +1,10 @@
 import ast
+from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
 
 def _poop_raise(exc_type: type[BaseException], *args: object) -> None:
     raise exc_type(*args)
-
-
-class RaiseTransformer:
-    """Intercepts UppercaseName.raise_(args) and rewrites to _poop_raise(UppercaseName, *args).
-
-    This allows POOP code to raise exceptions using message-passing syntax:
-        KeyError.raise_("key not found")
-    instead of the forbidden `raise` statement.
-
-    Only intercepts calls where the receiver is a simple Name starting with an
-    uppercase letter (Python convention for classes/exception types).
-    """
-
-    BINDINGS: ClassVar[dict[str, object]] = {
-        "_poop_raise": _poop_raise,
-    }
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _RaiseRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-
 
 class _RaiseRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -48,3 +27,24 @@ class _RaiseRewriter(ast.NodeTransformer):
                 node,
             )
         return node
+
+
+
+class RaiseTransformer(BaseTransformer):
+    """Intercepts UppercaseName.raise_(args) and rewrites to _poop_raise(UppercaseName, *args).
+
+    This allows POOP code to raise exceptions using message-passing syntax:
+        KeyError.raise_("key not found")
+    instead of the forbidden `raise` statement.
+
+    Only intercepts calls where the receiver is a simple Name starting with an
+    uppercase letter (Python convention for classes/exception types).
+    """
+
+    rewriter = _RaiseRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_raise": _poop_raise,
+    }
+
+
+

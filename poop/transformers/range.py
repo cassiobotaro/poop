@@ -1,4 +1,5 @@
 import ast
+from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
 from poop.types.int import Int
@@ -14,16 +15,6 @@ def _poop_range(
         return Interval(Int(int(stop_or_start)), Int(int(stop) - 1), Int(1))
     return Interval(Int(int(stop_or_start)), Int(int(stop) - 1), Int(int(step)))
 
-
-class RangeTransformer:
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_range": _poop_range}
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _RangeRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-
-
 class _RangeRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
         self.generic_visit(node)
@@ -37,3 +28,12 @@ class _RangeRewriter(ast.NodeTransformer):
                 node,
             )
         return node
+
+
+
+class RangeTransformer(BaseTransformer):
+    rewriter = _RangeRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {"_poop_range": _poop_range}
+
+
+

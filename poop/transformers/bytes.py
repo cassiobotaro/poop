@@ -1,4 +1,5 @@
 import ast
+from poop.transformers.base import BaseTransformer
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar, cast
 
@@ -25,19 +26,6 @@ def _poop_bytes_from(arg: object = None, encoding: object = None) -> Bytes:
         ints = cast("Iterable[_Int]", arg)
         return Bytes(bytes(item._value for item in ints))
     raise TypeError(f"cannot convert {type(arg).__name__} to Bytes")
-
-
-class BytesTransformer:
-    BINDINGS: ClassVar[dict[str, object]] = {
-        "_poop_bytes": Bytes,
-        "_poop_bytes_from": _poop_bytes_from,
-    }
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _BytesRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-
 
 class _BytesRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -69,3 +57,15 @@ class _BytesRewriter(ast.NodeTransformer):
                 node,
             )
         return node
+
+
+
+class BytesTransformer(BaseTransformer):
+    rewriter = _BytesRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_bytes": Bytes,
+        "_poop_bytes_from": _poop_bytes_from,
+    }
+
+
+
