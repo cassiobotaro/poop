@@ -7,7 +7,7 @@ def _interval(start: int, stop: int) -> Interval:
 
 
 def test_str() -> None:
-    assert str(_interval(1, 3)) == "(1..3)"
+    assert str(_interval(1, 3)) == "range(1, 4)"
 
 
 def test_repr_delegates_to_str() -> None:

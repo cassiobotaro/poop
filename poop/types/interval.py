@@ -96,6 +96,6 @@ class Interval(_IterableMixin, Object):
         return Int(len(self._range()))
 
     def __str__(self) -> str:
-        return f"({self._start}..{self._stop})"
+        return repr(self._range())
 
     __repr__ = __str__
