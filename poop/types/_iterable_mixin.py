@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 import builtins as _builtins
+from abc import abstractmethod
 from collections import deque
 from collections.abc import Callable, Iterator
 from functools import reduce as functools_reduce
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 
 class _IterableMixin:
+    @abstractmethod
+    def __iter__(self) -> Iterator[Any]: ...
+
     def _iter_items(self) -> Iterator[Any]:
-        return iter(self)  # type: ignore[arg-type]
+        return iter(self)
 
     def _collect(self, items: Any) -> Any:
         from poop.types.list import List
