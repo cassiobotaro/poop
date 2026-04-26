@@ -29,19 +29,15 @@ All existing examples verified passing.
 
 ---
 
-**improvement**
+**improvement** ✅ resolved
 
-Add pipeline and dependabot.
+`.github/workflows/ci.yml` created: runs ruff check, ruff format --check,
+ty check, and pytest on every push to main and every PR.
+dependabot.yml was already present (uv + github-actions, weekly).
 
 ---
 
 **improvement**
 
 Review the builtin functions to check if they are blocked / implemented as methods.
-
----
-
-**improvement**
-
-Create a github workflow to run on each pr or push to main using uv and run ruff format and linter, tests, ty.
 
