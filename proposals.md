@@ -4,40 +4,7 @@ Review feita por Claude (Opus 4.7) considerando `INFECTIONS.md` e o pipeline `pa
 
 ---
 
-## 1. Refatoração — duplicação igualmente grande nos transformers
-
-Todos os transformers seguem o mesmo padrão:
-
-```python
-class XTransformer:
-    BINDINGS: ClassVar[dict[str, object]] = {...}
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = _XRewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-```
-
-**Proposta.** Mover `transform()` para uma classe-base mínima:
-
-```python
-class _BaseTransformer:
-    rewriter: type[ast.NodeTransformer]
-    BINDINGS: ClassVar[dict[str, object]] = {}
-
-    def transform(self, tree: ast.Module) -> ast.Module:
-        tree = self.rewriter().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
-```
-
-E cada transformer concreto declara apenas `rewriter = _XRewriter` e `BINDINGS`. Remove ~50 linhas de boilerplate e centraliza o `fix_missing_locations`, que hoje é repetido 16 vezes (e fácil de esquecer ao criar um novo transformer).
-
-A API pública continua sendo o `Transformer` Protocol em `transformers/base.py`.
-
----
-
-## 2. Refatoração — duplicação nos métodos de coleção (List, Tuple, Set, FrozenSet, Interval, Bytes, ByteArray, MemoryView, Dict)
+## 1. Refatoração — duplicação nos métodos de coleção (List, Tuple, Set, FrozenSet, Interval, Bytes, ByteArray, MemoryView, Dict)
 
 Os métodos `do`, `map`, `filter`, `filter_false`, `find`, `reduce`, `sum`, `all`, `any` aparecem com implementação quase idêntica em **9 tipos**. Exemplos:
 
@@ -53,7 +20,7 @@ class _IterableMixin:
 
     def do(self, block):
         deque(map(block, self), maxlen=0)
-        return self  # opcional, ver item 11
+        return self  # opcional, ver item 9
 
     def all(self, block):
         from poop.types.boolean import false, true
@@ -77,7 +44,7 @@ class _IterableMixin:
         from poop.types.int import Int
         items = list(self)
         if not items:
-            return Int(0)  # ver item 5: hoje retorna 0 nativo
+            return Int(0)  # ver item 3: hoje retorna 0 nativo
         return reduce(lambda a, b: a + b, items)
 ```
 
@@ -87,25 +54,7 @@ class _IterableMixin:
 
 ---
 
-## 3. Bug — `Dict.pop` / `Dict.setdefault` retornam tipos não validados
-
-`poop/types/dict.py:91-101`:
-
-```python
-def pop(self, key: Object) -> Object:
-    return self._data.pop(key)
-
-def setdefault(self, key: Object, default: Object) -> Object:
-    return self._data.setdefault(key, default)
-```
-
-`pop` levanta `KeyError` Python diretamente — sem chance de o usuário tratar via `Try(...).except_(KeyError, ...)` de forma idiomática (porque `KeyError.raise_` está no transformer, mas nada chama isso aqui — o exception nativo *é* compatível com `Try.except_`, então OK). Contudo, `pop(missing_key)` deveria, alinhado ao resto do `Dict` (`.at` retorna `none` para chave ausente), retornar `none` ou aceitar um default explícito. Hoje a inconsistência é: `at(missing) → none`, mas `pop(missing) → KeyError`. Decidir o contrato e documentar.
-
-`setdefault` retorna o valor inserido — se o usuário passa um Python nativo, ele entra no `_data` e é retornado sem virar POOP. Adicionar verificação ou converter.
-
----
-
-## 4. Bug — `__eq__` com tipos numéricos heterogêneos sempre retorna `false`
+## 2. Bug — `__eq__` com tipos numéricos heterogêneos sempre retorna `false`
 
 `Int(1) == Float(1.0)` → `false`. `Int(1) == Complex(1+0j)` → `false`. Em Python nativo, todos seriam `True`.
 
@@ -117,7 +66,7 @@ Caso contrário, é um buraco de surpresa que pode comer 30 minutos de debug do 
 
 ---
 
-## 5. Inconsistência — `do(block)` retorna `None` em vez de `self`
+## 3. Inconsistência — `do(block)` retorna `None` em vez de `self`
 
 Ver `INFECTIONS.md` linha 483: *"Returning `self` enables cascades: `x.print().print()`."* Esse princípio é aplicado em `Object.print`, mas `do` (em todos os tipos) retorna `None`:
 
@@ -138,7 +87,7 @@ Permite `numbers.do(lambda x: x.print()).map(lambda x: x.times(Int(2))).print()`
 
 ---
 
-## 6. Inconsistência — `BINDINGS` montado depois da classe em `Try` e `With`
+## 4. Inconsistência — `BINDINGS` montado depois da classe em `Try` e `With`
 
 `poop/types/try_.py:71` e `poop/types/with_.py:51`:
 
@@ -163,13 +112,13 @@ A diferença ficaria menos visível movendo `Try.BINDINGS` para um arquivo separ
 
 ---
 
-## 7. Inconsistência — `With` não está em `poop/types/__init__.py`
+## 5. Inconsistência — `With` não está em `poop/types/__init__.py`
 
 `poop/types/__init__.py` exporta todos os tipos POOP exceto `With`. Ou inclui `With` (consistência) ou retira `Try` para alinhar — `Try` está exposto, `With` não, sem motivo aparente.
 
 ---
 
-## 8. Filosofia — `Object.is_instance(type_: type)` recebe tipo Python cru
+## 6. Filosofia — `Object.is_instance(type_: type)` recebe tipo Python cru
 
 `poop/types/object.py:59`:
 
@@ -181,7 +130,7 @@ O argumento é uma `type` Python — não há tipo POOP correspondente para "cla
 
 ---
 
-## 9. Filosofia — operadores binários `+`, `-`, `*`, `/`, `<<`, `>>`, `&`, `|`, `^` continuam permitidos
+## 7. Filosofia — operadores binários `+`, `-`, `*`, `/`, `<<`, `>>`, `&`, `|`, `^` continuam permitidos
 
 `Int.__add__`, `Int.__lshift__` etc. são *aliases* para mensagens (`add(other)`, `bit_shift_left(other)`). Mas `INFECTIONS.md` argumenta que `-x` "looks like an operator" e por isso é proibido. **Por que `a + b` é OK e `-a` não é?**
 
@@ -199,7 +148,7 @@ Análogo: `==`, `!=`, `<`, `<=`, `>`, `>=` são `Compare` ASTs e estão permitid
 
 ---
 
-## 10. Filosofia — `__getitem__` em `List`/`Tuple`/`Str`/`Bytes` está implementado mas é "morto" para POOP
+## 8. Filosofia — `__getitem__` em `List`/`Tuple`/`Str`/`Bytes` está implementado mas é "morto" para POOP
 
 Como `no_subscript` proíbe `obj[key]`, todos os `__getitem__` em tipos POOP são código que só funciona se chamado de Python externo (ex.: testes). Manter por compatibilidade Python é razoável, mas vale **um comentário no topo de cada `__getitem__`** explicando que ele é alcançável apenas via interop, não via POOP. Senão um futuro contributor pode achar que pode usar `[]` em código POOP.
 
@@ -207,7 +156,7 @@ Alternativa mais radical: remover os `__getitem__` (e `__contains__`, `__iter__`
 
 ---
 
-## 11. Filosofia — `Str.__repr__ = __str__` esconde aspas em REPL
+## 9. Filosofia — `Str.__repr__ = __str__` esconde aspas em REPL
 
 `Str("hello").__repr__()` retorna `"hello"` em vez de `"'hello'"`. No REPL POOP atual:
 
@@ -230,7 +179,7 @@ Sem distinguir do output de `print`. Em CPython:
 
 ---
 
-## 12. Filosofia — REPL imprime resultado mas não armazena `_`
+## 10. Filosofia — REPL imprime resultado mas não armazena `_`
 
 CPython REPL armazena o último valor avaliado em `_`. Ao escrever uma expressão simples, o REPL POOP imprime o resultado (via commit `1488677`), mas não popula `_` no namespace. Adicionar isso eleva muito a usabilidade em sessão interativa:
 
@@ -244,7 +193,7 @@ Requer um pouco de cooperação no executor (`mode="single"` já imprime via `di
 
 ---
 
-## 13. Filosofia — `Boolean.while_true(cond_block, body_block)` é uma mensagem para o objeto errado
+## 11. Filosofia — `Boolean.while_true(cond_block, body_block)` é uma mensagem para o objeto errado
 
 Em Smalltalk, `whileTrue:` é mensagem para um **block**, não para o booleano: `[cond] whileTrue: [body]`. O receiver é o block que retorna o booleano, não um bool literal.
 
@@ -260,9 +209,9 @@ Hoje, ler `true.while_true(lambda: x < 10, lambda: x.print())` é confuso porque
 
 ---
 
-## 14. Filosofia — duplicação `_TrueClass.while_true` vs `_FalseClass.while_true`
+## 12. Filosofia — duplicação `_TrueClass.while_true` vs `_FalseClass.while_true`
 
-`poop/types/boolean.py:132-152` e `212-232`. As duas implementações de `while_true` (e `while_false`) são **idênticas**. Movê-las para a base `Boolean` elimina ~40 linhas duplicadas. O receiver não altera o comportamento (ver item 19), portanto:
+`poop/types/boolean.py:132-152` e `212-232`. As duas implementações de `while_true` (e `while_false`) são **idênticas**. Movê-las para a base `Boolean` elimina ~40 linhas duplicadas. O receiver não altera o comportamento (ver item 17), portanto:
 
 ```python
 class Boolean(Object, ABC):
@@ -283,7 +232,7 @@ Igualmente, `_TrueClass.if_true_if_false`/`if_false_if_true` poderiam compartilh
 
 ---
 
-## 15. Performance — `from poop.types.boolean import false, true` em todo método
+## 13. Performance — `from poop.types.boolean import false, true` em todo método
 
 Cada método que retorna Boolean importa `false, true` no body. Isso é necessário por causa do ciclo `Object → Boolean → Object`. Mas os imports lazy são executados a cada chamada — não é grande custo (Python cacheia o módulo), mas o ruído visual é considerável.
 
@@ -325,7 +274,7 @@ E usar `t, f = _bools()` no body. Funciona, mas o real ganho é estético.
 
 ---
 
-## 16. Performance / ergonomia — `singletons` para Int(0), Int(1), Str("")
+## 14. Performance / ergonomia — `singletons` para Int(0), Int(1), Str("")
 
 Cada `Int(0)` aloca um novo objeto. Isso é custo desprezível para Python normal, mas em código POOP que faz `numbers.sum()` sobre coleção vazia, ou contadores em loops, há alocações repetidas. Smalltalk tradicionalmente faz cache de inteiros pequenos (semelhante a CPython com -5..256). Proposta: cache de `Int(-5)..Int(256)` no módulo `int.py`, retornado por `_poop_int(n)` quando aplicável.
 
@@ -333,7 +282,7 @@ Custo: pequena complexidade no factory. Ganho: alocação reduzida em hot loops.
 
 ---
 
-## 17. Refatoração — `poop/transformers/dict.py:_poop_dict_from` tem ramos quase idênticos para Tuple/List
+## 15. Refatoração — `poop/transformers/dict.py:_poop_dict_from` tem ramos quase idênticos para Tuple/List
 
 ```python
 if isinstance(item, Tuple):
@@ -360,7 +309,7 @@ else:
 
 ---
 
-## 18. Funcionalidade nova — `Transcript`
+## 16. Funcionalidade nova — `Transcript`
 
 Smalltalk tem `Transcript` como objeto global de saída. POOP hoje usa `obj.print()`. **Proposta**: adicionar um objeto `Transcript` no namespace padrão com `show`, `show_cr` (newline), `clear`. Não substitui `obj.print()` — coexiste. Útil para programas que fazem muito output de tipos diferentes:
 
@@ -372,7 +321,7 @@ Permite cascade sem que cada objeto saiba como se imprimir junto a outros. Já �
 
 ---
 
-## 19. Funcionalidade nova — `Block` como tipo de primeira classe
+## 17. Funcionalidade nova — `Block` como tipo de primeira classe
 
 Hoje "block" = `lambda` Python. Smalltalk tem blocks com mensagens próprias: `[1+2] value`, `[:x | x*2] value: 5`, `[cond] whileTrue: [body]`.
 
@@ -401,17 +350,17 @@ class Block(Object):
             self._fn()
 ```
 
-Resolve o item 19 (`while_true` mora no objeto certo). Ergonomia depende de transformer que reescreva `lambda: ...` para `Block(lambda: ...)` — não trivial, pode ser opt-in via `block(lambda: ...)`.
+Resolve o item 17 (`while_true` mora no objeto certo). Ergonomia depende de transformer que reescreva `lambda: ...` para `Block(lambda: ...)` — não trivial, pode ser opt-in via `block(lambda: ...)`.
 
 ---
 
-## 20. Funcionalidade nova — `Symbol` (Smalltalk imutável e único)
+## 18. Funcionalidade nova — `Symbol` (Smalltalk imutável e único)
 
 `Symbol("foo")` é canonical e singleton em Smalltalk — `#foo == #foo` é sempre `true`. POOP poderia adicionar `Symbol` para chaves de Dict, mensagens passadas a `perform`, etc. Reduz alocações e ajuda a transmitir intenção. A implementação Python: cache em `Symbol("name")` que retorna a mesma instância para o mesmo nome.
 
 ---
 
-## 21. Funcionalidade nova — `Object.respond_to(message: Str) -> Boolean`
+## 19. Funcionalidade nova — `Object.respond_to(message: Str) -> Boolean`
 
 Existe `has_attr` (atalho de `hasattr`). Smalltalk tem `respondsTo:` que verifica se o objeto responde àquela mensagem (basicamente o mesmo que `hasattr` mais `callable`). Adicionar:
 
@@ -425,7 +374,7 @@ def respond_to(self, name: Str) -> Boolean:
 
 ---
 
-## 22. Funcionalidade nova — `Object.perform(message_name, *args)`
+## 20. Funcionalidade nova — `Object.perform(message_name, *args)`
 
 Smalltalk: `obj perform: #foo with: 1 with: 2`. Equivalente a `getattr(obj, name)(*args)`. Hoje POOP tem `get_attr` mas não há atalho para "envia mensagem por nome". Proposta:
 
@@ -437,7 +386,7 @@ def perform(self, name: Str, *args: Object) -> Object:
 
 ---
 
-## 23. Funcionalidade nova — `times` em Int
+## 21. Funcionalidade nova — `times` em Int
 
 Smalltalk: `5 timesRepeat: [Transcript show: 'hi']`. Equivalente em POOP:
 
@@ -453,7 +402,7 @@ class Int(Object):
 
 ---
 
-## 25. Funcionalidade nova — `--validators-only` / `--transformers-only` / `--explain` no CLI
+## 23. Funcionalidade nova — `--validators-only` / `--transformers-only` / `--explain` no CLI
 
 `poop/cli.py` aceita apenas o arquivo. Para depuração, seria útil:
 
@@ -463,13 +412,13 @@ class Int(Object):
 
 ---
 
-## 26. Funcionalidade nova — fail-fast vs collect-all em Validator
+## 24. Funcionalidade nova — fail-fast vs collect-all em Validator
 
 Hoje cada validator lança `ValidationError` no primeiro problema. Programas grandes recebem feedback um erro por vez. **Proposta**: `Validator.validate` poderia retornar `list[ValidationError]` em vez de levantar, e o `Interpreter` decide o que fazer (printar todos, ou levantar o primeiro). Isso quebra a API atual — pode ser opt-in via `Interpreter(collect_all=True)`.
 
 ---
 
-## 27. Funcionalidade nova — `ast.AsyncFunctionDef` está bloqueado mas `async`/`await` não têm validator próprio
+## 25. Funcionalidade nova — `ast.AsyncFunctionDef` está bloqueado mas `async`/`await` não têm validator próprio
 
 `no_free_functions` bloqueia `AsyncFunctionDef` no top-level, mas dentro de classes, `async def` métodos seriam aceitos. Idem `await expr`, `async for`, `async with` — `async for`/`async with` têm validator (`no_loops`, `no_with`), mas `await` não. Em uma linguagem que não tem `Future` nem event loop POOP, `async`/`await` não fazem sentido. Adicionar `no_async`:
 
@@ -484,13 +433,13 @@ class _NoAsyncVisitor(ast.NodeVisitor):
 
 ---
 
-## 28. Funcionalidade nova — `Number` mixin para `Int` + `Float` + `Complex`
+## 26. Funcionalidade nova — `Number` mixin para `Int` + `Float` + `Complex`
 
 Hoje as três classes duplicam `negated`, `__add__`, `__sub__`, etc. com tipos diferentes. Uma classe-base `Number` com hooks `_wrap(value)` por subclasse reduz ~150 linhas e abre porta para coerções `Int + Float → Float`, etc.
 
 ---
 
-## 33. Filosofia — `properties` (`@property`) em tipos POOP contradizem "everything is a message"
+## 31. Filosofia — `properties` (`@property`) em tipos POOP contradizem "everything is a message"
 
 `Int.real`, `Int.imag`, `Float.real`, `Complex.real`, `Interval.start` etc. são `@property`. Quem escreve `interval.start` está acessando um atributo, não enviando uma mensagem. Em Smalltalk, `start` seria um getter sem parens (mensagem unária). Em Python, sem parens vira atributo.
 
@@ -508,10 +457,10 @@ Padronizar tudo em métodos (com parens) é mais coerente.
 
 ## Resumo executivo
 
-**Bugs reais a corrigir.** Nenhum — todos foram corrigidos.
+**Bugs corrigidos.** Nenhum pendente — todos foram resolvidos (Dict.pop, Interval.includes, sum() return type, etc.).
 
-**Refatorações de alto impacto.** 1 (base de transformers), 2 (mixin de coleção iterável), 14 (while_* na base de Boolean), 28 (Number mixin).
+**Refatorações de alto impacto.** 1 (mixin de coleção iterável), 12 (while_* na base de Boolean), 26 (Number mixin).
 
-**Decisões filosóficas a documentar em INFECTIONS.md.** 4 (eq heterogêneo), 8 (`is_instance` com tipo cru), 9 (operadores binários permitidos), 13 (while_true e o receiver irrelevante), 29 (properties).
+**Decisões filosóficas a documentar em INFECTIONS.md.** 2 (eq heterogêneo), 6 (`is_instance` com tipo cru), 7 (operadores binários permitidos), 11 (while_true e o receiver irrelevante), 27 (properties).
 
-**Funcionalidades novas com bom retorno por esforço.** 18 (Transcript), 19 (Block), 21 (respond_to), 22 (perform), 23 (Int.times), 27 (no_async).
+**Funcionalidades novas com bom retorno por esforço.** 16 (Transcript), 17 (Block), 19 (respond_to), 20 (perform), 21 (Int.times), 25 (no_async).
