@@ -37,9 +37,9 @@ def test_bit_invert() -> None:
 
 
 def test_to_returns_interval() -> None:
-    from poop.types.interval import Interval
+    from poop.types.range import Range
 
-    assert isinstance(Int(1).to_(Int(5)), Interval)
+    assert isinstance(Int(1).to_(Int(5)), Range)
 
 
 def test_max_returns_larger() -> None:

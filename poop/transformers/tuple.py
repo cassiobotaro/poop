@@ -12,13 +12,13 @@ def _poop_tuple(*elements: Object) -> Tuple:
 
 
 def _poop_tuple_from(arg: object = None) -> Tuple:
-    from poop.types.interval import Interval
+    from poop.types.range import Range
 
     if arg is None:
         return Tuple()
     if isinstance(arg, Tuple):
         return arg
-    if isinstance(arg, Interval):
+    if isinstance(arg, Range):
         return Tuple(*arg._iter())
     if isinstance(arg, Iterable):
         return Tuple(*cast("Iterable[Object]", arg))

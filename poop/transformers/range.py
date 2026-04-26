@@ -3,17 +3,17 @@ from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
 from poop.types.int import Int
-from poop.types.interval import Interval
+from poop.types.range import Range
 
 
 def _poop_range(
     stop_or_start: Int, stop: Int | None = None, step: Int | None = None
-) -> Interval:
+) -> Range:
     if stop is None:
-        return Interval(Int(0), Int(int(stop_or_start) - 1), Int(1))
+        return Range(Int(0), Int(int(stop_or_start) - 1), Int(1))
     if step is None:
-        return Interval(Int(int(stop_or_start)), Int(int(stop) - 1), Int(1))
-    return Interval(Int(int(stop_or_start)), Int(int(stop) - 1), Int(int(step)))
+        return Range(Int(int(stop_or_start)), Int(int(stop) - 1), Int(1))
+    return Range(Int(int(stop_or_start)), Int(int(stop) - 1), Int(int(step)))
 
 class _RangeRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:

@@ -2,7 +2,7 @@ import ast
 
 from poop.transformers.range import RangeTransformer, _poop_range
 from poop.types.int import Int
-from poop.types.interval import Interval
+from poop.types.range import Range
 
 
 def _transform(source: str) -> ast.Module:
@@ -39,7 +39,7 @@ def test_bindings_contains_poop_range() -> None:
 
 def test_poop_range_stop_only() -> None:
     iv = _poop_range(Int(5))
-    assert isinstance(iv, Interval)
+    assert isinstance(iv, Range)
     assert list(iv._iter()) == [Int(0), Int(1), Int(2), Int(3), Int(4)]
 
 

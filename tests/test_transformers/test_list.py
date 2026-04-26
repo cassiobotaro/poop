@@ -106,9 +106,9 @@ def test_list_from_tuple() -> None:
 
 
 def test_list_from_interval() -> None:
-    from poop.types.interval import Interval
+    from poop.types.range import Range
 
-    result = _poop_list_from(Interval(Int(1), Int(3)))
+    result = _poop_list_from(Range(Int(1), Int(3)))
     assert isinstance(result, List)
     assert result == List(Int(1), Int(2), Int(3))
 

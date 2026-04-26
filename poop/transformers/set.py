@@ -12,13 +12,13 @@ def _poop_set(*elements: Object) -> Set:
 
 
 def _poop_set_from(arg: object = None) -> Set:
-    from poop.types.interval import Interval
+    from poop.types.range import Range
 
     if arg is None:
         return Set()
     if isinstance(arg, Set):
         return arg
-    if isinstance(arg, Interval):
+    if isinstance(arg, Range):
         return Set(*arg._iter())
     if isinstance(arg, Iterable):
         return Set(*cast("Iterable[Object]", arg))

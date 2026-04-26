@@ -85,9 +85,9 @@ def test_set_from_list() -> None:
 
 
 def test_set_from_interval() -> None:
-    from poop.types.interval import Interval
+    from poop.types.range import Range
 
-    result = _poop_set_from(Interval(Int(1), Int(3)))
+    result = _poop_set_from(Range(Int(1), Int(3)))
     assert isinstance(result, Set)
     assert result == Set(Int(1), Int(2), Int(3))
 

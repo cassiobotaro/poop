@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class Interval(_IterableMixin, Object):
+class Range(_IterableMixin, Object):
     __slots__ = ("_start", "_step", "_stop")
 
     def __init__(self, start: Int, stop: Int, step: Int | None = None) -> None:
@@ -85,10 +85,10 @@ class Interval(_IterableMixin, Object):
     def last(self) -> Int:
         return self._stop
 
-    def reversed(self) -> Interval:
+    def reversed(self) -> Range:
         from poop.types.int import Int
 
-        return Interval(self._stop, self._start, Int(-self._step._value))
+        return Range(self._stop, self._start, Int(-self._step._value))
 
     def len(self) -> Int:
         from poop.types.int import Int

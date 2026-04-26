@@ -12,13 +12,13 @@ def _poop_list(*elements: Object) -> List:
 
 
 def _poop_list_from(arg: object = None) -> List:
-    from poop.types.interval import Interval
+    from poop.types.range import Range
 
     if arg is None:
         return List()
     if isinstance(arg, List):
         return arg
-    if isinstance(arg, Interval):
+    if isinstance(arg, Range):
         return List(*arg._iter())
     if isinstance(arg, Iterable):
         return List(*cast("Iterable[Object]", arg))
