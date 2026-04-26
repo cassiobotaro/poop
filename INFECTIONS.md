@@ -530,12 +530,12 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 | Message | Behavior |
 |---|---|
-| `obj.print()` | prints `str(obj)` followed by `\n` and returns `self` |
+| `obj.print()` | prints `str(obj)` followed by `\n`; returns `None` |
 | `obj.print(end="")` | controls the terminator |
-| `obj.print(flush=True)` | forces buffer flush before returning |
+| `obj.print(flush=True)` | forces buffer flush |
 | `list.print(sep=", ")` | `List`/`Tuple`: joins elements with `sep` (default `" "`) |
 
-`"".print()` prints a blank line. Returning `self` enables cascades: `x.print().print()`.
+`"".print()` prints a blank line.
 
 ### Error — `poop/types/error.py`
 
