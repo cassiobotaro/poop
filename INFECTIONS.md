@@ -37,7 +37,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 | AST node | Reason |
 |---|---|
 | `ast.For` | Loop looks procedural; use `col.do(block)`, `col.map(block)`, recursion |
-| `ast.While` | Same; use `cond.while_true(block)` |
+| `ast.While` | Same; use `Block(lambda: cond).while_true(Block(lambda: body))` |
 | `ast.AsyncFor` | Async variant of `for` |
 
 ### No free functions — `poop/validators/no_free_functions.py`
@@ -470,8 +470,22 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `and:` / `or:` (lazy) | `and_(block)` / `or_(block)` |
 | `not` / `xor:` / `eqv:` | `not_()` / `xor(other)` / `eqv(other)` |
 | `&` / `\|` (eager) | `__and__(other)` / `__or__(other)` |
-| `whileTrue:` / `whileFalse:` | `while_true(cond_block, body_block)` / `while_false(cond_block, body_block)` |
 | `assert:` | `assert_(message)` | raises `AssertionError(message)` if `false`; returns `self` if `true` |
+
+### Block — `poop/types/block.py` + `poop/transformers/block.py`
+
+`Block` is a first-class object wrapping a callable. In Smalltalk, `[...]` syntax creates a block; in POOP every `lambda` expression is automatically rewritten to `Block(lambda: ...)` by the transformer. This makes `lambda` the idiomatic block literal — the `Block(...)` wrapper is transparent to the programmer.
+
+`while_true` and `while_false` live on `Block`, not on `Boolean`. The receiver is the condition block — the object whose value determines whether the loop continues. This matches Smalltalk semantics (`[cond] whileTrue: [body]`) and eliminates the philosophical problem of the receiver being irrelevant.
+
+| Smalltalk message | Method |
+|---|---|
+| `[cond] whileTrue: [body]` | `Block(cond).while_true(Block(body))` |
+| `[cond] whileFalse: [body]` | `Block(cond).while_false(Block(body))` |
+| `[block] value` | `Block(block)()` |
+| `[block] value: arg` | `Block(block)(arg)` |
+
+> **Why lambda, not `[...]`?** Python has no block literal syntax. `lambda` is the closest equivalent — a deferred expression. The transformer intercepts every `ast.Lambda` and wraps it in `Block(...)`, so programmers write natural Python lambdas and get first-class POOP blocks automatically.
 
 ### Collection iterable methods — `poop/types/_iterable_mixin.py`
 

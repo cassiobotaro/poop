@@ -6,6 +6,7 @@ from builtins import (
 )
 
 from poop.transformers.base import Transformer
+from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
 from poop.transformers.bytes import BytesTransformer
@@ -44,6 +45,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     FrozenSetTransformer(),
     RaiseTransformer(),
     ClassTransformer(),
+    BlockTransformer(),
 ]
 DEFAULT_NAMESPACE: _dict[str, object] = {
     **BooleanTransformer.BINDINGS,
@@ -65,6 +67,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **ClassTransformer.BINDINGS,
     **TryTransformer.BINDINGS,
     **WithTransformer.BINDINGS,
+    **BlockTransformer.BINDINGS,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]

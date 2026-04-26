@@ -1,3 +1,4 @@
+from poop.types.block import Block
 from poop.types.boolean import Boolean, false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -17,6 +18,7 @@ from poop.types.try_ import Try
 from poop.types.with_ import With
 
 __all__ = [
+    "Block",
     "Boolean",
     "ByteArray",
     "Bytes",
