@@ -478,6 +478,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 |---|---|
 | `obj.print()` | prints `str(obj)` followed by `\n` and returns `self` |
 | `obj.print(end="")` | controls the terminator |
+| `obj.print(flush=True)` | forces buffer flush before returning |
 | `list.print(sep=", ")` | `List`/`Tuple`: joins elements with `sep` (default `" "`) |
 
 `"".print()` prints a blank line. Returning `self` enables cascades: `x.print().print()`.
