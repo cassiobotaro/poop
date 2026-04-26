@@ -322,6 +322,21 @@ O único tipo onde a distinção importa de verdade é `Str` — `repr` deve env
 
 ---
 
+## 20. Renomeação — `Interval` → `Range`
+
+`poop/types/interval.py` expõe o tipo como `Interval`, mas o conceito é idêntico ao `range` do Python e ao `Range` de outras linguagens. Em POOP, o tipo é criado via `Int.to_(limit)` e representa uma sequência inteira — semanticamente um intervalo, mas o nome `Range` é mais reconhecível e alinhado com o vocabulário do domínio.
+
+Impacto da renomeação:
+
+- `poop/types/interval.py` → `poop/types/range.py`; classe `Interval` → `Range`
+- `poop/transformers/range.py` — já usa o nome `Range` internamente (`RangeTransformer`); ajustar imports
+- `poop/types/__init__.py` — exportar `Range` em vez de (ou além de) `Interval`
+- Todos os arquivos que importam `Interval`: `list.py`, `tuple.py`, `set.py`, `frozen_set.py`, `int.py`, `dict.py`, testes
+- `INFECTIONS.md` — ocorrências de "Interval"
+- Manter `Interval` como alias depreciado é opcional; dado que não há interop externo, pode-se renomear diretamente
+
+---
+
 ## Resumo executivo
 
 **Bugs corrigidos.** Nenhum pendente — todos foram resolvidos. (Dict.pop, Interval.includes, sum() return type, etc.).
@@ -333,3 +348,5 @@ O único tipo onde a distinção importa de verdade é `Str` — `repr` deve env
 **Funcionalidades novas com bom retorno por esforço.** 8 (Transcript), 9 (Block), 11 (respond_to), 12 (perform), 13 (Int.times), 16 (no_async).
 
 **Consistência com convenção Python.** 1 (`Str.__repr__` esconde aspas no REPL), 19 (`__str__`/`__repr__` para todos os tipos).
+
+**Renomeações.** 20 (`Interval` → `Range`).
