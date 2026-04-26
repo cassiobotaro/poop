@@ -3,13 +3,29 @@
 Review feita por Claude (Opus 4.7) considerando `INFECTIONS.md` e o pipeline `parse → validate → transform → execute`. Cada item indica caminho, linhas relevantes e uma sugestão concreta. Itens estão agrupados por intenção: refatoração, bug/inconsistência, alinhamento filosófico e novas funcionalidades.
 
 ---
-## 1. Consistência — `Str.__repr__` deve envolver o valor em aspas
+## 1. Consistência — revisar `__str__` e `__repr__` em todos os tipos para seguir a convenção Python
 
-`Str("hello").__repr__()` retorna `"hello"` em vez de `"'hello'"`. No REPL POOP o resultado de uma expressão string fica idêntico ao output de `print`, sem forma de distinguir. Em CPython `repr("hello")` retorna `"'hello'"`.
+Em Python, `__repr__` deve retornar uma representação que idealmente permita recriar o objeto (`eval(repr(x)) == x`), enquanto `__str__` é a forma legível para humanos. Hoje `Object` define `__repr__ = __str__`, o que faz todos os subtipos perderem a distinção.
 
-Em Python, `__repr__` representa o objeto de forma que `eval(repr(x)) == x`; `__str__` é a forma legível. Para todos os tipos POOP (Int, List, Boolean…) `str` e `repr` já coincidem com a convenção Python, portanto `__repr__ = __str__` na base `Object` está correto para eles. A única exceção é `Str`.
+Revisar cada tipo e alinhar com o comportamento CPython equivalente:
 
-**Proposta:** definir `__repr__` em `Str` para retornar `f"'{self._value}'"`, escapando aspas simples internas. Mantém `__repr__ = __str__` em todos os outros tipos.
+| Tipo POOP | CPython equivalente | `str` esperado | `repr` esperado |
+|---|---|---|---|
+| `Str("hello")` | `str` | `hello` | `'hello'` |
+| `Int(42)` | `int` | `42` | `42` |
+| `Float(3.14)` | `float` | `3.14` | `3.14` |
+| `Complex(1+2j)` | `complex` | `(1+2j)` | `(1+2j)` |
+| `true` / `false` | `bool` | `True` / `False` | `True` / `False` |
+| `none` | `NoneType` | `None` | `None` |
+| `List(Int(1), Int(2))` | `list` | `[1, 2]` | `[1, 2]` |
+| `Tuple(Int(1), Int(2))` | `tuple` | `(1, 2)` | `(1, 2)` |
+| `Dict(...)` | `dict` | `{...}` | `{...}` |
+| `Set(Int(1))` | `set` | `{1}` | `{1}` |
+| `Bytes(b"hi")` | `bytes` | `b'hi'` | `b'hi'` |
+
+Para a maioria dos tipos `str` e `repr` já coincidem — `__repr__ = __str__` na base `Object` está correto. A exceção mais visível é `Str`: `repr` deve envolver em aspas simples (escapando aspas simples internas), como CPython faz. Os demais tipos devem ser verificados individualmente.
+
+**Proposta:** auditar `__str__` e `__repr__` tipo a tipo; ajustar onde o comportamento diverge do CPython equivalente. Começar por `Str`.
 
 ---
 
