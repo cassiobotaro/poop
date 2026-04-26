@@ -442,6 +442,10 @@ Concrete root of all POOP types. Provides default implementations for universal 
 
 `__str__` returns `"<ClassName>"` as fallback; `__repr__` delegates to `__str__`.
 
+#### `is_instance` and raw Python types
+
+`obj.is_instance(T)` accepts a raw Python `type` (e.g. `Int`, `Str`, `Boolean`) — not a POOP-level "Class" object. This is a deliberate primitive leak: POOP has no first-class metaclass or class-object type, so there is nothing more idiomatic to pass. The same tradeoff applies to exception types in `Try.except_(ValueError, handler)` and context managers in `With`. The message-passing form (`obj.is_instance(...)`) is preserved; only the argument is a native Python type rather than a POOP wrapper.
+
 ### NoneClass — `poop/types/none.py`
 
 `NoneClass(Object)` with singleton `none`. Transformer rewrites `ast.Constant(value=None)` → `_poop_none`.
