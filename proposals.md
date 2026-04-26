@@ -15,9 +15,10 @@ only the display was wrong.
 
 ---
 
-**improvement**
+**improvement** ✅ resolved
 
-Quickstart in the readme summarizing the infections and showing some examples.
+Quickstart added to README: key substitutions table + Hello World,
+FizzBuzz and Leap Year examples.
 
 ---
 

@@ -35,6 +35,76 @@ Git hooks are managed by [prek](https://prek.j178.dev) and run ruff and ty on ev
 poop examples/hello_world.py
 ```
 
+## Quickstart
+
+POOP rewrites Python so that **every operation is a message sent to an object** — no free functions, no control-flow statements. Two mechanisms drive this:
+
+- **Validators** reject forbidden constructs (`if`, `for`, `while`, `print(...)`, `len(x)`, …).
+- **Transformers** rewrite the AST before execution so every literal becomes a POOP type (`Int`, `Str`, `Boolean`, `List`, …) and `range()` / `bool()` / `list()` / … return their POOP equivalents.
+
+### Key substitutions
+
+| Python | POOP |
+|---|---|
+| `print(x)` | `x.print()` |
+| `if cond:` / `else:` | `cond.if_true(lambda: …)` / `cond.if_false(lambda: …)` |
+| `for x in col:` | `col.do(lambda x: …)` |
+| `while cond:` | `(lambda: cond).while_true(lambda: …)` |
+| `not x` | `x.not_()` |
+| `-x` | `x.negated()` |
+| `len(x)` | `x.len()` |
+| `x[i]` | `x.at(i)` |
+| `x[a:b]` | `x.copy_from_to(a, b)` |
+| `x and y` | `x.and_(lambda: y)` |
+| `x or y` | `x.or_(lambda: y)` |
+
+### Hello, World
+
+```python
+"Hello, World!".print()
+```
+
+### FizzBuzz
+
+```python
+class FizzBuzz:
+    def run(self):
+        range(1, 101).do(
+            lambda i: (i % 15 == 0).if_true_if_false(
+                lambda: "FizzBuzz".print(),
+                lambda: (i % 3 == 0).if_true_if_false(
+                    lambda: "Fizz".print(),
+                    lambda: (i % 5 == 0).if_true_if_false(
+                        lambda: "Buzz".print(),
+                        lambda: i.print(),
+                    ),
+                ),
+            )
+        )
+
+FizzBuzz().run()
+```
+
+### Leap year
+
+```python
+class Year:
+    def __init__(self, value):
+        self._value = value
+
+    def is_leap(self):
+        return (self._value % 400 == 0).or_(
+            lambda: (self._value % 4 == 0).and_(
+                lambda: (self._value % 100 == 0).not_()
+            )
+        )
+
+Year(2000).is_leap().print()  # true
+Year(1900).is_leap().print()  # false
+```
+
+More examples in [`examples/`](examples/).
+
 ## Type annotations
 
 Type annotations (`x: int`, `def f(x: int) -> str:`) are not evaluated at
