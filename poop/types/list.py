@@ -137,6 +137,6 @@ class List(_IterableMixin, Object):
         return self
 
     def __str__(self) -> str:
-        return f"[{', '.join(str(item) for item in self._items)}]"
+        return f"[{', '.join(repr(item) for item in self._items)}]"
 
     __repr__ = __str__

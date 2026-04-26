@@ -115,7 +115,7 @@ def test_str_empty() -> None:
 def test_str_representation() -> None:
     d = Dict()
     d.at_put(Str("a"), Int(1))
-    assert str(d) == "{a: 1}"
+    assert str(d) == "{'a': 1}"
 
 
 def test_repr_equals_str() -> None:

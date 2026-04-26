@@ -122,7 +122,7 @@ class Dict(Object):
         return true
 
     def __str__(self) -> str:
-        pairs = ", ".join(f"{k}: {v}" for k, v in self._data.items())
+        pairs = ", ".join(f"{repr(k)}: {repr(v)}" for k, v in self._data.items())
         return "{" + pairs + "}"
 
     __repr__ = __str__

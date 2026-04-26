@@ -104,7 +104,7 @@ class Tuple(_IterableMixin, Object):
 
     def __str__(self) -> str:
         if len(self._items) == 1:
-            return f"({self._items[0]},)"
-        return f"({', '.join(str(item) for item in self._items)})"
+            return f"({repr(self._items[0])},)"
+        return f"({', '.join(repr(item) for item in self._items)})"
 
     __repr__ = __str__

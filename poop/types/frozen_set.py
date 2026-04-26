@@ -102,6 +102,6 @@ class FrozenSet(_IterableMixin, Object):
     def __str__(self) -> str:
         if not self._data:
             return "frozenset()"
-        return "frozenset({" + ", ".join(str(item) for item in self._data) + "})"
+        return "frozenset({" + ", ".join(repr(item) for item in self._data) + "})"
 
     __repr__ = __str__
