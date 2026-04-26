@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from poop.types.object import Object
 
@@ -21,8 +21,6 @@ class Try(Object):
     """
 
     __slots__ = ("_block", "_finally_block", "_handlers")
-
-    BINDINGS: ClassVar[dict[str, object]] = {}
 
     def __init__(self, block: Callable[[], object]) -> None:
         self._block = block
@@ -67,5 +65,3 @@ class Try(Object):
     def __repr__(self) -> str:
         return str(self)
 
-
-Try.BINDINGS = {"Try": Try}

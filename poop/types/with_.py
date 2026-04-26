@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, ClassVar
+from typing import Any
 
 from poop.types.object import Object
 
@@ -24,8 +24,6 @@ class With(Object):
 
     __slots__ = ("_cm_block",)
 
-    BINDINGS: ClassVar[dict[str, object]] = {}
-
     def __init__(self, cm_block: Callable[[], Any]) -> None:
         self._cm_block = cm_block
 
@@ -47,5 +45,3 @@ class With(Object):
     def __repr__(self) -> str:
         return str(self)
 
-
-With.BINDINGS = {"With": With}
