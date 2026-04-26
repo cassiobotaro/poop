@@ -11,9 +11,8 @@ def test_object_print_outputs_str(capsys: pytest.CaptureFixture[str]) -> None:
     assert capsys.readouterr().out == "42\n"
 
 
-def test_object_print_returns_self() -> None:
-    obj = Int(1)
-    assert obj.print() is obj
+def test_object_print_returns_none() -> None:
+    assert Int(1).print() is None
 
 
 def test_object_print_end_param(capsys: pytest.CaptureFixture[str]) -> None:
@@ -31,10 +30,6 @@ def test_empty_str_print_blank_line(capsys: pytest.CaptureFixture[str]) -> None:
     assert capsys.readouterr().out == "\n"
 
 
-def test_object_print_cascade(capsys: pytest.CaptureFixture[str]) -> None:
-    Str("hello").print().print()
-    assert capsys.readouterr().out == "hello\nhello\n"
-
 
 def test_list_print_default_sep(capsys: pytest.CaptureFixture[str]) -> None:
     List(Int(1), Int(2), Int(3)).print()
@@ -46,9 +41,8 @@ def test_list_print_custom_sep(capsys: pytest.CaptureFixture[str]) -> None:
     assert capsys.readouterr().out == "1;2;3\n"
 
 
-def test_list_print_returns_self() -> None:
-    lst = List(Int(1))
-    assert lst.print() is lst
+def test_list_print_returns_none() -> None:
+    assert List(Int(1)).print() is None
 
 
 def test_tuple_print_default_sep(capsys: pytest.CaptureFixture[str]) -> None:
@@ -61,6 +55,5 @@ def test_tuple_print_custom_sep(capsys: pytest.CaptureFixture[str]) -> None:
     assert capsys.readouterr().out == "1, 2, 3\n"
 
 
-def test_tuple_print_returns_self() -> None:
-    t = Tuple(Int(1))
-    assert t.print() is t
+def test_tuple_print_returns_none() -> None:
+    assert Tuple(Int(1)).print() is None

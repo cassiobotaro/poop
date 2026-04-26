@@ -94,13 +94,12 @@ class Tuple(_IterableMixin, Object):
     def __hash__(self) -> int:
         return hash(self._items)
 
-    def print(self, sep: str = " ", end: str = "\n", flush: bool = False) -> Tuple:
+    def print(self, sep: str = " ", end: str = "\n", flush: bool = False) -> None:
         from builtins import print as _builtins_print
 
         _builtins_print(
             *[str(item) for item in self._items], sep=sep, end=end, flush=flush
         )  # noqa: T201
-        return self
 
     def __str__(self) -> str:
         if len(self._items) == 1:
