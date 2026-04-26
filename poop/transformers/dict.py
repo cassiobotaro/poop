@@ -26,13 +26,7 @@ def _poop_dict_from(arg: object = None) -> Dict:
     if isinstance(arg, Iterable):
         d = Dict()
         for item in cast("Iterable[Object]", arg):
-            if isinstance(item, Tuple):
-                if len(item._items) != 2:
-                    raise TypeError(
-                        f"dict entry must have exactly 2 elements, got {len(item._items)}"
-                    )
-                d._data[item._items[0]] = item._items[1]
-            elif isinstance(item, List):
+            if isinstance(item, (Tuple, List)):
                 if len(item._items) != 2:
                     raise TypeError(
                         f"dict entry must have exactly 2 elements, got {len(item._items)}"
