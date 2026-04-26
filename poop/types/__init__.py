@@ -14,6 +14,7 @@ from poop.types.object import Object
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.try_ import Try
+from poop.types.with_ import With
 
 __all__ = [
     "Boolean",
@@ -32,6 +33,7 @@ __all__ = [
     "Set",
     "Str",
     "Try",
+    "With",
     "false",
     "none",
     "true",
