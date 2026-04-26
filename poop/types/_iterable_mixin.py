@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from collections import deque
-from functools import reduce as functools_reduce
-from typing import TYPE_CHECKING, Any, Callable, Iterator
-
 import builtins as _builtins
+from collections import deque
+from collections.abc import Callable, Iterator
+from functools import reduce as functools_reduce
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
@@ -30,9 +30,7 @@ class _IterableMixin:
         return self._collect(x for x in self._iter_items() if bool(block(x)))
 
     def filter_false(self, block: Callable[[Any], Any]) -> Any:
-        return self._collect(
-            x for x in self._iter_items() if not bool(block(x))
-        )
+        return self._collect(x for x in self._iter_items() if not bool(block(x)))
 
     def find(self, block: Callable[[Any], Any]) -> Any:
         from poop.types.none import none
@@ -57,16 +55,12 @@ class _IterableMixin:
         from poop.types.boolean import false, true
 
         return (
-            true
-            if _builtins.all(bool(block(x)) for x in self._iter_items())
-            else false
+            true if _builtins.all(bool(block(x)) for x in self._iter_items()) else false
         )
 
     def any(self, block: Callable[[Any], Any]) -> Any:
         from poop.types.boolean import false, true
 
         return (
-            true
-            if _builtins.any(bool(block(x)) for x in self._iter_items())
-            else false
+            true if _builtins.any(bool(block(x)) for x in self._iter_items()) else false
         )

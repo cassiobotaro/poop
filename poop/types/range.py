@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
@@ -8,7 +7,6 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
     from poop.types.list import List
-    from poop.types.none import NoneClass
 
 
 class Range(_IterableMixin, Object):

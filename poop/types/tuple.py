@@ -9,7 +9,6 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
-    from poop.types.none import NoneClass
 
 _tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
 

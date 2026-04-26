@@ -182,5 +182,3 @@ def test_false_is_none_returns_false() -> None:
 
 def test_false_not_none_returns_true() -> None:
     assert false.not_none() is true
-
-

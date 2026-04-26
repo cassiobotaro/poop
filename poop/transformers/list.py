@@ -1,8 +1,8 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from collections.abc import Iterable
 from typing import ClassVar, cast
 
+from poop.transformers.base import BaseTransformer
 from poop.types.list import List
 from poop.types.object import Object
 
@@ -23,6 +23,7 @@ def _poop_list_from(arg: object = None) -> List:
     if isinstance(arg, Iterable):
         return List(*cast("Iterable[Object]", arg))
     raise TypeError(f"cannot convert {type(arg).__name__} to List")
+
 
 class _ListRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -57,13 +58,9 @@ class _ListRewriter(ast.NodeTransformer):
         )
 
 
-
 class ListTransformer(BaseTransformer):
     rewriter = _ListRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_list": _poop_list,
         "_poop_list_from": _poop_list_from,
     }
-
-
-

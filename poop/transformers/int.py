@@ -1,7 +1,7 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
+from poop.transformers.base import BaseTransformer
 from poop.types.int import Int
 
 
@@ -22,6 +22,7 @@ def _poop_int_from(value: object = None, base: object = None) -> Int:
             return Int(int(value._value, base._value))
         return Int(int(value._value))
     raise TypeError(f"cannot convert {type(value).__name__} to Int")
+
 
 class _IntRewriter(ast.NodeTransformer):
     def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
@@ -68,13 +69,9 @@ class _IntRewriter(ast.NodeTransformer):
         return node
 
 
-
 class IntTransformer(BaseTransformer):
     rewriter = _IntRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_int": Int,
         "_poop_int_from": _poop_int_from,
     }
-
-
-

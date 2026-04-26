@@ -1,6 +1,6 @@
 import ast
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 
@@ -11,18 +11,24 @@ app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
 
 @app.command()
 def main(
-    file: Annotated[Optional[Path], typer.Argument(help="Source file to run")] = None,
+    file: Annotated[Path | None, typer.Argument(help="Source file to run")] = None,
     validators_only: Annotated[
         bool,
-        typer.Option("--validators-only", help="Run validators only, report all errors"),
+        typer.Option(
+            "--validators-only", help="Run validators only, report all errors"
+        ),
     ] = False,
     transformers_only: Annotated[
         bool,
-        typer.Option("--transformers-only", help="Run up to transformers and dump the AST"),
+        typer.Option(
+            "--transformers-only", help="Run up to transformers and dump the AST"
+        ),
     ] = False,
     explain: Annotated[
         bool,
-        typer.Option("--explain", help="Report all validation errors with substitute hints"),
+        typer.Option(
+            "--explain", help="Report all validation errors with substitute hints"
+        ),
     ] = False,
 ) -> None:
     from poop.interpreter import Interpreter

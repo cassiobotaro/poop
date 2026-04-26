@@ -36,7 +36,6 @@ def test_bit_invert() -> None:
     assert Int(1).bit_invert() == Int(-2)
 
 
-
 def test_max_returns_larger() -> None:
     assert Int(3).max(Int(7)) == Int(7)
     assert Int(7).max(Int(3)) == Int(7)

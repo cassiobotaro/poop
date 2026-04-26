@@ -1,7 +1,7 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
+from poop.transformers.base import BaseTransformer
 from poop.types.string import Str
 
 
@@ -11,6 +11,7 @@ def _poop_str_from(value: object = None) -> Str:
     if isinstance(value, Str):
         return value
     return Str(str(value))
+
 
 class _StrRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -39,13 +40,9 @@ class _StrRewriter(ast.NodeTransformer):
         return node
 
 
-
 class StrTransformer(BaseTransformer):
     rewriter = _StrRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_str": Str,
         "_poop_str_from": _poop_str_from,
     }
-
-
-

@@ -1,8 +1,8 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from collections.abc import Iterable
 from typing import ClassVar, cast
 
+from poop.transformers.base import BaseTransformer
 from poop.types.byte_array import ByteArray
 
 
@@ -22,6 +22,7 @@ def _poop_bytearray_from(arg: object = None) -> ByteArray:
         ints = cast("Iterable[Int]", arg)
         return ByteArray(bytearray(item._value for item in ints))
     return ByteArray()
+
 
 class _ByteArrayRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -43,12 +44,8 @@ class _ByteArrayRewriter(ast.NodeTransformer):
         return node
 
 
-
 class ByteArrayTransformer(BaseTransformer):
     rewriter = _ByteArrayRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_bytearray_from": _poop_bytearray_from
     }
-
-
-

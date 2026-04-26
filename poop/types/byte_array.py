@@ -1,6 +1,5 @@
-from collections import deque
-from collections.abc import Callable, Iterator
-from typing import TYPE_CHECKING, Any
+from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
@@ -64,8 +63,6 @@ class ByteArray(_IterableMixin, Object):
         from poop.types.string import Str
 
         return Str(self._value.hex())
-
-
 
     def __iter__(self) -> Iterator[Int]:
         from poop.types.int import Int

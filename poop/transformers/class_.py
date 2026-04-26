@@ -1,8 +1,9 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
+from poop.transformers.base import BaseTransformer
 from poop.types.object import Object
+
 
 class _ClassRewriter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
@@ -24,7 +25,6 @@ class _ClassRewriter(ast.NodeTransformer):
         return node
 
 
-
 class ClassTransformer(BaseTransformer):
     """Implicitly injects Object as base class when none is specified.
 
@@ -39,6 +39,3 @@ class ClassTransformer(BaseTransformer):
 
     rewriter = _ClassRewriter
     BINDINGS: ClassVar[dict[str, object]] = {"Object": Object}
-
-
-

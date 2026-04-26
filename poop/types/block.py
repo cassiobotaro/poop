@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 
 

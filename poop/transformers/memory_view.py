@@ -1,7 +1,7 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
+from poop.transformers.base import BaseTransformer
 from poop.types.memory_view import MemoryView
 
 
@@ -14,6 +14,7 @@ def _poop_memoryview_from(arg: object = None) -> MemoryView:
     if isinstance(arg, ByteArray):
         return MemoryView(memoryview(arg._value))
     return MemoryView(memoryview(b""))
+
 
 class _MemoryViewRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -35,12 +36,8 @@ class _MemoryViewRewriter(ast.NodeTransformer):
         return node
 
 
-
 class MemoryViewTransformer(BaseTransformer):
     rewriter = _MemoryViewRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_memoryview_from": _poop_memoryview_from
     }
-
-
-

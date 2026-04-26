@@ -76,7 +76,7 @@ def test_str_repr_wraps_in_quotes() -> None:
 
 
 def test_str_repr_eval_roundtrip() -> None:
-    assert eval(repr(Str("it's"))) == "it's"
+    assert eval(repr(Str("it's"))) == "it's"  # noqa: S307
 
 
 # --- dunders ---
@@ -86,7 +86,7 @@ def test_len_dunder() -> None:
     assert len(Str("hello")) == 5
 
 
-def test_at_returns_char() -> None:
+def test_at_returns_second_char() -> None:
     assert Str("hello").at(Int(1)) == Str("e")
 
 

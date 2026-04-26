@@ -1,7 +1,7 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
+from poop.transformers.base import BaseTransformer
 from poop.types.boolean import Boolean, false, true
 
 
@@ -9,6 +9,7 @@ def _poop_bool_from(value: object = None) -> Boolean:
     if isinstance(value, Boolean):
         return value
     return true if bool(value) else false
+
 
 class _BooleanRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -32,7 +33,6 @@ class _BooleanRewriter(ast.NodeTransformer):
         return node
 
 
-
 class BooleanTransformer(BaseTransformer):
     rewriter = _BooleanRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
@@ -40,6 +40,3 @@ class BooleanTransformer(BaseTransformer):
         "_poop_false": false,
         "_poop_bool_from": _poop_bool_from,
     }
-
-
-

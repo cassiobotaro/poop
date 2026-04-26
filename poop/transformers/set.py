@@ -1,8 +1,8 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from collections.abc import Iterable
 from typing import ClassVar, cast
 
+from poop.transformers.base import BaseTransformer
 from poop.types.object import Object
 from poop.types.set import Set
 
@@ -23,6 +23,7 @@ def _poop_set_from(arg: object = None) -> Set:
     if isinstance(arg, Iterable):
         return Set(*cast("Iterable[Object]", arg))
     raise TypeError(f"cannot convert {type(arg).__name__} to Set")
+
 
 class _SetRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -55,13 +56,9 @@ class _SetRewriter(ast.NodeTransformer):
         )
 
 
-
 class SetTransformer(BaseTransformer):
     rewriter = _SetRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_set": _poop_set,
         "_poop_set_from": _poop_set_from,
     }
-
-
-

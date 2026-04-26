@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
@@ -7,7 +7,6 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
-    from poop.types.none import NoneClass
 
 _set = set  # alias to avoid shadowing by Set class name in annotations
 

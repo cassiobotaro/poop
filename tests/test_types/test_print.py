@@ -30,7 +30,6 @@ def test_empty_str_print_blank_line(capsys: pytest.CaptureFixture[str]) -> None:
     assert capsys.readouterr().out == "\n"
 
 
-
 def test_list_print_default_sep(capsys: pytest.CaptureFixture[str]) -> None:
     List(Int(1), Int(2), Int(3)).print()
     assert capsys.readouterr().out == "1 2 3\n"

@@ -1,7 +1,7 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from typing import ClassVar
 
+from poop.transformers.base import BaseTransformer
 from poop.types.complex import Complex
 
 
@@ -27,6 +27,7 @@ def _poop_complex_from(real: object = None, imag: object = None) -> Complex:
     r = real._value if isinstance(real, (Int, Float)) else 0  # type: ignore[union-attr]
     i = imag._value if isinstance(imag, (Int, Float)) else 0  # type: ignore[union-attr]
     return Complex(complex(r, i))
+
 
 class _ComplexRewriter(ast.NodeTransformer):
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
@@ -85,13 +86,9 @@ class _ComplexRewriter(ast.NodeTransformer):
         return node
 
 
-
 class ComplexTransformer(BaseTransformer):
     rewriter = _ComplexRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_complex_literal": _poop_complex_literal,
         "_poop_complex_from": _poop_complex_from,
     }
-
-
-

@@ -1,8 +1,8 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from collections.abc import Iterable
 from typing import ClassVar, cast
 
+from poop.transformers.base import BaseTransformer
 from poop.types.object import Object
 from poop.types.tuple import Tuple
 
@@ -23,6 +23,7 @@ def _poop_tuple_from(arg: object = None) -> Tuple:
     if isinstance(arg, Iterable):
         return Tuple(*cast("Iterable[Object]", arg))
     raise TypeError(f"cannot convert {type(arg).__name__} to Tuple")
+
 
 class _TupleRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -57,13 +58,9 @@ class _TupleRewriter(ast.NodeTransformer):
         )
 
 
-
 class TupleTransformer(BaseTransformer):
     rewriter = _TupleRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_tuple": _poop_tuple,
         "_poop_tuple_from": _poop_tuple_from,
     }
-
-
-

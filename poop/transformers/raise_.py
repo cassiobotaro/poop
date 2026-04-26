@@ -1,10 +1,12 @@
 import ast
-from poop.transformers.base import BaseTransformer
 from typing import ClassVar
+
+from poop.transformers.base import BaseTransformer
 
 
 def _poop_raise(exc_type: type[BaseException], *args: object) -> None:
     raise exc_type(*args)
+
 
 class _RaiseRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
@@ -29,7 +31,6 @@ class _RaiseRewriter(ast.NodeTransformer):
         return node
 
 
-
 class RaiseTransformer(BaseTransformer):
     """Intercepts UppercaseName.raise_(args) and rewrites to _poop_raise(UppercaseName, *args).
 
@@ -45,6 +46,3 @@ class RaiseTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_raise": _poop_raise,
     }
-
-
-
