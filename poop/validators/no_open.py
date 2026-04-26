@@ -1,19 +1,6 @@
-import ast
+from poop.validators._call_name import make_call_name_validator
 
-from poop.errors import ValidationError
-
-
-class NoOpenValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoOpenVisitor().visit(tree)
-
-
-class _NoOpenVisitor(ast.NodeVisitor):
-    def visit_Call(self, node: ast.Call) -> None:
-        if isinstance(node.func, ast.Name) and node.func.id == "open":
-            raise ValidationError(
-                "open() is forbidden — no POOP equivalent",
-                lineno=node.lineno,
-                col_offset=node.col_offset,
-            )
-        self.generic_visit(node)
+NoOpenValidator = make_call_name_validator(
+    forbidden={'open'},
+    message='open() is forbidden — no POOP equivalent',
+)

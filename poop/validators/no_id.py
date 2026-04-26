@@ -1,19 +1,6 @@
-import ast
+from poop.validators._call_name import make_call_name_validator
 
-from poop.errors import ValidationError
-
-
-class NoIdValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoIdVisitor().visit(tree)
-
-
-class _NoIdVisitor(ast.NodeVisitor):
-    def visit_Call(self, node: ast.Call) -> None:
-        if isinstance(node.func, ast.Name) and node.func.id == "id":
-            raise ValidationError(
-                "id() is forbidden — use obj.id() instead",
-                lineno=node.lineno,
-                col_offset=node.col_offset,
-            )
-        self.generic_visit(node)
+NoIdValidator = make_call_name_validator(
+    forbidden={'id'},
+    message='id() is forbidden — use obj.id() instead',
+)

@@ -1,19 +1,6 @@
-import ast
+from poop.validators._call_name import make_call_name_validator
 
-from poop.errors import ValidationError
-
-
-class NoDivmodValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoDivmodVisitor().visit(tree)
-
-
-class _NoDivmodVisitor(ast.NodeVisitor):
-    def visit_Call(self, node: ast.Call) -> None:
-        if isinstance(node.func, ast.Name) and node.func.id == "divmod":
-            raise ValidationError(
-                "divmod() is forbidden — use a.divmod(b) instead",
-                lineno=node.lineno,
-                col_offset=node.col_offset,
-            )
-        self.generic_visit(node)
+NoDivmodValidator = make_call_name_validator(
+    forbidden={'divmod'},
+    message='divmod() is forbidden — use a.divmod(b) instead',
+)

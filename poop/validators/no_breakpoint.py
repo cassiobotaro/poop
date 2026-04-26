@@ -1,19 +1,6 @@
-import ast
+from poop.validators._call_name import make_call_name_validator
 
-from poop.errors import ValidationError
-
-
-class NoBreakpointValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoBreakpointVisitor().visit(tree)
-
-
-class _NoBreakpointVisitor(ast.NodeVisitor):
-    def visit_Call(self, node: ast.Call) -> None:
-        if isinstance(node.func, ast.Name) and node.func.id == "breakpoint":
-            raise ValidationError(
-                "breakpoint() is forbidden — no POOP equivalent",
-                lineno=node.lineno,
-                col_offset=node.col_offset,
-            )
-        self.generic_visit(node)
+NoBreakpointValidator = make_call_name_validator(
+    forbidden={'breakpoint'},
+    message='breakpoint() is forbidden — no POOP equivalent',
+)
