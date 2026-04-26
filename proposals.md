@@ -22,9 +22,10 @@ FizzBuzz and Leap Year examples.
 
 ---
 
-**improvement**
+**improvement** ✅ resolved
 
-Add more code examples and review the existing ones.
+Added collatz.py (demonstrates while_true). Added docstring to fizzbuzz.py.
+All existing examples verified passing.
 
 ---
 
