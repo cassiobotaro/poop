@@ -7,23 +7,11 @@ shows the value a second time.
 
 ---
 
-**bug**
+**bug** ✅ resolved
 
-When I type (1).print() the output is
-
-```bash
->>> b = (1).to_(100)
->>> b
-range(1, 101)
-```
-
-The expected output is
-
-```bash
->>> b = (1).to_(100)
->>> b
-range(1, 100)
-```
+`Range.__str__` now uses the original `stop` value instead of exposing the
+internal Python range (`stop + sign`). Iteration was already correct (inclusive);
+only the display was wrong.
 
 ---
 

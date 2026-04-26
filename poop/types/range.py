@@ -96,6 +96,10 @@ class Range(_IterableMixin, Object):
         return Int(len(self._range()))
 
     def __str__(self) -> str:
-        return repr(self._range())
+        start, stop = self._start._value, self._stop._value
+        step = self._step._value
+        if step == 1:
+            return f"range({start}, {stop})"
+        return f"range({start}, {stop}, {step})"
 
     __repr__ = __str__

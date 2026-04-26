@@ -7,7 +7,15 @@ def _range(start: int, stop: int) -> Range:
 
 
 def test_str() -> None:
-    assert str(_range(1, 3)) == "range(1, 4)"
+    assert str(_range(1, 3)) == "range(1, 3)"
+
+
+def test_str_with_step() -> None:
+    assert str(Int(1).to_by_(Int(9), Int(2))) == "range(1, 9, 2)"
+
+
+def test_str_descending() -> None:
+    assert str(_range(5, 3)) == "range(5, 3, -1)"
 
 
 def test_repr_delegates_to_str() -> None:
