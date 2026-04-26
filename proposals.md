@@ -302,6 +302,26 @@ Padronizar tudo em métodos (com parens) é mais coerente.
 
 ---
 
+## 19. Consistência — `__str__` e `__repr__` devem seguir a convenção Python em todos os tipos
+
+Em Python, `__repr__` deve retornar uma representação que idealmente permita recriar o objeto (`eval(repr(x)) == x`), enquanto `__str__` retorna a forma legível para humanos. Hoje POOP define `__repr__ = __str__` na base `Object`, o que faz todos os tipos perderem a distinção — visível no REPL (item 1 trata `Str` especificamente, mas o problema é geral).
+
+Exemplos do comportamento atual vs. esperado:
+
+| Tipo | `str(x)` atual | `repr(x)` atual | `repr(x)` esperado |
+|---|---|---|---|
+| `Str("hello")` | `hello` | `hello` | `'hello'` |
+| `Int(42)` | `42` | `42` | `42` (ok) |
+| `List(Int(1), Int(2))` | `[1, 2]` | `[1, 2]` | `[1, 2]` (ok) |
+| `none` | `None` | `None` | `None` (ok) |
+| `true` | `True` | `True` | `True` (ok) |
+
+O único tipo onde a distinção importa de verdade é `Str` — `repr` deve envolver em aspas simples, como CPython. Para os demais tipos numéricos e coleções, `str` e `repr` já coincidem com a convenção Python, então `__repr__ = __str__` está correto.
+
+**Proposta concreta:** definir `__repr__` em `Str` para retornar `f"'{self._value}'"` (ou escapar aspas simples internas), mantendo `__repr__ = __str__` nos demais tipos.
+
+---
+
 ## Resumo executivo
 
 **Bugs corrigidos.** Nenhum pendente — todos foram resolvidos. (Dict.pop, Interval.includes, sum() return type, etc.).
@@ -311,3 +331,5 @@ Padronizar tudo em métodos (com parens) é mais coerente.
 **Decisões filosóficas a documentar em INFECTIONS.md.** 1 (`is_instance` com tipo cru), 2 (operadores binários permitidos), 3 (while_true e o receiver irrelevante), 18 (properties).
 
 **Funcionalidades novas com bom retorno por esforço.** 8 (Transcript), 9 (Block), 11 (respond_to), 12 (perform), 13 (Int.times), 16 (no_async).
+
+**Consistência com convenção Python.** 1 (`Str.__repr__` esconde aspas no REPL), 19 (`__str__`/`__repr__` para todos os tipos).
