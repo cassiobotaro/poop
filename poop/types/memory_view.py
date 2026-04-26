@@ -33,11 +33,6 @@ class MemoryView(_IterableMixin, Object):
 
         return Int(self._value[index._value])
 
-    def __getitem__(self, index: Int) -> Int:
-        return self.at(index)
-
-
-
     def __iter__(self) -> Iterator[Int]:
         from poop.types.int import Int
 

@@ -39,9 +39,6 @@ class ByteArray(_IterableMixin, Object):
         s = step._value if step is not None else None
         return ByteArray(bytearray(self._value[start._value : stop._value : s]))
 
-    def __getitem__(self, index: Int) -> Int:
-        return self.at(index)
-
     def at_put(self, index: Int, byte: Int) -> ByteArray:
         self._value[index._value] = byte._value
         return self

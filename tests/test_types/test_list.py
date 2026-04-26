@@ -23,9 +23,9 @@ def test_at() -> None:
     assert lst.at(Int(2)) == Int(30)
 
 
-def test_getitem() -> None:
+def test_at_returns_element() -> None:
     lst = List(Int(10), Int(20))
-    assert lst[Int(1)] == Int(20)
+    assert lst.at(Int(1)) == Int(20)
 
 
 def test_add_returns_self() -> None:

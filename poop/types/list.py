@@ -49,9 +49,6 @@ class List(_IterableMixin, Object):
     def __mul__(self, other: Int) -> List:
         return List(*self._items * other._value)
 
-    def __getitem__(self, index: Int) -> Object:
-        return self.at(index)
-
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)
 

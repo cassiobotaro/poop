@@ -21,9 +21,9 @@ def test_at() -> None:
     assert t.at(Int(2)) == Int(30)
 
 
-def test_getitem() -> None:
+def test_at_returns_element() -> None:
     t = Tuple(Int(10), Int(20))
-    assert t[Int(1)] == Int(20)
+    assert t.at(Int(1)) == Int(20)
 
 
 def test_includes_true() -> None:

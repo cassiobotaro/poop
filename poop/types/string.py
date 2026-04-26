@@ -51,9 +51,6 @@ class Str(Object):
         s = step._value if step is not None else None
         return Str(self._value[start._value : stop._value : s])
 
-    def __getitem__(self, index: Int) -> Str:
-        return self.at(index)
-
     def __iter__(self) -> Iterator[Str]:
         for ch in self._value:
             yield Str(ch)

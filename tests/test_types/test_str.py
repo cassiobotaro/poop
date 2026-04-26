@@ -79,8 +79,8 @@ def test_len_dunder() -> None:
     assert len(Str("hello")) == 5
 
 
-def test_getitem_dunder() -> None:
-    assert Str("hello")[Int(1)] == Str("e")
+def test_at_returns_char() -> None:
+    assert Str("hello").at(Int(1)) == Str("e")
 
 
 def test_iter_yields_str_chars() -> None:

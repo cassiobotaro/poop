@@ -38,9 +38,6 @@ class Bytes(_IterableMixin, Object):
         s = step._value if step is not None else None
         return Bytes(self._value[start._value : stop._value : s])
 
-    def __getitem__(self, index: Int) -> Int:
-        return self.at(index)
-
     def includes(self, byte: Int) -> Boolean:
         from poop.types.boolean import false, true
 

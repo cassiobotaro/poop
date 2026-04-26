@@ -29,8 +29,8 @@ def test_at_returns_byte_value_as_int() -> None:
     assert ba.at(Int(1)) == Int(66)
 
 
-def test_getitem_dunder() -> None:
-    assert ByteArray(bytearray(b"Z"))[Int(0)] == Int(90)
+def test_at_zero_indexed() -> None:
+    assert ByteArray(bytearray(b"Z")).at(Int(0)) == Int(90)
 
 
 def test_at_put_mutates() -> None:

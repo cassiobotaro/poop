@@ -28,8 +28,8 @@ def test_at_returns_byte_as_int() -> None:
     assert mv.at(Int(1)) == Int(66)
 
 
-def test_getitem_dunder() -> None:
-    assert _mv(b"Z")[Int(0)] == Int(90)
+def test_at_returns_byte_value() -> None:
+    assert _mv(b"Z").at(Int(0)) == Int(90)
 
 
 def test_do_yields_int_values() -> None:

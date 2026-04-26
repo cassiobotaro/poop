@@ -22,8 +22,8 @@ def test_at_returns_byte_value_as_int() -> None:
     assert Bytes(b"ABC").at(Int(1)) == Int(66)
 
 
-def test_getitem_dunder() -> None:
-    assert Bytes(b"Z")[Int(0)] == Int(90)
+def test_at_zero_indexed() -> None:
+    assert Bytes(b"Z").at(Int(0)) == Int(90)
 
 
 def test_includes_true() -> None:
