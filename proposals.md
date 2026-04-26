@@ -3,13 +3,7 @@
 Review feita por Claude (Opus 4.7) considerando `INFECTIONS.md` e o pipeline `parse → validate → transform → execute`. Cada item indica caminho, linhas relevantes e uma sugestão concreta. Itens estão agrupados por intenção: refatoração, bug/inconsistência, alinhamento filosófico e novas funcionalidades.
 
 ---
-## 1. Funcionalidade nova — `Number` mixin para `Int` + `Float` + `Complex`
-
-Hoje as três classes duplicam `negated`, `__add__`, `__sub__`, etc. com tipos diferentes. Uma classe-base `Number` com hooks `_wrap(value)` por subclasse reduz ~150 linhas e abre porta para coerções `Int + Float → Float`, etc.
-
----
-
-## 2. Filosofia — `properties` (`@property`) em tipos POOP contradizem "everything is a message"
+## 1. Filosofia — `properties` (`@property`) em tipos POOP contradizem "everything is a message"
 
 `Int.real`, `Int.imag`, `Float.real`, `Complex.real`, `Range.start` etc. são `@property`. Quem escreve `r.start` está acessando um atributo, não enviando uma mensagem. Em Smalltalk, `start` seria um getter sem parens (mensagem unária). Em Python, sem parens vira atributo.
 
@@ -25,7 +19,7 @@ Padronizar tudo em métodos (com parens) é mais coerente.
 
 ---
 
-## 3. Filosofia — `Boolean.while_true(cond_block, body_block)` é uma mensagem para o objeto errado
+## 2. Filosofia — `Boolean.while_true(cond_block, body_block)` é uma mensagem para o objeto errado
 
 Em Smalltalk, `whileTrue:` é mensagem para um **block**, não para o booleano: `[cond] whileTrue: [body]`. O receiver é o block que retorna o booleano, não um bool literal.
 
@@ -41,7 +35,7 @@ Hoje, ler `true.while_true(lambda: x < 10, lambda: x.print())` é confuso porque
 
 ---
 
-## 4. Filosofia — duplicação `_TrueClass.while_true` vs `_FalseClass.while_true`
+## 3. Filosofia — duplicação `_TrueClass.while_true` vs `_FalseClass.while_true`
 
 `poop/types/boolean.py:132-152` e `212-232`. As duas implementações de `while_true` (e `while_false`) são **idênticas**. Movê-las para a base `Boolean` elimina ~40 linhas duplicadas. O receiver não altera o comportamento (ver item 3), portanto:
 
@@ -64,7 +58,7 @@ Igualmente, `_TrueClass.if_true_if_false`/`if_false_if_true` poderiam compartilh
 
 ---
 
-## 5. Funcionalidade nova — `Block` como tipo de primeira classe
+## 4. Funcionalidade nova — `Block` como tipo de primeira classe
 
 Hoje "block" = `lambda` Python. Smalltalk tem blocks com mensagens próprias: `[1+2] value`, `[:x | x*2] value: 5`, `[cond] whileTrue: [body]`.
 
@@ -101,8 +95,8 @@ Resolve o item 3 (`while_true` mora no objeto certo). Ergonomia depende de trans
 
 **Bugs corrigidos.** Nenhum pendente — todos foram resolvidos. (Dict.pop, Range.includes, sum() return type, etc.).
 
-**Refatorações de alto impacto.** 1 (Number mixin), 4 (while_* na base de Boolean).
+**Refatorações de alto impacto.** 3 (while_* na base de Boolean).
 
-**Decisões filosóficas a documentar em INFECTIONS.md.** 3 (while_true e o receiver irrelevante), 2 (properties).
+**Decisões filosóficas a documentar em INFECTIONS.md.** 2 (while_true e o receiver irrelevante), 1 (properties).
 
-**Funcionalidades novas com bom retorno por esforço.** 5 (Block).
+**Funcionalidades novas com bom retorno por esforço.** 4 (Block).
