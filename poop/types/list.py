@@ -19,6 +19,7 @@ _list = list  # alias to avoid shadowing by List class name in annotations
 
 class List(Object):
     __slots__ = ("_items",)
+    __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
         self._items: _list[Object] = _list(elements)

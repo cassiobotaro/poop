@@ -30,9 +30,7 @@ class MemoryView(Object):
     def at(self, index: Int) -> Int:
         from poop.types.int import Int
 
-        item = self._value[index._value]
-        # memoryview of bytes/bytearray yields int items
-        return Int(item if isinstance(item, int) else item)
+        return Int(self._value[index._value])
 
     def __getitem__(self, index: Int) -> Int:
         return self.at(index)

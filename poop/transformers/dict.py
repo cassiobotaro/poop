@@ -8,8 +8,9 @@ from poop.types.object import Object
 
 def _poop_dict_from_pairs(*pairs: Object) -> Dict:
     d = Dict()
-    for i in range(0, len(pairs), 2):
-        d._data[pairs[i]] = pairs[i + 1]
+    it = iter(pairs)
+    for k, v in zip(it, it):
+        d._data[k] = v
     return d
 
 

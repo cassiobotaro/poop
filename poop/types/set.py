@@ -17,6 +17,7 @@ _set = set  # alias to avoid shadowing by Set class name in annotations
 
 class Set(Object):
     __slots__ = ("_data",)
+    __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
         self._data: _set[Object] = _set(elements)

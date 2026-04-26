@@ -16,6 +16,7 @@ _dict = dict  # alias to avoid shadowing by Dict class name in annotations
 
 class Dict(Object):
     __slots__ = ("_data",)
+    __hash__ = None
 
     def __init__(self) -> None:
         self._data: _dict[Object, Object] = {}
@@ -89,7 +90,9 @@ class Dict(Object):
         return List(*[Tuple(k, v) for k, v in self._data.items()])
 
     def pop(self, key: Object) -> Object:
-        return self._data.pop(key)
+        from poop.types.none import none
+
+        return self._data.pop(key, none)
 
     def popitem(self) -> Tuple:
         from poop.types.tuple import Tuple

@@ -16,6 +16,7 @@ _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 
 class ByteArray(Object):
     __slots__ = ("_value",)
+    __hash__ = None
 
     def __init__(self, value: _bytearray | None = None) -> None:
         self._value: _bytearray = _bytearray() if value is None else value
