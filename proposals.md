@@ -22,6 +22,7 @@ Revisar cada tipo e alinhar com o comportamento CPython equivalente:
 | `Dict(...)` | `dict` | `{...}` | `{...}` |
 | `Set(Int(1))` | `set` | `{1}` | `{1}` |
 | `Bytes(b"hi")` | `bytes` | `b'hi'` | `b'hi'` |
+| `Range(1, 5)` (atual `Interval`) | `range` | `range(1, 5)` | `range(1, 5)` |
 
 Para a maioria dos tipos `str` e `repr` já coincidem — `__repr__ = __str__` na base `Object` está correto. A exceção mais visível é `Str`: `repr` deve envolver em aspas simples (escapando aspas simples internas), como CPython faz. Os demais tipos devem ser verificados individualmente.
 
