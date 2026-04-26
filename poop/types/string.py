@@ -311,4 +311,5 @@ class Str(Object):
     def __str__(self) -> _str:
         return self._value
 
-    __repr__ = __str__
+    def __repr__(self) -> _str:
+        return repr(self._value)

@@ -67,9 +67,16 @@ def test_hash_consistent() -> None:
     assert hash(Str("hello")) == hash(Str("hello"))
 
 
-def test_str_repr_delegates() -> None:
-    s = Str("hi")
-    assert repr(s) == str(s)
+def test_str_str_returns_raw_value() -> None:
+    assert str(Str("hello")) == "hello"
+
+
+def test_str_repr_wraps_in_quotes() -> None:
+    assert repr(Str("hello")) == "'hello'"
+
+
+def test_str_repr_eval_roundtrip() -> None:
+    assert eval(repr(Str("it's"))) == "it's"
 
 
 # --- dunders ---
