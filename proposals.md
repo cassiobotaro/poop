@@ -506,12 +506,6 @@ Padronizar tudo em métodos (com parens) é mais coerente.
 
 ---
 
-## 35. Documentação — `INFECTIONS.md` `Object.print` na seção Object não documenta o `flush`
-
-Linha 481: `obj.print(end="")`. A implementação aceita `flush: bool = False`. Pequeno, mas um leitor pode pensar que `flush` não é suportado.
-
----
-
 ## Resumo executivo
 
 **Bugs reais a corrigir.** Nenhum — todos foram corrigidos.
