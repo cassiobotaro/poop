@@ -411,6 +411,14 @@ These are class-definition decorators, not runtime operations on values. They de
 
 `help()` is a development tool — it prints documentation for inspection at the REPL or during exploration. It carries no program logic and has no message-passing equivalent that would be more expressive. Allowed.
 
+### Heterogeneous numeric comparisons return `false`
+
+`Int(1) == Float(1.0)` → `false`. `Int(1) == Complex(1+0j)` → `false`. In native Python all three would be `True`.
+
+This is intentional: POOP types are opaque to each other — an `Int` and a `Float` are distinct objects and equality is strict type identity first. The principle "every basic type has a POOP equivalent" means each type is self-contained; implicit cross-type coercion would require treating one type as subordinate to another, which breaks that symmetry.
+
+To compare numeric values across types, convert explicitly first: `i.float() == f`, `f.int() == i`, `i.complex() == c`.
+
 ## Active types
 
 ### Object — `poop/types/object.py`
