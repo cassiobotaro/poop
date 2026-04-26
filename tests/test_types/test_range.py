@@ -11,7 +11,7 @@ def test_str() -> None:
 
 
 def test_str_with_step() -> None:
-    assert str(Int(1).to_by_(Int(9), Int(2))) == "range(1, 9, 2)"
+    assert str(Range(Int(1), Int(9), Int(2))) == "range(1, 9, 2)"
 
 
 def test_str_descending() -> None:
@@ -148,25 +148,25 @@ def test_reversed_len_is_same() -> None:
     assert _range(1, 5).reversed().len() == Int(5)
 
 
-def test_to_by_ascending_step() -> None:
+def test_range_with_ascending_step() -> None:
     results: list[int] = []
-    Int(1).to_by_(Int(9), Int(2)).do(lambda i: results.append(int(i)))
+    Range(Int(1), Int(9), Int(2)).do(lambda i: results.append(int(i)))
     assert results == [1, 3, 5, 7, 9]
 
 
-def test_to_by_descending_step() -> None:
+def test_range_with_descending_step() -> None:
     results: list[int] = []
-    Int(9).to_by_(Int(1), Int(-2)).do(lambda i: results.append(int(i)))
+    Range(Int(9), Int(1), Int(-2)).do(lambda i: results.append(int(i)))
     assert results == [9, 7, 5, 3, 1]
 
 
-def test_to_by_len() -> None:
-    assert Int(1).to_by_(Int(9), Int(2)).len() == Int(5)
+def test_range_with_step_len() -> None:
+    assert Range(Int(1), Int(9), Int(2)).len() == Int(5)
 
 
 def test_reversed_with_step() -> None:
     results: list[int] = []
-    Int(1).to_by_(Int(9), Int(2)).reversed().do(lambda i: results.append(int(i)))
+    Range(Int(1), Int(9), Int(2)).reversed().do(lambda i: results.append(int(i)))
     assert results == [9, 7, 5, 3, 1]
 
 
@@ -187,7 +187,7 @@ def test_step_default_descending() -> None:
 
 
 def test_step_explicit() -> None:
-    assert Int(1).to_by_(Int(9), Int(2)).step == Int(2)
+    assert Range(Int(1), Int(9), Int(2)).step == Int(2)
 
 
 def test_count_present() -> None:
@@ -199,7 +199,7 @@ def test_count_absent() -> None:
 
 
 def test_count_with_step_not_hit() -> None:
-    assert Int(1).to_by_(Int(9), Int(2)).count(Int(4)) == Int(0)
+    assert Range(Int(1), Int(9), Int(2)).count(Int(4)) == Int(0)
 
 
 def test_index_found() -> None:

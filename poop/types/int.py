@@ -6,7 +6,6 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
     from poop.types.float import Float
-    from poop.types.range import Range
     from poop.types.string import Str
     from poop.types.tuple import Tuple
 
@@ -24,16 +23,6 @@ class Int(Object):
 
     def bit_invert(self) -> Int:
         return Int(~self._value)
-
-    def to_(self, limit: Int) -> Range:
-        from poop.types.range import Range
-
-        return Range(self, limit)
-
-    def to_by_(self, limit: Int, step: Int) -> Range:
-        from poop.types.range import Range
-
-        return Range(self, limit, step)
 
     def max(self, other: Int) -> Int:
         return self if self._value >= other._value else other

@@ -23,7 +23,7 @@ class Statistics:
         (text + value.repr()).print()
 
     def run(self):
-        data = (1).to_(10).map(lambda i: i * i)
+        data = range(1, 11).map(lambda i: i * i)
 
         sorted_data = data.sorted()
 
