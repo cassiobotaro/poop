@@ -36,6 +36,26 @@ class Interpreter:
             tree = transformer.transform(tree)
         execute(tree, filename=filename, namespace=dict(self._namespace))
 
+    def validate_all(self, source: str, filename: str = "<string>") -> list[ValidationError]:
+        from poop.errors import ValidationError
+
+        tree: ast.Module = parse(source, filename=filename)
+        errors: list[ValidationError] = []
+        for validator in self._validators:
+            try:
+                validator.validate(tree)
+            except ValidationError as exc:
+                errors.append(exc)
+        return errors
+
+    def transform_source(self, source: str, filename: str = "<string>") -> ast.Module:
+        tree: ast.Module = parse(source, filename=filename)
+        for validator in self._validators:
+            validator.validate(tree)
+        for transformer in self._transformers:
+            tree = transformer.transform(tree)
+        return tree
+
     def run_source_repl(self, source: str, namespace: dict[str, object]) -> None:
         tree: ast.Module = parse(source, filename="<repl>")
         for validator in self._validators:
