@@ -36,9 +36,12 @@ from poop.validators.no_iter import NoIterValidator
 from poop.validators.no_len import NoLenValidator
 from poop.validators.no_loops import NoLoopsValidator
 from poop.validators.no_match import NoMatchValidator
+from poop.validators.no_filter import NoFilterValidator
+from poop.validators.no_map import NoMapValidator
 from poop.validators.no_max import NoMaxValidator
 from poop.validators.no_min import NoMinValidator
 from poop.validators.no_not import NoNotValidator
+from poop.validators.no_round import NoRoundValidator
 from poop.validators.no_open import NoOpenValidator
 from poop.validators.no_pow import NoPowValidator
 from poop.validators.no_print import NoPrintValidator
@@ -93,6 +96,9 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoAnyValidator(),
     NoMinValidator(),
     NoMaxValidator(),
+    NoMapValidator(),
+    NoFilterValidator(),
+    NoRoundValidator(),
     NoBinValidator(),
     NoBreakpointValidator(),
     NoChrValidator(),

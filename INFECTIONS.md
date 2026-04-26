@@ -364,6 +364,22 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 Available on `List`, `Tuple`, `Set`, `FrozenSet`, and `Interval`.
 
+### No `map` / `filter` — `poop/validators/no_map.py`, `poop/validators/no_filter.py`
+
+| Call | Reason | Substitute |
+|---|---|---|
+| `map(func, col)` | free function with procedural look | `col.map(block)` |
+| `filter(func, col)` | free function with procedural look | `col.filter(block)` |
+
+### No `round` — `poop/validators/no_round.py`
+
+| Call | Reason | Substitute |
+|---|---|---|
+| `round(x)` | free function with procedural look | `x.round()` |
+| `round(x, n)` | free function with procedural look | `x.round(n)` |
+
+Available on `Int` and `Float`.
+
 ### No `sorted` / `reversed` — `poop/validators/no_sorted.py`, `poop/validators/no_reversed.py`
 
 | Call | Reason | Substitute |

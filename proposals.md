@@ -37,7 +37,8 @@ dependabot.yml was already present (uv + github-actions, weekly).
 
 ---
 
-**improvement**
+**improvement** ✅ resolved
 
-Review the builtin functions to check if they are blocked / implemented as methods.
+Audit complete. Added `no_map`, `no_filter`, `no_round` validators.
+Substitutes: `col.map(block)`, `col.filter(block)`, `x.round()` (already on Int/Float).
 
