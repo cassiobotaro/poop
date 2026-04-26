@@ -3,23 +3,7 @@
 Review feita por Claude (Opus 4.7) considerando `INFECTIONS.md` e o pipeline `parse → validate → transform → execute`. Cada item indica caminho, linhas relevantes e uma sugestão concreta. Itens estão agrupados por intenção: refatoração, bug/inconsistência, alinhamento filosófico e novas funcionalidades.
 
 ---
-## 1. Funcionalidade nova — `times` em Int
-
-Smalltalk: `5 timesRepeat: [Transcript show: 'hi']`. Equivalente em POOP:
-
-```python
-class Int(Object):
-    def times(self, block: Callable[[], Any]) -> Int:
-        for _ in range(self._value):
-            block()
-        return self
-```
-
-Útil porque hoje a única forma é `Int(0).to_(Int(4)).do(lambda i: ...)`, mais verboso.
-
----
-
-## 2. Funcionalidade nova — `--validators-only` / `--transformers-only` / `--explain` no CLI
+## 1. Funcionalidade nova — `--validators-only` / `--transformers-only` / `--explain` no CLI
 
 `poop/cli.py` aceita apenas o arquivo. Para depuração, seria útil:
 
@@ -29,13 +13,13 @@ class Int(Object):
 
 ---
 
-## 3. Funcionalidade nova — fail-fast vs collect-all em Validator
+## 2. Funcionalidade nova — fail-fast vs collect-all em Validator
 
 Hoje cada validator lança `ValidationError` no primeiro problema. Programas grandes recebem feedback um erro por vez. **Proposta**: `Validator.validate` poderia retornar `list[ValidationError]` em vez de levantar, e o `Interpreter` decide o que fazer (printar todos, ou levantar o primeiro). Isso quebra a API atual — pode ser opt-in via `Interpreter(collect_all=True)`.
 
 ---
 
-## 4. Funcionalidade nova — `ast.AsyncFunctionDef` está bloqueado mas `async`/`await` não têm validator próprio
+## 3. Funcionalidade nova — `ast.AsyncFunctionDef` está bloqueado mas `async`/`await` não têm validator próprio
 
 `no_free_functions` bloqueia `AsyncFunctionDef` no top-level, mas dentro de classes, `async def` métodos seriam aceitos. Idem `await expr`, `async for`, `async with` — `async for`/`async with` têm validator (`no_loops`, `no_with`), mas `await` não. Em uma linguagem que não tem `Future` nem event loop POOP, `async`/`await` não fazem sentido. Adicionar `no_async`:
 
@@ -50,13 +34,13 @@ class _NoAsyncVisitor(ast.NodeVisitor):
 
 ---
 
-## 5. Funcionalidade nova — `Number` mixin para `Int` + `Float` + `Complex`
+## 4. Funcionalidade nova — `Number` mixin para `Int` + `Float` + `Complex`
 
 Hoje as três classes duplicam `negated`, `__add__`, `__sub__`, etc. com tipos diferentes. Uma classe-base `Number` com hooks `_wrap(value)` por subclasse reduz ~150 linhas e abre porta para coerções `Int + Float → Float`, etc.
 
 ---
 
-## 6. Filosofia — `properties` (`@property`) em tipos POOP contradizem "everything is a message"
+## 5. Filosofia — `properties` (`@property`) em tipos POOP contradizem "everything is a message"
 
 `Int.real`, `Int.imag`, `Float.real`, `Complex.real`, `Interval.start` etc. são `@property`. Quem escreve `interval.start` está acessando um atributo, não enviando uma mensagem. Em Smalltalk, `start` seria um getter sem parens (mensagem unária). Em Python, sem parens vira atributo.
 
@@ -72,7 +56,7 @@ Padronizar tudo em métodos (com parens) é mais coerente.
 
 ---
 
-## 7. Renomeação — `Interval` → `Range`
+## 6. Renomeação — `Interval` → `Range`
 
 `poop/types/interval.py` expõe o tipo como `Interval`, mas o conceito é idêntico ao `range` do Python e ao `Range` de outras linguagens. Em POOP, o tipo é criado via `Int.to_(limit)` e representa uma sequência inteira — semanticamente um intervalo, mas o nome `Range` é mais reconhecível e alinhado com o vocabulário do domínio.
 
@@ -87,7 +71,7 @@ Impacto da renomeação:
 
 ---
 
-## 8. Filosofia — `Boolean.while_true(cond_block, body_block)` é uma mensagem para o objeto errado
+## 7. Filosofia — `Boolean.while_true(cond_block, body_block)` é uma mensagem para o objeto errado
 
 Em Smalltalk, `whileTrue:` é mensagem para um **block**, não para o booleano: `[cond] whileTrue: [body]`. O receiver é o block que retorna o booleano, não um bool literal.
 
@@ -103,7 +87,7 @@ Hoje, ler `true.while_true(lambda: x < 10, lambda: x.print())` é confuso porque
 
 ---
 
-## 9. Filosofia — duplicação `_TrueClass.while_true` vs `_FalseClass.while_true`
+## 8. Filosofia — duplicação `_TrueClass.while_true` vs `_FalseClass.while_true`
 
 `poop/types/boolean.py:132-152` e `212-232`. As duas implementações de `while_true` (e `while_false`) são **idênticas**. Movê-las para a base `Boolean` elimina ~40 linhas duplicadas. O receiver não altera o comportamento (ver item 17), portanto:
 
@@ -126,7 +110,7 @@ Igualmente, `_TrueClass.if_true_if_false`/`if_false_if_true` poderiam compartilh
 
 ---
 
-## 10. Funcionalidade nova — `Block` como tipo de primeira classe
+## 9. Funcionalidade nova — `Block` como tipo de primeira classe
 
 Hoje "block" = `lambda` Python. Smalltalk tem blocks com mensagens próprias: `[1+2] value`, `[:x | x*2] value: 5`, `[cond] whileTrue: [body]`.
 
@@ -165,8 +149,8 @@ Resolve o item 17 (`while_true` mora no objeto certo). Ergonomia depende de tran
 
 **Refatorações de alto impacto completadas.** ✅ 0 (while_* na base de Boolean), 8 (Number mixin).
 
-**Decisões filosóficas a documentar em INFECTIONS.md.** 17 (while_true e o receiver irrelevante), 9 (properties).
+**Decisões filosóficas a documentar em INFECTIONS.md.** 16 (while_true e o receiver irrelevante), 9 (properties).
 
-**Funcionalidades novas com bom retorno por esforço.** , 10 (Block), , , 1 (Int.times), 7 (no_async).
+**Funcionalidades novas com bom retorno por esforço.** , 9 (Block), , , , 7 (no_async).
 
 **Renomeações.** 10 (`Interval` → `Range`).
