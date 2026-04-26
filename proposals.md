@@ -3,26 +3,13 @@
 Review feita por Claude (Opus 4.7) considerando `INFECTIONS.md` e o pipeline `parse → validate → transform → execute`. Cada item indica caminho, linhas relevantes e uma sugestão concreta. Itens estão agrupados por intenção: refatoração, bug/inconsistência, alinhamento filosófico e novas funcionalidades.
 
 ---
-## 1. Filosofia — `Str.__repr__ = __str__` esconde aspas em REPL
+## 1. Consistência — `Str.__repr__` deve envolver o valor em aspas
 
-`Str("hello").__repr__()` retorna `"hello"` em vez de `"'hello'"`. No REPL POOP atual:
+`Str("hello").__repr__()` retorna `"hello"` em vez de `"'hello'"`. No REPL POOP o resultado de uma expressão string fica idêntico ao output de `print`, sem forma de distinguir. Em CPython `repr("hello")` retorna `"'hello'"`.
 
-```
->>> "hello"
-hello
-```
+Em Python, `__repr__` representa o objeto de forma que `eval(repr(x)) == x`; `__str__` é a forma legível. Para todos os tipos POOP (Int, List, Boolean…) `str` e `repr` já coincidem com a convenção Python, portanto `__repr__ = __str__` na base `Object` está correto para eles. A única exceção é `Str`.
 
-Sem distinguir do output de `print`. Em CPython:
-
-```
->>> "hello"
-'hello'
-```
-
-`INFECTIONS.md` (linha 17) decreta que `__repr__` delega a `__str__`, mas isso degrada a experiência do REPL. Sugestões:
-
-1. Manter `__str__ = self._value` e definir `__repr__ = f"'{self._value}'"` (apenas para `Str`). Documenta como exceção justificada.
-2. Adicionar `displayhook` customizado no executor REPL que, ao mostrar `Str`, envolve em aspas.
+**Proposta:** definir `__repr__` em `Str` para retornar `f"'{self._value}'"`, escapando aspas simples internas. Mantém `__repr__ = __str__` em todos os outros tipos.
 
 ---
 
@@ -302,27 +289,7 @@ Padronizar tudo em métodos (com parens) é mais coerente.
 
 ---
 
-## 19. Consistência — `__str__` e `__repr__` devem seguir a convenção Python em todos os tipos
-
-Em Python, `__repr__` deve retornar uma representação que idealmente permita recriar o objeto (`eval(repr(x)) == x`), enquanto `__str__` retorna a forma legível para humanos. Hoje POOP define `__repr__ = __str__` na base `Object`, o que faz todos os tipos perderem a distinção — visível no REPL (item 1 trata `Str` especificamente, mas o problema é geral).
-
-Exemplos do comportamento atual vs. esperado:
-
-| Tipo | `str(x)` atual | `repr(x)` atual | `repr(x)` esperado |
-|---|---|---|---|
-| `Str("hello")` | `hello` | `hello` | `'hello'` |
-| `Int(42)` | `42` | `42` | `42` (ok) |
-| `List(Int(1), Int(2))` | `[1, 2]` | `[1, 2]` | `[1, 2]` (ok) |
-| `none` | `None` | `None` | `None` (ok) |
-| `true` | `True` | `True` | `True` (ok) |
-
-O único tipo onde a distinção importa de verdade é `Str` — `repr` deve envolver em aspas simples, como CPython. Para os demais tipos numéricos e coleções, `str` e `repr` já coincidem com a convenção Python, então `__repr__ = __str__` está correto.
-
-**Proposta concreta:** definir `__repr__` em `Str` para retornar `f"'{self._value}'"` (ou escapar aspas simples internas), mantendo `__repr__ = __str__` nos demais tipos.
-
----
-
-## 20. Renomeação — `Interval` → `Range`
+## 19. Renomeação — `Interval` → `Range`
 
 `poop/types/interval.py` expõe o tipo como `Interval`, mas o conceito é idêntico ao `range` do Python e ao `Range` de outras linguagens. Em POOP, o tipo é criado via `Int.to_(limit)` e representa uma sequência inteira — semanticamente um intervalo, mas o nome `Range` é mais reconhecível e alinhado com o vocabulário do domínio.
 
@@ -347,6 +314,6 @@ Impacto da renomeação:
 
 **Funcionalidades novas com bom retorno por esforço.** 8 (Transcript), 9 (Block), 11 (respond_to), 12 (perform), 13 (Int.times), 16 (no_async).
 
-**Consistência com convenção Python.** 1 (`Str.__repr__` esconde aspas no REPL), 19 (`__str__`/`__repr__` para todos os tipos).
+**Consistência com convenção Python.** 1 (`Str.__repr__` esconde aspas no REPL).
 
-**Renomeações.** 20 (`Interval` → `Range`).
+**Renomeações.** 19 (`Interval` → `Range`).
