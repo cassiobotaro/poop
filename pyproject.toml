@@ -10,7 +10,7 @@ authors = [
 dependencies = ["typer>=0.15"]
 
 [project.scripts]
-poop = "poop.cli:main"
+poop = "poop.cli:entry_point"
 
 [tool.uv]
 package = true
