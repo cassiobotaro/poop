@@ -463,20 +463,42 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `whileTrue:` / `whileFalse:` | `while_true(cond_block, body_block)` / `while_false(cond_block, body_block)` |
 | `assert:` | `assert_(message)` | raises `AssertionError(message)` if `false`; returns `self` if `true` |
 
+### Collection iterable methods — `poop/types/_iterable_mixin.py`
+
+`List`, `Tuple`, `Set`, `FrozenSet`, `Interval`, `Bytes`, `ByteArray`, and `MemoryView` all inherit the following methods from `_IterableMixin`:
+
+| Smalltalk message | POOP method | Behavior |
+|---|---|---|
+| `do:` | `do(block)` | visits each element; **returns `self`** |
+| `collect:` | `map(block)` | transforms elements; return type matches collection (see note) |
+| `select:` | `filter(block)` | keeps matching elements; return type matches collection |
+| `reject:` | `filter_false(block)` | keeps non-matching elements; return type matches collection |
+| `detect:` | `find(block)` | first element satisfying block, or POOP `none` |
+| `inject:into:` | `reduce(init, block)` | left fold |
+| — | `sum()` | sum of elements; returns `Int(0)` for empty collection |
+| — | `all(block)` | `true` if block holds for every element |
+| — | `any(block)` | `true` if block holds for at least one element |
+
+`do` returning `self` enables cascades: `col.do(lambda x: x.print()).map(lambda x: x + 1)`.
+
+`map`/`filter`/`filter_false` return the same type for `List`, `Tuple`, `Set`, and `FrozenSet`; they return `List` for `Interval`, `Bytes`, `ByteArray`, and `MemoryView` (those types cannot be reconstructed from arbitrary transformed elements).
+
+`Bytes`, `ByteArray`, and `MemoryView` only expose `do` and `map` from this mixin. `Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements.
+
 ### Interval — `poop/types/interval.py`
 
 `Interval(Object)` represents a closed integer interval [start, stop]. Created via `Int.to_(limit)`.
 
-| Smalltalk message | POOP method | Behavior |
-|---|---|---|
-| `do:` | `do(block)` | iterates without allocating a list |
-| `collect:` | `map(block)` | transforms → `List` |
-| `select:` | `filter(block)` | filters → `List` |
-| `reject:` | `filter_false(block)` | filters inverse → `List` |
-| `detect:` | `find(block)` | first satisfying, or POOP `none` |
-| `inject:into:` | `reduce(init, block)` | reduce |
-| `len` | `len()` | returns `Int` |
-| `copyFrom:to:` | `copy_from_to(start, stop, step=None)` | slice → `List` |
+| POOP method | Behavior |
+|---|---|
+| `do(block)` | see collection iterable methods above |
+| `map(block)` | transforms → `List` |
+| `filter(block)` | filters → `List` |
+| `filter_false(block)` | filters inverse → `List` |
+| `find(block)` | first satisfying, or POOP `none` |
+| `reduce(init, block)` | reduce |
+| `len()` | returns `Int` |
+| `copy_from_to(start, stop, step=None)` | slice → `List` |
 
 ### Object.print — `poop/types/object.py`
 
