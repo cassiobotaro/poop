@@ -1,0 +1,72 @@
+from __future__ import annotations
+
+from collections import deque
+from functools import reduce as functools_reduce
+from typing import TYPE_CHECKING, Any, Callable, Iterator
+
+import builtins as _builtins
+
+if TYPE_CHECKING:
+    pass
+
+
+class _IterableMixin:
+    def _iter_items(self) -> Iterator[Any]:
+        return iter(self)  # type: ignore[arg-type]
+
+    def _collect(self, items: Any) -> Any:
+        from poop.types.list import List
+
+        return List(*items)
+
+    def do(self, block: Callable[[Any], Any]) -> _IterableMixin:
+        deque(map(block, self._iter_items()), maxlen=0)
+        return self  # type: ignore[return-value]
+
+    def map(self, block: Callable[[Any], Any]) -> Any:
+        return self._collect(map(block, self._iter_items()))
+
+    def filter(self, block: Callable[[Any], Any]) -> Any:
+        return self._collect(x for x in self._iter_items() if bool(block(x)))
+
+    def filter_false(self, block: Callable[[Any], Any]) -> Any:
+        return self._collect(
+            x for x in self._iter_items() if not bool(block(x))
+        )
+
+    def find(self, block: Callable[[Any], Any]) -> Any:
+        from poop.types.none import none
+
+        for item in self._iter_items():
+            if bool(block(item)):
+                return item
+        return none
+
+    def reduce(self, init: Any, block: Callable[[Any, Any], Any]) -> Any:
+        return functools_reduce(block, self._iter_items(), init)
+
+    def sum(self) -> Any:
+        from poop.types.int import Int
+
+        items = list(self._iter_items())
+        if not items:
+            return Int(0)
+        return functools_reduce(lambda a, b: a + b, items)
+
+    def all(self, block: Callable[[Any], Any]) -> Any:
+        from poop.types.boolean import false, true
+
+        return (
+            true
+            if _builtins.all(bool(block(x)) for x in self._iter_items())
+            else false
+        )
+
+    def any(self, block: Callable[[Any], Any]) -> Any:
+        from poop.types.boolean import false, true
+
+        return (
+            true
+            if _builtins.any(bool(block(x)) for x in self._iter_items())
+            else false
+        )

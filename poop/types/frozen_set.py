@@ -1,10 +1,7 @@
-from builtins import all as builtins_all
-from builtins import any as builtins_any
-from collections import deque
 from collections.abc import Callable, Iterator
-from functools import reduce
 from typing import TYPE_CHECKING, Any
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -15,11 +12,14 @@ if TYPE_CHECKING:
 _frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name
 
 
-class FrozenSet(Object):
+class FrozenSet(_IterableMixin, Object):
     __slots__ = ("_data",)
 
     def __init__(self, *elements: Object) -> None:
         self._data: _frozenset[Object] = _frozenset(elements)
+
+    def _collect(self, items: Any) -> FrozenSet:
+        return FrozenSet(*items)
 
     def includes(self, obj: Object) -> Boolean:
         from poop.types.boolean import false, true
@@ -33,47 +33,6 @@ class FrozenSet(Object):
 
     def __len__(self) -> int:
         return len(self._data)
-
-    def do(self, block: Callable[[Object], Any]) -> None:
-        deque(map(block, self._data), maxlen=0)
-
-    def map(self, block: Callable[[Object], Any]) -> FrozenSet:
-        return FrozenSet(*map(block, self._data))
-
-    def filter(self, block: Callable[[Object], Any]) -> FrozenSet:
-        return FrozenSet(*[x for x in self._data if bool(block(x))])
-
-    def filter_false(self, block: Callable[[Object], Any]) -> FrozenSet:
-        return FrozenSet(*[x for x in self._data if not bool(block(x))])
-
-    def find(self, block: Callable[[Object], Any]) -> Object | NoneClass:
-        from poop.types.none import none
-
-        for item in self._data:
-            if bool(block(item)):
-                return item
-        return none
-
-    def reduce(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
-        return reduce(block, self._data, init)
-
-    def sum(self) -> Object:
-        from poop.types.int import Int
-
-        items = list(self._data)
-        if not items:
-            return Int(0)
-        return reduce(lambda a, b: a + b, items)
-
-    def all(self, block: Callable[[Object], Any]) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return true if builtins_all(bool(block(x)) for x in self._data) else false
-
-    def any(self, block: Callable[[Object], Any]) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return true if builtins_any(bool(block(x)) for x in self._data) else false
 
     def copy(self) -> FrozenSet:
         return FrozenSet(*self._data)

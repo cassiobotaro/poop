@@ -1,10 +1,7 @@
-from builtins import all as builtins_all
-from builtins import any as builtins_any
-from collections import deque
 from collections.abc import Callable
-from functools import reduce
 from typing import TYPE_CHECKING, Any
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -14,7 +11,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class Interval(Object):
+class Interval(_IterableMixin, Object):
     __slots__ = ("_start", "_step", "_stop")
 
     def __init__(self, start: Int, stop: Int, step: Int | None = None) -> None:
@@ -37,8 +34,16 @@ class Interval(Object):
         for i in self._range():
             yield Int(i)
 
-    def do[T](self, block: Callable[[Int], T]) -> None:
-        deque(map(block, self._iter()), maxlen=0)
+    def __iter__(self) -> Any:
+        return self._iter()
+
+    def _iter_items(self) -> Any:
+        return self._iter()
+
+    def _collect(self, items: Any) -> Any:
+        from poop.types.list import List
+
+        return List(*items)
 
     def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> List:
         from poop.types.list import List
@@ -46,50 +51,6 @@ class Interval(Object):
         s = step._value if step is not None else None
         items = list(self._iter())
         return List(*items[start._value : stop._value : s])
-
-    def map(self, block: Callable[[Int], Any]) -> List:
-        from poop.types.list import List
-
-        return List(*map(block, self._iter()))
-
-    def filter(self, block: Callable[[Int], Any]) -> List:
-        from poop.types.list import List
-
-        return List(*[i for i in self._iter() if bool(block(i))])
-
-    def filter_false(self, block: Callable[[Int], Any]) -> List:
-        from poop.types.list import List
-
-        return List(*[i for i in self._iter() if not bool(block(i))])
-
-    def find(self, block: Callable[[Int], Any]) -> Int | NoneClass:
-        from poop.types.none import none
-
-        for i in self._iter():
-            if bool(block(i)):
-                return i
-        return none
-
-    def reduce[T](self, init: T, block: Callable[[T, Int], T]) -> T:
-        return reduce(block, self._iter(), init)
-
-    def sum(self) -> Object:
-        from poop.types.int import Int
-
-        items = list(self._iter())
-        if not items:
-            return Int(0)
-        return reduce(lambda a, b: a + b, items)
-
-    def all(self, block: Callable[[Int], Any]) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return true if builtins_all(bool(block(i)) for i in self._iter()) else false
-
-    def any(self, block: Callable[[Int], Any]) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return true if builtins_any(bool(block(i)) for i in self._iter()) else false
 
     def includes(self, item: Int) -> Boolean:
         from poop.types.boolean import false, true

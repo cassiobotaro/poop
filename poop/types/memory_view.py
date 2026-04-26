@@ -2,6 +2,7 @@ from collections import deque
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
 _memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
 
 
-class MemoryView(Object):
+class MemoryView(_IterableMixin, Object):
     __slots__ = ("_value",)
 
     def __init__(self, value: _memoryview) -> None:
@@ -35,16 +36,7 @@ class MemoryView(Object):
     def __getitem__(self, index: Int) -> Int:
         return self.at(index)
 
-    def do(self, block: Callable[[Int], Any]) -> None:
-        from poop.types.int import Int
 
-        deque((block(Int(b)) for b in self._value), maxlen=0)
-
-    def map(self, block: Callable[[Int], Any]) -> List:
-        from poop.types.int import Int
-        from poop.types.list import List
-
-        return List(*(block(Int(b)) for b in self._value))
 
     def __iter__(self) -> Iterator[Int]:
         from poop.types.int import Int

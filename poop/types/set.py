@@ -1,10 +1,7 @@
-from builtins import all as builtins_all
-from builtins import any as builtins_any
-from collections import deque
 from collections.abc import Callable, Iterator
-from functools import reduce
 from typing import TYPE_CHECKING, Any
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -15,12 +12,15 @@ if TYPE_CHECKING:
 _set = set  # alias to avoid shadowing by Set class name in annotations
 
 
-class Set(Object):
+class Set(_IterableMixin, Object):
     __slots__ = ("_data",)
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
         self._data: _set[Object] = _set(elements)
+
+    def _collect(self, items: Any) -> Set:
+        return Set(*items)
 
     def add(self, obj: Object) -> Set:
         self._data.add(obj)
@@ -99,47 +99,6 @@ class Set(Object):
 
     def __len__(self) -> int:
         return len(self._data)
-
-    def do(self, block: Callable[[Object], Any]) -> None:
-        deque(map(block, self._data), maxlen=0)
-
-    def map(self, block: Callable[[Object], Any]) -> Set:
-        return Set(*map(block, self._data))
-
-    def filter(self, block: Callable[[Object], Any]) -> Set:
-        return Set(*[x for x in self._data if bool(block(x))])
-
-    def filter_false(self, block: Callable[[Object], Any]) -> Set:
-        return Set(*[x for x in self._data if not bool(block(x))])
-
-    def find(self, block: Callable[[Object], Any]) -> Object | NoneClass:
-        from poop.types.none import none
-
-        for item in self._data:
-            if bool(block(item)):
-                return item
-        return none
-
-    def reduce(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
-        return reduce(block, self._data, init)
-
-    def sum(self) -> Object:
-        from poop.types.int import Int
-
-        items = list(self._data)
-        if not items:
-            return Int(0)
-        return reduce(lambda a, b: a + b, items)
-
-    def all(self, block: Callable[[Object], Any]) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return true if builtins_all(bool(block(x)) for x in self._data) else false
-
-    def any(self, block: Callable[[Object], Any]) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return true if builtins_any(bool(block(x)) for x in self._data) else false
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._data)

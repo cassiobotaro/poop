@@ -2,6 +2,7 @@ from collections import deque
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 
 
-class ByteArray(Object):
+class ByteArray(_IterableMixin, Object):
     __slots__ = ("_value",)
     __hash__ = None
 
@@ -67,16 +68,7 @@ class ByteArray(Object):
 
         return Str(self._value.hex())
 
-    def do(self, block: Callable[[Int], Any]) -> None:
-        from poop.types.int import Int
 
-        deque((block(Int(b)) for b in self._value), maxlen=0)
-
-    def map(self, block: Callable[[Int], Any]) -> List:
-        from poop.types.int import Int
-        from poop.types.list import List
-
-        return List(*(block(Int(b)) for b in self._value))
 
     def __iter__(self) -> Iterator[Int]:
         from poop.types.int import Int

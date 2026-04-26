@@ -1,12 +1,9 @@
-from builtins import all as builtins_all
-from builtins import any as builtins_any
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
-from collections import deque
 from collections.abc import Callable, Iterator
-from functools import reduce
 from typing import TYPE_CHECKING, Any
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -17,11 +14,14 @@ if TYPE_CHECKING:
 _tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
 
 
-class Tuple(Object):
+class Tuple(_IterableMixin, Object):
     __slots__ = ("_items",)
 
     def __init__(self, *elements: Object) -> None:
         self._items: _tuple[Object, ...] = _tuple(elements)
+
+    def _collect(self, items: Any) -> Tuple:
+        return Tuple(*items)
 
     def len(self) -> Int:
         from poop.types.int import Int
@@ -57,46 +57,6 @@ class Tuple(Object):
 
     def __contains__(self, item: object) -> bool:
         return item in self._items
-
-    def do(self, block: Callable[[Object], Any]) -> None:
-        deque(map(block, self._items), maxlen=0)
-
-    def map(self, block: Callable[[Object], Any]) -> Tuple:
-        return Tuple(*map(block, self._items))
-
-    def filter(self, block: Callable[[Object], Any]) -> Tuple:
-        return Tuple(*[x for x in self._items if bool(block(x))])
-
-    def filter_false(self, block: Callable[[Object], Any]) -> Tuple:
-        return Tuple(*[x for x in self._items if not bool(block(x))])
-
-    def find(self, block: Callable[[Object], Any]) -> Object | NoneClass:
-        from poop.types.none import none
-
-        for item in self._items:
-            if bool(block(item)):
-                return item
-        return none
-
-    def reduce(self, init: Any, block: Callable[[Any, Object], Any]) -> Any:
-        return reduce(block, self._items, init)
-
-    def sum(self) -> Object:
-        from poop.types.int import Int
-
-        if not self._items:
-            return Int(0)
-        return reduce(lambda a, b: a + b, self._items)
-
-    def all(self, block: Callable[[Object], Any]) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return true if builtins_all(bool(block(x)) for x in self._items) else false
-
-    def any(self, block: Callable[[Object], Any]) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return true if builtins_any(bool(block(x)) for x in self._items) else false
 
     def sorted(self, key: Callable[[Object], Any] | None = None) -> Tuple:
         return Tuple(*builtins_sorted(self._items, key=key))
