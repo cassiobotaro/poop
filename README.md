@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="poop.png" alt="POOP logo" width="220">
+</p>
+
 # POOP 💩
 
 **POOP** is an acronym for **P**ython **O**bject **O**riented **P**rogramming.
