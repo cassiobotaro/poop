@@ -41,6 +41,20 @@ uv run pytest tests/test_file.py::test_name
 
 Após cada funcionalidade ou correção implementada, fazer commit das mudanças com mensagem descritiva. Cada commit deve ser atômico — um validator, um tipo, um bug fix — nunca agrupar mudanças não relacionadas.
 
+Before implementing a multi-part plan, confirm scope with the user — they may want only a subset implemented (e.g., `dir` as method but `help` as function).
+
+## Testing
+
+When fixing tests, verify expected values against actual language semantics (e.g., ascii repr quoting style, inclusive vs exclusive interval bounds, `__radd__` requirements for `builtins.sum`) before assuming the implementation is wrong.
+
+## Language Design Principles
+
+When implementing new types or features, ensure they are transparent to end users (e.g., use lambda transformers, `__call__`, or syntactic sugar) rather than exposing internal class names like `Block()`.
+
+## Conventions
+
+Always verify GitHub Action versions are current and use the actual current year (2026) in license files, copyright notices, and dates.
+
 ## Architecture
 
 Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate → transform → execute(namespace)`.
