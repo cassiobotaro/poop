@@ -2,13 +2,12 @@ import ast
 from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
+from poop.types.byte_array import ByteArray
+from poop.types.bytes import Bytes
 from poop.types.memory_view import MemoryView
 
 
 def _poop_memoryview_from(arg: object = None) -> MemoryView:
-    from poop.types.byte_array import ByteArray
-    from poop.types.bytes import Bytes
-
     if isinstance(arg, Bytes):
         return MemoryView(memoryview(arg._value))
     if isinstance(arg, ByteArray):
