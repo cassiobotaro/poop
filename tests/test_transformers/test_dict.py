@@ -9,7 +9,9 @@ from poop.transformers.dict import (
 )
 from poop.types.dict import Dict
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def _transform(source: str) -> ast.Module:
@@ -89,9 +91,6 @@ def test_dict_from_dict_returns_same() -> None:
 
 
 def test_dict_from_list_of_tuples() -> None:
-    from poop.types.list import List
-    from poop.types.tuple import Tuple
-
     pairs = List(Tuple(Str("a"), Int(1)), Tuple(Str("b"), Int(2)))
     result = _poop_dict_from(pairs)
     assert isinstance(result, Dict)
@@ -100,8 +99,6 @@ def test_dict_from_list_of_tuples() -> None:
 
 
 def test_dict_from_tuple_of_tuples() -> None:
-    from poop.types.tuple import Tuple
-
     pairs = Tuple(Tuple(Str("x"), Int(10)), Tuple(Str("y"), Int(20)))
     result = _poop_dict_from(pairs)
     assert isinstance(result, Dict)
@@ -110,16 +107,11 @@ def test_dict_from_tuple_of_tuples() -> None:
 
 
 def test_dict_from_entry_wrong_size_raises() -> None:
-    from poop.types.list import List
-    from poop.types.tuple import Tuple
-
     with pytest.raises(TypeError):
         _poop_dict_from(List(Tuple(Str("a"), Int(1), Int(2))))
 
 
 def test_dict_from_list_of_lists() -> None:
-    from poop.types.list import List
-
     pairs = List(List(Str("a"), Int(1)), List(Str("b"), Int(2)))
     result = _poop_dict_from(pairs)
     assert isinstance(result, Dict)
@@ -128,15 +120,11 @@ def test_dict_from_list_of_lists() -> None:
 
 
 def test_dict_from_list_of_lists_wrong_size_raises() -> None:
-    from poop.types.list import List
-
     with pytest.raises(TypeError):
         _poop_dict_from(List(List(Str("a"), Int(1), Int(2))))
 
 
 def test_dict_from_invalid_item_type_raises() -> None:
-    from poop.types.list import List
-
     with pytest.raises(TypeError, match="cannot use"):
         _poop_dict_from(List(Int(1)))
 
