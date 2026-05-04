@@ -7,6 +7,9 @@ from poop import Interpreter
 from poop.errors import ExecutionError, ParseError, ValidationError
 from poop.transformers.boolean import BooleanTransformer
 from poop.types.boolean import Boolean
+from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.tuple import Tuple
 
 
 def test_valid_code_runs_successfully() -> None:
@@ -69,9 +72,6 @@ def test_custom_transformers_bypass_boolean_substitution() -> None:
 
 
 def test_int_divmod_returns_tuple_of_ints() -> None:
-    from poop.types.int import Int
-    from poop.types.tuple import Tuple
-
     result = Int(17).divmod(Int(5))
     assert isinstance(result, Tuple)
     assert result.at(Int(0)) == Int(3)
@@ -79,10 +79,6 @@ def test_int_divmod_returns_tuple_of_ints() -> None:
 
 
 def test_float_divmod_returns_tuple_of_floats() -> None:
-    from poop.types.float import Float
-    from poop.types.int import Int
-    from poop.types.tuple import Tuple
-
     result = Float(17.0).divmod(Float(5.0))
     assert isinstance(result, Tuple)
     assert result.at(Int(0)) == Float(3.0)
