@@ -104,15 +104,23 @@ Par do item 6. Mesma justificativa de simetria.
 
 **Decisão:** vale o investimento ou mantém banido?
 
-### 10. `open(path)` → `Str.open(mode)` retornando tipo `File`?
+### 10. `open(path)` → tipo `Path` POOP inspirado em `pathlib`?
 
 **Hoje:** `INFECTIONS.md:349-351` declara "file I/O — no POOP equivalent".
 
-**Modelagem possível:** `Str("path").open(Str("r"))` retorna `File` POOP com `read_lines() -> List[Str]`, `write(content: Str) -> File`, `close() -> NoneClass`.
+**Observação importante:** o `pathlib` da stdlib já é **orientado a objetos** — `Path("foo.txt").read_text()`, `Path("dir").iterdir()`, `Path("a").exists()`. A API casa naturalmente com o modelo de mensagens do POOP, dispensando um "subsistema novo" pensado do zero.
 
-**Escopo:** grande — outro subsistema novo.
+**Modelagens possíveis:**
+- **(a) Wrapper sobre `pathlib.Path`** — `Path` POOP envolve `pathlib.Path` e expõe métodos como `read_text() -> Str`, `read_lines() -> List[Str]`, `write_text(content: Str) -> Path`, `exists() -> Boolean`, `iterdir() -> List[Path]`. Mais barato, leveraging pathlib testado.
+- **(b) `Str.open(mode)` retornando `File` POOP** — alternativa originalmente proposta, mais próxima do builtin `open()` mas exige desenhar do zero o ciclo de vida (`close`, context manager via `With`).
 
-**Decisão:** par do item 9 — implementar I/O ou manter banido?
+**Recomendação:** (a). Pathlib já fez o trabalho de "OO-ificar" I/O de filesystem; POOP herda isso quase de graça. Para o `open()` em si, basta `Path("foo").read_text()` / `write_text()` cobrir a maior parte dos usos sem precisar de file handles abertos.
+
+**Local sugerido:** `poop/types/path.py` (novo) + transformer em `poop/transformers/path.py` para interceptar `open(...)` rewriting para `Path(...).read_text()` quando o padrão for óbvio (ou simplesmente deixar o usuário escrever `Path("foo").read_text()` diretamente).
+
+**Escopo:** menor que reimplementar I/O do zero — wrapper sobre `pathlib` + métodos delegando.
+
+**Decisão:** adotar a abordagem (a) com `pathlib` como base, ou desenhar `File` do zero, ou manter banido?
 
 ---
 
