@@ -1,7 +1,13 @@
 import ast
 
+import pytest
+
 from poop.transformers.bytes import BytesTransformer, _poop_bytes_from
 from poop.types.bytes import Bytes
+from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.list import List
+from poop.types.string import Str
 
 
 def _transform(source: str) -> ast.Module:
@@ -70,42 +76,29 @@ def test_bytes_from_bytes_returns_same() -> None:
 
 
 def test_bytes_from_int_returns_zero_filled() -> None:
-    from poop.types.int import Int
-
     result = _poop_bytes_from(Int(3))
     assert isinstance(result, Bytes)
     assert result._value == b"\x00\x00\x00"
 
 
 def test_bytes_from_str_uses_utf8_by_default() -> None:
-    from poop.types.string import Str
-
     result = _poop_bytes_from(Str("hello"))
     assert isinstance(result, Bytes)
     assert result._value == b"hello"
 
 
 def test_bytes_from_str_with_explicit_encoding() -> None:
-    from poop.types.string import Str
-
     result = _poop_bytes_from(Str("hello"), Str("ascii"))
     assert isinstance(result, Bytes)
     assert result._value == b"hello"
 
 
 def test_bytes_from_list_of_ints() -> None:
-    from poop.types.int import Int
-    from poop.types.list import List
-
     result = _poop_bytes_from(List(Int(72), Int(101), Int(108)))
     assert isinstance(result, Bytes)
     assert result._value == b"Hel"
 
 
 def test_bytes_from_unsupported_type_raises() -> None:
-    import pytest
-
-    from poop.types.float import Float
-
     with pytest.raises(TypeError, match="cannot convert"):
         _poop_bytes_from(Float(3.14))
