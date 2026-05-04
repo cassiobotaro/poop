@@ -16,23 +16,54 @@ Items where the substitute works, but the method name does not mirror the builti
 
 **Decision:** keep only `copy_from_to`, or add `.slice(...)` as an alias to align with the builtin name?
 
-### 2. `enumerate(col)` → `col.enumerate()`?
+### 2. `enumerate(col)` → `col.enumerate()` returning a lazy `Enumerate` object?
 
-**Suggested location:** `poop/types/_iterable_mixin.py` (would cover `List`, `Tuple`, `Set`, `Range`, `Bytes`, `ByteArray` in a single implementation).
+**Suggested location:** `poop/types/enumerate.py` (new) plus a hook on `poop/types/_iterable_mixin.py` so every collection (`List`, `Tuple`, `Set`, `Range`, `Bytes`, `ByteArray`) inherits `.enumerate()`.
 
 **Today:** `INFECTIONS.md:287` points to `col.map(block)` / `col.reduce(init, block)` with manual indexing.
 
-**Expected behavior:** return a `List` of `Tuple(Int(index), item)`.
+**Two possible shapes:**
 
-**Decision:** implement `_IterableMixin.enumerate()` or keep the indirect substitute?
+- **(a) Eager `List` of `Tuple(Int(index), item)`.** Cheap (~5 lines on `_IterableMixin`), matches every other collection method (`map`, `filter`, `reduce` are all eager). Materializes the whole list upfront — wasteful on large inputs.
+- **(b) Lazy `Enumerate(Object)` object — preferred.** Mirrors Python's `enumerate` semantics 1:1: an iterator that yields `Tuple(Int(index), item)` on demand. Memory-efficient, single-pass, chainable.
 
-### 3. `zip(a, b)` → `a.zip(other)`?
+**Why (b) is the preferred direction:** matches the user's mental model of `enumerate`, scales to large inputs, and unlocks the same lazy pattern for `zip` (item 3), `map`, `filter`, etc. as a future evolution.
 
-**Suggested location:** `poop/types/_iterable_mixin.py`, accepting another collection.
+**Why it is gated:** today POOP has **no** user-facing iterator type. The only interaction with iteration is `col.do(block)`; `next()` is banned by `no_iter`; there is no `Iterator` Object. Introducing a single lazy `Enumerate` in isolation would be the only lazy first-class object in the language, with no `next` substitute and only `do(block)` as a useful method — collapsing back to eager behavior on first use.
 
-**Expected behavior:** return a `List` of `Tuple(item_a, item_b)`, stopping at the shorter input.
+**Dependency:** **proposal 4** (first-class `Iterator` type). Decide that one first; lazy `Enumerate` falls out naturally as a specific iterator. If proposal 4 is rejected, fall back to shape (a).
 
-**Decision:** implement, or keep the indirect substitute via `map`/`reduce`?
+**Sketch (assuming proposal 4 is accepted):**
+
+```python
+# poop/types/enumerate.py
+class Enumerate(Iterator):  # Iterator base from proposal 4
+    __slots__ = ("_source", "_start")
+
+    def __init__(self, source: _IterableMixin, start: Int = Int(0)) -> None:
+        self._source = source
+        self._start = start
+
+    def __iter__(self) -> Iterator[Tuple]:
+        return (
+            Tuple(Int(i), item)
+            for i, item in _builtins.enumerate(self._source, self._start._value)
+        )
+```
+
+Then `_IterableMixin.enumerate(start=Int(0)) -> Enumerate` — and because `Enumerate` is an `Iterator`, methods like `do`, `map`, `filter` work uniformly.
+
+**Effort:** small once proposal 4 lands (~30 lines + tests). Without proposal 4: medium and inconsistent (one-off lazy type).
+
+**Decision:** confirm shape (b) lazy `Enumerate` as the target, conditional on proposal 4? Otherwise fall back to shape (a) eager `List`.
+
+### 3. `zip(a, b)` → `a.zip(other)` returning a lazy `Zip` object?
+
+Same dependency tree as item 2: prefer a lazy `Zip(Object)` mirroring Python's `zip` (single-pass, stops at shortest), conditional on proposal 4. Fallback eager shape returns a `List` of `Tuple(item_a, item_b)`.
+
+**Suggested location:** `poop/types/zip.py` (new) plus a hook on `poop/types/_iterable_mixin.py` accepting another iterable.
+
+**Decision:** confirm the lazy shape conditional on proposal 4, with eager `List` fallback otherwise.
 
 ### 4. `iter(col)` / `next(it)` → first-class `Iterator` type?
 
