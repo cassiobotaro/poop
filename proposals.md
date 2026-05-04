@@ -40,24 +40,7 @@ Se o usuário passar `complex(None, x)` ou outro tipo não suportado, o transfor
 
 ---
 
-### 3. `# type: ignore[attr-defined]` em massa nos testes de coleções (type-ignore)
-
-**Local:** `tests/test_types/test_set.py` (lambdas linhas 79–151), `test_frozen_set.py` (40–105), `test_dict.py:86`, `test_memory_view.py:37,47`, `test_bytes.py:59,69`, `test_byte_array.py:78,88`. Total: ~30 ocorrências.
-
-Padrão típico:
-```python
-result = s.map(lambda x: Int(x._value * 2))  # type: ignore[attr-defined]
-```
-
-Como `_IterableMixin.map` declara `Callable[[Any], Any]`, `x` é `Any` — o type-checker **não deveria** reclamar de `x._value`. As supressões são provavelmente legado de uma versão mais antiga de `ty`. Vale uma passada removendo-as em batch e rodando `ty check`.
-
-**Correção:** remover os ignores e rodar `uv run ty check`. Manter apenas os que realmente disparam.
-
-**Esforço:** pequeno (mecânico). **Impacto:** -30 supressões potencialmente.
-
----
-
-### 4. `# ty: ignore[unresolved-attribute]` nas lambdas com `.abs()` (type-ignore)
+### 3. `# ty: ignore[unresolved-attribute]` nas lambdas com `.abs()` (type-ignore)
 
 **Local:** `tests/test_types/test_list.py:207,336`, `tests/test_types/test_tuple.py:203`
 
@@ -76,7 +59,7 @@ mas o caller perderia covariância. Avaliar se vale a complexidade extra para 3 
 
 ## Baixa prioridade / oportunidades
 
-### 5. Boilerplate de comparação em `Int`/`Float`/`Str` (refactor)
+### 4. Boilerplate de comparação em `Int`/`Float`/`Str` (refactor)
 
 **Local:** `poop/types/int.py`, `poop/types/float.py`, `poop/types/string.py`
 
@@ -96,7 +79,7 @@ class _ComparableMixin:
 
 ---
 
-### 6. Falta `Float.complex()` (architecture)
+### 5. Falta `Float.complex()` (architecture)
 
 **Local:** `poop/types/float.py` (método ausente)
 
@@ -113,7 +96,7 @@ def complex(self) -> Complex:
 
 ---
 
-### 7. Cobertura de teste para `Tuple` como chave de `Dict` (test)
+### 6. Cobertura de teste para `Tuple` como chave de `Dict` (test)
 
 **Local:** `tests/test_types/test_tuple.py`, `tests/test_types/test_dict.py`
 
@@ -123,7 +106,7 @@ def complex(self) -> Complex:
 
 ---
 
-### 8. Subtests do pytest 9 — não há ganho real (test/architecture)
+### 7. Subtests do pytest 9 — não há ganho real (test/architecture)
 
 **Local:** todos os tests
 
@@ -137,13 +120,12 @@ Avaliação anterior já feita: nenhum teste tem laços `for` com múltiplas ass
 |---|---|---|---|
 | 1 | `Complex` `NotImplemented` ignores | P | M |
 | 2 | `_poop_complex_from` silencioso | P | M |
-| 3 | `attr-defined` em testes de coleção | P | M |
-| 4 | `ty: ignore` `.abs()` | P-M | B |
-| 5 | `_ComparableMixin` | M | B-M |
-| 6 | `Float.complex()` ausente | P | B |
-| 7 | Teste `Tuple` como chave de `Dict` | T | B |
+| 3 | `ty: ignore` `.abs()` | P-M | B |
+| 4 | `_ComparableMixin` | M | B-M |
+| 5 | `Float.complex()` ausente | P | B |
+| 6 | Teste `Tuple` como chave de `Dict` | T | B |
 
 Legenda: **T**rivial, **P**equeno, **M**édio · **B**aixo, **M**édio, **A**lto.
 
-**Recomendação de ordem:** 3 → 7 → 2 → 1 → 6 → 5 → 4.
-Itens 3 e 7 são "quick wins" com retorno claro.
+**Recomendação de ordem:** 6 → 2 → 1 → 5 → 4 → 3.
+Item 6 é o único "quick win" trivial restante.

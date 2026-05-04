@@ -34,7 +34,7 @@ def test_at_returns_byte_value() -> None:
 
 def test_do_yields_int_values() -> None:
     seen: list[Int] = []
-    _mv(b"\x01\x02\x03").do(lambda b: seen.append(b))  # type: ignore[arg-type]
+    _mv(b"\x01\x02\x03").do(lambda b: seen.append(b))
     assert seen == [Int(1), Int(2), Int(3)]
 
 
@@ -44,7 +44,7 @@ def test_map_returns_list() -> None:
 
 
 def test_map_transforms() -> None:
-    result = _mv(b"\x01\x02").map(lambda b: Int(b._value * 10))  # type: ignore[attr-defined]
+    result = _mv(b"\x01\x02").map(lambda b: Int(b._value * 10))
     assert result.at(Int(0)) == Int(10)
     assert result.at(Int(1)) == Int(20)
 

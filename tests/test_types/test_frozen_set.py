@@ -37,7 +37,7 @@ def test_contains_dunder() -> None:
 def test_do_visits_all_elements() -> None:
     fs = FrozenSet(Int(1), Int(2), Int(3))
     seen: list[Int] = []
-    fs.do(lambda x: seen.append(x))  # type: ignore[arg-type]
+    fs.do(lambda x: seen.append(x))
     assert len(seen) == 3
 
 
@@ -47,13 +47,13 @@ def test_map_returns_frozenset() -> None:
 
 
 def test_map_transforms_elements() -> None:
-    result = FrozenSet(Int(2)).map(lambda x: Int(x._value * 3))  # type: ignore[attr-defined]
+    result = FrozenSet(Int(2)).map(lambda x: Int(x._value * 3))
     assert result.includes(Int(6)) is true
 
 
 def test_filter_keeps_matching() -> None:
     fs = FrozenSet(Int(1), Int(2), Int(3), Int(4))
-    result = fs.filter(lambda x: x._value % 2 == 0)  # type: ignore[attr-defined]
+    result = fs.filter(lambda x: x._value % 2 == 0)
     assert result.len() == Int(2)
     assert result.includes(Int(2)) is true
     assert result.includes(Int(4)) is true
@@ -61,23 +61,23 @@ def test_filter_keeps_matching() -> None:
 
 def test_filter_false_keeps_non_matching() -> None:
     fs = FrozenSet(Int(1), Int(2), Int(3))
-    result = fs.filter_false(lambda x: x._value % 2 == 0)  # type: ignore[attr-defined]
+    result = fs.filter_false(lambda x: x._value % 2 == 0)
     assert result.len() == Int(2)
 
 
 def test_find_returns_matching_element() -> None:
     fs = FrozenSet(Int(5))
-    result = fs.find(lambda x: x._value > 3)  # type: ignore[attr-defined]
+    result = fs.find(lambda x: x._value > 3)
     assert result == Int(5)
 
 
 def test_find_returns_none_when_not_found() -> None:
-    assert FrozenSet(Int(1)).find(lambda x: x._value > 99) is none  # type: ignore[attr-defined]
+    assert FrozenSet(Int(1)).find(lambda x: x._value > 99) is none
 
 
 def test_reduce_accumulates() -> None:
     fs = FrozenSet(Int(1), Int(2), Int(3))
-    result = fs.reduce(Int(0), lambda acc, x: Int(acc._value + x._value))  # type: ignore[attr-defined]
+    result = fs.reduce(Int(0), lambda acc, x: Int(acc._value + x._value))
     assert result == Int(6)
 
 
@@ -90,19 +90,19 @@ def test_sum_empty_returns_zero() -> None:
 
 
 def test_all_true_when_all_match() -> None:
-    assert FrozenSet(Int(2), Int(4)).all(lambda x: x._value % 2 == 0) is true  # type: ignore[attr-defined]
+    assert FrozenSet(Int(2), Int(4)).all(lambda x: x._value % 2 == 0) is true
 
 
 def test_all_false_when_any_mismatch() -> None:
-    assert FrozenSet(Int(2), Int(3)).all(lambda x: x._value % 2 == 0) is false  # type: ignore[attr-defined]
+    assert FrozenSet(Int(2), Int(3)).all(lambda x: x._value % 2 == 0) is false
 
 
 def test_any_true_when_some_match() -> None:
-    assert FrozenSet(Int(1), Int(2)).any(lambda x: x._value % 2 == 0) is true  # type: ignore[attr-defined]
+    assert FrozenSet(Int(1), Int(2)).any(lambda x: x._value % 2 == 0) is true
 
 
 def test_any_false_when_none_match() -> None:
-    assert FrozenSet(Int(1), Int(3)).any(lambda x: x._value % 2 == 0) is false  # type: ignore[attr-defined]
+    assert FrozenSet(Int(1), Int(3)).any(lambda x: x._value % 2 == 0) is false
 
 
 def test_eq_equal_frozensets() -> None:

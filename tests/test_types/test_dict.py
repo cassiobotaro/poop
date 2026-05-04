@@ -83,7 +83,7 @@ def test_do_receives_tuple_pairs() -> None:
     d.at_put(Str("x"), Int(10))
     d.at_put(Str("y"), Int(20))
     pairs: list[Tuple] = []
-    d.do(lambda pair: pairs.append(pair))  # type: ignore[arg-type]
+    d.do(lambda pair: pairs.append(pair))
     assert len(pairs) == 2
     assert all(isinstance(p, Tuple) for p in pairs)
 

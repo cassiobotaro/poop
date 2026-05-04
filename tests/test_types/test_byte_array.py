@@ -75,7 +75,7 @@ def test_hex() -> None:
 
 def test_do_yields_int_byte_values() -> None:
     seen: list[Int] = []
-    ByteArray(bytearray(b"\x01\x02\x03")).do(lambda b: seen.append(b))  # type: ignore[arg-type]
+    ByteArray(bytearray(b"\x01\x02\x03")).do(lambda b: seen.append(b))
     assert seen == [Int(1), Int(2), Int(3)]
 
 
@@ -85,7 +85,7 @@ def test_map_returns_list() -> None:
 
 
 def test_map_transforms_bytes() -> None:
-    result = ByteArray(bytearray(b"\x01\x02")).map(lambda b: Int(b._value * 2))  # type: ignore[attr-defined]
+    result = ByteArray(bytearray(b"\x01\x02")).map(lambda b: Int(b._value * 2))
     assert result.at(Int(0)) == Int(2)
     assert result.at(Int(1)) == Int(4)
 
