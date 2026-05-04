@@ -1,9 +1,12 @@
 import pytest
 
 from poop.types.boolean import false, true
+from poop.types.bytes import Bytes
+from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def test_str_wraps_value() -> None:
@@ -253,14 +256,10 @@ def test_join() -> None:
 
 
 def test_int_parses_integer_string() -> None:
-    from poop.types.int import Int
-
     assert Str("42").int() == Int(42)
 
 
 def test_float_parses_float_string() -> None:
-    from poop.types.float import Float
-
     assert Str("3.14").float() == Float(3.14)
 
 
@@ -277,8 +276,6 @@ def test_center_with_fillchar() -> None:
 
 
 def test_encode_returns_bytes() -> None:
-    from poop.types.bytes import Bytes
-
     assert Str("hello").encode(Str("utf-8")) == Bytes(b"hello")
 
 
@@ -291,68 +288,46 @@ def test_expandtabs_with_size() -> None:
 
 
 def test_isascii_true() -> None:
-    from poop.types.boolean import true
-
     assert Str("hello").isascii() is true
 
 
 def test_isascii_false() -> None:
-    from poop.types.boolean import false
-
     assert Str("héllo").isascii() is false
 
 
 def test_isdecimal_true() -> None:
-    from poop.types.boolean import true
-
     assert Str("123").isdecimal() is true
 
 
 def test_isdecimal_false() -> None:
-    from poop.types.boolean import false
-
     assert Str("12.3").isdecimal() is false
 
 
 def test_isidentifier_true() -> None:
-    from poop.types.boolean import true
-
     assert Str("my_var").isidentifier() is true
 
 
 def test_isidentifier_false() -> None:
-    from poop.types.boolean import false
-
     assert Str("1var").isidentifier() is false
 
 
 def test_isnumeric_true() -> None:
-    from poop.types.boolean import true
-
     assert Str("123").isnumeric() is true
 
 
 def test_isprintable_true() -> None:
-    from poop.types.boolean import true
-
     assert Str("hello").isprintable() is true
 
 
 def test_isprintable_false() -> None:
-    from poop.types.boolean import false
-
     assert Str("hello\x00").isprintable() is false
 
 
 def test_istitle_true() -> None:
-    from poop.types.boolean import true
-
     assert Str("Hello World").istitle() is true
 
 
 def test_istitle_false() -> None:
-    from poop.types.boolean import false
-
     assert Str("hello world").istitle() is false
 
 
@@ -377,16 +352,12 @@ def test_zfill() -> None:
 
 
 def test_partition() -> None:
-    from poop.types.tuple import Tuple
-
     assert Str("hello world foo").partition(Str(" ")) == Tuple(
         Str("hello"), Str(" "), Str("world foo")
     )
 
 
 def test_rpartition() -> None:
-    from poop.types.tuple import Tuple
-
     assert Str("hello world foo").rpartition(Str(" ")) == Tuple(
         Str("hello world"), Str(" "), Str("foo")
     )
@@ -421,21 +392,15 @@ def test_rindex_found() -> None:
 
 
 def test_rindex_not_found_raises() -> None:
-    import pytest
-
     with pytest.raises(ValueError):
         Str("hello").rindex(Str("xyz"))
 
 
 def test_rsplit() -> None:
-    from poop.types.list import List
-
     assert Str("a b c").rsplit(Str(" ")) == List(Str("a"), Str("b"), Str("c"))
 
 
 def test_splitlines() -> None:
-    from poop.types.list import List
-
     assert Str("a\nb\nc").splitlines() == List(Str("a"), Str("b"), Str("c"))
 
 
