@@ -1,7 +1,12 @@
 import ast
 
+import pytest
+
 from poop.transformers.int import IntTransformer, _poop_int_from
+from poop.types.complex import Complex
+from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.string import Str
 
 
 def _transform(source: str) -> ast.Module:
@@ -99,43 +104,29 @@ def test_int_from_none_returns_zero() -> None:
 
 
 def test_int_from_float_truncates() -> None:
-    from poop.types.float import Float
-
     result = _poop_int_from(Float(3.9))
     assert isinstance(result, Int)
     assert result._value == 3
 
 
 def test_int_from_str_parses() -> None:
-    from poop.types.string import Str
-
     result = _poop_int_from(Str("42"))
     assert isinstance(result, Int)
     assert result._value == 42
 
 
 def test_int_from_str_with_base() -> None:
-    from poop.types.string import Str
-
     result = _poop_int_from(Str("ff"), Int(16))
     assert isinstance(result, Int)
     assert result._value == 255
 
 
 def test_int_from_str_with_non_int_base_raises() -> None:
-    import pytest
-
-    from poop.types.string import Str
-
     with pytest.raises(TypeError, match="base must be Int"):
         _poop_int_from(Str("10"), "invalid_base")
 
 
 def test_int_from_unsupported_type_raises() -> None:
-    import pytest
-
-    from poop.types.complex import Complex
-
     with pytest.raises(TypeError, match="cannot convert"):
         _poop_int_from(Complex(complex(1, 2)))
 
