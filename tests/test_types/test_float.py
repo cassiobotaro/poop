@@ -1,4 +1,10 @@
+import pytest
+
+from poop.types.boolean import false, true
+from poop.types.complex import Complex
 from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.string import Str
 
 
 def test_str() -> None:
@@ -64,55 +70,39 @@ def test_pow() -> None:
 
 
 def test_eq_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Float(1.5).__eq__(Float(1.5)) is true
     assert Float(1.5).__eq__(Float(2.5)) is false
 
 
 def test_eq_with_non_float_returns_false() -> None:
-    from poop.types.boolean import false
-
     assert Float(1.5).__eq__(1.5) is false
 
 
 def test_ne_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Float(1.5).__ne__(Float(2.5)) is true
     assert Float(1.5).__ne__(Float(1.5)) is false
 
 
 def test_ne_with_non_float_returns_true() -> None:
-    from poop.types.boolean import true
-
     assert Float(1.5).__ne__(1.5) is true
 
 
 def test_lt_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Float(1.0).__lt__(Float(2.0)) is true
     assert Float(2.0).__lt__(Float(1.0)) is false
 
 
 def test_le_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Float(1.0).__le__(Float(1.0)) is true
     assert Float(2.0).__le__(Float(1.0)) is false
 
 
 def test_gt_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Float(2.0).__gt__(Float(1.0)) is true
     assert Float(1.0).__gt__(Float(2.0)) is false
 
 
 def test_ge_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Float(2.0).__ge__(Float(2.0)) is true
     assert Float(1.0).__ge__(Float(2.0)) is false
 
@@ -122,14 +112,10 @@ def test_hashable() -> None:
 
 
 def test_is_none_inherited() -> None:
-    from poop.types.boolean import false
-
     assert Float(1.0).is_none() is false
 
 
 def test_class_name() -> None:
-    from poop.types.string import Str
-
     assert Float(1.0).class_name() == Str("Float")
 
 
@@ -146,27 +132,19 @@ def test_dunder_abs() -> None:
 
 
 def test_ceil_returns_int() -> None:
-    from poop.types.int import Int
-
     assert Float(2.3).ceil() == Int(3)
 
 
 def test_floor_returns_int() -> None:
-    from poop.types.int import Int
-
     assert Float(2.7).floor() == Int(2)
 
 
 def test_trunc_returns_int() -> None:
-    from poop.types.int import Int
-
     assert Float(2.9).trunc() == Int(2)
     assert Float(-2.9).trunc() == Int(-2)
 
 
 def test_round_no_digits_returns_int() -> None:
-    from poop.types.int import Int
-
     assert Float(2.5).round() == Int(2)
     assert Float(3.5).round() == Int(4)
 
@@ -180,20 +158,14 @@ def test_int_conversion() -> None:
 
 
 def test_complex() -> None:
-    from poop.types.complex import Complex
-
     assert Float(2.5).complex() == Complex(2.5 + 0j)
 
 
 def test_is_integer_true() -> None:
-    from poop.types.boolean import true
-
     assert Float(3.0).is_integer() is true
 
 
 def test_is_integer_false() -> None:
-    from poop.types.boolean import false
-
     assert Float(3.5).is_integer() is false
 
 
@@ -202,8 +174,6 @@ def test_floordiv() -> None:
 
 
 def test_int_truncates() -> None:
-    from poop.types.int import Int
-
     assert Float(3.7).int() == Int(3)
     assert Float(-2.9).int() == Int(-2)
 
@@ -219,8 +189,6 @@ def test_conjugate_returns_self() -> None:
 
 
 def test_hex_returns_str() -> None:
-    from poop.types.string import Str
-
     assert Float(1.0).hex() == Str("0x1.0000000000000p+0")
 
 
@@ -234,8 +202,6 @@ def test_imag_returns_zero() -> None:
 
 
 def test_as_integer_ratio() -> None:
-    from poop.types.int import Int
-
     n, d = Float(0.5).as_integer_ratio()._items
     assert n == Int(1)
     assert d == Int(2)
@@ -246,10 +212,6 @@ def test_pow_method() -> None:
 
 
 def test_fromhex_parses_hex_string() -> None:
-    import pytest
-
-    from poop.types.string import Str
-
     result = Float.fromhex(Str("0x1.8p+0"))
     assert isinstance(result, Float)
     assert result._value == pytest.approx(1.5)
