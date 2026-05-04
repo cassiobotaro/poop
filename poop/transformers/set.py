@@ -4,6 +4,7 @@ from typing import ClassVar, cast
 
 from poop.transformers.base import BaseTransformer
 from poop.types.object import Object
+from poop.types.range import Range
 from poop.types.set import Set
 
 
@@ -12,8 +13,6 @@ def _poop_set(*elements: Object) -> Set:
 
 
 def _poop_set_from(arg: object = None) -> Set:
-    from poop.types.range import Range
-
     if arg is None:
         return Set()
     if isinstance(arg, Set):
