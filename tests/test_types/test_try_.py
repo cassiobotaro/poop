@@ -1,6 +1,7 @@
 import pytest
 
 from poop.types.error import Error
+from poop.types.string import Str
 from poop.types.try_ import Try
 
 
@@ -30,8 +31,6 @@ def test_try_except_handles_matching_exception() -> None:
 
 
 def test_try_except_handler_receives_error_with_message() -> None:
-    from poop.types.string import Str
-
     received: list[object] = []
     Try(lambda: _raise(ValueError("bad input"))).except_(
         ValueError, lambda e: received.append(e.message())
