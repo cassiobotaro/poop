@@ -1,6 +1,9 @@
 import ast
 
 from poop.transformers.string import StrTransformer, _poop_str_from
+from poop.types.boolean import false, true
+from poop.types.float import Float
+from poop.types.int import Int
 from poop.types.string import Str
 
 
@@ -70,23 +73,17 @@ def test_str_from_str_returns_same() -> None:
 
 
 def test_str_from_int_converts() -> None:
-    from poop.types.int import Int
-
     result = _poop_str_from(Int(42))
     assert isinstance(result, Str)
     assert result._value == "42"
 
 
 def test_str_from_float_converts() -> None:
-    from poop.types.float import Float
-
     result = _poop_str_from(Float(3.14))
     assert isinstance(result, Str)
     assert result._value == "3.14"
 
 
 def test_str_from_bool_converts() -> None:
-    from poop.types.boolean import false, true
-
     assert _poop_str_from(true)._value == "True"
     assert _poop_str_from(false)._value == "False"
