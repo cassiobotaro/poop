@@ -1,8 +1,14 @@
 import ast
 
+import pytest
+
 from poop.transformers.list import ListTransformer, _poop_list, _poop_list_from
+from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.range import Range
+from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def _transform(source: str) -> ast.Module:
@@ -98,39 +104,29 @@ def test_list_from_list_returns_same() -> None:
 
 
 def test_list_from_tuple() -> None:
-    from poop.types.tuple import Tuple
-
     result = _poop_list_from(Tuple(Int(1), Int(2), Int(3)))
     assert isinstance(result, List)
     assert result == List(Int(1), Int(2), Int(3))
 
 
 def test_list_from_interval() -> None:
-    from poop.types.range import Range
-
     result = _poop_list_from(Range(Int(1), Int(3)))
     assert isinstance(result, List)
     assert result == List(Int(1), Int(2), Int(3))
 
 
 def test_list_from_str() -> None:
-    from poop.types.string import Str
-
     result = _poop_list_from(Str("abc"))
     assert isinstance(result, List)
     assert result == List(Str("a"), Str("b"), Str("c"))
 
 
 def test_list_from_bytes() -> None:
-    from poop.types.bytes import Bytes
-
     result = _poop_list_from(Bytes(b"\x01\x02"))
     assert isinstance(result, List)
     assert result == List(Int(1), Int(2))
 
 
 def test_list_from_unsupported_type_raises() -> None:
-    import pytest
-
     with pytest.raises(TypeError, match="cannot convert"):
         _poop_list_from(Int(5))
