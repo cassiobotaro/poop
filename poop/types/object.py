@@ -50,8 +50,6 @@ class Object:
         return Int(id(self))
 
     def callable(self) -> Boolean:
-        import builtins
-
         from poop.types.boolean import false, true
 
         return true if builtins.callable(self) else false
