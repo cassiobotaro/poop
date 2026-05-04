@@ -1,7 +1,11 @@
 import pytest
 
+from poop.parser import parse
+from poop.transformers.int import IntTransformer
+from poop.transformers.set import SetTransformer, _poop_set
 from poop.types.boolean import false, true
 from poop.types.int import Int
+from poop.types.int import Int as _Int
 from poop.types.none import none
 from poop.types.set import Set
 
@@ -51,8 +55,6 @@ def test_remove_decreases_len() -> None:
 
 
 def test_remove_missing_raises() -> None:
-    import pytest
-
     s = Set()
     with pytest.raises(KeyError):
         s.remove(Int(99))
@@ -189,11 +191,6 @@ def test_not_hashable() -> None:
 
 
 def test_transformer_literal() -> None:
-    from poop.parser import parse
-    from poop.transformers.int import IntTransformer
-    from poop.transformers.set import SetTransformer, _poop_set
-    from poop.types.int import Int as _Int
-
     tree = parse("s = {1, 2, 3}")
     tree = IntTransformer().transform(tree)
     tree = SetTransformer().transform(tree)
@@ -307,38 +304,26 @@ def test_symmetric_difference_update() -> None:
 
 
 def test_isdisjoint_true() -> None:
-    from poop.types.boolean import true
-
     assert Set(Int(1), Int(2)).isdisjoint(Set(Int(3), Int(4))) is true
 
 
 def test_isdisjoint_false() -> None:
-    from poop.types.boolean import false
-
     assert Set(Int(1), Int(2)).isdisjoint(Set(Int(2), Int(3))) is false
 
 
 def test_issubset_true() -> None:
-    from poop.types.boolean import true
-
     assert Set(Int(1), Int(2)).issubset(Set(Int(1), Int(2), Int(3))) is true
 
 
 def test_issubset_false() -> None:
-    from poop.types.boolean import false
-
     assert Set(Int(1), Int(4)).issubset(Set(Int(1), Int(2), Int(3))) is false
 
 
 def test_issuperset_true() -> None:
-    from poop.types.boolean import true
-
     assert Set(Int(1), Int(2), Int(3)).issuperset(Set(Int(1), Int(2))) is true
 
 
 def test_issuperset_false() -> None:
-    from poop.types.boolean import false
-
     assert Set(Int(1), Int(2)).issuperset(Set(Int(1), Int(3))) is false
 
 
