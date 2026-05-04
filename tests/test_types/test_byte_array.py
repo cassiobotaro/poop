@@ -1,9 +1,16 @@
+import pytest
+
+from poop.parser import parse
+from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
+from poop.transformers.bytes import BytesTransformer
+from poop.transformers.int import IntTransformer
 from poop.types.boolean import false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def test_empty_bytearray() -> None:
@@ -108,8 +115,6 @@ def test_ne_different() -> None:
 
 
 def test_not_hashable() -> None:
-    import pytest
-
     with pytest.raises(TypeError):
         hash(ByteArray(bytearray(b"hello")))  # type: ignore[call-overload]
 
@@ -124,9 +129,6 @@ def test_repr_equals_str() -> None:
 
 
 def test_transformer_no_args() -> None:
-    from poop.parser import parse
-    from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
-
     tree = parse("ba = bytearray()")
     tree = ByteArrayTransformer().transform(tree)
     ns: dict[str, object] = {"_poop_bytearray_from": _poop_bytearray_from}
@@ -137,10 +139,6 @@ def test_transformer_no_args() -> None:
 
 
 def test_transformer_from_bytes_arg() -> None:
-    from poop.parser import parse
-    from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
-    from poop.transformers.bytes import BytesTransformer
-
     tree = parse('ba = bytearray(b"abc")')
     tree = BytesTransformer().transform(tree)
     tree = ByteArrayTransformer().transform(tree)
@@ -155,10 +153,6 @@ def test_transformer_from_bytes_arg() -> None:
 
 
 def test_transformer_from_int_arg() -> None:
-    from poop.parser import parse
-    from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
-    from poop.transformers.int import IntTransformer
-
     tree = parse("ba = bytearray(5)")
     tree = IntTransformer().transform(tree)
     tree = ByteArrayTransformer().transform(tree)
@@ -367,8 +361,6 @@ def test_lstrip_default() -> None:
 
 
 def test_partition() -> None:
-    from poop.types.tuple import Tuple
-
     result = ByteArray(bytearray(b"hello world")).partition(ByteArray(bytearray(b" ")))
     assert isinstance(result, Tuple)
     assert result.at(Int(0)) == ByteArray(bytearray(b"hello"))
@@ -406,8 +398,6 @@ def test_rjust() -> None:
 
 
 def test_rpartition() -> None:
-    from poop.types.tuple import Tuple
-
     result = ByteArray(bytearray(b"hello world")).rpartition(ByteArray(bytearray(b" ")))
     assert isinstance(result, Tuple)
     assert result.at(Int(2)) == ByteArray(bytearray(b"world"))
