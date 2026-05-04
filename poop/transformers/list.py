@@ -5,6 +5,7 @@ from typing import ClassVar, cast
 from poop.transformers.base import BaseTransformer
 from poop.types.list import List
 from poop.types.object import Object
+from poop.types.range import Range
 
 
 def _poop_list(*elements: Object) -> List:
@@ -12,8 +13,6 @@ def _poop_list(*elements: Object) -> List:
 
 
 def _poop_list_from(arg: object = None) -> List:
-    from poop.types.range import Range
-
     if arg is None:
         return List()
     if isinstance(arg, List):
