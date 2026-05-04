@@ -1,7 +1,14 @@
+from poop.parser import parse
+from poop.transformers.frozen_set import FrozenSetTransformer, _poop_frozenset_from
+from poop.transformers.int import IntTransformer
+from poop.transformers.set import SetTransformer, _poop_set
 from poop.types.boolean import false, true
+from poop.types.dict import Dict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
+from poop.types.int import Int as _Int
 from poop.types.none import none
+from poop.types.string import Str
 
 
 def test_empty_frozenset() -> None:
@@ -133,9 +140,6 @@ def test_equal_frozensets_have_equal_hash() -> None:
 
 
 def test_frozenset_can_be_dict_key() -> None:
-    from poop.types.dict import Dict
-    from poop.types.string import Str
-
     d = Dict()
     fs = FrozenSet(Int(1))
     d.at_put(fs, Str("value"))
@@ -156,12 +160,6 @@ def test_repr_equals_str() -> None:
 
 
 def test_transformer_frozenset_call() -> None:
-    from poop.parser import parse
-    from poop.transformers.frozen_set import FrozenSetTransformer, _poop_frozenset_from
-    from poop.transformers.int import IntTransformer
-    from poop.transformers.set import SetTransformer, _poop_set
-    from poop.types.int import Int as _Int
-
     tree = parse("fs = frozenset({1, 2, 3})")
     tree = IntTransformer().transform(tree)
     tree = SetTransformer().transform(tree)
@@ -178,9 +176,6 @@ def test_transformer_frozenset_call() -> None:
 
 
 def test_transformer_frozenset_empty_call() -> None:
-    from poop.parser import parse
-    from poop.transformers.frozen_set import FrozenSetTransformer, _poop_frozenset_from
-
     tree = parse("fs = frozenset()")
     tree = FrozenSetTransformer().transform(tree)
     ns: dict[str, object] = {"_poop_frozenset_from": _poop_frozenset_from}
@@ -229,42 +224,30 @@ def test_symmetric_difference() -> None:
 
 
 def test_isdisjoint_true() -> None:
-    from poop.types.boolean import true
-
     assert FrozenSet(Int(1), Int(2)).isdisjoint(FrozenSet(Int(3), Int(4))) is true
 
 
 def test_isdisjoint_false() -> None:
-    from poop.types.boolean import false
-
     assert FrozenSet(Int(1), Int(2)).isdisjoint(FrozenSet(Int(2), Int(3))) is false
 
 
 def test_issubset_true() -> None:
-    from poop.types.boolean import true
-
     assert FrozenSet(Int(1), Int(2)).issubset(FrozenSet(Int(1), Int(2), Int(3))) is true
 
 
 def test_issubset_false() -> None:
-    from poop.types.boolean import false
-
     assert (
         FrozenSet(Int(1), Int(4)).issubset(FrozenSet(Int(1), Int(2), Int(3))) is false
     )
 
 
 def test_issuperset_true() -> None:
-    from poop.types.boolean import true
-
     assert (
         FrozenSet(Int(1), Int(2), Int(3)).issuperset(FrozenSet(Int(1), Int(2))) is true
     )
 
 
 def test_issuperset_false() -> None:
-    from poop.types.boolean import false
-
     assert FrozenSet(Int(1), Int(2)).issuperset(FrozenSet(Int(1), Int(3))) is false
 
 
