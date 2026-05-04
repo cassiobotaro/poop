@@ -81,6 +81,13 @@ class Object:
 
         return List(*(Str(name) for name in builtins.dir(self)))
 
+    def format(self, spec: Str | None = None) -> Str:
+        from poop.types.string import Str
+
+        spec_value = "" if spec is None else spec._value
+        target = builtins.getattr(self, "_value", self)
+        return Str(builtins.format(target, spec_value))
+
     def get_attr(self, name: str, *default: Any) -> Any:
         return builtins.getattr(self, name, *default)
 

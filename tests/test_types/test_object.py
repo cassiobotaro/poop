@@ -175,6 +175,25 @@ def test_ascii_escapes_non_ascii_chars() -> None:
     assert result == Str("caf\\xe9")
 
 
+def test_format_without_spec_returns_str() -> None:
+    result = Int(42).format()
+    assert isinstance(result, Str)
+    assert result == Str("42")
+
+
+def test_format_int_with_hex_spec() -> None:
+    from poop.types.float import Float
+
+    assert Int(42).format(Str("x")) == Str("2a")
+    assert Float(3.14159).format(Str(".2f")) == Str("3.14")
+    assert Str("abc").format(Str(">5")) == Str("  abc")
+
+
+def test_format_invalid_spec_raises_value_error() -> None:
+    with pytest.raises(ValueError):
+        Int(42).format(Str("?invalid"))
+
+
 def test_dir_returns_list_of_str() -> None:
     result = Object().dir()
     assert isinstance(result, List)
