@@ -168,7 +168,54 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 
 ## Decisões em aberto — documentação
 
-### 12. Site de documentação com MkDocs?
+### 12. Auditar e reescrever `INFECTIONS.md` para refletir o estado atual?
+
+**Hoje:** `INFECTIONS.md` (738 linhas) é o catálogo canônico de validators, transformers, types e princípios. Foi escrito incrementalmente desde o início do projeto, e várias seções foram adicionadas quando algumas decisões ainda eram **dúvidas em aberto** ("talvez", "a definir", "investigar"). Hoje muitas dessas dúvidas já foram resolvidas pela prática (no código, nos testes, nos commits), mas o documento pode não ter sido atualizado uniformemente.
+
+**Sintomas de drift que motivam a auditoria:**
+- Itens ainda categorizados como "no POOP equivalent" enquanto na prática há substituto (ex.: `vars`, `setattr`/`delattr` — vide propostas 6-8 desta lista — sintoma de regra "intencional" virou inércia).
+- Princípios formulados como hipóteses ("Methods should follow Python names...") sem confirmação explícita de que todas as exceções estão catalogadas (`do` é a única exceção citada — outras escapariam?).
+- Substitutos prometidos que não existem (ex.: `Object.format` — proposta 1).
+- Tabelas de validators podem listar AST nodes que o validator atual não cobre (ou vice-versa) — drift entre código e doc.
+- Possíveis duplicatas entre `INFECTIONS.md` (princípios) e `CLAUDE.md` (workflow) que tornam ambíguo qual é a fonte da verdade.
+
+**Escopo da auditoria proposta:**
+
+1. **Validators** — para cada `poop/validators/no_*.py`:
+   - confirmar que a tabela em `INFECTIONS.md` lista exatamente os nodes/calls que o validator visita;
+   - confirmar que o "Substitute" prometido existe em `poop/types/` (cruzar com proposta 1);
+   - marcar validators sem substituto como "ban definitivo" ou mover para backlog explícito.
+
+2. **Transformers** — para cada `poop/transformers/*.py`:
+   - confirmar que a documentação cobre todos os nodes que o transformer reescreve;
+   - confirmar que os literais documentados ("every literal is transformed") estão de fato 100% cobertos (`int`, `float`, `str`, `bool`, `None`, `list`, `tuple`, `set`, `dict`, `bytes`, `complex` — todos têm transformer? Há gap?).
+
+3. **Types** — para cada `poop/types/*.py`:
+   - confirmar que a página/seção de cada tipo lista métodos públicos atuais (não os de uma versão anterior);
+   - confirmar que dunders → aliases públicos seguem a regra "Dunders exposed as regular methods" sem exceções não documentadas;
+   - confirmar a regra "All POOP methods return POOP types" varrendo retornos.
+
+4. **Princípios** — revalidar cada bullet de `## Principles`:
+   - É descritivo (reflete o código) ou aspiracional (ainda não cumprido)?
+   - Aspiracional → mover para `proposals.md` como item explícito.
+   - Descritivo → manter, com exemplo concreto se ajudar.
+
+5. **Dúvidas históricas em aberto** — varrer `git log -- INFECTIONS.md` em busca de commits "wip", "draft", "rascunho", "talvez" ou linguagem hesitante; cada uma vira uma pergunta a fechar (sim/não/proposta).
+
+**Ferramentas que ajudam:**
+- `grep -n "talvez\|a definir\|TODO\|FIXME\|investigar\|? *$" INFECTIONS.md` para sinalizar dúvidas residuais.
+- Script de cross-check: parsear validators/transformers/types via AST e comparar com seções de `INFECTIONS.md` (gap analysis automatizada).
+
+**Saída esperada:**
+- `INFECTIONS.md` reescrito (ou em PRs incrementais) onde cada regra é **descritiva e verificada** — espelha o código.
+- Itens aspiracionais migrados para `proposals.md`.
+- Cross-reference automatizado vivo (script em `scripts/audit_infections.py` rodado em CI?) — bônus.
+
+**Esforço:** grande (varredura linha-a-linha de 738 linhas + cross-check com ~60 validators, ~16 transformers, ~17 tipos). **Impacto:** restaura `INFECTIONS.md` como SSOT confiável; pré-requisito para a proposta 12 (MkDocs) — sem doc consistente, gerar site amplifica o drift.
+
+**Decisão:** fazer auditoria como uma única passada (esforço grande mas resolve de vez), ou em ondas incrementais por seção (validators primeiro, depois transformers, depois types)?
+
+### 13. Site de documentação com MkDocs?
 
 **Hoje:** documentação espalhada em `README.md` (visão geral), `INFECTIONS.md` (catálogo de validators/transformers/types — 90+ seções), `CLAUDE.md` (guia interno) e `proposals.md` (este backlog). Sem navegação, sem busca, sem versionamento publicado.
 
