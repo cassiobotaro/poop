@@ -5,6 +5,8 @@ from typing import Annotated
 import typer
 
 from poop.errors import PoopError
+from poop.interpreter import Interpreter
+from poop.repl import Repl
 
 app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
 
@@ -31,13 +33,9 @@ def main(
         ),
     ] = False,
 ) -> None:
-    from poop.interpreter import Interpreter
-
     interpreter = Interpreter()
 
     if file is None:
-        from poop.repl import Repl
-
         Repl(interpreter).run()
         return
 
