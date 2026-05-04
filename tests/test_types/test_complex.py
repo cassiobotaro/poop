@@ -1,7 +1,15 @@
 import pytest
 
+from poop.parser import parse
+from poop.transformers.complex import (
+    ComplexTransformer,
+    _poop_complex_from,
+    _poop_complex_literal,
+)
+from poop.transformers.int import IntTransformer
 from poop.types.boolean import false, true
 from poop.types.complex import Complex
+from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -97,8 +105,6 @@ def test_equal_complex_same_hash() -> None:
 
 
 def test_complex_can_be_dict_key() -> None:
-    from poop.types.dict import Dict
-
     d = Dict()
     d.at_put(Complex(1 + 2j), Int(42))
     assert d.at(Complex(1 + 2j)) == Int(42)
@@ -118,9 +124,6 @@ def test_repr_equals_str() -> None:
 
 
 def test_transformer_j_literal() -> None:
-    from poop.parser import parse
-    from poop.transformers.complex import ComplexTransformer, _poop_complex_literal
-
     tree = parse("c = 2j")
     tree = ComplexTransformer().transform(tree)
     ns: dict[str, object] = {"_poop_complex_literal": _poop_complex_literal}
@@ -131,9 +134,6 @@ def test_transformer_j_literal() -> None:
 
 
 def test_transformer_binop_literal() -> None:
-    from poop.parser import parse
-    from poop.transformers.complex import ComplexTransformer, _poop_complex_literal
-
     tree = parse("c = 1+2j")
     tree = ComplexTransformer().transform(tree)
     ns: dict[str, object] = {"_poop_complex_literal": _poop_complex_literal}
@@ -144,9 +144,6 @@ def test_transformer_binop_literal() -> None:
 
 
 def test_transformer_binop_sub_literal() -> None:
-    from poop.parser import parse
-    from poop.transformers.complex import ComplexTransformer, _poop_complex_literal
-
     tree = parse("c = 3-1j")
     tree = ComplexTransformer().transform(tree)
     ns: dict[str, object] = {"_poop_complex_literal": _poop_complex_literal}
@@ -157,9 +154,6 @@ def test_transformer_binop_sub_literal() -> None:
 
 
 def test_transformer_complex_call_no_args() -> None:
-    from poop.parser import parse
-    from poop.transformers.complex import ComplexTransformer, _poop_complex_from
-
     tree = parse("c = complex()")
     tree = ComplexTransformer().transform(tree)
     ns: dict[str, object] = {"_poop_complex_from": _poop_complex_from}
@@ -169,10 +163,6 @@ def test_transformer_complex_call_no_args() -> None:
 
 
 def test_transformer_complex_call_two_args() -> None:
-    from poop.parser import parse
-    from poop.transformers.complex import ComplexTransformer, _poop_complex_from
-    from poop.transformers.int import IntTransformer
-
     tree = parse("c = complex(1, 2)")
     tree = IntTransformer().transform(tree)
     tree = ComplexTransformer().transform(tree)
@@ -184,9 +174,6 @@ def test_transformer_complex_call_two_args() -> None:
 
 
 def test_transformer_does_not_affect_int_literals() -> None:
-    from poop.parser import parse
-    from poop.transformers.complex import ComplexTransformer
-
     tree = ComplexTransformer().transform(parse("x = 42"))
     ns: dict[str, object] = {}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
@@ -194,30 +181,22 @@ def test_transformer_does_not_affect_int_literals() -> None:
 
 
 def test_complex_from_str() -> None:
-    from poop.transformers.complex import _poop_complex_from
-
     result = _poop_complex_from(Str("1+2j"))
     assert isinstance(result, Complex)
     assert result == Complex(1 + 2j)
 
 
 def test_complex_from_int() -> None:
-    from poop.transformers.complex import _poop_complex_from
-
     result = _poop_complex_from(Int(5))
     assert result == Complex(5 + 0j)
 
 
 def test_complex_from_float() -> None:
-    from poop.transformers.complex import _poop_complex_from
-
     result = _poop_complex_from(Float(2.5))
     assert result == Complex(2.5 + 0j)
 
 
 def test_complex_from_existing_complex() -> None:
-    from poop.transformers.complex import _poop_complex_from
-
     c = Complex(1 + 2j)
     assert _poop_complex_from(c) is c
 
@@ -305,24 +284,15 @@ def test_str_various(c: Complex, expected: str) -> None:
 
 
 def test_complex_from_unsupported_real_type_raises() -> None:
-    from poop.transformers.complex import _poop_complex_from
-    from poop.types.dict import Dict
-
     with pytest.raises(TypeError, match="Dict"):
         _poop_complex_from(Dict())
 
 
 def test_complex_from_unsupported_first_of_two_args_raises() -> None:
-    from poop.transformers.complex import _poop_complex_from
-    from poop.types.dict import Dict
-
     with pytest.raises(TypeError, match="Dict"):
         _poop_complex_from(Dict(), Int(1))
 
 
 def test_complex_from_unsupported_second_of_two_args_raises() -> None:
-    from poop.transformers.complex import _poop_complex_from
-    from poop.types.dict import Dict
-
     with pytest.raises(TypeError, match="Dict"):
         _poop_complex_from(Int(1), Dict())
