@@ -1,18 +1,14 @@
 import ast
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import ClassVar, cast
 
 from poop.transformers.base import BaseTransformer
 from poop.types.bytes import Bytes
-
-if TYPE_CHECKING:
-    from poop.types.int import Int as _Int
+from poop.types.int import Int
+from poop.types.string import Str
 
 
 def _poop_bytes_from(arg: object = None, encoding: object = None) -> Bytes:
-    from poop.types.int import Int
-    from poop.types.string import Str
-
     if arg is None:
         return Bytes(b"")
     if isinstance(arg, Bytes):
@@ -23,7 +19,7 @@ def _poop_bytes_from(arg: object = None, encoding: object = None) -> Bytes:
         enc = encoding._value if isinstance(encoding, Str) else "utf-8"
         return Bytes(arg._value.encode(enc))
     if isinstance(arg, Iterable):
-        ints = cast("Iterable[_Int]", arg)
+        ints = cast("Iterable[Int]", arg)
         return Bytes(bytes(item._value for item in ints))
     raise TypeError(f"cannot convert {type(arg).__name__} to Bytes")
 
