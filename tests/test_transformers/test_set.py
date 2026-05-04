@@ -1,8 +1,13 @@
 import ast
 
+import pytest
+
 from poop.transformers.set import SetTransformer, _poop_set, _poop_set_from
 from poop.types.int import Int
+from poop.types.list import List
+from poop.types.range import Range
 from poop.types.set import Set
+from poop.types.tuple import Tuple
 
 
 def _transform(source: str) -> ast.Module:
@@ -77,31 +82,23 @@ def test_set_from_set_returns_same() -> None:
 
 
 def test_set_from_list() -> None:
-    from poop.types.list import List
-
     result = _poop_set_from(List(Int(1), Int(2), Int(1)))
     assert isinstance(result, Set)
     assert result == Set(Int(1), Int(2))
 
 
 def test_set_from_interval() -> None:
-    from poop.types.range import Range
-
     result = _poop_set_from(Range(Int(1), Int(3)))
     assert isinstance(result, Set)
     assert result == Set(Int(1), Int(2), Int(3))
 
 
 def test_set_from_tuple() -> None:
-    from poop.types.tuple import Tuple
-
     result = _poop_set_from(Tuple(Int(10), Int(20)))
     assert isinstance(result, Set)
     assert result == Set(Int(10), Int(20))
 
 
 def test_set_from_unsupported_type_raises() -> None:
-    import pytest
-
     with pytest.raises(TypeError, match="cannot convert"):
         _poop_set_from(Int(5))
