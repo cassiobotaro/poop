@@ -1,6 +1,9 @@
 import ast
 
+from poop import Interpreter
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.class_ import ClassTransformer
+from poop.types.boolean import _FalseClass
 from poop.types.object import Object
 
 
@@ -50,8 +53,6 @@ def test_class_transformer_bindings_contains_object() -> None:
 
 
 def test_transformed_class_inherits_from_object_at_runtime() -> None:
-    from poop.transformers import DEFAULT_NAMESPACE
-
     tree = _transform("class Dog: pass\nd = Dog()")
     ns = dict(DEFAULT_NAMESPACE)
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
@@ -59,8 +60,6 @@ def test_transformed_class_inherits_from_object_at_runtime() -> None:
 
 
 def test_class_with_object_base_inherits_at_runtime() -> None:
-    from poop.transformers import DEFAULT_NAMESPACE
-
     tree = _transform("class Cat(object): pass\nc = Cat()")
     ns = dict(DEFAULT_NAMESPACE)
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
@@ -68,15 +67,10 @@ def test_class_with_object_base_inherits_at_runtime() -> None:
 
 
 def test_inherited_print_method_available() -> None:
-    from poop import Interpreter
-
     Interpreter().run_source("class Dog: pass\nDog().print()")
 
 
 def test_inherited_is_none_returns_false() -> None:
-    from poop.transformers import DEFAULT_NAMESPACE
-    from poop.types.boolean import _FalseClass
-
     tree = _transform("class Dog: pass\nresult = Dog().is_none()")
     ns = dict(DEFAULT_NAMESPACE)
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
