@@ -1,14 +1,11 @@
 import ast
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from poop.errors import ValidationError
 from poop.executor import execute
 from poop.parser import parse
 from poop.transformers import DEFAULT_NAMESPACE, DEFAULT_TRANSFORMERS, Transformer
 from poop.validators import DEFAULT_VALIDATORS, Validator
-
-if TYPE_CHECKING:
-    from poop.errors import ValidationError
 
 
 class Interpreter:
@@ -43,8 +40,6 @@ class Interpreter:
     def validate_all(
         self, source: str, filename: str = "<string>"
     ) -> list[ValidationError]:
-        from poop.errors import ValidationError
-
         tree: ast.Module = parse(source, filename=filename)
         errors: list[ValidationError] = []
         for validator in self._validators:
