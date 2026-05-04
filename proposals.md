@@ -1,142 +1,142 @@
-# Propostas de Melhoria
+# Improvement Proposals
 
-Lista priorizada de melhorias verificadas no código com referências `file:line` reais. Categorias: **bug**, **decisão em aberto**.
+Prioritized list of improvements verified against the code, with real `file:line` references. Categories: **bug**, **open decision**.
 
-Princípio em jogo (`INFECTIONS.md:16`): *"Activate validator only when the substitute exists — blocking without offering an alternative only breaks code without teaching anything."*
+Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the substitute exists — blocking without offering an alternative only breaks code without teaching anything."*
 
 ---
 
-## Decisões em aberto — substituto existe com nome diferente
+## Open decisions — substitute exists with a different name
 
-Itens onde o substituto funciona, mas o nome do método não espelha o builtin. Implementar é opcional — depende de priorizar nomes espelhados vs. API enxuta.
+Items where the substitute works, but the method name does not mirror the builtin. Implementing them is optional — depends on whether mirrored names take priority over a leaner API.
 
-### 1. `slice()` → adicionar alias `.slice(start, stop, step)`?
+### 1. `slice()` → add a `.slice(start, stop, step)` alias?
 
-**Local hoje:** `poop/types/list.py:42`, `poop/types/tuple.py:37`, `poop/types/string.py:50`, `poop/types/bytes.py:36`, `poop/types/byte_array.py:30`, `poop/types/range.py:32` — todos expõem `copy_from_to(start, stop, step)`. Documentado em `INFECTIONS.md:281`.
+**Today:** `poop/types/list.py:42`, `poop/types/tuple.py:37`, `poop/types/string.py:50`, `poop/types/bytes.py:36`, `poop/types/byte_array.py:30`, `poop/types/range.py:32` — all expose `copy_from_to(start, stop, step)`. Documented at `INFECTIONS.md:281`.
 
-**Decisão:** manter só `copy_from_to`, ou adicionar `.slice(...)` como alias para alinhar com o nome do builtin?
+**Decision:** keep only `copy_from_to`, or add `.slice(...)` as an alias to align with the builtin name?
 
 ### 2. `enumerate(col)` → `col.enumerate()`?
 
-**Local sugerido:** `poop/types/_iterable_mixin.py` (cobriria `List`, `Tuple`, `Set`, `Range`, `Bytes`, `ByteArray` numa única implementação).
+**Suggested location:** `poop/types/_iterable_mixin.py` (would cover `List`, `Tuple`, `Set`, `Range`, `Bytes`, `ByteArray` in a single implementation).
 
-**Hoje:** `INFECTIONS.md:287` aponta `col.map(block)` / `col.reduce(init, block)` com índice manual.
+**Today:** `INFECTIONS.md:287` points to `col.map(block)` / `col.reduce(init, block)` with manual indexing.
 
-**Comportamento esperado:** retornar `List` de `Tuple(Int(index), item)`.
+**Expected behavior:** return a `List` of `Tuple(Int(index), item)`.
 
-**Decisão:** implementar `_IterableMixin.enumerate()` ou manter substituto indireto?
+**Decision:** implement `_IterableMixin.enumerate()` or keep the indirect substitute?
 
 ### 3. `zip(a, b)` → `a.zip(other)`?
 
-**Local sugerido:** `poop/types/_iterable_mixin.py` aceitando outra coleção.
+**Suggested location:** `poop/types/_iterable_mixin.py`, accepting another collection.
 
-**Comportamento esperado:** retornar `List` de `Tuple(item_a, item_b)`, parando no menor.
+**Expected behavior:** return a `List` of `Tuple(item_a, item_b)`, stopping at the shorter input.
 
-**Decisão:** implementar ou manter substituto indireto via `map`/`reduce`?
+**Decision:** implement, or keep the indirect substitute via `map`/`reduce`?
 
-### 4. `iter(col)` / `next(it)` → tipo `Iterator` first-class?
+### 4. `iter(col)` / `next(it)` → first-class `Iterator` type?
 
-**Hoje:** iteração apenas via `col.do(block)` (`INFECTIONS.md:294`).
+**Today:** iteration only via `col.do(block)` (`INFECTIONS.md:294`).
 
-**Implementação:** invasiva — requer novo tipo `Iterator` em `poop/types/` + transformer correspondente em `poop/transformers/` (assim como `Block` tem o seu).
+**Implementation:** invasive — requires a new `Iterator` type in `poop/types/` plus a matching transformer in `poop/transformers/` (just like `Block` has its own).
 
-**Decisão:** introduzir iterator first-class, ou manter o modelo Smalltalk puro (apenas `do`)?
+**Decision:** introduce a first-class iterator, or keep the pure Smalltalk model (only `do`)?
 
 ---
 
-## Decisões em aberto — reavaliar "intencional"
+## Open decisions — revisit "intentional"
 
-Itens hoje categorizados como "sem substituto possível" (`INFECTIONS.md:299-345`), mas que merecem revisão.
+Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
 
 ### 5. `setattr(obj, name, val)` → `obj.set_attr(name, val)`?
 
-**Assimetria atual:** `Object` expõe `get_attr` (`poop/types/object.py:84`) e `has_attr` (`poop/types/object.py:87`) mas não há `set_attr`. `INFECTIONS.md:299-304` diz apenas "use class methods", o que já não é a regra para `getattr`/`hasattr`.
+**Current asymmetry:** `Object` exposes `get_attr` (`poop/types/object.py:84`) and `has_attr` (`poop/types/object.py:87`) but no `set_attr`. `INFECTIONS.md:299-304` only says "use class methods", which is no longer the rule for `getattr`/`hasattr`.
 
-**Decisão:** completar o trio com `set_attr` (e `del_attr` simétrico, item 6)?
+**Decision:** complete the trio with `set_attr` (and a symmetric `del_attr`, item 6)?
 
 ### 6. `delattr(obj, name)` → `obj.del_attr(name)`?
 
-Par do item 5. Mesma justificativa de simetria.
+Counterpart of item 5. Same symmetry argument.
 
-### 7. `vars(obj)` → `obj.vars()` retornando `Dict`?
+### 7. `vars(obj)` → `obj.vars()` returning a `Dict`?
 
-**Hoje:** englobado em `no_introspection` (`poop/validators/no_introspection.py`, `INFECTIONS.md:312`) junto com `globals()`/`locals()`.
+**Today:** bundled into `no_introspection` (`poop/validators/no_introspection.py`, `INFECTIONS.md:312`) alongside `globals()`/`locals()`.
 
-**Distinção importante:** `vars(obj)` numa instância retorna `__dict__` — isso é **estado da instância**, não escopo léxico. POOP usa `__slots__`, então o substituto natural seria iterar os slots e produzir `Dict[Str, Object]`.
+**Important distinction:** `vars(obj)` on an instance returns `__dict__` — that is **instance state**, not lexical scope. POOP uses `__slots__`, so the natural substitute would iterate the slots and produce a `Dict[Str, Object]`.
 
-`globals()`/`locals()` continuam sem substituto (são escopo léxico real).
+`globals()`/`locals()` remain without a substitute (they are real lexical scope).
 
-**Decisão:** separar `vars` de `no_introspection` e dar um substituto `obj.vars()` em `Object`?
+**Decision:** split `vars` out of `no_introspection` and give `Object` a `vars()` substitute?
 
-### 8. `input(prompt)` → introduzir tipo `Console` / `Stdin`?
+### 8. `input(prompt)` → introduce a `Console` / `Stdin` type?
 
-**Hoje:** `INFECTIONS.md:343-345` declara "interactive I/O — no POOP equivalent".
+**Today:** `INFECTIONS.md:343-345` declares "interactive I/O — no POOP equivalent".
 
-**Observação:** Smalltalk *modela* I/O interativo (`Transcript`, etc.). Substituto natural: objeto POOP `Console` com `Console.read_line(prompt: Str) -> Str`.
+**Note:** Smalltalk *does* model interactive I/O (`Transcript`, etc.). Natural substitute: a POOP `Console` object with `Console.read_line(prompt: Str) -> Str`.
 
-**Escopo:** grande — novo subsistema de I/O.
+**Scope:** large — a brand new I/O subsystem.
 
-**Decisão:** vale o investimento ou mantém banido?
+**Decision:** worth the investment, or keep banned?
 
-### 9. `open(path)` → tipo `Path` POOP inspirado em `pathlib`?
+### 9. `open(path)` → POOP `Path` type inspired by `pathlib`?
 
-**Hoje:** `INFECTIONS.md:349-351` declara "file I/O — no POOP equivalent".
+**Today:** `INFECTIONS.md:349-351` declares "file I/O — no POOP equivalent".
 
-**Observação importante:** o `pathlib` da stdlib já é **orientado a objetos** — `Path("foo.txt").read_text()`, `Path("dir").iterdir()`, `Path("a").exists()`. A API casa naturalmente com o modelo de mensagens do POOP, dispensando um "subsistema novo" pensado do zero.
+**Important observation:** the stdlib's `pathlib` is already **object-oriented** — `Path("foo.txt").read_text()`, `Path("dir").iterdir()`, `Path("a").exists()`. The API matches POOP's message-passing model naturally, sparing us a "from-scratch subsystem".
 
-**Modelagens possíveis:**
-- **(a) Wrapper sobre `pathlib.Path`** — `Path` POOP envolve `pathlib.Path` e expõe métodos como `read_text() -> Str`, `read_lines() -> List[Str]`, `write_text(content: Str) -> Path`, `exists() -> Boolean`, `iterdir() -> List[Path]`. Mais barato, leveraging pathlib testado.
-- **(b) `Str.open(mode)` retornando `File` POOP** — alternativa originalmente proposta, mais próxima do builtin `open()` mas exige desenhar do zero o ciclo de vida (`close`, context manager via `With`).
+**Possible models:**
+- **(a) Wrapper around `pathlib.Path`** — a POOP `Path` wraps `pathlib.Path` and exposes methods like `read_text() -> Str`, `read_lines() -> List[Str]`, `write_text(content: Str) -> Path`, `exists() -> Boolean`, `iterdir() -> List[Path]`. Cheaper, leverages tested pathlib.
+- **(b) `Str.open(mode)` returning a POOP `File`** — alternative originally proposed, closer to the builtin `open()` but requires designing the lifecycle from scratch (`close`, context manager via `With`).
 
-**Recomendação:** (a). Pathlib já fez o trabalho de "OO-ificar" I/O de filesystem; POOP herda isso quase de graça. Para o `open()` em si, basta `Path("foo").read_text()` / `write_text()` cobrir a maior parte dos usos sem precisar de file handles abertos.
+**Recommendation:** (a). Pathlib has already done the work of "OO-ifying" filesystem I/O; POOP inherits it almost for free. For `open()` itself, `Path("foo").read_text()` / `write_text()` covers most uses without exposing open file handles.
 
-**Local sugerido:** `poop/types/path.py` (novo) + transformer em `poop/transformers/path.py` para interceptar `open(...)` rewriting para `Path(...).read_text()` quando o padrão for óbvio (ou simplesmente deixar o usuário escrever `Path("foo").read_text()` diretamente).
+**Suggested location:** `poop/types/path.py` (new) plus a transformer at `poop/transformers/path.py` to intercept `open(...)` and rewrite it to `Path(...).read_text()` when the pattern is obvious (or simply require users to write `Path("foo").read_text()` directly).
 
-**Escopo:** menor que reimplementar I/O do zero — wrapper sobre `pathlib` + métodos delegando.
+**Scope:** smaller than reimplementing I/O from scratch — wrapper over `pathlib` plus delegating methods.
 
-**Decisão:** adotar a abordagem (a) com `pathlib` como base, ou desenhar `File` do zero, ou manter banido?
+**Decision:** adopt approach (a) with `pathlib` as the foundation, design `File` from scratch, or keep banned?
 
 ---
 
-## Decisões em aberto — semântica da linguagem
+## Open decisions — language semantics
 
-### 10. Avaliação de operadores binários no estilo Smalltalk (esquerda-para-direita, sem precedência)?
+### 10. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
 
-**Hoje:** Python avalia `3 + 1 * 2` como `3 + (1 * 2) = 5` (precedência: `*` antes de `+`). POOP herda isso pois o parser é o do Python (`poop/parser.py` → `ast.parse`).
+**Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
 
-**Em Smalltalk:** mensagens binárias são avaliadas **esquerda-para-direita sem precedência**. `3 + 1 * 2` lê-se "envia `+ 1` para `3`, depois `* 2` para o resultado" → `(3 + 1) * 2 = 8`. É consequência direta do princípio "tudo é mensagem para um objeto".
+**In Smalltalk:** binary messages are evaluated **left-to-right with no precedence**. `3 + 1 * 2` reads as "send `+ 1` to `3`, then `* 2` to the result" → `(3 + 1) * 2 = 8`. It is a direct consequence of the principle "everything is a message to an object".
 
-**Tensão de princípios em POOP:**
+**Tension between POOP principles:**
 - `INFECTIONS.md:8` — "Everything is an object and every operation is message passing".
-- `INFECTIONS.md` (Active types) — "Binary infix operators (`+`, `-`, `*`, `/`, `<<`, `>>`, `&`, `|`, `^`, `==`, `!=`, `<`, `<=`, `>`, `>=`)" são **explicitamente permitidos**.
+- `INFECTIONS.md` (Active types) — "Binary infix operators (`+`, `-`, `*`, `/`, `<<`, `>>`, `&`, `|`, `^`, `==`, `!=`, `<`, `<=`, `>`, `>=`)" are **explicitly allowed**.
 
-Se cada `+`, `*`, etc. é mensagem (`__add__`, `__mul__`), então o "agrupamento" via precedência Python é uma decisão artificial — o leitor humano espera message-passing puro.
+If every `+`, `*`, etc. is a message (`__add__`, `__mul__`), then the "grouping" via Python precedence is an artificial decision — a human reader expects pure message passing.
 
-**Implementação possível:** novo transformer em `poop/transformers/binop_left_assoc.py` que reescreve `ast.BinOp` para ser left-associative ignorando precedência:
+**Possible implementation:** new transformer at `poop/transformers/binop_left_assoc.py` that rewrites `ast.BinOp` to be left-associative, ignoring precedence:
 
 ```python
 class _LeftAssocRewriter(ast.NodeTransformer):
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
-        # Junta cadeias de BinOp em pós-ordem reagrupando esquerda-para-direita
-        # exceto onde houver parênteses explícitos (já refletidos na árvore).
+        # Joins BinOp chains in post-order, regrouping left-to-right,
+        # except where explicit parentheses already nest the tree.
         ...
 ```
 
-Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvores aninhadas e devem ser preservados — o transformer só reordena cadeias planas.
+Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtrees and must be preserved — the transformer only reorders flat chains.
 
 **Trade-offs:**
-- **Pró:** consistência com o princípio "tudo é mensagem"; código POOP fica mais previsível pra quem lê como diálogo de objetos; alinha com Smalltalk-isms já adotados (`do:`, `if_true:`).
-- **Contra:** quebra a expectativa de qualquer programador Python que olhe o código; expressões matemáticas precisam parênteses explícitos para semântica usual (`3 + (1 * 2)`); ferramentas estáticas (ty, IDE inspections) avaliam com precedência Python e poderiam mostrar resultados diferentes do runtime; muito "infectivo" — afeta toda expressão aritmética em todos os exemplos.
-- **Mitigação parcial:** validator opcional que pede parênteses em qualquer cadeia mista de operadores diferentes, forçando o autor a explicitar — mas isso é poluição sintática.
+- **Pro:** consistency with the "everything is a message" principle; POOP code becomes more predictable for someone reading it as a dialogue between objects; aligns with already-adopted Smalltalk-isms (`do:`, `if_true:`).
+- **Con:** breaks the expectation of any Python programmer who looks at the code; mathematical expressions need explicit parentheses for the usual semantics (`3 + (1 * 2)`); static tools (ty, IDE inspections) evaluate with Python precedence and could disagree with the runtime; very "infectious" — affects every arithmetic expression in every example.
+- **Partial mitigation:** an optional validator that requires parentheses on any chain mixing different operators, forcing the author to be explicit — but that is syntactic noise.
 
-**Casos a considerar:**
-- Comparações encadeadas (`a < b < c`) — Python já tem semântica especial; preservar ou rejeitar?
-- Operadores unários (`-x`) — já banidos via `no_unary_minus`, então não interferem.
-- Atribuição aumentada (`x += y * z`) — o RHS sofre o mesmo reordenamento?
+**Cases to consider:**
+- Chained comparisons (`a < b < c`) — Python already has special semantics; preserve or reject?
+- Unary operators (`-x`) — already banned via `no_unary_minus`, so they do not interfere.
+- Augmented assignment (`x += y * z`) — does the RHS undergo the same reordering?
 
-**Esforço:** médio (transformer + testes + atualização de exemplos que dependem de precedência implícita). **Impacto:** mudança semântica observável em todo programa POOP com operadores misturados; alinha a linguagem com seu princípio fundador.
+**Effort:** medium (transformer + tests + updates to examples that depend on implicit precedence). **Impact:** observable semantic change in every POOP program with mixed operators; aligns the language with its founding principle.
 
-**Decisão:** adotar avaliação esquerda-para-direita estilo Smalltalk, ou manter precedência Python por pragmatismo?
+**Decision:** adopt Smalltalk-style left-to-right evaluation, or keep Python precedence for pragmatism?
 
 ---
 
@@ -161,96 +161,96 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 
 ---
 
-## Decisões em aberto — documentação
+## Open decisions — documentation
 
-### 12. Auditar e reescrever `INFECTIONS.md` para refletir o estado atual?
+### 12. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
-**Hoje:** `INFECTIONS.md` (738 linhas) é o catálogo canônico de validators, transformers, types e princípios. Foi escrito incrementalmente desde o início do projeto, e várias seções foram adicionadas quando algumas decisões ainda eram **dúvidas em aberto** ("talvez", "a definir", "investigar"). Hoje muitas dessas dúvidas já foram resolvidas pela prática (no código, nos testes, nos commits), mas o documento pode não ter sido atualizado uniformemente.
+**Today:** `INFECTIONS.md` (738 lines) is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
-**Sintomas de drift que motivam a auditoria:**
-- Itens ainda categorizados como "no POOP equivalent" enquanto na prática há substituto (ex.: `vars`, `setattr`/`delattr` — vide propostas 5-7 desta lista — sintoma de regra "intencional" virou inércia).
-- Princípios formulados como hipóteses ("Methods should follow Python names...") sem confirmação explícita de que todas as exceções estão catalogadas (`do` é a única exceção citada — outras escapariam?).
-- Tabelas de validators podem listar AST nodes que o validator atual não cobre (ou vice-versa) — drift entre código e doc.
-- Possíveis duplicatas entre `INFECTIONS.md` (princípios) e `CLAUDE.md` (workflow) que tornam ambíguo qual é a fonte da verdade.
+**Drift symptoms motivating the audit:**
+- Items still classified as "no POOP equivalent" while a substitute exists in practice (e.g.: `vars`, `setattr`/`delattr` — see proposals 5-7 in this list — a sign that "intentional" turned into inertia).
+- Principles phrased as hypotheses ("Methods should follow Python names...") without explicit confirmation that all exceptions are catalogued (`do` is the only exception cited — could others slip through?).
+- Validator tables may list AST nodes the current validator does not visit (or vice versa) — drift between code and doc.
+- Possible duplicates between `INFECTIONS.md` (principles) and `CLAUDE.md` (workflow) that make it ambiguous which is the source of truth.
 
-**Escopo da auditoria proposta:**
+**Proposed audit scope:**
 
-1. **Validators** — para cada `poop/validators/no_*.py`:
-   - confirmar que a tabela em `INFECTIONS.md` lista exatamente os nodes/calls que o validator visita;
-   - confirmar que o "Substitute" prometido existe em `poop/types/`;
-   - marcar validators sem substituto como "ban definitivo" ou mover para backlog explícito.
+1. **Validators** — for each `poop/validators/no_*.py`:
+   - confirm the table in `INFECTIONS.md` lists exactly the nodes/calls the validator visits;
+   - confirm the promised "Substitute" exists in `poop/types/`;
+   - mark validators without a substitute as a "definitive ban" or move them to an explicit backlog.
 
-2. **Transformers** — para cada `poop/transformers/*.py`:
-   - confirmar que a documentação cobre todos os nodes que o transformer reescreve;
-   - confirmar que os literais documentados ("every literal is transformed") estão de fato 100% cobertos (`int`, `float`, `str`, `bool`, `None`, `list`, `tuple`, `set`, `dict`, `bytes`, `complex` — todos têm transformer? Há gap?).
+2. **Transformers** — for each `poop/transformers/*.py`:
+   - confirm the documentation covers every node the transformer rewrites;
+   - confirm the documented literals ("every literal is transformed") are in fact 100% covered (`int`, `float`, `str`, `bool`, `None`, `list`, `tuple`, `set`, `dict`, `bytes`, `complex` — does each have a transformer? Any gaps?).
 
-3. **Types** — para cada `poop/types/*.py`:
-   - confirmar que a página/seção de cada tipo lista métodos públicos atuais (não os de uma versão anterior);
-   - confirmar que dunders → aliases públicos seguem a regra "Dunders exposed as regular methods" sem exceções não documentadas;
-   - confirmar a regra "All POOP methods return POOP types" varrendo retornos.
+3. **Types** — for each `poop/types/*.py`:
+   - confirm the page/section for each type lists the current public methods (not those of an earlier version);
+   - confirm that dunders → public aliases follow the rule "Dunders exposed as regular methods" with no undocumented exceptions;
+   - confirm the rule "All POOP methods return POOP types" by sweeping return values.
 
-4. **Princípios** — revalidar cada bullet de `## Principles`:
-   - É descritivo (reflete o código) ou aspiracional (ainda não cumprido)?
-   - Aspiracional → mover para `proposals.md` como item explícito.
-   - Descritivo → manter, com exemplo concreto se ajudar.
+4. **Principles** — re-validate each bullet of `## Principles`:
+   - Is it descriptive (reflects the code) or aspirational (not yet enforced)?
+   - Aspirational → move to `proposals.md` as an explicit item.
+   - Descriptive → keep, with a concrete example if it helps.
 
-5. **Dúvidas históricas em aberto** — varrer `git log -- INFECTIONS.md` em busca de commits "wip", "draft", "rascunho", "talvez" ou linguagem hesitante; cada uma vira uma pergunta a fechar (sim/não/proposta).
+5. **Historical open questions** — sweep `git log -- INFECTIONS.md` for commits with "wip", "draft", "rascunho", "talvez" or hesitant language; each becomes a question to close (yes/no/proposal).
 
-**Ferramentas que ajudam:**
-- `grep -n "talvez\|a definir\|TODO\|FIXME\|investigar\|? *$" INFECTIONS.md` para sinalizar dúvidas residuais.
-- Script de cross-check: parsear validators/transformers/types via AST e comparar com seções de `INFECTIONS.md` (gap analysis automatizada).
+**Useful tooling:**
+- `grep -n "talvez\|a definir\|TODO\|FIXME\|investigar\|? *$" INFECTIONS.md` to flag residual questions.
+- Cross-check script: parse validators/transformers/types via AST and compare with `INFECTIONS.md` sections (automated gap analysis).
 
-**Saída esperada:**
-- `INFECTIONS.md` reescrito (ou em PRs incrementais) onde cada regra é **descritiva e verificada** — espelha o código.
-- Itens aspiracionais migrados para `proposals.md`.
-- Cross-reference automatizado vivo (script em `scripts/audit_infections.py` rodado em CI?) — bônus.
+**Expected output:**
+- `INFECTIONS.md` rewritten (or in incremental PRs) where each rule is **descriptive and verified** — mirrors the code.
+- Aspirational items migrated to `proposals.md`.
+- Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Esforço:** grande (varredura linha-a-linha de 738 linhas + cross-check com ~60 validators, ~16 transformers, ~17 tipos). **Impacto:** restaura `INFECTIONS.md` como SSOT confiável; pré-requisito para a proposta 13 (MkDocs) — sem doc consistente, gerar site amplifica o drift.
+**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 13 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
-**Decisão:** fazer auditoria como uma única passada (esforço grande mas resolve de vez), ou em ondas incrementais por seção (validators primeiro, depois transformers, depois types)?
+**Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 13. Site de documentação com MkDocs?
+### 13. Documentation site with MkDocs?
 
-**Hoje:** documentação espalhada em `README.md` (visão geral), `INFECTIONS.md` (catálogo de validators/transformers/types — 90+ seções), `CLAUDE.md` (guia interno) e `proposals.md` (este backlog). Sem navegação, sem busca, sem versionamento publicado.
+**Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
-**Proposta:** adotar [MkDocs](https://www.mkdocs.org/) com tema [Material](https://squidfunk.github.io/mkdocs-material/) para gerar site estático navegável.
+**Proposal:** adopt [MkDocs](https://www.mkdocs.org/) with the [Material](https://squidfunk.github.io/mkdocs-material/) theme to generate a navigable static site.
 
-**Estrutura sugerida em `docs/`:**
-- `index.md` — landing page (extraído de `README.md`)
-- `getting-started.md` — instalar, rodar primeiro programa POOP
-- `principles.md` — princípios da linguagem (extraído de `INFECTIONS.md` "Principles")
-- `infections/validators.md` — um item por validator (gerado/extraído de `INFECTIONS.md`)
-- `infections/transformers.md` — idem para transformers
-- `types/` — uma página por tipo POOP (`Object`, `Int`, `Str`, etc.) com seus métodos
-- `examples.md` — apontador para `examples/`
-- `contributing.md` — workflow, commits atômicos, princípios de design
+**Suggested structure under `docs/`:**
+- `index.md` — landing page (extracted from `README.md`)
+- `getting-started.md` — install, run the first POOP program
+- `principles.md` — language principles (extracted from `INFECTIONS.md` "Principles")
+- `infections/validators.md` — one entry per validator (generated/extracted from `INFECTIONS.md`)
+- `infections/transformers.md` — same for transformers
+- `types/` — one page per POOP type (`Object`, `Int`, `Str`, etc.) with their methods
+- `examples.md` — pointer to `examples/`
+- `contributing.md` — workflow, atomic commits, design principles
 
-**Setup mínimo:**
-- `mkdocs.yml` no root (config + nav)
-- `mkdocs` + `mkdocs-material` em `[dependency-groups.dev]` no `pyproject.toml`
-- `uv run mkdocs serve` para preview local; `uv run mkdocs build` para gerar `site/`
-- Opcional: GitHub Pages via Action (`mkdocs gh-deploy`).
+**Minimum setup:**
+- `mkdocs.yml` at the repo root (config + nav)
+- `mkdocs` + `mkdocs-material` in `[dependency-groups.dev]` in `pyproject.toml`
+- `uv run mkdocs serve` for local preview; `uv run mkdocs build` to generate `site/`
+- Optional: GitHub Pages via Action (`mkdocs gh-deploy`).
 
-**Bônus considerados:**
-- `mkdocstrings[python]` para gerar API reference automaticamente a partir de docstrings dos tipos POOP — alinha com a regra "every relevant dunder gets an alias com nome Python" e expõe a API rica.
-- Plugin `mkdocs-autorefs` para links cruzados entre páginas.
+**Bonus considerations:**
+- `mkdocstrings[python]` to auto-generate API reference from docstrings on POOP types — aligns with the rule "every relevant dunder gets a Python-named alias" and surfaces the rich API.
+- `mkdocs-autorefs` plugin for cross-page links.
 
 **Trade-offs:**
-- **Manter** `INFECTIONS.md` como single-source-of-truth e gerar páginas a partir dele (script de extração) — evita duplicação, mas exige tooling.
-- **Migrar** o conteúdo para arquivos separados em `docs/` — mais limpo no final, mas exige atualizar o workflow ("Após cada infection, atualizar `docs/infections/...`" em vez de `INFECTIONS.md`).
+- **Keep** `INFECTIONS.md` as the single source of truth and generate pages from it (extraction script) — avoids duplication but requires tooling.
+- **Migrate** the content into separate files under `docs/` — cleaner end state, but requires updating the workflow ("After each infection, update `docs/infections/...`" instead of `INFECTIONS.md`).
 
-**Esforço:** médio (setup ~1h; migração de conteúdo dependendo da escolha de SSOT). **Impacto:** descoberta da linguagem POOP por novos usuários melhora drasticamente; busca textual no site; histórico publicado.
+**Effort:** medium (setup ~1h; content migration depends on the SSOT choice). **Impact:** language discoverability for new users improves dramatically; full-text search on the site; published history.
 
-**Decisão:** adotar MkDocs? Se sim, qual SSOT — `INFECTIONS.md` extraído ou `docs/` migrado?
+**Decision:** adopt MkDocs? If yes, which SSOT — `INFECTIONS.md` extracted or `docs/` migrated?
 
 ---
 
-## Permanecem banidos (sem proposta)
+## Stay banned (no proposal)
 
-Genuinamente sem substituto possível dentro do modelo POOP:
+Genuinely without a possible substitute inside POOP's model:
 
-- `exec`/`eval`/`compile` — metaprogramação, contraria o princípio estático.
-- `exit`/`quit` — controle de processo, fora do modelo de objetos.
-- `breakpoint` — handshake de debugger, não é operação de domínio.
-- `globals()`/`locals()` — introspecção de escopo léxico (estado de instância já é acessível).
-- `del` — statement, não builtin function.
+- `exec`/`eval`/`compile` — metaprogramming, contradicts the static principle.
+- `exit`/`quit` — process control, outside the object model.
+- `breakpoint` — debugger handshake, not a domain operation.
+- `globals()`/`locals()` — lexical scope introspection (instance state is already accessible).
+- `del` — statement, not a builtin function.
