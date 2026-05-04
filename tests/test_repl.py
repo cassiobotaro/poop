@@ -14,6 +14,8 @@ from poop.repl import (
     _setup_readline,
 )
 from poop.transformers import DEFAULT_NAMESPACE
+from poop.types.int import Int
+from poop.types.string import Str
 
 
 def _repl() -> tuple[Repl, dict[str, object]]:
@@ -23,8 +25,6 @@ def _repl() -> tuple[Repl, dict[str, object]]:
 
 
 def test_namespace_persists_across_calls() -> None:
-    from poop.types.int import Int
-
     repl, ns = _repl()
     repl._interpreter.run_source_repl("x = 42", ns)
     repl._interpreter.run_source_repl("y = x + 1", ns)
@@ -198,8 +198,6 @@ def test_run_restores_displayhook_on_exception(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_run_stores_last_result_in_underscore(monkeypatch: pytest.MonkeyPatch) -> None:
-    from poop.types.int import Int
-
     repl = Repl(Interpreter())
     monkeypatch.setattr("builtins.input", _fake_input("1 + 1", EOFError()))
     repl.run()
@@ -246,8 +244,6 @@ def test_poop_completer_callable_gets_paren() -> None:
 
 
 def test_poop_completer_attr_matches() -> None:
-    from poop.types.int import Int
-
     ns: dict[str, object] = {"n": Int(1)}
     c = _PoopCompleter(ns)
     result = c.complete("n.ab", 0)
@@ -255,8 +251,6 @@ def test_poop_completer_attr_matches() -> None:
 
 
 def test_poop_completer_attr_hides_dunder() -> None:
-    from poop.types.int import Int
-
     ns: dict[str, object] = {"n": Int(1)}
     c = _PoopCompleter(ns)
     assert c.complete("n.__", 0) is None
@@ -273,8 +267,6 @@ def test_poop_completer_attr_bad_expr_returns_none() -> None:
 
 def test_colorize_value_no_color_when_not_tty(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.stdout.isatty", lambda: False)
-    from poop.types.int import Int
-
     assert _colorize_value(Int(1)) == "1"
 
 
@@ -282,8 +274,6 @@ def test_colorize_value_int_contains_ansi_when_tty(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr("sys.stdout.isatty", lambda: True)
-    from poop.types.int import Int
-
     result = _colorize_value(Int(1))
     assert "\x1b[" in result
     assert "1" in result
@@ -291,8 +281,6 @@ def test_colorize_value_int_contains_ansi_when_tty(
 
 def test_colorize_value_str_uses_quoted_repr(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.stdout.isatty", lambda: True)
-    from poop.types.string import Str
-
     result = _colorize_value(Str("hello"))
     assert "'hello'" in result
 
