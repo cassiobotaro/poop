@@ -1,3 +1,8 @@
+from poop.parser import parse
+from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
+from poop.transformers.bytes import BytesTransformer
+from poop.transformers.int import IntTransformer
+from poop.transformers.memory_view import MemoryViewTransformer, _poop_memoryview_from
 from poop.types.boolean import false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -81,13 +86,6 @@ def test_repr_equals_str() -> None:
 
 
 def test_transformer_from_bytes() -> None:
-    from poop.parser import parse
-    from poop.transformers.bytes import BytesTransformer
-    from poop.transformers.memory_view import (
-        MemoryViewTransformer,
-        _poop_memoryview_from,
-    )
-
     tree = parse('mv = memoryview(b"abc")')
     tree = BytesTransformer().transform(tree)
     tree = MemoryViewTransformer().transform(tree)
@@ -102,14 +100,6 @@ def test_transformer_from_bytes() -> None:
 
 
 def test_transformer_from_bytearray() -> None:
-    from poop.parser import parse
-    from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
-    from poop.transformers.int import IntTransformer
-    from poop.transformers.memory_view import (
-        MemoryViewTransformer,
-        _poop_memoryview_from,
-    )
-
     tree = parse("mv = memoryview(bytearray(3))")
     tree = IntTransformer().transform(tree)
     tree = ByteArrayTransformer().transform(tree)
@@ -126,24 +116,18 @@ def test_transformer_from_bytearray() -> None:
 
 
 def test_factory_from_bytes_object() -> None:
-    from poop.transformers.memory_view import _poop_memoryview_from
-
     mv = _poop_memoryview_from(Bytes(b"hello"))
     assert isinstance(mv, MemoryView)
     assert mv.len() == Int(5)
 
 
 def test_factory_from_bytearray_object() -> None:
-    from poop.transformers.memory_view import _poop_memoryview_from
-
     mv = _poop_memoryview_from(ByteArray(bytearray(b"hi")))
     assert isinstance(mv, MemoryView)
     assert mv.len() == Int(2)
 
 
 def test_factory_fallback_empty() -> None:
-    from poop.transformers.memory_view import _poop_memoryview_from
-
     mv = _poop_memoryview_from(None)
     assert isinstance(mv, MemoryView)
     assert mv.len() == Int(0)
