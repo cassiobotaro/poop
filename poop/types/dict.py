@@ -1,15 +1,13 @@
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from poop.types.boolean import Boolean, false, true
+from poop.types.int import Int
+from poop.types.list import List
+from poop.types.none import NoneClass, none
 from poop.types.object import Object
-
-if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
-    from poop.types.int import Int
-    from poop.types.list import List
-    from poop.types.none import NoneClass
-    from poop.types.tuple import Tuple
+from poop.types.tuple import Tuple
 
 _dict = dict  # alias to avoid shadowing by Dict class name in annotations
 
@@ -22,8 +20,6 @@ class Dict(Object):
         self._data: _dict[Object, Object] = {}
 
     def at(self, key: Object) -> Object | NoneClass:
-        from poop.types.none import none
-
         return self._data.get(key, none)
 
     def at_put(self, key: Object, val: Object) -> Dict:
@@ -31,14 +27,10 @@ class Dict(Object):
         return self
 
     def includes_key(self, key: Object) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if key in self._data else false
 
     @classmethod
     def fromkeys(cls, keys: Iterable[Object], value: Object | None = None) -> Dict:
-        from poop.types.none import none
-
         fill: Object = none if value is None else value
         d = cls()
         for k in keys:
@@ -46,23 +38,15 @@ class Dict(Object):
         return d
 
     def keys(self) -> List:
-        from poop.types.list import List
-
         return List(*self._data.keys())
 
     def values(self) -> List:
-        from poop.types.list import List
-
         return List(*self._data.values())
 
     def do(self, block: Callable[[Tuple], Any]) -> None:
-        from poop.types.tuple import Tuple
-
         deque((block(Tuple(k, v)) for k, v in self._data.items()), maxlen=0)
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._data))
 
     def __len__(self) -> int:
@@ -84,19 +68,12 @@ class Dict(Object):
         return new
 
     def items(self) -> List:
-        from poop.types.list import List
-        from poop.types.tuple import Tuple
-
         return List(*[Tuple(k, v) for k, v in self._data.items()])
 
     def pop(self, key: Object) -> Object:
-        from poop.types.none import none
-
         return self._data.pop(key, none)
 
     def popitem(self) -> Tuple:
-        from poop.types.tuple import Tuple
-
         k, v = self._data.popitem()
         return Tuple(k, v)
 
@@ -108,15 +85,11 @@ class Dict(Object):
         return self
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Dict):
             return true if self._data == other._data else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Dict):
             return false if self._data == other._data else true
         return true
