@@ -4,12 +4,11 @@ from typing import ClassVar, cast
 
 from poop.transformers.base import BaseTransformer
 from poop.types.byte_array import ByteArray
+from poop.types.bytes import Bytes
+from poop.types.int import Int
 
 
 def _poop_bytearray_from(arg: object = None) -> ByteArray:
-    from poop.types.bytes import Bytes
-    from poop.types.int import Int
-
     if arg is None:
         return ByteArray()
     if isinstance(arg, Bytes):
@@ -17,8 +16,6 @@ def _poop_bytearray_from(arg: object = None) -> ByteArray:
     if isinstance(arg, Int):
         return ByteArray(bytearray(arg._value))
     if isinstance(arg, Iterable):
-        from poop.types.int import Int
-
         ints = cast("Iterable[Int]", arg)
         return ByteArray(bytearray(item._value for item in ints))
     return ByteArray()
