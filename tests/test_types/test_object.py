@@ -1,5 +1,10 @@
+import pytest
+
 from poop.types.boolean import false, true
+from poop.types.int import Int
+from poop.types.list import List
 from poop.types.object import Object
+from poop.types.string import Str
 
 
 def test_is_none_returns_false() -> None:
@@ -27,8 +32,6 @@ def test_not_falsy_object_returns_true() -> None:
 
 
 def test_class_name_returns_type_name() -> None:
-    from poop.types.string import Str
-
     assert Object().class_name() == Str("Object")
 
 
@@ -105,8 +108,6 @@ def test_callable_returns_true_for_callable_object() -> None:
 
 
 def test_id_returns_int() -> None:
-    from poop.types.int import Int
-
     obj = Object()
     result = obj.id()
     assert isinstance(result, Int)
@@ -114,8 +115,6 @@ def test_id_returns_int() -> None:
 
 
 def test_hash_returns_int() -> None:
-    from poop.types.int import Int
-
     obj = Object()
     result = obj.hash()
     assert isinstance(result, Int)
@@ -129,8 +128,6 @@ def test_get_attr_existing_attribute() -> None:
 
 
 def test_get_attr_missing_raises_attribute_error() -> None:
-    import pytest
-
     with pytest.raises(AttributeError):
         Object().get_attr("nonexistent")
 
@@ -142,22 +139,16 @@ def test_get_attr_missing_with_default_returns_default() -> None:
 
 
 def test_repr_method_returns_str_type() -> None:
-    from poop.types.string import Str
-
     result = Object().repr()
     assert isinstance(result, Str)
 
 
 def test_repr_method_matches_builtin_repr() -> None:
-    from poop.types.string import Str
-
     obj = Object()
     assert obj.repr() == Str(repr(obj))
 
 
 def test_repr_method_custom_str() -> None:
-    from poop.types.string import Str
-
     class Named(Object):
         def __str__(self) -> str:
             return "Named!"
@@ -166,22 +157,16 @@ def test_repr_method_custom_str() -> None:
 
 
 def test_ascii_returns_str_type() -> None:
-    from poop.types.string import Str
-
     result = Object().ascii()
     assert isinstance(result, Str)
 
 
 def test_ascii_ascii_only_object() -> None:
-    from poop.types.string import Str
-
     result = Object().ascii()
     assert result == Str("<Object>")
 
 
 def test_ascii_escapes_non_ascii_chars() -> None:
-    from poop.types.string import Str
-
     class Exotic(Object):
         def __str__(self) -> str:
             return "café"
@@ -191,17 +176,12 @@ def test_ascii_escapes_non_ascii_chars() -> None:
 
 
 def test_dir_returns_list_of_str() -> None:
-    from poop.types.list import List
-    from poop.types.string import Str
-
     result = Object().dir()
     assert isinstance(result, List)
     assert all(isinstance(item, Str) for item in result._items)
 
 
 def test_dir_contains_known_method() -> None:
-    from poop.types.string import Str
-
     result = Object().dir()
     assert Str("class_name") in result._items
 
@@ -216,8 +196,6 @@ def test_repr_delegates_to_str() -> None:
 
 
 def test_eq_same_object_returns_true() -> None:
-    from poop.types.boolean import true
-
     obj = Object()
     assert obj == obj
     result = obj.__eq__(obj)
@@ -225,24 +203,18 @@ def test_eq_same_object_returns_true() -> None:
 
 
 def test_eq_different_objects_returns_false() -> None:
-    from poop.types.boolean import false
-
     a, b = Object(), Object()
     result = a.__eq__(b)
     assert result is false
 
 
 def test_ne_same_object_returns_false() -> None:
-    from poop.types.boolean import false
-
     obj = Object()
     result = obj.__ne__(obj)
     assert result is false
 
 
 def test_ne_different_objects_returns_true() -> None:
-    from poop.types.boolean import true
-
     a, b = Object(), Object()
     result = a.__ne__(b)
     assert result is true
