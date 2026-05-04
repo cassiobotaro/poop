@@ -3,6 +3,9 @@ from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
 from poop.types.complex import Complex
+from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.string import Str
 
 
 def _poop_complex_literal(value: complex) -> Complex:
@@ -10,10 +13,6 @@ def _poop_complex_literal(value: complex) -> Complex:
 
 
 def _poop_complex_from(real: object = None, imag: object = None) -> Complex:
-    from poop.types.float import Float
-    from poop.types.int import Int
-    from poop.types.string import Str
-
     if real is None:
         return Complex(complex(0, 0))
     if imag is None:
