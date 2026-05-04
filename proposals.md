@@ -23,24 +23,7 @@ Lista priorizada de melhorias verificadas no código com referências `file:line
 
 ## Média prioridade
 
-### 2. `_poop_complex_from` silencia tipos inválidos com `0` (bug)
-
-**Local:** `poop/transformers/complex.py:27-28`
-
-```python
-r = real._value if isinstance(real, (Int, Float)) else 0  # type: ignore[union-attr]
-i = imag._value if isinstance(imag, (Int, Float)) else 0  # type: ignore[union-attr]
-```
-
-Se o usuário passar `complex(None, x)` ou outro tipo não suportado, o transformer silenciosamente converte para `0` em vez de erro. Comportamento divergente do `complex()` nativo do Python (que erra com `TypeError`).
-
-**Correção:** levantar `TypeError` quando o tipo não for `Int`/`Float`/numérico nativo. Os dois `type: ignore` desaparecem porque o `else` deixa de existir.
-
-**Esforço:** pequeno. **Impacto:** comportamento mais previsível, -2 ignores.
-
----
-
-### 3. `# ty: ignore[unresolved-attribute]` nas lambdas com `.abs()` (type-ignore)
+### 2. `# ty: ignore[unresolved-attribute]` nas lambdas com `.abs()` (type-ignore)
 
 **Local:** `tests/test_types/test_list.py:207,336`, `tests/test_types/test_tuple.py:203`
 
@@ -59,7 +42,7 @@ mas o caller perderia covariância. Avaliar se vale a complexidade extra para 3 
 
 ## Baixa prioridade / oportunidades
 
-### 4. Boilerplate de comparação em `Int`/`Float`/`Str` (refactor)
+### 3. Boilerplate de comparação em `Int`/`Float`/`Str` (refactor)
 
 **Local:** `poop/types/int.py`, `poop/types/float.py`, `poop/types/string.py`
 
@@ -79,7 +62,7 @@ class _ComparableMixin:
 
 ---
 
-### 5. Falta `Float.complex()` (architecture)
+### 4. Falta `Float.complex()` (architecture)
 
 **Local:** `poop/types/float.py` (método ausente)
 
@@ -96,7 +79,7 @@ def complex(self) -> Complex:
 
 ---
 
-### 6. Subtests do pytest 9 — não há ganho real (test/architecture)
+### 5. Subtests do pytest 9 — não há ganho real (test/architecture)
 
 **Local:** todos os tests
 
@@ -109,11 +92,10 @@ Avaliação anterior já feita: nenhum teste tem laços `for` com múltiplas ass
 | # | Categoria | Esforço | Impacto |
 |---|---|---|---|
 | 1 | `Complex` `NotImplemented` ignores | P | M |
-| 2 | `_poop_complex_from` silencioso | P | M |
-| 3 | `ty: ignore` `.abs()` | P-M | B |
-| 4 | `_ComparableMixin` | M | B-M |
-| 5 | `Float.complex()` ausente | P | B |
+| 2 | `ty: ignore` `.abs()` | P-M | B |
+| 3 | `_ComparableMixin` | M | B-M |
+| 4 | `Float.complex()` ausente | P | B |
 
 Legenda: **T**rivial, **P**equeno, **M**édio · **B**aixo, **M**édio, **A**lto.
 
-**Recomendação de ordem:** 2 → 1 → 5 → 4 → 3.
+**Recomendação de ordem:** 1 → 4 → 3 → 2.

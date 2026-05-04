@@ -304,9 +304,25 @@ def test_str_various(c: Complex, expected: str) -> None:
     assert str(c) == expected
 
 
-def test_complex_from_unsupported_real_type_returns_zero() -> None:
+def test_complex_from_unsupported_real_type_raises() -> None:
     from poop.transformers.complex import _poop_complex_from
     from poop.types.dict import Dict
 
-    result = _poop_complex_from(Dict())
-    assert result == Complex(complex(0, 0))
+    with pytest.raises(TypeError, match="Dict"):
+        _poop_complex_from(Dict())
+
+
+def test_complex_from_unsupported_first_of_two_args_raises() -> None:
+    from poop.transformers.complex import _poop_complex_from
+    from poop.types.dict import Dict
+
+    with pytest.raises(TypeError, match="Dict"):
+        _poop_complex_from(Dict(), Int(1))
+
+
+def test_complex_from_unsupported_second_of_two_args_raises() -> None:
+    from poop.transformers.complex import _poop_complex_from
+    from poop.types.dict import Dict
+
+    with pytest.raises(TypeError, match="Dict"):
+        _poop_complex_from(Int(1), Dict())

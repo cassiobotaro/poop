@@ -23,10 +23,19 @@ def _poop_complex_from(real: object = None, imag: object = None) -> Complex:
             return Complex(complex(real._value, 0))
         if isinstance(real, Str):
             return Complex(complex(real._value))
-        return Complex(complex(0, 0))
-    r = real._value if isinstance(real, (Int, Float)) else 0  # type: ignore[union-attr]
-    i = imag._value if isinstance(imag, (Int, Float)) else 0  # type: ignore[union-attr]
-    return Complex(complex(r, i))
+        raise TypeError(
+            f"complex() argument must be Int, Float, Str or Complex, "
+            f"not {type(real).__name__}"
+        )
+    if not isinstance(real, (Int, Float)):
+        raise TypeError(
+            f"complex() first argument must be Int or Float, not {type(real).__name__}"
+        )
+    if not isinstance(imag, (Int, Float)):
+        raise TypeError(
+            f"complex() second argument must be Int or Float, not {type(imag).__name__}"
+        )
+    return Complex(complex(real._value, imag._value))
 
 
 class _ComplexRewriter(ast.NodeTransformer):
