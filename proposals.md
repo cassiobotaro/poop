@@ -140,9 +140,30 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 
 ---
 
+## Open decisions — import hygiene
+
+### 11. Audit project imports against the `TYPE_CHECKING` rule?
+
+**Rule (`CLAUDE.md:58`):** imports live at module top; function-local `import` only to break a real cycle; imports used **exclusively** in type annotations must live in an `if TYPE_CHECKING:` block at the top of the module — never function-local, never alongside runtime top-level imports.
+
+**Symptoms to look for:**
+- `from poop.types.X import Y` function-local where `Y` is used **only in annotations** inside that function (should move to a module-top `if TYPE_CHECKING` block).
+- `from poop.types.X import Y` top-level where `Y` is used only in annotations (same fix — move to `TYPE_CHECKING`).
+- Function-local imports without an actual cycle (could be hoisted to the top).
+
+**Scope:** sweep `poop/types/*.py`, `poop/transformers/*.py`, `poop/validators/*.py`. For each function-local `import`: confirm whether a cycle exists (try hoisting) and whether the name is used at runtime vs. in annotations only.
+
+**Tooling hint:** `grep -n "    from poop\." poop/**/*.py` lists function-local imports; cross-check with grep for runtime use vs. annotation-only use.
+
+**Effort:** medium (sweep + one commit per affected module). **Impact:** aligns the codebase with the rule; avoids unnecessary lazy-import overhead; clarifies author intent (runtime vs. type-only).
+
+**Decision:** do the audit in one pass, or handle opportunistically when touching each file?
+
+---
+
 ## Decisões em aberto — documentação
 
-### 11. Auditar e reescrever `INFECTIONS.md` para refletir o estado atual?
+### 12. Auditar e reescrever `INFECTIONS.md` para refletir o estado atual?
 
 **Hoje:** `INFECTIONS.md` (738 linhas) é o catálogo canônico de validators, transformers, types e princípios. Foi escrito incrementalmente desde o início do projeto, e várias seções foram adicionadas quando algumas decisões ainda eram **dúvidas em aberto** ("talvez", "a definir", "investigar"). Hoje muitas dessas dúvidas já foram resolvidas pela prática (no código, nos testes, nos commits), mas o documento pode não ter sido atualizado uniformemente.
 
@@ -184,11 +205,11 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 - Itens aspiracionais migrados para `proposals.md`.
 - Cross-reference automatizado vivo (script em `scripts/audit_infections.py` rodado em CI?) — bônus.
 
-**Esforço:** grande (varredura linha-a-linha de 738 linhas + cross-check com ~60 validators, ~16 transformers, ~17 tipos). **Impacto:** restaura `INFECTIONS.md` como SSOT confiável; pré-requisito para a proposta 12 (MkDocs) — sem doc consistente, gerar site amplifica o drift.
+**Esforço:** grande (varredura linha-a-linha de 738 linhas + cross-check com ~60 validators, ~16 transformers, ~17 tipos). **Impacto:** restaura `INFECTIONS.md` como SSOT confiável; pré-requisito para a proposta 13 (MkDocs) — sem doc consistente, gerar site amplifica o drift.
 
 **Decisão:** fazer auditoria como uma única passada (esforço grande mas resolve de vez), ou em ondas incrementais por seção (validators primeiro, depois transformers, depois types)?
 
-### 12. Site de documentação com MkDocs?
+### 13. Site de documentação com MkDocs?
 
 **Hoje:** documentação espalhada em `README.md` (visão geral), `INFECTIONS.md` (catálogo de validators/transformers/types — 90+ seções), `CLAUDE.md` (guia interno) e `proposals.md` (este backlog). Sem navegação, sem busca, sem versionamento publicado.
 
