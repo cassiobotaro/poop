@@ -1,6 +1,8 @@
 import pytest
 
 from poop.types.boolean import false, true
+from poop.types.int import Int
+from poop.types.string import Str
 
 
 def test_assert_true_returns_self() -> None:
@@ -22,21 +24,15 @@ def test_assert_false_no_message_raises_empty() -> None:
 
 
 def test_assert_message_is_stringified() -> None:
-    from poop.types.string import Str
-
     with pytest.raises(AssertionError, match="bad value"):
         false.assert_(Str("bad value"))
 
 
 def test_assert_chains_after_comparison() -> None:
-    from poop.types.int import Int
-
     result = (Int(5) > Int(0)).assert_("must be positive")
     assert result is true
 
 
 def test_assert_false_from_comparison_raises() -> None:
-    from poop.types.int import Int
-
     with pytest.raises(AssertionError):
         (Int(0) > Int(5)).assert_("must be positive")
