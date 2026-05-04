@@ -1,8 +1,12 @@
+from poop.parser import parse
+from poop.transformers.bytes import BytesTransformer
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
+from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def test_empty_bytes() -> None:
@@ -97,8 +101,6 @@ def test_equal_bytes_have_equal_hash() -> None:
 
 
 def test_bytes_can_be_dict_key() -> None:
-    from poop.types.dict import Dict
-
     d = Dict()
     key = Bytes(b"key")
     d.at_put(key, Int(42))
@@ -115,9 +117,6 @@ def test_repr_equals_str() -> None:
 
 
 def test_transformer_literal() -> None:
-    from poop.parser import parse
-    from poop.transformers.bytes import BytesTransformer
-
     tree = parse('b = b"hello"')
     tree = BytesTransformer().transform(tree)
     ns: dict[str, object] = {"_poop_bytes": Bytes}
@@ -128,9 +127,6 @@ def test_transformer_literal() -> None:
 
 
 def test_transformer_empty_literal() -> None:
-    from poop.parser import parse
-    from poop.transformers.bytes import BytesTransformer
-
     tree = parse("b = b''")
     tree = BytesTransformer().transform(tree)
     ns: dict[str, object] = {"_poop_bytes": Bytes}
@@ -140,9 +136,6 @@ def test_transformer_empty_literal() -> None:
 
 
 def test_transformer_does_not_affect_str_literals() -> None:
-    from poop.parser import parse
-    from poop.transformers.bytes import BytesTransformer
-
     tree = BytesTransformer().transform(parse('s = "hello"'))
     ns: dict[str, object] = {}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
@@ -259,8 +252,6 @@ def test_isupper_false() -> None:
 
 
 def test_join() -> None:
-    from poop.types.list import List
-
     parts = List(Bytes(b"a"), Bytes(b"b"), Bytes(b"c"))
     assert Bytes(b"-").join(parts) == Bytes(b"a-b-c")
 
@@ -286,8 +277,6 @@ def test_lstrip_chars() -> None:
 
 
 def test_partition() -> None:
-    from poop.types.tuple import Tuple
-
     result = Bytes(b"hello world").partition(Bytes(b" "))
     assert isinstance(result, Tuple)
     assert result.at(Int(0)) == Bytes(b"hello")
@@ -332,8 +321,6 @@ def test_rjust_with_fill() -> None:
 
 
 def test_rpartition() -> None:
-    from poop.types.tuple import Tuple
-
     result = Bytes(b"hello world").rpartition(Bytes(b" "))
     assert isinstance(result, Tuple)
     assert result.at(Int(0)) == Bytes(b"hello")
@@ -341,16 +328,12 @@ def test_rpartition() -> None:
 
 
 def test_rsplit_no_sep() -> None:
-    from poop.types.list import List
-
     result = Bytes(b"a b c").rsplit()
     assert isinstance(result, List)
     assert result.len() == Int(3)
 
 
 def test_rsplit_with_sep() -> None:
-    from poop.types.list import List
-
     result = Bytes(b"a,b,c").rsplit(Bytes(b","))
     assert isinstance(result, List)
     assert result.at(Int(0)) == Bytes(b"a")
@@ -365,16 +348,12 @@ def test_rstrip_chars() -> None:
 
 
 def test_split_no_sep() -> None:
-    from poop.types.list import List
-
     result = Bytes(b"a b c").split()
     assert isinstance(result, List)
     assert result.len() == Int(3)
 
 
 def test_split_with_sep() -> None:
-    from poop.types.list import List
-
     result = Bytes(b"a,b,c").split(Bytes(b","))
     assert isinstance(result, List)
     assert result.at(Int(0)) == Bytes(b"a")
@@ -382,8 +361,6 @@ def test_split_with_sep() -> None:
 
 
 def test_splitlines() -> None:
-    from poop.types.list import List
-
     result = Bytes(b"a\nb\nc").splitlines()
     assert isinstance(result, List)
     assert result.len() == Int(3)
