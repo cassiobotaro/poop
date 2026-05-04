@@ -1,6 +1,12 @@
 import pytest
 
+from poop.types.boolean import false, true
+from poop.types.bytes import Bytes
+from poop.types.complex import Complex
+from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def test_str() -> None:
@@ -71,55 +77,39 @@ def test_pow() -> None:
 
 
 def test_eq_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Int(5).__eq__(Int(5)) is true
     assert Int(5).__eq__(Int(6)) is false
 
 
 def test_eq_with_non_int_returns_false() -> None:
-    from poop.types.boolean import false
-
     assert Int(5).__eq__(42) is false
 
 
 def test_ne_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Int(5).__ne__(Int(6)) is true
     assert Int(5).__ne__(Int(5)) is false
 
 
 def test_ne_with_non_int_returns_true() -> None:
-    from poop.types.boolean import true
-
     assert Int(5).__ne__(42) is true
 
 
 def test_lt_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Int(3).__lt__(Int(5)) is true
     assert Int(5).__lt__(Int(3)) is false
 
 
 def test_le_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Int(3).__le__(Int(3)) is true
     assert Int(5).__le__(Int(3)) is false
 
 
 def test_gt_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Int(5).__gt__(Int(3)) is true
     assert Int(3).__gt__(Int(5)) is false
 
 
 def test_ge_returns_boolean() -> None:
-    from poop.types.boolean import false, true
-
     assert Int(5).__ge__(Int(5)) is true
     assert Int(3).__ge__(Int(5)) is false
 
@@ -129,14 +119,10 @@ def test_hashable() -> None:
 
 
 def test_is_none_inherited() -> None:
-    from poop.types.boolean import false
-
     assert Int(1).is_none() is false
 
 
 def test_class_name() -> None:
-    from poop.types.string import Str
-
     assert Int(1).class_name() == Str("Int")
 
 
@@ -158,8 +144,6 @@ def test_dunder_abs() -> None:
 
 
 def test_truediv_returns_float() -> None:
-    from poop.types.float import Float
-
     assert Int(7) / Int(2) == Float(3.5)
 
 
@@ -208,8 +192,6 @@ def test_bit_length() -> None:
 
 
 def test_is_integer_always_true() -> None:
-    from poop.types.boolean import true
-
     assert Int(42).is_integer() is true
 
 
@@ -218,14 +200,10 @@ def test_int() -> None:
 
 
 def test_float() -> None:
-    from poop.types.float import Float
-
     assert Int(3).float() == Float(3.0)
 
 
 def test_complex() -> None:
-    from poop.types.complex import Complex
-
     assert Int(3).complex() == Complex(3 + 0j)
 
 
@@ -253,46 +231,30 @@ def test_conjugate_returns_self() -> None:
 
 
 def test_as_integer_ratio() -> None:
-    from poop.types.tuple import Tuple
-
     assert Int(5).as_integer_ratio() == Tuple(Int(5), Int(1))
 
 
 def test_to_bytes_big_endian() -> None:
-    from poop.types.bytes import Bytes
-    from poop.types.string import Str
-
     assert Int(255).to_bytes(Int(2), Str("big")) == Bytes(b"\x00\xff")
 
 
 def test_to_bytes_little_endian() -> None:
-    from poop.types.bytes import Bytes
-    from poop.types.string import Str
-
     assert Int(255).to_bytes(Int(2), Str("little")) == Bytes(b"\xff\x00")
 
 
 def test_bin_returns_binary_string() -> None:
-    from poop.types.string import Str
-
     assert Int(10).bin() == Str("0b1010")
 
 
 def test_hex_returns_hex_string() -> None:
-    from poop.types.string import Str
-
     assert Int(255).hex() == Str("0xff")
 
 
 def test_oct_returns_octal_string() -> None:
-    from poop.types.string import Str
-
     assert Int(8).oct() == Str("0o10")
 
 
 def test_chr_returns_character() -> None:
-    from poop.types.string import Str
-
     assert Int(65).chr() == Str("A")
 
 
@@ -301,22 +263,14 @@ def test_pow_method() -> None:
 
 
 def test_from_bytes_big_endian() -> None:
-    from poop.types.bytes import Bytes
-    from poop.types.string import Str
-
     assert Int.from_bytes(Bytes(b"\x00\xff"), Str("big")) == Int(255)
 
 
 def test_from_bytes_little_endian() -> None:
-    from poop.types.bytes import Bytes
-    from poop.types.string import Str
-
     assert Int.from_bytes(Bytes(b"\xff\x00"), Str("little")) == Int(255)
 
 
 def test_from_bytes_roundtrips_with_to_bytes() -> None:
-    from poop.types.string import Str
-
     n = Int(12345)
     b = n.to_bytes(Int(4), Str("big"))
     assert Int.from_bytes(b, Str("big")) == n
