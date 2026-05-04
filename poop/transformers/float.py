@@ -3,12 +3,11 @@ from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
 from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.string import Str
 
 
 def _poop_float_from(value: object = None) -> Float:
-    from poop.types.int import Int
-    from poop.types.string import Str
-
     if value is None:
         return Float(0.0)
     if isinstance(value, Float):
