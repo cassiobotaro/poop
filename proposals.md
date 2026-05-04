@@ -116,6 +116,44 @@ Par do item 6. Mesma justificativa de simetria.
 
 ---
 
+## Decisões em aberto — documentação
+
+### 11. Site de documentação com MkDocs?
+
+**Hoje:** documentação espalhada em `README.md` (visão geral), `INFECTIONS.md` (catálogo de validators/transformers/types — 90+ seções), `CLAUDE.md` (guia interno) e `proposals.md` (este backlog). Sem navegação, sem busca, sem versionamento publicado.
+
+**Proposta:** adotar [MkDocs](https://www.mkdocs.org/) com tema [Material](https://squidpalm.github.io/mkdocs-material/) para gerar site estático navegável.
+
+**Estrutura sugerida em `docs/`:**
+- `index.md` — landing page (extraído de `README.md`)
+- `getting-started.md` — instalar, rodar primeiro programa POOP
+- `principles.md` — princípios da linguagem (extraído de `INFECTIONS.md` "Principles")
+- `infections/validators.md` — um item por validator (gerado/extraído de `INFECTIONS.md`)
+- `infections/transformers.md` — idem para transformers
+- `types/` — uma página por tipo POOP (`Object`, `Int`, `Str`, etc.) com seus métodos
+- `examples.md` — apontador para `examples/`
+- `contributing.md` — workflow, commits atômicos, princípios de design
+
+**Setup mínimo:**
+- `mkdocs.yml` no root (config + nav)
+- `mkdocs` + `mkdocs-material` em `[dependency-groups.dev]` no `pyproject.toml`
+- `uv run mkdocs serve` para preview local; `uv run mkdocs build` para gerar `site/`
+- Opcional: GitHub Pages via Action (`mkdocs gh-deploy`).
+
+**Bônus considerados:**
+- `mkdocstrings[python]` para gerar API reference automaticamente a partir de docstrings dos tipos POOP — alinha com a regra "every relevant dunder gets an alias com nome Python" e expõe a API rica.
+- Plugin `mkdocs-autorefs` para links cruzados entre páginas.
+
+**Trade-offs:**
+- **Manter** `INFECTIONS.md` como single-source-of-truth e gerar páginas a partir dele (script de extração) — evita duplicação, mas exige tooling.
+- **Migrar** o conteúdo para arquivos separados em `docs/` — mais limpo no final, mas exige atualizar o workflow ("Após cada infection, atualizar `docs/infections/...`" em vez de `INFECTIONS.md`).
+
+**Esforço:** médio (setup ~1h; migração de conteúdo dependendo da escolha de SSOT). **Impacto:** descoberta da linguagem POOP por novos usuários melhora drasticamente; busca textual no site; histórico publicado.
+
+**Decisão:** adotar MkDocs? Se sim, qual SSOT — `INFECTIONS.md` extraído ou `docs/` migrado?
+
+---
+
 ## Permanecem banidos (sem proposta)
 
 Genuinamente sem substituto possível dentro do modelo POOP:
