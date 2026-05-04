@@ -3,7 +3,10 @@ import ast
 import pytest
 
 from poop.transformers.float import FloatTransformer, _poop_float_from
+from poop.types.complex import Complex
 from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.string import Str
 
 
 def _transform(source: str) -> ast.Module:
@@ -90,24 +93,18 @@ def test_float_from_none_returns_zero() -> None:
 
 
 def test_float_from_int_converts() -> None:
-    from poop.types.int import Int
-
     result = _poop_float_from(Int(42))
     assert isinstance(result, Float)
     assert result._value == 42.0
 
 
 def test_float_from_str_parses() -> None:
-    from poop.types.string import Str
-
     result = _poop_float_from(Str("3.14"))
     assert isinstance(result, Float)
     assert result._value == pytest.approx(3.14)
 
 
 def test_float_from_unsupported_type_raises() -> None:
-    from poop.types.complex import Complex
-
     with pytest.raises(TypeError, match="cannot convert"):
         _poop_float_from(Complex(complex(1, 2)))
 
