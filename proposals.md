@@ -124,9 +124,51 @@ Par do item 6. Mesma justificativa de simetria.
 
 ---
 
+## Decisões em aberto — semântica da linguagem
+
+### 11. Avaliação de operadores binários no estilo Smalltalk (esquerda-para-direita, sem precedência)?
+
+**Hoje:** Python avalia `3 + 1 * 2` como `3 + (1 * 2) = 5` (precedência: `*` antes de `+`). POOP herda isso pois o parser é o do Python (`poop/parser.py` → `ast.parse`).
+
+**Em Smalltalk:** mensagens binárias são avaliadas **esquerda-para-direita sem precedência**. `3 + 1 * 2` lê-se "envia `+ 1` para `3`, depois `* 2` para o resultado" → `(3 + 1) * 2 = 8`. É consequência direta do princípio "tudo é mensagem para um objeto".
+
+**Tensão de princípios em POOP:**
+- `INFECTIONS.md:8` — "Everything is an object and every operation is message passing".
+- `INFECTIONS.md` (Active types) — "Binary infix operators (`+`, `-`, `*`, `/`, `<<`, `>>`, `&`, `|`, `^`, `==`, `!=`, `<`, `<=`, `>`, `>=`)" são **explicitamente permitidos**.
+
+Se cada `+`, `*`, etc. é mensagem (`__add__`, `__mul__`), então o "agrupamento" via precedência Python é uma decisão artificial — o leitor humano espera message-passing puro.
+
+**Implementação possível:** novo transformer em `poop/transformers/binop_left_assoc.py` que reescreve `ast.BinOp` para ser left-associative ignorando precedência:
+
+```python
+class _LeftAssocRewriter(ast.NodeTransformer):
+    def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
+        # Junta cadeias de BinOp em pós-ordem reagrupando esquerda-para-direita
+        # exceto onde houver parênteses explícitos (já refletidos na árvore).
+        ...
+```
+
+Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvores aninhadas e devem ser preservados — o transformer só reordena cadeias planas.
+
+**Trade-offs:**
+- **Pró:** consistência com o princípio "tudo é mensagem"; código POOP fica mais previsível pra quem lê como diálogo de objetos; alinha com Smalltalk-isms já adotados (`do:`, `if_true:`).
+- **Contra:** quebra a expectativa de qualquer programador Python que olhe o código; expressões matemáticas precisam parênteses explícitos para semântica usual (`3 + (1 * 2)`); ferramentas estáticas (ty, IDE inspections) avaliam com precedência Python e poderiam mostrar resultados diferentes do runtime; muito "infectivo" — afeta toda expressão aritmética em todos os exemplos.
+- **Mitigação parcial:** validator opcional que pede parênteses em qualquer cadeia mista de operadores diferentes, forçando o autor a explicitar — mas isso é poluição sintática.
+
+**Casos a considerar:**
+- Comparações encadeadas (`a < b < c`) — Python já tem semântica especial; preservar ou rejeitar?
+- Operadores unários (`-x`) — já banidos via `no_unary_minus`, então não interferem.
+- Atribuição aumentada (`x += y * z`) — o RHS sofre o mesmo reordenamento?
+
+**Esforço:** médio (transformer + testes + atualização de exemplos que dependem de precedência implícita). **Impacto:** mudança semântica observável em todo programa POOP com operadores misturados; alinha a linguagem com seu princípio fundador.
+
+**Decisão:** adotar avaliação esquerda-para-direita estilo Smalltalk, ou manter precedência Python por pragmatismo?
+
+---
+
 ## Decisões em aberto — documentação
 
-### 11. Site de documentação com MkDocs?
+### 12. Site de documentação com MkDocs?
 
 **Hoje:** documentação espalhada em `README.md` (visão geral), `INFECTIONS.md` (catálogo de validators/transformers/types — 90+ seções), `CLAUDE.md` (guia interno) e `proposals.md` (este backlog). Sem navegação, sem busca, sem versionamento publicado.
 
