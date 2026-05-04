@@ -1,3 +1,4 @@
+from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
@@ -94,8 +95,6 @@ class Tuple(_IterableMixin, Object):
         return hash(self._items)
 
     def print(self, sep: str = " ", end: str = "\n", flush: bool = False) -> None:
-        from builtins import print as _builtins_print
-
         _builtins_print(
             *[str(item) for item in self._items], sep=sep, end=end, flush=flush
         )  # noqa: T201
