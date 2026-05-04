@@ -4,7 +4,9 @@ from typing import ClassVar, cast
 
 from poop.transformers.base import BaseTransformer
 from poop.types.dict import Dict
+from poop.types.list import List
 from poop.types.object import Object
+from poop.types.tuple import Tuple
 
 
 def _poop_dict_from_pairs(*pairs: Object) -> Dict:
@@ -16,9 +18,6 @@ def _poop_dict_from_pairs(*pairs: Object) -> Dict:
 
 
 def _poop_dict_from(arg: object = None) -> Dict:
-    from poop.types.list import List
-    from poop.types.tuple import Tuple
-
     if arg is None:
         return Dict()
     if isinstance(arg, Dict):
