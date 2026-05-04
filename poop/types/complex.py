@@ -1,3 +1,4 @@
+from types import NotImplementedType
 from typing import TYPE_CHECKING
 
 from poop.types.object import Object
@@ -48,64 +49,64 @@ class Complex(Object):
             return _complex(other._value)
         return None
 
-    def __add__(self, other: object) -> Complex:
+    def __add__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(self._value + v)
 
-    def __radd__(self, other: object) -> Complex:
+    def __radd__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(v + self._value)
 
-    def __sub__(self, other: object) -> Complex:
+    def __sub__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(self._value - v)
 
-    def __rsub__(self, other: object) -> Complex:
+    def __rsub__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(v - self._value)
 
-    def __mul__(self, other: object) -> Complex:
+    def __mul__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(self._value * v)
 
-    def __rmul__(self, other: object) -> Complex:
+    def __rmul__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(v * self._value)
 
-    def __truediv__(self, other: object) -> Complex:
+    def __truediv__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(self._value / v)
 
-    def __rtruediv__(self, other: object) -> Complex:
+    def __rtruediv__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(v / self._value)
 
-    def __pow__(self, other: object) -> Complex:
+    def __pow__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(self._value**v)
 
-    def __rpow__(self, other: object) -> Complex:
+    def __rpow__(self, other: object) -> Complex | NotImplementedType:
         v = self._coerce(other)
         if v is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return Complex(v**self._value)
 
     def negated(self) -> Complex:

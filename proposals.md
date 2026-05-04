@@ -4,26 +4,9 @@ Lista priorizada de melhorias verificadas no código com referências `file:line
 
 ---
 
-## Alta prioridade
-
-### 1. `Complex` retornando `NotImplemented` com 10 `type: ignore` (refactor/type-ignore)
-
-**Local:** `poop/types/complex.py:54,60,66,72,78,84,90,96,102,108`
-
-10 ocorrências de `return NotImplemented  # type: ignore[return-value]`. As assinaturas declaram `-> Complex` mas retornam `NotImplemented` (correto pelo protocolo Python para que `__radd__` etc. seja invocado).
-
-**Correção:** mudar a assinatura para refletir a realidade. Opções:
-- (a) `-> Complex | type[NotImplemented]` (verbosa mas precisa)
-- (b) Remover `_coerce` retornando `None` e validar tipos na entrada com `TypeError` antes — mas isso quebra o protocolo de operadores binários do Python.
-- (c) Mais limpo: usar `from typing import Any; -> Any` e documentar — perde-se precisão de tipo, mas elimina os 10 ignores.
-
-**Recomendação:** (a). É o padrão correto, mesmo verboso. **Esforço:** pequeno. **Impacto:** elimina 10 supressões.
-
----
-
 ## Média prioridade
 
-### 2. `# ty: ignore[unresolved-attribute]` nas lambdas com `.abs()` (type-ignore)
+### 1. `# ty: ignore[unresolved-attribute]` nas lambdas com `.abs()` (type-ignore)
 
 **Local:** `tests/test_types/test_list.py:207,336`, `tests/test_types/test_tuple.py:203`
 
@@ -42,7 +25,7 @@ mas o caller perderia covariância. Avaliar se vale a complexidade extra para 3 
 
 ## Baixa prioridade / oportunidades
 
-### 3. Boilerplate de comparação em `Int`/`Float`/`Str` (refactor)
+### 2. Boilerplate de comparação em `Int`/`Float`/`Str` (refactor)
 
 **Local:** `poop/types/int.py`, `poop/types/float.py`, `poop/types/string.py`
 
@@ -62,7 +45,7 @@ class _ComparableMixin:
 
 ---
 
-### 4. Falta `Float.complex()` (architecture)
+### 3. Falta `Float.complex()` (architecture)
 
 **Local:** `poop/types/float.py` (método ausente)
 
@@ -79,7 +62,7 @@ def complex(self) -> Complex:
 
 ---
 
-### 5. Subtests do pytest 9 — não há ganho real (test/architecture)
+### 4. Subtests do pytest 9 — não há ganho real (test/architecture)
 
 **Local:** todos os tests
 
@@ -91,11 +74,10 @@ Avaliação anterior já feita: nenhum teste tem laços `for` com múltiplas ass
 
 | # | Categoria | Esforço | Impacto |
 |---|---|---|---|
-| 1 | `Complex` `NotImplemented` ignores | P | M |
-| 2 | `ty: ignore` `.abs()` | P-M | B |
-| 3 | `_ComparableMixin` | M | B-M |
-| 4 | `Float.complex()` ausente | P | B |
+| 1 | `ty: ignore` `.abs()` | P-M | B |
+| 2 | `_ComparableMixin` | M | B-M |
+| 3 | `Float.complex()` ausente | P | B |
 
 Legenda: **T**rivial, **P**equeno, **M**édio · **B**aixo, **M**édio, **A**lto.
 
-**Recomendação de ordem:** 1 → 4 → 3 → 2.
+**Recomendação de ordem:** 3 → 2 → 1.
