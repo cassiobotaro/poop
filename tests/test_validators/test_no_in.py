@@ -1,3 +1,5 @@
+import ast
+
 import pytest
 
 from poop.errors import ValidationError
@@ -5,8 +7,6 @@ from poop.validators.no_in import NoInValidator
 
 
 def _validate(src: str) -> None:
-    import ast
-
     NoInValidator().validate(ast.parse(src))
 
 
