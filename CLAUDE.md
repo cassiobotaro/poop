@@ -55,6 +55,8 @@ When implementing new types or features, ensure they are transparent to end user
 
 Always verify GitHub Action versions are current and use the actual current year (2026) in license files, copyright notices, and dates.
 
+Imports must live at the top of the module. Use function-local `import` only when strictly necessary to resolve circular imports.
+
 ## Architecture
 
 Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate → transform → execute(namespace)`.
