@@ -4,6 +4,7 @@ from typing import ClassVar, cast
 
 from poop.transformers.base import BaseTransformer
 from poop.types.object import Object
+from poop.types.range import Range
 from poop.types.tuple import Tuple
 
 
@@ -12,8 +13,6 @@ def _poop_tuple(*elements: Object) -> Tuple:
 
 
 def _poop_tuple_from(arg: object = None) -> Tuple:
-    from poop.types.range import Range
-
     if arg is None:
         return Tuple()
     if isinstance(arg, Tuple):
