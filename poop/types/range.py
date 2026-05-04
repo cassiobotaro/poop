@@ -1,20 +1,16 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types.boolean import Boolean, false, true
+from poop.types.int import Int
+from poop.types.list import List
 from poop.types.object import Object
-
-if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
-    from poop.types.int import Int
-    from poop.types.list import List
 
 
 class Range(_IterableMixin, Object):
     __slots__ = ("_start", "_step", "_stop")
 
     def __init__(self, start: Int, stop: Int, step: Int | None = None) -> None:
-        from poop.types.int import Int
-
         self._start = start
         self._stop = stop
         self._step = (
@@ -27,8 +23,6 @@ class Range(_IterableMixin, Object):
         return range(start, stop + sign, step)
 
     def _iter(self) -> Any:
-        from poop.types.int import Int
-
         for i in self._range():
             yield Int(i)
 
@@ -36,25 +30,17 @@ class Range(_IterableMixin, Object):
         return self._iter()
 
     def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> List:
-        from poop.types.list import List
-
         s = step._value if step is not None else None
         items = list(self._iter())
         return List(*items[start._value : stop._value : s])
 
     def includes(self, item: Int) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if item._value in self._range() else false
 
     def count(self, value: Int) -> Int:
-        from poop.types.int import Int
-
         return Int(self._range().count(value._value))
 
     def index(self, value: Int) -> Int:
-        from poop.types.int import Int
-
         return Int(self._range().index(value._value))
 
     @property
@@ -76,13 +62,9 @@ class Range(_IterableMixin, Object):
         return self._stop
 
     def reversed(self) -> Range:
-        from poop.types.int import Int
-
         return Range(self._stop, self._start, Int(-self._step._value))
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._range()))
 
     def __str__(self) -> str:
