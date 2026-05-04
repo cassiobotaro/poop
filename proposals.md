@@ -45,24 +45,7 @@ class _ComparableMixin:
 
 ---
 
-### 3. Falta `Float.complex()` (architecture)
-
-**Local:** `poop/types/float.py` (método ausente)
-
-`Int` tem `.float()`. `Float` tem `.int()`. Nem `Int` nem `Float` têm `.complex()`. INFECTIONS.md:442 explicitamente recomenda conversões explícitas como caminho idiomático: *"To compare numeric values across types, convert explicitly first: `i.float() == f`, `f.int() == i`, `i.complex() == c`."* — então `complex()` deveria existir.
-
-**Correção:** adicionar `complex()` em `Int` e `Float`:
-```python
-def complex(self) -> Complex:
-    from poop.types.complex import Complex
-    return Complex(complex(self._value))
-```
-
-**Esforço:** pequeno. **Impacto:** completa a API documentada.
-
----
-
-### 4. Subtests do pytest 9 — não há ganho real (test/architecture)
+### 3. Subtests do pytest 9 — não há ganho real (test/architecture)
 
 **Local:** todos os tests
 
@@ -76,8 +59,7 @@ Avaliação anterior já feita: nenhum teste tem laços `for` com múltiplas ass
 |---|---|---|---|
 | 1 | `ty: ignore` `.abs()` | P-M | B |
 | 2 | `_ComparableMixin` | M | B-M |
-| 3 | `Float.complex()` ausente | P | B |
 
 Legenda: **T**rivial, **P**equeno, **M**édio · **B**aixo, **M**édio, **A**lto.
 
-**Recomendação de ordem:** 3 → 2 → 1.
+**Recomendação de ordem:** 2 → 1.

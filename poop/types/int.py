@@ -5,6 +5,7 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
+    from poop.types.complex import Complex
     from poop.types.float import Float
     from poop.types.string import Str
     from poop.types.tuple import Tuple
@@ -88,6 +89,11 @@ class Int(Object):
         from poop.types.float import Float
 
         return Float(float(self._value))
+
+    def complex(self) -> Complex:
+        from poop.types.complex import Complex
+
+        return Complex(complex(self._value))
 
     def __abs__(self) -> Int:
         return Int(abs(self._value))

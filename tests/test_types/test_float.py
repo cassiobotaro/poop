@@ -179,6 +179,12 @@ def test_int_conversion() -> None:
     assert int(Float(3.9)) == 3
 
 
+def test_complex() -> None:
+    from poop.types.complex import Complex
+
+    assert Float(2.5).complex() == Complex(2.5 + 0j)
+
+
 def test_is_integer_true() -> None:
     from poop.types.boolean import true
 

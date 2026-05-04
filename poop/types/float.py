@@ -4,6 +4,7 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.complex import Complex
     from poop.types.int import Int
     from poop.types.string import Str
     from poop.types.tuple import Tuple
@@ -34,6 +35,11 @@ class Float(Object):
 
     def float(self) -> Float:
         return self
+
+    def complex(self) -> Complex:
+        from poop.types.complex import Complex
+
+        return Complex(complex(self._value))
 
     def is_integer(self) -> Boolean:
         from poop.types.boolean import false, true

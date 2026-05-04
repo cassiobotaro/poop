@@ -223,6 +223,12 @@ def test_float() -> None:
     assert Int(3).float() == Float(3.0)
 
 
+def test_complex() -> None:
+    from poop.types.complex import Complex
+
+    assert Int(3).complex() == Complex(3 + 0j)
+
+
 def test_real_returns_self() -> None:
     n = Int(5)
     assert n.real is n
