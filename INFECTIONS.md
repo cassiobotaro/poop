@@ -362,7 +362,7 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|---|
 | `sum(col)` | free function with procedural look | `col.sum()` |
 
-Available on `List`, `Tuple`, `Set`, `FrozenSet`, and `Interval`.
+Available on `List`, `Tuple`, `Set`, `FrozenSet`, and `Range`.
 
 ### No `map` / `filter` — `poop/validators/no_map.py`, `poop/validators/no_filter.py`
 
@@ -505,7 +505,7 @@ Concrete root of all POOP types. Provides default implementations for universal 
 
 ### Collection iterable methods — `poop/types/_iterable_mixin.py`
 
-`List`, `Tuple`, `Set`, `FrozenSet`, `Interval`, `Bytes`, `ByteArray`, and `MemoryView` all inherit the following methods from `_IterableMixin`:
+`List`, `Tuple`, `Set`, `FrozenSet`, `Range`, `Bytes`, `ByteArray`, and `MemoryView` all inherit the following methods from `_IterableMixin`:
 
 | Smalltalk message | POOP method | Behavior |
 |---|---|---|
@@ -521,13 +521,13 @@ Concrete root of all POOP types. Provides default implementations for universal 
 
 `do` returning `self` enables cascades: `col.do(lambda x: x.print()).map(lambda x: x + 1)`.
 
-`map`/`filter`/`filter_false` return the same type for `List`, `Tuple`, `Set`, and `FrozenSet`; they return `List` for `Interval`, `Bytes`, `ByteArray`, and `MemoryView` (those types cannot be reconstructed from arbitrary transformed elements).
+`map`/`filter`/`filter_false` return the same type for `List`, `Tuple`, `Set`, and `FrozenSet`; they return `List` for `Range`, `Bytes`, `ByteArray`, and `MemoryView` (those types cannot be reconstructed from arbitrary transformed elements).
 
 `Bytes`, `ByteArray`, and `MemoryView` only expose `do` and `map` from this mixin. `Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements.
 
-### Interval — `poop/types/interval.py`
+### Range — `poop/types/range.py`
 
-`Interval(Object)` represents a closed integer interval [start, stop]. Created via `Int.to_(limit)`.
+`Range(Object)` represents a closed integer interval [start, stop]. Created via `range(start, stop)` (rewritten to `_poop_range(...)` by the transformer).
 
 | POOP method | Behavior |
 |---|---|
@@ -694,7 +694,7 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 | AST node | Replacement |
 |---|---|
-| `ast.Call` with `range(stop)` / `range(start, stop)` / `range(start, stop, step)` | `_poop_range(...)` → `Interval` |
+| `ast.Call` with `range(stop)` / `range(start, stop)` / `range(start, stop, step)` | `_poop_range(...)` → `Range` |
 
 ### Raise — `poop/transformers/raise_.py`
 
@@ -733,6 +733,6 @@ Implicitly injects `Object` as the base class of every user-defined class that h
 | `Tuple` | `Tuple` |
 | `Bytes` | `Bytes` |
 | `ByteArray` | `ByteArray` |
-| `Interval` | `List` |
+| `Range` | `List` |
 
-> `Interval.copy_from_to` returns `List` (not `Interval`) because reconstructing a valid closed interval from sliced `Int` POOP values would require unpacking assumptions about the underlying range step.
+> `Range.copy_from_to` returns `List` (not `Range`) because reconstructing a valid closed interval from sliced `Int` POOP values would require unpacking assumptions about the underlying range step.
