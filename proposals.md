@@ -6,43 +6,17 @@ Princípio em jogo (`INFECTIONS.md:16`): *"Activate validator only when the subs
 
 ---
 
-## Alta prioridade
-
-### 1. Implementar `Object.format(spec)` — substituto faltante para `format()` (bug)
-
-**Local:** `poop/types/object.py` (adicionar método); `poop/validators/no_format.py:5`; `INFECTIONS.md:271-275`.
-
-O validator `no_format` rejeita `format(x, spec)` e a documentação promete o substituto `obj.format(spec)`, mas o método não existe em `Object`. É o único caso em todo o conjunto de validators ativos onde o contrato validator↔substituto está rompido.
-
-**Implementação esperada** (segue o padrão de `repr`/`ascii`/`get_attr` em `poop/types/object.py:84-90`, que já usa import function-local para quebrar o ciclo `object` ↔ `string`):
-
-```python
-def format(self, spec: Str) -> Str:
-    from poop.types.string import Str  # circular: string.py importa Object
-    return Str(builtins.format(self, spec._value))
-```
-
-**Testes em `tests/test_types/test_object.py`:**
-- `Int(42).format(Str("x"))` → `Str("2a")`
-- `Float(3.14159).format(Str(".2f"))` → `Str("3.14")`
-- `Str("abc").format(Str(">5"))` → `Str("  abc")`
-- spec inválido propaga `ValueError` do builtin
-
-**Esforço:** pequeno (~5 linhas + 4 testes). **Impacto:** fecha a única lacuna validator↔substituto.
-
----
-
 ## Decisões em aberto — substituto existe com nome diferente
 
 Itens onde o substituto funciona, mas o nome do método não espelha o builtin. Implementar é opcional — depende de priorizar nomes espelhados vs. API enxuta.
 
-### 2. `slice()` → adicionar alias `.slice(start, stop, step)`?
+### 1. `slice()` → adicionar alias `.slice(start, stop, step)`?
 
 **Local hoje:** `poop/types/list.py:42`, `poop/types/tuple.py:37`, `poop/types/string.py:50`, `poop/types/bytes.py:36`, `poop/types/byte_array.py:30`, `poop/types/range.py:32` — todos expõem `copy_from_to(start, stop, step)`. Documentado em `INFECTIONS.md:281`.
 
 **Decisão:** manter só `copy_from_to`, ou adicionar `.slice(...)` como alias para alinhar com o nome do builtin?
 
-### 3. `enumerate(col)` → `col.enumerate()`?
+### 2. `enumerate(col)` → `col.enumerate()`?
 
 **Local sugerido:** `poop/types/_iterable_mixin.py` (cobriria `List`, `Tuple`, `Set`, `Range`, `Bytes`, `ByteArray` numa única implementação).
 
@@ -52,7 +26,7 @@ Itens onde o substituto funciona, mas o nome do método não espelha o builtin. 
 
 **Decisão:** implementar `_IterableMixin.enumerate()` ou manter substituto indireto?
 
-### 4. `zip(a, b)` → `a.zip(other)`?
+### 3. `zip(a, b)` → `a.zip(other)`?
 
 **Local sugerido:** `poop/types/_iterable_mixin.py` aceitando outra coleção.
 
@@ -60,7 +34,7 @@ Itens onde o substituto funciona, mas o nome do método não espelha o builtin. 
 
 **Decisão:** implementar ou manter substituto indireto via `map`/`reduce`?
 
-### 5. `iter(col)` / `next(it)` → tipo `Iterator` first-class?
+### 4. `iter(col)` / `next(it)` → tipo `Iterator` first-class?
 
 **Hoje:** iteração apenas via `col.do(block)` (`INFECTIONS.md:294`).
 
@@ -74,17 +48,17 @@ Itens onde o substituto funciona, mas o nome do método não espelha o builtin. 
 
 Itens hoje categorizados como "sem substituto possível" (`INFECTIONS.md:299-345`), mas que merecem revisão.
 
-### 6. `setattr(obj, name, val)` → `obj.set_attr(name, val)`?
+### 5. `setattr(obj, name, val)` → `obj.set_attr(name, val)`?
 
 **Assimetria atual:** `Object` expõe `get_attr` (`poop/types/object.py:84`) e `has_attr` (`poop/types/object.py:87`) mas não há `set_attr`. `INFECTIONS.md:299-304` diz apenas "use class methods", o que já não é a regra para `getattr`/`hasattr`.
 
-**Decisão:** completar o trio com `set_attr` (e `del_attr` simétrico, item 7)?
+**Decisão:** completar o trio com `set_attr` (e `del_attr` simétrico, item 6)?
 
-### 7. `delattr(obj, name)` → `obj.del_attr(name)`?
+### 6. `delattr(obj, name)` → `obj.del_attr(name)`?
 
-Par do item 6. Mesma justificativa de simetria.
+Par do item 5. Mesma justificativa de simetria.
 
-### 8. `vars(obj)` → `obj.vars()` retornando `Dict`?
+### 7. `vars(obj)` → `obj.vars()` retornando `Dict`?
 
 **Hoje:** englobado em `no_introspection` (`poop/validators/no_introspection.py`, `INFECTIONS.md:312`) junto com `globals()`/`locals()`.
 
@@ -94,7 +68,7 @@ Par do item 6. Mesma justificativa de simetria.
 
 **Decisão:** separar `vars` de `no_introspection` e dar um substituto `obj.vars()` em `Object`?
 
-### 9. `input(prompt)` → introduzir tipo `Console` / `Stdin`?
+### 8. `input(prompt)` → introduzir tipo `Console` / `Stdin`?
 
 **Hoje:** `INFECTIONS.md:343-345` declara "interactive I/O — no POOP equivalent".
 
@@ -104,7 +78,7 @@ Par do item 6. Mesma justificativa de simetria.
 
 **Decisão:** vale o investimento ou mantém banido?
 
-### 10. `open(path)` → tipo `Path` POOP inspirado em `pathlib`?
+### 9. `open(path)` → tipo `Path` POOP inspirado em `pathlib`?
 
 **Hoje:** `INFECTIONS.md:349-351` declara "file I/O — no POOP equivalent".
 
@@ -126,7 +100,7 @@ Par do item 6. Mesma justificativa de simetria.
 
 ## Decisões em aberto — semântica da linguagem
 
-### 11. Avaliação de operadores binários no estilo Smalltalk (esquerda-para-direita, sem precedência)?
+### 10. Avaliação de operadores binários no estilo Smalltalk (esquerda-para-direita, sem precedência)?
 
 **Hoje:** Python avalia `3 + 1 * 2` como `3 + (1 * 2) = 5` (precedência: `*` antes de `+`). POOP herda isso pois o parser é o do Python (`poop/parser.py` → `ast.parse`).
 
@@ -168,14 +142,13 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 
 ## Decisões em aberto — documentação
 
-### 12. Auditar e reescrever `INFECTIONS.md` para refletir o estado atual?
+### 11. Auditar e reescrever `INFECTIONS.md` para refletir o estado atual?
 
 **Hoje:** `INFECTIONS.md` (738 linhas) é o catálogo canônico de validators, transformers, types e princípios. Foi escrito incrementalmente desde o início do projeto, e várias seções foram adicionadas quando algumas decisões ainda eram **dúvidas em aberto** ("talvez", "a definir", "investigar"). Hoje muitas dessas dúvidas já foram resolvidas pela prática (no código, nos testes, nos commits), mas o documento pode não ter sido atualizado uniformemente.
 
 **Sintomas de drift que motivam a auditoria:**
-- Itens ainda categorizados como "no POOP equivalent" enquanto na prática há substituto (ex.: `vars`, `setattr`/`delattr` — vide propostas 6-8 desta lista — sintoma de regra "intencional" virou inércia).
+- Itens ainda categorizados como "no POOP equivalent" enquanto na prática há substituto (ex.: `vars`, `setattr`/`delattr` — vide propostas 5-7 desta lista — sintoma de regra "intencional" virou inércia).
 - Princípios formulados como hipóteses ("Methods should follow Python names...") sem confirmação explícita de que todas as exceções estão catalogadas (`do` é a única exceção citada — outras escapariam?).
-- Substitutos prometidos que não existem (ex.: `Object.format` — proposta 1).
 - Tabelas de validators podem listar AST nodes que o validator atual não cobre (ou vice-versa) — drift entre código e doc.
 - Possíveis duplicatas entre `INFECTIONS.md` (princípios) e `CLAUDE.md` (workflow) que tornam ambíguo qual é a fonte da verdade.
 
@@ -183,7 +156,7 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 
 1. **Validators** — para cada `poop/validators/no_*.py`:
    - confirmar que a tabela em `INFECTIONS.md` lista exatamente os nodes/calls que o validator visita;
-   - confirmar que o "Substitute" prometido existe em `poop/types/` (cruzar com proposta 1);
+   - confirmar que o "Substitute" prometido existe em `poop/types/`;
    - marcar validators sem substituto como "ban definitivo" ou mover para backlog explícito.
 
 2. **Transformers** — para cada `poop/transformers/*.py`:
@@ -211,11 +184,11 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 - Itens aspiracionais migrados para `proposals.md`.
 - Cross-reference automatizado vivo (script em `scripts/audit_infections.py` rodado em CI?) — bônus.
 
-**Esforço:** grande (varredura linha-a-linha de 738 linhas + cross-check com ~60 validators, ~16 transformers, ~17 tipos). **Impacto:** restaura `INFECTIONS.md` como SSOT confiável; pré-requisito para a proposta 13 (MkDocs) — sem doc consistente, gerar site amplifica o drift.
+**Esforço:** grande (varredura linha-a-linha de 738 linhas + cross-check com ~60 validators, ~16 transformers, ~17 tipos). **Impacto:** restaura `INFECTIONS.md` como SSOT confiável; pré-requisito para a proposta 12 (MkDocs) — sem doc consistente, gerar site amplifica o drift.
 
 **Decisão:** fazer auditoria como uma única passada (esforço grande mas resolve de vez), ou em ondas incrementais por seção (validators primeiro, depois transformers, depois types)?
 
-### 13. Site de documentação com MkDocs?
+### 12. Site de documentação com MkDocs?
 
 **Hoje:** documentação espalhada em `README.md` (visão geral), `INFECTIONS.md` (catálogo de validators/transformers/types — 90+ seções), `CLAUDE.md` (guia interno) e `proposals.md` (este backlog). Sem navegação, sem busca, sem versionamento publicado.
 
