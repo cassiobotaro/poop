@@ -204,7 +204,7 @@ def test_sorted_with_key() -> None:
     from poop.types.int import Int
 
     lst = List(Int(-3), Int(1), Int(-2))
-    result = lst.sorted(key=lambda x: x.abs())
+    result = lst.sorted(key=lambda x: x.abs())  # ty: ignore[unresolved-attribute]
     assert result == List(Int(1), Int(-2), Int(-3))
 
 
@@ -333,7 +333,7 @@ def test_sort_returns_self() -> None:
 
 def test_sort_with_key() -> None:
     lst = List(Int(-3), Int(1), Int(-2))
-    lst.sort(key=lambda x: x.abs())
+    lst.sort(key=lambda x: x.abs())  # ty: ignore[unresolved-attribute]
     assert lst == List(Int(1), Int(-2), Int(-3))
 
 

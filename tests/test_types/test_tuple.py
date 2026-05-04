@@ -200,7 +200,7 @@ def test_sorted_empty() -> None:
 
 def test_sorted_with_key() -> None:
     t = Tuple(Int(-3), Int(1), Int(-2))
-    result = t.sorted(key=lambda x: x.abs())
+    result = t.sorted(key=lambda x: x.abs())  # ty: ignore[unresolved-attribute]
     assert result == Tuple(Int(1), Int(-2), Int(-3))
 
 
