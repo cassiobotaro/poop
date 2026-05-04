@@ -14,11 +14,11 @@ Princípio em jogo (`INFECTIONS.md:16`): *"Activate validator only when the subs
 
 O validator `no_format` rejeita `format(x, spec)` e a documentação promete o substituto `obj.format(spec)`, mas o método não existe em `Object`. É o único caso em todo o conjunto de validators ativos onde o contrato validator↔substituto está rompido.
 
-**Implementação esperada** (segue o padrão de `repr`/`ascii`/`get_attr`):
+**Implementação esperada** (segue o padrão de `repr`/`ascii`/`get_attr` em `poop/types/object.py:84-90`, que já usa import function-local para quebrar o ciclo `object` ↔ `string`):
 
 ```python
 def format(self, spec: Str) -> Str:
-    from poop.types.string import Str
+    from poop.types.string import Str  # circular: string.py importa Object
     return Str(builtins.format(self, spec._value))
 ```
 
@@ -211,7 +211,7 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 - Itens aspiracionais migrados para `proposals.md`.
 - Cross-reference automatizado vivo (script em `scripts/audit_infections.py` rodado em CI?) — bônus.
 
-**Esforço:** grande (varredura linha-a-linha de 738 linhas + cross-check com ~60 validators, ~16 transformers, ~17 tipos). **Impacto:** restaura `INFECTIONS.md` como SSOT confiável; pré-requisito para a proposta 12 (MkDocs) — sem doc consistente, gerar site amplifica o drift.
+**Esforço:** grande (varredura linha-a-linha de 738 linhas + cross-check com ~60 validators, ~16 transformers, ~17 tipos). **Impacto:** restaura `INFECTIONS.md` como SSOT confiável; pré-requisito para a proposta 13 (MkDocs) — sem doc consistente, gerar site amplifica o drift.
 
 **Decisão:** fazer auditoria como uma única passada (esforço grande mas resolve de vez), ou em ondas incrementais por seção (validators primeiro, depois transformers, depois types)?
 
@@ -219,7 +219,7 @@ Detalhe: parênteses explícitos no código fonte (`3 + (1 * 2)`) viram subárvo
 
 **Hoje:** documentação espalhada em `README.md` (visão geral), `INFECTIONS.md` (catálogo de validators/transformers/types — 90+ seções), `CLAUDE.md` (guia interno) e `proposals.md` (este backlog). Sem navegação, sem busca, sem versionamento publicado.
 
-**Proposta:** adotar [MkDocs](https://www.mkdocs.org/) com tema [Material](https://squidpalm.github.io/mkdocs-material/) para gerar site estático navegável.
+**Proposta:** adotar [MkDocs](https://www.mkdocs.org/) com tema [Material](https://squidfunk.github.io/mkdocs-material/) para gerar site estático navegável.
 
 **Estrutura sugerida em `docs/`:**
 - `index.md` — landing page (extraído de `README.md`)
