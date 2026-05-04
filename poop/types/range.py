@@ -35,14 +35,6 @@ class Range(_IterableMixin, Object):
     def __iter__(self) -> Any:
         return self._iter()
 
-    def _iter_items(self) -> Any:
-        return self._iter()
-
-    def _collect(self, items: Any) -> Any:
-        from poop.types.list import List
-
-        return List(*items)
-
     def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> List:
         from poop.types.list import List
 
