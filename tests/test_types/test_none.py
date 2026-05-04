@@ -1,5 +1,8 @@
 from poop.types.boolean import false, true
 from poop.types.none import NoneClass, none
+from poop.types.none import none as none2
+from poop.types.object import Object
+from poop.types.string import Str
 
 
 def test_none_is_instance_of_none_class() -> None:
@@ -7,8 +10,6 @@ def test_none_is_instance_of_none_class() -> None:
 
 
 def test_none_is_singleton() -> None:
-    from poop.types.none import none as none2
-
     assert none is none2
 
 
@@ -21,14 +22,10 @@ def test_not_none_returns_false() -> None:
 
 
 def test_object_is_none_returns_false() -> None:
-    from poop.types.object import Object
-
     assert Object().is_none() is false
 
 
 def test_object_not_none_returns_true() -> None:
-    from poop.types.object import Object
-
     assert Object().not_none() is true
 
 
@@ -45,8 +42,6 @@ def test_bool_none_is_false() -> None:
 
 
 def test_class_name() -> None:
-    from poop.types.string import Str
-
     assert none.class_name() == Str("NoneClass")
 
 
@@ -55,8 +50,6 @@ def test_if_none_executes_block() -> None:
 
 
 def test_if_none_does_not_execute_block_on_object() -> None:
-    from poop.types.object import Object
-
     obj = Object()
     assert obj.if_none(lambda: 42) is obj
 
@@ -66,7 +59,5 @@ def test_if_not_none_does_not_execute_block() -> None:
 
 
 def test_if_not_none_executes_block_on_object() -> None:
-    from poop.types.object import Object
-
     obj = Object()
     assert obj.if_not_none(lambda v: v) is obj
