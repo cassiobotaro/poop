@@ -55,6 +55,8 @@ When implementing new types or features, ensure they are transparent to end user
 
 Always verify GitHub Action versions are current and use the actual current year (2026) in license files, copyright notices, and dates.
 
+`proposals.md` must be written in English. New entries, edits, and rewrites in that file use English regardless of the conversation language.
+
 Imports must live at the top of the module. Use function-local `import` only when strictly necessary to resolve circular imports. Imports needed exclusively for type annotations must live inside an `if TYPE_CHECKING:` block at the top of the module — never function-local, never at top-level alongside runtime imports.
 
 ## Architecture
