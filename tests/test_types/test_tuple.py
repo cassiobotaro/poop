@@ -1,5 +1,11 @@
+import pytest
+
 from poop.types.boolean import false, true
+from poop.types.dict import Dict
 from poop.types.int import Int
+from poop.types.list import List
+from poop.types.none import none
+from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
@@ -75,8 +81,6 @@ def test_detect_finds_first() -> None:
 
 
 def test_detect_returns_none_when_not_found() -> None:
-    from poop.types.none import none
-
     result = Tuple(Int(1), Int(2)).find(lambda x: x > Int(10))
     assert result is none
 
@@ -173,8 +177,6 @@ def test_no_mutate_original() -> None:
 
 
 def test_not_equal_to_list() -> None:
-    from poop.types.list import List
-
     assert (Tuple(Int(1)) == List(Int(1))) is false
 
 
@@ -242,8 +244,6 @@ def test_index_middle() -> None:
 
 
 def test_index_not_found_raises() -> None:
-    import pytest
-
     with pytest.raises(ValueError):
         Tuple(Int(1), Int(2)).index(Int(9))
 
@@ -264,15 +264,10 @@ def test_mul_repeats() -> None:
 
 
 def test_ne_with_non_tuple_returns_true() -> None:
-    from poop.types.list import List
-
     assert Tuple(Int(1)).__ne__(List(Int(1))) is true
 
 
 def test_tuple_usable_as_dict_key() -> None:
-    from poop.types.dict import Dict
-    from poop.types.string import Str
-
     key = Tuple(Int(1), Int(2))
     d = Dict().at_put(key, Str("v"))
 
