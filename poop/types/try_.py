@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
+from poop.types.error import Error
 from poop.types.object import Object
-
-if TYPE_CHECKING:
-    from poop.types.error import Error
 
 
 class Try(Object):
@@ -43,8 +40,6 @@ class Try(Object):
         return self._execute()
 
     def _execute(self) -> Try:
-        from poop.types.error import Error
-
         try:
             self._block()
         except BaseException as e:
