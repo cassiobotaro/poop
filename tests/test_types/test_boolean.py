@@ -1,4 +1,6 @@
 from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import false as false2
+from poop.types.boolean import true as true2
 
 
 def test_true_is_instance_of_boolean() -> None:
@@ -10,14 +12,10 @@ def test_false_is_instance_of_boolean() -> None:
 
 
 def test_true_is_singleton() -> None:
-    from poop.types.boolean import true as true2
-
     assert true is true2
 
 
 def test_false_is_singleton() -> None:
-    from poop.types.boolean import false as false2
-
     assert false is false2
 
 
