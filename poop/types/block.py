@@ -1,10 +1,8 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from poop.types.none import NoneClass, none
 from poop.types.object import Object
-
-if TYPE_CHECKING:
-    from poop.types.none import NoneClass
 
 
 class Block(Object):
@@ -17,15 +15,11 @@ class Block(Object):
         return self._fn(*args)
 
     def while_true(self, body: Block) -> NoneClass:
-        from poop.types.none import none
-
         while bool(self._fn()):
             body()
         return none
 
     def while_false(self, body: Block) -> NoneClass:
-        from poop.types.none import none
-
         while not bool(self._fn()):
             body()
         return none
