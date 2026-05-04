@@ -1,12 +1,10 @@
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types.boolean import Boolean, false, true
+from poop.types.int import Int
 from poop.types.object import Object
-
-if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
-    from poop.types.int import Int
 
 _frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name
 
@@ -21,13 +19,9 @@ class FrozenSet(_IterableMixin, Object):
         return FrozenSet(*items)
 
     def includes(self, obj: Object) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if obj in self._data else false
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._data))
 
     def __len__(self) -> int:
@@ -49,18 +43,12 @@ class FrozenSet(_IterableMixin, Object):
         return FrozenSet(*self._data.symmetric_difference(other._data))
 
     def isdisjoint(self, other: FrozenSet) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._data.isdisjoint(other._data) else false
 
     def issubset(self, other: FrozenSet) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._data.issubset(other._data) else false
 
     def issuperset(self, other: FrozenSet) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._data.issuperset(other._data) else false
 
     def __iter__(self) -> Iterator[Object]:
@@ -70,15 +58,11 @@ class FrozenSet(_IterableMixin, Object):
         return item in self._data
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, FrozenSet):
             return true if self._data == other._data else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, FrozenSet):
             return false if self._data == other._data else true
         return true
