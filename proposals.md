@@ -96,17 +96,7 @@ def complex(self) -> Complex:
 
 ---
 
-### 6. Cobertura de teste para `Tuple` como chave de `Dict` (test)
-
-**Local:** `tests/test_types/test_tuple.py`, `tests/test_types/test_dict.py`
-
-`Tuple.__hash__` existe (`poop/types/tuple.py:93`). Mas não vi teste validando que `Dict({Tuple(Int(1), Int(2)): Str("v")})` funciona — caso clássico de uso. Falha aqui seria embaraçosa.
-
-**Correção:** adicionar teste cobrindo `Tuple` como chave de `Dict`. **Esforço:** trivial. **Impacto:** baixo, mas evita regressão.
-
----
-
-### 7. Subtests do pytest 9 — não há ganho real (test/architecture)
+### 6. Subtests do pytest 9 — não há ganho real (test/architecture)
 
 **Local:** todos os tests
 
@@ -123,9 +113,7 @@ Avaliação anterior já feita: nenhum teste tem laços `for` com múltiplas ass
 | 3 | `ty: ignore` `.abs()` | P-M | B |
 | 4 | `_ComparableMixin` | M | B-M |
 | 5 | `Float.complex()` ausente | P | B |
-| 6 | Teste `Tuple` como chave de `Dict` | T | B |
 
 Legenda: **T**rivial, **P**equeno, **M**édio · **B**aixo, **M**édio, **A**lto.
 
-**Recomendação de ordem:** 6 → 2 → 1 → 5 → 4 → 3.
-Item 6 é o único "quick win" trivial restante.
+**Recomendação de ordem:** 2 → 1 → 5 → 4 → 3.

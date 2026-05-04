@@ -267,3 +267,19 @@ def test_ne_with_non_tuple_returns_true() -> None:
     from poop.types.list import List
 
     assert Tuple(Int(1)).__ne__(List(Int(1))) is true
+
+
+def test_tuple_usable_as_dict_key() -> None:
+    from poop.types.dict import Dict
+    from poop.types.string import Str
+
+    key = Tuple(Int(1), Int(2))
+    d = Dict().at_put(key, Str("v"))
+
+    assert d.at(Tuple(Int(1), Int(2))) == Str("v")
+    assert d.includes_key(Tuple(Int(1), Int(2))) is true
+    assert d.includes_key(Tuple(Int(1), Int(3))) is false
+
+
+def test_tuple_hash_matches_for_equal_tuples() -> None:
+    assert hash(Tuple(Int(1), Int(2))) == hash(Tuple(Int(1), Int(2)))
