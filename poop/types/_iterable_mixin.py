@@ -5,7 +5,7 @@ from abc import abstractmethod
 from collections import deque
 from collections.abc import Callable, Iterator
 from functools import reduce as functools_reduce
-from typing import Any
+from typing import Any, Self
 
 
 class _IterableMixin:
@@ -20,9 +20,9 @@ class _IterableMixin:
 
         return List(*items)
 
-    def do(self, block: Callable[[Any], Any]) -> _IterableMixin:
+    def do(self, block: Callable[[Any], Any]) -> Self:
         deque(map(block, self._iter_items()), maxlen=0)
-        return self  # type: ignore[return-value]
+        return self
 
     def map(self, block: Callable[[Any], Any]) -> Any:
         return self._collect(map(block, self._iter_items()))

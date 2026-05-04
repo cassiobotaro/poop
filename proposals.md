@@ -23,31 +23,7 @@ Lista priorizada de melhorias verificadas no código com referências `file:line
 
 ## Média prioridade
 
-### 2. `_IterableMixin.do` com `type: ignore` evitável (type-ignore/refactor)
-
-**Local:** `poop/types/_iterable_mixin.py:23-25`
-
-```python
-def do(self, block: Callable[[Any], Any]) -> _IterableMixin:
-    deque(map(block, self._iter_items()), maxlen=0)
-    return self  # type: ignore[return-value]
-```
-
-Quando `List(...).do(...)` é chamado, o caller perde o tipo `List` e recebe `_IterableMixin`. O `type: ignore` mascara isso. Como `INFECTIONS.md:522` explicitamente documenta que cascades dependem de `do` retornar `self` no mesmo tipo, isso é uma regressão de tipo real.
-
-**Correção:**
-```python
-from typing import Self
-def do(self, block: Callable[[Any], Any]) -> Self:
-    deque(map(block, self._iter_items()), maxlen=0)
-    return self
-```
-
-**Esforço:** pequeno (1 linha). **Impacto:** elimina o ignore + melhora o tipo retornado pelas cascades em todas as 8 coleções que herdam do mixin.
-
----
-
-### 3. `Range` tem overrides redundantes do mixin (refactor)
+### 2. `Range` tem overrides redundantes do mixin (refactor)
 
 **Local:** `poop/types/range.py:38-44`
 
@@ -68,7 +44,7 @@ Ambos são idênticos ao default do `_IterableMixin`:
 
 ---
 
-### 4. `_poop_complex_from` silencia tipos inválidos com `0` (bug)
+### 3. `_poop_complex_from` silencia tipos inválidos com `0` (bug)
 
 **Local:** `poop/transformers/complex.py:27-28`
 
@@ -85,7 +61,7 @@ Se o usuário passar `complex(None, x)` ou outro tipo não suportado, o transfor
 
 ---
 
-### 5. `# type: ignore[attr-defined]` em massa nos testes de coleções (type-ignore)
+### 4. `# type: ignore[attr-defined]` em massa nos testes de coleções (type-ignore)
 
 **Local:** `tests/test_types/test_set.py` (lambdas linhas 79–151), `test_frozen_set.py` (40–105), `test_dict.py:86`, `test_memory_view.py:37,47`, `test_bytes.py:59,69`, `test_byte_array.py:78,88`. Total: ~30 ocorrências.
 
@@ -102,7 +78,7 @@ Como `_IterableMixin.map` declara `Callable[[Any], Any]`, `x` é `Any` — o typ
 
 ---
 
-### 6. `# ty: ignore[unresolved-attribute]` nas lambdas com `.abs()` (type-ignore)
+### 5. `# ty: ignore[unresolved-attribute]` nas lambdas com `.abs()` (type-ignore)
 
 **Local:** `tests/test_types/test_list.py:207,336`, `tests/test_types/test_tuple.py:203`
 
@@ -121,7 +97,7 @@ mas o caller perderia covariância. Avaliar se vale a complexidade extra para 3 
 
 ## Baixa prioridade / oportunidades
 
-### 7. Boilerplate de comparação em `Int`/`Float`/`Str` (refactor)
+### 6. Boilerplate de comparação em `Int`/`Float`/`Str` (refactor)
 
 **Local:** `poop/types/int.py`, `poop/types/float.py`, `poop/types/string.py`
 
@@ -141,7 +117,7 @@ class _ComparableMixin:
 
 ---
 
-### 8. Falta `Float.complex()` (architecture)
+### 7. Falta `Float.complex()` (architecture)
 
 **Local:** `poop/types/float.py` (método ausente)
 
@@ -158,7 +134,7 @@ def complex(self) -> Complex:
 
 ---
 
-### 9. Cobertura de teste para `Tuple` como chave de `Dict` (test)
+### 8. Cobertura de teste para `Tuple` como chave de `Dict` (test)
 
 **Local:** `tests/test_types/test_tuple.py`, `tests/test_types/test_dict.py`
 
@@ -168,7 +144,7 @@ def complex(self) -> Complex:
 
 ---
 
-### 10. Subtests do pytest 9 — não há ganho real (test/architecture)
+### 9. Subtests do pytest 9 — não há ganho real (test/architecture)
 
 **Local:** todos os tests
 
@@ -181,16 +157,15 @@ Avaliação anterior já feita: nenhum teste tem laços `for` com múltiplas ass
 | # | Categoria | Esforço | Impacto |
 |---|---|---|---|
 | 1 | `Complex` `NotImplemented` ignores | P | M |
-| 2 | `_IterableMixin.do` → `Self` | P | M |
-| 3 | Overrides redundantes em `Range` | T | B |
-| 4 | `_poop_complex_from` silencioso | P | M |
-| 5 | `attr-defined` em testes de coleção | P | M |
-| 6 | `ty: ignore` `.abs()` | P-M | B |
-| 7 | `_ComparableMixin` | M | B-M |
-| 8 | `Float.complex()` ausente | P | B |
-| 9 | Teste `Tuple` como chave de `Dict` | T | B |
+| 2 | Overrides redundantes em `Range` | T | B |
+| 3 | `_poop_complex_from` silencioso | P | M |
+| 4 | `attr-defined` em testes de coleção | P | M |
+| 5 | `ty: ignore` `.abs()` | P-M | B |
+| 6 | `_ComparableMixin` | M | B-M |
+| 7 | `Float.complex()` ausente | P | B |
+| 8 | Teste `Tuple` como chave de `Dict` | T | B |
 
 Legenda: **T**rivial, **P**equeno, **M**édio · **B**aixo, **M**édio, **A**lto.
 
-**Recomendação de ordem:** 2 → 3 → 5 → 9 → 4 → 1 → 8 → 7 → 6.
-Itens 2, 3, 5, 9 são "quick wins" com retorno claro.
+**Recomendação de ordem:** 2 → 4 → 8 → 3 → 1 → 7 → 6 → 5.
+Itens 2, 4, 8 são "quick wins" com retorno claro.
