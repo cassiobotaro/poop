@@ -1,3 +1,4 @@
+import math
 from typing import TYPE_CHECKING
 
 from poop.types.object import Object
@@ -113,8 +114,6 @@ class Float(Object):
         return self.__divmod__(other)
 
     def __ceil__(self) -> Int:
-        import math
-
         from poop.types.int import Int
 
         return Int(math.ceil(self._value))
@@ -123,8 +122,6 @@ class Float(Object):
         return self.__ceil__()
 
     def __floor__(self) -> Int:
-        import math
-
         from poop.types.int import Int
 
         return Int(math.floor(self._value))
@@ -133,8 +130,6 @@ class Float(Object):
         return self.__floor__()
 
     def __trunc__(self) -> Int:
-        import math
-
         from poop.types.int import Int
 
         return Int(math.trunc(self._value))
