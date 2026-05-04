@@ -1,7 +1,13 @@
 import ast
 
+import pytest
+
 from poop.transformers.tuple import TupleTransformer, _poop_tuple, _poop_tuple_from
+from poop.types.bytes import Bytes
 from poop.types.int import Int
+from poop.types.list import List
+from poop.types.range import Range
+from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
@@ -93,39 +99,29 @@ def test_tuple_from_tuple_returns_same() -> None:
 
 
 def test_tuple_from_list() -> None:
-    from poop.types.list import List
-
     result = _poop_tuple_from(List(Int(1), Int(2), Int(3)))
     assert isinstance(result, Tuple)
     assert result == Tuple(Int(1), Int(2), Int(3))
 
 
 def test_tuple_from_interval() -> None:
-    from poop.types.range import Range
-
     result = _poop_tuple_from(Range(Int(1), Int(3)))
     assert isinstance(result, Tuple)
     assert result == Tuple(Int(1), Int(2), Int(3))
 
 
 def test_tuple_from_str() -> None:
-    from poop.types.string import Str
-
     result = _poop_tuple_from(Str("abc"))
     assert isinstance(result, Tuple)
     assert result == Tuple(Str("a"), Str("b"), Str("c"))
 
 
 def test_tuple_from_bytes() -> None:
-    from poop.types.bytes import Bytes
-
     result = _poop_tuple_from(Bytes(b"\x01\x02"))
     assert isinstance(result, Tuple)
     assert result == Tuple(Int(1), Int(2))
 
 
 def test_tuple_from_unsupported_type_raises() -> None:
-    import pytest
-
     with pytest.raises(TypeError, match="cannot convert"):
         _poop_tuple_from(Int(5))
