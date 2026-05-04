@@ -3,6 +3,7 @@ import pytest
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import none
 
 
 def test_empty_list() -> None:
@@ -88,8 +89,6 @@ def test_detect_finds_first() -> None:
 
 
 def test_detect_returns_none_when_not_found() -> None:
-    from poop.types.none import none
-
     result = List(Int(1), Int(2)).find(lambda x: x > Int(10))
     assert result is none
 
@@ -201,8 +200,6 @@ def test_sorted_empty() -> None:
 
 
 def test_sorted_with_key() -> None:
-    from poop.types.int import Int
-
     lst = List(Int(-3), Int(1), Int(-2))
     result = lst.sorted(key=lambda x: x.abs())  # ty: ignore[unresolved-attribute]
     assert result == List(Int(1), Int(-2), Int(-3))
@@ -274,8 +271,6 @@ def test_index_found() -> None:
 
 
 def test_index_not_found_raises() -> None:
-    import pytest
-
     with pytest.raises(ValueError):
         List(Int(1), Int(2)).index(Int(9))
 
@@ -303,8 +298,6 @@ def test_remove_returns_self() -> None:
 
 
 def test_remove_not_found_raises() -> None:
-    import pytest
-
     with pytest.raises(ValueError):
         List(Int(1)).remove(Int(9))
 
