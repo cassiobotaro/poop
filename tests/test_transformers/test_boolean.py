@@ -2,6 +2,8 @@ import ast
 
 from poop.transformers.boolean import BooleanTransformer, _poop_bool_from
 from poop.types.boolean import false, true
+from poop.types.int import Int
+from poop.types.string import Str
 
 
 def _first_value(source: str) -> ast.expr:
@@ -92,24 +94,16 @@ def test_bool_from_false_singleton_returns_same() -> None:
 
 
 def test_bool_from_truthy_value_returns_true() -> None:
-    from poop.types.int import Int
-
     assert _poop_bool_from(Int(1)) is true
 
 
 def test_bool_from_falsy_value_returns_false() -> None:
-    from poop.types.int import Int
-
     assert _poop_bool_from(Int(0)) is false
 
 
 def test_bool_from_nonempty_str_returns_true() -> None:
-    from poop.types.string import Str
-
     assert _poop_bool_from(Str("hello")) is true
 
 
 def test_bool_from_empty_str_returns_false() -> None:
-    from poop.types.string import Str
-
     assert _poop_bool_from(Str("")) is false
