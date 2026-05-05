@@ -104,6 +104,17 @@ def test_any_false() -> None:
     assert List(Int(1), Int(3)).any(lambda x: x % Int(2) == Int(0)) is false
 
 
+def test_append_adds_element() -> None:
+    lst = List(Int(1), Int(2))
+    lst.append(Int(3))
+    assert lst == List(Int(1), Int(2), Int(3))
+
+
+def test_append_returns_none() -> None:
+    lst = List(Int(1))
+    assert lst.append(Int(2)) is none
+
+
 def test_pop_returns_last_element() -> None:
     lst = List(Int(10), Int(20), Int(30))
     assert lst.pop() == Int(30)

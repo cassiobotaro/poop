@@ -84,6 +84,10 @@ class List(_IterableMixin, Object):
     def reversed(self) -> List:
         return List(*builtins_reversed(self._items))
 
+    def append(self, obj: Object) -> NoneClass:
+        self._items.append(obj)
+        return none
+
     def pop(self) -> Object:
         return self._items.pop()
 
