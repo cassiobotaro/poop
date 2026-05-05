@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Literal, cast
 
+from poop.types.boolean import Boolean, false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
     from poop.types.complex import Complex
     from poop.types.float import Float
@@ -38,8 +38,6 @@ class Int(Object):
         return Int(self._value.bit_length())
 
     def is_integer(self) -> Boolean:
-        from poop.types.boolean import true
-
         return true
 
     @property
@@ -77,7 +75,6 @@ class Int(Object):
 
     @classmethod
     def from_bytes(cls, b: Bytes, byteorder: Str) -> Int:
-
         return cls(
             _int.from_bytes(b._value, cast(Literal["little", "big"], byteorder._value))
         )
@@ -176,37 +173,25 @@ class Int(Object):
         return self.__round__(ndigits)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Int):
             return true if self._value == other._value else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Int):
             return false if self._value == other._value else true
         return true
 
     def __lt__(self, other: Int) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value < other._value else false
 
     def __le__(self, other: Int) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value <= other._value else false
 
     def __gt__(self, other: Int) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value > other._value else false
 
     def __ge__(self, other: Int) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value >= other._value else false
 
     def __hash__(self) -> _int:
