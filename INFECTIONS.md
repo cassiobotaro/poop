@@ -275,12 +275,17 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|---|
 | `format(x, spec)` | free function with procedural look | `x.format(spec)` |
 
-### No `enumerate`/`zip` — `poop/validators/no_enumerate.py`
+### No `zip` — `poop/validators/no_zip.py`
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `enumerate(col)` | free function with procedural look | `col.do(block)` accumulating an index in outer state |
-| `zip(a, b)` | free function with procedural look | same |
+| `zip(a, b)` | free function with procedural look | pending (proposal 2) |
+
+### `enumerate` → `Enumerate` — `poop/transformers/enumerate.py`
+
+`enumerate(col)` and `enumerate(col, start)` are rewritten by `EnumerateTransformer` to `_poop_enumerate(col)` / `_poop_enumerate(col, start)`, which returns an `Enumerate` object.
+
+`Enumerate` (`poop/types/enumerate.py`) is a lazy iterable POOP type. It wraps any iterable (including `Dict`) and yields `Tuple(Int(index), item)` pairs on demand. It inherits `do`, `map`, `filter`, `filter_false`, `find`, `sum`, `all`, `any` from `_IterableMixin`. Every collection type exposes `.enumerate(start=Int(0)) -> Enumerate` as a convenience method. `Dict.enumerate()` iterates over keys, consistent with Python's `enumerate(dict)`.
 
 ### No `iter`/`next` — `poop/validators/no_iter.py`
 

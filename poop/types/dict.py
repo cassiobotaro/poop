@@ -11,6 +11,7 @@ from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.enumerate import Enumerate
     from poop.types.none import NoneClass
 
 _dict = dict  # alias to avoid shadowing by Dict class name in annotations
@@ -87,6 +88,11 @@ class Dict(Object):
     def update(self, other: Dict) -> NoneClass:
         self._data.update(other._data)
         return none
+
+    def enumerate(self, start: Int | None = None) -> Enumerate:
+        from poop.types.enumerate import Enumerate
+
+        return Enumerate(self, start)
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, Dict):

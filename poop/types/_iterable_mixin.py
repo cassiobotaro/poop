@@ -58,3 +58,8 @@ class _IterableMixin:
         return (
             true if _builtins.any(bool(block(x)) for x in self._iter_items()) else false
         )
+
+    def enumerate(self, start: Any = None) -> Any:
+        from poop.types.enumerate import Enumerate
+
+        return Enumerate(self, start)

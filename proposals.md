@@ -10,46 +10,9 @@ Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the subst
 
 Items where the substitute works, but the method name does not mirror the builtin. Implementing them is optional — depends on whether mirrored names take priority over a leaner API.
 
-### 1. `enumerate(col)` → `col.enumerate()` returning a lazy `Enumerate` object?
+### ~~1. `enumerate(col)` → `col.enumerate()` returning a lazy `Enumerate` object?~~ — DONE
 
-**Suggested location:** `poop/types/enumerate.py` (new) plus a hook on `poop/types/_iterable_mixin.py` so every collection (`List`, `Tuple`, `Set`, `Range`, `Bytes`, `ByteArray`) inherits `.enumerate()`.
-
-**Today:** `INFECTIONS.md:287` points to `col.map(block)` / `col.reduce(init, block)` with manual indexing.
-
-**Two possible shapes:**
-
-- **(a) Eager `List` of `Tuple(Int(index), item)`.** Cheap (~5 lines on `_IterableMixin`), matches every other collection method (`map`, `filter`, `reduce` are all eager). Materializes the whole list upfront — wasteful on large inputs.
-- **(b) Lazy `Enumerate(Object)` object — preferred.** Mirrors Python's `enumerate` semantics 1:1: an iterator that yields `Tuple(Int(index), item)` on demand. Memory-efficient, single-pass, chainable.
-
-**Why (b) is the preferred direction:** matches the user's mental model of `enumerate`, scales to large inputs, and unlocks the same lazy pattern for `zip` (item 2), `map`, `filter`, etc. as a future evolution.
-
-**Why it is gated:** today POOP has **no** user-facing iterator type. The only interaction with iteration is `col.do(block)`; `next()` is banned by `no_iter`; there is no `Iterator` Object. Introducing a single lazy `Enumerate` in isolation would be the only lazy first-class object in the language, with no `next` substitute and only `do(block)` as a useful method — collapsing back to eager behavior on first use.
-
-**Dependency:** **proposal 3** (first-class `Iterator` type). Decide that one first; lazy `Enumerate` falls out naturally as a specific iterator. If proposal 3 is rejected, fall back to shape (a).
-
-**Sketch (assuming proposal 3 is accepted):**
-
-```python
-# poop/types/enumerate.py
-class Enumerate(Iterator):  # Iterator base from proposal 3
-    __slots__ = ("_source", "_start")
-
-    def __init__(self, source: _IterableMixin, start: Int = Int(0)) -> None:
-        self._source = source
-        self._start = start
-
-    def __iter__(self) -> Iterator[Tuple]:
-        return (
-            Tuple(Int(i), item)
-            for i, item in _builtins.enumerate(self._source, self._start._value)
-        )
-```
-
-Then `_IterableMixin.enumerate(start=Int(0)) -> Enumerate` — and because `Enumerate` is an `Iterator`, methods like `do`, `map`, `filter` work uniformly.
-
-**Effort:** small once proposal 3 lands (~30 lines + tests). Without proposal 3: medium and inconsistent (one-off lazy type).
-
-**Decision:** confirm shape (b) lazy `Enumerate` as the target, conditional on proposal 3? Otherwise fall back to shape (a) eager `List`.
+**Decision:** lazy `Enumerate(_IterableMixin, Object)` without dependency on proposal 3. `enumerate(col)` and `enumerate(col, start)` are intercepted by `EnumerateTransformer` and rewritten to `_poop_enumerate(...)`. All `_IterableMixin` types and `Dict` expose `.enumerate(start=Int(0)) -> Enumerate`. `Enumerate` inherits `do`, `map`, `filter`, etc. from `_IterableMixin` and works on any iterable including `Dict`.
 
 ### 2. `zip(a, b)` → `a.zip(other)` returning a lazy `Zip` object?
 

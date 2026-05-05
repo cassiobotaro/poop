@@ -13,6 +13,7 @@ from poop.transformers.bytes import BytesTransformer
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.dict import DictTransformer
+from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
@@ -38,6 +39,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     IntTransformer(),
     FloatTransformer(),
     StrTransformer(),
+    EnumerateTransformer(),
     RangeTransformer(),
     ListTransformer(),
     TupleTransformer(),
@@ -59,6 +61,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **IntTransformer.BINDINGS,
     **FloatTransformer.BINDINGS,
     **StrTransformer.BINDINGS,
+    **EnumerateTransformer.BINDINGS,
     **RangeTransformer.BINDINGS,
     **ListTransformer.BINDINGS,
     **TupleTransformer.BINDINGS,

@@ -14,7 +14,6 @@ from poop.validators.no_comprehension import NoComprehensionValidator
 from poop.validators.no_del import NoDelValidator
 from poop.validators.no_dir import NoDirValidator
 from poop.validators.no_divmod import NoDivmodValidator
-from poop.validators.no_enumerate import NoEnumerateValidator
 from poop.validators.no_exec import NoExecValidator
 from poop.validators.no_exit import NoExitValidator
 from poop.validators.no_filter import NoFilterValidator
@@ -59,6 +58,7 @@ from poop.validators.no_unary_plus import NoUnaryPlusValidator
 from poop.validators.no_walrus import NoWalrusValidator
 from poop.validators.no_with import NoWithValidator
 from poop.validators.no_yield import NoYieldValidator
+from poop.validators.no_zip import NoZipValidator
 
 DEFAULT_VALIDATORS: list[Validator] = [
     NoIfValidator(),
@@ -102,7 +102,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoBreakpointValidator(),
     NoChrValidator(),
     NoDivmodValidator(),
-    NoEnumerateValidator(),
+    NoZipValidator(),
     NoExecValidator(),
     NoExitValidator(),
     NoFormatValidator(),
