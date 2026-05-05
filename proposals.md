@@ -10,13 +10,7 @@ Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the subst
 
 Items where the substitute works, but the method name does not mirror the builtin. Implementing them is optional — depends on whether mirrored names take priority over a leaner API.
 
-### 1. `slice()` → add a `.slice(start, stop, step)` alias?
-
-**Today:** `poop/types/list.py:42`, `poop/types/tuple.py:37`, `poop/types/string.py:50`, `poop/types/bytes.py:36`, `poop/types/byte_array.py:30`, `poop/types/range.py:32` — all expose `copy_from_to(start, stop, step)`. Documented at `INFECTIONS.md:281`.
-
-**Decision:** keep only `copy_from_to`, or add `.slice(...)` as an alias to align with the builtin name?
-
-### 2. `enumerate(col)` → `col.enumerate()` returning a lazy `Enumerate` object?
+### 1. `enumerate(col)` → `col.enumerate()` returning a lazy `Enumerate` object?
 
 **Suggested location:** `poop/types/enumerate.py` (new) plus a hook on `poop/types/_iterable_mixin.py` so every collection (`List`, `Tuple`, `Set`, `Range`, `Bytes`, `ByteArray`) inherits `.enumerate()`.
 
@@ -27,17 +21,17 @@ Items where the substitute works, but the method name does not mirror the builti
 - **(a) Eager `List` of `Tuple(Int(index), item)`.** Cheap (~5 lines on `_IterableMixin`), matches every other collection method (`map`, `filter`, `reduce` are all eager). Materializes the whole list upfront — wasteful on large inputs.
 - **(b) Lazy `Enumerate(Object)` object — preferred.** Mirrors Python's `enumerate` semantics 1:1: an iterator that yields `Tuple(Int(index), item)` on demand. Memory-efficient, single-pass, chainable.
 
-**Why (b) is the preferred direction:** matches the user's mental model of `enumerate`, scales to large inputs, and unlocks the same lazy pattern for `zip` (item 3), `map`, `filter`, etc. as a future evolution.
+**Why (b) is the preferred direction:** matches the user's mental model of `enumerate`, scales to large inputs, and unlocks the same lazy pattern for `zip` (item 2), `map`, `filter`, etc. as a future evolution.
 
 **Why it is gated:** today POOP has **no** user-facing iterator type. The only interaction with iteration is `col.do(block)`; `next()` is banned by `no_iter`; there is no `Iterator` Object. Introducing a single lazy `Enumerate` in isolation would be the only lazy first-class object in the language, with no `next` substitute and only `do(block)` as a useful method — collapsing back to eager behavior on first use.
 
-**Dependency:** **proposal 4** (first-class `Iterator` type). Decide that one first; lazy `Enumerate` falls out naturally as a specific iterator. If proposal 4 is rejected, fall back to shape (a).
+**Dependency:** **proposal 3** (first-class `Iterator` type). Decide that one first; lazy `Enumerate` falls out naturally as a specific iterator. If proposal 3 is rejected, fall back to shape (a).
 
-**Sketch (assuming proposal 4 is accepted):**
+**Sketch (assuming proposal 3 is accepted):**
 
 ```python
 # poop/types/enumerate.py
-class Enumerate(Iterator):  # Iterator base from proposal 4
+class Enumerate(Iterator):  # Iterator base from proposal 3
     __slots__ = ("_source", "_start")
 
     def __init__(self, source: _IterableMixin, start: Int = Int(0)) -> None:
@@ -53,19 +47,19 @@ class Enumerate(Iterator):  # Iterator base from proposal 4
 
 Then `_IterableMixin.enumerate(start=Int(0)) -> Enumerate` — and because `Enumerate` is an `Iterator`, methods like `do`, `map`, `filter` work uniformly.
 
-**Effort:** small once proposal 4 lands (~30 lines + tests). Without proposal 4: medium and inconsistent (one-off lazy type).
+**Effort:** small once proposal 3 lands (~30 lines + tests). Without proposal 3: medium and inconsistent (one-off lazy type).
 
-**Decision:** confirm shape (b) lazy `Enumerate` as the target, conditional on proposal 4? Otherwise fall back to shape (a) eager `List`.
+**Decision:** confirm shape (b) lazy `Enumerate` as the target, conditional on proposal 3? Otherwise fall back to shape (a) eager `List`.
 
-### 3. `zip(a, b)` → `a.zip(other)` returning a lazy `Zip` object?
+### 2. `zip(a, b)` → `a.zip(other)` returning a lazy `Zip` object?
 
-Same dependency tree as item 2: prefer a lazy `Zip(Object)` mirroring Python's `zip` (single-pass, stops at shortest), conditional on proposal 4. Fallback eager shape returns a `List` of `Tuple(item_a, item_b)`.
+Same dependency tree as item 1: prefer a lazy `Zip(Object)` mirroring Python's `zip` (single-pass, stops at shortest), conditional on proposal 3. Fallback eager shape returns a `List` of `Tuple(item_a, item_b)`.
 
 **Suggested location:** `poop/types/zip.py` (new) plus a hook on `poop/types/_iterable_mixin.py` accepting another iterable.
 
-**Decision:** confirm the lazy shape conditional on proposal 4, with eager `List` fallback otherwise.
+**Decision:** confirm the lazy shape conditional on proposal 3, with eager `List` fallback otherwise.
 
-### 4. `iter(col)` / `next(it)` → first-class `Iterator` type?
+### 3. `iter(col)` / `next(it)` → first-class `Iterator` type?
 
 **Today:** iteration only via `col.do(block)` (`INFECTIONS.md:294`).
 
@@ -79,17 +73,17 @@ Same dependency tree as item 2: prefer a lazy `Zip(Object)` mirroring Python's `
 
 Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
 
-### 5. `setattr(obj, name, val)` → `obj.set_attr(name, val)`?
+### 4. `setattr(obj, name, val)` → `obj.set_attr(name, val)`?
 
 **Current asymmetry:** `Object` exposes `get_attr` (`poop/types/object.py:84`) and `has_attr` (`poop/types/object.py:87`) but no `set_attr`. `INFECTIONS.md:299-304` only says "use class methods", which is no longer the rule for `getattr`/`hasattr`.
 
-**Decision:** complete the trio with `set_attr` (and a symmetric `del_attr`, item 6)?
+**Decision:** complete the trio with `set_attr` (and a symmetric `del_attr`, item 5)?
 
-### 6. `delattr(obj, name)` → `obj.del_attr(name)`?
+### 5. `delattr(obj, name)` → `obj.del_attr(name)`?
 
-Counterpart of item 5. Same symmetry argument.
+Counterpart of item 4. Same symmetry argument.
 
-### 7. `vars(obj)` → `obj.vars()` returning a `Dict`?
+### 6. `vars(obj)` → `obj.vars()` returning a `Dict`?
 
 **Today:** bundled into `no_introspection` (`poop/validators/no_introspection.py`, `INFECTIONS.md:312`) alongside `globals()`/`locals()`.
 
@@ -99,7 +93,7 @@ Counterpart of item 5. Same symmetry argument.
 
 **Decision:** split `vars` out of `no_introspection` and give `Object` a `vars()` substitute?
 
-### 8. `input(prompt)` → introduce a `Console` / `Stdin` type?
+### 7. `input(prompt)` → introduce a `Console` / `Stdin` type?
 
 **Today:** `INFECTIONS.md:343-345` declares "interactive I/O — no POOP equivalent".
 
@@ -109,7 +103,7 @@ Counterpart of item 5. Same symmetry argument.
 
 **Decision:** worth the investment, or keep banned?
 
-### 9. `open(path)` → POOP `Path` type inspired by `pathlib`?
+### 8. `open(path)` → POOP `Path` type inspired by `pathlib`?
 
 **Today:** `INFECTIONS.md:349-351` declares "file I/O — no POOP equivalent".
 
@@ -131,7 +125,7 @@ Counterpart of item 5. Same symmetry argument.
 
 ## Open decisions — language semantics
 
-### 10. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
+### 9. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
 
 **Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
 
@@ -173,7 +167,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — import hygiene
 
-### 11. Audit project imports against the `TYPE_CHECKING` rule?
+### 10. Audit project imports against the `TYPE_CHECKING` rule?
 
 **Rule (`CLAUDE.md:58`):** imports live at module top; function-local `import` only to break a real cycle; imports used **exclusively** in type annotations must live in an `if TYPE_CHECKING:` block at the top of the module — never function-local, never alongside runtime top-level imports.
 
@@ -194,12 +188,12 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — documentation
 
-### 12. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 11. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
 **Today:** `INFECTIONS.md` (738 lines) is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
 **Drift symptoms motivating the audit:**
-- Items still classified as "no POOP equivalent" while a substitute exists in practice (e.g.: `vars`, `setattr`/`delattr` — see proposals 5-7 in this list — a sign that "intentional" turned into inertia).
+- Items still classified as "no POOP equivalent" while a substitute exists in practice (e.g.: `vars`, `setattr`/`delattr` — see proposals 4-6 in this list — a sign that "intentional" turned into inertia).
 - Principles phrased as hypotheses ("Methods should follow Python names...") without explicit confirmation that all exceptions are catalogued (`do` is the only exception cited — could others slip through?).
 - Validator tables may list AST nodes the current validator does not visit (or vice versa) — drift between code and doc.
 - Possible duplicates between `INFECTIONS.md` (principles) and `CLAUDE.md` (workflow) that make it ambiguous which is the source of truth.
@@ -236,11 +230,11 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 13 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 12 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 13. Documentation site with MkDocs?
+### 12. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
