@@ -1,10 +1,10 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
+from poop.types.boolean import Boolean, false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
     from poop.types.float import Float
     from poop.types.int import Int
@@ -56,8 +56,6 @@ class Str(Object):
             yield Str(ch)
 
     def includes(self, char: Str) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if char._value in self._value else false
 
     def __contains__(self, item: object) -> bool:
@@ -121,43 +119,27 @@ class Str(Object):
         return Int(self._value.count(sub._value))
 
     def startswith(self, prefix: Str) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.startswith(prefix._value) else false
 
     def endswith(self, suffix: Str) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.endswith(suffix._value) else false
 
     def isalpha(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isalpha() else false
 
     def isdigit(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isdigit() else false
 
     def isalnum(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isalnum() else false
 
     def isspace(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isspace() else false
 
     def isupper(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isupper() else false
 
     def islower(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.islower() else false
 
     def casefold(self) -> Str:
@@ -179,33 +161,21 @@ class Str(Object):
         return Str(self._value.expandtabs(tabsize._value))
 
     def isascii(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isascii() else false
 
     def isdecimal(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isdecimal() else false
 
     def isidentifier(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isidentifier() else false
 
     def isnumeric(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isnumeric() else false
 
     def isprintable(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isprintable() else false
 
     def istitle(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.istitle() else false
 
     def ljust(self, width: Int, fillchar: Str | None = None) -> Str:
@@ -272,37 +242,25 @@ class Str(Object):
         return Str(self._value * other._value)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Str):
             return true if self._value == other._value else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Str):
             return false if self._value == other._value else true
         return true
 
     def __lt__(self, other: Str) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value < other._value else false
 
     def __le__(self, other: Str) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value <= other._value else false
 
     def __gt__(self, other: Str) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value > other._value else false
 
     def __ge__(self, other: Str) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value >= other._value else false
 
     def __hash__(self) -> _int:
