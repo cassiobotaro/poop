@@ -2,10 +2,10 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types.boolean import Boolean, false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.int import Int
     from poop.types.list import List
     from poop.types.string import Str
@@ -38,8 +38,6 @@ class Bytes(_IterableMixin, Object):
         return Bytes(self._value[start._value : stop._value : s])
 
     def includes(self, byte: Int) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if byte._value in self._value else false
 
     def __contains__(self, item: object) -> bool:
@@ -69,15 +67,11 @@ class Bytes(_IterableMixin, Object):
         return (Int(b) for b in self._value)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Bytes):
             return true if self._value == other._value else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Bytes):
             return false if self._value == other._value else true
         return true
@@ -105,8 +99,6 @@ class Bytes(_IterableMixin, Object):
         return Int(self._value.count(sub._value))
 
     def endswith(self, suffix: Bytes) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.endswith(suffix._value) else false
 
     def expandtabs(self, tabsize: Int | None = None) -> Bytes:
@@ -125,43 +117,27 @@ class Bytes(_IterableMixin, Object):
         return Int(self._value.index(sub._value))
 
     def isalnum(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isalnum() else false
 
     def isalpha(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isalpha() else false
 
     def isascii(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isascii() else false
 
     def isdigit(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isdigit() else false
 
     def islower(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.islower() else false
 
     def isspace(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isspace() else false
 
     def istitle(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.istitle() else false
 
     def isupper(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.isupper() else false
 
     def join(self, parts: List) -> Bytes:
@@ -243,8 +219,6 @@ class Bytes(_IterableMixin, Object):
         return List(*[Bytes(p) for p in self._value.splitlines()])
 
     def startswith(self, prefix: Bytes) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.startswith(prefix._value) else false
 
     def strip(self, chars: Bytes | None = None) -> Bytes:
