@@ -8,17 +8,7 @@ Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the subst
 
 ## Open decisions — substitute exists with a different name
 
-Items where the substitute works, but the method name does not mirror the builtin. Implementing them is optional — depends on whether mirrored names take priority over a leaner API.
-
-### ~~1. `enumerate(col)` → `col.enumerate()` returning a lazy `Enumerate` object?~~ — DONE
-
-**Decision:** lazy `Enumerate(_IterableMixin, Object)` without dependency on proposal 3. `enumerate(col)` and `enumerate(col, start)` are intercepted by `EnumerateTransformer` and rewritten to `_poop_enumerate(...)`. All `_IterableMixin` types and `Dict` expose `.enumerate(start=Int(0)) -> Enumerate`. `Enumerate` inherits `do`, `map`, `filter`, etc. from `_IterableMixin` and works on any iterable including `Dict`.
-
-### ~~2. `zip(a, b)` → `a.zip(other)` returning a lazy `Zip` object?~~ — DONE
-
-**Decision:** lazy `Zip(_IterableMixin, Object)` mirroring Python exactly. `zip(...)` interceptado por `ZipTransformer` → `_poop_zip(...)`. Suporta número variádico de iteráveis e `strict=true` (levanta `ValueError` se tamanhos diferem). Todos os tipos `_IterableMixin` e `Dict` expõem `.zip(*others, strict=false) -> Zip`.
-
-### 3. `iter(col)` / `next(it)` → first-class `Iterator` type?
+### 1. `iter(col)` / `next(it)` → first-class `Iterator` type?
 
 **Today:** iteration only via `col.do(block)`. `iter` and `next` are banned by `NoIterValidator`.
 
@@ -50,9 +40,9 @@ Items where the substitute works, but the method name does not mirror the builti
 
 Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
 
-### 4. `input(prompt)` → introduce a `Console` / `Stdin` type?
+### 2. `input(prompt)` → introduce a `Console` / `Stdin` type?
 
-**Today:** `INFECTIONS.md:343-345` declares "interactive I/O — no POOP equivalent".
+**Today:** `INFECTIONS.md` declares "interactive I/O — no POOP equivalent".
 
 **Note:** Smalltalk *does* model interactive I/O (`Transcript`, etc.). Natural substitute: a POOP `Console` object with `Console.read_line(prompt: Str) -> Str`.
 
@@ -60,9 +50,9 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 **Decision:** worth the investment, or keep banned?
 
-### 5. `open(path)` → POOP `Path` type inspired by `pathlib`?
+### 3. `open(path)` → POOP `Path` type inspired by `pathlib`?
 
-**Today:** `INFECTIONS.md:349-351` declares "file I/O — no POOP equivalent".
+**Today:** `INFECTIONS.md` declares "file I/O — no POOP equivalent".
 
 **Important observation:** the stdlib's `pathlib` is already **object-oriented** — `Path("foo.txt").read_text()`, `Path("dir").iterdir()`, `Path("a").exists()`. The API matches POOP's message-passing model naturally, sparing us a "from-scratch subsystem".
 
@@ -82,7 +72,7 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 ## Open decisions — language semantics
 
-### 6. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
+### 4. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
 
 **Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
 
@@ -94,22 +84,13 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 If every `+`, `*`, etc. is a message (`__add__`, `__mul__`), then the "grouping" via Python precedence is an artificial decision — a human reader expects pure message passing.
 
-**Possible implementation:** new transformer at `poop/transformers/binop_left_assoc.py` that rewrites `ast.BinOp` to be left-associative, ignoring precedence:
-
-```python
-class _LeftAssocRewriter(ast.NodeTransformer):
-    def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
-        # Joins BinOp chains in post-order, regrouping left-to-right,
-        # except where explicit parentheses already nest the tree.
-        ...
-```
+**Possible implementation:** new transformer at `poop/transformers/binop_left_assoc.py` that rewrites `ast.BinOp` to be left-associative, ignoring precedence.
 
 Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtrees and must be preserved — the transformer only reorders flat chains.
 
 **Trade-offs:**
 - **Pro:** consistency with the "everything is a message" principle; POOP code becomes more predictable for someone reading it as a dialogue between objects; aligns with already-adopted Smalltalk-isms (`do:`, `if_true:`).
 - **Con:** breaks the expectation of any Python programmer who looks at the code; mathematical expressions need explicit parentheses for the usual semantics (`3 + (1 * 2)`); static tools (ty, IDE inspections) evaluate with Python precedence and could disagree with the runtime; very "infectious" — affects every arithmetic expression in every example.
-- **Partial mitigation:** an optional validator that requires parentheses on any chain mixing different operators, forcing the author to be explicit — but that is syntactic noise.
 
 **Cases to consider:**
 - Chained comparisons (`a < b < c`) — Python already has special semantics; preserve or reject?
@@ -124,11 +105,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — API review
 
-### ~~7. Audit methods returning `self` — should they mirror Python instead?~~ — DONE (option c)
-
-**Decision:** hybrid (c) — mutators named after Python void-returning methods (`append`, `clear`, `extend`, `insert`, `remove`, `reverse`, `sort`, `update`, `discard`, `intersection_update`, `difference_update`, `symmetric_difference_update`) now return POOP `none`. POOP-specific methods (`List.add`, `Dict.at_put`, `ByteArray.at_put`) that have no Python equivalent keep returning `self`. Identity methods (`Int.real`, `NoneClass.if_not_none`, `Try.run`, `With.do`) are unchanged. Principle added to `INFECTIONS.md`.
-
-### 8. Audit `__slots__` usage on POOP types?
+### 5. Audit `__slots__` usage on POOP types?
 
 **Today:** `INFECTIONS.md` declares the principle: *"`__slots__` on all POOP types: instance variables are declared in the class definition and fixed — never added dynamically to instances. Subclasses that need new instance variables can declare their own `__slots__` or omit them."*
 
@@ -170,60 +147,26 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 **Decision:** which sub-questions to act on, and in what order? Or accept the current state as descriptively correct and leave only documentation tightening?
 
-### ~~11. Audit POOP-only methods — document them and verify they behave like their Python equivalents~~ — DONE
+### 6. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
 
-**Today:** POOP defines a number of methods that have no Python method counterpart — they exist because POOP bans syntax constructs (`[]`, `in`, `len()`, etc.) and replaces them with object messages. These are not named after a Python method; they are a new API invented by POOP:
+**Context:** Type constructor calls (`int(expr)`, `float(expr)`, `str(expr)`, etc.) are already intercepted by the existing transformers — `int(Str("42"))` correctly produces a POOP `Int` at runtime. This is documented in `INFECTIONS.md` as "Constructor builtins are intercepted, not banned".
 
-| POOP method | Replaces | Python semantics |
-|---|---|---|
-| `obj.at(idx)` | `obj[idx]` | `__getitem__` |
-| `obj.at_put(idx, val)` | `obj[idx] = val` | `__setitem__` |
-| `obj.includes(x)` | `x in obj` | `__contains__` |
-| `obj.len()` | `len(obj)` | `__len__` |
-| `List.add(x)` | `list.append(x)` but returns `self` | no Python method equivalent |
-| `List.first()` / `List.last()` | `lst[0]` / `lst[-1]` | `__getitem__` |
-| `obj.do(block)` | `for x in obj: block(x)` | iteration |
-| `obj.map(fn)` | `[fn(x) for x in obj]` / `map(fn, obj)` | — |
-| `obj.filter(fn)` | `[x for x in obj if fn(x)]` / `filter(fn, obj)` | — |
-| `obj.filter_false(fn)` | `[x for x in obj if not fn(x)]` / `filterfalse(fn, obj)` | — |
-| `obj.find(fn)` | `next((x for x in obj if fn(x)), None)` | — |
-| `obj.sum()` | `sum(obj)` | — |
-| `obj.all(fn)` | `all(fn(x) for x in obj)` | — |
-| `obj.any(fn)` | `any(fn(x) for x in obj)` | — |
+**Remaining question:** POOP types also expose conversion as methods: `Str("42").int() -> Int`, `Str("3.14").float() -> Float`, `Int(3).float() -> Float`, etc. (e.g., `poop/types/string.py:39`, `poop/types/int.py:86`).
 
-**Two sub-concerns:**
-
-1. **Syntax-substituting methods** (`at`, `at_put`, `includes`, `len`) — these ARE semantically Python, just expressed as messages instead of syntax or builtins. Their contract should be identical to Python (`at(idx)` raises `IndexError` for out-of-range, `at_put` on an immutable type raises `TypeError`, etc.). Currently there is no explicit documentation that each of these mirrors Python exactly, and no tests that verify the error cases.
-
-2. **New POOP-specific methods** (`add`, `do`, `map`, `filter`, `filter_false`, `find`, `sum`, `all`, `any`, `first`, `last`) — these are convenient abstractions, some from Smalltalk (`do`), some from Python's functional API (`map`, `filter`). Their semantics and return types are not documented anywhere beyond reading the implementation.
-
-**What is missing:**
-- An `INFECTIONS.md` section (or supplementary document) cataloguing each POOP-only method with: what it replaces, its contract, its return type, and any edge cases.
-- Tests covering edge-case parity with Python for syntax-substituting methods (e.g., `at` with negative index, `at` out of bounds, `at_put` on immutable types).
-- Confirmation that `at` on `Dict` returns `none` for missing keys (POOP semantics differ from `KeyError` — this is intentional but undocumented).
+The method name `int` on `Str` is the same identifier as the Python type `int`. A human reading `Str("42").int()` may be momentarily confused about whether `int` is a method or a constructor call. This is purely a readability concern — the execution is unambiguous.
 
 **Options:**
 
-- **(a) Catalogue only.** Add a section to `INFECTIONS.md` listing all POOP-only methods grouped by category (syntax substitutes, iteration, functional). No behavior changes.
-- **(b) Catalogue + edge-case tests.** Same as (a), plus add tests for out-of-bounds, immutable `at_put`, and other boundary conditions that should match Python.
-- **(c) Strict parity for syntax-substituting methods.** Change `Dict.at` to raise `KeyError` on missing key (matching Python `dict[key]`), and add a separate `get(key)` returning `none`. Maximizes Python-mirror fidelity.
+- **(a) Status quo** — keep `Str.int()`, `Int.float()`, etc. The method names follow the Python convention ("Python names, not Smalltalk names"). The transformer already intercepts the bare `int(expr)` call form, so both forms work correctly. The naming is consistent with how `ord()` on `Str` mirrors `ord(c)` the builtin.
+- **(b) Rename to `to_int()`, `to_float()`** — eliminates the ambiguity at the cost of breaking the "Python names" principle. `Str("42").to_int()` reads as an explicit conversion, not a constructor lookup.
 
-**Effort:** (a) small. (b) medium. (c) medium + breaking change.
-
-**Decision:** option (c) — strict parity enforced. Changes implemented:
-- `List.add()`, `List.first()`, `List.last()` removed; use `append()` and `at()`.
-- `Tuple.first()`, `Tuple.last()` removed.
-- `Range.first()`, `Range.last()` removed; `Range.at(idx)` added.
-- `Str.reversed()` now returns `List` of character `Str` objects (mirrors sequence types).
-- `Dict.at(key)` now raises `KeyError` for missing keys (mirrors `dict[key]`).
-- `Dict.get(key, default=none)` added (mirrors `dict.get`).
-- Examples and tests updated accordingly.
+**Decision:** keep status quo (a) or rename (b)?
 
 ---
 
 ## Open decisions — documentation
 
-### 9. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 7. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
 **Today:** `INFECTIONS.md` is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
@@ -264,11 +207,11 @@ So the principle is currently **descriptively accurate** for the library types. 
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 10 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 8 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 10. Documentation site with MkDocs?
+### 8. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
@@ -301,132 +244,6 @@ So the principle is currently **descriptively accurate** for the library types. 
 **Effort:** medium (setup ~1h; content migration depends on the SSOT choice). **Impact:** language discoverability for new users improves dramatically; full-text search on the site; published history.
 
 **Decision:** adopt MkDocs? If yes, which SSOT — `INFECTIONS.md` extracted or `docs/` migrated?
-
----
-
-## Open decisions — API review
-
-### ~~12. Restore `reduce`?~~ — DONE
-
-**History:** `reduce` was dropped in commit `473dcaa` (option b of the former proposal 9). The reasoning was that `reduce` is not a Python builtin — it lives in `functools.reduce` — so keeping it violates the principle "method names follow corresponding Python builtins/collection API".
-
-**New argument for restoring it:** POOP bans list comprehensions entirely. The `map` and `filter` methods exist precisely because list comprehensions cover `[fn(x) for x in col]` and `[x for x in col if pred(x)]` — they are substitutes, not builtins-as-methods. By the same reasoning, `reduce` is the only substitute available for accumulation patterns that the specialized reductions (`sum`, `all`, `any`) cannot express. Without it, users are forced into verbose `do(block)` accumulating into outer mutable state — the least readable option and also the most un-Smalltalk approach.
-
-**Examples that have no clean substitute today:**
-
-```python
-# product of all elements — sum() does not cover this
-product = lst.reduce(Int(1), lambda acc, x: acc * x)
-
-# building a string from a list of parts
-sentence = words.reduce(Str(""), lambda acc, w: acc + Str(" ") + w)
-
-# roman numeral from digit list — was in examples/ before the drop
-```
-
-**Name:** `reduce` is the correct name (not Smalltalk's `inject_into`, not Haskell's `fold`). `functools.reduce` is the canonical Python name and is well understood.
-
-**Signature question:** should the initial value be required (current POOP style) or optional (mirroring `functools.reduce`)?
-
-- `functools.reduce(fn, iterable)` — uses first element as seed (raises `TypeError` on empty).
-- `functools.reduce(fn, iterable, initial)` — explicit seed.
-
-POOP style would be `lst.reduce(init, block)` (required init, matches `_IterableMixin`'s `reduce(init, block)` that was removed). Making `init` optional adds an edge case (empty collection raises) that is harder to handle without `try/except`.
-
-**Options:**
-
-- **(a) Restore as-is** — `reduce(init: Object, block: Callable) -> Object`, required initial value, on `_IterableMixin` (all collections).
-- **(b) Restore with optional init** — `reduce(block, init=None)` or `reduce(init, block)` where `init` is optional; raises on empty if omitted. Mirrors `functools.reduce` more closely but adds an error path.
-- **(c) Keep dropped** — accept that folds require verbose `do()`. Document the gap explicitly in `INFECTIONS.md`.
-
-**Decision:** option (a) — restored with required `init`. `reduce(init, block)` re-added to `_IterableMixin`. `filter` and `map` are substitutes for list comprehensions banned by POOP; `reduce` follows the same logic for accumulation patterns that `sum`/`all`/`any` cannot cover.
-
-### ~~13. `do()` return type — `Self` or `none`?~~ — DONE
-
-**Today:** `_IterableMixin.do(block)` returns `Self` (`poop/types/_iterable_mixin.py:27-29`). This follows Smalltalk's `do:` which returns the receiver, enabling chaining: `lst.do(log).sorted()`.
-
-**Tension with proposal 7:** proposal 7 says "Python void-returning methods return `none`". A `for` loop in Python returns nothing. But `do()` is not a Python method — it is a POOP-specific Smalltalk method. Proposal 7 was scoped to methods named after Python void-returning methods (`sort`, `reverse`, `clear`, etc.). `do()` does not exist in Python at all, so the rule does not strictly apply.
-
-**Arguments for keeping `Self`:**
-
-- Smalltalk's `do:` has always returned the receiver; `do()` is the one explicit Smalltalk import into POOP.
-- Chaining `lst.do(log).map(fn)` is idiomatic and useful without an extra line.
-- The `With.do()` method already returns `Self` with the same chain-enabling rationale (noted as an exception in proposal 7).
-
-**Arguments for changing to `none`:**
-
-- Iteration has no meaningful "result" — returning `self` implies the receiver changed, which it did not.
-- Consistency: every other side-effecting method that POOP adopted from Python (`append`, `sort`, `clear`, `extend`...) returns `none`. `do()` is the odd one out.
-- Users who need chaining can write `lst.map(identity)` or simply separate the statements.
-
-**Options:**
-
-- **(a) Keep `Self`** — preserve the Smalltalk contract; `do` is the documented Smalltalk exception to the naming rule, so it can also be the exception to the return-type rule.
-- **(b) Change to `none`** — align with the mutator principle; remove the Smalltalk chaining idiom from iteration.
-
-**Decision:** option (b) — `do()` now returns `none`. `do` is the POOP substitute for a `for` loop, and `for` loops return nothing. The Smalltalk receiver-return pattern was dropped in favour of consistency with the mutator principle.
-
-### 14. Conversion methods `int()`, `float()`, `complex()` as methods — correct approach?
-
-**Today:** POOP types expose conversion methods: `Str("42").int() -> Int`, `Str("3.14").float() -> Float`, `Int(3).float() -> Float`, `Float(3.7).int() -> Int`, etc. These are defined directly on each type (e.g., `poop/types/string.py:39`, `poop/types/int.py:86`).
-
-**Analogy with `enumerate`:** `enumerate(col)` was a Python builtin call; POOP intercepted it via `EnumerateTransformer` and made it return a POOP `Enumerate` object. The method form `col.enumerate()` is a convenience alias. By analogy, `int("42")` is a Python constructor call — it could be intercepted by a transformer and rewritten to `Int("42")`. The method form `Str("42").int()` is then the POOP-style way to access the same constructor.
-
-**The naming tension:** `int` is both a Python type (constructor) and the name of a method on POOP `Str`. When a user reads `Str("42").int()`, it is ambiguous whether `int` is a method or a constructor call. The POOP transformer for `int` literals rewrites `42` → `_poop_int(42)`, but it does not intercept `int("42")` — that call would produce a plain Python `int`, not a POOP `Int`, which is a silent correctness bug.
-
-**Sub-questions:**
-
-1. Should `int(expr)`, `float(expr)`, `complex(expr)` calls be intercepted by a transformer (like `enumerate`) and rewritten to `Int(expr)`, `Float(expr)`, `Complex(expr)`?
-2. Should the conversion methods on types be kept as-is (`Str.int()`, `Int.float()`, etc.) regardless of question 1?
-3. Is the method name `int` on `Str` confusing enough to warrant renaming (e.g., `to_int()`)? This would break the "Python names" principle but improve clarity.
-
-**Options:**
-
-- **(a) Status quo** — keep conversion methods as-is, accept the gap where `int("42")` in POOP code silently produces a Python `int`. Document the correct form (`Str("42").int()`).
-- **(b) Add transformer** — intercept `int(expr)`, `float(expr)`, `complex(expr)` calls and rewrite to `_poop_Int(expr)`, etc. Keeps conversion methods AND makes the builtin-style call work correctly. Mirrors the `enumerate`/`zip` pattern.
-- **(c) Rename methods** — rename `Str.int()` → `Str.to_int()` (etc.) to make the method-vs-constructor distinction explicit. Breaks "Python names" but eliminates the ambiguity.
-
-**Decision:** status quo (a), add transformers for type conversion builtins (b), or rename to `to_int/to_float` (c)?
-
-### 15. Allow class-constructor builtins (`int()`, `str()`, `float()`, `list()`, `tuple()`, `dict()`, `set()`, `bytes()`, `bool()`) via transformers?
-
-**Today:** POOP intercepts `enumerate(col)` and `zip(a, b)` via transformers that rewrite the AST call to `_poop_enumerate(...)` / `_poop_zip(...)`, returning a POOP `Enumerate` / `Zip` object. The same pattern is used for literals (`42` → `_poop_int(42)`). But type-constructor calls like `int("42")`, `str(42)`, `list(range(3))` are **not intercepted** — they produce plain Python objects, silently bypassing the POOP type system.
-
-**The silent correctness bug:** a POOP user writing `int("42")` gets a Python `int`, not a POOP `Int`. Arithmetic on it (`int("42") + Int(1)`) would fail or produce unexpected results. This is the same category of bug that motivated the literal transformers for `42`, `"hello"`, `[1,2,3]`, etc.
-
-**Scope of the proposal:** apply the transformer pattern to explicit constructor calls for all POOP primitive types:
-
-| Call in source | Rewritten to | Result |
-|---|---|---|
-| `int(expr)` | `_poop_int(expr)` | `Int` |
-| `float(expr)` | `_poop_float(expr)` | `Float` |
-| `str(expr)` | `_poop_str(expr)` | `Str` |
-| `bool(expr)` | `_poop_bool(expr)` | `Boolean` |
-| `list(expr)` | `_poop_list(expr)` | `List` |
-| `tuple(expr)` | `_poop_tuple(expr)` | `Tuple` |
-| `dict(expr)` | `_poop_dict(expr)` | `Dict` |
-| `set(expr)` | `_poop_set(expr)` | `Set` |
-| `bytes(expr)` | `_poop_bytes(expr)` | `Bytes` |
-| `complex(expr)` | `_poop_complex(expr)` | `Complex` |
-| `frozenset(expr)` | `_poop_frozenset(expr)` | `FrozenSet` |
-
-**Relationship with proposal 14:** if this proposal is adopted, the conversion-method question (`Str.int()`, `Int.float()`, etc.) becomes less urgent — `int(str_val)` in POOP code would correctly produce a POOP `Int`. The method forms (`Str.int()`, `Int.float()`) could still exist as convenience aliases.
-
-**Implementation notes:**
-
-- Each transformer would extend `BaseTransformer` and rewrite `ast.Call` nodes where `func` is an `ast.Name` matching the target names.
-- The factory functions (`_poop_int`, `_poop_str`, etc.) would accept Python native values OR POOP objects and coerce appropriately (e.g., `_poop_int(Int(3))` → `Int(3)`, `_poop_int("42")` → `Int(42)`).
-- Alternatively, one `ConstructorTransformer` could intercept all of them in a single pass.
-- Must integrate with the validator ordering: these transformers run before validators, so calling `int(x)` in POOP code would be safe after transformation.
-
-**Options:**
-
-- **(a) Full sweep** — intercept all constructor calls listed above in one new `ConstructorTransformer`. Resolves the silent bug uniformly.
-- **(b) Partial — numeric only** — intercept only `int()`, `float()`, `complex()` (the most common conversions). Leave `list()`, `tuple()`, etc. for a follow-up.
-- **(c) No transformer, just ban** — add validators that reject bare `int(expr)`, `str(expr)`, etc. at the call site, forcing users to use the POOP method forms (`str_val.int()`, `int_val.float()`). Explicit error with a suggested substitute.
-- **(d) Status quo** — document the gap, rely on users knowing to use `.int()`, `.float()` method forms. No validator, no transformer.
-
-**Decision:** full transformer (a), numeric-only (b), ban with message (c), or status quo (d)?
 
 ---
 

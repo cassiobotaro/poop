@@ -91,6 +91,15 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 
 `and_` and `or_` receive a block so evaluation is lazy — the right-hand side is only evaluated if needed, preserving the short-circuit semantics of Python's `and`/`or`.
 
+### No `async`/`await` — `poop/validators/no_async.py`
+
+| AST node | Reason |
+|---|---|
+| `ast.AsyncFunctionDef` | async functions imply an event loop — POOP has no event loop |
+| `ast.Await` | same |
+
+`ast.AsyncFor` is also banned by the loops validator. `ast.AsyncFunctionDef` *outside* a class is additionally covered by the free-functions validator; `no_async` handles the case where an `async def` appears *inside* a class method.
+
 ### No `not` — `poop/validators/no_not.py`
 
 | AST node | Reason | Substitute |
@@ -685,7 +694,7 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 | AST node | Replacement |
 |---|---|
-| `ast.Call` with `frozenset(x)` | `FrozenSet(*x)` or `FrozenSet()` |
+| `ast.Call` with `frozenset(x)` | `_poop_frozenset_from(x)` |
 
 ### Range — `poop/transformers/range.py`
 
