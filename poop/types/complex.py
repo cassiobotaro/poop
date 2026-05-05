@@ -1,10 +1,10 @@
 from types import NotImplementedType
 from typing import TYPE_CHECKING
 
+from poop.types.boolean import Boolean, false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.float import Float
 
 _complex = complex  # alias to avoid shadowing by Complex class name
@@ -113,15 +113,11 @@ class Complex(Object):
         return Complex(-self._value)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Complex):
             return true if self._value == other._value else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Complex):
             return false if self._value == other._value else true
         return true
