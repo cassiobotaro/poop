@@ -188,9 +188,9 @@ def test_clear_empties_dict() -> None:
     assert d.len() == Int(0)
 
 
-def test_clear_returns_self() -> None:
+def test_clear_returns_none() -> None:
     d = _dict_with([(1, 10)])
-    assert d.clear() is d
+    assert d.clear() is none
 
 
 def test_copy_returns_new_dict() -> None:
@@ -255,10 +255,10 @@ def test_update_merges_dicts() -> None:
     assert d1.at(Int(2)) == Int(20)
 
 
-def test_update_returns_self() -> None:
+def test_update_returns_none() -> None:
     d1 = _dict_with([(1, 10)])
     d2 = _dict_with([(2, 20)])
-    assert d1.update(d2) is d1
+    assert d1.update(d2) is none
 
 
 def test_eq_with_non_dict_returns_false() -> None:

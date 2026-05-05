@@ -23,10 +23,10 @@ def test_dunder_len() -> None:
     assert len(Set(Int(1), Int(2))) == 2
 
 
-def test_add_returns_self() -> None:
+def test_add_returns_none() -> None:
     s = Set()
     result = s.add(Int(1))
-    assert result is s
+    assert result is none
 
 
 def test_add_increases_len() -> None:
@@ -42,10 +42,10 @@ def test_add_duplicate_keeps_unique() -> None:
     assert s.len() == Int(1)
 
 
-def test_remove_returns_self() -> None:
+def test_remove_returns_none() -> None:
     s = Set(Int(1))
     result = s.remove(Int(1))
-    assert result is s
+    assert result is none
 
 
 def test_remove_decreases_len() -> None:
@@ -207,9 +207,9 @@ def test_discard_missing_does_not_raise() -> None:
     assert s.len() == Int(1)
 
 
-def test_discard_returns_self() -> None:
+def test_discard_returns_none() -> None:
     s = Set(Int(1))
-    assert s.discard(Int(1)) is s
+    assert s.discard(Int(1)) is none
 
 
 def test_clear_empties_set() -> None:
@@ -218,9 +218,9 @@ def test_clear_empties_set() -> None:
     assert s.len() == Int(0)
 
 
-def test_clear_returns_self() -> None:
+def test_clear_returns_none() -> None:
     s = Set(Int(1))
-    assert s.clear() is s
+    assert s.clear() is none
 
 
 def test_copy_returns_new_set() -> None:
@@ -274,9 +274,9 @@ def test_update_mutates() -> None:
     assert s == Set(Int(1), Int(2), Int(3))
 
 
-def test_update_returns_self() -> None:
+def test_update_returns_none() -> None:
     s = Set(Int(1))
-    assert s.update(Set(Int(2))) is s
+    assert s.update(Set(Int(2))) is none
 
 
 def test_intersection_update() -> None:

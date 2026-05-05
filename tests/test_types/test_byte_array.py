@@ -9,6 +9,7 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -179,9 +180,9 @@ def test_append_adds_byte() -> None:
     assert ba.at(Int(0)) == Int(65)
 
 
-def test_append_returns_self() -> None:
+def test_append_returns_none() -> None:
     ba = ByteArray()
-    assert ba.append(Int(1)) is ba
+    assert ba.append(Int(1)) is none
 
 
 def test_clear_empties() -> None:
@@ -190,9 +191,9 @@ def test_clear_empties() -> None:
     assert ba.len() == Int(0)
 
 
-def test_clear_returns_self() -> None:
+def test_clear_returns_none() -> None:
     ba = ByteArray(bytearray(b"hi"))
-    assert ba.clear() is ba
+    assert ba.clear() is none
 
 
 def test_copy_returns_new_bytearray() -> None:
@@ -215,9 +216,9 @@ def test_extend_mutates() -> None:
     assert ba.len() == Int(4)
 
 
-def test_extend_returns_self() -> None:
+def test_extend_returns_none() -> None:
     ba = ByteArray()
-    assert ba.extend(ByteArray(bytearray(b"x"))) is ba
+    assert ba.extend(ByteArray(bytearray(b"x"))) is none
 
 
 def test_insert_adds_at_position() -> None:
@@ -227,9 +228,9 @@ def test_insert_adds_at_position() -> None:
     assert ba.len() == Int(3)
 
 
-def test_insert_returns_self() -> None:
+def test_insert_returns_none() -> None:
     ba = ByteArray(bytearray(b"a"))
-    assert ba.insert(Int(0), Int(65)) is ba
+    assert ba.insert(Int(0), Int(65)) is none
 
 
 def test_pop_last() -> None:
@@ -253,9 +254,9 @@ def test_remove_first_occurrence() -> None:
     assert ba.at(Int(0)) == Int(98)
 
 
-def test_remove_returns_self() -> None:
+def test_remove_returns_none() -> None:
     ba = ByteArray(bytearray(b"a"))
-    assert ba.remove(Int(97)) is ba
+    assert ba.remove(Int(97)) is none
 
 
 def test_reverse_mutates() -> None:
@@ -265,9 +266,9 @@ def test_reverse_mutates() -> None:
     assert ba.at(Int(2)) == Int(97)  # ord('a')
 
 
-def test_reverse_returns_self() -> None:
+def test_reverse_returns_none() -> None:
     ba = ByteArray(bytearray(b"hi"))
-    assert ba.reverse() is ba
+    assert ba.reverse() is none
 
 
 def test_capitalize() -> None:

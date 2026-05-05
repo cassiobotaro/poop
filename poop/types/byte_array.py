@@ -5,12 +5,14 @@ from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import none
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
@@ -97,37 +99,37 @@ class ByteArray(_IterableMixin, Object):
     def __mul__(self, other: Int) -> ByteArray:
         return ByteArray(_bytearray(self._value * other._value))
 
-    def append(self, byte: Int) -> ByteArray:
+    def append(self, byte: Int) -> NoneClass:
         self._value.append(byte._value)
-        return self
+        return none
 
-    def clear(self) -> ByteArray:
+    def clear(self) -> NoneClass:
         self._value.clear()
-        return self
+        return none
 
     def copy(self) -> ByteArray:
         return ByteArray(_bytearray(self._value))
 
-    def extend(self, iterable: ByteArray) -> ByteArray:
+    def extend(self, iterable: ByteArray) -> NoneClass:
         self._value.extend(iterable._value)
-        return self
+        return none
 
-    def insert(self, i: Int, byte: Int) -> ByteArray:
+    def insert(self, i: Int, byte: Int) -> NoneClass:
         self._value.insert(i._value, byte._value)
-        return self
+        return none
 
     def pop(self, index: Int | None = None) -> Int:
         if index is None:
             return Int(self._value.pop())
         return Int(self._value.pop(index._value))
 
-    def remove(self, byte: Int) -> ByteArray:
+    def remove(self, byte: Int) -> NoneClass:
         self._value.remove(byte._value)
-        return self
+        return none
 
-    def reverse(self) -> ByteArray:
+    def reverse(self) -> NoneClass:
         self._value.reverse()
-        return self
+        return none
 
     def capitalize(self) -> ByteArray:
         return ByteArray(_bytearray(self._value.capitalize()))

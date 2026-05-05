@@ -6,11 +6,13 @@ from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
+from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
+    from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
 _list = list  # alias to avoid shadowing by List class name in annotations
@@ -89,9 +91,9 @@ class List(_IterableMixin, Object):
     def pop(self) -> Object:
         return self._items.pop()
 
-    def clear(self) -> List:
+    def clear(self) -> NoneClass:
         self._items.clear()
-        return self
+        return none
 
     def copy(self) -> List:
         return List(*self._items)
@@ -101,32 +103,32 @@ class List(_IterableMixin, Object):
 
         return Int(self._items.count(obj))
 
-    def extend(self, other: List) -> List:
+    def extend(self, other: List) -> NoneClass:
         self._items.extend(other._items)
-        return self
+        return none
 
     def index(self, obj: Object) -> Int:
         from poop.types.int import Int
 
         return Int(self._items.index(obj))
 
-    def insert(self, i: Int, obj: Object) -> List:
+    def insert(self, i: Int, obj: Object) -> NoneClass:
         self._items.insert(i._value, obj)
-        return self
+        return none
 
-    def remove(self, obj: Object) -> List:
+    def remove(self, obj: Object) -> NoneClass:
         self._items.remove(obj)
-        return self
+        return none
 
-    def reverse(self) -> List:
+    def reverse(self) -> NoneClass:
         self._items.reverse()
-        return self
+        return none
 
     def sort(
         self, key: Callable[[Object], Any] | None = None, reverse: bool = False
-    ) -> List:
+    ) -> NoneClass:
         self._items[:] = builtins_sorted(self._items, key=key, reverse=reverse)
-        return self
+        return none
 
     def first(self) -> Object:
         return self._items[0]

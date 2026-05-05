@@ -147,49 +147,9 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — API review
 
-### 7. Audit methods returning `self` — should they mirror Python instead?
+### ~~7. Audit methods returning `self` — should they mirror Python instead?~~ — DONE (option c)
 
-**Today:** dozens of POOP methods return `self` for Smalltalk-style cascading. Examples (non-exhaustive):
-- `_IterableMixin.do(block) -> Self`
-- `Int.real`/`numerator`/`denominator`/`conjugate`/`__ceil__`/`__floor__`/`__trunc__` — all return `self`
-- `ByteArray.append`/`clear`/`extend`/`insert`/`remove`/`reverse`/`at_put` — return `self`
-- `Set.add`/`discard`/`remove`/`clear`/`update`/`intersection_update`/`difference_update`/`symmetric_difference_update` — return `self`
-- `Dict.set`/`update`/`clear` — return `self`
-- `List.append`/`extend`/`insert`/`remove`/`clear`/`reverse`/`sort` — return `self`
-- `NoneClass.if_not_none` — returns `self`
-- `Try.run` / `With.do` — return `self`
-
-**Tension:** the documented principle is *"Method names follow the corresponding Python name — builtins, dunders and collection API"*. But several of those Python counterparts return **`None`**, not the receiver:
-
-| POOP method | Returns | Python equivalent | Returns |
-|---|---|---|---|
-| `List.append(x)` | `self` | `list.append(x)` | `None` |
-| `List.extend(it)` | `self` | `list.extend(it)` | `None` |
-| `List.sort()` | `self` | `list.sort()` | `None` |
-| `Set.add(x)` | `self` | `set.add(x)` | `None` |
-| `Set.update(s)` | `self` | `set.update(s)` | `None` |
-| `Dict.update(d)` | `self` | `dict.update(d)` | `None` |
-| `ByteArray.append(b)` | `self` | `bytearray.append(b)` | `None` |
-| `ByteArray.reverse()` | `self` | `bytearray.reverse()` | `None` |
-
-By naming these methods after their Python counterparts, POOP signals "same semantics" — but the return type silently differs, breaking the mirror.
-
-**Why it matters:**
-- A reader who knows Python expects `result = lst.append(x)` to leave `result` as `None`. In POOP they get the list. Either is fine in isolation, but the surprise is in the mismatch.
-- Smalltalk-style cascades (`a.append(x).append(y)`) are not idiomatic Python. POOP enables them via `return self` but doesn't mark them as a deliberate diversion from the Python mirror.
-- Methods like `Int.real`/`numerator` returning `self` are correct because Python's `int.real` is a property that yields the int — those map cleanly. Mutator methods (`append`, `clear`, etc.) are the genuine divergence.
-
-**Options:**
-
-- **(a) Mirror Python strictly.** All mutators return POOP `none` (mirroring Python's `None`). Cascade chains break; users cascade through explicit `do(block)` if needed. Aligns the rule with the practice.
-- **(b) Keep cascading; document explicitly.** Add an explicit principle in `INFECTIONS.md` listing "POOP-Smalltalk extensions to Python's API" — methods that intentionally diverge from the Python mirror by returning `self`. Closes the documentation gap without behavior changes.
-- **(c) Hybrid.** Keep `self`-returning for non-mutator/identity methods (e.g., `Int.real`, `NoneClass.if_not_none`); convert mutators to return `none`. Surfaces the principle "mutators are void in Python; POOP follows".
-
-**Scope:** wide — touches every collection mutator and every `Int`/`Float` "identity" property. Each option has different downstream impact on existing examples and tests.
-
-**Effort:** (a) large (audit ~40 methods + update tests/examples). (b) small (just a documentation principle). (c) medium (selective rewrite + principle).
-
-**Decision:** strict mirror (a), document the divergence (b), or hybrid (c)?
+**Decision:** hybrid (c) — mutators named after Python void-returning methods (`append`, `clear`, `extend`, `insert`, `remove`, `reverse`, `sort`, `update`, `discard`, `intersection_update`, `difference_update`, `symmetric_difference_update`) now return POOP `none`. POOP-specific methods (`List.add`, `Dict.at_put`, `ByteArray.at_put`) that have no Python equivalent keep returning `self`. Identity methods (`Int.real`, `NoneClass.if_not_none`, `Try.run`, `With.do`) are unchanged. Principle added to `INFECTIONS.md`.
 
 ### 8. Audit `__slots__` usage on POOP types?
 

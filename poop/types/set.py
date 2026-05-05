@@ -4,10 +4,12 @@ from typing import TYPE_CHECKING, Any
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
 from poop.types.int import Int
+from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
 
 _set = set  # alias to avoid shadowing by Set class name in annotations
 
@@ -22,21 +24,21 @@ class Set(_IterableMixin, Object):
     def _collect(self, items: Any) -> Set:
         return Set(*items)
 
-    def add(self, obj: Object) -> Set:
+    def add(self, obj: Object) -> NoneClass:
         self._data.add(obj)
-        return self
+        return none
 
-    def remove(self, obj: Object) -> Set:
+    def remove(self, obj: Object) -> NoneClass:
         self._data.remove(obj)
-        return self
+        return none
 
-    def discard(self, obj: Object) -> Set:
+    def discard(self, obj: Object) -> NoneClass:
         self._data.discard(obj)
-        return self
+        return none
 
-    def clear(self) -> Set:
+    def clear(self) -> NoneClass:
         self._data.clear()
-        return self
+        return none
 
     def copy(self) -> Set:
         return Set(*self._data)
@@ -56,21 +58,21 @@ class Set(_IterableMixin, Object):
     def symmetric_difference(self, other: Set) -> Set:
         return Set(*self._data.symmetric_difference(other._data))
 
-    def update(self, *others: Set) -> Set:
+    def update(self, *others: Set) -> NoneClass:
         self._data.update(*[o._data for o in others])
-        return self
+        return none
 
-    def intersection_update(self, *others: Set) -> Set:
+    def intersection_update(self, *others: Set) -> NoneClass:
         self._data.intersection_update(*[o._data for o in others])
-        return self
+        return none
 
-    def difference_update(self, *others: Set) -> Set:
+    def difference_update(self, *others: Set) -> NoneClass:
         self._data.difference_update(*[o._data for o in others])
-        return self
+        return none
 
-    def symmetric_difference_update(self, other: Set) -> Set:
+    def symmetric_difference_update(self, other: Set) -> NoneClass:
         self._data.symmetric_difference_update(other._data)
-        return self
+        return none
 
     def isdisjoint(self, other: Set) -> Boolean:
         return true if self._data.isdisjoint(other._data) else false

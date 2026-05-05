@@ -62,9 +62,9 @@ class Dict(Object):
     def __contains__(self, item: object) -> bool:
         return item in self._data
 
-    def clear(self) -> Dict:
+    def clear(self) -> NoneClass:
         self._data.clear()
-        return self
+        return none
 
     def copy(self) -> Dict:
         new = Dict()
@@ -84,9 +84,9 @@ class Dict(Object):
     def setdefault(self, key: Object, default: Object) -> Object:
         return self._data.setdefault(key, default)
 
-    def update(self, other: Dict) -> Dict:
+    def update(self, other: Dict) -> NoneClass:
         self._data.update(other._data)
-        return self
+        return none
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, Dict):

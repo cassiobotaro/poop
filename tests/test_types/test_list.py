@@ -223,9 +223,9 @@ def test_clear_empties_list() -> None:
     assert lst.len() == Int(0)
 
 
-def test_clear_returns_self() -> None:
+def test_clear_returns_none() -> None:
     lst = List(Int(1))
-    assert lst.clear() is lst
+    assert lst.clear() is none
 
 
 def test_copy_returns_new_list() -> None:
@@ -256,9 +256,9 @@ def test_extend_appends_all() -> None:
     assert lst == List(Int(1), Int(2), Int(3), Int(4))
 
 
-def test_extend_returns_self() -> None:
+def test_extend_returns_none() -> None:
     lst = List(Int(1))
-    assert lst.extend(List(Int(2))) is lst
+    assert lst.extend(List(Int(2))) is none
 
 
 def test_index_found() -> None:
@@ -276,9 +276,9 @@ def test_insert_at_position() -> None:
     assert lst == List(Int(1), Int(2), Int(3))
 
 
-def test_insert_returns_self() -> None:
+def test_insert_returns_none() -> None:
     lst = List(Int(1))
-    assert lst.insert(Int(0), Int(0)) is lst
+    assert lst.insert(Int(0), Int(0)) is none
 
 
 def test_remove_first_occurrence() -> None:
@@ -287,9 +287,9 @@ def test_remove_first_occurrence() -> None:
     assert lst == List(Int(2), Int(1))
 
 
-def test_remove_returns_self() -> None:
+def test_remove_returns_none() -> None:
     lst = List(Int(1))
-    assert lst.remove(Int(1)) is lst
+    assert lst.remove(Int(1)) is none
 
 
 def test_remove_not_found_raises() -> None:
@@ -303,9 +303,9 @@ def test_reverse_mutates_in_place() -> None:
     assert lst == List(Int(3), Int(2), Int(1))
 
 
-def test_reverse_returns_self() -> None:
+def test_reverse_returns_none() -> None:
     lst = List(Int(1), Int(2))
-    assert lst.reverse() is lst
+    assert lst.reverse() is none
 
 
 def test_sort_mutates_in_place() -> None:
@@ -314,9 +314,9 @@ def test_sort_mutates_in_place() -> None:
     assert lst == List(Int(1), Int(2), Int(3))
 
 
-def test_sort_returns_self() -> None:
+def test_sort_returns_none() -> None:
     lst = List(Int(3), Int(1))
-    assert lst.sort() is lst
+    assert lst.sort() is none
 
 
 def test_sort_with_key() -> None:
