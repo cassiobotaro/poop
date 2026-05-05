@@ -28,6 +28,7 @@ from poop.transformers.string import StrTransformer
 from poop.transformers.try_ import TryTransformer
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.with_ import WithTransformer
+from poop.transformers.zip import ZipTransformer
 
 DEFAULT_TRANSFORMERS: _list[Transformer] = [
     BooleanTransformer(),
@@ -40,6 +41,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     FloatTransformer(),
     StrTransformer(),
     EnumerateTransformer(),
+    ZipTransformer(),
     RangeTransformer(),
     ListTransformer(),
     TupleTransformer(),
@@ -62,6 +64,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **FloatTransformer.BINDINGS,
     **StrTransformer.BINDINGS,
     **EnumerateTransformer.BINDINGS,
+    **ZipTransformer.BINDINGS,
     **RangeTransformer.BINDINGS,
     **ListTransformer.BINDINGS,
     **TupleTransformer.BINDINGS,

@@ -63,3 +63,8 @@ class _IterableMixin:
         from poop.types.enumerate import Enumerate
 
         return Enumerate(self, start)
+
+    def zip(self, *others: Any, strict: Any = None) -> Any:
+        from poop.types.zip import Zip
+
+        return Zip(self, *others, strict=strict)

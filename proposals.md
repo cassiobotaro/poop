@@ -14,13 +14,9 @@ Items where the substitute works, but the method name does not mirror the builti
 
 **Decision:** lazy `Enumerate(_IterableMixin, Object)` without dependency on proposal 3. `enumerate(col)` and `enumerate(col, start)` are intercepted by `EnumerateTransformer` and rewritten to `_poop_enumerate(...)`. All `_IterableMixin` types and `Dict` expose `.enumerate(start=Int(0)) -> Enumerate`. `Enumerate` inherits `do`, `map`, `filter`, etc. from `_IterableMixin` and works on any iterable including `Dict`.
 
-### 2. `zip(a, b)` → `a.zip(other)` returning a lazy `Zip` object?
+### ~~2. `zip(a, b)` → `a.zip(other)` returning a lazy `Zip` object?~~ — DONE
 
-Same dependency tree as item 1: prefer a lazy `Zip(Object)` mirroring Python's `zip` (single-pass, stops at shortest), conditional on proposal 3. Fallback eager shape returns a `List` of `Tuple(item_a, item_b)`.
-
-**Suggested location:** `poop/types/zip.py` (new) plus a hook on `poop/types/_iterable_mixin.py` accepting another iterable.
-
-**Decision:** confirm the lazy shape conditional on proposal 3, with eager `List` fallback otherwise.
+**Decision:** lazy `Zip(_IterableMixin, Object)` mirroring Python exactly. `zip(...)` interceptado por `ZipTransformer` → `_poop_zip(...)`. Suporta número variádico de iteráveis e `strict=true` (levanta `ValueError` se tamanhos diferem). Todos os tipos `_IterableMixin` e `Dict` expõem `.zip(*others, strict=false) -> Zip`.
 
 ### 3. `iter(col)` / `next(it)` → first-class `Iterator` type?
 

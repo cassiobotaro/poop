@@ -58,7 +58,6 @@ from poop.validators.no_unary_plus import NoUnaryPlusValidator
 from poop.validators.no_walrus import NoWalrusValidator
 from poop.validators.no_with import NoWithValidator
 from poop.validators.no_yield import NoYieldValidator
-from poop.validators.no_zip import NoZipValidator
 
 DEFAULT_VALIDATORS: list[Validator] = [
     NoIfValidator(),
@@ -102,7 +101,6 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoBreakpointValidator(),
     NoChrValidator(),
     NoDivmodValidator(),
-    NoZipValidator(),
     NoExecValidator(),
     NoExitValidator(),
     NoFormatValidator(),

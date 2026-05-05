@@ -275,11 +275,11 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|---|
 | `format(x, spec)` | free function with procedural look | `x.format(spec)` |
 
-### No `zip` — `poop/validators/no_zip.py`
+### `zip` → `Zip` — `poop/transformers/zip.py`
 
-| Call | Reason | Substitute |
-|---|---|---|
-| `zip(a, b)` | free function with procedural look | pending (proposal 2) |
+`zip(a, b, ...)` and `zip(a, b, strict=True)` are rewritten by `ZipTransformer` to `_poop_zip(...)`, which returns a `Zip` object.
+
+`Zip` (`poop/types/zip.py`) is a lazy iterable POOP type mirroring Python's `zip` exactly: accepts any number of iterables, stops at the shortest, and raises `ValueError` when `strict=true` and lengths differ. It inherits `do`, `map`, `filter`, `filter_false`, `find`, `sum`, `all`, `any` from `_IterableMixin`. Every `_IterableMixin` type and `Dict` expose `.zip(*others, strict=false) -> Zip` as a convenience method.
 
 ### `enumerate` → `Enumerate` — `poop/transformers/enumerate.py`
 

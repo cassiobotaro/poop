@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.enumerate import Enumerate
     from poop.types.none import NoneClass
+    from poop.types.zip import Zip
 
 _dict = dict  # alias to avoid shadowing by Dict class name in annotations
 
@@ -93,6 +94,11 @@ class Dict(Object):
         from poop.types.enumerate import Enumerate
 
         return Enumerate(self, start)
+
+    def zip(self, *others: object, strict: Boolean | None = None) -> Zip:
+        from poop.types.zip import Zip
+
+        return Zip(self, *others, strict=strict)
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, Dict):
