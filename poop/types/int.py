@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING, Literal, cast
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
     from poop.types.complex import Complex
     from poop.types.float import Float

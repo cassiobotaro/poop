@@ -1,10 +1,11 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
     from poop.types.float import Float
     from poop.types.int import Int

@@ -2,10 +2,11 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
     from poop.types.int import Int
     from poop.types.list import List
     from poop.types.string import Str

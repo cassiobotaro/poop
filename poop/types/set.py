@@ -1,10 +1,13 @@
 from collections.abc import Iterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
 
 _set = set  # alias to avoid shadowing by Set class name in annotations
 

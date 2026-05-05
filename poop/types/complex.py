@@ -1,10 +1,11 @@
 from types import NotImplementedType
 from typing import TYPE_CHECKING
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
     from poop.types.float import Float
 
 _complex = complex  # alias to avoid shadowing by Complex class name

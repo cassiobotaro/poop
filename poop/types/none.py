@@ -1,8 +1,11 @@
 from collections.abc import Callable
-from typing import Any, final
+from typing import TYPE_CHECKING, Any, final
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import false, true
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
 
 
 @final
