@@ -20,11 +20,29 @@ Items where the substitute works, but the method name does not mirror the builti
 
 ### 3. `iter(col)` / `next(it)` → first-class `Iterator` type?
 
-**Today:** iteration only via `col.do(block)` (`INFECTIONS.md:294`).
+**Today:** iteration only via `col.do(block)`. `iter` and `next` are banned by `NoIterValidator`.
 
-**Implementation:** invasive — requires a new `Iterator` type in `poop/types/` plus a matching transformer in `poop/transformers/` (just like `Block` has its own).
+**Desired direction (partially settled):**
 
-**Decision:** introduce a first-class iterator, or keep the pure Smalltalk model (only `do`)?
+- `iter(col)` is intercepted by a transformer and returns a POOP `Iterator` object — lazy, just like Python's `iter()`.
+- Every collection exposes `.iter() -> Iterator` as a convenience method (`col.iter()` ≡ `iter(col)`).
+- `Iterator` is **one-shot and consumed once**: calling `do` or advancing it exhausts it permanently — unlike `Enumerate` and `Zip` which are restartable. This mirrors Python's iterator protocol exactly.
+- `next(it)` is rewritten to `it.next()`. The open question is what `next()` returns when exhausted — see options below.
+
+**One-shot invariant:** once an `Iterator` is exhausted, subsequent calls to `next()` always return the exhausted sentinel (never restart). `do(block)` on an exhausted iterator is a no-op. This is a deliberate break from the restartable pattern of `List`, `Enumerate`, `Zip`, etc.
+
+**Open question — exhaustion sentinel for `next()`:**
+
+- **(a) Return `none`** — simple, but ambiguous if `none` is a valid item in the collection.
+- **(b) Return `Tuple(Boolean, item)`** — `Tuple(true, val)` if a value exists, `Tuple(false, none)` if exhausted. Unambiguous, but verbose at the call site.
+- **(c) Raise Python's `StopIteration` natively** — identical to Python, but POOP bans `try/except` so the user cannot catch it. Only viable if `Iterator` is never used in a context where exhaustion must be handled gracefully.
+
+**Implementation notes:**
+- `Iterator` wraps a Python-native iterator (`_iter`) in `__slots__`.
+- `__iter__` returns `self` (standard iterator protocol — makes `Iterator` usable in POOP's own `do`/`map`/`filter`).
+- `no_iter` validator keeps banning `iter(col)` and `next(it)` as bare calls — the transformer intercepts them before the validator would fire (same ordering as `enumerate`, `zip`, `range`).
+
+**Decision:** which exhaustion sentinel (a, b, or c)?
 
 ---
 
