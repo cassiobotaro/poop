@@ -29,19 +29,6 @@ def test_at_returns_element() -> None:
     assert lst.at(Int(1)) == Int(20)
 
 
-def test_add_returns_self() -> None:
-    lst = List(Int(1))
-    result = lst.add(Int(2))
-    assert result is lst
-    assert lst.len() == Int(2)
-
-
-def test_add_appends() -> None:
-    lst = List()
-    lst.add(Int(1)).add(Int(2)).add(Int(3))
-    assert lst == List(Int(1), Int(2), Int(3))
-
-
 def test_includes_true() -> None:
     assert List(Int(1), Int(2), Int(3)).includes(Int(2)) is true
 
@@ -117,14 +104,6 @@ def test_any_false() -> None:
     assert List(Int(1), Int(3)).any(lambda x: x % Int(2) == Int(0)) is false
 
 
-def test_first() -> None:
-    assert List(Int(10), Int(20), Int(30)).first() == Int(10)
-
-
-def test_last() -> None:
-    assert List(Int(10), Int(20), Int(30)).last() == Int(30)
-
-
 def test_pop_returns_last_element() -> None:
     lst = List(Int(10), Int(20), Int(30))
     assert lst.pop() == Int(30)
@@ -134,7 +113,7 @@ def test_pop_removes_last_element() -> None:
     lst = List(Int(10), Int(20), Int(30))
     lst.pop()
     assert lst.len() == Int(2)
-    assert lst.last() == Int(20)
+    assert lst.at(Int(-1)) == Int(20)
 
 
 def test_pop_successive_calls() -> None:

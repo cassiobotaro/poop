@@ -25,8 +25,13 @@ class Dict(Object):
     def __init__(self) -> None:
         self._data: _dict[Object, Object] = {}
 
-    def at(self, key: Object) -> Object | NoneClass:
-        return self._data.get(key, none)
+    def at(self, key: Object) -> Object:
+        return self._data[key]
+
+    def get(
+        self, key: Object, default: Object | NoneClass = none
+    ) -> Object | NoneClass:
+        return self._data.get(key, default)
 
     def at_put(self, key: Object, val: Object) -> Dict:
         self._data[key] = val

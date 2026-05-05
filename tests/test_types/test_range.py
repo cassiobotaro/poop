@@ -102,12 +102,12 @@ def test_includes_returns_false_for_element_outside_range() -> None:
     assert _range(1, 5).includes(Int(6)) is false
 
 
-def test_first_returns_start() -> None:
-    assert _range(3, 7).first() == Int(3)
+def test_at_returns_element() -> None:
+    assert _range(3, 7).at(Int(0)) == Int(3)
 
 
-def test_last_returns_stop() -> None:
-    assert _range(3, 7).last() == Int(7)
+def test_at_negative_index() -> None:
+    assert _range(3, 7).at(Int(-1)) == Int(7)
 
 
 def test_reversed_iterates_in_reverse() -> None:

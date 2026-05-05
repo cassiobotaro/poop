@@ -43,11 +43,17 @@ def test_includes_not_found() -> None:
 
 
 def test_reversed() -> None:
-    assert Str("hello").reversed() == Str("olleh")
+    from poop.types.list import List
+
+    assert Str("hello").reversed() == List(
+        Str("o"), Str("l"), Str("l"), Str("e"), Str("h")
+    )
 
 
 def test_reversed_empty() -> None:
-    assert Str("").reversed() == Str("")
+    from poop.types.list import List
+
+    assert Str("").reversed() == List()
 
 
 def test_add_concatenates() -> None:

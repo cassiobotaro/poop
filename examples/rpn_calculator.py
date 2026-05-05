@@ -50,15 +50,15 @@ class RPN:
         expression.split().do(
             lambda token: ops.includes_key(token).if_true_if_false(
                 lambda: self._apply(ops, token, stack),
-                lambda: stack.add(int(token)),
+                lambda: stack.append(int(token)),
             )
         )
-        return stack.last()
+        return stack.at(stack.len() - 1)
 
     def _apply(self, ops, operator, stack):
         b = stack.pop()
         a = stack.pop()
-        stack.add(ops.at(operator)(a, b))
+        stack.append(ops.at(operator)(a, b))
 
 
 RPN().evaluate("20 5 /").print()

@@ -91,12 +91,6 @@ class Tuple(_IterableMixin, Object):
 
         return Int(self._items.index(obj))
 
-    def first(self) -> Object:
-        return self._items[0]
-
-    def last(self) -> Object:
-        return self._items[-1]
-
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, Tuple):
             return true if self._items == other._items else false

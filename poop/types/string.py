@@ -85,8 +85,10 @@ class Str(Object):
             return item._value in self._value
         return False
 
-    def reversed(self) -> Str:
-        return Str(self._value[::-1])
+    def reversed(self) -> List:
+        from poop.types.list import List
+
+        return List(*[Str(c) for c in reversed(self._value)])
 
     def upper(self) -> Str:
         return Str(self._value.upper())

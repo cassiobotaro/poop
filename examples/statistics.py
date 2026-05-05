@@ -29,8 +29,8 @@ class Statistics:
 
         self._label("Sum:    ", data.sum())
         self._label("Mean:   ", data.sum() / data.len())
-        self._label("Min:    ", sorted_data.first())
-        self._label("Max:    ", sorted_data.last())
+        self._label("Min:    ", sorted_data.at(0))
+        self._label("Max:    ", sorted_data.at(sorted_data.len() - 1))
         self._label("Median: ", sorted_data.at(data.len() // 2))
 
 

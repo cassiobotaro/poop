@@ -77,11 +77,8 @@ class Range(_IterableMixin, Object):
     def step(self) -> Int:
         return self._step
 
-    def first(self) -> Int:
-        return self._start
-
-    def last(self) -> Int:
-        return self._stop
+    def at(self, index: Int) -> Int:
+        return Int(self._range()[index._value])
 
     def reversed(self) -> Range:
         return Range(self._stop, self._start, Int(-self._step._value))

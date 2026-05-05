@@ -109,14 +109,6 @@ def test_any_false() -> None:
     assert Tuple(Int(1), Int(3)).any(lambda x: x % Int(2) == Int(0)) is false
 
 
-def test_first() -> None:
-    assert Tuple(Int(10), Int(20), Int(30)).first() == Int(10)
-
-
-def test_last() -> None:
-    assert Tuple(Int(10), Int(20), Int(30)).last() == Int(30)
-
-
 def test_iter() -> None:
     items = list(Tuple(Int(1), Int(2), Int(3)))
     assert items == [Int(1), Int(2), Int(3)]

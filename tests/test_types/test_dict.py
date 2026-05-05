@@ -38,8 +38,29 @@ def test_at_existing_key() -> None:
     assert d.at(Str("k")) == Int(42)
 
 
-def test_at_missing_key_returns_none() -> None:
-    assert Dict().at(Str("missing")) is none
+def test_at_missing_key_raises() -> None:
+    with pytest.raises(KeyError):
+        Dict().at(Str("missing"))
+
+
+def test_get_existing_key() -> None:
+    d = Dict()
+    d.at_put(Str("k"), Int(42))
+    assert d.get(Str("k")) == Int(42)
+
+
+def test_get_missing_key_returns_none() -> None:
+    assert Dict().get(Str("missing")) is none
+
+
+def test_get_missing_key_with_default() -> None:
+    assert Dict().get(Str("missing"), Int(99)) == Int(99)
+
+
+def test_get_existing_key_ignores_default() -> None:
+    d = Dict()
+    d.at_put(Str("k"), Int(1))
+    assert d.get(Str("k"), Int(99)) == Int(1)
 
 
 def test_at_put_returns_self() -> None:

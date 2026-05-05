@@ -28,10 +28,6 @@ class List(_IterableMixin, Object):
     def _collect(self, items: Any) -> List:
         return List(*items)
 
-    def add(self, obj: Object) -> List:
-        self._items.append(obj)
-        return self
-
     def len(self) -> Int:
         from poop.types.int import Int
 
@@ -129,12 +125,6 @@ class List(_IterableMixin, Object):
     ) -> NoneClass:
         self._items[:] = builtins_sorted(self._items, key=key, reverse=reverse)
         return none
-
-    def first(self) -> Object:
-        return self._items[0]
-
-    def last(self) -> Object:
-        return self._items[-1]
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, List):
