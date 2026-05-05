@@ -1,10 +1,12 @@
 import ast
 from collections.abc import Iterable
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.transformers.base import BaseTransformer
 from poop.types.frozen_set import FrozenSet
-from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def _poop_frozenset_from(iterable: Iterable[Object] | None = None) -> FrozenSet:

@@ -1,12 +1,14 @@
 import ast
 from collections.abc import Iterable
-from typing import ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from poop.transformers.base import BaseTransformer
 from poop.types.dict import Dict
 from poop.types.list import List
-from poop.types.object import Object
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def _poop_dict_from_pairs(*pairs: Object) -> Dict:

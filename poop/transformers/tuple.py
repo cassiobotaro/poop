@@ -1,11 +1,13 @@
 import ast
 from collections.abc import Iterable
-from typing import ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from poop.transformers.base import BaseTransformer
-from poop.types.object import Object
 from poop.types.range import Range
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def _poop_tuple(*elements: Object) -> Tuple:
