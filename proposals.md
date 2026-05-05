@@ -121,11 +121,59 @@ Counterpart of item 4. Same symmetry argument.
 
 **Decision:** adopt approach (a) with `pathlib` as the foundation, design `File` from scratch, or keep banned?
 
+### 9. `Slice` as a first-class POOP type?
+
+**Today:** the `slice(...)` builtin is forbidden by `no_slice`; the substitute is the method `obj.slice(start, stop, step)` on each sequence type (`poop/types/{list,tuple,string,bytes,byte_array,range}.py`, `INFECTIONS.md:725-738`). Users cannot construct, store, or pass around a slice as a value — every call site must restate the bounds inline.
+
+**Proposal:** introduce `poop/types/slice.py` defining `Slice(Object)` — a reusable, immutable value object representing a slice range, mirroring Python's `slice()` semantics but in POOP's message-passing style.
+
+**Sketch:**
+
+```python
+# poop/types/slice.py
+class Slice(Object):
+    __slots__ = ("_start", "_stop", "_step")
+
+    def __init__(
+        self, start: Int, stop: Int, step: Int | None = None
+    ) -> None:
+        self._start = start
+        self._stop = stop
+        self._step = step
+
+    def start(self) -> Int: return self._start
+    def stop(self) -> Int: return self._stop
+    def step(self) -> Int | None_: return self._step  # POOP None
+
+    def apply_to(self, sequence: _IterableMixin) -> Any:
+        # Delegates to the existing per-type .slice() method.
+        s = self._step._value if self._step is not None else None
+        return sequence.slice(self._start, self._stop, self._step)
+```
+
+**Method overload on sequence types:** allow `obj.slice(s)` where `s` is a `Slice` to mean "apply this slice value", in addition to the existing `obj.slice(start, stop, step)` form. Keeps both shapes ergonomic.
+
+**Why it is useful:**
+- Reuse: build a slice once, apply it to many collections (`s = Slice(Int(0), Int(5)); a.slice(s); b.slice(s)`).
+- Composition: pass slices into functions/blocks as values, store them in `List`s, compare with `==`.
+- Mirrors Python's design (`slice` as a real type) without lifting the ban on the free-function `slice(...)`.
+
+**Validator interaction:** `no_slice` keeps forbidding the free `slice(...)` call; users construct via the constructor `Slice(...)` (an `ast.Name` node referring to a POOP-injected name, just like `List`, `Tuple`, etc.), not via the Python builtin. No validator change required — `Slice` is registered in `DEFAULT_NAMESPACE` like other POOP types.
+
+**Open sub-decisions:**
+- Negative indices? Python's `slice` allows them; POOP currently inherits Python slice semantics inside `obj.slice(...)`. Carry them forward as-is, or normalize?
+- Default `start`/`stop` (Python allows `slice(None, None, 2)`)? Force explicit `Int`s, or accept POOP `None`?
+- Should `Slice` be iterable or only applicable? Probably applicable-only, to avoid the lazy-iterator question (which is proposal 3's territory).
+
+**Effort:** small (~40 lines + transformer/namespace registration + tests). **Impact:** restores the value-object flavor of Python's `slice` inside POOP while keeping the free-function ban intact; complementary to the existing method substitute.
+
+**Decision:** introduce `Slice` as a POOP type, or keep the method-only model where slice bounds are always inline?
+
 ---
 
 ## Open decisions — language semantics
 
-### 9. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
+### 10. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
 
 **Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
 
@@ -165,9 +213,36 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ---
 
+## Open decisions — API review
+
+### 11. Reconsider `_IterableMixin.reduce(init, block)`?
+
+**Today:** `_IterableMixin.reduce(init, block)` is a public method on every collection (`poop/types/_iterable_mixin.py:44`), documented in `INFECTIONS.md` and the Principles section: *"`map` not `collect`, `filter` not `select`, `filter_false` not `reject`, `find` not `detect`, `reduce` not `inject_into`"*.
+
+**Tension:** the rule that motivates that list is *"Method names follow the corresponding Python name — builtins, dunders and collection API"*. But **`reduce` is not a Python builtin** — it lives in `functools.reduce` and was deliberately moved out of builtins in Python 3 because Guido considered it less readable than explicit loops or `sum`/`min`/`max`. Keeping `.reduce(...)` as a first-class method on every POOP collection is therefore not derived from the same principle as `.map(...)` or `.filter(...)` (which mirror builtins).
+
+**Options:**
+
+- **(a) Keep it.** `reduce` is widely understood, the principle of "Python names" is satisfied loosely (it is *a* Python name, just not a builtin), and it covers folds that `sum`/`all`/`any` cannot express. Cheapest: zero change.
+- **(b) Drop it.** Push users toward explicit `do(block)` accumulating into an outer variable, or toward the existing specialized reductions (`sum`, `all`, `any`, `find`). Aligns POOP with Python 3's stance and trims the mixin. Removes ~3 lines + tests; may force awkward workarounds for genuine folds.
+- **(c) Rename.** If we keep the operation but want to honor "builtin names only", rename to something that does not pretend to be a builtin (e.g., `fold`, the Haskell/Scala name). Slight churn, but more honest about the principle.
+- **(d) Restrict scope.** Keep `reduce` only where folds are actually idiomatic (e.g., on `List`, `Tuple`) and remove it from collections where folding rarely makes sense (`Set`, `Dict`).
+
+**Sub-questions if we keep it:**
+- Should the parameter order match `functools.reduce(function, iterable, initial)` or stay as the current `reduce(init, block)`? Current order matches Smalltalk's `inject:into:` more than functools.
+- Should `init` be optional, like `functools.reduce`?
+
+**Effort:** (a) zero. (b)/(c) small (~10 lines + test updates + INFECTIONS.md edit). (d) small per type touched.
+
+**Impact:** mostly principle hygiene. Affects how new contributors interpret the "builtin names only" rule when adding methods.
+
+**Decision:** keep, drop, rename, or restrict?
+
+---
+
 ## Open decisions — import hygiene
 
-### 10. Audit project imports against the `TYPE_CHECKING` rule?
+### 12. Audit project imports against the `TYPE_CHECKING` rule?
 
 **Rule (`CLAUDE.md:58`):** imports live at module top; function-local `import` only to break a real cycle; imports used **exclusively** in type annotations must live in an `if TYPE_CHECKING:` block at the top of the module — never function-local, never alongside runtime top-level imports.
 
@@ -188,7 +263,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — documentation
 
-### 11. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 13. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
 **Today:** `INFECTIONS.md` (738 lines) is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
@@ -230,11 +305,11 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 12 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 14 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 12. Documentation site with MkDocs?
+### 14. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
