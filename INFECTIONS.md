@@ -300,8 +300,8 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `setattr(obj, name, val)` | explicit attribute manipulation | use class methods |
-| `delattr(obj, name)` | same | same |
+| `setattr(obj, name, val)` | free function with procedural look | `obj.set_attr(name, val)` |
+| `delattr(obj, name)` | same | `obj.del_attr(name)` |
 
 ### No introspection — `poop/validators/no_introspection.py`
 
