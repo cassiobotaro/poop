@@ -1,11 +1,16 @@
 import ast
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from poop.errors import ValidationError
 from poop.executor import execute
 from poop.parser import parse
-from poop.transformers import DEFAULT_NAMESPACE, DEFAULT_TRANSFORMERS, Transformer
-from poop.validators import DEFAULT_VALIDATORS, Validator
+from poop.transformers import DEFAULT_NAMESPACE, DEFAULT_TRANSFORMERS
+from poop.validators import DEFAULT_VALIDATORS
+
+if TYPE_CHECKING:
+    from poop.transformers import Transformer
+    from poop.validators import Validator
 
 
 class Interpreter:

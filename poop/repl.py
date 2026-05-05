@@ -2,9 +2,9 @@ import atexit
 import codeop
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from poop.errors import PoopError
-from poop.interpreter import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
@@ -12,6 +12,9 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    from poop.interpreter import Interpreter
 
 _BANNER = "POOP 💩  — Python infected by Smalltalk. Ctrl+D to exit."
 _HISTORY_FILE = Path.home() / ".poop_history"
