@@ -29,7 +29,7 @@ class Range(_IterableMixin, Object):
     def __iter__(self) -> Any:
         return self._iter()
 
-    def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> List:
+    def slice(self, start: Int, stop: Int, step: Int | None = None) -> List:
         s = step._value if step is not None else None
         items = list(self._iter())
         return List(*items[start._value : stop._value : s])

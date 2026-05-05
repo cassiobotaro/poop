@@ -248,9 +248,9 @@ def test_index_not_found_raises() -> None:
         Tuple(Int(1), Int(2)).index(Int(9))
 
 
-def test_copy_from_to_with_step() -> None:
+def test_slice_with_step() -> None:
     t = Tuple(Int(0), Int(1), Int(2), Int(3), Int(4))
-    assert t.copy_from_to(Int(0), Int(5), Int(2)) == Tuple(Int(0), Int(2), Int(4))
+    assert t.slice(Int(0), Int(5), Int(2)) == Tuple(Int(0), Int(2), Int(4))
 
 
 def test_add_concatenates() -> None:

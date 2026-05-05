@@ -408,8 +408,8 @@ def test_ord_returns_code_point() -> None:
     assert Str("A").ord() == Int(65)
 
 
-def test_copy_from_to_with_step() -> None:
-    assert Str("abcdef").copy_from_to(Int(0), Int(6), Int(2)) == Str("ace")
+def test_slice_with_step() -> None:
+    assert Str("abcdef").slice(Int(0), Int(6), Int(2)) == Str("ace")
 
 
 def test_contains_non_str_returns_false() -> None:

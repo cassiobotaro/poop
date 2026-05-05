@@ -47,7 +47,7 @@ class Str(Object):
     def at(self, index: Int) -> Str:
         return Str(self._value[index._value])
 
-    def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> Str:
+    def slice(self, start: Int, stop: Int, step: Int | None = None) -> Str:
         s = step._value if step is not None else None
         return Str(self._value[start._value : stop._value : s])
 

@@ -398,8 +398,8 @@ def test_zfill() -> None:
     assert Bytes(b"42").zfill(Int(5)) == Bytes(b"00042")
 
 
-def test_copy_from_to_with_step() -> None:
-    assert Bytes(b"abcdef").copy_from_to(Int(0), Int(6), Int(2)) == Bytes(b"ace")
+def test_slice_with_step() -> None:
+    assert Bytes(b"abcdef").slice(Int(0), Int(6), Int(2)) == Bytes(b"ace")
 
 
 def test_contains_non_int_returns_false() -> None:

@@ -34,7 +34,7 @@ class Tuple(_IterableMixin, Object):
     def at(self, index: Int) -> Object:
         return self._items[index._value]
 
-    def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> Tuple:
+    def slice(self, start: Int, stop: Int, step: Int | None = None) -> Tuple:
         s = step._value if step is not None else None
         return Tuple(*self._items[start._value : stop._value : s])
 

@@ -33,7 +33,7 @@ class Bytes(_IterableMixin, Object):
 
         return Int(self._value[index._value])
 
-    def copy_from_to(self, start: Int, stop: Int, step: Int | None = None) -> Bytes:
+    def slice(self, start: Int, stop: Int, step: Int | None = None) -> Bytes:
         s = step._value if step is not None else None
         return Bytes(self._value[start._value : stop._value : s])
 

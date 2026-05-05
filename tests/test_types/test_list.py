@@ -336,8 +336,8 @@ def test_sort_reverse() -> None:
     assert lst == List(Int(3), Int(2), Int(1))
 
 
-def test_copy_from_to_with_step() -> None:
-    assert List(Int(0), Int(1), Int(2), Int(3), Int(4)).copy_from_to(
+def test_slice_with_step() -> None:
+    assert List(Int(0), Int(1), Int(2), Int(3), Int(4)).slice(
         Int(0), Int(5), Int(2)
     ) == List(Int(0), Int(2), Int(4))
 

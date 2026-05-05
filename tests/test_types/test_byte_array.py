@@ -465,9 +465,9 @@ def test_zfill() -> None:
     assert ByteArray(bytearray(b"42")).zfill(Int(5)) == ByteArray(bytearray(b"00042"))
 
 
-def test_copy_from_to_with_step() -> None:
+def test_slice_with_step() -> None:
     ba = ByteArray(bytearray(b"abcdef"))
-    assert ba.copy_from_to(Int(0), Int(6), Int(2)) == ByteArray(bytearray(b"ace"))
+    assert ba.slice(Int(0), Int(6), Int(2)) == ByteArray(bytearray(b"ace"))
 
 
 def test_contains_non_int_returns_false() -> None:

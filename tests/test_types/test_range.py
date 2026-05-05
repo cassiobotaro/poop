@@ -197,8 +197,8 @@ def test_index_not_found_raises() -> None:
         _range(1, 5).index(Int(9))
 
 
-def test_copy_from_to_with_step() -> None:
-    result = _range(0, 10).copy_from_to(Int(0), Int(5), Int(2))
+def test_slice_with_step() -> None:
+    result = _range(0, 10).slice(Int(0), Int(5), Int(2))
     assert result == List(Int(0), Int(2), Int(4))
 
 
