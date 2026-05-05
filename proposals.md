@@ -193,6 +193,48 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 **Decision:** which sub-questions to act on, and in what order? Or accept the current state as descriptively correct and leave only documentation tightening?
 
+### 11. Audit POOP-only methods — document them and verify they behave like their Python equivalents
+
+**Today:** POOP defines a number of methods that have no Python method counterpart — they exist because POOP bans syntax constructs (`[]`, `in`, `len()`, etc.) and replaces them with object messages. These are not named after a Python method; they are a new API invented by POOP:
+
+| POOP method | Replaces | Python semantics |
+|---|---|---|
+| `obj.at(idx)` | `obj[idx]` | `__getitem__` |
+| `obj.at_put(idx, val)` | `obj[idx] = val` | `__setitem__` |
+| `obj.includes(x)` | `x in obj` | `__contains__` |
+| `obj.len()` | `len(obj)` | `__len__` |
+| `List.add(x)` | `list.append(x)` but returns `self` | no Python method equivalent |
+| `List.first()` / `List.last()` | `lst[0]` / `lst[-1]` | `__getitem__` |
+| `obj.do(block)` | `for x in obj: block(x)` | iteration |
+| `obj.map(fn)` | `[fn(x) for x in obj]` / `map(fn, obj)` | — |
+| `obj.filter(fn)` | `[x for x in obj if fn(x)]` / `filter(fn, obj)` | — |
+| `obj.filter_false(fn)` | `[x for x in obj if not fn(x)]` / `filterfalse(fn, obj)` | — |
+| `obj.find(fn)` | `next((x for x in obj if fn(x)), None)` | — |
+| `obj.sum()` | `sum(obj)` | — |
+| `obj.all(fn)` | `all(fn(x) for x in obj)` | — |
+| `obj.any(fn)` | `any(fn(x) for x in obj)` | — |
+
+**Two sub-concerns:**
+
+1. **Syntax-substituting methods** (`at`, `at_put`, `includes`, `len`) — these ARE semantically Python, just expressed as messages instead of syntax or builtins. Their contract should be identical to Python (`at(idx)` raises `IndexError` for out-of-range, `at_put` on an immutable type raises `TypeError`, etc.). Currently there is no explicit documentation that each of these mirrors Python exactly, and no tests that verify the error cases.
+
+2. **New POOP-specific methods** (`add`, `do`, `map`, `filter`, `filter_false`, `find`, `sum`, `all`, `any`, `first`, `last`) — these are convenient abstractions, some from Smalltalk (`do`), some from Python's functional API (`map`, `filter`). Their semantics and return types are not documented anywhere beyond reading the implementation.
+
+**What is missing:**
+- An `INFECTIONS.md` section (or supplementary document) cataloguing each POOP-only method with: what it replaces, its contract, its return type, and any edge cases.
+- Tests covering edge-case parity with Python for syntax-substituting methods (e.g., `at` with negative index, `at` out of bounds, `at_put` on immutable types).
+- Confirmation that `at` on `Dict` returns `none` for missing keys (POOP semantics differ from `KeyError` — this is intentional but undocumented).
+
+**Options:**
+
+- **(a) Catalogue only.** Add a section to `INFECTIONS.md` listing all POOP-only methods grouped by category (syntax substitutes, iteration, functional). No behavior changes.
+- **(b) Catalogue + edge-case tests.** Same as (a), plus add tests for out-of-bounds, immutable `at_put`, and other boundary conditions that should match Python.
+- **(c) Strict parity for syntax-substituting methods.** Change `Dict.at` to raise `KeyError` on missing key (matching Python `dict[key]`), and add a separate `get(key)` returning `none`. Maximizes Python-mirror fidelity.
+
+**Effort:** (a) small. (b) medium. (c) medium + breaking change.
+
+**Decision:** catalogue only (a), catalogue + tests (b), or enforce strict parity (c)?
+
 ---
 
 ## Open decisions — documentation
