@@ -5,10 +5,10 @@ from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types.boolean import Boolean, false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.int import Int
 
 _tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
@@ -48,8 +48,6 @@ class Tuple(_IterableMixin, Object):
         return iter(self._items)
 
     def includes(self, obj: Object) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if obj in self._items else false
 
     def __contains__(self, item: object) -> bool:
@@ -78,15 +76,11 @@ class Tuple(_IterableMixin, Object):
         return self._items[-1]
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Tuple):
             return true if self._items == other._items else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Tuple):
             return false if self._items == other._items else true
         return true
