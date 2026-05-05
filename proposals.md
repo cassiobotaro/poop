@@ -73,20 +73,7 @@ Same dependency tree as item 1: prefer a lazy `Zip(Object)` mirroring Python's `
 
 Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
 
-### 4. `vars(obj)` → `obj.vars()` returning a `Dict`? [CLOSED — stay banned]
-
-**Decision:** keep `vars` forbidden alongside `globals`/`locals`.
-
-The original proposal assumed `vars(obj)` is instance-state introspection and therefore safe. On closer analysis, implementing `Object.vars()` would require iterating `__slots__` across the MRO, which surfaces Python-native values stored in those slots (`_value` as a Python `int` on `Int`, `_items` as a Python `list` on `List`, etc.) — not POOP objects. This breaks two principles simultaneously:
-
-1. **Encapsulation** — exposes implementation slots (`_value`, `_items`, `_data`) that are internal to POOP types and hidden by design.
-2. **"All POOP methods return POOP types"** — the slot values are Python-native, not wrapped.
-
-For user-defined classes the result would be correct (their attributes are POOP objects post-transform), but the behaviour would be inconsistent between built-in and user-defined types with no clean way to reconcile them.
-
-`vars` stays in `no_introspection`, reason updated from "inertia" to "by design".
-
-### 5. `input(prompt)` → introduce a `Console` / `Stdin` type?
+### 4. `input(prompt)` → introduce a `Console` / `Stdin` type?
 
 **Today:** `INFECTIONS.md:343-345` declares "interactive I/O — no POOP equivalent".
 
@@ -96,7 +83,7 @@ For user-defined classes the result would be correct (their attributes are POOP 
 
 **Decision:** worth the investment, or keep banned?
 
-### 6. `open(path)` → POOP `Path` type inspired by `pathlib`?
+### 5. `open(path)` → POOP `Path` type inspired by `pathlib`?
 
 **Today:** `INFECTIONS.md:349-351` declares "file I/O — no POOP equivalent".
 
@@ -114,74 +101,11 @@ For user-defined classes the result would be correct (their attributes are POOP 
 
 **Decision:** adopt approach (a) with `pathlib` as the foundation, design `File` from scratch, or keep banned?
 
-### 7. `Slice` as a first-class POOP type? [DONE]
-
-**Decision taken:** `Slice` introduced as a POOP type in `poop/types/slice.py`.
-Sub-decisions resolved: negative indices carry Python semantics; `start`/`stop` are explicit `Int`
-only (POOP `None` not accepted); `step()` returns POOP `none` when absent; `Slice` is
-applicable-only (not iterable); `indices(length) -> Tuple(Int, Int, Int)` included, mirroring
-Python's `slice.indices()`; `apply_to` dropped in favour of the `obj.slice(s: Slice)` overload
-on all six sequence types (List, Tuple, Str, Bytes, ByteArray, Range).
-
-`slice(...)` is **transformed** (not forbidden): `SliceTransformer` rewrites `slice(...)` calls
-to `Slice(...)` at the AST level, mirroring the `range` → `Range` pattern. `no_slice` validator
-removed.
-
----
-
-### ~~7. `Slice` as a first-class POOP type?~~ (original proposal text below)
-
-**Today:** the `slice(...)` builtin is forbidden by `no_slice`; the substitute is the method `obj.slice(start, stop, step)` on each sequence type (`poop/types/{list,tuple,string,bytes,byte_array,range}.py`, `INFECTIONS.md:725-738`). Users cannot construct, store, or pass around a slice as a value — every call site must restate the bounds inline.
-
-**Proposal:** introduce `poop/types/slice.py` defining `Slice(Object)` — a reusable, immutable value object representing a slice range, mirroring Python's `slice()` semantics but in POOP's message-passing style.
-
-**Sketch:**
-
-```python
-# poop/types/slice.py
-class Slice(Object):
-    __slots__ = ("_start", "_stop", "_step")
-
-    def __init__(
-        self, start: Int, stop: Int, step: Int | None = None
-    ) -> None:
-        self._start = start
-        self._stop = stop
-        self._step = step
-
-    def start(self) -> Int: return self._start
-    def stop(self) -> Int: return self._stop
-    def step(self) -> Int | None_: return self._step  # POOP None
-
-    def apply_to(self, sequence: _IterableMixin) -> Any:
-        # Delegates to the existing per-type .slice() method.
-        s = self._step._value if self._step is not None else None
-        return sequence.slice(self._start, self._stop, self._step)
-```
-
-**Method overload on sequence types:** allow `obj.slice(s)` where `s` is a `Slice` to mean "apply this slice value", in addition to the existing `obj.slice(start, stop, step)` form. Keeps both shapes ergonomic.
-
-**Why it is useful:**
-- Reuse: build a slice once, apply it to many collections (`s = Slice(Int(0), Int(5)); a.slice(s); b.slice(s)`).
-- Composition: pass slices into functions/blocks as values, store them in `List`s, compare with `==`.
-- Mirrors Python's design (`slice` as a real type) without lifting the ban on the free-function `slice(...)`.
-
-**Validator interaction:** `no_slice` keeps forbidding the free `slice(...)` call; users construct via the constructor `Slice(...)` (an `ast.Name` node referring to a POOP-injected name, just like `List`, `Tuple`, etc.), not via the Python builtin. No validator change required — `Slice` is registered in `DEFAULT_NAMESPACE` like other POOP types.
-
-**Open sub-decisions:**
-- Negative indices? Python's `slice` allows them; POOP currently inherits Python slice semantics inside `obj.slice(...)`. Carry them forward as-is, or normalize?
-- Default `start`/`stop` (Python allows `slice(None, None, 2)`)? Force explicit `Int`s, or accept POOP `None`?
-- Should `Slice` be iterable or only applicable? Probably applicable-only, to avoid the lazy-iterator question (which is proposal 3's territory).
-
-**Effort:** small (~40 lines + transformer/namespace registration + tests). **Impact:** restores the value-object flavor of Python's `slice` inside POOP while keeping the free-function ban intact; complementary to the existing method substitute.
-
-**Decision:** introduce `Slice` as a POOP type, or keep the method-only model where slice bounds are always inline?
-
 ---
 
 ## Open decisions — language semantics
 
-### 8. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
+### 6. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
 
 **Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
 
@@ -223,7 +147,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — API review
 
-### 9. Audit methods returning `self` — should they mirror Python instead?
+### 7. Audit methods returning `self` — should they mirror Python instead?
 
 **Today:** dozens of POOP methods return `self` for Smalltalk-style cascading. Examples (non-exhaustive):
 - `_IterableMixin.do(block) -> Self`
@@ -267,7 +191,7 @@ By naming these methods after their Python counterparts, POOP signals "same sema
 
 **Decision:** strict mirror (a), document the divergence (b), or hybrid (c)?
 
-### 10. Audit `__slots__` usage on POOP types?
+### 8. Audit `__slots__` usage on POOP types?
 
 **Today:** `INFECTIONS.md` declares the principle: *"`__slots__` on all POOP types: instance variables are declared in the class definition and fixed — never added dynamically to instances. Subclasses that need new instance variables can declare their own `__slots__` or omit them."*
 
@@ -313,12 +237,11 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 ## Open decisions — documentation
 
-### 11. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 9. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
-**Today:** `INFECTIONS.md` (738 lines) is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
+**Today:** `INFECTIONS.md` is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
 **Drift symptoms motivating the audit:**
-- Items still classified as "no POOP equivalent" while a substitute exists in practice (e.g.: `vars` — see proposal 4 in this list — a sign that "intentional" turned into inertia).
 - Principles phrased as hypotheses ("Methods should follow Python names...") without explicit confirmation that all exceptions are catalogued (`do` is the only exception cited — could others slip through?).
 - Validator tables may list AST nodes the current validator does not visit (or vice versa) — drift between code and doc.
 - Possible duplicates between `INFECTIONS.md` (principles) and `CLAUDE.md` (workflow) that make it ambiguous which is the source of truth.
@@ -355,11 +278,11 @@ So the principle is currently **descriptively accurate** for the library types. 
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 12 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 10 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 12. Documentation site with MkDocs?
+### 10. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
@@ -403,4 +326,5 @@ Genuinely without a possible substitute inside POOP's model:
 - `exit`/`quit` — process control, outside the object model.
 - `breakpoint` — debugger handshake, not a domain operation.
 - `globals()`/`locals()` — lexical scope introspection (instance state is already accessible).
+- `vars(obj)` — exposes Python-native slot values (`_value`, `_items`, `_data`) that are not POOP objects; breaks encapsulation and the "all methods return POOP types" rule.
 - `del` — statement, not a builtin function.
