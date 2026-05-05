@@ -73,15 +73,18 @@ Same dependency tree as item 1: prefer a lazy `Zip(Object)` mirroring Python's `
 
 Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
 
-### 4. `vars(obj)` → `obj.vars()` returning a `Dict`?
+### 4. `vars(obj)` → `obj.vars()` returning a `Dict`? [CLOSED — stay banned]
 
-**Today:** bundled into `no_introspection` (`poop/validators/no_introspection.py`, `INFECTIONS.md:312`) alongside `globals()`/`locals()`.
+**Decision:** keep `vars` forbidden alongside `globals`/`locals`.
 
-**Important distinction:** `vars(obj)` on an instance returns `__dict__` — that is **instance state**, not lexical scope. POOP uses `__slots__`, so the natural substitute would iterate the slots and produce a `Dict[Str, Object]`.
+The original proposal assumed `vars(obj)` is instance-state introspection and therefore safe. On closer analysis, implementing `Object.vars()` would require iterating `__slots__` across the MRO, which surfaces Python-native values stored in those slots (`_value` as a Python `int` on `Int`, `_items` as a Python `list` on `List`, etc.) — not POOP objects. This breaks two principles simultaneously:
 
-`globals()`/`locals()` remain without a substitute (they are real lexical scope).
+1. **Encapsulation** — exposes implementation slots (`_value`, `_items`, `_data`) that are internal to POOP types and hidden by design.
+2. **"All POOP methods return POOP types"** — the slot values are Python-native, not wrapped.
 
-**Decision:** split `vars` out of `no_introspection` and give `Object` a `vars()` substitute?
+For user-defined classes the result would be correct (their attributes are POOP objects post-transform), but the behaviour would be inconsistent between built-in and user-defined types with no clean way to reconcile them.
+
+`vars` stays in `no_introspection`, reason updated from "inertia" to "by design".
 
 ### 5. `input(prompt)` → introduce a `Console` / `Stdin` type?
 

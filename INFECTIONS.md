@@ -303,7 +303,7 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|
 | `globals()` | scope introspection — state lives in instances |
 | `locals()` | same |
-| `vars(obj)` | same |
+| `vars(obj)` | exposes raw Python-native slot values (`_value`, `_items`, `_data`) that are not POOP objects — breaks encapsulation and the "all methods return POOP types" rule; no clean substitute |
 
 ### No `dir` — `poop/validators/no_dir.py`
 
