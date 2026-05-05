@@ -111,7 +111,18 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 **Decision:** adopt approach (a) with `pathlib` as the foundation, design `File` from scratch, or keep banned?
 
-### 7. `Slice` as a first-class POOP type?
+### 7. `Slice` as a first-class POOP type? [DONE]
+
+**Decision taken:** `Slice` introduced as a POOP type in `poop/types/slice.py` (commit c911777).
+Sub-decisions resolved: negative indices carry Python semantics; `start`/`stop` are explicit `Int`
+only (POOP `None` not accepted); `step()` returns POOP `none` when absent; `Slice` is
+applicable-only (not iterable); `indices(length) -> Tuple(Int, Int, Int)` included, mirroring
+Python's `slice.indices()`; `apply_to` dropped in favour of the `obj.slice(s: Slice)` overload
+on all six sequence types (List, Tuple, Str, Bytes, ByteArray, Range).
+
+---
+
+### ~~7. `Slice` as a first-class POOP type?~~ (original proposal text below)
 
 **Today:** the `slice(...)` builtin is forbidden by `no_slice`; the substitute is the method `obj.slice(start, stop, step)` on each sequence type (`poop/types/{list,tuple,string,bytes,byte_array,range}.py`, `INFECTIONS.md:725-738`). Users cannot construct, store, or pass around a slice as a value — every call site must restate the bounds inline.
 
