@@ -82,12 +82,6 @@ def test_find_returns_none_when_not_found() -> None:
     assert FrozenSet(Int(1)).find(lambda x: x._value > 99) is none
 
 
-def test_reduce_accumulates() -> None:
-    fs = FrozenSet(Int(1), Int(2), Int(3))
-    result = fs.reduce(Int(0), lambda acc, x: Int(acc._value + x._value))
-    assert result == Int(6)
-
-
 def test_sum_returns_total() -> None:
     assert FrozenSet(Int(1), Int(2), Int(3)).sum() == Int(6)
 

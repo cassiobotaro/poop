@@ -85,13 +85,6 @@ def test_detect_returns_none_when_not_found() -> None:
     assert result is none
 
 
-def test_inject_into_reduces() -> None:
-    result = Tuple(Int(1), Int(2), Int(3), Int(4)).reduce(
-        Int(0), lambda acc, x: acc + x
-    )
-    assert result == Int(10)
-
-
 def test_sum_returns_total() -> None:
     assert Tuple(Int(1), Int(2), Int(3)).sum() == Int(6)
 

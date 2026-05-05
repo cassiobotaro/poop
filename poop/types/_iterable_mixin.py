@@ -43,9 +43,6 @@ class _IterableMixin:
                 return item
         return none
 
-    def reduce(self, init: Any, block: Callable[[Any, Any], Any]) -> Any:
-        return functools_reduce(block, self._iter_items(), init)
-
     def sum(self) -> Any:
         items = list(self._iter_items())
         if not items:
