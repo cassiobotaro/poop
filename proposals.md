@@ -73,17 +73,7 @@ Same dependency tree as item 1: prefer a lazy `Zip(Object)` mirroring Python's `
 
 Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
 
-### 4. `setattr(obj, name, val)` → `obj.set_attr(name, val)`?
-
-**Current asymmetry:** `Object` exposes `get_attr` (`poop/types/object.py:84`) and `has_attr` (`poop/types/object.py:87`) but no `set_attr`. `INFECTIONS.md:299-304` only says "use class methods", which is no longer the rule for `getattr`/`hasattr`.
-
-**Decision:** complete the trio with `set_attr` (and a symmetric `del_attr`, item 5)?
-
-### 5. `delattr(obj, name)` → `obj.del_attr(name)`?
-
-Counterpart of item 4. Same symmetry argument.
-
-### 6. `vars(obj)` → `obj.vars()` returning a `Dict`?
+### 4. `vars(obj)` → `obj.vars()` returning a `Dict`?
 
 **Today:** bundled into `no_introspection` (`poop/validators/no_introspection.py`, `INFECTIONS.md:312`) alongside `globals()`/`locals()`.
 
@@ -93,7 +83,7 @@ Counterpart of item 4. Same symmetry argument.
 
 **Decision:** split `vars` out of `no_introspection` and give `Object` a `vars()` substitute?
 
-### 7. `input(prompt)` → introduce a `Console` / `Stdin` type?
+### 5. `input(prompt)` → introduce a `Console` / `Stdin` type?
 
 **Today:** `INFECTIONS.md:343-345` declares "interactive I/O — no POOP equivalent".
 
@@ -103,7 +93,7 @@ Counterpart of item 4. Same symmetry argument.
 
 **Decision:** worth the investment, or keep banned?
 
-### 8. `open(path)` → POOP `Path` type inspired by `pathlib`?
+### 6. `open(path)` → POOP `Path` type inspired by `pathlib`?
 
 **Today:** `INFECTIONS.md:349-351` declares "file I/O — no POOP equivalent".
 
@@ -121,7 +111,7 @@ Counterpart of item 4. Same symmetry argument.
 
 **Decision:** adopt approach (a) with `pathlib` as the foundation, design `File` from scratch, or keep banned?
 
-### 9. `Slice` as a first-class POOP type?
+### 7. `Slice` as a first-class POOP type?
 
 **Today:** the `slice(...)` builtin is forbidden by `no_slice`; the substitute is the method `obj.slice(start, stop, step)` on each sequence type (`poop/types/{list,tuple,string,bytes,byte_array,range}.py`, `INFECTIONS.md:725-738`). Users cannot construct, store, or pass around a slice as a value — every call site must restate the bounds inline.
 
@@ -173,7 +163,7 @@ class Slice(Object):
 
 ## Open decisions — language semantics
 
-### 10. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
+### 8. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
 
 **Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
 
@@ -215,7 +205,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — API review
 
-### 11. Reconsider `_IterableMixin.reduce(init, block)`?
+### 9. Reconsider `_IterableMixin.reduce(init, block)`?
 
 **Today:** `_IterableMixin.reduce(init, block)` is a public method on every collection (`poop/types/_iterable_mixin.py:44`), documented in `INFECTIONS.md` and the Principles section: *"`map` not `collect`, `filter` not `select`, `filter_false` not `reject`, `find` not `detect`, `reduce` not `inject_into`"*.
 
@@ -238,16 +228,60 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 **Decision:** keep, drop, rename, or restrict?
 
+### 10. Audit methods returning `self` — should they mirror Python instead?
+
+**Today:** dozens of POOP methods return `self` for Smalltalk-style cascading. Examples (non-exhaustive):
+- `_IterableMixin.do(block) -> Self`
+- `Int.real`/`numerator`/`denominator`/`conjugate`/`__ceil__`/`__floor__`/`__trunc__` — all return `self`
+- `ByteArray.append`/`clear`/`extend`/`insert`/`remove`/`reverse`/`at_put` — return `self`
+- `Set.add`/`discard`/`remove`/`clear`/`update`/`intersection_update`/`difference_update`/`symmetric_difference_update` — return `self`
+- `Dict.set`/`update`/`clear` — return `self`
+- `List.append`/`extend`/`insert`/`remove`/`clear`/`reverse`/`sort` — return `self`
+- `NoneClass.if_not_none` — returns `self`
+- `Try.run` / `With.do` — return `self`
+
+**Tension:** the documented principle is *"Method names follow the corresponding Python name — builtins, dunders and collection API"*. But several of those Python counterparts return **`None`**, not the receiver:
+
+| POOP method | Returns | Python equivalent | Returns |
+|---|---|---|---|
+| `List.append(x)` | `self` | `list.append(x)` | `None` |
+| `List.extend(it)` | `self` | `list.extend(it)` | `None` |
+| `List.sort()` | `self` | `list.sort()` | `None` |
+| `Set.add(x)` | `self` | `set.add(x)` | `None` |
+| `Set.update(s)` | `self` | `set.update(s)` | `None` |
+| `Dict.update(d)` | `self` | `dict.update(d)` | `None` |
+| `ByteArray.append(b)` | `self` | `bytearray.append(b)` | `None` |
+| `ByteArray.reverse()` | `self` | `bytearray.reverse()` | `None` |
+
+By naming these methods after their Python counterparts, POOP signals "same semantics" — but the return type silently differs, breaking the mirror.
+
+**Why it matters:**
+- A reader who knows Python expects `result = lst.append(x)` to leave `result` as `None`. In POOP they get the list. Either is fine in isolation, but the surprise is in the mismatch.
+- Smalltalk-style cascades (`a.append(x).append(y)`) are not idiomatic Python. POOP enables them via `return self` but doesn't mark them as a deliberate diversion from the Python mirror.
+- Methods like `Int.real`/`numerator` returning `self` are correct because Python's `int.real` is a property that yields the int — those map cleanly. Mutator methods (`append`, `clear`, etc.) are the genuine divergence.
+
+**Options:**
+
+- **(a) Mirror Python strictly.** All mutators return POOP `none` (mirroring Python's `None`). Cascade chains break; users cascade through explicit `do(block)` if needed. Aligns the rule with the practice.
+- **(b) Keep cascading; document explicitly.** Add an explicit principle in `INFECTIONS.md` listing "POOP-Smalltalk extensions to Python's API" — methods that intentionally diverge from the Python mirror by returning `self`. Closes the documentation gap without behavior changes.
+- **(c) Hybrid.** Keep `self`-returning for non-mutator/identity methods (e.g., `Int.real`, `NoneClass.if_not_none`); convert mutators to return `none`. Surfaces the principle "mutators are void in Python; POOP follows".
+
+**Scope:** wide — touches every collection mutator and every `Int`/`Float` "identity" property. Each option has different downstream impact on existing examples and tests.
+
+**Effort:** (a) large (audit ~40 methods + update tests/examples). (b) small (just a documentation principle). (c) medium (selective rewrite + principle).
+
+**Decision:** strict mirror (a), document the divergence (b), or hybrid (c)?
+
 ---
 
 ## Open decisions — documentation
 
-### 12. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 11. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
 **Today:** `INFECTIONS.md` (738 lines) is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
 **Drift symptoms motivating the audit:**
-- Items still classified as "no POOP equivalent" while a substitute exists in practice (e.g.: `vars`, `setattr`/`delattr` — see proposals 4-6 in this list — a sign that "intentional" turned into inertia).
+- Items still classified as "no POOP equivalent" while a substitute exists in practice (e.g.: `vars` — see proposal 4 in this list — a sign that "intentional" turned into inertia).
 - Principles phrased as hypotheses ("Methods should follow Python names...") without explicit confirmation that all exceptions are catalogued (`do` is the only exception cited — could others slip through?).
 - Validator tables may list AST nodes the current validator does not visit (or vice versa) — drift between code and doc.
 - Possible duplicates between `INFECTIONS.md` (principles) and `CLAUDE.md` (workflow) that make it ambiguous which is the source of truth.
@@ -284,11 +318,11 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 13 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 12 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 13. Documentation site with MkDocs?
+### 12. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
