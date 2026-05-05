@@ -1,10 +1,10 @@
 import math
 from typing import TYPE_CHECKING
 
+from poop.types.boolean import Boolean, false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.complex import Complex
     from poop.types.int import Int
     from poop.types.string import Str
@@ -43,8 +43,6 @@ class Float(Object):
         return Complex(complex(self._value))
 
     def is_integer(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value.is_integer() else false
 
     def as_integer_ratio(self) -> Tuple:
@@ -150,37 +148,25 @@ class Float(Object):
         return _int(self._value)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Float):
             return true if self._value == other._value else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
         if isinstance(other, Float):
             return false if self._value == other._value else true
         return true
 
     def __lt__(self, other: Float) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value < other._value else false
 
     def __le__(self, other: Float) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value <= other._value else false
 
     def __gt__(self, other: Float) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value > other._value else false
 
     def __ge__(self, other: Float) -> Boolean:
-        from poop.types.boolean import false, true
-
         return true if self._value >= other._value else false
 
     def __hash__(self) -> _int:
