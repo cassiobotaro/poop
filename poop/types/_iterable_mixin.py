@@ -7,6 +7,10 @@ from collections.abc import Callable, Iterator
 from functools import reduce as functools_reduce
 from typing import Any, Self
 
+from poop.types.boolean import false, true
+from poop.types.int import Int
+from poop.types.none import none
+
 
 class _IterableMixin:
     @abstractmethod
@@ -16,7 +20,7 @@ class _IterableMixin:
         return iter(self)
 
     def _collect(self, items: Any) -> Any:
-        from poop.types.list import List
+        from poop.types.list import List  # circular: list.py imports _IterableMixin
 
         return List(*items)
 
@@ -34,8 +38,6 @@ class _IterableMixin:
         return self._collect(x for x in self._iter_items() if not bool(block(x)))
 
     def find(self, block: Callable[[Any], Any]) -> Any:
-        from poop.types.none import none
-
         for item in self._iter_items():
             if bool(block(item)):
                 return item
@@ -45,23 +47,17 @@ class _IterableMixin:
         return functools_reduce(block, self._iter_items(), init)
 
     def sum(self) -> Any:
-        from poop.types.int import Int
-
         items = list(self._iter_items())
         if not items:
             return Int(0)
         return functools_reduce(lambda a, b: a + b, items)
 
     def all(self, block: Callable[[Any], Any]) -> Any:
-        from poop.types.boolean import false, true
-
         return (
             true if _builtins.all(bool(block(x)) for x in self._iter_items()) else false
         )
 
     def any(self, block: Callable[[Any], Any]) -> Any:
-        from poop.types.boolean import false, true
-
         return (
             true if _builtins.any(bool(block(x)) for x in self._iter_items()) else false
         )
