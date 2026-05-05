@@ -240,27 +240,9 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ---
 
-## Open decisions — import hygiene
-
-### 12. Sweep residual function-local imports in `object.py` and the mutual-cycle types?
-
-**Status:** an initial pass already removed every annotation-only top-level POOP import (now correctly inside `if TYPE_CHECKING:`) and hoisted every function-local POOP import that did not break a real cycle. What remains are imports that close *genuine* cycles:
-
-- `object.py` — all function-local imports of `Boolean`/`Int`/`Str`/`List` for runtime values. Cannot hoist: every POOP type imports `Object` as base, so any top-level import of those types in `object.py` would close the cycle.
-- `string.py`, `int.py`, `tuple.py`, `complex.py`, `bytes.py` — pairwise function-local imports between these types (each uses the others at runtime). Hoisting any one of them requires verifying load order pair by pair.
-- `_iterable_mixin.py:19` — `from poop.types.list import List` inside `_collect`. `list.py` inherits `_IterableMixin`, so this is a genuine cycle.
-
-**Open question:** for the mutual-cycle types, can we pick a "spine" (e.g., `string.py` always imports the others at top, others stay function-local for `Str`) to reduce the function-local count further? Each candidate needs an isolated test of load order.
-
-**Effort:** small per pair, but easy to introduce hard-to-debug import-time failures. Low priority — current state already complies with the spirit of the rule.
-
-**Decision:** continue trimming the residuals (one cycle pair at a time), or freeze and accept the remaining function-local imports as documented circular-import breakers?
-
----
-
 ## Open decisions — documentation
 
-### 13. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 12. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
 **Today:** `INFECTIONS.md` (738 lines) is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
@@ -302,11 +284,11 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 14 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 13 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 14. Documentation site with MkDocs?
+### 13. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
