@@ -205,30 +205,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — API review
 
-### 9. Reconsider `_IterableMixin.reduce(init, block)`?
-
-**Today:** `_IterableMixin.reduce(init, block)` is a public method on every collection (`poop/types/_iterable_mixin.py:44`), documented in `INFECTIONS.md` and the Principles section: *"`map` not `collect`, `filter` not `select`, `filter_false` not `reject`, `find` not `detect`, `reduce` not `inject_into`"*.
-
-**Tension:** the rule that motivates that list is *"Method names follow the corresponding Python name — builtins, dunders and collection API"*. But **`reduce` is not a Python builtin** — it lives in `functools.reduce` and was deliberately moved out of builtins in Python 3 because Guido considered it less readable than explicit loops or `sum`/`min`/`max`. Keeping `.reduce(...)` as a first-class method on every POOP collection is therefore not derived from the same principle as `.map(...)` or `.filter(...)` (which mirror builtins).
-
-**Options:**
-
-- **(a) Keep it.** `reduce` is widely understood, the principle of "Python names" is satisfied loosely (it is *a* Python name, just not a builtin), and it covers folds that `sum`/`all`/`any` cannot express. Cheapest: zero change.
-- **(b) Drop it.** Push users toward explicit `do(block)` accumulating into an outer variable, or toward the existing specialized reductions (`sum`, `all`, `any`, `find`). Aligns POOP with Python 3's stance and trims the mixin. Removes ~3 lines + tests; may force awkward workarounds for genuine folds.
-- **(c) Rename.** If we keep the operation but want to honor "builtin names only", rename to something that does not pretend to be a builtin (e.g., `fold`, the Haskell/Scala name). Slight churn, but more honest about the principle.
-- **(d) Restrict scope.** Keep `reduce` only where folds are actually idiomatic (e.g., on `List`, `Tuple`) and remove it from collections where folding rarely makes sense (`Set`, `Dict`).
-
-**Sub-questions if we keep it:**
-- Should the parameter order match `functools.reduce(function, iterable, initial)` or stay as the current `reduce(init, block)`? Current order matches Smalltalk's `inject:into:` more than functools.
-- Should `init` be optional, like `functools.reduce`?
-
-**Effort:** (a) zero. (b)/(c) small (~10 lines + test updates + INFECTIONS.md edit). (d) small per type touched.
-
-**Impact:** mostly principle hygiene. Affects how new contributors interpret the "builtin names only" rule when adding methods.
-
-**Decision:** keep, drop, rename, or restrict?
-
-### 10. Audit methods returning `self` — should they mirror Python instead?
+### 9. Audit methods returning `self` — should they mirror Python instead?
 
 **Today:** dozens of POOP methods return `self` for Smalltalk-style cascading. Examples (non-exhaustive):
 - `_IterableMixin.do(block) -> Self`
@@ -272,7 +249,7 @@ By naming these methods after their Python counterparts, POOP signals "same sema
 
 **Decision:** strict mirror (a), document the divergence (b), or hybrid (c)?
 
-### 11. Audit `__slots__` usage on POOP types?
+### 10. Audit `__slots__` usage on POOP types?
 
 **Today:** `INFECTIONS.md` declares the principle: *"`__slots__` on all POOP types: instance variables are declared in the class definition and fixed — never added dynamically to instances. Subclasses that need new instance variables can declare their own `__slots__` or omit them."*
 
@@ -318,7 +295,7 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 ## Open decisions — documentation
 
-### 12. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 11. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
 **Today:** `INFECTIONS.md` (738 lines) is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
@@ -360,11 +337,11 @@ So the principle is currently **descriptively accurate** for the library types. 
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 13 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep of 738 lines + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 12 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 13. Documentation site with MkDocs?
+### 12. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
