@@ -58,7 +58,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `-x` | `x.negated()` |
 | `len(x)` | `x.len()` |
 | `x[i]` | `x.at(i)` |
-| `x[a:b]` | `x.copy_from_to(a, b)` |
+| `x[a:b]` | `x.slice(a, b)` |
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
 
