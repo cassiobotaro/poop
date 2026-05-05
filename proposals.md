@@ -113,12 +113,16 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 ### 7. `Slice` as a first-class POOP type? [DONE]
 
-**Decision taken:** `Slice` introduced as a POOP type in `poop/types/slice.py` (commit c911777).
+**Decision taken:** `Slice` introduced as a POOP type in `poop/types/slice.py`.
 Sub-decisions resolved: negative indices carry Python semantics; `start`/`stop` are explicit `Int`
 only (POOP `None` not accepted); `step()` returns POOP `none` when absent; `Slice` is
 applicable-only (not iterable); `indices(length) -> Tuple(Int, Int, Int)` included, mirroring
 Python's `slice.indices()`; `apply_to` dropped in favour of the `obj.slice(s: Slice)` overload
 on all six sequence types (List, Tuple, Str, Bytes, ByteArray, Range).
+
+`slice(...)` is **transformed** (not forbidden): `SliceTransformer` rewrites `slice(...)` calls
+to `Slice(...)` at the AST level, mirroring the `range` → `Range` pattern. `no_slice` validator
+removed.
 
 ---
 

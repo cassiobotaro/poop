@@ -274,12 +274,6 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|---|
 | `format(x, spec)` | free function with procedural look | `x.format(spec)` |
 
-### No `slice` — `poop/validators/no_slice.py`
-
-| Call | Reason | Substitute |
-|---|---|---|
-| `slice(...)` | Python-specific construct | `obj.slice(start, stop)` |
-
 ### No `enumerate`/`zip` — `poop/validators/no_enumerate.py`
 
 | Call | Reason | Substitute |
@@ -721,9 +715,24 @@ Implicitly injects `Object` as the base class of every user-defined class that h
 
 > **Tradeoff**: classes that explicitly inherit from native Python types (e.g. `class Foo(Exception):`) are left unchanged — they do not gain POOP `Object` methods, consistent with how `Try` and `Error` interact with the native exception hierarchy.
 
-## Slicing — `slice`
+## Slicing — `slice` / `Slice`
 
-`slice(start, stop, step=None)` replaces the `obj[start:stop:step]` slice syntax on all sequence types. Indices are 0-based; `stop` is exclusive — identical semantics to Python's slice. `step` is optional (`None` means step 1). The free `slice(...)` builtin remains forbidden by `no_slice`; the method `obj.slice(...)` is the substitute.
+`slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.
+
+`obj.slice(start, stop, step=None)` is also accepted directly on every sequence type. Both forms are equivalent at runtime.
+
+`Slice` is a first-class immutable POOP type (`poop/types/slice.py`) — hashable, comparable with `==`/`!=`, and reusable across collections.
+
+| Method | Returns | Notes |
+|---|---|---|
+| `Slice(start, stop)` | `Slice` | Two-arg constructor |
+| `Slice(start, stop, step)` | `Slice` | Three-arg constructor |
+| `.start()` | `Int` | |
+| `.stop()` | `Int` | |
+| `.step()` | `Int \| NoneClass` | POOP `none` when not set |
+| `.indices(length)` | `Tuple(Int, Int, Int)` | Normalised start/stop/step for a sequence of the given length; mirrors Python's `slice.indices()` |
+
+`obj.slice(s: Slice)` overload is available on every sequence type in addition to the positional form:
 
 | Type | Returns |
 |---|---|

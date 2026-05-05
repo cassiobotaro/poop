@@ -47,6 +47,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     RaiseTransformer(),
     ClassTransformer(),
     BlockTransformer(),
+    SliceTransformer(),
 ]
 DEFAULT_NAMESPACE: _dict[str, object] = {
     **BooleanTransformer.BINDINGS,
