@@ -12,7 +12,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - There are no control flow structures — conditionals and iterations are messages sent to objects.
 - There are no free functions — all behavior lives in class methods.
 - **Message aesthetics**: the central criterion of an infection is not "does it exist in Smalltalk?" but rather "does it look like an object receiving a message?". Operators (`-x`, `not x`, `~x`) and free functions (`len(x)`, `abs(x)`) have a procedural look even when they call methods internally — they must be replaced by `x.negated()`, `x.not_()`, `x.bit_invert()`, `x.len()`, `x.abs()`. POOP code must look like a conversation between objects, not a sequence of operations.
-- **Method names in Python, not Smalltalk**: all methods follow the corresponding Python name — builtins, dunders and collection API. `map` not `collect`, `filter` not `select`, `filter_false` not `reject`, `find` not `detect`, `reduce` not `inject_into`. Smalltalk names are not implemented. **Exception**: iteration uses `do` (from Smalltalk `do:`) instead of `for_each` — `for` is a Python keyword and `for_each` is a Java/JS idiom with no Python equivalent; `do` is the canonical Smalltalk message for iteration and reads naturally as a message to an object.
+- **Method names in Python, not Smalltalk**: all methods follow the corresponding Python name — builtins, dunders and collection API. `map` not `collect`, `filter` not `select`, `filter_false` not `reject`, `find` not `detect`. Smalltalk names are not implemented. **Exception**: iteration uses `do` (from Smalltalk `do:`) instead of `for_each` — `for` is a Python keyword and `for_each` is a Java/JS idiom with no Python equivalent; `do` is the canonical Smalltalk message for iteration and reads naturally as a message to an object. Folds (`inject:into:` / `functools.reduce`) have no method substitute: use `do(block)` accumulating into outer state, or one of the specialized reductions (`sum`, `all`, `any`, `find`).
 - **Activate validator only when the substitute exists**: blocking without offering an alternative only breaks code without teaching anything. Validators without an implemented substitute live in the backlog until the alternative is ready.
 - **Representation**: all POOP types implement `__str__` (and `__repr__` delegates to it). `Transcript.show` calls `str(obj)` internally.
 - **`__slots__` on all POOP types**: instance variables are declared in the class definition and fixed — never added dynamically to instances. Runtime *method* extension continues to work normally. Subclasses that need new instance variables can declare their own `__slots__` or omit them.
@@ -284,7 +284,7 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `enumerate(col)` | free function with procedural look | `col.map(block)`, `col.reduce(init, block)` |
+| `enumerate(col)` | free function with procedural look | `col.do(block)` accumulating an index in outer state |
 | `zip(a, b)` | free function with procedural look | same |
 
 ### No `iter`/`next` — `poop/validators/no_iter.py`
@@ -514,7 +514,7 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `select:` | `filter(block)` | keeps matching elements; return type matches collection |
 | `reject:` | `filter_false(block)` | keeps non-matching elements; return type matches collection |
 | `detect:` | `find(block)` | first element satisfying block, or POOP `none` |
-| `inject:into:` | `reduce(init, block)` | left fold |
+| `inject:into:` | — | no method substitute; use `do(block)` with outer state, or one of the specialized reductions below |
 | — | `sum()` | sum of elements; returns `Int(0)` for empty collection |
 | — | `all(block)` | `true` if block holds for every element |
 | — | `any(block)` | `true` if block holds for at least one element |
@@ -536,7 +536,6 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `filter(block)` | filters → `List` |
 | `filter_false(block)` | filters inverse → `List` |
 | `find(block)` | first satisfying, or POOP `none` |
-| `reduce(init, block)` | reduce |
 | `len()` | returns `Int` |
 | `slice(start, stop, step=None)` | slice → `List` |
 
