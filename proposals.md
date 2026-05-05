@@ -304,6 +304,92 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 ---
 
+## Open decisions — API review
+
+### 12. Restore `reduce`?
+
+**History:** `reduce` was dropped in commit `473dcaa` (option b of the former proposal 9). The reasoning was that `reduce` is not a Python builtin — it lives in `functools.reduce` — so keeping it violates the principle "method names follow corresponding Python builtins/collection API".
+
+**New argument for restoring it:** POOP bans list comprehensions entirely. The `map` and `filter` methods exist precisely because list comprehensions cover `[fn(x) for x in col]` and `[x for x in col if pred(x)]` — they are substitutes, not builtins-as-methods. By the same reasoning, `reduce` is the only substitute available for accumulation patterns that the specialized reductions (`sum`, `all`, `any`) cannot express. Without it, users are forced into verbose `do(block)` accumulating into outer mutable state — the least readable option and also the most un-Smalltalk approach.
+
+**Examples that have no clean substitute today:**
+
+```python
+# product of all elements — sum() does not cover this
+product = lst.reduce(Int(1), lambda acc, x: acc * x)
+
+# building a string from a list of parts
+sentence = words.reduce(Str(""), lambda acc, w: acc + Str(" ") + w)
+
+# roman numeral from digit list — was in examples/ before the drop
+```
+
+**Name:** `reduce` is the correct name (not Smalltalk's `inject_into`, not Haskell's `fold`). `functools.reduce` is the canonical Python name and is well understood.
+
+**Signature question:** should the initial value be required (current POOP style) or optional (mirroring `functools.reduce`)?
+
+- `functools.reduce(fn, iterable)` — uses first element as seed (raises `TypeError` on empty).
+- `functools.reduce(fn, iterable, initial)` — explicit seed.
+
+POOP style would be `lst.reduce(init, block)` (required init, matches `_IterableMixin`'s `reduce(init, block)` that was removed). Making `init` optional adds an edge case (empty collection raises) that is harder to handle without `try/except`.
+
+**Options:**
+
+- **(a) Restore as-is** — `reduce(init: Object, block: Callable) -> Object`, required initial value, on `_IterableMixin` (all collections).
+- **(b) Restore with optional init** — `reduce(block, init=None)` or `reduce(init, block)` where `init` is optional; raises on empty if omitted. Mirrors `functools.reduce` more closely but adds an error path.
+- **(c) Keep dropped** — accept that folds require verbose `do()`. Document the gap explicitly in `INFECTIONS.md`.
+
+**Decision:** restore (a), restore with optional init (b), or keep dropped (c)?
+
+### 13. `do()` return type — `Self` or `none`?
+
+**Today:** `_IterableMixin.do(block)` returns `Self` (`poop/types/_iterable_mixin.py:27-29`). This follows Smalltalk's `do:` which returns the receiver, enabling chaining: `lst.do(log).sorted()`.
+
+**Tension with proposal 7:** proposal 7 says "Python void-returning methods return `none`". A `for` loop in Python returns nothing. But `do()` is not a Python method — it is a POOP-specific Smalltalk method. Proposal 7 was scoped to methods named after Python void-returning methods (`sort`, `reverse`, `clear`, etc.). `do()` does not exist in Python at all, so the rule does not strictly apply.
+
+**Arguments for keeping `Self`:**
+
+- Smalltalk's `do:` has always returned the receiver; `do()` is the one explicit Smalltalk import into POOP.
+- Chaining `lst.do(log).map(fn)` is idiomatic and useful without an extra line.
+- The `With.do()` method already returns `Self` with the same chain-enabling rationale (noted as an exception in proposal 7).
+
+**Arguments for changing to `none`:**
+
+- Iteration has no meaningful "result" — returning `self` implies the receiver changed, which it did not.
+- Consistency: every other side-effecting method that POOP adopted from Python (`append`, `sort`, `clear`, `extend`...) returns `none`. `do()` is the odd one out.
+- Users who need chaining can write `lst.map(identity)` or simply separate the statements.
+
+**Options:**
+
+- **(a) Keep `Self`** — preserve the Smalltalk contract; `do` is the documented Smalltalk exception to the naming rule, so it can also be the exception to the return-type rule.
+- **(b) Change to `none`** — align with the mutator principle; remove the Smalltalk chaining idiom from iteration.
+
+**Decision:** keep `Self` (a) or change to `none` (b)?
+
+### 14. Conversion methods `int()`, `float()`, `complex()` as methods — correct approach?
+
+**Today:** POOP types expose conversion methods: `Str("42").int() -> Int`, `Str("3.14").float() -> Float`, `Int(3).float() -> Float`, `Float(3.7).int() -> Int`, etc. These are defined directly on each type (e.g., `poop/types/string.py:39`, `poop/types/int.py:86`).
+
+**Analogy with `enumerate`:** `enumerate(col)` was a Python builtin call; POOP intercepted it via `EnumerateTransformer` and made it return a POOP `Enumerate` object. The method form `col.enumerate()` is a convenience alias. By analogy, `int("42")` is a Python constructor call — it could be intercepted by a transformer and rewritten to `Int("42")`. The method form `Str("42").int()` is then the POOP-style way to access the same constructor.
+
+**The naming tension:** `int` is both a Python type (constructor) and the name of a method on POOP `Str`. When a user reads `Str("42").int()`, it is ambiguous whether `int` is a method or a constructor call. The POOP transformer for `int` literals rewrites `42` → `_poop_int(42)`, but it does not intercept `int("42")` — that call would produce a plain Python `int`, not a POOP `Int`, which is a silent correctness bug.
+
+**Sub-questions:**
+
+1. Should `int(expr)`, `float(expr)`, `complex(expr)` calls be intercepted by a transformer (like `enumerate`) and rewritten to `Int(expr)`, `Float(expr)`, `Complex(expr)`?
+2. Should the conversion methods on types be kept as-is (`Str.int()`, `Int.float()`, etc.) regardless of question 1?
+3. Is the method name `int` on `Str` confusing enough to warrant renaming (e.g., `to_int()`)? This would break the "Python names" principle but improve clarity.
+
+**Options:**
+
+- **(a) Status quo** — keep conversion methods as-is, accept the gap where `int("42")` in POOP code silently produces a Python `int`. Document the correct form (`Str("42").int()`).
+- **(b) Add transformer** — intercept `int(expr)`, `float(expr)`, `complex(expr)` calls and rewrite to `_poop_Int(expr)`, etc. Keeps conversion methods AND makes the builtin-style call work correctly. Mirrors the `enumerate`/`zip` pattern.
+- **(c) Rename methods** — rename `Str.int()` → `Str.to_int()` (etc.) to make the method-vs-constructor distinction explicit. Breaks "Python names" but eliminates the ambiguity.
+
+**Decision:** status quo (a), add transformers for type conversion builtins (b), or rename to `to_int/to_float` (c)?
+
+---
+
 ## Stay banned (no proposal)
 
 Genuinely without a possible substitute inside POOP's model:
