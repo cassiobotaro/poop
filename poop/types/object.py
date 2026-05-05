@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
     from poop.types.list import List
+    from poop.types.none import NoneClass
     from poop.types.string import Str
 
 
@@ -95,6 +96,18 @@ class Object:
         from poop.types.boolean import false, true
 
         return true if hasattr(self, symbol) else false
+
+    def set_attr(self, name: str, value: Any) -> NoneClass:
+        from poop.types.none import none
+
+        builtins.setattr(self, name, value)
+        return none
+
+    def del_attr(self, name: str) -> NoneClass:
+        from poop.types.none import none
+
+        builtins.delattr(self, name)
+        return none
 
     def print(self, end: str = "\n", flush: bool = False) -> None:
         _builtins_print(str(self), end=end, flush=flush)  # noqa: T201

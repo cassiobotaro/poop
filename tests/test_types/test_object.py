@@ -138,6 +138,42 @@ def test_get_attr_missing_with_default_returns_default() -> None:
     assert result is sentinel
 
 
+def test_set_attr_writes_to_declared_slot() -> None:
+    from poop.types.none import none
+
+    class Container(Object):
+        __slots__ = ("data",)
+        data: Int
+
+    obj = Container()
+    result = obj.set_attr("data", Int(42))
+    assert obj.data == Int(42)
+    assert result is none
+
+
+def test_set_attr_on_unknown_slot_raises_attribute_error() -> None:
+    with pytest.raises(AttributeError):
+        Object().set_attr("nonexistent", Int(1))
+
+
+def test_del_attr_removes_attribute() -> None:
+    from poop.types.none import none
+
+    class Container(Object):
+        data: Int
+
+    obj = Container()
+    obj.data = Int(7)  # type: ignore[unresolved-attribute]
+    result = obj.del_attr("data")
+    assert not hasattr(obj, "data")
+    assert result is none
+
+
+def test_del_attr_missing_raises_attribute_error() -> None:
+    with pytest.raises(AttributeError):
+        Object().del_attr("nonexistent")
+
+
 def test_repr_method_returns_str_type() -> None:
     result = Object().repr()
     assert isinstance(result, Str)
