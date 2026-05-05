@@ -170,7 +170,7 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 **Decision:** which sub-questions to act on, and in what order? Or accept the current state as descriptively correct and leave only documentation tightening?
 
-### 11. Audit POOP-only methods — document them and verify they behave like their Python equivalents
+### ~~11. Audit POOP-only methods — document them and verify they behave like their Python equivalents~~ — DONE
 
 **Today:** POOP defines a number of methods that have no Python method counterpart — they exist because POOP bans syntax constructs (`[]`, `in`, `len()`, etc.) and replaces them with object messages. These are not named after a Python method; they are a new API invented by POOP:
 
@@ -210,7 +210,14 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 **Effort:** (a) small. (b) medium. (c) medium + breaking change.
 
-**Decision:** catalogue only (a), catalogue + tests (b), or enforce strict parity (c)?
+**Decision:** option (c) — strict parity enforced. Changes implemented:
+- `List.add()`, `List.first()`, `List.last()` removed; use `append()` and `at()`.
+- `Tuple.first()`, `Tuple.last()` removed.
+- `Range.first()`, `Range.last()` removed; `Range.at(idx)` added.
+- `Str.reversed()` now returns `List` of character `Str` objects (mirrors sequence types).
+- `Dict.at(key)` now raises `KeyError` for missing keys (mirrors `dict[key]`).
+- `Dict.get(key, default=none)` added (mirrors `dict.get`).
+- Examples and tests updated accordingly.
 
 ---
 
