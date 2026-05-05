@@ -1,13 +1,17 @@
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
-from poop.types.none import NoneClass, none
+from poop.types.none import none
 from poop.types.object import Object
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
 
 _dict = dict  # alias to avoid shadowing by Dict class name in annotations
 

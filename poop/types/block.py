@@ -1,8 +1,11 @@
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from poop.types.none import NoneClass, none
+from poop.types.none import none
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.none import NoneClass
 
 
 class Block(Object):
