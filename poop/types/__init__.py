@@ -13,6 +13,7 @@ from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.range import Range
 from poop.types.set import Set
+from poop.types.slice import Slice
 from poop.types.string import Str
 from poop.types.try_ import Try
 from poop.types.with_ import With
@@ -33,6 +34,7 @@ __all__ = [
     "NoneClass",
     "Object",
     "Set",
+    "Slice",
     "Str",
     "Try",
     "With",

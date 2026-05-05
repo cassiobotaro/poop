@@ -8,6 +8,7 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.slice import Slice
 
 
 class Range(_IterableMixin, Object):
@@ -32,10 +33,28 @@ class Range(_IterableMixin, Object):
     def __iter__(self) -> Any:
         return self._iter()
 
-    def slice(self, start: Int, stop: Int, step: Int | None = None) -> List:
-        s = step._value if step is not None else None
+    def slice(
+        self,
+        start_or_slice: Int | Slice,
+        stop: Int | None = None,
+        step: Int | None = None,
+    ) -> List:
+        from poop.types.slice import Slice
+
         items = list(self._iter())
-        return List(*items[start._value : stop._value : s])
+        if isinstance(start_or_slice, Slice):
+            s = (
+                start_or_slice._step._value
+                if start_or_slice._step is not None
+                else None
+            )
+            return List(
+                *items[start_or_slice._start._value : start_or_slice._stop._value : s]
+            )
+        if stop is None:
+            raise TypeError("stop is required when start is an Int")
+        s = step._value if step is not None else None
+        return List(*items[start_or_slice._value : stop._value : s])
 
     def includes(self, item: Int) -> Boolean:
         return true if item._value in self._range() else false

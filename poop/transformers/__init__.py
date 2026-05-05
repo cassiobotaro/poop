@@ -22,6 +22,7 @@ from poop.transformers.none import NoneTransformer
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.set import SetTransformer
+from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import StrTransformer
 from poop.transformers.try_ import TryTransformer
 from poop.transformers.tuple import TupleTransformer
@@ -67,6 +68,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **ClassTransformer.BINDINGS,
     **TryTransformer.BINDINGS,
     **WithTransformer.BINDINGS,
+    **SliceTransformer.BINDINGS,
     **BlockTransformer.BINDINGS,
 }
 

@@ -23,6 +23,12 @@ def test_error_suggests_slice_method() -> None:
         NoSliceValidator().validate(tree)
 
 
+def test_error_suggests_slice_constructor() -> None:
+    tree = ast.parse("slice(1, 10)")
+    with pytest.raises(ValidationError, match=r"Slice\("):
+        NoSliceValidator().validate(tree)
+
+
 def test_carries_line_number() -> None:
     tree = ast.parse("x = 1\nslice(1, 10)")
     with pytest.raises(ValidationError) as exc_info:

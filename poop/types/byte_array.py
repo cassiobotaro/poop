@@ -11,6 +11,7 @@ from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.slice import Slice
 
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 
@@ -31,9 +32,33 @@ class ByteArray(_IterableMixin, Object):
     def at(self, index: Int) -> Int:
         return Int(self._value[index._value])
 
-    def slice(self, start: Int, stop: Int, step: Int | None = None) -> ByteArray:
+    def slice(
+        self,
+        start_or_slice: Int | Slice,
+        stop: Int | None = None,
+        step: Int | None = None,
+    ) -> ByteArray:
+        from poop.types.slice import Slice
+
+        if isinstance(start_or_slice, Slice):
+            s = (
+                start_or_slice._step._value
+                if start_or_slice._step is not None
+                else None
+            )
+            return ByteArray(
+                bytearray(
+                    self._value[
+                        start_or_slice._start._value : start_or_slice._stop._value : s
+                    ]
+                )
+            )
+        if stop is None:
+            raise TypeError("stop is required when start is an Int")
         s = step._value if step is not None else None
-        return ByteArray(bytearray(self._value[start._value : stop._value : s]))
+        return ByteArray(
+            bytearray(self._value[start_or_slice._value : stop._value : s])
+        )
 
     def at_put(self, index: Int, byte: Int) -> ByteArray:
         self._value[index._value] = byte._value
