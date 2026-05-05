@@ -1,10 +1,8 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, final
+from typing import Any, final
 
+from poop.types.boolean import Boolean, false, true
 from poop.types.object import Object
-
-if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
 
 
 @final
@@ -18,13 +16,9 @@ class NoneClass(Object):
         return self
 
     def is_none(self) -> Boolean:
-        from poop.types.boolean import true
-
         return true
 
     def not_none(self) -> Boolean:
-        from poop.types.boolean import false
-
         return false
 
     def __str__(self) -> str:
