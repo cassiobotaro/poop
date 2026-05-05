@@ -70,6 +70,18 @@ def test_detect_returns_none_when_not_found() -> None:
     assert _range(1, 5).find(lambda i: i > Int(9)) is none
 
 
+def test_do_returns_none() -> None:
+    assert _range(1, 3).do(lambda i: i) is none
+
+
+def test_reduce_sum() -> None:
+    assert _range(1, 5).reduce(Int(0), lambda acc, i: acc + i) == Int(15)
+
+
+def test_reduce_product() -> None:
+    assert _range(1, 4).reduce(Int(1), lambda acc, i: acc * i) == Int(24)
+
+
 def test_is_none_inherited() -> None:
     assert _range(1, 3).is_none() is false
 

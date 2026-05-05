@@ -306,7 +306,7 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 ## Open decisions — API review
 
-### 12. Restore `reduce`?
+### ~~12. Restore `reduce`?~~ — DONE
 
 **History:** `reduce` was dropped in commit `473dcaa` (option b of the former proposal 9). The reasoning was that `reduce` is not a Python builtin — it lives in `functools.reduce` — so keeping it violates the principle "method names follow corresponding Python builtins/collection API".
 
@@ -339,9 +339,9 @@ POOP style would be `lst.reduce(init, block)` (required init, matches `_Iterable
 - **(b) Restore with optional init** — `reduce(block, init=None)` or `reduce(init, block)` where `init` is optional; raises on empty if omitted. Mirrors `functools.reduce` more closely but adds an error path.
 - **(c) Keep dropped** — accept that folds require verbose `do()`. Document the gap explicitly in `INFECTIONS.md`.
 
-**Decision:** restore (a), restore with optional init (b), or keep dropped (c)?
+**Decision:** option (a) — restored with required `init`. `reduce(init, block)` re-added to `_IterableMixin`. `filter` and `map` are substitutes for list comprehensions banned by POOP; `reduce` follows the same logic for accumulation patterns that `sum`/`all`/`any` cannot cover.
 
-### 13. `do()` return type — `Self` or `none`?
+### ~~13. `do()` return type — `Self` or `none`?~~ — DONE
 
 **Today:** `_IterableMixin.do(block)` returns `Self` (`poop/types/_iterable_mixin.py:27-29`). This follows Smalltalk's `do:` which returns the receiver, enabling chaining: `lst.do(log).sorted()`.
 
@@ -364,7 +364,7 @@ POOP style would be `lst.reduce(init, block)` (required init, matches `_Iterable
 - **(a) Keep `Self`** — preserve the Smalltalk contract; `do` is the documented Smalltalk exception to the naming rule, so it can also be the exception to the return-type rule.
 - **(b) Change to `none`** — align with the mutator principle; remove the Smalltalk chaining idiom from iteration.
 
-**Decision:** keep `Self` (a) or change to `none` (b)?
+**Decision:** option (b) — `do()` now returns `none`. `do` is the POOP substitute for a `for` loop, and `for` loops return nothing. The Smalltalk receiver-return pattern was dropped in favour of consistency with the mutator principle.
 
 ### 14. Conversion methods `int()`, `float()`, `complex()` as methods — correct approach?
 
@@ -387,6 +387,46 @@ POOP style would be `lst.reduce(init, block)` (required init, matches `_Iterable
 - **(c) Rename methods** — rename `Str.int()` → `Str.to_int()` (etc.) to make the method-vs-constructor distinction explicit. Breaks "Python names" but eliminates the ambiguity.
 
 **Decision:** status quo (a), add transformers for type conversion builtins (b), or rename to `to_int/to_float` (c)?
+
+### 15. Allow class-constructor builtins (`int()`, `str()`, `float()`, `list()`, `tuple()`, `dict()`, `set()`, `bytes()`, `bool()`) via transformers?
+
+**Today:** POOP intercepts `enumerate(col)` and `zip(a, b)` via transformers that rewrite the AST call to `_poop_enumerate(...)` / `_poop_zip(...)`, returning a POOP `Enumerate` / `Zip` object. The same pattern is used for literals (`42` → `_poop_int(42)`). But type-constructor calls like `int("42")`, `str(42)`, `list(range(3))` are **not intercepted** — they produce plain Python objects, silently bypassing the POOP type system.
+
+**The silent correctness bug:** a POOP user writing `int("42")` gets a Python `int`, not a POOP `Int`. Arithmetic on it (`int("42") + Int(1)`) would fail or produce unexpected results. This is the same category of bug that motivated the literal transformers for `42`, `"hello"`, `[1,2,3]`, etc.
+
+**Scope of the proposal:** apply the transformer pattern to explicit constructor calls for all POOP primitive types:
+
+| Call in source | Rewritten to | Result |
+|---|---|---|
+| `int(expr)` | `_poop_int(expr)` | `Int` |
+| `float(expr)` | `_poop_float(expr)` | `Float` |
+| `str(expr)` | `_poop_str(expr)` | `Str` |
+| `bool(expr)` | `_poop_bool(expr)` | `Boolean` |
+| `list(expr)` | `_poop_list(expr)` | `List` |
+| `tuple(expr)` | `_poop_tuple(expr)` | `Tuple` |
+| `dict(expr)` | `_poop_dict(expr)` | `Dict` |
+| `set(expr)` | `_poop_set(expr)` | `Set` |
+| `bytes(expr)` | `_poop_bytes(expr)` | `Bytes` |
+| `complex(expr)` | `_poop_complex(expr)` | `Complex` |
+| `frozenset(expr)` | `_poop_frozenset(expr)` | `FrozenSet` |
+
+**Relationship with proposal 14:** if this proposal is adopted, the conversion-method question (`Str.int()`, `Int.float()`, etc.) becomes less urgent — `int(str_val)` in POOP code would correctly produce a POOP `Int`. The method forms (`Str.int()`, `Int.float()`) could still exist as convenience aliases.
+
+**Implementation notes:**
+
+- Each transformer would extend `BaseTransformer` and rewrite `ast.Call` nodes where `func` is an `ast.Name` matching the target names.
+- The factory functions (`_poop_int`, `_poop_str`, etc.) would accept Python native values OR POOP objects and coerce appropriately (e.g., `_poop_int(Int(3))` → `Int(3)`, `_poop_int("42")` → `Int(42)`).
+- Alternatively, one `ConstructorTransformer` could intercept all of them in a single pass.
+- Must integrate with the validator ordering: these transformers run before validators, so calling `int(x)` in POOP code would be safe after transformation.
+
+**Options:**
+
+- **(a) Full sweep** — intercept all constructor calls listed above in one new `ConstructorTransformer`. Resolves the silent bug uniformly.
+- **(b) Partial — numeric only** — intercept only `int()`, `float()`, `complex()` (the most common conversions). Leave `list()`, `tuple()`, etc. for a follow-up.
+- **(c) No transformer, just ban** — add validators that reject bare `int(expr)`, `str(expr)`, etc. at the call site, forcing users to use the POOP method forms (`str_val.int()`, `int_val.float()`). Explicit error with a suggested substitute.
+- **(d) Status quo** — document the gap, rely on users knowing to use `.int()`, `.float()` method forms. No validator, no transformer.
+
+**Decision:** full transformer (a), numeric-only (b), ban with message (c), or status quo (d)?
 
 ---
 

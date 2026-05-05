@@ -80,6 +80,26 @@ def test_detect_returns_none_when_not_found() -> None:
     assert result is none
 
 
+def test_do_returns_none() -> None:
+    assert List(Int(1), Int(2)).do(lambda x: x) is none
+
+
+def test_reduce_sum() -> None:
+    assert List(Int(1), Int(2), Int(3), Int(4)).reduce(
+        Int(0), lambda acc, x: acc + x
+    ) == Int(10)
+
+
+def test_reduce_product() -> None:
+    assert List(Int(1), Int(2), Int(3), Int(4)).reduce(
+        Int(1), lambda acc, x: acc * x
+    ) == Int(24)
+
+
+def test_reduce_empty_returns_init() -> None:
+    assert List().reduce(Int(0), lambda acc, x: acc + x) == Int(0)
+
+
 def test_sum_returns_total() -> None:
     assert List(Int(1), Int(2), Int(3)).sum() == Int(6)
 

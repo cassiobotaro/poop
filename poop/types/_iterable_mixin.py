@@ -5,7 +5,10 @@ from abc import abstractmethod
 from collections import deque
 from collections.abc import Callable, Iterator
 from functools import reduce as functools_reduce
-from typing import Any, Self
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from poop.types.none import NoneClass
 
 from poop.types.boolean import false, true
 from poop.types.int import Int
@@ -24,9 +27,9 @@ class _IterableMixin:
 
         return List(*items)
 
-    def do(self, block: Callable[[Any], Any]) -> Self:
+    def do(self, block: Callable[[Any], Any]) -> NoneClass:
         deque(map(block, self._iter_items()), maxlen=0)
-        return self
+        return none
 
     def map(self, block: Callable[[Any], Any]) -> Any:
         return self._collect(map(block, self._iter_items()))
@@ -42,6 +45,9 @@ class _IterableMixin:
             if bool(block(item)):
                 return item
         return none
+
+    def reduce(self, init: Any, block: Callable[[Any, Any], Any]) -> Any:
+        return functools_reduce(block, self._iter_items(), init)
 
     def sum(self) -> Any:
         items = list(self._iter_items())
