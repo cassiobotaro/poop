@@ -478,7 +478,7 @@ To compare numeric values across types, convert explicitly first: `i.float() == 
 
 ### Object — `poop/types/object.py`
 
-Concrete root of all POOP types. Provides default implementations for universal methods:
+Concrete root of all POOP types. The table below highlights the universal methods that map directly onto Smalltalk messages — it is **not exhaustive**. The full API also includes `if_none`, `if_not_none`, `hash`, `id`, `callable`, `is_subclass`, `repr`, `ascii`, `format`, `has_attr`, `set_attr`, `del_attr`, and `print` (see `poop/types/object.py` for signatures).
 
 | Smalltalk message | Method | Behavior |
 |---|---|---|
