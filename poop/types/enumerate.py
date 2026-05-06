@@ -12,15 +12,27 @@ if TYPE_CHECKING:
 
 
 class Enumerate(_IterableMixin, Object):
-    __slots__ = ("_source", "_start")
+    __slots__ = ("_iter", "_source", "_start")
 
     def __init__(self, source: Any, start: Int | None = None) -> None:
         self._source = source
         self._start: Int = Int(0) if start is None else start
+        self._iter: Iterator[Tuple] | None = None
 
-    def __iter__(self) -> Iterator[Tuple]:
+    def _gen(self) -> Iterator[Tuple]:
         for i, item in _builtins.enumerate(self._source, self._start._value):
             yield Tuple(Int(i), item)
+
+    def __iter__(self) -> Iterator[Tuple]:
+        return self._gen()
+
+    def iter(self) -> Enumerate:
+        return self
+
+    def next(self) -> Tuple:
+        if self._iter is None:
+            self._iter = self._gen()
+        return next(self._iter)
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true

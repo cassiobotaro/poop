@@ -162,3 +162,32 @@ def test_enumerate_on_range_transformer() -> None:
     }
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
     assert isinstance(ns["e"], Enumerate)
+
+
+def test_iter_returns_self() -> None:
+    e = List(Int(1), Int(2)).enumerate()
+    assert e.iter() is e
+
+
+def test_next_advances() -> None:
+    e = List(Int(10), Int(20)).enumerate()
+    assert e.next() == Tuple(Int(0), Int(10))
+    assert e.next() == Tuple(Int(1), Int(20))
+
+
+def test_exhaustion_raises_stop_iteration() -> None:
+    import pytest
+
+    e = List(Int(1)).enumerate()
+    e.next()
+    with pytest.raises(StopIteration):
+        e.next()
+
+
+def test_do_remains_restartable() -> None:
+    e = List(Int(1), Int(2)).enumerate()
+    seen_a: list[Tuple] = []
+    e.do(lambda t: seen_a.append(t))
+    seen_b: list[Tuple] = []
+    e.do(lambda t: seen_b.append(t))
+    assert seen_a == seen_b == [Tuple(Int(0), Int(1)), Tuple(Int(1), Int(2))]
