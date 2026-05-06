@@ -126,52 +126,7 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 
 ## Open decisions — documentation
 
-### 5. Audit and rewrite `INFECTIONS.md` to reflect current state?
-
-**Today:** `INFECTIONS.md` is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
-
-**Drift symptoms motivating the audit:**
-- Principles phrased as hypotheses ("Methods should follow Python names...") without explicit confirmation that all exceptions are catalogued (`do` is the only exception cited — could others slip through?).
-- Validator tables may list AST nodes the current validator does not visit (or vice versa) — drift between code and doc.
-- Possible duplicates between `INFECTIONS.md` (principles) and `CLAUDE.md` (workflow) that make it ambiguous which is the source of truth.
-
-**Proposed audit scope:**
-
-1. **Validators** — for each `poop/validators/no_*.py`:
-   - confirm the table in `INFECTIONS.md` lists exactly the nodes/calls the validator visits;
-   - confirm the promised "Substitute" exists in `poop/types/`;
-   - mark validators without a substitute as a "definitive ban" or move them to an explicit backlog.
-
-2. **Transformers** — for each `poop/transformers/*.py`:
-   - confirm the documentation covers every node the transformer rewrites;
-   - confirm the documented literals ("every literal is transformed") are in fact 100% covered (`int`, `float`, `str`, `bool`, `None`, `list`, `tuple`, `set`, `dict`, `bytes`, `complex` — does each have a transformer? Any gaps?).
-
-3. **Types** — for each `poop/types/*.py`:
-   - confirm the page/section for each type lists the current public methods (not those of an earlier version);
-   - confirm that dunders → public aliases follow the rule "Dunders exposed as regular methods" with no undocumented exceptions;
-   - confirm the rule "All POOP methods return POOP types" by sweeping return values.
-
-4. **Principles** — re-validate each bullet of `## Principles`:
-   - Is it descriptive (reflects the code) or aspirational (not yet enforced)?
-   - Aspirational → move to `proposals.md` as an explicit item.
-   - Descriptive → keep, with a concrete example if it helps.
-
-5. **Historical open questions** — sweep `git log -- INFECTIONS.md` for commits with "wip", "draft", "rascunho", "talvez" or hesitant language; each becomes a question to close (yes/no/proposal).
-
-**Useful tooling:**
-- `grep -n "talvez\|a definir\|TODO\|FIXME\|investigar\|? *$" INFECTIONS.md` to flag residual questions.
-- Cross-check script: parse validators/transformers/types via AST and compare with `INFECTIONS.md` sections (automated gap analysis).
-
-**Expected output:**
-- `INFECTIONS.md` rewritten (or in incremental PRs) where each rule is **descriptive and verified** — mirrors the code.
-- Aspirational items migrated to `proposals.md`.
-- Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
-
-**Effort:** large (line-by-line sweep + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 6 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
-
-**Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
-
-### 6. Documentation site with MkDocs?
+### 5. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
@@ -205,7 +160,7 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 
 **Decision:** adopt MkDocs? If yes, which SSOT — `INFECTIONS.md` extracted or `docs/` migrated?
 
-### 7. Document missing types in `INFECTIONS.md`
+### 6. Document missing types in `INFECTIONS.md`
 
 **Today:** the `## Active types` section in `INFECTIONS.md` only catalogues an API for `Object`, `NoneClass`, `Boolean`, `Block`, `Range`, `Error`, `Try`, `With`, the `_IterableMixin` shared methods, `Object.print`, the three `Dict views`, and `MappingProxy`. The remaining types appear only under `## Active transformers` (which describes AST rewrites, not the type's API) or as scattered notes.
 
@@ -220,7 +175,7 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 
 That is **~28 types** without canonical API documentation in `INFECTIONS.md`.
 
-**Discovery context:** flagged during the validators/transformers/types audit (proposals.md `#5` Wave 3a). The audit could only verify drift on already-documented types; missing sections fell out of scope.
+**Discovery context:** flagged during the closed `INFECTIONS.md` audit (Wave 3a). The audit could only verify drift on already-documented types; missing sections fell out of scope.
 
 **Proposed scope:**
 
@@ -235,7 +190,7 @@ That is **~28 types** without canonical API documentation in `INFECTIONS.md`.
 **Open questions:**
 
 - **(a) Granularity.** One commit per type (~28 commits), or per category (~5: scalars, sequences, collections, iterables, iterators)?
-- **(b) Source-of-truth interaction.** If proposal `#6` (MkDocs) is adopted with `docs/` as SSoT, is this work better done directly under `docs/types/*.md` instead? Trade-off: deciding `#6` first avoids redoing the work; doing this first gives `#6` something to render.
+- **(b) Source-of-truth interaction.** If proposal `#5` (MkDocs) is adopted with `docs/` as SSoT, is this work better done directly under `docs/types/*.md` instead? Trade-off: deciding `#5` first avoids redoing the work; doing this first gives `#5` something to render.
 - **(c) Curated vs exhaustive.** The `Object` section is curated (mapped to Smalltalk messages, with a "see source for full list" note added in this audit). Should other type sections follow the same pattern, or be exhaustive?
 
 **Decision:** adopt? If yes, settle (a) granularity and (c) curated-vs-exhaustive.
