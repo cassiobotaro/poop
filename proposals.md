@@ -6,96 +6,11 @@ Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the subst
 
 ---
 
-## Open decisions — substitute exists with a different name
-
-### ~~1. `iter(col)` / `next(it)` → first-class `Iterator` type?~~ — DONE
-
-**Decision:** specialized iterator types per container, mirroring Python's model. `iter()` and `next()` remain banned as bare calls — they are exclusively methods.
-
-Implemented:
-
-- New base `_IteratorBase` (`poop/types/_iterator_base.py`) — wraps a Python iterator, exposes `next()` (raising `StopIteration` on exhaustion, catchable via `Try(...).except_(StopIteration, ...)`) and `do(block)` consuming the rest one-shot.
-- One specialized iterator per container, faithful to Python (`list_iterator`, `tuple_iterator`, `set_iterator`, `frozenset_iterator`, `dict_keyiterator`, `str_iterator`, `range_iterator`, `bytes_iterator`, `bytearray_iterator`, `memory_iterator`).
-- Each container gains an `iter()` method returning the matching iterator type.
-- `Enumerate` and `Zip` are their own iterators (`x.iter() is x`), mirroring Python's `iter(enumerate(x)) is enumerate(x)`. They expose `next()` consuming a lazy internal generator one-shot, while `do()` keeps the existing restartable behaviour.
-- `Dict.iter()` returns `DictKeyIterator` (mirrors `iter(dict)` in Python). Value/item iterators are deferred to a future proposal.
-
-**Exhaustion sentinel for `next()`: (c) raise `StopIteration`.** POOP's `Try()` (`poop/types/try_.py`) handles the rest — `Try(lambda: it.next()).except_(StopIteration, handler).run()`. Raised raw (not wrapped in a POOP `IteratorExhausted`) for perfect interop with Python iterators.
-
-### 9. `Dict.keys()` / `values()` / `items()` → live view objects?
-
-**Today:** `Dict.keys()`, `Dict.values()`, `Dict.items()` (`poop/types/dict.py`) eagerly build and return a `List`. Snapshots — they do not reflect later mutations of the dict.
-
-**In Python:** these methods return live view objects (`dict_keys`, `dict_values`, `dict_items`) that:
-- reflect dict mutations after the view was created;
-- are iterable (each yields its corresponding `dict_*iterator`);
-- expose `len()` / `__contains__`;
-- `dict_keys` and `dict_items` (when values are hashable) support **set operations** (`|`, `&`, `-`, `^`).
-
-**Proposed direction:** introduce three POOP types — `DictKeys`, `DictValues`, `DictItems` — wrapping the native Python view (`__slots__ = ("_view",)`), inheriting `_IterableMixin` so `do`/`map`/`filter`/etc. work, and exposing `len()`, `includes(x)`, `__iter__` lazy.
-
-For `DictKeys` and `DictItems`: also implement set ops (`union`, `intersection`, `difference`, `symmetric_difference`, plus `|`, `&`, `-`, `^` infix) returning POOP `Set`. Mirrors Python's view algebra.
-
-**Open questions:**
-
-- **(a) Liveness vs eagerness.** The current snapshot semantics may be a deliberate simplification. Live views are more powerful but also more surprising — a long-held view sees later mutations. Adopt liveness (Python parity) or keep snapshot (current)?
-- **(b) Set ops on `DictValues`?** Python rejects them because values may be unhashable. Match Python (no set ops on values) or relax (allow when all values are hashable)?
-- **(c) Migration impact.** Several call sites in `examples/` and `tests/` rely on `keys()`/`values()`/`items()` returning a `List` (e.g., `.at(Int(0))`, `.append(...)`). Switching to a view breaks those — but the view does have `_IterableMixin`, so `.do(block)` etc. continue to work. How aggressive: full break (Python parity), or keep `.list()` / `.to_list()` escape hatch on the view?
-
-**Suggested files:**
-- `poop/types/dict_keys.py` (new)
-- `poop/types/dict_values.py` (new)
-- `poop/types/dict_items.py` (new)
-
-**Effort:** medium — three new types + update `Dict.keys/values/items` + sweep callers.
-
-**Decision:** adopt live views (a)? Set ops on values (b)? Hard break or escape hatch (c)?
-
-### 10. `DictValueIterator` and `DictItemIterator`?
-
-**Today:** Proposal #1 introduced `DictKeyIterator` (returned by `Dict.iter()`), mirroring Python's `iter(dict)`. Value and item iterators were explicitly deferred.
-
-**In Python:**
-- `iter(d.values())` returns a `dict_valueiterator`
-- `iter(d.items())` returns a `dict_itemiterator`
-
-These are distinct types from `dict_keyiterator` even though their `__next__` is structurally identical to `_IteratorBase`.
-
-**Proposed direction:** add `DictValueIterator` and `DictItemIterator` as `_IteratorBase` subclasses. They are returned by `.iter()` on the corresponding view objects from proposal #9.
-
-```python
-class DictValues:
-    def iter(self) -> DictValueIterator:
-        return DictValueIterator(self._view)
-
-class DictItems:
-    def iter(self) -> DictItemIterator:
-        return DictItemIterator(self._view)
-```
-
-Each iterator's `next()` yields the right shape — for `DictItemIterator`, each `next()` returns a `Tuple(key, value)` (matching Python).
-
-**Dependency:** this proposal **requires #9** — without view objects, there is nowhere natural to hang `.iter()` for values/items.
-
-**Open question:** if proposal #9 is rejected (snapshot kept), does this proposal still make sense? Possible fallbacks:
-- **(a) Drop it** — without views, there is no "thing" whose iterator type would be returned; `Dict.values()` returns a `List`, and `List.iter()` already returns `ListIterator`.
-- **(b) Add `Dict.iter_values()` / `Dict.iter_items()` methods directly on Dict** — bypasses the view layer entirely; less faithful to Python but unblocks the iterator types.
-
-**Suggested files:**
-- `poop/types/dict_value_iterator.py` (new)
-- `poop/types/dict_item_iterator.py` (new)
-
-**Effort:** small (after #9 is in) — two thin iterator subclasses + the `.iter()` methods on the views.
-
-**Decision:** depends on #9 outcome. If #9 adopted, this is straightforward; if rejected, choose (a) drop or (b) Dict.iter_values()/iter_items().
-
----
-
 ## Open decisions — revisit "intentional"
 
 Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
 
-### 2. `input(prompt)` → introduce a `Console` / `Stdin` type?
+### 1. `input(prompt)` → introduce a `Console` / `Stdin` type?
 
 **Today:** `INFECTIONS.md` declares "interactive I/O — no POOP equivalent".
 
@@ -105,7 +20,7 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 **Decision:** worth the investment, or keep banned?
 
-### 3. `open(path)` → POOP `Path` type inspired by `pathlib`?
+### 2. `open(path)` → POOP `Path` type inspired by `pathlib`?
 
 **Today:** `INFECTIONS.md` declares "file I/O — no POOP equivalent".
 
@@ -127,7 +42,7 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 ## Open decisions — language semantics
 
-### 4. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
+### 3. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
 
 **Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
 
@@ -160,7 +75,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — API review
 
-### 5. Audit `__slots__` usage on POOP types?
+### 4. Audit `__slots__` usage on POOP types?
 
 **Today:** `INFECTIONS.md` declares the principle: *"`__slots__` on all POOP types: instance variables are declared in the class definition and fixed — never added dynamically to instances. Subclasses that need new instance variables can declare their own `__slots__` or omit them."*
 
@@ -202,7 +117,7 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 **Decision:** which sub-questions to act on, and in what order? Or accept the current state as descriptively correct and leave only documentation tightening?
 
-### 6. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
+### 5. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
 
 **Context:** Type constructor calls (`int(expr)`, `float(expr)`, `str(expr)`, etc.) are already intercepted by the existing transformers — `int(Str("42"))` correctly produces a POOP `Int` at runtime. This is documented in `INFECTIONS.md` as "Constructor builtins are intercepted, not banned".
 
@@ -217,11 +132,78 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 
 **Decision:** keep status quo (a) or rename (b)?
 
+### 6. `Dict.keys()` / `values()` / `items()` → live view objects?
+
+**Today:** `Dict.keys()`, `Dict.values()`, `Dict.items()` (`poop/types/dict.py`) eagerly build and return a `List`. Snapshots — they do not reflect later mutations of the dict.
+
+**In Python:** these methods return live view objects (`dict_keys`, `dict_values`, `dict_items`) that:
+- reflect dict mutations after the view was created;
+- are iterable (each yields its corresponding `dict_*iterator`);
+- expose `len()` / `__contains__`;
+- `dict_keys` and `dict_items` (when values are hashable) support **set operations** (`|`, `&`, `-`, `^`).
+
+**Proposed direction:** introduce three POOP types — `DictKeys`, `DictValues`, `DictItems` — wrapping the native Python view (`__slots__ = ("_view",)`), inheriting `_IterableMixin` so `do`/`map`/`filter`/etc. work, and exposing `len()`, `includes(x)`, `__iter__` lazy.
+
+For `DictKeys` and `DictItems`: also implement set ops (`union`, `intersection`, `difference`, `symmetric_difference`, plus `|`, `&`, `-`, `^` infix) returning POOP `Set`. Mirrors Python's view algebra.
+
+**Open questions:**
+
+- **(a) Liveness vs eagerness.** The current snapshot semantics may be a deliberate simplification. Live views are more powerful but also more surprising — a long-held view sees later mutations. Adopt liveness (Python parity) or keep snapshot (current)?
+- **(b) Set ops on `DictValues`?** Python rejects them because values may be unhashable. Match Python (no set ops on values) or relax (allow when all values are hashable)?
+- **(c) Migration impact.** Several call sites in `examples/` and `tests/` rely on `keys()`/`values()`/`items()` returning a `List` (e.g., `.at(Int(0))`, `.append(...)`). Switching to a view breaks those — but the view does have `_IterableMixin`, so `.do(block)` etc. continue to work. How aggressive: full break (Python parity), or keep `.list()` / `.to_list()` escape hatch on the view?
+
+**Suggested files:**
+- `poop/types/dict_keys.py` (new)
+- `poop/types/dict_values.py` (new)
+- `poop/types/dict_items.py` (new)
+
+**Effort:** medium — three new types + update `Dict.keys/values/items` + sweep callers.
+
+**Decision:** adopt live views (a)? Set ops on values (b)? Hard break or escape hatch (c)?
+
+### 7. `DictValueIterator` and `DictItemIterator`?
+
+**Today:** Only `DictKeyIterator` exists (returned by `Dict.iter()`, mirroring Python's `iter(dict)`). Value and item iterators were explicitly deferred when the iterator subsystem landed.
+
+**In Python:**
+- `iter(d.values())` returns a `dict_valueiterator`
+- `iter(d.items())` returns a `dict_itemiterator`
+
+These are distinct types from `dict_keyiterator` even though their `__next__` is structurally identical to `_IteratorBase`.
+
+**Proposed direction:** add `DictValueIterator` and `DictItemIterator` as `_IteratorBase` subclasses. They are returned by `.iter()` on the corresponding view objects from proposal #6.
+
+```python
+class DictValues:
+    def iter(self) -> DictValueIterator:
+        return DictValueIterator(self._view)
+
+class DictItems:
+    def iter(self) -> DictItemIterator:
+        return DictItemIterator(self._view)
+```
+
+Each iterator's `next()` yields the right shape — for `DictItemIterator`, each `next()` returns a `Tuple(key, value)` (matching Python).
+
+**Dependency:** this proposal **requires #6** — without view objects, there is nowhere natural to hang `.iter()` for values/items.
+
+**Open question:** if proposal #6 is rejected (snapshot kept), does this proposal still make sense? Possible fallbacks:
+- **(a) Drop it** — without views, there is no "thing" whose iterator type would be returned; `Dict.values()` returns a `List`, and `List.iter()` already returns `ListIterator`.
+- **(b) Add `Dict.iter_values()` / `Dict.iter_items()` methods directly on Dict** — bypasses the view layer entirely; less faithful to Python but unblocks the iterator types.
+
+**Suggested files:**
+- `poop/types/dict_value_iterator.py` (new)
+- `poop/types/dict_item_iterator.py` (new)
+
+**Effort:** small (after #6 is in) — two thin iterator subclasses + the `.iter()` methods on the views.
+
+**Decision:** depends on #6 outcome. If #6 adopted, this is straightforward; if rejected, choose (a) drop or (b) Dict.iter_values()/iter_items().
+
 ---
 
 ## Open decisions — documentation
 
-### 7. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 8. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
 **Today:** `INFECTIONS.md` is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
@@ -262,11 +244,11 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 8 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 9 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 8. Documentation site with MkDocs?
+### 9. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
