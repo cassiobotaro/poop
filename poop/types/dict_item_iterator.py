@@ -18,6 +18,9 @@ class DictItemIterator(_IteratorBase):
         k, v = next(self._iter)
         return Tuple(k, v)
 
+    def __next__(self) -> Tuple:
+        return self.next()
+
     def do(self, block: Callable[[Tuple], Any]) -> NoneClass:
         deque((block(Tuple(k, v)) for k, v in self._iter), maxlen=0)
         return none
