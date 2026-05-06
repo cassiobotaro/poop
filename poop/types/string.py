@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from poop.types.boolean import false, true
 from poop.types.object import Object
+from poop.types.str_iterator import StrIterator
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
@@ -76,6 +77,9 @@ class Str(Object):
     def __iter__(self) -> Iterator[Str]:
         for ch in self._value:
             yield Str(ch)
+
+    def iter(self) -> StrIterator:
+        return StrIterator(self)
 
     def includes(self, char: Str) -> Boolean:
         return true if char._value in self._value else false
