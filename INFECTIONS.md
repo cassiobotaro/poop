@@ -355,9 +355,11 @@ Every collection exposes `.iter()` returning a specialized one-shot iterator tha
 
 ### No `input` — `poop/validators/no_input.py`
 
-| Call | Reason |
-|---|---|
-| `input(prompt)` | interactive I/O — no POOP equivalent |
+| Call | Reason | Substitute |
+|---|---|---|
+| `input(prompt)` | free function with procedural look | `prompt.input()` (`poop/types/string.py`) |
+
+Symmetric to `Object.print()` — the receiver is what gets shown. Scoped to `Str` (not `Object`) since non-string receivers as prompts are meaningless. `EOFError` propagates raw, catchable via `Try(lambda: prompt.input()).except_(EOFError, handler).run()`.
 
 ### No `open` — `poop/validators/no_open.py`
 

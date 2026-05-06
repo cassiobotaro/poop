@@ -10,17 +10,7 @@ Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the subst
 
 Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
 
-### 1. `input(prompt)` → introduce a `Console` / `Stdin` type?
-
-**Today:** `INFECTIONS.md` declares "interactive I/O — no POOP equivalent".
-
-**Note:** Smalltalk *does* model interactive I/O (`Transcript`, etc.). Natural substitute: a POOP `Console` object with `Console.read_line(prompt: Str) -> Str`.
-
-**Scope:** large — a brand new I/O subsystem.
-
-**Decision:** worth the investment, or keep banned?
-
-### 2. `open(path)` → POOP `Path` type inspired by `pathlib`?
+### 1. `open(path)` → POOP `Path` type inspired by `pathlib`?
 
 **Today:** `INFECTIONS.md` declares "file I/O — no POOP equivalent".
 
@@ -42,7 +32,7 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 ## Open decisions — language semantics
 
-### 3. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
+### 2. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
 
 **Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
 
@@ -75,7 +65,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — API review
 
-### 4. Audit `__slots__` usage on POOP types?
+### 3. Audit `__slots__` usage on POOP types?
 
 **Today:** `INFECTIONS.md` declares the principle: *"`__slots__` on all POOP types: instance variables are declared in the class definition and fixed — never added dynamically to instances. Subclasses that need new instance variables can declare their own `__slots__` or omit them."*
 
@@ -117,7 +107,7 @@ So the principle is currently **descriptively accurate** for the library types. 
 
 **Decision:** which sub-questions to act on, and in what order? Or accept the current state as descriptively correct and leave only documentation tightening?
 
-### 5. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
+### 4. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
 
 **Context:** Type constructor calls (`int(expr)`, `float(expr)`, `str(expr)`, etc.) are already intercepted by the existing transformers — `int(Str("42"))` correctly produces a POOP `Int` at runtime. This is documented in `INFECTIONS.md` as "Constructor builtins are intercepted, not banned".
 
@@ -132,7 +122,7 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 
 **Decision:** keep status quo (a) or rename (b)?
 
-### 6. `Dict.keys()` / `values()` / `items()` → live view objects?
+### 5. `Dict.keys()` / `values()` / `items()` → live view objects?
 
 **Today:** `Dict.keys()`, `Dict.values()`, `Dict.items()` (`poop/types/dict.py`) eagerly build and return a `List`. Snapshots — they do not reflect later mutations of the dict.
 
@@ -161,7 +151,7 @@ For `DictKeys` and `DictItems`: also implement set ops (`union`, `intersection`,
 
 **Decision:** adopt live views (a)? Set ops on values (b)? Hard break or escape hatch (c)?
 
-### 7. `DictValueIterator` and `DictItemIterator`?
+### 6. `DictValueIterator` and `DictItemIterator`?
 
 **Today:** Only `DictKeyIterator` exists (returned by `Dict.iter()`, mirroring Python's `iter(dict)`). Value and item iterators were explicitly deferred when the iterator subsystem landed.
 
@@ -171,7 +161,7 @@ For `DictKeys` and `DictItems`: also implement set ops (`union`, `intersection`,
 
 These are distinct types from `dict_keyiterator` even though their `__next__` is structurally identical to `_IteratorBase`.
 
-**Proposed direction:** add `DictValueIterator` and `DictItemIterator` as `_IteratorBase` subclasses. They are returned by `.iter()` on the corresponding view objects from proposal #6.
+**Proposed direction:** add `DictValueIterator` and `DictItemIterator` as `_IteratorBase` subclasses. They are returned by `.iter()` on the corresponding view objects from proposal #5.
 
 ```python
 class DictValues:
@@ -185,9 +175,9 @@ class DictItems:
 
 Each iterator's `next()` yields the right shape — for `DictItemIterator`, each `next()` returns a `Tuple(key, value)` (matching Python).
 
-**Dependency:** this proposal **requires #6** — without view objects, there is nowhere natural to hang `.iter()` for values/items.
+**Dependency:** this proposal **requires #5** — without view objects, there is nowhere natural to hang `.iter()` for values/items.
 
-**Open question:** if proposal #6 is rejected (snapshot kept), does this proposal still make sense? Possible fallbacks:
+**Open question:** if proposal #5 is rejected (snapshot kept), does this proposal still make sense? Possible fallbacks:
 - **(a) Drop it** — without views, there is no "thing" whose iterator type would be returned; `Dict.values()` returns a `List`, and `List.iter()` already returns `ListIterator`.
 - **(b) Add `Dict.iter_values()` / `Dict.iter_items()` methods directly on Dict** — bypasses the view layer entirely; less faithful to Python but unblocks the iterator types.
 
@@ -197,13 +187,13 @@ Each iterator's `next()` yields the right shape — for `DictItemIterator`, each
 
 **Effort:** small (after #6 is in) — two thin iterator subclasses + the `.iter()` methods on the views.
 
-**Decision:** depends on #6 outcome. If #6 adopted, this is straightforward; if rejected, choose (a) drop or (b) Dict.iter_values()/iter_items().
+**Decision:** depends on #5 outcome. If #5 adopted, this is straightforward; if rejected, choose (a) drop or (b) Dict.iter_values()/iter_items().
 
 ---
 
 ## Open decisions — documentation
 
-### 8. Audit and rewrite `INFECTIONS.md` to reflect current state?
+### 7. Audit and rewrite `INFECTIONS.md` to reflect current state?
 
 **Today:** `INFECTIONS.md` is the canonical catalog of validators, transformers, types, and principles. It was written incrementally since the start of the project, and several sections were added when some decisions were still **open questions** ("maybe", "to be defined", "investigate"). Many of those questions have since been settled in practice (in code, tests, commits), but the document may not have been updated uniformly.
 
@@ -244,11 +234,11 @@ Each iterator's `next()` yields the right shape — for `DictItemIterator`, each
 - Aspirational items migrated to `proposals.md`.
 - Live automated cross-reference (script in `scripts/audit_infections.py` run in CI?) — bonus.
 
-**Effort:** large (line-by-line sweep + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 9 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
+**Effort:** large (line-by-line sweep + cross-check against ~60 validators, ~16 transformers, ~17 types). **Impact:** restores `INFECTIONS.md` as a trustworthy SSOT; prerequisite for proposal 8 (MkDocs) — without a consistent doc, generating the site amplifies the drift.
 
 **Decision:** run the audit in a single pass (large effort but settles it for good), or in incremental waves by section (validators first, then transformers, then types)?
 
-### 9. Documentation site with MkDocs?
+### 8. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
