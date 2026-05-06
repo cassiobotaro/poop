@@ -37,27 +37,15 @@ uv run pytest tests/test_file.py::test_name
 - **pytest-cov** — test coverage reporting for the `poop` module (`tests/`)
 - **prek** — git hook runner using `.pre-commit-config.yaml`; hooks run `ruff check --fix`, `ruff format`, and `ty check` on every commit
 
-## Workflow
+## Conventions and workflow
 
-Após cada funcionalidade ou correção implementada, fazer commit das mudanças com mensagem descritiva. Cada commit deve ser atômico — um validator, um tipo, um bug fix — nunca agrupar mudanças não relacionadas.
+The contributor workflow and conventions (atomic commits, imports at top, English-only `proposals.md`, Smalltalk version in every example, etc.) are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). Follow them as if you were a human contributor.
 
-Before implementing a multi-part plan, confirm scope with the user — they may want only a subset implemented (e.g., `dir` as method but `help` as function).
+AI-specific guidance:
 
-## Testing
-
-When fixing tests, verify expected values against actual language semantics (e.g., ascii repr quoting style, inclusive vs exclusive interval bounds, `__radd__` requirements for `builtins.sum`) before assuming the implementation is wrong.
-
-## Language Design Principles
-
-When implementing new types or features, ensure they are transparent to end users (e.g., use lambda transformers, `__call__`, or syntactic sugar) rather than exposing internal class names like `Block()`.
-
-## Conventions
-
-Always verify GitHub Action versions are current and use the actual current year (2026) in license files, copyright notices, and dates.
-
-`proposals.md` must be written in English. New entries, edits, and rewrites in that file use English regardless of the conversation language.
-
-Imports must live at the top of the module. Use function-local `import` only when strictly necessary to resolve circular imports. Imports needed exclusively for type annotations must live inside an `if TYPE_CHECKING:` block at the top of the module — never function-local, never at top-level alongside runtime imports.
+- Before implementing a multi-part plan, confirm scope with the user — they may want only a subset implemented (e.g., `dir` as method but `help` as function).
+- When fixing tests, verify expected values against actual language semantics (e.g., ascii repr quoting style, inclusive vs exclusive interval bounds, `__radd__` requirements for `builtins.sum`) before assuming the implementation is wrong.
+- When implementing new types or features, ensure they are transparent to end users (e.g., use lambda transformers, `__call__`, or syntactic sugar) rather than exposing internal class names like `Block()`.
 
 ## Architecture
 
