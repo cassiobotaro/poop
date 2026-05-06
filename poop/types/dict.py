@@ -3,9 +3,11 @@ from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types.boolean import false, true
+from poop.types.dict_items import DictItems
 from poop.types.dict_key_iterator import DictKeyIterator
+from poop.types.dict_keys import DictKeys
+from poop.types.dict_values import DictValues
 from poop.types.int import Int
-from poop.types.list import List
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.tuple import Tuple
@@ -49,11 +51,11 @@ class Dict(Object):
             d._data[k] = fill
         return d
 
-    def keys(self) -> List:
-        return List(*self._data.keys())
+    def keys(self) -> DictKeys:
+        return DictKeys(self)
 
-    def values(self) -> List:
-        return List(*self._data.values())
+    def values(self) -> DictValues:
+        return DictValues(self)
 
     def do(self, block: Callable[[Tuple], Any]) -> None:
         deque((block(Tuple(k, v)) for k, v in self._data.items()), maxlen=0)
@@ -82,8 +84,8 @@ class Dict(Object):
         new._data = self._data.copy()
         return new
 
-    def items(self) -> List:
-        return List(*[Tuple(k, v) for k, v in self._data.items()])
+    def items(self) -> DictItems:
+        return DictItems(self)
 
     def pop(self, key: Object) -> Object:
         return self._data.pop(key, none)

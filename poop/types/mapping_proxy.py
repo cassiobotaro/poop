@@ -13,6 +13,9 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.dict import Dict
+    from poop.types.dict_items import DictItems
+    from poop.types.dict_keys import DictKeys
+    from poop.types.dict_values import DictValues
     from poop.types.none import NoneClass
 
 
@@ -36,6 +39,15 @@ class MappingProxy(Object):
 
     def includes_key(self, key: Object) -> Boolean:
         return self._dict.includes_key(key)
+
+    def keys(self) -> DictKeys:
+        return self._dict.keys()
+
+    def values(self) -> DictValues:
+        return self._dict.values()
+
+    def items(self) -> DictItems:
+        return self._dict.items()
 
     def len(self) -> Int:
         return Int(len(self._dict))

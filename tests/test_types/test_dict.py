@@ -6,6 +6,9 @@ from poop.transformers.int import IntTransformer
 from poop.transformers.string import StrTransformer
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
+from poop.types.dict_items import DictItems
+from poop.types.dict_keys import DictKeys
+from poop.types.dict_values import DictValues
 from poop.types.int import Int
 from poop.types.int import Int as _Int
 from poop.types.list import List
@@ -87,20 +90,20 @@ def test_includes_key_false() -> None:
     assert Dict().includes_key(Str("x")) is false
 
 
-def test_keys_returns_list() -> None:
+def test_keys_returns_dict_keys_view() -> None:
     d = Dict()
     d.at_put(Str("a"), Int(1))
     d.at_put(Str("b"), Int(2))
-    assert isinstance(d.keys(), List)
+    assert isinstance(d.keys(), DictKeys)
     assert d.keys().includes(Str("a")) is true
     assert d.keys().includes(Str("b")) is true
 
 
-def test_values_returns_list() -> None:
+def test_values_returns_dict_values_view() -> None:
     d = Dict()
     d.at_put(Str("a"), Int(1))
     d.at_put(Str("b"), Int(2))
-    assert isinstance(d.values(), List)
+    assert isinstance(d.values(), DictValues)
     assert d.values().includes(Int(1)) is true
     assert d.values().includes(Int(2)) is true
 
@@ -228,10 +231,12 @@ def test_copy_is_shallow() -> None:
     assert c.len() == Int(1)
 
 
-def test_items_returns_list_of_tuples() -> None:
+def test_items_returns_dict_items_view() -> None:
     d = Dict()
     d.at_put(Int(1), Int(10))
-    assert d.items() == List(Tuple(Int(1), Int(10)))
+    items = d.items()
+    assert isinstance(items, DictItems)
+    assert items.list() == List(Tuple(Int(1), Int(10)))
 
 
 def test_pop_removes_and_returns_value() -> None:
