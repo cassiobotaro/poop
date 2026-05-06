@@ -23,9 +23,15 @@ def test_next_raises_validation_error() -> None:
         NoIterValidator().validate(tree)
 
 
-def test_error_suggests_do() -> None:
+def test_error_suggests_iter_method() -> None:
     tree = ast.parse("iter(x)")
-    with pytest.raises(ValidationError, match=r"\.do\("):
+    with pytest.raises(ValidationError, match=r"col\.iter\(\)"):
+        NoIterValidator().validate(tree)
+
+
+def test_error_for_next_suggests_next_method() -> None:
+    tree = ast.parse("next(x)")
+    with pytest.raises(ValidationError, match=r"it\.next\(\)"):
         NoIterValidator().validate(tree)
 
 
