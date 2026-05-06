@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
+from poop.types.frozen_set_iterator import FrozenSetIterator
 from poop.types.int import Int
 from poop.types.object import Object
 
@@ -56,6 +57,9 @@ class FrozenSet(_IterableMixin, Object):
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._data)
+
+    def iter(self) -> FrozenSetIterator:
+        return FrozenSetIterator(self._data)
 
     def __contains__(self, item: object) -> bool:
         return item in self._data
