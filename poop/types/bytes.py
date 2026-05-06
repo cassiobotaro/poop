@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
+from poop.types.bytes_iterator import BytesIterator
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -87,6 +88,9 @@ class Bytes(_IterableMixin, Object):
         from poop.types.int import Int
 
         return (Int(b) for b in self._value)
+
+    def iter(self) -> BytesIterator:
+        return BytesIterator(self)
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, Bytes):
