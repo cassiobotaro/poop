@@ -30,42 +30,9 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 ---
 
-## Open decisions — language semantics
-
-### 2. Smalltalk-style binary operator evaluation (left-to-right, no precedence)?
-
-**Today:** Python evaluates `3 + 1 * 2` as `3 + (1 * 2) = 5` (precedence: `*` before `+`). POOP inherits that because the parser is Python's (`poop/parser.py` → `ast.parse`).
-
-**In Smalltalk:** binary messages are evaluated **left-to-right with no precedence**. `3 + 1 * 2` reads as "send `+ 1` to `3`, then `* 2` to the result" → `(3 + 1) * 2 = 8`. It is a direct consequence of the principle "everything is a message to an object".
-
-**Tension between POOP principles:**
-- `INFECTIONS.md:8` — "Everything is an object and every operation is message passing".
-- `INFECTIONS.md` (Active types) — "Binary infix operators (`+`, `-`, `*`, `/`, `<<`, `>>`, `&`, `|`, `^`, `==`, `!=`, `<`, `<=`, `>`, `>=`)" are **explicitly allowed**.
-
-If every `+`, `*`, etc. is a message (`__add__`, `__mul__`), then the "grouping" via Python precedence is an artificial decision — a human reader expects pure message passing.
-
-**Possible implementation:** new transformer at `poop/transformers/binop_left_assoc.py` that rewrites `ast.BinOp` to be left-associative, ignoring precedence.
-
-Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtrees and must be preserved — the transformer only reorders flat chains.
-
-**Trade-offs:**
-- **Pro:** consistency with the "everything is a message" principle; POOP code becomes more predictable for someone reading it as a dialogue between objects; aligns with already-adopted Smalltalk-isms (`do:`, `if_true:`).
-- **Con:** breaks the expectation of any Python programmer who looks at the code; mathematical expressions need explicit parentheses for the usual semantics (`3 + (1 * 2)`); static tools (ty, IDE inspections) evaluate with Python precedence and could disagree with the runtime; very "infectious" — affects every arithmetic expression in every example.
-
-**Cases to consider:**
-- Chained comparisons (`a < b < c`) — Python already has special semantics; preserve or reject?
-- Unary operators (`-x`) — already banned via `no_unary_minus`, so they do not interfere.
-- Augmented assignment (`x += y * z`) — does the RHS undergo the same reordering?
-
-**Effort:** medium (transformer + tests + updates to examples that depend on implicit precedence). **Impact:** observable semantic change in every POOP program with mixed operators; aligns the language with its founding principle.
-
-**Decision:** adopt Smalltalk-style left-to-right evaluation, or keep Python precedence for pragmatism?
-
----
-
 ## Open decisions — API review
 
-### 3. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
+### 2. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
 
 **Context:** Type constructor calls (`int(expr)`, `float(expr)`, `str(expr)`, etc.) are already intercepted by the existing transformers — `int(Str("42"))` correctly produces a POOP `Int` at runtime. This is documented in `INFECTIONS.md` as "Constructor builtins are intercepted, not banned".
 
@@ -84,7 +51,7 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 
 ## Open decisions — documentation
 
-### 4. Documentation site with MkDocs?
+### 3. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
