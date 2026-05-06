@@ -538,7 +538,7 @@ Concrete root of all POOP types. Provides default implementations for universal 
 
 ### Collection iterable methods — `poop/types/_iterable_mixin.py`
 
-`List`, `Tuple`, `Set`, `FrozenSet`, `Range`, `Bytes`, `ByteArray`, and `MemoryView` all inherit the following methods from `_IterableMixin`:
+`List`, `Tuple`, `Set`, `FrozenSet`, `Range`, `Bytes`, `ByteArray`, `MemoryView`, `Enumerate`, `Zip`, `DictKeys`, `DictValues`, and `DictItems` all inherit the following methods from `_IterableMixin`:
 
 | Smalltalk message | POOP method | Behavior |
 |---|---|---|
@@ -551,10 +551,12 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | — | `sum()` | sum of elements; returns `Int(0)` for empty collection |
 | — | `all(block)` | `true` if block holds for every element |
 | — | `any(block)` | `true` if block holds for at least one element |
+| — | `enumerate(start=Int(0))` | returns an `Enumerate` of `Tuple(Int(i), item)` pairs |
+| — | `zip(*others, strict=false)` | returns a `Zip` of `Tuple(...)` |
 
-`map`/`filter`/`filter_false` return the same type for `List`, `Tuple`, `Set`, and `FrozenSet`; they return `List` for `Range`, `Bytes`, `ByteArray`, and `MemoryView` (those types cannot be reconstructed from arbitrary transformed elements).
+`map`/`filter`/`filter_false` return the same type for `List`, `Tuple`, `Set`, and `FrozenSet`; they return `List` for every other inheritor (`Range`, `Bytes`, `ByteArray`, `MemoryView`, `Enumerate`, `Zip`, `DictKeys`, `DictValues`, `DictItems`) — those types cannot be reconstructed from arbitrary transformed elements.
 
-`Bytes`, `ByteArray`, and `MemoryView` only expose `do` and `map` from this mixin. `Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements.
+`Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements. `Bytes` and `ByteArray` override `find` for substring search (different semantics from the mixin's element-finding `find`).
 
 ### Range — `poop/types/range.py`
 
