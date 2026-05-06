@@ -158,3 +158,51 @@ def test_str_repr() -> None:
 def test_unhashable() -> None:
     with pytest.raises(TypeError):
         hash(DictKeys(_make()))
+
+
+def test_reflected_or() -> None:
+    keys = DictKeys(_make())
+    result = Set(Str("c")) | keys
+    assert result._data == {Str("a"), Str("b"), Str("c")}
+
+
+def test_reflected_and() -> None:
+    keys = DictKeys(_make())
+    result = Set(Str("a"), Str("x")) & keys
+    assert result._data == {Str("a")}
+
+
+def test_reflected_sub() -> None:
+    keys = DictKeys(_make())
+    result = Set(Str("a"), Str("x")) - keys
+    assert result._data == {Str("x")}
+
+
+def test_reflected_xor() -> None:
+    keys = DictKeys(_make())
+    result = Set(Str("b"), Str("c")) ^ keys
+    assert result._data == {Str("a"), Str("c")}
+
+
+def test_eq_with_other_type() -> None:
+    keys = DictKeys(_make())
+    assert (keys == Int(0)) is false
+
+
+def test_ne() -> None:
+    a = DictKeys(_make())
+    b = DictKeys(Dict())
+    assert (a != b) is true
+    assert (a != a) is false
+
+
+def test_other_keys_passthrough() -> None:
+    # When other is a raw Python set, _other_keys returns it as-is
+    keys = DictKeys(_make())
+    result = keys.isdisjoint(set())
+    assert result is true
+
+
+def test_reversed_dunder() -> None:
+    keys = DictKeys(_make())
+    assert list(reversed(keys))[0] == Str("b")

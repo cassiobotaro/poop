@@ -119,3 +119,48 @@ def test_unhashable() -> None:
     mp = MappingProxy(Dict())
     with pytest.raises(TypeError):
         hash(mp)
+
+
+def test_keys_returns_dict_keys() -> None:
+    from poop.types.dict_keys import DictKeys
+
+    mp = MappingProxy(_make())
+    assert isinstance(mp.keys(), DictKeys)
+
+
+def test_values_returns_dict_values() -> None:
+    from poop.types.dict_values import DictValues
+
+    mp = MappingProxy(_make())
+    assert isinstance(mp.values(), DictValues)
+
+
+def test_items_returns_dict_items() -> None:
+    from poop.types.dict_items import DictItems
+
+    mp = MappingProxy(_make())
+    assert isinstance(mp.items(), DictItems)
+
+
+def test_iter_method_returns_dict_key_iterator() -> None:
+    from poop.types.dict_key_iterator import DictKeyIterator
+
+    mp = MappingProxy(_make())
+    assert isinstance(mp.iter(), DictKeyIterator)
+
+
+def test_reversed_dunder() -> None:
+    mp = MappingProxy(_make())
+    assert list(reversed(mp)) == [Str("b"), Str("a")]
+
+
+def test_eq_with_other_type() -> None:
+    mp = MappingProxy(_make())
+    assert (mp == Int(0)) is false
+
+
+def test_ne_with_dict_proxy() -> None:
+    a = MappingProxy(_make())
+    b = MappingProxy(Dict())
+    assert (a != b) is true
+    assert (a != a) is false

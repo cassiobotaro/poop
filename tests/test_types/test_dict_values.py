@@ -108,3 +108,8 @@ def test_str_repr() -> None:
 def test_unhashable() -> None:
     with pytest.raises(TypeError):
         hash(DictValues(_make()))
+
+
+def test_reversed_dunder() -> None:
+    values = DictValues(_make())
+    assert list(reversed(values)) == [Int(2), Int(1)]

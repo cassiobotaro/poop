@@ -164,3 +164,68 @@ def test_str_repr() -> None:
 def test_unhashable() -> None:
     with pytest.raises(TypeError):
         hash(DictItems(_make()))
+
+
+def test_reflected_or() -> None:
+    items = DictItems(_make())
+    result = Set(Tuple(Str("c"), Int(3))) | items
+    assert {x for x in result._data} == {
+        Tuple(Str("a"), Int(1)),
+        Tuple(Str("b"), Int(2)),
+        Tuple(Str("c"), Int(3)),
+    }
+
+
+def test_reflected_and() -> None:
+    items = DictItems(_make())
+    result = Set(Tuple(Str("a"), Int(1)), Tuple(Str("x"), Int(0))) & items
+    assert result._data == {Tuple(Str("a"), Int(1))}
+
+
+def test_reflected_sub() -> None:
+    items = DictItems(_make())
+    result = Set(Tuple(Str("a"), Int(1)), Tuple(Str("x"), Int(0))) - items
+    assert result._data == {Tuple(Str("x"), Int(0))}
+
+
+def test_reflected_xor() -> None:
+    items = DictItems(_make())
+    result = Set(Tuple(Str("b"), Int(2)), Tuple(Str("c"), Int(3))) ^ items
+    assert result._data == {Tuple(Str("a"), Int(1)), Tuple(Str("c"), Int(3))}
+
+
+def test_contains_non_tuple() -> None:
+    items = DictItems(_make())
+    assert Int(0) not in items
+    assert Tuple(Str("a")) not in items  # arity != 2
+
+
+def test_includes_non_pair() -> None:
+    items = DictItems(_make())
+    assert items.includes(Tuple(Str("a"))) is false
+
+
+def test_eq_with_other_type() -> None:
+    items = DictItems(_make())
+    assert (items == Int(0)) is false
+
+
+def test_ne() -> None:
+    a = DictItems(_make())
+    b = DictItems(Dict())
+    assert (a != b) is true
+    assert (a != a) is false
+
+
+def test_reversed_dunder() -> None:
+    items = DictItems(_make())
+    rev = list(reversed(items))
+    assert rev[0] == Tuple(Str("b"), Int(2))
+
+
+def test_other_items_set_of_non_tuples() -> None:
+    # _other_items handles Sets of non-Tuple elements gracefully (returns empty pairs)
+    items = DictItems(_make())
+    other = Set(Int(99))  # not a Tuple
+    result = items.isdisjoint(other)
+    assert result is true
