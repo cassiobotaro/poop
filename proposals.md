@@ -30,28 +30,9 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 ---
 
-## Open decisions — API review
-
-### 2. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
-
-**Context:** Type constructor calls (`int(expr)`, `float(expr)`, `str(expr)`, etc.) are already intercepted by the existing transformers — `int(Str("42"))` correctly produces a POOP `Int` at runtime. This is documented in `INFECTIONS.md` as "Constructor builtins are intercepted, not banned".
-
-**Remaining question:** POOP types also expose conversion as methods: `Str("42").int() -> Int`, `Str("3.14").float() -> Float`, `Int(3).float() -> Float`, etc. (e.g., `poop/types/string.py:39`, `poop/types/int.py:86`).
-
-The method name `int` on `Str` is the same identifier as the Python type `int`. A human reading `Str("42").int()` may be momentarily confused about whether `int` is a method or a constructor call. This is purely a readability concern — the execution is unambiguous.
-
-**Options:**
-
-- **(a) Status quo** — keep `Str.int()`, `Int.float()`, etc. The method names follow the Python convention ("Python names, not Smalltalk names"). The transformer already intercepts the bare `int(expr)` call form, so both forms work correctly. The naming is consistent with how `ord()` on `Str` mirrors `ord(c)` the builtin.
-- **(b) Rename to `to_int()`, `to_float()`** — eliminates the ambiguity at the cost of breaking the "Python names" principle. `Str("42").to_int()` reads as an explicit conversion, not a constructor lookup.
-
-**Decision:** keep status quo (a) or rename (b)?
-
----
-
 ## Open decisions — documentation
 
-### 3. Documentation site with MkDocs?
+### 2. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
