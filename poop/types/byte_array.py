@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
+from poop.types.byte_array_iterator import ByteArrayIterator
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
@@ -82,6 +83,9 @@ class ByteArray(_IterableMixin, Object):
 
     def __iter__(self) -> Iterator[Int]:
         return (Int(b) for b in self._value)
+
+    def iter(self) -> ByteArrayIterator:
+        return ByteArrayIterator(self)
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, ByteArray):
