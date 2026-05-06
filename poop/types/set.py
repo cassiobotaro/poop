@@ -112,16 +112,24 @@ class Set(_IterableMixin, Object):
             return false if self._data == other._data else true
         return true
 
-    def __and__(self, other: Set) -> Set:
+    def __and__(self, other: object) -> Any:
+        if not isinstance(other, Set):
+            return NotImplemented
         return Set(*self._data & other._data)
 
-    def __or__(self, other: Set) -> Set:
+    def __or__(self, other: object) -> Any:
+        if not isinstance(other, Set):
+            return NotImplemented
         return Set(*self._data | other._data)
 
-    def __sub__(self, other: Set) -> Set:
+    def __sub__(self, other: object) -> Any:
+        if not isinstance(other, Set):
+            return NotImplemented
         return Set(*self._data - other._data)
 
-    def __xor__(self, other: Set) -> Set:
+    def __xor__(self, other: object) -> Any:
+        if not isinstance(other, Set):
+            return NotImplemented
         return Set(*self._data ^ other._data)
 
     def __str__(self) -> str:
