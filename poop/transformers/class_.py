@@ -34,7 +34,8 @@ class ClassTransformer(BaseTransformer):
         class Foo(Bar):    → unchanged (already has a POOP or custom base)
 
     This mirrors Python 3's implicit inheritance from `object`, but uses
-    POOP's Object so user classes gain print(), responds_to(), is_nil(), etc.
+    POOP's Object so user classes gain print(), is_none(), not_none(),
+    class_name(), is_instance(), etc.
     """
 
     rewriter = _ClassRewriter
