@@ -6,6 +6,7 @@ from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
+from poop.types.set_iterator import SetIterator
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
@@ -94,6 +95,9 @@ class Set(_IterableMixin, Object):
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._data)
+
+    def iter(self) -> SetIterator:
+        return SetIterator(self._data)
 
     def __contains__(self, item: object) -> bool:
         return item in self._data
