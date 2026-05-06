@@ -608,6 +608,8 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 > **Tradeoff**: `exc_type` must be a native Python exception class. Mirroring Python's full hierarchy (~100+ classes) into POOP types is impractical. The handler always receives an `Error` wrapper regardless.
 
+`Try` is exposed in `DEFAULT_NAMESPACE` via `TryTransformer` (`poop/transformers/try_.py`) — a namespace-only transformer that injects the binding without rewriting AST.
+
 ### With — `poop/types/with_.py`
 
 `With(Object)` implements the context manager protocol as a message-passing builder. The context manager block is executed lazily — only when `.do()` is called.
@@ -619,6 +621,8 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 The context manager object must implement Python's `__enter__`/`__exit__` protocol — a deliberate primitive leak, consistent with `Try` using native exception types. Exceptions propagate via the standard `__exit__` return value: if `__exit__` returns falsy, the exception is re-raised; truthy suppresses it.
 
 > **Tradeoff**: context managers must implement Python's native protocol (`__enter__`/`__exit__`). POOP cannot redefine resource acquisition semantics without reimplementing every standard context manager (files, locks, etc.), which is impractical.
+
+`With` is exposed in `DEFAULT_NAMESPACE` via `WithTransformer` (`poop/transformers/with_.py`) — a namespace-only transformer that injects the binding without rewriting AST.
 
 ## Active transformers
 
