@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types.boolean import false, true
+from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
@@ -65,6 +66,9 @@ class Dict(Object):
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._data)
+
+    def iter(self) -> DictKeyIterator:
+        return DictKeyIterator(self._data)
 
     def __contains__(self, item: object) -> bool:
         return item in self._data
