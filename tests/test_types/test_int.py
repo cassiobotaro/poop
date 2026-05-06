@@ -195,16 +195,23 @@ def test_is_integer_always_true() -> None:
     assert Int(42).is_integer() is true
 
 
-def test_int() -> None:
-    assert Int(3).int() is Int(3) or Int(3).int() == Int(3)
+def test_int_constructor_identity() -> None:
+    from poop.transformers.int import _poop_int_from
+
+    n = Int(3)
+    assert _poop_int_from(n) is n
 
 
-def test_float() -> None:
-    assert Int(3).float() == Float(3.0)
+def test_float_constructor() -> None:
+    from poop.transformers.float import _poop_float_from
+
+    assert _poop_float_from(Int(3)) == Float(3.0)
 
 
-def test_complex() -> None:
-    assert Int(3).complex() == Complex(3 + 0j)
+def test_complex_constructor() -> None:
+    from poop.transformers.complex import _poop_complex_from
+
+    assert _poop_complex_from(Int(3)) == Complex(3 + 0j)
 
 
 def test_real_returns_self() -> None:

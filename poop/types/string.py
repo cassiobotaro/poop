@@ -9,13 +9,11 @@ from poop.types.str_iterator import StrIterator
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
-    from poop.types.float import Float
     from poop.types.int import Int
     from poop.types.list import List
     from poop.types.slice import Slice
     from poop.types.tuple import Tuple
 
-_int = int  # alias to avoid shadowing by Str.int() method
 _str = str  # alias to avoid shadowing in annotations
 
 
@@ -30,23 +28,13 @@ class Str(Object):
 
         return Int(len(self._value))
 
-    def __len__(self) -> _int:
+    def __len__(self) -> int:
         return len(self._value)
 
     def ord(self) -> Int:
         from poop.types.int import Int
 
         return Int(ord(self._value))
-
-    def int(self) -> Int:
-        from poop.types.int import Int
-
-        return Int(_int(self._value))
-
-    def float(self) -> Float:
-        from poop.types.float import Float
-
-        return Float(float(self._value))
 
     def input(self) -> Str:
         return Str(builtins.input(self._value))
@@ -295,7 +283,7 @@ class Str(Object):
     def __ge__(self, other: Str) -> Boolean:
         return true if self._value >= other._value else false
 
-    def __hash__(self) -> _int:
+    def __hash__(self) -> int:
         return hash(self._value)
 
     def __str__(self) -> _str:

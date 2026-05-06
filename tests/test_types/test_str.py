@@ -262,11 +262,15 @@ def test_join() -> None:
 
 
 def test_int_parses_integer_string() -> None:
-    assert Str("42").int() == Int(42)
+    from poop.transformers.int import _poop_int_from
+
+    assert _poop_int_from(Str("42")) == Int(42)
 
 
 def test_float_parses_float_string() -> None:
-    assert Str("3.14").float() == Float(3.14)
+    from poop.transformers.float import _poop_float_from
+
+    assert _poop_float_from(Str("3.14")) == Float(3.14)
 
 
 def test_casefold() -> None:

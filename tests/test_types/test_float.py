@@ -157,8 +157,10 @@ def test_int_conversion() -> None:
     assert int(Float(3.9)) == 3
 
 
-def test_complex() -> None:
-    assert Float(2.5).complex() == Complex(2.5 + 0j)
+def test_complex_constructor() -> None:
+    from poop.transformers.complex import _poop_complex_from
+
+    assert _poop_complex_from(Float(2.5)) == Complex(2.5 + 0j)
 
 
 def test_is_integer_true() -> None:
@@ -174,13 +176,17 @@ def test_floordiv() -> None:
 
 
 def test_int_truncates() -> None:
-    assert Float(3.7).int() == Int(3)
-    assert Float(-2.9).int() == Int(-2)
+    from poop.transformers.int import _poop_int_from
+
+    assert _poop_int_from(Float(3.7)) == Int(3)
+    assert _poop_int_from(Float(-2.9)) == Int(-2)
 
 
-def test_float_identity() -> None:
+def test_float_constructor_identity() -> None:
+    from poop.transformers.float import _poop_float_from
+
     f = Float(1.5)
-    assert f.float() is f
+    assert _poop_float_from(f) is f
 
 
 def test_conjugate_returns_self() -> None:

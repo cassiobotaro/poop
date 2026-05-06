@@ -6,7 +6,6 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
-    from poop.types.complex import Complex
     from poop.types.int import Int
     from poop.types.string import Str
     from poop.types.tuple import Tuple
@@ -29,19 +28,6 @@ class Float(Object):
 
     def min(self, other: Float) -> Float:
         return self if self._value <= other._value else other
-
-    def int(self) -> Int:
-        from poop.types.int import Int
-
-        return Int(_int(self._value))
-
-    def float(self) -> Float:
-        return self
-
-    def complex(self) -> Complex:
-        from poop.types.complex import Complex
-
-        return Complex(complex(self._value))
 
     def is_integer(self) -> Boolean:
         return true if self._value.is_integer() else false
