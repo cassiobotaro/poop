@@ -1,6 +1,7 @@
 from poop.types.boolean import Boolean, false, true
 from poop.types.boolean import false as false2
 from poop.types.boolean import true as true2
+from poop.types.none import none
 
 
 def test_true_is_instance_of_boolean() -> None:
@@ -29,7 +30,7 @@ def test_if_true_calls_block_on_true() -> None:
 
 
 def test_if_true_returns_none_on_false() -> None:
-    assert false.if_true(lambda: 42) is None
+    assert false.if_true(lambda: 42) is none
 
 
 def test_if_false_calls_block_on_false() -> None:
@@ -38,7 +39,7 @@ def test_if_false_calls_block_on_false() -> None:
 
 
 def test_if_false_returns_none_on_true() -> None:
-    assert true.if_false(lambda: 42) is None
+    assert true.if_false(lambda: 42) is none
 
 
 def test_if_true_if_false_selects_true_branch() -> None:

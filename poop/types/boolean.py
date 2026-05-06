@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import final
+from typing import TYPE_CHECKING, final
 
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.none import NoneClass
 
 
 class Boolean(Object, ABC):
@@ -14,10 +17,10 @@ class Boolean(Object, ABC):
         return str(self)
 
     @abstractmethod
-    def if_true[T](self, block: Callable[[], T]) -> T | None: ...
+    def if_true[T](self, block: Callable[[], T]) -> T | NoneClass: ...
 
     @abstractmethod
-    def if_false[T](self, block: Callable[[], T]) -> T | None: ...
+    def if_false[T](self, block: Callable[[], T]) -> T | NoneClass: ...
 
     @abstractmethod
     def if_true_if_false[T](
@@ -71,8 +74,10 @@ class _TrueClass(Boolean):
     def if_true[T](self, block: Callable[[], T]) -> T:
         return block()
 
-    def if_false[T](self, block: Callable[[], T]) -> None:
-        return None
+    def if_false[T](self, block: Callable[[], T]) -> NoneClass:
+        from poop.types.none import none
+
+        return none
 
     def if_true_if_false[T](
         self,
@@ -126,8 +131,10 @@ class _TrueClass(Boolean):
 class _FalseClass(Boolean):
     __slots__ = ()
 
-    def if_true[T](self, block: Callable[[], T]) -> None:
-        return None
+    def if_true[T](self, block: Callable[[], T]) -> NoneClass:
+        from poop.types.none import none
+
+        return none
 
     def if_false[T](self, block: Callable[[], T]) -> T:
         return block()
