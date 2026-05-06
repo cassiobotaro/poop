@@ -65,49 +65,7 @@ Detail: explicit parentheses in the source (`3 + (1 * 2)`) become nested subtree
 
 ## Open decisions — API review
 
-### 3. Audit `__slots__` usage on POOP types?
-
-**Today:** `INFECTIONS.md` declares the principle: *"`__slots__` on all POOP types: instance variables are declared in the class definition and fixed — never added dynamically to instances. Subclasses that need new instance variables can declare their own `__slots__` or omit them."*
-
-A quick survey of `poop/types/*.py` shows every type currently declares `__slots__`:
-
-| Pattern | Types |
-|---|---|
-| `__slots__ = ()` | `Object`, `Boolean` (and the abstract `_TrueClass`/`_FalseClass`), `NoneClass` |
-| `__slots__ = ("_value",)` | `Int`, `Float`, `Complex`, `Str`, `Bytes`, `ByteArray`, `MemoryView` |
-| `__slots__ = ("_items",)` | `List`, `Tuple` |
-| `__slots__ = ("_data",)` | `Set`, `FrozenSet`, `Dict` |
-| `__slots__ = ("_start", "_step", "_stop")` | `Range` |
-| `__slots__ = ("_block", "_finally_block", "_handlers")` | `Try` |
-| `__slots__ = ("_cm_block",)` | `With` |
-| `__slots__ = ("_fn",)` | `Block` |
-| `__slots__ = ("_exception",)` | `Error` |
-
-So the principle is currently **descriptively accurate** for the library types. The audit asks the deeper questions:
-
-**Open sub-questions:**
-
-1. **Naming consistency.** Three different conventions coexist for "the wrapped Python value":
-   - `_value` for scalar wrappers (`Int`, `Float`, `Str`, …) — including `MemoryView` and `ByteArray` which wrap mutable structures.
-   - `_items` for sequence wrappers (`List`, `Tuple`).
-   - `_data` for set/dict wrappers (`Set`, `FrozenSet`, `Dict`).
-   Should these collapse to a single `_value` everywhere (uniform), stay split by category (current — descriptive), or be renamed to follow Python's semi-standard `__wrapped__` / `_inner`?
-
-2. **End-user classes.** The principle is written about library types; there is no enforcement (validator) that user classes inheriting from `Object` must declare `__slots__`. Should there be? Today a user can write `class Foo(Object): pass` and freely set arbitrary attributes — directly contradicting the spirit of the rule.
-
-3. **Empty `__slots__ = ()`.** `Object`, `Boolean`, `NoneClass` declare empty slots. This is functionally the same as inheriting from a slotted base, but makes the declaration explicit. Is the explicit empty-tuple a documented requirement, or an accident? Could it be skipped on abstract types (`Boolean`)?
-
-4. **Annotation alignment.** Several types declare slot names as strings in `__slots__` and again in `__init__` — but no class-level type annotation matches the slot. This means `ty` cannot infer the slot's type from the class definition (only from the `__init__` body). Should slots be paired with class-level annotations (e.g., `__slots__ = ("_value",)` plus `_value: int`) for static-typing clarity?
-
-5. **`__hash__ = None` + slots.** `List`, `ByteArray`, `Set`, `Dict` declare `__hash__ = None` to be explicitly unhashable. This is a class attribute, not a slot — and Python's slot machinery requires care so that `__hash__ = None` does not collide with slot generation. Should this pattern be lifted into a base class or mixin?
-
-**Effort:** (1) medium — rename + tests/examples touched. (2) medium — new validator + tests. (3) small — documentation. (4) medium — sweep types adding annotations. (5) small — mixin extraction.
-
-**Impact:** principle hygiene; sets the stage for tighter static guarantees; closes the gap between "library types follow `__slots__`" and "user classes inheriting from `Object` may not".
-
-**Decision:** which sub-questions to act on, and in what order? Or accept the current state as descriptively correct and leave only documentation tightening?
-
-### 4. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
+### 3. Conversion method naming — `Str.int()`, `Int.float()`, etc.?
 
 **Context:** Type constructor calls (`int(expr)`, `float(expr)`, `str(expr)`, etc.) are already intercepted by the existing transformers — `int(Str("42"))` correctly produces a POOP `Int` at runtime. This is documented in `INFECTIONS.md` as "Constructor builtins are intercepted, not banned".
 
@@ -126,7 +84,7 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 
 ## Open decisions — documentation
 
-### 5. Documentation site with MkDocs?
+### 4. Documentation site with MkDocs?
 
 **Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
 
