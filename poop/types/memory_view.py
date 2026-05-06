@@ -5,6 +5,7 @@ from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
+from poop.types.memory_view_iterator import MemoryViewIterator
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -30,6 +31,9 @@ class MemoryView(_IterableMixin, Object):
 
     def __iter__(self) -> Iterator[Int]:
         return (Int(b) for b in self._value)
+
+    def iter(self) -> MemoryViewIterator:
+        return MemoryViewIterator(self)
 
     def tobytes(self) -> Bytes:
         return Bytes(self._value.tobytes())
