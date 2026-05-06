@@ -205,6 +205,41 @@ The method name `int` on `Str` is the same identifier as the Python type `int`. 
 
 **Decision:** adopt MkDocs? If yes, which SSOT — `INFECTIONS.md` extracted or `docs/` migrated?
 
+### 7. Document missing types in `INFECTIONS.md`
+
+**Today:** the `## Active types` section in `INFECTIONS.md` only catalogues an API for `Object`, `NoneClass`, `Boolean`, `Block`, `Range`, `Error`, `Try`, `With`, the `_IterableMixin` shared methods, `Object.print`, the three `Dict views`, and `MappingProxy`. The remaining types appear only under `## Active transformers` (which describes AST rewrites, not the type's API) or as scattered notes.
+
+**Types currently without a dedicated API section:**
+
+- Scalars: `Int`, `Float`, `Complex`
+- Sequences: `Str`, `Bytes`, `ByteArray`, `MemoryView`
+- Collections: `List`, `Tuple`, `Set`, `FrozenSet`, `Dict`
+- Lazy iterables: `Enumerate`, `Zip`
+- Slicing: `Slice` (has a section under `## Slicing` at the end of the file, structurally inconsistent with the others)
+- Iterators: `_IteratorBase`, `ListIterator`, `TupleIterator`, `SetIterator`, `FrozenSetIterator`, `DictKeyIterator`, `DictValueIterator`, `DictItemIterator`, `DictReverseKeyIterator`, `DictReverseValueIterator`, `DictReverseItemIterator`, `StrIterator`, `RangeIterator`, `BytesIterator`, `ByteArrayIterator`, `MemoryViewIterator`
+
+That is **~28 types** without canonical API documentation in `INFECTIONS.md`.
+
+**Discovery context:** flagged during the validators/transformers/types audit (proposals.md `#5` Wave 3a). The audit could only verify drift on already-documented types; missing sections fell out of scope.
+
+**Proposed scope:**
+
+1. **One section per type** under `## Active types`, with a method table (Smalltalk message → POOP method → behavior, where applicable; otherwise just method/behavior).
+2. **Move `Slice`** from `## Slicing` (end of file) into `## Active types` for consistency.
+3. **Iterator section**: a single block explaining `_IteratorBase` and listing the 11 specialized iterators in a table — they share an API and are mostly interchangeable.
+4. **Cover all dunders → public alias mappings** explicitly. The principle "Dunders exposed as regular methods" needs every exception called out.
+5. **Sweep return-types** to confirm the rule "All POOP methods return POOP types" is descriptive (not aspirational).
+
+**Effort:** medium-large. Each scalar/collection has 20–60 public methods; iterators are smaller. Splitting by type category lets the work proceed in waves (e.g. one commit per type or per category).
+
+**Open questions:**
+
+- **(a) Granularity.** One commit per type (~28 commits), or per category (~5: scalars, sequences, collections, iterables, iterators)?
+- **(b) Source-of-truth interaction.** If proposal `#6` (MkDocs) is adopted with `docs/` as SSoT, is this work better done directly under `docs/types/*.md` instead? Trade-off: deciding `#6` first avoids redoing the work; doing this first gives `#6` something to render.
+- **(c) Curated vs exhaustive.** The `Object` section is curated (mapped to Smalltalk messages, with a "see source for full list" note added in this audit). Should other type sections follow the same pattern, or be exhaustive?
+
+**Decision:** adopt? If yes, settle (a) granularity and (c) curated-vs-exhaustive.
+
 ---
 
 ## Stay banned (no proposal)
