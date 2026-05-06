@@ -567,8 +567,16 @@ Concrete root of all POOP types. Provides default implementations for universal 
 | `filter(block)` | filters → `List` |
 | `filter_false(block)` | filters inverse → `List` |
 | `find(block)` | first satisfying, or POOP `none` |
+| `iter()` | returns a one-shot `RangeIterator` |
 | `len()` | returns `Int` |
+| `at(index)` | returns the value at `index` as `Int` |
 | `slice(start, stop, step=None)` | slice → `List` |
+| `slice(slice_obj)` | slice via `Slice` value object → `List` |
+| `reversed()` | returns reversed `Range` |
+| `includes(value)` | `true` if `value` is in the range |
+| `count(value)` | number of occurrences (always `0` or `1`) |
+| `index(value)` | position of `value`, or raises `ValueError` |
+| `start` / `stop` / `step` | properties exposing the underlying `Int` bounds |
 
 ### Object.print — `poop/types/object.py`
 
