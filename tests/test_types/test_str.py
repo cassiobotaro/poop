@@ -432,3 +432,42 @@ def test_eq_with_non_str_returns_false() -> None:
 
 def test_ne_with_non_str_returns_true() -> None:
     assert Str("hello").__ne__(Int(1)) is true
+
+
+def test_input_with_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[str] = []
+
+    def fake_input(prompt: str) -> str:
+        seen.append(prompt)
+        return "alice"
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    assert Str("Name: ").input() == Str("alice")
+    assert seen == ["Name: "]
+
+
+def test_input_empty_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[str] = []
+
+    def fake_input(prompt: str) -> str:
+        seen.append(prompt)
+        return "data"
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    assert Str("").input() == Str("data")
+    assert seen == [""]
+
+
+def test_input_returns_str_type(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("builtins.input", lambda _prompt: "x")
+    result = Str("? ").input()
+    assert isinstance(result, Str)
+
+
+def test_input_propagates_eof(monkeypatch: pytest.MonkeyPatch) -> None:
+    def raise_eof(_prompt: str) -> str:
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", raise_eof)
+    with pytest.raises(EOFError):
+        Str("? ").input()

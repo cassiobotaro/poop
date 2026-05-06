@@ -1,3 +1,4 @@
+import builtins
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
@@ -46,6 +47,9 @@ class Str(Object):
         from poop.types.float import Float
 
         return Float(float(self._value))
+
+    def input(self) -> Str:
+        return Str(builtins.input(self._value))
 
     def at(self, index: Int) -> Str:
         return Str(self._value[index._value])
