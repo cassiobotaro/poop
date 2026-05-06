@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class Range(_IterableMixin, Object):
-    __slots__ = ("_start", "_step", "_stop")
+    __slots__ = ("_start", "_stop", "_step")
 
     def __init__(self, start: Int, stop: Int, step: Int | None = None) -> None:
         self._start = start
