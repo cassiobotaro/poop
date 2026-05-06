@@ -57,8 +57,9 @@ class Dict(Object):
     def values(self) -> DictValues:
         return DictValues(self)
 
-    def do(self, block: Callable[[Tuple], Any]) -> None:
+    def do(self, block: Callable[[Tuple], Any]) -> NoneClass:
         deque((block(Tuple(k, v)) for k, v in self._data.items()), maxlen=0)
+        return none
 
     def len(self) -> Int:
         return Int(len(self._data))
