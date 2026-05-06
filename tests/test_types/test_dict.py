@@ -232,11 +232,13 @@ def test_copy_is_shallow() -> None:
 
 
 def test_items_returns_dict_items_view() -> None:
+    from poop.transformers.list import _poop_list_from
+
     d = Dict()
     d.at_put(Int(1), Int(10))
     items = d.items()
     assert isinstance(items, DictItems)
-    assert items.list() == List(Tuple(Int(1), Int(10)))
+    assert _poop_list_from(items) == List(Tuple(Int(1), Int(10)))
 
 
 def test_pop_removes_and_returns_value() -> None:

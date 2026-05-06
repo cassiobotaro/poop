@@ -17,7 +17,6 @@ from poop.types.tuple import Tuple
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.dict import Dict
-    from poop.types.list import List
 
 
 def _other_items(other: Any) -> Any:
@@ -77,11 +76,6 @@ class DictItems(_IterableMixin, Object):
 
     def mapping(self) -> MappingProxy:
         return MappingProxy(self._dict)
-
-    def list(self) -> List:
-        from poop.types.list import List
-
-        return List(*(Tuple(k, v) for k, v in self._dict._data.items()))
 
     def _own_set(self) -> set:
         return set(self._dict._data.items())

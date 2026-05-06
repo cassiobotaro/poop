@@ -14,7 +14,6 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.dict import Dict
-    from poop.types.list import List
 
 
 @final
@@ -53,11 +52,6 @@ class DictValues(_IterableMixin, Object):
 
     def mapping(self) -> MappingProxy:
         return MappingProxy(self._dict)
-
-    def list(self) -> List:
-        from poop.types.list import List
-
-        return List(*self._dict._data.values())
 
     def __str__(self) -> str:
         items = ", ".join(repr(v) for v in self._dict._data.values())

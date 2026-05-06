@@ -68,8 +68,10 @@ def test_mapping() -> None:
 
 
 def test_list_escape() -> None:
+    from poop.transformers.list import _poop_list_from
+
     items = DictItems(_make())
-    lst = items.list()
+    lst = _poop_list_from(items)
     assert isinstance(lst, List)
     assert lst == List(Tuple(Str("a"), Int(1)), Tuple(Str("b"), Int(2)))
 

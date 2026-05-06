@@ -16,7 +16,6 @@ from poop.types.set import Set
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.dict import Dict
-    from poop.types.list import List
 
 
 def _other_keys(other: Any) -> Any:
@@ -67,11 +66,6 @@ class DictKeys(_IterableMixin, Object):
 
     def mapping(self) -> MappingProxy:
         return MappingProxy(self._dict)
-
-    def list(self) -> List:
-        from poop.types.list import List
-
-        return List(*self._dict._data.keys())
 
     def __or__(self, other: Any) -> Set:
         return Set(*(self._dict._data.keys() | _other_keys(other)))
