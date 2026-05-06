@@ -165,3 +165,31 @@ def test_transformer_strict_unequal_raises() -> None:
     assert isinstance(z, Zip)
     with pytest.raises(ValueError):
         list(z)
+
+
+def test_iter_returns_self() -> None:
+    z = List(Int(1), Int(2)).zip(List(Int(3), Int(4)))
+    assert z.iter() is z
+
+
+def test_next_advances() -> None:
+    z = List(Int(1), Int(2)).zip(List(Int(10), Int(20)))
+    assert z.next() == Tuple(Int(1), Int(10))
+    assert z.next() == Tuple(Int(2), Int(20))
+
+
+def test_exhaustion_raises_stop_iteration() -> None:
+    z = List(Int(1)).zip(List(Int(10)))
+    z.next()
+    with pytest.raises(StopIteration):
+        z.next()
+
+
+def test_do_remains_restartable() -> None:
+    z = List(Int(1), Int(2)).zip(List(Int(10), Int(20)))
+    seen_a: list[Tuple] = []
+    z.do(lambda t: seen_a.append(t))
+    seen_b: list[Tuple] = []
+    z.do(lambda t: seen_b.append(t))
+    expected = [Tuple(Int(1), Int(10)), Tuple(Int(2), Int(20))]
+    assert seen_a == seen_b == expected

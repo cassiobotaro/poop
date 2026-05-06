@@ -12,15 +12,27 @@ if TYPE_CHECKING:
 
 
 class Zip(_IterableMixin, Object):
-    __slots__ = ("_sources", "_strict")
+    __slots__ = ("_iter", "_sources", "_strict")
 
     def __init__(self, *sources: Any, strict: Boolean | None = None) -> None:
         self._sources = sources
         self._strict: Boolean = false if strict is None else strict
+        self._iter: Iterator[Tuple] | None = None
 
-    def __iter__(self) -> Iterator[Tuple]:
+    def _gen(self) -> Iterator[Tuple]:
         for items in _builtins.zip(*self._sources, strict=bool(self._strict)):
             yield Tuple(*items)
+
+    def __iter__(self) -> Iterator[Tuple]:
+        return self._gen()
+
+    def iter(self) -> Zip:
+        return self
+
+    def next(self) -> Tuple:
+        if self._iter is None:
+            self._iter = self._gen()
+        return next(self._iter)
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true
