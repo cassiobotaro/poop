@@ -22,3 +22,9 @@ def test_input_carries_line_number() -> None:
     with pytest.raises(ValidationError) as exc_info:
         NoInputValidator().validate(tree)
     assert exc_info.value.lineno == 2
+
+
+def test_error_suggests_str_input_method() -> None:
+    tree = ast.parse("input('prompt: ')")
+    with pytest.raises(ValidationError, match=r"prompt\.input\(\)"):
+        NoInputValidator().validate(tree)
