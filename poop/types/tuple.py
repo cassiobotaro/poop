@@ -6,12 +6,14 @@ from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
+from poop.types.none import none
 from poop.types.object import Object
 from poop.types.tuple_iterator import TupleIterator
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
+    from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
 _tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
@@ -108,10 +110,11 @@ class Tuple(_IterableMixin, Object):
     def __hash__(self) -> int:
         return hash(self._items)
 
-    def print(self, sep: str = " ", end: str = "\n", flush: bool = False) -> None:
+    def print(self, sep: str = " ", end: str = "\n", flush: bool = False) -> NoneClass:
         _builtins_print(
             *[str(item) for item in self._items], sep=sep, end=end, flush=flush
         )  # noqa: T201
+        return none
 
     def __str__(self) -> str:
         if len(self._items) == 1:

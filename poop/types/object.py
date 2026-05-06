@@ -109,8 +109,11 @@ class Object:
         builtins.delattr(self, name)
         return none
 
-    def print(self, end: str = "\n", flush: bool = False) -> None:
+    def print(self, end: str = "\n", flush: bool = False) -> NoneClass:
+        from poop.types.none import none
+
         _builtins_print(str(self), end=end, flush=flush)  # noqa: T201
+        return none
 
     def __str__(self) -> str:
         return f"<{self.class_name()}>"
