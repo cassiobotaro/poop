@@ -272,6 +272,50 @@ Each iterator's `next()` yields the right shape — for `DictItemIterator`, each
 
 **Decision:** adopt MkDocs? If yes, which SSOT — `INFECTIONS.md` extracted or `docs/` migrated?
 
+### 9. Add a `CONTRIBUTING.md`?
+
+**Today:** there is no `CONTRIBUTING.md` at the repo root. Contributor guidance is split between `CLAUDE.md` (workflow + conventions, but framed for an AI agent) and `INFECTIONS.md` (language principles, written as a catalog). A first-time human contributor has no canonical entry point — they must read `CLAUDE.md` and infer which parts apply.
+
+**Drift symptoms motivating this:**
+- Atomic-commit rule lives in `CLAUDE.md:42` but should be enforced for any contributor.
+- The convention "every example needs a Smalltalk version" lives only in commit history — not documented anywhere; was discovered when `slicing.py` slipped through.
+- Imports-at-top, English-in-`proposals.md`, and "verify GitHub Action versions are current" rules are buried in `CLAUDE.md` Conventions.
+- Pre-commit setup (`prek` + `.pre-commit-config.yaml`) is mentioned in passing in `CLAUDE.md:38` but not in any onboarding doc.
+
+**Proposed scope for `CONTRIBUTING.md`:**
+
+1. **Getting started** — `uv sync --dev`, running `poop file.py`, running tests.
+2. **Workflow**
+   - Atomic commits: one validator, one type, one bug fix per commit.
+   - Confirm scope before multi-part plans.
+   - Pre-commit hooks (`prek install`).
+3. **Conventions**
+   - Imports at top of module; `if TYPE_CHECKING` block for type-only.
+   - `proposals.md` written in English regardless of conversation language.
+   - Every example in `examples/` must have a corresponding Smalltalk version in its docstring.
+   - Use the actual current year in dates / copyright / license.
+4. **Adding a new validator / transformer / type** — checklist:
+   - File location (`poop/validators/`, `poop/transformers/`, `poop/types/`).
+   - Register in `DEFAULT_VALIDATORS` / `DEFAULT_TRANSFORMERS` / namespace.
+   - Add tests under `tests/`.
+   - Update `INFECTIONS.md` with the catalog entry.
+5. **Closing a proposal** — pattern observed in commits:
+   - Implement in atomic commits.
+   - Strike the heading (`### ~~N. ...~~ — DONE`) **or** remove + renumber + update cross-references.
+   - Update `INFECTIONS.md` if the proposal affects validators/types.
+6. **Pull requests** — branch naming, description format, what to test before opening.
+
+**Open questions:**
+
+- **(a) Location.** `CONTRIBUTING.md` at root (GitHub auto-links it from the "New PR" page) vs. `docs/contributing.md` (consumed by MkDocs proposal 8). A common pattern is one at root with a stub that links to the MkDocs page; or symlink.
+- **(b) Source distribution.** Distill from `CLAUDE.md` (some sections are AI-specific — *"Defer to user judgement"*, etc., do not belong in `CONTRIBUTING.md`) or write fresh.
+- **(c) Relationship to `CLAUDE.md`.** Once `CONTRIBUTING.md` exists, `CLAUDE.md` should reference it ("conventions documented in `CONTRIBUTING.md`") to avoid drift between the two.
+- **(d) Code of conduct.** Bundle a Contributor Covenant section into `CONTRIBUTING.md`, add a separate `CODE_OF_CONDUCT.md`, or skip for now (small project, single maintainer)?
+
+**Effort:** small (~2h to draft + review). **Impact:** lowers barrier for human contributors; codifies conventions discovered ad-hoc (Smalltalk-in-examples, atomic commits).
+
+**Decision:** adopt? If yes, settle (a) location and (d) code of conduct.
+
 ---
 
 ## Stay banned (no proposal)
