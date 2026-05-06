@@ -634,6 +634,36 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `With` is exposed in `DEFAULT_NAMESPACE` via `WithTransformer` (`poop/transformers/with_.py`) — a namespace-only transformer that injects the binding without rewriting AST.
 
+### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
+
+`slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.
+
+`obj.slice(start, stop, step=None)` is also accepted directly on every sequence type. Both forms are equivalent at runtime.
+
+`Slice` is a first-class immutable POOP type (`poop/types/slice.py`) — hashable, comparable with `==`/`!=`, and reusable across collections.
+
+| Method | Returns | Notes |
+|---|---|---|
+| `Slice(start, stop)` | `Slice` | Two-arg constructor |
+| `Slice(start, stop, step)` | `Slice` | Three-arg constructor |
+| `.start()` | `Int` | |
+| `.stop()` | `Int` | |
+| `.step()` | `Int \| NoneClass` | POOP `none` when not set |
+| `.indices(length)` | `Tuple(Int, Int, Int)` | Normalised start/stop/step for a sequence of the given length; mirrors Python's `slice.indices()` |
+
+`obj.slice(s: Slice)` overload is available on every sequence type in addition to the positional form:
+
+| Type | Returns |
+|---|---|
+| `Str` | `Str` |
+| `List` | `List` |
+| `Tuple` | `Tuple` |
+| `Bytes` | `Bytes` |
+| `ByteArray` | `ByteArray` |
+| `Range` | `List` |
+
+> `Range.slice` returns `List` (not `Range`) because reconstructing a valid closed interval from sliced `Int` POOP values would require unpacking assumptions about the underlying range step.
+
 ## Active transformers
 
 ### Int — `poop/transformers/int.py`
@@ -766,32 +796,3 @@ Implicitly injects `Object` as the base class of every user-defined class that h
 
 > **Tradeoff**: classes that explicitly inherit from native Python types (e.g. `class Foo(Exception):`) are left unchanged — they do not gain POOP `Object` methods, consistent with how `Try` and `Error` interact with the native exception hierarchy.
 
-## Slicing — `slice` / `Slice`
-
-`slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.
-
-`obj.slice(start, stop, step=None)` is also accepted directly on every sequence type. Both forms are equivalent at runtime.
-
-`Slice` is a first-class immutable POOP type (`poop/types/slice.py`) — hashable, comparable with `==`/`!=`, and reusable across collections.
-
-| Method | Returns | Notes |
-|---|---|---|
-| `Slice(start, stop)` | `Slice` | Two-arg constructor |
-| `Slice(start, stop, step)` | `Slice` | Three-arg constructor |
-| `.start()` | `Int` | |
-| `.stop()` | `Int` | |
-| `.step()` | `Int \| NoneClass` | POOP `none` when not set |
-| `.indices(length)` | `Tuple(Int, Int, Int)` | Normalised start/stop/step for a sequence of the given length; mirrors Python's `slice.indices()` |
-
-`obj.slice(s: Slice)` overload is available on every sequence type in addition to the positional form:
-
-| Type | Returns |
-|---|---|
-| `Str` | `Str` |
-| `List` | `List` |
-| `Tuple` | `Tuple` |
-| `Bytes` | `Bytes` |
-| `ByteArray` | `ByteArray` |
-| `Range` | `List` |
-
-> `Range.slice` returns `List` (not `Range`) because reconstructing a valid closed interval from sliced `Int` POOP values would require unpacking assumptions about the underlying range step.
