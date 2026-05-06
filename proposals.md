@@ -8,31 +8,19 @@ Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the subst
 
 ## Open decisions — substitute exists with a different name
 
-### 1. `iter(col)` / `next(it)` → first-class `Iterator` type?
+### ~~1. `iter(col)` / `next(it)` → first-class `Iterator` type?~~ — DONE
 
-**Today:** iteration only via `col.do(block)`. `iter` and `next` are banned by `NoIterValidator`.
+**Decision:** specialized iterator types per container, mirroring Python's model. `iter()` and `next()` remain banned as bare calls — they are exclusively methods.
 
-**Desired direction (partially settled):**
+Implemented:
 
-- `iter(col)` is intercepted by a transformer and returns a POOP `Iterator` object — lazy, just like Python's `iter()`.
-- Every collection exposes `.iter() -> Iterator` as a convenience method (`col.iter()` ≡ `iter(col)`).
-- `Iterator` is **one-shot and consumed once**: calling `do` or advancing it exhausts it permanently — unlike `Enumerate` and `Zip` which are restartable. This mirrors Python's iterator protocol exactly.
-- `next(it)` is rewritten to `it.next()`. The open question is what `next()` returns when exhausted — see options below.
+- New base `_IteratorBase` (`poop/types/_iterator_base.py`) — wraps a Python iterator, exposes `next()` (raising `StopIteration` on exhaustion, catchable via `Try(...).except_(StopIteration, ...)`) and `do(block)` consuming the rest one-shot.
+- One specialized iterator per container, faithful to Python (`list_iterator`, `tuple_iterator`, `set_iterator`, `frozenset_iterator`, `dict_keyiterator`, `str_iterator`, `range_iterator`, `bytes_iterator`, `bytearray_iterator`, `memory_iterator`).
+- Each container gains an `iter()` method returning the matching iterator type.
+- `Enumerate` and `Zip` are their own iterators (`x.iter() is x`), mirroring Python's `iter(enumerate(x)) is enumerate(x)`. They expose `next()` consuming a lazy internal generator one-shot, while `do()` keeps the existing restartable behaviour.
+- `Dict.iter()` returns `DictKeyIterator` (mirrors `iter(dict)` in Python). Value/item iterators are deferred to a future proposal.
 
-**One-shot invariant:** once an `Iterator` is exhausted, subsequent calls to `next()` always return the exhausted sentinel (never restart). `do(block)` on an exhausted iterator is a no-op. This is a deliberate break from the restartable pattern of `List`, `Enumerate`, `Zip`, etc.
-
-**Open question — exhaustion sentinel for `next()`:**
-
-- **(a) Return `none`** — simple, but ambiguous if `none` is a valid item in the collection.
-- **(b) Return `Tuple(Boolean, item)`** — `Tuple(true, val)` if a value exists, `Tuple(false, none)` if exhausted. Unambiguous, but verbose at the call site.
-- **(c) Raise Python's `StopIteration` natively** — identical to Python, but POOP bans `try/except` so the user cannot catch it. Only viable if `Iterator` is never used in a context where exhaustion must be handled gracefully.
-
-**Implementation notes:**
-- `Iterator` wraps a Python-native iterator (`_iter`) in `__slots__`.
-- `__iter__` returns `self` (standard iterator protocol — makes `Iterator` usable in POOP's own `do`/`map`/`filter`).
-- `no_iter` validator keeps banning `iter(col)` and `next(it)` as bare calls — the transformer intercepts them before the validator would fire (same ordering as `enumerate`, `zip`, `range`).
-
-**Decision:** which exhaustion sentinel (a, b, or c)?
+**Exhaustion sentinel for `next()`: (c) raise `StopIteration`.** POOP's `Try()` (`poop/types/try_.py`) handles the rest — `Try(lambda: it.next()).except_(StopIteration, handler).run()`. Raised raw (not wrapped in a POOP `IteratorExhausted`) for perfect interop with Python iterators.
 
 ---
 

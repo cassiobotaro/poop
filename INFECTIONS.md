@@ -300,10 +300,16 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `iter(col)` | iterator protocol with procedural look | `col.do(block)` |
-| `next(it)` | same | same |
-| `aiter(col)` | async variant | same |
-| `anext(it)` | async variant | same |
+| `iter(col)` | iterator protocol with procedural look | `col.iter()` |
+| `next(it)` | same | `it.next()` |
+| `aiter(col)` | async variant | `col.iter()` |
+| `anext(it)` | async variant | `it.next()` |
+
+Every collection exposes `.iter()` returning a specialized one-shot iterator that mirrors Python's iterator types (`list_iterator`, `tuple_iterator`, `set_iterator`, `frozenset_iterator`, `dict_keyiterator`, `str_iterator`, `range_iterator`, `bytes_iterator`, `bytearray_iterator`, `memory_iterator`). All inherit from `_IteratorBase` (`poop/types/_iterator_base.py`), expose `.next()` and `.do(block)`, and raise `StopIteration` on exhaustion — catchable via `Try(lambda: it.next()).except_(StopIteration, handler).run()`.
+
+`Enumerate` and `Zip` are their own iterators (`x.iter() is x`, mirroring Python's `iter(zip(...)) is zip(...)`). They expose `.next()` consuming a lazy internal generator one-shot, while `.do()` keeps the existing restartable behaviour.
+
+`Dict.iter()` returns `DictKeyIterator`, mirroring `iter(dict)` in Python. Value/item iterators are deferred to a future proposal.
 
 ### No `setattr`/`delattr` — `poop/validators/no_setattr.py`
 
