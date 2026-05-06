@@ -5,6 +5,7 @@ from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
+from poop.types.range_iterator import RangeIterator
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
@@ -32,6 +33,9 @@ class Range(_IterableMixin, Object):
 
     def __iter__(self) -> Any:
         return self._iter()
+
+    def iter(self) -> RangeIterator:
+        return RangeIterator(self)
 
     def slice(
         self,
