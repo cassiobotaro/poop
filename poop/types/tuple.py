@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
+from poop.types.tuple_iterator import TupleIterator
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
@@ -68,6 +69,9 @@ class Tuple(_IterableMixin, Object):
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)
+
+    def iter(self) -> TupleIterator:
+        return TupleIterator(self._items)
 
     def includes(self, obj: Object) -> Boolean:
         return true if obj in self._items else false
