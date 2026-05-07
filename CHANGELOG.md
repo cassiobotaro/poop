@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.2](https://github.com/cassiobotaro/poop/compare/v0.1.1...v0.1.2) (2026-05-07)
+
+
+### Documentation
+
+* add poop emoji favicon ([c324d72](https://github.com/cassiobotaro/poop/commit/c324d723515f20ebc025f8fbe4af954c44f8e866))
+* bootstrap mkdocs site with landing pages ([7db6585](https://github.com/cassiobotaro/poop/commit/7db658572f8c45ac5dce1e93d9e475106370fe63))
+* close proposal 2 — MkDocs adopted, migration tracked ([7ef3a91](https://github.com/cassiobotaro/poop/commit/7ef3a9161bae525ea179e550d3d6f22ad599b59b))
+* use poop emoji as the site logo ([97923d3](https://github.com/cassiobotaro/poop/commit/97923d3305b251c066dfb851a5097dabdba9fefd))
+
 ## [0.1.1](https://github.com/cassiobotaro/poop/compare/v0.1.0...v0.1.1) (2026-05-07)
 
 
