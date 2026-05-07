@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/cassiobotaro/poop/compare/v0.1.2...v0.1.3) (2026-05-07)
+
+
+### Documentation
+
+* replace closed proposal 2 with new docs-content roadmap ([5af6a9e](https://github.com/cassiobotaro/poop/commit/5af6a9ef3336dc16892cefb839138267079e960a))
+
+
+### Miscellaneous Chores
+
+* trigger release 0.1.3 to validate lockfile-sync workflow ([386f799](https://github.com/cassiobotaro/poop/commit/386f799cbb6d8519f0d2479a68fc0ba7586218d6))
+
 ## [0.1.2](https://github.com/cassiobotaro/poop/compare/v0.1.1...v0.1.2) (2026-05-07)
 
 
