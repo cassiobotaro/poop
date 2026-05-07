@@ -9,6 +9,7 @@ theme:
   name: material
   icon:
     logo: material/emoticon-poop
+  favicon: assets/favicon.svg
   features:
     - navigation.instant
     - navigation.tracking
