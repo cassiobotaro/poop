@@ -32,39 +32,25 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 ## Open decisions — documentation
 
-### 2. Documentation site with MkDocs?
+### ~~2. Documentation site with MkDocs?~~ — DONE (partial)
 
-**Today:** documentation is scattered across `README.md` (overview), `INFECTIONS.md` (validator/transformer/type catalog — 90+ sections), `CLAUDE.md` (internal guide), and `proposals.md` (this backlog). No navigation, no search, no published versioning.
+**Decision:** adopt MkDocs + Material theme; SSOT = migrate
+`INFECTIONS.md` content into per-topic files under `docs/`; deploy to
+GitHub Pages via `mkdocs gh-deploy`.
 
-**Proposal:** adopt [MkDocs](https://www.mkdocs.org/) with the [Material](https://squidfunk.github.io/mkdocs-material/) theme to generate a navigable static site.
+**Implemented:** initial setup landed — `mkdocs.yml`, `docs/index.md`,
+`docs/getting-started.md`, `docs/contributing.md`, `mkdocs` and
+`mkdocs-material` as dev deps, `.github/workflows/docs.yml` for
+`gh-deploy`. `INFECTIONS.md` and `CONTRIBUTING.md` remain canonical
+during the migration window.
 
-**Suggested structure under `docs/`:**
-- `index.md` — landing page (extracted from `README.md`)
-- `getting-started.md` — install, run the first POOP program
-- `principles.md` — language principles (extracted from `INFECTIONS.md` "Principles")
-- `infections/validators.md` — one entry per validator (generated/extracted from `INFECTIONS.md`)
-- `infections/transformers.md` — same for transformers
-- `types/` — one page per POOP type (`Object`, `Int`, `Str`, etc.) with their methods
-- `examples.md` — pointer to `examples/`
-- `contributing.md` — workflow, atomic commits, design principles
-
-**Minimum setup:**
-- `mkdocs.yml` at the repo root (config + nav)
-- `mkdocs` + `mkdocs-material` in `[dependency-groups.dev]` in `pyproject.toml`
-- `uv run mkdocs serve` for local preview; `uv run mkdocs build` to generate `site/`
-- Optional: GitHub Pages via Action (`mkdocs gh-deploy`).
-
-**Bonus considerations:**
-- `mkdocstrings[python]` to auto-generate API reference from docstrings on POOP types — aligns with the rule "every relevant dunder gets a Python-named alias" and surfaces the rich API.
-- `mkdocs-autorefs` plugin for cross-page links.
-
-**Trade-offs:**
-- **Keep** `INFECTIONS.md` as the single source of truth and generate pages from it (extraction script) — avoids duplication but requires tooling.
-- **Migrate** the content into separate files under `docs/` — cleaner end state, but requires updating the workflow ("After each infection, update `docs/infections/...`" instead of `INFECTIONS.md`).
-
-**Effort:** medium (setup ~1h; content migration depends on the SSOT choice). **Impact:** language discoverability for new users improves dramatically; full-text search on the site; published history.
-
-**Decision:** adopt MkDocs? If yes, which SSOT — `INFECTIONS.md` extracted or `docs/` migrated?
+**Residual work (follow-up PRs):**
+- Migrate `INFECTIONS.md` "Principles" → `docs/principles.md`.
+- Migrate `INFECTIONS.md` "Active infections" → `docs/infections/validators.md` and `docs/infections/transformers.md`.
+- One page per POOP type under `docs/types/`.
+- Migrate `examples/` index into `docs/examples.md`.
+- Move `CONTRIBUTING.md` content into `docs/contributing.md`; update the workflow rule that says "Add an entry to `INFECTIONS.md`" to point at the new structure.
+- Once migration completes: delete `INFECTIONS.md`; consider adding `mkdocstrings[python]` for auto-API and `mkdocs-autorefs` for cross-page links.
 
 ---
 
