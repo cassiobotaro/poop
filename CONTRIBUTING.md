@@ -172,6 +172,31 @@ When `proposals.md` item N is implemented:
   shows what.
 - Reference the relevant `proposals.md` item if the PR closes one.
 
+## Releases
+
+Releases are automated by
+[release-please](https://github.com/googleapis/release-please) — see
+`.github/workflows/release.yml`. Conventional Commit types in `main`
+drive the next SemVer:
+
+- `fix:` → patch (`0.1.0` → `0.1.1`)
+- `feat:` → minor (`0.1.0` → `0.2.0`)
+- `feat!:` / `BREAKING CHANGE:` → major **once the project reaches
+  `1.0.0`**. While we are pre-1.0, breaking changes bump the minor
+  version (configured via `bump-minor-pre-major`).
+- `docs:`, `chore:`, `refactor:`, `test:`, `style:` → no version bump
+  and no changelog entry.
+
+The action keeps a single open **Release PR** (titled
+`chore(main): release X.Y.Z`) that bumps `pyproject.toml`, updates
+`.release-please-manifest.json`, and rewrites `CHANGELOG.md`. Merging
+that PR is the publish action: the next workflow run creates the tag
+`vX.Y.Z` and the GitHub Release with notes generated from the commits.
+
+To force a specific version (for example, to graduate to `1.0.0`),
+include `Release-As: 1.0.0` on its own line in the body of any commit
+on `main`.
+
 ## Testing
 
 - Tests live next to their target: `poop/types/foo.py` → `tests/test_types/test_foo.py`.
