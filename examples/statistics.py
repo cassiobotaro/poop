@@ -2,7 +2,8 @@
 Basic Statistics
 
 Computes sum, mean, min, max and median of the squares 1²…10².
-Demonstrates Interval.map() producing a List, then List operations.
+Demonstrates a lazy `range.map()` chain materialized into a List
+via `list(...)` so List-only methods (`.sorted()`, `.len()`) work.
 
 Smalltalk:
     data := (1 to: 10) collect: [:i | i * i].
@@ -23,7 +24,7 @@ class Statistics:
         (text + value.repr()).print()
 
     def run(self):
-        data = range(1, 11).map(lambda i: i * i)
+        data = list(range(1, 11).map(lambda i: i * i))
 
         sorted_data = data.sorted()
 

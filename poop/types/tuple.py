@@ -26,9 +26,6 @@ class Tuple(_IterableMixin, Object):
     def __init__(self, *elements: Object) -> None:
         self._items: _tuple[Object, ...] = _tuple(elements)
 
-    def _collect(self, items: Any) -> Tuple:
-        return Tuple(*items)
-
     def len(self) -> Int:
         from poop.types.int import Int
 

@@ -55,7 +55,7 @@ def test_enumerate_do() -> None:
 
 def test_enumerate_map() -> None:
     result = List(Int(10), Int(20)).enumerate().map(lambda t: t.at(Int(0)))
-    assert result == List(Int(0), Int(1))
+    assert List(*result) == List(Int(0), Int(1))
 
 
 def test_enumerate_on_range() -> None:

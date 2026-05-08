@@ -22,9 +22,6 @@ class Set(_IterableMixin, Object):
     def __init__(self, *elements: Object) -> None:
         self._data: _set[Object] = _set(elements)
 
-    def _collect(self, items: Any) -> Set:
-        return Set(*items)
-
     def add(self, obj: Object) -> NoneClass:
         self._data.add(obj)
         return none

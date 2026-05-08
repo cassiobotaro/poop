@@ -24,23 +24,24 @@ class _IterableMixin:
     def _iter_items(self) -> Iterator[Any]:
         return iter(self)
 
-    def _collect(self, items: Any) -> Any:
-        from poop.types.list import List  # circular: list.py imports _IterableMixin
-
-        return List(*items)
-
     def do(self, block: Callable[[Any], Any]) -> NoneClass:
         deque(map(block, self._iter_items()), maxlen=0)
         return none
 
     def map(self, block: Callable[[Any], Any]) -> Any:
-        return self._collect(map(block, self._iter_items()))
+        from poop.types.map import Map
+
+        return Map(self, block)
 
     def filter(self, block: Callable[[Any], Any]) -> Any:
-        return self._collect(x for x in self._iter_items() if bool(block(x)))
+        from poop.types.filter import Filter
+
+        return Filter(self, block)
 
     def filter_false(self, block: Callable[[Any], Any]) -> Any:
-        return self._collect(x for x in self._iter_items() if not bool(block(x)))
+        from poop.types.filter import Filter
+
+        return Filter(self, lambda x: not bool(block(x)))
 
     def find(self, block: Callable[[Any], Any]) -> Any:
         for item in self._iter_items():

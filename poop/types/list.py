@@ -27,9 +27,6 @@ class List(_IterableMixin, Object):
     def __init__(self, *elements: Object) -> None:
         self._items: _list[Object] = _list(elements)
 
-    def _collect(self, items: Any) -> List:
-        return List(*items)
-
     def len(self) -> Int:
         from poop.types.int import Int
 

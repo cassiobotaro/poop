@@ -155,7 +155,7 @@ def test_iterable_mixin_do() -> None:
 def test_iterable_mixin_map() -> None:
     items = DictItems(_make())
     keys = items.map(lambda t: t.at(Int(0)))
-    assert keys == List(Str("a"), Str("b"))
+    assert List(*keys) == List(Str("a"), Str("b"))
 
 
 def test_str_repr() -> None:

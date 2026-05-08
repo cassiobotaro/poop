@@ -64,13 +64,15 @@ def test_do_yields_int_byte_values() -> None:
     assert seen == [Int(1), Int(2), Int(3)]
 
 
-def test_map_returns_list() -> None:
+def test_map_returns_lazy_map() -> None:
+    from poop.types.map import Map
+
     result = Bytes(b"\x01\x02").map(lambda b: b)
-    assert isinstance(result, List)
+    assert isinstance(result, Map)
 
 
 def test_map_transforms_bytes() -> None:
-    result = Bytes(b"\x01\x02").map(lambda b: Int(b._value * 2))
+    result = List(*Bytes(b"\x01\x02").map(lambda b: Int(b._value * 2)))
     assert result.at(Int(0)) == Int(2)
     assert result.at(Int(1)) == Int(4)
 

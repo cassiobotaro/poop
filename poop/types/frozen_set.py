@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
@@ -18,9 +18,6 @@ class FrozenSet(_IterableMixin, Object):
 
     def __init__(self, *elements: Object) -> None:
         self._data: _frozenset[Object] = _frozenset(elements)
-
-    def _collect(self, items: Any) -> FrozenSet:
-        return FrozenSet(*items)
 
     def includes(self, obj: Object) -> Boolean:
         return true if obj in self._data else false

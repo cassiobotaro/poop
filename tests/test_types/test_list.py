@@ -49,25 +49,27 @@ def test_do_iterates() -> None:
     assert results == [Int(1), Int(2), Int(3)]
 
 
-def test_collect_maps() -> None:
+def test_map_transforms_elements() -> None:
     result = List(Int(1), Int(2), Int(3)).map(lambda x: x + Int(10))
-    assert result == List(Int(11), Int(12), Int(13))
+    assert List(*result) == List(Int(11), Int(12), Int(13))
 
 
-def test_collect_returns_list() -> None:
-    assert isinstance(List(Int(1)).map(lambda x: x), List)
+def test_map_returns_lazy_map() -> None:
+    from poop.types.map import Map
+
+    assert isinstance(List(Int(1)).map(lambda x: x), Map)
 
 
-def test_select_filters() -> None:
+def test_filter_keeps_matching() -> None:
     result = List(Int(1), Int(2), Int(3), Int(4)).filter(lambda x: x % Int(2) == Int(0))
-    assert result == List(Int(2), Int(4))
+    assert List(*result) == List(Int(2), Int(4))
 
 
-def test_reject_filters_inverse() -> None:
+def test_filter_false_keeps_non_matching() -> None:
     result = List(Int(1), Int(2), Int(3), Int(4)).filter_false(
         lambda x: x % Int(2) == Int(0)
     )
-    assert result == List(Int(1), Int(3))
+    assert List(*result) == List(Int(1), Int(3))
 
 
 def test_detect_finds_first() -> None:

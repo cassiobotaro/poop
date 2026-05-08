@@ -82,21 +82,23 @@ def test_do_visits_all_elements() -> None:
     assert len(seen) == 3
 
 
-def test_map_returns_set() -> None:
+def test_map_returns_lazy_map() -> None:
+    from poop.types.map import Map
+
     s = Set(Int(1), Int(2))
     result = s.map(lambda x: x)
-    assert isinstance(result, Set)
+    assert isinstance(result, Map)
 
 
 def test_map_transforms_elements() -> None:
     s = Set(Int(2))
-    result = s.map(lambda x: Int(x._value * 2))
+    result = Set(*s.map(lambda x: Int(x._value * 2)))
     assert result.includes(Int(4)) is true
 
 
 def test_filter_keeps_matching() -> None:
     s = Set(Int(1), Int(2), Int(3), Int(4))
-    result = s.filter(lambda x: x._value % 2 == 0)
+    result = Set(*s.filter(lambda x: x._value % 2 == 0))
     assert result.len() == Int(2)
     assert result.includes(Int(2)) is true
     assert result.includes(Int(4)) is true
@@ -104,7 +106,7 @@ def test_filter_keeps_matching() -> None:
 
 def test_filter_false_keeps_non_matching() -> None:
     s = Set(Int(1), Int(2), Int(3))
-    result = s.filter_false(lambda x: x._value % 2 == 0)
+    result = Set(*s.filter_false(lambda x: x._value % 2 == 0))
     assert result.len() == Int(2)
 
 

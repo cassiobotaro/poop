@@ -69,7 +69,7 @@ def test_zip_map() -> None:
     result = (
         List(Int(1), Int(2)).zip(List(Int(10), Int(20))).map(lambda t: t.at(Int(0)))
     )
-    assert result == List(Int(1), Int(2))
+    assert List(*result) == List(Int(1), Int(2))
 
 
 def test_zip_on_range() -> None:

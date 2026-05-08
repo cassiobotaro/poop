@@ -46,19 +46,19 @@ def test_do_descending_range() -> None:
     assert results == [5, 4, 3]
 
 
-def test_collect_transforms_elements() -> None:
+def test_map_transforms_elements() -> None:
     result = _range(1, 3).map(lambda i: i + Int(10))
-    assert result == List(Int(11), Int(12), Int(13))
+    assert List(*result) == List(Int(11), Int(12), Int(13))
 
 
-def test_select_filters_elements() -> None:
+def test_filter_keeps_matching() -> None:
     result = _range(1, 5).filter(lambda i: i % Int(2) == Int(0))
-    assert result == List(Int(2), Int(4))
+    assert List(*result) == List(Int(2), Int(4))
 
 
-def test_reject_filters_elements() -> None:
+def test_filter_false_keeps_non_matching() -> None:
     result = _range(1, 5).filter_false(lambda i: i % Int(2) == Int(0))
-    assert result == List(Int(1), Int(3), Int(5))
+    assert List(*result) == List(Int(1), Int(3), Int(5))
 
 
 def test_detect_finds_first_match() -> None:
