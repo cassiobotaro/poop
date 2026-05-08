@@ -181,3 +181,23 @@ def test_false_is_none_returns_false() -> None:
 
 def test_false_not_none_returns_true() -> None:
     assert false.not_none() is true
+
+
+def test_false_lt_true() -> None:
+    assert (false < true) is true
+
+
+def test_true_lt_false_returns_false() -> None:
+    assert (true < false) is false
+
+
+def test_true_eq_true_via_le() -> None:
+    assert (true <= true) is true
+
+
+def test_true_gt_false() -> None:
+    assert (true > false) is true
+
+
+def test_false_ge_false() -> None:
+    assert (false >= false) is true

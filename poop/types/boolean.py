@@ -66,6 +66,18 @@ class Boolean(Object, ABC):
     @abstractmethod
     def __str__(self) -> str: ...
 
+    def __lt__(self, other: Boolean) -> Boolean:
+        return true if bool(self) < bool(other) else false
+
+    def __le__(self, other: Boolean) -> Boolean:
+        return true if bool(self) <= bool(other) else false
+
+    def __gt__(self, other: Boolean) -> Boolean:
+        return true if bool(self) > bool(other) else false
+
+    def __ge__(self, other: Boolean) -> Boolean:
+        return true if bool(self) >= bool(other) else false
+
 
 @final
 class _TrueClass(Boolean):
