@@ -1,7 +1,9 @@
+import builtins
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any
 
+from poop.types._iterable_mixin import _MISSING
 from poop.types.boolean import false, true
 from poop.types.dict_items import DictItems
 from poop.types.dict_key_iterator import DictKeyIterator
@@ -60,6 +62,30 @@ class Dict(Object):
     def do(self, block: Callable[[Tuple], Any]) -> NoneClass:
         deque((block(Tuple(k, v)) for k, v in self._data.items()), maxlen=0)
         return none
+
+    def min(
+        self,
+        key: Callable[[Any], Any] | None = None,
+        default: Any = _MISSING,
+    ) -> Any:
+        kwargs: dict[str, Any] = {}
+        if key is not None:
+            kwargs["key"] = key
+        if default is not _MISSING:
+            kwargs["default"] = default
+        return builtins.min(self._data, **kwargs)
+
+    def max(
+        self,
+        key: Callable[[Any], Any] | None = None,
+        default: Any = _MISSING,
+    ) -> Any:
+        kwargs: dict[str, Any] = {}
+        if key is not None:
+            kwargs["key"] = key
+        if default is not _MISSING:
+            kwargs["default"] = default
+        return builtins.max(self._data, **kwargs)
 
     def len(self) -> Int:
         return Int(len(self._data))

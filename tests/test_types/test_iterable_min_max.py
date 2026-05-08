@@ -13,6 +13,7 @@ import pytest
 from poop import Interpreter
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
+from poop.types.dict import Dict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
@@ -131,3 +132,37 @@ def test_str_min_empty_with_default() -> None:
 def test_str_min_empty_raises() -> None:
     with pytest.raises(ValueError, match="empty"):
         Str("").min()
+
+
+def test_dict_min_returns_smallest_key() -> None:
+    d = Dict()
+    d.at_put(Str("banana"), Int(1))
+    d.at_put(Str("apple"), Int(2))
+    d.at_put(Str("cherry"), Int(3))
+    assert d.min() == Str("apple")
+
+
+def test_dict_max_returns_largest_key() -> None:
+    d = Dict()
+    d.at_put(Str("banana"), Int(1))
+    d.at_put(Str("apple"), Int(2))
+    d.at_put(Str("cherry"), Int(3))
+    assert d.max() == Str("cherry")
+
+
+def test_dict_min_with_key() -> None:
+    d = Dict()
+    d.at_put(Str("aa"), Int(0))
+    d.at_put(Str("b"), Int(0))
+    d.at_put(Str("ccc"), Int(0))
+    assert d.min(key=lambda k: k.len()) == Str("b")
+
+
+def test_dict_min_empty_with_default() -> None:
+    sentinel = Str("empty!")
+    assert Dict().min(default=sentinel) is sentinel
+
+
+def test_dict_min_empty_raises() -> None:
+    with pytest.raises(ValueError, match="empty"):
+        Dict().min()
