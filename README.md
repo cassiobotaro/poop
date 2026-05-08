@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="poop.png" alt="POOP logo" width="440">
+  <img src="poop.png" alt="POOP logo" width="600">
 </p>
 
 # POOP 💩

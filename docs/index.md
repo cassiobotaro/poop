@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/poop.png" alt="POOP logo" width="440">
+  <img src="assets/poop.png" alt="POOP logo" width="600">
 </p>
 
 # POOP
