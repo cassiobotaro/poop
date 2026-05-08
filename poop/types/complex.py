@@ -14,8 +14,8 @@ _complex = complex  # alias to avoid shadowing by Complex class name
 class Complex(Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _complex) -> None:
-        self._value = value
+    def __init__(self, value: _complex | Complex) -> None:
+        self._value = value._value if isinstance(value, Complex) else value
 
     @property
     def real(self) -> Float:

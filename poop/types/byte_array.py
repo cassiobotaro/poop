@@ -23,8 +23,13 @@ class ByteArray(_IterableMixin, Object):
     __slots__ = ("_value",)
     __hash__ = None
 
-    def __init__(self, value: _bytearray | None = None) -> None:
-        self._value: _bytearray = _bytearray() if value is None else value
+    def __init__(self, value: _bytearray | ByteArray | None = None) -> None:
+        if value is None:
+            self._value: _bytearray = _bytearray()
+        elif isinstance(value, ByteArray):
+            self._value = value._value
+        else:
+            self._value = value
 
     def len(self) -> Int:
         return Int(len(self._value))

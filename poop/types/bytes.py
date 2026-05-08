@@ -20,8 +20,8 @@ _bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
 class Bytes(_IterableMixin, Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _bytes) -> None:
-        self._value = value
+    def __init__(self, value: _bytes | Bytes) -> None:
+        self._value = value._value if isinstance(value, Bytes) else value
 
     def len(self) -> Int:
         from poop.types.int import Int

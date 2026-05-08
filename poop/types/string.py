@@ -20,8 +20,8 @@ _str = str  # alias to avoid shadowing in annotations
 class Str(Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _str) -> None:
-        self._value = value
+    def __init__(self, value: _str | Str) -> None:
+        self._value = value._value if isinstance(value, Str) else value
 
     def len(self) -> Int:
         from poop.types.int import Int

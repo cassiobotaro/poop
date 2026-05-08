@@ -17,8 +17,8 @@ _int = int  # alias to avoid shadowing by annotations
 class Float(Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _float) -> None:
-        self._value = value
+    def __init__(self, value: _float | Float) -> None:
+        self._value = value._value if isinstance(value, Float) else value
 
     def negated(self) -> Float:
         return Float(-self._value)

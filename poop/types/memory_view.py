@@ -17,8 +17,8 @@ _memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
 class MemoryView(_IterableMixin, Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _memoryview) -> None:
-        self._value = value
+    def __init__(self, value: _memoryview | MemoryView) -> None:
+        self._value = value._value if isinstance(value, MemoryView) else value
 
     def len(self) -> Int:
         return Int(len(self._value))
