@@ -14,6 +14,8 @@ from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.none import none
 
+_MISSING: Any = object()
+
 
 class _IterableMixin:
     @abstractmethod
@@ -54,6 +56,30 @@ class _IterableMixin:
         if not items:
             return Int(0)
         return functools_reduce(lambda a, b: a + b, items)
+
+    def min(
+        self,
+        key: Callable[[Any], Any] | None = None,
+        default: Any = _MISSING,
+    ) -> Any:
+        kwargs: dict[str, Any] = {}
+        if key is not None:
+            kwargs["key"] = key
+        if default is not _MISSING:
+            kwargs["default"] = default
+        return _builtins.min(self._iter_items(), **kwargs)
+
+    def max(
+        self,
+        key: Callable[[Any], Any] | None = None,
+        default: Any = _MISSING,
+    ) -> Any:
+        kwargs: dict[str, Any] = {}
+        if key is not None:
+            kwargs["key"] = key
+        if default is not _MISSING:
+            kwargs["default"] = default
+        return _builtins.max(self._iter_items(), **kwargs)
 
     def all(self, block: Callable[[Any], Any]) -> Any:
         return (
