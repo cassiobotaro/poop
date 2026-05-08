@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.4](https://github.com/cassiobotaro/poop/compare/v0.1.3...v0.1.4) (2026-05-08)
+
+
+### Documentation
+
+* cross-link Python vs POOP from index and getting-started ([956ec88](https://github.com/cassiobotaro/poop/commit/956ec88f04c56a93cac3bdfd3efe42303d2549bf))
+* file three interpreter bugs found while validating docs ([75990d9](https://github.com/cassiobotaro/poop/commit/75990d9912c2154c6d00f0f6975f9ee46088dcef))
+* fill builtins page with side-by-side Python/POOP examples ([11b3e9b](https://github.com/cassiobotaro/poop/commit/11b3e9bc289a1d15a3c14d55ac63018c7a4268ed))
+* fill conditionals page with side-by-side Python/POOP examples ([6819e13](https://github.com/cassiobotaro/poop/commit/6819e13e2b6e111f8cb543ae836b76e5df5954f3))
+* fill loops page with side-by-side Python/POOP examples ([a695bec](https://github.com/cassiobotaro/poop/commit/a695bec228bb46520d5a0991c7552c26af0fcc27))
+* mark proposals.md item 2 comparison-table as done ([912f833](https://github.com/cassiobotaro/poop/commit/912f833a3a5fa19e8840b844c16fac97f2bc23da))
+* scaffold Python vs POOP section with overview and stubs ([134a616](https://github.com/cassiobotaro/poop/commit/134a6167d94c6b4d8e217414981a4e92c47c008d))
+
 ## [0.1.3](https://github.com/cassiobotaro/poop/compare/v0.1.2...v0.1.3) (2026-05-07)
 
 
