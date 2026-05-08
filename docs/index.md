@@ -32,6 +32,9 @@ drive this:
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
 
+For runnable side-by-side comparisons of every Python construct POOP
+forbids, see [Python vs POOP](python-vs-poop/index.md).
+
 ### Hello, World
 
 ```python
