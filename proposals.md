@@ -1,6 +1,6 @@
 # Improvement Proposals
 
-Prioritized list of improvements verified against the code, with real `file:line` references. Categories: **bug**, **open decision**.
+Prioritized list of improvements verified against the code, with real `file:line` references. Categories: **bug**, **consistency**, **open decision**.
 
 Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the substitute exists — blocking without offering an alternative only breaks code without teaching anything."*
 
@@ -53,6 +53,74 @@ to how a Python user would expect `isinstance` replacements to feel.
 **Workaround for users today:** `is_instance` works only against
 user-defined classes (`x.is_instance(MyClass)`), since user names live
 in their own scope.
+
+---
+
+## Consistency
+
+### 1. Tighten public method signatures to POOP-only types
+
+**Today:** several public methods on POOP types declare parameters as
+Python primitives (`int`, `str`, `bool`) instead of the corresponding
+POOP types. At runtime in POOP source the transformer wraps every
+literal — `1` → `Int(1)`, `"foo"` → `Str("foo")`, `True` → POOP
+`Boolean` — so any user call passes POOP types. The signatures are
+"leaky": they suggest two callers (Python and POOP) when only POOP
+exists in the executed pipeline. The only consumer that still passes
+Python primitives is the unit-test suite, which runs methods directly
+without the transformer.
+
+This came up while fixing the `round(ndigits)` and `*_attr(name)`
+bugs in commits `9f66513` and `c3c36e1`: both fixes accepted
+`Int | int` / `Str | str` instead of tightening to `Int` / `Str`
+only. The looser signature avoids touching test code but contradicts
+the established convention — `Int.to_bytes(length: Int, byteorder:
+Str)`, `Float.divmod(other: Float)`, and `Object.format(spec: Str |
+None)` already accept POOP-only.
+
+**Concrete leak still present (becomes a runtime bug from POOP):**
+
+`Object.print(end: str = "\n", flush: bool = False)`
+(`poop/types/object.py:112`) — and the overrides on `List`
+(`poop/types/list.py:147`) and `Tuple` (`poop/types/tuple.py:113`)
+which add `sep: str = " "`. Repro:
+
+```python
+"hello".print(end=" ")
+# poop: end must be None or a string, not Str
+```
+
+**Fix sketch:**
+1. Tighten the just-fixed methods (`Float.__round__`, `Int.__round__`,
+   `Object.has_attr`, `Object.get_attr`, `Object.set_attr`,
+   `Object.del_attr`) to accept POOP types only; update unit tests
+   to construct POOP types at the call site.
+2. Fix `Object.print` / `List.print` / `Tuple.print` the same way:
+   `end: Str = Str("\n")`, `sep: Str = Str(" ")`, `flush: Boolean =
+   false` — unwrap via `_value` (or `bool(...)`) before delegating to
+   the Python `print` builtin.
+3. Audit the rest of `poop/types/` for the same shape. Initial
+   candidates to inspect: any public method with a `: int` / `: str` /
+   `: bool` annotation that does not look like a constructor or a
+   dunder Python invokes directly (`__init__`, `__str__`, `__hash__`,
+   `__bool__`, etc.). `grep -rn "def [a-z_]*.*: \(str\|int\|bool\)" poop/types/`
+   is a reasonable starting filter.
+
+**Out of scope (intentionally Python-typed):**
+- Constructors (`Int.__init__(self, value: int)`): they are the
+  bridge from Python land into POOP and are called by the transformer
+  itself.
+- Dunders that Python's runtime invokes and whose return type the
+  language pins (`__str__ -> str`, `__hash__ -> int`, `__bool__ ->
+  bool`, `__int__ -> int`).
+- Truly private helpers prefixed with `_`.
+
+**Recommendation:** approve as a single audit-and-tighten PR, or
+split into one PR per type (Object, List, Tuple, …). Either way the
+guideline going forward is: a POOP method's public signature uses
+POOP types; primitives appear only at the boundaries.
+
+**Decision:** approve the audit and the convention?
 
 ---
 
