@@ -26,7 +26,6 @@ def _poop_bytes_from(arg: object = None, encoding: object = None) -> Bytes:
 
 class _BytesRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if (
             isinstance(node.func, ast.Name)
             and node.func.id == "bytes"
@@ -36,11 +35,12 @@ class _BytesRewriter(ast.NodeTransformer):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_bytes_from", ctx=ast.Load()),
-                    args=node.args,
+                    args=[self.visit(arg) for arg in node.args],
                     keywords=[],
                 ),
                 node,
             )
+        self.generic_visit(node)
         return node
 
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
@@ -55,10 +55,16 @@ class _BytesRewriter(ast.NodeTransformer):
             )
         return node
 
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "bytes":
+            return ast.copy_location(ast.Name(id="Bytes", ctx=node.ctx), node)
+        return node
+
 
 class BytesTransformer(BaseTransformer):
     rewriter = _BytesRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_bytes": Bytes,
         "_poop_bytes_from": _poop_bytes_from,
+        "Bytes": Bytes,
     }

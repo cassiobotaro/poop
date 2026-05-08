@@ -28,7 +28,6 @@ def _poop_tuple_from(arg: object = None) -> Tuple:
 
 class _TupleRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if (
             isinstance(node.func, ast.Name)
             and node.func.id == "tuple"
@@ -38,11 +37,12 @@ class _TupleRewriter(ast.NodeTransformer):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_tuple_from", ctx=ast.Load()),
-                    args=node.args,
+                    args=[self.visit(arg) for arg in node.args],
                     keywords=[],
                 ),
                 node,
             )
+        self.generic_visit(node)
         return node
 
     def visit_Tuple(self, node: ast.Tuple) -> ast.AST:
@@ -58,10 +58,16 @@ class _TupleRewriter(ast.NodeTransformer):
             node,
         )
 
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "tuple":
+            return ast.copy_location(ast.Name(id="Tuple", ctx=node.ctx), node)
+        return node
+
 
 class TupleTransformer(BaseTransformer):
     rewriter = _TupleRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_tuple": _poop_tuple,
         "_poop_tuple_from": _poop_tuple_from,
+        "Tuple": Tuple,
     }

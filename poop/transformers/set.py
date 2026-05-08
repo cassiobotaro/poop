@@ -28,7 +28,6 @@ def _poop_set_from(arg: object = None) -> Set:
 
 class _SetRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if (
             isinstance(node.func, ast.Name)
             and node.func.id == "set"
@@ -38,11 +37,12 @@ class _SetRewriter(ast.NodeTransformer):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_set_from", ctx=ast.Load()),
-                    args=node.args,
+                    args=[self.visit(arg) for arg in node.args],
                     keywords=[],
                 ),
                 node,
             )
+        self.generic_visit(node)
         return node
 
     def visit_Set(self, node: ast.Set) -> ast.AST:
@@ -56,10 +56,16 @@ class _SetRewriter(ast.NodeTransformer):
             node,
         )
 
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "set":
+            return ast.copy_location(ast.Name(id="Set", ctx=node.ctx), node)
+        return node
+
 
 class SetTransformer(BaseTransformer):
     rewriter = _SetRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_set": _poop_set,
         "_poop_set_from": _poop_set_from,
+        "Set": Set,
     }

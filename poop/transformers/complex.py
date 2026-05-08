@@ -76,7 +76,6 @@ class _ComplexRewriter(ast.NodeTransformer):
         return node
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if (
             isinstance(node.func, ast.Name)
             and node.func.id == "complex"
@@ -86,11 +85,17 @@ class _ComplexRewriter(ast.NodeTransformer):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_complex_from", ctx=ast.Load()),
-                    args=node.args,
+                    args=[self.visit(arg) for arg in node.args],
                     keywords=[],
                 ),
                 node,
             )
+        self.generic_visit(node)
+        return node
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "complex":
+            return ast.copy_location(ast.Name(id="Complex", ctx=node.ctx), node)
         return node
 
 
@@ -99,4 +104,5 @@ class ComplexTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_complex_literal": _poop_complex_literal,
         "_poop_complex_from": _poop_complex_from,
+        "Complex": Complex,
     }

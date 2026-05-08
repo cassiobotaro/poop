@@ -43,16 +43,19 @@ class _IntRewriter(ast.NodeTransformer):
         return self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if isinstance(node.func, ast.Name) and node.func.id == "int":
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_int_from", ctx=ast.Load()),
-                    args=node.args,
-                    keywords=node.keywords,
+                    args=[self.visit(arg) for arg in node.args],
+                    keywords=[
+                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                        for kw in node.keywords
+                    ],
                 ),
                 node,
             )
+        self.generic_visit(node)
         return node
 
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
@@ -67,10 +70,16 @@ class _IntRewriter(ast.NodeTransformer):
             )
         return node
 
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "int":
+            return ast.copy_location(ast.Name(id="Int", ctx=node.ctx), node)
+        return node
+
 
 class IntTransformer(BaseTransformer):
     rewriter = _IntRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_int": Int,
         "_poop_int_from": _poop_int_from,
+        "Int": Int,
     }

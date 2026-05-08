@@ -12,19 +12,30 @@ def _poop_enumerate(source: object, start: Int | None = None) -> Enumerate:
 
 class _EnumerateRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if isinstance(node.func, ast.Name) and node.func.id == "enumerate":
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_enumerate", ctx=ast.Load()),
-                    args=node.args,
-                    keywords=node.keywords,
+                    args=[self.visit(arg) for arg in node.args],
+                    keywords=[
+                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                        for kw in node.keywords
+                    ],
                 ),
                 node,
             )
+        self.generic_visit(node)
+        return node
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "enumerate":
+            return ast.copy_location(ast.Name(id="Enumerate", ctx=node.ctx), node)
         return node
 
 
 class EnumerateTransformer(BaseTransformer):
     rewriter = _EnumerateRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_enumerate": _poop_enumerate}
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_enumerate": _poop_enumerate,
+        "Enumerate": Enumerate,
+    }

@@ -23,7 +23,6 @@ def _poop_bytearray_from(arg: object = None) -> ByteArray:
 
 class _ByteArrayRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if (
             isinstance(node.func, ast.Name)
             and node.func.id == "bytearray"
@@ -33,16 +32,23 @@ class _ByteArrayRewriter(ast.NodeTransformer):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_bytearray_from", ctx=ast.Load()),
-                    args=node.args,
+                    args=[self.visit(arg) for arg in node.args],
                     keywords=[],
                 ),
                 node,
             )
+        self.generic_visit(node)
+        return node
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "bytearray":
+            return ast.copy_location(ast.Name(id="ByteArray", ctx=node.ctx), node)
         return node
 
 
 class ByteArrayTransformer(BaseTransformer):
     rewriter = _ByteArrayRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
-        "_poop_bytearray_from": _poop_bytearray_from
+        "_poop_bytearray_from": _poop_bytearray_from,
+        "ByteArray": ByteArray,
     }

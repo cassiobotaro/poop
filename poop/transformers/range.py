@@ -18,19 +18,30 @@ def _poop_range(
 
 class _RangeRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if isinstance(node.func, ast.Name) and node.func.id == "range":
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_range", ctx=ast.Load()),
-                    args=node.args,
-                    keywords=node.keywords,
+                    args=[self.visit(arg) for arg in node.args],
+                    keywords=[
+                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                        for kw in node.keywords
+                    ],
                 ),
                 node,
             )
+        self.generic_visit(node)
+        return node
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "range":
+            return ast.copy_location(ast.Name(id="Range", ctx=node.ctx), node)
         return node
 
 
 class RangeTransformer(BaseTransformer):
     rewriter = _RangeRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_range": _poop_range}
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_range": _poop_range,
+        "Range": Range,
+    }

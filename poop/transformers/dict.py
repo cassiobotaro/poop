@@ -41,7 +41,6 @@ def _poop_dict_from(arg: object = None) -> Dict:
 
 class _DictRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if (
             isinstance(node.func, ast.Name)
             and node.func.id == "dict"
@@ -51,11 +50,12 @@ class _DictRewriter(ast.NodeTransformer):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_dict_from", ctx=ast.Load()),
-                    args=node.args,
+                    args=[self.visit(arg) for arg in node.args],
                     keywords=[],
                 ),
                 node,
             )
+        self.generic_visit(node)
         return node
 
     def visit_Dict(self, node: ast.Dict) -> ast.AST:
@@ -77,10 +77,16 @@ class _DictRewriter(ast.NodeTransformer):
             node,
         )
 
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "dict":
+            return ast.copy_location(ast.Name(id="Dict", ctx=node.ctx), node)
+        return node
+
 
 class DictTransformer(BaseTransformer):
     rewriter = _DictRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_dict_from_pairs": _poop_dict_from_pairs,
         "_poop_dict_from": _poop_dict_from,
+        "Dict": Dict,
     }

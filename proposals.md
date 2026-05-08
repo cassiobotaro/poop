@@ -6,56 +6,6 @@ Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the subst
 
 ---
 
-## Bugs
-
-Found while writing the `docs/python-vs-poop/` pages — every snippet
-was executed against the real interpreter, and these are the bugs
-that didn't run cleanly. The docs document the **intended** idiomatic
-call (matching each method's declared signature); these proposals are
-about closing the gap between the signature and the implementation.
-
-### 1. Public POOP type names not exposed in the user namespace
-
-**Today:** `DEFAULT_NAMESPACE`
-(`poop/transformers/__init__.py:56-80`) is built from
-`*Transformer.BINDINGS` dicts, and each transformer (e.g.
-`StrTransformer.BINDINGS` at `poop/transformers/string.py:45-48`,
-`IntTransformer.BINDINGS` at `poop/transformers/int.py:73-76`) exposes
-only the `_poop_*` private names — not `Str`, `Int`, `List`, `Dict`,
-etc. As a result `x.is_instance(Str)` raises
-`name 'Str' is not defined`, which makes the
-`Object.is_instance(type_)` API unusable for POOP's own types from
-user code.
-
-**Repro:**
-```python
-"hi".is_instance(Str).print()
-# poop: name 'Str' is not defined
-```
-
-**Possible models:**
-- **(a) Add public bindings.** Each transformer exposes both `_poop_str`
-  and `Str` (etc.). `is_instance` then works against any POOP type
-  the user can name. Risk: user code can shadow `Str` and confuse
-  literals; mitigated because `_poop_str` is the literal-construction
-  path, not `Str`.
-- **(b) Provide a `types` namespace.** Inject a `types` (or `poop`)
-  module-like object exposing `types.Str`, `types.Int`, etc. Avoids
-  shadowing risk; costs an extra hop.
-- **(c) Resolve names lazily inside `is_instance`.** Accept a string
-  literal — `x.is_instance("Str")` — and look it up in a registry.
-  Bigger semantic change; loses static typing discipline.
-
-**Recommendation:** (a). The current state already breaks the documented
-API; adding the bindings is the smallest change and the closest match
-to how a Python user would expect `isinstance` replacements to feel.
-
-**Workaround for users today:** `is_instance` works only against
-user-defined classes (`x.is_instance(MyClass)`), since user names live
-in their own scope.
-
----
-
 ## Open decisions — revisit "intentional"
 
 Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`) but worth reassessing.
@@ -82,7 +32,7 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 
 ## Open decisions — documentation
 
-### 2. Build out the docs site with comparison tables and learning content
+### 1. Build out the docs site with comparison tables and learning content
 
 **Today:** the MkDocs site (proposal closed in commit `97923d3` and
 follow-ups) has only three thin landing pages: `index.md`,

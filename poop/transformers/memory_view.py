@@ -17,7 +17,6 @@ def _poop_memoryview_from(arg: object = None) -> MemoryView:
 
 class _MemoryViewRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if (
             isinstance(node.func, ast.Name)
             and node.func.id == "memoryview"
@@ -27,16 +26,23 @@ class _MemoryViewRewriter(ast.NodeTransformer):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_memoryview_from", ctx=ast.Load()),
-                    args=node.args,
+                    args=[self.visit(arg) for arg in node.args],
                     keywords=[],
                 ),
                 node,
             )
+        self.generic_visit(node)
+        return node
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "memoryview":
+            return ast.copy_location(ast.Name(id="MemoryView", ctx=node.ctx), node)
         return node
 
 
 class MemoryViewTransformer(BaseTransformer):
     rewriter = _MemoryViewRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
-        "_poop_memoryview_from": _poop_memoryview_from
+        "_poop_memoryview_from": _poop_memoryview_from,
+        "MemoryView": MemoryView,
     }

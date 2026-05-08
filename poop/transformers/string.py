@@ -15,16 +15,16 @@ def _poop_str_from(value: object = None) -> Str:
 
 class _StrRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if isinstance(node.func, ast.Name) and node.func.id == "str":
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_str_from", ctx=ast.Load()),
-                    args=node.args,
+                    args=[self.visit(arg) for arg in node.args],
                     keywords=[],
                 ),
                 node,
             )
+        self.generic_visit(node)
         return node
 
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
@@ -39,10 +39,16 @@ class _StrRewriter(ast.NodeTransformer):
             )
         return node
 
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "str":
+            return ast.copy_location(ast.Name(id="Str", ctx=node.ctx), node)
+        return node
+
 
 class StrTransformer(BaseTransformer):
     rewriter = _StrRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_str": Str,
         "_poop_str_from": _poop_str_from,
+        "Str": Str,
     }

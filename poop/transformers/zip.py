@@ -14,19 +14,30 @@ def _poop_zip(*sources: object, strict: object = None) -> Zip:
 
 class _ZipRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        self.generic_visit(node)
         if isinstance(node.func, ast.Name) and node.func.id == "zip":
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_zip", ctx=ast.Load()),
-                    args=node.args,
-                    keywords=node.keywords,
+                    args=[self.visit(arg) for arg in node.args],
+                    keywords=[
+                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                        for kw in node.keywords
+                    ],
                 ),
                 node,
             )
+        self.generic_visit(node)
+        return node
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == "zip":
+            return ast.copy_location(ast.Name(id="Zip", ctx=node.ctx), node)
         return node
 
 
 class ZipTransformer(BaseTransformer):
     rewriter = _ZipRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_zip": _poop_zip}
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_zip": _poop_zip,
+        "Zip": Zip,
+    }
