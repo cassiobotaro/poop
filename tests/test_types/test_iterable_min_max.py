@@ -110,3 +110,24 @@ def test_empty_min_via_interpreter_surfaces_value_error() -> None:
     Interpreter().run_source(
         "Try(lambda: [].min()).except_(ValueError, lambda e: e.kind().print()).run()"
     )
+
+
+def test_str_min_returns_smallest_char() -> None:
+    assert Str("hello").min() == Str("e")
+
+
+def test_str_max_returns_largest_char() -> None:
+    assert Str("hello").max() == Str("o")
+
+
+def test_str_min_with_key() -> None:
+    assert Str("BAa").min(key=lambda c: c.lower()) == Str("A")
+
+
+def test_str_min_empty_with_default() -> None:
+    assert Str("").min(default=Str("empty!")) == Str("empty!")
+
+
+def test_str_min_empty_raises() -> None:
+    with pytest.raises(ValueError, match="empty"):
+        Str("").min()

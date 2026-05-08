@@ -1,7 +1,8 @@
 import builtins
-from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterator
+from typing import TYPE_CHECKING, Any
 
+from poop.types._iterable_mixin import _MISSING
 from poop.types.boolean import false, true
 from poop.types.object import Object
 from poop.types.str_iterator import StrIterator
@@ -72,6 +73,30 @@ class Str(Object):
 
     def iter(self) -> StrIterator:
         return StrIterator(self)
+
+    def min(
+        self,
+        key: Callable[[Str], Any] | None = None,
+        default: Any = _MISSING,
+    ) -> Any:
+        kwargs: dict[str, Any] = {}
+        if key is not None:
+            kwargs["key"] = key
+        if default is not _MISSING:
+            kwargs["default"] = default
+        return builtins.min(self, **kwargs)
+
+    def max(
+        self,
+        key: Callable[[Str], Any] | None = None,
+        default: Any = _MISSING,
+    ) -> Any:
+        kwargs: dict[str, Any] = {}
+        if key is not None:
+            kwargs["key"] = key
+        if default is not _MISSING:
+            kwargs["default"] = default
+        return builtins.max(self, **kwargs)
 
     def includes(self, char: Str) -> Boolean:
         return true if char._value in self._value else false
