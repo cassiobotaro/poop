@@ -136,6 +136,34 @@ def test_ne_different_tuples() -> None:
     assert (Tuple(Int(1)) != Tuple(Int(2))) is true
 
 
+def test_lt_lexicographic_first_position_decides() -> None:
+    assert (Tuple(Int(1), Int(99)) < Tuple(Int(2), Int(0))) is true
+
+
+def test_lt_lexicographic_second_position_decides() -> None:
+    assert (Tuple(Int(1), Int(2)) < Tuple(Int(1), Int(3))) is true
+
+
+def test_lt_equal_returns_false() -> None:
+    assert (Tuple(Int(1), Int(2)) < Tuple(Int(1), Int(2))) is false
+
+
+def test_le_equal_returns_true() -> None:
+    assert (Tuple(Int(1), Int(2)) <= Tuple(Int(1), Int(2))) is true
+
+
+def test_gt_lexicographic() -> None:
+    assert (Tuple(Int(3), Int(0)) > Tuple(Int(1), Int(99))) is true
+
+
+def test_ge_equal_returns_true() -> None:
+    assert (Tuple(Int(1), Int(2)) >= Tuple(Int(1), Int(2))) is true
+
+
+def test_lt_shorter_prefix_is_smaller() -> None:
+    assert (Tuple(Int(1), Int(2)) < Tuple(Int(1), Int(2), Int(0))) is true
+
+
 def test_str_empty() -> None:
     assert str(Tuple()) == "()"
 

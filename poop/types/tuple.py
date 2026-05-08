@@ -2,7 +2,7 @@ from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
@@ -107,6 +107,26 @@ class Tuple(_IterableMixin, Object):
         if isinstance(other, Tuple):
             return false if self._items == other._items else true
         return true
+
+    def __lt__(self, other: Tuple) -> Boolean:
+        a = cast("tuple[Any, ...]", self._items)
+        b = cast("tuple[Any, ...]", other._items)
+        return true if a < b else false
+
+    def __le__(self, other: Tuple) -> Boolean:
+        a = cast("tuple[Any, ...]", self._items)
+        b = cast("tuple[Any, ...]", other._items)
+        return true if a <= b else false
+
+    def __gt__(self, other: Tuple) -> Boolean:
+        a = cast("tuple[Any, ...]", self._items)
+        b = cast("tuple[Any, ...]", other._items)
+        return true if a > b else false
+
+    def __ge__(self, other: Tuple) -> Boolean:
+        a = cast("tuple[Any, ...]", self._items)
+        b = cast("tuple[Any, ...]", other._items)
+        return true if a >= b else false
 
     def __hash__(self) -> int:
         return hash(self._items)
