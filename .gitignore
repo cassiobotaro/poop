@@ -15,6 +15,3 @@ htmlcov/
 
 # Claude Code local settings
 .claude/settings.local.json
-
-# MkDocs build output
-site/
