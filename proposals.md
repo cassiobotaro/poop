@@ -168,6 +168,19 @@ complementary tracks:
   Python → POOP → Why → See also template. Every page assumes Python
   knowledge and treats Smalltalk as a curiosity aside. Cross-linked
   from `docs/index.md` and `docs/getting-started.md`.
+- ~~**REPL guide.**~~ **DONE** — `docs/repl.md` documents the REPL
+  (`poop` with no arguments): banner, prompts, pre-loaded namespace,
+  multi-line input, tab completion, history, `_` shortcut, and the
+  `poop: <message>` error format. Surfaced in the site nav and linked
+  from `docs/index.md` and `docs/getting-started.md`.
+- ~~**Guided tutorial.**~~ **DONE** — `docs/tutorial/` with an
+  overview and six lessons (Strings, Conditionals, Iteration,
+  Classes, Collections, Errors). Every lesson follows the
+  Goal → What's new → Walk-through → Try it → Anchor example →
+  Reference template, anchored on a real file in `examples/`. Each
+  POOP snippet was executed against the interpreter before publish.
+  Closes with a pointer to `examples/rpn_calculator.py` as a
+  capstone.
 - **"Why POOP?"** — short essay on the philosophy: every operation as a message, no procedural escape hatches, why we chose Python method names over Smalltalk's, what the project is *not* (production tool, performance-oriented).
 - **Cookbook / patterns.** Common idioms with explanation: FizzBuzz, leap year, recursion-instead-of-loop, blocks vs lambdas, conditional dispatch via `if_true_if_false`, `do:` vs `map:`, composing transformers. Each entry: problem statement → naive Python → POOP version → commentary on what changed and why.
 - **Smalltalk ↔ POOP bridge.** For readers familiar with Smalltalk: which messages map directly (`do:` → `do`), which renamed (`collect:` → `map`, `select:` → `filter`, `inject:into:` → `reduce`), and what is intentionally absent (cascades, keyword messages).
@@ -183,9 +196,10 @@ complementary tracks:
 
 **Recommendation:** sequence the work as (1) migration of `INFECTIONS.md`
 "Principles" + types pages → ~~(2) Python ↔ POOP comparison table~~
-**(2 done)** → (3) "Why POOP?" + cookbook → (4) the rest. The cookbook
-can now link to the `docs/python-vs-poop/` pages instead of restating
-the substitutions.
+**(2 done)** → ~~(2.5) REPL guide + Tutorial~~ **(also done)** →
+(3) "Why POOP?" + cookbook → (4) the rest. The cookbook can now link
+to the `docs/python-vs-poop/` pages and the tutorial lessons instead
+of restating the substitutions.
 
 **Scope:** large, multi-PR. Each enrichment item is one atomic PR per
 the project's atomic-commit rule — they are independent and can be

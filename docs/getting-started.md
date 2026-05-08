@@ -53,14 +53,16 @@ class FizzBuzz:
 FizzBuzz().run()
 ```
 
-Curious why FizzBuzz looks like that? Read
-[Conditionals](python-vs-poop/conditionals.md) and
-[Loops](python-vs-poop/loops.md) for the full translation guide.
+Curious why FizzBuzz looks like that? The [Tutorial](tutorial/index.md)
+walks through every piece of it (and more) in six short lessons. For
+quick lookup, [Conditionals](python-vs-poop/conditionals.md) and
+[Loops](python-vs-poop/loops.md) cover the side-by-side translations.
 
 More examples live in
 [`examples/`](https://github.com/cassiobotaro/poop/tree/main/examples)
 in the repository. The full forbidden-builtin list with side-by-side
-replacements is in [Builtins](python-vs-poop/builtins.md).
+replacements is in [Builtins](python-vs-poop/builtins.md). The
+[REPL](repl.md) is a fast way to try snippets without saving files.
 
 ## Type annotations
 

@@ -151,6 +151,8 @@ starts fresh.
 
 ## Next steps
 
+- New to POOP? Start with the [Tutorial](tutorial/index.md) — it uses
+  the REPL throughout.
 - Looking up a specific replacement? See [Python vs POOP](python-vs-poop/index.md).
 - Want to read source files instead? `poop examples/hello_world.py` runs
   any of the [bundled examples](https://github.com/cassiobotaro/poop/tree/main/examples).

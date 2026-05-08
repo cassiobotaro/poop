@@ -47,3 +47,11 @@ forbids, see [Python vs POOP](python-vs-poop/index.md).
 
 See [Getting started](getting-started.md) to install POOP and run your
 first program.
+
+### What's next
+
+- **New here?** Walk through the [Tutorial](tutorial/index.md) — six
+  short lessons from "Hello, World" to a small program with classes,
+  iteration, and error handling.
+- **Prefer to poke around?** Try the [REPL](repl.md) — `poop` with no
+  arguments drops you into an interactive prompt.
