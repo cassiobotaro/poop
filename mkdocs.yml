@@ -33,6 +33,14 @@ theme:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - Tutorial:
+      - Overview: tutorial/index.md
+      - 1. Strings: tutorial/01-strings.md
+      - 2. Conditionals: tutorial/02-conditionals.md
+      - 3. Iteration: tutorial/03-iteration.md
+      - 4. Classes: tutorial/04-classes.md
+      - 5. Collections: tutorial/05-collections.md
+      - 6. Errors: tutorial/06-errors.md
   - Python vs POOP:
       - Overview: python-vs-poop/index.md
       - Conditionals: python-vs-poop/conditionals.md
