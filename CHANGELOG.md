@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.6](https://github.com/cassiobotaro/poop/compare/v0.1.5...v0.1.6) (2026-05-08)
+
+
+### Features
+
+* **_IterableMixin:** add min/max with key/default ([1e3fbf3](https://github.com/cassiobotaro/poop/commit/1e3fbf38bfbe343c21dffd7e07a4f8f2f4346eee))
+* **Boolean:** integer-like ordering ([3f7ddfc](https://github.com/cassiobotaro/poop/commit/3f7ddfc3a805053cd1c5a02763f4c639d2064d5f))
+* **Dict:** add min/max over keys ([0f08634](https://github.com/cassiobotaro/poop/commit/0f08634d3caf09496a98d266d051a7fe563d1ab9))
+* **Str:** add min/max over chars ([4f39872](https://github.com/cassiobotaro/poop/commit/4f398724b2d0a41e4a957ce44ce1d761483ae8f0))
+* **Tuple:** lexicographic ordering ([cc672b5](https://github.com/cassiobotaro/poop/commit/cc672b5e01181a9779683d1c53ff587fe365d354))
+
+
+### Bug Fixes
+
+* **Int/Float:** round(ndigits) accepts POOP Int ([c978b48](https://github.com/cassiobotaro/poop/commit/c978b48b8b468759869e765d24d5123e24f41fd6))
+* **Object:** has_attr/get_attr/set_attr/del_attr accept POOP Str ([42ff2af](https://github.com/cassiobotaro/poop/commit/42ff2af81560d0d33f9f15714e8b9d80282950b1))
+* **transformers:** expose POOP type names and rewrite Python builtins ([bf43e0a](https://github.com/cassiobotaro/poop/commit/bf43e0ab5a40b91814dcb38876c4640fa5533e1c))
+* **types:** make value-wrapping ctors idempotent ([1576ff0](https://github.com/cassiobotaro/poop/commit/1576ff0cf21ac93d401d80296377c9c6e7e7c6cd))
+
+
+### Documentation
+
+* add proposal — tighten POOP method signatures to POOP-only types ([986baad](https://github.com/cassiobotaro/poop/commit/986baad5f6787d95b2786c16f60df862b8020f86))
+* **INFECTIONS:** document iterable min/max ([3bf52ef](https://github.com/cassiobotaro/poop/commit/3bf52efa225dd5fd1194f0211af2d28b5c4872c4))
+* **proposals:** add open decision on lazy map/filter ([ace2ca4](https://github.com/cassiobotaro/poop/commit/ace2ca4dba7018ef37b4387f7802b1e1ba0da4c6))
+* **proposals:** drop "Stay banned" section ([31d9632](https://github.com/cassiobotaro/poop/commit/31d9632e10d3f85cdd2b0ee2e0bf78bd09d883e1))
+* **proposals:** flesh out Path implementation plan ([01c8b40](https://github.com/cassiobotaro/poop/commit/01c8b409b2e85a0fdb64ec3630c85caeeb6e57d1))
+
 ## [0.1.5](https://github.com/cassiobotaro/poop/compare/v0.1.4...v0.1.5) (2026-05-08)
 
 
