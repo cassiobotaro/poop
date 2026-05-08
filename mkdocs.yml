@@ -33,6 +33,11 @@ theme:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - Python vs POOP:
+      - Overview: python-vs-poop/index.md
+      - Conditionals: python-vs-poop/conditionals.md
+      - Loops: python-vs-poop/loops.md
+      - Builtins: python-vs-poop/builtins.md
   - Contributing: contributing.md
 
 markdown_extensions:
