@@ -35,6 +35,13 @@ class Object:
 
         return false if bool(self) else true
 
+    def assert_(self, message: Str | None = None) -> Object:
+        if bool(self):
+            return self
+        if message is None:
+            raise AssertionError
+        raise AssertionError(message._value)
+
     def class_name(self) -> Str:
         from poop.types.string import Str
 

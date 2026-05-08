@@ -60,7 +60,7 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 
 | AST node | Reason | Substitute |
 |---|---|---|
-| `ast.Assert` | Statement — not a message to any object | `condition.assert_('message')` |
+| `ast.Assert` | Statement — not a message to any object | `obj.assert_('message')` (any truthy receiver) |
 
 ### No `raise` — `poop/validators/no_raise.py`
 
@@ -529,7 +529,7 @@ Concrete root of all POOP types. The table below highlights the universal method
 | `and:` / `or:` (lazy) | `and_(block)` / `or_(block)` |
 | `not` / `xor:` / `eqv:` | `not_()` / `xor(other)` / `eqv(other)` |
 | `&` / `\|` (eager) | `__and__(other)` / `__or__(other)` |
-| `assert:` | `assert_(message)` | raises `AssertionError(message)` if `false`; returns `self` if `true` |
+| `assert:` | `assert_(message)` (on `Object`, not just `Boolean`) | raises `AssertionError(message)` if `bool(self)` is falsy; returns `self` otherwise |
 
 ### Block — `poop/types/block.py` + `poop/transformers/block.py`
 
