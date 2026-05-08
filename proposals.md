@@ -61,7 +61,12 @@ complementary tracks:
 - Once migration completes: delete `INFECTIONS.md`; add `mkdocstrings[python]` for auto-API and `mkdocs-autorefs` for cross-page links.
 
 **Enrichment scope (new content, in priority order):**
-- **Python ↔ POOP comparison table.** Today the README has a 10-row "Key substitutions" snippet. Expand to a full reference covering control flow (`if`/`for`/`while`/`try`), collections (literals + indexing + slicing + comprehensions), iteration (`map`/`filter`/`reduce`/`sum`), error handling (`raise`/`try`/`except`), comparison/identity (`==`/`is`/`in`), boolean operators (`and`/`or`/`not`), arithmetic (unary `-`/`+`/`~`), introspection (`len`/`abs`/`hash`/`isinstance`), I/O (`print`/`input`/`open`). Side-by-side, runnable, with the POOP version showing the message-passing model.
+- ~~**Python ↔ POOP comparison table.**~~ **DONE** — shipped as the
+  `docs/python-vs-poop/` section: an overview plus three didactic
+  pages (`conditionals.md`, `loops.md`, `builtins.md`) using a fixed
+  Python → POOP → Why → See also template. Every page assumes Python
+  knowledge and treats Smalltalk as a curiosity aside. Cross-linked
+  from `docs/index.md` and `docs/getting-started.md`.
 - **"Why POOP?"** — short essay on the philosophy: every operation as a message, no procedural escape hatches, why we chose Python method names over Smalltalk's, what the project is *not* (production tool, performance-oriented).
 - **Cookbook / patterns.** Common idioms with explanation: FizzBuzz, leap year, recursion-instead-of-loop, blocks vs lambdas, conditional dispatch via `if_true_if_false`, `do:` vs `map:`, composing transformers. Each entry: problem statement → naive Python → POOP version → commentary on what changed and why.
 - **Smalltalk ↔ POOP bridge.** For readers familiar with Smalltalk: which messages map directly (`do:` → `do`), which renamed (`collect:` → `map`, `select:` → `filter`, `inject:into:` → `reduce`), and what is intentionally absent (cascades, keyword messages).
@@ -76,10 +81,10 @@ complementary tracks:
 - Versioned docs (`mike` plugin) once a 1.0 release is on the horizon.
 
 **Recommendation:** sequence the work as (1) migration of `INFECTIONS.md`
-"Principles" + types pages → (2) Python ↔ POOP comparison table → (3)
-"Why POOP?" + cookbook → (4) the rest. The comparison table delivers
-the highest visible-value-per-hour for new readers and unblocks
-linking from cookbook entries.
+"Principles" + types pages → ~~(2) Python ↔ POOP comparison table~~
+**(2 done)** → (3) "Why POOP?" + cookbook → (4) the rest. The cookbook
+can now link to the `docs/python-vs-poop/` pages instead of restating
+the substitutions.
 
 **Scope:** large, multi-PR. Each enrichment item is one atomic PR per
 the project's atomic-commit rule — they are independent and can be
