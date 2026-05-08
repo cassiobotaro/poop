@@ -27,16 +27,3 @@ Items currently classified as "no possible substitute" (`INFECTIONS.md:299-345`)
 **Scope:** smaller than reimplementing I/O from scratch — wrapper over `pathlib` plus delegating methods.
 
 **Decision:** adopt approach (a) with `pathlib` as the foundation, design `File` from scratch, or keep banned?
-
----
-
-## Stay banned (no proposal)
-
-Genuinely without a possible substitute inside POOP's model:
-
-- `exec`/`eval`/`compile` — metaprogramming, contradicts the static principle.
-- `exit`/`quit` — process control, outside the object model.
-- `breakpoint` — debugger handshake, not a domain operation.
-- `globals()`/`locals()` — lexical scope introspection (instance state is already accessible).
-- `vars(obj)` — exposes Python-native slot values (`_value`, `_items`, `_data`) that are not POOP objects; breaks encapsulation and the "all methods return POOP types" rule.
-- `del` — statement, not a builtin function.
