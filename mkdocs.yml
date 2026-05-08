@@ -38,6 +38,7 @@ nav:
       - Conditionals: python-vs-poop/conditionals.md
       - Loops: python-vs-poop/loops.md
       - Builtins: python-vs-poop/builtins.md
+  - REPL: repl.md
   - Contributing: contributing.md
 
 markdown_extensions:
