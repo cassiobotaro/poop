@@ -235,8 +235,18 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `min(a, b)` | free function with procedural look | `a.min(b)` |
-| `max(a, b)` | free function with procedural look | `a.max(b)` |
+| `min(a, b)` | free function with procedural look | `a.min(b)` (binary, on `Int`/`Float`) |
+| `min(iterable)` | free function with procedural look | `iterable.min()` |
+| `min(iterable, key=fn)` | free function with procedural look | `iterable.min(key=fn)` |
+| `min(iterable, default=x)` | free function with procedural look | `iterable.min(default=x)` |
+| `min(a, b, c, ...)` | free function with procedural look | `[a, b, c].min()` or chain `a.min(b).min(c)` |
+
+`max` mirrors `min` exactly. The iterable form lives on
+`_IterableMixin` (covers `List`, `Tuple`, `Set`, `FrozenSet`,
+`Range`, `Bytes`, `ByteArray`, `MemoryView`, `Enumerate`, `Zip`)
+plus direct implementations on `Str` (smallest/largest character)
+and `Dict` (smallest/largest key). Empty iterable without `default`
+raises `ValueError`, mirroring Python.
 
 ### No `bin`/`hex`/`oct` — `poop/validators/no_bin.py`
 
