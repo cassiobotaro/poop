@@ -11,9 +11,11 @@ from typing import Any
 import pytest
 
 from poop import Interpreter
+from poop.types.boolean import false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
+from poop.types.enumerate import Enumerate
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
@@ -22,6 +24,7 @@ from poop.types.range import Range
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+from poop.types.zip import Zip
 
 
 def _ints(*values: int) -> list[Int]:
@@ -111,6 +114,24 @@ def test_empty_min_via_interpreter_surfaces_value_error() -> None:
     Interpreter().run_source(
         "Try(lambda: [].min()).except_(ValueError, lambda e: e.kind().print()).run()"
     )
+
+
+def test_min_max_on_enumerate() -> None:
+    pairs = Enumerate(List(*_ints(7, 3, 5)), Int(0))
+    assert pairs.min() == Tuple(Int(0), Int(7))
+    assert pairs.max() == Tuple(Int(2), Int(5))
+
+
+def test_min_max_on_zip() -> None:
+    zipped = Zip(List(*_ints(3, 1, 2)), List(Str("a"), Str("b"), Str("c")))
+    assert zipped.min() == Tuple(Int(1), Str("b"))
+    assert zipped.max() == Tuple(Int(3), Str("a"))
+
+
+def test_min_on_boolean_via_iteration() -> None:
+    items = List(true, false, true)
+    assert items.min() is false
+    assert items.max() is true
 
 
 def test_str_min_returns_smallest_char() -> None:
