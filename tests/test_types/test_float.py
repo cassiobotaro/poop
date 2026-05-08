@@ -153,6 +153,11 @@ def test_round_with_digits_returns_float() -> None:
     assert Float(3.14159).round(2) == Float(3.14)
 
 
+def test_round_with_poop_int_ndigits() -> None:
+    assert Float(3.14159).round(Int(2)) == Float(3.14)
+    assert Float(3.456).round(Int(1)) == Float(3.5)
+
+
 def test_int_conversion() -> None:
     assert int(Float(3.9)) == 3
 

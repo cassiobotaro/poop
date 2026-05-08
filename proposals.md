@@ -15,32 +15,7 @@ idiomatic call (matching each method's declared signature); these
 proposals are about closing the gap between the signature and the
 implementation.
 
-### 1. `Float.round(ndigits)` rejects POOP `Int`
-
-**Today:** `Float.round` (`poop/types/float.py:131-132`) delegates to
-`Float.__round__` (`poop/types/float.py:125-129`), which calls Python's
-`round(self._value, ndigits)`. When the user writes `(3.456).round(1)`
-the `1` literal is transformed to a POOP `Int`, and Python's builtin
-`round` rejects it with `'Int' object cannot be interpreted as an
-integer`. `Int.round` (`poop/types/int.py:159`) has the same shape and
-likely the same defect.
-
-**Repro:**
-```python
-(3.456).round(1).print()
-# poop: 'Int' object cannot be interpreted as an integer
-```
-
-**Fix sketch:** unwrap `ndigits` before delegating — `int(ndigits)` if
-it's a POOP `Int`, else pass through. The same unwrap is already used
-in other places where POOP types meet Python builtins (e.g. Float
-arithmetic).
-
-**Workaround for users today:** call `.round()` with no argument, which
-rounds to the nearest integer and works because `__round__(None)` skips
-the offending path.
-
-### 2. `Object.has_attr(symbol)` rejects POOP `Str`
+### 1. `Object.has_attr(symbol)` rejects POOP `Str`
 
 **Today:** `Object.has_attr` (`poop/types/object.py:95-98`) calls
 Python's builtin `hasattr(self, symbol)`. When the user writes
@@ -65,7 +40,7 @@ code on any literal string. (Methods that take POOP `Str` and forward
 to Python `str` work elsewhere because they hit `__str__`; `hasattr`
 is one of the few Python builtins that does not.)
 
-### 3. Public POOP type names not exposed in the user namespace
+### 2. Public POOP type names not exposed in the user namespace
 
 **Today:** `DEFAULT_NAMESPACE`
 (`poop/transformers/__init__.py:56-80`) is built from

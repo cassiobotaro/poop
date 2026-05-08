@@ -183,6 +183,11 @@ def test_round_returns_self() -> None:
     assert Int(5).round() == Int(5)
 
 
+def test_round_with_poop_int_ndigits() -> None:
+    assert Int(123).round(Int(-1)) == Int(120)
+    assert Int(125).round(Int(-2)) == Int(100)
+
+
 def test_bit_count() -> None:
     assert Int(0b1011).bit_count() == Int(3)
 

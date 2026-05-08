@@ -153,10 +153,11 @@ class Int(Object):
     def trunc(self) -> Int:
         return self.__trunc__()
 
-    def __round__(self, ndigits: _int | None = None) -> Int:
-        return Int(round(self._value, ndigits))
+    def __round__(self, ndigits: Int | _int | None = None) -> Int:
+        n = None if ndigits is None else _int(ndigits)
+        return Int(round(self._value, n))
 
-    def round(self, ndigits: _int | None = None) -> Int:
+    def round(self, ndigits: Int | _int | None = None) -> Int:
         return self.__round__(ndigits)
 
     def __eq__(self, other: object) -> Boolean:

@@ -122,13 +122,14 @@ class Float(Object):
     def trunc(self) -> Int:
         return self.__trunc__()
 
-    def __round__(self, ndigits: _int | None = None) -> Int | Float:
+    def __round__(self, ndigits: Int | _int | None = None) -> Int | Float:
         from poop.types.int import Int
 
-        result = round(self._value, ndigits)
+        n = None if ndigits is None else _int(ndigits)
+        result = round(self._value, n)
         return Int(result) if isinstance(result, _int) else Float(result)
 
-    def round(self, ndigits: _int | None = None) -> Int | Float:
+    def round(self, ndigits: Int | _int | None = None) -> Int | Float:
         return self.__round__(ndigits)
 
     def __int__(self) -> _int:
