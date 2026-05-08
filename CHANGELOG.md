@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.5](https://github.com/cassiobotaro/poop/compare/v0.1.4...v0.1.5) (2026-05-08)
+
+
+### Documentation
+
+* add POOP logo to the docs site landing page ([924bd1e](https://github.com/cassiobotaro/poop/commit/924bd1e644c351c24832bb32f1219fd9bf506695))
+* add REPL guide ([dee88a2](https://github.com/cassiobotaro/poop/commit/dee88a28cc46a1b6e2c194a6e35b11863c3cfc54))
+* bump POOP logo width from 440 to 600 in README and docs ([e89b871](https://github.com/cassiobotaro/poop/commit/e89b871dfb247e829a4eaa331c0e6b55f438ece1))
+* cross-link tutorial and REPL from entry points ([78b622a](https://github.com/cassiobotaro/poop/commit/78b622afc3a58c0b2749575e41b6108e43895dbc))
+* fill tutorial Lesson 1 — Strings ([69d7e62](https://github.com/cassiobotaro/poop/commit/69d7e62b1a9e285e4c05638634754982c6c9af4a))
+* fill tutorial Lesson 2 — Conditionals ([be3d66b](https://github.com/cassiobotaro/poop/commit/be3d66be6f68f45a0c80d4ae31a2ae8da29d442c))
+* fill tutorial Lesson 3 — Iteration ([82cb3da](https://github.com/cassiobotaro/poop/commit/82cb3da8ef90df960c49493c0b1084cfeea519aa))
+* fill tutorial Lesson 4 — Classes ([213a575](https://github.com/cassiobotaro/poop/commit/213a575bd7bf40963f25a3dd87f82f04db592235))
+* fill tutorial Lesson 5 — Collections ([05e2128](https://github.com/cassiobotaro/poop/commit/05e2128777bfe79c274b968c728fc4ad5934a444))
+* fill tutorial Lesson 6 — Errors ([47d08b2](https://github.com/cassiobotaro/poop/commit/47d08b2ad6c323fc59b05fc8ec540ea19da80707))
+* scaffold Tutorial section with overview and six stubs ([fdf7f5b](https://github.com/cassiobotaro/poop/commit/fdf7f5bc5fb06ba3f6d0b438fbbb346f9ac9d3ae))
+
 ## [0.1.4](https://github.com/cassiobotaro/poop/compare/v0.1.3...v0.1.4) (2026-05-08)
 
 
