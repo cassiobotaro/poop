@@ -411,8 +411,25 @@ Available on `List`, `Tuple`, `Set`, `FrozenSet`, and `Range`.
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `map(func, col)` | free function with procedural look | `col.map(block)` |
-| `filter(func, col)` | free function with procedural look | `col.filter(block)` |
+| `map(func, col)` | free function with procedural look | `col.map(block)` returning `Map` (lazy) |
+| `filter(func, col)` | free function with procedural look | `col.filter(block)` returning `Filter` (lazy) |
+
+`col.map(block)` returns a `Map` and `col.filter(block)` returns a
+`Filter` — both lazy iterators in the same family as `Enumerate` and
+`Zip`. The block is applied on demand as the result is consumed.
+Materialization is via the target type's constructor:
+
+```python
+list(items.map(lambda x: x + 1))           # -> List
+tuple(items.filter(lambda x: x > 0))       # -> Tuple
+set(items.map(lambda x: x.lower()))        # -> Set
+bytes(items.map(lambda x: x.code()))       # -> Bytes
+```
+
+In Python tests (where the transformer doesn't run), construct via
+varargs unpack: `List(*items.map(...))`. Methods that consume the
+iterator (`do`, `sum`, `min`, `max`, `find`, `reduce`, `all`, `any`)
+work on `Map`/`Filter` directly via `_IterableMixin`.
 
 ### No `round` — `poop/validators/no_round.py`
 
@@ -553,20 +570,35 @@ Concrete root of all POOP types. The table below highlights the universal method
 | Smalltalk message | POOP method | Behavior |
 |---|---|---|
 | `do:` | `do(block)` | visits each element; returns `none` (substitute for `for` loop) |
-| `collect:` | `map(block)` | transforms elements; return type matches collection (see note) |
-| `select:` | `filter(block)` | keeps matching elements; return type matches collection |
-| `reject:` | `filter_false(block)` | keeps non-matching elements; return type matches collection |
+| `collect:` | `map(block)` | returns `Map` (lazy); materialize via `list(...)`/`tuple(...)`/etc. |
+| `select:` | `filter(block)` | returns `Filter` (lazy); same materialization |
+| `reject:` | `filter_false(block)` | returns `Filter` (lazy) with the predicate inverted |
 | `detect:` | `find(block)` | first element satisfying block, or POOP `none` |
 | `inject:into:` | `reduce(init, block)` | fold with required initial value; returns accumulated result |
 | — | `sum()` | sum of elements; returns `Int(0)` for empty collection |
+| — | `min(key=None, default=...)` | smallest element; mirrors Python `min` |
+| — | `max(key=None, default=...)` | largest element; mirrors Python `max` |
 | — | `all(block)` | `true` if block holds for every element |
 | — | `any(block)` | `true` if block holds for at least one element |
 | — | `enumerate(start=Int(0))` | returns an `Enumerate` of `Tuple(Int(i), item)` pairs |
 | — | `zip(*others, strict=false)` | returns a `Zip` of `Tuple(...)` |
 
-`map`/`filter`/`filter_false` return the same type for `List`, `Tuple`, `Set`, and `FrozenSet`; they return `List` for every other inheritor (`Range`, `Bytes`, `ByteArray`, `MemoryView`, `Enumerate`, `Zip`, `DictKeys`, `DictValues`, `DictItems`) — those types cannot be reconstructed from arbitrary transformed elements.
+`map`/`filter`/`filter_false` are **lazy** — they return `Map`/`Filter` iterators (same family as `Enumerate`/`Zip`) regardless of the receiver's type, mirroring Python's `map`/`filter` builtins. The block runs only as the result is consumed. To materialize, pass the lazy result to a constructor: `list(col.map(f))`, `tuple(col.filter(g))`, `set(col.map(f))`, `bytes(col.map(g))`. Methods that consume the iterator (`do`, `sum`, `min`, `max`, `find`, `reduce`, `all`, `any`) work on `Map`/`Filter` directly without materialization.
 
 `Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements. `Bytes` and `ByteArray` override `find` for substring search (different semantics from the mixin's element-finding `find`).
+
+`Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements. `Bytes` and `ByteArray` override `find` for substring search (different semantics from the mixin's element-finding `find`).
+
+### Map / Filter — `poop/types/map.py`, `poop/types/filter.py`
+
+`Map` and `Filter` are lazy iterator types in the same family as `Enumerate` and `Zip`. They wrap a source iterable and a block, and apply the block on demand:
+
+- `Map(source, block)` yields `block(item)` for each item.
+- `Filter(source, block)` yields `item` when `block(item)` is truthy.
+
+Both inherit `_IterableMixin` so chains like `col.map(f).filter(g).sum()` keep iterating once through the source. Both expose `.next()` (one-shot, like `Enumerate`/`Zip`) and `__iter__` (returns a fresh generator — restartable when the source is restartable).
+
+The transformers are namespace-only: they expose `Map` and `Filter` in `DEFAULT_NAMESPACE` but don't rewrite any AST. Users construct them either directly (`Map(source, block)`) or — more commonly — via the mixin's `.map(block)` / `.filter(block)` methods.
 
 ### Range — `poop/types/range.py`
 
@@ -575,9 +607,9 @@ Concrete root of all POOP types. The table below highlights the universal method
 | POOP method | Behavior |
 |---|---|
 | `do(block)` | see collection iterable methods above |
-| `map(block)` | transforms → `List` |
-| `filter(block)` | filters → `List` |
-| `filter_false(block)` | filters inverse → `List` |
+| `map(block)` | transforms → `Map` (lazy) |
+| `filter(block)` | filters → `Filter` (lazy) |
+| `filter_false(block)` | filters inverse → `Filter` (lazy) |
 | `find(block)` | first satisfying, or POOP `none` |
 | `iter()` | returns a one-shot `RangeIterator` |
 | `len()` | returns `Int` |
