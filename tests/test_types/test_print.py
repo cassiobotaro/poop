@@ -17,7 +17,7 @@ def test_object_print_returns_none() -> None:
 
 
 def test_object_print_end_param(capsys: pytest.CaptureFixture[str]) -> None:
-    Int(42).print(end="")
+    Int(42).print(end=Str(""))
     assert capsys.readouterr().out == "42"
 
 
@@ -37,7 +37,7 @@ def test_list_print_default_sep(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_list_print_custom_sep(capsys: pytest.CaptureFixture[str]) -> None:
-    List(Int(1), Int(2), Int(3)).print(sep=";")
+    List(Int(1), Int(2), Int(3)).print(sep=Str(";"))
     assert capsys.readouterr().out == "1;2;3\n"
 
 
@@ -51,7 +51,7 @@ def test_tuple_print_default_sep(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_tuple_print_custom_sep(capsys: pytest.CaptureFixture[str]) -> None:
-    Tuple(Int(1), Int(2), Int(3)).print(sep=", ")
+    Tuple(Int(1), Int(2), Int(3)).print(sep=Str(", "))
     assert capsys.readouterr().out == "1, 2, 3\n"
 
 

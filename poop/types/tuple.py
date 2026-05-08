@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from poop.types.int import Int
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
+    from poop.types.string import Str
 
 _tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
 
@@ -110,9 +111,20 @@ class Tuple(_IterableMixin, Object):
     def __hash__(self) -> int:
         return hash(self._items)
 
-    def print(self, sep: str = " ", end: str = "\n", flush: bool = False) -> NoneClass:
+    def print(
+        self,
+        sep: Str | None = None,
+        end: Str | None = None,
+        flush: Boolean | None = None,
+    ) -> NoneClass:
+        sep_value = " " if sep is None else sep._value
+        end_value = "\n" if end is None else end._value
+        flush_value = False if flush is None else bool(flush)
         _builtins_print(
-            *[str(item) for item in self._items], sep=sep, end=end, flush=flush
+            *[str(item) for item in self._items],
+            sep=sep_value,
+            end=end_value,
+            flush=flush_value,
         )  # noqa: T201
         return none
 

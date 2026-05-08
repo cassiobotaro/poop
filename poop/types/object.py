@@ -89,30 +89,32 @@ class Object:
         target = builtins.getattr(self, "_value", self)
         return Str(builtins.format(target, spec_value))
 
-    def get_attr(self, name: Str | str, *default: Any) -> Any:
-        return builtins.getattr(self, str(name), *default)
+    def get_attr(self, name: Str, *default: Any) -> Any:
+        return builtins.getattr(self, name._value, *default)
 
-    def has_attr(self, symbol: Str | str) -> Boolean:
+    def has_attr(self, symbol: Str) -> Boolean:
         from poop.types.boolean import false, true
 
-        return true if hasattr(self, str(symbol)) else false
+        return true if hasattr(self, symbol._value) else false
 
-    def set_attr(self, name: Str | str, value: Any) -> NoneClass:
+    def set_attr(self, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
 
-        builtins.setattr(self, str(name), value)
+        builtins.setattr(self, name._value, value)
         return none
 
-    def del_attr(self, name: Str | str) -> NoneClass:
+    def del_attr(self, name: Str) -> NoneClass:
         from poop.types.none import none
 
-        builtins.delattr(self, str(name))
+        builtins.delattr(self, name._value)
         return none
 
-    def print(self, end: str = "\n", flush: bool = False) -> NoneClass:
+    def print(self, end: Str | None = None, flush: Boolean | None = None) -> NoneClass:
         from poop.types.none import none
 
-        _builtins_print(str(self), end=end, flush=flush)  # noqa: T201
+        end_value = "\n" if end is None else end._value
+        flush_value = False if flush is None else bool(flush)
+        _builtins_print(str(self), end=end_value, flush=flush_value)  # noqa: T201
         return none
 
     def __str__(self) -> str:
