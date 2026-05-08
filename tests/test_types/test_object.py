@@ -43,6 +43,11 @@ def test_has_attr_missing_method() -> None:
     assert Object().has_attr("nonexistent") is false
 
 
+def test_has_attr_accepts_poop_str() -> None:
+    assert Object().has_attr(Str("class_name")) is true
+    assert Object().has_attr(Str("nonexistent")) is false
+
+
 def test_is_instance_returns_true_for_matching_type() -> None:
     assert Object().is_instance(Object) is true
 
@@ -138,6 +143,11 @@ def test_get_attr_missing_with_default_returns_default() -> None:
     assert result is sentinel
 
 
+def test_get_attr_accepts_poop_str() -> None:
+    result = Object().get_attr(Str("class_name"))
+    assert callable(result)
+
+
 def test_set_attr_writes_to_declared_slot() -> None:
     from poop.types.none import none
 
@@ -156,6 +166,16 @@ def test_set_attr_on_unknown_slot_raises_attribute_error() -> None:
         Object().set_attr("nonexistent", Int(1))
 
 
+def test_set_attr_accepts_poop_str() -> None:
+    class Container(Object):
+        __slots__ = ("data",)
+        data: Int
+
+    obj = Container()
+    obj.set_attr(Str("data"), Int(42))
+    assert obj.data == Int(42)
+
+
 def test_del_attr_removes_attribute() -> None:
     from poop.types.none import none
 
@@ -172,6 +192,16 @@ def test_del_attr_removes_attribute() -> None:
 def test_del_attr_missing_raises_attribute_error() -> None:
     with pytest.raises(AttributeError):
         Object().del_attr("nonexistent")
+
+
+def test_del_attr_accepts_poop_str() -> None:
+    class Container(Object):
+        data: Int
+
+    obj = Container()
+    obj.data = Int(7)  # type: ignore[unresolved-attribute]
+    obj.del_attr(Str("data"))
+    assert not hasattr(obj, "data")
 
 
 def test_repr_method_returns_str_type() -> None:

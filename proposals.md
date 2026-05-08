@@ -9,38 +9,12 @@ Guiding principle (`INFECTIONS.md:16`): *"Activate validator only when the subst
 ## Bugs
 
 Found while writing the `docs/python-vs-poop/` pages — every snippet
-was executed against the real interpreter, and these three are the
-ones that didn't run cleanly. The docs document the **intended**
-idiomatic call (matching each method's declared signature); these
-proposals are about closing the gap between the signature and the
-implementation.
+was executed against the real interpreter, and these are the bugs
+that didn't run cleanly. The docs document the **intended** idiomatic
+call (matching each method's declared signature); these proposals are
+about closing the gap between the signature and the implementation.
 
-### 1. `Object.has_attr(symbol)` rejects POOP `Str`
-
-**Today:** `Object.has_attr` (`poop/types/object.py:95-98`) calls
-Python's builtin `hasattr(self, symbol)`. When the user writes
-`x.has_attr("deposit")` the `"deposit"` literal is transformed to a
-POOP `Str`, and `hasattr` rejects it with `attribute name must be
-string, not 'Str'`. `Object.get_attr` and `Object.set_attr`
-(`poop/types/object.py:92-93,100-104`) have the same shape and likely
-the same defect.
-
-**Repro:**
-```python
-"hi".has_attr("upper").print()
-# poop: attribute name must be string, not 'Str'
-```
-
-**Fix sketch:** unwrap the symbol via `str(symbol)` before delegating
-to the Python builtin. Apply consistently to `get_attr` and
-`set_attr`.
-
-**Workaround for users today:** none — `has_attr` is unusable from POOP
-code on any literal string. (Methods that take POOP `Str` and forward
-to Python `str` work elsewhere because they hit `__str__`; `hasattr`
-is one of the few Python builtins that does not.)
-
-### 2. Public POOP type names not exposed in the user namespace
+### 1. Public POOP type names not exposed in the user namespace
 
 **Today:** `DEFAULT_NAMESPACE`
 (`poop/transformers/__init__.py:56-80`) is built from

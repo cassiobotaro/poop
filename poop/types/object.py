@@ -89,24 +89,24 @@ class Object:
         target = builtins.getattr(self, "_value", self)
         return Str(builtins.format(target, spec_value))
 
-    def get_attr(self, name: str, *default: Any) -> Any:
-        return builtins.getattr(self, name, *default)
+    def get_attr(self, name: Str | str, *default: Any) -> Any:
+        return builtins.getattr(self, str(name), *default)
 
-    def has_attr(self, symbol: str) -> Boolean:
+    def has_attr(self, symbol: Str | str) -> Boolean:
         from poop.types.boolean import false, true
 
-        return true if hasattr(self, symbol) else false
+        return true if hasattr(self, str(symbol)) else false
 
-    def set_attr(self, name: str, value: Any) -> NoneClass:
+    def set_attr(self, name: Str | str, value: Any) -> NoneClass:
         from poop.types.none import none
 
-        builtins.setattr(self, name, value)
+        builtins.setattr(self, str(name), value)
         return none
 
-    def del_attr(self, name: str) -> NoneClass:
+    def del_attr(self, name: Str | str) -> NoneClass:
         from poop.types.none import none
 
-        builtins.delattr(self, name)
+        builtins.delattr(self, str(name))
         return none
 
     def print(self, end: str = "\n", flush: bool = False) -> NoneClass:
