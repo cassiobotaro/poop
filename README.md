@@ -68,6 +68,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 - **File I/O**
   - Python: `open("notes.txt").read()`
   - POOP: `Path("notes.txt").read_text()`
+  - `Path(...).write_text(content)` returns an `Int` with the number of bytes written.
 - **Validation debugging**
   - Use `poop file.py --validators-only` to list all validation errors at once.
   - Use `poop file.py --explain` to list errors with substitute hints.
