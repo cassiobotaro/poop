@@ -5,10 +5,13 @@ import pytest
 
 from poop import Interpreter
 from poop.errors import ExecutionError, ParseError, ValidationError
+from poop.executor import execute
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.boolean import BooleanTransformer
 from poop.types.boolean import Boolean
 from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
@@ -95,3 +98,38 @@ def test_slice_subscript_is_forbidden() -> None:
     # no_subscript now also blocks slice notation
     with pytest.raises(ValidationError):
         Interpreter().run_source("x = [1, 2, 3]\ny = x[1:2]")
+
+
+def test_validate_all_collects_multiple_validation_errors() -> None:
+    source = "if True:\n    print('x')\nlen([1])\n"
+    errors = Interpreter().validate_all(source)
+    assert len(errors) >= 3
+    messages = [str(error) for error in errors]
+    assert any("if" in message for message in messages)
+    assert any("print" in message for message in messages)
+    assert any("len" in message for message in messages)
+
+
+def test_pipeline_integration_with_multiple_transformers() -> None:
+    source = (
+        "class Greeter:\n"
+        "    def run(self):\n"
+        "        items = list((1, 2, 3))\n"
+        "        return str(items.at(0))\n"
+        "result = Greeter().run()\n"
+    )
+    tree = Interpreter().transform_source(source)
+    namespace = dict(DEFAULT_NAMESPACE)
+    execute(tree, namespace=namespace)
+    assert namespace["result"] == Str("1")
+
+
+def test_pipeline_integration_supports_path_namespace(tmp_path: Path) -> None:
+    target = tmp_path / "hello.txt"
+    source = (
+        f'Path("{target}").write_text("hello")\nresult = Path("{target}").read_text()\n'
+    )
+    tree = Interpreter().transform_source(source)
+    namespace = dict(DEFAULT_NAMESPACE)
+    execute(tree, namespace=namespace)
+    assert namespace["result"] == Str("hello")

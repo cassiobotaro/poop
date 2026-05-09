@@ -11,6 +11,7 @@ from poop.types.int import Int
 from poop.types.memory_view import MemoryView
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
+from poop.types.path import Path
 from poop.types.range import Range
 from poop.types.set import Set
 from poop.types.slice import Slice
@@ -33,6 +34,7 @@ __all__ = [
     "MemoryView",
     "NoneClass",
     "Object",
+    "Path",
     "Set",
     "Slice",
     "Str",

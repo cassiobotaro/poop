@@ -13,7 +13,7 @@ def test_valid_code_passes() -> None:
 
 def test_open_raises_validation_error() -> None:
     tree = ast.parse("open('file.txt')")
-    with pytest.raises(ValidationError, match="open()"):
+    with pytest.raises(ValidationError, match="Path\\('file'\\)\\.read_text"):
         NoOpenValidator().validate(tree)
 
 

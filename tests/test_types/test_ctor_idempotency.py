@@ -14,6 +14,7 @@ from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.memory_view import MemoryView
+from poop.types.path import Path
 from poop.types.string import Str
 
 
@@ -33,6 +34,12 @@ def test_ctor_unwraps_own_type(ctor: type, primitive: object) -> None:
     inner = ctor(primitive)
     outer = ctor(inner)
     assert outer._value == inner._value
+
+
+def test_path_ctor_unwraps_own_type() -> None:
+    inner = Path(Str("tmp.txt"))
+    outer = Path(inner)
+    assert outer._path == inner._path
 
 
 def test_aliased_str_constructor_works_end_to_end() -> None:

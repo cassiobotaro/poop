@@ -25,6 +25,7 @@ from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
 from poop.transformers.memory_view import MemoryViewTransformer
+from poop.transformers.path import PathTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.string import StrTransformer
@@ -42,6 +43,7 @@ from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.memory_view import MemoryView
+from poop.types.path import Path
 from poop.types.range import Range
 from poop.types.set import Set
 from poop.types.string import Str
@@ -77,6 +79,7 @@ def _eval(source: str) -> object:
         (EnumerateTransformer, "Enumerate", Enumerate),
         (ZipTransformer, "Zip", Zip),
         (BlockTransformer, "Block", Block),
+        (PathTransformer, "Path", Path),
     ],
 )
 def test_public_type_binding_is_in_transformer(
@@ -105,6 +108,7 @@ def test_public_type_binding_is_in_transformer(
         "Enumerate",
         "Zip",
         "Block",
+        "Path",
     ],
 )
 def test_public_type_binding_is_in_default_namespace(name: str) -> None:

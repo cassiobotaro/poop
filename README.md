@@ -61,6 +61,18 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `x[a:b]` | `x.slice(a, b)` |
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
+| `open("f").read()` / `open("f", "w").write(x)` | `Path("f").read_text()` / `Path("f").write_text(x)` |
+
+### Migration recipes (Python → POOP)
+
+- **File I/O**
+  - Python: `open("notes.txt").read()`
+  - POOP: `Path("notes.txt").read_text()`
+- **Validation debugging**
+  - Use `poop file.py --validators-only` to list all validation errors at once.
+  - Use `poop file.py --explain` to list errors with substitute hints.
+- **AST inspection after infections**
+  - Use `poop file.py --transformers-only` to inspect transformed code before execution.
 
 ### Hello, World
 

@@ -50,12 +50,44 @@ def test_cli_explain_reports_errors(tmp_path: Path) -> None:
     assert "if" in result.output
 
 
+def test_cli_explain_no_errors(tmp_path: Path) -> None:
+    f = tmp_path / "ok.py"
+    f.write_text('"hi".print()\n', encoding="utf-8")
+    result = runner.invoke(app, [str(f), "--explain"])
+    assert result.exit_code == 0
+    assert "No validation errors." in result.output
+
+
+def test_cli_explain_syntax_error_is_wrapped(tmp_path: Path) -> None:
+    f = tmp_path / "bad.py"
+    f.write_text("def :\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f), "--explain"])
+    assert result.exit_code == 1
+    assert "poop:" in result.output
+
+
 def test_cli_transformers_only_dumps_ast(tmp_path: Path) -> None:
     f = tmp_path / "ok.py"
     f.write_text('"hi".print()\n', encoding="utf-8")
     result = runner.invoke(app, [str(f), "--transformers-only"])
     assert result.exit_code == 0
     assert "_poop_str" in result.output
+
+
+def test_cli_transformers_only_validation_error_is_wrapped(tmp_path: Path) -> None:
+    f = tmp_path / "bad.py"
+    f.write_text("print('x')\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f), "--transformers-only"])
+    assert result.exit_code == 1
+    assert "poop:" in result.output
+
+
+def test_cli_transformers_only_syntax_error_is_wrapped(tmp_path: Path) -> None:
+    f = tmp_path / "bad.py"
+    f.write_text("def :\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f), "--transformers-only"])
+    assert result.exit_code == 1
+    assert "poop:" in result.output
 
 
 def test_cli_validators_only_syntax_error_is_wrapped(tmp_path: Path) -> None:
