@@ -47,11 +47,25 @@ jobs:
       - name: Verify uv.lock is in sync with pyproject.toml
         run: uv lock --check
 
-      - name: Create GitHub Release with auto-generated notes
+      - name: Create GitHub Release with notes from git log
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # gh's --generate-notes uses GitHub's PR-based template, which
+          # is empty for direct-push workflows. Build notes from commit
+          # subjects since the previous tag instead.
+          prev_tag="$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+          {
+            if [ -n "$prev_tag" ]; then
+              git log "${prev_tag}..${GITHUB_REF_NAME}" --pretty=format:"- %s"
+              printf '\n\n**Full Changelog**: https://github.com/%s/compare/%s...%s\n' \
+                "$GITHUB_REPOSITORY" "$prev_tag" "$GITHUB_REF_NAME"
+            else
+              git log "${GITHUB_REF_NAME}" --pretty=format:"- %s"
+              printf '\n'
+            fi
+          } > release_notes.md
           gh release create "${GITHUB_REF_NAME}" \
             --title "${GITHUB_REF_NAME}" \
-            --generate-notes \
+            --notes-file release_notes.md \
             --verify-tag
