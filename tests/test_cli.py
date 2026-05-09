@@ -46,6 +46,7 @@ def test_cli_explain_reports_errors(tmp_path: Path) -> None:
     f.write_text("if x: pass\n", encoding="utf-8")
     result = runner.invoke(app, [str(f), "--explain"])
     assert result.exit_code == 1
+    assert "Found 1 validation error(s):" in result.output
     assert "if" in result.output
 
 
@@ -55,3 +56,11 @@ def test_cli_transformers_only_dumps_ast(tmp_path: Path) -> None:
     result = runner.invoke(app, [str(f), "--transformers-only"])
     assert result.exit_code == 0
     assert "_poop_str" in result.output
+
+
+def test_cli_validators_only_syntax_error_is_wrapped(tmp_path: Path) -> None:
+    f = tmp_path / "bad.py"
+    f.write_text("def :\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f), "--validators-only"])
+    assert result.exit_code == 1
+    assert "poop:" in result.output
