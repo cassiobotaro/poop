@@ -2,53 +2,56 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    tags:
+      - "v*"
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  release-please:
-    runs-on: ubuntu-latest
-    outputs:
-      prs_created: ${{ steps.release.outputs.prs_created }}
-      pr_number: ${{ fromJSON(steps.release.outputs.prs || '[]')[0].number }}
-    steps:
-      - id: release
-        uses: googleapis/release-please-action@v4
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-
-  sync-lockfile:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.prs_created == 'true' }}
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
+          # Need full history so we can verify the tag is on main and so
+          # `gh ... --generate-notes` can diff against the previous tag.
           fetch-depth: 0
 
-      - run: gh pr checkout ${{ needs.release-please.outputs.pr_number }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify tag commit is on main
+        run: |
+          tag_sha="$(git rev-parse "${GITHUB_REF_NAME}^{commit}")"
+          if ! git merge-base --is-ancestor "$tag_sha" origin/main; then
+            echo "::error::Tag ${GITHUB_REF_NAME} (${tag_sha}) is not on origin/main."
+            exit 1
+          fi
+
+      - name: Verify pyproject.toml version matches tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pyproject_version="$(
+            grep -E '^version = "[^"]+"' pyproject.toml \
+              | head -n1 \
+              | sed -E 's/^version = "([^"]+)"/\1/'
+          )"
+          if [ "$tag" != "$pyproject_version" ]; then
+            echo "::error::Tag is v${tag} but pyproject.toml has version = \"${pyproject_version}\"."
+            exit 1
+          fi
 
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.14"
           enable-cache: true
 
-      - run: uv lock
+      - name: Verify uv.lock is in sync with pyproject.toml
+        run: uv lock --check
 
-      - name: Commit lockfile if changed
+      - name: Create GitHub Release with auto-generated notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if git diff --quiet uv.lock; then
-            echo "uv.lock already in sync — nothing to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add uv.lock
-          git commit -m "chore: sync uv.lock with bumped version"
-          git push
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            --verify-tag
