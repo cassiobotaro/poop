@@ -387,11 +387,33 @@ All three views are unhashable (`__hash__ = None`), expose `len()`/`includes()`/
 
 Symmetric to `Object.print()` — the receiver is what gets shown. Scoped to `Str` (not `Object`) since non-string receivers as prompts are meaningless. `EOFError` propagates raw, catchable via `Try(lambda: prompt.input()).except_(EOFError, handler).run()`.
 
-### No `open` — `poop/validators/no_open.py`
+### No `open` → `Path` — `poop/validators/no_open.py`, `poop/transformers/path.py`
 
-| Call | Reason |
-|---|---|
-| `open(path, ...)` | file I/O — no POOP equivalent |
+| Call | Reason | Substitute |
+|---|---|---|
+| `open(path, ...)` | free function with procedural look | `Path('foo').read_text()` / `write_text(content)` (`poop/types/path.py`) |
+
+`Path` (`poop/types/path.py`) wraps `pathlib.Path` and exposes filesystem I/O as message passing. Exposed as a namespace-only binding by `PathTransformer` (no AST rewrite), in the same family as `Try` / `With` / `Map` / `Filter`. `Path` accepts `Str | Path` in the constructor (idempotent), supports `__truediv__` for joining (`Path('dir') / 'file.txt'`), and orders by the underlying `pathlib.Path`.
+
+| Method | Returns | Notes |
+|---|---|---|
+| `read_text()` / `write_text(content)` | `Str` / `Int` (bytes written) | UTF-8 only |
+| `read_bytes()` / `write_bytes(data)` | `Bytes` / `Int` (bytes written) | |
+| `exists()` / `is_file()` / `is_dir()` / `is_symlink()` / `is_absolute()` | `Boolean` | direct delegation |
+| `mkdir(mode, parents, exist_ok)` / `rmdir()` / `unlink(missing_ok)` / `touch(mode, exist_ok)` | `NoneClass` | mutate, return `none` |
+| `resolve()` / `absolute()` / `rename(target)` / `replace(target)` | `Path` | navigation |
+| `joinpath(*others)` / `with_name(n)` / `with_suffix(s)` / `with_stem(s)` / `relative_to(other)` | `Path` | navigation |
+| `as_posix()` / `as_uri()` | `Str` | |
+| `iterdir()` | `PathIterator` | lazy, one-shot — `pathlib.iterdir` returns a generator |
+| `glob(pattern)` / `rglob(pattern)` | `Map` | `pathlib.glob`/`rglob` already return a `map`; POOP `Map` wraps it with `Path._from_pathlib` |
+| `Path.cwd()` / `Path.home()` | `Path` | classmethods |
+| Properties: `name` / `stem` / `suffix` | `Str` | mirror `pathlib` |
+| Properties: `parts` / `parents` | `Tuple[Str]` / `Tuple[Path]` | |
+| Property: `parent` | `Path` | |
+
+`PathIterator` (`poop/types/path_iterator.py`) inherits `_IteratorBase` and `_IterableMixin` — it exposes `next()` / `do(block)` and gains `map` / `filter` / `find` / `all` / `any` / `reduce` / `sum` / `min` / `max` / `enumerate` / `zip` from the mixin. It is one-shot (the underlying `pathlib` generator is consumed lazily).
+
+Out of v1 (filed if demand appears): `open(mode)` returning a POOP `File`, `stat()` / `lstat()`, `owner()` / `group()`, datetime-typed `mtime`, full `PurePath` hierarchy, non-UTF-8 encodings.
 
 ### No `del` — `poop/validators/no_del.py`
 
