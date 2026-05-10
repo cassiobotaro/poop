@@ -262,6 +262,38 @@ def test_poop_completer_attr_bad_expr_returns_none() -> None:
     assert c.complete("nonexistent.foo", 0) is None
 
 
+def test_poop_completer_attr_does_not_call_function() -> None:
+    calls: list[str] = []
+
+    def danger() -> str:
+        calls.append("called")
+        return "value"
+
+    ns: dict[str, object] = {"danger": danger}
+    c = _PoopCompleter(ns)
+    assert c.complete("danger().up", 0) is None
+    assert calls == []
+
+
+def test_poop_completer_attr_rejects_walrus() -> None:
+    ns: dict[str, object] = {}
+    c = _PoopCompleter(ns)
+    assert c.complete("(x := 1).bit_l", 0) is None
+    assert "x" not in ns
+
+
+def test_poop_completer_attr_rejects_subscript() -> None:
+    ns: dict[str, object] = {"lst": [Int(1)]}
+    c = _PoopCompleter(ns)
+    assert c.complete("lst[0].ab", 0) is None
+
+
+def test_poop_completer_attr_allows_literal() -> None:
+    ns: dict[str, object] = {}
+    c = _PoopCompleter(ns)
+    assert c.complete("'hi'.upp", 0) == "'hi'.upper("
+
+
 # --- _colorize_value ---
 
 

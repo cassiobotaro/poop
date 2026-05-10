@@ -1,3 +1,4 @@
+import ast
 import atexit
 import codeop
 import sys
@@ -63,6 +64,27 @@ def _colorize_value(value: object) -> str:
     return repr(value)
 
 
+_SAFE_AST_NODES: tuple[type[ast.AST], ...] = (
+    ast.Expression,
+    ast.Name,
+    ast.Attribute,
+    ast.Constant,
+    ast.List,
+    ast.Tuple,
+    ast.Set,
+    ast.Dict,
+    ast.Load,
+)
+
+
+def _is_safe_expr(expr: str) -> bool:
+    try:
+        tree = ast.parse(expr, mode="eval")
+    except SyntaxError:
+        return False
+    return all(isinstance(node, _SAFE_AST_NODES) for node in ast.walk(tree))
+
+
 class _PoopCompleter:
     def __init__(self, namespace: dict[str, object]) -> None:
         self._ns = namespace
@@ -89,6 +111,8 @@ class _PoopCompleter:
     def _attr_matches(self, text: str) -> list[str]:
         dot = text.rfind(".")
         expr, attr = text[:dot], text[dot + 1 :]
+        if not _is_safe_expr(expr):
+            return []
         try:
             obj = eval(expr, self._ns)  # noqa: S307
             results = []
