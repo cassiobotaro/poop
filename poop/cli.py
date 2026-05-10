@@ -26,12 +26,6 @@ def main(
             "--transformers-only", help="Run up to transformers and dump the AST"
         ),
     ] = False,
-    explain: Annotated[
-        bool,
-        typer.Option(
-            "--explain", help="Report all validation errors with substitute hints"
-        ),
-    ] = False,
 ) -> None:
     interpreter = Interpreter()
 
@@ -42,8 +36,12 @@ def main(
     source = file.read_text(encoding="utf-8")
     filename = str(file)
 
-    if validators_only or explain:
-        errors = interpreter.validate_all(source, filename)
+    if validators_only:
+        try:
+            errors = interpreter.validate_all(source, filename)
+        except PoopError as exc:
+            typer.echo(f"poop: {exc}", err=True)
+            raise typer.Exit(1)
         if not errors:
             typer.echo("No validation errors.")
             return

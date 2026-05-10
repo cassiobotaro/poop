@@ -41,12 +41,12 @@ def test_cli_validators_only_reports_all_errors(tmp_path: Path) -> None:
     assert "print" in result.output
 
 
-def test_cli_explain_reports_errors(tmp_path: Path) -> None:
-    f = tmp_path / "bad.py"
-    f.write_text("if x: pass\n", encoding="utf-8")
-    result = runner.invoke(app, [str(f), "--explain"])
+def test_cli_validators_only_reports_parse_error(tmp_path: Path) -> None:
+    f = tmp_path / "syntax.py"
+    f.write_text("def (\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f), "--validators-only"])
     assert result.exit_code == 1
-    assert "if" in result.output
+    assert "poop:" in result.output
 
 
 def test_cli_transformers_only_dumps_ast(tmp_path: Path) -> None:
