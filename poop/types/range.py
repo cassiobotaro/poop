@@ -16,6 +16,8 @@ class Range(_IterableMixin, Object):
     __slots__ = ("_start", "_stop", "_step")
 
     def __init__(self, start: Int, stop: Int, step: Int | None = None) -> None:
+        if step is not None and step._value == 0:
+            raise ValueError("step must not be zero")
         self._start = start
         self._stop = stop
         self._step = (

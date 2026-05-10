@@ -210,3 +210,8 @@ def test_sum_returns_total() -> None:
 
 def test_sum_single_element() -> None:
     assert _range(5, 5).sum() == Int(5)
+
+
+def test_step_zero_raises_at_construction() -> None:
+    with pytest.raises(ValueError, match="step must not be zero"):
+        Range(Int(0), Int(5), Int(0))
