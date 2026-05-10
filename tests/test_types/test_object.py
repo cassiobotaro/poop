@@ -15,6 +15,28 @@ def test_not_none_returns_true() -> None:
     assert Object().not_none() is true
 
 
+def test_is_identical_same_object() -> None:
+    obj = Object()
+    assert obj.is_identical(obj) is true
+
+
+def test_is_identical_distinct_objects() -> None:
+    assert Object().is_identical(Object()) is false
+
+
+def test_is_identical_value_equal_distinct() -> None:
+    assert Int(1).is_identical(Int(1)) is false
+
+
+def test_not_identical_same_object() -> None:
+    obj = Object()
+    assert obj.not_identical(obj) is false
+
+
+def test_not_identical_distinct_objects() -> None:
+    assert Object().not_identical(Object()) is true
+
+
 def test_not_truthy_object_returns_false() -> None:
     class Truthy(Object):
         def __bool__(self) -> bool:

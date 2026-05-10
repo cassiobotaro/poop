@@ -30,6 +30,16 @@ class Object:
 
         return true
 
+    def is_identical(self, other: Object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self is other else false
+
+    def not_identical(self, other: Object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return false if self is other else true
+
     def not_(self) -> Boolean:
         from poop.types.boolean import false, true
 
