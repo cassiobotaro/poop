@@ -56,3 +56,13 @@ def test_poop_range_start_stop_step() -> None:
 def test_poop_range_empty() -> None:
     iv = _poop_range(Int(0))
     assert list(iv._iter()) == []
+
+
+def test_poop_range_negative_step() -> None:
+    iv = _poop_range(Int(10), Int(0), Int(-1))
+    assert list(iv._iter()) == [Int(i) for i in range(10, 0, -1)]
+
+
+def test_poop_range_negative_step_with_stride() -> None:
+    iv = _poop_range(Int(10), Int(0), Int(-2))
+    assert list(iv._iter()) == [Int(i) for i in range(10, 0, -2)]

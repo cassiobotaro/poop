@@ -13,7 +13,9 @@ def _poop_range(
         return Range(Int(0), Int(int(stop_or_start) - 1), Int(1))
     if step is None:
         return Range(Int(int(stop_or_start)), Int(int(stop) - 1), Int(1))
-    return Range(Int(int(stop_or_start)), Int(int(stop) - 1), Int(int(step)))
+    step_value = int(step)
+    sign = 1 if step_value > 0 else -1
+    return Range(Int(int(stop_or_start)), Int(int(stop) - sign), Int(step_value))
 
 
 class _RangeRewriter(ast.NodeTransformer):
