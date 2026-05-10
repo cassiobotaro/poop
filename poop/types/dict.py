@@ -42,7 +42,7 @@ class Dict(Object):
         self._data[key] = val
         return self
 
-    def includes_key(self, key: Object) -> Boolean:
+    def includes(self, key: Object) -> Boolean:
         return true if key in self._data else false
 
     @classmethod

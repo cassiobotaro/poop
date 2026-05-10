@@ -37,8 +37,8 @@ class MappingProxy(Object):
     ) -> Object | NoneClass:
         return self._dict.get(key, default)
 
-    def includes_key(self, key: Object) -> Boolean:
-        return self._dict.includes_key(key)
+    def includes(self, key: Object) -> Boolean:
+        return self._dict.includes(key)
 
     def keys(self) -> DictKeys:
         return self._dict.keys()

@@ -297,8 +297,8 @@ def test_tuple_usable_as_dict_key() -> None:
     d = Dict().at_put(key, Str("v"))
 
     assert d.at(Tuple(Int(1), Int(2))) == Str("v")
-    assert d.includes_key(Tuple(Int(1), Int(2))) is true
-    assert d.includes_key(Tuple(Int(1), Int(3))) is false
+    assert d.includes(Tuple(Int(1), Int(2))) is true
+    assert d.includes(Tuple(Int(1), Int(3))) is false
 
 
 def test_tuple_hash_matches_for_equal_tuples() -> None:

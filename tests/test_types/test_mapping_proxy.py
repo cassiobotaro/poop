@@ -33,10 +33,10 @@ def test_get_default() -> None:
     assert mp.get(Str("missing"), Int(99)) == Int(99)
 
 
-def test_includes_key() -> None:
+def test_includes() -> None:
     mp = MappingProxy(_make())
-    assert mp.includes_key(Str("a")) is true
-    assert mp.includes_key(Str("missing")) is false
+    assert mp.includes(Str("a")) is true
+    assert mp.includes(Str("missing")) is false
 
 
 def test_len() -> None:

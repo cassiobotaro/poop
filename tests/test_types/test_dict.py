@@ -80,14 +80,14 @@ def test_at_put_updates_existing() -> None:
     assert d.len() == Int(1)
 
 
-def test_includes_key_true() -> None:
+def test_includes_true() -> None:
     d = Dict()
     d.at_put(Str("a"), Int(1))
-    assert d.includes_key(Str("a")) is true
+    assert d.includes(Str("a")) is true
 
 
-def test_includes_key_false() -> None:
-    assert Dict().includes_key(Str("x")) is false
+def test_includes_false() -> None:
+    assert Dict().includes(Str("x")) is false
 
 
 def test_keys_returns_dict_keys_view() -> None:

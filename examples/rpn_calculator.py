@@ -48,7 +48,7 @@ class RPN:
         }
         stack = []
         expression.split().do(
-            lambda token: ops.includes_key(token).if_true_if_false(
+            lambda token: ops.includes(token).if_true_if_false(
                 lambda: self._apply(ops, token, stack),
                 lambda: stack.append(int(token)),
             )
