@@ -251,6 +251,12 @@ def test_format_invalid_spec_raises_value_error() -> None:
         Int(42).format(Str("?invalid"))
 
 
+def test_format_with_poop_none_treats_as_no_spec() -> None:
+    from poop.types.none import none
+
+    assert Int(42).format(none) == Str("42")
+
+
 def test_dir_returns_list_of_str() -> None:
     result = Object().dir()
     assert isinstance(result, List)

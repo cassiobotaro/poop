@@ -99,10 +99,11 @@ class Object:
 
         return List(*(Str(name) for name in builtins.dir(self)))
 
-    def format(self, spec: Str | None = None) -> Str:
+    def format(self, spec: Str | NoneClass | None = None) -> Str:
+        from poop.types.none import NoneClass
         from poop.types.string import Str
 
-        spec_value = "" if spec is None else spec._value
+        spec_value = "" if spec is None or isinstance(spec, NoneClass) else spec._value
         target = builtins.getattr(self, "_value", self)
         return Str(builtins.format(target, spec_value))
 
