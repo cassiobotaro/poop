@@ -27,9 +27,9 @@ class ByteArray(_IterableMixin, Object):
         if value is None:
             self._value: _bytearray = _bytearray()
         elif isinstance(value, ByteArray):
-            self._value = value._value
+            self._value = _bytearray(value._value)
         else:
-            self._value = value
+            self._value = _bytearray(value)
 
     def len(self) -> Int:
         return Int(len(self._value))

@@ -23,6 +23,20 @@ def test_from_bytearray_value() -> None:
     assert ba.len() == Int(3)
 
 
+def test_init_from_bytearray_does_not_alias_input() -> None:
+    raw = bytearray(b"abc")
+    ba = ByteArray(raw)
+    raw[0] = ord("Z")
+    assert ba.at(Int(0)) == Int(ord("a"))
+
+
+def test_init_from_byte_array_does_not_alias_source() -> None:
+    src = ByteArray(bytearray(b"abc"))
+    copy = ByteArray(src)
+    src.at_put(Int(0), Int(ord("Z")))
+    assert copy.at(Int(0)) == Int(ord("a"))
+
+
 def test_len() -> None:
     assert ByteArray(bytearray(b"hello")).len() == Int(5)
 
