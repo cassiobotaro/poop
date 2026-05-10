@@ -36,7 +36,8 @@ Git hooks are managed by [prek](https://prek.j178.dev) and run ruff and ty on ev
 ## Usage
 
 ```bash
-poop examples/hello_world.py
+poop examples/hello_world.py   # run a file
+poop                            # interactive REPL (Ctrl+D to exit)
 ```
 
 ## Quickstart
@@ -61,6 +62,8 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `x[a:b]` | `x.slice(a, b)` |
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
+
+For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
 ### Hello, World
 
