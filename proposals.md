@@ -1,30 +1,6 @@
 # Proposals
 
-## 1. Refactoring — `_ValueEqMixin` for `__eq__`/`__ne__` boilerplate
-
-Seventeen POOP types repeat the same shape:
-
-```python
-def __eq__(self, other: object) -> Boolean:
-    if isinstance(other, X):
-        return true if self._value == other._value else false
-    return false
-
-def __ne__(self, other: object) -> Boolean:
-    if isinstance(other, X):
-        return false if self._value == other._value else true
-    return true
-```
-
-**Affected.** `Int`, `Float`, `Complex`, `Str`, `Bytes`, `ByteArray`, `MemoryView`, `List`, `Tuple`, `Set`, `FrozenSet`, `Dict`, `Slice`, `Path`, `MappingProxy`, `DictKeys`, `DictItems` — about 14 lines × 17 types.
-
-**Proposal.** Either a class-decorator `@value_equality(attr="_value")` injecting both methods, or a small mixin that uses an `_eq_attr: ClassVar[str]` to know which field to compare. Collection types (`List`, `Tuple`, `Set`, `FrozenSet`, `Dict`) already follow the same pattern but compare `self._items` / `self._data` instead of `self._value` — the helper needs to be configurable per type.
-
-**Risk.** Low. The pattern is fully mechanical and tests already pin every operator.
-
-**Out of scope.** Types with extra equality logic (`Slice` checks step nullability, `DictKeys`/`DictItems` compare against multiple types, `MappingProxy` accepts both `Dict` and `MappingProxy`).
-
-## 2. Refactoring — Path-to-pathlib coercion helper
+## 1. Refactoring — Path-to-pathlib coercion helper
 
 `poop/types/path.py` repeats `other._path if isinstance(other, Path) else _pathlib.Path(other._value)` (or its variants) at 5 sites: `rename` (l. 125), `replace` (l. 131), `joinpath` (l. 136, list-comp), `relative_to` (l. 149), `__truediv__` (l. 213, drops the `_pathlib.Path` wrap).
 
@@ -32,7 +8,7 @@ def __ne__(self, other: object) -> Boolean:
 
 **Risk.** Trivial — pure refactor.
 
-## 3. Bug — `_poop_zip` silently drops invalid `strict` kwarg
+## 2. Bug — `_poop_zip` silently drops invalid `strict` kwarg
 
 `poop/transformers/zip.py:8-12`:
 
@@ -48,7 +24,7 @@ If a user passes `strict=Int(1)` (or anything non-`Boolean`), the value is silen
 
 **Risk.** Could break code that relied on the silent fallback, but that code was already buggy.
 
-## 4. Polish — `Block.__str__` shows raw Python lambda
+## 3. Polish — `Block.__str__` shows raw Python lambda
 
 ```python
 >>> Block(lambda x: x + 1)
@@ -61,7 +37,7 @@ The other lazy types print as `<map>`, `<filter>`, `<zip>`, `<enumerate>`. `Bloc
 
 **Risk.** Negligible. Affects display only.
 
-## 5. Docs — `NoLoopsValidator` message predates Block
+## 4. Docs — `NoLoopsValidator` message predates Block
 
 `poop/validators/no_loops.py:21` suggests:
 
