@@ -154,6 +154,12 @@ def test_round_with_digits_returns_float() -> None:
     assert Float(3.456).round(Int(1)) == Float(3.5)
 
 
+def test_round_accepts_poop_none() -> None:
+    from poop.types.none import none
+
+    assert Float(2.5).round(none) == Int(2)
+
+
 def test_int_conversion() -> None:
     assert int(Float(3.9)) == 3
 

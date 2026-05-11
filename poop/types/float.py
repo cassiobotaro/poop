@@ -7,6 +7,7 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
+    from poop.types.none import NoneClass
     from poop.types.string import Str
     from poop.types.tuple import Tuple
 
@@ -122,14 +123,15 @@ class Float(Object):
     def trunc(self) -> Int:
         return self.__trunc__()
 
-    def __round__(self, ndigits: Int | None = None) -> Int | Float:
+    def __round__(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
+        from poop.types._unwrap import _unwrap
         from poop.types.int import Int
 
-        n = None if ndigits is None else ndigits._value
+        n = _unwrap(ndigits, None)
         result = round(self._value, n)
         return Int(result) if isinstance(result, _int) else Float(result)
 
-    def round(self, ndigits: Int | None = None) -> Int | Float:
+    def round(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
         return self.__round__(ndigits)
 
     def __int__(self) -> _int:
