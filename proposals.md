@@ -1,22 +1,6 @@
 # Proposals
 
-## 1. Bug — `_poop_zip` silently drops invalid `strict` kwarg
-
-`poop/transformers/zip.py:8-12`:
-
-```python
-def _poop_zip(*sources: object, strict: object = None) -> Zip:
-    s = None if strict is None else (strict if isinstance(strict, Boolean) else None)
-    return Zip(*sources, strict=s)
-```
-
-If a user passes `strict=Int(1)` (or anything non-`Boolean`), the value is silently swallowed and the zip runs in non-strict mode. Surprising and undebuggable.
-
-**Proposal.** Raise `TypeError(f"strict must be Boolean, got {type(strict).__name__}")` when `strict` is not None and not a `Boolean`. Mirrors how `_poop_complex_from` and `_poop_int_from` validate their args.
-
-**Risk.** Could break code that relied on the silent fallback, but that code was already buggy.
-
-## 2. Polish — `Block.__str__` shows raw Python lambda
+## 1. Polish — `Block.__str__` shows raw Python lambda
 
 ```python
 >>> Block(lambda x: x + 1)
@@ -29,7 +13,7 @@ The other lazy types print as `<map>`, `<filter>`, `<zip>`, `<enumerate>`. `Bloc
 
 **Risk.** Negligible. Affects display only.
 
-## 3. Docs — `NoLoopsValidator` message predates Block
+## 2. Docs — `NoLoopsValidator` message predates Block
 
 `poop/validators/no_loops.py:21` suggests:
 
