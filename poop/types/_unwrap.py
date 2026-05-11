@@ -5,7 +5,7 @@ def _is_absent(value: object) -> bool:
     return value is None or isinstance(value, NoneClass)
 
 
-def _unwrap[T](value: object, default: T) -> object | T:
+def _unwrap[T](value: object, default: T) -> T:
     if _is_absent(value):
         return default
     return getattr(value, "_value")  # noqa: B009
