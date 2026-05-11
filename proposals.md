@@ -1,32 +1,6 @@
 # Proposals
 
-## 1. Bug — optional kwargs crash when receiving POOP `none`
-
-The codebase uses Python `None` as the "absent" sentinel for optional kwargs and unwraps the value via `x._value` (or `bool(x)` for booleans) when present. The pattern looks like:
-
-```python
-def print(self, end: Str | None = None) -> NoneClass:
-    end_value = "\n" if end is None else end._value
-```
-
-POOP code that explicitly passes `none` (the POOP value) hits `AttributeError: 'NoneClass' object has no attribute '_value'` because `none is None` is `False`. The same shape with booleans (`bool(flush)`) treats `none` as truthy, silently using the wrong default.
-
-`Object.format` was patched with a one-off `or isinstance(spec, NoneClass)` guard. The same latent bug exists in roughly 30 other call sites:
-
-- `Object.print` (`end`, `flush`)
-- `List.print` / `Tuple.print` (`sep`, `end`, `flush`)
-- `Int.round` / `Float.round` (`ndigits`)
-- `Path.mkdir` (`mode`, `parents`, `exist_ok`), `Path.touch` (`mode`, `exist_ok`), `Path.unlink` (`missing_ok`)
-- `Bytes` / `ByteArray`: `center`, `expandtabs`, `ljust`, `rjust`, `lstrip`, `rstrip`, `strip`, `split`, `rsplit` (`fillchar`, `tabsize`, `chars`, `sep`)
-- `Str`: `center`, `expandtabs`, `ljust`, `rjust`, `split`, `rsplit` (same kwargs)
-
-**Proposal.** Add a tiny helper, e.g. `_iterable_mixin._unwrap(value, default)`, that returns `default` when `value is None or isinstance(value, NoneClass)` and `value._value` (or `bool(value)` for booleans, via a sibling helper) otherwise. Replace the inline ternaries. Widen the type hints to `Str | NoneClass | None` (or `Boolean | NoneClass | None`) to document that POOP `none` is accepted.
-
-**Why batch this.** Doing it all at once avoids landing 30 near-identical commits and surfaces the right place for the helper to live. A pure mechanical sweep, but every site needs a small regression test (one per method) to prevent backsliding.
-
-**Risk.** Low. Existing tests pass `None` (Python) or omit the kwarg, so they keep working. New behaviour is additive.
-
-## 2. Refactoring — node-validator factory for structural validators
+## 1. Refactoring — node-validator factory for structural validators
 
 The `make_call_name_validator` factory in `poop/validators/_call_name.py` collapsed ~35 single-purpose validators down to 3 lines each. The structural validators (those that reject by AST node type rather than call name) still carry the same boilerplate: subclass with `validate(tree)`, inner `_Visitor(ast.NodeVisitor)`, one `visit_<Node>` per banned node, raise `ValidationError(message, lineno, col_offset)`.
 
@@ -38,7 +12,7 @@ The `make_call_name_validator` factory in `poop/validators/_call_name.py` collap
 
 **Out of scope.** `no_comprehension` (4 different visit methods, distinct messages), `no_free_functions` (stateful `_class_depth`), `no_if` (visit_If + visit_IfExp with distinct messages), `no_introspection` (already uses the call-name factory).
 
-## 3. Refactoring — `_ValueEqMixin` for `__eq__`/`__ne__` boilerplate
+## 2. Refactoring — `_ValueEqMixin` for `__eq__`/`__ne__` boilerplate
 
 Seventeen POOP types repeat the same shape:
 
@@ -62,7 +36,7 @@ def __ne__(self, other: object) -> Boolean:
 
 **Out of scope.** Types with extra equality logic (`Slice` checks step nullability, `DictKeys`/`DictItems` compare against multiple types, `MappingProxy` accepts both `Dict` and `MappingProxy`).
 
-## 4. Refactoring — Path-to-pathlib coercion helper
+## 3. Refactoring — Path-to-pathlib coercion helper
 
 `poop/types/path.py` repeats `other._path if isinstance(other, Path) else _pathlib.Path(other._value)` (or its variants) at 5 sites: `rename` (l. 125), `replace` (l. 131), `joinpath` (l. 136, list-comp), `relative_to` (l. 149), `__truediv__` (l. 213, drops the `_pathlib.Path` wrap).
 
@@ -70,7 +44,7 @@ def __ne__(self, other: object) -> Boolean:
 
 **Risk.** Trivial — pure refactor.
 
-## 5. Bug — `_poop_zip` silently drops invalid `strict` kwarg
+## 4. Bug — `_poop_zip` silently drops invalid `strict` kwarg
 
 `poop/transformers/zip.py:8-12`:
 
@@ -86,7 +60,7 @@ If a user passes `strict=Int(1)` (or anything non-`Boolean`), the value is silen
 
 **Risk.** Could break code that relied on the silent fallback, but that code was already buggy.
 
-## 6. Polish — `Block.__str__` shows raw Python lambda
+## 5. Polish — `Block.__str__` shows raw Python lambda
 
 ```python
 >>> Block(lambda x: x + 1)
@@ -99,7 +73,7 @@ The other lazy types print as `<map>`, `<filter>`, `<zip>`, `<enumerate>`. `Bloc
 
 **Risk.** Negligible. Affects display only.
 
-## 7. Docs — `NoLoopsValidator` message predates Block
+## 6. Docs — `NoLoopsValidator` message predates Block
 
 `poop/validators/no_loops.py:21` suggests:
 
