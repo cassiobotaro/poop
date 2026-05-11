@@ -12,12 +12,12 @@ def _poop_bytearray_from(arg: object = None) -> ByteArray:
     if arg is None:
         return ByteArray()
     if isinstance(arg, Bytes):
-        return ByteArray(bytearray(arg._value))
+        return ByteArray(arg._value)
     if isinstance(arg, Int):
         return ByteArray(bytearray(arg._value))
     if isinstance(arg, Iterable):
         ints = cast("Iterable[Int]", arg)
-        return ByteArray(bytearray(item._value for item in ints))
+        return ByteArray(item._value for item in ints)
     return ByteArray()
 
 

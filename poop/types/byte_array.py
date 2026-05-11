@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
@@ -23,7 +23,10 @@ class ByteArray(_IterableMixin, Object):
     __slots__ = ("_value",)
     __hash__ = None
 
-    def __init__(self, value: _bytearray | ByteArray | None = None) -> None:
+    def __init__(
+        self,
+        value: _bytearray | bytes | ByteArray | Iterable[int] | None = None,
+    ) -> None:
         if value is None:
             self._value: _bytearray = _bytearray()
         elif isinstance(value, ByteArray):
@@ -103,10 +106,10 @@ class ByteArray(_IterableMixin, Object):
         return true
 
     def __add__(self, other: ByteArray) -> ByteArray:
-        return ByteArray(_bytearray(self._value + other._value))
+        return ByteArray(self._value + other._value)
 
     def __mul__(self, other: Int) -> ByteArray:
-        return ByteArray(_bytearray(self._value * other._value))
+        return ByteArray(self._value * other._value)
 
     def append(self, byte: Int) -> NoneClass:
         self._value.append(byte._value)
@@ -117,7 +120,7 @@ class ByteArray(_IterableMixin, Object):
         return none
 
     def copy(self) -> ByteArray:
-        return ByteArray(_bytearray(self._value))
+        return ByteArray(self._value)
 
     def extend(self, iterable: ByteArray) -> NoneClass:
         self._value.extend(iterable._value)
@@ -141,14 +144,12 @@ class ByteArray(_IterableMixin, Object):
         return none
 
     def capitalize(self) -> ByteArray:
-        return ByteArray(_bytearray(self._value.capitalize()))
+        return ByteArray(self._value.capitalize())
 
     def center(self, width: Int, fillchar: ByteArray | None = None) -> ByteArray:
         if fillchar is None:
-            return ByteArray(_bytearray(self._value.center(width._value)))
-        return ByteArray(
-            _bytearray(self._value.center(width._value, bytes(fillchar._value)))
-        )
+            return ByteArray(self._value.center(width._value))
+        return ByteArray(self._value.center(width._value, bytes(fillchar._value)))
 
     def count(self, sub: ByteArray) -> Int:
         return Int(self._value.count(sub._value))
@@ -158,8 +159,8 @@ class ByteArray(_IterableMixin, Object):
 
     def expandtabs(self, tabsize: Int | None = None) -> ByteArray:
         if tabsize is None:
-            return ByteArray(_bytearray(self._value.expandtabs()))
-        return ByteArray(_bytearray(self._value.expandtabs(tabsize._value)))
+            return ByteArray(self._value.expandtabs())
+        return ByteArray(self._value.expandtabs(tabsize._value))
 
     def find(self, sub: ByteArray) -> Int:
         return Int(self._value.find(sub._value))
@@ -193,36 +194,32 @@ class ByteArray(_IterableMixin, Object):
 
     def join(self, parts: List) -> ByteArray:
         pieces: list[_bytearray] = [p._value for p in parts if isinstance(p, ByteArray)]  # type: ignore[unresolved-attribute]
-        return ByteArray(_bytearray(self._value.join(pieces)))
+        return ByteArray(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: ByteArray | None = None) -> ByteArray:
         if fillchar is None:
-            return ByteArray(_bytearray(self._value.ljust(width._value)))
-        return ByteArray(
-            _bytearray(self._value.ljust(width._value, bytes(fillchar._value)))
-        )
+            return ByteArray(self._value.ljust(width._value))
+        return ByteArray(self._value.ljust(width._value, bytes(fillchar._value)))
 
     def lower(self) -> ByteArray:
-        return ByteArray(_bytearray(self._value.lower()))
+        return ByteArray(self._value.lower())
 
     def lstrip(self, chars: ByteArray | None = None) -> ByteArray:
         if chars is None:
-            return ByteArray(_bytearray(self._value.lstrip()))
-        return ByteArray(_bytearray(self._value.lstrip(chars._value)))
+            return ByteArray(self._value.lstrip())
+        return ByteArray(self._value.lstrip(chars._value))
 
     def partition(self, sep: ByteArray) -> Tuple:
-        return Tuple(
-            *[ByteArray(_bytearray(p)) for p in self._value.partition(sep._value)]
-        )
+        return Tuple(*[ByteArray(p) for p in self._value.partition(sep._value)])
 
     def removeprefix(self, prefix: ByteArray) -> ByteArray:
-        return ByteArray(_bytearray(self._value.removeprefix(bytes(prefix._value))))
+        return ByteArray(self._value.removeprefix(bytes(prefix._value)))
 
     def removesuffix(self, suffix: ByteArray) -> ByteArray:
-        return ByteArray(_bytearray(self._value.removesuffix(bytes(suffix._value))))
+        return ByteArray(self._value.removesuffix(bytes(suffix._value)))
 
     def replace(self, old: ByteArray, new: ByteArray) -> ByteArray:
-        return ByteArray(_bytearray(self._value.replace(old._value, new._value)))
+        return ByteArray(self._value.replace(old._value, new._value))
 
     def rfind(self, sub: ByteArray) -> Int:
         return Int(self._value.rfind(sub._value))
@@ -232,56 +229,52 @@ class ByteArray(_IterableMixin, Object):
 
     def rjust(self, width: Int, fillchar: ByteArray | None = None) -> ByteArray:
         if fillchar is None:
-            return ByteArray(_bytearray(self._value.rjust(width._value)))
-        return ByteArray(
-            _bytearray(self._value.rjust(width._value, bytes(fillchar._value)))
-        )
+            return ByteArray(self._value.rjust(width._value))
+        return ByteArray(self._value.rjust(width._value, bytes(fillchar._value)))
 
     def rpartition(self, sep: ByteArray) -> Tuple:
-        return Tuple(
-            *[ByteArray(_bytearray(p)) for p in self._value.rpartition(sep._value)]
-        )
+        return Tuple(*[ByteArray(p) for p in self._value.rpartition(sep._value)])
 
     def rsplit(self, sep: ByteArray | None = None) -> List:
         return List(
             *[
-                ByteArray(_bytearray(p))
+                ByteArray(p)
                 for p in self._value.rsplit(sep._value if sep is not None else None)
             ]
         )
 
     def rstrip(self, chars: ByteArray | None = None) -> ByteArray:
         if chars is None:
-            return ByteArray(_bytearray(self._value.rstrip()))
-        return ByteArray(_bytearray(self._value.rstrip(chars._value)))
+            return ByteArray(self._value.rstrip())
+        return ByteArray(self._value.rstrip(chars._value))
 
     def split(self, sep: ByteArray | None = None) -> List:
         if sep is None:
-            return List(*[ByteArray(_bytearray(p)) for p in self._value.split()])
-        return List(*[ByteArray(_bytearray(p)) for p in self._value.split(sep._value)])
+            return List(*[ByteArray(p) for p in self._value.split()])
+        return List(*[ByteArray(p) for p in self._value.split(sep._value)])
 
     def splitlines(self) -> List:
-        return List(*[ByteArray(_bytearray(p)) for p in self._value.splitlines()])
+        return List(*[ByteArray(p) for p in self._value.splitlines()])
 
     def startswith(self, prefix: ByteArray) -> Boolean:
         return true if self._value.startswith(bytes(prefix._value)) else false
 
     def strip(self, chars: ByteArray | None = None) -> ByteArray:
         if chars is None:
-            return ByteArray(_bytearray(self._value.strip()))
-        return ByteArray(_bytearray(self._value.strip(chars._value)))
+            return ByteArray(self._value.strip())
+        return ByteArray(self._value.strip(chars._value))
 
     def swapcase(self) -> ByteArray:
-        return ByteArray(_bytearray(self._value.swapcase()))
+        return ByteArray(self._value.swapcase())
 
     def title(self) -> ByteArray:
-        return ByteArray(_bytearray(self._value.title()))
+        return ByteArray(self._value.title())
 
     def upper(self) -> ByteArray:
-        return ByteArray(_bytearray(self._value.upper()))
+        return ByteArray(self._value.upper())
 
     def zfill(self, width: Int) -> ByteArray:
-        return ByteArray(_bytearray(self._value.zfill(width._value)))
+        return ByteArray(self._value.zfill(width._value))
 
     def __str__(self) -> str:
         return repr(self._value)
