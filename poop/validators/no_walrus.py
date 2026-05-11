@@ -1,17 +1,9 @@
 import ast
 
-from poop.errors import ValidationError
+from poop.validators._node import make_node_validator
 
-
-class NoWalrusValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoWalrusVisitor().visit(tree)
-
-
-class _NoWalrusVisitor(ast.NodeVisitor):
-    def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
-        raise ValidationError(
-            ":= (walrus operator) is forbidden — use a separate assignment instead",
-            lineno=node.lineno,
-            col_offset=node.col_offset,
-        )
+NoWalrusValidator = make_node_validator(
+    {
+        ast.NamedExpr: ":= (walrus operator) is forbidden — use a separate assignment instead"
+    }
+)
