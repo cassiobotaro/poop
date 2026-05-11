@@ -146,10 +146,17 @@ class ByteArray(_IterableMixin, Object):
     def capitalize(self) -> ByteArray:
         return ByteArray(self._value.capitalize())
 
-    def center(self, width: Int, fillchar: ByteArray | None = None) -> ByteArray:
-        if fillchar is None:
+    def center(
+        self,
+        width: Int,
+        fillchar: ByteArray | NoneClass | None = None,
+    ) -> ByteArray:
+        from poop.types._unwrap import _unwrap
+
+        fill = _unwrap(fillchar, None)
+        if fill is None:
             return ByteArray(self._value.center(width._value))
-        return ByteArray(self._value.center(width._value, bytes(fillchar._value)))
+        return ByteArray(self._value.center(width._value, bytes(fill)))
 
     def count(self, sub: ByteArray) -> Int:
         return Int(self._value.count(sub._value))
@@ -157,10 +164,13 @@ class ByteArray(_IterableMixin, Object):
     def endswith(self, suffix: ByteArray) -> Boolean:
         return true if self._value.endswith(bytes(suffix._value)) else false
 
-    def expandtabs(self, tabsize: Int | None = None) -> ByteArray:
-        if tabsize is None:
+    def expandtabs(self, tabsize: Int | NoneClass | None = None) -> ByteArray:
+        from poop.types._unwrap import _unwrap
+
+        size = _unwrap(tabsize, None)
+        if size is None:
             return ByteArray(self._value.expandtabs())
-        return ByteArray(self._value.expandtabs(tabsize._value))
+        return ByteArray(self._value.expandtabs(size))
 
     def find(self, sub: ByteArray) -> Int:
         return Int(self._value.find(sub._value))
@@ -196,18 +206,25 @@ class ByteArray(_IterableMixin, Object):
         pieces: list[_bytearray] = [p._value for p in parts if isinstance(p, ByteArray)]  # type: ignore[unresolved-attribute]
         return ByteArray(self._value.join(pieces))
 
-    def ljust(self, width: Int, fillchar: ByteArray | None = None) -> ByteArray:
-        if fillchar is None:
+    def ljust(
+        self,
+        width: Int,
+        fillchar: ByteArray | NoneClass | None = None,
+    ) -> ByteArray:
+        from poop.types._unwrap import _unwrap
+
+        fill = _unwrap(fillchar, None)
+        if fill is None:
             return ByteArray(self._value.ljust(width._value))
-        return ByteArray(self._value.ljust(width._value, bytes(fillchar._value)))
+        return ByteArray(self._value.ljust(width._value, bytes(fill)))
 
     def lower(self) -> ByteArray:
         return ByteArray(self._value.lower())
 
-    def lstrip(self, chars: ByteArray | None = None) -> ByteArray:
-        if chars is None:
-            return ByteArray(self._value.lstrip())
-        return ByteArray(self._value.lstrip(chars._value))
+    def lstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
+        from poop.types._unwrap import _unwrap
+
+        return ByteArray(self._value.lstrip(_unwrap(chars, None)))
 
     def partition(self, sep: ByteArray) -> Tuple:
         return Tuple(*[ByteArray(p) for p in self._value.partition(sep._value)])
@@ -227,31 +244,35 @@ class ByteArray(_IterableMixin, Object):
     def rindex(self, sub: ByteArray) -> Int:
         return Int(self._value.rindex(sub._value))
 
-    def rjust(self, width: Int, fillchar: ByteArray | None = None) -> ByteArray:
-        if fillchar is None:
+    def rjust(
+        self,
+        width: Int,
+        fillchar: ByteArray | NoneClass | None = None,
+    ) -> ByteArray:
+        from poop.types._unwrap import _unwrap
+
+        fill = _unwrap(fillchar, None)
+        if fill is None:
             return ByteArray(self._value.rjust(width._value))
-        return ByteArray(self._value.rjust(width._value, bytes(fillchar._value)))
+        return ByteArray(self._value.rjust(width._value, bytes(fill)))
 
     def rpartition(self, sep: ByteArray) -> Tuple:
         return Tuple(*[ByteArray(p) for p in self._value.rpartition(sep._value)])
 
-    def rsplit(self, sep: ByteArray | None = None) -> List:
-        return List(
-            *[
-                ByteArray(p)
-                for p in self._value.rsplit(sep._value if sep is not None else None)
-            ]
-        )
+    def rsplit(self, sep: ByteArray | NoneClass | None = None) -> List:
+        from poop.types._unwrap import _unwrap
 
-    def rstrip(self, chars: ByteArray | None = None) -> ByteArray:
-        if chars is None:
-            return ByteArray(self._value.rstrip())
-        return ByteArray(self._value.rstrip(chars._value))
+        return List(*[ByteArray(p) for p in self._value.rsplit(_unwrap(sep, None))])
 
-    def split(self, sep: ByteArray | None = None) -> List:
-        if sep is None:
-            return List(*[ByteArray(p) for p in self._value.split()])
-        return List(*[ByteArray(p) for p in self._value.split(sep._value)])
+    def rstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
+        from poop.types._unwrap import _unwrap
+
+        return ByteArray(self._value.rstrip(_unwrap(chars, None)))
+
+    def split(self, sep: ByteArray | NoneClass | None = None) -> List:
+        from poop.types._unwrap import _unwrap
+
+        return List(*[ByteArray(p) for p in self._value.split(_unwrap(sep, None))])
 
     def splitlines(self) -> List:
         return List(*[ByteArray(p) for p in self._value.splitlines()])
@@ -259,10 +280,10 @@ class ByteArray(_IterableMixin, Object):
     def startswith(self, prefix: ByteArray) -> Boolean:
         return true if self._value.startswith(bytes(prefix._value)) else false
 
-    def strip(self, chars: ByteArray | None = None) -> ByteArray:
-        if chars is None:
-            return ByteArray(self._value.strip())
-        return ByteArray(self._value.strip(chars._value))
+    def strip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
+        from poop.types._unwrap import _unwrap
+
+        return ByteArray(self._value.strip(_unwrap(chars, None)))
 
     def swapcase(self) -> ByteArray:
         return ByteArray(self._value.swapcase())

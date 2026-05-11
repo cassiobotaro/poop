@@ -548,3 +548,26 @@ def test_strip_with_chars() -> None:
 def test_expandtabs_with_tabsize() -> None:
     ba = ByteArray(bytearray(b"a\tb"))
     assert ba.expandtabs(Int(4)) == ByteArray(bytearray(b"a   b"))
+
+
+def test_methods_accept_poop_none_kwargs() -> None:
+    from poop.types.none import none
+
+    base = ByteArray(bytearray(b"  hi  "))
+    assert base.lstrip(chars=none) == ByteArray(bytearray(b"hi  "))
+    assert base.rstrip(chars=none) == ByteArray(bytearray(b"  hi"))
+    assert base.strip(chars=none) == ByteArray(bytearray(b"hi"))
+    assert base.split(sep=none) == List(ByteArray(bytearray(b"hi")))
+    assert base.rsplit(sep=none) == List(ByteArray(bytearray(b"hi")))
+    assert ByteArray(bytearray(b"hi")).center(Int(6), fillchar=none) == ByteArray(
+        bytearray(b"  hi  ")
+    )
+    assert ByteArray(bytearray(b"hi")).ljust(Int(4), fillchar=none) == ByteArray(
+        bytearray(b"hi  ")
+    )
+    assert ByteArray(bytearray(b"hi")).rjust(Int(4), fillchar=none) == ByteArray(
+        bytearray(b"  hi")
+    )
+    assert ByteArray(bytearray(b"a\tb")).expandtabs(tabsize=none) == ByteArray(
+        bytearray(b"a       b")
+    )
