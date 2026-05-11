@@ -1,19 +1,6 @@
 # Proposals
 
-## 1. Polish — `Block.__str__` shows raw Python lambda
-
-```python
->>> Block(lambda x: x + 1)
-Block(<function <lambda> at 0x7c85c289f320>)
-```
-
-The other lazy types print as `<map>`, `<filter>`, `<zip>`, `<enumerate>`. `Block` should follow the same convention.
-
-**Proposal.** `f"<block at {hex(id(self))}>"` or just `"<block>"`. The lambda body is generally not interesting to the user; if it is, they can introspect via `dis`.
-
-**Risk.** Negligible. Affects display only.
-
-## 2. Docs — `NoLoopsValidator` message predates Block
+## 1. Docs — `NoLoopsValidator` message predates Block
 
 `poop/validators/no_loops.py:21` suggests:
 
