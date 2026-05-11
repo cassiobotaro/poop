@@ -188,6 +188,12 @@ def test_round_with_poop_int_ndigits() -> None:
     assert Int(125).round(Int(-2)) == Int(100)
 
 
+def test_round_accepts_poop_none() -> None:
+    from poop.types.none import none
+
+    assert Int(5).round(none) == Int(5)
+
+
 def test_bit_count() -> None:
     assert Int(0b1011).bit_count() == Int(3)
 
