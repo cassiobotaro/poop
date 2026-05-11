@@ -1,18 +1,6 @@
 # Proposals
 
-## 1. Refactoring — drop redundant `_bytearray(...)` wrapping inside `ByteArray`
-
-After the fix that made `ByteArray.__init__` copy its input (commit `1144b28`), the ~30 internal call sites that defensively wrap with `_bytearray(...)` now allocate twice: once at the call site, once inside `__init__`.
-
-**Affected.** `poop/types/byte_array.py` — methods `__add__`, `__mul__`, `copy`, `capitalize`, `center`, `expandtabs`, `join`, `ljust`, `lower`, `lstrip`, `partition`, `removeprefix`, `removesuffix`, `replace`, `rjust`, `rpartition`, `rsplit`, `rstrip`, `split`, `splitlines`, `strip`, `swapcase`, `title`, `upper`, `zfill`. Also `poop/transformers/byte_array.py` — `_poop_bytearray_from` does `ByteArray(bytearray(...))`.
-
-**Proposal.** Drop the wrapper at every call site (`ByteArray(_bytearray(x))` → `ByteArray(x)`). For the transformer's `bytearray(item._value for item in ints)`, widen `__init__`'s type hint to accept any iterable of ints so the generator can flow through directly.
-
-**Why not in the original PR.** Kept the scope tight — the bug fix lands cleanly without the cleanup, and the cleanup is mechanical. Doing it later also lets us measure whether the double allocation matters in practice (unlikely for typical sizes).
-
-**Risk.** None functional — tests already exercise these methods. The only behavioural change would be a single allocation instead of two.
-
-## 2. Bug — optional kwargs crash when receiving POOP `none`
+## 1. Bug — optional kwargs crash when receiving POOP `none`
 
 The codebase uses Python `None` as the "absent" sentinel for optional kwargs and unwraps the value via `x._value` (or `bool(x)` for booleans) when present. The pattern looks like:
 
@@ -38,7 +26,7 @@ POOP code that explicitly passes `none` (the POOP value) hits `AttributeError: '
 
 **Risk.** Low. Existing tests pass `None` (Python) or omit the kwarg, so they keep working. New behaviour is additive.
 
-## 3. Refactoring — node-validator factory for structural validators
+## 2. Refactoring — node-validator factory for structural validators
 
 The `make_call_name_validator` factory in `poop/validators/_call_name.py` collapsed ~35 single-purpose validators down to 3 lines each. The structural validators (those that reject by AST node type rather than call name) still carry the same boilerplate: subclass with `validate(tree)`, inner `_Visitor(ast.NodeVisitor)`, one `visit_<Node>` per banned node, raise `ValidationError(message, lineno, col_offset)`.
 
@@ -50,7 +38,7 @@ The `make_call_name_validator` factory in `poop/validators/_call_name.py` collap
 
 **Out of scope.** `no_comprehension` (4 different visit methods, distinct messages), `no_free_functions` (stateful `_class_depth`), `no_if` (visit_If + visit_IfExp with distinct messages), `no_introspection` (already uses the call-name factory).
 
-## 4. Refactoring — `_ValueEqMixin` for `__eq__`/`__ne__` boilerplate
+## 3. Refactoring — `_ValueEqMixin` for `__eq__`/`__ne__` boilerplate
 
 Seventeen POOP types repeat the same shape:
 
@@ -74,7 +62,7 @@ def __ne__(self, other: object) -> Boolean:
 
 **Out of scope.** Types with extra equality logic (`Slice` checks step nullability, `DictKeys`/`DictItems` compare against multiple types, `MappingProxy` accepts both `Dict` and `MappingProxy`).
 
-## 5. Refactoring — Path-to-pathlib coercion helper
+## 4. Refactoring — Path-to-pathlib coercion helper
 
 `poop/types/path.py` repeats `other._path if isinstance(other, Path) else _pathlib.Path(other._value)` (or its variants) at 5 sites: `rename` (l. 125), `replace` (l. 131), `joinpath` (l. 136, list-comp), `relative_to` (l. 149), `__truediv__` (l. 213, drops the `_pathlib.Path` wrap).
 
@@ -82,7 +70,7 @@ def __ne__(self, other: object) -> Boolean:
 
 **Risk.** Trivial — pure refactor.
 
-## 6. Bug — `_poop_zip` silently drops invalid `strict` kwarg
+## 5. Bug — `_poop_zip` silently drops invalid `strict` kwarg
 
 `poop/transformers/zip.py:8-12`:
 
@@ -98,7 +86,7 @@ If a user passes `strict=Int(1)` (or anything non-`Boolean`), the value is silen
 
 **Risk.** Could break code that relied on the silent fallback, but that code was already buggy.
 
-## 7. Polish — `Block.__str__` shows raw Python lambda
+## 6. Polish — `Block.__str__` shows raw Python lambda
 
 ```python
 >>> Block(lambda x: x + 1)
@@ -111,7 +99,7 @@ The other lazy types print as `<map>`, `<filter>`, `<zip>`, `<enumerate>`. `Bloc
 
 **Risk.** Negligible. Affects display only.
 
-## 8. Docs — `NoLoopsValidator` message predates Block
+## 7. Docs — `NoLoopsValidator` message predates Block
 
 `poop/validators/no_loops.py:21` suggests:
 
