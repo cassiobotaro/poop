@@ -16,6 +16,12 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 
+def _to_pathlib(other: Str | Path) -> _pathlib.Path:
+    if isinstance(other, Path):
+        return other._path
+    return _pathlib.Path(other._value)
+
+
 class Path(_ValueEqMixin, Object):
     __slots__ = ("_path",)
     _eq_attr: ClassVar[str] = "_path"
@@ -125,20 +131,15 @@ class Path(_ValueEqMixin, Object):
         return Path._from_pathlib(self._path.absolute())
 
     def rename(self, target: Str | Path) -> Path:
-        target_p = (
-            target._path if isinstance(target, Path) else _pathlib.Path(target._value)
-        )
-        return Path._from_pathlib(self._path.rename(target_p))
+        return Path._from_pathlib(self._path.rename(_to_pathlib(target)))
 
     def replace(self, target: Str | Path) -> Path:
-        target_p = (
-            target._path if isinstance(target, Path) else _pathlib.Path(target._value)
-        )
-        return Path._from_pathlib(self._path.replace(target_p))
+        return Path._from_pathlib(self._path.replace(_to_pathlib(target)))
 
     def joinpath(self, *others: Str | Path) -> Path:
-        parts = [o._path if isinstance(o, Path) else o._value for o in others]
-        return Path._from_pathlib(self._path.joinpath(*parts))
+        return Path._from_pathlib(
+            self._path.joinpath(*(_to_pathlib(o) for o in others))
+        )
 
     def with_name(self, name: Str) -> Path:
         return Path._from_pathlib(self._path.with_name(name._value))
@@ -150,8 +151,7 @@ class Path(_ValueEqMixin, Object):
         return Path._from_pathlib(self._path.with_stem(stem._value))
 
     def relative_to(self, other: Str | Path) -> Path:
-        target = other._path if isinstance(other, Path) else _pathlib.Path(other._value)
-        return Path._from_pathlib(self._path.relative_to(target))
+        return Path._from_pathlib(self._path.relative_to(_to_pathlib(other)))
 
     def as_posix(self) -> Str:
         from poop.types.string import Str
