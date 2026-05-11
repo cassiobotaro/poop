@@ -170,6 +170,25 @@ def test_touch_creates_empty_file(tmp_path: _pathlib.Path) -> None:
     assert target.read_text(encoding="utf-8") == ""
 
 
+def test_mkdir_accepts_poop_none_kwargs(tmp_path: _pathlib.Path) -> None:
+    target = tmp_path / "new"
+    Path(Str(str(target))).mkdir(mode=none, parents=none, exist_ok=none)
+    assert target.is_dir()
+
+
+def test_touch_accepts_poop_none_kwargs(tmp_path: _pathlib.Path) -> None:
+    target = tmp_path / "fresh"
+    Path(Str(str(target))).touch(mode=none, exist_ok=none)
+    assert target.is_file()
+
+
+def test_unlink_accepts_poop_none_kwarg(tmp_path: _pathlib.Path) -> None:
+    target = tmp_path / "doomed"
+    target.write_text("x", encoding="utf-8")
+    Path(Str(str(target))).unlink(missing_ok=none)
+    assert not target.exists()
+
+
 # --- methods returning Path ---
 
 

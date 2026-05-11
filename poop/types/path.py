@@ -75,16 +75,17 @@ class Path(Object):
 
     def mkdir(
         self,
-        mode: Int | None = None,
-        parents: Boolean | None = None,
-        exist_ok: Boolean | None = None,
+        mode: Int | NoneClass | None = None,
+        parents: Boolean | NoneClass | None = None,
+        exist_ok: Boolean | NoneClass | None = None,
     ) -> NoneClass:
+        from poop.types._unwrap import _unwrap, _unwrap_bool
         from poop.types.none import none
 
         self._path.mkdir(
-            mode=0o777 if mode is None else mode._value,
-            parents=False if parents is None else bool(parents),
-            exist_ok=False if exist_ok is None else bool(exist_ok),
+            mode=_unwrap(mode, 0o777),
+            parents=_unwrap_bool(parents, False),
+            exist_ok=_unwrap_bool(exist_ok, False),
         )
         return none
 
@@ -94,23 +95,24 @@ class Path(Object):
         self._path.rmdir()
         return none
 
-    def unlink(self, missing_ok: Boolean | None = None) -> NoneClass:
+    def unlink(self, missing_ok: Boolean | NoneClass | None = None) -> NoneClass:
+        from poop.types._unwrap import _unwrap_bool
         from poop.types.none import none
 
-        ok = False if missing_ok is None else bool(missing_ok)
-        self._path.unlink(missing_ok=ok)
+        self._path.unlink(missing_ok=_unwrap_bool(missing_ok, False))
         return none
 
     def touch(
         self,
-        mode: Int | None = None,
-        exist_ok: Boolean | None = None,
+        mode: Int | NoneClass | None = None,
+        exist_ok: Boolean | NoneClass | None = None,
     ) -> NoneClass:
+        from poop.types._unwrap import _unwrap, _unwrap_bool
         from poop.types.none import none
 
         self._path.touch(
-            mode=0o666 if mode is None else mode._value,
-            exist_ok=True if exist_ok is None else bool(exist_ok),
+            mode=_unwrap(mode, 0o666),
+            exist_ok=_unwrap_bool(exist_ok, True),
         )
         return none
 
