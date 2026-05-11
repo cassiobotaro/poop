@@ -1,6 +1,7 @@
 import pathlib as _pathlib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
 
@@ -15,8 +16,9 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 
-class Path(Object):
+class Path(_ValueEqMixin, Object):
     __slots__ = ("_path",)
+    _eq_attr: ClassVar[str] = "_path"
 
     def __init__(self, path: Str | Path) -> None:
         if isinstance(path, Path):
@@ -214,16 +216,6 @@ class Path(Object):
     def __truediv__(self, other: Str | Path) -> Path:
         target = other._path if isinstance(other, Path) else other._value
         return Path._from_pathlib(self._path / target)
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Path):
-            return true if self._path == other._path else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Path):
-            return false if self._path == other._path else true
-        return true
 
     def __lt__(self, other: Path) -> Boolean:
         return true if self._path < other._path else false
