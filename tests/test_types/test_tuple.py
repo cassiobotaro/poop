@@ -303,3 +303,9 @@ def test_tuple_usable_as_dict_key() -> None:
 
 def test_tuple_hash_matches_for_equal_tuples() -> None:
     assert hash(Tuple(Int(1), Int(2))) == hash(Tuple(Int(1), Int(2)))
+
+
+def test_print_accepts_poop_none_kwargs(capsys: pytest.CaptureFixture[str]) -> None:
+    Tuple(Int(1), Int(2)).print(sep=none, end=none, flush=none)
+    captured = capsys.readouterr()
+    assert captured.out == "1 2\n"
