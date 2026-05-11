@@ -257,6 +257,22 @@ def test_format_with_poop_none_treats_as_no_spec() -> None:
     assert Int(42).format(none) == Str("42")
 
 
+def test_print_accepts_poop_none_for_end(capsys: pytest.CaptureFixture[str]) -> None:
+    from poop.types.none import none
+
+    Int(7).print(end=none)
+    captured = capsys.readouterr()
+    assert captured.out == "7\n"
+
+
+def test_print_accepts_poop_none_for_flush(capsys: pytest.CaptureFixture[str]) -> None:
+    from poop.types.none import none
+
+    Int(7).print(flush=none)
+    captured = capsys.readouterr()
+    assert captured.out == "7\n"
+
+
 def test_dir_returns_list_of_str() -> None:
     result = Object().dir()
     assert isinstance(result, List)

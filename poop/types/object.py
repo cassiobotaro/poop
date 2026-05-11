@@ -100,10 +100,10 @@ class Object:
         return List(*(Str(name) for name in builtins.dir(self)))
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
-        from poop.types.none import NoneClass
+        from poop.types._unwrap import _unwrap
         from poop.types.string import Str
 
-        spec_value = "" if spec is None or isinstance(spec, NoneClass) else spec._value
+        spec_value = _unwrap(spec, "")
         target = builtins.getattr(self, "_value", self)
         return Str(builtins.format(target, spec_value))
 
@@ -127,11 +127,16 @@ class Object:
         builtins.delattr(self, name._value)
         return none
 
-    def print(self, end: Str | None = None, flush: Boolean | None = None) -> NoneClass:
+    def print(
+        self,
+        end: Str | NoneClass | None = None,
+        flush: Boolean | NoneClass | None = None,
+    ) -> NoneClass:
+        from poop.types._unwrap import _unwrap, _unwrap_bool
         from poop.types.none import none
 
-        end_value = "\n" if end is None else end._value
-        flush_value = False if flush is None else bool(flush)
+        end_value = _unwrap(end, "\n")
+        flush_value = _unwrap_bool(flush, False)
         _builtins_print(str(self), end=end_value, flush=flush_value)  # noqa: T201
         return none
 
