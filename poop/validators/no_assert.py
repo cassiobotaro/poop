@@ -1,17 +1,7 @@
 import ast
 
-from poop.errors import ValidationError
+from poop.validators._node import make_node_validator
 
-
-class NoAssertValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoAssertVisitor().visit(tree)
-
-
-class _NoAssertVisitor(ast.NodeVisitor):
-    def visit_Assert(self, node: ast.Assert) -> None:
-        raise ValidationError(
-            "assert is forbidden — use obj.assert_('message') instead",
-            lineno=node.lineno,
-            col_offset=node.col_offset,
-        )
+NoAssertValidator = make_node_validator(
+    {ast.Assert: "assert is forbidden — use obj.assert_('message') instead"}
+)
