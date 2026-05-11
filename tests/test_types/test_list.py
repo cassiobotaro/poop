@@ -365,3 +365,9 @@ def test_eq_with_non_list_returns_false() -> None:
 
 def test_ne_with_non_list_returns_true() -> None:
     assert List(Int(1)).__ne__(Int(1)) is true
+
+
+def test_print_accepts_poop_none_kwargs(capsys: pytest.CaptureFixture[str]) -> None:
+    List(Int(1), Int(2)).print(sep=none, end=none, flush=none)
+    captured = capsys.readouterr()
+    assert captured.out == "1 2\n"

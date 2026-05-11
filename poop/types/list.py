@@ -144,13 +144,15 @@ class List(_IterableMixin, Object):
 
     def print(
         self,
-        sep: Str | None = None,
-        end: Str | None = None,
-        flush: Boolean | None = None,
+        sep: Str | NoneClass | None = None,
+        end: Str | NoneClass | None = None,
+        flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        sep_value = " " if sep is None else sep._value
-        end_value = "\n" if end is None else end._value
-        flush_value = False if flush is None else bool(flush)
+        from poop.types._unwrap import _unwrap, _unwrap_bool
+
+        sep_value = _unwrap(sep, " ")
+        end_value = _unwrap(end, "\n")
+        flush_value = _unwrap_bool(flush, False)
         _builtins_print(
             *[str(item) for item in self._items],
             sep=sep_value,
