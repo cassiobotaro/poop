@@ -28,6 +28,6 @@ class Block(Object):
         return none
 
     def __str__(self) -> str:
-        return f"Block({self._fn})"
+        return "<block>"
 
     __repr__ = __str__

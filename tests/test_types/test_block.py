@@ -66,6 +66,8 @@ def test_block_while_false_returns_none() -> None:
     assert result is none
 
 
-def test_block_str() -> None:
+def test_block_str_hides_class_name() -> None:
     b = Block(lambda: None)
-    assert "Block" in str(b)
+    assert str(b) == "<block>"
+    assert "Block" not in str(b)
+    assert "lambda" not in str(b)
