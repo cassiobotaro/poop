@@ -1,18 +1,6 @@
 # Proposals
 
-## 1. Refactoring — node-validator factory for structural validators
-
-The `make_call_name_validator` factory in `poop/validators/_call_name.py` collapsed ~35 single-purpose validators down to 3 lines each. The structural validators (those that reject by AST node type rather than call name) still carry the same boilerplate: subclass with `validate(tree)`, inner `_Visitor(ast.NodeVisitor)`, one `visit_<Node>` per banned node, raise `ValidationError(message, lineno, col_offset)`.
-
-**Affected.** Pure single-node validators that fit a strict factory: `no_assert`, `no_walrus`, `no_match`, `no_del`, `no_raise`, `no_type_alias`, `no_subscript`. Multi-node ones with shared messages: `no_with` (With/AsyncWith), `no_try` (Try/TryStar), `no_yield` (Yield/YieldFrom), `no_async` (AsyncFunctionDef/Await), `no_global` (Global/Nonlocal), `no_loops` (For/While/AsyncFor). Validators that filter by `op` (`no_unary_minus`, `no_unary_plus`, `no_invert`, `no_not`, `no_and_or`, `no_in`, `no_is`) need a slightly richer factory.
-
-**Proposal.** Add `make_node_validator(node_types: Iterable[type[ast.AST]], message: str)` and an `op`-aware sibling `make_unary_op_validator(op: type[ast.unaryop], message: str)`. Migrate the ~13 single/multi-node validators first (mechanical), then evaluate whether the op-filtered ones benefit.
-
-**Gain.** Same shape as the call-name factory: ~150 lines deleted, one canonical place for `lineno`/`col_offset` plumbing, less surface for typo regressions in error messages.
-
-**Out of scope.** `no_comprehension` (4 different visit methods, distinct messages), `no_free_functions` (stateful `_class_depth`), `no_if` (visit_If + visit_IfExp with distinct messages), `no_introspection` (already uses the call-name factory).
-
-## 2. Refactoring — `_ValueEqMixin` for `__eq__`/`__ne__` boilerplate
+## 1. Refactoring — `_ValueEqMixin` for `__eq__`/`__ne__` boilerplate
 
 Seventeen POOP types repeat the same shape:
 
@@ -36,7 +24,7 @@ def __ne__(self, other: object) -> Boolean:
 
 **Out of scope.** Types with extra equality logic (`Slice` checks step nullability, `DictKeys`/`DictItems` compare against multiple types, `MappingProxy` accepts both `Dict` and `MappingProxy`).
 
-## 3. Refactoring — Path-to-pathlib coercion helper
+## 2. Refactoring — Path-to-pathlib coercion helper
 
 `poop/types/path.py` repeats `other._path if isinstance(other, Path) else _pathlib.Path(other._value)` (or its variants) at 5 sites: `rename` (l. 125), `replace` (l. 131), `joinpath` (l. 136, list-comp), `relative_to` (l. 149), `__truediv__` (l. 213, drops the `_pathlib.Path` wrap).
 
@@ -44,7 +32,7 @@ def __ne__(self, other: object) -> Boolean:
 
 **Risk.** Trivial — pure refactor.
 
-## 4. Bug — `_poop_zip` silently drops invalid `strict` kwarg
+## 3. Bug — `_poop_zip` silently drops invalid `strict` kwarg
 
 `poop/transformers/zip.py:8-12`:
 
@@ -60,7 +48,7 @@ If a user passes `strict=Int(1)` (or anything non-`Boolean`), the value is silen
 
 **Risk.** Could break code that relied on the silent fallback, but that code was already buggy.
 
-## 5. Polish — `Block.__str__` shows raw Python lambda
+## 4. Polish — `Block.__str__` shows raw Python lambda
 
 ```python
 >>> Block(lambda x: x + 1)
@@ -73,7 +61,7 @@ The other lazy types print as `<map>`, `<filter>`, `<zip>`, `<enumerate>`. `Bloc
 
 **Risk.** Negligible. Affects display only.
 
-## 6. Docs — `NoLoopsValidator` message predates Block
+## 5. Docs — `NoLoopsValidator` message predates Block
 
 `poop/validators/no_loops.py:21` suggests:
 
