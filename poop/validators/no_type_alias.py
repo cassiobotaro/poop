@@ -1,17 +1,9 @@
 import ast
 
-from poop.errors import ValidationError
+from poop.validators._node import make_node_validator
 
-
-class NoTypeAliasValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoTypeAliasVisitor().visit(tree)
-
-
-class _NoTypeAliasVisitor(ast.NodeVisitor):
-    def visit_TypeAlias(self, node: ast.TypeAlias) -> None:
-        raise ValidationError(
-            "type aliases are forbidden — POOP types differ from Python builtins",
-            lineno=node.lineno,
-            col_offset=node.col_offset,
-        )
+NoTypeAliasValidator = make_node_validator(
+    {
+        ast.TypeAlias: "type aliases are forbidden — POOP types differ from Python builtins"
+    }
+)
