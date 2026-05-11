@@ -2,9 +2,10 @@ from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.none import none
 from poop.types.object import Object
@@ -20,8 +21,9 @@ if TYPE_CHECKING:
 _tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
 
 
-class Tuple(_IterableMixin, Object):
+class Tuple(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
+    _eq_attr: ClassVar[str] = "_items"
 
     def __init__(self, *elements: Object) -> None:
         self._items: _tuple[Object, ...] = _tuple(elements)
@@ -94,16 +96,6 @@ class Tuple(_IterableMixin, Object):
         from poop.types.int import Int
 
         return Int(self._items.index(obj))
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Tuple):
-            return true if self._items == other._items else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Tuple):
-            return false if self._items == other._items else true
-        return true
 
     def __lt__(self, other: Tuple) -> Boolean:
         a = cast("tuple[Any, ...]", self._items)

@@ -2,9 +2,10 @@ from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
@@ -20,8 +21,9 @@ if TYPE_CHECKING:
 _list = list  # alias to avoid shadowing by List class name in annotations
 
 
-class List(_IterableMixin, Object):
+class List(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
+    _eq_attr: ClassVar[str] = "_items"
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
@@ -131,16 +133,6 @@ class List(_IterableMixin, Object):
     ) -> NoneClass:
         self._items[:] = builtins_sorted(self._items, key=key, reverse=reverse)
         return none
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, List):
-            return true if self._items == other._items else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, List):
-            return false if self._items == other._items else true
-        return true
 
     def print(
         self,
