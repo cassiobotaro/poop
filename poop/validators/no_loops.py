@@ -1,31 +1,11 @@
 import ast
 
-from poop.errors import ValidationError
+from poop.validators._node import make_node_validator
 
-
-class NoLoopsValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoLoopsVisitor().visit(tree)
-
-
-class _NoLoopsVisitor(ast.NodeVisitor):
-    def visit_For(self, node: ast.For) -> None:
-        raise ValidationError(
-            "for loops are forbidden — use col.do(block) instead",
-            lineno=node.lineno,
-            col_offset=node.col_offset,
-        )
-
-    def visit_While(self, node: ast.While) -> None:
-        raise ValidationError(
-            "while loops are forbidden — use (lambda: cond).while_true(lambda: body) or (lambda: cond).while_false(lambda: body) instead",
-            lineno=node.lineno,
-            col_offset=node.col_offset,
-        )
-
-    def visit_AsyncFor(self, node: ast.AsyncFor) -> None:
-        raise ValidationError(
-            "async for loops are forbidden — use col.do(block) instead",
-            lineno=node.lineno,
-            col_offset=node.col_offset,
-        )
+NoLoopsValidator = make_node_validator(
+    {
+        ast.For: "for loops are forbidden — use col.do(block) instead",
+        ast.While: "while loops are forbidden — use (lambda: cond).while_true(lambda: body) or (lambda: cond).while_false(lambda: body) instead",
+        ast.AsyncFor: "async for loops are forbidden — use col.do(block) instead",
+    }
+)
