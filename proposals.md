@@ -1,14 +1,6 @@
 # Proposals
 
-## 1. Refactoring — Path-to-pathlib coercion helper
-
-`poop/types/path.py` repeats `other._path if isinstance(other, Path) else _pathlib.Path(other._value)` (or its variants) at 5 sites: `rename` (l. 125), `replace` (l. 131), `joinpath` (l. 136, list-comp), `relative_to` (l. 149), `__truediv__` (l. 213, drops the `_pathlib.Path` wrap).
-
-**Proposal.** Extract `_to_pathlib(other: Str | Path) -> _pathlib.Path` as a module-private helper. The `__truediv__` site stays slightly different (it relies on pathlib's `/` accepting a raw string), but the helper still covers the other 4.
-
-**Risk.** Trivial — pure refactor.
-
-## 2. Bug — `_poop_zip` silently drops invalid `strict` kwarg
+## 1. Bug — `_poop_zip` silently drops invalid `strict` kwarg
 
 `poop/transformers/zip.py:8-12`:
 
@@ -24,7 +16,7 @@ If a user passes `strict=Int(1)` (or anything non-`Boolean`), the value is silen
 
 **Risk.** Could break code that relied on the silent fallback, but that code was already buggy.
 
-## 3. Polish — `Block.__str__` shows raw Python lambda
+## 2. Polish — `Block.__str__` shows raw Python lambda
 
 ```python
 >>> Block(lambda x: x + 1)
@@ -37,7 +29,7 @@ The other lazy types print as `<map>`, `<filter>`, `<zip>`, `<enumerate>`. `Bloc
 
 **Risk.** Negligible. Affects display only.
 
-## 4. Docs — `NoLoopsValidator` message predates Block
+## 3. Docs — `NoLoopsValidator` message predates Block
 
 `poop/validators/no_loops.py:21` suggests:
 
