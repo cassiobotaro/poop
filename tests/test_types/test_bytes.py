@@ -431,3 +431,18 @@ def test_fromhex_parses_hex_string() -> None:
 def test_fromhex_roundtrips_with_hex() -> None:
     b = Bytes(b"\xde\xad\xbe\xef")
     assert Bytes.fromhex(b.hex()) == b
+
+
+def test_methods_accept_poop_none_kwargs() -> None:
+    from poop.types.none import none
+
+    base = Bytes(b"  hi  ")
+    assert base.lstrip(chars=none) == Bytes(b"hi  ")
+    assert base.rstrip(chars=none) == Bytes(b"  hi")
+    assert base.strip(chars=none) == Bytes(b"hi")
+    assert base.split(sep=none) == List(Bytes(b"hi"))
+    assert base.rsplit(sep=none) == List(Bytes(b"hi"))
+    assert Bytes(b"hi").center(Int(6), fillchar=none) == Bytes(b"  hi  ")
+    assert Bytes(b"hi").ljust(Int(4), fillchar=none) == Bytes(b"hi  ")
+    assert Bytes(b"hi").rjust(Int(4), fillchar=none) == Bytes(b"  hi")
+    assert Bytes(b"a\tb").expandtabs(tabsize=none) == Bytes(b"a       b")
