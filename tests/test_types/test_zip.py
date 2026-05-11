@@ -193,3 +193,25 @@ def test_do_remains_restartable() -> None:
     z.do(lambda t: seen_b.append(t))
     expected = [Tuple(Int(1), Int(10)), Tuple(Int(2), Int(20))]
     assert seen_a == seen_b == expected
+
+
+def test_poop_zip_accepts_python_none_strict() -> None:
+    z = _poop_zip(List(Int(1)), List(Int(2)), strict=None)
+    assert z._strict is false
+
+
+def test_poop_zip_accepts_poop_none_strict() -> None:
+    from poop.types.none import none
+
+    z = _poop_zip(List(Int(1)), List(Int(2)), strict=none)
+    assert z._strict is false
+
+
+def test_poop_zip_accepts_boolean_strict() -> None:
+    z = _poop_zip(List(Int(1)), List(Int(2)), strict=true)
+    assert z._strict is true
+
+
+def test_poop_zip_rejects_non_boolean_strict() -> None:
+    with pytest.raises(TypeError, match="strict must be Boolean, got Int"):
+        _poop_zip(List(Int(1)), List(Int(2)), strict=Int(1))
