@@ -1,9 +1,10 @@
 import builtins
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _MISSING
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.dict_items import DictItems
 from poop.types.dict_key_iterator import DictKeyIterator
@@ -23,8 +24,9 @@ if TYPE_CHECKING:
 _dict = dict  # alias to avoid shadowing by Dict class name in annotations
 
 
-class Dict(Object):
+class Dict(_ValueEqMixin, Object):
     __slots__ = ("_data",)
+    _eq_attr: ClassVar[str] = "_data"
     __hash__ = None
 
     def __init__(self) -> None:
@@ -137,16 +139,6 @@ class Dict(Object):
         from poop.types.zip import Zip
 
         return Zip(self, *others, strict=strict)
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Dict):
-            return true if self._data == other._data else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Dict):
-            return false if self._data == other._data else true
-        return true
 
     def __str__(self) -> str:
         pairs = ", ".join(f"{repr(k)}: {repr(v)}" for k, v in self._data.items())

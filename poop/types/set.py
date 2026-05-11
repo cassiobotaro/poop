@@ -1,7 +1,8 @@
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.none import none
@@ -15,8 +16,9 @@ if TYPE_CHECKING:
 _set = set  # alias to avoid shadowing by Set class name in annotations
 
 
-class Set(_IterableMixin, Object):
+class Set(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_data",)
+    _eq_attr: ClassVar[str] = "_data"
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
@@ -98,16 +100,6 @@ class Set(_IterableMixin, Object):
 
     def __contains__(self, item: object) -> bool:
         return item in self._data
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Set):
-            return true if self._data == other._data else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Set):
-            return false if self._data == other._data else true
-        return true
 
     def __and__(self, other: object) -> Any:
         if not isinstance(other, Set):
