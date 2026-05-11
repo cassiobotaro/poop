@@ -1,6 +1,7 @@
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
 
@@ -15,8 +16,9 @@ _float = float  # alias to avoid shadowing by Float.float() method
 _int = int  # alias to avoid shadowing by annotations
 
 
-class Float(Object):
+class Float(_ValueEqMixin, Object):
     __slots__ = ("_value",)
+    _eq_attr: ClassVar[str] = "_value"
 
     def __init__(self, value: _float | Float) -> None:
         self._value = value._value if isinstance(value, Float) else value
@@ -136,16 +138,6 @@ class Float(Object):
 
     def __int__(self) -> _int:
         return _int(self._value)
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Float):
-            return true if self._value == other._value else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Float):
-            return false if self._value == other._value else true
-        return true
 
     def __lt__(self, other: Float) -> Boolean:
         return true if self._value < other._value else false

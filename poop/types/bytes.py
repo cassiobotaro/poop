@@ -1,7 +1,8 @@
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.bytes_iterator import BytesIterator
 from poop.types.object import Object
@@ -18,8 +19,9 @@ if TYPE_CHECKING:
 _bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
 
 
-class Bytes(_IterableMixin, Object):
+class Bytes(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
+    _eq_attr: ClassVar[str] = "_value"
 
     def __init__(self, value: _bytes | Bytes) -> None:
         self._value = value._value if isinstance(value, Bytes) else value
@@ -92,16 +94,6 @@ class Bytes(_IterableMixin, Object):
 
     def iter(self) -> BytesIterator:
         return BytesIterator(self)
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Bytes):
-            return true if self._value == other._value else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Bytes):
-            return false if self._value == other._value else true
-        return true
 
     def __hash__(self) -> int:
         return hash(self._value)

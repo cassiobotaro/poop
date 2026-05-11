@@ -1,8 +1,9 @@
 import builtins
 from collections.abc import Callable, Iterator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _MISSING
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
 from poop.types.str_iterator import StrIterator
@@ -19,8 +20,9 @@ if TYPE_CHECKING:
 _str = str  # alias to avoid shadowing in annotations
 
 
-class Str(Object):
+class Str(_ValueEqMixin, Object):
     __slots__ = ("_value",)
+    _eq_attr: ClassVar[str] = "_value"
 
     def __init__(self, value: _str | Str) -> None:
         self._value = value._value if isinstance(value, Str) else value
@@ -297,16 +299,6 @@ class Str(Object):
 
     def __rmul__(self, other: Int) -> Str:
         return Str(self._value * other._value)
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Str):
-            return true if self._value == other._value else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Str):
-            return false if self._value == other._value else true
-        return true
 
     def __lt__(self, other: Str) -> Boolean:
         return true if self._value < other._value else false

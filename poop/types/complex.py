@@ -1,18 +1,18 @@
 from types import NotImplementedType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from poop.types.boolean import false, true
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.float import Float
 
 _complex = complex  # alias to avoid shadowing by Complex class name
 
 
-class Complex(Object):
+class Complex(_ValueEqMixin, Object):
     __slots__ = ("_value",)
+    _eq_attr: ClassVar[str] = "_value"
 
     def __init__(self, value: _complex | Complex) -> None:
         self._value = value._value if isinstance(value, Complex) else value
@@ -112,16 +112,6 @@ class Complex(Object):
 
     def negated(self) -> Complex:
         return Complex(-self._value)
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Complex):
-            return true if self._value == other._value else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Complex):
-            return false if self._value == other._value else true
-        return true
 
     def __hash__(self) -> int:
         return hash(self._value)

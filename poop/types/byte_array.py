@@ -1,7 +1,8 @@
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.byte_array_iterator import ByteArrayIterator
 from poop.types.int import Int
@@ -19,8 +20,9 @@ if TYPE_CHECKING:
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 
 
-class ByteArray(_IterableMixin, Object):
+class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
+    _eq_attr: ClassVar[str] = "_value"
     __hash__ = None
 
     def __init__(
@@ -94,16 +96,6 @@ class ByteArray(_IterableMixin, Object):
 
     def iter(self) -> ByteArrayIterator:
         return ByteArrayIterator(self)
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, ByteArray):
-            return true if self._value == other._value else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, ByteArray):
-            return false if self._value == other._value else true
-        return true
 
     def __add__(self, other: ByteArray) -> ByteArray:
         return ByteArray(self._value + other._value)

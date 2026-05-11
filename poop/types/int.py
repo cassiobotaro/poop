@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
 
@@ -14,8 +15,9 @@ if TYPE_CHECKING:
 _int = int  # alias to avoid shadowing by Int.int() method
 
 
-class Int(Object):
+class Int(_ValueEqMixin, Object):
     __slots__ = ("_value",)
+    _eq_attr: ClassVar[str] = "_value"
 
     def __init__(self, value: _int | Int) -> None:
         self._value = value._value if isinstance(value, Int) else value
@@ -162,16 +164,6 @@ class Int(Object):
 
     def round(self, ndigits: Int | NoneClass | None = None) -> Int:
         return self.__round__(ndigits)
-
-    def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Int):
-            return true if self._value == other._value else false
-        return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Int):
-            return false if self._value == other._value else true
-        return true
 
     def __lt__(self, other: Int) -> Boolean:
         return true if self._value < other._value else false
