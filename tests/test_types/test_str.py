@@ -475,3 +475,13 @@ def test_input_propagates_eof(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("builtins.input", raise_eof)
     with pytest.raises(EOFError):
         Str("? ").input()
+
+
+def test_methods_accept_poop_none_kwargs() -> None:
+    from poop.types.none import none
+
+    assert Str("hi").split(sep=none) == List(Str("hi"))
+    assert Str("hi").center(Int(6), fillchar=none) == Str("  hi  ")
+    assert Str("hi").ljust(Int(4), fillchar=none) == Str("hi  ")
+    assert Str("hi").rjust(Int(4), fillchar=none) == Str("  hi")
+    assert Str("a\tb").expandtabs(tabsize=none) == Str("a       b")
