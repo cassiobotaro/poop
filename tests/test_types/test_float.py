@@ -116,7 +116,7 @@ def test_is_none_inherited() -> None:
 
 
 def test_class_name() -> None:
-    assert Float(1.0).class_name() == Str("Float")
+    assert Float(1.0).class_name() == Str("float")
 
 
 def test_abs_positive() -> None:

@@ -145,25 +145,27 @@ def test_type_repr_mimics_python_builtin(type_: type, lowercase: str) -> None:
 
 
 @pytest.mark.parametrize(
-    ("type_", "pascal"),
+    ("type_", "lowercase"),
     [
-        (Str, "Str"),
-        (Int, "Int"),
-        (Float, "Float"),
-        (List, "List"),
-        (Tuple, "Tuple"),
-        (Dict, "Dict"),
-        (Set, "Set"),
-        (FrozenSet, "FrozenSet"),
-        (Bytes, "Bytes"),
-        (ByteArray, "ByteArray"),
-        (MemoryView, "MemoryView"),
-        (Complex, "Complex"),
-        (Range, "Range"),
-        (Enumerate, "Enumerate"),
-        (Zip, "Zip"),
-        (Object, "Object"),
+        (Str, "str"),
+        (Int, "int"),
+        (Float, "float"),
+        (List, "list"),
+        (Tuple, "tuple"),
+        (Dict, "dict"),
+        (Set, "set"),
+        (FrozenSet, "frozenset"),
+        (Bytes, "bytes"),
+        (ByteArray, "bytearray"),
+        (MemoryView, "memoryview"),
+        (Complex, "complex"),
+        (Range, "range"),
+        (Enumerate, "enumerate"),
+        (Zip, "zip"),
+        (Object, "object"),
     ],
 )
-def test_class_name_preserves_pascal_case(type_: type, pascal: str) -> None:
-    assert type_.__qualname__ == pascal
+def test_class_name_returns_lowercase_for_poop_builtins(
+    type_: type, lowercase: str
+) -> None:
+    assert type_.__name__ == lowercase

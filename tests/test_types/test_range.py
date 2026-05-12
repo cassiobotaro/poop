@@ -87,7 +87,7 @@ def test_is_none_inherited() -> None:
 
 
 def test_class_name() -> None:
-    assert _range(1, 3).class_name() == Str("Range")
+    assert _range(1, 3).class_name() == Str("range")
 
 
 def test_all_returns_true_when_all_match() -> None:

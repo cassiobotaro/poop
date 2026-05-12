@@ -54,7 +54,7 @@ def test_not_falsy_object_returns_true() -> None:
 
 
 def test_class_name_returns_type_name() -> None:
-    assert Object().class_name() == Str("Object")
+    assert Object().class_name() == Str("object")
 
 
 def test_has_attr_existing_method() -> None:
@@ -220,7 +220,7 @@ def test_ascii_returns_str_type() -> None:
 
 def test_ascii_ascii_only_object() -> None:
     result = Object().ascii()
-    assert result == Str("<Object>")
+    assert result == Str("<object>")
 
 
 def test_ascii_escapes_non_ascii_chars() -> None:
@@ -285,7 +285,7 @@ def test_dir_contains_known_method() -> None:
 
 
 def test_str_default() -> None:
-    assert str(Object()) == "<Object>"
+    assert str(Object()) == "<object>"
 
 
 def test_repr_delegates_to_str() -> None:

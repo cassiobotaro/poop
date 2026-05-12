@@ -123,7 +123,7 @@ def test_is_none_inherited() -> None:
 
 
 def test_class_name() -> None:
-    assert Int(1).class_name() == Str("Int")
+    assert Int(1).class_name() == Str("int")
 
 
 @pytest.mark.parametrize("value", [0, 1, -1, 100])
