@@ -1,35 +1,15 @@
-"""Tests that public POOP type names are exposed in the user namespace.
+"""Tests that POOP type bindings are mangled, not publicly visible.
 
-Each transformer exposes both its private literal-construction binding
-(`_poop_str`, `_poop_int`, ...) and a public type binding (`Str`, `Int`,
-...) that user code can pass to `is_instance`. Lowercase Python builtin
-names that overlap (`str`, `int`, ...) are also rewritten to the
-capitalized POOP name at parse time so `x.is_instance(str)` is no longer
-silently false.
+Lowercase Python builtins (`int`, `list`, ...) are rewritten at parse time
+to the mangled `_poop_*` name so `x.is_instance(int)` works. The mangled
+names live in the namespace; the PascalCase ones do not, keeping the
+user-facing globals limited to true entry points (`Try`, `Path`, `With`).
 """
 
 import pytest
 
 from poop import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
-from poop.transformers.base import BaseTransformer
-from poop.transformers.block import BlockTransformer
-from poop.transformers.boolean import BooleanTransformer
-from poop.transformers.byte_array import ByteArrayTransformer
-from poop.transformers.bytes import BytesTransformer
-from poop.transformers.complex import ComplexTransformer
-from poop.transformers.dict import DictTransformer
-from poop.transformers.enumerate import EnumerateTransformer
-from poop.transformers.float import FloatTransformer
-from poop.transformers.frozen_set import FrozenSetTransformer
-from poop.transformers.int import IntTransformer
-from poop.transformers.list import ListTransformer
-from poop.transformers.memory_view import MemoryViewTransformer
-from poop.transformers.range import RangeTransformer
-from poop.transformers.set import SetTransformer
-from poop.transformers.string import StrTransformer
-from poop.transformers.tuple import TupleTransformer
-from poop.transformers.zip import ZipTransformer
 from poop.types.block import Block
 from poop.types.boolean import Boolean
 from poop.types.byte_array import ByteArray
@@ -42,8 +22,10 @@ from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.memory_view import MemoryView
+from poop.types.object import Object
 from poop.types.range import Range
 from poop.types.set import Set
+from poop.types.slice import Slice
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 from poop.types.zip import Zip
@@ -58,35 +40,37 @@ def _eval(source: str) -> object:
 
 
 @pytest.mark.parametrize(
-    ("transformer", "name", "type_"),
+    ("mangled", "type_"),
     [
-        (BooleanTransformer, "Boolean", Boolean),
-        (StrTransformer, "Str", Str),
-        (IntTransformer, "Int", Int),
-        (FloatTransformer, "Float", Float),
-        (ListTransformer, "List", List),
-        (TupleTransformer, "Tuple", Tuple),
-        (DictTransformer, "Dict", Dict),
-        (SetTransformer, "Set", Set),
-        (FrozenSetTransformer, "FrozenSet", FrozenSet),
-        (BytesTransformer, "Bytes", Bytes),
-        (ByteArrayTransformer, "ByteArray", ByteArray),
-        (MemoryViewTransformer, "MemoryView", MemoryView),
-        (ComplexTransformer, "Complex", Complex),
-        (RangeTransformer, "Range", Range),
-        (EnumerateTransformer, "Enumerate", Enumerate),
-        (ZipTransformer, "Zip", Zip),
-        (BlockTransformer, "Block", Block),
+        ("_poop_boolean", Boolean),
+        ("_poop_str", Str),
+        ("_poop_int", Int),
+        ("_poop_float", Float),
+        ("_poop_list_cls", List),
+        ("_poop_tuple_cls", Tuple),
+        ("_poop_dict", Dict),
+        ("_poop_set_cls", Set),
+        ("_poop_frozenset", FrozenSet),
+        ("_poop_bytes", Bytes),
+        ("_poop_bytearray", ByteArray),
+        ("_poop_memoryview", MemoryView),
+        ("_poop_complex", Complex),
+        ("_poop_range_cls", Range),
+        ("_poop_enumerate_cls", Enumerate),
+        ("_poop_zip_cls", Zip),
+        ("_poop_block", Block),
+        ("_poop_object", Object),
+        ("_poop_slice", Slice),
     ],
 )
-def test_public_type_binding_is_in_transformer(
-    transformer: type[BaseTransformer], name: str, type_: type
+def test_mangled_type_binding_is_in_default_namespace(
+    mangled: str, type_: type
 ) -> None:
-    assert transformer.BINDINGS[name] is type_
+    assert DEFAULT_NAMESPACE[mangled] is type_
 
 
 @pytest.mark.parametrize(
-    "name",
+    "pascal",
     [
         "Boolean",
         "Str",
@@ -105,27 +89,14 @@ def test_public_type_binding_is_in_transformer(
         "Enumerate",
         "Zip",
         "Block",
+        "Object",
+        "Slice",
+        "Map",
+        "Filter",
     ],
 )
-def test_public_type_binding_is_in_default_namespace(name: str) -> None:
-    assert name in DEFAULT_NAMESPACE
-
-
-@pytest.mark.parametrize(
-    ("literal", "capitalized"),
-    [
-        ('"hi"', "Str"),
-        ("(42)", "Int"),
-        ("(3.14)", "Float"),
-        ("True", "Boolean"),
-        ("[1]", "List"),
-        ("(1,)", "Tuple"),
-        ("{1: 2}", "Dict"),
-        ("{1, 2}", "Set"),
-    ],
-)
-def test_is_instance_resolves_capitalized_name(literal: str, capitalized: str) -> None:
-    assert bool(_eval(f"{literal}.is_instance({capitalized})")) is True
+def test_pascal_type_name_is_not_in_default_namespace(pascal: str) -> None:
+    assert pascal not in DEFAULT_NAMESPACE
 
 
 @pytest.mark.parametrize(

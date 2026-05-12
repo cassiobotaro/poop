@@ -37,7 +37,7 @@ class _RangeRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "range":
-            return ast.copy_location(ast.Name(id="Range", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_range_cls", ctx=node.ctx), node)
         return node
 
 
@@ -45,5 +45,5 @@ class RangeTransformer(BaseTransformer):
     rewriter = _RangeRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_range": _poop_range,
-        "Range": Range,
+        "_poop_range_cls": Range,
     }

@@ -41,7 +41,7 @@ class _StrRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "str":
-            return ast.copy_location(ast.Name(id="Str", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_str", ctx=node.ctx), node)
         return node
 
 
@@ -50,5 +50,4 @@ class StrTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_str": Str,
         "_poop_str_from": _poop_str_from,
-        "Str": Str,
     }

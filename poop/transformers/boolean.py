@@ -34,7 +34,7 @@ class _BooleanRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "bool":
-            return ast.copy_location(ast.Name(id="Boolean", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_boolean", ctx=node.ctx), node)
         return node
 
 
@@ -44,5 +44,5 @@ class BooleanTransformer(BaseTransformer):
         "_poop_true": true,
         "_poop_false": false,
         "_poop_bool_from": _poop_bool_from,
-        "Boolean": Boolean,
+        "_poop_boolean": Boolean,
     }

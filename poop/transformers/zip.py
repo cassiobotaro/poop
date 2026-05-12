@@ -35,7 +35,7 @@ class _ZipRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "zip":
-            return ast.copy_location(ast.Name(id="Zip", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_zip_cls", ctx=node.ctx), node)
         return node
 
 
@@ -43,5 +43,5 @@ class ZipTransformer(BaseTransformer):
     rewriter = _ZipRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_zip": _poop_zip,
-        "Zip": Zip,
+        "_poop_zip_cls": Zip,
     }

@@ -72,7 +72,7 @@ class _IntRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "int":
-            return ast.copy_location(ast.Name(id="Int", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_int", ctx=node.ctx), node)
         return node
 
 
@@ -81,5 +81,4 @@ class IntTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_int": Int,
         "_poop_int_from": _poop_int_from,
-        "Int": Int,
     }

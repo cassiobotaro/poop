@@ -95,14 +95,14 @@ class _ComplexRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "complex":
-            return ast.copy_location(ast.Name(id="Complex", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_complex", ctx=node.ctx), node)
         return node
 
 
 class ComplexTransformer(BaseTransformer):
     rewriter = _ComplexRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_complex": Complex,
         "_poop_complex_literal": _poop_complex_literal,
         "_poop_complex_from": _poop_complex_from,
-        "Complex": Complex,
     }

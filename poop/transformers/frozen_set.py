@@ -36,13 +36,13 @@ class _FrozenSetRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "frozenset":
-            return ast.copy_location(ast.Name(id="FrozenSet", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_frozenset", ctx=node.ctx), node)
         return node
 
 
 class FrozenSetTransformer(BaseTransformer):
     rewriter = _FrozenSetRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_frozenset": FrozenSet,
         "_poop_frozenset_from": _poop_frozenset_from,
-        "FrozenSet": FrozenSet,
     }

@@ -9,7 +9,7 @@ class _ClassRewriter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
         self.generic_visit(node)
 
-        object_base = ast.Name(id="Object", ctx=ast.Load())
+        object_base = ast.Name(id="_poop_object", ctx=ast.Load())
 
         if not node.bases:
             node.bases = [object_base]
@@ -17,7 +17,7 @@ class _ClassRewriter(ast.NodeTransformer):
 
         new_bases = []
         for base in node.bases:
-            if isinstance(base, ast.Name) and base.id == "object":
+            if isinstance(base, ast.Name) and base.id in ("object", "Object"):
                 new_bases.append(object_base)
             else:
                 new_bases.append(base)
@@ -39,4 +39,4 @@ class ClassTransformer(BaseTransformer):
     """
 
     rewriter = _ClassRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"Object": Object}
+    BINDINGS: ClassVar[dict[str, object]] = {"_poop_object": Object}

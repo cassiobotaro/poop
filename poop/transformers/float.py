@@ -63,7 +63,7 @@ class _FloatRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "float":
-            return ast.copy_location(ast.Name(id="Float", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_float", ctx=node.ctx), node)
         return node
 
 
@@ -72,5 +72,4 @@ class FloatTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_float": Float,
         "_poop_float_from": _poop_float_from,
-        "Float": Float,
     }

@@ -22,5 +22,4 @@ class BlockTransformer(BaseTransformer):
     rewriter = _BlockRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_block": Block,
-        "Block": Block,
     }

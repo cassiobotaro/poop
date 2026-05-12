@@ -1,7 +1,5 @@
 import pytest
 
-from poop.transformers import DEFAULT_NAMESPACE
-from poop.transformers.filter import FilterTransformer
 from poop.types.filter import Filter
 from poop.types.int import Int
 from poop.types.list import List
@@ -63,14 +61,6 @@ def test_filter_chains_lazily() -> None:
 def test_filter_materializes_via_list_constructor() -> None:
     f = Filter(List(Int(1), Int(2), Int(3)), lambda x: x._value >= 2)
     assert List(*f) == List(Int(2), Int(3))
-
-
-def test_filter_is_in_default_namespace() -> None:
-    assert DEFAULT_NAMESPACE["Filter"] is Filter
-
-
-def test_filter_binding_in_transformer() -> None:
-    assert FilterTransformer.BINDINGS["Filter"] is Filter
 
 
 def test_filter_str_repr() -> None:

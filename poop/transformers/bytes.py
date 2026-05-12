@@ -57,7 +57,7 @@ class _BytesRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "bytes":
-            return ast.copy_location(ast.Name(id="Bytes", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_bytes", ctx=node.ctx), node)
         return node
 
 
@@ -66,5 +66,4 @@ class BytesTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_bytes": Bytes,
         "_poop_bytes_from": _poop_bytes_from,
-        "Bytes": Bytes,
     }

@@ -36,13 +36,15 @@ class _MemoryViewRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "memoryview":
-            return ast.copy_location(ast.Name(id="MemoryView", ctx=node.ctx), node)
+            return ast.copy_location(
+                ast.Name(id="_poop_memoryview", ctx=node.ctx), node
+            )
         return node
 
 
 class MemoryViewTransformer(BaseTransformer):
     rewriter = _MemoryViewRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_memoryview": MemoryView,
         "_poop_memoryview_from": _poop_memoryview_from,
-        "MemoryView": MemoryView,
     }

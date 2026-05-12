@@ -41,6 +41,7 @@ from poop.validators.no_max import NoMaxValidator
 from poop.validators.no_min import NoMinValidator
 from poop.validators.no_not import NoNotValidator
 from poop.validators.no_open import NoOpenValidator
+from poop.validators.no_poop_prefix import NoPoopPrefixValidator
 from poop.validators.no_pow import NoPowValidator
 from poop.validators.no_print import NoPrintValidator
 from poop.validators.no_raise import NoRaiseValidator
@@ -119,6 +120,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoSubscriptValidator(),
     NoSumValidator(),
     NoDelValidator(),
+    NoPoopPrefixValidator(),
 ]
 
 __all__ = ["DEFAULT_VALIDATORS", "Validator"]

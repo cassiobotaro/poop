@@ -18,12 +18,12 @@ Smalltalk:
 
 class SliceDemo:
     def run(self):
-        window = Slice(1, 4)
+        window = slice(1, 4)
 
         [10, 20, 30, 40, 50].slice(window).print()  # 20 30 40
         "POOP language".slice(window).print()  # OOP
 
-        every_other = Slice(0, 6, 2)
+        every_other = slice(0, 6, 2)
         [0, 1, 2, 3, 4, 5].slice(every_other).print()  # 0 2 4
 
         window.indices(10).print()  # (1, 4, 1)

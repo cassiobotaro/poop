@@ -9,14 +9,14 @@ def _transform(source: str) -> ast.Module:
     return SliceTransformer().transform(tree)
 
 
-def test_slice_call_is_rewritten_to_Slice() -> None:
+def test_slice_call_is_rewritten_to_mangled() -> None:
     tree = _transform("x = slice(1, 5)")
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
     call = assign.value
     assert isinstance(call, ast.Call)
     assert isinstance(call.func, ast.Name)
-    assert call.func.id == "Slice"
+    assert call.func.id == "_poop_slice"
 
 
 def test_slice_three_arg_is_rewritten() -> None:
@@ -26,7 +26,7 @@ def test_slice_three_arg_is_rewritten() -> None:
     call = assign.value
     assert isinstance(call, ast.Call)
     assert isinstance(call.func, ast.Name)
-    assert call.func.id == "Slice"
+    assert call.func.id == "_poop_slice"
     assert len(call.args) == 3
 
 
@@ -40,6 +40,6 @@ def test_other_names_not_rewritten() -> None:
     assert call.func.id == "myslice"
 
 
-def test_bindings_contains_Slice() -> None:
-    assert "Slice" in SliceTransformer.BINDINGS
-    assert SliceTransformer.BINDINGS["Slice"] is Slice
+def test_bindings_contains_mangled_slice() -> None:
+    assert "_poop_slice" in SliceTransformer.BINDINGS
+    assert SliceTransformer.BINDINGS["_poop_slice"] is Slice

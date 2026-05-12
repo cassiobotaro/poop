@@ -11,7 +11,7 @@ class _SliceRewriter(ast.NodeTransformer):
         if isinstance(node.func, ast.Name) and node.func.id == "slice":
             return ast.copy_location(
                 ast.Call(
-                    func=ast.Name(id="Slice", ctx=ast.Load()),
+                    func=ast.Name(id="_poop_slice", ctx=ast.Load()),
                     args=node.args,
                     keywords=node.keywords,
                 ),
@@ -22,4 +22,4 @@ class _SliceRewriter(ast.NodeTransformer):
 
 class SliceTransformer(BaseTransformer):
     rewriter = _SliceRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"Slice": Slice}
+    BINDINGS: ClassVar[dict[str, object]] = {"_poop_slice": Slice}

@@ -42,13 +42,13 @@ class _ByteArrayRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "bytearray":
-            return ast.copy_location(ast.Name(id="ByteArray", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_bytearray", ctx=node.ctx), node)
         return node
 
 
 class ByteArrayTransformer(BaseTransformer):
     rewriter = _ByteArrayRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_bytearray": ByteArray,
         "_poop_bytearray_from": _poop_bytearray_from,
-        "ByteArray": ByteArray,
     }

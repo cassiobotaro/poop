@@ -20,12 +20,17 @@ def _first_class_bases(source: str) -> list[str]:
 
 def test_class_without_base_gets_object() -> None:
     bases = _first_class_bases("class Foo: pass")
-    assert bases == ["Object"]
+    assert bases == ["_poop_object"]
 
 
 def test_class_with_object_base_gets_rewritten() -> None:
     bases = _first_class_bases("class Foo(object): pass")
-    assert bases == ["Object"]
+    assert bases == ["_poop_object"]
+
+
+def test_class_with_explicit_Object_base_gets_rewritten() -> None:
+    bases = _first_class_bases("class Foo(Object): pass")
+    assert bases == ["_poop_object"]
 
 
 def test_class_with_custom_base_unchanged() -> None:
@@ -33,23 +38,18 @@ def test_class_with_custom_base_unchanged() -> None:
     assert bases == ["Foo"]
 
 
-def test_class_with_poop_type_base_unchanged() -> None:
-    bases = _first_class_bases("class MyInt(Int): pass")
-    assert bases == ["Int"]
-
-
 def test_nested_class_also_transformed() -> None:
     source = "class Outer:\n    class Inner: pass"
     tree = _transform(source)
     classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
     for cls in classes:
-        assert any(isinstance(b, ast.Name) and b.id == "Object" for b in cls.bases), (
-            f"{cls.name} missing Object base"
-        )
+        assert any(
+            isinstance(b, ast.Name) and b.id == "_poop_object" for b in cls.bases
+        ), f"{cls.name} missing _poop_object base"
 
 
 def test_class_transformer_bindings_contains_object() -> None:
-    assert ClassTransformer.BINDINGS.get("Object") is Object
+    assert ClassTransformer.BINDINGS.get("_poop_object") is Object
 
 
 def test_transformed_class_inherits_from_object_at_runtime() -> None:

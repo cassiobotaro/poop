@@ -60,7 +60,7 @@ class _TupleRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "tuple":
-            return ast.copy_location(ast.Name(id="Tuple", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_tuple_cls", ctx=node.ctx), node)
         return node
 
 
@@ -69,5 +69,5 @@ class TupleTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_tuple": _poop_tuple,
         "_poop_tuple_from": _poop_tuple_from,
-        "Tuple": Tuple,
+        "_poop_tuple_cls": Tuple,
     }

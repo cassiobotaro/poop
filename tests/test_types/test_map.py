@@ -1,7 +1,5 @@
 import pytest
 
-from poop.transformers import DEFAULT_NAMESPACE
-from poop.transformers.map import MapTransformer
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.map import Map
@@ -58,14 +56,6 @@ def test_map_chains_lazily() -> None:
 def test_map_materializes_via_list_constructor() -> None:
     m = Map(List(Int(1), Int(2)), lambda x: Int(x._value + 5))
     assert List(*m) == List(Int(6), Int(7))
-
-
-def test_map_is_in_default_namespace() -> None:
-    assert DEFAULT_NAMESPACE["Map"] is Map
-
-
-def test_map_binding_in_transformer() -> None:
-    assert MapTransformer.BINDINGS["Map"] is Map
 
 
 def test_map_str_repr() -> None:

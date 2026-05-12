@@ -60,7 +60,7 @@ class _ListRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "list":
-            return ast.copy_location(ast.Name(id="List", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_list_cls", ctx=node.ctx), node)
         return node
 
 
@@ -69,5 +69,5 @@ class ListTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_list": _poop_list,
         "_poop_list_from": _poop_list_from,
-        "List": List,
+        "_poop_list_cls": List,
     }

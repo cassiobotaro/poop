@@ -58,7 +58,7 @@ class _SetRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "set":
-            return ast.copy_location(ast.Name(id="Set", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_set_cls", ctx=node.ctx), node)
         return node
 
 
@@ -67,5 +67,5 @@ class SetTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_set": _poop_set,
         "_poop_set_from": _poop_set_from,
-        "Set": Set,
+        "_poop_set_cls": Set,
     }

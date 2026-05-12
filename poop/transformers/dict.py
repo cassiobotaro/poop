@@ -79,14 +79,14 @@ class _DictRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "dict":
-            return ast.copy_location(ast.Name(id="Dict", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_dict", ctx=node.ctx), node)
         return node
 
 
 class DictTransformer(BaseTransformer):
     rewriter = _DictRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_dict": Dict,
         "_poop_dict_from_pairs": _poop_dict_from_pairs,
         "_poop_dict_from": _poop_dict_from,
-        "Dict": Dict,
     }

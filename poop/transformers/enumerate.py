@@ -29,7 +29,9 @@ class _EnumerateRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "enumerate":
-            return ast.copy_location(ast.Name(id="Enumerate", ctx=node.ctx), node)
+            return ast.copy_location(
+                ast.Name(id="_poop_enumerate_cls", ctx=node.ctx), node
+            )
         return node
 
 
@@ -37,5 +39,5 @@ class EnumerateTransformer(BaseTransformer):
     rewriter = _EnumerateRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_enumerate": _poop_enumerate,
-        "Enumerate": Enumerate,
+        "_poop_enumerate_cls": Enumerate,
     }
