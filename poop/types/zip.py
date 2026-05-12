@@ -45,6 +45,6 @@ class Zip(_IterableMixin, Object):
         return false if self is other else true
 
     def __str__(self) -> str:
-        return "<zip object>"
+        return "<zip>"
 
     __repr__ = __str__

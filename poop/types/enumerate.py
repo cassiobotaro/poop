@@ -45,6 +45,6 @@ class Enumerate(_IterableMixin, Object):
         return false if self is other else true
 
     def __str__(self) -> str:
-        return f"<enumerate object, start={self._start._value}>"
+        return "<enumerate>"
 
     __repr__ = __str__

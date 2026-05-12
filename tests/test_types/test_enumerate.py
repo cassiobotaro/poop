@@ -83,13 +83,12 @@ def test_enumerate_dict_custom_start() -> None:
 
 def test_enumerate_str_representation() -> None:
     e = List(Int(1)).enumerate()
-    assert "enumerate" in str(e)
-    assert "0" in str(e)
+    assert str(e) == "<enumerate>"
 
 
-def test_enumerate_str_custom_start() -> None:
+def test_enumerate_str_does_not_leak_start() -> None:
     e = List(Int(1)).enumerate(Int(7))
-    assert "7" in str(e)
+    assert str(e) == "<enumerate>"
 
 
 def test_enumerate_eq_identity() -> None:

@@ -94,7 +94,7 @@ def test_zip_ne_different() -> None:
 
 
 def test_zip_str() -> None:
-    assert str(List(Int(1)).zip(List(Int(2)))) == "<zip object>"
+    assert str(List(Int(1)).zip(List(Int(2)))) == "<zip>"
 
 
 def test_transformer_two_args() -> None:
