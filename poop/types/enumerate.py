@@ -15,6 +15,7 @@ class Enumerate(_IterableMixin, Object):
     __slots__ = ("_iter", "_source", "_start")
 
     def __init__(self, source: Any, start: Int | None = None) -> None:
+        iter(source)
         self._source = source
         self._start: Int = Int(0) if start is None else start
         self._iter: Iterator[Tuple] | None = None

@@ -1,3 +1,5 @@
+import pytest
+
 from poop.parser import parse
 from poop.transformers.enumerate import EnumerateTransformer, _poop_enumerate
 from poop.transformers.int import IntTransformer
@@ -89,6 +91,11 @@ def test_enumerate_str_representation() -> None:
 def test_enumerate_str_does_not_leak_start() -> None:
     e = List(Int(1)).enumerate(Int(7))
     assert str(e) == "<enumerate>"
+
+
+def test_enumerate_rejects_non_iterable_source() -> None:
+    with pytest.raises(TypeError, match="'int' object is not iterable"):
+        Enumerate(Int(42))
 
 
 def test_enumerate_eq_identity() -> None:

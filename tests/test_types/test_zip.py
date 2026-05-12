@@ -97,6 +97,11 @@ def test_zip_str() -> None:
     assert str(List(Int(1)).zip(List(Int(2)))) == "<zip>"
 
 
+def test_zip_rejects_non_iterable_source() -> None:
+    with pytest.raises(TypeError, match="'int' object is not iterable"):
+        Zip(Int(42), List(Int(1)))
+
+
 def test_transformer_two_args() -> None:
     tree = parse("z = zip([1], [2])")
     tree = IntTransformer().transform(tree)

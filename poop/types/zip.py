@@ -15,6 +15,8 @@ class Zip(_IterableMixin, Object):
     __slots__ = ("_iter", "_sources", "_strict")
 
     def __init__(self, *sources: Any, strict: Boolean | None = None) -> None:
+        for source in sources:
+            iter(source)
         self._sources = sources
         self._strict: Boolean = false if strict is None else strict
         self._iter: Iterator[Tuple] | None = None
