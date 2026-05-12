@@ -24,15 +24,15 @@ def _poop_complex_from(real: object = None, imag: object = None) -> Complex:
             return Complex(complex(real._value))
         raise TypeError(
             f"complex() argument must be Int, Float, Str or Complex, "
-            f"not {type(real).__name__}"
+            f"not {type(real).__qualname__}"
         )
     if not isinstance(real, (Int, Float)):
         raise TypeError(
-            f"complex() first argument must be Int or Float, not {type(real).__name__}"
+            f"complex() first argument must be Int or Float, not {type(real).__qualname__}"
         )
     if not isinstance(imag, (Int, Float)):
         raise TypeError(
-            f"complex() second argument must be Int or Float, not {type(imag).__name__}"
+            f"complex() second argument must be Int or Float, not {type(imag).__qualname__}"
         )
     return Complex(complex(real._value, imag._value))
 

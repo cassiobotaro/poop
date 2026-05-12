@@ -192,3 +192,7 @@ class _FalseClass(Boolean):
 
 true: Boolean = _TrueClass()
 false: Boolean = _FalseClass()
+
+
+Boolean.__module__ = "builtins"
+Boolean.__name__ = "bool"

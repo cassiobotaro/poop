@@ -127,3 +127,7 @@ class Set(_ValueEqMixin, _IterableMixin, Object):
         return "{" + ", ".join(repr(item) for item in self._data) + "}"
 
     __repr__ = __str__
+
+
+Set.__module__ = "builtins"
+Set.__name__ = "set"

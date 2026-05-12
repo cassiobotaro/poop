@@ -268,3 +268,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return repr(self._value)
 
     __repr__ = __str__
+
+
+Bytes.__module__ = "builtins"
+Bytes.__name__ = "bytes"

@@ -17,7 +17,7 @@ class Error(Object):
         return Str(str(self._exception))
 
     def kind(self) -> Str:
-        return Str(type(self._exception).__name__)
+        return Str(type(self._exception).__qualname__)
 
     def __str__(self) -> str:
         return f"Error({self._exception})"

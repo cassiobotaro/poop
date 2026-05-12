@@ -34,9 +34,9 @@ def _poop_dict_from(arg: object = None) -> Dict:
                     )
                 d._data[item._items[0]] = item._items[1]
             else:
-                raise TypeError(f"cannot use {type(item).__name__} as dict entry")
+                raise TypeError(f"cannot use {type(item).__qualname__} as dict entry")
         return d
-    raise TypeError(f"cannot convert {type(arg).__name__} to Dict")
+    raise TypeError(f"cannot convert {type(arg).__qualname__} to Dict")
 
 
 class _DictRewriter(ast.NodeTransformer):

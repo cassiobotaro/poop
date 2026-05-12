@@ -210,3 +210,7 @@ class Int(_ValueEqMixin, Object):
         return str(self._value)
 
     __repr__ = __str__
+
+
+Int.__module__ = "builtins"
+Int.__name__ = "int"

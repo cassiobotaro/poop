@@ -23,7 +23,7 @@ def _poop_list_from(arg: object = None) -> List:
         return List(*arg._iter())
     if isinstance(arg, Iterable):
         return List(*cast("Iterable[Object]", arg))
-    raise TypeError(f"cannot convert {type(arg).__name__} to List")
+    raise TypeError(f"cannot convert {type(arg).__qualname__} to List")
 
 
 class _ListRewriter(ast.NodeTransformer):

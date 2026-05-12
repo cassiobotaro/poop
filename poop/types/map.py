@@ -47,3 +47,7 @@ class Map(_IterableMixin, Object):
         return "<map>"
 
     __repr__ = __str__
+
+
+Map.__module__ = "builtins"
+Map.__name__ = "map"

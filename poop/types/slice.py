@@ -74,3 +74,7 @@ class Slice(Object):
         return f"Slice({self._start}, {self._stop}, {self._step})"
 
     __repr__ = __str__
+
+
+Slice.__module__ = "builtins"
+Slice.__name__ = "slice"

@@ -16,7 +16,7 @@ def _poop_float_from(value: object = None) -> Float:
         return Float(float(value._value))
     if isinstance(value, Str):
         return Float(float(value._value))
-    raise TypeError(f"cannot convert {type(value).__name__} to Float")
+    raise TypeError(f"cannot convert {type(value).__qualname__} to Float")
 
 
 class _FloatRewriter(ast.NodeTransformer):

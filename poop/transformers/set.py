@@ -23,7 +23,7 @@ def _poop_set_from(arg: object = None) -> Set:
         return Set(*arg._iter())
     if isinstance(arg, Iterable):
         return Set(*cast("Iterable[Object]", arg))
-    raise TypeError(f"cannot convert {type(arg).__name__} to Set")
+    raise TypeError(f"cannot convert {type(arg).__qualname__} to Set")
 
 
 class _SetRewriter(ast.NodeTransformer):

@@ -48,3 +48,7 @@ class Zip(_IterableMixin, Object):
         return "<zip>"
 
     __repr__ = __str__
+
+
+Zip.__module__ = "builtins"
+Zip.__name__ = "zip"

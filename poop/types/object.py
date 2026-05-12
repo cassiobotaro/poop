@@ -55,7 +55,7 @@ class Object:
     def class_name(self) -> Str:
         from poop.types.string import Str
 
-        return Str(type(self).__name__)
+        return Str(type(self).__qualname__)
 
     def hash(self) -> Int:
         from poop.types.int import Int
@@ -158,3 +158,7 @@ class Object:
 
     def __hash__(self) -> int:
         return id(self)
+
+
+Object.__module__ = "builtins"
+Object.__name__ = "object"

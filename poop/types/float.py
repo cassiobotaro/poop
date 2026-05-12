@@ -164,3 +164,7 @@ class Float(_ValueEqMixin, Object):
         return str(self._value)
 
     __repr__ = __str__
+
+
+Float.__module__ = "builtins"
+Float.__name__ = "float"

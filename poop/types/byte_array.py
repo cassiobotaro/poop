@@ -293,3 +293,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return repr(self._value)
 
     __repr__ = __str__
+
+
+ByteArray.__module__ = "builtins"
+ByteArray.__name__ = "bytearray"

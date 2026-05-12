@@ -116,3 +116,54 @@ def test_is_instance_lowercase_name_resolves_to_poop_type(
     literal: str, lowercase: str
 ) -> None:
     assert bool(_eval(f"{literal}.is_instance({lowercase})")) is True
+
+
+@pytest.mark.parametrize(
+    ("type_", "lowercase"),
+    [
+        (Boolean, "bool"),
+        (Str, "str"),
+        (Int, "int"),
+        (Float, "float"),
+        (List, "list"),
+        (Tuple, "tuple"),
+        (Dict, "dict"),
+        (Set, "set"),
+        (FrozenSet, "frozenset"),
+        (Bytes, "bytes"),
+        (ByteArray, "bytearray"),
+        (MemoryView, "memoryview"),
+        (Complex, "complex"),
+        (Range, "range"),
+        (Enumerate, "enumerate"),
+        (Zip, "zip"),
+        (Object, "object"),
+    ],
+)
+def test_type_repr_mimics_python_builtin(type_: type, lowercase: str) -> None:
+    assert repr(type_) == f"<class '{lowercase}'>"
+
+
+@pytest.mark.parametrize(
+    ("type_", "pascal"),
+    [
+        (Str, "Str"),
+        (Int, "Int"),
+        (Float, "Float"),
+        (List, "List"),
+        (Tuple, "Tuple"),
+        (Dict, "Dict"),
+        (Set, "Set"),
+        (FrozenSet, "FrozenSet"),
+        (Bytes, "Bytes"),
+        (ByteArray, "ByteArray"),
+        (MemoryView, "MemoryView"),
+        (Complex, "Complex"),
+        (Range, "Range"),
+        (Enumerate, "Enumerate"),
+        (Zip, "Zip"),
+        (Object, "Object"),
+    ],
+)
+def test_class_name_preserves_pascal_case(type_: type, pascal: str) -> None:
+    assert type_.__qualname__ == pascal

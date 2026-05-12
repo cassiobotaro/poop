@@ -100,3 +100,7 @@ class Range(_IterableMixin, Object):
         return f"range({start}, {stop}, {step})"
 
     __repr__ = __str__
+
+
+Range.__module__ = "builtins"
+Range.__name__ = "range"

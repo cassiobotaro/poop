@@ -157,3 +157,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         return f"[{', '.join(repr(item) for item in self._items)}]"
 
     __repr__ = __str__
+
+
+List.__module__ = "builtins"
+List.__name__ = "list"

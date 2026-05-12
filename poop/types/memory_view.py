@@ -40,3 +40,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         return repr(self._value)
 
     __repr__ = __str__
+
+
+MemoryView.__module__ = "builtins"
+MemoryView.__name__ = "memoryview"

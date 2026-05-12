@@ -48,3 +48,7 @@ class Filter(_IterableMixin, Object):
         return "<filter>"
 
     __repr__ = __str__
+
+
+Filter.__module__ = "builtins"
+Filter.__name__ = "filter"

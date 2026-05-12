@@ -84,3 +84,7 @@ class FrozenSet(_ValueEqMixin, _IterableMixin, Object):
         return "frozenset({" + ", ".join(repr(item) for item in self._data) + "})"
 
     __repr__ = __str__
+
+
+FrozenSet.__module__ = "builtins"
+FrozenSet.__name__ = "frozenset"

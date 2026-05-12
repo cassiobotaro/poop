@@ -120,3 +120,7 @@ class Complex(_ValueEqMixin, Object):
         return repr(self._value)
 
     __repr__ = __str__
+
+
+Complex.__module__ = "builtins"
+Complex.__name__ = "complex"

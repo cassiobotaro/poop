@@ -145,3 +145,7 @@ class Dict(_ValueEqMixin, Object):
         return "{" + pairs + "}"
 
     __repr__ = __str__
+
+
+Dict.__module__ = "builtins"
+Dict.__name__ = "dict"

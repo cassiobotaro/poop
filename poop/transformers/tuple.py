@@ -23,7 +23,7 @@ def _poop_tuple_from(arg: object = None) -> Tuple:
         return Tuple(*arg._iter())
     if isinstance(arg, Iterable):
         return Tuple(*cast("Iterable[Object]", arg))
-    raise TypeError(f"cannot convert {type(arg).__name__} to Tuple")
+    raise TypeError(f"cannot convert {type(arg).__qualname__} to Tuple")
 
 
 class _TupleRewriter(ast.NodeTransformer):

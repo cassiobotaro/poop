@@ -145,3 +145,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         return f"({', '.join(repr(item) for item in self._items)})"
 
     __repr__ = __str__
+
+
+Tuple.__module__ = "builtins"
+Tuple.__name__ = "tuple"

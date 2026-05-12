@@ -48,3 +48,7 @@ class Enumerate(_IterableMixin, Object):
         return "<enumerate>"
 
     __repr__ = __str__
+
+
+Enumerate.__module__ = "builtins"
+Enumerate.__name__ = "enumerate"

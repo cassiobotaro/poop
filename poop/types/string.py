@@ -320,3 +320,7 @@ class Str(_ValueEqMixin, Object):
 
     def __repr__(self) -> _str:
         return repr(self._value)
+
+
+Str.__module__ = "builtins"
+Str.__name__ = "str"

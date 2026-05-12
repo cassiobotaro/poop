@@ -17,10 +17,10 @@ def _poop_int_from(value: object = None, base: object = None) -> Int:
     if isinstance(value, Str):
         if base is not None:
             if not isinstance(base, Int):
-                raise TypeError(f"base must be Int, got {type(base).__name__}")
+                raise TypeError(f"base must be Int, got {type(base).__qualname__}")
             return Int(int(value._value, base._value))
         return Int(int(value._value))
-    raise TypeError(f"cannot convert {type(value).__name__} to Int")
+    raise TypeError(f"cannot convert {type(value).__qualname__} to Int")
 
 
 class _IntRewriter(ast.NodeTransformer):
