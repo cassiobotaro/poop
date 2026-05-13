@@ -2,7 +2,7 @@
 
 Quick translations of common Python idioms to POOP source code. For the full reference of which Python constructs are forbidden and why, see [`INFECTIONS.md`](INFECTIONS.md). For end-to-end programs, see [`examples/`](examples).
 
-> Every snippet pair shows the Python form you would normally write and the POOP form the validators and transformers force you to write instead. Snippets are valid as POOP source — primitive literals like `0`, `"hi"`, `True` are wrapped to POOP types by transformers at parse time, so `xs.at(0)` and `name.print()` work without explicit `Int(0)` / `Str(...)` calls.
+> Every snippet pair shows the Python form you would normally write and the POOP form the validators and transformers force you to write instead. Snippets are valid as POOP source — primitive literals like `0`, `"hi"`, `True` are wrapped to POOP types by transformers at parse time, so methods like `.at(0)` and `.print()` work directly on Python literals without any manual wrapping.
 
 ## Control flow
 
@@ -75,7 +75,7 @@ result = [x * 2 for x in xs if x > 0]
 result = list(xs.filter(lambda x: x > 0).map(lambda x: x * 2))
 ```
 
-> `map` and `filter` return lazy `Map` / `Filter` objects. Materialize with `list(...)`, `tuple(...)`, `set(...)`, `bytes(...)`.
+> `map` and `filter` return lazy iterators. Materialize with `list(...)`, `tuple(...)`, `set(...)`, `bytes(...)`.
 
 ### `range` loop
 
@@ -163,8 +163,10 @@ window = xs[1:4]
 ```python
 # POOP
 first = xs.at(0)
-window = xs.slice(Slice(1, 4))   # Slice is reusable — pass it to any collection
+window = xs.slice(1, 4)
 ```
+
+> For reuse across collections, build a value with `slice(start, stop, step=None)` — the transformer rewrites the lowercase builtin into POOP's `Slice`. Pass it to `xs.slice(s)` on any sequence type.
 
 ## Membership
 
