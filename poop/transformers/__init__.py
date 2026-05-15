@@ -37,6 +37,7 @@ from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
 from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
+from poop.transformers.shlex import NAMESPACE as _shlex_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import StrTransformer
 from poop.transformers.try_ import NAMESPACE as _try_namespace
@@ -107,6 +108,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_pprint_namespace,
     **_bisect_namespace,
     **_heapq_namespace,
+    **_shlex_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
