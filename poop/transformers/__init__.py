@@ -27,6 +27,7 @@ from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
+from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import StrTransformer
@@ -87,6 +88,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_random_namespace,
     **_errno_namespace,
     **_getpass_namespace,
+    **_secrets_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
