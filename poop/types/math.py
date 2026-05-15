@@ -76,6 +76,32 @@ class Math:
     def atan2(y: Float, x: Float) -> Float:
         return Float(_math.atan2(y._value, x._value))
 
+    # Hyperbolic --------------------------------------------------
+
+    @staticmethod
+    def sinh(x: Float) -> Float:
+        return Float(_math.sinh(x._value))
+
+    @staticmethod
+    def cosh(x: Float) -> Float:
+        return Float(_math.cosh(x._value))
+
+    @staticmethod
+    def tanh(x: Float) -> Float:
+        return Float(_math.tanh(x._value))
+
+    @staticmethod
+    def asinh(x: Float) -> Float:
+        return Float(_math.asinh(x._value))
+
+    @staticmethod
+    def acosh(x: Float) -> Float:
+        return Float(_math.acosh(x._value))
+
+    @staticmethod
+    def atanh(x: Float) -> Float:
+        return Float(_math.atanh(x._value))
+
     # Power & exponential -----------------------------------------
 
     @staticmethod

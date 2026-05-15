@@ -81,3 +81,22 @@ def test_asin_acos_atan() -> None:
 def test_atan2() -> None:
     assert Math.atan2(Float(1.0), Float(1.0))._value == _math.pi / 4
     assert isinstance(Math.atan2(Float(1.0), Float(1.0)), Float)
+
+
+# --- Hyperbolic ---
+
+
+def test_sinh_cosh_tanh_at_zero() -> None:
+    assert Math.sinh(Float(0.0))._value == 0.0
+    assert Math.cosh(Float(0.0))._value == 1.0
+    assert Math.tanh(Float(0.0))._value == 0.0
+
+
+def test_sinh_returns_poop_float() -> None:
+    assert isinstance(Math.sinh(Float(1.0)), Float)
+
+
+def test_asinh_acosh_atanh() -> None:
+    assert Math.asinh(Float(0.0))._value == 0.0
+    assert Math.acosh(Float(1.0))._value == 0.0
+    assert Math.atanh(Float(0.0))._value == 0.0
