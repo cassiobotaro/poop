@@ -1,3 +1,5 @@
+from typing import cast
+
 from poop.interpreter import Interpreter
 from poop.types.float import Float
 from poop.types.int import Int
@@ -104,3 +106,60 @@ def test_randbytes_returns_poop_bytes_of_length() -> None:
     result = r.randbytes(Int(4))
     assert isinstance(result, Bytes)
     assert len(result._value) == 4
+
+
+# --- Collection draws (simple) ---
+
+
+def test_choice_returns_an_element_from_list() -> None:
+    from poop.types.list import List
+
+    r = Random(Int(0))
+    coll = List(Int(1), Int(2), Int(3))
+    picked = r.choice(coll)
+    assert picked in (Int(1), Int(2), Int(3))
+
+
+def test_choice_returns_poop_element() -> None:
+    from poop.types.list import List
+
+    r = Random(Int(0))
+    coll = List(Int(10), Int(20), Int(30))
+    picked = r.choice(coll)
+    assert isinstance(picked, Int)
+
+
+def test_choice_deterministic_with_seed() -> None:
+    from poop.types.list import List
+
+    coll = List(Int(1), Int(2), Int(3), Int(4), Int(5))
+    a = Random(Int(42)).choice(coll)
+    b = Random(Int(42)).choice(coll)
+    assert isinstance(a, Int)
+    assert isinstance(b, Int)
+    assert a._value == b._value
+
+
+def test_shuffle_mutates_list_in_place() -> None:
+    from poop.types.list import List
+    from poop.types.none import none
+
+    r = Random(Int(0))
+    coll = List(Int(1), Int(2), Int(3), Int(4), Int(5))
+    values_before = sorted(cast(Int, x)._value for x in coll._items)
+    result = r.shuffle(coll)
+    values_after = sorted(cast(Int, x)._value for x in coll._items)
+    assert result is none
+    assert values_after == values_before  # same elements, order may differ
+
+
+def test_shuffle_is_deterministic_with_seed() -> None:
+    from poop.types.list import List
+
+    a = List(Int(1), Int(2), Int(3), Int(4), Int(5))
+    b = List(Int(1), Int(2), Int(3), Int(4), Int(5))
+    Random(Int(42)).shuffle(a)
+    Random(Int(42)).shuffle(b)
+    a_order = [cast(Int, x)._value for x in a._items]
+    b_order = [cast(Int, x)._value for x in b._items]
+    assert a_order == b_order

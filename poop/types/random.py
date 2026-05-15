@@ -1,5 +1,5 @@
 import random as _random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from poop.types.float import Float
 from poop.types.none import none
@@ -7,7 +7,9 @@ from poop.types.none import none
 if TYPE_CHECKING:
     from poop.types.bytes import Bytes
     from poop.types.int import Int
+    from poop.types.list import List
     from poop.types.none import NoneClass
+    from poop.types.object import Object
 
 
 class Random:
@@ -80,6 +82,19 @@ class Random:
         from poop.types.bytes import Bytes as _Bytes
 
         return _Bytes(self._impl.randbytes(n._value))
+
+    # Collection draws -----------------------------------------------
+
+    def choice(self, seq: Any) -> Object:
+        # seq is a POOP iterable; iterate to get a Python list of POOP
+        # objects, then delegate to _random.choice.
+        return self._impl.choice(list(seq))
+
+    def shuffle(self, x: List) -> NoneClass:
+        # In-place mutation of the POOP List's underlying buffer. Mirrors
+        # Python's random.shuffle, which mutates and returns None.
+        self._impl.shuffle(x._items)
+        return none
 
 
 _DEFAULT = Random()
