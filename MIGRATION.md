@@ -688,3 +688,25 @@ order = sorter.static_order()
 ```
 
 > `TopologicalSorter` is in scope without a `graphlib.` prefix (same pattern as `Random`, `UUID`). `static_order()` returns a `Tuple`; the incremental `.add` / `.prepare` / `.get_ready` / `.done` surface is also exposed for streaming consumption. `graphlib.CycleError` is a Python exception class for use with `Try.except_(...)`.
+
+## Arbitrary-precision decimals (`decimal` module + `Decimal` / `Context` classes)
+
+```python
+# Python
+from decimal import Decimal, getcontext, ROUND_HALF_UP
+
+price = Decimal("19.99")
+total = price * Decimal("3") + Decimal("0.10")
+rounded = total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+getcontext().prec = 50
+```
+
+```python
+# POOP
+price = Decimal("19.99")
+total = price * Decimal("3") + Decimal("0.10")
+rounded = total.quantize(Decimal("0.01"), decimal.ROUND_HALF_UP)
+# precision setting: use a Context via decimal.localcontext()
+```
+
+> `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.). Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Use `with decimal.localcontext() as ctx:` to scope precision/rounding changes.

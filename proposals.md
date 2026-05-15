@@ -424,42 +424,6 @@ explicit `Enum` base for ergonomics.
 **Out of scope (for v1):** `EnumType` metaclass introspection
 (POOP forbids introspection).
 
-## Expose `decimal` as POOP messages
-
-Python's `decimal` provides arbitrary-precision decimal arithmetic
-— critical for money, accounting, and any computation where
-binary-float rounding error is unacceptable.
-
-**Proposal — `decimal` (lowercase module) + `Decimal` class:**
-
-1. **`Decimal` class** wrapping Python's `decimal.Decimal`:
-   - `Decimal(value)` — accepts `Int`, `Str` (`"3.14"`), `Tuple`
-     (sign, digits, exponent), `Float`. Mirrors Python.
-   - All arithmetic operators (`+ - * / // % **`) returning
-     `Decimal`.
-   - `.quantize(exp, rounding=None)`, `.normalize()`, `.adjusted()`,
-     `.as_tuple()`, `.as_integer_ratio()`, `.is_finite()`,
-     `.is_infinite()`, `.is_nan()`, `.is_signed()`, `.is_zero()`,
-     `.sqrt()`, `.ln()`, `.log10()`, `.exp()`.
-2. **`decimal` module namespace:**
-   - `decimal.Decimal` — class attribute alias.
-   - `decimal.getcontext() -> Context`,
-     `decimal.setcontext(ctx) -> NoneClass`,
-     `decimal.localcontext(ctx=None)` (with-block context manager).
-   - Rounding constants: `ROUND_UP`, `ROUND_DOWN`, `ROUND_HALF_UP`,
-     `ROUND_HALF_DOWN`, `ROUND_HALF_EVEN`, `ROUND_CEILING`,
-     `ROUND_FLOOR`, `ROUND_05UP`.
-   - Signal classes: `InvalidOperation`, `DivisionByZero`,
-     `Overflow`, `Underflow`, `Inexact`, `Rounded`, `Subnormal`,
-     `Clamped`, `FloatOperation`, `DecimalException`.
-3. **`Context` class** — precision, rounding, traps, flags.
-
-**Type discipline:** `Decimal` is its own POOP type with full
-arithmetic; conversions cross to `Int`/`Float`/`Str` explicitly.
-
-**Out of scope (for v1):** the C-vs-Python implementation toggle;
-historical traps inherited from `cdecimal`.
-
 ## Expose `fractions` as POOP messages
 
 Python's `fractions.Fraction` is exact rational arithmetic.
@@ -2022,7 +1986,7 @@ each annotated with one of:
 | `numbers` | out | ABC hierarchy — POOP has its own type tree |
 | `math` | covered | `Math` namespace (shipped in v0.6.0) |
 | `cmath` | audit | Needs `Complex` POOP type story — see "Future work" |
-| `decimal` | proposed | See proposal above |
+| `decimal` | covered | `decimal` + `Decimal` + `Context` (shipped in this PR) |
 | `fractions` | proposed | See proposal above |
 | `random` | covered | `Random` namespace (shipped in v0.7.0) |
 | `statistics` | proposed | See proposal above |
