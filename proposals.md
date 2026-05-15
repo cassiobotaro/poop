@@ -1756,30 +1756,6 @@ classes:**
 **Out of scope (for v1):** `json.tool` (CLI module — not relevant
 to POOP source).
 
-## Expose `mimetypes` as POOP messages
-
-Python's `mimetypes` maps file extensions to MIME content types.
-
-**Proposal — `mimetypes` (lowercase module) + `MimeTypes` class:**
-
-1. **Module-level shortcuts:**
-   `mimetypes.guess_type(url, strict=True) -> Tuple[Str | NoneClass, Str | NoneClass]`,
-   `mimetypes.guess_extension(type, strict=True) -> Str | NoneClass`,
-   `mimetypes.guess_all_extensions(type, strict=True) -> List[Str]`,
-   `mimetypes.add_type(type, ext, strict=True)`,
-   `mimetypes.init(files=None)`,
-   `mimetypes.read_mime_types(filename) -> Dict | NoneClass`.
-2. **`MimeTypes` class** — reusable registry with the same
-   methods as module-level.
-3. **Constants:** `mimetypes.knownfiles -> List[Str]`,
-   `mimetypes.suffix_map -> Dict[Str, Str]`,
-   `mimetypes.encodings_map -> Dict[Str, Str]`,
-   `mimetypes.types_map -> Dict[Str, Str]`,
-   `mimetypes.common_types -> Dict[Str, Str]`.
-
-**Type discipline:** `Str` for types/extensions, `Dict` for the
-maps.
-
 ## Expose `html` as POOP messages
 
 Python's `html` is small: escape/unescape entities, plus
@@ -2518,7 +2494,7 @@ each annotated with one of:
 | `email` | proposed | See proposal above |
 | `json` | proposed | See proposal above |
 | `mailbox` | out | Niche legacy |
-| `mimetypes` | proposed | See proposal above |
+| `mimetypes` | covered | `mimetypes` + `MimeTypes` (shipped in v0.15.0) |
 | `base64` | covered | Methods on `Bytes` and `Str` (shipped in v0.13.0) |
 | `binascii` | covered | `binascii` namespace (shipped in v0.14.0) |
 | `quopri` | out | Niche legacy encoding |

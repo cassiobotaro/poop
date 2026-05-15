@@ -392,3 +392,29 @@ Try(lambda: binascii.a2b_hex(b"zz")).except_(
 ```
 
 > `binascii.Error` and `binascii.Incomplete` are exposed as raw Python exception classes so user code can pass them to `Try.except_(...)`. The hex pair `b2a_hex`/`hexlify` are aliases, as are `a2b_hex`/`unhexlify`.
+
+## MIME type lookups (`mimetypes` module + `MimeTypes` class)
+
+```python
+# Python
+import mimetypes
+
+mime, encoding = mimetypes.guess_type("page.html")
+ext = mimetypes.guess_extension("text/html")
+mimetypes.add_type("application/x-custom", ".custom")
+
+# Isolated registry
+registry = mimetypes.MimeTypes(filenames=["/etc/mime.types"])
+```
+
+```python
+# POOP
+mime, encoding = mimetypes.guess_type("page.html")
+ext = mimetypes.guess_extension("text/html")
+mimetypes.add_type("application/x-custom", ".custom")
+
+# Isolated registry — Python: random.Random(seed) → POOP: Random(seed). Same idea here.
+registry = MimeTypes(filenames=["/etc/mime.types"])
+```
+
+> POOP exposes both `mimetypes` (lowercase, module-level API + constant maps) and `MimeTypes` (the class — `MimeTypes(filenames=List, strict=Boolean)`). The split mirrors Python exactly. `mimetypes.suffix_map`/`encodings_map`/`types_map`/`common_types`/`knownfiles` are snapshotted from CPython's globals at import time and don't reflect later `add_type` mutations.

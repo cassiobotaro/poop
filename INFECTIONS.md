@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `binascii`, `errno`, `getpass`, `math`, `random`, `secrets`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `MimeTypes`, `Path`, `Random`, `Try`, `With`, `binascii`, `errno`, `getpass`, `math`, `mimetypes`, `random`, `secrets`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -837,6 +837,23 @@ The two exception classes are exposed as raw Python types so user code can pass 
 `b2a_hqx`/`a2b_hqx` (Mac BinHex 4) are not exposed because Python removed them in 3.13.
 
 `binascii` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/binascii.py` — namespace-only, no AST rewrite.
+
+### mimetypes + MimeTypes — `poop/types/mimetypes.py` + `poop/transformers/mimetypes.py`
+
+`mimetypes` mirrors Python's `mimetypes` module — extension/MIME-type lookups. Like `random`/`Random`, POOP exposes **two namespace entries** because the source module ships both a module-level API and a reusable class:
+
+- **`mimetypes`** (lowercase) — module-level shortcuts plus the standard registry constants. Operates on CPython's process-global registry.
+- **`MimeTypes`** (PascalCase) — the reusable registry class. `MimeTypes(filenames=List, strict=Boolean)` builds an isolated instance with its own state.
+
+| Category | Operations | Returns |
+|---|---|---|
+| Lookups | `guess_type(url, strict=true)`, `guess_extension(type, strict=true)`, `guess_all_extensions(type, strict=true)` | `Tuple[Str/none, Str/none]` / `Str | none` / `List[Str]` |
+| Mutation | `add_type(type, ext, strict=true)`, `init(files=none)`, `read_mime_types(filename)` (module-only) | `none` / `none` / `Dict | none` |
+| Constants (module-only) | `suffix_map`, `encodings_map`, `types_map`, `common_types` (all `Dict[Str, Str]`), `knownfiles` (`List[Str]`) | snapshot at import time |
+
+The constant dicts are **snapshotted** from CPython's globals at import time. Subsequent `add_type` calls update CPython's mutable globals but not the POOP snapshots — this preserves POOP's "no introspection" stance: constants are immutable values from POOP's perspective. Use `MimeTypes` if you need a registry that reflects later mutations.
+
+`mimetypes` and `MimeTypes` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/mimetypes.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
