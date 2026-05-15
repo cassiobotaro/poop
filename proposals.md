@@ -310,8 +310,8 @@ instead. POOP follows Python here.
 
 **Type discipline:** every value in the returned `Dict` is a POOP
 type. TOML's `date` / `time` / `datetime` map to POOP's `DateTime`
-once that proposal lands (see the audit table — `datetime` is
-currently `audit`); until then, expose them as ISO-8601 `Str` so
+once that proposal lands (`datetime` is currently `proposed`);
+until then, expose them as ISO-8601 `Str` so
 no Python `datetime.datetime` leaks. This is the one place the
 proposal trades full type-coverage for ship-now pragmatism, and is
 documented explicitly so it can be tightened later. When the
