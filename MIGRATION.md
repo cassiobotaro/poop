@@ -607,3 +607,25 @@ hex_form = new_id.hex
 ```
 
 > `UUID` is in scope without a `uuid.` prefix (same pattern as `Random`). All seven generators (`uuid1`/`3`/`4`/`5`/`6`/`7`/`8`) plus `uuid.getnode()` and the standard constants (`NAMESPACE_DNS`/`URL`/`OID`/`X500`, `NIL`, `MAX`, four `RESERVED_*`/`RFC_4122` variant tokens) are surfaced. `is_safe` flattens CPython's `SafeUUID` enum to a lowercase `Str` token (sanctioned divergence).
+
+## JSON (`json` module)
+
+```python
+# Python
+import json
+
+text = json.dumps({"name": "alice", "ages": [10, 20]})
+obj = json.loads(text)
+json.dump(obj, open("data.json", "w"))
+loaded = json.load(open("data.json"))
+```
+
+```python
+# POOP
+text = json.dumps({"name": "alice", "ages": [10, 20]})
+obj = json.loads(text)
+json.dump(obj, Path("data.json"))
+loaded = json.load(Path("data.json"))
+```
+
+> POOP's `json` is path-based — `dump`/`load` accept a `Path` instead of a file object (no `open` in POOP). The round-trip preserves POOP types: `json.loads(s)` returns a POOP value graph (`Dict`/`List`/`Str`/`Int`/`Float`/`Boolean`/`none`), and `json.dumps` accepts the same graph back. `json.JSONDecodeError` is exposed as a Python exception class for use with `Try.except_(...)`. Custom encoders/decoders and callback kwargs (`object_hook`, `default`, …) are deferred to Future work.

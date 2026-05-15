@@ -1542,33 +1542,6 @@ the POOP record.
   `MessageError`/`MessageParseError`.
 - Compat32-only convenience constructors (legacy).
 
-## Expose `json` as POOP messages
-
-Python's `json` (de)serialises JSON. Used everywhere.
-
-**Proposal — `json` (lowercase module) + `JSONEncoder`/`JSONDecoder`
-classes:**
-
-1. **Module-level shortcuts:**
-   `json.dumps(obj, *, skipkeys=False, ensure_ascii=True, check_circular=True, allow_nan=True, cls=None, indent=None, separators=None, default=None, sort_keys=False, **kw) -> Str`,
-   `json.dump(obj, path, **kw) -> NoneClass` (path-based POOP
-   convention),
-   `json.loads(s, *, cls=None, object_hook=None, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None, **kw) -> Object`,
-   `json.load(path, **kw) -> Object`.
-2. **`JSONEncoder` class** for custom serialisation (subclass +
-   override `.default(obj)`).
-3. **`JSONDecoder` class** for custom deserialisation (`.decode(s)`,
-   `.raw_decode(s, idx=0)`).
-4. **Errors:** `JSONDecodeError` (with `.msg`, `.doc`, `.pos`,
-   `.lineno`, `.colno`).
-
-**Type discipline:** `Str` ↔ POOP `Dict`/`List`/`Str`/`Int`/`Float`/
-`Boolean`/`none`. Round-trip preserves POOP types via default
-`object_hook`-less behaviour.
-
-**Out of scope (for v1):** `json.tool` (CLI module — not relevant
-to POOP source).
-
 ## Expose `html` as POOP messages
 
 Python's `html` is small: escape/unescape entities, plus
@@ -2264,7 +2237,7 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `email` | proposed | See proposal above |
-| `json` | proposed | See proposal above |
+| `json` | covered | `json` namespace (shipped in v0.25.0) |
 | `mailbox` | out | Niche legacy |
 | `mimetypes` | covered | `mimetypes` + `MimeTypes` (shipped in v0.15.0) |
 | `base64` | covered | Methods on `Bytes` and `Str` (shipped in v0.13.0) |
@@ -2483,6 +2456,25 @@ Cross-cutting decisions to make first:
   `cmath.*`.
 - Should `cmath` and `math` share predicates that take Complex
   (returning Boolean) or duplicate them per type, like Python does?
+
+### `JSONEncoder` / `JSONDecoder` subclassing + advanced kwargs — from the `json` proposal (v0.25.0)
+
+v0.25.0 ships `json.dumps`/`loads`/`dump`/`load` with round-trip POOP
+type discipline plus the common formatting flags (`skipkeys`,
+`ensure_ascii`, `check_circular`, `allow_nan`, `indent`,
+`sort_keys`) and `json.JSONDecodeError` for use with `Try.except_`.
+
+Deferred:
+- **`JSONEncoder` / `JSONDecoder` classes** — POOP doesn't yet
+  expose enough subclassing surface to let users override
+  `.default(obj)` or `.object_hook` and have it dispatch through the
+  unwrap/wrap layer cleanly.
+- **`cls=...` / `default=` / `object_hook=` / `parse_float=` /
+  `parse_int=` / `parse_constant=` / `object_pairs_hook=` /
+  `separators=`** — callback hooks that need POOP `Block` →
+  Python `callable` adaptation with type discipline still preserved.
+
+`json.tool` (CLI module) stays out of scope.
 
 ### Streaming-lexer extras on `Shlex` — from the `shlex` proposal (v0.23.0)
 

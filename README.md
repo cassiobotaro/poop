@@ -82,6 +82,8 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `shlex.split(cmd)` | `shlex.split(cmd)` |
 | `uuid.uuid4()` | `uuid.uuid4()` |
 | `uuid.UUID(s)` | `UUID(s)` |
+| `json.dumps(obj)` | `json.dumps(obj)` |
+| `json.loads(s)` | `json.loads(s)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1023,6 +1023,24 @@ v0.23.0 ships the common iterative surface; the full `Shlex` API (`read_token`, 
 `uuid.SafeUUID` is not exposed as a dedicated POOP enum (see above). `uuid.uuid6`/`7`/`8` are new in Python 3.14 and surfaced unchanged.
 
 `uuid` and `UUID` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/uuid.py` — namespace-only, no AST rewrite.
+
+### json — `poop/types/json.py` + `poop/transformers/json.py`
+
+`json` mirrors Python's `json` module — (de)serialisation between JSON text and POOP value graphs.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `json.dumps(obj, *, skipkeys, ensure_ascii, check_circular, allow_nan, indent, sort_keys)` | `Str` | full POOP value tree → JSON |
+| `json.loads(s)` | POOP value | JSON → full POOP value tree |
+| `json.dump(obj, path, …)` | `none` | path-based serialise (POOP I/O convention) |
+| `json.load(path)` | POOP value | path-based deserialise |
+| `json.JSONDecodeError` | Python exception type | usable with `Try.except_` |
+
+**Round-trip type discipline.** The native `json` library walks Python types; this namespace wraps every entry/exit with `_unwrap`/`_wrap` so callers never see a raw `dict`/`list`/`str`/`int`/`float`/`bool`/`None`. `Json.loads('{"a":1, "b":true}')` returns a `Dict[Str, Int | Boolean]` — every value is a POOP type. `Json.dumps(d)` accepts a POOP value graph and returns POOP `Str`.
+
+v0.25.0 covers the common 95%; subclassing (`JSONEncoder` / `JSONDecoder`) and callback kwargs (`cls`, `default`, `object_hook`, `parse_int`/`parse_float`/`parse_constant`, `object_pairs_hook`, `separators`) are deferred to Future work pending a POOP `Block` → Python `callable` adaptation story. `json.tool` (CLI) stays out of scope.
+
+`json` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/json.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
