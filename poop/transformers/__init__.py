@@ -18,6 +18,7 @@ from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
+from poop.transformers.math import MathTransformer
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
 from poop.transformers.path import PathTransformer
@@ -79,6 +80,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **SliceTransformer.BINDINGS,
     **BlockTransformer.BINDINGS,
     **PathTransformer.BINDINGS,
+    **MathTransformer.BINDINGS,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]

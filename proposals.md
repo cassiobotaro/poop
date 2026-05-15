@@ -30,7 +30,7 @@ mirroring `math.<name>` exactly.**
    - `Math.asinh(x)`, `Math.acosh(x)`, `Math.atanh(x)`
 4. **Exponential / logarithmic / power:**
    - `Math.exp(x)`, `Math.expm1(x)`, `Math.exp2(x)`
-   - `Math.log(x, base=Math.e)`, `Math.log2(x)`, `Math.log10(x)`,
+   - `Math.log(x, base=Math.E)`, `Math.log2(x)`, `Math.log10(x)`,
      `Math.log1p(x)`
    - `Math.sqrt(x)`, `Math.cbrt(x)`, `Math.pow(x, y)`
 5. **Rounding and float decomposition:**
@@ -54,8 +54,9 @@ mirroring `math.<name>` exactly.**
 10. **Special functions:**
     - `Math.erf(x)`, `Math.erfc(x)`,
       `Math.gamma(x)`, `Math.lgamma(x)`
-11. **Constants:**
-    - `Math.pi`, `Math.e`, `Math.tau`, `Math.inf`, `Math.nan`
+11. **Constants** (recased to UPPER_SNAKE_CASE — see "Naming
+    divergence" below):
+    - `Math.PI`, `Math.E`, `Math.TAU`, `Math.INF`, `Math.NAN`
 
 `MathTransformer` is **namespace-only** (no AST rewrite); it
 injects `Math` into `DEFAULT_NAMESPACE` like `Try` / `With` /
@@ -73,6 +74,17 @@ for the same reason (it is on Python's `float`, not in `math`).
 `Tuple`). No Python primitives leak across the boundary, even for
 convenience or to keep tests shorter. This applies both to
 public-facing annotations and to the runtime values returned.
+
+**Naming divergence — constants only.** Function names mirror
+Python's `math.*` exactly (`Math.sqrt`, `Math.atan2`, `Math.isclose`,
+…). The **five constants are recased to UPPER_SNAKE_CASE**: Python's
+`math.pi` / `math.e` / `math.tau` / `math.inf` / `math.nan` are
+exposed as `Math.PI` / `Math.E` / `Math.TAU` / `Math.INF` /
+`Math.NAN`. This sanctioned divergence aligns the `Math` namespace
+with the rest of POOP's stdlib-mirror surface (`Uuid.NAMESPACE_DNS`,
+`Secrets.DEFAULT_ENTROPY`, `Uuid.NIL`, `Uuid.MAX`, …), all of which
+already use uppercase. The Python `math` module is the historical
+exception that POOP harmonises with the rest.
 
 **Smalltalk reference.** Listed for context — POOP no longer
 follows Smalltalk for math, but the differences are recorded so
@@ -100,7 +112,7 @@ reached in POOP via `Math.<same-python-name>(args)`.
 | `math.fsum(iter)` | `iter sum` | POOP keeps `Math.fsum` (Kahan summation) |
 | `math.prod(iter)` | `iter inject: 1 into: [:a :b ǀ a * b]` | no native Pharo |
 | `math.isclose(a, b)` | `a closeTo: b` | POOP keeps Python's keyword args |
-| `Math.pi` | `Float pi` | constant on `Float` class side in Smalltalk |
+| `math.pi` (→ `Math.PI`) | `Float pi` | constant on `Float` class side in Smalltalk; POOP recases to UPPER_SNAKE_CASE |
 
 **Out of scope (for v1):**
 
