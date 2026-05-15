@@ -1,7 +1,7 @@
 """
 Geometry primer
 
-Demonstrates the Math namespace — the POOP equivalent of Python's
+Demonstrates the `math` namespace — the POOP equivalent of Python's
 math module — by computing triangle and circle properties.
 
 Smalltalk:
@@ -25,27 +25,27 @@ class Geometry:
         (text + value.repr()).print()
 
     def hypotenuse(self, a, b):
-        return Math.hypot(a, b)
+        return math.hypot(a, b)
 
     def circle_area(self, radius):
-        return Math.pi * radius * radius
+        return math.pi * radius * radius
 
     def circle_circumference(self, radius):
-        return 2.0 * Math.pi * radius
+        return 2.0 * math.pi * radius
 
     def run(self):
         self._label("Hypotenuse 3-4: ", self.hypotenuse(3.0, 4.0))
         self._label("Area r=5:       ", self.circle_area(5.0))
         self._label("Circumference:  ", self.circle_circumference(5.0))
 
-        sin30 = Math.sin(Math.radians(30.0))
-        cos60 = Math.cos(Math.radians(60.0))
-        self._label("sin 30 ≈ 0.5:   ", Math.isclose(sin30, 0.5))
-        self._label("cos 60 ≈ 0.5:   ", Math.isclose(cos60, 0.5))
+        sin30 = math.sin(math.radians(30.0))
+        cos60 = math.cos(math.radians(60.0))
+        self._label("sin 30 ≈ 0.5:   ", math.isclose(sin30, 0.5))
+        self._label("cos 60 ≈ 0.5:   ", math.isclose(cos60, 0.5))
 
-        self._label("sqrt(2):        ", Math.sqrt(2.0))
-        self._label("5! = 120:       ", Math.factorial(5))
-        self._label("gcd(12, 18):    ", Math.gcd(12, 18))
+        self._label("sqrt(2):        ", math.sqrt(2.0))
+        self._label("5! = 120:       ", math.factorial(5))
+        self._label("gcd(12, 18):    ", math.gcd(12, 18))
 
 
 Geometry().run()

@@ -26,7 +26,7 @@ mints a v4, `UUID fromString:` parses one, and the instance answers
      Python returns a `SafeUUID` enum; POOP flattens to a `Str` token
      to avoid introducing a one-off enum type)
 2. **Namespace `Uuid`** injected into `DEFAULT_NAMESPACE`
-   (`Math`-style, no AST rewrite). Class-side messages:
+   (`math`-style, no AST rewrite). Class-side messages:
    - `Uuid.uuid1(node=None, clock_seq=None)`,
      `Uuid.uuid3(namespace, name)`, `Uuid.uuid4()`,
      `Uuid.uuid5(namespace, name)`,
@@ -89,7 +89,7 @@ follows Python here.
 **Proposal:**
 
 1. **Namespace `Secrets`** injected into `DEFAULT_NAMESPACE`
-   (`Math`-style, no AST rewrite). No new POOP type.
+   (`math`-style, no AST rewrite). No new POOP type.
 2. **Token minting** (`nbytes=None` resolves to `DEFAULT_ENTROPY`,
    mirroring Python):
    - `Secrets.token_bytes(nbytes=None) -> Bytes`
@@ -279,7 +279,7 @@ instead. POOP follows Python here.
 **Proposal:**
 
 1. **Namespace `Toml`** injected into `DEFAULT_NAMESPACE`
-   (`Math`-style, no AST rewrite). No new POOP types — TOML values
+   (`math`-style, no AST rewrite). No new POOP types — TOML values
    map onto existing POOP types (`Dict` / `List` / `Str` / `Int` /
    `Float` / `Boolean` / `DateTime`).
 2. **Parsing — keeping Python's exact names and keyword args:**
@@ -337,9 +337,9 @@ decision case-by-case:
 - **Message on the value** — when the operation belongs to a single
   receiver (`'abc'.is_digit()`, `path.read_text()`,
   `bytes.b64encode()`, `coll.sort()`).
-- **Class-with-class-methods (`Math`-style namespace global)** — when
+- **Class-with-class-methods (`math`-style namespace global)** — when
   the operation parses, creates, or combines values (`Random new`,
-  `Date today`, `NeoJSONReader fromString:`, `Math.atan2`). In POOP
+  `Date today`, `NeoJSONReader fromString:`, `math.atan2`). In POOP
   this maps to a namespace-only binding like `Try` / `With` / `Path`.
 - **Specialized global object** — when there is no single value to
   receive the message (`Smalltalk exit`, `Transcript`, `SystemVersion

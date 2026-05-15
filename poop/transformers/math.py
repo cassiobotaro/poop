@@ -5,4 +5,4 @@ from poop.types.math import Math
 
 
 class MathTransformer(BaseTransformer):
-    BINDINGS: ClassVar[dict[str, object]] = {"Math": Math}
+    BINDINGS: ClassVar[dict[str, object]] = {"math": Math}

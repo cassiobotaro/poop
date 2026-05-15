@@ -22,7 +22,7 @@ def test_sqrt_returns_poop_float() -> None:
 
 
 def test_math_reachable_via_interpreter() -> None:
-    Interpreter().run_source("Math.sqrt(2.0).print()")
+    Interpreter().run_source("math.sqrt(2.0).print()")
 
 
 # --- Number theory ---

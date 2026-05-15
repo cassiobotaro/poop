@@ -250,14 +250,14 @@ n = math.factorial(5)
 
 ```python
 # POOP
-r = Math.sqrt(x)
-a = Math.pi * r * r
-ok = Math.isclose(a, b)
-h = Math.hypot(3, 4, 12)
-n = Math.factorial(5)
+r = math.sqrt(x)
+a = math.pi * r * r
+ok = math.isclose(a, b)
+h = math.hypot(3, 4, 12)
+n = math.factorial(5)
 ```
 
-> `Math` mirrors `math.*` exactly — same function names, parameter order, defaults, kw-only markers, return types, and constant case (so `Math.pi` stays lowercase like `math.pi`).
+> `math` mirrors Python's `math` module exactly — same name (lowercase), same function names, parameter order, defaults, kw-only markers, return types. No `import math` needed in POOP — the namespace is injected globally.
 
 ## Random (`random` module)
 
