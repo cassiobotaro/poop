@@ -141,5 +141,62 @@ class Random:
         )
         return _List(*picks)
 
+    # Distributions --------------------------------------------------
+
+    def gauss(self, mu: Float | None = None, sigma: Float | None = None) -> Float:
+        from poop.types._unwrap import _unwrap
+
+        return Float(self._impl.gauss(_unwrap(mu, 0.0), _unwrap(sigma, 1.0)))
+
+    def normalvariate(
+        self, mu: Float | None = None, sigma: Float | None = None
+    ) -> Float:
+        from poop.types._unwrap import _unwrap
+
+        return Float(self._impl.normalvariate(_unwrap(mu, 0.0), _unwrap(sigma, 1.0)))
+
+    def lognormvariate(self, mu: Float, sigma: Float) -> Float:
+        return Float(self._impl.lognormvariate(mu._value, sigma._value))
+
+    def expovariate(self, lambd: Float | None = None) -> Float:
+        from poop.types._unwrap import _unwrap
+
+        return Float(self._impl.expovariate(_unwrap(lambd, 1.0)))
+
+    def gammavariate(self, alpha: Float, beta: Float) -> Float:
+        return Float(self._impl.gammavariate(alpha._value, beta._value))
+
+    def betavariate(self, alpha: Float, beta: Float) -> Float:
+        return Float(self._impl.betavariate(alpha._value, beta._value))
+
+    def paretovariate(self, alpha: Float) -> Float:
+        return Float(self._impl.paretovariate(alpha._value))
+
+    def weibullvariate(self, alpha: Float, beta: Float) -> Float:
+        return Float(self._impl.weibullvariate(alpha._value, beta._value))
+
+    def vonmisesvariate(self, mu: Float, kappa: Float) -> Float:
+        return Float(self._impl.vonmisesvariate(mu._value, kappa._value))
+
+    def triangular(
+        self,
+        low: Float | None = None,
+        high: Float | None = None,
+        mode: Float | None = None,
+    ) -> Float:
+        from poop.types._unwrap import _unwrap
+
+        return Float(
+            self._impl.triangular(
+                _unwrap(low, 0.0), _unwrap(high, 1.0), _unwrap(mode, None)
+            )
+        )
+
+    def binomialvariate(self, n: Int | None = None, p: Float | None = None) -> Int:
+        from poop.types._unwrap import _unwrap
+        from poop.types.int import Int as _Int
+
+        return _Int(self._impl.binomialvariate(_unwrap(n, 1), _unwrap(p, 0.5)))
+
 
 _DEFAULT = Random()

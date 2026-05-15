@@ -221,3 +221,100 @@ def test_sample_with_counts() -> None:
     result = r.sample(population, Int(2), counts=counts)
     for item in result._items:
         assert cast(Int, item)._value == 1
+
+
+# --- Distributions ---
+
+
+def test_gauss_returns_float() -> None:
+    r = Random(Int(42))
+    result = r.gauss()
+    assert isinstance(result, Float)
+
+
+def test_gauss_with_mu_sigma() -> None:
+    r = Random(Int(42))
+    result = r.gauss(Float(10.0), Float(2.0))
+    assert isinstance(result, Float)
+
+
+def test_normalvariate() -> None:
+    r = Random(Int(42))
+    assert isinstance(r.normalvariate(), Float)
+    assert isinstance(r.normalvariate(Float(5.0), Float(1.5)), Float)
+
+
+def test_lognormvariate() -> None:
+    r = Random(Int(42))
+    result = r.lognormvariate(Float(0.0), Float(1.0))
+    assert isinstance(result, Float)
+    assert result._value > 0.0  # lognormal is always positive
+
+
+def test_expovariate_default_lambd() -> None:
+    r = Random(Int(42))
+    result = r.expovariate()
+    assert isinstance(result, Float)
+    assert result._value >= 0.0
+
+
+def test_expovariate_with_lambd() -> None:
+    r = Random(Int(42))
+    result = r.expovariate(Float(2.0))
+    assert isinstance(result, Float)
+
+
+def test_gammavariate() -> None:
+    r = Random(Int(42))
+    assert isinstance(r.gammavariate(Float(2.0), Float(1.0)), Float)
+
+
+def test_betavariate_in_unit_range() -> None:
+    r = Random(Int(42))
+    result = r.betavariate(Float(2.0), Float(5.0))
+    assert isinstance(result, Float)
+    assert 0.0 <= result._value <= 1.0
+
+
+def test_paretovariate() -> None:
+    r = Random(Int(42))
+    result = r.paretovariate(Float(1.5))
+    assert isinstance(result, Float)
+    assert result._value >= 1.0  # pareto distribution starts at 1
+
+
+def test_weibullvariate() -> None:
+    r = Random(Int(42))
+    assert isinstance(r.weibullvariate(Float(1.0), Float(1.5)), Float)
+
+
+def test_vonmisesvariate() -> None:
+    r = Random(Int(42))
+    assert isinstance(r.vonmisesvariate(Float(0.0), Float(4.0)), Float)
+
+
+def test_triangular_defaults() -> None:
+    r = Random(Int(42))
+    result = r.triangular()
+    assert isinstance(result, Float)
+    assert 0.0 <= result._value <= 1.0
+
+
+def test_triangular_with_bounds() -> None:
+    r = Random(Int(42))
+    result = r.triangular(Float(10.0), Float(20.0), Float(15.0))
+    assert 10.0 <= result._value <= 20.0
+
+
+def test_binomialvariate_returns_int() -> None:
+    r = Random(Int(42))
+    result = r.binomialvariate(Int(10), Float(0.5))
+    assert isinstance(result, Int)
+    assert 0 <= result._value <= 10
+
+
+def test_binomialvariate_defaults() -> None:
+    r = Random(Int(42))
+    result = r.binomialvariate()
+    assert isinstance(result, Int)
+    assert result._value in (0, 1)  # n=1, single Bernoulli trial
