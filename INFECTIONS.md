@@ -394,7 +394,7 @@ Symmetric to `Object.print()` — the receiver is what gets shown. Scoped to `St
 |---|---|---|
 | `open(path, ...)` | free function with procedural look | `Path('foo').read_text()` / `write_text(content)` (`poop/types/path.py`) |
 
-`Path` (`poop/types/path.py`) wraps `pathlib.Path` and exposes filesystem I/O as message passing. Exposed as a namespace-only binding by `PathTransformer` (no AST rewrite), in the same family as `Try` / `With`. `Path` accepts `Str | Path` in the constructor (idempotent), supports `__truediv__` for joining (`Path('dir') / 'file.txt'`), and orders by the underlying `pathlib.Path`.
+`Path` (`poop/types/path.py`) wraps `pathlib.Path` and exposes filesystem I/O as message passing. Exposed as a namespace-only binding via the `NAMESPACE` dict in `poop/transformers/path.py` (no AST rewrite), in the same family as `Try` / `With`. `Path` accepts `Str | Path` in the constructor (idempotent), supports `__truediv__` for joining (`Path('dir') / 'file.txt'`), and orders by the underlying `pathlib.Path`.
 
 | Method | Returns | Notes |
 |---|---|---|
@@ -706,7 +706,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 > **Tradeoff**: `exc_type` must be a native Python exception class. Mirroring Python's full hierarchy (~100+ classes) into POOP types is impractical. The handler always receives an `Error` wrapper regardless.
 
-`Try` is exposed in `DEFAULT_NAMESPACE` via `TryTransformer` (`poop/transformers/try_.py`) — a namespace-only transformer that injects the binding without rewriting AST.
+`Try` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/try_.py` — namespace-only, no AST rewrite.
 
 ### With — `poop/types/with_.py`
 
@@ -720,11 +720,11 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 > **Tradeoff**: context managers must implement Python's native protocol (`__enter__`/`__exit__`). POOP cannot redefine resource acquisition semantics without reimplementing every standard context manager (files, locks, etc.), which is impractical.
 
-`With` is exposed in `DEFAULT_NAMESPACE` via `WithTransformer` (`poop/transformers/with_.py`) — a namespace-only transformer that injects the binding without rewriting AST.
+`With` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/with_.py` — namespace-only, no AST rewrite.
 
 ### math — `poop/types/math.py` + `poop/transformers/math.py`
 
-`math` is a namespace class wrapping Python's `math` module. Exposed as a namespace-only binding by `MathTransformer` (no AST rewrite), in the same family as `Try` / `With` / `Path`. Every public callable in Python 3.14's `math` is reachable as `math.<same-name>(...)`, with parameter order, keyword-only markers, defaults, return types, **and the lowercase module name** mirroring Python exactly. The namespace binding is `math` (lowercase) because `math` is a Python module, not a class.
+`math` is a namespace class wrapping Python's `math` module. Exposed as a namespace-only binding via the `NAMESPACE` dict in `poop/transformers/math.py` (no AST rewrite), in the same family as `Try` / `With` / `Path`. Every public callable in Python 3.14's `math` is reachable as `math.<same-name>(...)`, with parameter order, keyword-only markers, defaults, return types, **and the lowercase module name** mirroring Python exactly. The namespace binding is `math` (lowercase) because `math` is a Python module, not a class.
 
 The five module constants follow the source module's case verbatim — `math.pi`, `math.e`, `math.tau`, `math.inf`, `math.nan` (lowercase). Other POOP namespaces inherit their own case from their source modules: `uuid.NAMESPACE_DNS`, `secrets.DEFAULT_ENTROPY`, and so on stay uppercase because that is how `uuid` and `secrets` ship them.
 
@@ -745,11 +745,11 @@ The five module constants follow the source module's case verbatim — `math.pi`
 
 POOP `Int` and `Float` keep methods that are native to Python's `int` and `float` (`bit_length`, `bit_count`, `is_integer`, `as_integer_ratio`) and the substitutes for banned builtins (`Int.abs()`, `Int.pow()`, `Int.divmod()` cover the `no_abs` / `no_pow` / `no_divmod` validators). The math-specific public methods that previously lived on those types (`Int.ceil`/`floor`/`trunc`, `Float.ceil`/`floor`/`trunc`) are removed — `math.ceil(x)` and friends are the single source of truth.
 
-`math` is exposed in `DEFAULT_NAMESPACE` via `MathTransformer` (`poop/transformers/math.py`) — a namespace-only transformer that injects the binding without rewriting AST.
+`math` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/math.py` — namespace-only, no AST rewrite.
 
 ### random + Random — `poop/types/random.py` + `poop/transformers/random.py`
 
-Python's `random` module exposes two distinct names: the lowercase `random` module (with module-level functions like `random.random()` and `random.choice(xs)`) and the PascalCase `Random` class (instantiated for seeded, independent generators: `random.Random(seed)`). POOP mirrors that split with **two BINDINGS entries**:
+Python's `random` module exposes two distinct names: the lowercase `random` module (with module-level functions like `random.random()` and `random.choice(xs)`) and the PascalCase `Random` class (instantiated for seeded, independent generators: `random.Random(seed)`). POOP mirrors that split with **two namespace entries**:
 
 - **`random`** (lowercase) — a singleton instance (`_DEFAULT = Random()`) acting as the module. Module-level entry points are calls on this singleton: `random.random()`, `random.choice(xs)`, `random.shuffle(xs)`, etc. — matching Python's `random.<func>` exactly.
 - **`Random`** (PascalCase) — the class itself, callable in POOP source: `r = Random(seed); r.random()`. Equivalent to Python's `random.Random(seed)`, but shorter (POOP user code already has `Random` in scope, no `random.` prefix needed for the constructor).
@@ -765,7 +765,7 @@ This is the first POOP namespace where two names point to related but distinct o
 
 The same method set is available on both `random` (module API, uses singleton state) and on `Random(seed)` instances (independent state per instance). Anything cryptographic goes through `secrets`, not `random`. `getstate` / `setstate` are deferred to Future work (see `proposals.md`) because the Mersenne Twister state is opaque (625 ints) and has no clean POOP type-discipline mapping.
 
-`random` and `Random` are exposed in `DEFAULT_NAMESPACE` via `RandomTransformer` (`poop/transformers/random.py`) — a namespace-only transformer that injects both bindings without rewriting AST.
+`random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

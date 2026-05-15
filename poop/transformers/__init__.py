@@ -18,19 +18,19 @@ from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
-from poop.transformers.math import MathTransformer
+from poop.transformers.math import NAMESPACE as _math_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
-from poop.transformers.path import PathTransformer
+from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.raise_ import RaiseTransformer
-from poop.transformers.random import RandomTransformer
+from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import StrTransformer
-from poop.transformers.try_ import TryTransformer
+from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
-from poop.transformers.with_ import WithTransformer
+from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.zip import ZipTransformer
 
 DEFAULT_TRANSFORMERS: _list[Transformer] = [
@@ -76,13 +76,13 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **FrozenSetTransformer.BINDINGS,
     **RaiseTransformer.BINDINGS,
     **ClassTransformer.BINDINGS,
-    **TryTransformer.BINDINGS,
-    **WithTransformer.BINDINGS,
+    **_try_namespace,
+    **_with_namespace,
     **SliceTransformer.BINDINGS,
     **BlockTransformer.BINDINGS,
-    **PathTransformer.BINDINGS,
-    **MathTransformer.BINDINGS,
-    **RandomTransformer.BINDINGS,
+    **_path_namespace,
+    **_math_namespace,
+    **_random_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
