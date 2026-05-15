@@ -2228,6 +2228,54 @@ Python's `shlex` parses simple shell-like syntax: `split`, `join`,
 
 **Type discipline:** `Str` in/out, `List[Str]` for `split`.
 
+## Expose `unittest` as POOP messages
+
+Python's `unittest` is the canonical test framework (xUnit style).
+POOP currently has no testing API; tests live in pytest at the
+Python layer. Exposing `unittest` lets users write tests in POOP
+source.
+
+**Proposal — `unittest` (lowercase module) + class set:**
+
+1. **`TestCase` class** — base for test methods. Methods to
+   override: `.setUp()`, `.tearDown()`, `.setUpClass()`,
+   `.tearDownClass()`, `.setUpModule()`/`.tearDownModule()`.
+   Per-test assertions: `.assertEqual`, `.assertNotEqual`,
+   `.assertTrue`, `.assertFalse`, `.assertIs`, `.assertIsNot`,
+   `.assertIsNone`, `.assertIsNotNone`, `.assertIn`,
+   `.assertNotIn`, `.assertIsInstance`, `.assertNotIsInstance`,
+   `.assertRaises`, `.assertRaisesRegex`, `.assertWarns`,
+   `.assertWarnsRegex`, `.assertLogs`, `.assertNoLogs`,
+   `.assertAlmostEqual`, `.assertNotAlmostEqual`, `.assertGreater`,
+   `.assertGreaterEqual`, `.assertLess`, `.assertLessEqual`,
+   `.assertRegex`, `.assertNotRegex`, `.assertCountEqual`,
+   `.assertMultiLineEqual`, `.assertSequenceEqual`,
+   `.assertListEqual`, `.assertTupleEqual`, `.assertSetEqual`,
+   `.assertDictEqual`, `.fail`, `.skipTest`. Plus the
+   `.subTest(msg=None, **params)` context manager and
+   `.addCleanup(function, *args, **kwargs)`.
+2. **Decorators:** `@unittest.skip(reason)`,
+   `@unittest.skipIf(condition, reason)`,
+   `@unittest.skipUnless(condition, reason)`,
+   `@unittest.expectedFailure`,
+   `@unittest.skipIfCondition`.
+3. **`TestSuite`/`TestLoader`/`TestRunner`/`TestResult`** classes
+   for orchestration.
+4. **Main:** `unittest.main(...)` (module-level test runner).
+5. **Mock support:** `unittest.mock` sub-namespace with `Mock`,
+   `MagicMock`, `AsyncMock`, `PropertyMock`, `patch`,
+   `patch.object`, `patch.dict`, `patch.multiple`, `sentinel`,
+   `DEFAULT`, `call`, `create_autospec`.
+6. **Errors:** `SkipTest`.
+
+**Type discipline:** all POOP types; assertions raise POOP
+`AssertionError` on failure (`obj.assert_(msg)` already exists).
+
+**Out of scope (for v1):**
+
+- `IsolatedAsyncioTestCase` — pairs with the `asyncio` proposal.
+- The `unittest.test_runner` machinery — niche extension point.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -2495,7 +2543,7 @@ each annotated with one of:
 | `pydoc` | out | POOP has no docstring tooling |
 | `pydoc_data` | out | Pairs with `pydoc` |
 | `doctest` | out | Depends on `repr` (forbidden) |
-| `unittest` | audit | POOP testing story TBD |
+| `unittest` | proposed | See proposal above |
 | `ensurepip` | out | Packaging |
 | `venv` | out | Packaging |
 | `zipapp` | out | Packaging |
