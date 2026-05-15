@@ -13,7 +13,7 @@ mints a v4, `UUID fromString:` parses one, and the instance answers
 
 **Proposal:**
 
-1. **New POOP type `Uuid`** in `poop/types/uuid.py`, wrapping
+1. **New POOP class `UUID`** in `poop/types/uuid.py`, wrapping
    `uuid.UUID` internally. Instances answer:
    - `.hex -> Str`, `.urn -> Str`, `.int -> Int`,
      `.bytes -> Bytes`, `.bytes_le -> Bytes`
@@ -25,37 +25,39 @@ mints a v4, `UUID fromString:` parses one, and the instance answers
      (`"safe"` / `"unsafe"` / `"unknown"` — **sanctioned divergence**:
      Python returns a `SafeUUID` enum; POOP flattens to a `Str` token
      to avoid introducing a one-off enum type)
-2. **Namespace `Uuid`** injected into `DEFAULT_NAMESPACE`
-   (`math`-style, no AST rewrite). Class-side messages:
-   - `Uuid.uuid1(node=None, clock_seq=None)`,
-     `Uuid.uuid3(namespace, name)`, `Uuid.uuid4()`,
-     `Uuid.uuid5(namespace, name)`,
-     `Uuid.uuid6(node=None, clock_seq=None)`, `Uuid.uuid7()`,
-     `Uuid.uuid8(a=None, b=None, c=None)` — every variant Python 3.14
-     ships
-   - `Uuid.from_string(s)`, `Uuid.from_bytes(b)`,
-     `Uuid.from_bytes_le(b)`, `Uuid.from_int(i)`,
-     `Uuid.from_fields(...)` — factory methods substituting for
-     Python's overloaded `uuid.UUID(hex=..., bytes=..., int=...)`
-     constructor, since POOP namespaces are not callable
-   - `Uuid.getnode() -> Int` (mirrors `uuid.getnode()`)
-3. **Constants on `Uuid`** — every public `uuid.*` constant:
-   - The four standard namespaces as POOP `Uuid` values:
-     `Uuid.NAMESPACE_DNS`, `Uuid.NAMESPACE_URL`,
-     `Uuid.NAMESPACE_OID`, `Uuid.NAMESPACE_X500`
-   - The two sentinel UUIDs: `Uuid.NIL` (all-zeros), `Uuid.MAX`
+   - `UUID(hex=..., bytes=..., int=..., fields=..., bytes_le=...)`
+     constructor — mirrors `uuid.UUID(...)` exactly (Python uses
+     keyword args for the parse-from-foo variants).
+2. **Namespace `uuid`** (lowercase, mirroring Python's module name)
+   injected into `DEFAULT_NAMESPACE` (`math`-style, no AST rewrite).
+   Module-level functions:
+   - `uuid.uuid1(node=None, clock_seq=None)`,
+     `uuid.uuid3(namespace, name)`, `uuid.uuid4()`,
+     `uuid.uuid5(namespace, name)`,
+     `uuid.uuid6(node=None, clock_seq=None)`, `uuid.uuid7()`,
+     `uuid.uuid8(a=None, b=None, c=None)` — every variant Python 3.14
+     ships, returning `UUID` instances
+   - `uuid.getnode() -> Int` (mirrors `uuid.getnode()`)
+   - `uuid.UUID` — the class itself, accessible as a module attribute
+     just like Python's `uuid.UUID`
+3. **Constants** on the `uuid` namespace — every public `uuid.*`
+   constant:
+   - The four standard namespaces as POOP `UUID` values:
+     `uuid.NAMESPACE_DNS`, `uuid.NAMESPACE_URL`,
+     `uuid.NAMESPACE_OID`, `uuid.NAMESPACE_X500`
+   - The two sentinel UUIDs: `uuid.NIL` (all-zeros), `uuid.MAX`
      (all-ones)
-   - The four variant `Str` constants: `Uuid.RESERVED_NCS`,
-     `Uuid.RFC_4122`, `Uuid.RESERVED_MICROSOFT`,
-     `Uuid.RESERVED_FUTURE`
+   - The four variant `Str` constants: `uuid.RESERVED_NCS`,
+     `uuid.RFC_4122`, `uuid.RESERVED_MICROSOFT`,
+     `uuid.RESERVED_FUTURE`
 
-`UuidTransformer` is **namespace-only** (no AST rewrite); it
-injects `Uuid` into `DEFAULT_NAMESPACE` like `Math` / `Try` /
-`With` / `Path`.
+`UuidTransformer` is **namespace-only** (no AST rewrite); it injects
+two bindings — `uuid` (lowercase singleton) and `UUID` (the class) —
+into `DEFAULT_NAMESPACE` in the same family as `random` / `Random`.
 
 **Type discipline:** every signature exposed by this proposal —
-methods on `Uuid` instances, methods and constants on the `Uuid`
-namespace — takes and returns POOP types (`Uuid`, `Str`, `Bytes`,
+methods on `UUID` instances, methods and constants on the `uuid`
+namespace — takes and returns POOP types (`UUID`, `Str`, `Bytes`,
 `Int`, `Tuple`). No `uuid.UUID`, raw `bytes`, or `int` leaks across
 the boundary.
 
@@ -63,8 +65,8 @@ the boundary.
 
 | Python | Smalltalk (Pharo) | Notes |
 |---|---|---|
-| `uuid.uuid4()` | `UUID new` | POOP mirrors Python — no `.new()` alias |
-| `uuid.UUID(s)` | `UUID fromString: s` | keyword msg in Smalltalk |
+| `uuid.uuid4()` | `UUID new` | POOP mirrors Python lowercase: `uuid.uuid4()` |
+| `uuid.UUID(s)` | `UUID fromString: s` | POOP: `UUID(s)` (the class is in scope) |
 | `u.hex` | `u asString36 copyWithout: $-` | Pharo has no direct `.hex` |
 | `u.bytes` | `u asByteArray` | direct |
 | `u.version` | `u version` | direct |
@@ -88,23 +90,24 @@ follows Python here.
 
 **Proposal:**
 
-1. **Namespace `Secrets`** injected into `DEFAULT_NAMESPACE`
-   (`math`-style, no AST rewrite). No new POOP type.
+1. **Namespace `secrets`** (lowercase, mirroring Python's module
+   name) injected into `DEFAULT_NAMESPACE` (`math`-style, no AST
+   rewrite). No new POOP type (`secrets` has no public class).
 2. **Token minting** (`nbytes=None` resolves to `DEFAULT_ENTROPY`,
    mirroring Python):
-   - `Secrets.token_bytes(nbytes=None) -> Bytes`
-   - `Secrets.token_hex(nbytes=None) -> Str`
-   - `Secrets.token_urlsafe(nbytes=None) -> Str`
+   - `secrets.token_bytes(nbytes=None) -> Bytes`
+   - `secrets.token_hex(nbytes=None) -> Str`
+   - `secrets.token_urlsafe(nbytes=None) -> Str`
 3. **Secure draws** (parameter names follow Python exactly):
-   - `Secrets.choice(seq) -> element` (works on any POOP iterable;
+   - `secrets.choice(seq) -> element` (works on any POOP iterable;
      element is a POOP type)
-   - `Secrets.randbelow(exclusive_upper_bound) -> Int`
-   - `Secrets.randbits(k) -> Int`
+   - `secrets.randbelow(exclusive_upper_bound) -> Int`
+   - `secrets.randbits(k) -> Int`
 4. **Constant-time comparison:**
-   - `Secrets.compare_digest(a, b, /) -> Boolean` (positional-only,
+   - `secrets.compare_digest(a, b, /) -> Boolean` (positional-only,
      accepts `Str` or `Bytes`; rejects mixed types like Python does)
 5. **Constant:**
-   - `Secrets.DEFAULT_ENTROPY -> Int` (`32` in CPython)
+   - `secrets.DEFAULT_ENTROPY -> Int` (`32` in CPython)
 
 `SecretsTransformer` is **namespace-only**.
 
@@ -115,13 +118,13 @@ boundary.
 
 **Smalltalk reference.** No direct mapping in base Pharo. The
 nearest analog is `Random new` (NOT cryptographically secure) —
-POOP deliberately separates the two: `Random` (proposal pending)
-will be non-secure; `Secrets` is secure-by-default.
+POOP deliberately separates the two: `random` is non-secure;
+`secrets` is secure-by-default.
 
 **Out of scope (for v1):**
 
 - `secrets.SystemRandom` class wrapper — duplicates `choice` /
-  `randbelow` / `randbits` already on `Secrets`.
+  `randbelow` / `randbits` already on `secrets`.
 
 ## Expose `base64` as POOP messages
 
@@ -199,9 +202,10 @@ follows the same shape but mirrors Python's two-step API
 (`hashlib.sha256(data) -> Hash`, then `.hexdigest()`) so the
 incremental `.update()` path is preserved.
 
-**Proposal:**
+**Proposal — `hashlib` (lowercase module) + `Hash` (class), in the
+same dual-binding family as `random` / `Random`.**
 
-1. **New POOP type `Hash`** in `poop/types/hash.py`, wrapping
+1. **New POOP class `Hash`** in `poop/types/hash.py`, wrapping
    Python's hash object. Instances answer (mirroring Python
    exactly):
    - `.update(data) -> None` — mutates internal state, returns
@@ -224,23 +228,28 @@ incremental `.update()` path is preserved.
    substituting for Python's first positional argument):
    - `.pbkdf2_hmac(hash_name, salt, iterations, dklen=None) -> Bytes`
    - `.scrypt(*, salt, n, r, p, maxmem=0, dklen=64) -> Bytes`
-4. **Namespace `Hash`** (class side of the `Hash` POOP type):
-   - `Hash.new(name, data) -> Hash` (generic constructor)
-   - `Hash.algorithms_available -> FrozenSet` of `Str`
-   - `Hash.algorithms_guaranteed -> FrozenSet` of `Str`
-   - `Hash.file_digest(path, digest, /) -> Hash` (Python 3.11+;
+4. **Namespace `hashlib`** (lowercase, mirroring Python's module
+   name):
+   - `hashlib.new(name, data) -> Hash` (generic constructor — same
+     as Python's `hashlib.new`)
+   - `hashlib.algorithms_available -> FrozenSet` of `Str`
+   - `hashlib.algorithms_guaranteed -> FrozenSet` of `Str`
+   - `hashlib.file_digest(path, digest, /) -> Hash` (Python 3.11+;
      `path` is a POOP `Path` — sanctioned receiver-type divergence
      from Python's `fileobj`; the parameter named `digest` matches
      Python's name)
+   - `hashlib.Hash` — the class itself, accessible as a module
+     attribute just like Python's `hashlib._Hash`
 
-`HashTransformer` is **namespace-only**; it injects `Hash` into
+`HashlibTransformer` is **namespace-only**; it injects two
+bindings (`hashlib` lowercase singleton + `Hash` class) into
 `DEFAULT_NAMESPACE` alongside the new methods on `Bytes`.
 
 **Type discipline:** every signature — methods on `Hash`, the
-hash-shortcut and key-derivation methods on `Bytes`, and class-side
-`Hash.*` — takes and returns POOP types (`Hash`, `Bytes`, `Str`,
-`Int`, `FrozenSet`, `Path`). No `bytes`, `int`, or raw `hashlib` object
-leaks across the boundary.
+hash-shortcut and key-derivation methods on `Bytes`, and module-
+level `hashlib.*` — takes and returns POOP types (`Hash`, `Bytes`,
+`Str`, `Int`, `FrozenSet`, `Path`). No `bytes`, `int`, or raw
+`hashlib` object leaks across the boundary.
 
 **Smalltalk reference.**
 
@@ -278,25 +287,26 @@ instead. POOP follows Python here.
 
 **Proposal:**
 
-1. **Namespace `Toml`** injected into `DEFAULT_NAMESPACE`
-   (`math`-style, no AST rewrite). No new POOP types — TOML values
-   map onto existing POOP types (`Dict` / `List` / `Str` / `Int` /
-   `Float` / `Boolean` / `DateTime`).
+1. **Namespace `tomllib`** (lowercase, mirroring Python's module
+   name) injected into `DEFAULT_NAMESPACE` (`math`-style, no AST
+   rewrite). No new POOP types — TOML values map onto existing POOP
+   types (`Dict` / `List` / `Str` / `Int` / `Float` / `Boolean` /
+   `DateTime`).
 2. **Parsing — keeping Python's exact names and keyword args:**
-   - `Toml.loads(s, /, *, parse_float=Float) -> Dict` — direct
+   - `tomllib.loads(s, /, *, parse_float=Float) -> Dict` — direct
      mirror of `tomllib.loads`. `parse_float` defaults to `Float`
      (POOP's `Float`, mirroring Python's `float` default).
-   - `Toml.load(path, /, *, parse_float=Float) -> Dict` — mirror of
-     `tomllib.load`. Python takes a binary file object; POOP takes
-     a POOP `Path` since POOP has no file-object abstraction. This
-     is a forced receiver-type divergence; the message name and
-     keyword args stay Python's.
+   - `tomllib.load(path, /, *, parse_float=Float) -> Dict` — mirror
+     of `tomllib.load`. Python takes a binary file object; POOP
+     takes a POOP `Path` since POOP has no file-object abstraction.
+     This is a forced receiver-type divergence; the message name
+     and keyword args stay Python's.
 3. **Errors:**
-   - `Toml.TOMLDecodeError` — POOP error type wrapping
+   - `tomllib.TOMLDecodeError` — POOP error type wrapping
      `tomllib.TOMLDecodeError` (a `ValueError` subclass in Python).
      Raised by both `loads` and `load` on malformed input.
 
-`TomlTransformer` is **namespace-only**.
+`TomllibTransformer` is **namespace-only**.
 
 **Type discipline:** every value in the returned `Dict` is a POOP
 type. TOML's `date` / `time` / `datetime` map to POOP's `DateTime`
@@ -305,9 +315,9 @@ currently `audit`); until then, expose them as ISO-8601 `Str` so
 no Python `datetime.datetime` leaks. This is the one place the
 proposal trades full type-coverage for ship-now pragmatism, and is
 documented explicitly so it can be tightened later. When the
-`DateTime` proposal lands, the `Toml.loads` / `Toml.load` return
-type narrows from `Dict[Str, Str]` (for date-typed values) to
-`Dict[Str, DateTime]` automatically.
+`DateTime` proposal lands, the `tomllib.loads` / `tomllib.load`
+return type narrows from `Dict[Str, Str]` (for date-typed values)
+to `Dict[Str, DateTime]` automatically.
 
 **Smalltalk reference.** Pharo has no TOML parser in base. The
 closest analogs are `STON fromString:` and `NeoJSONReader fromString:`
