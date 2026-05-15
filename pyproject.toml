@@ -31,6 +31,20 @@ addopts = "--cov=poop"
 testpaths = "tests/"
 strict_parametrization_ids = true
 
+[tool.coverage.run]
+branch = true
+source = ["poop"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  '\.\.\.',
+]
+fail_under = 95
+show_missing = true
+
 [tool.ty.rules]
 # POOP intentionally overrides __eq__/__ne__/__lt__ etc. to return Boolean
 # (Smalltalk semantics) instead of bool — LSP violation is by design.
