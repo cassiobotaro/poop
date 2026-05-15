@@ -85,63 +85,6 @@ level `hashlib.*` — takes and returns POOP types (`Hash`, `Bytes`,
 implicit-encodes via `asByteArray`; Python explicit-encodes via
 `.encode()`. POOP could go either way.
 
-## Expose `tomllib` as POOP messages
-
-Python's `tomllib` (3.11+) is unreachable from POOP today. TOML
-is the configuration format of choice across modern Python projects
-(`pyproject.toml`, ruff / ty configs) and POOP programs should be
-able to read it.
-
-Smalltalk has no native TOML support; Pharo uses STON / JSON
-instead. POOP follows Python here.
-
-**Proposal:**
-
-1. **Namespace `tomllib`** (lowercase, mirroring Python's module
-   name) injected into `DEFAULT_NAMESPACE` (`math`-style, no AST
-   rewrite). No new POOP types — TOML values map onto existing POOP
-   types (`Dict` / `List` / `Str` / `Int` / `Float` / `Boolean` /
-   `DateTime`).
-2. **Parsing — keeping Python's exact names and keyword args:**
-   - `tomllib.loads(s, /, *, parse_float=Float) -> Dict` — direct
-     mirror of `tomllib.loads`. `parse_float` defaults to `Float`
-     (POOP's `Float`, mirroring Python's `float` default).
-   - `tomllib.load(path, /, *, parse_float=Float) -> Dict` — mirror
-     of `tomllib.load`. Python takes a binary file object; POOP
-     takes a POOP `Path` since POOP has no file-object abstraction.
-     This is a forced receiver-type divergence; the message name
-     and keyword args stay Python's.
-3. **Errors:**
-   - `tomllib.TOMLDecodeError` — POOP error type wrapping
-     `tomllib.TOMLDecodeError` (a `ValueError` subclass in Python).
-     Raised by both `loads` and `load` on malformed input.
-
-`TomllibTransformer` is **namespace-only**.
-
-**Type discipline:** every value in the returned `Dict` is a POOP
-type. TOML's `date` / `time` / `datetime` map to POOP's `DateTime`
-once that proposal lands (`datetime` is currently `proposed`);
-until then, expose them as ISO-8601 `Str` so
-no Python `datetime.datetime` leaks. This is the one place the
-proposal trades full type-coverage for ship-now pragmatism, and is
-documented explicitly so it can be tightened later. When the
-`DateTime` proposal lands, the `tomllib.loads` / `tomllib.load`
-return type narrows from `Dict[Str, Str]` (for date-typed values)
-to `Dict[Str, DateTime]` automatically.
-
-**Smalltalk reference.** Pharo has no TOML parser in base. The
-closest analogs are `STON fromString:` and `NeoJSONReader fromString:`
-— class-side parsers returning a generic value. POOP keeps Python's
-`loads` / `load` names rather than Smalltalk's `fromString:`.
-
-**Out of scope (for v1):**
-
-- Write support — Python's `tomllib` is read-only and there is no
-  upstream writer.
-- Routing TOML floats into `Decimal` via `parse_float` — the
-  parameter ships in v1 (mirroring Python), but a `Decimal` target
-  pairs with the `decimal` proposal.
-
 ## Expose `string` as POOP messages
 
 Python's `string` module ships ASCII character-class constants
@@ -2181,7 +2124,7 @@ each annotated with one of:
 |---|---|---|
 | `csv` | proposed | See proposal above |
 | `configparser` | proposed | See proposal above |
-| `tomllib` | proposed | See proposal above |
+| `tomllib` | covered | `tomllib` namespace (shipped in v0.26.0) |
 | `netrc` | out | Niche legacy format |
 | `plistlib` | out | macOS-specific niche |
 
@@ -2456,6 +2399,21 @@ Cross-cutting decisions to make first:
   `cmath.*`.
 - Should `cmath` and `math` share predicates that take Complex
   (returning Boolean) or duplicate them per type, like Python does?
+
+### TOML date/time/datetime narrowing + `parse_float` — from the `tomllib` proposal (v0.26.0)
+
+v0.26.0 ships `tomllib.loads`/`load` with full POOP-type round-trip
+for everything except date/time/datetime, which **flatten to ISO-8601
+`Str`** as a transient divergence — POOP doesn't yet have a `DateTime`
+type. When the `datetime` proposal lands, `tomllib._wrap` tightens to
+return a `DateTime` POOP type for these values; tests will need a
+small update.
+
+`parse_float` kwarg also deferred — the proposal mentions a Python
+callable defaulting to `Float`, but routing TOML floats into
+`Decimal` (the documented motivation) pairs with the `decimal`
+proposal landing first. Write support stays out of scope (`tomllib`
+is read-only upstream).
 
 ### `JSONEncoder` / `JSONDecoder` subclassing + advanced kwargs — from the `json` proposal (v0.25.0)
 

@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1041,6 +1041,22 @@ v0.23.0 ships the common iterative surface; the full `Shlex` API (`read_token`, 
 v0.25.0 covers the common 95%; subclassing (`JSONEncoder` / `JSONDecoder`) and callback kwargs (`cls`, `default`, `object_hook`, `parse_int`/`parse_float`/`parse_constant`, `object_pairs_hook`, `separators`) are deferred to Future work pending a POOP `Block` → Python `callable` adaptation story. `json.tool` (CLI) stays out of scope.
 
 `json` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/json.py` — namespace-only, no AST rewrite.
+
+### tomllib — `poop/types/tomllib.py` + `poop/transformers/tomllib.py`
+
+`tomllib` mirrors Python's `tomllib` (3.11+) — read-only TOML parsing for `pyproject.toml`, ruff/ty configs, and other modern Python config formats.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `tomllib.loads(s, /)` | `Dict[Str, …]` | from `Str` |
+| `tomllib.load(path, /)` | `Dict[Str, …]` | from POOP `Path` — receiver-type divergence: CPython takes a binary file, POOP has no file-object abstraction |
+| `tomllib.TOMLDecodeError` | Python exception type | usable with `Try.except_` |
+
+**Type discipline divergence.** TOML date / time / datetime values flatten to ISO-8601 `Str` for now. POOP doesn't yet have a `DateTime` POOP type; when the `datetime` proposal lands, the internal `_wrap` tightens. Documented divergence; tests will need a small update at that point.
+
+`parse_float` (CPython's hook for routing floats to e.g. `Decimal`) is deferred to Future work pending the `decimal` proposal. Write support stays out of scope (`tomllib` is read-only upstream).
+
+`tomllib` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/tomllib.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

@@ -629,3 +629,22 @@ loaded = json.load(Path("data.json"))
 ```
 
 > POOP's `json` is path-based — `dump`/`load` accept a `Path` instead of a file object (no `open` in POOP). The round-trip preserves POOP types: `json.loads(s)` returns a POOP value graph (`Dict`/`List`/`Str`/`Int`/`Float`/`Boolean`/`none`), and `json.dumps` accepts the same graph back. `json.JSONDecodeError` is exposed as a Python exception class for use with `Try.except_(...)`. Custom encoders/decoders and callback kwargs (`object_hook`, `default`, …) are deferred to Future work.
+
+## TOML (`tomllib` module)
+
+```python
+# Python
+import tomllib
+
+cfg = tomllib.loads(text)
+with open("pyproject.toml", "rb") as f:
+    pyproject = tomllib.load(f)
+```
+
+```python
+# POOP
+cfg = tomllib.loads(text)
+pyproject = tomllib.load(Path("pyproject.toml"))
+```
+
+> POOP's `tomllib.load` accepts a `Path` (POOP has no file-object abstraction). Round-trip returns POOP types — TOML date / time / datetime values currently flatten to ISO-8601 `Str` until the `datetime` proposal lands. `tomllib.TOMLDecodeError` is a Python exception class for use with `Try.except_(...)`. Write support stays out of scope (`tomllib` is read-only upstream).
