@@ -38,6 +38,7 @@ from poop.transformers.pprint import NAMESPACE as _pprint_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
+from poop.transformers.re import NAMESPACE as _re_namespace
 from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
@@ -119,6 +120,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_tomllib_namespace,
     **_hmac_namespace,
     **_graphlib_namespace,
+    **_re_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
