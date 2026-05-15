@@ -24,6 +24,7 @@ from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
 from poop.transformers.graphlib import NAMESPACE as _graphlib_namespace
+from poop.transformers.hashlib import NAMESPACE as _hashlib_namespace
 from poop.transformers.heapq import NAMESPACE as _heapq_namespace
 from poop.transformers.hmac import NAMESPACE as _hmac_namespace
 from poop.transformers.int import IntTransformer
@@ -119,6 +120,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_tomllib_namespace,
     **_hmac_namespace,
     **_graphlib_namespace,
+    **_hashlib_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
