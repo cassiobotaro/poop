@@ -35,11 +35,7 @@ class Interpreter:
         self.run_source(source, filename=str(path))
 
     def run_source(self, source: str, filename: str = "<string>") -> None:
-        tree: ast.Module = parse(source, filename=filename)
-        for validator in self._validators:
-            validator.validate(tree)
-        for transformer in self._transformers:
-            tree = transformer.transform(tree)
+        tree = self._validate_and_transform(source, filename)
         execute(tree, filename=filename, namespace=dict(self._namespace))
 
     def validate_all(
@@ -55,17 +51,16 @@ class Interpreter:
         return errors
 
     def transform_source(self, source: str, filename: str = "<string>") -> ast.Module:
+        return self._validate_and_transform(source, filename)
+
+    def run_source_repl(self, source: str, namespace: dict[str, object]) -> None:
+        tree = self._validate_and_transform(source, filename="<repl>")
+        execute(tree, filename="<repl>", namespace=namespace, interactive=True)
+
+    def _validate_and_transform(self, source: str, filename: str) -> ast.Module:
         tree: ast.Module = parse(source, filename=filename)
         for validator in self._validators:
             validator.validate(tree)
         for transformer in self._transformers:
             tree = transformer.transform(tree)
         return tree
-
-    def run_source_repl(self, source: str, namespace: dict[str, object]) -> None:
-        tree: ast.Module = parse(source, filename="<repl>")
-        for validator in self._validators:
-            validator.validate(tree)
-        for transformer in self._transformers:
-            tree = transformer.transform(tree)
-        execute(tree, filename="<repl>", namespace=namespace, interactive=True)
