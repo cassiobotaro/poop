@@ -1,4 +1,6 @@
 import ast
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated
 
@@ -9,6 +11,15 @@ from poop.interpreter import Interpreter
 from poop.repl import Repl
 
 app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
+
+
+@contextmanager
+def _poop_errors() -> Iterator[None]:
+    try:
+        yield
+    except PoopError as exc:
+        typer.echo(f"poop: {exc}", err=True)
+        raise typer.Exit(1) from exc
 
 
 @app.command()
@@ -37,11 +48,8 @@ def main(
     filename = str(file)
 
     if validators_only:
-        try:
+        with _poop_errors():
             errors = interpreter.validate_all(source, filename)
-        except PoopError as exc:
-            typer.echo(f"poop: {exc}", err=True)
-            raise typer.Exit(1)
         if not errors:
             typer.echo("No validation errors.")
             return
@@ -50,19 +58,13 @@ def main(
         raise typer.Exit(1)
 
     if transformers_only:
-        try:
+        with _poop_errors():
             tree = interpreter.transform_source(source, filename)
-        except PoopError as exc:
-            typer.echo(f"poop: {exc}", err=True)
-            raise typer.Exit(1)
         typer.echo(ast.unparse(tree))
         return
 
-    try:
+    with _poop_errors():
         interpreter.run_file(file)
-    except PoopError as exc:
-        typer.echo(f"poop: {exc}", err=True)
-        raise typer.Exit(1)
 
 
 def entry_point() -> None:
