@@ -508,6 +508,267 @@ encoders.
   — pair with future streaming I/O proposal.
 - `register` / `register_error` — extension hooks; defer.
 
+## Expose `datetime` as POOP messages
+
+Python's `datetime` ships five canonical types (`date`, `time`,
+`datetime`, `timedelta`, `tzinfo`) plus `timezone`. Unreachable from
+POOP today and a hard dependency of `tomllib`, logging, file
+metadata, and almost every domain model.
+
+**Proposal — `datetime` (lowercase module) + five POOP classes:**
+
+1. **`Date`** — `Date(year, month, day)`, `Date.today()`,
+   `Date.fromisoformat(s)`, `Date.fromtimestamp(t)`. Properties
+   `.year`/`.month`/`.day`, methods `.weekday()`, `.isoweekday()`,
+   `.isoformat()`, `.strftime(fmt)`, arithmetic with `TimeDelta`.
+2. **`Time`** — `Time(hour, minute, second, microsecond, tzinfo)`,
+   `Time.fromisoformat(s)`. Same property/method shape as `Date`.
+3. **`DateTime`** — `DateTime(year, month, day, hour, …, tzinfo)`,
+   `DateTime.now(tz=None)`, `DateTime.utcnow()` (deprecated alias
+   ok), `DateTime.fromtimestamp(t, tz=None)`,
+   `DateTime.fromisoformat(s)`, `.timestamp()`, `.astimezone(tz)`.
+4. **`TimeDelta`** — `TimeDelta(days, seconds, microseconds, ...)`,
+   arithmetic between `DateTime`s yields `TimeDelta`.
+5. **`TimeZone`** — `TimeZone(offset, name=None)`,
+   `TimeZone.utc` constant.
+6. **`datetime` namespace** binds the five classes (just like
+   Python's `datetime.date`, `datetime.time`, etc. are accessible
+   as module attributes).
+
+**Type discipline:** all POOP types — `Int`/`Float` for components,
+`Str` for ISO strings, `Bytes` for `__bytes__` if exposed.
+
+**Out of scope (for v1):**
+
+- The abstract `tzinfo` extension protocol — POOP users get
+  `TimeZone`; custom subclasses defer.
+- `datetime.MINYEAR`/`MAXYEAR` integer constants — expose if asked.
+
+## Expose `zoneinfo` as POOP messages
+
+Python's `zoneinfo` (3.9+) provides IANA timezone database access:
+`ZoneInfo("America/Sao_Paulo")` returns a `tzinfo` subclass. Pairs
+directly with `datetime`'s `TimeZone`.
+
+**Proposal — `zoneinfo` (lowercase module) + `ZoneInfo` class:**
+
+1. **`ZoneInfo` class** — `ZoneInfo(key)` looks up by IANA name;
+   `ZoneInfo.from_file(file_obj, key)`,
+   `ZoneInfo.no_cache(key)`,
+   `ZoneInfo.clear_cache(only_keys=None)`. Property `.key -> Str`.
+2. **Module-level helpers:**
+   `zoneinfo.available_timezones() -> Set[Str]`,
+   `zoneinfo.reset_tzpath(to=None)`.
+3. **`ZoneInfoNotFoundError`** — POOP error for missing zones.
+4. **Tzpath** — `zoneinfo.TZPATH` exposed as `Tuple[Str]`.
+
+**Type discipline:** `Str` for keys, `Set[Str]` for the timezone
+roster, `Tuple[Str]` for the search path.
+
+**Out of scope (for v1):** `InvalidTZPathWarning` (warning system
+out of scope).
+
+## Expose `calendar` as POOP messages
+
+Python's `calendar` formats month/year calendars and answers
+calendar queries (leap years, weekdays). Niche but small.
+
+**Proposal — `calendar` (lowercase module) + `Calendar` class:**
+
+1. **Module-level helpers:**
+   `calendar.isleap(year) -> Boolean`,
+   `calendar.leapdays(y1, y2) -> Int`,
+   `calendar.weekday(year, month, day) -> Int`,
+   `calendar.monthrange(year, month) -> Tuple[Int, Int]`,
+   `calendar.month(year, month, w=0, l=0) -> Str` (text rendering),
+   `calendar.calendar(year, w=2, l=1, c=6, m=3) -> Str`,
+   `calendar.timegm(time_tuple) -> Int`.
+2. **`Calendar` class** for iterating dates:
+   - `Calendar(firstweekday=0)` constructor
+   - `.iterweekdays() -> Map[Int]`,
+     `.itermonthdates(year, month) -> Map[Date]`,
+     `.itermonthdays(year, month) -> Map[Int]`, …
+3. **Weekday constants:** `calendar.MONDAY` … `calendar.SUNDAY`
+   (each `Int`).
+
+**Type discipline:** `Int` for years/months/days, `Boolean` for
+leap predicate, `Str` for formatted output.
+
+**Out of scope (for v1):**
+
+- `HTMLCalendar`, `LocaleTextCalendar`, `LocaleHTMLCalendar` —
+  niche output formats.
+
+## Expose `heapq` as POOP messages
+
+Python's `heapq` implements a binary min-heap on a regular list.
+The functions mutate the underlying list in-place.
+
+**Proposal — `heapq` (lowercase module) namespace, no new POOP
+type (operations work on POOP `List`):**
+
+1. **In-place operations** (each returns `none`, mutates the list):
+   `heapq.heappush(heap, item)`, `heapq.heappop(heap) -> element`,
+   `heapq.heappushpop(heap, item) -> element`,
+   `heapq.heapreplace(heap, item) -> element`,
+   `heapq.heapify(x) -> NoneClass`.
+2. **Queries:**
+   `heapq.nlargest(n, iterable, key=None) -> List`,
+   `heapq.nsmallest(n, iterable, key=None) -> List`,
+   `heapq.merge(*iterables, key=None, reverse=False) -> Map`.
+
+**Type discipline:** POOP `List` in, POOP elements out. `heappop`
+on an empty heap raises `IndexError` (Python's behaviour).
+
+**Out of scope (for v1):** `_heapify_max` and the other private
+max-heap variants.
+
+## Expose `bisect` as POOP messages
+
+Python's `bisect` does binary search and ordered insertion on
+sorted sequences.
+
+**Proposal — `bisect` (lowercase module) namespace:**
+
+1. **Binary search:**
+   `bisect.bisect_left(a, x, lo=0, hi=None, *, key=None) -> Int`,
+   `bisect.bisect_right(a, x, lo=0, hi=None, *, key=None) -> Int`,
+   `bisect.bisect(a, x, ...)` (alias for `bisect_right`).
+2. **Ordered insertion** (mutate the list, return `none`):
+   `bisect.insort_left(a, x, lo=0, hi=None, *, key=None) -> NoneClass`,
+   `bisect.insort_right(a, x, ...)`, `bisect.insort(a, x, ...)`.
+
+**Type discipline:** `List` in, `Int` for index queries, `none`
+for in-place mutators.
+
+## Expose `array` as POOP messages
+
+Python's `array.array` is a homogeneous, memory-compact sequence.
+Niche in pure Python (NumPy/struct do most jobs) but useful for
+fixed-typecode storage.
+
+**Proposal — `array` (lowercase module) + `Array` class:**
+
+1. **`Array` class:**
+   - `Array(typecode, initializer=None)` — typecode is `Str`
+     (`'i'`, `'B'`, `'f'`, …)
+   - Standard sequence API: `.append`, `.extend`, `.insert`,
+     `.pop`, `.remove`, `.count`, `.index`, `.reverse`, `.len()`,
+     iteration via `.do(block)`, `at(i)`, `.slice(...)`.
+   - Conversion: `.tobytes() -> Bytes`, `.tolist() -> List`,
+     `.frombytes(b)`, `.fromlist(l)`, `.fromstring` (deprecated).
+   - Metadata: `.typecode -> Str`, `.itemsize -> Int`.
+2. **`array.typecodes`** module attribute — `Str` of valid codes.
+
+**Type discipline:** typecode-appropriate POOP elements; `Bytes`
+for raw, `List` for conversion.
+
+**Out of scope (for v1):** `array.fromfile`/`tofile` — pair with
+streaming I/O.
+
+## Expose `weakref` as POOP messages
+
+Python's `weakref` creates references that don't prevent garbage
+collection. Niche — mostly for caches and circular-reference
+breakers. Low priority but worth proposing.
+
+**Proposal — `weakref` (lowercase module) + class set:**
+
+1. **`weakref` namespace shortcuts:**
+   `weakref.ref(obj, callback=None) -> WeakRef`,
+   `weakref.proxy(obj, callback=None)`,
+   `weakref.getweakrefcount(obj) -> Int`,
+   `weakref.getweakrefs(obj) -> List`.
+2. **`WeakRef` class** — call returns the live object or `none`.
+3. **`WeakSet` / `WeakKeyDictionary` / `WeakValueDictionary`** —
+   POOP collections with weak-reference semantics.
+
+**Type discipline:** POOP types; `none` for dead refs.
+
+**Out of scope (for v1):** `finalize`, `WeakMethod` — niche.
+
+## Expose `copy` as POOP messages
+
+Python's `copy` does shallow and deep object copying. `copy.copy`
+and `copy.deepcopy` are the entire public surface.
+
+**Proposal — `copy` (lowercase module) namespace:**
+
+1. `copy.copy(obj) -> Object` — shallow copy.
+2. `copy.deepcopy(obj, memo=None) -> Object` — recursive deep copy.
+3. `copy.Error` — POOP error wrapping `copy.Error`.
+
+**Type discipline:** returns the same POOP type as the input.
+
+**Out of scope (for v1):** `copy.replace` (3.13+) — small but
+trivially added later if asked.
+
+## Expose `pprint` as POOP messages
+
+Python's `pprint` pretty-prints data structures (multi-line,
+indented). Useful for debugging.
+
+**Proposal — `pprint` (lowercase module) + `PrettyPrinter` class:**
+
+1. **Module-level shortcuts:**
+   `pprint.pprint(obj, ...) -> NoneClass` (prints to stdout),
+   `pprint.pformat(obj, ...) -> Str`,
+   `pprint.pp(obj, ...)` (3.8+ alias),
+   `pprint.isreadable(obj) -> Boolean`,
+   `pprint.isrecursive(obj) -> Boolean`,
+   `pprint.saferepr(obj) -> Str`.
+2. **`PrettyPrinter` class** — reusable with `indent`, `width`,
+   `depth`, `compact`, `sort_dicts`, `underscore_numbers` knobs.
+
+**Type discipline:** `Str` output, `Boolean` for predicates.
+
+## Expose `enum` as POOP messages
+
+Python's `enum` provides `Enum`, `IntEnum`, `StrEnum`, `Flag`,
+`IntFlag` — typed enumeration classes. POOP user classes can
+already support class-side singletons; this proposal codifies the
+explicit `Enum` base for ergonomics.
+
+**Proposal — `enum` (lowercase module) + class set:**
+
+1. **`Enum` base** — `class Color(Enum): RED = 1; GREEN = 2`.
+   Members are class-side `Enum` instances accessible by name and
+   value (`Color.RED`, `Color(1)`, `Color["RED"]`).
+2. **Specialised bases:** `IntEnum`, `StrEnum` (3.11+),
+   `IntFlag`, `Flag`, `ReprEnum` (3.11+).
+3. **`auto()`** for sequential value generation.
+4. **Method/property:** `.name -> Str`, `.value -> Object`,
+   `Enum.iter()` for member iteration.
+5. **Decorators:** `@enum.unique`, `@enum.verify`,
+   `@enum.member`, `@enum.nonmember` (3.12+).
+
+**Type discipline:** members are POOP `Enum` instances;
+`.value` returns whatever POOP type the user assigned.
+
+**Out of scope (for v1):** `EnumType` metaclass introspection
+(POOP forbids introspection).
+
+## Expose `graphlib` as POOP messages
+
+Python's `graphlib` is small: just `TopologicalSorter` for graph
+topo-sorts (3.9+). Useful for dependency resolution.
+
+**Proposal — `graphlib` (lowercase module) + `TopologicalSorter`
+class:**
+
+1. **`TopologicalSorter` class:**
+   - `TopologicalSorter(graph=None)` — graph as `Dict[node, Iterable[predecessors]]`
+   - `.add(node, *predecessors)` for incremental building
+   - `.prepare()` — finalize structure
+   - `.is_active() -> Boolean`,
+     `.get_ready() -> Tuple[node]`,
+     `.done(*nodes)`,
+     `.static_order() -> Tuple[node]` (one-shot full order)
+2. **`CycleError`** — POOP error if the graph has cycles.
+
+**Type discipline:** generic over POOP node types; `Tuple` for
+returned orderings.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -570,20 +831,20 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `datetime` | audit | Class factories — `DateTime.now()`, `Date.today()` |
-| `zoneinfo` | audit | Pairs with `datetime` |
-| `calendar` | audit | `Calendar` namespace |
+| `datetime` | proposed | See proposal above |
+| `zoneinfo` | proposed | See proposal above |
+| `calendar` | proposed | See proposal above |
 | `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |
-| `heapq` | audit | Methods on `List` (`.heap_push`, `.heap_pop`) or `Heap` type |
-| `bisect` | audit | `List.bisect(x)` / `.insert_sorted(x)` |
-| `array` | audit | Typed dense array vs POOP `List` — defer unless needed |
-| `weakref` | audit | Low priority |
+| `heapq` | proposed | See proposal above |
+| `bisect` | proposed | See proposal above |
+| `array` | proposed | See proposal above |
+| `weakref` | proposed | See proposal above |
 | `types` | out | Introspection — forbidden in POOP |
-| `copy` | audit | `obj.copy()` / `obj.deep_copy()` on `Object` |
-| `pprint` | audit | Pairs with eventual print story |
+| `copy` | proposed | See proposal above |
+| `pprint` | proposed | See proposal above |
 | `reprlib` | out | POOP forbids `repr` |
-| `enum` | audit | POOP classes already support class-side singletons |
-| `graphlib` | audit | `Graph` type or namespace |
+| `enum` | proposed | See proposal above |
+| `graphlib` | proposed | See proposal above |
 
 ### Numeric and Mathematical Modules
 
