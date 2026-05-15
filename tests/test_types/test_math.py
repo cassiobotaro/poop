@@ -1,5 +1,7 @@
 import math as _math
 
+import pytest
+
 from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
 from poop.types.float import Float
@@ -16,7 +18,7 @@ def test_constant_pi_present() -> None:
 def test_sqrt_returns_poop_float() -> None:
     result = Math.sqrt(Float(4.0))
     assert isinstance(result, Float)
-    assert result._value == 2.0
+    assert result._value == pytest.approx(2.0)
 
 
 def test_math_reachable_via_interpreter() -> None:
@@ -65,9 +67,9 @@ def test_isqrt() -> None:
 
 
 def test_sin_cos_tan() -> None:
-    assert Math.sin(Float(0.0))._value == 0.0
-    assert Math.cos(Float(0.0))._value == 1.0
-    assert Math.tan(Float(0.0))._value == 0.0
+    assert Math.sin(Float(0.0))._value == pytest.approx(0.0)
+    assert Math.cos(Float(0.0))._value == pytest.approx(1.0)
+    assert Math.tan(Float(0.0))._value == pytest.approx(0.0)
 
 
 def test_sin_returns_poop_float() -> None:
@@ -75,13 +77,13 @@ def test_sin_returns_poop_float() -> None:
 
 
 def test_asin_acos_atan() -> None:
-    assert Math.asin(Float(0.0))._value == 0.0
-    assert Math.acos(Float(1.0))._value == 0.0
-    assert Math.atan(Float(0.0))._value == 0.0
+    assert Math.asin(Float(0.0))._value == pytest.approx(0.0)
+    assert Math.acos(Float(1.0))._value == pytest.approx(0.0)
+    assert Math.atan(Float(0.0))._value == pytest.approx(0.0)
 
 
 def test_atan2() -> None:
-    assert Math.atan2(Float(1.0), Float(1.0))._value == _math.pi / 4
+    assert Math.atan2(Float(1.0), Float(1.0))._value == pytest.approx(_math.pi / 4)
     assert isinstance(Math.atan2(Float(1.0), Float(1.0)), Float)
 
 
@@ -89,9 +91,9 @@ def test_atan2() -> None:
 
 
 def test_sinh_cosh_tanh_at_zero() -> None:
-    assert Math.sinh(Float(0.0))._value == 0.0
-    assert Math.cosh(Float(0.0))._value == 1.0
-    assert Math.tanh(Float(0.0))._value == 0.0
+    assert Math.sinh(Float(0.0))._value == pytest.approx(0.0)
+    assert Math.cosh(Float(0.0))._value == pytest.approx(1.0)
+    assert Math.tanh(Float(0.0))._value == pytest.approx(0.0)
 
 
 def test_sinh_returns_poop_float() -> None:
@@ -99,44 +101,44 @@ def test_sinh_returns_poop_float() -> None:
 
 
 def test_asinh_acosh_atanh() -> None:
-    assert Math.asinh(Float(0.0))._value == 0.0
-    assert Math.acosh(Float(1.0))._value == 0.0
-    assert Math.atanh(Float(0.0))._value == 0.0
+    assert Math.asinh(Float(0.0))._value == pytest.approx(0.0)
+    assert Math.acosh(Float(1.0))._value == pytest.approx(0.0)
+    assert Math.atanh(Float(0.0))._value == pytest.approx(0.0)
 
 
 # --- Exp / log / power ---
 
 
 def test_exp_family() -> None:
-    assert Math.exp(Float(0.0))._value == 1.0
-    assert Math.expm1(Float(0.0))._value == 0.0
-    assert Math.exp2(Float(3.0))._value == 8.0
+    assert Math.exp(Float(0.0))._value == pytest.approx(1.0)
+    assert Math.expm1(Float(0.0))._value == pytest.approx(0.0)
+    assert Math.exp2(Float(3.0))._value == pytest.approx(8.0)
 
 
 def test_log_default_base_natural() -> None:
-    assert Math.log(Float(_math.e))._value == 1.0
+    assert Math.log(Float(_math.e))._value == pytest.approx(1.0)
     assert isinstance(Math.log(Float(_math.e)), Float)
 
 
 def test_log_with_explicit_base() -> None:
-    assert Math.log(Float(8.0), Float(2.0))._value == 3.0
+    assert Math.log(Float(8.0), Float(2.0))._value == pytest.approx(3.0)
 
 
 def test_log2_log10_log1p() -> None:
-    assert Math.log2(Float(8.0))._value == 3.0
-    assert Math.log10(Float(100.0))._value == 2.0
-    assert Math.log1p(Float(0.0))._value == 0.0
+    assert Math.log2(Float(8.0))._value == pytest.approx(3.0)
+    assert Math.log10(Float(100.0))._value == pytest.approx(2.0)
+    assert Math.log1p(Float(0.0))._value == pytest.approx(0.0)
 
 
 def test_cbrt() -> None:
-    assert Math.cbrt(Float(8.0))._value == 2.0
-    assert Math.cbrt(Float(64.0))._value == 4.0
+    assert Math.cbrt(Float(8.0))._value == pytest.approx(2.0)
+    assert Math.cbrt(Float(64.0))._value == pytest.approx(4.0)
 
 
 def test_pow_returns_float() -> None:
     result = Math.pow(Float(2.0), Float(10.0))
     assert isinstance(result, Float)
-    assert result._value == 1024.0
+    assert result._value == pytest.approx(1024.0)
 
 
 # --- Rounding & float decomposition ---
@@ -157,8 +159,8 @@ def test_modf_returns_tuple_of_floats() -> None:
     frac, integ = result._items
     assert isinstance(frac, Float)
     assert isinstance(integ, Float)
-    assert frac._value == 0.75
-    assert integ._value == 3.0
+    assert frac._value == pytest.approx(0.75)
+    assert integ._value == pytest.approx(3.0)
 
 
 def test_frexp_returns_tuple_of_float_and_int() -> None:
@@ -167,12 +169,12 @@ def test_frexp_returns_tuple_of_float_and_int() -> None:
     mantissa, exponent = result._items
     assert isinstance(mantissa, Float)
     assert isinstance(exponent, Int)
-    assert mantissa._value == 0.5
+    assert mantissa._value == pytest.approx(0.5)
     assert exponent._value == 4
 
 
 def test_ldexp() -> None:
-    assert Math.ldexp(Float(0.5), Int(4))._value == 8.0
+    assert Math.ldexp(Float(0.5), Int(4))._value == pytest.approx(8.0)
     assert isinstance(Math.ldexp(Float(0.5), Int(4)), Float)
 
 
@@ -180,12 +182,12 @@ def test_ldexp() -> None:
 
 
 def test_degrees() -> None:
-    assert Math.degrees(Float(_math.pi))._value == 180.0
+    assert Math.degrees(Float(_math.pi))._value == pytest.approx(180.0)
     assert isinstance(Math.degrees(Float(_math.pi)), Float)
 
 
 def test_radians() -> None:
-    assert Math.radians(Float(180.0))._value == _math.pi
+    assert Math.radians(Float(180.0))._value == pytest.approx(_math.pi)
     assert isinstance(Math.radians(Float(180.0)), Float)
 
 
@@ -193,27 +195,27 @@ def test_radians() -> None:
 
 
 def test_fabs() -> None:
-    assert Math.fabs(Float(-3.5))._value == 3.5
-    assert Math.fabs(Float(3.5))._value == 3.5
+    assert Math.fabs(Float(-3.5))._value == pytest.approx(3.5)
+    assert Math.fabs(Float(3.5))._value == pytest.approx(3.5)
     assert isinstance(Math.fabs(Float(-1.0)), Float)
 
 
 def test_copysign() -> None:
-    assert Math.copysign(Float(3.0), Float(-1.0))._value == -3.0
-    assert Math.copysign(Float(-3.0), Float(1.0))._value == 3.0
+    assert Math.copysign(Float(3.0), Float(-1.0))._value == pytest.approx(-3.0)
+    assert Math.copysign(Float(-3.0), Float(1.0))._value == pytest.approx(3.0)
 
 
 def test_fmod() -> None:
-    assert Math.fmod(Float(7.0), Float(3.0))._value == 1.0
+    assert Math.fmod(Float(7.0), Float(3.0))._value == pytest.approx(1.0)
     assert isinstance(Math.fmod(Float(7.0), Float(3.0)), Float)
 
 
 def test_remainder() -> None:
-    assert Math.remainder(Float(7.0), Float(3.0))._value == 1.0
+    assert Math.remainder(Float(7.0), Float(3.0))._value == pytest.approx(1.0)
 
 
 def test_fma() -> None:
-    assert Math.fma(Float(2.0), Float(3.0), Float(4.0))._value == 10.0
+    assert Math.fma(Float(2.0), Float(3.0), Float(4.0))._value == pytest.approx(10.0)
     assert isinstance(Math.fma(Float(2.0), Float(3.0), Float(4.0)), Float)
 
 
@@ -294,7 +296,7 @@ def test_prod_float_input_returns_float() -> None:
 
     result = Math.prod(List(Float(2.0), Float(3.0), Float(4.0)))
     assert isinstance(result, Float)
-    assert result._value == 24.0
+    assert result._value == pytest.approx(24.0)
 
 
 def test_prod_with_start() -> None:
@@ -322,42 +324,42 @@ def test_dist() -> None:
     q = _Tuple(Float(3.0), Float(4.0))
     result = Math.dist(p, q)
     assert isinstance(result, Float)
-    assert result._value == 5.0
+    assert result._value == pytest.approx(5.0)
 
 
 def test_hypot_2d() -> None:
     result = Math.hypot(Float(3.0), Float(4.0))
     assert isinstance(result, Float)
-    assert result._value == 5.0
+    assert result._value == pytest.approx(5.0)
 
 
 def test_hypot_n_dim() -> None:
     result = Math.hypot(Float(3.0), Float(4.0), Float(12.0))
-    assert result._value == 13.0
+    assert result._value == pytest.approx(13.0)
 
 
 def test_hypot_accepts_int() -> None:
     result = Math.hypot(Int(3), Int(4))
-    assert result._value == 5.0
+    assert result._value == pytest.approx(5.0)
 
 
 # --- Special functions ---
 
 
 def test_erf_at_zero() -> None:
-    assert Math.erf(Float(0.0))._value == 0.0
+    assert Math.erf(Float(0.0))._value == pytest.approx(0.0)
     assert isinstance(Math.erf(Float(0.0)), Float)
 
 
 def test_erfc_at_zero() -> None:
-    assert Math.erfc(Float(0.0))._value == 1.0
+    assert Math.erfc(Float(0.0))._value == pytest.approx(1.0)
 
 
 def test_gamma() -> None:
-    assert Math.gamma(Float(1.0))._value == 1.0
-    assert Math.gamma(Float(5.0))._value == 24.0  # gamma(n) == (n-1)!
+    assert Math.gamma(Float(1.0))._value == pytest.approx(1.0)
+    assert Math.gamma(Float(5.0))._value == pytest.approx(24.0)  # gamma(n) == (n-1)!
 
 
 def test_lgamma() -> None:
-    assert Math.lgamma(Float(1.0))._value == 0.0
+    assert Math.lgamma(Float(1.0))._value == pytest.approx(0.0)
     assert isinstance(Math.lgamma(Float(1.0)), Float)
