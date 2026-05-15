@@ -57,3 +57,27 @@ def test_perm_default_k_returns_factorial() -> None:
 def test_isqrt() -> None:
     assert Math.isqrt(Int(17))._value == 4
     assert isinstance(Math.isqrt(Int(17)), Int)
+
+
+# --- Trigonometric ---
+
+
+def test_sin_cos_tan() -> None:
+    assert Math.sin(Float(0.0))._value == 0.0
+    assert Math.cos(Float(0.0))._value == 1.0
+    assert Math.tan(Float(0.0))._value == 0.0
+
+
+def test_sin_returns_poop_float() -> None:
+    assert isinstance(Math.sin(Float(1.0)), Float)
+
+
+def test_asin_acos_atan() -> None:
+    assert Math.asin(Float(0.0))._value == 0.0
+    assert Math.acos(Float(1.0))._value == 0.0
+    assert Math.atan(Float(0.0))._value == 0.0
+
+
+def test_atan2() -> None:
+    assert Math.atan2(Float(1.0), Float(1.0))._value == _math.pi / 4
+    assert isinstance(Math.atan2(Float(1.0), Float(1.0)), Float)

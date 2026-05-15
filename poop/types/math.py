@@ -46,6 +46,36 @@ class Math:
     def isqrt(n: Int) -> Int:
         return Int(_math.isqrt(n._value))
 
+    # Trigonometric -----------------------------------------------
+
+    @staticmethod
+    def sin(x: Float) -> Float:
+        return Float(_math.sin(x._value))
+
+    @staticmethod
+    def cos(x: Float) -> Float:
+        return Float(_math.cos(x._value))
+
+    @staticmethod
+    def tan(x: Float) -> Float:
+        return Float(_math.tan(x._value))
+
+    @staticmethod
+    def asin(x: Float) -> Float:
+        return Float(_math.asin(x._value))
+
+    @staticmethod
+    def acos(x: Float) -> Float:
+        return Float(_math.acos(x._value))
+
+    @staticmethod
+    def atan(x: Float) -> Float:
+        return Float(_math.atan(x._value))
+
+    @staticmethod
+    def atan2(y: Float, x: Float) -> Float:
+        return Float(_math.atan2(y._value, x._value))
+
     # Power & exponential -----------------------------------------
 
     @staticmethod
