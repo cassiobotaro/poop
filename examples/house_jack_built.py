@@ -1,95 +1,85 @@
 """
-The House that Jack Built — refactored with composition
+The House that Jack Built — Sandi Metz refactor
 
-The classic nursery rhyme renders best when each "thing" in the
-cumulative chain is a small value object and the verses are built
-by composing them, rather than by a procedural method with a case
-statement (Sandi Metz's go-to teaching refactor of cumulative tales).
+Port of Sandi Metz's canonical refactor of the cumulative tale.
+The procedural verse-building method becomes a `House` with two
+injected strategies: an *orderer* that decides the sequence of
+phrases, and a *formatter* that decides how each verse's parts are
+rendered. The default strategies reproduce the standard nursery
+rhyme; swapping in alternates produces other performances without
+touching House itself.
 
-Three classes carry the load:
+  - DefaultOrder      / RandomOrder      — sequence strategies
+  - DefaultFormatter  / EchoFormatter    — rendering strategies
 
-- `Phrase`  — a value object pairing a subject (Str) with the verb
-  that links it to the *previous* phrase in the chain.
-- `Verse`   — receives a List of Phrases (focus first, then the
-  cumulative chain) and renders the verse text.
-- `House`   — composes the canonical 12 phrases; knows how to render
-  any verse and to recite the first N verses.
-
-`Random.randint(Int(1), Int(12))` picks how many verses to recite
-in tonight's performance, demonstrating the Random namespace.
+`RandomOrder` uses `Random.sample(coll, coll.len())` — the Python
+idiom for a non-mutating shuffle.
 
 Smalltalk:
-    | rng count house |
-    rng := Random new.
-    count := rng nextIntegerBetween: 1 and: 12.
-    house := House canonical.
-    1 to: count do: [:i | Transcript showCr: (house verse: i) render].
+    | house |
+    house := House new
+        orderer:   RandomOrder new;
+        formatter: EchoFormatter new;
+        yourself.
+    Transcript show: house recite.
 """
 
 
-class Phrase:
-    def __init__(self, subject, verb):
-        self._subject = subject
-        self._verb = verb
-
-    def subject(self):
-        return self._subject
-
-    def verb(self):
-        return self._verb
+class DefaultFormatter:
+    def format(self, parts):
+        return parts
 
 
-class Verse:
-    def __init__(self, phrases):
-        # phrases[0] is the focus (most recent thing introduced);
-        # phrases[1..] are the prior chain in reverse-introduction order.
-        self._phrases = phrases
+class EchoFormatter:
+    def format(self, parts):
+        # parts.zip(parts).flatten — each part appears twice
+        return parts.map(lambda p: [p, p]).reduce([], lambda acc, pair: acc + pair)
 
-    def render(self):
-        focus = self._phrases.at(0)
-        head = "This is " + focus.subject()
-        rest = self._phrases.slice(1, self._phrases.len()).reduce(
-            "",
-            lambda acc, phrase: acc + " that " + phrase.verb() + " " + phrase.subject(),
-        )
-        return head + rest + "."
+
+class DefaultOrder:
+    def order(self, data):
+        return data
+
+
+class RandomOrder:
+    def order(self, data):
+        # Non-mutating shuffle: Random.sample(coll, k=len(coll)) is the
+        # Python idiom (Random.shuffle mutates in-place).
+        return Random.sample(data, data.len())
 
 
 class House:
-    def __init__(self, phrases):
-        self._phrases = phrases
+    DATA = [
+        "the horse and the hound and the horn that belonged to",
+        "the farmer sowing his corn that kept",
+        "the rooster that crowed in the morn that woke",
+        "the priest all shaven and shorn that married",
+        "the man all tattered and torn that kissed",
+        "the maiden all forlorn that milked",
+        "the cow with the crumpled horn that tossed",
+        "the dog that worried",
+        "the cat that killed",
+        "the rat that ate",
+        "the malt that lay in",
+        "the house that Jack built",
+    ]
 
-    @classmethod
-    def canonical(cls):
-        return cls(
-            list(
-                Phrase("the house that Jack built", "lay in"),
-                Phrase("the malt", "ate"),
-                Phrase("the rat", "killed"),
-                Phrase("the cat", "worried"),
-                Phrase("the dog", "tossed"),
-                Phrase("the cow with the crumpled horn", "milked"),
-                Phrase("the maiden all forlorn", "kissed"),
-                Phrase("the man all tattered and torn", "married"),
-                Phrase("the priest all shaven and shorn", "woke"),
-                Phrase("the rooster that crowed in the morn", "kept"),
-                Phrase("the farmer sowing his corn", "belonged to"),
-                Phrase("the horse and the hound and the horn", "lived in"),
-            )
+    def __init__(self, orderer=DefaultOrder(), formatter=DefaultFormatter()):
+        self._formatter = formatter
+        self._data = orderer.order(House.DATA)
+
+    def recite(self):
+        verses = list(range(1, self._data.len() + 1).map(lambda i: self.line(i)))
+        return "\n".join(verses)
+
+    def line(self, number):
+        return "This is " + " ".join(self.parts(number)) + ".\n"
+
+    def parts(self, number):
+        # Ruby's data.last(number) — the last N entries of the data list.
+        return self._formatter.format(
+            self._data.slice(self._data.len() - number, self._data.len())
         )
 
-    def size(self):
-        return self._phrases.len()
 
-    def verse(self, n):
-        # Verse n uses the first n phrases. Focus is the n-th (most
-        # recent), chain is verse 1..n-1 in reverse.
-        return Verse(self._phrases.slice(0, n).reversed())
-
-    def recite(self, count):
-        range(1, count + 1).do(lambda i: self.verse(i).render().print())
-
-
-count = Random.randint(1, 12)
-("Tonight: " + count.repr() + " verses").print()
-House.canonical().recite(count)
+House().recite().print()
