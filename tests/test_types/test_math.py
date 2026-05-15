@@ -1,6 +1,7 @@
 import math as _math
 
 from poop.interpreter import Interpreter
+from poop.types.boolean import false, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.math import Math
@@ -232,3 +233,38 @@ def test_nextafter_with_steps() -> None:
     result = Math.nextafter(Float(1.0), Float(2.0), steps=Int(3))
     assert isinstance(result, Float)
     assert result._value > Math.nextafter(Float(1.0), Float(2.0))._value
+
+
+# --- Predicates ---
+
+
+def test_isfinite() -> None:
+    assert Math.isfinite(Float(1.0)) is true
+    assert Math.isfinite(Float(float("inf"))) is false
+    assert Math.isfinite(Float(float("nan"))) is false
+
+
+def test_isinf() -> None:
+    assert Math.isinf(Float(float("inf"))) is true
+    assert Math.isinf(Float(-float("inf"))) is true
+    assert Math.isinf(Float(1.0)) is false
+
+
+def test_isnan() -> None:
+    assert Math.isnan(Float(float("nan"))) is true
+    assert Math.isnan(Float(1.0)) is false
+
+
+def test_isclose_default_tolerances() -> None:
+    assert Math.isclose(Float(1.0), Float(1.0)) is true
+    assert Math.isclose(Float(1.0), Float(2.0)) is false
+
+
+def test_isclose_with_rel_tol() -> None:
+    assert Math.isclose(Float(100.0), Float(101.0), rel_tol=Float(0.02)) is true
+    assert Math.isclose(Float(100.0), Float(101.0), rel_tol=Float(1e-9)) is false
+
+
+def test_isclose_with_abs_tol() -> None:
+    assert Math.isclose(Float(0.0), Float(1e-12), abs_tol=Float(1e-9)) is true
+    assert Math.isclose(Float(0.0), Float(1e-12)) is false

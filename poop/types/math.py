@@ -1,10 +1,12 @@
 import math as _math
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types.boolean import false, true
 from poop.types.float import Float
 from poop.types.int import Int
 
 if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
     from poop.types.tuple import Tuple
 
 
@@ -220,3 +222,33 @@ class Math:
         if steps is None:
             return Float(_math.nextafter(x._value, y._value))
         return Float(_math.nextafter(x._value, y._value, steps=steps._value))
+
+    # Predicates --------------------------------------------------
+
+    @staticmethod
+    def isfinite(x: Float) -> Boolean:
+        return true if _math.isfinite(x._value) else false
+
+    @staticmethod
+    def isinf(x: Float) -> Boolean:
+        return true if _math.isinf(x._value) else false
+
+    @staticmethod
+    def isnan(x: Float) -> Boolean:
+        return true if _math.isnan(x._value) else false
+
+    @staticmethod
+    def isclose(
+        a: Float,
+        b: Float,
+        *,
+        rel_tol: Float = Float(1e-9),
+        abs_tol: Float = Float(0.0),
+    ) -> Boolean:
+        return (
+            true
+            if _math.isclose(
+                a._value, b._value, rel_tol=rel_tol._value, abs_tol=abs_tol._value
+            )
+            else false
+        )
