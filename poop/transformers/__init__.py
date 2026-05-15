@@ -23,6 +23,7 @@ from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
 from poop.transformers.path import PathTransformer
 from poop.transformers.raise_ import RaiseTransformer
+from poop.transformers.random import RandomTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
@@ -81,6 +82,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **BlockTransformer.BINDINGS,
     **PathTransformer.BINDINGS,
     **MathTransformer.BINDINGS,
+    **RandomTransformer.BINDINGS,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
