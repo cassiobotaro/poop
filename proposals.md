@@ -20,7 +20,7 @@ mirroring `math.<name>` exactly.**
 
 1. **Number theory** (integer in, integer out):
    - `Math.factorial(n)`, `Math.gcd(*args)`, `Math.lcm(*args)`,
-     `Math.comb(n, k)`, `Math.perm(n, k)`, `Math.isqrt(n)`
+     `Math.comb(n, k)`, `Math.perm(n, k=None)`, `Math.isqrt(n)`
 2. **Trigonometric:**
    - `Math.sin(x)`, `Math.cos(x)`, `Math.tan(x)`
    - `Math.asin(x)`, `Math.acos(x)`, `Math.atan(x)`,
@@ -30,8 +30,8 @@ mirroring `math.<name>` exactly.**
    - `Math.asinh(x)`, `Math.acosh(x)`, `Math.atanh(x)`
 4. **Exponential / logarithmic / power:**
    - `Math.exp(x)`, `Math.expm1(x)`, `Math.exp2(x)`
-   - `Math.log(x, base)` (positional `base` optional, defaults to
-     natural log), `Math.log2(x)`, `Math.log10(x)`, `Math.log1p(x)`
+   - `Math.log(x, base=Math.e)`, `Math.log2(x)`, `Math.log10(x)`,
+     `Math.log1p(x)`
    - `Math.sqrt(x)`, `Math.cbrt(x)`, `Math.pow(x, y)`
 5. **Rounding and float decomposition:**
    - `Math.floor(x)`, `Math.ceil(x)`, `Math.trunc(x)`
@@ -43,12 +43,12 @@ mirroring `math.<name>` exactly.**
 7. **Float utilities:**
    - `Math.fabs(x)`, `Math.copysign(x, y)`, `Math.fmod(x, y)`,
      `Math.remainder(x, y)`, `Math.fma(x, y, z)` (Python 3.13+),
-     `Math.ulp(x)`, `Math.nextafter(x, y, steps=1)`
+     `Math.ulp(x)`, `Math.nextafter(x, y, *, steps=None)`
 8. **Predicates** (return `Boolean`):
    - `Math.isfinite(x)`, `Math.isinf(x)`, `Math.isnan(x)`,
-     `Math.isclose(a, b, rel_tol, abs_tol)`
+     `Math.isclose(a, b, *, rel_tol=1e-09, abs_tol=0.0)`
 9. **Aggregates over iterables / tuples:**
-   - `Math.fsum(iterable)`, `Math.prod(iterable, start)`,
+   - `Math.fsum(iterable)`, `Math.prod(iterable, *, start=1)`,
      `Math.sumprod(p, q)` (Python 3.12+),
      `Math.dist(p, q)`, `Math.hypot(*args)`
 10. **Special functions:**
@@ -131,23 +131,32 @@ mints a v4, `UUID fromString:` parses one, and the instance answers
      `.clock_seq_hi_variant`, `.clock_seq_low`, `.node`, `.time`,
      `.clock_seq` — all `Int`
    - `.version -> Int`, `.variant -> Str`, `.is_safe -> Str`
-     (`"safe"` / `"unsafe"` / `"unknown"`, mirroring `SafeUUID`)
+     (`"safe"` / `"unsafe"` / `"unknown"` — **sanctioned divergence**:
+     Python returns a `SafeUUID` enum; POOP flattens to a `Str` token
+     to avoid introducing a one-off enum type)
 2. **Namespace `Uuid`** injected into `DEFAULT_NAMESPACE`
    (`Math`-style, no AST rewrite). Class-side messages:
-   - `Uuid.uuid1(node, clock_seq)`, `Uuid.uuid3(namespace, name)`,
-     `Uuid.uuid4()`, `Uuid.uuid5(namespace, name)`,
-     `Uuid.uuid6(node, clock_seq, timestamp)`, `Uuid.uuid7()`,
-     `Uuid.uuid8(a, b, c)` — every variant Python 3.14 ships
+   - `Uuid.uuid1(node=None, clock_seq=None)`,
+     `Uuid.uuid3(namespace, name)`, `Uuid.uuid4()`,
+     `Uuid.uuid5(namespace, name)`,
+     `Uuid.uuid6(node=None, clock_seq=None)`, `Uuid.uuid7()`,
+     `Uuid.uuid8(a=None, b=None, c=None)` — every variant Python 3.14
+     ships
    - `Uuid.from_string(s)`, `Uuid.from_bytes(b)`,
      `Uuid.from_bytes_le(b)`, `Uuid.from_int(i)`,
      `Uuid.from_fields(...)` — factory methods substituting for
      Python's overloaded `uuid.UUID(hex=..., bytes=..., int=...)`
      constructor, since POOP namespaces are not callable
    - `Uuid.getnode() -> Int` (mirrors `uuid.getnode()`)
-3. **Constants on `Uuid`** — the four standard namespaces as POOP
-   `Uuid` values:
-   - `Uuid.NAMESPACE_DNS`, `Uuid.NAMESPACE_URL`,
+3. **Constants on `Uuid`** — every public `uuid.*` constant:
+   - The four standard namespaces as POOP `Uuid` values:
+     `Uuid.NAMESPACE_DNS`, `Uuid.NAMESPACE_URL`,
      `Uuid.NAMESPACE_OID`, `Uuid.NAMESPACE_X500`
+   - The two sentinel UUIDs: `Uuid.NIL` (all-zeros), `Uuid.MAX`
+     (all-ones)
+   - The four variant `Str` constants: `Uuid.RESERVED_NCS`,
+     `Uuid.RFC_4122`, `Uuid.RESERVED_MICROSOFT`,
+     `Uuid.RESERVED_FUTURE`
 
 `UuidTransformer` is **namespace-only** (no AST rewrite); it
 injects `Uuid` into `DEFAULT_NAMESPACE` like `Math` / `Try` /
@@ -190,18 +199,21 @@ follows Python here.
 
 1. **Namespace `Secrets`** injected into `DEFAULT_NAMESPACE`
    (`Math`-style, no AST rewrite). No new POOP type.
-2. **Token minting:**
-   - `Secrets.token_bytes(nbytes=32) -> Bytes`
-   - `Secrets.token_hex(nbytes=32) -> Str`
-   - `Secrets.token_urlsafe(nbytes=32) -> Str`
-3. **Secure draws:**
-   - `Secrets.choice(coll) -> element` (works on any POOP iterable;
+2. **Token minting** (`nbytes=None` resolves to `DEFAULT_ENTROPY`,
+   mirroring Python):
+   - `Secrets.token_bytes(nbytes=None) -> Bytes`
+   - `Secrets.token_hex(nbytes=None) -> Str`
+   - `Secrets.token_urlsafe(nbytes=None) -> Str`
+3. **Secure draws** (parameter names follow Python exactly):
+   - `Secrets.choice(seq) -> element` (works on any POOP iterable;
      element is a POOP type)
-   - `Secrets.randbelow(n) -> Int`
+   - `Secrets.randbelow(exclusive_upper_bound) -> Int`
    - `Secrets.randbits(k) -> Int`
 4. **Constant-time comparison:**
-   - `Secrets.compare_digest(a, b) -> Boolean` (accepts `Str` or
-     `Bytes`; rejects mixed types like Python does)
+   - `Secrets.compare_digest(a, b, /) -> Boolean` (positional-only,
+     accepts `Str` or `Bytes`; rejects mixed types like Python does)
+5. **Constant:**
+   - `Secrets.DEFAULT_ENTROPY -> Int` (`32` in CPython)
 
 `SecretsTransformer` is **namespace-only**.
 
@@ -241,16 +253,17 @@ module-level singleton pattern.**
 
 1. **New POOP type `Random`** in `poop/types/random.py`, wrapping
    `random.Random`. Instances answer the full Python method set:
-   - **Bookkeeping:** `.seed(a, version)`, `.getstate() -> Tuple`,
-     `.setstate(state)`
+   - **Bookkeeping:** `.seed(a=None, version=2)`,
+     `.getstate() -> Tuple`, `.setstate(state)`
    - **Core draws:** `.random() -> Float` (in `[0.0, 1.0)`),
      `.uniform(a, b) -> Float`, `.randint(a, b) -> Int` (inclusive
      both ends), `.randrange(start, stop, step) -> Int`,
      `.getrandbits(k) -> Int`, `.randbytes(n) -> Bytes`
-   - **Collection draws:** `.choice(coll) -> element`,
-     `.choices(population, weights, k) -> List`,
-     `.sample(population, k, counts) -> List`,
-     `.shuffle(coll)` — in-place, mutates and returns `None`
+   - **Collection draws** (parameter names follow Python exactly):
+     `.choice(seq) -> element`,
+     `.choices(population, weights=None, *, cum_weights=None, k=1) -> List`,
+     `.sample(population, k, *, counts=None) -> List`,
+     `.shuffle(x)` — in-place, mutates and returns `None`
      (mirrors Python)
    - **Distributions:** `.gauss`, `.normalvariate`,
      `.lognormvariate`, `.expovariate`, `.gammavariate`,
@@ -267,9 +280,10 @@ module-level singleton pattern.**
      not callable, so this is the one forced naming divergence
      from Python)
    - `Random.random()`, `Random.uniform(a, b)`, `Random.randint(a, b)`,
-     `Random.choice(coll)`, `Random.shuffle(coll)`,
-     `Random.sample(coll, k)`, `Random.choices(coll, k=...)`, …
-     — every Python module-level function with the same name and
+     `Random.choice(seq)`, `Random.shuffle(x)`,
+     `Random.sample(population, k, *, counts=None)`,
+     `Random.choices(population, weights=None, *, cum_weights=None, k=1)`,
+     … — every Python module-level function with the same name and
      parameter order.
 
 `RandomTransformer` is **namespace-only**; it injects `Random` into
@@ -310,6 +324,8 @@ naturally.
 
 - `random.SystemRandom` — duplicates `secrets`; users wanting
   crypto-secure draws go through `Secrets.*` instead.
+- `Random.VERSION` class attribute — implementation detail of the
+  state-serialization format; defer until needed.
 - The `main` entry point (`python -m random`) — niche CLI tool.
 - Internal magic constants (`BPF`, `LOG4`, `NV_MAGICCONST`,
   `RECIP_BPF`, `SG_MAGICCONST`, `TWOPI`) — Python exposes them but
@@ -335,18 +351,18 @@ only), no new namespace.**
    the encoded value is ASCII-bearing `Bytes`, not `Str`):
    - `.b16encode()`, `.b32encode()`, `.b32hexencode()` (Python 3.10+),
      `.b64encode()`, `.standard_b64encode()`, `.urlsafe_b64encode()`,
-     `.a85encode()`, `.b85encode()`
+     `.a85encode()`, `.b85encode()`, `.z85encode()` (Python 3.13+)
 2. **Decode on `Bytes`** (each returns `Bytes`):
    - `.b16decode()`, `.b32decode()`, `.b32hexdecode()`,
      `.b64decode()`, `.standard_b64decode()`,
-     `.urlsafe_b64decode()`, `.a85decode()`, `.b85decode()`
-3. **Decode on `Str`** (each returns `Bytes`) — only the variants
-   where Python's decoder accepts a `str` input:
+     `.urlsafe_b64decode()`, `.a85decode()`, `.b85decode()`,
+     `.z85decode()` (Python 3.13+)
+3. **Decode on `Str`** (each returns `Bytes`) — every variant whose
+   Python counterpart accepts a `str` input:
    - `.b16decode()`, `.b32decode()`, `.b32hexdecode()`,
      `.b64decode()`, `.standard_b64decode()`,
-     `.urlsafe_b64decode()`, `.a85decode()`
-   - `Str` has **no `b85decode`** — Python's `base64.b85decode`
-     refuses `str` inputs, and POOP mirrors that strictly.
+     `.urlsafe_b64decode()`, `.a85decode()`, `.b85decode()`,
+     `.z85decode()` (Python 3.13+)
 
 No new POOP type, no `Base64Transformer`, no AST rewrite — the
 methods are registered on the existing `Bytes` and `Str` types.
@@ -370,11 +386,14 @@ exactly as in Python.
 
 **Out of scope (for v1):**
 
-- Custom `altchars` parameter for `b64encode` / `b64decode` —
-  `urlsafe_b64encode`/`urlsafe_b64decode` cover the common need.
-- Custom `casefold` / `map01` / `foldspaces` / `wrapcol` / `pad` /
-  `adobe` / `ignorechars` parameters on the various decoders —
-  add later if asked for; v1 ships the defaults Python ships.
+- Optional kwargs on individual encoders/decoders — v1 ships the
+  defaults Python ships. Specifically deferred: `altchars` and
+  `validate` on `b64encode`/`b64decode`, `casefold` and `map01` on
+  `b32decode`/`b32hexdecode` and `b16decode`, `foldspaces` /
+  `wrapcol` / `pad` / `adobe` on `a85encode`, `foldspaces` /
+  `adobe` / `ignorechars` on `a85decode`, and `pad` on `b85encode`.
+- Legacy file-oriented helpers (`encode`, `decode`, `encodebytes`,
+  `decodebytes`) — POOP routes file I/O through `Path`.
 
 ## Expose `hashlib` as POOP messages
 
@@ -395,9 +414,9 @@ incremental `.update()` path is preserved.
    exactly):
    - `.update(data) -> None` — mutates internal state, returns
      `None` like Python (no chaining)
-   - `.digest() -> Bytes`
-   - `.hexdigest() -> Str` (Python's name — single word, no
-     underscore)
+   - `.digest(length=None) -> Bytes` — `length` is required for
+     shake hashes and ignored by the rest (mirrors Python)
+   - `.hexdigest(length=None) -> Str` — same shape as `.digest`
    - `.copy() -> Hash`
    - `.digest_size -> Int`, `.block_size -> Int`, `.name -> Str`
 2. **Shortcut methods on `Bytes`** — every guaranteed algorithm
@@ -406,17 +425,21 @@ incremental `.update()` path is preserved.
      `.sha512()`
    - `.blake2b()`, `.blake2s()`
    - `.sha3_224()`, `.sha3_256()`, `.sha3_384()`, `.sha3_512()`
-   - `.shake_128(length)`, `.shake_256(length)` — `length`
-     required by Python for digest size
-3. **Key-derivation messages on `Bytes`** (receiver = password):
-   - `.pbkdf2_hmac(name, salt, iterations, dk_len) -> Bytes`
-   - `.scrypt(salt, n, r, p, max_mem, dk_len) -> Bytes`
+   - `.shake_128()`, `.shake_256()` — constructor takes no `length`;
+     pass `length` to `.digest(length)` / `.hexdigest(length)` on
+     the returned `Hash` (mirroring Python exactly)
+3. **Key-derivation messages on `Bytes`** (receiver = password,
+   substituting for Python's first positional argument):
+   - `.pbkdf2_hmac(hash_name, salt, iterations, dklen=None) -> Bytes`
+   - `.scrypt(*, salt, n, r, p, maxmem=0, dklen=64) -> Bytes`
 4. **Namespace `Hash`** (class side of the `Hash` POOP type):
    - `Hash.new(name, data) -> Hash` (generic constructor)
-   - `Hash.algorithms_available -> Set` of `Str`
-   - `Hash.algorithms_guaranteed -> Set` of `Str`
-   - `Hash.file_digest(path, name) -> Hash` (Python 3.11+;
-     `path` is a POOP `Path`)
+   - `Hash.algorithms_available -> FrozenSet` of `Str`
+   - `Hash.algorithms_guaranteed -> FrozenSet` of `Str`
+   - `Hash.file_digest(path, digest, /) -> Hash` (Python 3.11+;
+     `path` is a POOP `Path` — sanctioned receiver-type divergence
+     from Python's `fileobj`; the parameter named `digest` matches
+     Python's name)
 
 `HashTransformer` is **namespace-only**; it injects `Hash` into
 `DEFAULT_NAMESPACE` alongside the new methods on `Bytes`.
@@ -424,7 +447,7 @@ incremental `.update()` path is preserved.
 **Type discipline:** every signature — methods on `Hash`, the
 hash-shortcut and key-derivation methods on `Bytes`, and class-side
 `Hash.*` — takes and returns POOP types (`Hash`, `Bytes`, `Str`,
-`Int`, `Set`, `Path`). No `bytes`, `int`, or raw `hashlib` object
+`Int`, `FrozenSet`, `Path`). No `bytes`, `int`, or raw `hashlib` object
 leaks across the boundary.
 
 **Smalltalk reference.**
@@ -467,23 +490,32 @@ instead. POOP follows Python here.
    (`Math`-style, no AST rewrite). No new POOP types — TOML values
    map onto existing POOP types (`Dict` / `List` / `Str` / `Int` /
    `Float` / `Boolean` / `DateTime`).
-2. **Parsing — keeping Python's exact names:**
-   - `Toml.loads(s) -> Dict` — direct mirror of `tomllib.loads`,
-     takes a POOP `Str`
-   - `Toml.load(path) -> Dict` — mirror of `tomllib.load`. Python
-     takes a binary file object; POOP takes a POOP `Path` since
-     POOP has no file-object abstraction. This is a forced
-     receiver-type divergence; the message name stays Python's.
+2. **Parsing — keeping Python's exact names and keyword args:**
+   - `Toml.loads(s, /, *, parse_float=Float) -> Dict` — direct
+     mirror of `tomllib.loads`. `parse_float` defaults to `Float`
+     (POOP's `Float`, mirroring Python's `float` default).
+   - `Toml.load(path, /, *, parse_float=Float) -> Dict` — mirror of
+     `tomllib.load`. Python takes a binary file object; POOP takes
+     a POOP `Path` since POOP has no file-object abstraction. This
+     is a forced receiver-type divergence; the message name and
+     keyword args stay Python's.
+3. **Errors:**
+   - `Toml.TOMLDecodeError` — POOP error type wrapping
+     `tomllib.TOMLDecodeError` (a `ValueError` subclass in Python).
+     Raised by both `loads` and `load` on malformed input.
 
 `TomlTransformer` is **namespace-only**.
 
 **Type discipline:** every value in the returned `Dict` is a POOP
 type. TOML's `date` / `time` / `datetime` map to POOP's `DateTime`
-once that proposal lands; until then, expose them as ISO-8601
-`Str` so no Python `datetime.datetime` leaks. This is the one
-place the proposal trades full type-coverage for ship-now
-pragmatism, and is documented explicitly so it can be tightened
-later.
+once that proposal lands (see the audit table — `datetime` is
+currently `audit`); until then, expose them as ISO-8601 `Str` so
+no Python `datetime.datetime` leaks. This is the one place the
+proposal trades full type-coverage for ship-now pragmatism, and is
+documented explicitly so it can be tightened later. When the
+`DateTime` proposal lands, the `Toml.loads` / `Toml.load` return
+type narrows from `Dict[Str, Str]` (for date-typed values) to
+`Dict[Str, DateTime]` automatically.
 
 **Smalltalk reference.** Pharo has no TOML parser in base. The
 closest analogs are `STON fromString:` and `NeoJSONReader fromString:`
@@ -494,8 +526,9 @@ closest analogs are `STON fromString:` and `NeoJSONReader fromString:`
 
 - Write support — Python's `tomllib` is read-only and there is no
   upstream writer.
-- Custom `parse_float` callback — useful for routing TOML floats
-  into `Decimal`, but pairs with the `decimal` proposal.
+- Routing TOML floats into `Decimal` via `parse_float` — the
+  parameter ships in v1 (mirroring Python), but a `Decimal` target
+  pairs with the `decimal` proposal.
 
 ## Audit the rest of the Python stdlib for POOP equivalents
 
