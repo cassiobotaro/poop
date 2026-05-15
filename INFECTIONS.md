@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Try`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1000,6 +1000,29 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 v0.23.0 ships the common iterative surface; the full `Shlex` API (`read_token`, `sourcehook`, the character-class attributes, push/pop sources, etc.) is deferred to Future work. See proposals.md.
 
 `shlex` and `Shlex` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/shlex.py` — namespace-only, no AST rewrite.
+
+### uuid + UUID — `poop/types/uuid.py` + `poop/transformers/uuid.py`
+
+`UUID` is a full POOP value wrapping `uuid.UUID`. Construction mirrors CPython exactly — positional `UUID(Str("12345...-…"))` for a canonical string or keyword `UUID(hex=..., bytes=..., bytes_le=..., int=..., fields=...)` for the parse-from-foo variants. Like `random`/`Random` and `mimetypes`/`MimeTypes`, two namespace entries are bound:
+
+- **`uuid`** (lowercase) — module-level generators, helpers, and constants.
+- **`UUID`** (PascalCase) — the class.
+
+| Category | Members | Returns |
+|---|---|---|
+| Representations | `.hex`, `.urn` (`Str`), `.int` (`Int`), `.bytes`, `.bytes_le` (`Bytes`), `.fields` (`Tuple[Int x 6]`) | per row |
+| Field accessors | `.time_low`, `.time_mid`, `.time_hi_version`, `.clock_seq_hi_variant`, `.clock_seq_low`, `.node`, `.time`, `.clock_seq` | `Int` |
+| Classification | `.version` (`Int`), `.variant` (`Str`), `.is_safe` (`Str` token: `"safe"`/`"unsafe"`/`"unknown"`) | per row |
+| Generators | `uuid.uuid1`/`3`/`4`/`5`/`6`/`7`/`8` | `UUID` |
+| Helper | `uuid.getnode()` | `Int` |
+| Namespace constants (`UUID`) | `uuid.NAMESPACE_DNS`/`URL`/`OID`/`X500`, `uuid.NIL`, `uuid.MAX` | `UUID` |
+| Variant constants (`Str`) | `uuid.RESERVED_NCS`, `uuid.RFC_4122`, `uuid.RESERVED_MICROSOFT`, `uuid.RESERVED_FUTURE` | `Str` |
+
+**`is_safe` divergence.** CPython returns a `SafeUUID` enum. POOP flattens to a lowercase `Str` token (`"safe"` / `"unsafe"` / `"unknown"`) to avoid introducing a one-off enum type — sanctioned divergence, called out in the proposal.
+
+`uuid.SafeUUID` is not exposed as a dedicated POOP enum (see above). `uuid.uuid6`/`7`/`8` are new in Python 3.14 and surfaced unchanged.
+
+`uuid` and `UUID` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/uuid.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

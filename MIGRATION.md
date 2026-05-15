@@ -585,3 +585,25 @@ lexer.do(lambda token: handle(token))
 ```
 
 > `shlex.split` returns `List[Str]`. The `Shlex` class is the streaming lexer (mirrors `shlex.shlex`); v0.23.0 ships the common iterative surface (`.get_token()`, iteration, `.lineno`, `.whitespace_split`). Deeper lexer configuration (character classes, push sources, etc.) is deferred to Future work.
+
+## UUIDs (`uuid` module + `UUID` class)
+
+```python
+# Python
+import uuid
+
+new_id = uuid.uuid4()
+parsed = uuid.UUID("12345678-1234-5678-1234-567812345678")
+name_id = uuid.uuid5(uuid.NAMESPACE_URL, "https://example.com")
+hex_form = new_id.hex
+```
+
+```python
+# POOP
+new_id = uuid.uuid4()
+parsed = UUID("12345678-1234-5678-1234-567812345678")
+name_id = uuid.uuid5(uuid.NAMESPACE_URL, "https://example.com")
+hex_form = new_id.hex
+```
+
+> `UUID` is in scope without a `uuid.` prefix (same pattern as `Random`). All seven generators (`uuid1`/`3`/`4`/`5`/`6`/`7`/`8`) plus `uuid.getnode()` and the standard constants (`NAMESPACE_DNS`/`URL`/`OID`/`X500`, `NIL`, `MAX`, four `RESERVED_*`/`RFC_4122` variant tokens) are surfaced. `is_safe` flattens CPython's `SafeUUID` enum to a lowercase `Str` token (sanctioned divergence).

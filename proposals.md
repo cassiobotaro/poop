@@ -1,82 +1,5 @@
 # Proposals
 
-## Expose `uuid` as POOP messages
-
-Python's `uuid` module is unreachable from POOP today (imports are
-forbidden). UUIDs are the default primary-key / correlation-ID
-choice across modern systems, and there is no native way to mint
-or parse one from POOP source.
-
-Smalltalk models this with a class factory on `UUID`: `UUID new`
-mints a v4, `UUID fromString:` parses one, and the instance answers
-`asString`, `version`, `asByteArray`.
-
-**Proposal:**
-
-1. **New POOP class `UUID`** in `poop/types/uuid.py`, wrapping
-   `uuid.UUID` internally. Instances answer:
-   - `.hex -> Str`, `.urn -> Str`, `.int -> Int`,
-     `.bytes -> Bytes`, `.bytes_le -> Bytes`
-   - `.fields -> Tuple` (6-tuple of `Int`)
-   - `.time_low`, `.time_mid`, `.time_hi_version`,
-     `.clock_seq_hi_variant`, `.clock_seq_low`, `.node`, `.time`,
-     `.clock_seq` — all `Int`
-   - `.version -> Int`, `.variant -> Str`, `.is_safe -> Str`
-     (`"safe"` / `"unsafe"` / `"unknown"` — **sanctioned divergence**:
-     Python returns a `SafeUUID` enum; POOP flattens to a `Str` token
-     to avoid introducing a one-off enum type)
-   - `UUID(hex=..., bytes=..., int=..., fields=..., bytes_le=...)`
-     constructor — mirrors `uuid.UUID(...)` exactly (Python uses
-     keyword args for the parse-from-foo variants).
-2. **Namespace `uuid`** (lowercase, mirroring Python's module name)
-   injected into `DEFAULT_NAMESPACE` (`math`-style, no AST rewrite).
-   Module-level functions:
-   - `uuid.uuid1(node=None, clock_seq=None)`,
-     `uuid.uuid3(namespace, name)`, `uuid.uuid4()`,
-     `uuid.uuid5(namespace, name)`,
-     `uuid.uuid6(node=None, clock_seq=None)`, `uuid.uuid7()`,
-     `uuid.uuid8(a=None, b=None, c=None)` — every variant Python 3.14
-     ships, returning `UUID` instances
-   - `uuid.getnode() -> Int` (mirrors `uuid.getnode()`)
-   - `uuid.UUID` — the class itself, accessible as a module attribute
-     just like Python's `uuid.UUID`
-3. **Constants** on the `uuid` namespace — every public `uuid.*`
-   constant:
-   - The four standard namespaces as POOP `UUID` values:
-     `uuid.NAMESPACE_DNS`, `uuid.NAMESPACE_URL`,
-     `uuid.NAMESPACE_OID`, `uuid.NAMESPACE_X500`
-   - The two sentinel UUIDs: `uuid.NIL` (all-zeros), `uuid.MAX`
-     (all-ones)
-   - The four variant `Str` constants: `uuid.RESERVED_NCS`,
-     `uuid.RFC_4122`, `uuid.RESERVED_MICROSOFT`,
-     `uuid.RESERVED_FUTURE`
-
-`UuidTransformer` is **namespace-only** (no AST rewrite); it injects
-two bindings — `uuid` (lowercase singleton) and `UUID` (the class) —
-into `DEFAULT_NAMESPACE` in the same family as `random` / `Random`.
-
-**Type discipline:** every signature exposed by this proposal —
-methods on `UUID` instances, methods and constants on the `uuid`
-namespace — takes and returns POOP types (`UUID`, `Str`, `Bytes`,
-`Int`, `Tuple`). No `uuid.UUID`, raw `bytes`, or `int` leaks across
-the boundary.
-
-**Smalltalk reference.**
-
-| Python | Smalltalk (Pharo) | Notes |
-|---|---|---|
-| `uuid.uuid4()` | `UUID new` | POOP mirrors Python lowercase: `uuid.uuid4()` |
-| `uuid.UUID(s)` | `UUID fromString: s` | POOP: `UUID(s)` (the class is in scope) |
-| `u.hex` | `u asString36 copyWithout: $-` | Pharo has no direct `.hex` |
-| `u.bytes` | `u asByteArray` | direct |
-| `u.version` | `u version` | direct |
-| `uuid.uuid6` / `7` / `8` | (no native) | new in Python 3.14 |
-
-**Out of scope (for v1):**
-
-- `uuid.SafeUUID` exposed as a dedicated POOP enum type — flatten
-  to a `Str` token instead.
-
 ## Expose `hashlib` as POOP messages
 
 Python's `hashlib` module is unreachable from POOP today.
@@ -2369,7 +2292,7 @@ each annotated with one of:
 | `poplib` | out | Legacy protocol |
 | `imaplib` | out | Legacy protocol |
 | `smtplib` | proposed | See proposal above |
-| `uuid` | proposed | See proposal above |
+| `uuid` | covered | `uuid` + `UUID` (shipped in v0.24.0) |
 | `socketserver` | out | Pairs with `socket` if ever |
 | `ipaddress` | proposed | See proposal above |
 
