@@ -981,6 +981,79 @@ helpers; `Int` for sizes.
 `copy_function` callback argument plumbing — defer to a
 followup proposal.
 
+## Expose `pickle` as POOP messages
+
+Python's `pickle` serialises arbitrary objects to bytes. Useful for
+caches and inter-process state; comes with the standard security
+warnings about loading untrusted pickles.
+
+**Proposal — `pickle` (lowercase module) + `Pickler`/`Unpickler` classes:**
+
+1. **Module-level shortcuts:**
+   `pickle.dumps(obj, protocol=None, *, fix_imports=True) -> Bytes`,
+   `pickle.loads(data, *, fix_imports=True, encoding='ASCII', errors='strict', buffers=None) -> Object`.
+2. **`Path`-based read/write helpers** (POOP convention, not in
+   Python proper):
+   `pickle.dump(obj, path, ...)`, `pickle.load(path, ...)` —
+   path-based instead of file-object-based.
+3. **`Pickler` / `Unpickler` classes** for streaming and
+   customising via `persistent_id`/`persistent_load` hooks.
+4. **Constants:** `pickle.HIGHEST_PROTOCOL`, `DEFAULT_PROTOCOL`,
+   `PROTOCOL_*` levels.
+5. **`PickleError`, `PicklingError`, `UnpicklingError`** — POOP
+   error hierarchy.
+
+**Type discipline:** `Bytes` for serialised form, `Object` for
+deserialised (true to Python's dynamic-typed `loads`).
+
+**Out of scope (for v1):**
+
+- `pickletools` (introspection of pickle streams) — pairs with the
+  introspection ban.
+- `__reduce__` protocol hook — POOP user classes can implement it,
+  but the protocol isn't formally documented here.
+
+## Expose `sqlite3` as POOP messages
+
+Python's `sqlite3` ships with stdlib and is the right zero-config
+relational store for POOP programs. Unreachable from POOP today.
+
+**Proposal — `sqlite3` (lowercase module) + class set:**
+
+1. **Module-level entry:**
+   `sqlite3.connect(database, timeout=5.0, detect_types=0, isolation_level='', check_same_thread=True, factory=None, cached_statements=128, uri=False, *, autocommit=False) -> Connection`.
+2. **`Connection` class:**
+   `.cursor() -> Cursor`, `.commit()`, `.rollback()`, `.close()`,
+   `.execute(sql, params=()) -> Cursor`,
+   `.executemany(sql, seq) -> Cursor`,
+   `.executescript(script) -> Cursor`,
+   `.create_function(name, narg, func, *, deterministic=False)`,
+   `.create_aggregate(name, narg, agg_class)`,
+   `.create_collation(name, callable)`,
+   `.interrupt()`, `.iterdump() -> Map[Str]`,
+   `.backup(target, *, pages=-1, progress=None, name='main', sleep=0.250)`.
+3. **`Cursor` class:**
+   `.execute`, `.executemany`, `.executescript`, `.fetchone() -> Tuple | NoneClass`,
+   `.fetchmany(size=None) -> List[Tuple]`,
+   `.fetchall() -> List[Tuple]`, iteration as POOP iterable,
+   `.rowcount -> Int`, `.lastrowid -> Int | NoneClass`,
+   `.description -> Tuple`, `.arraysize -> Int`.
+4. **`Row` class** — dict-like row access by column name.
+5. **Constants:** `sqlite3.version`, `sqlite3.sqlite_version`,
+   `sqlite3.PARSE_DECLTYPES`, `sqlite3.PARSE_COLNAMES`.
+6. **Errors:** `Warning`, `Error`, `InterfaceError`,
+   `DatabaseError`, `DataError`, `OperationalError`,
+   `IntegrityError`, `InternalError`, `ProgrammingError`,
+   `NotSupportedError` — POOP error hierarchy.
+7. **Adapters/converters:** `sqlite3.register_adapter(type, func)`,
+   `sqlite3.register_converter(typename, func)`.
+
+**Type discipline:** `Connection`/`Cursor`/`Row` are POOP types;
+SQL strings are `Str`; bound parameters are POOP collections.
+
+**Out of scope (for v1):** `complete_statement` (SQLite-shell-style
+helper), `enable_callback_tracebacks` (debug-only).
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -1097,12 +1170,12 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `pickle` | audit | `Path.dump(obj)` / `Path.load()` — security caveats |
+| `pickle` | proposed | See proposal above |
 | `copyreg` | out | Internal hook for `pickle` |
 | `shelve` | out | Depends on `dbm` |
 | `marshal` | out | CPython internal |
 | `dbm` | out | Niche; prefer `sqlite3` |
-| `sqlite3` | audit | `Database.open(path)` class factory — own proposal |
+| `sqlite3` | proposed | See proposal above |
 
 ### Data Compression and Archiving
 
