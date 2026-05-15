@@ -77,55 +77,6 @@ the boundary.
 - `uuid.SafeUUID` exposed as a dedicated POOP enum type — flatten
   to a `Str` token instead.
 
-## Expose `secrets` as POOP messages
-
-Python's `secrets` module is unreachable from POOP today. Without
-it, POOP source cannot mint cryptographically-secure tokens, draw
-secure random integers, or compare digests in constant time —
-operations every auth-aware program needs.
-
-Smalltalk has no equivalent in the base image; Pharo's Cryptography
-package adds `SecureRandom`, but the choice is non-canonical. POOP
-follows Python here.
-
-**Proposal:**
-
-1. **Namespace `secrets`** (lowercase, mirroring Python's module
-   name) injected into `DEFAULT_NAMESPACE` (`math`-style, no AST
-   rewrite). No new POOP type (`secrets` has no public class).
-2. **Token minting** (`nbytes=None` resolves to `DEFAULT_ENTROPY`,
-   mirroring Python):
-   - `secrets.token_bytes(nbytes=None) -> Bytes`
-   - `secrets.token_hex(nbytes=None) -> Str`
-   - `secrets.token_urlsafe(nbytes=None) -> Str`
-3. **Secure draws** (parameter names follow Python exactly):
-   - `secrets.choice(seq) -> element` (works on any POOP iterable;
-     element is a POOP type)
-   - `secrets.randbelow(exclusive_upper_bound) -> Int`
-   - `secrets.randbits(k) -> Int`
-4. **Constant-time comparison:**
-   - `secrets.compare_digest(a, b, /) -> Boolean` (positional-only,
-     accepts `Str` or `Bytes`; rejects mixed types like Python does)
-5. **Constant:**
-   - `secrets.DEFAULT_ENTROPY -> Int` (`32` in CPython)
-
-`SecretsTransformer` is **namespace-only**.
-
-**Type discipline:** every signature exposed by this proposal takes
-and returns POOP types (`Bytes`, `Str`, `Int`, `Boolean`, plus the
-element type for `choice`). No Python primitives leak across the
-boundary.
-
-**Smalltalk reference.** No direct mapping in base Pharo. The
-nearest analog is `Random new` (NOT cryptographically secure) —
-POOP deliberately separates the two: `random` is non-secure;
-`secrets` is secure-by-default.
-
-**Out of scope (for v1):**
-
-- `secrets.SystemRandom` class wrapper — duplicates `choice` /
-  `randbelow` / `randbits` already on `secrets`.
-
 ## Expose `base64` as POOP messages
 
 Python's `base64` module is unreachable from POOP today. Encoding
@@ -2607,7 +2558,7 @@ each annotated with one of:
 |---|---|---|
 | `hashlib` | proposed | See proposal above |
 | `hmac` | proposed | See proposal above |
-| `secrets` | proposed | See proposal above |
+| `secrets` | covered | `secrets` namespace (shipped in v0.12.0) |
 
 ### Generic Operating System Services
 

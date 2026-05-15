@@ -321,3 +321,23 @@ pwd = getpass.getpass("Password: ")
 ```
 
 > Both `getpass.getuser()` and `getpass.getpass(prompt)` return POOP `Str`. `getpass.GetPassWarning` is not exposed in POOP — the underlying CPython call still emits it to stderr, but POOP has no warning model to catch it.
+
+## Cryptographic randomness (`secrets` module)
+
+```python
+# Python
+import secrets
+
+token = secrets.token_hex(16)
+n = secrets.randbelow(100)
+ok = secrets.compare_digest(a, b)
+```
+
+```python
+# POOP
+token = secrets.token_hex(16)
+n = secrets.randbelow(100)
+ok = secrets.compare_digest(a, b)
+```
+
+> Anything cryptographic goes through `secrets`, not `random`. `secrets.token_bytes` returns `Bytes`; `token_hex`/`token_urlsafe` return `Str`. `secrets.compare_digest(a, b, /)` is constant-time and accepts either `Str` or `Bytes` — but both arguments must be the same type, exactly like CPython.

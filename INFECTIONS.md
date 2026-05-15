@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `errno`, `getpass`, `math`, `random`. As new namespace mirrors land (`uuid`, `secrets`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `errno`, `getpass`, `math`, `random`, `secrets`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -792,6 +792,21 @@ The set of constants is built at import time by enumerating `dir(errno)` rather 
 `getpass.GetPassWarning` is **not surfaced** in POOP. CPython emits it via `warnings` when echo can't be suppressed, but POOP has no warning concept (`warnings` itself is "out" — see proposals.md). The underlying CPython call still writes the warning to stderr; POOP user code just cannot catch or filter it. See proposals.md § Future work for a possible later exposure path.
 
 `getpass` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/getpass.py` — namespace-only, no AST rewrite.
+
+### secrets — `poop/types/secrets.py` + `poop/transformers/secrets.py`
+
+`secrets` is a cryptographic-secure-only namespace mirroring Python's `secrets` module. POOP deliberately separates secure (`secrets`) from non-secure (`random`) randomness to match Python's API split exactly.
+
+| Category | Operations | Returns |
+|---|---|---|
+| Token minting | `token_bytes(nbytes=none)`, `token_hex(nbytes=none)`, `token_urlsafe(nbytes=none)` | `Bytes` / `Str` / `Str` |
+| Secure draws | `choice(seq)`, `randbelow(exclusive_upper_bound)`, `randbits(k)` | element / `Int` / `Int` |
+| Constant-time comparison | `compare_digest(a, b, /)` (positional-only) | `Boolean` |
+| Constant | `DEFAULT_ENTROPY` | `Int` (32 in CPython) |
+
+`secrets.SystemRandom` is **not** surfaced — its instance API duplicates the module-level functions above. `nbytes=none` resolves to `DEFAULT_ENTROPY`, mirroring CPython's default.
+
+`secrets` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/secrets.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
