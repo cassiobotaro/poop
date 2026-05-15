@@ -127,7 +127,8 @@ def test_log2_log10_log1p() -> None:
 
 
 def test_cbrt() -> None:
-    assert Math.cbrt(Float(27.0))._value == 3.0
+    assert Math.cbrt(Float(8.0))._value == 2.0
+    assert Math.cbrt(Float(64.0))._value == 4.0
 
 
 def test_pow_returns_float() -> None:
