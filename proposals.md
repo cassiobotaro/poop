@@ -510,24 +510,6 @@ on an empty heap raises `IndexError` (Python's behaviour).
 **Out of scope (for v1):** `_heapify_max` and the other private
 max-heap variants.
 
-## Expose `bisect` as POOP messages
-
-Python's `bisect` does binary search and ordered insertion on
-sorted sequences.
-
-**Proposal — `bisect` (lowercase module) namespace:**
-
-1. **Binary search:**
-   `bisect.bisect_left(a, x, lo=0, hi=None, *, key=None) -> Int`,
-   `bisect.bisect_right(a, x, lo=0, hi=None, *, key=None) -> Int`,
-   `bisect.bisect(a, x, ...)` (alias for `bisect_right`).
-2. **Ordered insertion** (mutate the list, return `none`):
-   `bisect.insort_left(a, x, lo=0, hi=None, *, key=None) -> NoneClass`,
-   `bisect.insort_right(a, x, ...)`, `bisect.insort(a, x, ...)`.
-
-**Type discipline:** `List` in, `Int` for index queries, `none`
-for in-place mutators.
-
 ## Expose `array` as POOP messages
 
 Python's `array.array` is a homogeneous, memory-compact sequence.
@@ -2276,7 +2258,7 @@ each annotated with one of:
 | `calendar` | proposed | See proposal above |
 | `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |
 | `heapq` | proposed | See proposal above |
-| `bisect` | proposed | See proposal above |
+| `bisect` | covered | `bisect` namespace (shipped in v0.21.0) |
 | `array` | proposed | See proposal above |
 | `weakref` | proposed | See proposal above |
 | `types` | out | Introspection — forbidden in POOP |

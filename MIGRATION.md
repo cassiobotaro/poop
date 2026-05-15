@@ -518,3 +518,21 @@ printer = PrettyPrinter(indent=4)
 ```
 
 > POOP types alias `__repr__` to `__str__`, so pretty-printed output reads exactly like POOP's regular `.print()`. `pprint.pp` differs from `pprint.pprint` only in defaulting `sort_dicts=false`. `PrettyPrinter` captures `sys.stdout` at construction time — to capture pretty-printed output, build the printer inside a stream redirect.
+
+## Binary search and ordered insertion (`bisect` module)
+
+```python
+# Python
+import bisect
+
+idx = bisect.bisect_left(sorted_xs, target)
+bisect.insort(sorted_xs, new_value)
+```
+
+```python
+# POOP
+idx = bisect.bisect_left(sorted_xs, target)
+bisect.insort(sorted_xs, new_value)
+```
+
+> `bisect`/`insort` are aliases for `bisect_right`/`insort_right`, matching CPython. Index queries return POOP `Int`; insertion mutators return `none` and mutate the `List` in place. `key` is a Python callable.
