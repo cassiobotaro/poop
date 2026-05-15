@@ -96,7 +96,7 @@ def test_assigning_unrelated_name_passes() -> None:
 
 def test_unprotected_lowercase_passes() -> None:
     # Names that look similar but are not bound do not trigger.
-    tree = ast.parse("uuid = 42")  # uuid is in proposals, not yet shipped
+    tree = ast.parse("hashlib = 42")  # hashlib is in proposals, not yet shipped
     NoNamespaceShadowValidator().validate(tree)
 
 
