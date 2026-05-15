@@ -85,6 +85,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `json.dumps(obj)` | `json.dumps(obj)` |
 | `json.loads(s)` | `json.loads(s)` |
 | `tomllib.loads(s)` | `tomllib.loads(s)` |
+| `hmac.new(k, m).hexdigest()` | `hmac.new(k, m).hexdigest()` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

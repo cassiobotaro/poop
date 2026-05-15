@@ -648,3 +648,25 @@ pyproject = tomllib.load(Path("pyproject.toml"))
 ```
 
 > POOP's `tomllib.load` accepts a `Path` (POOP has no file-object abstraction). Round-trip returns POOP types — TOML date / time / datetime values currently flatten to ISO-8601 `Str` until the `datetime` proposal lands. `tomllib.TOMLDecodeError` is a Python exception class for use with `Try.except_(...)`. Write support stays out of scope (`tomllib` is read-only upstream).
+
+## HMAC (`hmac` module + `HMAC` class)
+
+```python
+# Python
+import hmac
+
+mac = hmac.new(key, msg, digestmod="sha256")
+hex_signature = mac.hexdigest()
+ok = hmac.compare_digest(received, expected)
+one_shot = hmac.digest(key, msg, "sha256")
+```
+
+```python
+# POOP
+mac = hmac.new(key, msg, "sha256")
+hex_signature = mac.hexdigest()
+ok = hmac.compare_digest(received, expected)
+one_shot = hmac.digest(key, msg, "sha256")
+```
+
+> `digestmod` accepts a `Str` hash name (`"sha256"`, `"sha512"`, …) since `hashlib` is still proposed — CPython's `hmac.new` already supports the string form. When `hashlib` ships, the type widens.
