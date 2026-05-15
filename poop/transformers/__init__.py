@@ -29,6 +29,7 @@ from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.mimetypes import NAMESPACE as _mimetypes_namespace
 from poop.transformers.none import NoneTransformer
 from poop.transformers.path import NAMESPACE as _path_namespace
+from poop.transformers.pprint import NAMESPACE as _pprint_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
@@ -101,6 +102,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_glob_namespace,
     **_fnmatch_namespace,
     **_copy_namespace,
+    **_pprint_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
