@@ -63,7 +63,11 @@ def test_open_new_tab_returns_poop_boolean() -> None:
 
 
 def test_get_returns_browser() -> None:
-    browser = Webbrowser.get()
+    with mock.patch(
+        "poop.types.webbrowser._webbrowser.get",
+        return_value=_webbrowser.GenericBrowser("/usr/bin/echo"),
+    ):
+        browser = Webbrowser.get()
     assert isinstance(browser, Browser)
 
 
