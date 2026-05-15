@@ -341,3 +341,25 @@ ok = secrets.compare_digest(a, b)
 ```
 
 > Anything cryptographic goes through `secrets`, not `random`. `secrets.token_bytes` returns `Bytes`; `token_hex`/`token_urlsafe` return `Str`. `secrets.compare_digest(a, b, /)` is constant-time and accepts either `Str` or `Bytes` — but both arguments must be the same type, exactly like CPython.
+
+## Base64 (`base64` module)
+
+```python
+# Python
+import base64
+
+encoded = base64.b64encode(b"hello world")
+decoded = base64.b64decode(encoded)
+url_safe = base64.urlsafe_b64encode(b"\xfb\xff")
+from_str = base64.b64decode("YWJj")
+```
+
+```python
+# POOP
+encoded = b"hello world".b64encode()
+decoded = encoded.b64decode()
+url_safe = b"\xfb\xff".urlsafe_b64encode()
+from_str = "YWJj".b64decode()
+```
+
+> All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.

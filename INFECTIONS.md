@@ -793,6 +793,19 @@ The set of constants is built at import time by enumerating `dir(errno)` rather 
 
 `getpass` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/getpass.py` — namespace-only, no AST rewrite.
 
+### base64 — methods on `Bytes` and `Str`
+
+Python's `base64.*` is reachable as **methods on the value**, not a namespace. Both `Bytes` (encode + decode) and `Str` (decode only) carry the full surface:
+
+| Direction | Receivers | Methods |
+|---|---|---|
+| Encode | `Bytes` | `b16encode`, `b32encode`, `b32hexencode`, `b64encode`, `standard_b64encode`, `urlsafe_b64encode`, `a85encode`, `b85encode`, `z85encode` |
+| Decode | `Bytes`, `Str` | `b16decode`, `b32decode`, `b32hexdecode`, `b64decode`, `standard_b64decode`, `urlsafe_b64decode`, `a85decode`, `b85decode`, `z85decode` |
+
+Every method takes no arguments (v0.13.0 ships Python's defaults; optional kwargs like `altchars`/`validate`/`casefold` are deferred to Future work). Encoders return `Bytes` (ASCII-bearing), mirroring `base64.<name>(b)` in Python — callers wanting a textual `Str` must explicitly `.decode(Str("ascii"))` afterward, exactly as in Python. Decoders also return `Bytes`.
+
+No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
+
 ### secrets — `poop/types/secrets.py` + `poop/transformers/secrets.py`
 
 `secrets` is a cryptographic-secure-only namespace mirroring Python's `secrets` module. POOP deliberately separates secure (`secrets`) from non-secure (`random`) randomness to match Python's API split exactly.

@@ -77,70 +77,6 @@ the boundary.
 - `uuid.SafeUUID` exposed as a dedicated POOP enum type — flatten
   to a `Str` token instead.
 
-## Expose `base64` as POOP messages
-
-Python's `base64` module is unreachable from POOP today. Encoding
-bytes to text and back is a foundational primitive (data URIs, JWT
-headers, Basic auth, embedded blobs) and POOP source has no path
-to it.
-
-Smalltalk's Network-Url package in Pharo puts these messages on the
-value: `'abc' asByteArray base64Encoded`. POOP adopts the
-message-on-value direction but **keeps Python's exact function
-names and return types** so the interface mirrors `base64.*`
-literally.
-
-**Proposal — methods on `Bytes` (encode/decode) and `Str` (decode
-only), no new namespace.**
-
-1. **Encode on `Bytes`** (each returns `Bytes`, matching Python —
-   the encoded value is ASCII-bearing `Bytes`, not `Str`):
-   - `.b16encode()`, `.b32encode()`, `.b32hexencode()` (Python 3.10+),
-     `.b64encode()`, `.standard_b64encode()`, `.urlsafe_b64encode()`,
-     `.a85encode()`, `.b85encode()`, `.z85encode()` (Python 3.13+)
-2. **Decode on `Bytes`** (each returns `Bytes`):
-   - `.b16decode()`, `.b32decode()`, `.b32hexdecode()`,
-     `.b64decode()`, `.standard_b64decode()`,
-     `.urlsafe_b64decode()`, `.a85decode()`, `.b85decode()`,
-     `.z85decode()` (Python 3.13+)
-3. **Decode on `Str`** (each returns `Bytes`) — every variant whose
-   Python counterpart accepts a `str` input:
-   - `.b16decode()`, `.b32decode()`, `.b32hexdecode()`,
-     `.b64decode()`, `.standard_b64decode()`,
-     `.urlsafe_b64decode()`, `.a85decode()`, `.b85decode()`,
-     `.z85decode()` (Python 3.13+)
-
-No new POOP type, no `Base64Transformer`, no AST rewrite — the
-methods are registered on the existing `Bytes` and `Str` types.
-
-**Type discipline:** every method takes and returns POOP types —
-`Bytes` and `Str` only. No `bytes` / `str` leaks. Method names,
-parameter shapes, and return types mirror `base64.<name>` exactly.
-Note that callers wanting a `Str` representation of an encoded
-value must explicitly `.decode('ascii')` the returned `Bytes`,
-exactly as in Python.
-
-**Smalltalk reference.**
-
-| Python | Smalltalk (Pharo, Network-Url) | Notes |
-|---|---|---|
-| `base64.b64encode(b)` | `b base64Encoded` | POOP keeps Python name: `b.b64encode()` |
-| `base64.b64decode(s)` | `s base64Decoded` | POOP keeps Python name |
-| `base64.urlsafe_b64encode(b)` | `b base64UrlEncoded` | POOP keeps Python name |
-| `base64.b16encode(b)` | `b hex` | Pharo conflates b16 and hex; POOP keeps Python's `.b16encode()` |
-| `base64.a85encode` / `b85encode` | (no native) | rarely used |
-
-**Out of scope (for v1):**
-
-- Optional kwargs on individual encoders/decoders — v1 ships the
-  defaults Python ships. Specifically deferred: `altchars` and
-  `validate` on `b64encode`/`b64decode`, `casefold` and `map01` on
-  `b32decode`/`b32hexdecode` and `b16decode`, `foldspaces` /
-  `wrapcol` / `pad` / `adobe` on `a85encode`, `foldspaces` /
-  `adobe` / `ignorechars` on `a85decode`, and `pad` on `b85encode`.
-- Legacy file-oriented helpers (`encode`, `decode`, `encodebytes`,
-  `decodebytes`) — POOP routes file I/O through `Path`.
-
 ## Expose `hashlib` as POOP messages
 
 Python's `hashlib` module is unreachable from POOP today.
@@ -2607,7 +2543,7 @@ each annotated with one of:
 | `json` | proposed | See proposal above |
 | `mailbox` | out | Niche legacy |
 | `mimetypes` | proposed | See proposal above |
-| `base64` | proposed | See proposal above |
+| `base64` | covered | Methods on `Bytes` and `Str` (shipped in v0.13.0) |
 | `binascii` | proposed | See proposal above |
 | `quopri` | out | Niche legacy encoding |
 
@@ -2823,6 +2759,23 @@ Cross-cutting decisions to make first:
   `cmath.*`.
 - Should `cmath` and `math` share predicates that take Complex
   (returning Boolean) or duplicate them per type, like Python does?
+
+### Optional base64 kwargs — from the `base64` proposal (v0.13.0)
+
+v0.13.0 ships the 9 encoders + 9 decoders that mirror `base64.*` with
+their Python defaults. Optional kwargs are deferred: `altchars` and
+`validate` on `b64encode`/`b64decode`, `casefold` and `map01` on
+`b32decode`/`b32hexdecode`/`b16decode`, `foldspaces`/`wrapcol`/`pad`/
+`adobe` on `a85encode`, `foldspaces`/`adobe`/`ignorechars` on
+`a85decode`, and `pad` on `b85encode`. None of these affect the
+common case (encoding/decoding with stdlib defaults); when a real
+caller surfaces, add the kwargs to the relevant `Bytes`/`Str` methods
+and update the type discipline note to allow `Bytes`/`Str` for any
+non-bool flag.
+
+Legacy file-oriented helpers (`base64.encode`, `decode`,
+`encodebytes`, `decodebytes`) are intentionally out of scope — POOP
+routes file I/O through `Path`.
 
 ### `GetPassWarning` — from the `getpass` proposal (v0.11.0)
 
