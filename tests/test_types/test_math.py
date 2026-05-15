@@ -4,6 +4,7 @@ from poop.interpreter import Interpreter
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.math import Math
+from poop.types.tuple import Tuple
 
 
 def test_constant_pi_present() -> None:
@@ -135,3 +136,40 @@ def test_pow_returns_float() -> None:
     result = Math.pow(Float(2.0), Float(10.0))
     assert isinstance(result, Float)
     assert result._value == 1024.0
+
+
+# --- Rounding & float decomposition ---
+
+
+def test_floor_ceil_trunc_return_int() -> None:
+    assert Math.floor(Float(3.7))._value == 3
+    assert isinstance(Math.floor(Float(3.7)), Int)
+    assert Math.ceil(Float(3.2))._value == 4
+    assert isinstance(Math.ceil(Float(3.2)), Int)
+    assert Math.trunc(Float(-3.7))._value == -3
+    assert isinstance(Math.trunc(Float(-3.7)), Int)
+
+
+def test_modf_returns_tuple_of_floats() -> None:
+    result = Math.modf(Float(3.75))
+    assert isinstance(result, Tuple)
+    frac, integ = result._items
+    assert isinstance(frac, Float)
+    assert isinstance(integ, Float)
+    assert frac._value == 0.75
+    assert integ._value == 3.0
+
+
+def test_frexp_returns_tuple_of_float_and_int() -> None:
+    result = Math.frexp(Float(8.0))
+    assert isinstance(result, Tuple)
+    mantissa, exponent = result._items
+    assert isinstance(mantissa, Float)
+    assert isinstance(exponent, Int)
+    assert mantissa._value == 0.5
+    assert exponent._value == 4
+
+
+def test_ldexp() -> None:
+    assert Math.ldexp(Float(0.5), Int(4))._value == 8.0
+    assert isinstance(Math.ldexp(Float(0.5), Int(4)), Float)

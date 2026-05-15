@@ -1,8 +1,11 @@
 import math as _math
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.types.float import Float
 from poop.types.int import Int
+
+if TYPE_CHECKING:
+    from poop.types.tuple import Tuple
 
 
 class Math:
@@ -143,3 +146,35 @@ class Math:
     @staticmethod
     def pow(x: Float, y: Float) -> Float:
         return Float(_math.pow(x._value, y._value))
+
+    # Rounding & float decomposition ------------------------------
+
+    @staticmethod
+    def floor(x: Float) -> Int:
+        return Int(_math.floor(x._value))
+
+    @staticmethod
+    def ceil(x: Float) -> Int:
+        return Int(_math.ceil(x._value))
+
+    @staticmethod
+    def trunc(x: Float) -> Int:
+        return Int(_math.trunc(x._value))
+
+    @staticmethod
+    def modf(x: Float) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        frac, integ = _math.modf(x._value)
+        return Tuple(Float(frac), Float(integ))
+
+    @staticmethod
+    def frexp(x: Float) -> Tuple:
+        from poop.types.tuple import Tuple
+
+        mantissa, exponent = _math.frexp(x._value)
+        return Tuple(Float(mantissa), Int(exponent))
+
+    @staticmethod
+    def ldexp(x: Float, i: Int) -> Float:
+        return Float(_math.ldexp(x._value, i._value))
