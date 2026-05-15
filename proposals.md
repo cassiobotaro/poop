@@ -2276,6 +2276,60 @@ source.
 - `IsolatedAsyncioTestCase` — pairs with the `asyncio` proposal.
 - The `unittest.test_runner` machinery — niche extension point.
 
+## Expose `profile` / `cProfile` / `pstats` as POOP messages
+
+Python's `profile` (pure-Python) and `cProfile` (C-accelerated)
+share the same API for deterministic profiling. `pstats` formats
+the results.
+
+**Proposal — `cProfile` (lowercase module, the C variant is
+default) + `pstats` (lowercase module):**
+
+1. **`cProfile` namespace:**
+   `cProfile.run(command, filename=None, sort=-1) -> NoneClass`,
+   `cProfile.runctx(command, globals, locals, filename=None, sort=-1)`,
+   `cProfile.Profile(timer=None, timeunit=0.0, subcalls=True, builtins=True)` class
+   with `.enable()`, `.disable()`, `.create_stats()`, `.print_stats(sort=-1)`,
+   `.dump_stats(file)`, `.run(cmd)`, `.runctx(cmd, globals, locals)`,
+   `.runcall(func, /, *args, **kwargs)`,
+   context-manager friendly via `With`.
+2. **`pstats` namespace:** `pstats.Stats(*filenames_or_profiles, stream=None)` class
+   with `.add(*filenames_or_profiles)`, `.dump_stats(filename)`,
+   `.sort_stats(*keys) -> Stats`, `.reverse_order()`,
+   `.print_stats(*restrictions)`, `.print_callers(*restrictions)`,
+   `.print_callees(*restrictions)`, `.strip_dirs()`, `.calc_callees()`.
+3. **`pstats.SortKey`** enum: `CALLS`, `CUMULATIVE`, `FILENAME`,
+   `LINE`, `NAME`, `NFL`, `PCALLS`, `STDNAME`, `TIME`.
+
+**Type discipline:** `Path` for filenames, `Str` for sort keys
+(via the `SortKey` enum), POOP `Profile`/`Stats` classes for the
+state objects.
+
+**Out of scope (for v1):** the pure-Python `profile` flavour
+— exposing only `cProfile` is the modern convention; `profile.Profile`
+becomes an alias.
+
+## Expose `timeit` as POOP messages
+
+Python's `timeit` measures small code snippet performance.
+
+**Proposal — `timeit` (lowercase module) + `Timer` class:**
+
+1. **Module-level shortcuts:**
+   `timeit.timeit(stmt='pass', setup='pass', timer=time.perf_counter, number=1000000, globals=None) -> Float`,
+   `timeit.repeat(stmt='pass', setup='pass', timer=time.perf_counter, repeat=5, number=1000000, globals=None) -> List[Float]`,
+   `timeit.default_timer -> Block` (currently `time.perf_counter`).
+2. **`Timer` class:**
+   `Timer(stmt='pass', setup='pass', timer=time.perf_counter, globals=None)`,
+   `.timeit(number=1000000) -> Float`,
+   `.repeat(repeat=5, number=1000000) -> List[Float]`,
+   `.autorange(callback=None) -> Tuple[Int, Float]`,
+   `.print_exc(file=None)`.
+
+**Type discipline:** `Float` for durations, `Int` for counts,
+`List[Float]` for repeat results, `Str` or callable for code
+snippets.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -2556,8 +2610,8 @@ each annotated with one of:
 | `bdb` | out | Debugger framework — depends on introspection |
 | `faulthandler` | out | C-level crash dumps |
 | `pdb` | out | Depends on introspection |
-| `profile` / `cProfile` / `pstats` | audit | `Block.profile()`? |
-| `timeit` | audit | `Block.benchmark()` |
+| `profile` / `cProfile` / `pstats` | proposed | See proposal above |
+| `timeit` | proposed | See proposal above |
 | `trace` | out | Depends on introspection |
 | `tracemalloc` | out | Depends on introspection |
 
