@@ -1263,6 +1263,30 @@ Python's `configparser` parses INI-style config files.
 **Type discipline:** `Str` for sections/options/values; `Boolean`/
 `Int`/`Float` for typed getters.
 
+## Expose `hmac` as POOP messages
+
+Python's `hmac` implements RFC 2104 keyed-hash message
+authentication. Pairs naturally with `hashlib`.
+
+**Proposal — `hmac` (lowercase module) + `HMAC` class:**
+
+1. **Module-level shortcuts:**
+   `hmac.new(key, msg=None, digestmod=hashlib.sha256) -> HMAC`,
+   `hmac.digest(key, msg, digest) -> Bytes` (one-shot, constant-
+   time-friendly),
+   `hmac.compare_digest(a, b, /) -> Boolean` (delegate of
+   `secrets.compare_digest`).
+2. **`HMAC` class** mirroring `Hash` from `hashlib`:
+   `.update(msg) -> NoneClass`, `.digest() -> Bytes`,
+   `.hexdigest() -> Str`, `.copy() -> HMAC`,
+   `.digest_size -> Int`, `.block_size -> Int`, `.name -> Str`.
+
+**Type discipline:** `Bytes` for keys/messages/digests, `Str` for
+hex, `Boolean` for `compare_digest`.
+
+**Out of scope (for v1):** the legacy `digestmod=None` default
+(deprecated in Python).
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -1413,7 +1437,7 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `hashlib` | proposed | See proposal above |
-| `hmac` | audit | Pairs with `hashlib` |
+| `hmac` | proposed | See proposal above |
 | `secrets` | proposed | See proposal above |
 
 ### Generic Operating System Services
