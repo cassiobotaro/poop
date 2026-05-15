@@ -455,6 +455,59 @@ classes, `Float` for `numeric`, `Boolean` for `is_normalized`.
 
 **Out of scope (for v1):** the internal `ucd_3_2_0` private object.
 
+## Expose `struct` as POOP messages
+
+Python's `struct` packs/unpacks binary data via format strings (`I`,
+`H`, `<i`, `>Q`, …). Unreachable from POOP today; necessary for
+binary file formats and network protocols.
+
+**Proposal — `struct` (lowercase module) + `Struct` class:**
+
+1. **Module-level shortcuts** (each takes a format `Str`):
+   `struct.pack(format, *values) -> Bytes`,
+   `struct.unpack(format, buffer) -> Tuple`,
+   `struct.pack_into(format, buffer, offset, *values) -> NoneClass`,
+   `struct.unpack_from(format, buffer, offset=0) -> Tuple`,
+   `struct.iter_unpack(format, buffer) -> Map`,
+   `struct.calcsize(format) -> Int`.
+2. **`Struct` class** — pre-compiled format for reuse:
+   - `Struct(format)` constructor
+   - `.pack`, `.unpack`, `.pack_into`, `.unpack_from`,
+     `.iter_unpack` mirroring module-level
+   - `.format -> Str`, `.size -> Int`
+3. **`struct.error`** — POOP error type for format mismatches.
+
+**Type discipline:** `Bytes` in/out for buffers, `Tuple` for
+unpacked values (each element wrapped to POOP type per format char),
+`Int` for sizes/offsets.
+
+## Expose `codecs` as POOP messages
+
+Python's `codecs` is the codec registry behind `str.encode` /
+`bytes.decode`. Most use is already covered by `Str.encode` /
+`Bytes.decode` on POOP types; the module is needed for less common
+codecs (`rot_13`, `hex_codec`, `base64_codec`) and incremental
+encoders.
+
+**Proposal — `codecs` (lowercase module) namespace, narrow surface:**
+
+1. **Codec lookup:** `codecs.encode(obj, encoding='utf-8', errors='strict') -> Bytes`,
+   `codecs.decode(obj, encoding='utf-8', errors='strict') -> Str`.
+2. **BOMs (constants):** `codecs.BOM_UTF8`, `BOM_UTF16`,
+   `BOM_UTF16_LE`, `BOM_UTF16_BE`, `BOM_UTF32`, `BOM_UTF32_LE`,
+   `BOM_UTF32_BE` (each `Bytes`).
+3. **Lookup metadata:** `codecs.lookup(encoding) -> CodecInfo`
+   returning a POOP record with `.name`, `.encode`, `.decode`,
+   `.incrementalencoder`, `.incrementaldecoder`.
+
+**Type discipline:** `Bytes`/`Str` end-to-end. No leaks.
+
+**Out of scope (for v1):**
+
+- Incremental encoder/decoder API and `StreamReader`/`StreamWriter`
+  — pair with future streaming I/O proposal.
+- `register` / `register_error` — extension hooks; defer.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -510,8 +563,8 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `struct` | audit | `Bytes.unpack(fmt)` / `Struct.pack(fmt, …)` — own proposal |
-| `codecs` | audit | Mostly covered by `Str.encode` / `Bytes.decode`; rarer codecs need a call |
+| `struct` | proposed | See proposal above |
+| `codecs` | proposed | See proposal above |
 
 ### Data Types
 
