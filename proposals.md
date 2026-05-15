@@ -1054,6 +1054,154 @@ SQL strings are `Str`; bound parameters are POOP collections.
 **Out of scope (for v1):** `complete_statement` (SQLite-shell-style
 helper), `enable_callback_tracebacks` (debug-only).
 
+## Expose `zlib` as POOP messages
+
+Python's `zlib` provides DEFLATE compression and CRC32/Adler32
+checksums.
+
+**Proposal — `zlib` (lowercase module) + `Compress`/`Decompress`
+classes:**
+
+1. **One-shot:** `zlib.compress(data, level=-1, wbits=15) -> Bytes`,
+   `zlib.decompress(data, wbits=15, bufsize=16384) -> Bytes`.
+2. **Streaming:** `zlib.compressobj(...) -> Compress`,
+   `zlib.decompressobj(...) -> Decompress` with `.compress`,
+   `.decompress`, `.flush`, `.copy` methods.
+3. **Checksums:** `zlib.adler32(data, value=1) -> Int`,
+   `zlib.crc32(data, value=0) -> Int`.
+4. **Constants:** `zlib.MAX_WBITS`, `Z_BEST_COMPRESSION`,
+   `Z_BEST_SPEED`, `Z_DEFAULT_COMPRESSION`, `Z_FILTERED`,
+   `Z_HUFFMAN_ONLY`, etc.
+5. **`zlib.error`** POOP error.
+
+**Type discipline:** `Bytes` in/out, `Int` for checksums and levels.
+
+## Expose `gzip` as POOP messages
+
+Python's `gzip` reads/writes RFC 1952 gzip files; built on `zlib`.
+
+**Proposal — `gzip` (lowercase module) + `GzipFile` class:**
+
+1. **Shortcuts (path-based, POOP convention):**
+   `gzip.compress(data, compresslevel=9) -> Bytes`,
+   `gzip.decompress(data) -> Bytes`,
+   `gzip.open(path, mode='rb', compresslevel=9, ...) -> GzipFile`.
+2. **`GzipFile` class** with `.read`, `.write`, `.close`, `.flush`,
+   `.seek`, `.tell`, used inside `With`.
+
+**Type discipline:** `Bytes` in/out, `Path` for files.
+
+## Expose `bz2` as POOP messages
+
+Mirror of `gzip` for bzip2.
+
+**Proposal — `bz2` (lowercase module) + class set:**
+
+1. **Shortcuts:** `bz2.compress(data, compresslevel=9) -> Bytes`,
+   `bz2.decompress(data) -> Bytes`,
+   `bz2.open(path, mode='rb', compresslevel=9, ...) -> BZ2File`.
+2. **Streaming:** `bz2.BZ2Compressor(compresslevel=9)`,
+   `bz2.BZ2Decompressor()`.
+3. **`BZ2File` class** mirroring `GzipFile`'s shape.
+
+**Type discipline:** identical to `gzip`.
+
+## Expose `lzma` as POOP messages
+
+Mirror of `gzip`/`bz2` for LZMA/XZ.
+
+**Proposal — `lzma` (lowercase module) + class set:**
+
+1. **Shortcuts:** `lzma.compress(data, format=FORMAT_XZ, check=CHECK_NONE, preset=None, filters=None) -> Bytes`,
+   `lzma.decompress(data, format=FORMAT_AUTO, memlimit=None, filters=None) -> Bytes`,
+   `lzma.open(path, mode='rb', *, format=None, check=-1, preset=None, filters=None, encoding=None, errors=None, newline=None) -> LZMAFile`.
+2. **Streaming:** `LZMACompressor`, `LZMADecompressor`.
+3. **Constants:** `FORMAT_XZ`, `FORMAT_ALONE`, `FORMAT_RAW`,
+   `FORMAT_AUTO`, `CHECK_NONE`/`CHECK_CRC32`/`CHECK_CRC64`/
+   `CHECK_SHA256`, `PRESET_DEFAULT`, `PRESET_EXTREME`.
+
+**Type discipline:** identical pattern to `gzip`/`bz2`.
+
+## Expose `zipfile` as POOP messages
+
+Python's `zipfile` reads/writes ZIP archives.
+
+**Proposal — `zipfile` (lowercase module) + class set:**
+
+1. **`ZipFile` class:**
+   `ZipFile(file, mode='r', compression=ZIP_STORED, allowZip64=True, compresslevel=None, *, strict_timestamps=True, metadata_encoding=None)`,
+   plus `.read(name) -> Bytes`, `.write(filename, arcname=None)`,
+   `.writestr(zinfo_or_arcname, data)`, `.extract(member, path=None, pwd=None) -> Path`,
+   `.extractall(path=None, members=None, pwd=None)`,
+   `.namelist() -> List[Str]`, `.infolist() -> List[ZipInfo]`,
+   `.getinfo(name) -> ZipInfo`, `.setpassword(pwd)`,
+   `.testzip() -> Str | NoneClass`, `.close()`.
+2. **`ZipInfo` class** for per-entry metadata.
+3. **`Path` class** in `zipfile.Path` — a POSIX-like API over a
+   ZipFile (already overlaps with POOP `Path`; namespace as
+   `zipfile.Path`).
+4. **Compression constants:** `ZIP_STORED`, `ZIP_DEFLATED`,
+   `ZIP_BZIP2`, `ZIP_LZMA`.
+5. **Errors:** `BadZipFile`, `LargeZipFile`.
+
+**Type discipline:** `Bytes` for content, `Path` for filesystem,
+`Str` for archive names.
+
+## Expose `tarfile` as POOP messages
+
+Python's `tarfile` reads/writes TAR archives (uncompressed +
+gzip/bz2/lzma compressed).
+
+**Proposal — `tarfile` (lowercase module) + class set:**
+
+1. **`TarFile` class** with `.open(name, mode='r')`-style class
+   methods (or POOP factory),
+   `.add(name, arcname=None, recursive=True, *, filter=None)`,
+   `.extract(member, path='', set_attrs=True, *, numeric_owner=False, filter=None)`,
+   `.extractall(path='.', members=None, *, numeric_owner=False, filter='data')`,
+   `.list(verbose=True, *, members=None)`,
+   `.getnames() -> List[Str]`,
+   `.getmember(name) -> TarInfo`,
+   `.getmembers() -> List[TarInfo]`,
+   `.close()`.
+2. **`TarInfo` class** for per-entry metadata.
+3. **Constants:** `tarfile.DEFAULT_FORMAT`, `USTAR_FORMAT`,
+   `GNU_FORMAT`, `PAX_FORMAT`, `ENCODING`.
+4. **Filters** (3.12+ security): `tarfile.data_filter`,
+   `fully_trusted_filter`, `tar_filter` for safe extraction.
+5. **Errors:** `TarError`, `ReadError`, `CompressionError`,
+   `StreamError`, `ExtractError`, `HeaderError`, `FilterError`,
+   `AbsolutePathError`, `OutsideDestinationError`,
+   `SpecialFileError`, `AbsoluteLinkError`, `LinkOutsideDestinationError`.
+
+**Type discipline:** `Bytes` content, `Path` filesystem, `Str`
+archive names.
+
+**Out of scope (for v1):** the historical `is_tarfile(path) -> Boolean`
+module function — promoted to `TarFile.is_tarfile(path)` class
+method per modern Python convention.
+
+## Expose `compression` as POOP messages
+
+Python 3.14 introduces `compression` as an umbrella package
+exposing sub-modules `compression.gzip`, `compression.bz2`,
+`compression.lzma`, `compression.zlib`, `compression.zstd`. POOP
+mirrors the umbrella.
+
+**Proposal — `compression` (lowercase namespace) attribute-access
+to the underlying compression modules:**
+
+1. **Attribute namespaces:** `compression.zlib`, `compression.gzip`,
+   `compression.bz2`, `compression.lzma`, `compression.zstd` — each
+   binds the same singleton as the individual lowercase namespace
+   proposals (above).
+2. **No new API surface** beyond the umbrella convenience.
+
+**Type discipline:** inherits from the individual module proposals.
+
+**Out of scope (for v1):** anything in `compression.zstd` until
+Python 3.14's API stabilises.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -1181,13 +1329,13 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `zlib` | audit | `Bytes.compress()` / `Bytes.decompress()` |
-| `gzip` | audit | `Path.gunzip()` / `Path.gzip()` |
-| `bz2` | audit | Same shape as `gzip` |
-| `lzma` | audit | Same shape as `gzip` |
-| `zipfile` | audit | `Zip.open(path)` namespace |
-| `tarfile` | audit | `Tar.open(path)` namespace |
-| `compression` | audit | New 3.14 wrapper namespace — track upstream |
+| `zlib` | proposed | See proposal above |
+| `gzip` | proposed | See proposal above |
+| `bz2` | proposed | See proposal above |
+| `lzma` | proposed | See proposal above |
+| `zipfile` | proposed | See proposal above |
+| `tarfile` | proposed | See proposal above |
+| `compression` | proposed | See proposal above |
 
 ### File Formats
 
