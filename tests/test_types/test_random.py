@@ -25,3 +25,22 @@ def test_same_seed_yields_same_sequence() -> None:
 
 def test_random_reachable_via_interpreter() -> None:
     Interpreter().run_source("Random.random().print()")
+
+
+# --- Bookkeeping ---
+
+
+def test_seed_makes_sequence_deterministic() -> None:
+    r = Random()
+    r.seed(Int(42))
+    first = r.random()._value
+    r.seed(Int(42))
+    second = r.random()._value
+    assert first == second
+
+
+def test_seed_returns_none_singleton() -> None:
+    from poop.types.none import none
+
+    r = Random()
+    assert r.seed(Int(1)) is none

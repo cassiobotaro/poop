@@ -2,9 +2,11 @@ import random as _random
 from typing import TYPE_CHECKING
 
 from poop.types.float import Float
+from poop.types.none import none
 
 if TYPE_CHECKING:
     from poop.types.int import Int
+    from poop.types.none import NoneClass
 
 
 class Random:
@@ -31,6 +33,16 @@ class Random:
 
     def new(self, seed: Int | None = None) -> Random:
         return Random(seed)
+
+    # Bookkeeping ----------------------------------------------------
+
+    def seed(self, a: Int | None = None, version: Int | None = None) -> NoneClass:
+        from poop.types._unwrap import _unwrap
+
+        self._impl.seed(_unwrap(a, None), version=_unwrap(version, 2))
+        return none
+
+    # Core draws -----------------------------------------------------
 
     def random(self) -> Float:
         return Float(self._impl.random())
