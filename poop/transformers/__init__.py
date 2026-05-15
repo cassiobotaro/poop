@@ -6,6 +6,7 @@ from builtins import (
 )
 
 from poop.transformers.base import Transformer
+from poop.transformers.binascii import NAMESPACE as _binascii_namespace
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
@@ -89,6 +90,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_errno_namespace,
     **_getpass_namespace,
     **_secrets_namespace,
+    **_binascii_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
