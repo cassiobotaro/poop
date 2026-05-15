@@ -15,13 +15,86 @@ touching House itself.
 `RandomOrder` uses `Random.sample(coll, coll.len())` — the Python
 idiom for a non-mutating shuffle.
 
-Smalltalk:
-    | house |
-    house := House new
-        orderer:   RandomOrder new;
-        formatter: EchoFormatter new;
-        yourself.
-    Transcript show: house recite.
+Smalltalk (Pharo):
+
+    Object subclass: #DefaultFormatter
+        instanceVariableNames: ''
+        package: 'HouseThatJackBuilt'.
+
+    DefaultFormatter >> format: parts
+        ^ parts.
+
+    Object subclass: #EchoFormatter
+        instanceVariableNames: ''
+        package: 'HouseThatJackBuilt'.
+
+    EchoFormatter >> format: parts
+        "Each entry doubled — equivalent to Ruby's parts.zip(parts).flatten."
+        ^ parts inject: OrderedCollection new into: [:acc :p |
+            acc add: p; add: p; yourself].
+
+    Object subclass: #DefaultOrder
+        instanceVariableNames: ''
+        package: 'HouseThatJackBuilt'.
+
+    DefaultOrder >> order: data
+        ^ data.
+
+    Object subclass: #RandomOrder
+        instanceVariableNames: ''
+        package: 'HouseThatJackBuilt'.
+
+    RandomOrder >> order: data
+        ^ data shuffled.
+
+    Object subclass: #House
+        instanceVariableNames: 'data formatter'
+        classVariableNames: 'DATA'
+        package: 'HouseThatJackBuilt'.
+
+    House class >> initialize
+        DATA := #(
+            'the horse and the hound and the horn that belonged to'
+            'the farmer sowing his corn that kept'
+            'the rooster that crowed in the morn that woke'
+            'the priest all shaven and shorn that married'
+            'the man all tattered and torn that kissed'
+            'the maiden all forlorn that milked'
+            'the cow with the crumpled horn that tossed'
+            'the dog that worried'
+            'the cat that killed'
+            'the rat that ate'
+            'the malt that lay in'
+            'the house that Jack built').
+
+    House class >> new
+        ^ self orderer: DefaultOrder new formatter: DefaultFormatter new.
+
+    House class >> orderer: anOrderer formatter: aFormatter
+        ^ super new setOrderer: anOrderer formatter: aFormatter.
+
+    House >> setOrderer: anOrderer formatter: aFormatter
+        data := anOrderer order: DATA.
+        formatter := aFormatter.
+        ^ self.
+
+    House >> recite
+        ^ String streamContents: [:s |
+            1 to: data size do: [:i | s nextPutAll: (self line: i); cr]].
+
+    House >> line: number
+        ^ String streamContents: [:s |
+            s nextPutAll: 'This is '.
+            (self parts: number)
+                do: [:p | s nextPutAll: p]
+                separatedBy: [s space].
+            s nextPutAll: '.'; cr].
+
+    House >> parts: number
+        ^ formatter format: (data last: number).
+
+    "Usage:"
+    Transcript show: House new recite.
 """
 
 
