@@ -2175,6 +2175,36 @@ interfaces.
 **Type discipline:** all POOP types; `Int` for prefixlen/version,
 `Bytes` for `.packed`, `Str` for textual forms.
 
+## Expose `locale` as POOP messages
+
+Python's `locale` exposes the system's locale-aware formatting:
+currency, decimal separators, month names, collation.
+
+**Proposal — `locale` (lowercase module) namespace:**
+
+1. **Get/set:** `locale.getlocale(category=LC_CTYPE) -> Tuple[Str, Str]`,
+   `locale.setlocale(category, locale=None) -> Str`,
+   `locale.getdefaultlocale() -> Tuple[Str, Str]` (deprecated 3.11+
+   but still in docs),
+   `locale.getpreferredencoding(do_setlocale=True) -> Str`.
+2. **Formatting:** `locale.localeconv() -> Dict`,
+   `locale.format_string(format, val, grouping=False, monetary=False) -> Str`,
+   `locale.currency(val, symbol=True, grouping=False, international=False) -> Str`,
+   `locale.str(val) -> Str`,
+   `locale.atof(string, func=float) -> Float`,
+   `locale.atoi(string) -> Int`,
+   `locale.delocalize(string) -> Str`,
+   `locale.normalize(localename) -> Str`.
+3. **Collation:** `locale.strcoll(string1, string2) -> Int`,
+   `locale.strxfrm(string) -> Str`.
+4. **Constants:** `LC_ALL`, `LC_CTYPE`, `LC_COLLATE`, `LC_TIME`,
+   `LC_MONETARY`, `LC_MESSAGES`, `LC_NUMERIC`, `CHAR_MAX`.
+5. **Errors:** `locale.Error`.
+
+**Type discipline:** `Str` for locale names/values, `Int` for
+category constants and `atoi` results, `Float` for `atof`,
+`Dict` for `localeconv` mapping.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -2416,7 +2446,7 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `gettext` | out | Niche |
-| `locale` | audit | `Locale` namespace |
+| `locale` | proposed | See proposal above |
 
 ### Program Frameworks
 
