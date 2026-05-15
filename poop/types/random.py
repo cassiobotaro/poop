@@ -96,5 +96,50 @@ class Random:
         self._impl.shuffle(x._items)
         return none
 
+    def choices(
+        self,
+        population: Any,
+        weights: Any = None,
+        *,
+        cum_weights: Any = None,
+        k: Int | None = None,
+    ) -> List:
+        from poop.types._unwrap import _unwrap
+        from poop.types.list import List as _List
+
+        # Weights flow through random.choices's internal float arithmetic
+        # (`cum_weights[-1] + 0.0`), which requires Python numerics — so we
+        # unwrap. Population elements stay wrapped because choices just
+        # indexes into them and returns them as-is.
+        weights_seq = None if weights is None else [w._value for w in weights]
+        cum_weights_seq = (
+            None if cum_weights is None else [w._value for w in cum_weights]
+        )
+        k_value = _unwrap(k, 1)
+        picks = self._impl.choices(
+            list(population),
+            weights=weights_seq,
+            cum_weights=cum_weights_seq,
+            k=k_value,
+        )
+        return _List(*picks)
+
+    def sample(
+        self,
+        population: Any,
+        k: Int,
+        *,
+        counts: Any = None,
+    ) -> List:
+        from poop.types.list import List as _List
+
+        counts_seq = None if counts is None else [c._value for c in counts]
+        picks = self._impl.sample(
+            list(population),
+            k._value,
+            counts=counts_seq,
+        )
+        return _List(*picks)
+
 
 _DEFAULT = Random()

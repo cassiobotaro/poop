@@ -163,3 +163,61 @@ def test_shuffle_is_deterministic_with_seed() -> None:
     a_order = [cast(Int, x)._value for x in a._items]
     b_order = [cast(Int, x)._value for x in b._items]
     assert a_order == b_order
+
+
+# --- Collection draws (weighted) ---
+
+
+def test_choices_default_k_is_one() -> None:
+    from poop.types.list import List
+
+    r = Random(Int(0))
+    result = r.choices(List(Int(1), Int(2), Int(3)))
+    assert isinstance(result, List)
+    assert len(result._items) == 1
+
+
+def test_choices_with_k() -> None:
+    from poop.types.list import List
+
+    r = Random(Int(0))
+    result = r.choices(List(Int(1), Int(2), Int(3)), k=Int(5))
+    assert len(result._items) == 5
+    for item in result._items:
+        assert cast(Int, item)._value in (1, 2, 3)
+
+
+def test_choices_with_weights_skews_distribution() -> None:
+    from poop.types.list import List
+
+    r = Random(Int(42))
+    population = List(Int(1), Int(2))
+    weights = List(Int(0), Int(1))  # Always pick 2
+    result = r.choices(population, weights=weights, k=Int(20))
+    for item in result._items:
+        assert cast(Int, item)._value == 2
+
+
+def test_sample_returns_k_without_replacement() -> None:
+    from poop.types.list import List
+
+    r = Random(Int(0))
+    population = List(Int(1), Int(2), Int(3), Int(4), Int(5))
+    result = r.sample(population, Int(3))
+    assert isinstance(result, List)
+    assert len(result._items) == 3
+    # No duplicates
+    values = [cast(Int, item)._value for item in result._items]
+    assert len(set(values)) == 3
+
+
+def test_sample_with_counts() -> None:
+    from poop.types.list import List
+
+    r = Random(Int(0))
+    # population [a, b] with counts [3, 0]: sample only from 'a' (treats as [a,a,a])
+    population = List(Int(1), Int(2))
+    counts = List(Int(3), Int(0))
+    result = r.sample(population, Int(2), counts=counts)
+    for item in result._items:
+        assert cast(Int, item)._value == 1
