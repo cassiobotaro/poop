@@ -536,3 +536,25 @@ bisect.insort(sorted_xs, new_value)
 ```
 
 > `bisect`/`insort` are aliases for `bisect_right`/`insort_right`, matching CPython. Index queries return POOP `Int`; insertion mutators return `none` and mutate the `List` in place. `key` is a Python callable.
+
+## Heap queue (`heapq` module)
+
+```python
+# Python
+import heapq
+
+heapq.heappush(heap, item)
+smallest = heapq.heappop(heap)
+top3 = heapq.nlargest(3, data)
+sorted_merge = list(heapq.merge(*iterables))
+```
+
+```python
+# POOP
+heapq.heappush(heap, item)
+smallest = heapq.heappop(heap)
+top3 = heapq.nlargest(3, data)
+sorted_merge = heapq.merge(*iterables).to_list()
+```
+
+> `heapq` operates on POOP `List` in place — `heappush`/`heappop`/`heapify` are mutators that return `none` (`heappop` returns the popped element). `heapq.merge` returns a `HeapMerge` lazy iterator with `.to_list()` to materialize.

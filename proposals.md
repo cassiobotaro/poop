@@ -486,30 +486,6 @@ leap predicate, `Str` for formatted output.
 - `HTMLCalendar`, `LocaleTextCalendar`, `LocaleHTMLCalendar` —
   niche output formats.
 
-## Expose `heapq` as POOP messages
-
-Python's `heapq` implements a binary min-heap on a regular list.
-The functions mutate the underlying list in-place.
-
-**Proposal — `heapq` (lowercase module) namespace, no new POOP
-type (operations work on POOP `List`):**
-
-1. **In-place operations** (each returns `none`, mutates the list):
-   `heapq.heappush(heap, item)`, `heapq.heappop(heap) -> element`,
-   `heapq.heappushpop(heap, item) -> element`,
-   `heapq.heapreplace(heap, item) -> element`,
-   `heapq.heapify(x) -> NoneClass`.
-2. **Queries:**
-   `heapq.nlargest(n, iterable, key=None) -> List`,
-   `heapq.nsmallest(n, iterable, key=None) -> List`,
-   `heapq.merge(*iterables, key=None, reverse=False) -> Map`.
-
-**Type discipline:** POOP `List` in, POOP elements out. `heappop`
-on an empty heap raises `IndexError` (Python's behaviour).
-
-**Out of scope (for v1):** `_heapify_max` and the other private
-max-heap variants.
-
 ## Expose `array` as POOP messages
 
 Python's `array.array` is a homogeneous, memory-compact sequence.
@@ -2257,7 +2233,7 @@ each annotated with one of:
 | `zoneinfo` | proposed | See proposal above |
 | `calendar` | proposed | See proposal above |
 | `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |
-| `heapq` | proposed | See proposal above |
+| `heapq` | covered | `heapq` namespace + `HeapMerge` (shipped in v0.22.0) |
 | `bisect` | covered | `bisect` namespace (shipped in v0.21.0) |
 | `array` | proposed | See proposal above |
 | `weakref` | proposed | See proposal above |

@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Try`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Try`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -959,6 +959,25 @@ Two namespace entries follow the `random`/`Random` and `mimetypes`/`MimeTypes` c
 `key` is a Python callable applied to elements during comparison; insertion mutators follow POOP's mutator convention (return `none`).
 
 `bisect` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/bisect.py` — namespace-only, no AST rewrite.
+
+### heapq — `poop/types/heapq.py` + `poop/transformers/heapq.py`
+
+`heapq` mirrors Python's `heapq` module — a binary min-heap on a regular POOP `List`. No new POOP type for the heap itself; operations mutate the underlying buffer.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `heapq.heappush(heap, item)` | `none` | in-place |
+| `heapq.heappop(heap)` | element | raises `IndexError` on empty |
+| `heapq.heappushpop(heap, item)` | element | one-step push+pop |
+| `heapq.heapreplace(heap, item)` | element | one-step pop+push |
+| `heapq.heapify(x)` | `none` | in-place rearrangement |
+| `heapq.nlargest(n, iterable, key=none)` | `List` | sorted descending |
+| `heapq.nsmallest(n, iterable, key=none)` | `List` | sorted ascending |
+| `heapq.merge(*iterables, key=none, reverse=false)` | `HeapMerge` | lazy iterator with `.to_list()` |
+
+Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
+
+`heapq` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/heapq.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

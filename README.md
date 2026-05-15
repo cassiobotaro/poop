@@ -78,6 +78,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `copy.deepcopy(x)` | `copy.deepcopy(x)` |
 | `pprint.pformat(x)` | `pprint.pformat(x)` |
 | `bisect.insort(xs, n)` | `bisect.insort(xs, n)` |
+| `heapq.heappush(h, x)` | `heapq.heappush(h, x)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
