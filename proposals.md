@@ -2205,6 +2205,29 @@ currency, decimal separators, month names, collation.
 category constants and `atoi` results, `Float` for `atof`,
 `Dict` for `localeconv` mapping.
 
+## Expose `shlex` as POOP messages
+
+Python's `shlex` parses simple shell-like syntax: `split`, `join`,
+`quote`. Useful for safe command-line construction.
+
+**Proposal — `shlex` (lowercase module) + `Shlex` class:**
+
+1. **Module-level shortcuts:**
+   `shlex.split(s, comments=False, posix=True) -> List[Str]`,
+   `shlex.join(split_command) -> Str`,
+   `shlex.quote(s) -> Str` (shell-safe escape).
+2. **`Shlex` class** for streaming/iterative lexing:
+   `Shlex(instream=None, infile=None, posix=False, punctuation_chars=False)`,
+   `.get_token() -> Str | NoneClass`,
+   `.read_token() -> Str | NoneClass`,
+   `.sourcehook(filename)`,
+   attributes `.commenters`, `.wordchars`, `.whitespace`,
+   `.escape`, `.quotes`, `.escapedquotes`,
+   `.whitespace_split`, `.infile`, `.source`, `.lineno`,
+   `.debug`, `.token`.
+
+**Type discipline:** `Str` in/out, `List[Str]` for `split`.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -2455,7 +2478,7 @@ each annotated with one of:
 | `turtle` | out | Educational graphics |
 | `turtledemo` | out | Pairs with `turtle` |
 | `cmd` | out | REPL framework |
-| `shlex` | audit | `Str.shell_split()` |
+| `shlex` | proposed | See proposal above |
 
 ### Graphical User Interfaces
 
