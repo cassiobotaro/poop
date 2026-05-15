@@ -2,130 +2,500 @@
 
 ## Expose `math` functions as POOP messages
 
-Python's `math` module is currently unreachable from POOP code because
-imports are forbidden. There is no idiomatic way to compute `sqrt`,
-`sin`, `log`, etc. in POOP source today.
+Python's `math` module is currently unreachable from POOP code
+because imports are forbidden. There is no idiomatic way to compute
+`sqrt`, `sin`, `log`, etc. in POOP source today.
 
-Smalltalk handles this with **messages on numbers** — `2 sqrt`, `1.0 sin`,
-`100 ln`, `30 degreesToRadians sin`. There is no `Math` global; the
-behavior lives on `Number` (and concretely on `Float`). POOP should
-adopt the same model where it fits, with a pragmatic fallback for
-multi-argument helpers and constants.
+Smalltalk would handle this with **messages on numbers** —
+`2 sqrt`, `1.0 sin`, `100 ln` — keeping behaviour on `Number` /
+`Float` rather than in a `Math` global. An earlier draft of this
+proposal adopted that hybrid model (unary methods on `Int` /
+`Float`, namespace for multi-arg). **This revision drops the hybrid
+in favour of a strict Python mirror**, so the interface matches the
+rule used by every other stdlib proposal: same function names, same
+parameter order, same return types as `math.*`.
 
-**Proposal — hybrid model:**
+**Proposal — every operation lives on the `Math` namespace,
+mirroring `math.<name>` exactly.**
 
-1. **Unary functions become methods on `Int` / `Float`.** The receiver
-   is obvious and the message reads naturally:
-   - `(2.0).sqrt()`, `(2.0).sin()`, `(2.0).cos()`, `(2.0).tan()`
-   - `(2.0).asin()`, `(2.0).acos()`, `(2.0).atan()`
-   - `(2.0).sinh()`, `(2.0).cosh()`, `(2.0).tanh()`
-   - `(2.0).asinh()`, `(2.0).acosh()`, `(2.0).atanh()`
-   - `(2.0).exp()`, `(2.0).log()`, `(2.0).log2()`, `(2.0).log10()`,
-     `(2.0).log1p()`
-   - `(2.0).floor()`, `(2.0).ceil()`, `(2.0).trunc()`
-   - `(0.5).degrees()`, `(0.5).radians()` (Python's `math.degrees` /
-     `math.radians`)
-   - `(0.5).erf()`, `(0.5).erfc()`, `(0.5).gamma()`, `(0.5).lgamma()`
-   - `(n).factorial()` (Int only)
-   - `(a).is_finite()`, `(a).is_infinite()`, `(a).is_nan()` (already
-     fits the `is_xxx() -> Boolean` pattern)
-2. **Binary / multi-argument helpers become a `Math` namespace-only
-   object** (same family as `Try` / `With` / `Path`):
-   - `Math.atan2(y, x)`, `Math.hypot(x, y, ...)`, `Math.copysign(x, y)`,
-     `Math.gcd(a, b)`, `Math.lcm(a, b)`, `Math.dist(p, q)`,
-     `Math.fmod(a, b)`, `Math.remainder(a, b)`, `Math.comb(n, k)`,
-     `Math.perm(n, k)`, `Math.fsum(iterable)`, `Math.prod(iterable)`,
-     `Math.isclose(a, b, ...)`
-3. **Constants live on `Math`:** `Math.pi`, `Math.e`, `Math.tau`,
-   `Math.inf`, `Math.nan`. Methods returning `Float`.
+1. **Number theory** (integer in, integer out):
+   - `Math.factorial(n)`, `Math.gcd(*args)`, `Math.lcm(*args)`,
+     `Math.comb(n, k)`, `Math.perm(n, k)`, `Math.isqrt(n)`
+2. **Trigonometric:**
+   - `Math.sin(x)`, `Math.cos(x)`, `Math.tan(x)`
+   - `Math.asin(x)`, `Math.acos(x)`, `Math.atan(x)`,
+     `Math.atan2(y, x)`
+3. **Hyperbolic:**
+   - `Math.sinh(x)`, `Math.cosh(x)`, `Math.tanh(x)`
+   - `Math.asinh(x)`, `Math.acosh(x)`, `Math.atanh(x)`
+4. **Exponential / logarithmic / power:**
+   - `Math.exp(x)`, `Math.expm1(x)`, `Math.exp2(x)`
+   - `Math.log(x, base)` (positional `base` optional, defaults to
+     natural log), `Math.log2(x)`, `Math.log10(x)`, `Math.log1p(x)`
+   - `Math.sqrt(x)`, `Math.cbrt(x)`, `Math.pow(x, y)`
+5. **Rounding and float decomposition:**
+   - `Math.floor(x)`, `Math.ceil(x)`, `Math.trunc(x)`
+   - `Math.modf(x)`, `Math.frexp(x)`, `Math.ldexp(x, i)`
+6. **Angular conversion** (the function name is the *destination*
+   unit, not the input — Python gotcha worth highlighting):
+   - `Math.degrees(x)` (radians → degrees),
+     `Math.radians(x)` (degrees → radians)
+7. **Float utilities:**
+   - `Math.fabs(x)`, `Math.copysign(x, y)`, `Math.fmod(x, y)`,
+     `Math.remainder(x, y)`, `Math.fma(x, y, z)` (Python 3.13+),
+     `Math.ulp(x)`, `Math.nextafter(x, y, steps=1)`
+8. **Predicates** (return `Boolean`):
+   - `Math.isfinite(x)`, `Math.isinf(x)`, `Math.isnan(x)`,
+     `Math.isclose(a, b, rel_tol, abs_tol)`
+9. **Aggregates over iterables / tuples:**
+   - `Math.fsum(iterable)`, `Math.prod(iterable, start)`,
+     `Math.sumprod(p, q)` (Python 3.12+),
+     `Math.dist(p, q)`, `Math.hypot(*args)`
+10. **Special functions:**
+    - `Math.erf(x)`, `Math.erfc(x)`,
+      `Math.gamma(x)`, `Math.lgamma(x)`
+11. **Constants:**
+    - `Math.pi`, `Math.e`, `Math.tau`, `Math.inf`, `Math.nan`
 
-`MathTransformer` is **namespace-only** (no AST rewrite); it injects
-`Math` into `DEFAULT_NAMESPACE` like `Try` / `With` / `Path`.
+`MathTransformer` is **namespace-only** (no AST rewrite); it
+injects `Math` into `DEFAULT_NAMESPACE` like `Try` / `With` /
+`Path`. There are **no** new methods on `Int` or `Float` —
+operations that previously read `(2.0).sqrt()` now read
+`Math.sqrt(2.0)`, matching `math.sqrt(2.0)` from Python.
 
-**Type discipline:** every signature exposed by this proposal — the
-new methods on `Int` / `Float`, and every method, attribute, and
-constant on `Math` — takes and returns POOP types (`Int`, `Float`,
-`Boolean`, `List`, ...). No Python primitives leak across the
-boundary, even for convenience or to keep tests shorter. This applies
-both to public-facing annotations and to the runtime values returned.
+`Int` retains the integer-bit messages it already has
+(`.bit_length()`, `.bit_count()`) because those live on Python's
+`int` type directly, not in `math.*`. `Float.is_integer()` stays
+for the same reason (it is on Python's `float`, not in `math`).
 
-**Smalltalk reference.** The mapping below documents where each
-Python operation comes from in Pharo/Squeak and where POOP departs
-from Smalltalk on purpose. "(no native)" means the dialect doesn't
-ship the operation in base; the idiom in the Notes column is what a
-Smalltalker would write.
+**Type discipline:** every method, attribute, and constant on
+`Math` takes and returns POOP types (`Int`, `Float`, `Boolean`,
+`Tuple`). No Python primitives leak across the boundary, even for
+convenience or to keep tests shorter. This applies both to
+public-facing annotations and to the runtime values returned.
 
-*Unary, dispatched on `Int` / `Float`:*
+**Smalltalk reference.** Listed for context — POOP no longer
+follows Smalltalk for math, but the differences are recorded so
+readers can see what was on the table. Every entry below is
+reached in POOP via `Math.<same-python-name>(args)`.
 
-| Python | Smalltalk | Notes |
+| Python (and POOP) | Smalltalk (Pharo) | Notes |
 |---|---|---|
-| `math.sqrt(x)` | `x sqrt` | direct |
-| `math.sin(x)` / `cos` / `tan` | `x sin` / `cos` / `tan` | direct |
-| `math.asin(x)` / `acos` / `atan` | `x arcSin` / `arcCos` / `arcTan` | POOP keeps Python's `asin` etc. for discoverability |
-| `math.sinh(x)` / `cosh` / `tanh` | `x sinh` / `cosh` / `tanh` | Pharo only; older dialects need an extension |
-| `math.asinh(x)` / `acosh` / `atanh` | `x arcSinh` / `arcCosh` / `arcTanh` | same shift as `arcSin` family |
-| `math.exp(x)` | `x exp` | direct |
-| `math.log(x)` | `x ln` | **mismatch**: in Smalltalk `log` = log10, `ln` = natural log; POOP follows Python (`.log()` = natural) |
+| `math.sqrt(x)` | `x sqrt` | unary on receiver — dropped in this revision |
+| `math.sin(x)` / `cos` / `tan` | `x sin` / `cos` / `tan` | dropped from receiver |
+| `math.asin(x)` / `acos` / `atan` | `x arcSin` / `arcCos` / `arcTan` | POOP keeps Python's shorter names |
+| `math.log(x)` (natural) | `x ln` | Smalltalk swaps `log`/`ln`; POOP follows Python |
 | `math.log10(x)` | `x log` | (see above) |
-| `math.log2(x)` | `x log: 2` | Smalltalk uses keyword `log:` for arbitrary base |
-| `math.log1p(x)` | (no native) | `(x + 1) ln` |
-| `math.floor(x)` | `x floor` | direct |
-| `math.ceil(x)` | `x ceiling` | POOP keeps Python's shorter `ceil` |
-| `math.trunc(x)` | `x truncated` | POOP keeps Python's `trunc` |
-| `math.degrees(x)` | `x radiansToDegrees` | **direction inverted**: Python `degrees(x)` is radians→degrees; Smalltalk reads the destination |
-| `math.radians(x)` | `x degreesToRadians` | (same gotcha) |
-| `math.erf(x)` / `erfc` / `gamma` / `lgamma` | (no native) | not in base Pharo; community packages add them |
-| `math.factorial(n)` | `n factorial` | direct, integer only in both |
-| `math.isfinite(x)` | `x isFinite` | direct |
-| `math.isinf(x)` | `x isInfinite` | POOP keeps Smalltalk's clearer `is_infinite()` |
-| `math.isnan(x)` | `x isNaN` | direct |
-
-*Multi-argument, dispatched on `Math`:*
-
-| Python | Smalltalk | Notes |
-|---|---|---|
-| `math.atan2(y, x)` | `y arcTan: x` | Smalltalk uses keyword msg with `y` as receiver; `Math.atan2(y, x)` reads more clearly than `(y).atan2(x)` |
-| `math.hypot(x, y, ...)` | `x hypot: y` | Pharo only covers 2D — POOP keeps Python's N-dim varargs |
-| `math.copysign(x, y)` | (no native) | idiom: `y sign * x abs` |
-| `math.gcd(a, b, ...)` | `a gcd: b` | Smalltalk is binary-only; POOP keeps Python's varargs |
-| `math.lcm(a, b, ...)` | `a lcm: b` | same as `gcd` |
-| `math.dist(p, q)` | `(3 @ 4) dist: (0 @ 0)` | Smalltalk has it on `Point` (2D); for N-dim, loop |
-| `math.fmod(a, b)` | (no exact) | Smalltalk's `\\` is floor-mod; `fmod` is trunc-mod — different on negatives |
-| `math.remainder(a, b)` | (no native) | IEEE 754 remainder; manual implementation |
-| `math.comb(n, k)` / `perm(n, k)` | (no native) | extension package in Pharo |
-| `math.fsum(iter)` | `iter sum` | Pharo's `Collection>>#sum` exists; `fsum` adds Kahan summation |
-| `math.prod(iter)` | (no native) | idiom: `iter inject: 1 into: [:a :b ǀ a * b]` |
-| `math.isclose(a, b)` | `a closeTo: b` | Pharo has it with a default tolerance |
-
-*Constants on `Math`:*
-
-| Python | Smalltalk | Notes |
-|---|---|---|
-| `math.pi` | `Float pi` | class-side method on `Float` |
-| `math.e` | `Float e` | class-side |
-| `math.tau` | (no native) | not standard in Smalltalk; would be `Float pi * 2` |
-| `math.inf` | `Float infinity` | class-side; POOP keeps Python's shorter `inf` |
-| `math.nan` | `Float nan` | class-side |
-
-A pure-Smalltalk port would put the constants on `Float` class-side
-(`Float.pi`) instead of `Math.pi`, and dispatch all binary ops
-through keyword messages on the receiver. POOP chooses `Math` for
-those cases for readability with Python eyes; the table makes the
-divergence explicit so future readers can see the trade.
+| `math.log(x, base)` | `x log: base` | keyword msg in Smalltalk |
+| `math.ceil(x)` | `x ceiling` | POOP keeps the shorter Python name |
+| `math.trunc(x)` | `x truncated` | POOP keeps the shorter Python name |
+| `math.atan2(y, x)` | `y arcTan: x` | keyword msg on `y` |
+| `math.hypot(x, y, ...)` | `x hypot: y` | Pharo binary-only — POOP's varargs win |
+| `math.gcd(a, b, ...)` | `a gcd: b` | Pharo binary-only |
+| `math.factorial(n)` | `n factorial` | unary on receiver — dropped |
+| `math.isfinite(x)` | `x isFinite` | predicate on receiver — dropped |
+| `math.isinf(x)` | `x isInfinite` | POOP keeps Python's shorter `isinf` |
+| `math.isnan(x)` | `x isNaN` | predicate on receiver — dropped |
+| `math.degrees(x)` | `x radiansToDegrees` | direction inverted — see proposal note |
+| `math.fsum(iter)` | `iter sum` | POOP keeps `Math.fsum` (Kahan summation) |
+| `math.prod(iter)` | `iter inject: 1 into: [:a :b ǀ a * b]` | no native Pharo |
+| `math.isclose(a, b)` | `a closeTo: b` | POOP keeps Python's keyword args |
+| `Math.pi` | `Float pi` | constant on `Float` class side in Smalltalk |
 
 **Out of scope (for v1):**
 
-- The bit/integer-specific helpers (`bit_length`, `bit_count`) already
-  live on `Int` and stay there.
-- `math.frexp` / `math.modf` / `math.ldexp` — niche; defer until
-  someone asks.
-- Complex math (`cmath`) — orthogonal, would need its own proposal.
+- `cmath` (complex math) — orthogonal, would need a separate
+  `Complex` POOP type story.
+- `math.fma` if running on a Python interpreter older than 3.13 —
+  POOP targets 3.14 so it ships.
 
-**Open question:** should `Float`'s `is_finite()` / `is_infinite()` /
-`is_nan()` be class-level on `Math` too (mirroring `math.isfinite(x)`)?
-Argument for both: receiver-method form reads naturally; class-level
-mirror keeps API discoverable for Python users searching for
-`isfinite`. Argument against: duplication for no semantic gain.
+## Expose `uuid` as POOP messages
+
+Python's `uuid` module is unreachable from POOP today (imports are
+forbidden). UUIDs are the default primary-key / correlation-ID
+choice across modern systems, and there is no native way to mint
+or parse one from POOP source.
+
+Smalltalk models this with a class factory on `UUID`: `UUID new`
+mints a v4, `UUID fromString:` parses one, and the instance answers
+`asString`, `version`, `asByteArray`.
+
+**Proposal:**
+
+1. **New POOP type `Uuid`** in `poop/types/uuid.py`, wrapping
+   `uuid.UUID` internally. Instances answer:
+   - `.hex -> Str`, `.urn -> Str`, `.int -> Int`,
+     `.bytes -> Bytes`, `.bytes_le -> Bytes`
+   - `.fields -> Tuple` (6-tuple of `Int`)
+   - `.time_low`, `.time_mid`, `.time_hi_version`,
+     `.clock_seq_hi_variant`, `.clock_seq_low`, `.node`, `.time`,
+     `.clock_seq` — all `Int`
+   - `.version -> Int`, `.variant -> Str`, `.is_safe -> Str`
+     (`"safe"` / `"unsafe"` / `"unknown"`, mirroring `SafeUUID`)
+2. **Namespace `Uuid`** injected into `DEFAULT_NAMESPACE`
+   (`Math`-style, no AST rewrite). Class-side messages:
+   - `Uuid.uuid1(node, clock_seq)`, `Uuid.uuid3(namespace, name)`,
+     `Uuid.uuid4()`, `Uuid.uuid5(namespace, name)`,
+     `Uuid.uuid6(node, clock_seq, timestamp)`, `Uuid.uuid7()`,
+     `Uuid.uuid8(a, b, c)` — every variant Python 3.14 ships
+   - `Uuid.from_string(s)`, `Uuid.from_bytes(b)`,
+     `Uuid.from_bytes_le(b)`, `Uuid.from_int(i)`,
+     `Uuid.from_fields(...)` — factory methods substituting for
+     Python's overloaded `uuid.UUID(hex=..., bytes=..., int=...)`
+     constructor, since POOP namespaces are not callable
+   - `Uuid.getnode() -> Int` (mirrors `uuid.getnode()`)
+3. **Constants on `Uuid`** — the four standard namespaces as POOP
+   `Uuid` values:
+   - `Uuid.NAMESPACE_DNS`, `Uuid.NAMESPACE_URL`,
+     `Uuid.NAMESPACE_OID`, `Uuid.NAMESPACE_X500`
+
+`UuidTransformer` is **namespace-only** (no AST rewrite); it
+injects `Uuid` into `DEFAULT_NAMESPACE` like `Math` / `Try` /
+`With` / `Path`.
+
+**Type discipline:** every signature exposed by this proposal —
+methods on `Uuid` instances, methods and constants on the `Uuid`
+namespace — takes and returns POOP types (`Uuid`, `Str`, `Bytes`,
+`Int`, `Tuple`). No `uuid.UUID`, raw `bytes`, or `int` leaks across
+the boundary.
+
+**Smalltalk reference.**
+
+| Python | Smalltalk (Pharo) | Notes |
+|---|---|---|
+| `uuid.uuid4()` | `UUID new` | POOP mirrors Python — no `.new()` alias |
+| `uuid.UUID(s)` | `UUID fromString: s` | keyword msg in Smalltalk |
+| `u.hex` | `u asString36 copyWithout: $-` | Pharo has no direct `.hex` |
+| `u.bytes` | `u asByteArray` | direct |
+| `u.version` | `u version` | direct |
+| `uuid.uuid6` / `7` / `8` | (no native) | new in Python 3.14 |
+
+**Out of scope (for v1):**
+
+- `uuid.SafeUUID` exposed as a dedicated POOP enum type — flatten
+  to a `Str` token instead.
+
+## Expose `secrets` as POOP messages
+
+Python's `secrets` module is unreachable from POOP today. Without
+it, POOP source cannot mint cryptographically-secure tokens, draw
+secure random integers, or compare digests in constant time —
+operations every auth-aware program needs.
+
+Smalltalk has no equivalent in the base image; Pharo's Cryptography
+package adds `SecureRandom`, but the choice is non-canonical. POOP
+follows Python here.
+
+**Proposal:**
+
+1. **Namespace `Secrets`** injected into `DEFAULT_NAMESPACE`
+   (`Math`-style, no AST rewrite). No new POOP type.
+2. **Token minting:**
+   - `Secrets.token_bytes(nbytes=32) -> Bytes`
+   - `Secrets.token_hex(nbytes=32) -> Str`
+   - `Secrets.token_urlsafe(nbytes=32) -> Str`
+3. **Secure draws:**
+   - `Secrets.choice(coll) -> element` (works on any POOP iterable;
+     element is a POOP type)
+   - `Secrets.randbelow(n) -> Int`
+   - `Secrets.randbits(k) -> Int`
+4. **Constant-time comparison:**
+   - `Secrets.compare_digest(a, b) -> Boolean` (accepts `Str` or
+     `Bytes`; rejects mixed types like Python does)
+
+`SecretsTransformer` is **namespace-only**.
+
+**Type discipline:** every signature exposed by this proposal takes
+and returns POOP types (`Bytes`, `Str`, `Int`, `Boolean`, plus the
+element type for `choice`). No Python primitives leak across the
+boundary.
+
+**Smalltalk reference.** No direct mapping in base Pharo. The
+nearest analog is `Random new` (NOT cryptographically secure) —
+POOP deliberately separates the two: `Random` (proposal pending)
+will be non-secure; `Secrets` is secure-by-default.
+
+**Out of scope (for v1):**
+
+- `secrets.SystemRandom` class wrapper — duplicates `choice` /
+  `randbelow` / `randbits` already on `Secrets`.
+
+## Expose `random` as POOP messages
+
+Python's `random` module is unreachable from POOP today (imports are
+forbidden). Without it, POOP source cannot draw random numbers, pick
+a random element from a collection, shuffle a sequence, or seed a
+deterministic generator — primitives every simulation, game, and
+test fixture needs.
+
+Smalltalk handles randomness on two levels: a `Random` class
+(`Random new` returns a non-secure generator) and messages on
+values (`aCollection atRandom`, `anInteger atRandom`). POOP
+**deliberately does not adopt the Smalltalk message-on-value
+shortcuts** — the interface mirrors Python's `random` module
+exactly, so the only entry points are the `Random` namespace and
+explicit `Random` instances.
+
+**Proposal — exact mirror of Python's `random.Random` instance +
+module-level singleton pattern.**
+
+1. **New POOP type `Random`** in `poop/types/random.py`, wrapping
+   `random.Random`. Instances answer the full Python method set:
+   - **Bookkeeping:** `.seed(a, version)`, `.getstate() -> Tuple`,
+     `.setstate(state)`
+   - **Core draws:** `.random() -> Float` (in `[0.0, 1.0)`),
+     `.uniform(a, b) -> Float`, `.randint(a, b) -> Int` (inclusive
+     both ends), `.randrange(start, stop, step) -> Int`,
+     `.getrandbits(k) -> Int`, `.randbytes(n) -> Bytes`
+   - **Collection draws:** `.choice(coll) -> element`,
+     `.choices(population, weights, k) -> List`,
+     `.sample(population, k, counts) -> List`,
+     `.shuffle(coll)` — in-place, mutates and returns `None`
+     (mirrors Python)
+   - **Distributions:** `.gauss`, `.normalvariate`,
+     `.lognormvariate`, `.expovariate`, `.gammavariate`,
+     `.betavariate`, `.paretovariate`, `.weibullvariate`,
+     `.vonmisesvariate`, `.triangular`, `.binomialvariate`
+     (Python 3.12+) — all returning `Float` or `Int` as in Python.
+2. **Namespace `Random`** (class side of the `Random` POOP type)
+   injected into `DEFAULT_NAMESPACE` (`Math`-style, no AST rewrite).
+   Class-side messages mirror every instance method above by
+   delegating to a hidden module-level singleton, exactly like
+   Python's `random.random()` vs `Random().random()`:
+   - `Random.new(seed)` — substitutes for Python's
+     `random.Random(seed)` constructor call (POOP namespaces are
+     not callable, so this is the one forced naming divergence
+     from Python)
+   - `Random.random()`, `Random.uniform(a, b)`, `Random.randint(a, b)`,
+     `Random.choice(coll)`, `Random.shuffle(coll)`,
+     `Random.sample(coll, k)`, `Random.choices(coll, k=...)`, …
+     — every Python module-level function with the same name and
+     parameter order.
+
+`RandomTransformer` is **namespace-only**; it injects `Random` into
+`DEFAULT_NAMESPACE`. There are **no** new methods on iterables or
+`Int` — anything that would have looked like `coll.at_random()` or
+`(n).at_random()` is reached through `Random.choice(coll)` or
+`Random.randint(1, n)`, which is how a Python program would write it.
+
+**Type discipline:** every signature exposed by this proposal —
+methods on `Random` instances and on the `Random` namespace — takes
+and returns POOP types (`Random`, `Float`, `Int`, `Bytes`, `List`,
+`Tuple`, plus the element type of the receiving collection). No
+`random.Random` instance, raw `float`, or `int` leaks across the
+boundary.
+
+**`random` vs `secrets`.** This proposal is for the non-secure,
+deterministic-when-seeded generator. Anything touching auth, token
+minting, or constant-time comparison goes through `secrets`
+(separate proposal above). POOP keeps the two namespaces strictly
+distinct, exactly as Python does.
+
+**Smalltalk reference.** Listed for context only — POOP's interface
+mirrors Python, not Smalltalk, even where Smalltalk reads more
+naturally.
+
+| Python | Smalltalk (Pharo) | Notes |
+|---|---|---|
+| `random.random()` | `Random new next` | Smalltalk's `next` returns `[0.0, 1.0)`; POOP keeps `.random()` |
+| `random.randint(a, b)` | `a to: b atRandom` | POOP keeps `.randint(a, b)` |
+| `random.choice(coll)` | `coll atRandom` | POOP keeps `Random.choice(coll)` — no `coll.at_random()` mixin |
+| `random.shuffle(seq)` | `seq shuffle` | POOP mutates like Python; non-mutating shuffle = `Random.sample(coll, k=len(coll))` (Python idiom) |
+| `random.sample(pop, k)` | (no native) | POOP keeps `.sample(pop, k)` |
+| `random.seed(a)` | `Random new seed: a` | direct |
+| `Random()` (new instance) | `Random new` | POOP exposes as `Random.new(seed)` — only forced divergence (namespace not callable) |
+| `random.randrange(n)` | `n atRandom` (≠) | **semantics differ**: Smalltalk returns `1..n`, Python returns `0..n-1`. POOP follows Python exactly. |
+
+**Out of scope (for v1):**
+
+- `random.SystemRandom` — duplicates `secrets`; users wanting
+  crypto-secure draws go through `Secrets.*` instead.
+- The `main` entry point (`python -m random`) — niche CLI tool.
+- Internal magic constants (`BPF`, `LOG4`, `NV_MAGICCONST`,
+  `RECIP_BPF`, `SG_MAGICCONST`, `TWOPI`) — Python exposes them but
+  they are implementation detail of the distributions.
+
+## Expose `base64` as POOP messages
+
+Python's `base64` module is unreachable from POOP today. Encoding
+bytes to text and back is a foundational primitive (data URIs, JWT
+headers, Basic auth, embedded blobs) and POOP source has no path
+to it.
+
+Smalltalk's Network-Url package in Pharo puts these messages on the
+value: `'abc' asByteArray base64Encoded`. POOP adopts the
+message-on-value direction but **keeps Python's exact function
+names and return types** so the interface mirrors `base64.*`
+literally.
+
+**Proposal — methods on `Bytes` (encode/decode) and `Str` (decode
+only), no new namespace.**
+
+1. **Encode on `Bytes`** (each returns `Bytes`, matching Python —
+   the encoded value is ASCII-bearing `Bytes`, not `Str`):
+   - `.b16encode()`, `.b32encode()`, `.b32hexencode()` (Python 3.10+),
+     `.b64encode()`, `.standard_b64encode()`, `.urlsafe_b64encode()`,
+     `.a85encode()`, `.b85encode()`
+2. **Decode on `Bytes`** (each returns `Bytes`):
+   - `.b16decode()`, `.b32decode()`, `.b32hexdecode()`,
+     `.b64decode()`, `.standard_b64decode()`,
+     `.urlsafe_b64decode()`, `.a85decode()`, `.b85decode()`
+3. **Decode on `Str`** (each returns `Bytes`) — only the variants
+   where Python's decoder accepts a `str` input:
+   - `.b16decode()`, `.b32decode()`, `.b32hexdecode()`,
+     `.b64decode()`, `.standard_b64decode()`,
+     `.urlsafe_b64decode()`, `.a85decode()`
+   - `Str` has **no `b85decode`** — Python's `base64.b85decode`
+     refuses `str` inputs, and POOP mirrors that strictly.
+
+No new POOP type, no `Base64Transformer`, no AST rewrite — the
+methods are registered on the existing `Bytes` and `Str` types.
+
+**Type discipline:** every method takes and returns POOP types —
+`Bytes` and `Str` only. No `bytes` / `str` leaks. Method names,
+parameter shapes, and return types mirror `base64.<name>` exactly.
+Note that callers wanting a `Str` representation of an encoded
+value must explicitly `.decode('ascii')` the returned `Bytes`,
+exactly as in Python.
+
+**Smalltalk reference.**
+
+| Python | Smalltalk (Pharo, Network-Url) | Notes |
+|---|---|---|
+| `base64.b64encode(b)` | `b base64Encoded` | POOP keeps Python name: `b.b64encode()` |
+| `base64.b64decode(s)` | `s base64Decoded` | POOP keeps Python name |
+| `base64.urlsafe_b64encode(b)` | `b base64UrlEncoded` | POOP keeps Python name |
+| `base64.b16encode(b)` | `b hex` | Pharo conflates b16 and hex; POOP keeps Python's `.b16encode()` |
+| `base64.a85encode` / `b85encode` | (no native) | rarely used |
+
+**Out of scope (for v1):**
+
+- Custom `altchars` parameter for `b64encode` / `b64decode` —
+  `urlsafe_b64encode`/`urlsafe_b64decode` cover the common need.
+- Custom `casefold` / `map01` / `foldspaces` / `wrapcol` / `pad` /
+  `adobe` / `ignorechars` parameters on the various decoders —
+  add later if asked for; v1 ships the defaults Python ships.
+
+## Expose `hashlib` as POOP messages
+
+Python's `hashlib` module is unreachable from POOP today.
+Computing SHA-256, deriving a key with PBKDF2, or checksumming a
+file are common needs that POOP source currently cannot reach.
+
+Smalltalk's Cryptography package in Pharo puts hashing on the
+receiver: `'abc' asByteArray sha256` returns a `ByteArray`. POOP
+follows the same shape but mirrors Python's two-step API
+(`hashlib.sha256(data) -> Hash`, then `.hexdigest()`) so the
+incremental `.update()` path is preserved.
+
+**Proposal:**
+
+1. **New POOP type `Hash`** in `poop/types/hash.py`, wrapping
+   Python's hash object. Instances answer (mirroring Python
+   exactly):
+   - `.update(data) -> None` — mutates internal state, returns
+     `None` like Python (no chaining)
+   - `.digest() -> Bytes`
+   - `.hexdigest() -> Str` (Python's name — single word, no
+     underscore)
+   - `.copy() -> Hash`
+   - `.digest_size -> Int`, `.block_size -> Int`, `.name -> Str`
+2. **Shortcut methods on `Bytes`** — every guaranteed algorithm
+   becomes a unary message returning a `Hash`:
+   - `.md5()`, `.sha1()`, `.sha224()`, `.sha256()`, `.sha384()`,
+     `.sha512()`
+   - `.blake2b()`, `.blake2s()`
+   - `.sha3_224()`, `.sha3_256()`, `.sha3_384()`, `.sha3_512()`
+   - `.shake_128(length)`, `.shake_256(length)` — `length`
+     required by Python for digest size
+3. **Key-derivation messages on `Bytes`** (receiver = password):
+   - `.pbkdf2_hmac(name, salt, iterations, dk_len) -> Bytes`
+   - `.scrypt(salt, n, r, p, max_mem, dk_len) -> Bytes`
+4. **Namespace `Hash`** (class side of the `Hash` POOP type):
+   - `Hash.new(name, data) -> Hash` (generic constructor)
+   - `Hash.algorithms_available -> Set` of `Str`
+   - `Hash.algorithms_guaranteed -> Set` of `Str`
+   - `Hash.file_digest(path, name) -> Hash` (Python 3.11+;
+     `path` is a POOP `Path`)
+
+`HashTransformer` is **namespace-only**; it injects `Hash` into
+`DEFAULT_NAMESPACE` alongside the new methods on `Bytes`.
+
+**Type discipline:** every signature — methods on `Hash`, the
+hash-shortcut and key-derivation methods on `Bytes`, and class-side
+`Hash.*` — takes and returns POOP types (`Hash`, `Bytes`, `Str`,
+`Int`, `Set`, `Path`). No `bytes`, `int`, or raw `hashlib` object
+leaks across the boundary.
+
+**Smalltalk reference.**
+
+| Python | Smalltalk (Pharo Cryptography) | Notes |
+|---|---|---|
+| `hashlib.sha256(b).hexdigest()` | `b sha256 hex` | POOP keeps Python's `.hexdigest()` (no underscore) |
+| `hashlib.sha256(b)`, then `.update(more)` | `SHA256 new accept: b; accept: more; finalHash` | Pharo uses `accept:` |
+| `hashlib.md5(b)` | `b md5` | direct |
+| `hashlib.pbkdf2_hmac(...)` | `PBKDF2 deriveKey: ... salt: ...` | similar shape, different naming |
+| `hashlib.scrypt(...)` | (extension package) | not in base |
+| `hashlib.file_digest(f, n)` | (no native) | Python 3.11+ |
+
+**Out of scope (for v1):**
+
+- `usedforsecurity=False` parameter — adds a flag without changing
+  semantics on most platforms.
+- Per-algorithm custom-init parameters for `blake2b` / `blake2s`
+  (`key`, `salt`, `person`, `node_depth`, …) — niche.
+
+**Open question:** should `Str` also offer the shortcut messages
+(`'abc'.sha256()` encoding utf-8 first), or should it force
+`.encode().sha256()` so the encoding step is explicit? Smalltalk
+implicit-encodes via `asByteArray`; Python explicit-encodes via
+`.encode()`. POOP could go either way.
+
+## Expose `tomllib` as POOP messages
+
+Python's `tomllib` (3.11+) is unreachable from POOP today. TOML
+is the configuration format of choice across modern Python projects
+(`pyproject.toml`, ruff / ty configs) and POOP programs should be
+able to read it.
+
+Smalltalk has no native TOML support; Pharo uses STON / JSON
+instead. POOP follows Python here.
+
+**Proposal:**
+
+1. **Namespace `Toml`** injected into `DEFAULT_NAMESPACE`
+   (`Math`-style, no AST rewrite). No new POOP types — TOML values
+   map onto existing POOP types (`Dict` / `List` / `Str` / `Int` /
+   `Float` / `Boolean` / `DateTime`).
+2. **Parsing — keeping Python's exact names:**
+   - `Toml.loads(s) -> Dict` — direct mirror of `tomllib.loads`,
+     takes a POOP `Str`
+   - `Toml.load(path) -> Dict` — mirror of `tomllib.load`. Python
+     takes a binary file object; POOP takes a POOP `Path` since
+     POOP has no file-object abstraction. This is a forced
+     receiver-type divergence; the message name stays Python's.
+
+`TomlTransformer` is **namespace-only**.
+
+**Type discipline:** every value in the returned `Dict` is a POOP
+type. TOML's `date` / `time` / `datetime` map to POOP's `DateTime`
+once that proposal lands; until then, expose them as ISO-8601
+`Str` so no Python `datetime.datetime` leaks. This is the one
+place the proposal trades full type-coverage for ship-now
+pragmatism, and is documented explicitly so it can be tightened
+later.
+
+**Smalltalk reference.** Pharo has no TOML parser in base. The
+closest analogs are `STON fromString:` and `NeoJSONReader fromString:`
+— class-side parsers returning a generic value. POOP keeps Python's
+`loads` / `load` names rather than Smalltalk's `fromString:`.
+
+**Out of scope (for v1):**
+
+- Write support — Python's `tomllib` is read-only and there is no
+  upstream writer.
+- Custom `parse_float` callback — useful for routing TOML floats
+  into `Decimal`, but pairs with the `decimal` proposal.
 
 ## Audit the rest of the Python stdlib for POOP equivalents
 
@@ -139,7 +509,8 @@ Three Smalltalk patterns are already in use and should guide the
 decision case-by-case:
 
 - **Message on the value** — when the operation belongs to a single
-  receiver (`'abc'.is_digit()`, `(2.0).sqrt()`, `coll.sort()`).
+  receiver (`'abc'.is_digit()`, `path.read_text()`,
+  `bytes.b64encode()`, `coll.sort()`).
 - **Class-with-class-methods (`Math`-style namespace global)** — when
   the operation parses, creates, or combines values (`Random new`,
   `Date today`, `NeoJSONReader fromString:`, `Math.atan2`). In POOP
@@ -211,7 +582,7 @@ each annotated with one of:
 | `cmath` | audit | Deferred by the `math` proposal; needs Complex story |
 | `decimal` | audit | `Decimal` POOP type with full message API |
 | `fractions` | audit | `Fraction` POOP type |
-| `random` | audit | `Random.new()`, `coll.at_random()` (Smalltalk-style) |
+| `random` | proposed | See proposal above |
 | `statistics` | audit | `coll.mean()` / `coll.median()` or `Statistics` namespace |
 
 ### Functional Programming Modules
@@ -266,7 +637,7 @@ each annotated with one of:
 |---|---|---|
 | `csv` | audit | `Csv.parse(s)` / `Path.read_csv()` — own proposal |
 | `configparser` | audit | `Ini.parse(s)` namespace |
-| `tomllib` | audit | `Toml.parse(s)` — read-only, simple |
+| `tomllib` | proposed | See proposal above |
 | `netrc` | out | Niche legacy format |
 | `plistlib` | out | macOS-specific niche |
 
@@ -274,9 +645,9 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `hashlib` | audit | `Str.sha256()` / `Bytes.sha256()` or `Hash` namespace |
+| `hashlib` | proposed | See proposal above |
 | `hmac` | audit | Pairs with `hashlib` |
-| `secrets` | audit | Pairs with `random` |
+| `secrets` | proposed | See proposal above |
 
 ### Generic Operating System Services
 
@@ -325,7 +696,7 @@ each annotated with one of:
 | `json` | audit | `Json.parse(s)` / `Json.dumps(obj)` |
 | `mailbox` | out | Niche legacy |
 | `mimetypes` | audit | `Path.mime_type` message |
-| `base64` | audit | `Bytes.to_base64()` / `Str.from_base64()` |
+| `base64` | proposed | See proposal above |
 | `binascii` | audit | Pairs with `base64` |
 | `quopri` | out | Niche legacy encoding |
 
@@ -350,7 +721,7 @@ each annotated with one of:
 | `poplib` | out | Legacy protocol |
 | `imaplib` | out | Legacy protocol |
 | `smtplib` | audit | `Smtp` namespace if a mail story emerges |
-| `uuid` | audit | `Uuid.new()` class factory |
+| `uuid` | proposed | See proposal above |
 | `socketserver` | out | Pairs with `socket` if ever |
 | `ipaddress` | audit | `IpAddress` POOP type |
 
