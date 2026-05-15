@@ -35,6 +35,7 @@ from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import StrTransformer
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
+from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.zip import ZipTransformer
 
@@ -93,6 +94,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_secrets_namespace,
     **_binascii_namespace,
     **_mimetypes_namespace,
+    **_webbrowser_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
