@@ -23,7 +23,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - **`True`, `False`, and `None` are singletons**: `true`, `false`, and `none` are unique objects — there is exactly one instance of each. All comparisons and identity checks rely on this guarantee.
 - **Constructor builtins are intercepted, not banned**: `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` etc. are class constructors — they ARE object instantiation and fit the OO model. Each transformer intercepts the bare call and rewrites it to return the POOP type via a `_poop_X_from(...)` factory.
 - **Dunders exposed as regular methods**: every relevant dunder on a POOP type gets an alias with the Python name without underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__hash__` → `hash()`, etc. Do not translate to Smalltalk names.
-- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. Only true entry points without an AST rewrite or method equivalent (`Try`, `With`, `Path`) are exposed under their PascalCase names.
+- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. Only true entry points without an AST rewrite or method equivalent (`Try`, `With`, `Path`, `Math`) are exposed under their PascalCase names.
 
 ## Active infections
 
@@ -707,6 +707,31 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 > **Tradeoff**: context managers must implement Python's native protocol (`__enter__`/`__exit__`). POOP cannot redefine resource acquisition semantics without reimplementing every standard context manager (files, locks, etc.), which is impractical.
 
 `With` is exposed in `DEFAULT_NAMESPACE` via `WithTransformer` (`poop/transformers/with_.py`) — a namespace-only transformer that injects the binding without rewriting AST.
+
+### Math — `poop/types/math.py` + `poop/transformers/math.py`
+
+`Math` is a namespace class wrapping Python's `math` module. Exposed as a namespace-only binding by `MathTransformer` (no AST rewrite), in the same family as `Try` / `With` / `Path`. Every public callable in Python 3.14's `math` is reachable as `Math.<same-name>(...)`, with parameter order, keyword-only markers, defaults, and return types mirroring Python exactly.
+
+The five module constants are recased to UPPER_SNAKE_CASE — `math.pi` / `math.e` / `math.tau` / `math.inf` / `math.nan` are exposed as `Math.PI` / `Math.E` / `Math.TAU` / `Math.INF` / `Math.NAN`. This is a deliberate divergence from strict Python mirroring, adopted so the `Math` constants line up with the rest of POOP's stdlib namespace surface (`Uuid.NAMESPACE_DNS`, `Secrets.DEFAULT_ENTROPY`, …); the Python `math` module is the historical outlier that POOP harmonises.
+
+| Category | Operations | Returns |
+|---|---|---|
+| Number theory | `factorial`, `gcd(*ints)`, `lcm(*ints)`, `comb`, `perm(n, k=None)`, `isqrt` | `Int` |
+| Trigonometric | `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2(y, x)` | `Float` |
+| Hyperbolic | `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` | `Float` |
+| Exp / log / power | `exp`, `expm1`, `exp2`, `log(x, base=Math.E)`, `log2`, `log10`, `log1p`, `sqrt`, `cbrt`, `pow` | `Float` |
+| Rounding | `floor`, `ceil`, `trunc` | `Int` |
+| Float decomposition | `modf` → `(Float, Float)`, `frexp` → `(Float, Int)`, `ldexp` | `Tuple` / `Float` |
+| Angular conversion | `degrees`, `radians` | `Float` |
+| Float utilities | `fabs`, `copysign`, `fmod`, `remainder`, `fma`, `ulp`, `nextafter(x, y, *, steps=None)` | `Float` |
+| Predicates | `isfinite`, `isinf`, `isnan`, `isclose(a, b, *, rel_tol=1e-9, abs_tol=0.0)` | `Boolean` |
+| Aggregates | `fsum`, `prod(iter, *, start=1)`, `sumprod`, `dist`, `hypot(*args)` | `Float` / `Int` |
+| Special functions | `erf`, `erfc`, `gamma`, `lgamma` | `Float` |
+| Constants | `PI`, `E`, `TAU`, `INF`, `NAN` | `Float` |
+
+POOP `Int` and `Float` keep methods that are native to Python's `int` and `float` (`bit_length`, `bit_count`, `is_integer`, `as_integer_ratio`) and the substitutes for banned builtins (`Int.abs()`, `Int.pow()`, `Int.divmod()` cover the `no_abs` / `no_pow` / `no_divmod` validators). The math-specific public methods that previously lived on those types (`Int.ceil`/`floor`/`trunc`, `Float.ceil`/`floor`/`trunc`) are removed — `Math.ceil(x)` and friends are the single source of truth.
+
+`Math` is exposed in `DEFAULT_NAMESPACE` via `MathTransformer` (`poop/transformers/math.py`) — a namespace-only transformer that injects the binding without rewriting AST.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

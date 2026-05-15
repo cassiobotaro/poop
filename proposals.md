@@ -623,7 +623,7 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `numbers` | out | ABC hierarchy — POOP has its own type tree |
-| `math` | proposed | See proposal above |
+| `math` | covered | `Math` namespace; see proposal above |
 | `cmath` | audit | Deferred by the `math` proposal; needs Complex story |
 | `decimal` | audit | `Decimal` POOP type with full message API |
 | `fractions` | audit | `Fraction` POOP type |
