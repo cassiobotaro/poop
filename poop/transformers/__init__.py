@@ -17,6 +17,7 @@ from poop.transformers.dict import DictTransformer
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.errno import NAMESPACE as _errno_namespace
 from poop.transformers.float import FloatTransformer
+from poop.transformers.fnmatch import NAMESPACE as _fnmatch_namespace
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
@@ -97,6 +98,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_mimetypes_namespace,
     **_webbrowser_namespace,
     **_glob_namespace,
+    **_fnmatch_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
