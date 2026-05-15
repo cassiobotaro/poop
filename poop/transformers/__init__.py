@@ -41,6 +41,7 @@ from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import StrTransformer
+from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.uuid import NAMESPACE as _uuid_namespace
@@ -113,6 +114,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_shlex_namespace,
     **_uuid_namespace,
     **_json_namespace,
+    **_tomllib_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
