@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `HMAC`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Date`, `DateTime`, `HMAC`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Time`, `TimeDelta`, `TimeZone`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `datetime`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1094,6 +1094,59 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `graphlib.CycleError` | Python exception type | usable with `Try.except_` |
 
 `graphlib` and `TopologicalSorter` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/graphlib.py` — namespace-only, no AST rewrite.
+
+### datetime + Date + Time + DateTime + TimeDelta + TimeZone — `poop/types/datetime.py` + `poop/transformers/datetime.py`
+
+`datetime` mirrors Python's `datetime` module — the canonical date, time, datetime, duration, and fixed-offset timezone types. All five wrapper classes are bound at module scope (`Date`, `Time`, …) and also accessible as `datetime.date`, `datetime.time`, etc. (the latter mirroring CPython's module attributes).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `Date(year, month, day)` | `Date` | |
+| `Date.today()` / `.fromisoformat(s)` / `.fromtimestamp(t)` / `.fromordinal(n)` | `Date` | constructors |
+| `Date.year` / `.month` / `.day` (properties) | `Int` | |
+| `Date.weekday()` / `.isoweekday()` / `.toordinal()` | `Int` | |
+| `Date.isoformat()` / `.strftime(fmt)` | `Str` | |
+| `Date.replace(year=none, month=none, day=none)` | `Date` | |
+| `Date + TimeDelta` | `Date` | |
+| `Date - TimeDelta` | `Date` | |
+| `Date - Date` | `TimeDelta` | |
+| `Time(hour=none, minute=none, second=none, microsecond=none, tzinfo=none)` | `Time` | |
+| `Time.fromisoformat(s)` | `Time` | |
+| `Time.hour` / `.minute` / `.second` / `.microsecond` (properties) | `Int` | |
+| `Time.tzinfo` (property) | `TimeZone \| NoneClass` | |
+| `Time.isoformat()` / `.strftime(fmt)` | `Str` | |
+| `Time.replace(...)` | `Time` | |
+| `DateTime(year, month, day, hour=none, ..., tzinfo=none)` | `DateTime` | |
+| `DateTime.now(tz=none)` / `.utcnow()` / `.fromtimestamp(t, tz=none)` / `.fromisoformat(s)` / `.combine(date, time, tzinfo=none)` | `DateTime` | constructors |
+| `DateTime.date()` / `.time()` | `Date` / `Time` | |
+| `DateTime.timestamp()` | `Float` | |
+| `DateTime.astimezone(tz=none)` | `DateTime` | |
+| `DateTime.weekday()` / `.isoweekday()` | `Int` | |
+| `DateTime.isoformat(sep=none)` / `.strftime(fmt)` | `Str` | |
+| `DateTime.replace(...)` | `DateTime` | |
+| `DateTime + TimeDelta` | `DateTime` | |
+| `DateTime - TimeDelta` | `DateTime` | |
+| `DateTime - DateTime` | `TimeDelta` | |
+| `DateTime < / <= / > / >= DateTime` | `Boolean` | |
+| `TimeDelta(days=none, seconds=none, microseconds=none, milliseconds=none, minutes=none, hours=none, weeks=none)` | `TimeDelta` | |
+| `TimeDelta.days` / `.seconds` / `.microseconds` (properties) | `Int` | |
+| `TimeDelta.total_seconds()` | `Float` | |
+| `TimeDelta + / - TimeDelta` | `TimeDelta` | |
+| `TimeDelta * Int` | `TimeDelta` | |
+| `TimeDelta / Int` | `TimeDelta` | |
+| `TimeDelta / TimeDelta` | `Float` | ratio |
+| `TimeDelta // TimeDelta` | `Int` | floor division |
+| `TimeDelta // Int` | `TimeDelta` | |
+| `TimeDelta % TimeDelta` | `TimeDelta` | |
+| `-TimeDelta` | `TimeDelta` | |
+| `TimeZone(offset, name=none)` | `TimeZone` | |
+| `TimeZone.utc` (class attr) | `TimeZone` | UTC constant |
+| `TimeZone.utcoffset(dt=none)` | `TimeDelta` | |
+| `TimeZone.tzname(dt=none)` | `Str` | |
+
+The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetime.tzinfo`) is out of scope; users get `TimeZone` for fixed offsets. The `Date.min`/`Date.max` class attributes and the `datetime.MINYEAR`/`MAXYEAR` integer constants are deferred until a caller asks for them.
+
+`datetime`, `Date`, `Time`, `DateTime`, `TimeDelta`, and `TimeZone` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/datetime.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

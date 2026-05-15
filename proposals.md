@@ -261,42 +261,6 @@ encoders.
   — pair with future streaming I/O proposal.
 - `register` / `register_error` — extension hooks; defer.
 
-## Expose `datetime` as POOP messages
-
-Python's `datetime` ships five canonical types (`date`, `time`,
-`datetime`, `timedelta`, `tzinfo`) plus `timezone`. Unreachable from
-POOP today and a hard dependency of `tomllib`, logging, file
-metadata, and almost every domain model.
-
-**Proposal — `datetime` (lowercase module) + five POOP classes:**
-
-1. **`Date`** — `Date(year, month, day)`, `Date.today()`,
-   `Date.fromisoformat(s)`, `Date.fromtimestamp(t)`. Properties
-   `.year`/`.month`/`.day`, methods `.weekday()`, `.isoweekday()`,
-   `.isoformat()`, `.strftime(fmt)`, arithmetic with `TimeDelta`.
-2. **`Time`** — `Time(hour, minute, second, microsecond, tzinfo)`,
-   `Time.fromisoformat(s)`. Same property/method shape as `Date`.
-3. **`DateTime`** — `DateTime(year, month, day, hour, …, tzinfo)`,
-   `DateTime.now(tz=None)`, `DateTime.utcnow()` (deprecated alias
-   ok), `DateTime.fromtimestamp(t, tz=None)`,
-   `DateTime.fromisoformat(s)`, `.timestamp()`, `.astimezone(tz)`.
-4. **`TimeDelta`** — `TimeDelta(days, seconds, microseconds, ...)`,
-   arithmetic between `DateTime`s yields `TimeDelta`.
-5. **`TimeZone`** — `TimeZone(offset, name=None)`,
-   `TimeZone.utc` constant.
-6. **`datetime` namespace** binds the five classes (just like
-   Python's `datetime.date`, `datetime.time`, etc. are accessible
-   as module attributes).
-
-**Type discipline:** all POOP types — `Int`/`Float` for components,
-`Str` for ISO strings, `Bytes` for `__bytes__` if exposed.
-
-**Out of scope (for v1):**
-
-- The abstract `tzinfo` extension protocol — POOP users get
-  `TimeZone`; custom subclasses defer.
-- `datetime.MINYEAR`/`MAXYEAR` integer constants — expose if asked.
-
 ## Expose `zoneinfo` as POOP messages
 
 Python's `zoneinfo` (3.9+) provides IANA timezone database access:
@@ -2000,7 +1964,7 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `datetime` | proposed | See proposal above |
+| `datetime` | covered | `datetime` + `Date` + `Time` + `DateTime` + `TimeDelta` + `TimeZone` (shipped in this PR) |
 | `zoneinfo` | proposed | See proposal above |
 | `calendar` | proposed | See proposal above |
 | `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |

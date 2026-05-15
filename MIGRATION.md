@@ -688,3 +688,29 @@ order = sorter.static_order()
 ```
 
 > `TopologicalSorter` is in scope without a `graphlib.` prefix (same pattern as `Random`, `UUID`). `static_order()` returns a `Tuple`; the incremental `.add` / `.prepare` / `.get_ready` / `.done` surface is also exposed for streaming consumption. `graphlib.CycleError` is a Python exception class for use with `Try.except_(...)`.
+
+## Dates and times (`datetime` module + `Date` / `Time` / `DateTime` / `TimeDelta` / `TimeZone`)
+
+```python
+# Python
+from datetime import date, datetime, timedelta, timezone
+
+today = date.today()
+dt = datetime(2026, 5, 15, 12, 30, tzinfo=timezone.utc)
+future = dt + timedelta(days=7)
+diff = future - dt          # timedelta(days=7)
+iso = dt.isoformat()
+parsed = datetime.fromisoformat("2026-05-15T12:30:00+00:00")
+```
+
+```python
+# POOP
+today = Date.today()
+dt = DateTime(2026, 5, 15, 12, 30, tzinfo=TimeZone.utc)
+future = dt + TimeDelta(days=7)
+diff = future - dt          # TimeDelta(days=7)
+iso = dt.isoformat()
+parsed = DateTime.fromisoformat("2026-05-15T12:30:00+00:00")
+```
+
+> The five canonical types are bound at module scope (`Date`, `Time`, `DateTime`, `TimeDelta`, `TimeZone`) and also reachable through the `datetime` namespace (`datetime.date`, `datetime.time`, …) for users used to Python's module attributes. Arithmetic is closed under the type pairs: `Date + TimeDelta` → `Date`, `DateTime - DateTime` → `TimeDelta`, `TimeDelta / TimeDelta` → `Float` (ratio), `TimeDelta // TimeDelta` → `Int`. `TimeZone.utc` is the UTC constant; custom `tzinfo` subclasses are out of scope (use `TimeZone(TimeDelta(hours=h))` for fixed offsets).

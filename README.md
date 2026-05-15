@@ -87,6 +87,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `tomllib.loads(s)` | `tomllib.loads(s)` |
 | `hmac.new(k, m).hexdigest()` | `hmac.new(k, m).hexdigest()` |
 | `graphlib.TopologicalSorter()` | `TopologicalSorter()` |
+| `datetime.date.today()` | `Date.today()` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
