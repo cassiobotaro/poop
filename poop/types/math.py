@@ -105,5 +105,41 @@ class Math:
     # Power & exponential -----------------------------------------
 
     @staticmethod
+    def exp(x: Float) -> Float:
+        return Float(_math.exp(x._value))
+
+    @staticmethod
+    def expm1(x: Float) -> Float:
+        return Float(_math.expm1(x._value))
+
+    @staticmethod
+    def exp2(x: Float) -> Float:
+        return Float(_math.exp2(x._value))
+
+    @staticmethod
+    def log(x: Float, base: Float = Float(_math.e)) -> Float:
+        return Float(_math.log(x._value, base._value))
+
+    @staticmethod
+    def log2(x: Float) -> Float:
+        return Float(_math.log2(x._value))
+
+    @staticmethod
+    def log10(x: Float) -> Float:
+        return Float(_math.log10(x._value))
+
+    @staticmethod
+    def log1p(x: Float) -> Float:
+        return Float(_math.log1p(x._value))
+
+    @staticmethod
     def sqrt(x: Float) -> Float:
         return Float(_math.sqrt(x._value))
+
+    @staticmethod
+    def cbrt(x: Float) -> Float:
+        return Float(_math.cbrt(x._value))
+
+    @staticmethod
+    def pow(x: Float, y: Float) -> Float:
+        return Float(_math.pow(x._value, y._value))

@@ -100,3 +100,37 @@ def test_asinh_acosh_atanh() -> None:
     assert Math.asinh(Float(0.0))._value == 0.0
     assert Math.acosh(Float(1.0))._value == 0.0
     assert Math.atanh(Float(0.0))._value == 0.0
+
+
+# --- Exp / log / power ---
+
+
+def test_exp_family() -> None:
+    assert Math.exp(Float(0.0))._value == 1.0
+    assert Math.expm1(Float(0.0))._value == 0.0
+    assert Math.exp2(Float(3.0))._value == 8.0
+
+
+def test_log_default_base_natural() -> None:
+    assert Math.log(Float(_math.e))._value == 1.0
+    assert isinstance(Math.log(Float(_math.e)), Float)
+
+
+def test_log_with_explicit_base() -> None:
+    assert Math.log(Float(8.0), Float(2.0))._value == 3.0
+
+
+def test_log2_log10_log1p() -> None:
+    assert Math.log2(Float(8.0))._value == 3.0
+    assert Math.log10(Float(100.0))._value == 2.0
+    assert Math.log1p(Float(0.0))._value == 0.0
+
+
+def test_cbrt() -> None:
+    assert Math.cbrt(Float(27.0))._value == 3.0
+
+
+def test_pow_returns_float() -> None:
+    result = Math.pow(Float(2.0), Float(10.0))
+    assert isinstance(result, Float)
+    assert result._value == 1024.0
