@@ -670,3 +670,21 @@ one_shot = hmac.digest(key, msg, "sha256")
 ```
 
 > `digestmod` accepts a `Str` hash name (`"sha256"`, `"sha512"`, …) since `hashlib` is still proposed — CPython's `hmac.new` already supports the string form. When `hashlib` ships, the type widens.
+
+## Topological sort (`graphlib` module + `TopologicalSorter` class)
+
+```python
+# Python
+from graphlib import TopologicalSorter
+
+sorter = TopologicalSorter({"b": ["a"], "c": ["b"]})
+order = list(sorter.static_order())
+```
+
+```python
+# POOP
+sorter = TopologicalSorter({"b": ["a"], "c": ["b"]})
+order = sorter.static_order()
+```
+
+> `TopologicalSorter` is in scope without a `graphlib.` prefix (same pattern as `Random`, `UUID`). `static_order()` returns a `Tuple`; the incremental `.add` / `.prepare` / `.get_ready` / `.done` surface is also exposed for streaming consumption. `graphlib.CycleError` is a Python exception class for use with `Try.except_(...)`.

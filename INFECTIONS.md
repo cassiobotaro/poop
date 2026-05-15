@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `HMAC`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `HMAC`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1077,6 +1077,23 @@ v0.25.0 covers the common 95%; subclassing (`JSONEncoder` / `JSONDecoder`) and c
 Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string-name form). When `hashlib` lands, the type widens to also accept hash constructors.
 
 `hmac` and `HMAC` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/hmac.py` — namespace-only, no AST rewrite.
+
+### graphlib + TopologicalSorter — `poop/types/graphlib.py` + `poop/transformers/graphlib.py`
+
+`graphlib` mirrors Python's `graphlib` (3.9+) — topological sorting of node graphs for dependency resolution.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `TopologicalSorter(graph=none)` | `TopologicalSorter` | `graph` is `Dict[node, Iterable[predecessors]]` |
+| `.add(node, *predecessors)` | `none` | incremental build |
+| `.prepare()` | `none` | finalize, lock structure |
+| `.is_active()` | `Boolean` | any nodes left to consume? |
+| `.get_ready()` | `Tuple[node]` | nodes whose predecessors are done |
+| `.done(*nodes)` | `none` | mark nodes consumed |
+| `.static_order()` | `Tuple[node]` | one-shot full sort |
+| `graphlib.CycleError` | Python exception type | usable with `Try.except_` |
+
+`graphlib` and `TopologicalSorter` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/graphlib.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

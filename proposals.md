@@ -424,27 +424,6 @@ explicit `Enum` base for ergonomics.
 **Out of scope (for v1):** `EnumType` metaclass introspection
 (POOP forbids introspection).
 
-## Expose `graphlib` as POOP messages
-
-Python's `graphlib` is small: just `TopologicalSorter` for graph
-topo-sorts (3.9+). Useful for dependency resolution.
-
-**Proposal — `graphlib` (lowercase module) + `TopologicalSorter`
-class:**
-
-1. **`TopologicalSorter` class:**
-   - `TopologicalSorter(graph=None)` — graph as `Dict[node, Iterable[predecessors]]`
-   - `.add(node, *predecessors)` for incremental building
-   - `.prepare()` — finalize structure
-   - `.is_active() -> Boolean`,
-     `.get_ready() -> Tuple[node]`,
-     `.done(*nodes)`,
-     `.static_order() -> Tuple[node]` (one-shot full order)
-2. **`CycleError`** — POOP error if the graph has cycles.
-
-**Type discipline:** generic over POOP node types; `Tuple` for
-returned orderings.
-
 ## Expose `decimal` as POOP messages
 
 Python's `decimal` provides arbitrary-precision decimal arithmetic
@@ -2034,7 +2013,7 @@ each annotated with one of:
 | `pprint` | covered | `pprint` + `PrettyPrinter` (shipped in v0.20.0) |
 | `reprlib` | out | POOP forbids `repr` |
 | `enum` | proposed | See proposal above |
-| `graphlib` | proposed | See proposal above |
+| `graphlib` | covered | `graphlib` + `TopologicalSorter` (shipped in v0.28.0) |
 
 ### Numeric and Mathematical Modules
 
