@@ -65,6 +65,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `math.sqrt(x)` | `math.sqrt(x)` |
 | `random.choice(xs)` | `random.choice(xs)` |
 | `random.Random(seed)` | `Random(seed)` |
+| `errno.EPERM` | `errno.EPERM` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

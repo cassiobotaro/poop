@@ -284,3 +284,22 @@ r = Random(42)
 ```
 
 > POOP exposes both `random` (lowercase, module-level singleton — `random.random()`, `random.choice(xs)`, …) and `Random` (PascalCase, the class — `Random(seed)` returns a fresh independently-seeded instance). The split mirrors Python exactly; the only shortcut is that `Random` is in scope without a `random.` prefix (no `import` needed). Cryptographic draws live in `secrets`, never `random`.
+
+## OS error codes (`errno` module)
+
+```python
+# Python
+import errno
+
+if exc.errno == errno.ENOENT:
+    handle_missing()
+name = errno.errorcode[exc.errno]
+```
+
+```python
+# POOP
+exc.errno.equals(errno.ENOENT).if_true(lambda: handle_missing())
+name = errno.errorcode.at(exc.errno)
+```
+
+> Every public integer constant in `errno.*` is reachable as `errno.<NAME>` (POOP `Int`). The reverse map `errno.errorcode` is a POOP `Dict[Int, Str]` — use `.at(code)` to look up a name.

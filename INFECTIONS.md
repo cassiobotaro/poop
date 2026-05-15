@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `math`, `random`. As new namespace mirrors land (`uuid`, `secrets`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `errno`, `math`, `random`. As new namespace mirrors land (`uuid`, `secrets`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -766,6 +766,19 @@ This is the first POOP namespace where two names point to related but distinct o
 The same method set is available on both `random` (module API, uses singleton state) and on `Random(seed)` instances (independent state per instance). Anything cryptographic goes through `secrets`, not `random`. `getstate` / `setstate` are deferred to Future work (see `proposals.md`) because the Mersenne Twister state is opaque (625 ints) and has no clean POOP type-discipline mapping.
 
 `random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
+
+### errno — `poop/types/errno.py` + `poop/transformers/errno.py`
+
+`errno` is a constant-only namespace mirroring Python's `errno` module. Every integer error code Python exposes (`EPERM`, `ENOENT`, `EAGAIN`, `EWOULDBLOCK`, …) is bound on the `Errno` class as a POOP `Int` class attribute under the same uppercase name. The reverse map `errno.errorcode` is a POOP `Dict[Int, Str]` keyed by canonical code, mirroring CPython exactly (so aliases like `EAGAIN`/`EWOULDBLOCK` collapse to a single entry).
+
+| Member | Type | Notes |
+|---|---|---|
+| `errno.EPERM`, `errno.ENOENT`, … (all 134 codes Python exposes) | `Int` | Same name as `errno.<NAME>` in CPython |
+| `errno.errorcode` | `Dict[Int, Str]` | 131 entries — canonical names only |
+
+The set of constants is built at import time by enumerating `dir(errno)` rather than maintained by hand, so POOP automatically tracks whichever subset CPython exposes on the host (Linux / macOS / Windows). Lowercase `errno` keeps the lowercase module-name convention; constants are uppercase because that is how CPython ships them.
+
+`errno` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/errno.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

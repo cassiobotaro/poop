@@ -1476,21 +1476,6 @@ multi-value, named record for `Uname`.
 
 **Out of scope (for v1):** the deprecated `dist()` / `linux_distribution()`.
 
-## Expose `errno` as POOP messages
-
-Python's `errno` is a tiny module: integer constants for OS error
-codes (`EACCES`, `ENOENT`, …) plus `errorcode` reverse map.
-
-**Proposal — `errno` (lowercase module) namespace:**
-
-1. **Error code constants** as POOP `Int` (full set Python exposes:
-   `EPERM`, `ENOENT`, `ESRCH`, `EINTR`, `EIO`, `ENXIO`, `E2BIG`,
-   …, and the Windows + Unix-specific subsets where defined).
-2. **`errno.errorcode`** — `Dict[Int, Str]` mapping code → name.
-
-**Type discipline:** `Int` for codes, `Str` for names, `Dict` for
-the reverse lookup.
-
 ## Expose `threading` as POOP messages
 
 Python's `threading` provides preemptive multitasking primitives:
@@ -2650,7 +2635,7 @@ each annotated with one of:
 | `getpass` | proposed | See proposal above |
 | `curses` | out | Terminal UI — niche |
 | `platform` | proposed | See proposal above |
-| `errno` | proposed | See proposal above |
+| `errno` | covered | `errno` namespace (shipped in v0.10.0) |
 | `ctypes` | out | FFI — clashes with introspection rules |
 | `mmap` | out | Low-level; defer until needed |
 
