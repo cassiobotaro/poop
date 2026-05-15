@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `Random`, `Try`, `With`, `binascii`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `math`, `mimetypes`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Try`, `With`, `binascii`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -919,6 +919,29 @@ POOP collapses Python's concrete browser classes (Chrome, Edge, Mozilla, …) in
 `deepcopy`'s `memo` parameter (an `id(obj)`-keyed dict CPython uses to track recursive identities during traversal) is **not** surfaced — it has no clean type-discipline mapping because POOP `Dict` is keyed by POOP `Object`, not `int`. Callers wanting custom memoization should implement `__deepcopy__` on their POOP class. `copy.replace` (3.13+) is similarly out of scope for v1 — POOP classes don't use decorators and have no `dataclasses` story.
 
 `copy` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/copy.py` — namespace-only, no AST rewrite.
+
+### pprint + PrettyPrinter — `poop/types/pprint.py` + `poop/transformers/pprint.py`
+
+`pprint` mirrors Python's `pprint` module — multi-line, indented printing of nested data structures. POOP types alias `__repr__` to `__str__`, so pretty-printed output reads naturally for POOP values.
+
+Two namespace entries follow the `random`/`Random` and `mimetypes`/`MimeTypes` convention:
+
+- **`pprint`** (lowercase) — module-level shortcuts.
+- **`PrettyPrinter`** (PascalCase) — reusable printer with knobs.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `pprint.pprint(obj, *, indent, width, depth, compact, sort_dicts, underscore_numbers)` | `none` | writes to stdout |
+| `pprint.pformat(obj, *, …)` | `Str` | returns the formatted string |
+| `pprint.pp(obj, *, …)` | `none` | like `pprint`, default `sort_dicts=false` |
+| `pprint.isreadable(obj)` | `Boolean` | output is eval-friendly? |
+| `pprint.isrecursive(obj)` | `Boolean` | object contains self-references? |
+| `pprint.saferepr(obj)` | `Str` | safe repr that doesn't recurse |
+| `PrettyPrinter(indent, width, depth, *, compact, sort_dicts, underscore_numbers)` | `PrettyPrinter` | reusable instance with `.pprint`/`.pformat`/`.isreadable`/`.isrecursive` |
+
+`PrettyPrinter` captures `sys.stdout` at construction time, matching CPython exactly — building one inside a stream redirect is the way to capture output.
+
+`pprint` and `PrettyPrinter` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/pprint.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

@@ -498,3 +498,23 @@ deep = copy.deepcopy(obj)
 ```
 
 > POOP types implement Python's `__copy__` / `__deepcopy__` protocol; the namespace routes calls. `copy.Error` is exposed as a Python exception class for use with `Try.except_(...)`. `deepcopy`'s `memo` parameter is not surfaced — implement `__deepcopy__` on your POOP class if you need custom memoization.
+
+## Pretty-printing (`pprint` module + `PrettyPrinter` class)
+
+```python
+# Python
+import pprint
+
+pprint.pprint(data)
+text = pprint.pformat(data, width=40)
+printer = pprint.PrettyPrinter(indent=4)
+```
+
+```python
+# POOP
+pprint.pprint(data)
+text = pprint.pformat(data, width=40)
+printer = PrettyPrinter(indent=4)
+```
+
+> POOP types alias `__repr__` to `__str__`, so pretty-printed output reads exactly like POOP's regular `.print()`. `pprint.pp` differs from `pprint.pprint` only in defaulting `sort_dicts=false`. `PrettyPrinter` captures `sys.stdout` at construction time — to capture pretty-printed output, build the printer inside a stream redirect.

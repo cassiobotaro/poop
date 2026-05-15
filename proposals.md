@@ -574,25 +574,6 @@ breakers. Low priority but worth proposing.
 
 **Out of scope (for v1):** `finalize`, `WeakMethod` — niche.
 
-## Expose `pprint` as POOP messages
-
-Python's `pprint` pretty-prints data structures (multi-line,
-indented). Useful for debugging.
-
-**Proposal — `pprint` (lowercase module) + `PrettyPrinter` class:**
-
-1. **Module-level shortcuts:**
-   `pprint.pprint(obj, ...) -> NoneClass` (prints to stdout),
-   `pprint.pformat(obj, ...) -> Str`,
-   `pprint.pp(obj, ...)` (3.8+ alias),
-   `pprint.isreadable(obj) -> Boolean`,
-   `pprint.isrecursive(obj) -> Boolean`,
-   `pprint.saferepr(obj) -> Str`.
-2. **`PrettyPrinter` class** — reusable with `indent`, `width`,
-   `depth`, `compact`, `sort_dicts`, `underscore_numbers` knobs.
-
-**Type discipline:** `Str` output, `Boolean` for predicates.
-
 ## Expose `enum` as POOP messages
 
 Python's `enum` provides `Enum`, `IntEnum`, `StrEnum`, `Flag`,
@@ -2300,7 +2281,7 @@ each annotated with one of:
 | `weakref` | proposed | See proposal above |
 | `types` | out | Introspection — forbidden in POOP |
 | `copy` | covered | `copy` namespace (shipped in v0.19.0) |
-| `pprint` | proposed | See proposal above |
+| `pprint` | covered | `pprint` + `PrettyPrinter` (shipped in v0.20.0) |
 | `reprlib` | out | POOP forbids `repr` |
 | `enum` | proposed | See proposal above |
 | `graphlib` | proposed | See proposal above |
