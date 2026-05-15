@@ -1287,6 +1287,210 @@ hex, `Boolean` for `compare_digest`.
 **Out of scope (for v1):** the legacy `digestmod=None` default
 (deprecated in Python).
 
+## Expose `os` as POOP messages
+
+Python's `os` is huge — process management, environment, file
+descriptors, file system ops not covered by `pathlib`. POOP splits
+it into focused namespaces rather than one monolithic mirror.
+
+**Proposal — four POOP namespaces (`os`, `system`, `process`,
+`env`) drawn from `os`:**
+
+1. **`os` (lowercase)** binds the four sub-namespaces and a small
+   set of file-system numerics that `Path` doesn't cover:
+   `os.urandom(n) -> Bytes`, `os.cpu_count() -> Int`,
+   `os.process_cpu_count() -> Int`, `os.getloadavg() -> Tuple[Float]`,
+   plus path-mode constants (`F_OK`, `R_OK`, `W_OK`, `X_OK`,
+   `O_RDONLY`, `O_WRONLY`, `O_RDWR`, `O_APPEND`, `O_CREAT`, …)
+   when those are needed for low-level FD ops.
+2. **`system`** namespace for process-level state:
+   `system.exit(code=0)`, `system.argv -> Tuple[Str]` (replaces
+   `sys.argv`), `system.executable -> Path`, `system.platform -> Str`.
+3. **`process`** namespace for current-process operations:
+   `process.pid -> Int`, `process.ppid -> Int`,
+   `process.uid` / `process.gid` / `process.euid` / `process.egid` /
+   `process.umask(mask) -> Int`, `process.chdir(path)`,
+   `process.getcwd() -> Path`, `process.kill(pid, signal)`.
+4. **`env`** namespace for environment variables:
+   `env.get(key, default=None) -> Str | NoneClass`,
+   `env.set(key, value) -> NoneClass`, `env.unset(key)`,
+   `env.has(key) -> Boolean`, `env.keys() -> Set[Str]`,
+   iteration via `.do(block)`, `Dict`-like API.
+
+**Type discipline:** `Path` for filesystem, `Str` for env values,
+`Int` for IDs/file-descriptors.
+
+**Out of scope (for v1):**
+
+- The `os.path` family — fully covered by `Path`.
+- `os.spawn*` / `os.exec*` / `os.fork()` — `subprocess` proposal
+  covers process creation; raw fork/exec is unsafe by default.
+- The low-level FD API (`os.open`/`read`/`write`/`close`) — use
+  `Path.read_bytes`/`write_bytes` or future streaming I/O instead.
+
+## Expose `io` as POOP messages
+
+Python's `io` covers in-memory and stream I/O. Most file I/O lives
+in `Path`; this proposal exposes only the in-memory and streaming
+extras.
+
+**Proposal — `io` (lowercase module) + class set:**
+
+1. **In-memory:**
+   `io.StringIO(initial_value='', newline='\n')` — text buffer,
+   `io.BytesIO(initial_bytes=b'')` — binary buffer.
+   Both expose `.read`, `.write`, `.getvalue`, `.seek`, `.tell`,
+   `.truncate`, `.close`, `With` context-manager friendly.
+2. **Stream bases** (for advanced users implementing custom
+   streams): `io.IOBase`, `io.RawIOBase`, `io.BufferedIOBase`,
+   `io.TextIOBase`.
+3. **Constants:** `io.SEEK_SET`, `io.SEEK_CUR`, `io.SEEK_END`,
+   `io.DEFAULT_BUFFER_SIZE`.
+4. **Errors:** `io.UnsupportedOperation`, `io.BlockingIOError`.
+
+**Type discipline:** `Str` for `StringIO`, `Bytes` for `BytesIO`,
+`Int` for sizes/positions.
+
+**Out of scope (for v1):**
+
+- `io.open` — `Path.read_text` / `write_text` is the POOP idiom.
+- `io.IncrementalNewlineDecoder` — niche.
+
+## Expose `time` as POOP messages
+
+Python's `time` is the wall-clock/monotonic clock API. Pairs with
+`datetime` but lower-level.
+
+**Proposal — `time` (lowercase module) namespace:**
+
+1. **Clocks:**
+   `time.time() -> Float` (wall-clock seconds since epoch),
+   `time.time_ns() -> Int`,
+   `time.monotonic() -> Float`,
+   `time.monotonic_ns() -> Int`,
+   `time.perf_counter() -> Float`,
+   `time.perf_counter_ns() -> Int`,
+   `time.process_time() -> Float`,
+   `time.process_time_ns() -> Int`,
+   `time.thread_time() -> Float`,
+   `time.thread_time_ns() -> Int`.
+2. **Sleep:** `time.sleep(seconds) -> NoneClass`.
+3. **Formatting / parsing:**
+   `time.strftime(format, time_tuple=None) -> Str`,
+   `time.strptime(string, format) -> StructTime`,
+   `time.gmtime(secs=None) -> StructTime`,
+   `time.localtime(secs=None) -> StructTime`,
+   `time.mktime(struct_time) -> Float`,
+   `time.asctime(struct_time=None) -> Str`,
+   `time.ctime(secs=None) -> Str`.
+4. **`StructTime` class** wrapping `time.struct_time`: nine-attr
+   record (`tm_year`, `tm_mon`, `tm_mday`, `tm_hour`, `tm_min`,
+   `tm_sec`, `tm_wday`, `tm_yday`, `tm_isdst`, `tm_zone`,
+   `tm_gmtoff`).
+5. **Timezone info:** `time.tzname`, `time.timezone`,
+   `time.altzone`, `time.daylight`, `time.tzset()`.
+
+**Type discipline:** `Float`/`Int` for clocks/durations, `Str` for
+formatted output, `StructTime` for structured time.
+
+## Expose `logging` as POOP messages
+
+Python's `logging` is the canonical logging framework: loggers,
+handlers, formatters, filters, levels.
+
+**Proposal — `logging` (lowercase module) + class set:**
+
+1. **Module-level convenience:**
+   `logging.debug(msg, *args, **kwargs)`,
+   `logging.info(...)`, `logging.warning(...)`,
+   `logging.error(...)`, `logging.critical(...)`,
+   `logging.exception(...)`, `logging.log(level, msg, *args, **kwargs)`,
+   `logging.getLogger(name=None) -> Logger`,
+   `logging.basicConfig(**kwargs) -> NoneClass`.
+2. **`Logger` class** — `.debug/info/warning/error/critical/log`,
+   `.setLevel(level)`, `.isEnabledFor(level) -> Boolean`,
+   `.addHandler(h)`, `.removeHandler(h)`, `.handlers -> List[Handler]`,
+   `.propagate -> Boolean`, `.getEffectiveLevel() -> Int`.
+3. **`Handler` class + subclasses:** `StreamHandler`, `FileHandler`,
+   `NullHandler`. Methods `.setLevel`, `.setFormatter(f)`,
+   `.addFilter`, `.removeFilter`, `.emit(record)`.
+4. **`Formatter` class:** `Formatter(fmt=None, datefmt=None, style='%', validate=True, *, defaults=None)`,
+   `.format(record) -> Str`.
+5. **`LogRecord` class** — emitted message + context (name, level,
+   pathname, lineno, msg, args, exc_info, …).
+6. **Filter** class + `Logger.addFilter`.
+7. **Level constants:** `CRITICAL=50`, `ERROR=40`, `WARNING=30`,
+   `INFO=20`, `DEBUG=10`, `NOTSET=0`. Plus
+   `logging.getLevelName(level) -> Str`,
+   `logging.addLevelName(level, name)`.
+
+**Type discipline:** all POOP types — `Str` for messages/levels,
+`Int` for level integers, `Dict` for `extra`/`defaults`.
+
+**Out of scope (for v1):**
+
+- `logging.config` (file + dict-based configuration) — niche, fold
+  into a follow-up.
+- `logging.handlers` (rotating, SMTP, syslog, …) — separate
+  proposal.
+
+## Expose `getpass` as POOP messages
+
+Python's `getpass` reads a password from the user without echoing,
+plus a `getuser()` helper.
+
+**Proposal — `getpass` (lowercase module) namespace:**
+
+1. **Reads:** `getpass.getpass(prompt='Password: ', stream=None) -> Str`,
+   `getpass.getuser() -> Str`.
+2. **Errors:** `getpass.GetPassWarning` (when echo can't be
+   suppressed).
+
+**Type discipline:** `Str` for prompts/values/users.
+
+## Expose `platform` as POOP messages
+
+Python's `platform` returns information about the runtime
+environment: OS, architecture, Python build.
+
+**Proposal — `platform` (lowercase module) namespace, all functions
+return POOP `Str` or POOP `Tuple`:**
+
+1. **OS info:** `platform.system()`, `platform.release()`,
+   `platform.version()`, `platform.machine()`, `platform.processor()`,
+   `platform.platform(aliased=False, terse=False)`,
+   `platform.node()`, `platform.uname() -> Uname`.
+2. **Architecture:** `platform.architecture(executable=sys.executable, bits='', linkage='') -> Tuple[Str, Str]`.
+3. **Python build:** `platform.python_version()`,
+   `platform.python_version_tuple() -> Tuple[Str]`,
+   `platform.python_branch()`, `platform.python_build() -> Tuple[Str, Str]`,
+   `platform.python_compiler()`, `platform.python_implementation()`,
+   `platform.python_revision()`.
+4. **Per-OS specifics:** `platform.mac_ver()`, `platform.win32_ver()`,
+   `platform.libc_ver()`.
+5. **`Uname` class** — named record with `.system`, `.node`,
+   `.release`, `.version`, `.machine`, `.processor`.
+
+**Type discipline:** `Str` for textual fields, `Tuple` for
+multi-value, named record for `Uname`.
+
+**Out of scope (for v1):** the deprecated `dist()` / `linux_distribution()`.
+
+## Expose `errno` as POOP messages
+
+Python's `errno` is a tiny module: integer constants for OS error
+codes (`EACCES`, `ENOENT`, …) plus `errorcode` reverse map.
+
+**Proposal — `errno` (lowercase module) namespace:**
+
+1. **Error code constants** as POOP `Int` (full set Python exposes:
+   `EPERM`, `ENOENT`, `ESRCH`, `EINTR`, `EIO`, `ENXIO`, `E2BIG`,
+   …, and the Windows + Unix-specific subsets where defined).
+2. **`errno.errorcode`** — `Dict[Int, Str]` mapping code → name.
+
+**Type discipline:** `Int` for codes, `Str` for names, `Dict` for
+the reverse lookup.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -1444,15 +1648,15 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `os` | audit | Split: `System`, `Platform`, `Env`, `Process` |
-| `io` | audit | Streams largely via `Path`; `StringIO`/`BytesIO` deferred |
-| `time` | audit | Pairs with `datetime` |
-| `logging` | audit | `Logger` namespace if a logging story emerges |
+| `os` | proposed | See proposal above |
+| `io` | proposed | See proposal above |
+| `time` | proposed | See proposal above |
+| `logging` | proposed | See proposal above |
 | `argparse` | out | POOP programs don't expose a CLI surface (yet) |
-| `getpass` | audit | `Stdin.password()` if a stdin story emerges |
+| `getpass` | proposed | See proposal above |
 | `curses` | out | Terminal UI — niche |
-| `platform` | audit | `Platform.name`, `Platform.version` |
-| `errno` | audit | Constants on `Error` class? |
+| `platform` | proposed | See proposal above |
+| `errno` | proposed | See proposal above |
 | `ctypes` | out | FFI — clashes with introspection rules |
 | `mmap` | out | Low-level; defer until needed |
 
