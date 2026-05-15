@@ -459,3 +459,24 @@ glob.iglob("*.txt").do(lambda f: process(f))
 ```
 
 > `glob.glob` returns `List[Path]`; `glob.iglob` returns `GlobIter` (iterable, with `.to_list()`). `Path.glob`/`Path.rglob` already cover most use; the namespace surfaces the module-level entry points for callers who want to glob from a string pattern without first constructing a `Path`.
+
+## Pattern matching on filenames (`fnmatch` module)
+
+```python
+# Python
+import fnmatch
+
+if fnmatch.fnmatch(name, "*.py"):
+    handle_python(name)
+selected = fnmatch.filter(all_names, "test_*.py")
+regex_src = fnmatch.translate("*.py")
+```
+
+```python
+# POOP
+fnmatch.fnmatch(name, "*.py").if_true(lambda: handle_python(name))
+selected = fnmatch.filter(all_names, "test_*.py")
+regex_src = fnmatch.translate("*.py")
+```
+
+> `fnmatch.fnmatch` follows the OS's case-sensitivity rules; `fnmatch.fnmatchcase` is always case-sensitive. `filter` returns `List[Str]`; `translate` returns a regex source `Str` for downstream compilation.

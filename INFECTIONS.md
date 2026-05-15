@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `Random`, `Try`, `With`, `binascii`, `errno`, `getpass`, `glob`, `math`, `mimetypes`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `Random`, `Try`, `With`, `binascii`, `errno`, `fnmatch`, `getpass`, `glob`, `math`, `mimetypes`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -892,6 +892,19 @@ POOP collapses Python's concrete browser classes (Chrome, Edge, Mozilla, …) in
 `GlobIter` wraps Python's `iglob` generator and yields POOP `Path` instances. The `dir_fd` parameter on CPython's `glob.glob` is not surfaced — POOP routes file-descriptor-based I/O nowhere yet.
 
 `glob` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/glob.py` — namespace-only, no AST rewrite.
+
+### fnmatch — `poop/types/fnmatch.py` + `poop/transformers/fnmatch.py`
+
+`fnmatch` mirrors Python's `fnmatch` module — Unix shell-pattern matching against filenames.
+
+| Operation | Returns |
+|---|---|
+| `fnmatch.fnmatch(filename, pattern)` | `Boolean` (case rules follow the OS) |
+| `fnmatch.fnmatchcase(filename, pattern)` | `Boolean` (always case-sensitive) |
+| `fnmatch.filter(names, pattern)` | `List[Str]` |
+| `fnmatch.translate(pattern)` | `Str` (regex source) |
+
+`fnmatch` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/fnmatch.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

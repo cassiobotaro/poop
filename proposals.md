@@ -801,22 +801,6 @@ prefixes, `Int` for file descriptors.
 
 **Out of scope (for v1):** `_RandomNameSequence` internal class.
 
-## Expose `fnmatch` as POOP messages
-
-Python's `fnmatch` tests filenames against Unix shell-style
-patterns. Tiny module.
-
-**Proposal — `fnmatch` (lowercase module) namespace:**
-
-1. **Pattern matching:**
-   `fnmatch.fnmatch(filename, pattern) -> Boolean`,
-   `fnmatch.fnmatchcase(filename, pattern) -> Boolean`,
-   `fnmatch.filter(names, pattern) -> List[Str]`,
-   `fnmatch.translate(pattern) -> Str` (compile to regex).
-
-**Type discipline:** `Boolean` for matches, `List[Str]` for filter,
-`Str` for the regex translation.
-
 ## Expose `shutil` as POOP messages
 
 Python's `shutil` is high-level file operations: copy, move, remove
@@ -2368,7 +2352,7 @@ each annotated with one of:
 | `filecmp` | proposed | See proposal above |
 | `tempfile` | proposed | See proposal above |
 | `glob` | covered | `glob` namespace + `GlobIter` (shipped in v0.17.0) |
-| `fnmatch` | proposed | See proposal above |
+| `fnmatch` | covered | `fnmatch` namespace (shipped in v0.18.0) |
 | `linecache` | out | Internal traceback helper |
 | `shutil` | proposed | See proposal above |
 
