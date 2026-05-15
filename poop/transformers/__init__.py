@@ -23,6 +23,7 @@ from poop.transformers.fnmatch import NAMESPACE as _fnmatch_namespace
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
+from poop.transformers.heapq import NAMESPACE as _heapq_namespace
 from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
 from poop.transformers.math import NAMESPACE as _math_namespace
@@ -105,6 +106,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_copy_namespace,
     **_pprint_namespace,
     **_bisect_namespace,
+    **_heapq_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
