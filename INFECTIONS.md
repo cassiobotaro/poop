@@ -733,11 +733,14 @@ POOP `Int` and `Float` keep methods that are native to Python's `int` and `float
 
 `math` is exposed in `DEFAULT_NAMESPACE` via `MathTransformer` (`poop/transformers/math.py`) — a namespace-only transformer that injects the binding without rewriting AST.
 
-### Random — `poop/types/random.py` + `poop/transformers/random.py`
+### random + Random — `poop/types/random.py` + `poop/transformers/random.py`
 
-`Random` wraps Python's `random.Random`. Unlike `Math`, which is pure and stateless, `Random` carries **per-instance state** (the pseudo-random sequence depends on the seed). The implementation reconciles "class with instances" and "module-level namespace" through a **singleton-as-namespace** trick: `RandomTransformer.BINDINGS` exposes a module-level instance (`_DEFAULT = Random()`) under the name `Random`. The singleton's instance methods serve as both the namespace (`Random.random()` is the singleton's `.random()` method) and the factory entry point (`Random.new(seed)` is the singleton's `.new(seed)` method, which returns a fresh independently-seeded `Random`). This mirrors how Python's `random` module actually works internally — `random.random` is literally `_inst.random`, a bound method.
+Python's `random` module exposes two distinct names: the lowercase `random` module (with module-level functions like `random.random()` and `random.choice(xs)`) and the PascalCase `Random` class (instantiated for seeded, independent generators: `random.Random(seed)`). POOP mirrors that split with **two BINDINGS entries**:
 
-This is the first POOP namespace where `BINDINGS` exposes an instance rather than a class. `Try` / `With` / `Path` / `Math` are all classes; `Random` is the singleton.
+- **`random`** (lowercase) — a singleton instance (`_DEFAULT = Random()`) acting as the module. Module-level entry points are calls on this singleton: `random.random()`, `random.choice(xs)`, `random.shuffle(xs)`, etc. — matching Python's `random.<func>` exactly.
+- **`Random`** (PascalCase) — the class itself, callable in POOP source: `r = Random(seed); r.random()`. Equivalent to Python's `random.Random(seed)`, but shorter (POOP user code already has `Random` in scope, no `random.` prefix needed for the constructor).
+
+This is the first POOP namespace where two names point to related but distinct objects: a module-like singleton AND its underlying class. Other module mirrors (`math`, `secrets`, `tomllib`) have only the lowercase module name because they expose no public class.
 
 | Category | Operations | Returns |
 |---|---|---|
@@ -746,9 +749,9 @@ This is the first POOP namespace where `BINDINGS` exposes an instance rather tha
 | Collection draws | `choice(seq)`, `shuffle(x)` mutates list, returns `none`, `choices(population, weights=None, *, cum_weights=None, k=Int(1))`, `sample(population, k, *, counts=None)` | element / `none` / `List` |
 | Distributions | `gauss`, `normalvariate`, `lognormvariate`, `expovariate`, `gammavariate`, `betavariate`, `paretovariate`, `weibullvariate`, `vonmisesvariate`, `triangular`, `binomialvariate` (Python 3.12+) | `Float` (10) / `Int` (binomialvariate) |
 
-`Random.new(seed)` is the one forced naming divergence from Python's `random.Random(seed)` constructor call — POOP namespaces are not callable. Anything cryptographic goes through `Secrets`, not `Random`. `getstate` / `setstate` are deferred to Future work (see `proposals.md`) because the Mersenne Twister state is opaque (625 ints) and has no clean POOP type-discipline mapping.
+The same method set is available on both `random` (module API, uses singleton state) and on `Random(seed)` instances (independent state per instance). Anything cryptographic goes through `secrets`, not `random`. `getstate` / `setstate` are deferred to Future work (see `proposals.md`) because the Mersenne Twister state is opaque (625 ints) and has no clean POOP type-discipline mapping.
 
-`Random` is exposed in `DEFAULT_NAMESPACE` via `RandomTransformer` (`poop/transformers/random.py`) — a namespace-only transformer that injects the singleton without rewriting AST.
+`random` and `Random` are exposed in `DEFAULT_NAMESPACE` via `RandomTransformer` (`poop/transformers/random.py`) — a namespace-only transformer that injects both bindings without rewriting AST.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

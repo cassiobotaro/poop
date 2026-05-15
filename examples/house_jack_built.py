@@ -12,7 +12,7 @@ touching House itself.
   - DefaultOrder      / RandomOrder      — sequence strategies
   - DefaultFormatter  / EchoFormatter    — rendering strategies
 
-`RandomOrder` uses `Random.sample(coll, coll.len())` — the Python
+`RandomOrder` uses `random.sample(coll, coll.len())` — the Python
 idiom for a non-mutating shuffle.
 
 Smalltalk (Pharo):
@@ -116,9 +116,9 @@ class DefaultOrder:
 
 class RandomOrder:
     def order(self, data):
-        # Non-mutating shuffle: Random.sample(coll, k=len(coll)) is the
-        # Python idiom (Random.shuffle mutates in-place).
-        return Random.sample(data, data.len())
+        # Non-mutating shuffle: random.sample(coll, k=len(coll)) is the
+        # Python idiom (random.shuffle mutates in-place).
+        return random.sample(data, data.len())
 
 
 class House:

@@ -259,7 +259,7 @@ n = math.factorial(5)
 
 > `math` mirrors Python's `math` module exactly — same name (lowercase), same function names, parameter order, defaults, kw-only markers, return types. No `import math` needed in POOP — the namespace is injected globally.
 
-## Random (`random` module)
+## Random (`random` module + `Random` class)
 
 ```python
 # Python
@@ -270,17 +270,17 @@ n = random.randint(1, 10)
 pick = random.choice(xs)
 random.shuffle(xs)
 sample = random.sample(xs, 3)
-r = random.Random(seed=42)
+r = random.Random(42)
 ```
 
 ```python
 # POOP
-x = Random.random()
-n = Random.randint(1, 10)
-pick = Random.choice(xs)
-Random.shuffle(xs)
-sample = Random.sample(xs, 3)
-r = Random.new(42)
+x = random.random()
+n = random.randint(1, 10)
+pick = random.choice(xs)
+random.shuffle(xs)
+sample = random.sample(xs, 3)
+r = Random(42)
 ```
 
-> `Random` mirrors `random.*` exactly. One forced divergence: POOP namespaces are not callable, so `random.Random(seed)` becomes `Random.new(seed)`. Cryptographic draws live in `Secrets`, never `Random`.
+> POOP exposes both `random` (lowercase, module-level singleton — `random.random()`, `random.choice(xs)`, …) and `Random` (PascalCase, the class — `Random(seed)` returns a fresh independently-seeded instance). The split mirrors Python exactly; the only shortcut is that `Random` is in scope without a `random.` prefix (no `import` needed). Cryptographic draws live in `secrets`, never `random`.

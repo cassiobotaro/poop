@@ -15,27 +15,25 @@ if TYPE_CHECKING:
 class Random:
     """Wraps `random.Random` mirroring Python's module-level interface.
 
-    The class itself is hidden from POOP source: `poop/transformers/random.py`
-    exposes a module-level singleton (`_DEFAULT`) under the name `Random` in
-    `DEFAULT_NAMESPACE`. The singleton acts as the namespace
-    (`Random.random()` is the singleton's instance method); `Random.new(seed)`
-    is a factory on the singleton returning a fresh, independently-seeded
-    `Random` instance.
+    Two names are bound in `DEFAULT_NAMESPACE`, exactly matching how
+    Python exposes the `random` module:
 
-    This mirrors how Python's `random` module works: `random.random` is
-    literally `_inst.random`, a bound method on a module-level singleton.
+      - `random` (lowercase): a module-level singleton (`_DEFAULT`)
+        carrying its own state. `random.random()`, `random.choice(xs)`,
+        etc. are calls on that singleton — equivalent to Python's
+        module-level functions (which are themselves bound methods of
+        `random._inst`).
+      - `Random` (PascalCase): the class itself. `Random(seed)`
+        constructs a fresh, independently-seeded instance — equivalent
+        to Python's `random.Random(seed)`.
 
-    Cryptographic draws belong to `Secrets`, not here.
+    Cryptographic draws belong to `secrets`, not here.
     """
 
     def __init__(self, seed: Int | None = None) -> None:
         from poop.types._unwrap import _unwrap
 
-        # noqa: S311 -- non-cryptographic by design; use Secrets for crypto.
         self._impl = _random.Random(_unwrap(seed, None))  # noqa: S311
-
-    def new(self, seed: Int | None = None) -> Random:
-        return Random(seed)
 
     # Bookkeeping ----------------------------------------------------
 

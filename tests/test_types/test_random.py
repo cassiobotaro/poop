@@ -12,8 +12,8 @@ def test_random_returns_poop_float_in_unit_range() -> None:
     assert 0.0 <= result._value < 1.0
 
 
-def test_new_returns_fresh_instance() -> None:
-    fresh = _DEFAULT.new(Int(42))
+def test_class_constructor_returns_fresh_instance() -> None:
+    fresh = Random(Int(42))
     assert isinstance(fresh, Random)
     assert fresh is not _DEFAULT
 
@@ -26,7 +26,11 @@ def test_same_seed_yields_same_sequence() -> None:
 
 
 def test_random_reachable_via_interpreter() -> None:
-    Interpreter().run_source("Random.random().print()")
+    Interpreter().run_source("random.random().print()")
+
+
+def test_class_constructor_reachable_via_interpreter() -> None:
+    Interpreter().run_source("Random(42).random().print()")
 
 
 # --- Bookkeeping ---

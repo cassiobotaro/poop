@@ -63,7 +63,8 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
 | `math.sqrt(x)` | `math.sqrt(x)` |
-| `random.choice(xs)` | `Random.choice(xs)` |
+| `random.choice(xs)` | `random.choice(xs)` |
+| `random.Random(seed)` | `Random(seed)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
