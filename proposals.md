@@ -1,119 +1,5 @@
 # Proposals
 
-## Expose `math` functions as POOP messages
-
-Python's `math` module is currently unreachable from POOP code
-because imports are forbidden. There is no idiomatic way to compute
-`sqrt`, `sin`, `log`, etc. in POOP source today.
-
-Smalltalk would handle this with **messages on numbers** —
-`2 sqrt`, `1.0 sin`, `100 ln` — keeping behaviour on `Number` /
-`Float` rather than in a `Math` global. An earlier draft of this
-proposal adopted that hybrid model (unary methods on `Int` /
-`Float`, namespace for multi-arg). **This revision drops the hybrid
-in favour of a strict Python mirror**, so the interface matches the
-rule used by every other stdlib proposal: same function names, same
-parameter order, same return types as `math.*`.
-
-**Proposal — every operation lives on the `Math` namespace,
-mirroring `math.<name>` exactly.**
-
-1. **Number theory** (integer in, integer out):
-   - `Math.factorial(n)`, `Math.gcd(*args)`, `Math.lcm(*args)`,
-     `Math.comb(n, k)`, `Math.perm(n, k=None)`, `Math.isqrt(n)`
-2. **Trigonometric:**
-   - `Math.sin(x)`, `Math.cos(x)`, `Math.tan(x)`
-   - `Math.asin(x)`, `Math.acos(x)`, `Math.atan(x)`,
-     `Math.atan2(y, x)`
-3. **Hyperbolic:**
-   - `Math.sinh(x)`, `Math.cosh(x)`, `Math.tanh(x)`
-   - `Math.asinh(x)`, `Math.acosh(x)`, `Math.atanh(x)`
-4. **Exponential / logarithmic / power:**
-   - `Math.exp(x)`, `Math.expm1(x)`, `Math.exp2(x)`
-   - `Math.log(x, base=Math.e)`, `Math.log2(x)`, `Math.log10(x)`,
-     `Math.log1p(x)`
-   - `Math.sqrt(x)`, `Math.cbrt(x)`, `Math.pow(x, y)`
-5. **Rounding and float decomposition:**
-   - `Math.floor(x)`, `Math.ceil(x)`, `Math.trunc(x)`
-   - `Math.modf(x)`, `Math.frexp(x)`, `Math.ldexp(x, i)`
-6. **Angular conversion** (the function name is the *destination*
-   unit, not the input — Python gotcha worth highlighting):
-   - `Math.degrees(x)` (radians → degrees),
-     `Math.radians(x)` (degrees → radians)
-7. **Float utilities:**
-   - `Math.fabs(x)`, `Math.copysign(x, y)`, `Math.fmod(x, y)`,
-     `Math.remainder(x, y)`, `Math.fma(x, y, z)` (Python 3.13+),
-     `Math.ulp(x)`, `Math.nextafter(x, y, *, steps=None)`
-8. **Predicates** (return `Boolean`):
-   - `Math.isfinite(x)`, `Math.isinf(x)`, `Math.isnan(x)`,
-     `Math.isclose(a, b, *, rel_tol=1e-09, abs_tol=0.0)`
-9. **Aggregates over iterables / tuples:**
-   - `Math.fsum(iterable)`, `Math.prod(iterable, *, start=1)`,
-     `Math.sumprod(p, q)` (Python 3.12+),
-     `Math.dist(p, q)`, `Math.hypot(*args)`
-10. **Special functions:**
-    - `Math.erf(x)`, `Math.erfc(x)`,
-      `Math.gamma(x)`, `Math.lgamma(x)`
-11. **Constants** (lowercase, mirroring `math.*` verbatim):
-    - `Math.pi`, `Math.e`, `Math.tau`, `Math.inf`, `Math.nan`
-
-`MathTransformer` is **namespace-only** (no AST rewrite); it
-injects `Math` into `DEFAULT_NAMESPACE` like `Try` / `With` /
-`Path`. There are **no** new methods on `Int` or `Float` —
-operations that previously read `(2.0).sqrt()` now read
-`Math.sqrt(2.0)`, matching `math.sqrt(2.0)` from Python.
-
-`Int` retains the integer-bit messages it already has
-(`.bit_length()`, `.bit_count()`) because those live on Python's
-`int` type directly, not in `math.*`. `Float.is_integer()` stays
-for the same reason (it is on Python's `float`, not in `math`).
-
-**Type discipline:** every method, attribute, and constant on
-`Math` takes and returns POOP types (`Int`, `Float`, `Boolean`,
-`Tuple`). No Python primitives leak across the boundary, even for
-convenience or to keep tests shorter. This applies both to
-public-facing annotations and to the runtime values returned.
-Constants follow the source module's case verbatim — `Math.pi`,
-`Math.e`, `Math.tau`, `Math.inf`, `Math.nan` are lowercase because
-that is how `math` ships them in Python. Other POOP namespaces
-inherit their own case from their source modules
-(`Uuid.NAMESPACE_DNS`, `Secrets.DEFAULT_ENTROPY`, etc.).
-
-**Smalltalk reference.** Listed for context — POOP no longer
-follows Smalltalk for math, but the differences are recorded so
-readers can see what was on the table. Every entry below is
-reached in POOP via `Math.<same-python-name>(args)`.
-
-| Python (and POOP) | Smalltalk (Pharo) | Notes |
-|---|---|---|
-| `math.sqrt(x)` | `x sqrt` | unary on receiver — dropped in this revision |
-| `math.sin(x)` / `cos` / `tan` | `x sin` / `cos` / `tan` | dropped from receiver |
-| `math.asin(x)` / `acos` / `atan` | `x arcSin` / `arcCos` / `arcTan` | POOP keeps Python's shorter names |
-| `math.log(x)` (natural) | `x ln` | Smalltalk swaps `log`/`ln`; POOP follows Python |
-| `math.log10(x)` | `x log` | (see above) |
-| `math.log(x, base)` | `x log: base` | keyword msg in Smalltalk |
-| `math.ceil(x)` | `x ceiling` | POOP keeps the shorter Python name |
-| `math.trunc(x)` | `x truncated` | POOP keeps the shorter Python name |
-| `math.atan2(y, x)` | `y arcTan: x` | keyword msg on `y` |
-| `math.hypot(x, y, ...)` | `x hypot: y` | Pharo binary-only — POOP's varargs win |
-| `math.gcd(a, b, ...)` | `a gcd: b` | Pharo binary-only |
-| `math.factorial(n)` | `n factorial` | unary on receiver — dropped |
-| `math.isfinite(x)` | `x isFinite` | predicate on receiver — dropped |
-| `math.isinf(x)` | `x isInfinite` | POOP keeps Python's shorter `isinf` |
-| `math.isnan(x)` | `x isNaN` | predicate on receiver — dropped |
-| `math.degrees(x)` | `x radiansToDegrees` | direction inverted — see proposal note |
-| `math.fsum(iter)` | `iter sum` | POOP keeps `Math.fsum` (Kahan summation) |
-| `math.prod(iter)` | `iter inject: 1 into: [:a :b ǀ a * b]` | no native Pharo |
-| `math.isclose(a, b)` | `a closeTo: b` | POOP keeps Python's keyword args |
-| `math.pi` | `Float pi` | POOP keeps Python's lowercase `Math.pi`; Smalltalk puts the constant on `Float` class side |
-
-**Out of scope (for v1):**
-
-- `cmath` (complex math) — orthogonal, would need a separate
-  `Complex` POOP type story.
-- `math.fma` if running on a Python interpreter older than 3.13 —
-  POOP targets 3.14 so it ships.
-
 ## Expose `uuid` as POOP messages
 
 Python's `uuid` module is unreachable from POOP today (imports are
@@ -537,11 +423,12 @@ closest analogs are `STON fromString:` and `NeoJSONReader fromString:`
 
 ## Audit the rest of the Python stdlib for POOP equivalents
 
-Following the `math` proposal above, the same question applies to
-every other commonly-used Python module: imports are forbidden in
-POOP, so anything in the stdlib is currently unreachable from POOP
-code. Each module needs a decision about whether — and how — to
-surface it inside POOP, without breaking the message-passing model.
+The same question that drove the `math` namespace (shipped in
+v0.6.0) applies to every other commonly-used Python module: imports
+are forbidden in POOP, so anything in the stdlib is currently
+unreachable from POOP code. Each module needs a decision about
+whether — and how — to surface it inside POOP, without breaking the
+message-passing model.
 
 Three Smalltalk patterns are already in use and should guide the
 decision case-by-case:
@@ -616,8 +503,8 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `numbers` | out | ABC hierarchy — POOP has its own type tree |
-| `math` | covered | `Math` namespace; see proposal above |
-| `cmath` | audit | Deferred by the `math` proposal; needs Complex story |
+| `math` | covered | `Math` namespace (shipped in v0.6.0) |
+| `cmath` | audit | Needs `Complex` POOP type story — see "Future work" |
 | `decimal` | audit | `Decimal` POOP type with full message API |
 | `fractions` | audit | `Fraction` POOP type |
 | `random` | proposed | See proposal above |
@@ -903,3 +790,33 @@ each annotated with one of:
 This is **scoping work**, not implementation work — the audit should
 produce a per-module decision and either a follow-up proposal or a
 "stays out" entry. Implementation happens proposal-by-proposal.
+
+## Future work
+
+Items deferred from shipped proposals that need their own follow-up
+once a prerequisite exists.
+
+### Complex math (`cmath`) — from the `math` proposal (v0.6.0)
+
+The `Math` namespace deliberately omits `cmath` because it requires
+a `Complex` POOP type with a fully-fleshed message API. POOP has a
+`Complex` wrapper today (`poop/types/complex.py`) used by literal
+transforms and arithmetic, but it does not yet expose the
+transcendental surface (`cmath.sqrt`, `cmath.exp`, `cmath.sin`,
+`cmath.phase`, `cmath.polar`, `cmath.rect`, `cmath.isclose`,
+`cmath.isfinite`/`isinf`/`isnan`, and the constants
+`cmath.pi`/`e`/`tau`/`inf`/`nan`/`infj`/`nanj`).
+
+When written, the `cmath` proposal should mirror the shape of the
+`math` namespace exactly — a `CMath` namespace-only injection (or
+fold the operations onto the existing `Complex` POOP type, TBD),
+with the same constant-case rule (lowercase, mirroring source).
+Cross-cutting decisions to make first:
+
+- Are `Complex` arithmetic predicates (`.isfinite()` / `.isinf()` /
+  `.isnan()`) Float-typed on the real and imaginary parts, or
+  defined on the whole `Complex`? Python defines the latter on
+  `cmath.*`.
+- Should `cmath` and `math` share predicates that take Complex
+  (returning Boolean) or duplicate them per type, like Python does?
+
