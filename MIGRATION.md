@@ -688,3 +688,25 @@ order = sorter.static_order()
 ```
 
 > `TopologicalSorter` is in scope without a `graphlib.` prefix (same pattern as `Random`, `UUID`). `static_order()` returns a `Tuple`; the incremental `.add` / `.prepare` / `.get_ready` / `.done` surface is also exposed for streaming consumption. `graphlib.CycleError` is a Python exception class for use with `Try.except_(...)`.
+
+## Hashing (`hashlib` module + `Hash` class)
+
+```python
+# Python
+import hashlib
+
+digest = hashlib.sha256(b"abc").hexdigest()
+mac = hashlib.new("sha512", b"abc").digest()
+key = hashlib.pbkdf2_hmac("sha256", b"pw", b"salt", 200_000)
+file_hash = hashlib.file_digest(open("blob.bin", "rb"), "sha256").hexdigest()
+```
+
+```python
+# POOP
+digest = b"abc".sha256().hexdigest()
+mac = hashlib.new("sha512", b"abc").digest()
+key = b"pw".pbkdf2_hmac("sha256", b"salt", 200_000)
+file_hash = hashlib.file_digest(Path("blob.bin"), "sha256").hexdigest()
+```
+
+> Shortcut messages on `Bytes` carry the data; the message names the algorithm — `b.sha256()`, `b.blake2b()`, `b.sha3_512()`, etc. Key derivation flips the convention: the receiver is the password (`b"pw".pbkdf2_hmac(...)`, `b"pw".scrypt(...)`), mirroring Smalltalk Cryptography's `password deriveKey: ...`. `hashlib.file_digest` takes a POOP `Path` instead of a file object — POOP routes file I/O through `Path`. `Str` does not carry the shortcut messages: encode first (`"abc".encode("utf-8").sha256()`) to keep the encoding step explicit.
