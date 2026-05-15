@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `errno`, `math`, `random`. As new namespace mirrors land (`uuid`, `secrets`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `errno`, `getpass`, `math`, `random`. As new namespace mirrors land (`uuid`, `secrets`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -779,6 +779,19 @@ The same method set is available on both `random` (module API, uses singleton st
 The set of constants is built at import time by enumerating `dir(errno)` rather than maintained by hand, so POOP automatically tracks whichever subset CPython exposes on the host (Linux / macOS / Windows). Lowercase `errno` keeps the lowercase module-name convention; constants are uppercase because that is how CPython ships them.
 
 `errno` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/errno.py` — namespace-only, no AST rewrite.
+
+### getpass — `poop/types/getpass.py` + `poop/transformers/getpass.py`
+
+`getpass` is a tiny namespace mirroring Python's `getpass` module. Both reads return POOP `Str`:
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `getpass.getpass(prompt=Str("Password: "), stream=none)` | `Str` | Reads without echo |
+| `getpass.getuser()` | `Str` | Login name lookup |
+
+`getpass.GetPassWarning` is **not surfaced** in POOP. CPython emits it via `warnings` when echo can't be suppressed, but POOP has no warning concept (`warnings` itself is "out" — see proposals.md). The underlying CPython call still writes the warning to stderr; POOP user code just cannot catch or filter it. See proposals.md § Future work for a possible later exposure path.
+
+`getpass` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/getpass.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

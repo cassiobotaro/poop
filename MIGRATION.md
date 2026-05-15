@@ -303,3 +303,21 @@ name = errno.errorcode.at(exc.errno)
 ```
 
 > Every public integer constant in `errno.*` is reachable as `errno.<NAME>` (POOP `Int`). The reverse map `errno.errorcode` is a POOP `Dict[Int, Str]` — use `.at(code)` to look up a name.
+
+## Password prompts (`getpass` module)
+
+```python
+# Python
+import getpass
+
+user = getpass.getuser()
+pwd = getpass.getpass("Password: ")
+```
+
+```python
+# POOP
+user = getpass.getuser()
+pwd = getpass.getpass("Password: ")
+```
+
+> Both `getpass.getuser()` and `getpass.getpass(prompt)` return POOP `Str`. `getpass.GetPassWarning` is not exposed in POOP — the underlying CPython call still emits it to stderr, but POOP has no warning model to catch it.

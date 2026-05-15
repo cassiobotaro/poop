@@ -1434,20 +1434,6 @@ handlers, formatters, filters, levels.
 - `logging.handlers` (rotating, SMTP, syslog, …) — separate
   proposal.
 
-## Expose `getpass` as POOP messages
-
-Python's `getpass` reads a password from the user without echoing,
-plus a `getuser()` helper.
-
-**Proposal — `getpass` (lowercase module) namespace:**
-
-1. **Reads:** `getpass.getpass(prompt='Password: ', stream=None) -> Str`,
-   `getpass.getuser() -> Str`.
-2. **Errors:** `getpass.GetPassWarning` (when echo can't be
-   suppressed).
-
-**Type discipline:** `Str` for prompts/values/users.
-
 ## Expose `platform` as POOP messages
 
 Python's `platform` returns information about the runtime
@@ -2632,7 +2618,7 @@ each annotated with one of:
 | `time` | proposed | See proposal above |
 | `logging` | proposed | See proposal above |
 | `argparse` | out | POOP programs don't expose a CLI surface (yet) |
-| `getpass` | proposed | See proposal above |
+| `getpass` | covered | `getpass` namespace (shipped in v0.11.0) |
 | `curses` | out | Terminal UI — niche |
 | `platform` | proposed | See proposal above |
 | `errno` | covered | `errno` namespace (shipped in v0.10.0) |
@@ -2886,4 +2872,20 @@ Cross-cutting decisions to make first:
   `cmath.*`.
 - Should `cmath` and `math` share predicates that take Complex
   (returning Boolean) or duplicate them per type, like Python does?
+
+### `GetPassWarning` — from the `getpass` proposal (v0.11.0)
+
+Python's `getpass.GetPassWarning` is emitted (not raised) when the
+echo-suppression call fails on the underlying TTY. It is a
+`UserWarning` subclass surfaced via the `warnings` module — a model
+POOP does not have (see `warnings` in the audit table: "out").
+v0.11.0 ships `getpass.getpass` and `getpass.getuser` but does not
+expose `GetPassWarning`; the underlying CPython call still emits the
+warning to stderr, POOP user code just cannot catch or filter it.
+
+A proper exposure would require either (a) a POOP `Warning`/`Stream`
+story to mirror `warnings.filterwarnings` and friends, or (b)
+upgrading the warning to a raised `Error` and letting POOP's `Try`
+catch it — diverging from Python's actual behavior. Deferred until
+a concrete user need surfaces.
 
