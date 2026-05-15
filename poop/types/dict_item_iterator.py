@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @final
-class DictItemIterator(_IteratorBase):
+class DictItemIterator(_IteratorBase, name="dict_itemiterator"):
     __slots__ = ()
 
     def next(self) -> Tuple:
@@ -24,8 +24,3 @@ class DictItemIterator(_IteratorBase):
     def do(self, block: Callable[[Tuple], Any]) -> NoneClass:
         deque((block(Tuple(k, v)) for k, v in self._iter), maxlen=0)
         return none
-
-    def __str__(self) -> str:
-        return "<dict_itemiterator>"
-
-    __repr__ = __str__

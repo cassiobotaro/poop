@@ -4,10 +4,5 @@ from poop.types._iterator_base import _IteratorBase
 
 
 @final
-class ByteArrayIterator(_IteratorBase):
+class ByteArrayIterator(_IteratorBase, name="bytearray_iterator"):
     __slots__ = ()
-
-    def __str__(self) -> str:
-        return "<bytearray_iterator>"
-
-    __repr__ = __str__

@@ -4,10 +4,5 @@ from poop.types._iterator_base import _IteratorBase
 
 
 @final
-class ListIterator(_IteratorBase):
+class ListIterator(_IteratorBase, name="list_iterator"):
     __slots__ = ()
-
-    def __str__(self) -> str:
-        return "<list_iterator>"
-
-    __repr__ = __str__

@@ -4,10 +4,5 @@ from poop.types._iterator_base import _IteratorBase
 
 
 @final
-class RangeIterator(_IteratorBase):
+class RangeIterator(_IteratorBase, name="range_iterator"):
     __slots__ = ()
-
-    def __str__(self) -> str:
-        return "<range_iterator>"
-
-    __repr__ = __str__

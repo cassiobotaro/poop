@@ -4,10 +4,5 @@ from poop.types._iterator_base import _IteratorBase
 
 
 @final
-class DictReverseKeyIterator(_IteratorBase):
+class DictReverseKeyIterator(_IteratorBase, name="dict_reversekeyiterator"):
     __slots__ = ()
-
-    def __str__(self) -> str:
-        return "<dict_reversekeyiterator>"
-
-    __repr__ = __str__
