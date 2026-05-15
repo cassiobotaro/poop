@@ -769,6 +769,107 @@ class:**
 **Type discipline:** generic over POOP node types; `Tuple` for
 returned orderings.
 
+## Expose `decimal` as POOP messages
+
+Python's `decimal` provides arbitrary-precision decimal arithmetic
+— critical for money, accounting, and any computation where
+binary-float rounding error is unacceptable.
+
+**Proposal — `decimal` (lowercase module) + `Decimal` class:**
+
+1. **`Decimal` class** wrapping Python's `decimal.Decimal`:
+   - `Decimal(value)` — accepts `Int`, `Str` (`"3.14"`), `Tuple`
+     (sign, digits, exponent), `Float`. Mirrors Python.
+   - All arithmetic operators (`+ - * / // % **`) returning
+     `Decimal`.
+   - `.quantize(exp, rounding=None)`, `.normalize()`, `.adjusted()`,
+     `.as_tuple()`, `.as_integer_ratio()`, `.is_finite()`,
+     `.is_infinite()`, `.is_nan()`, `.is_signed()`, `.is_zero()`,
+     `.sqrt()`, `.ln()`, `.log10()`, `.exp()`.
+2. **`decimal` module namespace:**
+   - `decimal.Decimal` — class attribute alias.
+   - `decimal.getcontext() -> Context`,
+     `decimal.setcontext(ctx) -> NoneClass`,
+     `decimal.localcontext(ctx=None)` (with-block context manager).
+   - Rounding constants: `ROUND_UP`, `ROUND_DOWN`, `ROUND_HALF_UP`,
+     `ROUND_HALF_DOWN`, `ROUND_HALF_EVEN`, `ROUND_CEILING`,
+     `ROUND_FLOOR`, `ROUND_05UP`.
+   - Signal classes: `InvalidOperation`, `DivisionByZero`,
+     `Overflow`, `Underflow`, `Inexact`, `Rounded`, `Subnormal`,
+     `Clamped`, `FloatOperation`, `DecimalException`.
+3. **`Context` class** — precision, rounding, traps, flags.
+
+**Type discipline:** `Decimal` is its own POOP type with full
+arithmetic; conversions cross to `Int`/`Float`/`Str` explicitly.
+
+**Out of scope (for v1):** the C-vs-Python implementation toggle;
+historical traps inherited from `cdecimal`.
+
+## Expose `fractions` as POOP messages
+
+Python's `fractions.Fraction` is exact rational arithmetic.
+
+**Proposal — `fractions` (lowercase module) + `Fraction` class:**
+
+1. **`Fraction` class:**
+   - `Fraction(numerator=0, denominator=1)`,
+     `Fraction.from_float(f)`, `Fraction.from_decimal(d)`,
+     `Fraction(string)` — `"3/4"` or `"0.25"`.
+   - `.numerator -> Int`, `.denominator -> Int`,
+     `.limit_denominator(max=10**6) -> Fraction`,
+     `.as_integer_ratio() -> Tuple[Int, Int]`.
+   - All arithmetic operators returning `Fraction` (or `Float` for
+     mixed-type promotion, mirroring Python).
+2. **`fractions` namespace:** binds `Fraction` class.
+
+**Type discipline:** `Fraction` is its own POOP type. Mixed
+arithmetic with `Int` returns `Fraction`; with `Float` returns
+`Float`.
+
+**Out of scope (for v1):** `Fraction.from_number_str` (private),
+the `_RATIONAL_FORMAT` regex.
+
+## Expose `statistics` as POOP messages
+
+Python's `statistics` covers mean/median/mode, variance, stdev,
+quantiles, correlation. Useful for any data summarisation.
+
+**Proposal — `statistics` (lowercase module) + `NormalDist` class:**
+
+1. **Central tendency:**
+   `statistics.mean(data) -> Float`,
+   `statistics.fmean(data, weights=None) -> Float`,
+   `statistics.geometric_mean(data) -> Float`,
+   `statistics.harmonic_mean(data, weights=None) -> Float`,
+   `statistics.median(data) -> Float | Int`,
+   `statistics.median_low(data)`, `median_high(data)`,
+   `median_grouped(data, interval=1)`,
+   `statistics.mode(data) -> element`,
+   `statistics.multimode(data) -> List`.
+2. **Spread:**
+   `statistics.pstdev`, `statistics.pvariance`, `statistics.stdev`,
+   `statistics.variance` (all `(data, xbar=None) -> Float`).
+3. **Quantiles:**
+   `statistics.quantiles(data, *, n=4, method='exclusive') -> List[Float]`.
+4. **Correlation:**
+   `statistics.correlation(x, y, *, method='linear') -> Float`,
+   `statistics.covariance(x, y) -> Float`,
+   `statistics.linear_regression(x, y, *, proportional=False) -> Tuple`.
+5. **`NormalDist` class** for Gaussian distributions:
+   `NormalDist(mu=0.0, sigma=1.0)`, `.from_samples(data)`,
+   `.mean`, `.stdev`, `.variance`, `.median`, `.mode`,
+   `.cdf(x)`, `.pdf(x)`, `.inv_cdf(p)`, `.zscore(x)`, `.samples(n)`,
+   `.overlap(other)`, `.quantiles(n=4)`, arithmetic between
+   `NormalDist`s.
+6. **`StatisticsError`** — POOP error for empty/invalid data.
+
+**Type discipline:** numerical inputs are POOP `Int`/`Float`;
+returns POOP `Float`/`Int`. `mode`/`multimode` return whatever the
+elements are.
+
+**Out of scope (for v1):** the `_sum` private helper; `Decimal`-
+aware variants surface naturally once `decimal` lands.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -853,10 +954,10 @@ each annotated with one of:
 | `numbers` | out | ABC hierarchy — POOP has its own type tree |
 | `math` | covered | `Math` namespace (shipped in v0.6.0) |
 | `cmath` | audit | Needs `Complex` POOP type story — see "Future work" |
-| `decimal` | audit | `Decimal` POOP type with full message API |
-| `fractions` | audit | `Fraction` POOP type |
+| `decimal` | proposed | See proposal above |
+| `fractions` | proposed | See proposal above |
 | `random` | covered | `Random` namespace (shipped in v0.7.0) |
-| `statistics` | audit | `coll.mean()` / `coll.median()` or `Statistics` namespace |
+| `statistics` | proposed | See proposal above |
 
 ### Functional Programming Modules
 
