@@ -446,3 +446,103 @@ def test_methods_accept_poop_none_kwargs() -> None:
     assert Bytes(b"hi").ljust(Int(4), fillchar=none) == Bytes(b"hi  ")
     assert Bytes(b"hi").rjust(Int(4), fillchar=none) == Bytes(b"  hi")
     assert Bytes(b"a\tb").expandtabs(tabsize=none) == Bytes(b"a       b")
+
+
+# --- base64 ---
+
+
+def test_b16encode_returns_bytes() -> None:
+    result = Bytes(b"abc").b16encode()
+    assert isinstance(result, Bytes)
+    assert result == Bytes(b"616263")
+
+
+def test_b16decode_roundtrip() -> None:
+    original = Bytes(b"abc")
+    assert original.b16encode().b16decode() == original
+
+
+def test_b32encode_returns_bytes() -> None:
+    result = Bytes(b"abc").b32encode()
+    assert isinstance(result, Bytes)
+    assert result == Bytes(b"MFRGG===")
+
+
+def test_b32decode_roundtrip() -> None:
+    original = Bytes(b"hello")
+    assert original.b32encode().b32decode() == original
+
+
+def test_b32hexencode_returns_bytes() -> None:
+    result = Bytes(b"abc").b32hexencode()
+    assert isinstance(result, Bytes)
+
+
+def test_b32hexdecode_roundtrip() -> None:
+    original = Bytes(b"hello")
+    assert original.b32hexencode().b32hexdecode() == original
+
+
+def test_b64encode_returns_bytes() -> None:
+    result = Bytes(b"abc").b64encode()
+    assert isinstance(result, Bytes)
+    assert result == Bytes(b"YWJj")
+
+
+def test_b64decode_roundtrip() -> None:
+    original = Bytes(b"hello world")
+    assert original.b64encode().b64decode() == original
+
+
+def test_standard_b64encode_matches_b64encode() -> None:
+    b = Bytes(b"abc")
+    assert b.standard_b64encode() == b.b64encode()
+
+
+def test_standard_b64decode_roundtrip() -> None:
+    original = Bytes(b"hello")
+    assert original.standard_b64encode().standard_b64decode() == original
+
+
+def test_urlsafe_b64encode_returns_bytes() -> None:
+    result = Bytes(b"\xfb\xff").urlsafe_b64encode()
+    assert isinstance(result, Bytes)
+    # urlsafe replaces + with - and / with _
+    assert b"+" not in result._value
+    assert b"/" not in result._value
+
+
+def test_urlsafe_b64decode_roundtrip() -> None:
+    original = Bytes(b"\xfb\xff\xfe")
+    assert original.urlsafe_b64encode().urlsafe_b64decode() == original
+
+
+def test_a85encode_returns_bytes() -> None:
+    result = Bytes(b"abc").a85encode()
+    assert isinstance(result, Bytes)
+
+
+def test_a85decode_roundtrip() -> None:
+    original = Bytes(b"hello world")
+    assert original.a85encode().a85decode() == original
+
+
+def test_b85encode_returns_bytes() -> None:
+    result = Bytes(b"abc").b85encode()
+    assert isinstance(result, Bytes)
+
+
+def test_b85decode_roundtrip() -> None:
+    original = Bytes(b"hello world")
+    assert original.b85encode().b85decode() == original
+
+
+def test_z85encode_returns_bytes() -> None:
+    # z85 requires input length multiple of 4
+    result = Bytes(b"abcd").z85encode()
+    assert isinstance(result, Bytes)
+
+
+def test_z85decode_roundtrip() -> None:
+    original = Bytes(b"abcd")
+    assert original.z85encode().z85decode() == original

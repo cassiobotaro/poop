@@ -487,3 +487,68 @@ def test_methods_accept_poop_none_kwargs() -> None:
     assert Str("hi").ljust(Int(4), fillchar=none) == Str("hi  ")
     assert Str("hi").rjust(Int(4), fillchar=none) == Str("  hi")
     assert Str("a\tb").expandtabs(tabsize=none) == Str("a       b")
+
+
+# --- base64 (decode-only on Str; encode lives on Bytes) ---
+
+
+def test_b64decode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    result = Str("YWJj").b64decode()
+    assert isinstance(result, Bytes)
+    assert result == Bytes(b"abc")
+
+
+def test_b16decode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    assert Str("616263").b16decode() == Bytes(b"abc")
+
+
+def test_b32decode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    assert Str("MFRGG===").b32decode() == Bytes(b"abc")
+
+
+def test_b32hexdecode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    encoded = Bytes(b"hello").b32hexencode()
+    assert encoded.decode(Str("ascii")).b32hexdecode() == Bytes(b"hello")
+
+
+def test_standard_b64decode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    assert Str("YWJj").standard_b64decode() == Bytes(b"abc")
+
+
+def test_urlsafe_b64decode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    encoded = Bytes(b"\xfb\xff\xfe").urlsafe_b64encode()
+    decoded = encoded.decode(Str("ascii")).urlsafe_b64decode()
+    assert decoded == Bytes(b"\xfb\xff\xfe")
+
+
+def test_a85decode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    encoded = Bytes(b"hello").a85encode()
+    assert encoded.decode(Str("ascii")).a85decode() == Bytes(b"hello")
+
+
+def test_b85decode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    encoded = Bytes(b"hello").b85encode()
+    assert encoded.decode(Str("ascii")).b85decode() == Bytes(b"hello")
+
+
+def test_z85decode_from_str() -> None:
+    from poop.types.bytes import Bytes
+
+    encoded = Bytes(b"abcd").z85encode()
+    assert encoded.decode(Str("ascii")).z85decode() == Bytes(b"abcd")

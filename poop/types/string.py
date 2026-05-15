@@ -1,3 +1,4 @@
+import base64 as _base64
 import builtins
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -314,6 +315,54 @@ class Str(_ValueEqMixin, Object):
 
     def __hash__(self) -> int:
         return hash(self._value)
+
+    # base64 — decoders on Str. Each returns Bytes (mirrors base64.<name>(s)
+    # in Python, which accepts str input and always returns bytes).
+
+    def b16decode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.b16decode(self._value))
+
+    def b32decode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.b32decode(self._value))
+
+    def b32hexdecode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.b32hexdecode(self._value))
+
+    def b64decode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.b64decode(self._value))
+
+    def standard_b64decode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.standard_b64decode(self._value))
+
+    def urlsafe_b64decode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.urlsafe_b64decode(self._value))
+
+    def a85decode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.a85decode(self._value))
+
+    def b85decode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.b85decode(self._value))
+
+    def z85decode(self) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(_base64.z85decode(self._value))
 
     def __str__(self) -> _str:
         return self._value

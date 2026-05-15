@@ -1,3 +1,4 @@
+import base64 as _base64
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
@@ -263,6 +264,65 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
     def zfill(self, width: Int) -> Bytes:
         return Bytes(self._value.zfill(width._value))
+
+    # base64 — encoders. Each returns Bytes (ASCII-bearing), mirroring
+    # Python's base64.<name>(b) which always returns bytes.
+
+    def b16encode(self) -> Bytes:
+        return Bytes(_base64.b16encode(self._value))
+
+    def b32encode(self) -> Bytes:
+        return Bytes(_base64.b32encode(self._value))
+
+    def b32hexencode(self) -> Bytes:
+        return Bytes(_base64.b32hexencode(self._value))
+
+    def b64encode(self) -> Bytes:
+        return Bytes(_base64.b64encode(self._value))
+
+    def standard_b64encode(self) -> Bytes:
+        return Bytes(_base64.standard_b64encode(self._value))
+
+    def urlsafe_b64encode(self) -> Bytes:
+        return Bytes(_base64.urlsafe_b64encode(self._value))
+
+    def a85encode(self) -> Bytes:
+        return Bytes(_base64.a85encode(self._value))
+
+    def b85encode(self) -> Bytes:
+        return Bytes(_base64.b85encode(self._value))
+
+    def z85encode(self) -> Bytes:
+        return Bytes(_base64.z85encode(self._value))
+
+    # base64 — decoders on Bytes. Each returns Bytes.
+
+    def b16decode(self) -> Bytes:
+        return Bytes(_base64.b16decode(self._value))
+
+    def b32decode(self) -> Bytes:
+        return Bytes(_base64.b32decode(self._value))
+
+    def b32hexdecode(self) -> Bytes:
+        return Bytes(_base64.b32hexdecode(self._value))
+
+    def b64decode(self) -> Bytes:
+        return Bytes(_base64.b64decode(self._value))
+
+    def standard_b64decode(self) -> Bytes:
+        return Bytes(_base64.standard_b64decode(self._value))
+
+    def urlsafe_b64decode(self) -> Bytes:
+        return Bytes(_base64.urlsafe_b64decode(self._value))
+
+    def a85decode(self) -> Bytes:
+        return Bytes(_base64.a85decode(self._value))
+
+    def b85decode(self) -> Bytes:
+        return Bytes(_base64.b85decode(self._value))
+
+    def z85decode(self) -> Bytes:
+        return Bytes(_base64.z85decode(self._value))
 
     def __str__(self) -> str:
         return repr(self._value)
