@@ -258,3 +258,29 @@ n = Math.factorial(5)
 ```
 
 > `Math` mirrors `math.*` exactly — same function names, parameter order, defaults, kw-only markers, return types, and constant case (so `Math.pi` stays lowercase like `math.pi`).
+
+## Random (`random` module)
+
+```python
+# Python
+import random
+
+x = random.random()
+n = random.randint(1, 10)
+pick = random.choice(xs)
+random.shuffle(xs)
+sample = random.sample(xs, 3)
+r = random.Random(seed=42)
+```
+
+```python
+# POOP
+x = Random.random()
+n = Random.randint(1, 10)
+pick = Random.choice(xs)
+Random.shuffle(xs)
+sample = Random.sample(xs, 3)
+r = Random.new(42)
+```
+
+> `Random` mirrors `random.*` exactly. One forced divergence: POOP namespaces are not callable, so `random.Random(seed)` becomes `Random.new(seed)`. Cryptographic draws live in `Secrets`, never `Random`.

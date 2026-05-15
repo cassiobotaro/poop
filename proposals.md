@@ -123,105 +123,6 @@ will be non-secure; `Secrets` is secure-by-default.
 - `secrets.SystemRandom` class wrapper — duplicates `choice` /
   `randbelow` / `randbits` already on `Secrets`.
 
-## Expose `random` as POOP messages
-
-Python's `random` module is unreachable from POOP today (imports are
-forbidden). Without it, POOP source cannot draw random numbers, pick
-a random element from a collection, shuffle a sequence, or seed a
-deterministic generator — primitives every simulation, game, and
-test fixture needs.
-
-Smalltalk handles randomness on two levels: a `Random` class
-(`Random new` returns a non-secure generator) and messages on
-values (`aCollection atRandom`, `anInteger atRandom`). POOP
-**deliberately does not adopt the Smalltalk message-on-value
-shortcuts** — the interface mirrors Python's `random` module
-exactly, so the only entry points are the `Random` namespace and
-explicit `Random` instances.
-
-**Proposal — exact mirror of Python's `random.Random` instance +
-module-level singleton pattern.**
-
-1. **New POOP type `Random`** in `poop/types/random.py`, wrapping
-   `random.Random`. Instances answer the full Python method set:
-   - **Bookkeeping:** `.seed(a=None, version=2)`,
-     `.getstate() -> Tuple`, `.setstate(state)`
-   - **Core draws:** `.random() -> Float` (in `[0.0, 1.0)`),
-     `.uniform(a, b) -> Float`, `.randint(a, b) -> Int` (inclusive
-     both ends), `.randrange(start, stop, step) -> Int`,
-     `.getrandbits(k) -> Int`, `.randbytes(n) -> Bytes`
-   - **Collection draws** (parameter names follow Python exactly):
-     `.choice(seq) -> element`,
-     `.choices(population, weights=None, *, cum_weights=None, k=1) -> List`,
-     `.sample(population, k, *, counts=None) -> List`,
-     `.shuffle(x)` — in-place, mutates and returns `None`
-     (mirrors Python)
-   - **Distributions:** `.gauss`, `.normalvariate`,
-     `.lognormvariate`, `.expovariate`, `.gammavariate`,
-     `.betavariate`, `.paretovariate`, `.weibullvariate`,
-     `.vonmisesvariate`, `.triangular`, `.binomialvariate`
-     (Python 3.12+) — all returning `Float` or `Int` as in Python.
-2. **Namespace `Random`** (class side of the `Random` POOP type)
-   injected into `DEFAULT_NAMESPACE` (`Math`-style, no AST rewrite).
-   Class-side messages mirror every instance method above by
-   delegating to a hidden module-level singleton, exactly like
-   Python's `random.random()` vs `Random().random()`:
-   - `Random.new(seed)` — substitutes for Python's
-     `random.Random(seed)` constructor call (POOP namespaces are
-     not callable, so this is the one forced naming divergence
-     from Python)
-   - `Random.random()`, `Random.uniform(a, b)`, `Random.randint(a, b)`,
-     `Random.choice(seq)`, `Random.shuffle(x)`,
-     `Random.sample(population, k, *, counts=None)`,
-     `Random.choices(population, weights=None, *, cum_weights=None, k=1)`,
-     … — every Python module-level function with the same name and
-     parameter order.
-
-`RandomTransformer` is **namespace-only**; it injects `Random` into
-`DEFAULT_NAMESPACE`. There are **no** new methods on iterables or
-`Int` — anything that would have looked like `coll.at_random()` or
-`(n).at_random()` is reached through `Random.choice(coll)` or
-`Random.randint(1, n)`, which is how a Python program would write it.
-
-**Type discipline:** every signature exposed by this proposal —
-methods on `Random` instances and on the `Random` namespace — takes
-and returns POOP types (`Random`, `Float`, `Int`, `Bytes`, `List`,
-`Tuple`, plus the element type of the receiving collection). No
-`random.Random` instance, raw `float`, or `int` leaks across the
-boundary.
-
-**`random` vs `secrets`.** This proposal is for the non-secure,
-deterministic-when-seeded generator. Anything touching auth, token
-minting, or constant-time comparison goes through `secrets`
-(separate proposal above). POOP keeps the two namespaces strictly
-distinct, exactly as Python does.
-
-**Smalltalk reference.** Listed for context only — POOP's interface
-mirrors Python, not Smalltalk, even where Smalltalk reads more
-naturally.
-
-| Python | Smalltalk (Pharo) | Notes |
-|---|---|---|
-| `random.random()` | `Random new next` | Smalltalk's `next` returns `[0.0, 1.0)`; POOP keeps `.random()` |
-| `random.randint(a, b)` | `a to: b atRandom` | POOP keeps `.randint(a, b)` |
-| `random.choice(coll)` | `coll atRandom` | POOP keeps `Random.choice(coll)` — no `coll.at_random()` mixin |
-| `random.shuffle(seq)` | `seq shuffle` | POOP mutates like Python; non-mutating shuffle = `Random.sample(coll, k=len(coll))` (Python idiom) |
-| `random.sample(pop, k)` | (no native) | POOP keeps `.sample(pop, k)` |
-| `random.seed(a)` | `Random new seed: a` | direct |
-| `Random()` (new instance) | `Random new` | POOP exposes as `Random.new(seed)` — only forced divergence (namespace not callable) |
-| `random.randrange(n)` | `n atRandom` (≠) | **semantics differ**: Smalltalk returns `1..n`, Python returns `0..n-1`. POOP follows Python exactly. |
-
-**Out of scope (for v1):**
-
-- `random.SystemRandom` — duplicates `secrets`; users wanting
-  crypto-secure draws go through `Secrets.*` instead.
-- `Random.VERSION` class attribute — implementation detail of the
-  state-serialization format; defer until needed.
-- The `main` entry point (`python -m random`) — niche CLI tool.
-- Internal magic constants (`BPF`, `LOG4`, `NV_MAGICCONST`,
-  `RECIP_BPF`, `SG_MAGICCONST`, `TWOPI`) — Python exposes them but
-  they are implementation detail of the distributions.
-
 ## Expose `base64` as POOP messages
 
 Python's `base64` module is unreachable from POOP today. Encoding
@@ -507,7 +408,7 @@ each annotated with one of:
 | `cmath` | audit | Needs `Complex` POOP type story — see "Future work" |
 | `decimal` | audit | `Decimal` POOP type with full message API |
 | `fractions` | audit | `Fraction` POOP type |
-| `random` | proposed | See proposal above |
+| `random` | covered | `Random` namespace (shipped in v0.7.0) |
 | `statistics` | audit | `coll.mean()` / `coll.median()` or `Statistics` namespace |
 
 ### Functional Programming Modules
@@ -795,6 +696,24 @@ produce a per-module decision and either a follow-up proposal or a
 
 Items deferred from shipped proposals that need their own follow-up
 once a prerequisite exists.
+
+### `Random.getstate()` / `Random.setstate(state)` — from the `random` proposal (v0.7.0)
+
+Python's `random.Random.getstate()` returns a tuple of the form
+`(version, internal_state, gauss_next)` where `internal_state` is a
+**625-element tuple of ints** carrying the Mersenne Twister state.
+POOP's type discipline forbids leaking raw Python primitives across
+the namespace boundary, but wrapping every state int into a POOP
+`Int` is pure overhead — nobody inspects the state; it exists only
+to round-trip into `setstate`. The cleanest path requires either an
+opaque-state POOP type that pickles/unpickles via Bytes, or a
+sanctioned divergence allowing the raw tuple through (the user never
+sees what's inside).
+
+For v1, `.seed(a, version)` covers the 95% case of determinism. The
+state pair is deferred until a concrete user need surfaces — at
+which point the trade-off (opaque-Bytes type vs. raw-tuple
+divergence) can be decided with real requirements in hand.
 
 ### Complex math (`cmath`) — from the `math` proposal (v0.6.0)
 

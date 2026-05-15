@@ -23,7 +23,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - **`True`, `False`, and `None` are singletons**: `true`, `false`, and `none` are unique objects — there is exactly one instance of each. All comparisons and identity checks rely on this guarantee.
 - **Constructor builtins are intercepted, not banned**: `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` etc. are class constructors — they ARE object instantiation and fit the OO model. Each transformer intercepts the bare call and rewrites it to return the POOP type via a `_poop_X_from(...)` factory.
 - **Dunders exposed as regular methods**: every relevant dunder on a POOP type gets an alias with the Python name without underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__hash__` → `hash()`, etc. Do not translate to Smalltalk names.
-- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. Only true entry points without an AST rewrite or method equivalent (`Try`, `With`, `Path`, `Math`) are exposed under their PascalCase names.
+- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. Only true entry points without an AST rewrite or method equivalent (`Try`, `With`, `Path`, `Math`, `Random`) are exposed under their PascalCase names.
 
 ## Active infections
 
@@ -732,6 +732,23 @@ The five module constants follow the source module's case verbatim — `math.pi`
 POOP `Int` and `Float` keep methods that are native to Python's `int` and `float` (`bit_length`, `bit_count`, `is_integer`, `as_integer_ratio`) and the substitutes for banned builtins (`Int.abs()`, `Int.pow()`, `Int.divmod()` cover the `no_abs` / `no_pow` / `no_divmod` validators). The math-specific public methods that previously lived on those types (`Int.ceil`/`floor`/`trunc`, `Float.ceil`/`floor`/`trunc`) are removed — `Math.ceil(x)` and friends are the single source of truth.
 
 `Math` is exposed in `DEFAULT_NAMESPACE` via `MathTransformer` (`poop/transformers/math.py`) — a namespace-only transformer that injects the binding without rewriting AST.
+
+### Random — `poop/types/random.py` + `poop/transformers/random.py`
+
+`Random` wraps Python's `random.Random`. Unlike `Math`, which is pure and stateless, `Random` carries **per-instance state** (the pseudo-random sequence depends on the seed). The implementation reconciles "class with instances" and "module-level namespace" through a **singleton-as-namespace** trick: `RandomTransformer.BINDINGS` exposes a module-level instance (`_DEFAULT = Random()`) under the name `Random`. The singleton's instance methods serve as both the namespace (`Random.random()` is the singleton's `.random()` method) and the factory entry point (`Random.new(seed)` is the singleton's `.new(seed)` method, which returns a fresh independently-seeded `Random`). This mirrors how Python's `random` module actually works internally — `random.random` is literally `_inst.random`, a bound method.
+
+This is the first POOP namespace where `BINDINGS` exposes an instance rather than a class. `Try` / `With` / `Path` / `Math` are all classes; `Random` is the singleton.
+
+| Category | Operations | Returns |
+|---|---|---|
+| Bookkeeping | `seed(a=None, version=Int(2))` | `none` |
+| Core draws | `random()`, `uniform(a, b)`, `randint(a, b)`, `randrange(start, stop=None, step=None)`, `getrandbits(k)`, `randbytes(n)` | `Float`/`Int`/`Bytes` |
+| Collection draws | `choice(seq)`, `shuffle(x)` mutates list, returns `none`, `choices(population, weights=None, *, cum_weights=None, k=Int(1))`, `sample(population, k, *, counts=None)` | element / `none` / `List` |
+| Distributions | `gauss`, `normalvariate`, `lognormvariate`, `expovariate`, `gammavariate`, `betavariate`, `paretovariate`, `weibullvariate`, `vonmisesvariate`, `triangular`, `binomialvariate` (Python 3.12+) | `Float` (10) / `Int` (binomialvariate) |
+
+`Random.new(seed)` is the one forced naming divergence from Python's `random.Random(seed)` constructor call — POOP namespaces are not callable. Anything cryptographic goes through `Secrets`, not `Random`. `getstate` / `setstate` are deferred to Future work (see `proposals.md`) because the Mersenne Twister state is opaque (625 ints) and has no clean POOP type-discipline mapping.
+
+`Random` is exposed in `DEFAULT_NAMESPACE` via `RandomTransformer` (`poop/transformers/random.py`) — a namespace-only transformer that injects the singleton without rewriting AST.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
