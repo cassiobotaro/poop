@@ -178,3 +178,13 @@ class Math:
     @staticmethod
     def ldexp(x: Float, i: Int) -> Float:
         return Float(_math.ldexp(x._value, i._value))
+
+    # Angular conversion ------------------------------------------
+
+    @staticmethod
+    def degrees(x: Float) -> Float:
+        return Float(_math.degrees(x._value))
+
+    @staticmethod
+    def radians(x: Float) -> Float:
+        return Float(_math.radians(x._value))

@@ -173,3 +173,16 @@ def test_frexp_returns_tuple_of_float_and_int() -> None:
 def test_ldexp() -> None:
     assert Math.ldexp(Float(0.5), Int(4))._value == 8.0
     assert isinstance(Math.ldexp(Float(0.5), Int(4)), Float)
+
+
+# --- Angular conversion ---
+
+
+def test_degrees() -> None:
+    assert Math.degrees(Float(_math.pi))._value == 180.0
+    assert isinstance(Math.degrees(Float(_math.pi)), Float)
+
+
+def test_radians() -> None:
+    assert Math.radians(Float(180.0))._value == _math.pi
+    assert isinstance(Math.radians(Float(180.0)), Float)
