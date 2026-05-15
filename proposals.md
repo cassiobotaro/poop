@@ -1830,24 +1830,6 @@ posture for the others.
   to the safe parser configuration (no entity expansion) to avoid
   XXE attacks. Document explicitly.
 
-## Expose `webbrowser` as POOP messages
-
-Python's `webbrowser` opens URLs in the user's default browser.
-Tiny module.
-
-**Proposal — `webbrowser` (lowercase module) namespace:**
-
-1. **Module-level entry:**
-   `webbrowser.open(url, new=0, autoraise=True) -> Boolean`,
-   `webbrowser.open_new(url) -> Boolean`,
-   `webbrowser.open_new_tab(url) -> Boolean`,
-   `webbrowser.get(using=None) -> Browser`,
-   `webbrowser.register(name, constructor, instance=None, *, preferred=False)`.
-2. **`Browser` class** for per-browser dispatch (the registered
-   instance returned by `get`).
-
-**Type discipline:** `Str` for URLs, `Boolean` for success.
-
 ## Expose `urllib` as POOP messages
 
 Python's `urllib` is a multi-module package: `urllib.request`
@@ -2512,7 +2494,7 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `webbrowser` | proposed | See proposal above |
+| `webbrowser` | covered | `webbrowser` + `Browser` (shipped in v0.16.0) |
 | `wsgiref` | out | Reference impl |
 | `urllib` | proposed | See proposal above |
 | `http` | proposed | See proposal above |
@@ -2711,6 +2693,19 @@ Cross-cutting decisions to make first:
   `cmath.*`.
 - Should `cmath` and `math` share predicates that take Complex
   (returning Boolean) or duplicate them per type, like Python does?
+
+### `webbrowser.register` — from the `webbrowser` proposal (v0.16.0)
+
+v0.16.0 ships the read paths (`open`/`open_new`/`open_new_tab`/`get`)
+plus the `Error` exception class and the `Browser` wrapper around
+`webbrowser.BaseBrowser`. `webbrowser.register(name, constructor,
+instance=None, *, preferred=False)` is deferred because the
+`constructor` argument is a Python callable returning a
+`BaseBrowser` subclass instance — there is no clean POOP
+type-discipline mapping for "callable that returns a Browser" in
+v1. When a real caller surfaces, decide whether to accept a POOP
+`Block` returning a `Browser` (and unwrap internally) or fold this
+into a richer factory API.
 
 ### Optional base64 kwargs — from the `base64` proposal (v0.13.0)
 

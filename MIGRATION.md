@@ -418,3 +418,25 @@ registry = MimeTypes(filenames=["/etc/mime.types"])
 ```
 
 > POOP exposes both `mimetypes` (lowercase, module-level API + constant maps) and `MimeTypes` (the class — `MimeTypes(filenames=List, strict=Boolean)`). The split mirrors Python exactly. `mimetypes.suffix_map`/`encodings_map`/`types_map`/`common_types`/`knownfiles` are snapshotted from CPython's globals at import time and don't reflect later `add_type` mutations.
+
+## Opening URLs (`webbrowser` module + `Browser` class)
+
+```python
+# Python
+import webbrowser
+
+webbrowser.open("https://example.com")
+webbrowser.open_new_tab("https://example.com")
+firefox = webbrowser.get("firefox")
+firefox.open_new("https://example.com")
+```
+
+```python
+# POOP
+webbrowser.open("https://example.com")
+webbrowser.open_new_tab("https://example.com")
+firefox = webbrowser.get("firefox")
+firefox.open_new("https://example.com")
+```
+
+> POOP exposes both `webbrowser` (lowercase, module-level API) and `Browser` (the controller wrapper, returned by `webbrowser.get(using=none)`). `webbrowser.Error` is a raw Python exception class for use with `Try.except_(...)`. `webbrowser.register(...)` is deferred to Future work — its `constructor` argument is a Python callable with no clean POOP mapping.

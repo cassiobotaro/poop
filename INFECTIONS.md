@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `MimeTypes`, `Path`, `Random`, `Try`, `With`, `binascii`, `errno`, `getpass`, `math`, `mimetypes`, `random`, `secrets`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `Random`, `Try`, `With`, `binascii`, `errno`, `getpass`, `math`, `mimetypes`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -854,6 +854,29 @@ The two exception classes are exposed as raw Python types so user code can pass 
 The constant dicts are **snapshotted** from CPython's globals at import time. Subsequent `add_type` calls update CPython's mutable globals but not the POOP snapshots — this preserves POOP's "no introspection" stance: constants are immutable values from POOP's perspective. Use `MimeTypes` if you need a registry that reflects later mutations.
 
 `mimetypes` and `MimeTypes` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/mimetypes.py` — namespace-only, no AST rewrite.
+
+### webbrowser + Browser — `poop/types/webbrowser.py` + `poop/transformers/webbrowser.py`
+
+`webbrowser` mirrors Python's `webbrowser` module — open URLs in the user's default (or a chosen) browser. Like `random`/`Random` and `mimetypes`/`MimeTypes`, two namespace entries are bound:
+
+- **`webbrowser`** (lowercase) — module-level shortcuts and the `get(using=none)` factory.
+- **`Browser`** (PascalCase) — wraps the underlying `webbrowser.BaseBrowser` controller returned by `get()`, exposing the same `open`/`open_new`/`open_new_tab` methods.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `webbrowser.open(url, new=Int(0), autoraise=true)` | `Boolean` | True iff a browser launched successfully |
+| `webbrowser.open_new(url)` | `Boolean` | new window |
+| `webbrowser.open_new_tab(url)` | `Boolean` | new tab |
+| `webbrowser.get(using=none)` | `Browser` | controller; raises `webbrowser.Error` if `using` unknown |
+| `webbrowser.Error` | Python type | usable with `Try.except_` |
+| `Browser.open` / `.open_new` / `.open_new_tab` | `Boolean` | per-instance dispatch |
+| `Browser.name` | `Str` | controller name (e.g. `"chrome"`) |
+
+POOP collapses Python's concrete browser classes (Chrome, Edge, Mozilla, …) into a single `Browser` POOP type because every concrete class carries the same public surface. Class identity is preserved internally for dispatch.
+
+`webbrowser.register(name, constructor, instance, preferred)` is **not** surfaced — its `constructor` argument is a Python callable returning a `BaseBrowser` subclass, with no clean POOP type-discipline mapping in v1. See proposals.md § Future work.
+
+`webbrowser` and `Browser` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/webbrowser.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
