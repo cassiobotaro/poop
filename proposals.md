@@ -1780,30 +1780,6 @@ Python's `mimetypes` maps file extensions to MIME content types.
 **Type discipline:** `Str` for types/extensions, `Dict` for the
 maps.
 
-## Expose `binascii` as POOP messages
-
-Python's `binascii` converts between binary and various ASCII-encoded
-representations. Pairs with `base64`.
-
-**Proposal — `binascii` (lowercase module) namespace:**
-
-1. **Hex:** `binascii.b2a_hex(data, sep=None, bytes_per_sep=1) -> Bytes`,
-   `binascii.hexlify(data, sep=None, bytes_per_sep=1) -> Bytes`,
-   `binascii.a2b_hex(hexstr) -> Bytes`,
-   `binascii.unhexlify(hexstr) -> Bytes`.
-2. **Base64 / quoted-printable / uu**: `b2a_base64`, `a2b_base64`,
-   `b2a_qp`, `a2b_qp`, `b2a_uu`, `a2b_uu`. Most use of these is
-   covered by `base64` proposal; `binascii` exposes the lower-level
-   one-shot variants.
-3. **CRC:** `binascii.crc_hqx(data, value) -> Int`,
-   `binascii.crc32(data, value=0) -> Int` (also in `zlib`).
-4. **Errors:** `binascii.Error`, `binascii.Incomplete`.
-
-**Type discipline:** `Bytes` in/out, `Int` for checksums.
-
-**Out of scope (for v1):** `b2a_hqx`/`a2b_hqx` (Mac BinHex 4 —
-removed in Python 3.13).
-
 ## Expose `html` as POOP messages
 
 Python's `html` is small: escape/unescape entities, plus
@@ -2544,7 +2520,7 @@ each annotated with one of:
 | `mailbox` | out | Niche legacy |
 | `mimetypes` | proposed | See proposal above |
 | `base64` | covered | Methods on `Bytes` and `Str` (shipped in v0.13.0) |
-| `binascii` | proposed | See proposal above |
+| `binascii` | covered | `binascii` namespace (shipped in v0.14.0) |
 | `quopri` | out | Niche legacy encoding |
 
 ### Structured Markup Processing Tools

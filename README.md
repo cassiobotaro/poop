@@ -70,6 +70,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `secrets.token_hex(16)` | `secrets.token_hex(16)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
+| `binascii.crc32(b)` | `binascii.crc32(b)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

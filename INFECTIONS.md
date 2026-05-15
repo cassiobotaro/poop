@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `errno`, `getpass`, `math`, `random`, `secrets`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `binascii`, `errno`, `getpass`, `math`, `random`, `secrets`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -820,6 +820,23 @@ No new POOP type, no transformer, no AST rewrite — the methods live directly o
 `secrets.SystemRandom` is **not** surfaced — its instance API duplicates the module-level functions above. `nbytes=none` resolves to `DEFAULT_ENTROPY`, mirroring CPython's default.
 
 `secrets` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/secrets.py` — namespace-only, no AST rewrite.
+
+### binascii — `poop/types/binascii.py` + `poop/transformers/binascii.py`
+
+`binascii` mirrors Python's `binascii` module — lower-level one-shot conversions between binary data and ASCII representations, plus CRC checksums. Pairs with `base64` (the methods on `Bytes`/`Str`).
+
+| Category | Operations | Returns |
+|---|---|---|
+| Hex | `b2a_hex(data, sep=none, bytes_per_sep=Int(1))`, `hexlify(...)` (alias), `a2b_hex(hexstr)`, `unhexlify(hexstr)` (alias) | `Bytes` |
+| Base64 / qp / uu (one-shot) | `b2a_base64(data)`, `a2b_base64(data)`, `b2a_qp(data)`, `a2b_qp(data)`, `b2a_uu(data)`, `a2b_uu(data)` | `Bytes` |
+| CRC | `crc_hqx(data, value)`, `crc32(data, value=Int(0))` | `Int` |
+| Exception classes | `binascii.Error`, `binascii.Incomplete` | Python exception types |
+
+The two exception classes are exposed as raw Python types so user code can pass them to `Try.except_(...)`. Exception classes are the documented exception to POOP's type-discipline rule — `Try` already accepts a Python exception type for its handler, so exposing these mirrors that existing convention.
+
+`b2a_hqx`/`a2b_hqx` (Mac BinHex 4) are not exposed because Python removed them in 3.13.
+
+`binascii` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/binascii.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
