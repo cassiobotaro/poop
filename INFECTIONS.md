@@ -431,6 +431,20 @@ Out of v1 (filed if demand appears): `open(mode)` returning a POOP `File`, `stat
 
 Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` under a `_poop_*` key (`_poop_int`, `_poop_list_cls`, `_poop_object`, …) so the rewritten AST resolves them at runtime. This validator stops user code from referencing the same names directly, preserving the abstraction that POOP types pass as their Python builtin counterparts.
 
+### No namespace shadow — `poop/validators/no_namespace_shadow.py`
+
+| AST node | Reason |
+|---|---|
+| `ast.Assign` with target `ast.Name` in the protected set | reassigning a namespace name (`math = 42`) breaks every later call to `math.sqrt(…)` |
+| `ast.AnnAssign` with target `ast.Name` in the protected set | annotated form (`math: int = 42`) — same problem |
+| `ast.AugAssign` with target `ast.Name` in the protected set | augmented form (`math += 1`) — same problem |
+| `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
+| Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
+
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Path`, `Random`, `Try`, `With`, `math`, `random`. As new namespace mirrors land (`uuid`, `secrets`, …), they protect themselves automatically — no changes to this validator.
+
+What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
+
 ### No `sum` — `poop/validators/no_sum.py`
 
 | Call | Reason | Substitute |

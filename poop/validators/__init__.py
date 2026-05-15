@@ -39,6 +39,7 @@ from poop.validators.no_map import NoMapValidator
 from poop.validators.no_match import NoMatchValidator
 from poop.validators.no_max import NoMaxValidator
 from poop.validators.no_min import NoMinValidator
+from poop.validators.no_namespace_shadow import NoNamespaceShadowValidator
 from poop.validators.no_not import NoNotValidator
 from poop.validators.no_open import NoOpenValidator
 from poop.validators.no_poop_prefix import NoPoopPrefixValidator
@@ -121,6 +122,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoSumValidator(),
     NoDelValidator(),
     NoPoopPrefixValidator(),
+    NoNamespaceShadowValidator(),
 ]
 
 __all__ = ["DEFAULT_VALIDATORS", "Validator"]
