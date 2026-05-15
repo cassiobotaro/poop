@@ -75,6 +75,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `webbrowser.open(url)` | `webbrowser.open(url)` |
 | `glob.glob("*.py")` | `glob.glob("*.py")` |
 | `fnmatch.fnmatch(n, p)` | `fnmatch.fnmatch(n, p)` |
+| `copy.deepcopy(x)` | `copy.deepcopy(x)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

@@ -480,3 +480,21 @@ regex_src = fnmatch.translate("*.py")
 ```
 
 > `fnmatch.fnmatch` follows the OS's case-sensitivity rules; `fnmatch.fnmatchcase` is always case-sensitive. `filter` returns `List[Str]`; `translate` returns a regex source `Str` for downstream compilation.
+
+## Shallow / deep copy (`copy` module)
+
+```python
+# Python
+import copy
+
+shallow = copy.copy(obj)
+deep = copy.deepcopy(obj)
+```
+
+```python
+# POOP
+shallow = copy.copy(obj)
+deep = copy.deepcopy(obj)
+```
+
+> POOP types implement Python's `__copy__` / `__deepcopy__` protocol; the namespace routes calls. `copy.Error` is exposed as a Python exception class for use with `Try.except_(...)`. `deepcopy`'s `memo` parameter is not surfaced — implement `__deepcopy__` on your POOP class if you need custom memoization.

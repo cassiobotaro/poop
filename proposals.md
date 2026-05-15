@@ -574,22 +574,6 @@ breakers. Low priority but worth proposing.
 
 **Out of scope (for v1):** `finalize`, `WeakMethod` — niche.
 
-## Expose `copy` as POOP messages
-
-Python's `copy` does shallow and deep object copying. `copy.copy`
-and `copy.deepcopy` are the entire public surface.
-
-**Proposal — `copy` (lowercase module) namespace:**
-
-1. `copy.copy(obj) -> Object` — shallow copy.
-2. `copy.deepcopy(obj, memo=None) -> Object` — recursive deep copy.
-3. `copy.Error` — POOP error wrapping `copy.Error`.
-
-**Type discipline:** returns the same POOP type as the input.
-
-**Out of scope (for v1):** `copy.replace` (3.13+) — small but
-trivially added later if asked.
-
 ## Expose `pprint` as POOP messages
 
 Python's `pprint` pretty-prints data structures (multi-line,
@@ -2315,7 +2299,7 @@ each annotated with one of:
 | `array` | proposed | See proposal above |
 | `weakref` | proposed | See proposal above |
 | `types` | out | Introspection — forbidden in POOP |
-| `copy` | proposed | See proposal above |
+| `copy` | covered | `copy` namespace (shipped in v0.19.0) |
 | `pprint` | proposed | See proposal above |
 | `reprlib` | out | POOP forbids `repr` |
 | `enum` | proposed | See proposal above |
@@ -2660,6 +2644,24 @@ Cross-cutting decisions to make first:
   `cmath.*`.
 - Should `cmath` and `math` share predicates that take Complex
   (returning Boolean) or duplicate them per type, like Python does?
+
+### `copy.replace` and `deepcopy(obj, memo)` — from the `copy` proposal (v0.19.0)
+
+Two deferrals from v0.19.0:
+
+- **`copy.replace(obj, /, **kwargs)`** (Python 3.13+) — a shortcut
+  for "build a new instance with these field updates" on
+  dataclasses / NamedTuple / classes that implement `__replace__`.
+  POOP classes don't use decorators (no `dataclasses` story), and
+  `__replace__` is a recent addition; defer until a real caller
+  surfaces.
+- **`deepcopy(obj, memo)`** — the `memo` parameter is a CPython
+  implementation detail (an `id(obj)`-keyed dict tracking
+  recursive identities during traversal). It has no clean type-
+  discipline mapping because POOP `Dict` keys are POOP `Object`,
+  not `int`. v0.19.0 ships `deepcopy(obj)` without `memo`; callers
+  needing custom memoization should implement `__deepcopy__` on
+  their POOP class instead.
 
 ### `webbrowser.register` — from the `webbrowser` proposal (v0.16.0)
 

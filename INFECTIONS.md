@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `Random`, `Try`, `With`, `binascii`, `errno`, `fnmatch`, `getpass`, `glob`, `math`, `mimetypes`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `Random`, `Try`, `With`, `binascii`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `math`, `mimetypes`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -905,6 +905,20 @@ POOP collapses Python's concrete browser classes (Chrome, Edge, Mozilla, …) in
 | `fnmatch.translate(pattern)` | `Str` (regex source) |
 
 `fnmatch` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/fnmatch.py` — namespace-only, no AST rewrite.
+
+### copy — `poop/types/copy.py` + `poop/transformers/copy.py`
+
+`copy` mirrors Python's `copy` module — shallow and deep object copying. POOP types implement `__copy__` / `__deepcopy__` via the standard Python protocol; the namespace just routes calls.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `copy.copy(obj)` | same type as input | shallow |
+| `copy.deepcopy(obj)` | same type as input | recursive |
+| `copy.Error` | Python exception type | usable with `Try.except_` |
+
+`deepcopy`'s `memo` parameter (an `id(obj)`-keyed dict CPython uses to track recursive identities during traversal) is **not** surfaced — it has no clean type-discipline mapping because POOP `Dict` is keyed by POOP `Object`, not `int`. Callers wanting custom memoization should implement `__deepcopy__` on their POOP class. `copy.replace` (3.13+) is similarly out of scope for v1 — POOP classes don't use decorators and have no `dataclasses` story.
+
+`copy` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/copy.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
