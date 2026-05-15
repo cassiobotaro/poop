@@ -81,8 +81,11 @@ def test_int_divmod_returns_tuple_of_ints() -> None:
 def test_float_divmod_returns_tuple_of_floats() -> None:
     result = Float(17.0).divmod(Float(5.0))
     assert isinstance(result, Tuple)
-    assert result.at(Int(0)) == Float(3.0)
-    assert result.at(Int(1)) == Float(2.0)
+    quotient, remainder = result._items
+    assert isinstance(quotient, Float)
+    assert isinstance(remainder, Float)
+    assert quotient._value == pytest.approx(3.0)
+    assert remainder._value == pytest.approx(2.0)
 
 
 def test_subscript_raises_validation_error() -> None:

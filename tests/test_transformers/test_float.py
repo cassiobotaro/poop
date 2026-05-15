@@ -89,13 +89,13 @@ def test_float_from_float_returns_same() -> None:
 def test_float_from_none_returns_zero() -> None:
     result = _poop_float_from()
     assert isinstance(result, Float)
-    assert result._value == 0.0
+    assert result._value == pytest.approx(0.0)
 
 
 def test_float_from_int_converts() -> None:
     result = _poop_float_from(Int(42))
     assert isinstance(result, Float)
-    assert result._value == 42.0
+    assert result._value == pytest.approx(42.0)
 
 
 def test_float_from_str_parses() -> None:

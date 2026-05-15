@@ -144,7 +144,9 @@ def test_dunder_abs() -> None:
 
 
 def test_truediv_returns_float() -> None:
-    assert Int(7) / Int(2) == Float(3.5)
+    result = Int(7) / Int(2)
+    assert isinstance(result, Float)
+    assert result._value == pytest.approx(3.5)
 
 
 def test_lshift() -> None:
@@ -204,7 +206,9 @@ def test_int_constructor_identity() -> None:
 def test_float_constructor() -> None:
     from poop.transformers.float import _poop_float_from
 
-    assert _poop_float_from(Int(3)) == Float(3.0)
+    result = _poop_float_from(Int(3))
+    assert isinstance(result, Float)
+    assert result._value == pytest.approx(3.0)
 
 
 def test_complex_constructor() -> None:

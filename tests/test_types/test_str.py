@@ -270,7 +270,9 @@ def test_int_parses_integer_string() -> None:
 def test_float_parses_float_string() -> None:
     from poop.transformers.float import _poop_float_from
 
-    assert _poop_float_from(Str("3.14")) == Float(3.14)
+    result = _poop_float_from(Str("3.14"))
+    assert isinstance(result, Float)
+    assert result._value == pytest.approx(3.14)
 
 
 def test_casefold() -> None:

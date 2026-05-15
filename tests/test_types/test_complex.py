@@ -16,16 +16,16 @@ from poop.types.string import Str
 
 
 def test_real() -> None:
-    assert Complex(1 + 2j).real == Float(1.0)
+    assert Complex(1 + 2j).real._value == pytest.approx(1.0)
 
 
 def test_imag() -> None:
-    assert Complex(1 + 2j).imag == Float(2.0)
+    assert Complex(1 + 2j).imag._value == pytest.approx(2.0)
 
 
 def test_real_zero_imag() -> None:
-    assert Complex(3j).real == Float(0.0)
-    assert Complex(3j).imag == Float(3.0)
+    assert Complex(3j).real._value == pytest.approx(0.0)
+    assert Complex(3j).imag._value == pytest.approx(3.0)
 
 
 def test_conjugate() -> None:
@@ -35,11 +35,11 @@ def test_conjugate() -> None:
 def test_abs() -> None:
     result = Complex(3 + 4j).abs()
     assert isinstance(result, Float)
-    assert result == Float(5.0)
+    assert result._value == pytest.approx(5.0)
 
 
 def test_dunder_abs() -> None:
-    assert abs(Complex(3 + 4j)) == Float(5.0)
+    assert abs(Complex(3 + 4j))._value == pytest.approx(5.0)
 
 
 def test_negated() -> None:

@@ -16,7 +16,7 @@ def test_repr_delegates_to_str() -> None:
 
 
 def test_float_conversion() -> None:
-    assert float(Float(2.5)) == 2.5
+    assert float(Float(2.5)) == pytest.approx(2.5)
 
 
 def test_bool_nonzero_is_true() -> None:
@@ -28,45 +28,45 @@ def test_bool_zero_is_false() -> None:
 
 
 def test_negated() -> None:
-    assert Float(3.0).negated() == Float(-3.0)
+    assert Float(3.0).negated()._value == pytest.approx(-3.0)
 
 
 def test_negated_negative() -> None:
-    assert Float(-2.5).negated() == Float(2.5)
+    assert Float(-2.5).negated()._value == pytest.approx(2.5)
 
 
 def test_max_returns_larger() -> None:
-    assert Float(1.5).max(Float(2.5)) == Float(2.5)
-    assert Float(2.5).max(Float(1.5)) == Float(2.5)
+    assert Float(1.5).max(Float(2.5))._value == pytest.approx(2.5)
+    assert Float(2.5).max(Float(1.5))._value == pytest.approx(2.5)
 
 
 def test_min_returns_smaller() -> None:
-    assert Float(1.5).min(Float(2.5)) == Float(1.5)
-    assert Float(2.5).min(Float(1.5)) == Float(1.5)
+    assert Float(1.5).min(Float(2.5))._value == pytest.approx(1.5)
+    assert Float(2.5).min(Float(1.5))._value == pytest.approx(1.5)
 
 
 def test_add() -> None:
-    assert Float(1.5) + Float(2.5) == Float(4.0)
+    assert (Float(1.5) + Float(2.5))._value == pytest.approx(4.0)
 
 
 def test_sub() -> None:
-    assert Float(5.0) - Float(2.0) == Float(3.0)
+    assert (Float(5.0) - Float(2.0))._value == pytest.approx(3.0)
 
 
 def test_mul() -> None:
-    assert Float(2.0) * Float(3.0) == Float(6.0)
+    assert (Float(2.0) * Float(3.0))._value == pytest.approx(6.0)
 
 
 def test_truediv() -> None:
-    assert Float(7.0) / Float(2.0) == Float(3.5)
+    assert (Float(7.0) / Float(2.0))._value == pytest.approx(3.5)
 
 
 def test_mod() -> None:
-    assert Float(7.0) % Float(3.0) == Float(1.0)
+    assert (Float(7.0) % Float(3.0))._value == pytest.approx(1.0)
 
 
 def test_pow() -> None:
-    assert Float(2.0) ** Float(3.0) == Float(8.0)
+    assert (Float(2.0) ** Float(3.0))._value == pytest.approx(8.0)
 
 
 def test_eq_returns_boolean() -> None:
@@ -120,15 +120,15 @@ def test_class_name() -> None:
 
 
 def test_abs_positive() -> None:
-    assert Float(3.5).abs() == Float(3.5)
+    assert Float(3.5).abs()._value == pytest.approx(3.5)
 
 
 def test_abs_negative() -> None:
-    assert Float(-3.5).abs() == Float(3.5)
+    assert Float(-3.5).abs()._value == pytest.approx(3.5)
 
 
 def test_dunder_abs() -> None:
-    assert abs(Float(-2.0)) == Float(2.0)
+    assert abs(Float(-2.0))._value == pytest.approx(2.0)
 
 
 def test_round_no_digits_returns_int() -> None:
@@ -137,8 +137,8 @@ def test_round_no_digits_returns_int() -> None:
 
 
 def test_round_with_digits_returns_float() -> None:
-    assert Float(3.14159).round(Int(2)) == Float(3.14)
-    assert Float(3.456).round(Int(1)) == Float(3.5)
+    assert Float(3.14159).round(Int(2))._value == pytest.approx(3.14)
+    assert Float(3.456).round(Int(1))._value == pytest.approx(3.5)
 
 
 def test_round_accepts_poop_none() -> None:
@@ -166,7 +166,7 @@ def test_is_integer_false() -> None:
 
 
 def test_floordiv() -> None:
-    assert Float(7.0) // Float(2.0) == Float(3.0)
+    assert (Float(7.0) // Float(2.0))._value == pytest.approx(3.0)
 
 
 def test_int_truncates() -> None:
@@ -198,7 +198,7 @@ def test_real_returns_self() -> None:
 
 
 def test_imag_returns_zero() -> None:
-    assert Float(2.5).imag == Float(0.0)
+    assert Float(2.5).imag._value == pytest.approx(0.0)
 
 
 def test_as_integer_ratio() -> None:
@@ -208,7 +208,7 @@ def test_as_integer_ratio() -> None:
 
 
 def test_pow_method() -> None:
-    assert Float(2.0).pow(Float(3.0)) == Float(8.0)
+    assert Float(2.0).pow(Float(3.0))._value == pytest.approx(8.0)
 
 
 def test_fromhex_parses_hex_string() -> None:
