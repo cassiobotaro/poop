@@ -1827,6 +1827,125 @@ signal state.
 **Out of scope (for v1):** `signal.SIGRTMIN`/`SIGRTMAX` real-time
 signal range — niche.
 
+## Expose `email` as POOP messages
+
+Python's `email` package handles MIME messages: parse, build,
+manipulate, generate. Sub-packages: `email.message`, `email.parser`,
+`email.generator`, `email.policy`, `email.utils`, `email.headerregistry`,
+`email.contentmanager`, `email.iterators`.
+
+**Proposal — `email` (lowercase package) + class set:**
+
+1. **`EmailMessage` class** (modern, 3.4+):
+   `EmailMessage(policy=default)`, `.set_content(content, subtype='plain', ...)`,
+   `.add_alternative(...)`, `.add_related(...)`, `.add_attachment(...)`,
+   `.get_body(preferencelist=('related', 'html', 'plain'))`,
+   `.get_content()`, `.iter_attachments()`, `.iter_parts()`,
+   header manipulation as dict-like, `.is_multipart() -> Boolean`.
+2. **Parser:** `email.message_from_string(s, _class=EmailMessage, *, policy=default) -> EmailMessage`,
+   `email.message_from_bytes(b, ...)`, `message_from_file(fp, ...)`,
+   `message_from_binary_file(fp, ...)`. Plus `BytesParser`/`Parser`
+   classes for streaming.
+3. **Generator:** `email.generator.Generator`, `BytesGenerator` for
+   serialising back to text/bytes.
+4. **Policy:** `email.policy.default`, `email.policy.SMTP`,
+   `email.policy.SMTPUTF8`, `email.policy.HTTP`,
+   `email.policy.strict`, `email.policy.compat32`.
+5. **Utils:** `email.utils.parseaddr(address) -> Tuple[Str, Str]`,
+   `email.utils.formataddr(pair, charset='utf-8') -> Str`,
+   `email.utils.getaddresses(fieldvalues) -> List[Tuple]`,
+   `email.utils.parsedate(date) -> Tuple | NoneClass`,
+   `email.utils.parsedate_tz(date)`, `email.utils.mktime_tz(tuple)`,
+   `email.utils.formatdate(timeval=None, localtime=False, usegmt=False) -> Str`,
+   `email.utils.format_datetime(dt, usegmt=False) -> Str`,
+   `email.utils.localtime(dt=None) -> DateTime`,
+   `email.utils.make_msgid(idstring=None, domain=None) -> Str`.
+
+**Type discipline:** `Str`/`Bytes` for content, `DateTime` for
+date values (depends on `datetime` proposal), `EmailMessage` as
+the POOP record.
+
+**Out of scope (for v1):**
+
+- `email.errors` deep hierarchy — expose only the parent
+  `MessageError`/`MessageParseError`.
+- Compat32-only convenience constructors (legacy).
+
+## Expose `json` as POOP messages
+
+Python's `json` (de)serialises JSON. Used everywhere.
+
+**Proposal — `json` (lowercase module) + `JSONEncoder`/`JSONDecoder`
+classes:**
+
+1. **Module-level shortcuts:**
+   `json.dumps(obj, *, skipkeys=False, ensure_ascii=True, check_circular=True, allow_nan=True, cls=None, indent=None, separators=None, default=None, sort_keys=False, **kw) -> Str`,
+   `json.dump(obj, path, **kw) -> NoneClass` (path-based POOP
+   convention),
+   `json.loads(s, *, cls=None, object_hook=None, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None, **kw) -> Object`,
+   `json.load(path, **kw) -> Object`.
+2. **`JSONEncoder` class** for custom serialisation (subclass +
+   override `.default(obj)`).
+3. **`JSONDecoder` class** for custom deserialisation (`.decode(s)`,
+   `.raw_decode(s, idx=0)`).
+4. **Errors:** `JSONDecodeError` (with `.msg`, `.doc`, `.pos`,
+   `.lineno`, `.colno`).
+
+**Type discipline:** `Str` ↔ POOP `Dict`/`List`/`Str`/`Int`/`Float`/
+`Boolean`/`none`. Round-trip preserves POOP types via default
+`object_hook`-less behaviour.
+
+**Out of scope (for v1):** `json.tool` (CLI module — not relevant
+to POOP source).
+
+## Expose `mimetypes` as POOP messages
+
+Python's `mimetypes` maps file extensions to MIME content types.
+
+**Proposal — `mimetypes` (lowercase module) + `MimeTypes` class:**
+
+1. **Module-level shortcuts:**
+   `mimetypes.guess_type(url, strict=True) -> Tuple[Str | NoneClass, Str | NoneClass]`,
+   `mimetypes.guess_extension(type, strict=True) -> Str | NoneClass`,
+   `mimetypes.guess_all_extensions(type, strict=True) -> List[Str]`,
+   `mimetypes.add_type(type, ext, strict=True)`,
+   `mimetypes.init(files=None)`,
+   `mimetypes.read_mime_types(filename) -> Dict | NoneClass`.
+2. **`MimeTypes` class** — reusable registry with the same
+   methods as module-level.
+3. **Constants:** `mimetypes.knownfiles -> List[Str]`,
+   `mimetypes.suffix_map -> Dict[Str, Str]`,
+   `mimetypes.encodings_map -> Dict[Str, Str]`,
+   `mimetypes.types_map -> Dict[Str, Str]`,
+   `mimetypes.common_types -> Dict[Str, Str]`.
+
+**Type discipline:** `Str` for types/extensions, `Dict` for the
+maps.
+
+## Expose `binascii` as POOP messages
+
+Python's `binascii` converts between binary and various ASCII-encoded
+representations. Pairs with `base64`.
+
+**Proposal — `binascii` (lowercase module) namespace:**
+
+1. **Hex:** `binascii.b2a_hex(data, sep=None, bytes_per_sep=1) -> Bytes`,
+   `binascii.hexlify(data, sep=None, bytes_per_sep=1) -> Bytes`,
+   `binascii.a2b_hex(hexstr) -> Bytes`,
+   `binascii.unhexlify(hexstr) -> Bytes`.
+2. **Base64 / quoted-printable / uu**: `b2a_base64`, `a2b_base64`,
+   `b2a_qp`, `a2b_qp`, `b2a_uu`, `a2b_uu`. Most use of these is
+   covered by `base64` proposal; `binascii` exposes the lower-level
+   one-shot variants.
+3. **CRC:** `binascii.crc_hqx(data, value) -> Int`,
+   `binascii.crc32(data, value=0) -> Int` (also in `zlib`).
+4. **Errors:** `binascii.Error`, `binascii.Incomplete`.
+
+**Type discipline:** `Bytes` in/out, `Int` for checksums.
+
+**Out of scope (for v1):** `b2a_hqx`/`a2b_hqx` (Mac BinHex 4 —
+removed in Python 3.13).
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -2023,12 +2142,12 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `email` | audit | Own proposal — `Email.parse(s)` |
-| `json` | audit | `Json.parse(s)` / `Json.dumps(obj)` |
+| `email` | proposed | See proposal above |
+| `json` | proposed | See proposal above |
 | `mailbox` | out | Niche legacy |
-| `mimetypes` | audit | `Path.mime_type` message |
+| `mimetypes` | proposed | See proposal above |
 | `base64` | proposed | See proposal above |
-| `binascii` | audit | Pairs with `base64` |
+| `binascii` | proposed | See proposal above |
 | `quopri` | out | Niche legacy encoding |
 
 ### Structured Markup Processing Tools
