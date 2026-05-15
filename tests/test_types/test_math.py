@@ -186,3 +186,49 @@ def test_degrees() -> None:
 def test_radians() -> None:
     assert Math.radians(Float(180.0))._value == _math.pi
     assert isinstance(Math.radians(Float(180.0)), Float)
+
+
+# --- Float utilities ---
+
+
+def test_fabs() -> None:
+    assert Math.fabs(Float(-3.5))._value == 3.5
+    assert Math.fabs(Float(3.5))._value == 3.5
+    assert isinstance(Math.fabs(Float(-1.0)), Float)
+
+
+def test_copysign() -> None:
+    assert Math.copysign(Float(3.0), Float(-1.0))._value == -3.0
+    assert Math.copysign(Float(-3.0), Float(1.0))._value == 3.0
+
+
+def test_fmod() -> None:
+    assert Math.fmod(Float(7.0), Float(3.0))._value == 1.0
+    assert isinstance(Math.fmod(Float(7.0), Float(3.0)), Float)
+
+
+def test_remainder() -> None:
+    assert Math.remainder(Float(7.0), Float(3.0))._value == 1.0
+
+
+def test_fma() -> None:
+    assert Math.fma(Float(2.0), Float(3.0), Float(4.0))._value == 10.0
+    assert isinstance(Math.fma(Float(2.0), Float(3.0), Float(4.0)), Float)
+
+
+def test_ulp_positive() -> None:
+    result = Math.ulp(Float(1.0))
+    assert isinstance(result, Float)
+    assert result._value > 0.0
+
+
+def test_nextafter_no_steps() -> None:
+    result = Math.nextafter(Float(1.0), Float(2.0))
+    assert isinstance(result, Float)
+    assert result._value > 1.0
+
+
+def test_nextafter_with_steps() -> None:
+    result = Math.nextafter(Float(1.0), Float(2.0), steps=Int(3))
+    assert isinstance(result, Float)
+    assert result._value > Math.nextafter(Float(1.0), Float(2.0))._value

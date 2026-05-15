@@ -188,3 +188,35 @@ class Math:
     @staticmethod
     def radians(x: Float) -> Float:
         return Float(_math.radians(x._value))
+
+    # Float utilities ---------------------------------------------
+
+    @staticmethod
+    def fabs(x: Float) -> Float:
+        return Float(_math.fabs(x._value))
+
+    @staticmethod
+    def copysign(x: Float, y: Float) -> Float:
+        return Float(_math.copysign(x._value, y._value))
+
+    @staticmethod
+    def fmod(x: Float, y: Float) -> Float:
+        return Float(_math.fmod(x._value, y._value))
+
+    @staticmethod
+    def remainder(x: Float, y: Float) -> Float:
+        return Float(_math.remainder(x._value, y._value))
+
+    @staticmethod
+    def fma(x: Float, y: Float, z: Float) -> Float:
+        return Float(_math.fma(x._value, y._value, z._value))
+
+    @staticmethod
+    def ulp(x: Float) -> Float:
+        return Float(_math.ulp(x._value))
+
+    @staticmethod
+    def nextafter(x: Float, y: Float, *, steps: Int | None = None) -> Float:
+        if steps is None:
+            return Float(_math.nextafter(x._value, y._value))
+        return Float(_math.nextafter(x._value, y._value, steps=steps._value))
