@@ -23,6 +23,7 @@ from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
 from poop.transformers.math import NAMESPACE as _math_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
+from poop.transformers.mimetypes import NAMESPACE as _mimetypes_namespace
 from poop.transformers.none import NoneTransformer
 from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.raise_ import RaiseTransformer
@@ -91,6 +92,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_getpass_namespace,
     **_secrets_namespace,
     **_binascii_namespace,
+    **_mimetypes_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
