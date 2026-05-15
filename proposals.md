@@ -2330,6 +2330,97 @@ Python's `timeit` measures small code snippet performance.
 `List[Float]` for repeat results, `Str` or callable for code
 snippets.
 
+## Expose `sys` as POOP messages
+
+Python's `sys` is the runtime introspection grab-bag. POOP forbids
+broad introspection but still needs the runtime-state pieces:
+argv, stdin/stdout/stderr, exit, executable path. Like `os`, POOP
+splits the module into focused namespaces.
+
+**Proposal — four POOP namespaces drawn from `sys`:**
+
+1. **`sys`** (lowercase) binds the four sub-namespaces and the
+   misc helpers that don't fit elsewhere:
+   `sys.exit(code=0)`, `sys.executable -> Path`,
+   `sys.platform -> Str`, `sys.version -> Str`,
+   `sys.version_info -> Tuple`, `sys.implementation`,
+   `sys.maxsize -> Int`, `sys.byteorder -> Str`,
+   `sys.flags`, `sys.float_info`, `sys.int_info`,
+   `sys.hash_info`, `sys.thread_info`,
+   `sys.modules -> Dict[Str, module]` (read-only view),
+   `sys.path -> List[Str]`,
+   `sys.getrecursionlimit() -> Int`,
+   `sys.setrecursionlimit(limit)`.
+2. **`args`** (lowercase) — read-only view of `sys.argv`:
+   `args.list -> List[Str]`, `args.script -> Str`,
+   `args.rest -> List[Str]`, iteration via `.do`.
+3. **`stdout` / `stderr`** namespaces (POOP-flavoured) —
+   `stdout.write(s)`, `stdout.writeln(s)`, `stdout.flush()`,
+   `stdout.isatty() -> Boolean`. Same shape for `stderr`.
+4. **`stdin`** namespace — `stdin.read() -> Str`,
+   `stdin.readline() -> Str`, `stdin.readlines() -> List[Str]`,
+   `stdin.isatty()`, iteration over lines.
+
+**Type discipline:** `Str`/`Int`/`Path` end-to-end. `sys.modules`
+keys are `Str`, values are opaque module objects (Python-only).
+
+**Out of scope (for v1):**
+
+- `sys.setprofile`/`settrace`/`monitoring` — introspection ban.
+- `sys._getframe`, `sys._current_frames` — frame introspection
+  forbidden.
+- `sys.audit`/`sys.addaudithook` — niche.
+- `sys.set_int_max_str_digits` etc. — runtime tuning niche.
+
+## Expose `atexit` as POOP messages
+
+Python's `atexit` registers callables to run at interpreter shutdown.
+Tiny module.
+
+**Proposal — `atexit` (lowercase module) namespace:**
+
+1. **`atexit.register(func, *args, **kwargs) -> Block`** — also
+   usable as decorator; returns the registered callable.
+2. **`atexit.unregister(func) -> NoneClass`**.
+3. **`atexit._run_exitfuncs() -> NoneClass`** — manual trigger
+   (testing only).
+4. **`atexit._clear() -> NoneClass`** — drop all registrations
+   (testing only).
+
+**Type discipline:** callable POOP `Block` in/out.
+
+## Expose `gc` as POOP messages
+
+Python's `gc` is the garbage collector control + introspection.
+POOP forbids broad introspection, but the control surface is fine
+to expose.
+
+**Proposal — `gc` (lowercase module) namespace, control surface
+only:**
+
+1. **Toggle:** `gc.enable()`, `gc.disable()`,
+   `gc.isenabled() -> Boolean`.
+2. **Force a cycle:** `gc.collect(generation=2) -> Int` (returns
+   unreachable count).
+3. **Thresholds:** `gc.get_threshold() -> Tuple[Int, Int, Int]`,
+   `gc.set_threshold(threshold0, threshold1=None, threshold2=None)`.
+4. **Stats:** `gc.get_count() -> Tuple[Int, Int, Int]`,
+   `gc.get_stats() -> List[Dict]`.
+5. **Debug flags:** `gc.get_debug() -> Int`, `gc.set_debug(flags)`,
+   constants `DEBUG_STATS`, `DEBUG_COLLECTABLE`,
+   `DEBUG_UNCOLLECTABLE`, `DEBUG_SAVEALL`, `DEBUG_LEAK`.
+6. **Freeze:** `gc.freeze()`, `gc.unfreeze()`,
+   `gc.get_freeze_count() -> Int`.
+7. **Callbacks:** `gc.callbacks -> List[Block]` (mutable).
+
+**Type discipline:** `Boolean`/`Int`/`Tuple`/`List` end-to-end.
+
+**Out of scope (for v1):**
+
+- `gc.get_objects(generation=None)`, `gc.get_referrers(*objs)`,
+  `gc.get_referents(*objs)`, `gc.is_tracked(obj)`, `gc.is_finalized(obj)`
+  — all introspection-heavy; clash with POOP's no-introspection rule.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -2619,16 +2710,16 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `sys` | audit | Split: `System`, `Stdout`/`Stderr`, `Args` |
+| `sys` | proposed | See proposal above |
 | `sysconfig` | out | Build-time metadata |
 | `builtins` | out | POOP *replaces* this |
 | `warnings` | out | POOP doesn't have a warning concept |
 | `dataclasses` | out | POOP classes don't use decorators |
 | `contextlib` | covered | Reachable via `With` |
 | `abc` | out | All POOP classes can be subclassed |
-| `atexit` | audit | `System.at_exit(block)` |
+| `atexit` | proposed | See proposal above |
 | `traceback` | out | Depends on introspection |
-| `gc` | audit | `System.gc()` |
+| `gc` | proposed | See proposal above |
 | `inspect` | out | Forbidden — POOP rejects introspection |
 | `site` | out | Site-packages plumbing |
 
