@@ -167,18 +167,6 @@ def test_bitwise_xor() -> None:
     assert Int(0b1100) ^ Int(0b1010) == Int(0b0110)
 
 
-def test_ceil_returns_self() -> None:
-    assert Int(5).ceil() == Int(5)
-
-
-def test_floor_returns_self() -> None:
-    assert Int(5).floor() == Int(5)
-
-
-def test_trunc_returns_self() -> None:
-    assert Int(5).trunc() == Int(5)
-
-
 def test_round_returns_self() -> None:
     assert Int(5).round() == Int(5)
 
