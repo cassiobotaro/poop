@@ -28,10 +28,10 @@ class Geometry:
         return Math.hypot(a, b)
 
     def circle_area(self, radius):
-        return Math.PI * radius * radius
+        return Math.pi * radius * radius
 
     def circle_circumference(self, radius):
-        return 2.0 * Math.PI * radius
+        return 2.0 * Math.pi * radius
 
     def run(self):
         self._label("Hypotenuse 3-4: ", self.hypotenuse(3.0, 4.0))

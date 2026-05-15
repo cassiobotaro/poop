@@ -9,8 +9,8 @@ from poop.types.tuple import Tuple
 
 
 def test_constant_pi_present() -> None:
-    assert isinstance(Math.PI, Float)
-    assert Math.PI._value == _math.pi
+    assert isinstance(Math.pi, Float)
+    assert Math.pi._value == _math.pi
 
 
 def test_sqrt_returns_poop_float() -> None:

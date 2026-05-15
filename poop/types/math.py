@@ -15,15 +15,18 @@ class Math:
 
     Every public function in `math.*` is exposed as a `@staticmethod`
     with the same name, parameter order, defaults, and return types.
-    Constants are recased to UPPER_SNAKE_CASE for consistency with
-    `Uuid.NAMESPACE_DNS`, `Secrets.DEFAULT_ENTROPY`, etc.
+    Constants follow the source module's case verbatim — lowercase
+    `pi`, `e`, `tau`, `inf`, `nan` because that is how `math` ships
+    them in Python. Other namespaces inherit their own case from
+    their source modules (`Uuid.NAMESPACE_DNS`,
+    `Secrets.DEFAULT_ENTROPY`, …).
     """
 
-    PI: ClassVar[Float] = Float(_math.pi)
-    E: ClassVar[Float] = Float(_math.e)
-    TAU: ClassVar[Float] = Float(_math.tau)
-    INF: ClassVar[Float] = Float(_math.inf)
-    NAN: ClassVar[Float] = Float(_math.nan)
+    pi: ClassVar[Float] = Float(_math.pi)
+    e: ClassVar[Float] = Float(_math.e)
+    tau: ClassVar[Float] = Float(_math.tau)
+    inf: ClassVar[Float] = Float(_math.inf)
+    nan: ClassVar[Float] = Float(_math.nan)
 
     # Number theory ------------------------------------------------
 

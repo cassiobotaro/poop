@@ -712,14 +712,14 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `Math` is a namespace class wrapping Python's `math` module. Exposed as a namespace-only binding by `MathTransformer` (no AST rewrite), in the same family as `Try` / `With` / `Path`. Every public callable in Python 3.14's `math` is reachable as `Math.<same-name>(...)`, with parameter order, keyword-only markers, defaults, and return types mirroring Python exactly.
 
-The five module constants are recased to UPPER_SNAKE_CASE — `math.pi` / `math.e` / `math.tau` / `math.inf` / `math.nan` are exposed as `Math.PI` / `Math.E` / `Math.TAU` / `Math.INF` / `Math.NAN`. This is a deliberate divergence from strict Python mirroring, adopted so the `Math` constants line up with the rest of POOP's stdlib namespace surface (`Uuid.NAMESPACE_DNS`, `Secrets.DEFAULT_ENTROPY`, …); the Python `math` module is the historical outlier that POOP harmonises.
+The five module constants follow the source module's case verbatim — `math.pi`, `math.e`, `math.tau`, `math.inf`, `math.nan` are exposed as `Math.pi`, `Math.e`, `Math.tau`, `Math.inf`, `Math.nan` (lowercase). Other POOP namespaces inherit their own case from their source modules: `Uuid.NAMESPACE_DNS`, `Secrets.DEFAULT_ENTROPY`, and so on stay uppercase because that is how `uuid` and `secrets` ship them.
 
 | Category | Operations | Returns |
 |---|---|---|
 | Number theory | `factorial`, `gcd(*ints)`, `lcm(*ints)`, `comb`, `perm(n, k=None)`, `isqrt` | `Int` |
 | Trigonometric | `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2(y, x)` | `Float` |
 | Hyperbolic | `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` | `Float` |
-| Exp / log / power | `exp`, `expm1`, `exp2`, `log(x, base=Math.E)`, `log2`, `log10`, `log1p`, `sqrt`, `cbrt`, `pow` | `Float` |
+| Exp / log / power | `exp`, `expm1`, `exp2`, `log(x, base=Math.e)`, `log2`, `log10`, `log1p`, `sqrt`, `cbrt`, `pow` | `Float` |
 | Rounding | `floor`, `ceil`, `trunc` | `Int` |
 | Float decomposition | `modf` → `(Float, Float)`, `frexp` → `(Float, Int)`, `ldexp` | `Tuple` / `Float` |
 | Angular conversion | `degrees`, `radians` | `Float` |
@@ -727,7 +727,7 @@ The five module constants are recased to UPPER_SNAKE_CASE — `math.pi` / `math.
 | Predicates | `isfinite`, `isinf`, `isnan`, `isclose(a, b, *, rel_tol=1e-9, abs_tol=0.0)` | `Boolean` |
 | Aggregates | `fsum`, `prod(iter, *, start=1)`, `sumprod`, `dist`, `hypot(*args)` | `Float` / `Int` |
 | Special functions | `erf`, `erfc`, `gamma`, `lgamma` | `Float` |
-| Constants | `PI`, `E`, `TAU`, `INF`, `NAN` | `Float` |
+| Constants | `pi`, `e`, `tau`, `inf`, `nan` | `Float` |
 
 POOP `Int` and `Float` keep methods that are native to Python's `int` and `float` (`bit_length`, `bit_count`, `is_integer`, `as_integer_ratio`) and the substitutes for banned builtins (`Int.abs()`, `Int.pow()`, `Int.divmod()` cover the `no_abs` / `no_pow` / `no_divmod` validators). The math-specific public methods that previously lived on those types (`Int.ceil`/`floor`/`trunc`, `Float.ceil`/`floor`/`trunc`) are removed — `Math.ceil(x)` and friends are the single source of truth.
 
