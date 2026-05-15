@@ -276,3 +276,21 @@ class Math:
     @staticmethod
     def hypot(*coordinates: Int | Float) -> Float:
         return Float(_math.hypot(*(c._value for c in coordinates)))
+
+    # Special functions -------------------------------------------
+
+    @staticmethod
+    def erf(x: Float) -> Float:
+        return Float(_math.erf(x._value))
+
+    @staticmethod
+    def erfc(x: Float) -> Float:
+        return Float(_math.erfc(x._value))
+
+    @staticmethod
+    def gamma(x: Float) -> Float:
+        return Float(_math.gamma(x._value))
+
+    @staticmethod
+    def lgamma(x: Float) -> Float:
+        return Float(_math.lgamma(x._value))

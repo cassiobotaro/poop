@@ -339,3 +339,25 @@ def test_hypot_n_dim() -> None:
 def test_hypot_accepts_int() -> None:
     result = Math.hypot(Int(3), Int(4))
     assert result._value == 5.0
+
+
+# --- Special functions ---
+
+
+def test_erf_at_zero() -> None:
+    assert Math.erf(Float(0.0))._value == 0.0
+    assert isinstance(Math.erf(Float(0.0)), Float)
+
+
+def test_erfc_at_zero() -> None:
+    assert Math.erfc(Float(0.0))._value == 1.0
+
+
+def test_gamma() -> None:
+    assert Math.gamma(Float(1.0))._value == 1.0
+    assert Math.gamma(Float(5.0))._value == 24.0  # gamma(n) == (n-1)!
+
+
+def test_lgamma() -> None:
+    assert Math.lgamma(Float(1.0))._value == 0.0
+    assert isinstance(Math.lgamma(Float(1.0)), Float)
