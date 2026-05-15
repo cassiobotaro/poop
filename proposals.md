@@ -2020,6 +2020,161 @@ posture for the others.
   to the safe parser configuration (no entity expansion) to avoid
   XXE attacks. Document explicitly.
 
+## Expose `webbrowser` as POOP messages
+
+Python's `webbrowser` opens URLs in the user's default browser.
+Tiny module.
+
+**Proposal — `webbrowser` (lowercase module) namespace:**
+
+1. **Module-level entry:**
+   `webbrowser.open(url, new=0, autoraise=True) -> Boolean`,
+   `webbrowser.open_new(url) -> Boolean`,
+   `webbrowser.open_new_tab(url) -> Boolean`,
+   `webbrowser.get(using=None) -> Browser`,
+   `webbrowser.register(name, constructor, instance=None, *, preferred=False)`.
+2. **`Browser` class** for per-browser dispatch (the registered
+   instance returned by `get`).
+
+**Type discipline:** `Str` for URLs, `Boolean` for success.
+
+## Expose `urllib` as POOP messages
+
+Python's `urllib` is a multi-module package: `urllib.request`
+(HTTP client), `urllib.parse` (URL parsing), `urllib.error`
+(exceptions), `urllib.response` (file-like responses),
+`urllib.robotparser` (robots.txt). Scoped v1 to `request` + `parse`.
+
+**Proposal — `urllib` (lowercase package) + class set:**
+
+1. **`urllib.request` namespace:**
+   `urlopen(url, data=None, [timeout, ]*, cafile=None, capath=None, cadefault=False, context=None) -> Response`,
+   `urlretrieve(url, filename=None, reporthook=None, data=None) -> Tuple[Path, Message]`,
+   `install_opener(opener)`, `build_opener(*handlers) -> OpenerDirector`,
+   `Request(url, data=None, headers={}, origin_req_host=None, unverifiable=False, method=None)` class
+   with `.add_header`, `.full_url`, `.headers`, `.method`, `.type`,
+   `.host`, `.origin_req_host`, `.unverifiable`, `.selector`,
+   `.data`, `.add_unredirected_header`, etc.
+2. **Handler classes:** `OpenerDirector`, `HTTPHandler`,
+   `HTTPSHandler`, `HTTPCookieProcessor`, `HTTPRedirectHandler`,
+   `ProxyHandler`, `HTTPBasicAuthHandler`,
+   `HTTPDigestAuthHandler`, `ProxyBasicAuthHandler`,
+   `ProxyDigestAuthHandler`, `HTTPDefaultErrorHandler`,
+   `FileHandler`, `DataHandler`, `FTPHandler`,
+   `CacheFTPHandler`, `UnknownHandler`.
+3. **`urllib.parse` namespace:**
+   `urlparse(urlstring, scheme='', allow_fragments=True) -> ParseResult`,
+   `urlunparse(components) -> Str`, `urlsplit`, `urlunsplit`,
+   `urljoin(base, url, allow_fragments=True) -> Str`,
+   `urldefrag(url) -> Tuple[Str, Str]`,
+   `quote(string, safe='/', encoding=None, errors=None) -> Str`,
+   `quote_plus`, `quote_from_bytes`,
+   `unquote`, `unquote_plus`, `unquote_to_bytes`,
+   `urlencode(query, doseq=False, safe='', encoding=None, errors=None, quote_via=quote_plus) -> Str`,
+   `parse_qs(qs, ...) -> Dict[Str, List[Str]]`,
+   `parse_qsl(qs, ...) -> List[Tuple[Str, Str]]`.
+   `ParseResult`/`SplitResult` named records.
+4. **`urllib.error` namespace:** `URLError`, `HTTPError`,
+   `ContentTooShortError`.
+5. **`urllib.response` namespace:** `addinfourl` class (Python's
+   response wrapper; in POOP simply called `Response`).
+
+**Type discipline:** `Str` for URLs/query strings, `Bytes` for bodies,
+`Dict[Str, List[Str]]` for parsed queries, named records for
+parse results.
+
+**Out of scope (for v1):** `urllib.robotparser` — niche, defer.
+
+## Expose `http` as POOP messages
+
+Python's `http` package: `http.client` (low-level HTTP),
+`http.server` (HTTP server framework), `http.cookies` (RFC 2109/
+6265 cookie parsing), `http.cookiejar` (cookie-jar storage),
+`http.HTTPStatus`/`HTTPMethod` enums.
+
+**Proposal — `http` (lowercase package) + class set:**
+
+1. **`http.HTTPStatus`** IntEnum — every standard status code
+   with `.value`, `.phrase`, `.description`, plus the
+   `is_informational`/`is_success`/`is_redirection`/`is_client_error`/
+   `is_server_error` predicates.
+2. **`http.HTTPMethod`** StrEnum — `GET`, `POST`, `PUT`, `PATCH`,
+   `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT`.
+3. **`http.client` namespace:** `HTTPConnection`, `HTTPSConnection`
+   classes with `.request`, `.getresponse`, `.set_tunnel`, etc.
+   `HTTPResponse` class for responses. Module constants
+   (`HTTP_PORT`, `HTTPS_PORT`).
+4. **`http.server` namespace:** `BaseHTTPRequestHandler`,
+   `SimpleHTTPRequestHandler`, `CGIHTTPRequestHandler`,
+   `HTTPServer`, `ThreadingHTTPServer`.
+5. **`http.cookies` namespace:** `BaseCookie`, `SimpleCookie`,
+   `Morsel` classes.
+6. **`http.cookiejar` namespace:** `CookieJar`, `FileCookieJar`,
+   `MozillaCookieJar`, `LWPCookieJar` plus `Cookie` class.
+
+**Type discipline:** `Str` for headers/methods, `Int` for status
+codes, POOP records for the structured cookie/response objects.
+
+## Expose `smtplib` as POOP messages
+
+Python's `smtplib` is the SMTP client.
+
+**Proposal — `smtplib` (lowercase module) + class set:**
+
+1. **`SMTP` class:** `SMTP(host='', port=0, local_hostname=None, [timeout, ]source_address=None)`,
+   `.connect`, `.helo`, `.ehlo`, `.starttls`, `.login`, `.sendmail`,
+   `.send_message`, `.quit`, `.set_debuglevel`, `.has_extn`,
+   `.docmd`, `.noop`, `.verify`, `.expn`, `.rset`.
+2. **`SMTP_SSL` class** — SMTP over SSL.
+3. **`LMTP` class** — Local Mail Transfer Protocol.
+4. **Errors:** `SMTPException`, `SMTPServerDisconnected`,
+   `SMTPResponseException`, `SMTPSenderRefused`,
+   `SMTPRecipientsRefused`, `SMTPDataError`,
+   `SMTPConnectError`, `SMTPHeloError`, `SMTPNotSupportedError`,
+   `SMTPAuthenticationError`.
+5. **Constants:** `SMTP_PORT` (25), `SMTP_SSL_PORT` (465),
+   `LMTP_PORT` (2003), `CRLF`, `bCRLF`.
+
+**Type discipline:** `Str` for hosts/usernames, `Bytes` for raw
+data, `Int` for ports/response codes, `Dict` for `sendmail`
+result (failed recipients).
+
+## Expose `ipaddress` as POOP messages
+
+Python's `ipaddress` handles IPv4/IPv6 addresses, networks,
+interfaces.
+
+**Proposal — `ipaddress` (lowercase module) + class set:**
+
+1. **Address classes:** `IPv4Address(address)`,
+   `IPv6Address(address)`. Both with `.compressed`, `.exploded`,
+   `.packed`, `.reverse_pointer`, `.is_private`, `.is_global`,
+   `.is_multicast`, `.is_unspecified`, `.is_reserved`,
+   `.is_loopback`, `.is_link_local`, `.version`, `.max_prefixlen`,
+   arithmetic with `Int`.
+2. **Network classes:** `IPv4Network(address, strict=True)`,
+   `IPv6Network(address, strict=True)`. Both with `.network_address`,
+   `.broadcast_address`, `.hostmask`, `.netmask`, `.prefixlen`,
+   `.with_prefixlen`, `.with_netmask`, `.with_hostmask`,
+   `.num_addresses`, `.hosts()`, iteration over addresses,
+   `.subnets(prefixlen_diff=1, new_prefix=None)`,
+   `.supernet(prefixlen_diff=1, new_prefix=None)`,
+   `.overlaps(other)`, `.compare_networks(other)`,
+   `.address_exclude(network)`, `.subnet_of(other)`,
+   `.supernet_of(other)`.
+3. **Interface classes:** `IPv4Interface(address)`,
+   `IPv6Interface(address)`.
+4. **Module factories:** `ipaddress.ip_address(address) -> IPv4Address | IPv6Address`,
+   `ipaddress.ip_network(address, strict=True) -> IPv4Network | IPv6Network`,
+   `ipaddress.ip_interface(address) -> IPv4Interface | IPv6Interface`,
+   `ipaddress.summarize_address_range(first, last) -> Map[Network]`,
+   `ipaddress.collapse_addresses(addresses) -> Map[Network]`,
+   `ipaddress.get_mixed_type_key(obj) -> Tuple`.
+5. **Errors:** `AddressValueError`, `NetmaskValueError`.
+
+**Type discipline:** all POOP types; `Int` for prefixlen/version,
+`Bytes` for `.packed`, `Str` for textual forms.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -2237,17 +2392,17 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `webbrowser` | audit | `System.open_browser(url)` |
+| `webbrowser` | proposed | See proposal above |
 | `wsgiref` | out | Reference impl |
-| `urllib` | audit | HTTP client — own proposal |
-| `http` | audit | Pairs with `urllib` |
+| `urllib` | proposed | See proposal above |
+| `http` | proposed | See proposal above |
 | `ftplib` | out | Legacy protocol |
 | `poplib` | out | Legacy protocol |
 | `imaplib` | out | Legacy protocol |
-| `smtplib` | audit | `Smtp` namespace if a mail story emerges |
+| `smtplib` | proposed | See proposal above |
 | `uuid` | proposed | See proposal above |
 | `socketserver` | out | Pairs with `socket` if ever |
-| `ipaddress` | audit | `IpAddress` POOP type |
+| `ipaddress` | proposed | See proposal above |
 
 ### Multimedia Services
 
