@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Try`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `Try`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `heapq`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -978,6 +978,28 @@ Two namespace entries follow the `random`/`Random` and `mimetypes`/`MimeTypes` c
 Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 
 `heapq` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/heapq.py` — namespace-only, no AST rewrite.
+
+### shlex + Shlex — `poop/types/shlex.py` + `poop/transformers/shlex.py`
+
+`shlex` mirrors Python's `shlex` module — POSIX-style shell tokenization, joining, and safe quoting. Two namespace entries follow the `random`/`Random` convention:
+
+- **`shlex`** (lowercase) — module-level `split`/`join`/`quote`.
+- **`Shlex`** (PascalCase) — the streaming lexer class, mirrors `shlex.shlex`.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `shlex.split(s, comments=false, posix=true)` | `List[Str]` | POSIX-style tokenization |
+| `shlex.join(split_command)` | `Str` | safely re-joins a list of args |
+| `shlex.quote(s)` | `Str` | shell-safe escape for one token |
+| `Shlex(instream=none, infile=none, posix=false, punctuation_chars=false)` | `Shlex` | streaming lexer |
+| `Shlex.get_token()` | `Str | none` | next token; `none` signals EOF |
+| iterating a `Shlex` | yields `Str` | wraps CPython's iter protocol |
+| `Shlex.lineno` (property) | `int` | source line counter |
+| `Shlex.whitespace_split` (property) | `bool` | configurable splitting mode |
+
+v0.23.0 ships the common iterative surface; the full `Shlex` API (`read_token`, `sourcehook`, the character-class attributes, push/pop sources, etc.) is deferred to Future work. See proposals.md.
+
+`shlex` and `Shlex` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/shlex.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

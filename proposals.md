@@ -1887,29 +1887,6 @@ currency, decimal separators, month names, collation.
 category constants and `atoi` results, `Float` for `atof`,
 `Dict` for `localeconv` mapping.
 
-## Expose `shlex` as POOP messages
-
-Python's `shlex` parses simple shell-like syntax: `split`, `join`,
-`quote`. Useful for safe command-line construction.
-
-**Proposal — `shlex` (lowercase module) + `Shlex` class:**
-
-1. **Module-level shortcuts:**
-   `shlex.split(s, comments=False, posix=True) -> List[Str]`,
-   `shlex.join(split_command) -> Str`,
-   `shlex.quote(s) -> Str` (shell-safe escape).
-2. **`Shlex` class** for streaming/iterative lexing:
-   `Shlex(instream=None, infile=None, posix=False, punctuation_chars=False)`,
-   `.get_token() -> Str | NoneClass`,
-   `.read_token() -> Str | NoneClass`,
-   `.sourcehook(filename)`,
-   attributes `.commenters`, `.wordchars`, `.whitespace`,
-   `.escape`, `.quotes`, `.escapedquotes`,
-   `.whitespace_split`, `.infile`, `.source`, `.lineno`,
-   `.debug`, `.token`.
-
-**Type discipline:** `Str` in/out, `List[Str]` for `split`.
-
 ## Expose `unittest` as POOP messages
 
 Python's `unittest` is the canonical test framework (xUnit style).
@@ -2417,7 +2394,7 @@ each annotated with one of:
 | `turtle` | out | Educational graphics |
 | `turtledemo` | out | Pairs with `turtle` |
 | `cmd` | out | REPL framework |
-| `shlex` | proposed | See proposal above |
+| `shlex` | covered | `shlex` + `Shlex` (shipped in v0.23.0) |
 
 ### Graphical User Interfaces
 
@@ -2583,6 +2560,19 @@ Cross-cutting decisions to make first:
   `cmath.*`.
 - Should `cmath` and `math` share predicates that take Complex
   (returning Boolean) or duplicate them per type, like Python does?
+
+### Streaming-lexer extras on `Shlex` — from the `shlex` proposal (v0.23.0)
+
+v0.23.0 ships the module-level functions (`split`/`join`/`quote`)
+and a `Shlex` class with `.get_token()`, iteration, and the
+`.lineno`/`.whitespace_split` properties. The full CPython surface
+(`.read_token`, `.sourcehook`, the configurable character-class
+attributes `.commenters`/`.wordchars`/`.whitespace`/`.escape`/
+`.quotes`/`.escapedquotes`/`.escapedquotes`, plus `.infile`/`.source`/
+`.debug`/`.token`/`.error_leader`/`.push_token`/`.push_source`/
+`.pop_source`) is deferred until a real caller needs it. Adding
+each of these is a small additional method or property delegating
+to `self._impl`.
 
 ### `copy.replace` and `deepcopy(obj, memo)` — from the `copy` proposal (v0.19.0)
 

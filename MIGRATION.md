@@ -558,3 +558,30 @@ sorted_merge = heapq.merge(*iterables).to_list()
 ```
 
 > `heapq` operates on POOP `List` in place — `heappush`/`heappop`/`heapify` are mutators that return `none` (`heappop` returns the popped element). `heapq.merge` returns a `HeapMerge` lazy iterator with `.to_list()` to materialize.
+
+## Shell tokenization (`shlex` module + `Shlex` class)
+
+```python
+# Python
+import shlex
+
+args = shlex.split('echo "hello world"')
+cmd = shlex.join(args)
+safe = shlex.quote(user_input)
+
+lexer = shlex.shlex(text)
+for token in lexer:
+    handle(token)
+```
+
+```python
+# POOP
+args = shlex.split('echo "hello world"')
+cmd = shlex.join(args)
+safe = shlex.quote(user_input)
+
+lexer = Shlex(text)
+lexer.do(lambda token: handle(token))
+```
+
+> `shlex.split` returns `List[Str]`. The `Shlex` class is the streaming lexer (mirrors `shlex.shlex`); v0.23.0 ships the common iterative surface (`.get_token()`, iteration, `.lineno`, `.whitespace_split`). Deeper lexer configuration (character classes, push sources, etc.) is deferred to Future work.
