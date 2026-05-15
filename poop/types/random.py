@@ -5,6 +5,7 @@ from poop.types.float import Float
 from poop.types.none import none
 
 if TYPE_CHECKING:
+    from poop.types.bytes import Bytes
     from poop.types.int import Int
     from poop.types.none import NoneClass
 
@@ -46,6 +47,39 @@ class Random:
 
     def random(self) -> Float:
         return Float(self._impl.random())
+
+    def uniform(self, a: Float, b: Float) -> Float:
+        return Float(self._impl.uniform(a._value, b._value))
+
+    def randint(self, a: Int, b: Int) -> Int:
+        from poop.types.int import Int as _Int
+
+        return _Int(self._impl.randint(a._value, b._value))
+
+    def randrange(
+        self,
+        start: Int,
+        stop: Int | None = None,
+        step: Int | None = None,
+    ) -> Int:
+        from poop.types._unwrap import _unwrap
+        from poop.types.int import Int as _Int
+
+        stop_value = _unwrap(stop, None)
+        step_value = _unwrap(step, 1)
+        if stop_value is None:
+            return _Int(self._impl.randrange(start._value))
+        return _Int(self._impl.randrange(start._value, stop_value, step_value))
+
+    def getrandbits(self, k: Int) -> Int:
+        from poop.types.int import Int as _Int
+
+        return _Int(self._impl.getrandbits(k._value))
+
+    def randbytes(self, n: Int) -> Bytes:
+        from poop.types.bytes import Bytes as _Bytes
+
+        return _Bytes(self._impl.randbytes(n._value))
 
 
 _DEFAULT = Random()

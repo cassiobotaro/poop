@@ -44,3 +44,63 @@ def test_seed_returns_none_singleton() -> None:
 
     r = Random()
     assert r.seed(Int(1)) is none
+
+
+# --- Core draws ---
+
+
+def test_uniform_returns_float_in_range() -> None:
+    r = Random(Int(0))
+    result = r.uniform(Float(1.0), Float(2.0))
+    assert isinstance(result, Float)
+    assert 1.0 <= result._value <= 2.0
+
+
+def test_randint_inclusive_both_ends() -> None:
+    r = Random(Int(0))
+    result = r.randint(Int(5), Int(5))
+    assert isinstance(result, Int)
+    assert result._value == 5
+
+
+def test_randint_within_range() -> None:
+    r = Random(Int(0))
+    for _ in range(100):
+        v = r.randint(Int(1), Int(10))._value
+        assert 1 <= v <= 10
+
+
+def test_randrange_single_arg() -> None:
+    r = Random(Int(0))
+    v = r.randrange(Int(10))._value
+    assert 0 <= v < 10
+
+
+def test_randrange_start_stop() -> None:
+    r = Random(Int(0))
+    v = r.randrange(Int(5), Int(15))._value
+    assert 5 <= v < 15
+
+
+def test_randrange_start_stop_step() -> None:
+    r = Random(Int(0))
+    v = r.randrange(Int(0), Int(20), Int(5))._value
+    assert v in {0, 5, 10, 15}
+
+
+def test_getrandbits() -> None:
+    from poop.types.int import Int as _Int
+
+    r = Random(Int(0))
+    v = r.getrandbits(Int(8))
+    assert isinstance(v, _Int)
+    assert 0 <= v._value < 256
+
+
+def test_randbytes_returns_poop_bytes_of_length() -> None:
+    from poop.types.bytes import Bytes
+
+    r = Random(Int(0))
+    result = r.randbytes(Int(4))
+    assert isinstance(result, Bytes)
+    assert len(result._value) == 4
