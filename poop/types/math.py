@@ -1,5 +1,5 @@
 import math as _math
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types.boolean import false, true
 from poop.types.float import Float
@@ -252,3 +252,27 @@ class Math:
             )
             else false
         )
+
+    # Aggregates over iterables -----------------------------------
+
+    @staticmethod
+    def fsum(seq: Any) -> Float:
+        return Float(_math.fsum(x._value for x in seq))
+
+    @staticmethod
+    def prod(iterable: Any, *, start: Int | Float = Int(1)) -> Int | Float:
+        result = _math.prod((x._value for x in iterable), start=start._value)
+        return Float(result) if isinstance(result, float) else Int(result)
+
+    @staticmethod
+    def sumprod(p: Any, q: Any) -> Int | Float:
+        result = _math.sumprod((x._value for x in p), (y._value for y in q))
+        return Float(result) if isinstance(result, float) else Int(result)
+
+    @staticmethod
+    def dist(p: Any, q: Any) -> Float:
+        return Float(_math.dist([x._value for x in p], [y._value for y in q]))
+
+    @staticmethod
+    def hypot(*coordinates: Int | Float) -> Float:
+        return Float(_math.hypot(*(c._value for c in coordinates)))

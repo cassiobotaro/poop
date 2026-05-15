@@ -268,3 +268,74 @@ def test_isclose_with_rel_tol() -> None:
 def test_isclose_with_abs_tol() -> None:
     assert Math.isclose(Float(0.0), Float(1e-12), abs_tol=Float(1e-9)) is true
     assert Math.isclose(Float(0.0), Float(1e-12)) is false
+
+
+# --- Iterable aggregates ---
+
+
+def test_fsum() -> None:
+    from poop.types.list import List
+
+    result = Math.fsum(List(Float(0.1), Float(0.2), Float(0.3)))
+    assert isinstance(result, Float)
+    assert Math.isclose(result, Float(0.6)) is true
+
+
+def test_prod_default_start_int() -> None:
+    from poop.types.list import List
+
+    result = Math.prod(List(Int(2), Int(3), Int(4)))
+    assert isinstance(result, Int)
+    assert result._value == 24
+
+
+def test_prod_float_input_returns_float() -> None:
+    from poop.types.list import List
+
+    result = Math.prod(List(Float(2.0), Float(3.0), Float(4.0)))
+    assert isinstance(result, Float)
+    assert result._value == 24.0
+
+
+def test_prod_with_start() -> None:
+    from poop.types.list import List
+
+    result = Math.prod(List(Int(2), Int(3)), start=Int(10))
+    assert isinstance(result, Int)
+    assert result._value == 60
+
+
+def test_sumprod() -> None:
+    from poop.types.list import List
+
+    p = List(Int(1), Int(2), Int(3))
+    q = List(Int(4), Int(5), Int(6))
+    result = Math.sumprod(p, q)
+    assert isinstance(result, Int)
+    assert result._value == 32  # 1*4 + 2*5 + 3*6
+
+
+def test_dist() -> None:
+    from poop.types.tuple import Tuple as _Tuple
+
+    p = _Tuple(Float(0.0), Float(0.0))
+    q = _Tuple(Float(3.0), Float(4.0))
+    result = Math.dist(p, q)
+    assert isinstance(result, Float)
+    assert result._value == 5.0
+
+
+def test_hypot_2d() -> None:
+    result = Math.hypot(Float(3.0), Float(4.0))
+    assert isinstance(result, Float)
+    assert result._value == 5.0
+
+
+def test_hypot_n_dim() -> None:
+    result = Math.hypot(Float(3.0), Float(4.0), Float(12.0))
+    assert result._value == 13.0
+
+
+def test_hypot_accepts_int() -> None:
+    result = Math.hypot(Int(3), Int(4))
+    assert result._value == 5.0
