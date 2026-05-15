@@ -1946,6 +1946,80 @@ representations. Pairs with `base64`.
 **Out of scope (for v1):** `b2a_hqx`/`a2b_hqx` (Mac BinHex 4 —
 removed in Python 3.13).
 
+## Expose `html` as POOP messages
+
+Python's `html` is small: escape/unescape entities, plus
+`html.parser.HTMLParser` for SAX-style parsing and
+`html.entities` for the name⇄codepoint maps.
+
+**Proposal — `html` (lowercase package) + `HTMLParser` class:**
+
+1. **Escape/unescape:** `html.escape(s, quote=True) -> Str`,
+   `html.unescape(s) -> Str`.
+2. **`html.parser.HTMLParser` class** (SAX-style):
+   `HTMLParser(*, convert_charrefs=True)`,
+   `.feed(data)`, `.close()`, `.reset()`, `.getpos() -> Tuple[Int, Int]`,
+   `.get_starttag_text() -> Str | NoneClass`.
+   Override hooks: `.handle_starttag`, `.handle_endtag`,
+   `.handle_startendtag`, `.handle_data`, `.handle_entityref`,
+   `.handle_charref`, `.handle_comment`, `.handle_decl`,
+   `.handle_pi`, `.unknown_decl`.
+3. **`html.entities` namespace:** `name2codepoint -> Dict[Str, Int]`,
+   `codepoint2name -> Dict[Int, Str]`, `html5 -> Dict[Str, Str]`,
+   `entitydefs -> Dict[Str, Str]`.
+
+**Type discipline:** `Str` for HTML strings, `Int` for codepoints,
+`Tuple[Int, Int]` for parser position.
+
+## Expose `xml` as POOP messages
+
+Python's `xml` is a package covering parse/build for XML: DOM (`xml.dom`,
+`xml.dom.minidom`), SAX (`xml.sax`), and ElementTree (`xml.etree.ElementTree`,
+the preferred API). Scope v1 to ElementTree + the safer `defusedxml`
+posture for the others.
+
+**Proposal — `xml` (lowercase package), focused on ElementTree:**
+
+1. **`xml.etree.ElementTree` (`ET`) namespace:**
+   - `ET.parse(source, parser=None) -> ElementTree`,
+     `ET.fromstring(text, parser=None) -> Element`,
+     `ET.fromstringlist(sequence, parser=None) -> Element`,
+     `ET.tostring(element, encoding=None, method='xml', short_empty_elements=True, xml_declaration=None, default_namespace=None) -> Bytes | Str`,
+     `ET.tostringlist(...)`,
+     `ET.XML(text, parser=None)` (alias of `fromstring`),
+     `ET.XMLID(text, parser=None) -> Tuple[Element, Dict]`,
+     `ET.iterparse(source, events=('end',), parser=None) -> Map`,
+     `ET.canonicalize(...)`.
+   - `ET.indent(tree, space='  ', level=0) -> NoneClass`.
+2. **`Element` class** — node with tag, attributes, children,
+   text/tail. Methods `.append`, `.extend`, `.insert`, `.remove`,
+   `.find`, `.findall`, `.findtext`, `.iter`, `.iterfind`,
+   `.iterancestors`, `.iterdescendants`, `.itertext`,
+   `.keys` / `.items` / `.attrib` / `.get`, `.set`, `.clear`,
+   `.getchildren` (deprecated), `.makeelement`.
+3. **`ElementTree` class** — document-level: `.getroot()`,
+   `.parse(source, parser=None)`, `.write(file, ...)`,
+   `.write_c14n(...)`, `.iter()`, `.iterfind()`, `.find()`,
+   `.findall()`, `.findtext()`.
+4. **Builder/parser classes:** `TreeBuilder`, `XMLParser`,
+   `XMLPullParser`.
+5. **Errors:** `ParseError`.
+6. **`xml.dom` minimal aliases:** expose only `Node` constants
+   (`ELEMENT_NODE`, `ATTRIBUTE_NODE`, …) — the full minidom API
+   is out of scope.
+
+**Type discipline:** `Element` is a POOP class. Attributes as POOP
+`Dict[Str, Str]`. Tags/text as `Str`.
+
+**Out of scope (for v1):**
+
+- `xml.sax`, `xml.dom.minidom`, `xml.dom.pulldom`, `xml.dom.expatbuilder` —
+  the SAX and full-DOM APIs are largely superseded by ElementTree.
+- `xml.dom.NodeFilter` and other DOM-specific helpers.
+- Loading external DTDs / general entity expansion — POOP defaults
+  to the safe parser configuration (no entity expansion) to avoid
+  XXE attacks. Document explicitly.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -2154,8 +2228,8 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `html` | audit | `Str.escape_html()` / `Str.unescape_html()` |
-| `xml` | audit | Own proposal — `Xml.parse(s)` |
+| `html` | proposed | See proposal above |
+| `xml` | proposed | See proposal above |
 | `xmlrpc` | out | Legacy protocol |
 | `pyexpat` | out | Internal; covered by `xml` if ever |
 
