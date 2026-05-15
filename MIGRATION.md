@@ -440,3 +440,22 @@ firefox.open_new("https://example.com")
 ```
 
 > POOP exposes both `webbrowser` (lowercase, module-level API) and `Browser` (the controller wrapper, returned by `webbrowser.get(using=none)`). `webbrowser.Error` is a raw Python exception class for use with `Try.except_(...)`. `webbrowser.register(...)` is deferred to Future work — its `constructor` argument is a Python callable with no clean POOP mapping.
+
+## Shell-style wildcard expansion (`glob` module)
+
+```python
+# Python
+import glob
+
+files = glob.glob("src/**/*.py", recursive=True)
+for f in glob.iglob("*.txt"):
+    process(f)
+```
+
+```python
+# POOP
+files = glob.glob("src/**/*.py", recursive=true)
+glob.iglob("*.txt").do(lambda f: process(f))
+```
+
+> `glob.glob` returns `List[Path]`; `glob.iglob` returns `GlobIter` (iterable, with `.to_list()`). `Path.glob`/`Path.rglob` already cover most use; the namespace surfaces the module-level entry points for callers who want to glob from a string pattern without first constructing a `Path`.

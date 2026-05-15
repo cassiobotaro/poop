@@ -801,23 +801,6 @@ prefixes, `Int` for file descriptors.
 
 **Out of scope (for v1):** `_RandomNameSequence` internal class.
 
-## Expose `glob` as POOP messages
-
-Python's `glob` does shell-style wildcard expansion (`*.py`,
-`**/*.txt`). Largely covered by `Path.glob` already, but the
-module-level functions are useful too.
-
-**Proposal — `glob` (lowercase module) namespace:**
-
-1. **Wildcard expansion:**
-   `glob.glob(pathname, *, root_dir=None, dir_fd=None, recursive=False, include_hidden=False) -> List[Path]`,
-   `glob.iglob(pathname, ...) -> Map[Path]`,
-   `glob.escape(pathname) -> Str`,
-   `glob.translate(pat, *, recursive=False, include_hidden=False, seps=None) -> Str`
-   (3.13+).
-
-**Type discipline:** `Path` returns, `Str` for patterns.
-
 ## Expose `fnmatch` as POOP messages
 
 Python's `fnmatch` tests filenames against Unix shell-style
@@ -2384,7 +2367,7 @@ each annotated with one of:
 | `stat` | out | Low-level constants — `Path` already exposes the queries |
 | `filecmp` | proposed | See proposal above |
 | `tempfile` | proposed | See proposal above |
-| `glob` | proposed | See proposal above |
+| `glob` | covered | `glob` namespace + `GlobIter` (shipped in v0.17.0) |
 | `fnmatch` | proposed | See proposal above |
 | `linecache` | out | Internal traceback helper |
 | `shutil` | proposed | See proposal above |

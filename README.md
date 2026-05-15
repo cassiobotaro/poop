@@ -73,6 +73,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `binascii.crc32(b)` | `binascii.crc32(b)` |
 | `mimetypes.guess_type(url)` | `mimetypes.guess_type(url)` |
 | `webbrowser.open(url)` | `webbrowser.open(url)` |
+| `glob.glob("*.py")` | `glob.glob("*.py")` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
