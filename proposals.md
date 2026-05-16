@@ -1,66 +1,5 @@
 # Proposals
 
-## Expose `csv` as POOP messages
-
-Python's `csv` reads/writes RFC 4180 CSV files with configurable
-dialects.
-
-**Proposal — `csv` (lowercase module) + reader/writer/dialect classes:**
-
-1. **Module-level shortcuts:**
-   `csv.reader(iterable, dialect='excel', **fmtparams) -> Reader`,
-   `csv.writer(writable, dialect='excel', **fmtparams) -> Writer`,
-   `csv.DictReader(file, fieldnames=None, restkey=None, restval=None, dialect='excel', *args, **kwds)`,
-   `csv.DictWriter(file, fieldnames, restval='', extrasaction='raise', dialect='excel', *args, **kwds)`.
-2. **Dialect API:**
-   `csv.list_dialects() -> List[Str]`,
-   `csv.get_dialect(name) -> Dialect`,
-   `csv.register_dialect(name, dialect=None, **fmtparams)`,
-   `csv.unregister_dialect(name)`,
-   `csv.field_size_limit(new_limit=None) -> Int`.
-3. **`Dialect` / `excel` / `excel_tab` / `unix_dialect`** as POOP
-   classes.
-4. **`Sniffer`** class for auto-detecting dialect from a sample.
-5. **Quoting constants:** `csv.QUOTE_ALL`, `QUOTE_MINIMAL`,
-   `QUOTE_NONNUMERIC`, `QUOTE_NONE`, `QUOTE_STRINGS` (3.12+),
-   `QUOTE_NOTNULL` (3.12+).
-6. **`csv.Error`** — POOP error wrapper.
-
-**Type discipline:** `Str` for fields, `List[Str]` for rows,
-`Dict[Str, Str]` for `DictReader`/`DictWriter`.
-
-## Expose `configparser` as POOP messages
-
-Python's `configparser` parses INI-style config files.
-
-**Proposal — `configparser` (lowercase module) + class set:**
-
-1. **`ConfigParser` class** with `BasicInterpolation` /
-   `ExtendedInterpolation` / `RawConfigParser` siblings:
-   `ConfigParser(defaults=None, dict_type=dict, allow_no_value=False, *, delimiters=('=', ':'), comment_prefixes=('#', ';'), inline_comment_prefixes=None, strict=True, empty_lines_in_values=True, default_section='DEFAULT', interpolation=None, converters=None)`.
-2. **Reading:** `.read(filenames, encoding=None)`,
-   `.read_string(string, source='<string>')`,
-   `.read_dict(dictionary, source='<dict>')`,
-   `.read_file(f, source=None)`.
-3. **Querying:** `.sections() -> List[Str]`,
-   `.has_section(section) -> Boolean`,
-   `.options(section) -> List[Str]`,
-   `.has_option(section, option) -> Boolean`,
-   `.items(section=...) -> List[Tuple[Str, Str]]`,
-   `.get(section, option, *, raw=False, vars=None, fallback=...) -> Str`,
-   `.getint`/`getfloat`/`getboolean` typed accessors,
-   `.defaults() -> Dict`.
-4. **Mutating:** `.add_section(section)`, `.remove_section(section)`,
-   `.set(section, option, value)`, `.remove_option(section, option)`,
-   `.clear()`, `.update(...)`.
-5. **Writing:** `.write(fp, space_around_delimiters=True)`.
-6. **Errors:** `Error`, `NoSectionError`, `DuplicateSectionError`,
-   `NoOptionError`, `DuplicateOptionError`, `InterpolationError`
-   subtree, `ParsingError`, `MissingSectionHeaderError`.
-
-**Type discipline:** `Str` for sections/options/values; `Boolean`/
-`Int`/`Float` for typed getters.
-
 ## Expose `os` as POOP messages
 
 Python's `os` is huge — process management, environment, file
@@ -1086,8 +1025,8 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `csv` | proposed | See proposal above |
-| `configparser` | proposed | See proposal above |
+| `csv` | covered | `csv` + `Reader` + `Writer` + `DictReader` + `DictWriter` + `Sniffer` (shipped in this PR) |
+| `configparser` | covered | `configparser` + `ConfigParser` + `RawConfigParser` (shipped in this PR) |
 | `tomllib` | covered | `tomllib` namespace (shipped in v0.26.0) |
 | `netrc` | out | Niche legacy format |
 | `plistlib` | out | macOS-specific niche |

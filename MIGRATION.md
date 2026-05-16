@@ -1335,3 +1335,30 @@ smtp = SMTP("smtp.example.com", 587)
 ```
 
 > `ipaddress` exposes both factory functions (`ip_address` / `ip_network` / `ip_interface`) and the explicit `IPv4Address` / `IPv6Address` / `IPv4Network` / `IPv6Network` / `IPv4Interface` / `IPv6Interface` classes. Address arithmetic with `Int` is supported (`addr + Int(1)`). `urllib.parse` is pure-text URL transformations; `urllib.request.urlopen` returns a `With`-friendly `Response` (`.read` / `.headers` / `.status`). `urllib.request.Request` is the bare request-builder; the handler hierarchy (`OpenerDirector` / `HTTPHandler` / …) is exposed as class refs for advanced callers. `http.HTTPStatus` and `http.HTTPMethod` are re-exports of CPython's enums with a `_missing_` patch so POOP `Int` / `Str` lookups work. `http.client.HTTPConnection` / `HTTPSConnection` wrap the upstream connection types; `HTTPResponse` exposes `.status` / `.read` / `.headers`. `http.server` / `http.cookies` / `http.cookiejar` are exposed under their submodule names. `smtplib.SMTP` / `SMTP_SSL` / `LMTP` cover the SMTP client surface (`helo` / `ehlo` / `starttls` / `login` / `sendmail` / `send_message` / `quit` / `close`); the full error hierarchy (`SMTPException` / `SMTPServerDisconnected` / `SMTPResponseException` / `SMTPSenderRefused` / `SMTPRecipientsRefused` / `SMTPDataError` / `SMTPConnectError` / `SMTPHeloError` / `SMTPNotSupportedError` / `SMTPAuthenticationError`) is exposed for `Try.except_`. `urllib.robotparser` is out of scope for v1.
+
+## File formats (`csv` module + readers/writers, `configparser` module + parser)
+
+```python
+# Python
+import csv, configparser
+
+with open("data.csv") as f:
+    for row in csv.reader(f):
+        print(row)
+
+cp = configparser.ConfigParser()
+cp.read("app.ini")
+host = cp.get("server", "host", fallback="localhost")
+```
+
+```python
+# POOP
+text = Path("data.csv").read_text()
+csv.reader(text).do(Block(lambda row: row.print()))
+
+cp = ConfigParser()
+cp.read(Path("app.ini"))
+host = cp.get("server", "host", fallback="localhost")
+```
+
+> POOP has no file-object abstraction, so `Reader` / `DictReader` take a `Str` (split on newlines) or `List[Str]` of lines; `Writer` / `DictWriter` accumulate into an internal buffer exposed via `.getvalue()`. `Sniffer` autodetects dialect from a sample. Dialect registration (`csv.register_dialect` / `unregister_dialect` / `get_dialect` / `list_dialects`) works as in CPython. `ConfigParser` has `read` (from `Path` / `Str` / `List[Path]`), `read_string` / `read_dict` / `read_file`, plus `write_str` and `write_to(path)` for serialization. Typed accessors (`getint` / `getfloat` / `getboolean`) return POOP wrappers. The full error hierarchy and both interpolation classes (`BasicInterpolation` / `ExtendedInterpolation`) are on the namespace.

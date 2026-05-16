@@ -123,6 +123,8 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `urllib.request.urlopen(u)` | `urllib.request.urlopen(u)` |
 | `http.HTTPStatus.OK` | `http.HTTPStatus.OK` |
 | `smtplib.SMTP(host, port)` | `SMTP(host, port)` |
+| `csv.reader(f)` | `csv.reader(text)` |
+| `configparser.ConfigParser()` | `ConfigParser()` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
