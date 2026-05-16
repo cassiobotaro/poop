@@ -117,6 +117,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `lzma.compress(b)` | `lzma.compress(b)` |
 | `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
 | `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
+| `locale.getpreferredencoding()` | `locale.getpreferredencoding()` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

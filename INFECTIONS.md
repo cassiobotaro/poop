@@ -1798,6 +1798,34 @@ POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for 
 
 `compression` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/compression.py` — namespace-only, no AST rewrite.
 
+### locale — `poop/types/locale.py` + `poop/transformers/locale.py`
+
+`locale` mirrors Python's `locale` module — system locale-aware formatting and parsing. No new POOP type; the namespace exposes the standard categories, formatting helpers, and collation routines directly.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `locale.getlocale(category=none)` | `Tuple(Str \| NoneClass, Str \| NoneClass)` | default `category=LC_CTYPE` |
+| `locale.setlocale(category, locale=none)` | `Str` | `locale=none` queries the current setting |
+| `locale.getdefaultlocale()` | `Tuple(Str \| NoneClass, Str \| NoneClass)` | deprecated upstream (3.11+) but still callable |
+| `locale.getpreferredencoding(do_setlocale=none)` | `Str` | default `do_setlocale=true` |
+| `locale.localeconv()` | `Dict[Str, Object]` | locale convention map |
+| `locale.format_string(format, val, grouping=none, monetary=none)` | `Str` | `val` is `Int` / `Float` |
+| `locale.currency(val, symbol=none, grouping=none, international=none)` | `Str` | raises `ValueError` in the C locale (no symbol) |
+| `locale.str(val)` | `Str` | format a `Float` per LC_NUMERIC |
+| `locale.atof(string)` | `Float` | parse a locale-formatted decimal |
+| `locale.atoi(string)` | `Int` | parse a locale-formatted integer |
+| `locale.delocalize(string)` | `Str` | strip locale formatting |
+| `locale.normalize(localename)` | `Str` | normalize alias names |
+| `locale.strcoll(s1, s2)` | `Int` | locale-aware string comparison |
+| `locale.strxfrm(string)` | `Str` | comparison key for sorting |
+| `locale.LC_ALL` / `LC_CTYPE` / `LC_COLLATE` / `LC_TIME` / `LC_MONETARY` / `LC_NUMERIC` / `LC_MESSAGES` (class attrs) | `Int` | category constants |
+| `locale.CHAR_MAX` (class attr) | `Int` | sentinel used by `localeconv` |
+| `locale.Error` (class attr) | exception class | raised by `setlocale` on unknown names |
+
+`LC_MESSAGES` falls back to `LC_ALL` on platforms where the POSIX category is unavailable (e.g., Windows).
+
+`locale` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/locale.py` — namespace-only, no AST rewrite.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.
