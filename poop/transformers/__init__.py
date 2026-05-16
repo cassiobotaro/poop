@@ -42,6 +42,7 @@ from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
 from poop.transformers.slice import SliceTransformer
+from poop.transformers.sqlite3 import NAMESPACE as _sqlite3_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
@@ -119,6 +120,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_tomllib_namespace,
     **_hmac_namespace,
     **_graphlib_namespace,
+    **_sqlite3_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
