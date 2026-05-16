@@ -1273,6 +1273,86 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 
 `hashlib` and `Hash` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/hashlib.py` — namespace-only, no AST rewrite.
 
+### string + Template — `poop/types/string.py` + `poop/transformers/string.py`
+
+`string` mirrors Python's `string` module — ASCII character-class constants plus the `Template` class for `$variable` substitution. The constants live on the namespace; `Template` is exposed alongside it (PascalCase), matching the `hmac`/`HMAC` and `uuid`/`UUID` convention.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `string.ascii_letters` / `ascii_lowercase` / `ascii_uppercase` (class attrs) | `Str` | |
+| `string.digits` / `hexdigits` / `octdigits` (class attrs) | `Str` | |
+| `string.punctuation` / `printable` / `whitespace` (class attrs) | `Str` | |
+| `Template(template_str)` | `Template` | source kept on `.template` |
+| `Template.substitute(mapping)` | `Str` | raises `KeyError` on missing key |
+| `Template.safe_substitute(mapping)` | `Str` | leaves missing `$name` in place |
+| `Template.template` (property) | `Str` | original source string |
+
+`string.Formatter` and `string.capwords` are deliberately out of scope — `Str.format` and `Str.title` cover the common cases.
+
+`string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
+
+### difflib + SequenceMatcher — `poop/types/difflib.py` + `poop/transformers/difflib.py`
+
+`difflib` mirrors Python's `difflib` module — text-line diffs (`unified_diff`, `context_diff`, `ndiff`, `restore`), fuzzy matching (`get_close_matches`), and the element-wise `SequenceMatcher` class for detailed diff queries.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `difflib.unified_diff(a, b, fromfile=none, tofile=none, fromfiledate=none, tofiledate=none, n=none, lineterm=none)` | `List[Str]` | `a` / `b` are `List[Str]` of lines |
+| `difflib.context_diff(a, b, …)` | `List[Str]` | same arg shape as `unified_diff` |
+| `difflib.ndiff(a, b)` | `List[Str]` | `?`/`-`/`+`/` ` marker per line |
+| `difflib.restore(seq, which)` | `List[Str]` | `which` is `Int(1)` or `Int(2)` |
+| `difflib.get_close_matches(word, possibilities, n=none, cutoff=none)` | `List[Str]` | defaults match CPython (`n=3`, `cutoff=0.6`) |
+| `SequenceMatcher(a, b, autojunk=none)` | `SequenceMatcher` | `a` / `b` are `Str` (per-char) or `List[Str]` (per-line) |
+| `SequenceMatcher.ratio()` / `.quick_ratio()` / `.real_quick_ratio()` | `Float` | |
+| `SequenceMatcher.get_matching_blocks()` | `List[Tuple(Int, Int, Int)]` | `(a, b, size)` per block |
+| `SequenceMatcher.get_opcodes()` | `List[Tuple(Str, Int, Int, Int, Int)]` | `(tag, i1, i2, j1, j2)` |
+| `SequenceMatcher.find_longest_match(alo=none, ahi=none, blo=none, bhi=none)` | `Tuple(Int, Int, Int)` | |
+
+`HtmlDiff` and the `IS_LINE_JUNK`/`IS_CHARACTER_JUNK` predicates are out of scope for v1.
+
+`difflib` and `SequenceMatcher` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/difflib.py` — namespace-only, no AST rewrite.
+
+### textwrap + TextWrapper — `poop/types/textwrap.py` + `poop/transformers/textwrap.py`
+
+`textwrap` mirrors Python's `textwrap` module — reflowing multi-line strings. Module-level shortcuts cover the common cases; the reusable `TextWrapper` class captures the full set of wrapping knobs.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `textwrap.wrap(text, width=none, …)` | `List[Str]` | defaults: `width=70`, etc. |
+| `textwrap.fill(text, width=none, …)` | `Str` | same arg shape as `wrap` |
+| `textwrap.shorten(text, width, placeholder=none)` | `Str` | truncates with `" [...]"` by default |
+| `textwrap.indent(text, prefix, predicate=none)` | `Str` | `predicate` is a `Block` / Python callable that takes `Str`, returns truthy |
+| `textwrap.dedent(text)` | `Str` | removes common leading indent |
+| `TextWrapper(width=none, initial_indent=none, subsequent_indent=none, expand_tabs=none, replace_whitespace=none, drop_whitespace=none, fix_sentence_endings=none, break_long_words=none, break_on_hyphens=none, tabsize=none, max_lines=none, placeholder=none)` | `TextWrapper` | reusable instance |
+| `TextWrapper.wrap(text)` / `.fill(text)` | `List[Str]` / `Str` | reuses configured knobs |
+
+`textwrap` and `TextWrapper` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/textwrap.py` — namespace-only, no AST rewrite.
+
+### unicodedata — `poop/types/unicodedata.py` + `poop/transformers/unicodedata.py`
+
+`unicodedata` mirrors Python's `unicodedata` module — access to the Unicode Character Database: normalization, character properties, name lookup, and numeric values. No new POOP type; every method takes/returns plain `Str` / `Int` / `Float` / `Boolean`.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `unicodedata.normalize(form, unistr)` | `Str` | `form` is `"NFC"` / `"NFKC"` / `"NFD"` / `"NFKD"` |
+| `unicodedata.is_normalized(form, unistr)` | `Boolean` | |
+| `unicodedata.category(chr)` | `Str` | e.g. `"Lu"`, `"Nd"`, `"Po"` |
+| `unicodedata.bidirectional(chr)` | `Str` | empty for unassigned |
+| `unicodedata.combining(chr)` | `Int` | canonical combining class |
+| `unicodedata.east_asian_width(chr)` | `Str` | `"Na"`, `"W"`, `"F"`, `"H"`, `"A"`, `"N"` |
+| `unicodedata.mirrored(chr)` | `Int` | `0` or `1` |
+| `unicodedata.decomposition(chr)` | `Str` | empty when no decomposition exists |
+| `unicodedata.name(chr, default=none)` | `Str` | raises `ValueError` when no name and no default |
+| `unicodedata.lookup(name)` | `Str` | raises `KeyError` on unknown name |
+| `unicodedata.decimal(chr, default=none)` | `Int` | raises `ValueError` when not a decimal digit and no default |
+| `unicodedata.digit(chr, default=none)` | `Int` | same shape as `decimal` |
+| `unicodedata.numeric(chr, default=none)` | `Float` | covers fractions like `"½"` (0.5) |
+| `unicodedata.unidata_version` (class attr) | `Str` | the Unicode version Python was built against |
+
+The private `ucd_3_2_0` legacy UCD object is out of scope for v1.
+
+`unicodedata` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/unicodedata.py` — namespace-only, no AST rewrite.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

@@ -813,3 +813,97 @@ rows = con.execute("SELECT * FROM users").fetchall()
 ```
 
 > Bound parameters are POOP `Tuple` or `List`; rows come back as POOP `Tuple` of POOP values (`Int`/`Float`/`Str`/`Bytes`/`none`). `Connection` is a context manager (`with sqlite3.connect(...) as con:` — commits on clean exit, rolls back on exception). `Connection.execute` returns a `Cursor` directly; chain `.fetchall()` / `.fetchone()` / iterate. Error classes (`sqlite3.OperationalError`, `IntegrityError`, …) are Python exception classes — pass them to `Try.except_(...)`. Callback-based methods (`create_function`, `register_adapter`, …) are deferred until a POOP `Block` → Python `callable` bridge lands.
+
+## ASCII character classes and string templates (`string` module + `Template` class)
+
+```python
+# Python
+import string
+
+alpha = string.ascii_lowercase
+template = string.Template("Hello, $name!")
+greeting = template.substitute({"name": "world"})
+```
+
+```python
+# POOP
+alpha = string.ascii_lowercase
+template = Template("Hello, $name!")
+greeting = template.substitute({"name": "world"})
+```
+
+> Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
+
+## Diffs and fuzzy matching (`difflib` module + `SequenceMatcher` class)
+
+```python
+# Python
+import difflib
+
+diff = list(difflib.unified_diff(a_lines, b_lines, fromfile="a", tofile="b"))
+matches = difflib.get_close_matches("appel", ["apple", "ape", "peach"])
+sm = difflib.SequenceMatcher(None, "abcd", "abef")
+ratio = sm.ratio()
+```
+
+```python
+# POOP
+diff = difflib.unified_diff(a_lines, b_lines, "a", "b")
+matches = difflib.get_close_matches("appel", ["apple", "ape", "peach"])
+sm = SequenceMatcher("abcd", "abef")
+ratio = sm.ratio()
+```
+
+> Diff producers (`unified_diff`, `context_diff`, `ndiff`, `restore`) return `List[Str]` — POOP collections are not lazy. `get_close_matches` defaults match CPython (`n=3`, `cutoff=0.6`). `SequenceMatcher` is in scope without the `difflib.` prefix; the `isjunk` predicate is omitted (POOP has no free-function callables for it), but `autojunk` is exposed. `HtmlDiff` and the line/character junk predicates are out of scope for v1.
+
+## Reflowing text (`textwrap` module + `TextWrapper` class)
+
+```python
+# Python
+import textwrap
+
+paragraph = textwrap.fill(blob, width=40)
+short = textwrap.shorten(blob, width=40, placeholder="…")
+quoted = textwrap.indent(blob, "> ")
+stripped = textwrap.dedent("""
+    one
+    two
+""")
+```
+
+```python
+# POOP
+paragraph = textwrap.fill(blob, 40)
+short = textwrap.shorten(blob, 40, "…")
+quoted = textwrap.indent(blob, "> ")
+stripped = textwrap.dedent("""
+    one
+    two
+""")
+```
+
+> Module-level shortcuts (`wrap`, `fill`, `shorten`, `indent`, `dedent`) take a `Str` and the same knobs CPython does. `TextWrapper(width=..., initial_indent=..., subsequent_indent=..., …)` is exposed bare for reusable configuration — its `.wrap(text)` returns `List[Str]`, `.fill(text)` returns `Str`. `textwrap.indent`'s `predicate=` accepts a `Block` / Python callable receiving each `Str` line.
+
+## Unicode Character Database (`unicodedata` module)
+
+```python
+# Python
+import unicodedata
+
+unicodedata.normalize("NFC", "café")
+unicodedata.category("A")           # "Lu"
+unicodedata.name("A")               # "LATIN CAPITAL LETTER A"
+unicodedata.lookup("LATIN CAPITAL LETTER A")  # "A"
+unicodedata.numeric("½")            # 0.5
+```
+
+```python
+# POOP
+unicodedata.normalize("NFC", "café")
+unicodedata.category("A")           # "Lu"
+unicodedata.name("A")               # "LATIN CAPITAL LETTER A"
+unicodedata.lookup("LATIN CAPITAL LETTER A")  # "A"
+unicodedata.numeric("½")            # 0.5
+```
+
+> No new POOP type: every method takes/returns `Str` / `Int` / `Float` / `Boolean`. `name` / `decimal` / `digit` / `numeric` accept an optional `default=` to suppress the `ValueError` / `KeyError` for chars without the requested property. `unicodedata.unidata_version` is a `Str` class attribute. The private `ucd_3_2_0` legacy UCD object is out of scope.

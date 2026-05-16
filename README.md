@@ -92,6 +92,11 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `datetime.date.today()` | `Date.today()` |
 | `decimal.Decimal("3.14")` | `Decimal("3.14")` |
 | `sqlite3.connect(p)` | `sqlite3.connect(p)` |
+| `string.ascii_letters` | `string.ascii_letters` |
+| `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
+| `difflib.get_close_matches(w, xs)` | `difflib.get_close_matches(w, xs)` |
+| `textwrap.fill(t, width=40)` | `textwrap.fill(t, 40)` |
+| `unicodedata.name("A")` | `unicodedata.name("A")` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

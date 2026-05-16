@@ -1,100 +1,5 @@
 # Proposals
 
-## Expose `string` as POOP messages
-
-Python's `string` module ships ASCII character-class constants
-(`ascii_letters`, `digits`, `whitespace`, …) plus `Template` for
-`$variable` substitution. None is reachable from POOP today.
-
-**Proposal — `string` (lowercase module) + `Template` class:**
-
-1. **Constants** (each is `Str`): `ascii_letters`, `ascii_lowercase`,
-   `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`,
-   `punctuation`, `printable`, `whitespace`.
-2. **`Template` class** — safe `$var` substitution:
-   - `Template(template_str)` constructor
-   - `.substitute(mapping) -> Str` (raises on missing key)
-   - `.safe_substitute(mapping) -> Str` (leaves missing as-is)
-   - `.template -> Str`
-
-**Type discipline:** constants are `Str`; `Template.substitute`
-accepts a POOP `Dict`, returns `Str`.
-
-**Out of scope (for v1):**
-
-- `string.Formatter` — `Str.format(spec)` covers the common case.
-- `string.capwords` — `Str.title()` is close enough; defer.
-
-## Expose `difflib` as POOP messages
-
-Python's `difflib` produces text diffs (unified/context/ndiff) and
-fuzzy-matches strings. Unreachable from POOP today.
-
-**Proposal — `difflib` (lowercase module) + `SequenceMatcher` class:**
-
-1. **Diff producers** (each returns `List[Str]` of lines, mirroring
-   Python):
-   `difflib.unified_diff(a, b, ...)`, `difflib.context_diff(a, b, ...)`,
-   `difflib.ndiff(a, b)`, `difflib.restore(seq, which)`.
-2. **Fuzzy matching:**
-   `difflib.get_close_matches(word, possibilities, n=3, cutoff=0.6) -> List[Str]`.
-3. **`SequenceMatcher` class** — element-wise diff with detailed
-   queries: `.ratio()`, `.get_matching_blocks()`, `.get_opcodes()`,
-   `.find_longest_match(...)`.
-
-**Type discipline:** `List[Str]` for line lists, `Float` for ratios,
-`Tuple[Int, Int, Int]` for matching blocks.
-
-**Out of scope (for v1):** `HtmlDiff`, `IS_LINE_JUNK` /
-`IS_CHARACTER_JUNK` predicates.
-
-## Expose `textwrap` as POOP messages
-
-Python's `textwrap` reflows multi-line strings: `wrap`, `fill`,
-`shorten`, `indent`, `dedent`. Unreachable from POOP today.
-
-**Proposal — `textwrap` (lowercase module) + `TextWrapper` class:**
-
-1. **Module-level shortcuts:**
-   - `textwrap.wrap(text, width=70, ...) -> List[Str]`
-   - `textwrap.fill(text, width=70, ...) -> Str`
-   - `textwrap.shorten(text, width, ...) -> Str`
-   - `textwrap.indent(text, prefix, predicate=None) -> Str`
-   - `textwrap.dedent(text) -> Str`
-2. **`TextWrapper` class** — reusable wrapper with tuning knobs
-   (`width`, `initial_indent`, `subsequent_indent`, `expand_tabs`,
-   `replace_whitespace`, `drop_whitespace`, `fix_sentence_endings`,
-   `break_long_words`, `break_on_hyphens`, `tabsize`, `max_lines`,
-   `placeholder`). Methods: `.wrap(text)`, `.fill(text)`.
-
-**Type discipline:** `Str` input/output, `Int` widths, `List[Str]`
-for `wrap()`.
-
-## Expose `unicodedata` as POOP messages
-
-Python's `unicodedata` gives access to the Unicode Character
-Database: normalization, character categorization, name lookup.
-Unreachable from POOP today.
-
-**Proposal — `unicodedata` (lowercase module) namespace, no new
-POOP type:**
-
-1. **Normalization:** `unicodedata.normalize(form, unistr) -> Str`,
-   `unicodedata.is_normalized(form, unistr) -> Boolean`.
-2. **Character properties:** `category`, `bidirectional`,
-   `combining`, `east_asian_width`, `mirrored`, `decomposition` —
-   all take a one-char `Str` and return `Str`/`Int`.
-3. **Name lookup:** `unicodedata.name(chr, default=None) -> Str`,
-   `unicodedata.lookup(name) -> Str`.
-4. **Numeric values:** `decimal`, `digit` (return `Int`),
-   `numeric` (returns `Float`).
-5. **Version:** `unicodedata.unidata_version -> Str`.
-
-**Type discipline:** `Str` for characters/names, `Int` for combining
-classes, `Float` for `numeric`, `Boolean` for `is_normalized`.
-
-**Out of scope (for v1):** the internal `ucd_3_2_0` private object.
-
 ## Expose `struct` as POOP messages
 
 Python's `struct` packs/unpacks binary data via format strings (`I`,
@@ -1754,11 +1659,11 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `string` | proposed | See proposal above |
-| `re` | covered | `re` + `Pattern` + `Match` (shipped in this PR) |
-| `difflib` | proposed | See proposal above |
-| `textwrap` | proposed | See proposal above |
-| `unicodedata` | proposed | See proposal above |
+| `string` | covered | `string` + `Template` (shipped in this PR) |
+| `re` | covered | `re` + `Pattern` + `Match` (shipped in v0.29.0) |
+| `difflib` | covered | `difflib` + `SequenceMatcher` (shipped in this PR) |
+| `textwrap` | covered | `textwrap` + `TextWrapper` (shipped in this PR) |
+| `unicodedata` | covered | `unicodedata` namespace (shipped in this PR) |
 | `stringprep` | out | Internal IDNA helper |
 | `readline` | out | REPL infrastructure — POOP doesn't expose a REPL |
 | `rlcompleter` | out | REPL infrastructure |
