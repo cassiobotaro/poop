@@ -16,6 +16,7 @@ from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.copy import NAMESPACE as _copy_namespace
 from poop.transformers.datetime import NAMESPACE as _datetime_namespace
+from poop.transformers.decimal import NAMESPACE as _decimal_namespace
 from poop.transformers.dict import DictTransformer
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.errno import NAMESPACE as _errno_namespace
@@ -125,6 +126,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_re_namespace,
     **_hashlib_namespace,
     **_datetime_namespace,
+    **_decimal_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]

@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Date`, `DateTime`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Shlex`, `Time`, `TimeDelta`, `TimeZone`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `datetime`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Context`, `Date`, `DateTime`, `Decimal`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Shlex`, `Time`, `TimeDelta`, `TimeZone`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `datetime`, `decimal`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1094,6 +1094,34 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `graphlib.CycleError` | Python exception type | usable with `Try.except_` |
 
 `graphlib` and `TopologicalSorter` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/graphlib.py` — namespace-only, no AST rewrite.
+
+### decimal + Decimal + Context — `poop/types/decimal.py` + `poop/transformers/decimal.py`
+
+`decimal` mirrors Python's `decimal` module — arbitrary-precision decimal arithmetic (money, accounting, anything where binary-float rounding error is unacceptable). `Decimal` is the number; `Context` carries precision, rounding mode, traps and flags.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `Decimal(value)` | `Decimal` | `value` is `Int`, `Float`, `Str`, `Tuple(sign, digits, exponent)`, or `Decimal` |
+| `Decimal + / - / * / / / // / % / ** Decimal` | `Decimal` | full arithmetic surface |
+| `-Decimal` / `+Decimal` / `abs(Decimal)` | `Decimal` | unary |
+| `Decimal < / <= / > / >= Decimal` | `Boolean` | |
+| `.quantize(exp, rounding=none)` | `Decimal` | round to a target exponent |
+| `.normalize()` / `.adjusted()` | `Decimal` / `Int` | |
+| `.as_tuple()` / `.as_integer_ratio()` | `Tuple` | |
+| `.is_finite()` / `.is_infinite()` / `.is_nan()` / `.is_signed()` / `.is_zero()` | `Boolean` | predicates |
+| `.sqrt()` / `.ln()` / `.log10()` / `.exp()` | `Decimal` | transcendentals |
+| `.to_integral_value(rounding=none)` | `Decimal` | |
+| `.copy_abs()` / `.copy_negate()` / `.compare(other)` | `Decimal` | |
+| `decimal.Decimal` (class attr) | `type[Decimal]` | |
+| `decimal.ROUND_UP/DOWN/HALF_UP/HALF_DOWN/HALF_EVEN/CEILING/FLOOR/05UP` | `Str` | rounding constants |
+| `decimal.InvalidOperation` / `DivisionByZero` / `Overflow` / `Underflow` / `Inexact` / `Rounded` / `Subnormal` / `Clamped` / `FloatOperation` / `DecimalException` | Python exception types | usable with `Try.except_` |
+| `decimal.getcontext()` | `Context` | |
+| `decimal.setcontext(ctx)` | `none` | |
+| `decimal.localcontext(ctx=none)` | context manager | use with `With` |
+| `Context.prec` / `.rounding` (properties) | `Int` / `Str` | |
+| `Context.create_decimal(value)` | `Decimal` | builds a Decimal under this context |
+
+`decimal`, `Decimal`, and `Context` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/decimal.py` — namespace-only, no AST rewrite.
 
 ### datetime + Date + Time + DateTime + TimeDelta + TimeZone — `poop/types/datetime.py` + `poop/transformers/datetime.py`
 

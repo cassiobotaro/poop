@@ -761,3 +761,25 @@ parsed = DateTime.fromisoformat("2026-05-15T12:30:00+00:00")
 ```
 
 > The five canonical types are bound at module scope (`Date`, `Time`, `DateTime`, `TimeDelta`, `TimeZone`) and also reachable through the `datetime` namespace (`datetime.date`, `datetime.time`, …) for users used to Python's module attributes. Arithmetic is closed under the type pairs: `Date + TimeDelta` → `Date`, `DateTime - DateTime` → `TimeDelta`, `TimeDelta / TimeDelta` → `Float` (ratio), `TimeDelta // TimeDelta` → `Int`. `TimeZone.utc` is the UTC constant; custom `tzinfo` subclasses are out of scope (use `TimeZone(TimeDelta(hours=h))` for fixed offsets).
+
+## Arbitrary-precision decimals (`decimal` module + `Decimal` / `Context` classes)
+
+```python
+# Python
+from decimal import Decimal, getcontext, ROUND_HALF_UP
+
+price = Decimal("19.99")
+total = price * Decimal("3") + Decimal("0.10")
+rounded = total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+getcontext().prec = 50
+```
+
+```python
+# POOP
+price = Decimal("19.99")
+total = price * Decimal("3") + Decimal("0.10")
+rounded = total.quantize(Decimal("0.01"), decimal.ROUND_HALF_UP)
+# precision setting: use a Context via decimal.localcontext()
+```
+
+> `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.). Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Use `with decimal.localcontext() as ctx:` to scope precision/rounding changes.
