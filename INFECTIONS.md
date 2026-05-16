@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Connection`, `Cursor`, `HMAC`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Row`, `Shlex`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `sqlite3`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Connection`, `Context`, `Cursor`, `Date`, `DateTime`, `Decimal`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Row`, `Shlex`, `Time`, `TimeDelta`, `TimeZone`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `datetime`, `decimal`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `sqlite3`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1132,6 +1132,146 @@ Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`
 Deferred until a caller surfaces: `Connection.create_function` / `.create_aggregate` / `.create_collation`, `sqlite3.register_adapter` / `.register_converter` — these need a POOP `Block` → Python `callable` bridge with type discipline preserved. `sqlite3.complete_statement` and `sqlite3.enable_callback_tracebacks` are out of scope (debug/shell helpers).
 
 `sqlite3`, `Connection`, `Cursor`, and `Row` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/sqlite3.py` — namespace-only, no AST rewrite.
+
+### decimal + Decimal + Context — `poop/types/decimal.py` + `poop/transformers/decimal.py`
+
+`decimal` mirrors Python's `decimal` module — arbitrary-precision decimal arithmetic (money, accounting, anything where binary-float rounding error is unacceptable). `Decimal` is the number; `Context` carries precision, rounding mode, traps and flags.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `Decimal(value)` | `Decimal` | `value` is `Int`, `Float`, `Str`, `Tuple(sign, digits, exponent)`, or `Decimal` |
+| `Decimal + / - / * / / / // / % / ** Decimal` | `Decimal` | full arithmetic surface |
+| `-Decimal` / `+Decimal` / `abs(Decimal)` | `Decimal` | unary |
+| `Decimal < / <= / > / >= Decimal` | `Boolean` | |
+| `.quantize(exp, rounding=none)` | `Decimal` | round to a target exponent |
+| `.normalize()` / `.adjusted()` | `Decimal` / `Int` | |
+| `.as_tuple()` / `.as_integer_ratio()` | `Tuple` | |
+| `.is_finite()` / `.is_infinite()` / `.is_nan()` / `.is_signed()` / `.is_zero()` | `Boolean` | predicates |
+| `.sqrt()` / `.ln()` / `.log10()` / `.exp()` | `Decimal` | transcendentals |
+| `.to_integral_value(rounding=none)` | `Decimal` | |
+| `.copy_abs()` / `.copy_negate()` / `.compare(other)` | `Decimal` | |
+| `decimal.Decimal` (class attr) | `type[Decimal]` | |
+| `decimal.ROUND_UP/DOWN/HALF_UP/HALF_DOWN/HALF_EVEN/CEILING/FLOOR/05UP` | `Str` | rounding constants |
+| `decimal.InvalidOperation` / `DivisionByZero` / `Overflow` / `Underflow` / `Inexact` / `Rounded` / `Subnormal` / `Clamped` / `FloatOperation` / `DecimalException` | Python exception types | usable with `Try.except_` |
+| `decimal.getcontext()` | `Context` | |
+| `decimal.setcontext(ctx)` | `none` | |
+| `decimal.localcontext(ctx=none)` | context manager | use with `With` |
+| `Context.prec` / `.rounding` (properties) | `Int` / `Str` | |
+| `Context.create_decimal(value)` | `Decimal` | builds a Decimal under this context |
+
+`decimal`, `Decimal`, and `Context` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/decimal.py` — namespace-only, no AST rewrite.
+
+### datetime + Date + Time + DateTime + TimeDelta + TimeZone — `poop/types/datetime.py` + `poop/transformers/datetime.py`
+
+`datetime` mirrors Python's `datetime` module — the canonical date, time, datetime, duration, and fixed-offset timezone types. All five wrapper classes are bound at module scope (`Date`, `Time`, …) and also accessible as `datetime.date`, `datetime.time`, etc. (the latter mirroring CPython's module attributes).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `Date(year, month, day)` | `Date` | |
+| `Date.today()` / `.fromisoformat(s)` / `.fromtimestamp(t)` / `.fromordinal(n)` | `Date` | constructors |
+| `Date.year` / `.month` / `.day` (properties) | `Int` | |
+| `Date.weekday()` / `.isoweekday()` / `.toordinal()` | `Int` | |
+| `Date.isoformat()` / `.strftime(fmt)` | `Str` | |
+| `Date.replace(year=none, month=none, day=none)` | `Date` | |
+| `Date + TimeDelta` | `Date` | |
+| `Date - TimeDelta` | `Date` | |
+| `Date - Date` | `TimeDelta` | |
+| `Time(hour=none, minute=none, second=none, microsecond=none, tzinfo=none)` | `Time` | |
+| `Time.fromisoformat(s)` | `Time` | |
+| `Time.hour` / `.minute` / `.second` / `.microsecond` (properties) | `Int` | |
+| `Time.tzinfo` (property) | `TimeZone \| NoneClass` | |
+| `Time.isoformat()` / `.strftime(fmt)` | `Str` | |
+| `Time.replace(...)` | `Time` | |
+| `DateTime(year, month, day, hour=none, ..., tzinfo=none)` | `DateTime` | |
+| `DateTime.now(tz=none)` / `.utcnow()` / `.fromtimestamp(t, tz=none)` / `.fromisoformat(s)` / `.combine(date, time, tzinfo=none)` | `DateTime` | constructors |
+| `DateTime.date()` / `.time()` | `Date` / `Time` | |
+| `DateTime.timestamp()` | `Float` | |
+| `DateTime.astimezone(tz=none)` | `DateTime` | |
+| `DateTime.weekday()` / `.isoweekday()` | `Int` | |
+| `DateTime.isoformat(sep=none)` / `.strftime(fmt)` | `Str` | |
+| `DateTime.replace(...)` | `DateTime` | |
+| `DateTime + TimeDelta` | `DateTime` | |
+| `DateTime - TimeDelta` | `DateTime` | |
+| `DateTime - DateTime` | `TimeDelta` | |
+| `DateTime < / <= / > / >= DateTime` | `Boolean` | |
+| `TimeDelta(days=none, seconds=none, microseconds=none, milliseconds=none, minutes=none, hours=none, weeks=none)` | `TimeDelta` | |
+| `TimeDelta.days` / `.seconds` / `.microseconds` (properties) | `Int` | |
+| `TimeDelta.total_seconds()` | `Float` | |
+| `TimeDelta + / - TimeDelta` | `TimeDelta` | |
+| `TimeDelta * Int` | `TimeDelta` | |
+| `TimeDelta / Int` | `TimeDelta` | |
+| `TimeDelta / TimeDelta` | `Float` | ratio |
+| `TimeDelta // TimeDelta` | `Int` | floor division |
+| `TimeDelta // Int` | `TimeDelta` | |
+| `TimeDelta % TimeDelta` | `TimeDelta` | |
+| `-TimeDelta` | `TimeDelta` | |
+| `TimeZone(offset, name=none)` | `TimeZone` | |
+| `TimeZone.utc` (class attr) | `TimeZone` | UTC constant |
+| `TimeZone.utcoffset(dt=none)` | `TimeDelta` | |
+| `TimeZone.tzname(dt=none)` | `Str` | |
+
+The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetime.tzinfo`) is out of scope; users get `TimeZone` for fixed offsets. The `Date.min`/`Date.max` class attributes and the `datetime.MINYEAR`/`MAXYEAR` integer constants are deferred until a caller asks for them.
+
+`datetime`, `Date`, `Time`, `DateTime`, `TimeDelta`, and `TimeZone` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/datetime.py` — namespace-only, no AST rewrite.
+
+### re + Pattern + Match — `poop/types/re.py` + `poop/transformers/re.py`
+
+`re` mirrors Python's `re` module — regular expression matching, substitution, splitting, and compilation. `Pattern` and `Match` are the two wrapper classes, exposed both as namespace attributes (`re.Pattern`, `re.Match`) and as bare globals (mirroring how `UUID` is also reachable without the `uuid.` prefix).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `re.match(pattern, string, flags=none)` | `Match \| NoneClass` | anchored at start |
+| `re.search(pattern, string, flags=none)` | `Match \| NoneClass` | anywhere |
+| `re.fullmatch(pattern, string, flags=none)` | `Match \| NoneClass` | full string |
+| `re.findall(pattern, string, flags=none)` | `List[Str]` or `List[Tuple]` | tuples when groups exist |
+| `re.finditer(pattern, string, flags=none)` | `Tuple[Match]` | materialised eagerly — POOP collections are not lazy |
+| `re.sub(pattern, repl, string, count=none, flags=none)` | `Str` | |
+| `re.subn(pattern, repl, string, count=none, flags=none)` | `Tuple(Str, Int)` | new string + count |
+| `re.split(pattern, string, maxsplit=none, flags=none)` | `List[Str]` | |
+| `re.escape(pattern)` | `Str` | escape regex meta-chars |
+| `re.compile(pattern, flags=none)` | `Pattern` | |
+| `re.IGNORECASE` / `MULTILINE` / `DOTALL` / `VERBOSE` / `ASCII` / `UNICODE` / `LOCALE` / `DEBUG` | `Int` | flag constants |
+| `Pattern.match` / `.search` / `.fullmatch` / `.findall` / `.finditer` / `.sub` / `.subn` / `.split` | same as module-level | reuses the compiled regex |
+| `Pattern.pattern` / `.flags` / `.groups` / `.groupindex` (properties) | `Str` / `Int` / `Int` / `Dict[Str, Int]` | |
+| `Match.group()` | `Str` | whole match |
+| `Match.group(i_or_name)` | `Str \| NoneClass` | unmatched optional → `none` |
+| `Match.group(a, b, ...)` | `Tuple` | multiple groups |
+| `Match.groups(default=none)` | `Tuple` | all numbered groups |
+| `Match.groupdict(default=none)` | `Dict[Str, Str \| NoneClass]` | named groups |
+| `Match.start(group=none)` / `.end(group=none)` | `Int` | |
+| `Match.span(group=none)` | `Tuple(Int, Int)` | |
+| `Match.expand(template)` | `Str` | apply `\1` / `\g<name>` backrefs |
+| `Match.string` / `.re` (properties) | `Str` / `Pattern` | |
+
+`re` and the `Pattern` / `Match` classes are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/re.py` — namespace-only, no AST rewrite.
+
+### hashlib + Hash — `poop/types/hash.py` + `poop/transformers/hashlib.py`
+
+`hashlib` mirrors Python's `hashlib` module — message digests (MD5, SHA-1/2/3, BLAKE2, SHAKE) and key-derivation functions (PBKDF2, scrypt). The shortcut messages live directly on `Bytes` so common code reads `b"abc".sha256().hexdigest()` — the receiver carries the data, the message names the algorithm.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `hashlib.new(name, data=none)` | `Hash` | generic constructor |
+| `hashlib.file_digest(path, digest, /)` | `Hash` | `path` is a `Path` — receiver-type divergence from CPython's `fileobj` |
+| `hashlib.algorithms_available` (class attr) | `FrozenSet[Str]` | every algorithm OpenSSL exposes locally |
+| `hashlib.algorithms_guaranteed` (class attr) | `FrozenSet[Str]` | algorithms guaranteed on every platform |
+| `hashlib.Hash` (class attr) | `type[Hash]` | the wrapper class itself |
+| `b.md5()` / `.sha1()` / `.sha224()` / `.sha256()` / `.sha384()` / `.sha512()` | `Hash` | shortcut on `Bytes` |
+| `b.blake2b()` / `.blake2s()` | `Hash` | BLAKE2 family |
+| `b.sha3_224()` / `.sha3_256()` / `.sha3_384()` / `.sha3_512()` | `Hash` | SHA-3 family |
+| `b.shake_128()` / `.shake_256()` | `Hash` | length is passed to `.digest(length)` / `.hexdigest(length)` |
+| `b.pbkdf2_hmac(hash_name, salt, iterations, dklen=none)` | `Bytes` | receiver = password |
+| `b.scrypt(*, salt, n, r, p, maxmem=none, dklen=none)` | `Bytes` | receiver = password; defaults `maxmem=0`, `dklen=64` |
+| `Hash.update(data)` | `none` | mutates in place |
+| `Hash.digest(length=none)` | `Bytes` | `length` is required for shake hashes, ignored by the rest |
+| `Hash.hexdigest(length=none)` | `Str` | same shape as `.digest` |
+| `Hash.copy()` | `Hash` | independent clone |
+| `Hash.digest_size` / `.block_size` (property) | `Int` | |
+| `Hash.name` (property) | `Str` | |
+
+`Str` does not carry the shortcut messages — encoding must be explicit (`"abc".encode("utf-8").sha256()`). This mirrors Python's bytes/str split and keeps the encoding step visible.
+
+`hashlib` and `Hash` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/hashlib.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 

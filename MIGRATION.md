@@ -689,6 +689,101 @@ order = sorter.static_order()
 
 > `TopologicalSorter` is in scope without a `graphlib.` prefix (same pattern as `Random`, `UUID`). `static_order()` returns a `Tuple`; the incremental `.add` / `.prepare` / `.get_ready` / `.done` surface is also exposed for streaming consumption. `graphlib.CycleError` is a Python exception class for use with `Try.except_(...)`.
 
+## Regular expressions (`re` module + `Pattern` / `Match` classes)
+
+```python
+# Python
+import re
+
+m = re.match(r"(\w+)=(\d+)", "x=42")
+name, value = m.group(1), m.group(2)
+clean = re.sub(r"\s+", " ", text)
+parts = re.split(r",\s*", csv_line)
+pat = re.compile(r"\d+", re.IGNORECASE)
+```
+
+```python
+# POOP
+m = re.match(r"(\w+)=(\d+)", "x=42")
+name = m.group(1)
+value = m.group(2)
+clean = re.sub(r"\s+", " ", text)
+parts = re.split(r",\s*", csv_line)
+pat = re.compile(r"\d+", re.IGNORECASE)
+```
+
+> Same surface as Python with POOP types: `Match` and `Pattern` are exposed as bare globals (same convention as `UUID`, `Random`). `re.findall` returns a `List` (eager) and `re.finditer` returns a `Tuple[Match]` since POOP collections are not lazy. `Match.group(i)` returns `none` for unmatched optional groups. Flag constants (`re.IGNORECASE`, `re.MULTILINE`, …) are `Int`.
+
+## Hashing (`hashlib` module + `Hash` class)
+
+```python
+# Python
+import hashlib
+
+digest = hashlib.sha256(b"abc").hexdigest()
+mac = hashlib.new("sha512", b"abc").digest()
+key = hashlib.pbkdf2_hmac("sha256", b"pw", b"salt", 200_000)
+file_hash = hashlib.file_digest(open("blob.bin", "rb"), "sha256").hexdigest()
+```
+
+```python
+# POOP
+digest = b"abc".sha256().hexdigest()
+mac = hashlib.new("sha512", b"abc").digest()
+key = b"pw".pbkdf2_hmac("sha256", b"salt", 200_000)
+file_hash = hashlib.file_digest(Path("blob.bin"), "sha256").hexdigest()
+```
+
+> Shortcut messages on `Bytes` carry the data; the message names the algorithm — `b.sha256()`, `b.blake2b()`, `b.sha3_512()`, etc. Key derivation flips the convention: the receiver is the password (`b"pw".pbkdf2_hmac(...)`, `b"pw".scrypt(...)`), mirroring Smalltalk Cryptography's `password deriveKey: ...`. `hashlib.file_digest` takes a POOP `Path` instead of a file object — POOP routes file I/O through `Path`. `Str` does not carry the shortcut messages: encode first (`"abc".encode("utf-8").sha256()`) to keep the encoding step explicit.
+
+## Dates and times (`datetime` module + `Date` / `Time` / `DateTime` / `TimeDelta` / `TimeZone`)
+
+```python
+# Python
+from datetime import date, datetime, timedelta, timezone
+
+today = date.today()
+dt = datetime(2026, 5, 15, 12, 30, tzinfo=timezone.utc)
+future = dt + timedelta(days=7)
+diff = future - dt          # timedelta(days=7)
+iso = dt.isoformat()
+parsed = datetime.fromisoformat("2026-05-15T12:30:00+00:00")
+```
+
+```python
+# POOP
+today = Date.today()
+dt = DateTime(2026, 5, 15, 12, 30, tzinfo=TimeZone.utc)
+future = dt + TimeDelta(days=7)
+diff = future - dt          # TimeDelta(days=7)
+iso = dt.isoformat()
+parsed = DateTime.fromisoformat("2026-05-15T12:30:00+00:00")
+```
+
+> The five canonical types are bound at module scope (`Date`, `Time`, `DateTime`, `TimeDelta`, `TimeZone`) and also reachable through the `datetime` namespace (`datetime.date`, `datetime.time`, …) for users used to Python's module attributes. Arithmetic is closed under the type pairs: `Date + TimeDelta` → `Date`, `DateTime - DateTime` → `TimeDelta`, `TimeDelta / TimeDelta` → `Float` (ratio), `TimeDelta // TimeDelta` → `Int`. `TimeZone.utc` is the UTC constant; custom `tzinfo` subclasses are out of scope (use `TimeZone(TimeDelta(hours=h))` for fixed offsets).
+
+## Arbitrary-precision decimals (`decimal` module + `Decimal` / `Context` classes)
+
+```python
+# Python
+from decimal import Decimal, getcontext, ROUND_HALF_UP
+
+price = Decimal("19.99")
+total = price * Decimal("3") + Decimal("0.10")
+rounded = total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+getcontext().prec = 50
+```
+
+```python
+# POOP
+price = Decimal("19.99")
+total = price * Decimal("3") + Decimal("0.10")
+rounded = total.quantize(Decimal("0.01"), decimal.ROUND_HALF_UP)
+# precision setting: use a Context via decimal.localcontext()
+```
+
+> `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.). Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Use `with decimal.localcontext() as ctx:` to scope precision/rounding changes.
+
 ## SQLite (`sqlite3` module + `Connection` / `Cursor` / `Row` classes)
 
 ```python

@@ -15,6 +15,8 @@ from poop.transformers.bytes import BytesTransformer
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.copy import NAMESPACE as _copy_namespace
+from poop.transformers.datetime import NAMESPACE as _datetime_namespace
+from poop.transformers.decimal import NAMESPACE as _decimal_namespace
 from poop.transformers.dict import DictTransformer
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.errno import NAMESPACE as _errno_namespace
@@ -24,6 +26,7 @@ from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
 from poop.transformers.graphlib import NAMESPACE as _graphlib_namespace
+from poop.transformers.hashlib import NAMESPACE as _hashlib_namespace
 from poop.transformers.heapq import NAMESPACE as _heapq_namespace
 from poop.transformers.hmac import NAMESPACE as _hmac_namespace
 from poop.transformers.int import IntTransformer
@@ -38,6 +41,7 @@ from poop.transformers.pprint import NAMESPACE as _pprint_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
+from poop.transformers.re import NAMESPACE as _re_namespace
 from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
@@ -120,6 +124,10 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_tomllib_namespace,
     **_hmac_namespace,
     **_graphlib_namespace,
+    **_re_namespace,
+    **_hashlib_namespace,
+    **_datetime_namespace,
+    **_decimal_namespace,
     **_sqlite3_namespace,
 }
 

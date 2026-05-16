@@ -1,90 +1,5 @@
 # Proposals
 
-## Expose `hashlib` as POOP messages
-
-Python's `hashlib` module is unreachable from POOP today.
-Computing SHA-256, deriving a key with PBKDF2, or checksumming a
-file are common needs that POOP source currently cannot reach.
-
-Smalltalk's Cryptography package in Pharo puts hashing on the
-receiver: `'abc' asByteArray sha256` returns a `ByteArray`. POOP
-follows the same shape but mirrors Python's two-step API
-(`hashlib.sha256(data) -> Hash`, then `.hexdigest()`) so the
-incremental `.update()` path is preserved.
-
-**Proposal — `hashlib` (lowercase module) + `Hash` (class), in the
-same dual-binding family as `random` / `Random`.**
-
-1. **New POOP class `Hash`** in `poop/types/hash.py`, wrapping
-   Python's hash object. Instances answer (mirroring Python
-   exactly):
-   - `.update(data) -> None` — mutates internal state, returns
-     `None` like Python (no chaining)
-   - `.digest(length=None) -> Bytes` — `length` is required for
-     shake hashes and ignored by the rest (mirrors Python)
-   - `.hexdigest(length=None) -> Str` — same shape as `.digest`
-   - `.copy() -> Hash`
-   - `.digest_size -> Int`, `.block_size -> Int`, `.name -> Str`
-2. **Shortcut methods on `Bytes`** — every guaranteed algorithm
-   becomes a unary message returning a `Hash`:
-   - `.md5()`, `.sha1()`, `.sha224()`, `.sha256()`, `.sha384()`,
-     `.sha512()`
-   - `.blake2b()`, `.blake2s()`
-   - `.sha3_224()`, `.sha3_256()`, `.sha3_384()`, `.sha3_512()`
-   - `.shake_128()`, `.shake_256()` — constructor takes no `length`;
-     pass `length` to `.digest(length)` / `.hexdigest(length)` on
-     the returned `Hash` (mirroring Python exactly)
-3. **Key-derivation messages on `Bytes`** (receiver = password,
-   substituting for Python's first positional argument):
-   - `.pbkdf2_hmac(hash_name, salt, iterations, dklen=None) -> Bytes`
-   - `.scrypt(*, salt, n, r, p, maxmem=0, dklen=64) -> Bytes`
-4. **Namespace `hashlib`** (lowercase, mirroring Python's module
-   name):
-   - `hashlib.new(name, data) -> Hash` (generic constructor — same
-     as Python's `hashlib.new`)
-   - `hashlib.algorithms_available -> FrozenSet` of `Str`
-   - `hashlib.algorithms_guaranteed -> FrozenSet` of `Str`
-   - `hashlib.file_digest(path, digest, /) -> Hash` (Python 3.11+;
-     `path` is a POOP `Path` — sanctioned receiver-type divergence
-     from Python's `fileobj`; the parameter named `digest` matches
-     Python's name)
-   - `hashlib.Hash` — the class itself, accessible as a module
-     attribute just like Python's `hashlib._Hash`
-
-`HashlibTransformer` is **namespace-only**; it injects two
-bindings (`hashlib` lowercase singleton + `Hash` class) into
-`DEFAULT_NAMESPACE` alongside the new methods on `Bytes`.
-
-**Type discipline:** every signature — methods on `Hash`, the
-hash-shortcut and key-derivation methods on `Bytes`, and module-
-level `hashlib.*` — takes and returns POOP types (`Hash`, `Bytes`,
-`Str`, `Int`, `FrozenSet`, `Path`). No `bytes`, `int`, or raw
-`hashlib` object leaks across the boundary.
-
-**Smalltalk reference.**
-
-| Python | Smalltalk (Pharo Cryptography) | Notes |
-|---|---|---|
-| `hashlib.sha256(b).hexdigest()` | `b sha256 hex` | POOP keeps Python's `.hexdigest()` (no underscore) |
-| `hashlib.sha256(b)`, then `.update(more)` | `SHA256 new accept: b; accept: more; finalHash` | Pharo uses `accept:` |
-| `hashlib.md5(b)` | `b md5` | direct |
-| `hashlib.pbkdf2_hmac(...)` | `PBKDF2 deriveKey: ... salt: ...` | similar shape, different naming |
-| `hashlib.scrypt(...)` | (extension package) | not in base |
-| `hashlib.file_digest(f, n)` | (no native) | Python 3.11+ |
-
-**Out of scope (for v1):**
-
-- `usedforsecurity=False` parameter — adds a flag without changing
-  semantics on most platforms.
-- Per-algorithm custom-init parameters for `blake2b` / `blake2s`
-  (`key`, `salt`, `person`, `node_depth`, …) — niche.
-
-**Open question:** should `Str` also offer the shortcut messages
-(`'abc'.sha256()` encoding utf-8 first), or should it force
-`.encode().sha256()` so the encoding step is explicit? Smalltalk
-implicit-encodes via `asByteArray`; Python explicit-encodes via
-`.encode()`. POOP could go either way.
-
 ## Expose `string` as POOP messages
 
 Python's `string` module ships ASCII character-class constants
@@ -109,34 +24,6 @@ accepts a POOP `Dict`, returns `Str`.
 
 - `string.Formatter` — `Str.format(spec)` covers the common case.
 - `string.capwords` — `Str.title()` is close enough; defer.
-
-## Expose `re` as POOP messages
-
-Python's `re` is unreachable from POOP today; POOP `Str` has no
-regex methods. Regex is essential for parsing, validation, and
-substitution.
-
-**Proposal — `re` (lowercase module) + `Pattern` and `Match`
-POOP classes:**
-
-1. **Module-level shortcuts** mirroring Python: `match`, `search`,
-   `fullmatch`, `findall`, `finditer`, `sub`, `subn`, `split`,
-   `escape`, `compile`. All take/return POOP types.
-2. **`Pattern` class** — `re.compile(...)` returns it; same methods
-   as module-level shortcuts (reusing the compiled regex) plus
-   `.pattern`, `.flags`, `.groups`, `.groupindex`.
-3. **`Match` class** — result of a successful match; methods
-   `.group`, `.groups`, `.groupdict`, `.start`, `.end`, `.span`,
-   `.expand`; properties `.string`, `.re`. `None`-on-no-match
-   becomes POOP `none`.
-4. **Flag constants** on `re`: `IGNORECASE`, `MULTILINE`, `DOTALL`,
-   `VERBOSE`, `ASCII`, `UNICODE`, `LOCALE`, `DEBUG`.
-
-**Type discipline:** all POOP types — `Str` for patterns/strings,
-`Int` for positions, `Tuple`/`Dict` for groups.
-
-**Out of scope (for v1):** `re.Scanner` (legacy), `Match.regs`
-(deprecated).
 
 ## Expose `difflib` as POOP messages
 
@@ -260,42 +147,6 @@ encoders.
 - Incremental encoder/decoder API and `StreamReader`/`StreamWriter`
   — pair with future streaming I/O proposal.
 - `register` / `register_error` — extension hooks; defer.
-
-## Expose `datetime` as POOP messages
-
-Python's `datetime` ships five canonical types (`date`, `time`,
-`datetime`, `timedelta`, `tzinfo`) plus `timezone`. Unreachable from
-POOP today and a hard dependency of `tomllib`, logging, file
-metadata, and almost every domain model.
-
-**Proposal — `datetime` (lowercase module) + five POOP classes:**
-
-1. **`Date`** — `Date(year, month, day)`, `Date.today()`,
-   `Date.fromisoformat(s)`, `Date.fromtimestamp(t)`. Properties
-   `.year`/`.month`/`.day`, methods `.weekday()`, `.isoweekday()`,
-   `.isoformat()`, `.strftime(fmt)`, arithmetic with `TimeDelta`.
-2. **`Time`** — `Time(hour, minute, second, microsecond, tzinfo)`,
-   `Time.fromisoformat(s)`. Same property/method shape as `Date`.
-3. **`DateTime`** — `DateTime(year, month, day, hour, …, tzinfo)`,
-   `DateTime.now(tz=None)`, `DateTime.utcnow()` (deprecated alias
-   ok), `DateTime.fromtimestamp(t, tz=None)`,
-   `DateTime.fromisoformat(s)`, `.timestamp()`, `.astimezone(tz)`.
-4. **`TimeDelta`** — `TimeDelta(days, seconds, microseconds, ...)`,
-   arithmetic between `DateTime`s yields `TimeDelta`.
-5. **`TimeZone`** — `TimeZone(offset, name=None)`,
-   `TimeZone.utc` constant.
-6. **`datetime` namespace** binds the five classes (just like
-   Python's `datetime.date`, `datetime.time`, etc. are accessible
-   as module attributes).
-
-**Type discipline:** all POOP types — `Int`/`Float` for components,
-`Str` for ISO strings, `Bytes` for `__bytes__` if exposed.
-
-**Out of scope (for v1):**
-
-- The abstract `tzinfo` extension protocol — POOP users get
-  `TimeZone`; custom subclasses defer.
-- `datetime.MINYEAR`/`MAXYEAR` integer constants — expose if asked.
 
 ## Expose `zoneinfo` as POOP messages
 
@@ -423,42 +274,6 @@ explicit `Enum` base for ergonomics.
 
 **Out of scope (for v1):** `EnumType` metaclass introspection
 (POOP forbids introspection).
-
-## Expose `decimal` as POOP messages
-
-Python's `decimal` provides arbitrary-precision decimal arithmetic
-— critical for money, accounting, and any computation where
-binary-float rounding error is unacceptable.
-
-**Proposal — `decimal` (lowercase module) + `Decimal` class:**
-
-1. **`Decimal` class** wrapping Python's `decimal.Decimal`:
-   - `Decimal(value)` — accepts `Int`, `Str` (`"3.14"`), `Tuple`
-     (sign, digits, exponent), `Float`. Mirrors Python.
-   - All arithmetic operators (`+ - * / // % **`) returning
-     `Decimal`.
-   - `.quantize(exp, rounding=None)`, `.normalize()`, `.adjusted()`,
-     `.as_tuple()`, `.as_integer_ratio()`, `.is_finite()`,
-     `.is_infinite()`, `.is_nan()`, `.is_signed()`, `.is_zero()`,
-     `.sqrt()`, `.ln()`, `.log10()`, `.exp()`.
-2. **`decimal` module namespace:**
-   - `decimal.Decimal` — class attribute alias.
-   - `decimal.getcontext() -> Context`,
-     `decimal.setcontext(ctx) -> NoneClass`,
-     `decimal.localcontext(ctx=None)` (with-block context manager).
-   - Rounding constants: `ROUND_UP`, `ROUND_DOWN`, `ROUND_HALF_UP`,
-     `ROUND_HALF_DOWN`, `ROUND_HALF_EVEN`, `ROUND_CEILING`,
-     `ROUND_FLOOR`, `ROUND_05UP`.
-   - Signal classes: `InvalidOperation`, `DivisionByZero`,
-     `Overflow`, `Underflow`, `Inexact`, `Rounded`, `Subnormal`,
-     `Clamped`, `FloatOperation`, `DecimalException`.
-3. **`Context` class** — precision, rounding, traps, flags.
-
-**Type discipline:** `Decimal` is its own POOP type with full
-arithmetic; conversions cross to `Int`/`Float`/`Str` explicitly.
-
-**Out of scope (for v1):** the C-vs-Python implementation toggle;
-historical traps inherited from `cdecimal`.
 
 ## Expose `fractions` as POOP messages
 
@@ -1940,7 +1755,7 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `string` | proposed | See proposal above |
-| `re` | proposed | See proposal above |
+| `re` | covered | `re` + `Pattern` + `Match` (shipped in this PR) |
 | `difflib` | proposed | See proposal above |
 | `textwrap` | proposed | See proposal above |
 | `unicodedata` | proposed | See proposal above |
@@ -1959,7 +1774,7 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `datetime` | proposed | See proposal above |
+| `datetime` | covered | `datetime` + `Date` + `Time` + `DateTime` + `TimeDelta` + `TimeZone` (shipped in this PR) |
 | `zoneinfo` | proposed | See proposal above |
 | `calendar` | proposed | See proposal above |
 | `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |
@@ -1981,7 +1796,7 @@ each annotated with one of:
 | `numbers` | out | ABC hierarchy — POOP has its own type tree |
 | `math` | covered | `Math` namespace (shipped in v0.6.0) |
 | `cmath` | audit | Needs `Complex` POOP type story — see "Future work" |
-| `decimal` | proposed | See proposal above |
+| `decimal` | covered | `decimal` + `Decimal` + `Context` (shipped in this PR) |
 | `fractions` | proposed | See proposal above |
 | `random` | covered | `Random` namespace (shipped in v0.7.0) |
 | `statistics` | proposed | See proposal above |
@@ -2046,7 +1861,7 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `hashlib` | proposed | See proposal above |
+| `hashlib` | covered | `hashlib` + `Hash` (shipped in this PR) |
 | `hmac` | covered | `hmac` + `HMAC` (shipped in v0.27.0) |
 | `secrets` | covered | `secrets` namespace (shipped in v0.12.0) |
 
