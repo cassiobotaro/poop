@@ -102,6 +102,9 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `array.array("i", xs)` | `Array("i", xs)` |
 | `weakref.ref(obj)` | `WeakRef(obj)` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
+| `fractions.Fraction(1, 2)` | `Fraction(1, 2)` |
+| `statistics.mean(xs)` | `statistics.mean(xs)` |
+| `statistics.NormalDist(0, 1).cdf(0)` | `NormalDist(0, 1).cdf(0)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

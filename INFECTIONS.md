@@ -1476,6 +1476,60 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 
 `enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
 
+### fractions + Fraction — `poop/types/fractions.py` + `poop/transformers/fractions.py`
+
+`fractions` mirrors Python's `fractions` module — exact rational arithmetic. `Fraction` is bare alongside the lowercase namespace (matching the `uuid` / `UUID` convention).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `Fraction(numerator=none, denominator=none)` | `Fraction` | two-arg form takes `Int`s; one-arg form accepts `Int` / `Float` / `Str("3/4")` / `Str("0.25")` / `Fraction` |
+| `Fraction.from_float(f)` (classmethod) | `Fraction` | exact bit-pattern from `Float` |
+| `Fraction.from_decimal(d)` (classmethod) | `Fraction` | exact from `Decimal` |
+| `Fraction.numerator` / `.denominator` (properties) | `Int` | always reduced to lowest terms |
+| `Fraction.limit_denominator(max_denominator=none)` | `Fraction` | best rational with denominator ≤ max |
+| `Fraction.as_integer_ratio()` | `Tuple(Int, Int)` | `(numerator, denominator)` |
+| `Fraction + - * / // % **` | `Fraction` / `Int` / `Float` | mixing with `Int` keeps `Fraction`; `Float` promotes to `Float`; `Fraction // Fraction` → `Int` |
+| `Fraction == != < <= > >= abs +x -x` | as Python | standard comparisons |
+
+POOP `Int` / `Float` don't return `NotImplemented` for non-POOP operands, so reflected dunders (`__radd__`, `__rsub__`, `__rmul__`, `__rtruediv__`) are only reachable when invoked directly — `Int + Fraction` won't dispatch through them yet.
+
+`fractions` and `Fraction` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/fractions.py` — namespace-only, no AST rewrite.
+
+### statistics + NormalDist — `poop/types/statistics.py` + `poop/transformers/statistics.py`
+
+`statistics` mirrors Python's `statistics` module — central tendency, spread, quantiles, correlation primitives, and the `NormalDist` distribution class.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `statistics.mean(data)` | element | typically `Float` / `Int` / `Fraction` depending on input |
+| `statistics.fmean(data, weights=none)` | `Float` | always `Float` |
+| `statistics.geometric_mean(data)` | `Float` | |
+| `statistics.harmonic_mean(data, weights=none)` | `Float` | |
+| `statistics.median(data)` | `Float` / `Int` | even-count averages two middle elements |
+| `statistics.median_low(data)` / `.median_high(data)` | element | |
+| `statistics.median_grouped(data, interval=none)` | `Float` | |
+| `statistics.mode(data)` / `.multimode(data)` | element / `List` | works on `Str` / `Boolean` / numeric data |
+| `statistics.pstdev(data, mu=none)` / `.pvariance(data, mu=none)` | `Float` | population spread |
+| `statistics.stdev(data, xbar=none)` / `.variance(data, xbar=none)` | `Float` | sample spread |
+| `statistics.quantiles(data, n=none, method=none)` | `List[Float]` | default `n=4`, `method="exclusive"` |
+| `statistics.correlation(x, y, method=none)` | `Float` | `method` is `"linear"` (default) or `"ranked"` |
+| `statistics.covariance(x, y)` | `Float` | |
+| `statistics.linear_regression(x, y, proportional=none)` | `Tuple(Float, Float)` | `(slope, intercept)` |
+| `statistics.StatisticsError` (class attr) | exception class | for `Try.except_` on empty/invalid data |
+| `NormalDist(mu=none, sigma=none)` | `NormalDist` | |
+| `NormalDist.from_samples(data)` (classmethod) | `NormalDist` | |
+| `NormalDist.mean` / `.stdev` / `.variance` / `.median` / `.mode` (properties) | `Float` | |
+| `NormalDist.cdf(x)` / `.pdf(x)` / `.inv_cdf(p)` / `.zscore(x)` | `Float` | |
+| `NormalDist.samples(n, seed=none)` | `List[Float]` | |
+| `NormalDist.overlap(other)` | `Float` | |
+| `NormalDist.quantiles(n=none)` | `List[Float]` | default `n=4` |
+| `NormalDist + - NormalDist` / `NormalDist + - * / Float` | `NormalDist` | affine transformations; `+` / `-` between two `NormalDist`s sums means and combines variances |
+| `NormalDist == != hash` | as Python | |
+
+The `_sum` private helper is out of scope. Decimal-aware variants surface naturally through the existing `Decimal` integration.
+
+`statistics` and `NormalDist` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/statistics.py` — namespace-only, no AST rewrite.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.
