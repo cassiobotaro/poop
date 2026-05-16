@@ -907,3 +907,120 @@ unicodedata.numeric("½")            # 0.5
 ```
 
 > No new POOP type: every method takes/returns `Str` / `Int` / `Float` / `Boolean`. `name` / `decimal` / `digit` / `numeric` accept an optional `default=` to suppress the `ValueError` / `KeyError` for chars without the requested property. `unicodedata.unidata_version` is a `Str` class attribute. The private `ucd_3_2_0` legacy UCD object is out of scope.
+
+## IANA timezones (`zoneinfo` module + `ZoneInfo` class)
+
+```python
+# Python
+from zoneinfo import ZoneInfo
+import datetime
+
+dt = datetime.datetime.now(tz=ZoneInfo("America/Sao_Paulo"))
+```
+
+```python
+# POOP
+dt = DateTime.now(ZoneInfo("America/Sao_Paulo"))
+```
+
+> `ZoneInfo` is bare (PascalCase). The lowercase `zoneinfo` namespace exposes `available_timezones()` (`Set[Str]`), `reset_tzpath(to=none)`, and `TZPATH()` (callable rather than attribute — `reset_tzpath` mutates it). `ZoneInfoNotFoundError` is a Python exception class for `Try.except_(...)`. `ZoneInfo.from_file` is deferred (POOP has no file-object abstraction). All `DateTime` constructors / `.now(tz=...)` / `.astimezone(tz)` entry points were widened to accept either `TimeZone` or `ZoneInfo`.
+
+## Calendars (`calendar` module + `Calendar` class)
+
+```python
+# Python
+import calendar
+
+calendar.isleap(2024)                          # True
+calendar.monthrange(2026, 5)                   # (4, 31)
+cal = calendar.Calendar()
+weeks = cal.monthdatescalendar(2026, 5)
+```
+
+```python
+# POOP
+calendar.isleap(2024)                          # true
+calendar.monthrange(2026, 5)                   # (4, 31)
+cal = Calendar()
+weeks = cal.monthdatescalendar(2026, 5)
+```
+
+> Module-level shortcuts (`isleap`, `leapdays`, `weekday`, `monthrange`, `monthcalendar`, `month`, `calendar`, `timegm`) plus the weekday/month constants (`MONDAY` … `SUNDAY`, `JANUARY` … `DECEMBER`) live on the namespace. The reusable `Calendar` class is bare (PascalCase); its `iter*` methods return materialized POOP `List`s — POOP collections are not lazy. `HTMLCalendar`, `LocaleTextCalendar`, and `LocaleHTMLCalendar` are out of scope for v1.
+
+## Typed arrays (`array` module + `Array` class)
+
+```python
+# Python
+import array
+
+a = array.array("i", [1, 2, 3])
+a.append(4)
+buf = a.tobytes()
+```
+
+```python
+# POOP
+a = Array("i", [1, 2, 3])
+a.append(4)
+buf = a.tobytes()
+```
+
+> `Array(typecode, initializer=none)` — typecode is `Str`, initializer is `List` or `Bytes`. Integer typecodes (`b`/`B`/`h`/`H`/`i`/`I`/`l`/`L`/`q`/`Q`) take `Int`; float typecodes (`f`/`d`) take `Float`. Typecode `u` is deprecated upstream and intentionally omitted — use `List[Str]` for character data. The full sequence surface is exposed (`append`/`extend`/`insert`/`pop`/`remove`/`count`/`index`/`reverse`/`at`/`slice`/`tobytes`/`tolist`/`frombytes`/`fromlist`/`do`/`includes`); `array.typecodes` is on the namespace. `fromfile`/`tofile` are deferred.
+
+## Weak references (`weakref` module + `WeakRef` / `WeakSet` / `WeakKeyDictionary` / `WeakValueDictionary`)
+
+```python
+# Python
+import weakref
+
+class Cache:
+    pass
+
+cache = Cache()
+r = weakref.ref(cache)
+alive = r()  # cache or None
+seen = weakref.WeakSet([cache])
+```
+
+```python
+# POOP
+class Cache:
+    pass
+
+cache = Cache()
+r = WeakRef(cache)
+alive = r()  # cache or none
+seen = WeakSet([cache])
+```
+
+> `WeakRef`, `WeakSet`, `WeakKeyDictionary`, `WeakValueDictionary` are all bare (PascalCase). `WeakRef(obj, callback=none)` — `r()` or `r.get()` returns the live object or `none`; `.is_alive()` is a quick check. `weakref.proxy(obj, callback=none)` returns a transparent forwarder (not a POOP wrapper). Only POOP user-class instances support weak references — built-in primitives like `Int` / `Str` define `__slots__` without `__weakref__`, matching Python's `int` / `str` restriction. `finalize` and `WeakMethod` are out of scope.
+
+## Enumerations (`enum` module + `Enum` / `IntEnum` / `StrEnum` / `Flag` / `IntFlag` / `ReprEnum`)
+
+```python
+# Python
+from enum import Enum, auto
+
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = auto()
+
+Color.RED.name        # "RED"
+Color.RED.value       # 1
+Color(2)              # Color.GREEN
+```
+
+```python
+# POOP
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = auto()
+
+Color.RED.name_str()      # Str("RED")
+Color.RED.value_object()  # Int(1)
+Color(Int(2))             # Color.GREEN
+```
+
+> The bases (`Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`) are bare alongside the `enum` namespace; `auto()` is also bare. `.name` stays a Python `str` (CPython's enum protocol and decorators like `@unique` depend on that). Use `.name_str()` for a POOP `Str`. `.value` returns whatever was assigned — raw Python primitives stay raw; use `.value_object()` to wrap them. POOP value lookup works via `_missing_`: `Color(Int(1))` finds the same member as `Color(1)`. `enum.unique` / `verify` / `member` / `nonmember` apply directly. `ReprEnum` is re-exported as-is (it can't be subclassed without a data-type mixin). `EnumType` metaclass access is out of scope.

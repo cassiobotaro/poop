@@ -1353,6 +1353,129 @@ The private `ucd_3_2_0` legacy UCD object is out of scope for v1.
 
 `unicodedata` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/unicodedata.py` — namespace-only, no AST rewrite.
 
+### zoneinfo + ZoneInfo — `poop/types/zoneinfo.py` + `poop/transformers/zoneinfo.py`
+
+`zoneinfo` mirrors Python's `zoneinfo` module — IANA timezone database access. `ZoneInfo` is a `datetime.tzinfo` wrapper that pairs directly with the `datetime` namespace's `DateTime.now(tz=…)` / `.astimezone(tz)` / `DateTime(..., tzinfo=…)` entry points (all widened to accept either `TimeZone` or `ZoneInfo`).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `ZoneInfo(key)` | `ZoneInfo` | cached lookup by IANA name |
+| `ZoneInfo.no_cache(key)` (classmethod) | `ZoneInfo` | bypass the cache |
+| `ZoneInfo.clear_cache(only_keys=none)` (classmethod) | `none` | `only_keys` is an optional `Set[Str]` |
+| `ZoneInfo.key` (property) | `Str` | the IANA name |
+| `zoneinfo.available_timezones()` | `Set[Str]` | roster from the local tzdata |
+| `zoneinfo.reset_tzpath(to=none)` | `none` | `to` is an optional `Tuple[Str]` of search paths |
+| `zoneinfo.TZPATH()` | `Tuple[Str]` | current search path (callable rather than attribute — `reset_tzpath` mutates it) |
+| `zoneinfo.ZoneInfoNotFoundError` (class attr) | exception class | use with `Try.except_(...)` |
+
+`ZoneInfo.from_file` is deferred — POOP has no file-object abstraction. `InvalidTZPathWarning` is out of scope (POOP has no warning system).
+
+`zoneinfo` and `ZoneInfo` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/zoneinfo.py` — namespace-only, no AST rewrite.
+
+### calendar + Calendar — `poop/types/calendar.py` + `poop/transformers/calendar.py`
+
+`calendar` mirrors Python's `calendar` module — formatting month/year calendars, leap-year queries, weekday math. The reusable `Calendar` class iterates dates with a configurable first-weekday.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `calendar.isleap(year)` | `Boolean` | |
+| `calendar.leapdays(y1, y2)` | `Int` | |
+| `calendar.weekday(year, month, day)` | `Int` | `0`=Monday |
+| `calendar.monthrange(year, month)` | `Tuple(Int, Int)` | `(first_weekday, ndays)` |
+| `calendar.monthcalendar(year, month)` | `List[List[Int]]` | rows of week × day; `0` for days outside the month |
+| `calendar.month(year, month, w=none, l=none)` | `Str` | text rendering |
+| `calendar.calendar(year, w=none, l=none, c=none, m=none)` | `Str` | full-year text rendering |
+| `calendar.timegm(time_tuple)` | `Int` | inverse of `time.gmtime` |
+| `calendar.MONDAY` … `SUNDAY` (class attrs) | `Int` | weekday constants (`0` … `6`) |
+| `calendar.JANUARY` … `DECEMBER` (class attrs) | `Int` | month constants (`1` … `12`) |
+| `calendar.IllegalMonthError` / `IllegalWeekdayError` (class attrs) | exception class | use with `Try.except_(...)` |
+| `Calendar(firstweekday=none)` | `Calendar` | reusable iterator |
+| `Calendar.iterweekdays()` | `List[Int]` | weekday order |
+| `Calendar.itermonthdates(year, month)` | `List[Date]` | full weeks including padding days |
+| `Calendar.itermonthdays(year, month)` | `List[Int]` | `0` for padding |
+| `Calendar.itermonthdays2(year, month)` | `List[Tuple(Int, Int)]` | `(day, weekday)` |
+| `Calendar.itermonthdays3(year, month)` | `List[Tuple(Int, Int, Int)]` | `(year, month, day)` — no padding |
+| `Calendar.monthdatescalendar(year, month)` | `List[List[Date]]` | weeks of full `Date`s |
+| `Calendar.monthdayscalendar(year, month)` | `List[List[Int]]` | weeks of day numbers |
+| `Calendar.yeardatescalendar(year, width=none)` | nested `List` | row × month × week × day |
+
+POOP collections are materialized eagerly — the `iter*` methods return `List` instead of Python's generators. `HTMLCalendar`, `LocaleTextCalendar`, and `LocaleHTMLCalendar` are out of scope for v1.
+
+`calendar` and `Calendar` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/calendar.py` — namespace-only, no AST rewrite.
+
+### array + Array — `poop/types/array.py` + `poop/transformers/array.py`
+
+`array` mirrors Python's `array` module — a homogeneous, memory-compact sequence keyed by a single typecode. Integer typecodes (`b`/`B`/`h`/`H`/`i`/`I`/`l`/`L`/`q`/`Q`) take `Int`; float typecodes (`f`/`d`) take `Float`. Typecode `u` (deprecated upstream) is intentionally omitted — use `List[Str]` for character data.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `Array(typecode, initializer=none)` | `Array` | initializer is `List` or `Bytes` |
+| `Array.typecode` (property) | `Str` | |
+| `Array.itemsize` (property) | `Int` | bytes per element |
+| `Array.len()` | `Int` | |
+| `Array.at(i)` / `.slice(start, stop, step=none)` | element / `Array` | |
+| `Array.append(v)` / `.extend(other)` / `.insert(i, v)` | `none` | mutators |
+| `Array.pop(i=none)` / `.remove(v)` | element / `none` | |
+| `Array.count(v)` / `.index(v)` | `Int` | |
+| `Array.reverse()` | `none` | in-place |
+| `Array.tobytes()` / `.tolist()` | `Bytes` / `List` | conversion |
+| `Array.frombytes(b)` / `.fromlist(l)` | `none` | extend from raw |
+| `Array.do(block)` | `none` | per-element iteration |
+| `Array.includes(v)` | `Boolean` | |
+| `array.typecodes` (class attr) | `Str` | valid typecode characters |
+
+`array.fromfile`/`tofile` are deferred — POOP has no file-streaming abstraction.
+
+`array` and `Array` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/array.py` — namespace-only, no AST rewrite.
+
+### weakref + WeakRef + WeakSet + WeakKeyDictionary + WeakValueDictionary — `poop/types/weakref.py` + `poop/transformers/weakref.py`
+
+`weakref` mirrors Python's `weakref` module — references that don't prevent garbage collection. Useful for caches and breaking cycles. POOP user-class instances support weak references (they have `__weakref__` automatically); POOP built-in primitives like `Int`/`Str`/`Bytes` define `__slots__` without `__weakref__`, matching Python's `int`/`str` restriction.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `weakref.ref(obj, callback=none)` | `WeakRef` | |
+| `weakref.proxy(obj, callback=none)` | transparent proxy | forwards attribute access while live |
+| `weakref.getweakrefcount(obj)` | `Int` | |
+| `weakref.getweakrefs(obj)` | `List[WeakRef]` | |
+| `WeakRef(obj, callback=none)` | `WeakRef` | calling the ref (`r()`) or `.get()` returns the live object or `none` |
+| `WeakRef.is_alive()` | `Boolean` | |
+| `WeakSet(items=none)` | `WeakSet` | `.add` / `.discard` / `.remove` / `.includes` / `.len()` / iteration / `.clear()` / `.copy()` |
+| `WeakKeyDictionary()` | `WeakKeyDictionary` | `.at_put(k, v)` / `.at(k)` / `.get(k, default=none)` / `.includes(k)` / `.keys()` / `.values()` / `.clear()` |
+| `WeakValueDictionary()` | `WeakValueDictionary` | same surface as `WeakKeyDictionary` |
+
+`finalize` and `WeakMethod` are out of scope for v1.
+
+`weakref`, `WeakRef`, `WeakSet`, `WeakKeyDictionary`, and `WeakValueDictionary` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/weakref.py` — namespace-only, no AST rewrite.
+
+### enum + Enum + IntEnum + StrEnum + Flag + IntFlag + ReprEnum — `poop/types/enum.py` + `poop/transformers/enum.py`
+
+`enum` mirrors Python's `enum` module — typed enumeration classes (`class Color(Enum): RED = 1`). The standard CPython machinery is preserved (members, lookups, `@unique`, `auto()`, etc.) and POOP adds:
+
+- `.name_str()` returning POOP `Str` — `.name` itself stays a Python `str` because CPython's enum machinery (and decorators like `@unique`) compare it for identity.
+- `.value_object()` returning a wrapped POOP value (`Int`/`Str`/`Float`/`Boolean`) — `.value` returns whatever was assigned (raw Python primitives stay raw; POOP types pass through unchanged).
+- `_missing_` is wired so `Color(Int(1))` resolves to `Color.RED` exactly like `Color(1)`.
+- `Enum.iter()` returns a POOP `List` of members.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `class Color(Enum): RED = 1` | enum class | members are class-side singletons |
+| `Color.RED.name` | Python `str` | matches Python's enum protocol |
+| `Color.RED.name_str()` | `Str` | POOP-shaped name |
+| `Color.RED.value` | whatever was assigned | raw Python primitive or POOP type |
+| `Color.RED.value_object()` | `Int` / `Str` / `Float` / `Boolean` | wrapped POOP form |
+| `Color(value)` / `Color(Int(value))` | enum member | POOP wrappers are unwrapped before lookup |
+| `Color.iter()` | `List` | materialized member list |
+| `IntEnum` / `StrEnum` / `Flag` / `IntFlag` | enum classes | same POOP helpers, plus the data-type mixin from CPython |
+| `ReprEnum` | enum class (re-exported) | requires a data-type mixin (`class Color(int, ReprEnum): ...`); `.name`/`.value` stay raw Python types in this path |
+| `auto()` | sentinel | for sequential value generation inside an enum body |
+| `enum.unique` / `verify` / `member` / `nonmember` (class attrs) | decorators | apply directly on enum classes |
+| `enum.CONTINUOUS` / `NAMED_FLAGS` / `UNIQUE` (class attrs) | constants | for `@verify` |
+
+`EnumType` metaclass access is out of scope (POOP forbids introspection).
+
+`enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

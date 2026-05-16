@@ -97,6 +97,11 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `difflib.get_close_matches(w, xs)` | `difflib.get_close_matches(w, xs)` |
 | `textwrap.fill(t, width=40)` | `textwrap.fill(t, 40)` |
 | `unicodedata.name("A")` | `unicodedata.name("A")` |
+| `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
+| `calendar.isleap(year)` | `calendar.isleap(year)` |
+| `array.array("i", xs)` | `Array("i", xs)` |
+| `weakref.ref(obj)` | `WeakRef(obj)` |
+| `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

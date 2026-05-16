@@ -53,133 +53,6 @@ encoders.
   — pair with future streaming I/O proposal.
 - `register` / `register_error` — extension hooks; defer.
 
-## Expose `zoneinfo` as POOP messages
-
-Python's `zoneinfo` (3.9+) provides IANA timezone database access:
-`ZoneInfo("America/Sao_Paulo")` returns a `tzinfo` subclass. Pairs
-directly with `datetime`'s `TimeZone`.
-
-**Proposal — `zoneinfo` (lowercase module) + `ZoneInfo` class:**
-
-1. **`ZoneInfo` class** — `ZoneInfo(key)` looks up by IANA name;
-   `ZoneInfo.from_file(file_obj, key)`,
-   `ZoneInfo.no_cache(key)`,
-   `ZoneInfo.clear_cache(only_keys=None)`. Property `.key -> Str`.
-2. **Module-level helpers:**
-   `zoneinfo.available_timezones() -> Set[Str]`,
-   `zoneinfo.reset_tzpath(to=None)`.
-3. **`ZoneInfoNotFoundError`** — POOP error for missing zones.
-4. **Tzpath** — `zoneinfo.TZPATH` exposed as `Tuple[Str]`.
-
-**Type discipline:** `Str` for keys, `Set[Str]` for the timezone
-roster, `Tuple[Str]` for the search path.
-
-**Out of scope (for v1):** `InvalidTZPathWarning` (warning system
-out of scope).
-
-## Expose `calendar` as POOP messages
-
-Python's `calendar` formats month/year calendars and answers
-calendar queries (leap years, weekdays). Niche but small.
-
-**Proposal — `calendar` (lowercase module) + `Calendar` class:**
-
-1. **Module-level helpers:**
-   `calendar.isleap(year) -> Boolean`,
-   `calendar.leapdays(y1, y2) -> Int`,
-   `calendar.weekday(year, month, day) -> Int`,
-   `calendar.monthrange(year, month) -> Tuple[Int, Int]`,
-   `calendar.month(year, month, w=0, l=0) -> Str` (text rendering),
-   `calendar.calendar(year, w=2, l=1, c=6, m=3) -> Str`,
-   `calendar.timegm(time_tuple) -> Int`.
-2. **`Calendar` class** for iterating dates:
-   - `Calendar(firstweekday=0)` constructor
-   - `.iterweekdays() -> Map[Int]`,
-     `.itermonthdates(year, month) -> Map[Date]`,
-     `.itermonthdays(year, month) -> Map[Int]`, …
-3. **Weekday constants:** `calendar.MONDAY` … `calendar.SUNDAY`
-   (each `Int`).
-
-**Type discipline:** `Int` for years/months/days, `Boolean` for
-leap predicate, `Str` for formatted output.
-
-**Out of scope (for v1):**
-
-- `HTMLCalendar`, `LocaleTextCalendar`, `LocaleHTMLCalendar` —
-  niche output formats.
-
-## Expose `array` as POOP messages
-
-Python's `array.array` is a homogeneous, memory-compact sequence.
-Niche in pure Python (NumPy/struct do most jobs) but useful for
-fixed-typecode storage.
-
-**Proposal — `array` (lowercase module) + `Array` class:**
-
-1. **`Array` class:**
-   - `Array(typecode, initializer=None)` — typecode is `Str`
-     (`'i'`, `'B'`, `'f'`, …)
-   - Standard sequence API: `.append`, `.extend`, `.insert`,
-     `.pop`, `.remove`, `.count`, `.index`, `.reverse`, `.len()`,
-     iteration via `.do(block)`, `at(i)`, `.slice(...)`.
-   - Conversion: `.tobytes() -> Bytes`, `.tolist() -> List`,
-     `.frombytes(b)`, `.fromlist(l)`, `.fromstring` (deprecated).
-   - Metadata: `.typecode -> Str`, `.itemsize -> Int`.
-2. **`array.typecodes`** module attribute — `Str` of valid codes.
-
-**Type discipline:** typecode-appropriate POOP elements; `Bytes`
-for raw, `List` for conversion.
-
-**Out of scope (for v1):** `array.fromfile`/`tofile` — pair with
-streaming I/O.
-
-## Expose `weakref` as POOP messages
-
-Python's `weakref` creates references that don't prevent garbage
-collection. Niche — mostly for caches and circular-reference
-breakers. Low priority but worth proposing.
-
-**Proposal — `weakref` (lowercase module) + class set:**
-
-1. **`weakref` namespace shortcuts:**
-   `weakref.ref(obj, callback=None) -> WeakRef`,
-   `weakref.proxy(obj, callback=None)`,
-   `weakref.getweakrefcount(obj) -> Int`,
-   `weakref.getweakrefs(obj) -> List`.
-2. **`WeakRef` class** — call returns the live object or `none`.
-3. **`WeakSet` / `WeakKeyDictionary` / `WeakValueDictionary`** —
-   POOP collections with weak-reference semantics.
-
-**Type discipline:** POOP types; `none` for dead refs.
-
-**Out of scope (for v1):** `finalize`, `WeakMethod` — niche.
-
-## Expose `enum` as POOP messages
-
-Python's `enum` provides `Enum`, `IntEnum`, `StrEnum`, `Flag`,
-`IntFlag` — typed enumeration classes. POOP user classes can
-already support class-side singletons; this proposal codifies the
-explicit `Enum` base for ergonomics.
-
-**Proposal — `enum` (lowercase module) + class set:**
-
-1. **`Enum` base** — `class Color(Enum): RED = 1; GREEN = 2`.
-   Members are class-side `Enum` instances accessible by name and
-   value (`Color.RED`, `Color(1)`, `Color["RED"]`).
-2. **Specialised bases:** `IntEnum`, `StrEnum` (3.11+),
-   `IntFlag`, `Flag`, `ReprEnum` (3.11+).
-3. **`auto()`** for sequential value generation.
-4. **Method/property:** `.name -> Str`, `.value -> Object`,
-   `Enum.iter()` for member iteration.
-5. **Decorators:** `@enum.unique`, `@enum.verify`,
-   `@enum.member`, `@enum.nonmember` (3.12+).
-
-**Type discipline:** members are POOP `Enum` instances;
-`.value` returns whatever POOP type the user assigned.
-
-**Out of scope (for v1):** `EnumType` metaclass introspection
-(POOP forbids introspection).
-
 ## Expose `fractions` as POOP messages
 
 Python's `fractions.Fraction` is exact rational arithmetic.
@@ -1679,19 +1552,19 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `datetime` | covered | `datetime` + `Date` + `Time` + `DateTime` + `TimeDelta` + `TimeZone` (shipped in this PR) |
-| `zoneinfo` | proposed | See proposal above |
-| `calendar` | proposed | See proposal above |
+| `datetime` | covered | `datetime` + `Date` + `Time` + `DateTime` + `TimeDelta` + `TimeZone` (shipped in v0.32.0) |
+| `zoneinfo` | covered | `zoneinfo` + `ZoneInfo` (shipped in this PR) |
+| `calendar` | covered | `calendar` + `Calendar` (shipped in this PR) |
 | `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |
 | `heapq` | covered | `heapq` namespace + `HeapMerge` (shipped in v0.22.0) |
 | `bisect` | covered | `bisect` namespace (shipped in v0.21.0) |
-| `array` | proposed | See proposal above |
-| `weakref` | proposed | See proposal above |
+| `array` | covered | `array` + `Array` (shipped in this PR) |
+| `weakref` | covered | `weakref` + `WeakRef` + `WeakSet` + `WeakKeyDictionary` + `WeakValueDictionary` (shipped in this PR) |
 | `types` | out | Introspection — forbidden in POOP |
 | `copy` | covered | `copy` namespace (shipped in v0.19.0) |
 | `pprint` | covered | `pprint` + `PrettyPrinter` (shipped in v0.20.0) |
 | `reprlib` | out | POOP forbids `repr` |
-| `enum` | proposed | See proposal above |
+| `enum` | covered | `enum` + `Enum` + `IntEnum` + `StrEnum` + `Flag` + `IntFlag` + `ReprEnum` (shipped in this PR) |
 | `graphlib` | covered | `graphlib` + `TopologicalSorter` (shipped in v0.28.0) |
 
 ### Numeric and Mathematical Modules
