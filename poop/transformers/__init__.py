@@ -25,6 +25,7 @@ from poop.transformers.difflib import NAMESPACE as _difflib_namespace
 from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.errno import NAMESPACE as _errno_namespace
+from poop.transformers.filecmp import NAMESPACE as _filecmp_namespace
 from poop.transformers.float import FloatTransformer
 from poop.transformers.fnmatch import NAMESPACE as _fnmatch_namespace
 from poop.transformers.fractions import NAMESPACE as _fractions_namespace
@@ -51,12 +52,14 @@ from poop.transformers.re import NAMESPACE as _re_namespace
 from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
+from poop.transformers.shutil import NAMESPACE as _shutil_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.sqlite3 import NAMESPACE as _sqlite3_namespace
 from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.struct import NAMESPACE as _struct_namespace
+from poop.transformers.tempfile import NAMESPACE as _tempfile_namespace
 from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
 from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
@@ -155,6 +158,9 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_statistics_namespace,
     **_struct_namespace,
     **_codecs_namespace,
+    **_filecmp_namespace,
+    **_tempfile_namespace,
+    **_shutil_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
