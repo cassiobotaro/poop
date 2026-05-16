@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime as _datetime
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
@@ -12,8 +12,11 @@ from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
 
+if TYPE_CHECKING:
+    from poop.types.zoneinfo import ZoneInfo
 
-def _opt_tz(tz: TimeZone | NoneClass | None) -> _datetime.tzinfo | None:
+
+def _opt_tz(tz: TimeZone | ZoneInfo | NoneClass | None) -> _datetime.tzinfo | None:
     if tz is None or isinstance(tz, NoneClass):
         return None
     return tz._impl
@@ -235,7 +238,7 @@ class Time(_ValueEqMixin, Object):
         minute: Int | NoneClass | None = None,
         second: Int | NoneClass | None = None,
         microsecond: Int | NoneClass | None = None,
-        tzinfo: TimeZone | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
     ) -> None:
         self._impl = _datetime.time(
             hour=_unwrap(hour, 0),
@@ -292,7 +295,7 @@ class Time(_ValueEqMixin, Object):
         minute: Int | NoneClass | None = None,
         second: Int | NoneClass | None = None,
         microsecond: Int | NoneClass | None = None,
-        tzinfo: TimeZone | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
     ) -> Time:
         kwargs: dict[str, Any] = {
             "hour": _unwrap(hour, self._impl.hour),
@@ -325,7 +328,7 @@ class DateTime(_ValueEqMixin, Object):
         minute: Int | NoneClass | None = None,
         second: Int | NoneClass | None = None,
         microsecond: Int | NoneClass | None = None,
-        tzinfo: TimeZone | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
     ) -> None:
         self._impl = _datetime.datetime(
             year._value,
@@ -345,7 +348,7 @@ class DateTime(_ValueEqMixin, Object):
         return obj
 
     @classmethod
-    def now(cls, tz: TimeZone | NoneClass | None = None) -> DateTime:
+    def now(cls, tz: TimeZone | ZoneInfo | NoneClass | None = None) -> DateTime:
         return cls._from_impl(_datetime.datetime.now(_opt_tz(tz)))
 
     @classmethod
@@ -354,7 +357,7 @@ class DateTime(_ValueEqMixin, Object):
 
     @classmethod
     def fromtimestamp(
-        cls, t: Int | Float, tz: TimeZone | NoneClass | None = None
+        cls, t: Int | Float, tz: TimeZone | ZoneInfo | NoneClass | None = None
     ) -> DateTime:
         return cls._from_impl(_datetime.datetime.fromtimestamp(t._value, _opt_tz(tz)))
 
@@ -364,7 +367,10 @@ class DateTime(_ValueEqMixin, Object):
 
     @classmethod
     def combine(
-        cls, date: Date, time: Time, tzinfo: TimeZone | NoneClass | None = None
+        cls,
+        date: Date,
+        time: Time,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
     ) -> DateTime:
         tz = _opt_tz(tzinfo) if tzinfo is not None else time._impl.tzinfo
         return cls._from_impl(_datetime.datetime.combine(date._impl, time._impl, tz))
@@ -415,7 +421,7 @@ class DateTime(_ValueEqMixin, Object):
     def timestamp(self) -> Float:
         return Float(self._impl.timestamp())
 
-    def astimezone(self, tz: TimeZone | NoneClass | None = None) -> DateTime:
+    def astimezone(self, tz: TimeZone | ZoneInfo | NoneClass | None = None) -> DateTime:
         return DateTime._from_impl(self._impl.astimezone(_opt_tz(tz)))
 
     def weekday(self) -> Int:
@@ -440,7 +446,7 @@ class DateTime(_ValueEqMixin, Object):
         minute: Int | NoneClass | None = None,
         second: Int | NoneClass | None = None,
         microsecond: Int | NoneClass | None = None,
-        tzinfo: TimeZone | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
     ) -> DateTime:
         kwargs: dict[str, Any] = {
             "year": _unwrap(year, self._impl.year),

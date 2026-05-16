@@ -5,6 +5,7 @@ from builtins import (
     list as _list,  # preserve builtin before poop.transformers.list shadows it
 )
 
+from poop.transformers.array import NAMESPACE as _array_namespace
 from poop.transformers.base import Transformer
 from poop.transformers.binascii import NAMESPACE as _binascii_namespace
 from poop.transformers.bisect import NAMESPACE as _bisect_namespace
@@ -12,6 +13,7 @@ from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
 from poop.transformers.bytes import BytesTransformer
+from poop.transformers.calendar import NAMESPACE as _calendar_namespace
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.copy import NAMESPACE as _copy_namespace
@@ -19,6 +21,7 @@ from poop.transformers.datetime import NAMESPACE as _datetime_namespace
 from poop.transformers.decimal import NAMESPACE as _decimal_namespace
 from poop.transformers.dict import DictTransformer
 from poop.transformers.difflib import NAMESPACE as _difflib_namespace
+from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.errno import NAMESPACE as _errno_namespace
 from poop.transformers.float import FloatTransformer
@@ -56,9 +59,11 @@ from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.unicodedata import NAMESPACE as _unicodedata_namespace
 from poop.transformers.uuid import NAMESPACE as _uuid_namespace
+from poop.transformers.weakref import NAMESPACE as _weakref_namespace
 from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.zip import ZipTransformer
+from poop.transformers.zoneinfo import NAMESPACE as _zoneinfo_namespace
 
 DEFAULT_TRANSFORMERS: _list[Transformer] = [
     BooleanTransformer(),
@@ -137,6 +142,11 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_difflib_namespace,
     **_textwrap_namespace,
     **_unicodedata_namespace,
+    **_zoneinfo_namespace,
+    **_calendar_namespace,
+    **_array_namespace,
+    **_weakref_namespace,
+    **_enum_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
