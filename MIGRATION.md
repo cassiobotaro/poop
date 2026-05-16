@@ -688,3 +688,33 @@ order = sorter.static_order()
 ```
 
 > `TopologicalSorter` is in scope without a `graphlib.` prefix (same pattern as `Random`, `UUID`). `static_order()` returns a `Tuple`; the incremental `.add` / `.prepare` / `.get_ready` / `.done` surface is also exposed for streaming consumption. `graphlib.CycleError` is a Python exception class for use with `Try.except_(...)`.
+
+## SQLite (`sqlite3` module + `Connection` / `Cursor` / `Row` classes)
+
+```python
+# Python
+import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE users(id INTEGER, name TEXT)")
+con.executemany(
+    "INSERT INTO users VALUES (?, ?)",
+    [(1, "Alice"), (2, "Bob")],
+)
+con.commit()
+rows = con.execute("SELECT * FROM users").fetchall()
+```
+
+```python
+# POOP
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE users(id INTEGER, name TEXT)")
+con.executemany(
+    "INSERT INTO users VALUES (?, ?)",
+    [(1, "Alice"), (2, "Bob")],
+)
+con.commit()
+rows = con.execute("SELECT * FROM users").fetchall()
+```
+
+> Bound parameters are POOP `Tuple` or `List`; rows come back as POOP `Tuple` of POOP values (`Int`/`Float`/`Str`/`Bytes`/`none`). `Connection` is a context manager (`with sqlite3.connect(...) as con:` — commits on clean exit, rolls back on exception). `Connection.execute` returns a `Cursor` directly; chain `.fetchall()` / `.fetchone()` / iterate. Error classes (`sqlite3.OperationalError`, `IntegrityError`, …) are Python exception classes — pass them to `Try.except_(...)`. Callback-based methods (`create_function`, `register_adapter`, …) are deferred until a POOP `Block` → Python `callable` bridge lands.
