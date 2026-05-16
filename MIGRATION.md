@@ -735,3 +735,29 @@ file_hash = hashlib.file_digest(Path("blob.bin"), "sha256").hexdigest()
 ```
 
 > Shortcut messages on `Bytes` carry the data; the message names the algorithm — `b.sha256()`, `b.blake2b()`, `b.sha3_512()`, etc. Key derivation flips the convention: the receiver is the password (`b"pw".pbkdf2_hmac(...)`, `b"pw".scrypt(...)`), mirroring Smalltalk Cryptography's `password deriveKey: ...`. `hashlib.file_digest` takes a POOP `Path` instead of a file object — POOP routes file I/O through `Path`. `Str` does not carry the shortcut messages: encode first (`"abc".encode("utf-8").sha256()`) to keep the encoding step explicit.
+
+## Dates and times (`datetime` module + `Date` / `Time` / `DateTime` / `TimeDelta` / `TimeZone`)
+
+```python
+# Python
+from datetime import date, datetime, timedelta, timezone
+
+today = date.today()
+dt = datetime(2026, 5, 15, 12, 30, tzinfo=timezone.utc)
+future = dt + timedelta(days=7)
+diff = future - dt          # timedelta(days=7)
+iso = dt.isoformat()
+parsed = datetime.fromisoformat("2026-05-15T12:30:00+00:00")
+```
+
+```python
+# POOP
+today = Date.today()
+dt = DateTime(2026, 5, 15, 12, 30, tzinfo=TimeZone.utc)
+future = dt + TimeDelta(days=7)
+diff = future - dt          # TimeDelta(days=7)
+iso = dt.isoformat()
+parsed = DateTime.fromisoformat("2026-05-15T12:30:00+00:00")
+```
+
+> The five canonical types are bound at module scope (`Date`, `Time`, `DateTime`, `TimeDelta`, `TimeZone`) and also reachable through the `datetime` namespace (`datetime.date`, `datetime.time`, …) for users used to Python's module attributes. Arithmetic is closed under the type pairs: `Date + TimeDelta` → `Date`, `DateTime - DateTime` → `TimeDelta`, `TimeDelta / TimeDelta` → `Float` (ratio), `TimeDelta // TimeDelta` → `Int`. `TimeZone.utc` is the UTC constant; custom `tzinfo` subclasses are out of scope (use `TimeZone(TimeDelta(hours=h))` for fixed offsets).
