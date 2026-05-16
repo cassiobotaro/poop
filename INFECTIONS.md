@@ -2005,6 +2005,34 @@ POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for 
 
 `configparser`, `ConfigParser`, and `RawConfigParser` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/configparser.py` — namespace-only, no AST rewrite.
 
+### pwd + Passwd, grp + Group, resource + RUsage — `poop/types/{pwd,grp,resource}.py`
+
+Three small Unix-specific namespaces shipped together. `pwd` looks up Unix password-file entries, `grp` looks up Unix group-file entries, and `resource` queries / modifies process resource limits + rusage.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `pwd.getpwuid(uid)` / `.getpwnam(name)` | `Passwd` | one record per entry |
+| `pwd.getpwall()` | `List[Passwd]` | full database |
+| `Passwd.pw_name` / `.pw_passwd` / `.pw_gecos` / `.pw_dir` / `.pw_shell` (properties) | `Str` | |
+| `Passwd.pw_uid` / `.pw_gid` (properties) | `Int` | |
+| `grp.getgrgid(gid)` / `.getgrnam(name)` | `Group` | one record per entry |
+| `grp.getgrall()` | `List[Group]` | full database |
+| `Group.gr_name` / `.gr_passwd` (properties) | `Str` | |
+| `Group.gr_gid` (property) | `Int` | |
+| `Group.gr_mem` (property) | `List[Str]` | member usernames |
+| `resource.getrlimit(resource_id)` / `.setrlimit(resource_id, limits)` | `Tuple(Int, Int)` / `none` | `(soft, hard)` |
+| `resource.prlimit(pid, resource_id, limits=none)` | `Tuple(Int, Int)` | Linux only |
+| `resource.getrusage(who)` | `RUsage` | |
+| `resource.getpagesize()` | `Int` | |
+| `RUsage.ru_utime` / `.ru_stime` (properties) | `Float` | CPU time |
+| `RUsage.ru_maxrss` / `.ru_ixrss` / `.ru_idrss` / `.ru_isrss` / `.ru_minflt` / `.ru_majflt` / `.ru_nswap` / `.ru_inblock` / `.ru_oublock` / `.ru_msgsnd` / `.ru_msgrcv` / `.ru_nsignals` / `.ru_nvcsw` / `.ru_nivcsw` (properties) | `Int` | per-counter |
+| `resource.RLIMIT_CPU` / `RLIMIT_FSIZE` / `RLIMIT_DATA` / `RLIMIT_STACK` / `RLIMIT_CORE` / `RLIMIT_RSS` / `RLIMIT_NOFILE` / `RLIMIT_OFILE` / `RLIMIT_AS` / `RLIMIT_MEMLOCK` / `RLIMIT_VMEM` / `RLIMIT_NPROC` / `RLIMIT_SBSIZE` / `RLIMIT_SWAP` / `RLIMIT_NPTS` / `RLIMIT_LOCKS` / `RLIMIT_KQUEUES` / `RLIMIT_MSGQUEUE` / `RLIMIT_NICE` / `RLIMIT_RTPRIO` / `RLIMIT_RTTIME` / `RLIMIT_SIGPENDING` (class attrs) | `Int` / `none` | platform-specific; `none` when unavailable |
+| `resource.RLIM_INFINITY` (class attr) | `Int` | sentinel |
+| `resource.RUSAGE_SELF` / `RUSAGE_CHILDREN` / `RUSAGE_THREAD` / `RUSAGE_BOTH` (class attrs) | `Int` / `none` | rusage targets |
+| `resource.error` (class attr) | exception class | for `Try.except_` |
+
+`pwd`, `Passwd`, `grp`, `Group`, `resource`, and `RUsage` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{pwd,grp,resource}.py` — namespace-only, no AST rewrite. Platform-specific `RLIMIT_*` / `RUSAGE_*` constants bind to `none` on platforms where they don't exist, so user code can `is_none()`-check before calling `getrlimit`.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

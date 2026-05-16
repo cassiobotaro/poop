@@ -822,70 +822,6 @@ only:**
   `gc.get_referents(*objs)`, `gc.is_tracked(obj)`, `gc.is_finalized(obj)`
   — all introspection-heavy; clash with POOP's no-introspection rule.
 
-## Expose `pwd` as POOP messages
-
-Python's `pwd` looks up Unix password-file entries (user records).
-
-**Proposal — `pwd` (lowercase module) namespace + `Passwd` named
-record:**
-
-1. **Lookups:** `pwd.getpwuid(uid) -> Passwd`,
-   `pwd.getpwnam(name) -> Passwd`,
-   `pwd.getpwall() -> List[Passwd]`.
-2. **`Passwd` named record:** `.pw_name`, `.pw_passwd`, `.pw_uid`,
-   `.pw_gid`, `.pw_gecos`, `.pw_dir`, `.pw_shell`.
-
-**Type discipline:** `Str` for names, `Int` for UIDs/GIDs, `Path`
-for home directory and shell.
-
-**Out of scope (for v1):** none — the module is minuscule.
-
-## Expose `grp` as POOP messages
-
-Python's `grp` looks up Unix group-file entries. Sibling of `pwd`.
-
-**Proposal — `grp` (lowercase module) namespace + `Group` named
-record:**
-
-1. **Lookups:** `grp.getgrgid(gid) -> Group`,
-   `grp.getgrnam(name) -> Group`,
-   `grp.getgrall() -> List[Group]`.
-2. **`Group` named record:** `.gr_name`, `.gr_passwd`, `.gr_gid`,
-   `.gr_mem`.
-
-**Type discipline:** `Str` for names, `Int` for GIDs, `List[Str]`
-for members.
-
-## Expose `resource` as POOP messages
-
-Python's `resource` (Unix only) queries and modifies process
-resource limits.
-
-**Proposal — `resource` (lowercase module) namespace:**
-
-1. **Limits:**
-   `resource.getrlimit(resource_id) -> Tuple[Int, Int]` (soft, hard),
-   `resource.setrlimit(resource_id, limits)`,
-   `resource.prlimit(pid, resource_id, limits=None)`.
-2. **Usage:** `resource.getrusage(who) -> RUsage`.
-3. **Page size:** `resource.getpagesize() -> Int`.
-4. **`RUsage` named record:** all standard `ru_*` fields
-   (`ru_utime`, `ru_stime`, `ru_maxrss`, `ru_ixrss`, `ru_idrss`,
-   `ru_isrss`, `ru_minflt`, `ru_majflt`, `ru_nswap`, `ru_inblock`,
-   `ru_oublock`, `ru_msgsnd`, `ru_msgrcv`, `ru_nsignals`,
-   `ru_nvcsw`, `ru_nivcsw`).
-5. **Resource constants:** `RLIMIT_CPU`, `RLIMIT_FSIZE`,
-   `RLIMIT_DATA`, `RLIMIT_STACK`, `RLIMIT_CORE`, `RLIMIT_RSS`,
-   `RLIMIT_NOFILE`, `RLIMIT_OFILE`, `RLIMIT_AS`, `RLIMIT_MEMLOCK`,
-   `RLIMIT_VMEM`, `RLIMIT_NPROC`, `RLIMIT_SBSIZE`, `RLIMIT_SWAP`,
-   `RLIMIT_NPTS`, `RLIMIT_LOCKS`, `RLIMIT_KQUEUES`, `RLIMIT_MSGQUEUE`,
-   `RLIMIT_NICE`, `RLIMIT_RTPRIO`, `RLIMIT_RTTIME`,
-   `RLIMIT_SIGPENDING`, `RLIM_INFINITY`. Usage targets:
-   `RUSAGE_SELF`, `RUSAGE_CHILDREN`, `RUSAGE_BOTH`, `RUSAGE_THREAD`.
-
-**Type discipline:** `Int` for IDs/limits, `Tuple[Int, Int]` for
-soft/hard pairs, `Float` for `ru_utime`/`ru_stime`.
-
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -1225,11 +1161,11 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `posix` | out | Low-level — covered via `os` if at all |
-| `pwd` | proposed | See proposal above |
-| `grp` | proposed | See proposal above |
+| `pwd` | covered | `pwd` + `Passwd` (shipped in this PR) |
+| `grp` | covered | `grp` + `Group` (shipped in this PR) |
 | `termios` / `tty` / `pty` | out | Low-level TTY |
 | `fcntl` | out | Low-level file control |
-| `resource` | proposed | See proposal above |
+| `resource` | covered | `resource` + `RUsage` (shipped in this PR) |
 | `syslog` | out | Niche logging |
 
 ### Windows-Specific Services
