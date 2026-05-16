@@ -1,0 +1,287 @@
+from __future__ import annotations
+
+import sqlite3 as _sqlite3
+from types import TracebackType
+from typing import Any, ClassVar, Self
+
+from poop.types._unwrap import _unwrap
+from poop.types.boolean import Boolean
+from poop.types.bytes import Bytes
+from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.list import List
+from poop.types.none import NoneClass, none
+from poop.types.object import Object
+from poop.types.path import Path
+from poop.types.string import Str
+from poop.types.tuple import Tuple
+
+
+def _wrap_value(value: Any) -> Any:
+    if value is None:
+        return none
+    if isinstance(value, bool):
+        from poop.types.boolean import false, true
+
+        return true if value else false
+    if isinstance(value, int):
+        return Int(value)
+    if isinstance(value, float):
+        return Float(value)
+    if isinstance(value, bytes):
+        return Bytes(value)
+    if isinstance(value, str):
+        return Str(value)
+    return value
+
+
+def _wrap_row(raw: tuple[Any, ...]) -> Tuple:
+    return Tuple(*[_wrap_value(v) for v in raw])
+
+
+def _unwrap_value(value: Any) -> Any:
+    if value is None or isinstance(value, NoneClass):
+        return None
+    if isinstance(value, Boolean):
+        return bool(value)
+    if hasattr(value, "_value"):
+        return value._value
+    return value
+
+
+def _unwrap_params(params: Any) -> Any:
+    if params is None or isinstance(params, NoneClass):
+        return ()
+    if isinstance(params, Tuple | List):
+        return tuple(_unwrap_value(p) for p in params)
+    return params
+
+
+def _unwrap_database(database: Str | Path) -> Any:
+    if isinstance(database, Path):
+        return str(database._path)
+    return database._value
+
+
+class Row(Object):
+    """Dict-like row access by column name or index."""
+
+    __slots__ = ("_columns", "_values")
+
+    def __init__(self, columns: tuple[str, ...], values: tuple[Any, ...]) -> None:
+        self._columns = columns
+        self._values = values
+
+    def at(self, key: Int | Str) -> Any:
+        if isinstance(key, Int):
+            return _wrap_value(self._values[key._value])
+        idx = self._columns.index(key._value)
+        return _wrap_value(self._values[idx])
+
+    def keys(self) -> Tuple:
+        return Tuple(*[Str(c) for c in self._columns])
+
+    def values(self) -> Tuple:
+        return Tuple(*[_wrap_value(v) for v in self._values])
+
+    def len(self) -> Int:
+        return Int(len(self._values))
+
+    def __len__(self) -> int:
+        return len(self._values)
+
+
+class Cursor(Object):
+    """Wraps Python's `sqlite3.Cursor` — query execution and result
+    iteration."""
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, impl: _sqlite3.Cursor) -> None:
+        self._impl = impl
+
+    def execute(
+        self, sql: Str, params: Tuple | List | NoneClass | None = None
+    ) -> Cursor:
+        self._impl.execute(sql._value, _unwrap_params(params))
+        return self
+
+    def executemany(self, sql: Str, seq: Tuple | List) -> Cursor:
+        seq_iter: Any = seq
+        self._impl.executemany(
+            sql._value,
+            [_unwrap_params(row) for row in seq_iter],
+        )
+        return self
+
+    def executescript(self, script: Str) -> Cursor:
+        self._impl.executescript(script._value)
+        return self
+
+    def fetchone(self) -> Tuple | NoneClass:
+        row = self._impl.fetchone()
+        return none if row is None else _wrap_row(row)
+
+    def fetchmany(self, size: Int | NoneClass | None = None) -> List:
+        n = _unwrap(size, self._impl.arraysize)
+        rows = self._impl.fetchmany(n)
+        return List(*[_wrap_row(r) for r in rows])
+
+    def fetchall(self) -> List:
+        rows = self._impl.fetchall()
+        return List(*[_wrap_row(r) for r in rows])
+
+    def close(self) -> NoneClass:
+        self._impl.close()
+        return none
+
+    @property
+    def rowcount(self) -> Int:
+        return Int(self._impl.rowcount)
+
+    @property
+    def lastrowid(self) -> Int | NoneClass:
+        lid = self._impl.lastrowid
+        return none if lid is None else Int(lid)
+
+    @property
+    def description(self) -> Tuple | NoneClass:
+        desc = self._impl.description
+        if desc is None:
+            return none
+        return Tuple(*[Tuple(Str(col[0]), *[none for _ in col[1:]]) for col in desc])
+
+    @property
+    def arraysize(self) -> Int:
+        return Int(self._impl.arraysize)
+
+    def __iter__(self) -> Any:
+        for row in self._impl:
+            yield _wrap_row(row)
+
+
+class Connection(Object):
+    """Wraps Python's `sqlite3.Connection` — a database connection."""
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, impl: _sqlite3.Connection) -> None:
+        self._impl = impl
+
+    def cursor(self) -> Cursor:
+        return Cursor(self._impl.cursor())
+
+    def commit(self) -> NoneClass:
+        self._impl.commit()
+        return none
+
+    def rollback(self) -> NoneClass:
+        self._impl.rollback()
+        return none
+
+    def close(self) -> NoneClass:
+        self._impl.close()
+        return none
+
+    def execute(
+        self, sql: Str, params: Tuple | List | NoneClass | None = None
+    ) -> Cursor:
+        return Cursor(self._impl.execute(sql._value, _unwrap_params(params)))
+
+    def executemany(self, sql: Str, seq: Tuple | List) -> Cursor:
+        seq_iter: Any = seq
+        return Cursor(
+            self._impl.executemany(
+                sql._value, [_unwrap_params(row) for row in seq_iter]
+            )
+        )
+
+    def executescript(self, script: Str) -> Cursor:
+        return Cursor(self._impl.executescript(script._value))
+
+    def interrupt(self) -> NoneClass:
+        self._impl.interrupt()
+        return none
+
+    def iterdump(self) -> List:
+        return List(*[Str(line) for line in self._impl.iterdump()])
+
+    def backup(
+        self,
+        target: Connection,
+        pages: Int | NoneClass | None = None,
+        name: Str | NoneClass | None = None,
+        sleep: Float | NoneClass | None = None,
+    ) -> NoneClass:
+        self._impl.backup(
+            target._impl,
+            pages=_unwrap(pages, -1),
+            name=_unwrap(name, "main"),
+            sleep=_unwrap(sleep, 0.250),
+        )
+        return none
+
+    def __enter__(self) -> Self:
+        self._impl.__enter__()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> Any:
+        return self._impl.__exit__(exc_type, exc_value, traceback)
+
+
+class Sqlite3:
+    """Namespace mirroring Python's `sqlite3` module."""
+
+    Connection: ClassVar[type[Connection]] = Connection
+    Cursor: ClassVar[type[Cursor]] = Cursor
+    Row: ClassVar[type[Row]] = Row
+
+    sqlite_version: ClassVar[Str] = Str(_sqlite3.sqlite_version)
+
+    PARSE_DECLTYPES: ClassVar[Int] = Int(_sqlite3.PARSE_DECLTYPES)
+    PARSE_COLNAMES: ClassVar[Int] = Int(_sqlite3.PARSE_COLNAMES)
+
+    Warning: ClassVar[type[Exception]] = _sqlite3.Warning
+    Error: ClassVar[type[Exception]] = _sqlite3.Error
+    InterfaceError: ClassVar[type[Exception]] = _sqlite3.InterfaceError
+    DatabaseError: ClassVar[type[Exception]] = _sqlite3.DatabaseError
+    DataError: ClassVar[type[Exception]] = _sqlite3.DataError
+    OperationalError: ClassVar[type[Exception]] = _sqlite3.OperationalError
+    IntegrityError: ClassVar[type[Exception]] = _sqlite3.IntegrityError
+    InternalError: ClassVar[type[Exception]] = _sqlite3.InternalError
+    ProgrammingError: ClassVar[type[Exception]] = _sqlite3.ProgrammingError
+    NotSupportedError: ClassVar[type[Exception]] = _sqlite3.NotSupportedError
+
+    @staticmethod
+    def connect(
+        database: Str | Path,
+        timeout: Float | NoneClass | None = None,
+        detect_types: Int | NoneClass | None = None,
+        isolation_level: Str | NoneClass | None = None,
+        check_same_thread: Boolean | NoneClass | None = None,
+        cached_statements: Int | NoneClass | None = None,
+        uri: Boolean | NoneClass | None = None,
+    ) -> Connection:
+        kwargs: dict[str, Any] = {}
+        if timeout is not None and not isinstance(timeout, NoneClass):
+            kwargs["timeout"] = timeout._value
+        if detect_types is not None and not isinstance(detect_types, NoneClass):
+            kwargs["detect_types"] = detect_types._value
+        if isolation_level is not None and not isinstance(isolation_level, NoneClass):
+            kwargs["isolation_level"] = isolation_level._value
+        if check_same_thread is not None and not isinstance(
+            check_same_thread, NoneClass
+        ):
+            kwargs["check_same_thread"] = bool(check_same_thread)
+        if cached_statements is not None and not isinstance(
+            cached_statements, NoneClass
+        ):
+            kwargs["cached_statements"] = cached_statements._value
+        if uri is not None and not isinstance(uri, NoneClass):
+            kwargs["uri"] = bool(uri)
+        return Connection(_sqlite3.connect(_unwrap_database(database), **kwargs))

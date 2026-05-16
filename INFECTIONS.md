@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Context`, `Date`, `DateTime`, `Decimal`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Shlex`, `Time`, `TimeDelta`, `TimeZone`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `datetime`, `decimal`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Connection`, `Context`, `Cursor`, `Date`, `DateTime`, `Decimal`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Row`, `Shlex`, `Time`, `TimeDelta`, `TimeZone`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `datetime`, `decimal`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `sqlite3`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1094,6 +1094,44 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `graphlib.CycleError` | Python exception type | usable with `Try.except_` |
 
 `graphlib` and `TopologicalSorter` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/graphlib.py` — namespace-only, no AST rewrite.
+
+### sqlite3 + Connection + Cursor + Row — `poop/types/sqlite3.py` + `poop/transformers/sqlite3.py`
+
+`sqlite3` mirrors Python's `sqlite3` module — the stdlib's zero-config relational store. Three wrapper classes (`Connection`, `Cursor`, `Row`) cover the cursor-iteration model.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `sqlite3.connect(database, timeout=none, detect_types=none, isolation_level=none, check_same_thread=none, cached_statements=none, uri=none)` | `Connection` | `database` is a `Str` or POOP `Path` |
+| `sqlite3.sqlite_version` (class attr) | `Str` | SQLite library version |
+| `sqlite3.PARSE_DECLTYPES` / `PARSE_COLNAMES` (class attrs) | `Int` | type-detection flags |
+| `sqlite3.Warning` / `Error` / `InterfaceError` / `DatabaseError` / `DataError` / `OperationalError` / `IntegrityError` / `InternalError` / `ProgrammingError` / `NotSupportedError` | Python exception types | usable with `Try.except_` |
+| `sqlite3.Connection` / `Cursor` / `Row` (class attrs) | `type[…]` | wrapper classes |
+| `Connection.cursor()` | `Cursor` | |
+| `Connection.commit()` / `.rollback()` / `.close()` / `.interrupt()` | `none` | |
+| `Connection.execute(sql, params=none)` | `Cursor` | shortcut: open cursor + execute |
+| `Connection.executemany(sql, seq)` | `Cursor` | `seq` is a POOP `List` / `Tuple` of param tuples |
+| `Connection.executescript(script)` | `Cursor` | multi-statement script |
+| `Connection.iterdump()` | `List[Str]` | SQL dump as lines |
+| `Connection.backup(target, pages=none, name=none, sleep=none)` | `none` | online backup |
+| `Connection` as context manager (`with`) | `Connection` | commit on success, rollback on exception |
+| `Cursor.execute` / `.executemany` / `.executescript` | `Cursor` | self-returning for chaining |
+| `Cursor.fetchone()` | `Tuple \| NoneClass` | |
+| `Cursor.fetchmany(size=none)` | `List[Tuple]` | |
+| `Cursor.fetchall()` | `List[Tuple]` | |
+| `Cursor.close()` | `none` | |
+| `Cursor.rowcount` / `.lastrowid` / `.arraysize` (properties) | `Int` (`lastrowid` may be `NoneClass`) | |
+| `Cursor.description` (property) | `Tuple \| NoneClass` | tuple of column descriptions |
+| `Cursor` is iterable | yields `Tuple` per row | streaming consumption |
+| `Row(columns, values)` | `Row` | dict-like row access |
+| `Row.at(index_or_name)` | wrapped value | `Int` index or `Str` column name |
+| `Row.keys()` / `.values()` | `Tuple` | |
+| `Row.len()` | `Int` | |
+
+Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`Int`, `float`→`Float`, `str`→`Str`, `bytes`→`Bytes`, `None`→`none`). Bound parameters are unwrapped on the way in (POOP `Tuple`/`List` of POOP values → Python tuple of raw values).
+
+Deferred until a caller surfaces: `Connection.create_function` / `.create_aggregate` / `.create_collation`, `sqlite3.register_adapter` / `.register_converter` — these need a POOP `Block` → Python `callable` bridge with type discipline preserved. `sqlite3.complete_statement` and `sqlite3.enable_callback_tracebacks` are out of scope (debug/shell helpers).
+
+`sqlite3`, `Connection`, `Cursor`, and `Row` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/sqlite3.py` — namespace-only, no AST rewrite.
 
 ### decimal + Decimal + Context — `poop/types/decimal.py` + `poop/transformers/decimal.py`
 

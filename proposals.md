@@ -450,47 +450,6 @@ deserialised (true to Python's dynamic-typed `loads`).
 - `__reduce__` protocol hook — POOP user classes can implement it,
   but the protocol isn't formally documented here.
 
-## Expose `sqlite3` as POOP messages
-
-Python's `sqlite3` ships with stdlib and is the right zero-config
-relational store for POOP programs. Unreachable from POOP today.
-
-**Proposal — `sqlite3` (lowercase module) + class set:**
-
-1. **Module-level entry:**
-   `sqlite3.connect(database, timeout=5.0, detect_types=0, isolation_level='', check_same_thread=True, factory=None, cached_statements=128, uri=False, *, autocommit=False) -> Connection`.
-2. **`Connection` class:**
-   `.cursor() -> Cursor`, `.commit()`, `.rollback()`, `.close()`,
-   `.execute(sql, params=()) -> Cursor`,
-   `.executemany(sql, seq) -> Cursor`,
-   `.executescript(script) -> Cursor`,
-   `.create_function(name, narg, func, *, deterministic=False)`,
-   `.create_aggregate(name, narg, agg_class)`,
-   `.create_collation(name, callable)`,
-   `.interrupt()`, `.iterdump() -> Map[Str]`,
-   `.backup(target, *, pages=-1, progress=None, name='main', sleep=0.250)`.
-3. **`Cursor` class:**
-   `.execute`, `.executemany`, `.executescript`, `.fetchone() -> Tuple | NoneClass`,
-   `.fetchmany(size=None) -> List[Tuple]`,
-   `.fetchall() -> List[Tuple]`, iteration as POOP iterable,
-   `.rowcount -> Int`, `.lastrowid -> Int | NoneClass`,
-   `.description -> Tuple`, `.arraysize -> Int`.
-4. **`Row` class** — dict-like row access by column name.
-5. **Constants:** `sqlite3.version`, `sqlite3.sqlite_version`,
-   `sqlite3.PARSE_DECLTYPES`, `sqlite3.PARSE_COLNAMES`.
-6. **Errors:** `Warning`, `Error`, `InterfaceError`,
-   `DatabaseError`, `DataError`, `OperationalError`,
-   `IntegrityError`, `InternalError`, `ProgrammingError`,
-   `NotSupportedError` — POOP error hierarchy.
-7. **Adapters/converters:** `sqlite3.register_adapter(type, func)`,
-   `sqlite3.register_converter(typename, func)`.
-
-**Type discipline:** `Connection`/`Cursor`/`Row` are POOP types;
-SQL strings are `Str`; bound parameters are POOP collections.
-
-**Out of scope (for v1):** `complete_statement` (SQLite-shell-style
-helper), `enable_callback_tracebacks` (debug-only).
-
 ## Expose `zlib` as POOP messages
 
 Python's `zlib` provides DEFLATE compression and CRC32/Adler32
@@ -1874,7 +1833,7 @@ each annotated with one of:
 | `shelve` | out | Depends on `dbm` |
 | `marshal` | out | CPython internal |
 | `dbm` | out | Niche; prefer `sqlite3` |
-| `sqlite3` | proposed | See proposal above |
+| `sqlite3` | covered | `sqlite3` + `Connection` + `Cursor` + `Row` (shipped in this PR) |
 
 ### Data Compression and Archiving
 
