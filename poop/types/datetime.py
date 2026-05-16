@@ -1,0 +1,492 @@
+from __future__ import annotations
+
+import datetime as _datetime
+from typing import Any, ClassVar
+
+from poop.types._unwrap import _unwrap
+from poop.types._value_eq import _ValueEqMixin
+from poop.types.boolean import false, true
+from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.none import NoneClass, none
+from poop.types.object import Object
+from poop.types.string import Str
+
+
+def _opt_tz(tz: TimeZone | NoneClass | None) -> _datetime.tzinfo | None:
+    if tz is None or isinstance(tz, NoneClass):
+        return None
+    return tz._impl
+
+
+class TimeDelta(_ValueEqMixin, Object):
+    """Wraps Python's `datetime.timedelta` — a duration."""
+
+    __slots__ = ("_impl",)
+    _eq_attr: ClassVar[str] = "_impl"
+
+    def __init__(
+        self,
+        days: Int | Float | NoneClass | None = None,
+        seconds: Int | Float | NoneClass | None = None,
+        microseconds: Int | Float | NoneClass | None = None,
+        milliseconds: Int | Float | NoneClass | None = None,
+        minutes: Int | Float | NoneClass | None = None,
+        hours: Int | Float | NoneClass | None = None,
+        weeks: Int | Float | NoneClass | None = None,
+    ) -> None:
+        self._impl = _datetime.timedelta(
+            days=_unwrap(days, 0),
+            seconds=_unwrap(seconds, 0),
+            microseconds=_unwrap(microseconds, 0),
+            milliseconds=_unwrap(milliseconds, 0),
+            minutes=_unwrap(minutes, 0),
+            hours=_unwrap(hours, 0),
+            weeks=_unwrap(weeks, 0),
+        )
+
+    @classmethod
+    def _from_impl(cls, impl: _datetime.timedelta) -> TimeDelta:
+        obj = cls.__new__(cls)
+        obj._impl = impl
+        return obj
+
+    @property
+    def days(self) -> Int:
+        return Int(self._impl.days)
+
+    @property
+    def seconds(self) -> Int:
+        return Int(self._impl.seconds)
+
+    @property
+    def microseconds(self) -> Int:
+        return Int(self._impl.microseconds)
+
+    def total_seconds(self) -> Float:
+        return Float(self._impl.total_seconds())
+
+    def __add__(self, other: TimeDelta) -> TimeDelta:
+        return TimeDelta._from_impl(self._impl + other._impl)
+
+    def __sub__(self, other: TimeDelta) -> TimeDelta:
+        return TimeDelta._from_impl(self._impl - other._impl)
+
+    def __mul__(self, other: Int | Float) -> TimeDelta:
+        return TimeDelta._from_impl(self._impl * other._value)
+
+    def __truediv__(self, other: Int | Float | TimeDelta) -> TimeDelta | Float:
+        if isinstance(other, TimeDelta):
+            return Float(self._impl / other._impl)
+        return TimeDelta._from_impl(self._impl / other._value)
+
+    def __floordiv__(self, other: Int | TimeDelta) -> TimeDelta | Int:
+        if isinstance(other, TimeDelta):
+            return Int(self._impl // other._impl)
+        return TimeDelta._from_impl(self._impl // other._value)
+
+    def __mod__(self, other: TimeDelta) -> TimeDelta:
+        return TimeDelta._from_impl(self._impl % other._impl)
+
+    def __neg__(self) -> TimeDelta:
+        return TimeDelta._from_impl(-self._impl)
+
+    def __hash__(self) -> int:
+        return hash(self._impl)
+
+
+class TimeZone(_ValueEqMixin, Object):
+    """Wraps Python's `datetime.timezone` — a fixed UTC offset."""
+
+    __slots__ = ("_impl",)
+    _eq_attr: ClassVar[str] = "_impl"
+
+    utc: ClassVar[TimeZone]
+
+    def __init__(
+        self,
+        offset: TimeDelta,
+        name: Str | NoneClass | None = None,
+    ) -> None:
+        n = _unwrap(name, None)
+        if n is None:
+            self._impl = _datetime.timezone(offset._impl)
+        else:
+            self._impl = _datetime.timezone(offset._impl, n)
+
+    @classmethod
+    def _from_impl(cls, impl: _datetime.timezone) -> TimeZone:
+        obj = cls.__new__(cls)
+        obj._impl = impl
+        return obj
+
+    def utcoffset(self, dt: DateTime | NoneClass | None = None) -> TimeDelta:
+        impl_dt: _datetime.datetime | None = None
+        if dt is not None and not isinstance(dt, NoneClass):
+            impl_dt = dt._impl
+        return TimeDelta._from_impl(self._impl.utcoffset(impl_dt))
+
+    def tzname(self, dt: DateTime | NoneClass | None = None) -> Str:
+        impl_dt: _datetime.datetime | None = None
+        if dt is not None and not isinstance(dt, NoneClass):
+            impl_dt = dt._impl
+        return Str(self._impl.tzname(impl_dt))
+
+    def __hash__(self) -> int:
+        return hash(self._impl)
+
+
+TimeZone.utc = TimeZone._from_impl(_datetime.UTC)
+
+
+class Date(_ValueEqMixin, Object):
+    """Wraps Python's `datetime.date`."""
+
+    __slots__ = ("_impl",)
+    _eq_attr: ClassVar[str] = "_impl"
+
+    def __init__(self, year: Int, month: Int, day: Int) -> None:
+        self._impl = _datetime.date(year._value, month._value, day._value)
+
+    @classmethod
+    def _from_impl(cls, impl: _datetime.date) -> Date:
+        obj = cls.__new__(cls)
+        obj._impl = impl
+        return obj
+
+    @classmethod
+    def today(cls) -> Date:
+        return cls._from_impl(_datetime.date.today())
+
+    @classmethod
+    def fromisoformat(cls, s: Str) -> Date:
+        return cls._from_impl(_datetime.date.fromisoformat(s._value))
+
+    @classmethod
+    def fromtimestamp(cls, t: Int | Float) -> Date:
+        return cls._from_impl(_datetime.date.fromtimestamp(t._value))
+
+    @classmethod
+    def fromordinal(cls, n: Int) -> Date:
+        return cls._from_impl(_datetime.date.fromordinal(n._value))
+
+    @property
+    def year(self) -> Int:
+        return Int(self._impl.year)
+
+    @property
+    def month(self) -> Int:
+        return Int(self._impl.month)
+
+    @property
+    def day(self) -> Int:
+        return Int(self._impl.day)
+
+    def weekday(self) -> Int:
+        return Int(self._impl.weekday())
+
+    def isoweekday(self) -> Int:
+        return Int(self._impl.isoweekday())
+
+    def isoformat(self) -> Str:
+        return Str(self._impl.isoformat())
+
+    def strftime(self, fmt: Str) -> Str:
+        return Str(self._impl.strftime(fmt._value))
+
+    def toordinal(self) -> Int:
+        return Int(self._impl.toordinal())
+
+    def replace(
+        self,
+        year: Int | NoneClass | None = None,
+        month: Int | NoneClass | None = None,
+        day: Int | NoneClass | None = None,
+    ) -> Date:
+        return Date._from_impl(
+            self._impl.replace(
+                year=_unwrap(year, self._impl.year),
+                month=_unwrap(month, self._impl.month),
+                day=_unwrap(day, self._impl.day),
+            )
+        )
+
+    def __add__(self, other: TimeDelta) -> Date:
+        return Date._from_impl(self._impl + other._impl)
+
+    def __sub__(self, other: Date | TimeDelta) -> Date | TimeDelta:
+        if isinstance(other, TimeDelta):
+            return Date._from_impl(self._impl - other._impl)
+        return TimeDelta._from_impl(self._impl - other._impl)
+
+    def __hash__(self) -> int:
+        return hash(self._impl)
+
+
+class Time(_ValueEqMixin, Object):
+    """Wraps Python's `datetime.time`."""
+
+    __slots__ = ("_impl",)
+    _eq_attr: ClassVar[str] = "_impl"
+
+    def __init__(
+        self,
+        hour: Int | NoneClass | None = None,
+        minute: Int | NoneClass | None = None,
+        second: Int | NoneClass | None = None,
+        microsecond: Int | NoneClass | None = None,
+        tzinfo: TimeZone | NoneClass | None = None,
+    ) -> None:
+        self._impl = _datetime.time(
+            hour=_unwrap(hour, 0),
+            minute=_unwrap(minute, 0),
+            second=_unwrap(second, 0),
+            microsecond=_unwrap(microsecond, 0),
+            tzinfo=_opt_tz(tzinfo),
+        )
+
+    @classmethod
+    def _from_impl(cls, impl: _datetime.time) -> Time:
+        obj = cls.__new__(cls)
+        obj._impl = impl
+        return obj
+
+    @classmethod
+    def fromisoformat(cls, s: Str) -> Time:
+        return cls._from_impl(_datetime.time.fromisoformat(s._value))
+
+    @property
+    def hour(self) -> Int:
+        return Int(self._impl.hour)
+
+    @property
+    def minute(self) -> Int:
+        return Int(self._impl.minute)
+
+    @property
+    def second(self) -> Int:
+        return Int(self._impl.second)
+
+    @property
+    def microsecond(self) -> Int:
+        return Int(self._impl.microsecond)
+
+    @property
+    def tzinfo(self) -> TimeZone | NoneClass:
+        tz = self._impl.tzinfo
+        if tz is None:
+            return none
+        if isinstance(tz, _datetime.timezone):
+            return TimeZone._from_impl(tz)
+        return none
+
+    def isoformat(self) -> Str:
+        return Str(self._impl.isoformat())
+
+    def strftime(self, fmt: Str) -> Str:
+        return Str(self._impl.strftime(fmt._value))
+
+    def replace(
+        self,
+        hour: Int | NoneClass | None = None,
+        minute: Int | NoneClass | None = None,
+        second: Int | NoneClass | None = None,
+        microsecond: Int | NoneClass | None = None,
+        tzinfo: TimeZone | NoneClass | None = None,
+    ) -> Time:
+        kwargs: dict[str, Any] = {
+            "hour": _unwrap(hour, self._impl.hour),
+            "minute": _unwrap(minute, self._impl.minute),
+            "second": _unwrap(second, self._impl.second),
+            "microsecond": _unwrap(microsecond, self._impl.microsecond),
+        }
+        if tzinfo is not None and not isinstance(tzinfo, NoneClass):
+            kwargs["tzinfo"] = tzinfo._impl
+        else:
+            kwargs["tzinfo"] = self._impl.tzinfo
+        return Time._from_impl(self._impl.replace(**kwargs))
+
+    def __hash__(self) -> int:
+        return hash(self._impl)
+
+
+class DateTime(_ValueEqMixin, Object):
+    """Wraps Python's `datetime.datetime`."""
+
+    __slots__ = ("_impl",)
+    _eq_attr: ClassVar[str] = "_impl"
+
+    def __init__(
+        self,
+        year: Int,
+        month: Int,
+        day: Int,
+        hour: Int | NoneClass | None = None,
+        minute: Int | NoneClass | None = None,
+        second: Int | NoneClass | None = None,
+        microsecond: Int | NoneClass | None = None,
+        tzinfo: TimeZone | NoneClass | None = None,
+    ) -> None:
+        self._impl = _datetime.datetime(
+            year._value,
+            month._value,
+            day._value,
+            _unwrap(hour, 0),
+            _unwrap(minute, 0),
+            _unwrap(second, 0),
+            _unwrap(microsecond, 0),
+            _opt_tz(tzinfo),
+        )
+
+    @classmethod
+    def _from_impl(cls, impl: _datetime.datetime) -> DateTime:
+        obj = cls.__new__(cls)
+        obj._impl = impl
+        return obj
+
+    @classmethod
+    def now(cls, tz: TimeZone | NoneClass | None = None) -> DateTime:
+        return cls._from_impl(_datetime.datetime.now(_opt_tz(tz)))
+
+    @classmethod
+    def utcnow(cls) -> DateTime:
+        return cls._from_impl(_datetime.datetime.now(_datetime.UTC))
+
+    @classmethod
+    def fromtimestamp(
+        cls, t: Int | Float, tz: TimeZone | NoneClass | None = None
+    ) -> DateTime:
+        return cls._from_impl(_datetime.datetime.fromtimestamp(t._value, _opt_tz(tz)))
+
+    @classmethod
+    def fromisoformat(cls, s: Str) -> DateTime:
+        return cls._from_impl(_datetime.datetime.fromisoformat(s._value))
+
+    @classmethod
+    def combine(
+        cls, date: Date, time: Time, tzinfo: TimeZone | NoneClass | None = None
+    ) -> DateTime:
+        tz = _opt_tz(tzinfo) if tzinfo is not None else time._impl.tzinfo
+        return cls._from_impl(_datetime.datetime.combine(date._impl, time._impl, tz))
+
+    @property
+    def year(self) -> Int:
+        return Int(self._impl.year)
+
+    @property
+    def month(self) -> Int:
+        return Int(self._impl.month)
+
+    @property
+    def day(self) -> Int:
+        return Int(self._impl.day)
+
+    @property
+    def hour(self) -> Int:
+        return Int(self._impl.hour)
+
+    @property
+    def minute(self) -> Int:
+        return Int(self._impl.minute)
+
+    @property
+    def second(self) -> Int:
+        return Int(self._impl.second)
+
+    @property
+    def microsecond(self) -> Int:
+        return Int(self._impl.microsecond)
+
+    @property
+    def tzinfo(self) -> TimeZone | NoneClass:
+        tz = self._impl.tzinfo
+        if tz is None:
+            return none
+        if isinstance(tz, _datetime.timezone):
+            return TimeZone._from_impl(tz)
+        return none
+
+    def date(self) -> Date:
+        return Date._from_impl(self._impl.date())
+
+    def time(self) -> Time:
+        return Time._from_impl(self._impl.time())
+
+    def timestamp(self) -> Float:
+        return Float(self._impl.timestamp())
+
+    def astimezone(self, tz: TimeZone | NoneClass | None = None) -> DateTime:
+        return DateTime._from_impl(self._impl.astimezone(_opt_tz(tz)))
+
+    def weekday(self) -> Int:
+        return Int(self._impl.weekday())
+
+    def isoweekday(self) -> Int:
+        return Int(self._impl.isoweekday())
+
+    def isoformat(self, sep: Str | NoneClass | None = None) -> Str:
+        s = _unwrap(sep, "T")
+        return Str(self._impl.isoformat(s))
+
+    def strftime(self, fmt: Str) -> Str:
+        return Str(self._impl.strftime(fmt._value))
+
+    def replace(
+        self,
+        year: Int | NoneClass | None = None,
+        month: Int | NoneClass | None = None,
+        day: Int | NoneClass | None = None,
+        hour: Int | NoneClass | None = None,
+        minute: Int | NoneClass | None = None,
+        second: Int | NoneClass | None = None,
+        microsecond: Int | NoneClass | None = None,
+        tzinfo: TimeZone | NoneClass | None = None,
+    ) -> DateTime:
+        kwargs: dict[str, Any] = {
+            "year": _unwrap(year, self._impl.year),
+            "month": _unwrap(month, self._impl.month),
+            "day": _unwrap(day, self._impl.day),
+            "hour": _unwrap(hour, self._impl.hour),
+            "minute": _unwrap(minute, self._impl.minute),
+            "second": _unwrap(second, self._impl.second),
+            "microsecond": _unwrap(microsecond, self._impl.microsecond),
+        }
+        if tzinfo is not None and not isinstance(tzinfo, NoneClass):
+            kwargs["tzinfo"] = tzinfo._impl
+        else:
+            kwargs["tzinfo"] = self._impl.tzinfo
+        return DateTime._from_impl(self._impl.replace(**kwargs))
+
+    def __add__(self, other: TimeDelta) -> DateTime:
+        return DateTime._from_impl(self._impl + other._impl)
+
+    def __sub__(self, other: DateTime | TimeDelta) -> DateTime | TimeDelta:
+        if isinstance(other, TimeDelta):
+            return DateTime._from_impl(self._impl - other._impl)
+        return TimeDelta._from_impl(self._impl - other._impl)
+
+    def __hash__(self) -> int:
+        return hash(self._impl)
+
+    def __lt__(self, other: DateTime) -> Any:
+        return true if self._impl < other._impl else false
+
+    def __le__(self, other: DateTime) -> Any:
+        return true if self._impl <= other._impl else false
+
+    def __gt__(self, other: DateTime) -> Any:
+        return true if self._impl > other._impl else false
+
+    def __ge__(self, other: DateTime) -> Any:
+        return true if self._impl >= other._impl else false
+
+
+class Datetime:
+    """Namespace mirroring Python's `datetime` module — binds the
+    five wrapper classes as module attributes."""
+
+    date: ClassVar[type[Date]] = Date
+    time: ClassVar[type[Time]] = Time
+    datetime: ClassVar[type[DateTime]] = DateTime
+    timedelta: ClassVar[type[TimeDelta]] = TimeDelta
+    timezone: ClassVar[type[TimeZone]] = TimeZone
