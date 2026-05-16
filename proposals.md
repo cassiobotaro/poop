@@ -25,34 +25,6 @@ accepts a POOP `Dict`, returns `Str`.
 - `string.Formatter` — `Str.format(spec)` covers the common case.
 - `string.capwords` — `Str.title()` is close enough; defer.
 
-## Expose `re` as POOP messages
-
-Python's `re` is unreachable from POOP today; POOP `Str` has no
-regex methods. Regex is essential for parsing, validation, and
-substitution.
-
-**Proposal — `re` (lowercase module) + `Pattern` and `Match`
-POOP classes:**
-
-1. **Module-level shortcuts** mirroring Python: `match`, `search`,
-   `fullmatch`, `findall`, `finditer`, `sub`, `subn`, `split`,
-   `escape`, `compile`. All take/return POOP types.
-2. **`Pattern` class** — `re.compile(...)` returns it; same methods
-   as module-level shortcuts (reusing the compiled regex) plus
-   `.pattern`, `.flags`, `.groups`, `.groupindex`.
-3. **`Match` class** — result of a successful match; methods
-   `.group`, `.groups`, `.groupdict`, `.start`, `.end`, `.span`,
-   `.expand`; properties `.string`, `.re`. `None`-on-no-match
-   becomes POOP `none`.
-4. **Flag constants** on `re`: `IGNORECASE`, `MULTILINE`, `DOTALL`,
-   `VERBOSE`, `ASCII`, `UNICODE`, `LOCALE`, `DEBUG`.
-
-**Type discipline:** all POOP types — `Str` for patterns/strings,
-`Int` for positions, `Tuple`/`Dict` for groups.
-
-**Out of scope (for v1):** `re.Scanner` (legacy), `Match.regs`
-(deprecated).
-
 ## Expose `difflib` as POOP messages
 
 Python's `difflib` produces text diffs (unified/context/ndiff) and
@@ -1896,7 +1868,7 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `string` | proposed | See proposal above |
-| `re` | proposed | See proposal above |
+| `re` | covered | `re` + `Pattern` + `Match` (shipped in this PR) |
 | `difflib` | proposed | See proposal above |
 | `textwrap` | proposed | See proposal above |
 | `unicodedata` | proposed | See proposal above |

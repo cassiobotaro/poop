@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `HMAC`, `Hash`, `MimeTypes`, `Path`, `PrettyPrinter`, `Random`, `Shlex`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Shlex`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1094,6 +1094,37 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `graphlib.CycleError` | Python exception type | usable with `Try.except_` |
 
 `graphlib` and `TopologicalSorter` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/graphlib.py` — namespace-only, no AST rewrite.
+
+### re + Pattern + Match — `poop/types/re.py` + `poop/transformers/re.py`
+
+`re` mirrors Python's `re` module — regular expression matching, substitution, splitting, and compilation. `Pattern` and `Match` are the two wrapper classes, exposed both as namespace attributes (`re.Pattern`, `re.Match`) and as bare globals (mirroring how `UUID` is also reachable without the `uuid.` prefix).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `re.match(pattern, string, flags=none)` | `Match \| NoneClass` | anchored at start |
+| `re.search(pattern, string, flags=none)` | `Match \| NoneClass` | anywhere |
+| `re.fullmatch(pattern, string, flags=none)` | `Match \| NoneClass` | full string |
+| `re.findall(pattern, string, flags=none)` | `List[Str]` or `List[Tuple]` | tuples when groups exist |
+| `re.finditer(pattern, string, flags=none)` | `Tuple[Match]` | materialised eagerly — POOP collections are not lazy |
+| `re.sub(pattern, repl, string, count=none, flags=none)` | `Str` | |
+| `re.subn(pattern, repl, string, count=none, flags=none)` | `Tuple(Str, Int)` | new string + count |
+| `re.split(pattern, string, maxsplit=none, flags=none)` | `List[Str]` | |
+| `re.escape(pattern)` | `Str` | escape regex meta-chars |
+| `re.compile(pattern, flags=none)` | `Pattern` | |
+| `re.IGNORECASE` / `MULTILINE` / `DOTALL` / `VERBOSE` / `ASCII` / `UNICODE` / `LOCALE` / `DEBUG` | `Int` | flag constants |
+| `Pattern.match` / `.search` / `.fullmatch` / `.findall` / `.finditer` / `.sub` / `.subn` / `.split` | same as module-level | reuses the compiled regex |
+| `Pattern.pattern` / `.flags` / `.groups` / `.groupindex` (properties) | `Str` / `Int` / `Int` / `Dict[Str, Int]` | |
+| `Match.group()` | `Str` | whole match |
+| `Match.group(i_or_name)` | `Str \| NoneClass` | unmatched optional → `none` |
+| `Match.group(a, b, ...)` | `Tuple` | multiple groups |
+| `Match.groups(default=none)` | `Tuple` | all numbered groups |
+| `Match.groupdict(default=none)` | `Dict[Str, Str \| NoneClass]` | named groups |
+| `Match.start(group=none)` / `.end(group=none)` | `Int` | |
+| `Match.span(group=none)` | `Tuple(Int, Int)` | |
+| `Match.expand(template)` | `Str` | apply `\1` / `\g<name>` backrefs |
+| `Match.string` / `.re` (properties) | `Str` / `Pattern` | |
+
+`re` and the `Pattern` / `Match` classes are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/re.py` — namespace-only, no AST rewrite.
 
 ### hashlib + Hash — `poop/types/hash.py` + `poop/transformers/hashlib.py`
 

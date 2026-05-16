@@ -689,6 +689,31 @@ order = sorter.static_order()
 
 > `TopologicalSorter` is in scope without a `graphlib.` prefix (same pattern as `Random`, `UUID`). `static_order()` returns a `Tuple`; the incremental `.add` / `.prepare` / `.get_ready` / `.done` surface is also exposed for streaming consumption. `graphlib.CycleError` is a Python exception class for use with `Try.except_(...)`.
 
+## Regular expressions (`re` module + `Pattern` / `Match` classes)
+
+```python
+# Python
+import re
+
+m = re.match(r"(\w+)=(\d+)", "x=42")
+name, value = m.group(1), m.group(2)
+clean = re.sub(r"\s+", " ", text)
+parts = re.split(r",\s*", csv_line)
+pat = re.compile(r"\d+", re.IGNORECASE)
+```
+
+```python
+# POOP
+m = re.match(r"(\w+)=(\d+)", "x=42")
+name = m.group(1)
+value = m.group(2)
+clean = re.sub(r"\s+", " ", text)
+parts = re.split(r",\s*", csv_line)
+pat = re.compile(r"\d+", re.IGNORECASE)
+```
+
+> Same surface as Python with POOP types: `Match` and `Pattern` are exposed as bare globals (same convention as `UUID`, `Random`). `re.findall` returns a `List` (eager) and `re.finditer` returns a `Tuple[Match]` since POOP collections are not lazy. `Match.group(i)` returns `none` for unmatched optional groups. Flag constants (`re.IGNORECASE`, `re.MULTILINE`, …) are `Int`.
+
 ## Hashing (`hashlib` module + `Hash` class)
 
 ```python
