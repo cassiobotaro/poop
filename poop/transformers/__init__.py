@@ -15,6 +15,7 @@ from poop.transformers.byte_array import ByteArrayTransformer
 from poop.transformers.bytes import BytesTransformer
 from poop.transformers.calendar import NAMESPACE as _calendar_namespace
 from poop.transformers.class_ import ClassTransformer
+from poop.transformers.codecs import NAMESPACE as _codecs_namespace
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.copy import NAMESPACE as _copy_namespace
 from poop.transformers.datetime import NAMESPACE as _datetime_namespace
@@ -55,6 +56,7 @@ from poop.transformers.sqlite3 import NAMESPACE as _sqlite3_namespace
 from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
+from poop.transformers.struct import NAMESPACE as _struct_namespace
 from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
 from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
@@ -151,6 +153,8 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_enum_namespace,
     **_fractions_namespace,
     **_statistics_namespace,
+    **_struct_namespace,
+    **_codecs_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
