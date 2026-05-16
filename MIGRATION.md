@@ -1068,3 +1068,53 @@ nd.cdf(3.0)
 ```
 
 > Module-level helpers cover central tendency (`mean` / `fmean` / `geometric_mean` / `harmonic_mean` / `median*` / `mode` / `multimode`), spread (`pstdev` / `pvariance` / `stdev` / `variance`), `quantiles`, and correlation primitives (`correlation` / `covariance` / `linear_regression`). `NormalDist` is bare (PascalCase). `+` / `-` between two `NormalDist`s sums means and combines variances; `*` / `/` against a `Float` / `Int` scales. `statistics.StatisticsError` is the Python exception class for `Try.except_`. The private `_sum` helper is out of scope; Decimal-aware variants work through the existing `Decimal` integration.
+
+## Binary packing (`struct` module + `Struct` class)
+
+```python
+# Python
+import struct
+
+raw = struct.pack(">If", 42, 1.5)
+n, x = struct.unpack(">If", raw)
+size = struct.calcsize(">If")
+
+s = struct.Struct(">If")
+raw = s.pack(7, 2.5)
+```
+
+```python
+# POOP
+raw = struct.pack(">If", 42, 1.5)
+result = struct.unpack(">If", raw)  # Tuple(Int(42), Float(1.5))
+size = struct.calcsize(">If")
+
+s = Struct(">If")
+raw = s.pack(7, 2.5)
+```
+
+> Format-char wrapping back into POOP types is handled at the boundary: `int` → `Int`, `float` → `Float`, `bool` → `Boolean`, `bytes` → `Bytes`. `unpack` always returns a `Tuple`. Buffers accept `Bytes` / `ByteArray` / `MemoryView` for reads; writes (`pack_into`) require a writable buffer (`ByteArray` or `MemoryView`). `iter_unpack` is materialized to `List[Tuple]` — POOP collections are not lazy. `struct.error` is the Python exception class for `Try.except_`.
+
+## Codecs (`codecs` module + `CodecInfo` class)
+
+```python
+# Python
+import codecs
+
+raw = codecs.encode("hello", "utf-8")      # b"hello"
+text = codecs.decode(b"hello", "utf-8")    # "hello"
+rot = codecs.encode("hello", "rot_13")     # "uryyb"
+hex_bytes = codecs.encode(b"\xff", "hex_codec")  # b"ff"
+info = codecs.lookup("utf-8")
+```
+
+```python
+# POOP
+raw = codecs.encode("hello", "utf-8")      # Bytes(b"hello")
+text = codecs.decode(b"hello", "utf-8")    # Str("hello")
+rot = codecs.encode("hello", "rot_13")     # Str("uryyb")
+hex_bytes = codecs.encode(b"\xff", "hex_codec")  # Bytes(b"ff")
+info = codecs.lookup("utf-8")              # CodecInfo
+```
+
+> `encode` and `decode` are polymorphic: text codecs return `Str`, binary codecs return `Bytes`. BOM constants (`BOM_UTF8`, `BOM_UTF16_LE`, …) live as class attributes on the `codecs` namespace. `CodecInfo.encode` / `.decode` mirror CPython's `(result, length_consumed)` tuple. Incremental encoder/decoder construction, `StreamReader` / `StreamWriter`, and `register` / `register_error` are out of scope — pair with future streaming I/O.

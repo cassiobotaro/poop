@@ -105,6 +105,8 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `fractions.Fraction(1, 2)` | `Fraction(1, 2)` |
 | `statistics.mean(xs)` | `statistics.mean(xs)` |
 | `statistics.NormalDist(0, 1).cdf(0)` | `NormalDist(0, 1).cdf(0)` |
+| `struct.pack(">I", 42)` | `struct.pack(">I", 42)` |
+| `codecs.encode(s, "rot_13")` | `codecs.encode(s, "rot_13")` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
