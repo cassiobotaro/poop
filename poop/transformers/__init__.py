@@ -19,7 +19,9 @@ from poop.transformers.class_ import ClassTransformer
 from poop.transformers.codecs import NAMESPACE as _codecs_namespace
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.compression import NAMESPACE as _compression_namespace
+from poop.transformers.configparser import NAMESPACE as _configparser_namespace
 from poop.transformers.copy import NAMESPACE as _copy_namespace
+from poop.transformers.csv import NAMESPACE as _csv_namespace
 from poop.transformers.datetime import NAMESPACE as _datetime_namespace
 from poop.transformers.decimal import NAMESPACE as _decimal_namespace
 from poop.transformers.dict import DictTransformer
@@ -187,6 +189,8 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_urllib_namespace,
     **_http_namespace,
     **_smtplib_namespace,
+    **_csv_namespace,
+    **_configparser_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
