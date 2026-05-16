@@ -80,7 +80,17 @@ quote-style = "double"
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = [
   # use of assert detected
-  "S101"
+  "S101",
+  # mock helpers in tests deliberately use loose annotations
+  "ANN001",
+  "ANN002",
+  "ANN003",
+  # private mock methods / inline staticmethods / dunders don't need return types
+  "ANN202",
+  "ANN204",
+  "ANN205",
+  # binding to 0.0.0.0 in ipaddress predicate tests is intentional
+  "S104",
 ]
 "examples/*" = [
   # names injected at runtime by the POOP interpreter namespace

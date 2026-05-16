@@ -39,7 +39,9 @@ from poop.transformers.gzip import NAMESPACE as _gzip_namespace
 from poop.transformers.hashlib import NAMESPACE as _hashlib_namespace
 from poop.transformers.heapq import NAMESPACE as _heapq_namespace
 from poop.transformers.hmac import NAMESPACE as _hmac_namespace
+from poop.transformers.http import NAMESPACE as _http_namespace
 from poop.transformers.int import IntTransformer
+from poop.transformers.ipaddress import NAMESPACE as _ipaddress_namespace
 from poop.transformers.json import NAMESPACE as _json_namespace
 from poop.transformers.list import ListTransformer
 from poop.transformers.locale import NAMESPACE as _locale_namespace
@@ -60,6 +62,7 @@ from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
 from poop.transformers.shutil import NAMESPACE as _shutil_namespace
 from poop.transformers.slice import SliceTransformer
+from poop.transformers.smtplib import NAMESPACE as _smtplib_namespace
 from poop.transformers.sqlite3 import NAMESPACE as _sqlite3_namespace
 from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
@@ -72,6 +75,7 @@ from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.unicodedata import NAMESPACE as _unicodedata_namespace
+from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.uuid import NAMESPACE as _uuid_namespace
 from poop.transformers.weakref import NAMESPACE as _weakref_namespace
 from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
@@ -179,6 +183,10 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_tarfile_namespace,
     **_compression_namespace,
     **_locale_namespace,
+    **_ipaddress_namespace,
+    **_urllib_namespace,
+    **_http_namespace,
+    **_smtplib_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
