@@ -1826,6 +1826,133 @@ POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for 
 
 `locale` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/locale.py` — namespace-only, no AST rewrite.
 
+### ipaddress + IPv4Address + IPv6Address + IPv4Network + IPv6Network + IPv4Interface + IPv6Interface — `poop/types/ipaddress.py` + `poop/transformers/ipaddress.py`
+
+`ipaddress` mirrors Python's `ipaddress` module — IPv4 / IPv6 address, network, and interface objects.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `IPv4Address(address)` / `IPv6Address(address)` | address | accepts `Str` / `Int` / `Bytes` / wrapper |
+| `.compressed` / `.exploded` / `.reverse_pointer` (properties) | `Str` | textual forms |
+| `.packed` (property) | `Bytes` | wire form |
+| `.version` / `.max_prefixlen` (properties) | `Int` | |
+| `.is_private` / `.is_global` / `.is_multicast` / `.is_unspecified` / `.is_reserved` / `.is_loopback` / `.is_link_local` (properties) | `Boolean` | scope predicates |
+| `addr + Int(n)` / `addr - Int(n)` | address | host arithmetic |
+| `addr == != < <= > >=` | as Python | ordering / equality |
+| `IPv4Network(address, strict=none)` / `IPv6Network(address, strict=none)` | network | |
+| `.network_address` / `.broadcast_address` / `.hostmask` / `.netmask` (properties) | address | |
+| `.prefixlen` / `.num_addresses` / `.version` (properties) | `Int` | |
+| `.with_prefixlen` / `.with_netmask` / `.with_hostmask` (properties) | `Str` | textual forms |
+| `.hosts()` | `List[address]` | excluding network/broadcast |
+| `.subnets(prefixlen_diff=none, new_prefix=none)` / `.supernet(prefixlen_diff=none, new_prefix=none)` | `List[network]` / network | |
+| `.overlaps(other)` / `.subnet_of(other)` / `.supernet_of(other)` | `Boolean` | |
+| `.compare_networks(other)` | `Int` | `-1` / `0` / `1` |
+| `.address_exclude(network)` | `List[network]` | |
+| `address in network` | `bool` | membership test |
+| `IPv4Interface(address)` / `IPv6Interface(address)` | interface | `.ip` / `.network` / `.with_*` |
+| `ipaddress.ip_address(address)` / `.ip_network(...)` / `.ip_interface(...)` | dispatched IPv4 or IPv6 wrapper | factory |
+| `ipaddress.summarize_address_range(first, last)` | `List[network]` | minimal-cover summarization |
+| `ipaddress.collapse_addresses(addresses)` | `List[network]` | dedup + merge adjacent |
+| `ipaddress.get_mixed_type_key(obj)` | sortable key | helper |
+| `ipaddress.AddressValueError` / `NetmaskValueError` (class attrs) | exception classes | |
+
+`ipaddress` and all six wrapper classes are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/ipaddress.py` — namespace-only, no AST rewrite.
+
+### urllib + Request + Response + ParseResult + SplitResult — `poop/types/urllib.py` + `poop/transformers/urllib.py`
+
+`urllib` mirrors Python's `urllib` package — URL parsing (`urllib.parse`), HTTP fetching (`urllib.request`), and error classes (`urllib.error`). `urllib.robotparser` is out of scope for v1.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `urllib.parse.urlparse(url, scheme=none, allow_fragments=none)` | `ParseResult` | `.scheme` / `.netloc` / `.path` / `.params` / `.query` / `.fragment` / `.hostname` / `.port` / `.username` / `.password` / `.geturl()` |
+| `urllib.parse.urlunparse(components)` | `Str` | inverse of `urlparse` |
+| `urllib.parse.urlsplit(url, scheme=none, allow_fragments=none)` | `SplitResult` | same shape as ParseResult, no `params` |
+| `urllib.parse.urlunsplit(components)` | `Str` | |
+| `urllib.parse.urljoin(base, url, allow_fragments=none)` | `Str` | |
+| `urllib.parse.urldefrag(url)` | `Tuple(Str, Str)` | `(defragmented, fragment)` |
+| `urllib.parse.quote(s, safe=none, encoding=none, errors=none)` / `.quote_plus(...)` / `.quote_from_bytes(...)` | `Str` | percent-encoding |
+| `urllib.parse.unquote(s, ...)` / `.unquote_plus(...)` / `.unquote_to_bytes(...)` | `Str` / `Bytes` | decoding |
+| `urllib.parse.urlencode(query, doseq=none, safe=none, encoding=none, errors=none)` | `Str` | accepts `Dict` or `List[Tuple]` |
+| `urllib.parse.parse_qs(qs, keep_blank_values=none, strict_parsing=none)` | `Dict[Str, List[Str]]` | |
+| `urllib.parse.parse_qsl(qs, ...)` | `List[Tuple(Str, Str)]` | preserves order |
+| `Request(url, data=none, headers=none, method=none)` | `Request` | headers is `Dict[Str, Str]` |
+| `Request.full_url` / `.method` / `.type` / `.host` / `.selector` (properties) | `Str` | |
+| `Request.data` (property) | `Bytes` / `none` | |
+| `Request.headers` (property) | `Dict[Str, Str]` | snapshot |
+| `Request.add_header(key, value)` / `.add_unredirected_header(key, value)` | `none` | |
+| `Request.has_header(key)` | `Boolean` | |
+| `urllib.request.urlopen(url, data=none, timeout=none)` | `Response` | accepts `Str` URL or `Request` |
+| `urllib.request.urlretrieve(url, filename=none, data=none)` | `Tuple(Str, Str)` | `(filename, headers_repr)` |
+| `Response.status` (property) | `Int` | |
+| `Response.read(size=none)` / `.readline(size=none)` | `Bytes` | |
+| `Response.url` / `.reason` / `.headers` (properties) | `Str` / `Str` / `Dict` | |
+| `Response.geturl()` / `.getcode()` | `Str` / `Int` | |
+| `Response.close()` | `none` | `With`-friendly |
+| `urllib.request.{OpenerDirector,HTTPHandler,HTTPSHandler,…}` (class attrs) | Python class refs | handler hierarchy |
+| `urllib.error.URLError` / `HTTPError` / `ContentTooShortError` (class attrs) | exception classes | |
+
+`urllib`, `Request`, `Response`, `ParseResult`, and `SplitResult` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/urllib.py` — namespace-only, no AST rewrite.
+
+### http + HTTPStatus + HTTPMethod + HTTPConnection + HTTPSConnection + HTTPResponse + SimpleCookie + Morsel — `poop/types/http.py` + `poop/transformers/http.py`
+
+`http` mirrors Python's `http` package — `http.client` (low-level HTTP), `http.server` (server framework), `http.cookies` (RFC 2109/6265 parsing), `http.cookiejar` (storage).
+
+`HTTPStatus` (IntEnum) and `HTTPMethod` (StrEnum) are re-exported directly from CPython. POOP patches their `_missing_` hook so calling them with POOP `Int` / `Str` wrappers resolves to the right member (e.g. `http.HTTPStatus(Int(200))` returns `HTTPStatus.OK`).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `http.HTTPStatus` (class attr) | IntEnum | `.OK` / `.NOT_FOUND` / … members; `.value` / `.phrase` / `.description` properties; `.is_success` / `.is_client_error` / `.is_server_error` / `.is_redirection` / `.is_informational` predicates |
+| `http.HTTPMethod` (class attr) | StrEnum | `.GET` / `.POST` / `.PUT` / `.PATCH` / `.DELETE` / `.HEAD` / `.OPTIONS` / `.TRACE` / `.CONNECT` |
+| `http.client.HTTPConnection(host, port=none, timeout=none)` | `HTTPConnection` | |
+| `http.client.HTTPSConnection(host, port=none, timeout=none)` | `HTTPSConnection` | |
+| `HTTPConnection.request(method, url, body=none, headers=none)` | `none` | body is `Bytes` / `Str`; headers is `Dict[Str, Str]` |
+| `HTTPConnection.getresponse()` | `HTTPResponse` | |
+| `HTTPConnection.set_tunnel(host, port=none, headers=none)` | `none` | proxy CONNECT |
+| `HTTPConnection.close()` | `none` | |
+| `HTTPResponse.status` / `.version` (properties) | `Int` | |
+| `HTTPResponse.reason` (property) | `Str` | |
+| `HTTPResponse.headers` (property) | `Dict[Str, Str]` | |
+| `HTTPResponse.getheader(name, default=none)` | `Str` / `none` | |
+| `HTTPResponse.read(amt=none)` / `.readline(limit=none)` | `Bytes` | |
+| `HTTPResponse.close()` | `none` | `With`-friendly |
+| `http.client.{HTTPException,BadStatusLine,InvalidURL,NotConnected,ResponseNotReady,RemoteDisconnected,UnknownProtocol}` (class attrs) | exception classes | |
+| `http.client.HTTP_PORT` / `HTTPS_PORT` (class attrs) | `Int` | `80` / `443` |
+| `http.server.{BaseHTTPRequestHandler,SimpleHTTPRequestHandler,CGIHTTPRequestHandler,HTTPServer,ThreadingHTTPServer}` (class attrs) | Python class refs | meant to be subclassed |
+| `http.cookies.SimpleCookie(source=none)` | `SimpleCookie` | dict-of-`Morsel` |
+| `SimpleCookie.load(rawdata)` / `.output(attrs=none, sep=none)` | `none` / `Str` | |
+| `SimpleCookie.at(key)` / `.at_put(key, value)` / `.keys()` | `Morsel` / `none` / `List[Str]` | |
+| `Morsel.key` / `.value` / `.coded_value` (properties) | `Str` | |
+| `Morsel.OutputString(attrs=none)` | `Str` | |
+| `http.cookies.{BaseCookie,SimpleCookie,Morsel,CookieError}` (class attrs) | classes / exceptions | |
+| `http.cookiejar.{CookieJar,FileCookieJar,MozillaCookieJar,LWPCookieJar,Cookie,DefaultCookiePolicy,CookiePolicy}` (class attrs) | Python class refs | passed by reference to other networking APIs |
+
+`http`, `HTTPConnection`, `HTTPSConnection`, `HTTPResponse`, `SimpleCookie`, and `Morsel` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/http.py` — namespace-only, no AST rewrite.
+
+### smtplib + SMTP + SMTP_SSL + LMTP — `poop/types/smtplib.py` + `poop/transformers/smtplib.py`
+
+`smtplib` mirrors Python's `smtplib` module — SMTP / SMTP-over-TLS / LMTP clients. The full error hierarchy and the standard port constants are exposed.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `SMTP(host=none, port=none, local_hostname=none, timeout=none, source_address=none)` | `SMTP` | empty constructor defers connection |
+| `SMTP_SSL(host=none, port=none, local_hostname=none, timeout=none)` | `SMTP_SSL` | TLS variant |
+| `LMTP(host=none, port=none, local_hostname=none)` | `LMTP` | local MTA |
+| `.connect(host=none, port=none)` | `Tuple(Int, Bytes)` | `(code, msg)` |
+| `.helo(name=none)` / `.ehlo(name=none)` | `Tuple(Int, Bytes)` | |
+| `.has_extn(name)` | `bool` | |
+| `.starttls()` | `Tuple(Int, Bytes)` | |
+| `.login(user, password)` | `Tuple(Int, Bytes)` | |
+| `.sendmail(from, to, msg, mail_options=none, rcpt_options=none)` | `Dict[Str, Tuple(Int, Bytes)]` | failed recipients only |
+| `.send_message(msg, from_addr=none, to_addrs=none)` | `Dict[Str, Tuple(Int, Bytes)]` | takes a Python `email.Message` |
+| `.docmd(cmd, args=none)` / `.noop()` / `.verify(addr)` / `.expn(addr)` / `.rset()` | `Tuple(Int, Bytes)` | |
+| `.set_debuglevel(level)` | `none` | |
+| `.quit()` / `.close()` | `Tuple(Int, Bytes)` / `none` | `With`-friendly |
+| `smtplib.SMTP_PORT` / `SMTP_SSL_PORT` / `LMTP_PORT` (class attrs) | `Int` | `25` / `465` / `2003` |
+| `smtplib.CRLF` / `bCRLF` (class attrs) | `Str` / `Bytes` | `"\r\n"` |
+| `smtplib.{SMTPException,SMTPServerDisconnected,SMTPResponseException,SMTPSenderRefused,SMTPRecipientsRefused,SMTPDataError,SMTPConnectError,SMTPHeloError,SMTPNotSupportedError,SMTPAuthenticationError}` (class attrs) | exception classes | |
+
+`smtplib`, `SMTP`, `SMTP_SSL`, and `LMTP` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/smtplib.py` — namespace-only, no AST rewrite.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

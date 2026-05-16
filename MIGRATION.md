@@ -1294,3 +1294,44 @@ encoding = locale.getpreferredencoding()  # Str
 ```
 
 > Categories (`LC_ALL` / `LC_CTYPE` / `LC_COLLATE` / `LC_TIME` / `LC_MONETARY` / `LC_NUMERIC` / `LC_MESSAGES`) and `CHAR_MAX` are class attributes on the namespace. `getlocale` / `getdefaultlocale` return a `Tuple(Str \| NoneClass, Str \| NoneClass)`. `localeconv` returns a `Dict[Str, Object]` covering the full LC_NUMERIC / LC_MONETARY convention. `locale.Error` is the Python exception class for `Try.except_` on unknown locale names. `LC_MESSAGES` falls back to `LC_ALL` on platforms missing the POSIX category (e.g. Windows). `currency` raises `ValueError` in the C locale (which has no monetary symbol).
+
+## Internet protocols (`ipaddress`, `urllib`, `http`, `smtplib`)
+
+```python
+# Python
+import ipaddress
+import urllib.parse
+import urllib.request
+import http
+import smtplib
+
+addr = ipaddress.ip_address("192.0.2.1")
+net = ipaddress.ip_network("192.0.2.0/24")
+
+parts = urllib.parse.urlparse("https://example.com/p?k=v")
+query = urllib.parse.urlencode({"a": 1, "b": 2})
+with urllib.request.urlopen("file:///tmp/x") as r:
+    body = r.read()
+
+status = http.HTTPStatus.OK
+conn = http.client.HTTPConnection("example.com")
+
+smtp = smtplib.SMTP("smtp.example.com", 587)
+```
+
+```python
+# POOP
+addr = ipaddress.ip_address("192.0.2.1")
+net = ipaddress.ip_network("192.0.2.0/24")
+
+parts = urllib.parse.urlparse("https://example.com/p?k=v")
+query = urllib.parse.urlencode({"a": 1, "b": 2})
+With.do(urllib.request.urlopen("file:///tmp/x"), Block(lambda r: r.read()))
+
+status = http.HTTPStatus(200)              # POOP Int round-trips into the IntEnum
+conn = HTTPConnection("example.com")
+
+smtp = SMTP("smtp.example.com", 587)
+```
+
+> `ipaddress` exposes both factory functions (`ip_address` / `ip_network` / `ip_interface`) and the explicit `IPv4Address` / `IPv6Address` / `IPv4Network` / `IPv6Network` / `IPv4Interface` / `IPv6Interface` classes. Address arithmetic with `Int` is supported (`addr + Int(1)`). `urllib.parse` is pure-text URL transformations; `urllib.request.urlopen` returns a `With`-friendly `Response` (`.read` / `.headers` / `.status`). `urllib.request.Request` is the bare request-builder; the handler hierarchy (`OpenerDirector` / `HTTPHandler` / …) is exposed as class refs for advanced callers. `http.HTTPStatus` and `http.HTTPMethod` are re-exports of CPython's enums with a `_missing_` patch so POOP `Int` / `Str` lookups work. `http.client.HTTPConnection` / `HTTPSConnection` wrap the upstream connection types; `HTTPResponse` exposes `.status` / `.read` / `.headers`. `http.server` / `http.cookies` / `http.cookiejar` are exposed under their submodule names. `smtplib.SMTP` / `SMTP_SSL` / `LMTP` cover the SMTP client surface (`helo` / `ehlo` / `starttls` / `login` / `sendmail` / `send_message` / `quit` / `close`); the full error hierarchy (`SMTPException` / `SMTPServerDisconnected` / `SMTPResponseException` / `SMTPSenderRefused` / `SMTPRecipientsRefused` / `SMTPDataError` / `SMTPConnectError` / `SMTPHeloError` / `SMTPNotSupportedError` / `SMTPAuthenticationError`) is exposed for `Try.except_`. `urllib.robotparser` is out of scope for v1.

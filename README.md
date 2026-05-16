@@ -118,6 +118,11 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
 | `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
 | `locale.getpreferredencoding()` | `locale.getpreferredencoding()` |
+| `ipaddress.ip_address("::1")` | `ipaddress.ip_address("::1")` |
+| `urllib.parse.urlparse(u)` | `urllib.parse.urlparse(u)` |
+| `urllib.request.urlopen(u)` | `urllib.request.urlopen(u)` |
+| `http.HTTPStatus.OK` | `http.HTTPStatus.OK` |
+| `smtplib.SMTP(host, port)` | `SMTP(host, port)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
