@@ -6,6 +6,7 @@ from builtins import (
 )
 
 from poop.transformers.array import NAMESPACE as _array_namespace
+from poop.transformers.atexit import NAMESPACE as _atexit_namespace
 from poop.transformers.base import Transformer
 from poop.transformers.binascii import NAMESPACE as _binascii_namespace
 from poop.transformers.bisect import NAMESPACE as _bisect_namespace
@@ -34,6 +35,7 @@ from poop.transformers.float import FloatTransformer
 from poop.transformers.fnmatch import NAMESPACE as _fnmatch_namespace
 from poop.transformers.fractions import NAMESPACE as _fractions_namespace
 from poop.transformers.frozen_set import FrozenSetTransformer
+from poop.transformers.gc import NAMESPACE as _gc_namespace
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
 from poop.transformers.graphlib import NAMESPACE as _graphlib_namespace
@@ -73,6 +75,7 @@ from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.struct import NAMESPACE as _struct_namespace
+from poop.transformers.sys import NAMESPACE as _sys_namespace
 from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.tempfile import NAMESPACE as _tempfile_namespace
 from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
@@ -197,6 +200,9 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_pwd_namespace,
     **_grp_namespace,
     **_resource_namespace,
+    **_sys_namespace,
+    **_atexit_namespace,
+    **_gc_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
