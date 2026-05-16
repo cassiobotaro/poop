@@ -37,6 +37,7 @@ from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
 from poop.transformers.graphlib import NAMESPACE as _graphlib_namespace
+from poop.transformers.grp import NAMESPACE as _grp_namespace
 from poop.transformers.gzip import NAMESPACE as _gzip_namespace
 from poop.transformers.hashlib import NAMESPACE as _hashlib_namespace
 from poop.transformers.heapq import NAMESPACE as _heapq_namespace
@@ -55,10 +56,12 @@ from poop.transformers.none import NoneTransformer
 from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.pickle import NAMESPACE as _pickle_namespace
 from poop.transformers.pprint import NAMESPACE as _pprint_namespace
+from poop.transformers.pwd import NAMESPACE as _pwd_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
 from poop.transformers.re import NAMESPACE as _re_namespace
+from poop.transformers.resource import NAMESPACE as _resource_namespace
 from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
@@ -191,6 +194,9 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_smtplib_namespace,
     **_csv_namespace,
     **_configparser_namespace,
+    **_pwd_namespace,
+    **_grp_namespace,
+    **_resource_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
