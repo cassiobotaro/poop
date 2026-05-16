@@ -2,7 +2,12 @@ import ast
 from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
-from poop.types.string import Str
+from poop.types.string import Str, String, Template
+
+NAMESPACE: dict[str, object] = {
+    "string": String,
+    "Template": Template,
+}
 
 
 def _poop_str_from(value: object = None) -> Str:

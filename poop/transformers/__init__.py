@@ -18,6 +18,7 @@ from poop.transformers.copy import NAMESPACE as _copy_namespace
 from poop.transformers.datetime import NAMESPACE as _datetime_namespace
 from poop.transformers.decimal import NAMESPACE as _decimal_namespace
 from poop.transformers.dict import DictTransformer
+from poop.transformers.difflib import NAMESPACE as _difflib_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.errno import NAMESPACE as _errno_namespace
 from poop.transformers.float import FloatTransformer
@@ -47,10 +48,13 @@ from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.sqlite3 import NAMESPACE as _sqlite3_namespace
+from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
+from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
 from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
+from poop.transformers.unicodedata import NAMESPACE as _unicodedata_namespace
 from poop.transformers.uuid import NAMESPACE as _uuid_namespace
 from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
@@ -129,6 +133,10 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_datetime_namespace,
     **_decimal_namespace,
     **_sqlite3_namespace,
+    **_string_namespace,
+    **_difflib_namespace,
+    **_textwrap_namespace,
+    **_unicodedata_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]

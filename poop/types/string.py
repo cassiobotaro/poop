@@ -1,5 +1,6 @@
 import base64 as _base64
 import builtins
+import string as _string
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -12,6 +13,7 @@ from poop.types.str_iterator import StrIterator
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
+    from poop.types.dict import Dict
     from poop.types.int import Int
     from poop.types.list import List
     from poop.types.none import NoneClass
@@ -373,3 +375,63 @@ class Str(_ValueEqMixin, Object):
 
 Str.__module__ = "builtins"
 Str.__name__ = "str"
+
+
+def _dict_to_mapping(mapping: Dict) -> dict[str, Any]:
+    # Template.substitute / safe_substitute accept any mapping whose
+    # keys are Python strs. POOP `Dict` keys are POOP `Str` values, so
+    # unwrap them; values are stringified by `string.Template` itself.
+    result: dict[str, Any] = {}
+    for k, v in mapping._data.items():
+        if not isinstance(k, Str):
+            raise TypeError(
+                f"Template mapping keys must be Str, got {type(k).__name__}"
+            )
+        result[k._value] = v._value if isinstance(v, Str) else v
+    return result
+
+
+class Template:
+    """Wraps Python's `string.Template` for `$variable` substitution.
+
+    Construction takes the template `Str`; `substitute` raises on
+    missing keys, `safe_substitute` leaves them in place. The
+    `template` property exposes the original source string.
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, template: Str) -> None:
+        self._impl = _string.Template(template._value)
+
+    def substitute(self, mapping: Dict) -> Str:
+        return Str(self._impl.substitute(_dict_to_mapping(mapping)))
+
+    def safe_substitute(self, mapping: Dict) -> Str:
+        return Str(self._impl.safe_substitute(_dict_to_mapping(mapping)))
+
+    @property
+    def template(self) -> Str:
+        return Str(self._impl.template)
+
+
+class String:
+    """Namespace mirroring Python's `string` module.
+
+    ASCII character-class constants plus the `Template` class (exposed
+    separately under its own PascalCase binding, matching the
+    `hmac`/`HMAC` and `uuid`/`UUID` convention).
+
+    `string.Formatter` and `string.capwords` are deliberately omitted
+    in v1 — `Str.format` and `Str.title` cover the common cases.
+    """
+
+    ascii_letters: ClassVar[Str] = Str(_string.ascii_letters)
+    ascii_lowercase: ClassVar[Str] = Str(_string.ascii_lowercase)
+    ascii_uppercase: ClassVar[Str] = Str(_string.ascii_uppercase)
+    digits: ClassVar[Str] = Str(_string.digits)
+    hexdigits: ClassVar[Str] = Str(_string.hexdigits)
+    octdigits: ClassVar[Str] = Str(_string.octdigits)
+    punctuation: ClassVar[Str] = Str(_string.punctuation)
+    printable: ClassVar[Str] = Str(_string.printable)
+    whitespace: ClassVar[Str] = Str(_string.whitespace)
