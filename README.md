@@ -128,6 +128,11 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `pwd.getpwuid(uid)` | `pwd.getpwuid(uid)` |
 | `grp.getgrnam(name)` | `grp.getgrnam(name)` |
 | `resource.getrusage(who)` | `resource.getrusage(who)` |
+| `sys.platform` | `sys.platform()` |
+| `sys.argv[0]` | `args.script()` |
+| `sys.stdout.write(s)` | `sys.stdout().write(s)` |
+| `atexit.register(f)` | `atexit.register(f)` |
+| `gc.collect()` | `gc.collect()` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

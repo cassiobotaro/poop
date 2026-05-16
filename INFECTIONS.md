@@ -2033,6 +2033,46 @@ Three small Unix-specific namespaces shipped together. `pwd` looks up Unix passw
 
 `pwd`, `Passwd`, `grp`, `Group`, `resource`, and `RUsage` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{pwd,grp,resource}.py` — namespace-only, no AST rewrite. Platform-specific `RLIMIT_*` / `RUSAGE_*` constants bind to `none` on platforms where they don't exist, so user code can `is_none()`-check before calling `getrlimit`.
 
+### sys + Args + Stdout + Stdin, atexit, gc — `poop/types/{sys,atexit,gc}.py`
+
+Three runtime-services namespaces shipped together. `sys` exposes a curated subset of CPython's `sys` module — introspection-heavy bits (`settrace`, `_getframe`, `monitoring`, audit hooks) are deliberately out of scope. `sys.argv` is split into a dedicated `args` namespace, and `sys.stdout` / `sys.stderr` / `sys.stdin` are wrapped by `Stdout` / `Stdin` classes that speak POOP types. `atexit` registers / unregisters shutdown callbacks (POOP `Block`s). `gc` exposes the garbage-collector control surface only — `get_objects` / `get_referrers` / `is_tracked` etc. are excluded for clashing with POOP's no-introspection rule.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `sys.executable()` | `Path` | |
+| `sys.platform()` / `.version()` / `.byteorder()` | `Str` | |
+| `sys.version_info()` | `Tuple(Int, Int, Int, Str, Int)` | `(major, minor, micro, releaselevel, serial)` |
+| `sys.maxsize()` / `.getrecursionlimit()` | `Int` | |
+| `sys.setrecursionlimit(limit)` | `none` | |
+| `sys.implementation()` / `.flags()` / `.float_info()` / `.int_info()` / `.hash_info()` / `.thread_info()` | Python object | opaque named tuples |
+| `sys.modules()` | `Dict[Str, module]` | snapshot at call time |
+| `sys.path()` | `List[Str]` | snapshot at call time |
+| `sys.exit(code=none)` | raises `SystemExit` | accepts `Int` or `Str` |
+| `sys.stdout()` / `sys.stderr()` | `Stdout` | wraps real streams |
+| `sys.stdin()` | `Stdin` | wraps real stream |
+| `args.list()` / `args.rest()` | `List[Str]` | full / minus script |
+| `args.script()` | `Str` | `argv[0]` or `""` |
+| `Stdout.write(s)` | `Int` | bytes written |
+| `Stdout.writeln(s=none)` / `.flush()` | `none` | |
+| `Stdout.isatty()` | `Boolean` | |
+| `Stdin.read(size=none)` / `.readline(size=none)` | `Str` | |
+| `Stdin.readlines()` | `List[Str]` | |
+| `Stdin.isatty()` | `Boolean` | iterable over lines |
+| `atexit.register(func, *args, **kwargs)` | the registered callable | matches CPython contract |
+| `atexit.unregister(func)` / `._run_exitfuncs()` / `._clear()` | `none` | |
+| `gc.enable()` / `.disable()` / `.collect(generation=2)` | `none` / `none` / `Int` | unreachable count |
+| `gc.isenabled()` | `Boolean` | |
+| `gc.get_threshold()` / `.get_count()` | `Tuple(Int, Int, Int)` | |
+| `gc.set_threshold(t0, t1=none, t2=none)` | `none` | |
+| `gc.get_stats()` | `List[Dict]` | |
+| `gc.get_debug()` / `.set_debug(flags)` | `Int` / `none` | |
+| `gc.DEBUG_STATS` / `DEBUG_COLLECTABLE` / `DEBUG_UNCOLLECTABLE` / `DEBUG_SAVEALL` / `DEBUG_LEAK` (class attrs) | `Int` | |
+| `gc.freeze()` / `.unfreeze()` | `none` | |
+| `gc.get_freeze_count()` | `Int` | |
+| `gc.callbacks()` | Python `list` | mutable, shared with CPython's |
+
+`sys`, `args`, `Stdout`, `Stdin`, `atexit`, and `gc` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{sys,atexit,gc}.py` — namespace-only, no AST rewrite. POOP lambdas auto-wrap as `Block`s, so `atexit.register(lambda: ...)` works directly.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

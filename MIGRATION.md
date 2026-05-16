@@ -1384,3 +1384,28 @@ usage = resource.getrusage(resource.RUSAGE_SELF)     # RUsage
 ```
 
 > `pwd` and `grp` are tiny — `getpwuid` / `getpwnam` / `getpwall` and `getgrgid` / `getgrnam` / `getgrall` return `Passwd` / `Group` POOP records with the standard `.pw_*` / `.gr_*` accessors. `resource` queries process limits (`getrlimit` returns `Tuple(soft, hard)`; `setrlimit` accepts the same shape) and per-process rusage (`getrusage` returns `RUsage` with `.ru_utime` / `.ru_stime` as `Float` and the per-counter `.ru_maxrss` / `.ru_minflt` / etc. as `Int`). All standard `RLIMIT_*` and `RUSAGE_*` constants are class attributes — platform-specific ones bind to `none` rather than raising on import. `resource.prlimit` is Linux-only.
+
+## Runtime services (`sys`, `atexit`, `gc`)
+
+```python
+# Python
+import sys, atexit, gc
+
+print(sys.platform, sys.version_info)
+sys.stdout.write("hi\n")
+script = sys.argv[0]
+atexit.register(lambda: print("bye"))
+gc.collect()
+```
+
+```python
+# POOP
+sys.platform().print()
+sys.version_info().print()
+sys.stdout().writeln("hi")
+script = args.script()                   # Str
+atexit.register(lambda: "bye".print())   # Block (lambda auto-wraps)
+gc.collect().print()                     # Int
+```
+
+> POOP splits `sys` into focused namespaces: `sys` itself (`executable`/`platform`/`version`/`version_info`/`maxsize`/`byteorder`/`modules`/`path`/`getrecursionlimit`/`setrecursionlimit`/`exit`/`implementation`/`flags`/`float_info`/`int_info`/`hash_info`/`thread_info`), `args` for a read-only view of `sys.argv` (`args.list()`/`args.script()`/`args.rest()`), and `Stdout`/`Stdin` wrappers returned by `sys.stdout()`/`sys.stderr()`/`sys.stdin()`. All return values are POOP types — `Path`, `Str`, `Int`, `List[Str]`, `Dict[Str, module]`, `Tuple`. The introspection-heavy `settrace` / `_getframe` / `monitoring` / `audit*` surface is intentionally absent. `atexit` mirrors CPython directly — `register` accepts a POOP `Block` (lambdas auto-wrap), `unregister` / `_run_exitfuncs` / `_clear` work as expected. `gc` exposes the **control surface only**: `enable`/`disable`/`isenabled`/`collect`/`get_threshold`/`set_threshold`/`get_count`/`get_stats`/`get_debug`/`set_debug`/`freeze`/`unfreeze`/`get_freeze_count`/`callbacks` plus the `DEBUG_*` constants — `get_objects` / `get_referrers` / `is_tracked` are excluded as introspection.
