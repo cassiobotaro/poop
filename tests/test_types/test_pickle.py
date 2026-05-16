@@ -1,0 +1,256 @@
+from pathlib import Path as _PyPath
+
+import pytest
+
+from poop.interpreter import Interpreter
+from poop.types.boolean import false, true
+from poop.types.bytes import Bytes
+from poop.types.dict import Dict
+from poop.types.float import Float
+from poop.types.frozen_set import FrozenSet
+from poop.types.int import Int
+from poop.types.list import List
+from poop.types.none import none
+from poop.types.object import Object
+from poop.types.path import Path
+from poop.types.pickle import PickleNamespace, Pickler, Unpickler
+from poop.types.set import Set
+from poop.types.string import Str
+from poop.types.tuple import Tuple
+
+
+# Pickle-safe POOP user class — no __slots__, so it has __dict__ and is
+# importable by qualified name (test module is loaded normally by pytest).
+class UserPoint(Object):
+    def __init__(self, x: int = 0, y: int = 0) -> None:
+        self.x = x
+        self.y = y
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, UserPoint) and self.x == other.x and self.y == other.y
+
+    def __hash__(self) -> int:
+        return hash((self.x, self.y))
+
+
+# --- Module-level shortcuts ---
+
+
+def test_dumps_returns_bytes() -> None:
+    raw = PickleNamespace.dumps(Int(42))
+    assert isinstance(raw, Bytes)
+
+
+def test_dumps_loads_int_round_trip() -> None:
+    raw = PickleNamespace.dumps(Int(42))
+    result = PickleNamespace.loads(raw)
+    assert result == Int(42)
+    assert isinstance(result, Int)
+
+
+def test_dumps_loads_str_round_trip() -> None:
+    raw = PickleNamespace.dumps(Str("hello"))
+    result = PickleNamespace.loads(raw)
+    assert result == Str("hello")
+    assert isinstance(result, Str)
+
+
+def test_dumps_loads_float_round_trip() -> None:
+    raw = PickleNamespace.dumps(Float(3.14))
+    result = PickleNamespace.loads(raw)
+    assert isinstance(result, Float)
+
+
+def test_dumps_loads_bytes_round_trip() -> None:
+    raw = PickleNamespace.dumps(Bytes(b"\xff\x00"))
+    result = PickleNamespace.loads(raw)
+    assert result == Bytes(b"\xff\x00")
+
+
+def test_dumps_loads_bool_round_trip() -> None:
+    assert PickleNamespace.loads(PickleNamespace.dumps(true)) is true
+    assert PickleNamespace.loads(PickleNamespace.dumps(false)) is false
+
+
+def test_dumps_loads_none_round_trip() -> None:
+    assert PickleNamespace.loads(PickleNamespace.dumps(none)) is none
+
+
+def test_dumps_loads_list_round_trip() -> None:
+    original = List(Int(1), Str("two"), Float(3.0))
+    result = PickleNamespace.loads(PickleNamespace.dumps(original))
+    assert result == original
+    assert isinstance(result, List)
+
+
+def test_dumps_loads_tuple_round_trip() -> None:
+    original = Tuple(Int(1), Int(2), Int(3))
+    result = PickleNamespace.loads(PickleNamespace.dumps(original))
+    assert result == original
+    assert isinstance(result, Tuple)
+
+
+def test_dumps_loads_dict_round_trip() -> None:
+    original = Dict().at_put(Str("a"), Int(1)).at_put(Str("b"), Int(2))
+    result = PickleNamespace.loads(PickleNamespace.dumps(original))
+    assert result == original
+    assert isinstance(result, Dict)
+
+
+def test_dumps_loads_set_round_trip() -> None:
+    original = Set(Int(1), Int(2), Int(3))
+    result = PickleNamespace.loads(PickleNamespace.dumps(original))
+    assert isinstance(result, Set)
+    assert result.len() == Int(3)
+
+
+def test_dumps_loads_frozen_set_round_trip() -> None:
+    original = FrozenSet(Int(1), Int(2))
+    result = PickleNamespace.loads(PickleNamespace.dumps(original))
+    assert isinstance(result, FrozenSet)
+
+
+def test_dumps_loads_nested_round_trip() -> None:
+    original = List(
+        Dict().at_put(Str("key"), List(Int(1), Int(2))),
+        Tuple(Str("x"), Int(99)),
+    )
+    result = PickleNamespace.loads(PickleNamespace.dumps(original))
+    assert result == original
+
+
+def test_dumps_with_protocol() -> None:
+    raw = PickleNamespace.dumps(List(Int(1), Int(2)), protocol=Int(2))
+    assert isinstance(raw, Bytes)
+    assert PickleNamespace.loads(raw) == List(Int(1), Int(2))
+
+
+def test_dumps_user_class_round_trips() -> None:
+    raw = PickleNamespace.dumps(UserPoint(3, 4))
+    result = PickleNamespace.loads(raw)
+    assert isinstance(result, UserPoint)
+    assert result.x == 3
+    assert result.y == 4
+
+
+# --- Path-based dump / load ---
+
+
+def test_dump_load_round_trip(tmp_path: _PyPath) -> None:
+    target = tmp_path / "data.pkl"
+    PickleNamespace.dump(
+        Dict().at_put(Str("x"), List(Int(1), Int(2), Int(3))),
+        Path(Str(str(target))),
+    )
+    assert target.exists()
+    restored = PickleNamespace.load(Path(Str(str(target))))
+    expected = Dict().at_put(Str("x"), List(Int(1), Int(2), Int(3)))
+    assert restored == expected
+
+
+def test_dump_user_class_to_path(tmp_path: _PyPath) -> None:
+    target = tmp_path / "point.pkl"
+    PickleNamespace.dump(UserPoint(5, 9), Path(Str(str(target))))
+    restored = PickleNamespace.load(Path(Str(str(target))))
+    assert restored == UserPoint(5, 9)
+
+
+def test_dump_returns_none(tmp_path: _PyPath) -> None:
+    target = tmp_path / "x.pkl"
+    assert PickleNamespace.dump(Int(7), Path(Str(str(target)))) is none
+
+
+# --- Constants ---
+
+
+def test_highest_protocol_is_int() -> None:
+    assert isinstance(PickleNamespace.HIGHEST_PROTOCOL, Int)
+    assert PickleNamespace.HIGHEST_PROTOCOL._value >= 5
+
+
+def test_default_protocol_is_int() -> None:
+    assert isinstance(PickleNamespace.DEFAULT_PROTOCOL, Int)
+
+
+# --- Error classes ---
+
+
+def test_error_classes_exposed() -> None:
+    assert issubclass(PickleNamespace.PicklingError, PickleNamespace.PickleError)
+    assert issubclass(PickleNamespace.UnpicklingError, PickleNamespace.PickleError)
+
+
+def test_loads_corrupt_data_raises() -> None:
+    with pytest.raises(PickleNamespace.UnpicklingError):
+        PickleNamespace.loads(Bytes(b"not a pickle stream"))
+
+
+# --- Pickler / Unpickler classes ---
+
+
+def test_pickler_accumulates_multiple_dumps() -> None:
+    p = Pickler()
+    p.dump(Int(1))
+    p.dump(Str("two"))
+    p.dump(List(Int(3), Int(4)))
+
+    raw = p.getvalue()
+    assert isinstance(raw, Bytes)
+
+    u = Unpickler(raw)
+    assert u.load() == Int(1)
+    assert u.load() == Str("two")
+    assert u.load() == List(Int(3), Int(4))
+
+
+def test_pickler_with_explicit_protocol() -> None:
+    p = Pickler(protocol=Int(2))
+    p.dump(Dict().at_put(Str("k"), Str("v")))
+    raw = p.getvalue()
+    u = Unpickler(raw)
+    expected = Dict().at_put(Str("k"), Str("v"))
+    assert u.load() == expected
+
+
+def test_pickler_clear_memo_returns_none() -> None:
+    p = Pickler()
+    p.dump(List(Int(1), Int(2)))
+    assert p.clear_memo() is none
+
+
+def test_pickler_fast_property() -> None:
+    p = Pickler()
+    assert p.fast is false
+    p.fast = True
+    assert p.fast is true
+    p.fast = False
+
+
+def test_pickler_dump_returns_none() -> None:
+    p = Pickler()
+    assert p.dump(Int(1)) is none
+
+
+def test_unpickler_can_load_user_class() -> None:
+    p = Pickler()
+    p.dump(UserPoint(1, 2))
+    u = Unpickler(p.getvalue())
+    result = u.load()
+    assert result == UserPoint(1, 2)
+
+
+# --- Interpreter integration ---
+
+
+def test_pickle_dumps_loads_via_interpreter() -> None:
+    Interpreter().run_source("raw = pickle.dumps([1, 2, 3])\npickle.loads(raw).print()")
+
+
+def test_Pickler_Unpickler_reachable_via_interpreter() -> None:
+    Interpreter().run_source(
+        "p = Pickler()\np.dump(42)\nUnpickler(p.getvalue()).load().print()"
+    )
+
+
+def test_pickle_constants_reachable_via_interpreter() -> None:
+    Interpreter().run_source("pickle.HIGHEST_PROTOCOL.print()")
