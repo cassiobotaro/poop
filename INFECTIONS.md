@@ -441,7 +441,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `HMAC`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Shlex`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Shlex`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
 What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
 
@@ -1125,6 +1125,34 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `Match.string` / `.re` (properties) | `Str` / `Pattern` | |
 
 `re` and the `Pattern` / `Match` classes are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/re.py` — namespace-only, no AST rewrite.
+
+### hashlib + Hash — `poop/types/hash.py` + `poop/transformers/hashlib.py`
+
+`hashlib` mirrors Python's `hashlib` module — message digests (MD5, SHA-1/2/3, BLAKE2, SHAKE) and key-derivation functions (PBKDF2, scrypt). The shortcut messages live directly on `Bytes` so common code reads `b"abc".sha256().hexdigest()` — the receiver carries the data, the message names the algorithm.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `hashlib.new(name, data=none)` | `Hash` | generic constructor |
+| `hashlib.file_digest(path, digest, /)` | `Hash` | `path` is a `Path` — receiver-type divergence from CPython's `fileobj` |
+| `hashlib.algorithms_available` (class attr) | `FrozenSet[Str]` | every algorithm OpenSSL exposes locally |
+| `hashlib.algorithms_guaranteed` (class attr) | `FrozenSet[Str]` | algorithms guaranteed on every platform |
+| `hashlib.Hash` (class attr) | `type[Hash]` | the wrapper class itself |
+| `b.md5()` / `.sha1()` / `.sha224()` / `.sha256()` / `.sha384()` / `.sha512()` | `Hash` | shortcut on `Bytes` |
+| `b.blake2b()` / `.blake2s()` | `Hash` | BLAKE2 family |
+| `b.sha3_224()` / `.sha3_256()` / `.sha3_384()` / `.sha3_512()` | `Hash` | SHA-3 family |
+| `b.shake_128()` / `.shake_256()` | `Hash` | length is passed to `.digest(length)` / `.hexdigest(length)` |
+| `b.pbkdf2_hmac(hash_name, salt, iterations, dklen=none)` | `Bytes` | receiver = password |
+| `b.scrypt(*, salt, n, r, p, maxmem=none, dklen=none)` | `Bytes` | receiver = password; defaults `maxmem=0`, `dklen=64` |
+| `Hash.update(data)` | `none` | mutates in place |
+| `Hash.digest(length=none)` | `Bytes` | `length` is required for shake hashes, ignored by the rest |
+| `Hash.hexdigest(length=none)` | `Str` | same shape as `.digest` |
+| `Hash.copy()` | `Hash` | independent clone |
+| `Hash.digest_size` / `.block_size` (property) | `Int` | |
+| `Hash.name` (property) | `Str` | |
+
+`Str` does not carry the shortcut messages — encoding must be explicit (`"abc".encode("utf-8").sha256()`). This mirrors Python's bytes/str split and keeps the encoding step visible.
+
+`hashlib` and `Hash` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/hashlib.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
