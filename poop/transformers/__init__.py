@@ -26,6 +26,7 @@ from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.errno import NAMESPACE as _errno_namespace
 from poop.transformers.float import FloatTransformer
 from poop.transformers.fnmatch import NAMESPACE as _fnmatch_namespace
+from poop.transformers.fractions import NAMESPACE as _fractions_namespace
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
@@ -51,6 +52,7 @@ from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.sqlite3 import NAMESPACE as _sqlite3_namespace
+from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
@@ -147,6 +149,8 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_array_namespace,
     **_weakref_namespace,
     **_enum_namespace,
+    **_fractions_namespace,
+    **_statistics_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
