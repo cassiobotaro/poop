@@ -1225,3 +1225,50 @@ my_object = pickle.load(Path("snapshot.pkl"))
 ```
 
 > `dump` / `load` are path-based — POOP has no file-object abstraction. POOP types round-trip cleanly: `Int` / `Str` / `Float` / `Bytes` / `Boolean` / `NoneClass` and the POOP collections (`List` / `Tuple` / `Dict` / `Set` / `FrozenSet`) are unwrapped to native Python on dump and re-wrapped to POOP on load — callers never see a raw `int` / `str` / `list` / etc. POOP user-class instances pass through unchanged. `Pickler(protocol=none)` is a `Bytes` buffer Pickler with `.dump(obj)`/`.getvalue()`/`.clear_memo()`/`.fast`; `Unpickler(data)` reads from a `Bytes` buffer with `.load()`. Constants `pickle.HIGHEST_PROTOCOL` / `DEFAULT_PROTOCOL` are `Int`. `PickleError` / `PicklingError` / `UnpicklingError` are exposed for `Try.except_`. **Security:** never `loads` pickle data from untrusted sources — it executes arbitrary code on deserialization.
+
+## Compression (`zlib` / `gzip` / `bz2` / `lzma` / `zipfile` / `tarfile` + `compression` umbrella)
+
+```python
+# Python
+import zlib, gzip, bz2, lzma, zipfile, tarfile
+
+raw = zlib.compress(b"hello world")
+zlib.decompress(raw)
+zlib.crc32(b"abc")
+
+with gzip.open("out.gz", "wb") as f:
+    f.write(b"payload")
+
+bz2.compress(b"payload")
+lzma.decompress(lzma.compress(b"payload"))
+
+with zipfile.ZipFile("a.zip", "w") as z:
+    z.writestr("file.txt", b"data")
+    z.extractall("/tmp/out")
+
+with tarfile.open("a.tar.gz", "w:gz") as t:
+    t.add("source", arcname="source")
+```
+
+```python
+# POOP
+raw = zlib.compress(b"hello world")        # Bytes
+zlib.decompress(raw)
+zlib.crc32(b"abc")                          # Int
+
+With.do(gzip.open(Path("out.gz"), "wb"),
+        Block(lambda f: f.write(b"payload")))
+
+bz2.compress(b"payload")
+lzma.decompress(lzma.compress(b"payload"))
+
+With.do(ZipFile(Path("a.zip"), "w"), Block(lambda z: (
+    z.writestr("file.txt", b"data"),
+    z.extractall(Path("/tmp/out")),
+)))
+
+With.do(TarFile.open(Path("a.tar.gz"), "w:gz"),
+        Block(lambda t: t.add(Path("source"), "source")))
+```
+
+> All compression entry points are `Bytes` in / `Bytes` out. File-handle classes (`GzipFile` / `BZ2File` / `LZMAFile`) and archive classes (`ZipFile` / `TarFile`) are `With`-friendly and path-based — POOP has no file-object abstraction. The `compression` umbrella (Python 3.14) re-exports the per-format namespaces under `compression.zlib` / `.gzip` / `.bz2` / `.lzma`. Streaming compressor/decompressor pairs (`Compress` / `Decompress`, `BZ2Compressor` / `BZ2Decompressor`, `LZMACompressor` / `LZMADecompressor`) cover the chunked use cases. `TarFile.extractall` defaults to the safe `filter="data"` (3.14+); callers who want the historical unsafe behavior pass `filter="fully_trusted"` explicitly. `compression.zstd` is out of scope until Python 3.14's API stabilises.

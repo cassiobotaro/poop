@@ -1662,6 +1662,142 @@ POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for 
 
 `pickle`, `Pickler`, and `Unpickler` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/pickle.py` — namespace-only, no AST rewrite.
 
+### zlib + Compress + Decompress — `poop/types/zlib.py` + `poop/transformers/zlib.py`
+
+`zlib` mirrors Python's `zlib` module — DEFLATE compression plus CRC32 / Adler32 checksums. `Compress` and `Decompress` are POOP wrappers around `zlib.compressobj`/`decompressobj` for streaming.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `zlib.compress(data, level=none, wbits=none)` | `Bytes` | default level = `Z_DEFAULT_COMPRESSION` |
+| `zlib.decompress(data, wbits=none, bufsize=none)` | `Bytes` | |
+| `zlib.compressobj(level=none, method=none, wbits=none, memLevel=none, strategy=none, zdict=none)` | `Compress` | |
+| `zlib.decompressobj(wbits=none, zdict=none)` | `Decompress` | |
+| `zlib.adler32(data, value=none)` / `.crc32(data, value=none)` | `Int` | rolling checksums |
+| `zlib.MAX_WBITS` / `DEFLATED` / `DEF_MEM_LEVEL` / `DEF_BUF_SIZE` / `Z_*_*` (class attrs) | `Int` | upstream constants |
+| `zlib.ZLIB_VERSION` (class attr) | Python `str` | banner |
+| `zlib.error` (class attr) | exception class | for `Try.except_` |
+| `Compress.compress(data)` / `.flush(mode=none)` / `.copy()` | `Bytes` / `Compress` | streaming |
+| `Decompress.decompress(data, max_length=none)` / `.flush(length=none)` / `.copy()` | `Bytes` / `Decompress` | |
+| `Decompress.unused_data` / `.unconsumed_tail` / `.eof` | `Bytes` / `Bytes` / `bool` | streaming cursor state |
+
+`zlib`, `Compress`, and `Decompress` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/zlib.py` — namespace-only, no AST rewrite.
+
+### gzip + GzipFile — `poop/types/gzip.py` + `poop/transformers/gzip.py`
+
+`gzip` mirrors Python's `gzip` module — RFC 1952 gzip files built on top of `zlib`. `GzipFile` is a path-based, `With`-friendly file handle.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `gzip.compress(data, compresslevel=none)` | `Bytes` | default `compresslevel=9` |
+| `gzip.decompress(data)` | `Bytes` | |
+| `gzip.open(path, mode=none, compresslevel=none)` | `GzipFile` | path-based; no file-object parameter |
+| `gzip.BadGzipFile` (class attr) | exception class | for `Try.except_` |
+| `GzipFile.read(size=none)` / `.write(data)` | `Bytes` / `Int` | |
+| `GzipFile.seek(offset, whence=none)` / `.tell()` / `.flush()` / `.close()` | mixed | streaming cursor |
+
+`gzip` and `GzipFile` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/gzip.py` — namespace-only, no AST rewrite.
+
+### bz2 + BZ2File + BZ2Compressor + BZ2Decompressor — `poop/types/bz2.py` + `poop/transformers/bz2.py`
+
+`bz2` mirrors Python's `bz2` module — bzip2 compression. Same shape as `gzip` plus a streaming compressor/decompressor pair.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `bz2.compress(data, compresslevel=none)` | `Bytes` | default `compresslevel=9` |
+| `bz2.decompress(data)` | `Bytes` | |
+| `bz2.open(path, mode=none, compresslevel=none)` | `BZ2File` | |
+| `BZ2File.read` / `.write` / `.seek` / `.tell` / `.flush` / `.close` | mixed | as in `GzipFile` |
+| `BZ2Compressor(compresslevel=none)` / `.compress(data)` / `.flush()` | `BZ2Compressor` / `Bytes` | |
+| `BZ2Decompressor()` / `.decompress(data, max_length=none)` | `BZ2Decompressor` / `Bytes` | |
+| `BZ2Decompressor.eof` / `.needs_input` / `.unused_data` | `bool` / `bool` / `Bytes` | streaming state |
+
+`bz2`, `BZ2File`, `BZ2Compressor`, and `BZ2Decompressor` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/bz2.py` — namespace-only, no AST rewrite.
+
+### lzma + LZMAFile + LZMACompressor + LZMADecompressor — `poop/types/lzma.py` + `poop/transformers/lzma.py`
+
+`lzma` mirrors Python's `lzma` module — LZMA / XZ compression. Same shape as `gzip`/`bz2`.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `lzma.compress(data, format=none, check=none, preset=none)` | `Bytes` | |
+| `lzma.decompress(data, format=none, memlimit=none)` | `Bytes` | |
+| `lzma.open(path, mode=none, format=none, check=none, preset=none)` | `LZMAFile` | |
+| `lzma.is_check_supported(check)` | `bool` | |
+| `lzma.FORMAT_XZ` / `FORMAT_ALONE` / `FORMAT_RAW` / `FORMAT_AUTO` (class attrs) | `Int` | container formats |
+| `lzma.CHECK_NONE` / `CHECK_CRC32` / `CHECK_CRC64` / `CHECK_SHA256` / `CHECK_ID_MAX` / `CHECK_UNKNOWN` (class attrs) | `Int` | integrity checks |
+| `lzma.PRESET_DEFAULT` / `PRESET_EXTREME` (class attrs) | `Int` | preset shortcuts |
+| `lzma.LZMAError` (class attr) | exception class | |
+| `LZMACompressor(format=none, check=none, preset=none)` / `.compress(data)` / `.flush()` | `LZMACompressor` / `Bytes` | |
+| `LZMADecompressor(format=none, memlimit=none)` / `.decompress(data, max_length=none)` | `LZMADecompressor` / `Bytes` | |
+| `LZMADecompressor.eof` / `.needs_input` / `.unused_data` / `.check` | `bool` / `bool` / `Bytes` / `Int` | streaming state |
+
+`lzma`, `LZMAFile`, `LZMACompressor`, and `LZMADecompressor` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/lzma.py` — namespace-only, no AST rewrite.
+
+### zipfile + ZipFile + ZipInfo — `poop/types/zipfile.py` + `poop/transformers/zipfile.py`
+
+`zipfile` mirrors Python's `zipfile` module — ZIP archives. Path-based construction; `With`-friendly.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `ZipFile(file, mode=none, compression=none, allowZip64=true, compresslevel=none)` | `ZipFile` | default `compression=ZIP_STORED` |
+| `ZipFile.read(name, pwd=none)` | `Bytes` | password is `Bytes` |
+| `ZipFile.write(filename, arcname=none)` | `none` | from disk |
+| `ZipFile.writestr(name, data)` | `none` | in-memory write |
+| `ZipFile.extract(member, path=none, pwd=none)` | `Path` | extracted path |
+| `ZipFile.extractall(path=none, members=none, pwd=none)` | `none` | members is `List[Str]` |
+| `ZipFile.namelist()` | `List[Str]` | |
+| `ZipFile.infolist()` | `List[ZipInfo]` | |
+| `ZipFile.getinfo(name)` | `ZipInfo` | |
+| `ZipFile.setpassword(pwd)` / `.close()` | `none` | |
+| `ZipFile.testzip()` | `Str` / `none` | name of first bad entry, or `none` |
+| `ZipInfo.filename` / `.file_size` / `.compress_size` / `.compress_type` / `.CRC` (properties) | `Str` / `Int` | |
+| `ZipInfo.date_time` (property) | `Tuple(Int, Int, Int, Int, Int, Int)` | `(year, month, day, hour, minute, second)` |
+| `ZipInfo.is_dir` (property) | `bool` | |
+| `zipfile.ZIP_STORED` / `ZIP_DEFLATED` / `ZIP_BZIP2` / `ZIP_LZMA` (class attrs) | `Int` | |
+| `zipfile.BadZipFile` / `zipfile.LargeZipFile` (class attrs) | exception classes | |
+| `zipfile.is_zipfile(filename)` | `bool` | |
+
+`zipfile`, `ZipFile`, and `ZipInfo` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/zipfile.py` — namespace-only, no AST rewrite.
+
+### tarfile + TarFile + TarInfo — `poop/types/tarfile.py` + `poop/transformers/tarfile.py`
+
+`tarfile` mirrors Python's `tarfile` module — TAR archives with optional gzip/bz2/lzma compression. `TarFile.open(name, mode)` is the canonical entry point; modes follow CPython (`"r:*"`, `"r:gz"`, `"w:bz2"`, `"w:xz"`, etc.).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `TarFile.open(name, mode=none)` (classmethod) | `TarFile` | `mode="r"` default |
+| `TarFile.is_tarfile(name)` (classmethod) | `bool` | |
+| `TarFile.add(name, arcname=none, recursive=true)` | `none` | |
+| `TarFile.extract(member, path=none, *, numeric_owner=false, filter=none)` | `none` | `member` is `Str` or `TarInfo` |
+| `TarFile.extractall(path=none, members=none, *, numeric_owner=false, filter=none)` | `none` | safe `filter="data"` default (3.14+); members is `List[TarInfo]` |
+| `TarFile.getnames()` | `List[Str]` | |
+| `TarFile.getmembers()` | `List[TarInfo]` | |
+| `TarFile.getmember(name)` | `TarInfo` | |
+| `TarFile.list(verbose=true)` | `none` | writes to stdout |
+| `TarFile.close()` | `none` | |
+| `TarInfo.name` / `.linkname` / `.uname` / `.gname` (properties) | `Str` | |
+| `TarInfo.size` / `.mtime` / `.mode` / `.uid` / `.gid` (properties) | `Int` | |
+| `TarInfo.type` (property) | `Bytes` | tar header type byte |
+| `TarInfo.is_file` / `.is_dir` / `.is_symlink` / `.is_link` (properties) | `bool` | |
+| `tarfile.DEFAULT_FORMAT` / `USTAR_FORMAT` / `GNU_FORMAT` / `PAX_FORMAT` (class attrs) | `Int` | |
+| `tarfile.ENCODING` (class attr) | `Str` | default encoding |
+| `tarfile.data_filter` / `tar_filter` / `fully_trusted_filter` (staticmethods) | Python callables | for `filter=` argument |
+| `tarfile.TarError` / `ReadError` / `CompressionError` / `StreamError` / `ExtractError` / `HeaderError` / `FilterError` / `AbsolutePathError` / `OutsideDestinationError` / `SpecialFileError` / `AbsoluteLinkError` / `LinkOutsideDestinationError` (class attrs) | exception classes | |
+
+`tarfile`, `TarFile`, and `TarInfo` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/tarfile.py` — namespace-only, no AST rewrite.
+
+### compression umbrella — `poop/types/compression.py` + `poop/transformers/compression.py`
+
+`compression` mirrors Python 3.14's `compression` umbrella package — attribute access to the individual compression namespaces.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `compression.zlib` / `gzip` / `bz2` / `lzma` (class attrs) | namespace classes | aliases for the standalone lowercase namespaces |
+
+`compression.zstd` is out of scope for v1 until Python 3.14's zstandard API stabilises.
+
+`compression` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/compression.py` — namespace-only, no AST rewrite.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

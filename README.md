@@ -111,6 +111,12 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `tempfile.mkdtemp()` | `tempfile.mkdtemp()` |
 | `shutil.copy(a, b)` | `shutil.copy(a, b)` |
 | `pickle.dumps(obj)` | `pickle.dumps(obj)` |
+| `zlib.compress(b)` | `zlib.compress(b)` |
+| `gzip.compress(b)` | `gzip.compress(b)` |
+| `bz2.compress(b)` | `bz2.compress(b)` |
+| `lzma.compress(b)` | `lzma.compress(b)` |
+| `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
+| `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
