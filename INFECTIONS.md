@@ -1568,6 +1568,74 @@ Incremental encoder/decoder construction, `StreamReader` / `StreamWriter`, and t
 
 `codecs` and `CodecInfo` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/codecs.py` — namespace-only, no AST rewrite.
 
+### filecmp + Dircmp — `poop/types/filecmp.py` + `poop/transformers/filecmp.py`
+
+`filecmp` mirrors Python's `filecmp` module — shallow/metadata or full-content file and directory comparison. `Dircmp` is exposed bare alongside the lowercase namespace.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `filecmp.cmp(f1, f2, shallow=none)` | `Boolean` | default `shallow=true` |
+| `filecmp.cmpfiles(dir1, dir2, common, shallow=none)` | `Tuple(List[Str], List[Str], List[Str])` | `(match, mismatch, errors)` |
+| `filecmp.clear_cache()` | `none` | drops the metadata-based fast-path cache |
+| `filecmp.DEFAULT_IGNORES` (class attr) | `List[Str]` | snapshot of CPython's default-skip list |
+| `Dircmp(a, b, ignore=none, hide=none)` | `Dircmp` | recursive comparison root |
+| `Dircmp.left` / `.right` (properties) | `Str` | the original paths |
+| `Dircmp.left_only` / `.right_only` / `.common` / `.common_dirs` / `.common_files` / `.common_funny` / `.same_files` / `.diff_files` / `.funny_files` (properties) | `List[Str]` | name groupings |
+| `Dircmp.subdirs` (property) | `Dict[Str, Dircmp]` | per-subdir comparison nodes |
+| `Dircmp.report()` / `.report_partial_closure()` / `.report_full_closure()` | `none` | writes the summary to stdout |
+| `Dircmp.report_str()` | `Str` | captures `report()` output instead of printing |
+
+`filecmp` and `Dircmp` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/filecmp.py` — namespace-only, no AST rewrite.
+
+### tempfile + TemporaryFile / NamedTemporaryFile / SpooledTemporaryFile / TemporaryDirectory — `poop/types/tempfile.py` + `poop/transformers/tempfile.py`
+
+`tempfile` mirrors Python's `tempfile` module — secure temp files and directories. Module-level factories return `Path` (or `Tuple(Int, Path)` for `mkstemp` exposing the raw file descriptor); the four temp classes are `With`-friendly and expose minimal binary `.read` / `.write` / `.seek` / `.tell` / `.flush` / `.close` so callers can populate or drain a file without a separate POOP I/O abstraction.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `tempfile.mkstemp(suffix=none, prefix=none, dir=none, text=none)` | `Tuple(Int, Path)` | `(fd, path)` — close `fd` with `os.close` after use |
+| `tempfile.mkdtemp(suffix=none, prefix=none, dir=none)` | `Path` | |
+| `tempfile.gettempdir()` | `Path` | |
+| `tempfile.gettempprefix()` | `Str` | |
+| `tempfile.gettempdirb()` | `Bytes` | |
+| `tempfile.gettempprefixb()` | `Bytes` | |
+| `tempfile.tempdir()` | `Path` / `none` | current search-path override |
+| `tempfile.set_tempdir(path)` | `none` | pass `none` to clear |
+| `TemporaryDirectory(suffix=none, prefix=none, dir=none, ignore_cleanup_errors=none)` | `TemporaryDirectory` | `.name` returns `Path`; `.cleanup()` removes; `With` yields the `Path` |
+| `TemporaryFile(mode=none, suffix=none, prefix=none, dir=none)` | `TemporaryFile` | anonymous file; `With` yields the wrapper |
+| `NamedTemporaryFile(mode=none, …, delete=none)` | `NamedTemporaryFile` | `.name` returns `Path`; default `delete=true` |
+| `SpooledTemporaryFile(max_size=none, mode=none, …)` | `SpooledTemporaryFile` | `.rollover()` forces flush to disk |
+| `_TempFileBase.write(data)` / `.read(size=none)` / `.seek(offset, whence=none)` / `.tell()` / `.flush()` / `.close()` | varies | binary by default; pass `mode=Str("w+")` for text |
+
+The private `_RandomNameSequence` class is out of scope for v1.
+
+`tempfile`, `TemporaryFile`, `NamedTemporaryFile`, `SpooledTemporaryFile`, and `TemporaryDirectory` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/tempfile.py` — namespace-only, no AST rewrite.
+
+### shutil — `poop/types/shutil.py` + `poop/transformers/shutil.py`
+
+`shutil` mirrors Python's `shutil` module — high-level file operations: copy/move/remove trees, archive create/extract, disk and terminal info. Paths accept either `Path` or `Str` everywhere; return values are `Path` when CPython returns a path-like.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `shutil.copy(src, dst, follow_symlinks=none)` / `.copy2(...)` / `.copyfile(...)` | `Path` | metadata-aware variants follow CPython |
+| `shutil.copytree(src, dst, symlinks=none, ignore_dangling_symlinks=none, dirs_exist_ok=none)` | `Path` | recursive |
+| `shutil.copymode(src, dst, follow_symlinks=none)` / `.copystat(...)` | `none` | metadata-only copies |
+| `shutil.move(src, dst)` | `Path` | |
+| `shutil.rmtree(path, ignore_errors=none)` | `none` | recursive remove |
+| `shutil.which(cmd, mode=none, path=none)` | `Path` / `none` | locate executable on `PATH` |
+| `shutil.make_archive(base_name, format, root_dir=none, base_dir=none)` | `Path` | `format` is `"zip"`, `"tar"`, `"gztar"`, …  |
+| `shutil.unpack_archive(filename, extract_dir=none, format=none)` | `none` | |
+| `shutil.get_archive_formats()` | `List[Tuple(Str, Str)]` | `(name, description)` |
+| `shutil.get_unpack_formats()` | `List[Tuple(Str, List[Str], Str)]` | `(name, extensions, description)` |
+| `shutil.disk_usage(path)` | `Tuple(Int, Int, Int)` | `(total, used, free)` in bytes |
+| `shutil.get_terminal_size(fallback=none)` | `Tuple(Int, Int)` | `(columns, lines)` |
+| `shutil.chown(path, user=none, group=none)` | `none` | |
+| `shutil.Error` / `.SameFileError` (class attrs) | exception class | for `Try.except_` |
+
+The `ignore_patterns` factory and the `copy_function` callback argument plumbing are out of scope for v1 — defer until POOP has a Block↔callable bridge.
+
+`shutil` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/shutil.py` — namespace-only, no AST rewrite.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

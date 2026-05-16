@@ -107,6 +107,9 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `statistics.NormalDist(0, 1).cdf(0)` | `NormalDist(0, 1).cdf(0)` |
 | `struct.pack(">I", 42)` | `struct.pack(">I", 42)` |
 | `codecs.encode(s, "rot_13")` | `codecs.encode(s, "rot_13")` |
+| `filecmp.cmp(a, b)` | `filecmp.cmp(a, b)` |
+| `tempfile.mkdtemp()` | `tempfile.mkdtemp()` |
+| `shutil.copy(a, b)` | `shutil.copy(a, b)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

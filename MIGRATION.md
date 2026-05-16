@@ -1118,3 +1118,83 @@ info = codecs.lookup("utf-8")              # CodecInfo
 ```
 
 > `encode` and `decode` are polymorphic: text codecs return `Str`, binary codecs return `Bytes`. BOM constants (`BOM_UTF8`, `BOM_UTF16_LE`, …) live as class attributes on the `codecs` namespace. `CodecInfo.encode` / `.decode` mirror CPython's `(result, length_consumed)` tuple. Incremental encoder/decoder construction, `StreamReader` / `StreamWriter`, and `register` / `register_error` are out of scope — pair with future streaming I/O.
+
+## File and directory comparison (`filecmp` module + `Dircmp` class)
+
+```python
+# Python
+import filecmp
+
+filecmp.cmp("a.txt", "b.txt")
+match, mismatch, errors = filecmp.cmpfiles("dir1", "dir2", ["a", "b"])
+dc = filecmp.dircmp("dir1", "dir2")
+dc.report()
+```
+
+```python
+# POOP
+filecmp.cmp(Path("a.txt"), Path("b.txt"))
+result = filecmp.cmpfiles(Path("dir1"), Path("dir2"), ["a", "b"])
+dc = Dircmp(Path("dir1"), Path("dir2"))
+dc.report()
+```
+
+> `Path` and `Str` are interchangeable as filesystem inputs. `cmpfiles` returns a single `Tuple(List[Str], List[Str], List[Str])` for `(match, mismatch, errors)`. `Dircmp` exposes the categorized name groups (`left_only`, `right_only`, `common`, `diff_files`, `same_files`, `funny_files`, etc.) as properties; `.subdirs` returns `Dict[Str, Dircmp]` for recursive walks. Use `.report_str()` to capture the textual summary as a `Str` instead of writing to stdout.
+
+## Temporary files and directories (`tempfile` module + temp classes)
+
+```python
+# Python
+import tempfile
+
+with tempfile.TemporaryDirectory() as d:
+    ...
+
+with tempfile.NamedTemporaryFile() as f:
+    f.write(b"data")
+    name = f.name
+
+fd, path = tempfile.mkstemp()
+```
+
+```python
+# POOP
+With.do(TemporaryDirectory(), Block(lambda d: ...))
+
+ntf = NamedTemporaryFile()
+ntf.write(b"data")
+name = ntf.name
+ntf.close()
+
+result = tempfile.mkstemp()  # Tuple(Int(fd), Path)
+```
+
+> `TemporaryDirectory` / `TemporaryFile` / `NamedTemporaryFile` / `SpooledTemporaryFile` are bare alongside the `tempfile` namespace. Each is a context manager and exposes the minimal binary surface (`.read` / `.write` / `.seek` / `.tell` / `.flush` / `.close`) so callers can populate or drain the file without a separate POOP I/O abstraction. `NamedTemporaryFile.name` and `TemporaryDirectory.name` return `Path`. `tempfile.tempdir()` reads the current search-path override; `tempfile.set_tempdir(path)` mutates it (pass `none` to clear).
+
+## High-level file operations (`shutil` module)
+
+```python
+# Python
+import shutil
+
+shutil.copy("src.txt", "dst.txt")
+shutil.copytree("src_dir", "dst_dir")
+shutil.move("a", "b")
+shutil.rmtree("doomed_dir")
+where = shutil.which("git")
+total, used, free = shutil.disk_usage(".")
+shutil.make_archive("bundle", "zip", root_dir=".", base_dir="src")
+```
+
+```python
+# POOP
+shutil.copy(Path("src.txt"), Path("dst.txt"))
+shutil.copytree(Path("src_dir"), Path("dst_dir"))
+shutil.move(Path("a"), Path("b"))
+shutil.rmtree(Path("doomed_dir"))
+where = shutil.which("git")
+usage = shutil.disk_usage(".")  # Tuple(Int, Int, Int)
+shutil.make_archive(Path("bundle"), "zip", root_dir=Path("."), base_dir="src")
+```
+
+> `Path` and `Str` are interchangeable everywhere `shutil` takes a filesystem location. Return values are `Path` when CPython returns a path-like. `shutil.which` returns `Path` or `none`. `shutil.disk_usage` returns `Tuple(total, used, free)` of `Int`; `shutil.get_terminal_size` returns `Tuple(columns, lines)`. Archive helpers (`make_archive`, `unpack_archive`, `get_archive_formats`, `get_unpack_formats`) all wrap the CPython surface. `shutil.Error` and `shutil.SameFileError` are exposed as class attributes for use with `Try.except_`. The `ignore_patterns` factory and `copy_function` callback argument plumbing are out of scope for v1 — defer until POOP has a Block↔callable bridge.

@@ -1,83 +1,5 @@
 # Proposals
 
-## Expose `filecmp` as POOP messages
-
-Python's `filecmp` compares files and directory trees: shallow
-metadata or full content comparison.
-
-**Proposal — `filecmp` (lowercase module) + `dircmp` class:**
-
-1. **File comparison:**
-   `filecmp.cmp(f1, f2, shallow=True) -> Boolean`,
-   `filecmp.cmpfiles(dir1, dir2, common, shallow=True) -> Tuple[List, List, List]`.
-2. **`dircmp` class** for recursive directory comparison:
-   `dircmp(a, b, ignore=None, hide=None)` with attributes
-   `.left_only`, `.right_only`, `.common`, `.diff_files`,
-   `.same_files`, `.funny_files`, `.subdirs`, plus
-   `.report()`/`.report_partial_closure()`/`.report_full_closure()`.
-3. **`filecmp.clear_cache() -> NoneClass`** — drop comparison cache.
-
-**Type discipline:** `Path` for inputs, `Boolean` for equality,
-`List[Str]` for file-name groupings.
-
-## Expose `tempfile` as POOP messages
-
-Python's `tempfile` creates secure temporary files/directories.
-Unreachable from POOP today and a common need for tests and
-intermediate processing.
-
-**Proposal — `tempfile` (lowercase module) + class set:**
-
-1. **Module-level shortcuts:**
-   `tempfile.mkstemp(suffix=None, prefix=None, dir=None, text=False) -> Tuple[Int, Path]`,
-   `tempfile.mkdtemp(suffix=None, prefix=None, dir=None) -> Path`,
-   `tempfile.gettempdir() -> Path`,
-   `tempfile.gettempprefix() -> Str`,
-   `tempfile.gettempdirb() -> Bytes`.
-2. **`TemporaryFile` / `NamedTemporaryFile` / `SpooledTemporaryFile`
-   / `TemporaryDirectory`** classes — context-manager friendly via
-   `With`. Properties expose `.name -> Path`.
-3. **`tempfile.tempdir`** — module-level mutable default. Read/write.
-
-**Type discipline:** `Path` for all filesystem paths, `Str` for
-prefixes, `Int` for file descriptors.
-
-**Out of scope (for v1):** `_RandomNameSequence` internal class.
-
-## Expose `shutil` as POOP messages
-
-Python's `shutil` is high-level file operations: copy, move, remove
-trees, archive create/extract, disk usage, terminal size.
-
-**Proposal — `shutil` (lowercase module) namespace:**
-
-1. **Copy:** `shutil.copy(src, dst, follow_symlinks=True) -> Path`,
-   `copy2(src, dst, ...) -> Path`,
-   `copyfile(src, dst, ...)`,
-   `copytree(src, dst, symlinks=False, ignore=None, copy_function=copy2, ignore_dangling_symlinks=False, dirs_exist_ok=False) -> Path`,
-   `copymode(src, dst)`, `copystat(src, dst)`, `copyfileobj(...)`.
-2. **Move/remove:**
-   `shutil.move(src, dst, copy_function=copy2) -> Path`,
-   `shutil.rmtree(path, ignore_errors=False, onexc=None) -> NoneClass`,
-   `shutil.which(cmd, mode=os.F_OK | os.X_OK, path=None) -> Path | NoneClass`.
-3. **Archives:**
-   `shutil.make_archive(base_name, format, root_dir=None, base_dir=None, ...) -> Path`,
-   `shutil.unpack_archive(filename, extract_dir=None, format=None, ...) -> NoneClass`,
-   `shutil.get_archive_formats() -> List[Tuple]`,
-   `shutil.get_unpack_formats() -> List[Tuple]`,
-   `shutil.register_archive_format(...)`, `register_unpack_format(...)`.
-4. **Disk/terminal info:**
-   `shutil.disk_usage(path) -> Tuple[Int, Int, Int]` (total/used/free),
-   `shutil.get_terminal_size(fallback=(80, 24)) -> Tuple[Int, Int]`,
-   `shutil.chown(path, user=None, group=None) -> NoneClass`.
-
-**Type discipline:** `Path` end-to-end; `Bytes` for binary copy
-helpers; `Int` for sizes.
-
-**Out of scope (for v1):** `ignore_patterns` factory and the
-`copy_function` callback argument plumbing — defer to a
-followup proposal.
-
 ## Expose `pickle` as POOP messages
 
 Python's `pickle` serialises arbitrary objects to bytes. Useful for
@@ -1477,12 +1399,12 @@ each annotated with one of:
 | `os.path` / `posixpath` / `ntpath` / `genericpath` / `nturl2path` | covered | Reachable via `Path` |
 | `fileinput` | out | Niche CLI helper |
 | `stat` | out | Low-level constants — `Path` already exposes the queries |
-| `filecmp` | proposed | See proposal above |
-| `tempfile` | proposed | See proposal above |
+| `filecmp` | covered | `filecmp` + `Dircmp` (shipped in this PR) |
+| `tempfile` | covered | `tempfile` + `TemporaryFile` + `NamedTemporaryFile` + `SpooledTemporaryFile` + `TemporaryDirectory` (shipped in this PR) |
 | `glob` | covered | `glob` namespace + `GlobIter` (shipped in v0.17.0) |
 | `fnmatch` | covered | `fnmatch` namespace (shipped in v0.18.0) |
 | `linecache` | out | Internal traceback helper |
-| `shutil` | proposed | See proposal above |
+| `shutil` | covered | `shutil` namespace (shipped in this PR) |
 
 ### Data Persistence
 
