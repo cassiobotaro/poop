@@ -42,6 +42,7 @@ from poop.transformers.hmac import NAMESPACE as _hmac_namespace
 from poop.transformers.int import IntTransformer
 from poop.transformers.json import NAMESPACE as _json_namespace
 from poop.transformers.list import ListTransformer
+from poop.transformers.locale import NAMESPACE as _locale_namespace
 from poop.transformers.lzma import NAMESPACE as _lzma_namespace
 from poop.transformers.math import NAMESPACE as _math_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
@@ -177,6 +178,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_zipfile_namespace,
     **_tarfile_namespace,
     **_compression_namespace,
+    **_locale_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
