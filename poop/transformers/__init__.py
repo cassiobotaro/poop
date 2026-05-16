@@ -13,10 +13,12 @@ from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
 from poop.transformers.bytes import BytesTransformer
+from poop.transformers.bz2 import NAMESPACE as _bz2_namespace
 from poop.transformers.calendar import NAMESPACE as _calendar_namespace
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.codecs import NAMESPACE as _codecs_namespace
 from poop.transformers.complex import ComplexTransformer
+from poop.transformers.compression import NAMESPACE as _compression_namespace
 from poop.transformers.copy import NAMESPACE as _copy_namespace
 from poop.transformers.datetime import NAMESPACE as _datetime_namespace
 from poop.transformers.decimal import NAMESPACE as _decimal_namespace
@@ -33,12 +35,14 @@ from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
 from poop.transformers.graphlib import NAMESPACE as _graphlib_namespace
+from poop.transformers.gzip import NAMESPACE as _gzip_namespace
 from poop.transformers.hashlib import NAMESPACE as _hashlib_namespace
 from poop.transformers.heapq import NAMESPACE as _heapq_namespace
 from poop.transformers.hmac import NAMESPACE as _hmac_namespace
 from poop.transformers.int import IntTransformer
 from poop.transformers.json import NAMESPACE as _json_namespace
 from poop.transformers.list import ListTransformer
+from poop.transformers.lzma import NAMESPACE as _lzma_namespace
 from poop.transformers.math import NAMESPACE as _math_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.mimetypes import NAMESPACE as _mimetypes_namespace
@@ -60,6 +64,7 @@ from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.struct import NAMESPACE as _struct_namespace
+from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.tempfile import NAMESPACE as _tempfile_namespace
 from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
 from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
@@ -71,6 +76,8 @@ from poop.transformers.weakref import NAMESPACE as _weakref_namespace
 from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.zip import ZipTransformer
+from poop.transformers.zipfile import NAMESPACE as _zipfile_namespace
+from poop.transformers.zlib import NAMESPACE as _zlib_namespace
 from poop.transformers.zoneinfo import NAMESPACE as _zoneinfo_namespace
 
 DEFAULT_TRANSFORMERS: _list[Transformer] = [
@@ -163,6 +170,13 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_tempfile_namespace,
     **_shutil_namespace,
     **_pickle_namespace,
+    **_zlib_namespace,
+    **_gzip_namespace,
+    **_bz2_namespace,
+    **_lzma_namespace,
+    **_zipfile_namespace,
+    **_tarfile_namespace,
+    **_compression_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
