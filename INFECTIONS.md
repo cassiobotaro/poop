@@ -1636,6 +1636,32 @@ The `ignore_patterns` factory and the `copy_function` callback argument plumbing
 
 `shutil` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/shutil.py` — namespace-only, no AST rewrite.
 
+### pickle + Pickler + Unpickler — `poop/types/pickle.py` + `poop/transformers/pickle.py`
+
+`pickle` mirrors Python's `pickle` module — object serialization to `Bytes`. The namespace adopts the same round-trip discipline as `json`: POOP primitive wrappers (`Int` / `Str` / `Float` / `Bytes` / `Boolean` / `NoneClass`) and POOP collections (`List` / `Tuple` / `Dict` / `Set` / `FrozenSet`) are unwrapped to their Python equivalents on dump and re-wrapped on load, so callers never see a raw Python primitive on the way out. POOP user-class instances pass through unchanged. `dump` / `load` are path-based per POOP's file-I/O convention (no `open` in POOP).
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `pickle.dumps(obj, protocol=none)` | `Bytes` | `protocol` defaults to `pickle.DEFAULT_PROTOCOL` |
+| `pickle.loads(data)` | wrapped POOP value | inverse of `dumps` |
+| `pickle.dump(obj, path, protocol=none)` | `none` | path-based; no file-object parameter |
+| `pickle.load(path)` | wrapped POOP value | |
+| `pickle.HIGHEST_PROTOCOL` / `pickle.DEFAULT_PROTOCOL` (class attrs) | `Int` | |
+| `pickle.PickleError` / `pickle.PicklingError` / `pickle.UnpicklingError` (class attrs) | exception classes | for `Try.except_` |
+| `Pickler(protocol=none)` | `Pickler` | in-memory buffer Pickler |
+| `Pickler.dump(obj)` | `none` | accumulates into the internal buffer |
+| `Pickler.getvalue()` | `Bytes` | the accumulated stream |
+| `Pickler.clear_memo()` | `none` | |
+| `Pickler.fast` (property) | `Boolean` | mirrors the deprecated upstream knob |
+| `Unpickler(data)` | `Unpickler` | wraps a `Bytes` buffer |
+| `Unpickler.load()` | wrapped POOP value | reads the next pickled object |
+
+POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for pretty printing, which would otherwise make them unpicklable by reference; the `_unwrap` / `_wrap` boundary sidesteps that entirely. `pickletools` (introspection of pickle streams) and the `__reduce__` protocol hook are out of scope for v1 — POOP user classes can implement `__reduce__`, but the protocol isn't formally documented here.
+
+**Security note:** `pickle.loads` / `Unpickler.load` execute arbitrary code embedded in the byte stream. Never load pickles from untrusted sources.
+
+`pickle`, `Pickler`, and `Unpickler` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/pickle.py` — namespace-only, no AST rewrite.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

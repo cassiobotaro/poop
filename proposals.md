@@ -1,37 +1,5 @@
 # Proposals
 
-## Expose `pickle` as POOP messages
-
-Python's `pickle` serialises arbitrary objects to bytes. Useful for
-caches and inter-process state; comes with the standard security
-warnings about loading untrusted pickles.
-
-**Proposal — `pickle` (lowercase module) + `Pickler`/`Unpickler` classes:**
-
-1. **Module-level shortcuts:**
-   `pickle.dumps(obj, protocol=None, *, fix_imports=True) -> Bytes`,
-   `pickle.loads(data, *, fix_imports=True, encoding='ASCII', errors='strict', buffers=None) -> Object`.
-2. **`Path`-based read/write helpers** (POOP convention, not in
-   Python proper):
-   `pickle.dump(obj, path, ...)`, `pickle.load(path, ...)` —
-   path-based instead of file-object-based.
-3. **`Pickler` / `Unpickler` classes** for streaming and
-   customising via `persistent_id`/`persistent_load` hooks.
-4. **Constants:** `pickle.HIGHEST_PROTOCOL`, `DEFAULT_PROTOCOL`,
-   `PROTOCOL_*` levels.
-5. **`PickleError`, `PicklingError`, `UnpicklingError`** — POOP
-   error hierarchy.
-
-**Type discipline:** `Bytes` for serialised form, `Object` for
-deserialised (true to Python's dynamic-typed `loads`).
-
-**Out of scope (for v1):**
-
-- `pickletools` (introspection of pickle streams) — pairs with the
-  introspection ban.
-- `__reduce__` protocol hook — POOP user classes can implement it,
-  but the protocol isn't formally documented here.
-
 ## Expose `zlib` as POOP messages
 
 Python's `zlib` provides DEFLATE compression and CRC32/Adler32
@@ -1410,7 +1378,7 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `pickle` | proposed | See proposal above |
+| `pickle` | covered | `pickle` + `Pickler` + `Unpickler` (shipped in this PR) |
 | `copyreg` | out | Internal hook for `pickle` |
 | `shelve` | out | Depends on `dbm` |
 | `marshal` | out | CPython internal |

@@ -110,6 +110,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `filecmp.cmp(a, b)` | `filecmp.cmp(a, b)` |
 | `tempfile.mkdtemp()` | `tempfile.mkdtemp()` |
 | `shutil.copy(a, b)` | `shutil.copy(a, b)` |
+| `pickle.dumps(obj)` | `pickle.dumps(obj)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

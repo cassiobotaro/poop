@@ -1198,3 +1198,30 @@ shutil.make_archive(Path("bundle"), "zip", root_dir=Path("."), base_dir="src")
 ```
 
 > `Path` and `Str` are interchangeable everywhere `shutil` takes a filesystem location. Return values are `Path` when CPython returns a path-like. `shutil.which` returns `Path` or `none`. `shutil.disk_usage` returns `Tuple(total, used, free)` of `Int`; `shutil.get_terminal_size` returns `Tuple(columns, lines)`. Archive helpers (`make_archive`, `unpack_archive`, `get_archive_formats`, `get_unpack_formats`) all wrap the CPython surface. `shutil.Error` and `shutil.SameFileError` are exposed as class attributes for use with `Try.except_`. The `ignore_patterns` factory and `copy_function` callback argument plumbing are out of scope for v1 — defer until POOP has a Block↔callable bridge.
+
+## Pickle (`pickle` module + `Pickler` / `Unpickler` classes)
+
+```python
+# Python
+import pickle
+
+raw = pickle.dumps({"a": [1, 2, 3]})
+data = pickle.loads(raw)
+
+with open("snapshot.pkl", "wb") as f:
+    pickle.dump(my_object, f)
+
+with open("snapshot.pkl", "rb") as f:
+    my_object = pickle.load(f)
+```
+
+```python
+# POOP
+raw = pickle.dumps({"a": [1, 2, 3]})       # Bytes
+data = pickle.loads(raw)                    # Dict[Str, List[Int]]
+
+pickle.dump(my_object, Path("snapshot.pkl"))
+my_object = pickle.load(Path("snapshot.pkl"))
+```
+
+> `dump` / `load` are path-based — POOP has no file-object abstraction. POOP types round-trip cleanly: `Int` / `Str` / `Float` / `Bytes` / `Boolean` / `NoneClass` and the POOP collections (`List` / `Tuple` / `Dict` / `Set` / `FrozenSet`) are unwrapped to native Python on dump and re-wrapped to POOP on load — callers never see a raw `int` / `str` / `list` / etc. POOP user-class instances pass through unchanged. `Pickler(protocol=none)` is a `Bytes` buffer Pickler with `.dump(obj)`/`.getvalue()`/`.clear_memo()`/`.fast`; `Unpickler(data)` reads from a `Bytes` buffer with `.load()`. Constants `pickle.HIGHEST_PROTOCOL` / `DEFAULT_PROTOCOL` are `Int`. `PickleError` / `PicklingError` / `UnpicklingError` are exposed for `Try.except_`. **Security:** never `loads` pickle data from untrusted sources — it executes arbitrary code on deserialization.
