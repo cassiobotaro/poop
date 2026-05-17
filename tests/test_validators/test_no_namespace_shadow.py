@@ -21,43 +21,43 @@ def test_assign_to_math_raises() -> None:
 
 def test_assign_to_random_raises() -> None:
     tree = ast.parse("random = 42")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 
 def test_assign_to_Random_class_raises() -> None:
     tree = ast.parse("Random = 42")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 
 def test_assign_to_Try_raises() -> None:
     tree = ast.parse("Try = 42")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 
 def test_assign_to_With_raises() -> None:
     tree = ast.parse("With = 42")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 
 def test_assign_to_Path_raises() -> None:
     tree = ast.parse("Path = 42")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 
 def test_annotated_assignment_raises() -> None:
     tree = ast.parse("math: int = 42")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 
 def test_augmented_assignment_raises() -> None:
     tree = ast.parse("math += 1")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 
@@ -70,7 +70,7 @@ def test_tuple_unpacking_with_protected_name_raises() -> None:
 
 def test_starred_unpacking_with_protected_name_raises() -> None:
     tree = ast.parse("a, *math = [1, 2, 3]")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 
@@ -85,7 +85,7 @@ def test_assignment_inside_method_also_raises() -> None:
     # Even local shadowing is caught — the user would hit
     # `math.sqrt(...)` failing in confusing ways otherwise.
     tree = ast.parse("class Foo:\n    def m(self):\n        math = 42")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="POOP namespace"):
         NoNamespaceShadowValidator().validate(tree)
 
 

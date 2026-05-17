@@ -21,7 +21,7 @@ def test_assert_raises_validation_error() -> None:
 
 def test_assert_with_message_raises_validation_error() -> None:
     tree = ast.parse("assert x > 0, 'must be positive'")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="assert_"):
         NoAssertValidator().validate(tree)
 
 
@@ -36,5 +36,5 @@ def test_validation_error_carries_line_number() -> None:
 def test_assert_inside_function_is_rejected() -> None:
     source = "def f():\n    assert True"
     tree = ast.parse(source)
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="assert_"):
         NoAssertValidator().validate(tree)

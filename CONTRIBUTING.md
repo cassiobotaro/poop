@@ -213,6 +213,12 @@ the changelog.
   bounds, `__radd__` requirements for `builtins.sum`).
 - `examples/` is excluded from `ty` and from ruff `F821` because example files
   rely on names injected at runtime (`True` → POOP boolean, etc.).
+- To measure coverage of a single module in isolation, override the project-wide
+  `--cov=poop` from `addopts`:
+  `uv run pytest tests/test_types/test_X.py --cov-config=/dev/null --cov=poop.types.X`.
+  The default `addopts` reports a TOTAL percentage averaged across every module
+  in `poop`, so a single-file run shows ~48% TOTAL even when the module itself
+  is 99% covered.
 
 ## License
 

@@ -2,6 +2,7 @@ from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.byte_array_iterator import ByteArrayIterator
@@ -143,7 +144,6 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         width: Int,
         fillchar: ByteArray | NoneClass | None = None,
     ) -> ByteArray:
-        from poop.types._unwrap import _unwrap
 
         fill = _unwrap(fillchar, None)
         if fill is None:
@@ -157,7 +157,6 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return true if self._value.endswith(bytes(suffix._value)) else false
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> ByteArray:
-        from poop.types._unwrap import _unwrap
 
         size = _unwrap(tabsize, None)
         if size is None:
@@ -203,7 +202,6 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         width: Int,
         fillchar: ByteArray | NoneClass | None = None,
     ) -> ByteArray:
-        from poop.types._unwrap import _unwrap
 
         fill = _unwrap(fillchar, None)
         if fill is None:
@@ -214,7 +212,6 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return ByteArray(self._value.lower())
 
     def lstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
-        from poop.types._unwrap import _unwrap
 
         return ByteArray(self._value.lstrip(_unwrap(chars, None)))
 
@@ -241,7 +238,6 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         width: Int,
         fillchar: ByteArray | NoneClass | None = None,
     ) -> ByteArray:
-        from poop.types._unwrap import _unwrap
 
         fill = _unwrap(fillchar, None)
         if fill is None:
@@ -252,17 +248,14 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return Tuple(*[ByteArray(p) for p in self._value.rpartition(sep._value)])
 
     def rsplit(self, sep: ByteArray | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap
 
         return List(*[ByteArray(p) for p in self._value.rsplit(_unwrap(sep, None))])
 
     def rstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
-        from poop.types._unwrap import _unwrap
 
         return ByteArray(self._value.rstrip(_unwrap(chars, None)))
 
     def split(self, sep: ByteArray | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap
 
         return List(*[ByteArray(p) for p in self._value.split(_unwrap(sep, None))])
 
@@ -273,7 +266,6 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return true if self._value.startswith(bytes(prefix._value)) else false
 
     def strip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
-        from poop.types._unwrap import _unwrap
 
         return ByteArray(self._value.strip(_unwrap(chars, None)))
 

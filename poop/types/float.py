@@ -1,6 +1,7 @@
 import math
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
@@ -117,7 +118,6 @@ class Float(_ValueEqMixin, Object):
         return Int(math.trunc(self._value))
 
     def __round__(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
-        from poop.types._unwrap import _unwrap
         from poop.types.int import Int
 
         n = _unwrap(ndigits, None)

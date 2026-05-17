@@ -30,7 +30,7 @@ def test_unary_minus_on_variable_raises() -> None:
 
 def test_unary_minus_on_call_raises() -> None:
     tree = ast.parse("x = -foo()")
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=r"\.negated"):
         NoUnaryMinusValidator().validate(tree)
 
 
@@ -44,7 +44,7 @@ def test_validation_error_carries_line_number() -> None:
 def test_nested_unary_minus_inside_class_is_rejected() -> None:
     source = "class Foo:\n    def bar(self):\n        return -self.x"
     tree = ast.parse(source)
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=r"\.negated"):
         NoUnaryMinusValidator().validate(tree)
 
 
