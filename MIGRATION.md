@@ -1511,3 +1511,49 @@ asyncio.run(asyncio.sleep(1)).print()
 ```
 
 > POOP exposes `signal.signal`/`getsignal`/`strsignal`/`raise_signal`/`pthread_kill`/`sigpending` plus the common signal constants (`SIGINT`, `SIGTERM`, `SIGABRT`, `SIGCHLD`, `SIGUSR1`, …). Platform-specific constants bind to `none` rather than raising on import. The `Socket` class mirrors `socket.socket` directly — `bind`/`listen`/`accept`/`connect`/`send`/`sendall`/`recv`/`sendto`/`recvfrom`/`shutdown`/`close`, plus the address-resolution module helpers (`gethostbyname`, `gethostbyname_ex`, `getfqdn`, `getservbyname/port`, `inet_aton/ntoa`, `inet_pton/ntop`) and the high-level `create_connection`/`create_server` factories. POOP `Socket` works as a `With` context manager. `ssl.create_default_context()` returns an `SSLContext`; mutators are method-based (`set_verify_mode`, `set_check_hostname`, `set_ciphers`) to keep POOP's no-property-mutation discipline. `ssl.SSLError` and its subclasses are catchable via `Try.except_`. `asyncio` is the smallest of the four — POOP **forbids `async def` syntax** (`no_async` validator), so `async def my_coro(): ...` won't parse. Coroutines must be defined on the Python side (or composed from `asyncio.sleep`/`asyncio.gather`/`asyncio.shield`) and handed to `asyncio.run`. Use `Future.done/cancelled/result/exception/cancel` to inspect tasks.
+
+## Generic OS (`os`, `io`, `time`, `logging`, `platform`)
+
+```python
+# Python
+import os, io, time, logging, platform
+
+random_bytes = os.urandom(16)
+pid = os.getpid()
+cwd = os.getcwd()
+home = os.environ.get("HOME")
+
+buf = io.StringIO()
+buf.write("hello")
+buf.getvalue()
+
+t = time.time()
+time.sleep(0.1)
+
+logger = logging.getLogger("app")
+logger.info("hi")
+
+system = platform.system()
+```
+
+```python
+# POOP
+random_bytes = os.urandom(16)             # Bytes
+pid = process.pid()                        # Int
+cwd = process.getcwd()                     # Path
+home = env.get("HOME")                     # Str | none
+
+buf = StringIO()
+buf.write("hello")
+buf.getvalue().print()                     # Str
+
+t = time.time()                            # Float
+time.sleep(0.1)
+
+logger = logging.getLogger("app")
+logger.info("hi")
+
+platform.system().print()                  # Str
+```
+
+> POOP splits Python's `os` into three focused namespaces: `os` itself (random bytes, CPU counts, load average, low-level flag constants like `O_RDONLY`/`F_OK`, and the platform separators `sep`/`linesep`/`pathsep`/`devnull`), `process` (the current-process state — `pid`/`ppid`/`uid`/`gid`/`euid`/`egid`/`umask`/`chdir`/`getcwd`/`kill`), and `env` (a thin POOP-flavoured `os.environ` — `get`/`set`/`unset`/`has`/`keys`/`values`/`as_dict`). `os.path` is **intentionally absent**: every operation is reachable through POOP's `Path` mirror. `io` exposes the in-memory buffers `StringIO` / `BytesIO` (both work as `With` context managers) plus the seek constants — disk I/O continues to go through `Path.read_text`/`write_text`/`read_bytes`/`write_bytes`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API in both seconds (`Float`) and nanoseconds (`Int`), plus parse/format helpers and `StructTime`. `logging` is the canonical Python `Logger`/`Handler`/`Formatter` triad — `set*` accessors return `none`, mutable booleans use `set_propagate`. `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment metadata; `Uname` exposes the standard six-field record.

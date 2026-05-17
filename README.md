@@ -146,6 +146,12 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `socket.socket(...)` | `Socket(...)` |
 | `ssl.create_default_context()` | `ssl.create_default_context()` |
 | `asyncio.run(coro)` | `asyncio.run(coro)` |
+| `os.getpid()` | `process.pid()` |
+| `os.environ["HOME"]` | `env.get("HOME")` |
+| `io.StringIO(...)` | `StringIO(...)` |
+| `time.time()` | `time.time()` |
+| `logging.getLogger(...)` | `logging.getLogger(...)` |
+| `platform.system()` | `platform.system()` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

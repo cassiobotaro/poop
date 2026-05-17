@@ -2226,6 +2226,66 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 
 `signal`/`socket`/`Socket`/`ssl`/`SSLContext`/`asyncio`/`Future` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{signal,socket,ssl,asyncio}.py` — namespace-only, no AST rewrite. **POOP forbids `async def` source** (the `no_async` validator rejects async function definitions), so coroutines for `asyncio.run` are constructed in Python — the namespace is most useful when POOP code is interoperating with an async Python library rather than defining new coroutines itself.
 
+### os + Process + Env, io + StringIO + BytesIO, time + StructTime, logging + Logger + Handler + Formatter, platform + Uname — `poop/types/{os,io,time,logging,platform}.py`
+
+Five generic-OS namespaces shipped together. `os` is split into three focused namespaces: `os` itself (random bytes, CPU counts, load average, low-level flags and separators), `process` (pid/ppid/uid/gid/euid/egid/umask/chdir/getcwd/kill), and `env` (`environ` access via `get`/`set`/`unset`/`has`/`keys`/`values`/`as_dict`). Most filesystem ops continue to live on `Path`; `os.path` is intentionally absent. `io` exposes the in-memory buffers `StringIO` / `BytesIO` plus the seek constants — disk I/O still goes through `Path.read_*` / `write_*`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API plus parse/format helpers; `StructTime` wraps `time.struct_time`. `logging` exposes the canonical xUnit-style framework (Logger + Handler + Formatter) — `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment info and exposes `Uname` as a POOP record.
+| Operation | Returns | Notes |
+|---|---|---|
+| `os.urandom(n)` | `Bytes` | |
+| `os.cpu_count()` / `.process_cpu_count()` | `Int` / `none` | |
+| `os.getloadavg()` | `Tuple(Float, Float, Float)` | Unix only |
+| `os.F_OK` / `R_OK` / `W_OK` / `X_OK` / `O_RDONLY` / `O_WRONLY` / `O_RDWR` / `O_APPEND` / `O_CREAT` / `O_TRUNC` / `O_EXCL` (class attrs) | `Int` | |
+| `os.sep` / `linesep` / `pathsep` / `devnull` (class attrs) | `Str` | |
+| `process.pid()` / `.ppid()` / `.uid()` / `.gid()` / `.euid()` / `.egid()` | `Int` | |
+| `process.umask(m)` | `Int` | previous mask |
+| `process.chdir(p)` / `.kill(pid, sig)` | `none` | |
+| `process.getcwd()` | `Path` | |
+| `env.get(key, default=none)` | `Str` / `none` | |
+| `env.set(key, value)` / `.unset(key)` | `none` | |
+| `env.has(key)` | `Boolean` | |
+| `env.keys()` | `Set[Str]` | |
+| `env.values()` | `List[Str]` | |
+| `env.as_dict()` | `Dict[Str, Str]` | snapshot |
+| `StringIO(initial='', newline=none)` / `BytesIO(initial=b'')` | buffer | works as `With` ctx mgr |
+| `StringIO.read(size=none)` / `.readline(size=none)` / `.getvalue()` | `Str` | |
+| `BytesIO.read(size=none)` / `.readline(size=none)` / `.getvalue()` | `Bytes` | |
+| `StringIO/BytesIO.write(x)` / `.seek(p, w=none)` / `.tell()` / `.truncate(s=none)` | `Int` | |
+| `StringIO/BytesIO.close()` | `none` | |
+| `io.SEEK_SET` / `SEEK_CUR` / `SEEK_END` / `DEFAULT_BUFFER_SIZE` (class attrs) | `Int` | |
+| `io.UnsupportedOperation` / `BlockingIOError` (class attrs) | exception class | |
+| `time.time()` / `.monotonic()` / `.perf_counter()` / `.process_time()` / `.thread_time()` | `Float` | seconds |
+| `time.time_ns()` / `.monotonic_ns()` / `.perf_counter_ns()` / `.process_time_ns()` / `.thread_time_ns()` | `Int` | nanoseconds |
+| `time.sleep(seconds)` | `none` | |
+| `time.strftime(fmt, t=none)` / `.asctime(t=none)` / `.ctime(secs=none)` | `Str` | |
+| `time.strptime(s, fmt)` / `.gmtime(secs=none)` / `.localtime(secs=none)` | `StructTime` | |
+| `time.mktime(t)` | `Float` | |
+| `time.tzname()` | `Tuple(Str, Str)` | |
+| `time.timezone()` / `.altzone()` / `.daylight()` | `Int` | |
+| `StructTime.tm_year` / `tm_mon` / `tm_mday` / `tm_hour` / `tm_min` / `tm_sec` / `tm_wday` / `tm_yday` / `tm_isdst` (properties) | `Int` | |
+| `StructTime.tm_zone` / `tm_gmtoff` (properties) | `Str` or `none` / `Int` or `none` | |
+| `logging.getLogger(name=none)` | `Logger` | |
+| `logging.basicConfig(level=none, fmt=none)` | `none` | |
+| `logging.debug/info/warning/error/critical(msg)` | `none` | root logger shortcuts |
+| `logging.getLevelName(level)` / `.addLevelName(level, name)` | `Str` / `none` | |
+| `logging.StreamHandler()` / `.NullHandler()` / `.FileHandler(path)` | `Handler` | |
+| `logging.CRITICAL` / `ERROR` / `WARNING` / `INFO` / `DEBUG` / `NOTSET` (class attrs) | `Int` | |
+| `Logger.setLevel(l)` / `.addHandler(h)` / `.removeHandler(h)` / `.set_propagate(b)` | `none` | |
+| `Logger.getEffectiveLevel()` | `Int` | |
+| `Logger.isEnabledFor(level)` / `.propagate` (property) | `Boolean` | |
+| `Logger.debug/info/warning/error/critical/exception(msg)` / `.log(level, msg)` | `none` | |
+| `Logger.handlers()` | `List[Handler]` | |
+| `Handler.setLevel(l)` / `.setFormatter(f)` | `none` | |
+| `Formatter()` / `Formatter(fmt=...)` | `Formatter` | |
+| `platform.system()` / `.release()` / `.version()` / `.machine()` / `.processor()` / `.node()` / `.platform(...)` | `Str` | |
+| `platform.uname()` | `Uname` | |
+| `platform.architecture()` | `Tuple(Str, Str)` | `(bits, linkage)` |
+| `platform.python_version()` / `.python_branch()` / `.python_compiler()` / `.python_implementation()` / `.python_revision()` | `Str` | |
+| `platform.python_version_tuple()` / `.python_build()` / `.libc_ver()` | `Tuple[Str, ...]` | |
+| `platform.mac_ver()` / `.win32_ver()` | `Tuple` | per-OS specifics |
+| `Uname.system` / `.node` / `.release` / `.version` / `.machine` / `.processor` (properties) | `Str` | |
+
+`os`/`process`/`env`/`io`/`StringIO`/`BytesIO`/`time`/`StructTime`/`logging`/`Logger`/`Handler`/`Formatter`/`platform`/`Uname` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{os,io,time,logging,platform}.py` — namespace-only, no AST rewrite. The pure-Python `os.path` family is **intentionally absent** — every operation is reachable via `Path` (POOP's `pathlib.Path` mirror). Likewise, `io.open` is replaced by `Path.read_text` / `write_text` / `read_bytes` / `write_bytes`. `logging.config` (file/dict configuration) and `logging.handlers` (rotating, SMTP, syslog) are out of scope for v1.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.
