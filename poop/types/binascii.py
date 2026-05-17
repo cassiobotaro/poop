@@ -1,6 +1,7 @@
 import binascii as _binascii
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._unwrap import _unwrap
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 
@@ -37,7 +38,6 @@ class Binascii:
         sep: Bytes | NoneClass | None = None,
         bytes_per_sep: Int | None = None,
     ) -> Bytes:
-        from poop.types._unwrap import _unwrap
         from poop.types.none import NoneClass as _NoneClass
 
         sep_value = None if sep is None or isinstance(sep, _NoneClass) else sep._value
@@ -96,6 +96,4 @@ class Binascii:
 
     @staticmethod
     def crc32(data: Bytes, value: Int | None = None) -> Int:
-        from poop.types._unwrap import _unwrap
-
         return Int(_binascii.crc32(data._value, _unwrap(value, 0)))

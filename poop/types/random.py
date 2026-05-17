@@ -1,6 +1,7 @@
 import random as _random
 from typing import TYPE_CHECKING, Any
 
+from poop.types._unwrap import _unwrap
 from poop.types.float import Float
 from poop.types.none import none
 
@@ -31,15 +32,11 @@ class Random:
     """
 
     def __init__(self, seed: Int | None = None) -> None:
-        from poop.types._unwrap import _unwrap
-
         self._impl = _random.Random(_unwrap(seed, None))  # noqa: S311
 
     # Bookkeeping ----------------------------------------------------
 
     def seed(self, a: Int | None = None, version: Int | None = None) -> NoneClass:
-        from poop.types._unwrap import _unwrap
-
         self._impl.seed(_unwrap(a, None), version=_unwrap(version, 2))
         return none
 
@@ -62,7 +59,6 @@ class Random:
         stop: Int | None = None,
         step: Int | None = None,
     ) -> Int:
-        from poop.types._unwrap import _unwrap
         from poop.types.int import Int as _Int
 
         stop_value = _unwrap(stop, None)
@@ -102,7 +98,6 @@ class Random:
         cum_weights: Any = None,
         k: Int | None = None,
     ) -> List:
-        from poop.types._unwrap import _unwrap
         from poop.types.list import List as _List
 
         # Weights flow through random.choices's internal float arithmetic
@@ -142,14 +137,11 @@ class Random:
     # Distributions --------------------------------------------------
 
     def gauss(self, mu: Float | None = None, sigma: Float | None = None) -> Float:
-        from poop.types._unwrap import _unwrap
-
         return Float(self._impl.gauss(_unwrap(mu, 0.0), _unwrap(sigma, 1.0)))
 
     def normalvariate(
         self, mu: Float | None = None, sigma: Float | None = None
     ) -> Float:
-        from poop.types._unwrap import _unwrap
 
         return Float(self._impl.normalvariate(_unwrap(mu, 0.0), _unwrap(sigma, 1.0)))
 
@@ -157,8 +149,6 @@ class Random:
         return Float(self._impl.lognormvariate(mu._value, sigma._value))
 
     def expovariate(self, lambd: Float | None = None) -> Float:
-        from poop.types._unwrap import _unwrap
-
         return Float(self._impl.expovariate(_unwrap(lambd, 1.0)))
 
     def gammavariate(self, alpha: Float, beta: Float) -> Float:
@@ -182,7 +172,6 @@ class Random:
         high: Float | None = None,
         mode: Float | None = None,
     ) -> Float:
-        from poop.types._unwrap import _unwrap
 
         return Float(
             self._impl.triangular(
@@ -191,7 +180,6 @@ class Random:
         )
 
     def binomialvariate(self, n: Int | None = None, p: Float | None = None) -> Int:
-        from poop.types._unwrap import _unwrap
         from poop.types.int import Int as _Int
 
         return _Int(self._impl.binomialvariate(_unwrap(n, 1), _unwrap(p, 0.5)))

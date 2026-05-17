@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _MISSING
+from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
@@ -145,7 +146,6 @@ class Str(_ValueEqMixin, Object):
         return Str(self._value.replace(old._value, new._value))
 
     def split(self, sep: Str | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap
         from poop.types.list import List
 
         return List(*(Str(p) for p in self._value.split(_unwrap(sep, None))))
@@ -196,8 +196,6 @@ class Str(_ValueEqMixin, Object):
         return Str(self._value.casefold())
 
     def center(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
-
         fill = _unwrap(fillchar, None)
         if fill is None:
             return Str(self._value.center(width._value))
@@ -209,8 +207,6 @@ class Str(_ValueEqMixin, Object):
         return Bytes(self._value.encode(encoding._value))
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
-
         size = _unwrap(tabsize, None)
         if size is None:
             return Str(self._value.expandtabs())
@@ -235,16 +231,12 @@ class Str(_ValueEqMixin, Object):
         return true if self._value.istitle() else false
 
     def ljust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
-
         fill = _unwrap(fillchar, None)
         if fill is None:
             return Str(self._value.ljust(width._value))
         return Str(self._value.ljust(width._value, fill))
 
     def rjust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
-
         fill = _unwrap(fillchar, None)
         if fill is None:
             return Str(self._value.rjust(width._value))

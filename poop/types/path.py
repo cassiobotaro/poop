@@ -1,6 +1,7 @@
 import pathlib as _pathlib
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._unwrap import _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
@@ -87,7 +88,6 @@ class Path(_ValueEqMixin, Object):
         parents: Boolean | NoneClass | None = None,
         exist_ok: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        from poop.types._unwrap import _unwrap, _unwrap_bool
         from poop.types.none import none
 
         self._path.mkdir(
@@ -104,7 +104,6 @@ class Path(_ValueEqMixin, Object):
         return none
 
     def unlink(self, missing_ok: Boolean | NoneClass | None = None) -> NoneClass:
-        from poop.types._unwrap import _unwrap_bool
         from poop.types.none import none
 
         self._path.unlink(missing_ok=_unwrap_bool(missing_ok, False))
@@ -115,7 +114,6 @@ class Path(_ValueEqMixin, Object):
         mode: Int | NoneClass | None = None,
         exist_ok: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        from poop.types._unwrap import _unwrap, _unwrap_bool
         from poop.types.none import none
 
         self._path.touch(

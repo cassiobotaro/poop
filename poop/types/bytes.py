@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.bytes_iterator import BytesIterator
@@ -111,8 +112,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Bytes(self._value.capitalize())
 
     def center(self, width: Int, fillchar: Bytes | NoneClass | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         fill = _unwrap(fillchar, None)
         if fill is None:
             return Bytes(self._value.center(width._value))
@@ -127,8 +126,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return true if self._value.endswith(suffix._value) else false
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         size = _unwrap(tabsize, None)
         if size is None:
             return Bytes(self._value.expandtabs())
@@ -173,8 +170,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Bytes(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: Bytes | NoneClass | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         fill = _unwrap(fillchar, None)
         if fill is None:
             return Bytes(self._value.ljust(width._value))
@@ -184,8 +179,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Bytes(self._value.lower())
 
     def lstrip(self, chars: Bytes | NoneClass | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         return Bytes(self._value.lstrip(_unwrap(chars, None)))
 
     def partition(self, sep: Bytes) -> Tuple:
@@ -213,8 +206,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Int(self._value.rindex(sub._value))
 
     def rjust(self, width: Int, fillchar: Bytes | NoneClass | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         fill = _unwrap(fillchar, None)
         if fill is None:
             return Bytes(self._value.rjust(width._value))
@@ -226,18 +217,14 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Tuple(*[Bytes(p) for p in self._value.rpartition(sep._value)])
 
     def rsplit(self, sep: Bytes | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap
         from poop.types.list import List
 
         return List(*[Bytes(p) for p in self._value.rsplit(_unwrap(sep, None))])
 
     def rstrip(self, chars: Bytes | NoneClass | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         return Bytes(self._value.rstrip(_unwrap(chars, None)))
 
     def split(self, sep: Bytes | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap
         from poop.types.list import List
 
         return List(*[Bytes(p) for p in self._value.split(_unwrap(sep, None))])
@@ -251,8 +238,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return true if self._value.startswith(prefix._value) else false
 
     def strip(self, chars: Bytes | NoneClass | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         return Bytes(self._value.strip(_unwrap(chars, None)))
 
     def swapcase(self) -> Bytes:
@@ -410,7 +395,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         iterations: Int,
         dklen: Int | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types._unwrap import _unwrap
 
         length = _unwrap(dklen, None)
         return Bytes(
@@ -433,7 +417,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         maxmem: Int | NoneClass | None = None,
         dklen: Int | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types._unwrap import _unwrap
 
         return Bytes(
             _hashlib.scrypt(

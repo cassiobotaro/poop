@@ -1,6 +1,7 @@
 import secrets as _secrets
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._unwrap import _unwrap
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
@@ -27,20 +28,14 @@ class Secrets:
 
     @staticmethod
     def token_bytes(nbytes: Int | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         return Bytes(_secrets.token_bytes(_unwrap(nbytes, None)))
 
     @staticmethod
     def token_hex(nbytes: Int | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
-
         return Str(_secrets.token_hex(_unwrap(nbytes, None)))
 
     @staticmethod
     def token_urlsafe(nbytes: Int | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
-
         return Str(_secrets.token_urlsafe(_unwrap(nbytes, None)))
 
     # Secure draws -----------------------------------------------------
