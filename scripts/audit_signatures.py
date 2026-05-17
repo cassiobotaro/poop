@@ -47,6 +47,9 @@ def _inherited_object_methods() -> set[str]:
 
 _INHERITED = _inherited_object_methods() | _public_names(object) | _public_names(type)
 
+# Tuple aliased so the `except` clause keeps its parentheses —
+# `ruff format` (as of 0.15.x) strips parens from `except (A, B, C):`
+# which is invalid Python 3 syntax.
 _BLIND_ERRORS = (ValueError, TypeError, NameError, AttributeError)
 
 

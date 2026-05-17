@@ -74,10 +74,10 @@ def test_gettempprefixb_returns_bytes() -> None:
     assert isinstance(TempfileNamespace.gettempprefixb(), Bytes)
 
 
-# --- tempdir / set_tempdir ---
+# --- tempdir (read/write property) ---
 
 
-def test_set_tempdir_round_trip(tmp_path: _PyPath) -> None:
+def test_tempdir_round_trip(tmp_path: _PyPath) -> None:
     TempfileNamespace.tempdir = Path(Str(str(tmp_path)))
     try:
         assert TempfileNamespace.tempdir == Path(Str(str(tmp_path)))

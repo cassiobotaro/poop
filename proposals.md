@@ -107,7 +107,7 @@ and rarely exercise edge cases.
    `proposals.md` / `CLAUDE.md`.**
    - INFECTIONS now has ~2300 lines of tables. Many entries
      describe pre-refactor APIs (e.g., the v0.51 refactor moved
-     `args.*` → `sys.argv()` but a casual reader would still see
+     `args.*` into `sys.*` but a casual reader could still find
      the table-row "`args.list()` / `args.rest()`"). A grep for
      terms removed in v0.51 (`args.`, `process.`, `env.`) across
      all docs should find no hits.

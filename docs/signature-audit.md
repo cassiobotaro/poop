@@ -59,7 +59,7 @@ Both sides expose a callable, but the signatures differ (parameter names, defaul
 | `csv` | `reader` | CPython `(iterable, /, dialect='excel', **fmtparams)` vs POOP `(source: 'List \| Str', dialect: 'Str \| None' = None, **fmtparams: 'Any') -> 'Reader'` | |
 | `csv` | `writer` | CPython `(fileobj, /, dialect='excel', **fmtparams)` vs POOP `(dialect: 'Str \| None' = None, **fmtparams: 'Any') -> 'Writer'` | |
 | `decimal` | `setcontext` | CPython `(context, /)` vs POOP `(ctx: 'Context') -> 'NoneClass'` | |
-| `difflib` | `ndiff` | CPython `(a, b, linejunk=None, charjunk=<function IS_CHARACTER_JUNK at 0x76434cc017a0>)` vs POOP `(a: List, b: List) -> List` | |
+| `difflib` | `ndiff` | CPython `(a, b, linejunk=None, charjunk=<function IS_CHARACTER_JUNK at 0x748f99a917a0>)` vs POOP `(a: List, b: List) -> List` | |
 | `difflib` | `restore` | CPython `(delta, which)` vs POOP `(seq: List, which: Int) -> List` | |
 | `email` | `message_from_bytes` | CPython `(s, *args, **kws)` vs POOP `(b: 'Bytes', policy: 'Any \| None' = None) -> 'EmailMessage'` | |
 | `email` | `message_from_string` | CPython `(s, *args, **kws)` vs POOP `(s: 'Str', policy: 'Any \| None' = None) -> 'EmailMessage'` | |
@@ -112,13 +112,13 @@ Both sides expose a callable, but the signatures differ (parameter names, defaul
 | `resource` | `prlimit` | CPython `(pid, resource, limits=None, /)` vs POOP `(pid: 'Int', resource_id: 'Int', limits: 'Tuple \| None' = None) -> 'Tuple'` | |
 | `resource` | `setrlimit` | CPython `(resource, limits, /)` vs POOP `(resource_id: 'Int', limits: 'Tuple') -> 'None'` | |
 | `shutil` | `chown` | CPython `(path, user=None, group=None, *, dir_fd=None, follow_symlinks=True)` vs POOP `(path: 'Path \| Str', user: 'Str \| Int \| None' = None, group: 'Str \| Int \| None' = None) -> 'NoneClass'` | |
-| `shutil` | `copytree` | CPython `(src, dst, symlinks=False, ignore=None, copy_function=<function copy2 at 0x76434c7c0250>, ignore_dangling_symlinks=False, dirs_exist_ok=False)` vs POOP `(src: 'Path \| Str', dst: 'Path \| Str', symlinks: 'Boolean \| None' = None, ignore_dangling_symlinks: 'Boolean \| None' = None, dirs_exist_ok: 'Boolean \| None' = None) -> 'Path'` | |
+| `shutil` | `copytree` | CPython `(src, dst, symlinks=False, ignore=None, copy_function=<function copy2 at 0x748f99664250>, ignore_dangling_symlinks=False, dirs_exist_ok=False)` vs POOP `(src: 'Path \| Str', dst: 'Path \| Str', symlinks: 'Boolean \| None' = None, ignore_dangling_symlinks: 'Boolean \| None' = None, dirs_exist_ok: 'Boolean \| None' = None) -> 'Path'` | |
 | `shutil` | `make_archive` | CPython `(base_name, format, root_dir=None, base_dir=None, verbose=0, dry_run=0, owner=None, group=None, logger=None)` vs POOP `(base_name: 'Path \| Str', format: 'Str', root_dir: 'Path \| Str \| None' = None, base_dir: 'Path \| Str \| None' = None) -> 'Path'` | |
-| `shutil` | `move` | CPython `(src, dst, copy_function=<function copy2 at 0x76434c7c0250>)` vs POOP `(src: 'Path \| Str', dst: 'Path \| Str') -> 'Path'` | |
+| `shutil` | `move` | CPython `(src, dst, copy_function=<function copy2 at 0x748f99664250>)` vs POOP `(src: 'Path \| Str', dst: 'Path \| Str') -> 'Path'` | |
 | `shutil` | `rmtree` | CPython `(path, ignore_errors=False, onerror=None, *, onexc=None, dir_fd=None)` vs POOP `(path: 'Path \| Str', ignore_errors: 'Boolean \| None' = None) -> 'NoneClass'` | |
 | `shutil` | `unpack_archive` | CPython `(filename, extract_dir=None, format=None, *, filter=None)` vs POOP `(filename: 'Path \| Str', extract_dir: 'Path \| Str \| None' = None, format: 'Str \| None' = None) -> 'NoneClass'` | |
 | `signal` | `pthread_kill` | CPython `(thread_id, signalnum, /)` vs POOP `(thread_id: 'Int', signum: 'Int') -> 'NoneClass'` | |
-| `socket` | `create_connection` | CPython `(address, timeout=<object object at 0x76434dd80870>, source_address=None, *, all_errors=False)` vs POOP `(address: 'Tuple', timeout: 'Float \| Int \| None' = None) -> 'Socket'` | |
+| `socket` | `create_connection` | CPython `(address, timeout=<object object at 0x748f9bd80870>, source_address=None, *, all_errors=False)` vs POOP `(address: 'Tuple', timeout: 'Float \| Int \| None' = None) -> 'Socket'` | |
 | `socket` | `create_server` | CPython `(address, *, family=<AddressFamily.AF_INET: 2>, backlog=None, reuse_port=False, dualstack_ipv6=False)` vs POOP `(address: 'Tuple', family: 'Int \| None' = None) -> 'Socket'` | |
 | `socket` | `htonl` | CPython `(integer, /)` vs POOP `(x: 'Int') -> 'Int'` | |
 | `socket` | `htons` | CPython `(integer, /)` vs POOP `(x: 'Int') -> 'Int'` | |
