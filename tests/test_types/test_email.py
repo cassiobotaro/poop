@@ -30,6 +30,37 @@ def test_emailmessage_set_content_with_subtype() -> None:
     assert isinstance(m.get_content(), Str)
 
 
+def test_emailmessage_set_content_with_bytes() -> None:
+    """Bytes content path needs maintype on set_bytes_content."""
+    m = EmailMessage()
+    m.set_content(Bytes(b"\x00\x01"), Str("octet-stream"))
+    body = m.get_content()
+    assert isinstance(body, Bytes)
+    assert body._value == b"\x00\x01"
+
+
+def test_emailmessage_set_content_bytes_custom_maintype() -> None:
+    m = EmailMessage()
+    m.set_content(Bytes(b"hi"), Str("plain"), Str("text"))
+    assert m._impl.get_content_type() == "text/plain"
+
+
+def test_emailmessage_get_content_wraps_rfc822_payload() -> None:
+    """`message/rfc822` content has an EmailMessage child — wrap it."""
+    from email.message import EmailMessage as _PyMessage
+    from email.policy import default as _default
+
+    inner = _PyMessage(policy=_default)
+    inner.set_content("inner body")
+    outer = _PyMessage(policy=_default)
+    outer.set_content(inner, subtype="rfc822")
+
+    poop_outer = EmailMessage(outer)
+    result = poop_outer.get_content()
+    assert isinstance(result, EmailMessage)
+    assert isinstance(result.get_content(), Str)
+
+
 def test_emailmessage_headers_round_trip() -> None:
     m = EmailMessage()
     m.at_put(Str("From"), Str("a@example.com"))

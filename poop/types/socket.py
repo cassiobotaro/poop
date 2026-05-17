@@ -22,7 +22,7 @@ def _unwrap_address(addr: Any) -> Any:
     return addr
 
 
-def _wrap_address(addr: Any) -> Tuple | Str:
+def _wrap_address(addr: Any) -> Tuple | Str | Bytes:
     if isinstance(addr, tuple):
         wrapped: list[Any] = []
         for item in addr:
@@ -35,6 +35,9 @@ def _wrap_address(addr: Any) -> Tuple | Str:
         return Tuple(*wrapped)
     if isinstance(addr, str):
         return Str(addr)
+    if isinstance(addr, (bytes, bytearray)):
+        # AF_UNIX abstract namespace addresses come back as bytes on Linux.
+        return Bytes(bytes(addr))
     return addr
 
 
@@ -134,10 +137,10 @@ class Socket(Object):
     def fileno(self) -> Int:
         return Int(self._impl.fileno())
 
-    def getsockname(self) -> Tuple | Str:
+    def getsockname(self) -> Tuple | Str | Bytes:
         return _wrap_address(self._impl.getsockname())
 
-    def getpeername(self) -> Tuple | Str:
+    def getpeername(self) -> Tuple | Str | Bytes:
         return _wrap_address(self._impl.getpeername())
 
     def __enter__(self) -> Self:
@@ -155,8 +158,8 @@ class SocketNamespace:
     # Address families
     AF_INET: ClassVar[Int] = Int(_socket.AF_INET)
     AF_INET6: ClassVar[Int] = Int(_socket.AF_INET6)
-    AF_UNIX: ClassVar[Int | None] = (
-        Int(_socket.AF_UNIX) if hasattr(_socket, "AF_UNIX") else None
+    AF_UNIX: ClassVar[Int | NoneClass] = (
+        Int(_socket.AF_UNIX) if hasattr(_socket, "AF_UNIX") else none
     )
     AF_UNSPEC: ClassVar[Int] = Int(_socket.AF_UNSPEC)
 
