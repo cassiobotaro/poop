@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit as _atexit
+import traceback
 from typing import Any, ClassVar
 
 from poop.types.none import NoneClass, none
@@ -30,23 +31,23 @@ class Atexit:
     @staticmethod
     def unregister(func: Any) -> NoneClass:
         _atexit.unregister(func)
-        Atexit._handlers = [(f, a, k) for f, a, k in Atexit._handlers if f is not func]
+        Atexit._handlers[:] = [(f, a, k) for f, a, k in Atexit._handlers if f is not func]
         return none
 
     @staticmethod
     def _run_exitfuncs() -> NoneClass:
-        for func, args, kwargs in reversed(Atexit._handlers):
+        for func, args, kwargs in reversed(list(Atexit._handlers)):
             try:
                 func(*args, **kwargs)
-            except Exception:  # noqa: S110
-                pass
+            except Exception:
+                traceback.print_exc()
             _atexit.unregister(func)
         Atexit._handlers.clear()
         return none
 
     @staticmethod
     def _clear() -> NoneClass:
-        for func, _, __ in Atexit._handlers:
+        for func, *_ in Atexit._handlers:
             _atexit.unregister(func)
         Atexit._handlers.clear()
         return none
