@@ -1557,3 +1557,38 @@ platform.system().print()                  # Str
 ```
 
 > POOP splits Python's `os` into three focused namespaces: `os` itself (random bytes, CPU counts, load average, low-level flag constants like `O_RDONLY`/`F_OK`, and the platform separators `sep`/`linesep`/`pathsep`/`devnull`), `process` (the current-process state — `pid`/`ppid`/`uid`/`gid`/`euid`/`egid`/`umask`/`chdir`/`getcwd`/`kill`), and `env` (a thin POOP-flavoured `os.environ` — `get`/`set`/`unset`/`has`/`keys`/`values`/`as_dict`). `os.path` is **intentionally absent**: every operation is reachable through POOP's `Path` mirror. `io` exposes the in-memory buffers `StringIO` / `BytesIO` (both work as `With` context managers) plus the seek constants — disk I/O continues to go through `Path.read_text`/`write_text`/`read_bytes`/`write_bytes`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API in both seconds (`Float`) and nanoseconds (`Int`), plus parse/format helpers and `StructTime`. `logging` is the canonical Python `Logger`/`Handler`/`Formatter` triad — `set*` accessors return `none`, mutable booleans use `set_propagate`. `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment metadata; `Uname` exposes the standard six-field record.
+
+## Concurrent execution (`threading`, `multiprocessing`, `concurrent`, `subprocess`, `queue`)
+
+```python
+# Python
+import threading, multiprocessing, concurrent.futures, subprocess, queue
+
+t = threading.Thread(target=do_work)
+t.start(); t.join()
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+    results = list(ex.map(square, range(10)))
+
+result = subprocess.run(["ls", "-la"], capture_output=True, text=True)
+
+q = queue.Queue()
+q.put(item); item = q.get()
+```
+
+```python
+# POOP
+t = Thread(target=do_work)
+t.start(); t.join()
+
+with ThreadPoolExecutor(4) as ex:
+    results = ex.map(square, List(*range(10)))
+
+result = subprocess.run(["ls", "-la"], capture_output=true, text=true)
+result.stdout.print()
+
+q = Queue()
+q.put(item); item = q.get()
+```
+
+> POOP exposes `threading.Thread` plus the standard primitives `Lock` / `RLock` / `Event` / `Semaphore` / `Barrier`, all `With`-friendly. Module helpers like `current_thread`/`active_count`/`get_ident` are on the `threading` namespace. `multiprocessing` mirrors the shape — `multiprocessing.Process` lives only on the namespace (not bound as a top-level name) to avoid clashing with the `os.process` namespace; `Pool`/`MPQueue` are top-level. Targets passed to `Process`/`Pool` workers must be **module-level Python functions** — POOP's `Block`-wrapped lambdas don't pickle across the `forkserver` boundary that's now the Linux default. `concurrent.futures` exposes `ThreadPoolExecutor` and `ProcessPoolExecutor` (both `With`-friendly) plus `CFFuture` (renamed from `Future` to disambiguate from `asyncio.Future`). `concurrent.wait`/`.as_completed` work the same as in CPython. `subprocess.run` returns a `CompletedProcess` whose `.stdout`/`.stderr` are POOP `Str` (when `text=true`) or `Bytes`. `Popen` exposes the full lifecycle. `queue` has the same four classes as CPython — `Queue` (FIFO), `LifoQueue`, `PriorityQueue`, and `SimpleQueue` — with `Empty`/`Full` exception classes for `Try.except_`.

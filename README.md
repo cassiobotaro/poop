@@ -152,6 +152,11 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `time.time()` | `time.time()` |
 | `logging.getLogger(...)` | `logging.getLogger(...)` |
 | `platform.system()` | `platform.system()` |
+| `threading.Thread(target=f)` | `Thread(target=f)` |
+| `multiprocessing.cpu_count()` | `multiprocessing.cpu_count()` |
+| `concurrent.futures.ThreadPoolExecutor()` | `ThreadPoolExecutor()` |
+| `subprocess.run(["ls"])` | `subprocess.run(["ls"])` |
+| `queue.Queue()` | `Queue()` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
