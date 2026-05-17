@@ -49,17 +49,21 @@ from poop.transformers.hmac import NAMESPACE as _hmac_namespace
 from poop.transformers.html import NAMESPACE as _html_namespace
 from poop.transformers.http import NAMESPACE as _http_namespace
 from poop.transformers.int import IntTransformer
+from poop.transformers.io import NAMESPACE as _io_namespace
 from poop.transformers.ipaddress import NAMESPACE as _ipaddress_namespace
 from poop.transformers.json import NAMESPACE as _json_namespace
 from poop.transformers.list import ListTransformer
 from poop.transformers.locale import NAMESPACE as _locale_namespace
+from poop.transformers.logging import NAMESPACE as _logging_namespace
 from poop.transformers.lzma import NAMESPACE as _lzma_namespace
 from poop.transformers.math import NAMESPACE as _math_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.mimetypes import NAMESPACE as _mimetypes_namespace
 from poop.transformers.none import NoneTransformer
+from poop.transformers.os import NAMESPACE as _os_namespace
 from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.pickle import NAMESPACE as _pickle_namespace
+from poop.transformers.platform import NAMESPACE as _platform_namespace
 from poop.transformers.pprint import NAMESPACE as _pprint_namespace
 from poop.transformers.profile import NAMESPACE as _profile_namespace
 from poop.transformers.pwd import NAMESPACE as _pwd_namespace
@@ -86,6 +90,7 @@ from poop.transformers.sys import NAMESPACE as _sys_namespace
 from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.tempfile import NAMESPACE as _tempfile_namespace
 from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
+from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.timeit import NAMESPACE as _timeit_namespace
 from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
@@ -223,6 +228,11 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_socket_namespace,
     **_ssl_namespace,
     **_asyncio_namespace,
+    **_os_namespace,
+    **_io_namespace,
+    **_time_namespace,
+    **_logging_namespace,
+    **_platform_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
