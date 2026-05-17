@@ -1,6 +1,6 @@
 # Proposals
 
-No open design proposals. Active engineering backlog (per-module fixes, refactors, deferred items from past proposals) lives in [`docs/code-review-findings.md`](docs/code-review-findings.md).
+No open design proposals. The post-v0.54 engineering backlog from the expert code review (refactors A3, C1, C2, C4; coverage T2, T3; declined C5) shipped on `main` and the tracking doc was retired.
 
 ## Future work
 
