@@ -45,6 +45,15 @@ def test_emailmessage_set_content_bytes_custom_maintype() -> None:
     assert m._impl.get_content_type() == "text/plain"
 
 
+def test_emailmessage_add_alternative_with_bytes() -> None:
+    """add_alternative has the same bytes-needs-maintype dispatch issue."""
+    m = EmailMessage()
+    m.set_content(Str("plain body"))
+    m.add_alternative(Bytes(b"\x00\x01"), Str("octet-stream"))
+    # The alternative was added; calling again would fail if bytes path crashed.
+    assert m._impl.is_multipart()
+
+
 def test_emailmessage_get_content_wraps_rfc822_payload() -> None:
     """`message/rfc822` content has an EmailMessage child — wrap it."""
     from email.message import EmailMessage as _PyMessage

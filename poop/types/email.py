@@ -64,10 +64,23 @@ class EmailMessage(Object):
         return EmailMessage(result)
 
     def add_alternative(
-        self, content: Str | Bytes, subtype: Str | None = None
+        self,
+        content: Str | Bytes,
+        subtype: Str | None = None,
+        maintype: Str | None = None,
     ) -> NoneClass:
         sub = "plain" if subtype is None else subtype._value
-        self._impl.add_alternative(content._value, subtype=sub)
+        if isinstance(content, Bytes):
+            # bytes path dispatches to set_bytes_content which requires
+            # maintype; default to "application" when caller omits it.
+            main = "application" if maintype is None else maintype._value
+            self._impl.add_alternative(content._value, maintype=main, subtype=sub)
+        elif maintype is None:
+            self._impl.add_alternative(content._value, subtype=sub)
+        else:
+            self._impl.add_alternative(
+                content._value, maintype=maintype._value, subtype=sub
+            )
         return none
 
     def add_attachment(

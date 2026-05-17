@@ -9,7 +9,7 @@ The fixes shipped against this doc landed in v0.54.1 (patch-compatible) and foll
 | # | Severity | Location | Issue | Decision |
 |---|---|---|---|---|
 | B1 | Médio | `poop/types/email.py:37-45` | `EmailMessage.set_content(Bytes(b"x"), Str("plain"))` raises `TypeError: set_bytes_content() missing 1 required positional argument: 'maintype'`. Branches for `Bytes` and `Str` are functionally identical and both miss `maintype` for bytes. | **fix in v0.54.1** |
-| B2 | Médio | `poop/types/email.py:47-51` | `EmailMessage.get_content()` returns garbage `Str("<email.message.EmailMessage ...>")` for multipart messages — falls through to `Str(result)` regardless of the underlying type. | **fix in v0.54.1** |
+| B2 | Médio | `poop/types/email.py:47-51` | `EmailMessage.get_content()` falls through to `Str(repr(result))` for any return type that isn't `str`/`bytes` — most visibly for embedded `message/rfc822` content where CPython returns an `EmailMessage`. (Note: multipart parents raise `KeyError` in CPython's `raw_data_manager` and are not affected by this fix; handling them is deferred.) | **fix in v0.54.1** (rfc822 only) |
 | B3 | Baixo | `poop/types/socket.py:25-38` | `_wrap_address` only handles `tuple` and `str`; AF_UNIX abstract-namespace `bytes` addresses are returned raw, leaking a Python type and violating the declared `-> Tuple \| Str` return. | **fix in v0.54.1** |
 
 ## API consistency
@@ -20,7 +20,7 @@ The fixes shipped against this doc landed in v0.54.1 (patch-compatible) and foll
 | A2 | Médio | `poop/types/re.py` | `re.error` exception class is not exposed — POOP user code can't `Try.except_(re.error, ...)`. Other namespaces (`json.JSONDecodeError`, `sqlite3.OperationalError`, etc.) follow the rule. | **fix in v0.54.1** |
 | A3 | Médio | `poop/types/xml.py:67,71`, `poop/types/logging.py:111`, `poop/types/ssl.py:77,85` | Setter-method drift — `Element.set_text/set_tail`, `Logger.set_propagate`, `SSLContext.set_check_hostname/set_verify_mode` all violate the post-v0.54 convention "assignment, not setter methods". Should collapse to `@property` + `@X.setter` pairs. | **defer v0.55** (breaking) |
 | A4 | Médio | `poop/types/threading.py:224,231,243`, `poop/types/multiprocessing.py:171,179`, `poop/types/weakref.py:250` | 6 sites still use the inline `Wrapper.__new__(Wrapper); w._impl = x` anti-pattern. 12 other files use the canonical `_from_impl(cls, impl)` classmethod. Standardize. | **defer v0.55** |
-| A5 | Baixo | `poop/transformers/__init__.py` | Manual `**_X_namespace` spreads (88 of them) provide zero protection against silent key collisions if a future PR redefines an existing name. 0 collisions today. | **fix in v0.54.1** (declarative loop + guard test) |
+| A5 | Baixo | `poop/transformers/__init__.py` | Manual `**_X_namespace` spreads (88 of them) provide zero protection against silent key collisions if a future PR redefines an existing name. 0 collisions today. | **partial in v0.54.1** (guard test landed; declarative-loop refactor deferred) |
 | A6 | Baixo | `CLAUDE.md:61` | PascalCase enumeration of bindings is missing `Random` (per the project rule "a module that also exposes a class binds both names"). | **fix in v0.54.1** |
 | OK1 | — | every `class X(Object)` | `__slots__` present uniformly across all Object subclasses. | confirmed OK |
 | OK2 | — | `poop/types/unittest.py` | `__test__ = False` correctly set on `TestCase`, `TestSuite`, `TestRunner`, `TestResult`. No other `Test*`/`Suite*`/`Runner*` candidates exist. | confirmed OK |
@@ -42,7 +42,7 @@ The "55% bundled vs 99% isolated" claim from the original proposal was **folklor
 
 | # | Severity | Issue | Decision |
 |---|---|---|---|
-| T1 | Médio | None of the 33 validator test files asserts on the `instead`/`use \`X\`` substitute hint in error messages — 48 validators include the substitute, all silently editable. | **fix in v0.54.1** |
+| T1 | Médio | None of the 33 validator test files asserts on the `instead`/`use \`X\`` substitute hint in error messages — 48 validators include the substitute, all silently editable. (Re-audit revealed ~53 of 60 validator tests already use `match=` against the substitute phrase; gap is smaller than first claimed, follow-up will sweep the remaining ~7.) | **defer** |
 | T2 | Médio | Top 10 worst-covered modules: `multiprocessing` (76%), `struct` (77%), `mimetypes` (80%), `weakref` (81%), `sqlite3` (82%), `repl` (84%), `ssl` (84%), `shutil` (84%), `timeit` (84%), `glob` (85%). Most misses are error paths uncovered by smoke tests. | **defer** (round-trip + Try.except_ tests per module) |
 | T3 | Baixo | Only 2 test files use `Try(...)`; 8 `except_(` total. Integration tests don't exercise error paths through `Try.except_`. | **defer** (paired with T2) |
 | FYI | — | Document the cov-config gotcha in CONTRIBUTING.md: "to measure a single module, use `--cov-config=/dev/null --cov=poop.types.X`". | **defer** (CONTRIBUTING update) |
