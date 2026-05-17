@@ -21,6 +21,7 @@ from poop.transformers.class_ import ClassTransformer
 from poop.transformers.codecs import NAMESPACE as _codecs_namespace
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.compression import NAMESPACE as _compression_namespace
+from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
 from poop.transformers.configparser import NAMESPACE as _configparser_namespace
 from poop.transformers.copy import NAMESPACE as _copy_namespace
 from poop.transformers.csv import NAMESPACE as _csv_namespace
@@ -59,6 +60,7 @@ from poop.transformers.lzma import NAMESPACE as _lzma_namespace
 from poop.transformers.math import NAMESPACE as _math_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.mimetypes import NAMESPACE as _mimetypes_namespace
+from poop.transformers.multiprocessing import NAMESPACE as _multiprocessing_namespace
 from poop.transformers.none import NoneTransformer
 from poop.transformers.os import NAMESPACE as _os_namespace
 from poop.transformers.path import NAMESPACE as _path_namespace
@@ -67,6 +69,7 @@ from poop.transformers.platform import NAMESPACE as _platform_namespace
 from poop.transformers.pprint import NAMESPACE as _pprint_namespace
 from poop.transformers.profile import NAMESPACE as _profile_namespace
 from poop.transformers.pwd import NAMESPACE as _pwd_namespace
+from poop.transformers.queue import NAMESPACE as _queue_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
@@ -86,10 +89,12 @@ from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.struct import NAMESPACE as _struct_namespace
+from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
 from poop.transformers.sys import NAMESPACE as _sys_namespace
 from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.tempfile import NAMESPACE as _tempfile_namespace
 from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
+from poop.transformers.threading import NAMESPACE as _threading_namespace
 from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.timeit import NAMESPACE as _timeit_namespace
 from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
@@ -233,6 +238,11 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_time_namespace,
     **_logging_namespace,
     **_platform_namespace,
+    **_threading_namespace,
+    **_multiprocessing_namespace,
+    **_concurrent_namespace,
+    **_subprocess_namespace,
+    **_queue_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
