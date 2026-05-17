@@ -14,17 +14,34 @@ Categories surfaced:
 
 False positives are expected and should be marked OK-sanctioned in
 the triage doc.
+
+Noise filters (missing-name only): bare ALL_CAPS constants, re-exported
+stdlib submodules, and Abstract*/Base* prefixed types are dropped. POOP
+curates these intentionally; surfacing 2000+ such rows drowned out the
+~200 that warrant a real decision.
+
+Decision preservation: if `docs/signature-audit.md` already exists, any
+`Decision` value the maintainer wrote into a row is carried forward for
+rows whose (module, name, category) is still surfaced after the next
+run.
 """
 
 from __future__ import annotations
 
 import importlib
 import inspect
+import re
 import sys
+import types
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 
 from poop.transformers import DEFAULT_NAMESPACE
+
+_DOC_PATH = Path(__file__).resolve().parent.parent / "docs" / "signature-audit.md"
+
+_ALL_CAPS_CONST = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
 
 @dataclass(frozen=True)
@@ -103,6 +120,29 @@ def _classify(py_attr: object, poop_attr: object) -> tuple[str, str]:
     return "", ""
 
 
+def _is_noise(py_module: object, name: str) -> bool:
+    """Drop low-signal missing-name rows: ALL_CAPS constants, re-exported
+    submodules, abstract-base classes, and cross-module re-exports that
+    POOP's curated subset intentionally omits."""
+    if _ALL_CAPS_CONST.match(name):
+        return True
+    if name.startswith(("Abstract", "Base")) and name != "BaseException":
+        return True
+    attr = getattr(py_module, name, None)
+    if isinstance(attr, types.ModuleType):
+        return True
+    # Re-exports from other modules (e.g. os.Mapping → collections.abc;
+    # os.GenericAlias → types). POOP doesn't promise to mirror these.
+    own_module = getattr(py_module, "__name__", "")
+    attr_module = getattr(attr, "__module__", "")
+    if attr_module and own_module and attr_module != own_module:
+        # Accept Posix → os bleed-through (CPython exposes posix names
+        # directly on os; treat them as os-native).
+        if not (own_module == "os" and attr_module in {"posix", "posixpath"}):
+            return True
+    return False
+
+
 def _audit_module(name: str, poop_class: object) -> Iterable[Finding]:
     try:
         py_module = importlib.import_module(name)
@@ -114,6 +154,8 @@ def _audit_module(name: str, poop_class: object) -> Iterable[Finding]:
     poop_names = _public_names(poop_class) - _INHERITED
 
     for n in sorted(py_names - poop_names):
+        if _is_noise(py_module, n):
+            continue
         yield Finding(name, n, "missing-name", f"CPython has `{name}.{n}`")
 
     for n in sorted(poop_names - py_names):
@@ -163,7 +205,38 @@ _CATEGORY_BLURB = {
 }
 
 
+_ROW_RE = re.compile(
+    r"^\| `(?P<module>[^`]+)` \| `(?P<name>[^`]+)` \| (?P<detail>.*?) \| (?P<decision>.*?) \|$"
+)
+
+
+def _load_existing_decisions() -> dict[tuple[str, str, str], str]:
+    """Parse `docs/signature-audit.md` (if present) and return a
+    {(module, name, category): decision} map for rows whose Decision
+    column was filled in."""
+    out: dict[tuple[str, str, str], str] = {}
+    if not _DOC_PATH.exists():
+        return out
+    current_category = ""
+    for line in _DOC_PATH.read_text().splitlines():
+        if line.startswith("## "):
+            head = line[3:].split(" ", 1)[0]
+            current_category = head if head in _CATEGORY_ORDER else ""
+            continue
+        if not current_category:
+            continue
+        m = _ROW_RE.match(line)
+        if not m:
+            continue
+        decision = m.group("decision").strip()
+        if not decision:
+            continue
+        out[(m.group("module"), m.group("name"), current_category)] = decision
+    return out
+
+
 def main() -> None:
+    decisions = _load_existing_decisions()
     findings: list[Finding] = []
     mirrors = _stdlib_mirrors()
     for module_name, poop_value in mirrors:
@@ -210,7 +283,8 @@ def main() -> None:
         print("|---|---|---|---|")
         for f in rows:
             detail = f.detail.replace("|", "\\|").replace("\n", " ")
-            print(f"| `{f.module}` | `{f.name}` | {detail} | |")
+            decision = decisions.get((f.module, f.name, f.category), "")
+            print(f"| `{f.module}` | `{f.name}` | {detail} | {decision} |")
         print()
 
 
