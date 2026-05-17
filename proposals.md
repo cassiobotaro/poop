@@ -411,7 +411,7 @@ each annotated with one of:
 |---|---|---|
 | `numbers` | out | ABC hierarchy — POOP has its own type tree |
 | `math` | covered | `Math` namespace (shipped in v0.6.0) |
-| `cmath` | audit | Needs `Complex` POOP type story — see "Future work" |
+| `cmath` | covered | `cmath` namespace (shipped in v0.53.0) |
 | `decimal` | covered | `decimal` + `Decimal` + `Context` (shipped in v0.32.0) |
 | `fractions` | covered | `fractions` + `Fraction` (shipped in this PR) |
 | `random` | covered | `Random` namespace (shipped in v0.7.0) |
@@ -731,30 +731,6 @@ For v1, `.seed(a, version)` covers the 95% case of determinism. The
 state pair is deferred until a concrete user need surfaces — at
 which point the trade-off (opaque-Bytes type vs. raw-tuple
 divergence) can be decided with real requirements in hand.
-
-### Complex math (`cmath`) — from the `math` proposal (v0.6.0)
-
-The `Math` namespace deliberately omits `cmath` because it requires
-a `Complex` POOP type with a fully-fleshed message API. POOP has a
-`Complex` wrapper today (`poop/types/complex.py`) used by literal
-transforms and arithmetic, but it does not yet expose the
-transcendental surface (`cmath.sqrt`, `cmath.exp`, `cmath.sin`,
-`cmath.phase`, `cmath.polar`, `cmath.rect`, `cmath.isclose`,
-`cmath.isfinite`/`isinf`/`isnan`, and the constants
-`cmath.pi`/`e`/`tau`/`inf`/`nan`/`infj`/`nanj`).
-
-When written, the `cmath` proposal should mirror the shape of the
-`math` namespace exactly — a `CMath` namespace-only injection (or
-fold the operations onto the existing `Complex` POOP type, TBD),
-with the same constant-case rule (lowercase, mirroring source).
-Cross-cutting decisions to make first:
-
-- Are `Complex` arithmetic predicates (`.isfinite()` / `.isinf()` /
-  `.isnan()`) Float-typed on the real and imaginary parts, or
-  defined on the whole `Complex`? Python defines the latter on
-  `cmath.*`.
-- Should `cmath` and `math` share predicates that take Complex
-  (returning Boolean) or duplicate them per type, like Python does?
 
 ### TOML date/time/datetime narrowing + `parse_float` — from the `tomllib` proposal (v0.26.0)
 

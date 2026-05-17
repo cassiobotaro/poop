@@ -751,6 +751,24 @@ POOP `Int` and `Float` keep methods that are native to Python's `int` and `float
 
 `math` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/math.py` — namespace-only, no AST rewrite.
 
+### cmath — `poop/types/cmath.py` + `poop/transformers/cmath.py`
+
+`cmath` is a namespace class wrapping Python's `cmath` module — the complex-number counterpart to `math`. Same shape: namespace-only binding, lowercase `cmath`, every public name from `cmath.*` reachable as `cmath.<same-name>(...)` with matching parameter order, defaults, and return types.
+
+Predicates (`isfinite`/`isinf`/`isnan`) take a `Complex` and return `Boolean` based on the **whole** Complex (true iff both real and imag satisfy the predicate), matching CPython's semantics. `cmath` and `math` predicates are deliberately separate (`math.isfinite(x: Float)` vs `cmath.isfinite(c: Complex)`), mirroring Python's two-namespace split.
+
+| Category | Operations | Returns |
+|---|---|---|
+| Power / log | `sqrt`, `exp`, `log(x, base=None)`, `log10` | `Complex` |
+| Trigonometric | `sin`, `cos`, `tan`, `asin`, `acos`, `atan` | `Complex` |
+| Hyperbolic | `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` | `Complex` |
+| Polar / rectangular | `phase(c)`, `polar(c)`, `rect(r, phi)` | `Float` / `Tuple(Float, Float)` / `Complex` |
+| Predicates | `isfinite`, `isinf`, `isnan`, `isclose(a, b, *, rel_tol=1e-9, abs_tol=0.0)` | `Boolean` |
+| Float constants | `pi`, `e`, `tau`, `inf`, `nan` | `Float` |
+| Complex constants | `infj`, `nanj` | `Complex` |
+
+`cmath` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/cmath.py` — namespace-only, no AST rewrite.
+
 ### random + Random — `poop/types/random.py` + `poop/transformers/random.py`
 
 Python's `random` module exposes two distinct names: the lowercase `random` module (with module-level functions like `random.random()` and `random.choice(xs)`) and the PascalCase `Random` class (instantiated for seeded, independent generators: `random.Random(seed)`). POOP mirrors that split with **two namespace entries**:

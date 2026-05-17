@@ -390,6 +390,32 @@ n = math.factorial(5)
 
 > `math` mirrors Python's `math` module exactly — same name (lowercase), same function names, parameter order, defaults, kw-only markers, return types. No `import math` needed in POOP — the namespace is injected globally.
 
+## Complex math (`cmath` module)
+
+```python
+# Python
+import cmath
+
+z = cmath.sqrt(complex(-1, 0))     # 1j
+y = cmath.exp(complex(0, cmath.pi))  # ~-1+0j
+r, phi = cmath.polar(complex(3, 4))
+restored = cmath.rect(r, phi)
+ok = cmath.isfinite(complex(1, 2))
+```
+
+```python
+# POOP
+z = cmath.sqrt(complex(-1, 0))
+y = cmath.exp(complex(0, cmath.pi))
+polar = cmath.polar(complex(3, 4))
+r = polar.at(0)
+phi = polar.at(1)
+restored = cmath.rect(r, phi)
+ok = cmath.isfinite(complex(1, 2))
+```
+
+> `cmath` mirrors `math` — same shape, but operations take and return `Complex` (with `phase` returning `Float` and `polar` returning a `Tuple(Float, Float)`). Predicates `cmath.isfinite/isinf/isnan` operate on the whole `Complex` (true iff both real and imag satisfy the predicate). `math` and `cmath` predicates stay separate (`math.isfinite(x: Float)` vs `cmath.isfinite(c: Complex)`), mirroring Python. `cmath.pi`/`e`/`tau`/`inf`/`nan` are `Float`; `cmath.infj`/`nanj` are `Complex`.
+
 ## Random (`random` module + `Random` class)
 
 ```python
