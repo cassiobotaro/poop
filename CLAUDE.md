@@ -47,6 +47,11 @@ AI-specific guidance:
 - When fixing tests, verify expected values against actual language semantics (e.g., ascii repr quoting style, inclusive vs exclusive interval bounds, `__radd__` requirements for `builtins.sum`) before assuming the implementation is wrong.
 - When implementing new types or features, ensure they are transparent to end users (e.g., use lambda transformers, `__call__`, or syntactic sugar) rather than exposing internal class names like `Block()`.
 
+## Documentation Updates
+
+- When fixing code, check whether `README.md` or related docs also need updates in the same commit.
+- Validate documentation code snippets actually run before committing.
+
 ## Architecture
 
 Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate → transform → execute(namespace)`.
