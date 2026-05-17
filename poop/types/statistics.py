@@ -3,6 +3,7 @@ from __future__ import annotations
 import statistics as _statistics
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.fractions import Fraction
@@ -60,10 +61,7 @@ class NormalDist:
 
     def __init__(self, mu: Float | None = None, sigma: Float | None = None) -> None:
         kwargs: dict[str, float] = {}
-        if mu is not None:
-            kwargs["mu"] = mu._value
-        if sigma is not None:
-            kwargs["sigma"] = sigma._value
+        kwargs.update(_kwargs_from(mu=mu, sigma=sigma))
         self._impl = _statistics.NormalDist(**kwargs)
 
     @classmethod
@@ -109,9 +107,7 @@ class NormalDist:
         return Float(self._impl.zscore(_to_number(x)))
 
     def samples(self, n: Int, seed: Int | None = None) -> List:
-        kwargs: dict[str, Any] = {}
-        if seed is not None:
-            kwargs["seed"] = seed._value
+        kwargs = _kwargs_from(seed=seed)
         return List(*(Float(s) for s in self._impl.samples(n._value, **kwargs)))
 
     def overlap(self, other: NormalDist) -> Float:
@@ -272,11 +268,7 @@ class Statistics:
         n: Int | None = None,
         method: Str | None = None,
     ) -> List:
-        kwargs: dict[str, Any] = {}
-        if n is not None:
-            kwargs["n"] = n._value
-        if method is not None:
-            kwargs["method"] = method._value
+        kwargs = _kwargs_from(n=n, method=method)
         return List(
             *(Float(q) for q in _statistics.quantiles(_unwrap_data(data), **kwargs))
         )
@@ -289,9 +281,7 @@ class Statistics:
         y: List | Tuple,
         method: Str | None = None,
     ) -> Float:
-        kwargs: dict[str, Any] = {}
-        if method is not None:
-            kwargs["method"] = method._value
+        kwargs = _kwargs_from(method=method)
         return Float(
             _statistics.correlation(_unwrap_data(x), _unwrap_data(y), **kwargs)
         )

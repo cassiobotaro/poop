@@ -4,7 +4,7 @@ import configparser as _configparser
 import io as _io
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _b, _opt_str
+from poop.types._unwrap import _b, _kwargs_from, _opt_str
 from poop.types.boolean import Boolean, false, true
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -91,9 +91,7 @@ class ConfigParser(Object):
     # Reading -----------------------------------------------------------
 
     def read(self, filenames: Path | Str | List, encoding: Str | None = None) -> List:
-        kwargs: dict[str, Any] = {}
-        if encoding is not None:
-            kwargs["encoding"] = encoding._value
+        kwargs = _kwargs_from(encoding=encoding)
         paths: Any
         if isinstance(filenames, List):
             paths = []

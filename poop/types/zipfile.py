@@ -4,7 +4,7 @@ import zipfile as _zipfile
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
-from poop.types._unwrap import _opt_int
+from poop.types._unwrap import _kwargs_from, _opt_int
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -97,9 +97,7 @@ class ZipFile(Object):
     # Reading -----------------------------------------------------------
 
     def read(self, name: Str, pwd: Bytes | None = None) -> Bytes:
-        kwargs: dict[str, Any] = {}
-        if pwd is not None:
-            kwargs["pwd"] = pwd._value
+        kwargs = _kwargs_from(pwd=pwd)
         return Bytes(self._impl.read(name._value, **kwargs))
 
     def namelist(self) -> List:
@@ -120,9 +118,7 @@ class ZipFile(Object):
     # Writing -----------------------------------------------------------
 
     def write(self, filename: Path | Str, arcname: Str | None = None) -> NoneClass:
-        kwargs: dict[str, Any] = {}
-        if arcname is not None:
-            kwargs["arcname"] = arcname._value
+        kwargs = _kwargs_from(arcname=arcname)
         self._impl.write(_path_str(filename), **kwargs)
         return none
 

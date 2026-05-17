@@ -4,7 +4,7 @@ import ipaddress as _ipaddress
 from collections.abc import Iterator
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _b
+from poop.types._unwrap import _b, _kwargs_from
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
@@ -233,10 +233,9 @@ class _NetworkBase(_ValueEqMixin, Object):
         new_prefix: Int | None = None,
     ) -> List:
         kwargs: dict[str, int] = {}
-        if prefixlen_diff is not None:
-            kwargs["prefixlen_diff"] = prefixlen_diff._value
-        if new_prefix is not None:
-            kwargs["new_prefix"] = new_prefix._value
+        kwargs.update(
+            _kwargs_from(prefixlen_diff=prefixlen_diff, new_prefix=new_prefix)
+        )
         return List(*(_wrap_network(s) for s in self._impl.subnets(**kwargs)))
 
     def supernet(
@@ -245,10 +244,9 @@ class _NetworkBase(_ValueEqMixin, Object):
         new_prefix: Int | None = None,
     ) -> _NetworkBase:
         kwargs: dict[str, int] = {}
-        if prefixlen_diff is not None:
-            kwargs["prefixlen_diff"] = prefixlen_diff._value
-        if new_prefix is not None:
-            kwargs["new_prefix"] = new_prefix._value
+        kwargs.update(
+            _kwargs_from(prefixlen_diff=prefixlen_diff, new_prefix=new_prefix)
+        )
         return _wrap_network(self._impl.supernet(**kwargs))
 
     def overlaps(self, other: _NetworkBase) -> Boolean:

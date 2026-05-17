@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import uuid as _uuid
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
+from poop.types._unwrap import _kwargs_from
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.bytes import Bytes
 from poop.types.int import Int
@@ -36,19 +37,10 @@ class UUID(_ValueEqMixin, Object):
         int: Int | None = None,
         version: Int | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if hex is not None:
-            kwargs["hex"] = hex._value
-        if bytes is not None:
-            kwargs["bytes"] = bytes._value
-        if bytes_le is not None:
-            kwargs["bytes_le"] = bytes_le._value
+        kwargs = _kwargs_from(hex=hex, bytes=bytes, bytes_le=bytes_le)
         if fields is not None:
             kwargs["fields"] = tuple(cast(Int, f)._value for f in fields._items)
-        if int is not None:
-            kwargs["int"] = int._value
-        if version is not None:
-            kwargs["version"] = version._value
+        kwargs.update(_kwargs_from(int=int, version=version))
         # The native `bytes` and `int` names are shadowed by parameters
         # above; build the uuid lazily with what we have.
         self._impl = _uuid.UUID(**kwargs)

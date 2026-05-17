@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import lzma as _lzma
 from types import TracebackType
-from typing import Any, ClassVar, Self
+from typing import ClassVar, Self
 
+from poop.types._unwrap import _kwargs_from
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -33,13 +34,7 @@ class LZMACompressor(Object):
         check: Int | None = None,
         preset: Int | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if format is not None:
-            kwargs["format"] = format._value
-        if check is not None:
-            kwargs["check"] = check._value
-        if preset is not None:
-            kwargs["preset"] = preset._value
+        kwargs = _kwargs_from(format=format, check=check, preset=preset)
         self._impl = _lzma.LZMACompressor(**kwargs)
 
     def compress(self, data: Bytes) -> Bytes:
@@ -59,11 +54,7 @@ class LZMADecompressor(Object):
         format: Int | None = None,
         memlimit: Int | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if format is not None:
-            kwargs["format"] = format._value
-        if memlimit is not None:
-            kwargs["memlimit"] = memlimit._value
+        kwargs = _kwargs_from(format=format, memlimit=memlimit)
         self._impl = _lzma.LZMADecompressor(**kwargs)
 
     def decompress(self, data: Bytes, max_length: Int | None = None) -> Bytes:
@@ -104,13 +95,7 @@ class LZMAFile(Object):
         check: Int | None = None,
         preset: Int | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if format is not None:
-            kwargs["format"] = format._value
-        if check is not None:
-            kwargs["check"] = check._value
-        if preset is not None:
-            kwargs["preset"] = preset._value
+        kwargs = _kwargs_from(format=format, check=check, preset=preset)
         self._impl = _lzma.LZMAFile(
             _path_str(path), "rb" if mode is None else mode._value, **kwargs
         )
@@ -185,13 +170,7 @@ class Lzma:
         check: Int | None = None,
         preset: Int | None = None,
     ) -> Bytes:
-        kwargs: dict[str, Any] = {}
-        if format is not None:
-            kwargs["format"] = format._value
-        if check is not None:
-            kwargs["check"] = check._value
-        if preset is not None:
-            kwargs["preset"] = preset._value
+        kwargs = _kwargs_from(format=format, check=check, preset=preset)
         return Bytes(_lzma.compress(data._value, **kwargs))
 
     @staticmethod
@@ -200,11 +179,7 @@ class Lzma:
         format: Int | None = None,
         memlimit: Int | None = None,
     ) -> Bytes:
-        kwargs: dict[str, Any] = {}
-        if format is not None:
-            kwargs["format"] = format._value
-        if memlimit is not None:
-            kwargs["memlimit"] = memlimit._value
+        kwargs = _kwargs_from(format=format, memlimit=memlimit)
         return Bytes(_lzma.decompress(data._value, **kwargs))
 
     @staticmethod

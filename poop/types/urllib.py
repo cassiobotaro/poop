@@ -6,7 +6,7 @@ import urllib.request as _urllib_request
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
-from poop.types._unwrap import _b, _opt_str
+from poop.types._unwrap import _b, _kwargs_from, _opt_str
 from poop.types.boolean import Boolean
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
@@ -190,10 +190,7 @@ class UrllibParse:
         errors: Str | None = None,
     ) -> Str:
         kwargs: dict[str, str] = {}
-        if encoding is not None:
-            kwargs["encoding"] = encoding._value
-        if errors is not None:
-            kwargs["errors"] = errors._value
+        kwargs.update(_kwargs_from(encoding=encoding, errors=errors))
         return Str(_urllib_parse.quote(string._value, _opt_str(safe, "/"), **kwargs))
 
     @staticmethod
@@ -204,10 +201,7 @@ class UrllibParse:
         errors: Str | None = None,
     ) -> Str:
         kwargs: dict[str, str] = {}
-        if encoding is not None:
-            kwargs["encoding"] = encoding._value
-        if errors is not None:
-            kwargs["errors"] = errors._value
+        kwargs.update(_kwargs_from(encoding=encoding, errors=errors))
         return Str(
             _urllib_parse.quote_plus(string._value, _opt_str(safe, ""), **kwargs)
         )
@@ -510,11 +504,7 @@ class UrllibRequest:
         timeout: Float | Int | None = None,
     ) -> Response:
         target: Any = url._impl if isinstance(url, Request) else url._value
-        kwargs: dict[str, Any] = {}
-        if data is not None:
-            kwargs["data"] = data._value
-        if timeout is not None:
-            kwargs["timeout"] = timeout._value
+        kwargs = _kwargs_from(data=data, timeout=timeout)
         return Response(_urllib_request.urlopen(target, **kwargs))  # noqa: S310
 
     @staticmethod
@@ -523,11 +513,7 @@ class UrllibRequest:
         filename: Str | None = None,
         data: Bytes | None = None,
     ) -> Tuple:
-        kwargs: dict[str, Any] = {}
-        if filename is not None:
-            kwargs["filename"] = filename._value
-        if data is not None:
-            kwargs["data"] = data._value
+        kwargs = _kwargs_from(filename=filename, data=data)
         path, headers = _urllib_request.urlretrieve(  # noqa: S310 — caller responsibility
             url._value, **kwargs
         )

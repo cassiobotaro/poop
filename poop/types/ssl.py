@@ -3,6 +3,7 @@ from __future__ import annotations
 import ssl as _ssl
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -92,9 +93,7 @@ class SSLContext(Object):
         server_hostname: Str | None = None,
         server_side: Boolean | None = None,
     ) -> Socket:
-        kwargs: dict[str, Any] = {}
-        if server_hostname is not None:
-            kwargs["server_hostname"] = server_hostname._value
+        kwargs = _kwargs_from(server_hostname=server_hostname)
         if server_side is not None:
             kwargs["server_side"] = bool(server_side)
         wrapped = self._impl.wrap_socket(sock._impl, **kwargs)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil as _shutil
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _b
+from poop.types._unwrap import _b, _kwargs_from
 from poop.types.boolean import Boolean
 from poop.types.int import Int
 from poop.types.list import List
@@ -159,11 +159,7 @@ class Shutil:
         mode: Int | None = None,
         path: Str | None = None,
     ) -> Path | NoneClass:
-        kwargs: dict[str, Any] = {}
-        if mode is not None:
-            kwargs["mode"] = mode._value
-        if path is not None:
-            kwargs["path"] = path._value
+        kwargs = _kwargs_from(mode=mode, path=path)
         result = _shutil.which(cmd._value, **kwargs)
         if result is None:
             return none
@@ -244,10 +240,6 @@ class Shutil:
         user: Str | Int | None = None,
         group: Str | Int | None = None,
     ) -> NoneClass:
-        kwargs: dict[str, Any] = {}
-        if user is not None:
-            kwargs["user"] = user._value
-        if group is not None:
-            kwargs["group"] = group._value
+        kwargs = _kwargs_from(user=user, group=group)
         _shutil.chown(_path_arg(path), **kwargs)
         return none

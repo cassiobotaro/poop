@@ -8,6 +8,7 @@ import http.server as _http_server
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types._unwrap import _kwargs_from
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -113,11 +114,7 @@ class HTTPConnection(Object):
         port: Int | None = None,
         timeout: Int | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if port is not None:
-            kwargs["port"] = port._value
-        if timeout is not None:
-            kwargs["timeout"] = timeout._value
+        kwargs = _kwargs_from(port=port, timeout=timeout)
         self._impl = _http_client.HTTPConnection(host._value, **kwargs)
 
     @classmethod
@@ -133,9 +130,7 @@ class HTTPConnection(Object):
         body: Bytes | Str | None = None,
         headers: Dict | None = None,
     ) -> NoneClass:
-        kwargs: dict[str, Any] = {}
-        if body is not None:
-            kwargs["body"] = body._value
+        kwargs = _kwargs_from(body=body)
         if headers is not None:
             h: dict[str, str] = {}
             for k, v in headers._data.items():
@@ -159,9 +154,7 @@ class HTTPConnection(Object):
         port: Int | None = None,
         headers: Dict | None = None,
     ) -> NoneClass:
-        kwargs: dict[str, Any] = {}
-        if port is not None:
-            kwargs["port"] = port._value
+        kwargs = _kwargs_from(port=port)
         if headers is not None:
             h: dict[str, str] = {}
             for k, v in headers._data.items():
@@ -182,11 +175,7 @@ class HTTPSConnection(HTTPConnection):
         port: Int | None = None,
         timeout: Int | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if port is not None:
-            kwargs["port"] = port._value
-        if timeout is not None:
-            kwargs["timeout"] = timeout._value
+        kwargs = _kwargs_from(port=port, timeout=timeout)
         self._impl = _http_client.HTTPSConnection(host._value, **kwargs)
 
 

@@ -2,7 +2,7 @@ import difflib as _difflib
 from collections.abc import Iterable
 from typing import Any
 
-from poop.types._unwrap import _b
+from poop.types._unwrap import _b, _kwargs_from
 from poop.types.boolean import Boolean
 from poop.types.float import Float
 from poop.types.int import Int
@@ -92,14 +92,7 @@ class SequenceMatcher:
         bhi: Int | None = None,
     ) -> Tuple:
         kwargs: dict[str, int] = {}
-        if alo is not None:
-            kwargs["alo"] = alo._value
-        if ahi is not None:
-            kwargs["ahi"] = ahi._value
-        if blo is not None:
-            kwargs["blo"] = blo._value
-        if bhi is not None:
-            kwargs["bhi"] = bhi._value
+        kwargs.update(_kwargs_from(alo=alo, ahi=ahi, blo=blo, bhi=bhi))
         m = self._impl.find_longest_match(**kwargs)
         return Tuple(Int(m.a), Int(m.b), Int(m.size))
 

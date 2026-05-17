@@ -61,3 +61,15 @@ def _opt_str(value: object, default: str | None = None) -> str | None:
 def _opt_timeout(value: object) -> Any:
     """`Float | Int | None` → `float | int | None`; for stdlib timeout kwargs."""
     return _unwrap(value, None)
+
+
+def _kwargs_from(**named: Any) -> dict[str, Any]:
+    """Drop None values; unwrap survivors via `._value`.
+
+    Collapses the 3-line `if x is not None: kwargs["x"] = x._value`
+    block to one line:
+
+        kwargs = _kwargs_from(x=x, y=y)        # builds fresh dict
+        kwargs.update(_kwargs_from(x=x, y=y))  # merges into existing dict
+    """
+    return {k: v._value for k, v in named.items() if v is not None}

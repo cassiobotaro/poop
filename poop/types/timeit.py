@@ -3,6 +3,7 @@ from __future__ import annotations
 import timeit as _timeit
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _kwargs_from
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -83,10 +84,7 @@ class TimeIt:
             kwargs["stmt"] = _unwrap_stmt(stmt)
         if setup is not None:
             kwargs["setup"] = _unwrap_stmt(setup)
-        if repeat is not None:
-            kwargs["repeat"] = repeat._value
-        if number is not None:
-            kwargs["number"] = number._value
+        kwargs.update(_kwargs_from(repeat=repeat, number=number))
         return List(*(Float(x) for x in _timeit.repeat(**kwargs)))
 
     @staticmethod

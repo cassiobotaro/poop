@@ -3,7 +3,7 @@ from __future__ import annotations
 import concurrent.futures as _cf
 from typing import Any, ClassVar, Self
 
-from poop.types._unwrap import _opt_timeout
+from poop.types._unwrap import _kwargs_from, _opt_timeout
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
@@ -80,11 +80,9 @@ class ThreadPoolExecutor(_BaseExecutor):
         max_workers: Int | None = None,
         thread_name_prefix: Str | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if max_workers is not None:
-            kwargs["max_workers"] = max_workers._value
-        if thread_name_prefix is not None:
-            kwargs["thread_name_prefix"] = thread_name_prefix._value
+        kwargs = _kwargs_from(
+            max_workers=max_workers, thread_name_prefix=thread_name_prefix
+        )
         super().__init__(_cf.ThreadPoolExecutor(**kwargs))
 
 
@@ -92,9 +90,7 @@ class ProcessPoolExecutor(_BaseExecutor):
     """Wraps `concurrent.futures.ProcessPoolExecutor`."""
 
     def __init__(self, max_workers: Int | None = None) -> None:
-        kwargs: dict[str, Any] = {}
-        if max_workers is not None:
-            kwargs["max_workers"] = max_workers._value
+        kwargs = _kwargs_from(max_workers=max_workers)
         super().__init__(_cf.ProcessPoolExecutor(**kwargs))
 
 
@@ -123,11 +119,7 @@ class Concurrent:
         return_when: Str | None = None,
     ) -> Tuple:
         impls = [f._impl for f in futures if isinstance(f, CFFuture)]
-        kwargs: dict[str, Any] = {}
-        if timeout is not None:
-            kwargs["timeout"] = timeout._value
-        if return_when is not None:
-            kwargs["return_when"] = return_when._value
+        kwargs = _kwargs_from(timeout=timeout, return_when=return_when)
         done, not_done = _cf.wait(impls, **kwargs)
         return Tuple(
             List(*(CFFuture(f) for f in done)),
@@ -137,7 +129,5 @@ class Concurrent:
     @staticmethod
     def as_completed(futures: List, timeout: Float | Int | None = None) -> List:
         impls = [f._impl for f in futures if isinstance(f, CFFuture)]
-        kwargs: dict[str, Any] = {}
-        if timeout is not None:
-            kwargs["timeout"] = timeout._value
+        kwargs = _kwargs_from(timeout=timeout)
         return List(*(CFFuture(f) for f in _cf.as_completed(impls, **kwargs)))

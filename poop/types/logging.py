@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging as _logging
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -145,11 +146,7 @@ class Logging:
 
     @staticmethod
     def basicConfig(level: Int | None = None, fmt: Str | None = None) -> NoneClass:
-        kwargs: dict[str, Any] = {}
-        if level is not None:
-            kwargs["level"] = level._value
-        if fmt is not None:
-            kwargs["format"] = fmt._value
+        kwargs = _kwargs_from(level=level, format=fmt)
         _logging.basicConfig(**kwargs)
         return none
 

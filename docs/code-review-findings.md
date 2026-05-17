@@ -12,7 +12,6 @@ Active engineering backlog. v0.54.1 closed the bug fixes + alto convention viola
 
 | # | Severity | Issue | Estimated LOC |
 |---|---|---|---|
-| C2 | Alto win | Pattern `if x is not None: kwargs["x"] = x._value` appears in 146 spots across 29 files (`subprocess`, `tarfile`, `shutil`, `zipfile`, `ssl`, `http`, `urllib`, `smtplib`, …). A `_kwargs_from(**named)` helper would shrink each 3-line block to 1 line. Mechanical sweep; needs care with the ~30 sites that also wrap values via `_impl` instead of `_value`. | -290 |
 | C5 | Discutível | Heavy property-delegation blocks in `urllib`, `ipaddress`, `tarfile`, `sys`, `uuid` (16-32 properties each, all `return Str(self._impl.X)` shape). A `@_delegated_property(Str)` decorator could compress them but loses static-type inference, IDE jump-to-def, and per-property docstrings. | -150 to -300 (cosmetic) |
 
 ## Test coverage

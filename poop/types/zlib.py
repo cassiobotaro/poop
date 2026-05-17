@@ -3,7 +3,7 @@ from __future__ import annotations
 import zlib as _zlib
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _opt_int
+from poop.types._unwrap import _kwargs_from, _opt_int
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.object import Object
@@ -154,9 +154,7 @@ class Zlib:
         strategy: Int | None = None,
         zdict: Bytes | None = None,
     ) -> Compress:
-        kwargs: dict[str, Any] = {}
-        if zdict is not None:
-            kwargs["zdict"] = zdict._value
+        kwargs = _kwargs_from(zdict=zdict)
         return Compress(
             _zlib.compressobj(
                 _opt_int(level, _zlib.Z_DEFAULT_COMPRESSION),
@@ -172,9 +170,7 @@ class Zlib:
     def decompressobj(
         wbits: Int | None = None, zdict: Bytes | None = None
     ) -> Decompress:
-        kwargs: dict[str, Any] = {}
-        if zdict is not None:
-            kwargs["zdict"] = zdict._value
+        kwargs = _kwargs_from(zdict=zdict)
         return Decompress(
             _zlib.decompressobj(_opt_int(wbits, _zlib.MAX_WBITS), **kwargs)
         )

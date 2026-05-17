@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import io as _io
-from typing import Any, ClassVar, Self
+from typing import ClassVar, Self
 
+from poop.types._unwrap import _kwargs_from
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -18,11 +19,7 @@ class StringIO(Object):
     def __init__(
         self, initial_value: Str | None = None, newline: Str | None = None
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if initial_value is not None:
-            kwargs["initial_value"] = initial_value._value
-        if newline is not None:
-            kwargs["newline"] = newline._value
+        kwargs = _kwargs_from(initial_value=initial_value, newline=newline)
         self._impl = _io.StringIO(**kwargs)
 
     def read(self, size: Int | None = None) -> Str:

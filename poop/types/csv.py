@@ -4,7 +4,7 @@ import csv as _csv
 import io as _io
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _opt_str
+from poop.types._unwrap import _kwargs_from, _opt_str
 from poop.types.boolean import Boolean
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -238,9 +238,7 @@ class Sniffer(Object):
         self._impl = _csv.Sniffer()
 
     def sniff(self, sample: Str, delimiters: Str | None = None) -> Any:
-        kwargs: dict[str, Any] = {}
-        if delimiters is not None:
-            kwargs["delimiters"] = delimiters._value
+        kwargs = _kwargs_from(delimiters=delimiters)
         return self._impl.sniff(sample._value, **kwargs)
 
     def has_header(self, sample: Str) -> Boolean:

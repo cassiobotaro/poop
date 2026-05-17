@@ -4,7 +4,7 @@ import smtplib as _smtplib
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
-from poop.types._unwrap import _opt_str
+from poop.types._unwrap import _kwargs_from, _opt_str
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -38,11 +38,7 @@ class _SMTPBase(Object):
     _impl: Any
 
     def connect(self, host: Str | None = None, port: Int | None = None) -> Tuple:
-        kwargs: dict[str, Any] = {}
-        if host is not None:
-            kwargs["host"] = host._value
-        if port is not None:
-            kwargs["port"] = port._value
+        kwargs = _kwargs_from(host=host, port=port)
         return _wrap_helo_tuple(self._impl.connect(**kwargs))
 
     def helo(self, name: Str | None = None) -> Tuple:
@@ -108,9 +104,7 @@ class _SMTPBase(Object):
         from_addr: Str | None = None,
         to_addrs: Str | List | None = None,
     ) -> Dict:
-        kwargs: dict[str, Any] = {}
-        if from_addr is not None:
-            kwargs["from_addr"] = from_addr._value
+        kwargs = _kwargs_from(from_addr=from_addr)
         if to_addrs is not None:
             if isinstance(to_addrs, List):
                 kwargs["to_addrs"] = [
@@ -154,15 +148,9 @@ class SMTP(_SMTPBase):
         timeout: Int | None = None,
         source_address: Tuple | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if host is not None:
-            kwargs["host"] = host._value
-        if port is not None:
-            kwargs["port"] = port._value
-        if local_hostname is not None:
-            kwargs["local_hostname"] = local_hostname._value
-        if timeout is not None:
-            kwargs["timeout"] = timeout._value
+        kwargs = _kwargs_from(
+            host=host, port=port, local_hostname=local_hostname, timeout=timeout
+        )
         if source_address is not None:
             host_part = source_address.at(Int(0))
             port_part = source_address.at(Int(1))
@@ -183,15 +171,9 @@ class SMTP_SSL(_SMTPBase):
         local_hostname: Str | None = None,
         timeout: Int | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if host is not None:
-            kwargs["host"] = host._value
-        if port is not None:
-            kwargs["port"] = port._value
-        if local_hostname is not None:
-            kwargs["local_hostname"] = local_hostname._value
-        if timeout is not None:
-            kwargs["timeout"] = timeout._value
+        kwargs = _kwargs_from(
+            host=host, port=port, local_hostname=local_hostname, timeout=timeout
+        )
         self._impl = _smtplib.SMTP_SSL(**kwargs)
 
 
@@ -204,13 +186,7 @@ class LMTP(_SMTPBase):
         port: Int | None = None,
         local_hostname: Str | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {}
-        if host is not None:
-            kwargs["host"] = host._value
-        if port is not None:
-            kwargs["port"] = port._value
-        if local_hostname is not None:
-            kwargs["local_hostname"] = local_hostname._value
+        kwargs = _kwargs_from(host=host, port=port, local_hostname=local_hostname)
         self._impl = _smtplib.LMTP(**kwargs)
 
 
