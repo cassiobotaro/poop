@@ -129,7 +129,7 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `grp.getgrnam(name)` | `grp.getgrnam(name)` |
 | `resource.getrusage(who)` | `resource.getrusage(who)` |
 | `sys.platform` | `sys.platform()` |
-| `sys.argv[0]` | `args.script()` |
+| `sys.argv[0]` | `sys.argv().at(0)` |
 | `sys.stdout.write(s)` | `sys.stdout().write(s)` |
 | `atexit.register(f)` | `atexit.register(f)` |
 | `gc.collect()` | `gc.collect()` |
@@ -146,8 +146,8 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `socket.socket(...)` | `Socket(...)` |
 | `ssl.create_default_context()` | `ssl.create_default_context()` |
 | `asyncio.run(coro)` | `asyncio.run(coro)` |
-| `os.getpid()` | `process.pid()` |
-| `os.environ["HOME"]` | `env.get("HOME")` |
+| `os.getpid()` | `os.getpid()` |
+| `os.environ["HOME"]` | `os.environ.get("HOME")` |
 | `io.StringIO(...)` | `StringIO(...)` |
 | `time.time()` | `time.time()` |
 | `logging.getLogger(...)` | `logging.getLogger(...)` |

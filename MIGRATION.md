@@ -1403,12 +1403,12 @@ gc.collect()
 sys.platform().print()
 sys.version_info().print()
 sys.stdout().writeln("hi")
-script = args.script()                   # Str
+script = sys.argv().at(0)                # Str (sys.argv mirrors Python; subscript → .at)
 atexit.register(lambda: "bye".print())   # Block (lambda auto-wraps)
 gc.collect().print()                     # Int
 ```
 
-> POOP splits `sys` into focused namespaces: `sys` itself (`executable`/`platform`/`version`/`version_info`/`maxsize`/`byteorder`/`modules`/`path`/`getrecursionlimit`/`setrecursionlimit`/`exit`/`implementation`/`flags`/`float_info`/`int_info`/`hash_info`/`thread_info`), `args` for a read-only view of `sys.argv` (`args.list()`/`args.script()`/`args.rest()`), and `Stdout`/`Stdin` wrappers returned by `sys.stdout()`/`sys.stderr()`/`sys.stdin()`. All return values are POOP types — `Path`, `Str`, `Int`, `List[Str]`, `Dict[Str, module]`, `Tuple`. The introspection-heavy `settrace` / `_getframe` / `monitoring` / `audit*` surface is intentionally absent. `atexit` mirrors CPython directly — `register` accepts a POOP `Block` (lambdas auto-wrap), `unregister` / `_run_exitfuncs` / `_clear` work as expected. `gc` exposes the **control surface only**: `enable`/`disable`/`isenabled`/`collect`/`get_threshold`/`set_threshold`/`get_count`/`get_stats`/`get_debug`/`set_debug`/`freeze`/`unfreeze`/`get_freeze_count`/`callbacks` plus the `DEBUG_*` constants — `get_objects` / `get_referrers` / `is_tracked` are excluded as introspection.
+> POOP mirrors Python's `sys` module shape directly — Python's attributes (`sys.argv`, `sys.platform`, `sys.version_info`, `sys.modules`, `sys.path`, `sys.maxsize`, …) become callables returning POOP types. So `sys.argv[0]` (subscript, banned in POOP) becomes `sys.argv().at(0)`. `sys.stdout` / `sys.stderr` / `sys.stdin` are wrapped by `Stdout` / `Stdin` classes (returned by `sys.stdout()` / `sys.stderr()` / `sys.stdin()`). All return values are POOP types — `Path`, `Str`, `Int`, `List[Str]`, `Dict[Str, module]`, `Tuple`. The introspection-heavy `settrace` / `_getframe` / `monitoring` / `audit*` surface is intentionally absent. `atexit` mirrors CPython directly — `register` accepts a POOP `Block` (lambdas auto-wrap), `unregister` / `_run_exitfuncs` / `_clear` work as expected. `gc` exposes the **control surface only**: `enable`/`disable`/`isenabled`/`collect`/`get_threshold`/`set_threshold`/`get_count`/`get_stats`/`get_debug`/`set_debug`/`freeze`/`unfreeze`/`get_freeze_count`/`callbacks` plus the `DEBUG_*` constants — `get_objects` / `get_referrers` / `is_tracked` are excluded as introspection.
 
 ## Internet data / markup (`email`, `html`, `xml`)
 
@@ -1539,9 +1539,9 @@ system = platform.system()
 ```python
 # POOP
 random_bytes = os.urandom(16)             # Bytes
-pid = process.pid()                        # Int
-cwd = process.getcwd()                     # Path
-home = env.get("HOME")                     # Str | none
+pid = os.getpid()                          # Int
+cwd = os.getcwd()                          # Path
+home = os.environ.get("HOME")              # Str | none
 
 buf = StringIO()
 buf.write("hello")
@@ -1556,7 +1556,7 @@ logger.info("hi")
 platform.system().print()                  # Str
 ```
 
-> POOP splits Python's `os` into three focused namespaces: `os` itself (random bytes, CPU counts, load average, low-level flag constants like `O_RDONLY`/`F_OK`, and the platform separators `sep`/`linesep`/`pathsep`/`devnull`), `process` (the current-process state — `pid`/`ppid`/`uid`/`gid`/`euid`/`egid`/`umask`/`chdir`/`getcwd`/`kill`), and `env` (a thin POOP-flavoured `os.environ` — `get`/`set`/`unset`/`has`/`keys`/`values`/`as_dict`). `os.path` is **intentionally absent**: every operation is reachable through POOP's `Path` mirror. `io` exposes the in-memory buffers `StringIO` / `BytesIO` (both work as `With` context managers) plus the seek constants — disk I/O continues to go through `Path.read_text`/`write_text`/`read_bytes`/`write_bytes`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API in both seconds (`Float`) and nanoseconds (`Int`), plus parse/format helpers and `StructTime`. `logging` is the canonical Python `Logger`/`Handler`/`Formatter` triad — `set*` accessors return `none`, mutable booleans use `set_propagate`. `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment metadata; `Uname` exposes the standard six-field record.
+> POOP mirrors Python's `os` module shape directly: `os.getpid()`/`getppid()`/`getuid()`/`getgid()`/`geteuid()`/`getegid()` for process IDs, `os.umask`/`chdir`/`getcwd`/`kill` for current-process state, plus the low-level helpers (`urandom`, `cpu_count`, `process_cpu_count`, `getloadavg`) and the standard flag/separator constants (`F_OK`/`R_OK`/`W_OK`/`X_OK`, `O_RDONLY` etc, `sep`/`linesep`/`pathsep`/`devnull`). Environment access lives on the `os.environ` sub-namespace — since POOP forbids subscript syntax, Python's `os.environ["X"] = "y"` becomes `os.environ.set("X", "y")` (the `get`/`unset`/`has`/`keys`/`values`/`as_dict` methods round out the API). `os.path` is **intentionally absent**: every operation is reachable through POOP's `Path` mirror. `io` exposes the in-memory buffers `StringIO` / `BytesIO` (both work as `With` context managers) plus the seek constants — disk I/O continues to go through `Path.read_text`/`write_text`/`read_bytes`/`write_bytes`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API in both seconds (`Float`) and nanoseconds (`Int`), plus parse/format helpers and `StructTime`. `logging` is the canonical Python `Logger`/`Handler`/`Formatter` triad — `set*` accessors return `none`, mutable booleans use `set_propagate`. `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment metadata; `Uname` exposes the standard six-field record.
 
 ## Concurrent execution (`threading`, `multiprocessing`, `concurrent`, `subprocess`, `queue`)
 
@@ -1591,4 +1591,4 @@ q = Queue()
 q.put(item); item = q.get()
 ```
 
-> POOP exposes `threading.Thread` plus the standard primitives `Lock` / `RLock` / `Event` / `Semaphore` / `Barrier`, all `With`-friendly. Module helpers like `current_thread`/`active_count`/`get_ident` are on the `threading` namespace. `multiprocessing` mirrors the shape — `multiprocessing.Process` lives only on the namespace (not bound as a top-level name) to avoid clashing with the `os.process` namespace; `Pool`/`MPQueue` are top-level. Targets passed to `Process`/`Pool` workers must be **module-level Python functions** — POOP's `Block`-wrapped lambdas don't pickle across the `forkserver` boundary that's now the Linux default. `concurrent.futures` exposes `ThreadPoolExecutor` and `ProcessPoolExecutor` (both `With`-friendly) plus `CFFuture` (renamed from `Future` to disambiguate from `asyncio.Future`). `concurrent.wait`/`.as_completed` work the same as in CPython. `subprocess.run` returns a `CompletedProcess` whose `.stdout`/`.stderr` are POOP `Str` (when `text=true`) or `Bytes`. `Popen` exposes the full lifecycle. `queue` has the same four classes as CPython — `Queue` (FIFO), `LifoQueue`, `PriorityQueue`, and `SimpleQueue` — with `Empty`/`Full` exception classes for `Try.except_`.
+> POOP exposes `threading.Thread` plus the standard primitives `Lock` / `RLock` / `Event` / `Semaphore` / `Barrier`, all `With`-friendly. Module helpers like `current_thread`/`active_count`/`get_ident` are on the `threading` namespace. `multiprocessing` mirrors the shape — `multiprocessing.Process` lives only on the namespace (not bound as a top-level name) to match Python's idiomatic usage; `Pool`/`MPQueue` are top-level. Targets passed to `Process`/`Pool` workers must be **module-level Python functions** — POOP's `Block`-wrapped lambdas don't pickle across the `forkserver` boundary that's now the Linux default. `concurrent.futures` exposes `ThreadPoolExecutor` and `ProcessPoolExecutor` (both `With`-friendly) plus `CFFuture` (renamed from `Future` to disambiguate from `asyncio.Future`). `concurrent.wait`/`.as_completed` work the same as in CPython. `subprocess.run` returns a `CompletedProcess` whose `.stdout`/`.stderr` are POOP `Str` (when `text=true`) or `Bytes`. `Popen` exposes the full lifecycle. `queue` has the same four classes as CPython — `Queue` (FIFO), `LifoQueue`, `PriorityQueue`, and `SimpleQueue` — with `Empty`/`Full` exception classes for `Try.except_`.

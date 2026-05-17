@@ -2033,9 +2033,9 @@ Three small Unix-specific namespaces shipped together. `pwd` looks up Unix passw
 
 `pwd`, `Passwd`, `grp`, `Group`, `resource`, and `RUsage` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{pwd,grp,resource}.py` — namespace-only, no AST rewrite. Platform-specific `RLIMIT_*` / `RUSAGE_*` constants bind to `none` on platforms where they don't exist, so user code can `is_none()`-check before calling `getrlimit`.
 
-### sys + Args + Stdout + Stdin, atexit, gc — `poop/types/{sys,atexit,gc}.py`
+### sys + Stdout + Stdin, atexit, gc — `poop/types/{sys,atexit,gc}.py`
 
-Three runtime-services namespaces shipped together. `sys` exposes a curated subset of CPython's `sys` module — introspection-heavy bits (`settrace`, `_getframe`, `monitoring`, audit hooks) are deliberately out of scope. `sys.argv` is split into a dedicated `args` namespace, and `sys.stdout` / `sys.stderr` / `sys.stdin` are wrapped by `Stdout` / `Stdin` classes that speak POOP types. `atexit` registers / unregisters shutdown callbacks (POOP `Block`s). `gc` exposes the garbage-collector control surface only — `get_objects` / `get_referrers` / `is_tracked` etc. are excluded for clashing with POOP's no-introspection rule.
+Three runtime-services namespaces shipped together. `sys` exposes a curated subset of CPython's `sys` module — introspection-heavy bits (`settrace`, `_getframe`, `monitoring`, audit hooks) are deliberately out of scope. Python attributes like `sys.argv` / `sys.platform` map to callables (`sys.argv()`, `sys.platform()`) that return POOP types — POOP code uses `sys.argv().at(0)` instead of `sys.argv[0]`. `sys.stdout` / `sys.stderr` / `sys.stdin` are wrapped by `Stdout` / `Stdin` classes that speak POOP types. `atexit` registers / unregisters shutdown callbacks (POOP `Block`s). `gc` exposes the garbage-collector control surface only — `get_objects` / `get_referrers` / `is_tracked` etc. are excluded for clashing with POOP's no-introspection rule.
 
 | Operation | Returns | Notes |
 |---|---|---|
@@ -2048,10 +2048,9 @@ Three runtime-services namespaces shipped together. `sys` exposes a curated subs
 | `sys.modules()` | `Dict[Str, module]` | snapshot at call time |
 | `sys.path()` | `List[Str]` | snapshot at call time |
 | `sys.exit(code=none)` | raises `SystemExit` | accepts `Int` or `Str` |
+| `sys.argv()` | `List[Str]` | mirrors Python's `sys.argv` |
 | `sys.stdout()` / `sys.stderr()` | `Stdout` | wraps real streams |
 | `sys.stdin()` | `Stdin` | wraps real stream |
-| `args.list()` / `args.rest()` | `List[Str]` | full / minus script |
-| `args.script()` | `Str` | `argv[0]` or `""` |
 | `Stdout.write(s)` | `Int` | bytes written |
 | `Stdout.writeln(s=none)` / `.flush()` | `none` | |
 | `Stdout.isatty()` | `Boolean` | |
@@ -2071,7 +2070,7 @@ Three runtime-services namespaces shipped together. `sys` exposes a curated subs
 | `gc.get_freeze_count()` | `Int` | |
 | `gc.callbacks()` | Python `list` | mutable, shared with CPython's |
 
-`sys`, `args`, `Stdout`, `Stdin`, `atexit`, and `gc` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{sys,atexit,gc}.py` — namespace-only, no AST rewrite. POOP lambdas auto-wrap as `Block`s, so `atexit.register(lambda: ...)` works directly.
+`sys`, `Stdout`, `Stdin`, `atexit`, and `gc` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{sys,atexit,gc}.py` — namespace-only, no AST rewrite. POOP lambdas auto-wrap as `Block`s, so `atexit.register(lambda: ...)` works directly.
 
 ### email + EmailMessage + EmailUtils + EmailPolicy, html + HTMLParser + Entities, xml + ET + Element + ElementTree — `poop/types/{email,html,xml}.py`
 
@@ -2226,9 +2225,10 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 
 `signal`/`socket`/`Socket`/`ssl`/`SSLContext`/`asyncio`/`Future` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{signal,socket,ssl,asyncio}.py` — namespace-only, no AST rewrite. **POOP forbids `async def` source** (the `no_async` validator rejects async function definitions), so coroutines for `asyncio.run` are constructed in Python — the namespace is most useful when POOP code is interoperating with an async Python library rather than defining new coroutines itself.
 
-### os + Process + Env, io + StringIO + BytesIO, time + StructTime, logging + Logger + Handler + Formatter, platform + Uname — `poop/types/{os,io,time,logging,platform}.py`
+### os + Environ, io + StringIO + BytesIO, time + StructTime, logging + Logger + Handler + Formatter, platform + Uname — `poop/types/{os,io,time,logging,platform}.py`
 
-Five generic-OS namespaces shipped together. `os` is split into three focused namespaces: `os` itself (random bytes, CPU counts, load average, low-level flags and separators), `process` (pid/ppid/uid/gid/euid/egid/umask/chdir/getcwd/kill), and `env` (`environ` access via `get`/`set`/`unset`/`has`/`keys`/`values`/`as_dict`). Most filesystem ops continue to live on `Path`; `os.path` is intentionally absent. `io` exposes the in-memory buffers `StringIO` / `BytesIO` plus the seek constants — disk I/O still goes through `Path.read_*` / `write_*`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API plus parse/format helpers; `StructTime` wraps `time.struct_time`. `logging` exposes the canonical xUnit-style framework (Logger + Handler + Formatter) — `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment info and exposes `Uname` as a POOP record.
+Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module shape directly: process-state queries (`getpid`/`getppid`/`getuid`/`getgid`/`geteuid`/`getegid`/`umask`/`chdir`/`getcwd`/`kill`), random bytes (`urandom`), CPU counts (`cpu_count`/`process_cpu_count`/`getloadavg`), and the low-level flag/separator constants. The `os.environ` sub-namespace handles environment variables — since POOP forbids subscript syntax, Python's `os.environ["X"] = "y"` becomes the explicit `os.environ.set("X", "y")`. `os.path` is **intentionally absent** — every operation is reachable via `Path`. `io` exposes the in-memory buffers `StringIO` / `BytesIO` plus the seek constants — disk I/O still goes through `Path.read_*` / `write_*`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API plus parse/format helpers; `StructTime` wraps `time.struct_time`. `logging` exposes the canonical xUnit-style framework (Logger + Handler + Formatter) — `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment info and exposes `Uname` as a POOP record.
+
 | Operation | Returns | Notes |
 |---|---|---|
 | `os.urandom(n)` | `Bytes` | |
@@ -2236,16 +2236,16 @@ Five generic-OS namespaces shipped together. `os` is split into three focused na
 | `os.getloadavg()` | `Tuple(Float, Float, Float)` | Unix only |
 | `os.F_OK` / `R_OK` / `W_OK` / `X_OK` / `O_RDONLY` / `O_WRONLY` / `O_RDWR` / `O_APPEND` / `O_CREAT` / `O_TRUNC` / `O_EXCL` (class attrs) | `Int` | |
 | `os.sep` / `linesep` / `pathsep` / `devnull` (class attrs) | `Str` | |
-| `process.pid()` / `.ppid()` / `.uid()` / `.gid()` / `.euid()` / `.egid()` | `Int` | |
-| `process.umask(m)` | `Int` | previous mask |
-| `process.chdir(p)` / `.kill(pid, sig)` | `none` | |
-| `process.getcwd()` | `Path` | |
-| `env.get(key, default=none)` | `Str` / `none` | |
-| `env.set(key, value)` / `.unset(key)` | `none` | |
-| `env.has(key)` | `Boolean` | |
-| `env.keys()` | `Set[Str]` | |
-| `env.values()` | `List[Str]` | |
-| `env.as_dict()` | `Dict[Str, Str]` | snapshot |
+| `os.getpid()` / `.getppid()` / `.getuid()` / `.getgid()` / `.geteuid()` / `.getegid()` | `Int` | |
+| `os.umask(m)` | `Int` | previous mask |
+| `os.chdir(p)` / `.kill(pid, sig)` | `none` | |
+| `os.getcwd()` | `Path` | |
+| `os.environ.get(key, default=none)` | `Str` / `none` | |
+| `os.environ.set(key, value)` / `.unset(key)` | `none` | mutators (replace Python's `environ[k]=v` / `del environ[k]`) |
+| `os.environ.has(key)` | `Boolean` | |
+| `os.environ.keys()` | `Set[Str]` | |
+| `os.environ.values()` | `List[Str]` | |
+| `os.environ.as_dict()` | `Dict[Str, Str]` | snapshot |
 | `StringIO(initial='', newline=none)` / `BytesIO(initial=b'')` | buffer | works as `With` ctx mgr |
 | `StringIO.read(size=none)` / `.readline(size=none)` / `.getvalue()` | `Str` | |
 | `BytesIO.read(size=none)` / `.readline(size=none)` / `.getvalue()` | `Bytes` | |
@@ -2284,7 +2284,7 @@ Five generic-OS namespaces shipped together. `os` is split into three focused na
 | `platform.mac_ver()` / `.win32_ver()` | `Tuple` | per-OS specifics |
 | `Uname.system` / `.node` / `.release` / `.version` / `.machine` / `.processor` (properties) | `Str` | |
 
-`os`/`process`/`env`/`io`/`StringIO`/`BytesIO`/`time`/`StructTime`/`logging`/`Logger`/`Handler`/`Formatter`/`platform`/`Uname` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{os,io,time,logging,platform}.py` — namespace-only, no AST rewrite. The pure-Python `os.path` family is **intentionally absent** — every operation is reachable via `Path` (POOP's `pathlib.Path` mirror). Likewise, `io.open` is replaced by `Path.read_text` / `write_text` / `read_bytes` / `write_bytes`. `logging.config` (file/dict configuration) and `logging.handlers` (rotating, SMTP, syslog) are out of scope for v1.
+`os`/`io`/`StringIO`/`BytesIO`/`time`/`StructTime`/`logging`/`Logger`/`Handler`/`Formatter`/`platform`/`Uname` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{os,io,time,logging,platform}.py` — namespace-only, no AST rewrite. The `Environ` sub-namespace is reachable via `os.environ` rather than the top-level (mirroring Python's `os.environ` attribute). The pure-Python `os.path` family is **intentionally absent** — every operation is reachable via `Path` (POOP's `pathlib.Path` mirror). Likewise, `io.open` is replaced by `Path.read_text` / `write_text` / `read_bytes` / `write_bytes`. `logging.config` (file/dict configuration) and `logging.handlers` (rotating, SMTP, syslog) are out of scope for v1.
 
 ### threading + Thread + Lock/RLock + Event + Semaphore + Barrier, multiprocessing + Process + MPQueue + Pool, concurrent + ThreadPoolExecutor + ProcessPoolExecutor + CFFuture, subprocess + Popen + CompletedProcess, queue + Queue + LifoQueue + PriorityQueue + SimpleQueue — `poop/types/{threading,multiprocessing,concurrent,subprocess,queue}.py`
 
@@ -2344,7 +2344,7 @@ Five concurrent-execution namespaces shipped together. `threading` exposes `Thre
 | `Queue.task_done()` / `.join()` | `none` | LifoQueue/PriorityQueue also expose these |
 | `queue.Empty` / `Full` (class attrs) | exception class | |
 
-`threading`/`Thread`/`Lock`/`RLock`/`Event`/`Semaphore`/`Barrier`/`multiprocessing`/`Pool`/`MPQueue`/`concurrent`/`ThreadPoolExecutor`/`ProcessPoolExecutor`/`CFFuture`/`subprocess`/`Popen`/`CompletedProcess`/`queue`/`Queue`/`LifoQueue`/`PriorityQueue`/`SimpleQueue` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{threading,multiprocessing,concurrent,subprocess,queue}.py` — namespace-only, no AST rewrite. `multiprocessing.Process` is **only reachable via `multiprocessing.Process`** (not bound as a top-level name) to avoid colliding with the `os.process` namespace shipped in v0.49.0. POOP's `Block` (lambda-wrapping) does not pickle across the `multiprocessing` boundary on `forkserver` start methods — module-level Python functions must be used as `target=...` for `Process` / `Pool` workers.
+`threading`/`Thread`/`Lock`/`RLock`/`Event`/`Semaphore`/`Barrier`/`multiprocessing`/`Pool`/`MPQueue`/`concurrent`/`ThreadPoolExecutor`/`ProcessPoolExecutor`/`CFFuture`/`subprocess`/`Popen`/`CompletedProcess`/`queue`/`Queue`/`LifoQueue`/`PriorityQueue`/`SimpleQueue` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{threading,multiprocessing,concurrent,subprocess,queue}.py` — namespace-only, no AST rewrite. `multiprocessing.Process` is **only reachable via `multiprocessing.Process`** (not bound as a top-level name) — that matches Python's idiomatic usage and avoids ambiguity with future `Process`-named types. POOP's `Block` (lambda-wrapping) does not pickle across the `multiprocessing` boundary on `forkserver` start methods — module-level Python functions must be used as `target=...` for `Process` / `Pool` workers.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
