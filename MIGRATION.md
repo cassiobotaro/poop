@@ -1505,12 +1505,15 @@ sock.connect(("example.com", 443))
 ctx = ssl.create_default_context()
 secure = ctx.wrap_socket(sock, server_hostname="example.com")
 
-# POOP forbids `async def` — coroutines must be built in Python.
-# Use asyncio.sleep / asyncio.gather to compose them.
-asyncio.run(asyncio.sleep(1)).print()
+class Go:
+    async def run(self):
+        await asyncio.sleep(1)
+        return 42
+
+asyncio.run(Go().run()).print()
 ```
 
-> POOP exposes `signal.signal`/`getsignal`/`strsignal`/`raise_signal`/`pthread_kill`/`sigpending` plus the common signal constants (`SIGINT`, `SIGTERM`, `SIGABRT`, `SIGCHLD`, `SIGUSR1`, …). Platform-specific constants bind to `none` rather than raising on import. The `Socket` class mirrors `socket.socket` directly — `bind`/`listen`/`accept`/`connect`/`send`/`sendall`/`recv`/`sendto`/`recvfrom`/`shutdown`/`close`, plus the address-resolution module helpers (`gethostbyname`, `gethostbyname_ex`, `getfqdn`, `getservbyname/port`, `inet_aton/ntoa`, `inet_pton/ntop`) and the high-level `create_connection`/`create_server` factories. POOP `Socket` works as a `With` context manager. `ssl.create_default_context()` returns an `SSLContext`; mutators are method-based (`set_verify_mode`, `set_check_hostname`, `set_ciphers`) to keep POOP's no-property-mutation discipline. `ssl.SSLError` and its subclasses are catchable via `Try.except_`. `asyncio` is the smallest of the four — POOP **forbids `async def` syntax** (`no_async` validator), so `async def my_coro(): ...` won't parse. Coroutines must be defined on the Python side (or composed from `asyncio.sleep`/`asyncio.gather`/`asyncio.shield`) and handed to `asyncio.run`. Use `Future.done/cancelled/result/exception/cancel` to inspect tasks.
+> POOP exposes `signal.signal`/`getsignal`/`strsignal`/`raise_signal`/`pthread_kill`/`sigpending` plus the common signal constants (`SIGINT`, `SIGTERM`, `SIGABRT`, `SIGCHLD`, `SIGUSR1`, …). Platform-specific constants bind to `none` rather than raising on import. The `Socket` class mirrors `socket.socket` directly — `bind`/`listen`/`accept`/`connect`/`send`/`sendall`/`recv`/`sendto`/`recvfrom`/`shutdown`/`close`, plus the address-resolution module helpers (`gethostbyname`, `gethostbyname_ex`, `getfqdn`, `getservbyname/port`, `inet_aton/ntoa`, `inet_pton/ntop`) and the high-level `create_connection`/`create_server` factories. POOP `Socket` works as a `With` context manager. `ssl.create_default_context()` returns an `SSLContext`; mutators are method-based (`set_verify_mode`, `set_check_hostname`, `set_ciphers`) to keep POOP's no-property-mutation discipline. `ssl.SSLError` and its subclasses are catchable via `Try.except_`. `asyncio` exposes `run`, `sleep`, `gather`, `wait_for`, `shield`, `create_task`, and `Future`. Since v0.52.0 POOP source can define `async def` methods inside a class and `await` other coroutines directly — drive them with `asyncio.run(SomeClass().run())`. Use `Future.done/cancelled/result/exception/cancel` to inspect tasks. `async for` / `async with` / async generators remain forbidden.
 
 ## Generic OS (`os`, `io`, `time`, `logging`, `platform`)
 

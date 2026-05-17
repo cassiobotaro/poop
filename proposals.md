@@ -1,168 +1,5 @@
 # Proposals
 
-## Revisit the `async def` / `await` ban
-
-POOP currently rejects `async def` and `await` at validation time:
-
-```
-poop.errors.ValidationError: async functions are forbidden —
-POOP has no event loop
-poop.errors.ValidationError: await is forbidden —
-POOP has no event loop
-```
-
-(`poop/validators/no_async.py`)
-
-The rationale ("POOP has no event loop") was true at the time the
-validator was written but is **no longer accurate** after v0.48.0:
-POOP now ships an `asyncio` namespace that wraps the CPython event
-loop — `asyncio.run(coro)`, `asyncio.sleep`, `asyncio.gather`,
-`asyncio.wait_for`, `asyncio.shield`, `Future`, and the
-`CancelledError` / `TimeoutError` / `InvalidStateError` /
-`IncompleteReadError` exception classes. There **is** an event loop
-reachable from POOP; what users *can't* do is define their own
-coroutines to feed it.
-
-The current state is a half-feature:
-
-- POOP code can call `asyncio.run(some_python_coro)` — useful only
-  if the coroutine was defined in a Python escape hatch (test
-  helper, vendored library, etc.).
-- POOP code can compose existing awaitables (`asyncio.run(
-  asyncio.gather(asyncio.sleep(1), asyncio.sleep(2)))`) — useful
-  for trivial demos, not for real concurrency.
-- POOP code **cannot** write `async def fetch(url):` and `await
-  client.get(url)`. Any modern Python async library (httpx,
-  asyncpg, aiosqlite, FastAPI handlers, Starlette routes, …) is
-  effectively unreachable.
-
-This proposal does **not** decide the question — it lays out the
-options so a decision can be made deliberately rather than by
-historical drift.
-
-**Three positions to consider:**
-
-### Position A — Keep the ban, narrow the rationale
-
-Keep `no_async` active but rewrite the error message and the
-proposals.md justification. The honest reason is **not** "no event
-loop"; the honest reason is one of:
-
-- *async breaks the receiver-message model.* `await x` is not a
-  message sent to `x` — it's a continuation primitive bolted onto
-  Python syntax. Allowing `await` would mean POOP code reads as
-  message-passing in 99% of the file and as cooperative
-  preemption in the 1% that uses async. Smalltalk doesn't have
-  `await`; it has processes that yield via messages.
-- *async forks the call-site contract.* In an async POOP, every
-  method that might suspend has to be `async def`, and every
-  caller needs `await`. That viral colouring fights POOP's
-  "everything is a method message; receivers respond
-  synchronously" promise.
-- *POOP's audience is educational.* The premise is "see how far
-  message-passing carries you." Concurrency is a separable concern
-  that can be taught after the core; coupling them confuses both.
-
-If the ban stays, drop `asyncio.run` / `Future` etc. from the
-namespace too, or document very loudly that the `asyncio` namespace
-is for Python-interop only and POOP users will never write a
-coroutine themselves.
-
-### Position B — Allow `async def` and `await`, no message-passing pretence
-
-Drop the `no_async` validator entirely. Accept that some POOP files
-will mix message-passing (most of the code) with `async` /
-`await` (the I/O-bound bits). Users get full asyncio interop —
-they can write FastAPI handlers, async DB queries, websocket
-handlers — at the cost of the language guarantee weakening.
-
-Implementation:
-- Remove `NoAsyncValidator` from `DEFAULT_VALIDATORS`.
-- Remove `NoAsyncValidator` from `no_free_functions.py`'s async
-  branch (or keep it: "free async functions are still forbidden,
-  but async methods inside a class are fine").
-- Add tests for `async def` methods + `await` expressions
-  surviving the validator.
-- Document the change in `INFECTIONS.md` § "Explicitly allowed"
-  (`async`/`await` joins `with` and `import` in the "POOP
-  tolerates this" column — but `import` is actually banned, so the
-  category needs renaming).
-- Decide whether `await x` should keep Python syntax or become
-  `.await_()` (method form). Python syntax is the obvious choice
-  — anything else would require an AST transformer.
-
-### Position C — Replace with a message-passing async story
-
-Keep `async def` / `await` banned but expose async semantics as
-**messages on a `Promise`-like type**. Two flavours:
-
-- **Block.async()** — `Block(lambda: do_io()).async()` schedules
-  the block on the loop and returns a `Future`. Chain via
-  `future.then(lambda x: ...)` and `future.wait()` (synchronous
-  bridge that calls `asyncio.run` under the hood).
-- **Actor-style** — a `Process` (in the Smalltalk sense, not the
-  OS sense) message that returns immediately and runs the block
-  on a background coroutine, with `process.value()` blocking until
-  the result is ready.
-
-This is the most Smalltalk-faithful answer but the most invasive
-to implement — it means a fresh transformer turning `block.async()`
-into the asyncio plumbing, plus a thread-or-loop runtime that lives
-under POOP rather than being a thin wrapper over CPython's
-`asyncio.run`. Existing Python async libraries would still not be
-directly reachable from POOP code without an adapter layer.
-
-**Trade-off matrix:**
-
-| Position | Reach Python async ecosystem | Keep "everything is a message" purity | Implementation cost |
-|---|---|---|---|
-| A — keep ban | ❌ Only via Python escape hatches | ✅ Pure | ✅ Zero |
-| B — allow async/await | ✅ Full | ❌ Two paradigms in one file | ⚡ Small (drop validator + tests + docs) |
-| C — Promise-as-message | 🟡 Adapter required | ✅ Pure | 🔴 Large (new transformer + runtime) |
-
-**Questions to settle before picking:**
-
-1. Is POOP's audience educational or pragmatic? Position A
-   makes sense for the former; B for the latter; C for the former
-   if the cost is affordable.
-2. Does "POOP code calls into Python async libraries" count as a
-   real use case the project wants to enable? If yes, A is
-   untenable. If no, A is the cheapest answer.
-3. Is the `asyncio` namespace shipped in v0.48.0 doing useful work
-   for anyone? If not, removing it (back to "POOP has no async at
-   all") is internally consistent with Position A.
-
-**Recommendation for the proposal — not for the decision:**
-
-Pick a position and align everything else. The half-banned status
-quo (validator says no, namespace says yes) is the worst of all
-worlds — users land on `asyncio.gather` in the docs, get inspired,
-write `async def`, hit the validator, and feel cheated.
-
-If undecided: ship **Position A + drop the `asyncio` namespace**
-as the smallest coherent change. The `asyncio` work isn't wasted —
-it can resurface as part of Position B or C when the question is
-deliberately answered.
-
-**Type discipline / scope:**
-
-- This proposal **does not implement** the change. Its output is
-  one of {A, B, C} chosen on purpose, documented in `INFECTIONS.md`,
-  and reflected in `no_async.py`'s error message + the audit table
-  in `proposals.md`.
-- The decision should be a single ticket, not a session of bikeshed
-  PRs. Once chosen, implementation is a follow-up.
-
-**Out of scope:**
-
-- Multi-threaded execution (`threading` / `multiprocessing` already
-  ship as message wrappers; the async question is orthogonal).
-- Channels / actors / dataflow primitives — broader concurrency
-  story belongs in its own proposal once the async question is
-  settled.
-- `async for` / `async with` / `async generator` — pair with
-  whichever position wins, but defer the spec until then.
-
 ## Audit every namespace signature against its Python counterpart
 
 v0.51.0 fixed two cases of "POOP design diverged from Python without
@@ -974,6 +811,17 @@ produce a per-module decision and either a follow-up proposal or a
 
 Items deferred from shipped proposals that need their own follow-up
 once a prerequisite exists.
+
+### `async for` / `async with` / async generators — from the async-ban decision (v0.52.0)
+
+v0.52.0 dropped `NoAsyncValidator` so `async def` methods and `await`
+expressions now pass the pipeline. The async-flavoured control
+structures stayed banned by their existing validators (`async for` by
+`no_loops`, `async with` by `no_with`, async generators indirectly via
+`no_yield`). Lifting any of these requires a separate decision plus
+likely a new POOP-side idiom (`do`-style iteration over async
+iterables, `With` adapter for async context managers, etc.). Deferred
+until a concrete caller surfaces.
 
 ### `Random.getstate()` / `Random.setstate(state)` — from the `random` proposal (v0.7.0)
 

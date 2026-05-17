@@ -92,14 +92,18 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 
 `and_` and `or_` receive a block so evaluation is lazy — the right-hand side is only evaluated if needed, preserving the short-circuit semantics of Python's `and`/`or`.
 
-### No `async`/`await` — `poop/validators/no_async.py`
+### `async def` / `await` — allowed inside class methods
 
-| AST node | Reason |
-|---|---|
-| `ast.AsyncFunctionDef` | async functions imply an event loop — POOP has no event loop |
-| `ast.Await` | same |
+POOP source can define `async def` methods and use `await` directly.
+The validator pipeline forwards `ast.AsyncFunctionDef` and `ast.Await`
+to compilation untouched; the coroutines are driven by `AsyncIO.run`
+from the `asyncio` namespace.
 
-`ast.AsyncFor` is also banned by the loops validator. `ast.AsyncFunctionDef` *outside* a class is additionally covered by the free-functions validator; `no_async` handles the case where an `async def` appears *inside* a class method.
+The async-flavoured *control structures* remain banned by their
+non-async validators: `ast.AsyncFor` by `no_loops`, `ast.AsyncWith` by
+`no_with`, and `async def` *outside* a class by `no_free_functions`.
+Async generators are forbidden indirectly — `yield` inside any
+function (sync or async) is rejected by `no_yield`.
 
 ### No `not` — `poop/validators/no_not.py`
 
@@ -2171,7 +2175,7 @@ Three dev / debug / profile namespaces shipped together. `unittest` is a POOP-fl
 
 ### signal, socket + Socket, ssl + SSLContext, asyncio + Future — `poop/types/{signal,socket,ssl,asyncio}.py`
 
-Four networking namespaces shipped together. `signal` wraps OS signal registration and exposes the standard signal constants (platform-specific ones bind to `none` when unavailable). `socket` mirrors CPython's `socket.socket` as the POOP `Socket` class plus the module-level helpers (`gethostbyname`, `inet_aton`, `create_connection`/`create_server`, …). `ssl` wraps `SSLContext` and the standard verify / protocol constants. `asyncio` is the **smallest** of the four — POOP forbids `async def` source (`no_async` validator), so coroutines must be built in Python and handed to `asyncio.run`; the namespace also exposes `gather`, `wait_for`, `shield`, `sleep`, `create_task`, and `Future`.
+Four networking namespaces shipped together. `signal` wraps OS signal registration and exposes the standard signal constants (platform-specific ones bind to `none` when unavailable). `socket` mirrors CPython's `socket.socket` as the POOP `Socket` class plus the module-level helpers (`gethostbyname`, `inet_aton`, `create_connection`/`create_server`, …). `ssl` wraps `SSLContext` and the standard verify / protocol constants. `asyncio` exposes `run`, `sleep`, `gather`, `wait_for`, `shield`, `create_task`, and `Future`. POOP source can write `async def` methods and `await` directly (since v0.52.0) — `AsyncIO.run(some_method())` is the canonical entry point.
 
 | Operation | Returns | Notes |
 |---|---|---|
@@ -2223,7 +2227,7 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 | `Future.cancel()` | `Boolean` | |
 | `asyncio.CancelledError` / `TimeoutError` / `InvalidStateError` / `IncompleteReadError` (class attrs) | exception class | |
 
-`signal`/`socket`/`Socket`/`ssl`/`SSLContext`/`asyncio`/`Future` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{signal,socket,ssl,asyncio}.py` — namespace-only, no AST rewrite. **POOP forbids `async def` source** (the `no_async` validator rejects async function definitions), so coroutines for `asyncio.run` are constructed in Python — the namespace is most useful when POOP code is interoperating with an async Python library rather than defining new coroutines itself.
+`signal`/`socket`/`Socket`/`ssl`/`SSLContext`/`asyncio`/`Future` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{signal,socket,ssl,asyncio}.py` — namespace-only, no AST rewrite. POOP code can define coroutines directly as `async def` methods on a class and `await` other coroutines; the namespace is also fully reachable when POOP code is interoperating with an existing async Python library. `async for` / `async with` / async generators remain forbidden (by `no_loops`, `no_with`, and `no_yield` respectively).
 
 ### os + Environ, io + StringIO + BytesIO, time + StructTime, logging + Logger + Handler + Formatter, platform + Uname — `poop/types/{os,io,time,logging,platform}.py`
 
