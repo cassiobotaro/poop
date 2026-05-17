@@ -4,6 +4,119 @@ Quick translations of common Python idioms to POOP source code. For the full ref
 
 > Every snippet pair shows the Python form you would normally write and the POOP form the validators and transformers force you to write instead. Snippets are valid as POOP source — primitive literals like `0`, `"hi"`, `True` are wrapped to POOP types by transformers at parse time, so methods like `.at(0)` and `.print()` work directly on Python literals without any manual wrapping.
 
+## Quick reference
+
+A one-line summary of the most common substitutions. The sections below walk through each in context.
+
+| Python | POOP |
+|---|---|
+| `print(x)` | `x.print()` |
+| `if cond:` / `else:` | `cond.if_true(lambda: …)` / `cond.if_false(lambda: …)` |
+| `for x in col:` | `col.do(lambda x: …)` |
+| `while cond:` | `(lambda: cond).while_true(lambda: …)` |
+| `not x` | `x.not_()` |
+| `-x` | `x.negated()` |
+| `len(x)` | `x.len()` |
+| `x[i]` | `x.at(i)` |
+| `x[a:b]` | `x.slice(a, b)` |
+| `x and y` | `x.and_(lambda: y)` |
+| `x or y` | `x.or_(lambda: y)` |
+| `math.sqrt(x)` | `math.sqrt(x)` |
+| `random.choice(xs)` | `random.choice(xs)` |
+| `random.Random(seed)` | `Random(seed)` |
+| `errno.EPERM` | `errno.EPERM` |
+| `getpass.getuser()` | `getpass.getuser()` |
+| `secrets.token_hex(16)` | `secrets.token_hex(16)` |
+| `base64.b64encode(b)` | `b.b64encode()` |
+| `base64.b64decode(s)` | `s.b64decode()` |
+| `binascii.crc32(b)` | `binascii.crc32(b)` |
+| `mimetypes.guess_type(url)` | `mimetypes.guess_type(url)` |
+| `webbrowser.open(url)` | `webbrowser.open(url)` |
+| `glob.glob("*.py")` | `glob.glob("*.py")` |
+| `fnmatch.fnmatch(n, p)` | `fnmatch.fnmatch(n, p)` |
+| `copy.deepcopy(x)` | `copy.deepcopy(x)` |
+| `pprint.pformat(x)` | `pprint.pformat(x)` |
+| `bisect.insort(xs, n)` | `bisect.insort(xs, n)` |
+| `heapq.heappush(h, x)` | `heapq.heappush(h, x)` |
+| `shlex.split(cmd)` | `shlex.split(cmd)` |
+| `uuid.uuid4()` | `uuid.uuid4()` |
+| `uuid.UUID(s)` | `UUID(s)` |
+| `json.dumps(obj)` | `json.dumps(obj)` |
+| `json.loads(s)` | `json.loads(s)` |
+| `tomllib.loads(s)` | `tomllib.loads(s)` |
+| `hmac.new(k, m).hexdigest()` | `hmac.new(k, m).hexdigest()` |
+| `graphlib.TopologicalSorter()` | `TopologicalSorter()` |
+| `re.match(p, s).group()` | `re.match(p, s).group()` |
+| `hashlib.sha256(b).hexdigest()` | `b.sha256().hexdigest()` |
+| `datetime.date.today()` | `Date.today()` |
+| `decimal.Decimal("3.14")` | `Decimal("3.14")` |
+| `sqlite3.connect(p)` | `sqlite3.connect(p)` |
+| `string.ascii_letters` | `string.ascii_letters` |
+| `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
+| `difflib.get_close_matches(w, xs)` | `difflib.get_close_matches(w, xs)` |
+| `textwrap.fill(t, width=40)` | `textwrap.fill(t, 40)` |
+| `unicodedata.name("A")` | `unicodedata.name("A")` |
+| `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
+| `calendar.isleap(year)` | `calendar.isleap(year)` |
+| `array.array("i", xs)` | `Array("i", xs)` |
+| `weakref.ref(obj)` | `WeakRef(obj)` |
+| `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
+| `fractions.Fraction(1, 2)` | `Fraction(1, 2)` |
+| `statistics.mean(xs)` | `statistics.mean(xs)` |
+| `statistics.NormalDist(0, 1).cdf(0)` | `NormalDist(0, 1).cdf(0)` |
+| `struct.pack(">I", 42)` | `struct.pack(">I", 42)` |
+| `codecs.encode(s, "rot_13")` | `codecs.encode(s, "rot_13")` |
+| `filecmp.cmp(a, b)` | `filecmp.cmp(a, b)` |
+| `tempfile.mkdtemp()` | `tempfile.mkdtemp()` |
+| `shutil.copy(a, b)` | `shutil.copy(a, b)` |
+| `pickle.dumps(obj)` | `pickle.dumps(obj)` |
+| `zlib.compress(b)` | `zlib.compress(b)` |
+| `gzip.compress(b)` | `gzip.compress(b)` |
+| `bz2.compress(b)` | `bz2.compress(b)` |
+| `lzma.compress(b)` | `lzma.compress(b)` |
+| `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
+| `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
+| `locale.getpreferredencoding()` | `locale.getpreferredencoding()` |
+| `ipaddress.ip_address("::1")` | `ipaddress.ip_address("::1")` |
+| `urllib.parse.urlparse(u)` | `urllib.parse.urlparse(u)` |
+| `urllib.request.urlopen(u)` | `urllib.request.urlopen(u)` |
+| `http.HTTPStatus.OK` | `http.HTTPStatus.OK` |
+| `smtplib.SMTP(host, port)` | `SMTP(host, port)` |
+| `csv.reader(f)` | `csv.reader(text)` |
+| `configparser.ConfigParser()` | `ConfigParser()` |
+| `pwd.getpwuid(uid)` | `pwd.getpwuid(uid)` |
+| `grp.getgrnam(name)` | `grp.getgrnam(name)` |
+| `resource.getrusage(who)` | `resource.getrusage(who)` |
+| `sys.platform` | `sys.platform()` |
+| `sys.argv[0]` | `sys.argv().at(0)` |
+| `sys.stdout.write(s)` | `sys.stdout().write(s)` |
+| `atexit.register(f)` | `atexit.register(f)` |
+| `gc.collect()` | `gc.collect()` |
+| `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
+| `email.utils.parseaddr(s)` | `email.utils.parseaddr(s)` |
+| `html.escape(s)` | `html.escape(s)` |
+| `ET.fromstring(text)` | `ET.fromstring(text)` |
+| `ET.tostring(elem)` | `ET.tostring(elem)` |
+| `class T(unittest.TestCase):` | `class T(TestCase):` |
+| `cProfile.Profile()` | `Profile()` |
+| `pstats.Stats(p)` | `Stats(p)` |
+| `timeit.timeit("pass")` | `timeit.timeit("pass")` |
+| `signal.SIGINT` | `signal.SIGINT` |
+| `socket.socket(...)` | `Socket(...)` |
+| `ssl.create_default_context()` | `ssl.create_default_context()` |
+| `asyncio.run(coro)` | `asyncio.run(coro)` |
+| `os.getpid()` | `os.getpid()` |
+| `os.environ["HOME"]` | `os.environ.get("HOME")` |
+| `io.StringIO(...)` | `StringIO(...)` |
+| `time.time()` | `time.time()` |
+| `logging.getLogger(...)` | `logging.getLogger(...)` |
+| `platform.system()` | `platform.system()` |
+| `threading.Thread(target=f)` | `Thread(target=f)` |
+| `multiprocessing.cpu_count()` | `multiprocessing.cpu_count()` |
+| `concurrent.futures.ThreadPoolExecutor()` | `ThreadPoolExecutor()` |
+| `subprocess.run(["ls"])` | `subprocess.run(["ls"])` |
+| `queue.Queue()` | `Queue()` |
+
 ## Control flow
 
 ### `if` / `else`

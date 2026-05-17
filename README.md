@@ -4,215 +4,132 @@
 
 # POOP 💩
 
-**POOP** is an acronym for **P**ython **O**bject **O**riented **P**rogramming.
+**POOP** — **P**ython **O**bject **O**riented **P**rogramming. A Python 3.14 interpreter that enforces Smalltalk-style message passing by rejecting `if`/`for`/`print`/`isinstance` and rewriting Python literals (`1`, `"hi"`, `True`, `[…]`, `{…}`) into POOP types where every operation is a message to a receiver.
 
-A Python interpreter infected by Smalltalk.
+POOP is for **educational exploration of message-passing semantics inside the Python ecosystem**, not for production. Status: **experimental** — the API changes between minor versions.
 
-## Development
+## Install
 
-Requires Python 3.14 and [uv](https://docs.astral.sh/uv/).
-
-```bash
-# Install dependencies
-uv sync --dev
-
-# Run
-poop <file.py>
-uv run python main.py <file.py>  # alternative without installing
-
-# Lint and format
-uv run ruff check --fix
-uv run ruff format
-
-# Type check (examples/ excluded — uses runtime-injected names)
-uv run ty check poop/ tests/
-
-# Tests with coverage
-uv run pytest
-```
-
-Git hooks are managed by [prek](https://prek.j178.dev) and run ruff and ty on every commit.
-
-## Usage
+End user (until POOP is published to PyPI):
 
 ```bash
-poop examples/hello_world.py   # run a file
-poop                            # interactive REPL (Ctrl+D to exit)
+git clone https://github.com/cassiobotaro/poop.git
+cd poop
+uv sync
+uv run poop examples/hello_world.py
 ```
 
-## Quickstart
+Contributor / development setup lives in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-POOP rewrites Python so that **every operation is a message sent to an object** — no free functions, no control-flow statements. Two mechanisms drive this:
-
-- **Validators** reject forbidden constructs (`if`, `for`, `while`, `print(...)`, `len(x)`, …).
-- **Transformers** rewrite the AST before execution so every literal becomes a POOP type (`Int`, `Str`, `Boolean`, `List`, …) and `range()` / `bool()` / `list()` / … return their POOP equivalents.
-
-### Key substitutions
-
-| Python | POOP |
-|---|---|
-| `print(x)` | `x.print()` |
-| `if cond:` / `else:` | `cond.if_true(lambda: …)` / `cond.if_false(lambda: …)` |
-| `for x in col:` | `col.do(lambda x: …)` |
-| `while cond:` | `(lambda: cond).while_true(lambda: …)` |
-| `not x` | `x.not_()` |
-| `-x` | `x.negated()` |
-| `len(x)` | `x.len()` |
-| `x[i]` | `x.at(i)` |
-| `x[a:b]` | `x.slice(a, b)` |
-| `x and y` | `x.and_(lambda: y)` |
-| `x or y` | `x.or_(lambda: y)` |
-| `math.sqrt(x)` | `math.sqrt(x)` |
-| `random.choice(xs)` | `random.choice(xs)` |
-| `random.Random(seed)` | `Random(seed)` |
-| `errno.EPERM` | `errno.EPERM` |
-| `getpass.getuser()` | `getpass.getuser()` |
-| `secrets.token_hex(16)` | `secrets.token_hex(16)` |
-| `base64.b64encode(b)` | `b.b64encode()` |
-| `base64.b64decode(s)` | `s.b64decode()` |
-| `binascii.crc32(b)` | `binascii.crc32(b)` |
-| `mimetypes.guess_type(url)` | `mimetypes.guess_type(url)` |
-| `webbrowser.open(url)` | `webbrowser.open(url)` |
-| `glob.glob("*.py")` | `glob.glob("*.py")` |
-| `fnmatch.fnmatch(n, p)` | `fnmatch.fnmatch(n, p)` |
-| `copy.deepcopy(x)` | `copy.deepcopy(x)` |
-| `pprint.pformat(x)` | `pprint.pformat(x)` |
-| `bisect.insort(xs, n)` | `bisect.insort(xs, n)` |
-| `heapq.heappush(h, x)` | `heapq.heappush(h, x)` |
-| `shlex.split(cmd)` | `shlex.split(cmd)` |
-| `uuid.uuid4()` | `uuid.uuid4()` |
-| `uuid.UUID(s)` | `UUID(s)` |
-| `json.dumps(obj)` | `json.dumps(obj)` |
-| `json.loads(s)` | `json.loads(s)` |
-| `tomllib.loads(s)` | `tomllib.loads(s)` |
-| `hmac.new(k, m).hexdigest()` | `hmac.new(k, m).hexdigest()` |
-| `graphlib.TopologicalSorter()` | `TopologicalSorter()` |
-| `re.match(p, s).group()` | `re.match(p, s).group()` |
-| `hashlib.sha256(b).hexdigest()` | `b.sha256().hexdigest()` |
-| `datetime.date.today()` | `Date.today()` |
-| `decimal.Decimal("3.14")` | `Decimal("3.14")` |
-| `sqlite3.connect(p)` | `sqlite3.connect(p)` |
-| `string.ascii_letters` | `string.ascii_letters` |
-| `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
-| `difflib.get_close_matches(w, xs)` | `difflib.get_close_matches(w, xs)` |
-| `textwrap.fill(t, width=40)` | `textwrap.fill(t, 40)` |
-| `unicodedata.name("A")` | `unicodedata.name("A")` |
-| `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
-| `calendar.isleap(year)` | `calendar.isleap(year)` |
-| `array.array("i", xs)` | `Array("i", xs)` |
-| `weakref.ref(obj)` | `WeakRef(obj)` |
-| `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
-| `fractions.Fraction(1, 2)` | `Fraction(1, 2)` |
-| `statistics.mean(xs)` | `statistics.mean(xs)` |
-| `statistics.NormalDist(0, 1).cdf(0)` | `NormalDist(0, 1).cdf(0)` |
-| `struct.pack(">I", 42)` | `struct.pack(">I", 42)` |
-| `codecs.encode(s, "rot_13")` | `codecs.encode(s, "rot_13")` |
-| `filecmp.cmp(a, b)` | `filecmp.cmp(a, b)` |
-| `tempfile.mkdtemp()` | `tempfile.mkdtemp()` |
-| `shutil.copy(a, b)` | `shutil.copy(a, b)` |
-| `pickle.dumps(obj)` | `pickle.dumps(obj)` |
-| `zlib.compress(b)` | `zlib.compress(b)` |
-| `gzip.compress(b)` | `gzip.compress(b)` |
-| `bz2.compress(b)` | `bz2.compress(b)` |
-| `lzma.compress(b)` | `lzma.compress(b)` |
-| `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
-| `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
-| `locale.getpreferredencoding()` | `locale.getpreferredencoding()` |
-| `ipaddress.ip_address("::1")` | `ipaddress.ip_address("::1")` |
-| `urllib.parse.urlparse(u)` | `urllib.parse.urlparse(u)` |
-| `urllib.request.urlopen(u)` | `urllib.request.urlopen(u)` |
-| `http.HTTPStatus.OK` | `http.HTTPStatus.OK` |
-| `smtplib.SMTP(host, port)` | `SMTP(host, port)` |
-| `csv.reader(f)` | `csv.reader(text)` |
-| `configparser.ConfigParser()` | `ConfigParser()` |
-| `pwd.getpwuid(uid)` | `pwd.getpwuid(uid)` |
-| `grp.getgrnam(name)` | `grp.getgrnam(name)` |
-| `resource.getrusage(who)` | `resource.getrusage(who)` |
-| `sys.platform` | `sys.platform()` |
-| `sys.argv[0]` | `sys.argv().at(0)` |
-| `sys.stdout.write(s)` | `sys.stdout().write(s)` |
-| `atexit.register(f)` | `atexit.register(f)` |
-| `gc.collect()` | `gc.collect()` |
-| `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
-| `email.utils.parseaddr(s)` | `email.utils.parseaddr(s)` |
-| `html.escape(s)` | `html.escape(s)` |
-| `ET.fromstring(text)` | `ET.fromstring(text)` |
-| `ET.tostring(elem)` | `ET.tostring(elem)` |
-| `class T(unittest.TestCase):` | `class T(TestCase):` |
-| `cProfile.Profile()` | `Profile()` |
-| `pstats.Stats(p)` | `Stats(p)` |
-| `timeit.timeit("pass")` | `timeit.timeit("pass")` |
-| `signal.SIGINT` | `signal.SIGINT` |
-| `socket.socket(...)` | `Socket(...)` |
-| `ssl.create_default_context()` | `ssl.create_default_context()` |
-| `asyncio.run(coro)` | `asyncio.run(coro)` |
-| `os.getpid()` | `os.getpid()` |
-| `os.environ["HOME"]` | `os.environ.get("HOME")` |
-| `io.StringIO(...)` | `StringIO(...)` |
-| `time.time()` | `time.time()` |
-| `logging.getLogger(...)` | `logging.getLogger(...)` |
-| `platform.system()` | `platform.system()` |
-| `threading.Thread(target=f)` | `Thread(target=f)` |
-| `multiprocessing.cpu_count()` | `multiprocessing.cpu_count()` |
-| `concurrent.futures.ThreadPoolExecutor()` | `ThreadPoolExecutor()` |
-| `subprocess.run(["ls"])` | `subprocess.run(["ls"])` |
-| `queue.Queue()` | `Queue()` |
-
-For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
-
-### Hello, World
+## Hello, POOP
 
 ```python
 "Hello, World!".print()
 ```
 
-### FizzBuzz
+Run it:
 
-```python
-class FizzBuzz:
-    def run(self):
-        range(1, 101).do(
-            lambda i: (i % 15 == 0).if_true_if_false(
-                lambda: "FizzBuzz".print(),
-                lambda: (i % 3 == 0).if_true_if_false(
-                    lambda: "Fizz".print(),
-                    lambda: (i % 5 == 0).if_true_if_false(
-                        lambda: "Buzz".print(),
-                        lambda: i.print(),
-                    ),
-                ),
-            )
-        )
-
-FizzBuzz().run()
+```bash
+poop hello.py            # run a file
+poop                     # interactive REPL (Ctrl+D to exit)
 ```
 
-### Leap year
+## The ten essentials
 
-```python
-class Year:
-    def __init__(self, value):
-        self._value = value
+| Python | POOP |
+|---|---|
+| `print(x)` | `x.print()` |
+| `if cond: …` / `else:` | `cond.if_true(lambda: …)` / `cond.if_true_if_false(lambda: …, lambda: …)` |
+| `for x in col: …` | `col.do(lambda x: …)` |
+| `while cond: …` | `(lambda: cond).while_true(lambda: …)` |
+| `len(x)` | `x.len()` |
+| `x[i]` | `x.at(i)` |
+| `x[a:b]` | `x.slice(a, b)` |
+| `not x` | `x.not_()` |
+| `x and y` / `x or y` | `x.and_(lambda: y)` / `x.or_(lambda: y)` |
+| `-x` | `x.negated()` |
 
-    def is_leap(self):
-        return (self._value % 400 == 0).or_(
-            lambda: (self._value % 4 == 0).and_(
-                lambda: (self._value % 100 == 0).not_()
-            )
-        )
+Full Python → POOP recipe book: [`MIGRATION.md`](MIGRATION.md). Design rationale: [`INFECTIONS.md`](INFECTIONS.md).
 
-Year(2000).is_leap().print()  # true
-Year(1900).is_leap().print()  # false
-```
+## What's banned (and what to use instead)
 
-More examples in [`examples/`](examples/).
+POOP runs ~60 validators on every program. Grouped by theme:
+
+**Control flow** — messages on a Boolean, not statements.
+- `if` / `else` / ternary → `cond.if_true(lambda: …)` / `cond.if_true_if_false(lambda: …, lambda: …)`
+- `for` / `while` / `match` → `col.do(…)` / `(lambda: cond).while_true(…)` / polymorphism
+- `with` / `try` / `raise` / `assert` → `With(lambda: cm()).do(…)` / `Try(lambda: …).except_(ExcType, lambda e: …).run()` / `ValueError.raise_("msg")` / `obj.assert_("msg")`
+
+**Free functions** — call as a method on the receiver.
+- `print` / `len` / `abs` / `hash` / `round` / `pow` / `divmod` / `min` / `max` / `sum` / `sorted` / `reversed` → `x.print()`, `x.len()`, `x.abs()`, `x.hash()`, …
+- `map` / `filter` → `col.map(lambda x: …)` / `col.filter(lambda x: …)`
+- `ascii` / `bin` / `chr` / `repr` / `format` → corresponding methods on `Int` / `Str`
+- `input` / `open` → `"prompt".input()` / `Path("file").read_text()`
+- `iter` → `col.iter()` / `it.next()`
+
+**Introspection** — POOP code talks via messages, not reflection.
+- `isinstance` / `issubclass` / `callable` / `id` / `dir` / `hasattr` / `getattr` / `setattr` / `type(...)` → use polymorphism (subclass dispatch) instead of asking what something is
+
+**Operator sugar** — methods on the receiver.
+- `x[i]` / `x[a:b]` → `x.at(i)` / `x.slice(a, b)`
+- `not x` / `x and y` / `x or y` → `x.not_()` / `x.and_(lambda: y)` / `x.or_(lambda: y)`
+- `-x` / `+x` / `~x` → `x.negated()` / drop the `+` / `x.bit_invert()`
+- `x is None` / `x in y` → `x.is_none()` / `y.includes(x)` (identity via `x.is_identical(y)`)
+
+**Syntax shortcuts that hide behaviour.**
+- comprehensions (`[x for x in …]`, `{…}`, generator exprs) → explicit `.map` / `.filter` / `.do`
+- top-level `def` (free functions) → define as a method inside a class
+- `yield` / walrus `:=` / `del` / `global` → out of scope
+
+**Side-channels.**
+- `exec` / `breakpoint` / `exit` — interpreter escape hatches forbidden
+
+The full catalog with one row per validator and the substitute recipe lives in [`INFECTIONS.md`](INFECTIONS.md).
+
+## Learn by example
+
+[`examples/`](examples/) ships ~25 programs grouped by what they teach.
+
+**Language basics**
+- [`hello_world.py`](examples/hello_world.py) — the smallest POOP program
+- [`greet.py`](examples/greet.py) — string input + concatenation
+- [`fizzbuzz.py`](examples/fizzbuzz.py) — control flow via `if_true_if_false`
+- [`leap_year.py`](examples/leap_year.py) — `and_` / `or_` / `not_`
+- [`collatz.py`](examples/collatz.py) — while-style recursion
+- [`grades.py`](examples/grades.py) — collection processing
+- [`geometry.py`](examples/geometry.py) — classes with state
+- [`slicing.py`](examples/slicing.py) — `Slice` as a reusable value object
+- [`bank_account.py`](examples/bank_account.py) — encapsulation
+
+**Idiomatic POOP**
+- [`pipeline.py`](examples/pipeline.py) — `filter` / `filter_false` / `map` / `do` chain
+- [`safe_config.py`](examples/safe_config.py) — `if_none` / `if_not_none` cascade
+- [`common_interests.py`](examples/common_interests.py) — set operations
+- [`statistics.py`](examples/statistics.py) — number aggregation
+- [`rpn_calculator.py`](examples/rpn_calculator.py) — stack as a POOP `List`
+- [`roman_numerals.py`](examples/roman_numerals.py) — string mapping
+- [`async_greeter.py`](examples/async_greeter.py) — `async def` + `await asyncio.sleep` (since v0.52.0)
+
+**Classic OO patterns** (Sandi Metz / GoF)
+- [`null_customer.py`](examples/null_customer.py) — Null Object
+- [`discounts.py`](examples/discounts.py) — Strategy
+- [`door.py`](examples/door.py) — State
+- [`payroll.py`](examples/payroll.py) — polymorphism replacing `if employee.type == ...`
+- [`tree.py`](examples/tree.py) — Composite replacing `isinstance`
+- [`decorators.py`](examples/decorators.py) — Decorator (composition by delegation)
+- [`observer.py`](examples/observer.py) — Observer
+- [`template_method.py`](examples/template_method.py) — Template Method
+- [`visitor.py`](examples/visitor.py) — Visitor
+- [`house_jack_built.py`](examples/house_jack_built.py) — recursive composition refactor
 
 ## Type annotations
 
-Type annotations (`x: int`, `def f(x: int) -> str:`) are not evaluated at
-runtime in Python and do not cause errors in POOP programs. However, they are
-misleading: POOP transforms all literals to its own types (`Int`, `Str`, …),
-so a variable annotated as `int` will hold an `Int` at runtime.
+Annotations (`x: int`, `def f(x: int) -> str:`) are not evaluated at runtime in Python and do not cause errors in POOP programs, but they are misleading: POOP transforms every literal to its own types (`Int`, `Str`, …), so a variable annotated as `int` holds an `Int` at runtime. Avoid annotations in POOP code. `type X = int` is explicitly banned by the validator pipeline.
 
-Avoid type annotations in POOP programs. The `type` keyword (`type X = int`)
-is explicitly banned by the validator pipeline.
+## Where to next
+
+- [`MIGRATION.md`](MIGRATION.md) — full Python → POOP recipe book
+- [`INFECTIONS.md`](INFECTIONS.md) — every validator / transformer / type, with rationale
+- [`proposals.md`](proposals.md) — open design backlog
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev setup, atomic-commit conventions, release flow
+- [Issues](https://github.com/cassiobotaro/poop/issues) — bugs and feature requests
