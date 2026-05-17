@@ -1,5 +1,114 @@
 # Proposals
 
+## Rework `README.md` for end-user onboarding
+
+The current `README.md` is dev-focused — the **Development** section
+(install dependencies, run linters, run tests) dominates the top of
+the file, while end-user concerns (what is POOP, why try it, how do
+I install and run a `.py` file) are scattered or absent. The
+"Quickstart" / "Key substitutions" table has grown organically as
+each new namespace shipped and is now 80+ rows long; a Python user
+looking for "how do I write a for loop?" has to scan past 70
+unrelated entries to find `for x in col:` → `col.do(lambda x: …)`.
+
+**Problems an end user hits today:**
+
+1. **No install path other than dev setup.** The "Development"
+   block tells you to `uv sync --dev`. There is no `pip install
+   poop-lang` / `uv tool install poop` / `pipx install` instruction
+   that gets the CLI on `PATH` without cloning the repo.
+2. **No "what & why" paragraph.** The one-liner ("a Python
+   interpreter infected by Smalltalk") doesn't answer "what is this
+   *for*?" — educational toy? language experiment? production
+   replacement? Users don't know which framing to apply.
+3. **No "what's banned" pocket reference.** The validator list lives
+   only in `CLAUDE.md`. A new user hits `ValidationError: print is
+   forbidden — call .print() on the receiver instead` and has no
+   single place to scan for the other landmines.
+4. **The substitutions table is too long to read.** 80+ rows mixing
+   essentials (`print(x)` → `x.print()`) with niche stdlib bindings
+   (`tarfile.open(p, "w:gz")` → `TarFile.open(p, "w:gz")`). It used
+   to be a useful cheatsheet; it's now a wall.
+5. **Examples are uncatalogued.** README has 3 inline (Hello,
+   FizzBuzz, leap year) and a one-line link to `examples/`. The 25
+   files in `examples/` (Null Object, Strategy, State, Composite,
+   Decorator, Observer, Template Method, Visitor, …) are not
+   discoverable from the README.
+6. **REPL is one line.** "Interactive REPL (Ctrl+D to exit)" — no
+   sample session, no mention of multiline input, no mention of
+   imports/`run_source`.
+7. **`MIGRATION.md` and `INFECTIONS.md` are linked only from inside
+   the substitutions table footer.** A new user landing on the
+   GitHub repo page has no signpost to either.
+8. **No status badge.** Users can't tell if POOP is experimental,
+   alpha, or production-ish.
+
+**Proposal — restructure `README.md` into seven short sections, in
+this order:**
+
+1. **Heading + logo + one-paragraph pitch.** What POOP is (a Python
+   3.14 interpreter that enforces Smalltalk-style object messaging
+   by rejecting `if`/`for`/`print`/`isinstance` and rewriting Python
+   literals into POOP types). What it's *for* (educational
+   exploration of message-passing semantics inside a Python
+   ecosystem). A "status: experimental — API changes between minor
+   versions" line.
+2. **Install.** Two short blocks: end-user (`uv tool install poop`
+   or `pipx install poop-lang` once published; `git clone + uv sync
+   + uv run poop ...` until then) and dev (`uv sync --dev` + `prek`
+   hooks).
+3. **Hello, POOP.** The current `"Hello, World!".print()` block,
+   followed by `poop hello.py` to show the CLI.
+4. **The ten essentials.** A *small* Python→POOP table covering only
+   the constructs every user hits in the first 5 minutes: `print`,
+   `if`, `for`, `while`, `len`, `x[i]`, `x[a:b]`, `not`, `and`/`or`,
+   `-x`. Link out to `MIGRATION.md` for the full Python→POOP recipe
+   book and to `INFECTIONS.md` for the design rationale.
+5. **What's banned (and what to use instead).** A one-line-per-rule
+   list grouping the 50+ validators by theme: control flow
+   (`if`/`for`/`while`/`match`), free functions (`print`/`len`/
+   `abs`/...), introspection (`isinstance`/`type`/`getattr`),
+   subscript (`x[i]`, with a pointer to `.at(i)`). Each rule
+   mentions the POOP replacement.
+6. **Learn by example.** A short *catalogued* list of `examples/`,
+   grouped by what they teach: language basics (`hello_world`,
+   `fizzbuzz`, `leap_year`, `collatz`), classic OO patterns
+   (`null_customer`, `payroll`, `discounts`, `tree`, `decorators`,
+   `door`, `observer`, `template_method`, `visitor`), idiomatic
+   POOP (`pipeline`, `safe_config`, `rpn_calculator`, …). Each
+   entry: filename + one-sentence sell.
+7. **Where to next.** Pointers to `MIGRATION.md`, `INFECTIONS.md`,
+   `proposals.md`, `CONTRIBUTING.md`, the GitHub issues, and a
+   "report a bug" template.
+
+The current "Development" section moves to the bottom or to
+`CONTRIBUTING.md` (it already half-lives there). The 80-row
+substitutions table moves entirely into `MIGRATION.md` (where the
+prose-style "Python → POOP" recipes already live and would benefit
+from a header-table consolidation).
+
+**Type discipline / scope:**
+
+- **README target length:** ~150 lines total (down from the current
+  ~190, with much higher signal density).
+- **No new docs files.** Reuse `MIGRATION.md`, `INFECTIONS.md`,
+  `CONTRIBUTING.md` — link rather than duplicate.
+- **Catalog of examples** can be auto-generated from `examples/*.py`
+  docstring first lines in a follow-up; the v1 of this proposal
+  hand-writes the list.
+- **No translations.** README stays English; a Portuguese-language
+  pitch can live in a follow-up doc if user demand surfaces.
+
+**Out of scope (for v1):**
+
+- Publishing to PyPI under a non-conflicting name (the project on
+  PyPI as "poop" may be taken; resolving that is a separate
+  release-engineering task).
+- Adding a CI status badge — pairs with a separate "set up CI for
+  the open-source release" task.
+- Adding a `--help` walkthrough — `poop --help` already prints
+  `argparse` defaults; document only if the CLI surface changes.
+
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
