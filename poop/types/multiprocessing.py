@@ -3,6 +3,7 @@ from __future__ import annotations
 import multiprocessing as _mp
 from typing import Any, ClassVar, Self
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
@@ -16,7 +17,7 @@ def _opt_timeout(timeout: Float | Int | None) -> Any:
     return None if timeout is None else timeout._value
 
 
-class Process(Object):
+class Process(_ImplWrapperMixin, Object):
     """Wraps Python's `multiprocessing.Process`."""
 
     __slots__ = ("_impl",)
@@ -166,19 +167,11 @@ class Multiprocessing:
 
     @staticmethod
     def active_children() -> List:
-        result = []
-        for p in _mp.active_children():
-            wrapper = Process.__new__(Process)
-            wrapper._impl = p
-            result.append(wrapper)
-        return List(*result)
+        return List(*(Process._from_impl(p) for p in _mp.active_children()))
 
     @staticmethod
     def current_process() -> Process:
-        p = _mp.current_process()
-        wrapper = Process.__new__(Process)
-        wrapper._impl = p
-        return wrapper
+        return Process._from_impl(_mp.current_process())
 
     @staticmethod
     def get_start_method(allow_none: Boolean | None = None) -> Str | NoneClass:

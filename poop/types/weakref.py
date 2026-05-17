@@ -4,6 +4,7 @@ import weakref as _weakref
 from collections.abc import Callable, Iterable, Iterator
 from typing import Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -23,7 +24,7 @@ def _wrap_callback(
     return adapter
 
 
-class WeakRef(Object):
+class WeakRef(_ImplWrapperMixin, Object):
     """Wraps Python's `weakref.ref`.
 
     `WeakRef(obj, callback=none)` keeps a weak reference; calling the
@@ -244,10 +245,4 @@ class Weakref:
 
     @staticmethod
     def getweakrefs(obj: Object) -> List:
-        refs = _weakref.getweakrefs(obj)
-        wrapped: list[Object] = []
-        for r in refs:
-            w = WeakRef.__new__(WeakRef)
-            w._impl = r
-            wrapped.append(w)
-        return List(*wrapped)
+        return List(*(WeakRef._from_impl(r) for r in _weakref.getweakrefs(obj)))

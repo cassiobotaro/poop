@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading as _threading
 from typing import Any, ClassVar, Self
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
@@ -16,7 +17,7 @@ def _opt_timeout(timeout: Float | Int | None) -> Any:
     return None if timeout is None else timeout._value
 
 
-class Thread(Object):
+class Thread(_ImplWrapperMixin, Object):
     """Wraps Python's `threading.Thread`."""
 
     __slots__ = ("_impl",)
@@ -220,17 +221,11 @@ class Threading:
 
     @staticmethod
     def current_thread() -> Thread:
-        t = _threading.current_thread()
-        wrapper = Thread.__new__(Thread)
-        wrapper._impl = t
-        return wrapper
+        return Thread._from_impl(_threading.current_thread())
 
     @staticmethod
     def main_thread() -> Thread:
-        t = _threading.main_thread()
-        wrapper = Thread.__new__(Thread)
-        wrapper._impl = t
-        return wrapper
+        return Thread._from_impl(_threading.main_thread())
 
     @staticmethod
     def active_count() -> Int:
@@ -238,12 +233,7 @@ class Threading:
 
     @staticmethod
     def enumerate() -> List:
-        result = []
-        for t in _threading.enumerate():
-            wrapper = Thread.__new__(Thread)
-            wrapper._impl = t
-            result.append(wrapper)
-        return List(*result)
+        return List(*(Thread._from_impl(t) for t in _threading.enumerate()))
 
     @staticmethod
     def get_ident() -> Int:
