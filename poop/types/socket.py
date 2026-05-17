@@ -234,24 +234,24 @@ class SocketNamespace:
         return Str(_socket.getservbyport(port._value, protocolname._value))
 
     @staticmethod
-    def htons(x: Int) -> Int:
-        return Int(_socket.htons(x._value))
+    def htons(integer: Int, /) -> Int:
+        return Int(_socket.htons(integer._value))
 
     @staticmethod
-    def htonl(x: Int) -> Int:
-        return Int(_socket.htonl(x._value))
+    def htonl(integer: Int, /) -> Int:
+        return Int(_socket.htonl(integer._value))
 
     @staticmethod
-    def ntohs(x: Int) -> Int:
-        return Int(_socket.ntohs(x._value))
+    def ntohs(integer: Int, /) -> Int:
+        return Int(_socket.ntohs(integer._value))
 
     @staticmethod
-    def ntohl(x: Int) -> Int:
-        return Int(_socket.ntohl(x._value))
+    def ntohl(integer: Int, /) -> Int:
+        return Int(_socket.ntohl(integer._value))
 
     @staticmethod
-    def inet_aton(ip_string: Str) -> Bytes:
-        return Bytes(_socket.inet_aton(ip_string._value))
+    def inet_aton(ip_addr: Str, /) -> Bytes:
+        return Bytes(_socket.inet_aton(ip_addr._value))
 
     @staticmethod
     def inet_ntoa(packed_ip: Bytes) -> Str:
@@ -266,19 +266,38 @@ class SocketNamespace:
         return Str(_socket.inet_ntop(family._value, packed_ip._value))
 
     @staticmethod
-    def create_connection(address: Tuple, timeout: Float | Int | None = None) -> Socket:
+    def create_connection(
+        address: Tuple,
+        timeout: Float | Int | None = None,
+        source_address: Tuple | None = None,
+        *,
+        all_errors: Boolean = false,
+    ) -> Socket:
         addr = _unwrap_address(address)
-        if timeout is None:
-            sock = _socket.create_connection(addr)
-        else:
-            sock = _socket.create_connection(addr, timeout=timeout._value)
+        kwargs: dict[str, Any] = {"all_errors": bool(all_errors)}
+        if timeout is not None:
+            kwargs["timeout"] = timeout._value
+        if source_address is not None:
+            kwargs["source_address"] = _unwrap_address(source_address)
+        sock = _socket.create_connection(addr, **kwargs)
         return Socket(impl=sock)
 
     @staticmethod
-    def create_server(address: Tuple, family: Int | None = None) -> Socket:
+    def create_server(
+        address: Tuple,
+        *,
+        family: Int = Int(_socket.AF_INET),
+        backlog: Int | None = None,
+        reuse_port: Boolean = false,
+        dualstack_ipv6: Boolean = false,
+    ) -> Socket:
         addr = _unwrap_address(address)
-        if family is None:
-            sock = _socket.create_server(addr)
-        else:
-            sock = _socket.create_server(addr, family=family._value)
+        kwargs: dict[str, Any] = {
+            "family": family._value,
+            "reuse_port": bool(reuse_port),
+            "dualstack_ipv6": bool(dualstack_ipv6),
+        }
+        if backlog is not None:
+            kwargs["backlog"] = backlog._value
+        sock = _socket.create_server(addr, **kwargs)
         return Socket(impl=sock)

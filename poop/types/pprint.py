@@ -8,6 +8,10 @@ from poop.types.none import NoneClass, none
 from poop.types.string import Str
 
 
+def _opt_i(value: Int | None) -> int | None:
+    return None if value is None else value._value
+
+
 def _i(value: Int | None, default: int | None) -> int | None:
     if value is None:
         return default
@@ -68,80 +72,81 @@ class Pprint:
 
     @staticmethod
     def pprint(
-        obj: Any,
-        *,
-        indent: Int | None = None,
-        width: Int | None = None,
+        object: Any,
+        stream: Any = None,
+        indent: Int = Int(1),
+        width: Int = Int(80),
         depth: Int | None = None,
-        compact: Boolean | None = None,
-        sort_dicts: Boolean | None = None,
-        underscore_numbers: Boolean | None = None,
+        *,
+        compact: Boolean = false,
+        sort_dicts: Boolean = true,
+        underscore_numbers: Boolean = false,
     ) -> NoneClass:
         _pprint.pprint(
-            obj,
-            indent=_i(indent, 1) or 1,
-            width=_i(width, 80) or 80,
-            depth=_i(depth, None),
-            compact=_b(compact, False),
-            sort_dicts=_b(sort_dicts, True),
-            underscore_numbers=_b(underscore_numbers, False),
+            object,
+            stream=stream,
+            indent=indent._value,
+            width=width._value,
+            depth=_opt_i(depth),
+            compact=bool(compact),
+            sort_dicts=bool(sort_dicts),
+            underscore_numbers=bool(underscore_numbers),
         )
         return none
 
     @staticmethod
     def pformat(
-        obj: Any,
-        *,
-        indent: Int | None = None,
-        width: Int | None = None,
+        object: Any,
+        indent: Int = Int(1),
+        width: Int = Int(80),
         depth: Int | None = None,
-        compact: Boolean | None = None,
-        sort_dicts: Boolean | None = None,
-        underscore_numbers: Boolean | None = None,
+        *,
+        compact: Boolean = false,
+        sort_dicts: Boolean = true,
+        underscore_numbers: Boolean = false,
     ) -> Str:
         return Str(
             _pprint.pformat(
-                obj,
-                indent=_i(indent, 1) or 1,
-                width=_i(width, 80) or 80,
-                depth=_i(depth, None),
-                compact=_b(compact, False),
-                sort_dicts=_b(sort_dicts, True),
-                underscore_numbers=_b(underscore_numbers, False),
+                object,
+                indent=indent._value,
+                width=width._value,
+                depth=_opt_i(depth),
+                compact=bool(compact),
+                sort_dicts=bool(sort_dicts),
+                underscore_numbers=bool(underscore_numbers),
             )
         )
 
     @staticmethod
     def pp(
-        obj: Any,
+        object: Any,
         *,
-        indent: Int | None = None,
-        width: Int | None = None,
+        indent: Int = Int(1),
+        width: Int = Int(80),
         depth: Int | None = None,
-        compact: Boolean | None = None,
-        sort_dicts: Boolean | None = None,
-        underscore_numbers: Boolean | None = None,
+        compact: Boolean = false,
+        sort_dicts: Boolean = false,
+        underscore_numbers: Boolean = false,
     ) -> NoneClass:
         # pp differs from pprint only in default sort_dicts=False.
-        sd = false if sort_dicts is None else sort_dicts
         return Pprint.pprint(
-            obj,
+            object,
             indent=indent,
             width=width,
             depth=depth,
             compact=compact,
-            sort_dicts=sd,
+            sort_dicts=sort_dicts,
             underscore_numbers=underscore_numbers,
         )
 
     @staticmethod
-    def isreadable(obj: Any) -> Boolean:
-        return true if _pprint.isreadable(obj) else false
+    def isreadable(object: Any) -> Boolean:
+        return true if _pprint.isreadable(object) else false
 
     @staticmethod
-    def isrecursive(obj: Any) -> Boolean:
-        return true if _pprint.isrecursive(obj) else false
+    def isrecursive(object: Any) -> Boolean:
+        return true if _pprint.isrecursive(object) else false
 
     @staticmethod
-    def saferepr(obj: Any) -> Str:
-        return Str(_pprint.saferepr(obj))
+    def saferepr(object: Any) -> Str:
+        return Str(_pprint.saferepr(object))

@@ -345,7 +345,7 @@ def test_create_server() -> None:
 
 def test_create_server_with_family() -> None:
     server = SocketNamespace.create_server(
-        Tuple(Str("127.0.0.1"), Int(0)), SocketNamespace.AF_INET
+        Tuple(Str("127.0.0.1"), Int(0)), family=SocketNamespace.AF_INET
     )
     try:
         assert isinstance(server, Socket)

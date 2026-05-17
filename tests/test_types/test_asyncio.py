@@ -22,7 +22,7 @@ def test_run_executes_coroutine() -> None:
 
 
 def test_run_with_debug_flag() -> None:
-    assert AsyncIO.run(_coro_returning(7), false) == 7
+    assert AsyncIO.run(_coro_returning(7), debug=false) == 7
 
 
 def test_run_accepts_callable() -> None:

@@ -41,9 +41,11 @@ When a Python attribute can be mutated (`logger.propagate = True`, `ctx.verify_m
 
 ### Default kwarg policy
 
-POOP method defaults mirror CPython exactly. If CPython writes `subprocess.run(args, *, check=False, capture_output=False)`, POOP writes `check=False`, not `check=none`. Defaulting to `none` silently merges "user passed `False`" with "user did not pass" — for bool flags this is harmless, for tri-state semantics it breaks. Mirror CPython and let the underlying call distinguish.
+POOP method defaults mirror CPython exactly. If CPython writes `subprocess.run(args, *, check=False, capture_output=False)`, POOP writes `check=false`, not `check=none`. Defaulting to `none` silently merges "user passed `false`" with "user did not pass" — for bool flags this is harmless, for tri-state semantics it breaks. Mirror CPython and let the underlying call distinguish.
 
 The only sanctioned `none`-default is when CPython itself uses `None` as the sentinel (e.g., `socket.gethostbyname(name, default=None)`).
+
+Parameter names also mirror CPython where there is no banned-builtin or POOP-specific clarification at stake. Audit drift via `scripts/audit_signatures.py` (output: `docs/signature-audit.md`); each surfaced row is either fixed or marked `OK-sanctioned` with rationale. The audit script preserves decisions across regenerations.
 
 ### Platform-specific constants
 

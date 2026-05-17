@@ -1,78 +1,10 @@
 # Proposals
 
-## Open questions
-
-### Signature audit — how to resolve the 2477-finding backlog
-
-`scripts/audit_signatures.py` generates `docs/signature-audit.md` by
-diffing every POOP stdlib mirror against CPython. The current run
-surfaces 2477 findings, dominated by **missing-name (2262)** — names
-CPython exposes that POOP does not. The other buckets are
-**param-mismatch (125)**, **extra-name (40)**, and **inspect-blind
-(50)**. There are no `attr-vs-method`/`method-vs-attr`/`import-error`
-rows after the v0.54.x convention cleanup.
-
-Three issues block a row-by-row triage:
-
-1. **Decision-column rot.** The audit script regenerates the doc from
-   scratch, so any `Decision` value typed into the table is wiped on
-   the next run. There's no merge layer. Either (a) the script needs
-   to read existing decisions and preserve them, or (b) decisions
-   live in a separate sidecar file (`signature-audit-decisions.json`?)
-   and the doc joins them at render time.
-
-2. **Bulk of `missing-name` is by design.** `os` alone contributes 375
-   rows — CLOCK_*, CLD_*, CLONE_*, EFD_*, EX_*, RWF_*, SCHED_*, … all
-   low-level OS constants POOP intentionally doesn't mirror.
-   `socket` (416), `sqlite3` (194), `ssl` (119), `asyncio` (109),
-   `pickle` (91) all follow the same pattern: curated subset
-   exposed, internals and deprecated APIs omitted. Marking every
-   such row `OK-sanctioned` adds noise without value.
-
-3. **`param-mismatch` mixes three kinds of drift:**
-   - Sanctioned divergences (POOP renames `id` to `gid` because `id`
-     is a banned builtin; POOP uses `Path` where CPython takes a
-     string filename; POOP omits `func=`/`onerror=` callbacks until
-     a Block↔callable bridge exists).
-   - Convention-violation noise: most POOP entry points default
-     optional kwargs to `Boolean | None = None` then unwrap inside
-     the body, even when CPython's default is a concrete `False` /
-     `0` / `'rb'`. The "Default kwarg policy" in
-     INFECTIONS.md§Project-conventions says to mirror CPython
-     defaults exactly, but the current code base predates the
-     convention and applying it retroactively is dozens of
-     breaking signature changes.
-   - Genuine cosmetic name drift (`cmath.cos(x)` instead of `cos(z)`,
-     `copy.copy(obj)` instead of `copy(x)`, `heapq.heapify(x)`
-     instead of `heapify(heap)`) — non-breaking when callers use
-     positional args, breaking for kwarg callers.
-
-**Open question for the maintainer:** which of these does the
-v0.55.x / v0.6.0 cycle commit to fixing?
-
-- **A — full retroactive fix.** Apply the Default kwarg policy and
-  rename params across all 125 param-mismatch rows. Breaking, large
-  diff, lots of test churn, but pays off the convention debt in one
-  pass. Cut as v0.55.0.
-- **B — cosmetic only.** Rename params only where they have no
-  default, leaving kwarg defaults untouched. Smaller, mostly
-  non-breaking.
-- **C — surgical.** Fix only rows where the POOP name is
-  *actively confusing* (`binascii.crc32(value=…)` instead of
-  `crc=…` is the worst offender), leave the rest, mark them
-  `OK-sanctioned` and call it the convention's grandfather clause.
-- **D — defer entirely.** Mark all param-mismatch `defer-v0.6.0`
-  and only revisit when a user reports a friction point.
-
-Recommendation pending discussion. Independent of A–D, the
-sidecar-file approach (issue 1) needs to land first so the
-decisions survive the next audit run.
-
-## Closed
-
-No closed proposals — the post-v0.54 engineering backlog from the
+No open design proposals. The post-v0.54 engineering backlog from the
 expert code review (refactors A3, C1, C2, C4; coverage T2, T3;
-declined C5) shipped on `main` and the tracking doc was retired.
+declined C5) and the v0.55.0 signature-audit sweep (param-mismatch
+retroactive fix; audit noise filter; decision preservation) both
+shipped on `main`.
 
 ## Future work
 

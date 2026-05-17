@@ -12,22 +12,22 @@ class Fnmatch:
     """
 
     @staticmethod
-    def fnmatch(filename: Str, pattern: Str) -> Boolean:
-        return true if _fnmatch.fnmatch(filename._value, pattern._value) else false
+    def fnmatch(name: Str, pat: Str) -> Boolean:
+        return true if _fnmatch.fnmatch(name._value, pat._value) else false
 
     @staticmethod
-    def fnmatchcase(filename: Str, pattern: Str) -> Boolean:
-        return true if _fnmatch.fnmatchcase(filename._value, pattern._value) else false
+    def fnmatchcase(name: Str, pat: Str) -> Boolean:
+        return true if _fnmatch.fnmatchcase(name._value, pat._value) else false
 
     @staticmethod
-    def filter(names: Any, pattern: Str) -> List:
+    def filter(names: Any, pat: Str) -> List:
         # fnmatch.filter wants an iterable of str; unwrap each POOP Str.
         # `names` is typed Any because POOP `List` iteration yields
         # generic `Object`; the contract is "iterable of Str" at runtime.
         python_names = [n._value for n in names]
-        kept = _fnmatch.filter(python_names, pattern._value)
+        kept = _fnmatch.filter(python_names, pat._value)
         return List(*(Str(s) for s in kept))
 
     @staticmethod
-    def translate(pattern: Str) -> Str:
-        return Str(_fnmatch.translate(pattern._value))
+    def translate(pat: Str) -> Str:
+        return Str(_fnmatch.translate(pat._value))

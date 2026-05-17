@@ -166,32 +166,57 @@ class Lzma:
     @staticmethod
     def compress(
         data: Bytes,
-        format: Int | None = None,
-        check: Int | None = None,
+        format: Int = Int(_lzma.FORMAT_XZ),
+        check: Int = Int(-1),
         preset: Int | None = None,
     ) -> Bytes:
-        kwargs = _kwargs_from(format=format, check=check, preset=preset)
-        return Bytes(_lzma.compress(data._value, **kwargs))
+        if preset is None:
+            return Bytes(
+                _lzma.compress(data._value, format=format._value, check=check._value)
+            )
+        return Bytes(
+            _lzma.compress(
+                data._value,
+                format=format._value,
+                check=check._value,
+                preset=preset._value,
+            )
+        )
 
     @staticmethod
     def decompress(
         data: Bytes,
-        format: Int | None = None,
+        format: Int = Int(_lzma.FORMAT_AUTO),
         memlimit: Int | None = None,
     ) -> Bytes:
-        kwargs = _kwargs_from(format=format, memlimit=memlimit)
-        return Bytes(_lzma.decompress(data._value, **kwargs))
+        if memlimit is None:
+            return Bytes(_lzma.decompress(data._value, format=format._value))
+        return Bytes(
+            _lzma.decompress(
+                data._value, format=format._value, memlimit=memlimit._value
+            )
+        )
 
     @staticmethod
     def open(
-        path: Path | Str,
-        mode: Str | None = None,
+        filename: Path | Str,
+        mode: Str = Str("rb"),
+        *,
         format: Int | None = None,
-        check: Int | None = None,
+        check: Int = Int(-1),
         preset: Int | None = None,
+        encoding: Str | None = None,
+        errors: Str | None = None,
+        newline: Str | None = None,
     ) -> LZMAFile:
-        return LZMAFile(path, mode, format, check, preset)
+        # `encoding`/`errors`/`newline` exposed for signature parity;
+        # POOP's LZMAFile is byte-mode only.
+        if encoding is not None or errors is not None or newline is not None:
+            raise ValueError(
+                "encoding/errors/newline require text mode; POOP LZMAFile is byte-mode only"
+            )
+        return LZMAFile(filename, mode, format, check, preset)
 
     @staticmethod
-    def is_check_supported(check: Int) -> bool:
-        return _lzma.is_check_supported(check._value)
+    def is_check_supported(check_id: Int, /) -> bool:
+        return _lzma.is_check_supported(check_id._value)

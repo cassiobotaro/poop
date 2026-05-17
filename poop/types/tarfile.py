@@ -253,5 +253,18 @@ class Tarfile:
     )
 
     @staticmethod
-    def open(name: Path | Str, mode: Str | None = None) -> TarFile:
+    def open(
+        name: Path | Str | None = None,
+        mode: Str = Str("r"),
+        fileobj: Any = None,
+        bufsize: Int = Int(10240),
+    ) -> TarFile:
+        # `fileobj` and `bufsize` accept the CPython signature for parity;
+        # POOP's TarFile is path-based, so `fileobj` must be `None`. Caller
+        # passes the path via `name`.
+        if fileobj is not None:
+            raise TypeError("POOP TarFile is path-based; pass `name`, not `fileobj`")
+        del bufsize  # accepted for signature parity, no-op for path-mode
+        if name is None:
+            raise TypeError("TarFile.open requires a `name` (Path or Str)")
         return TarFile.open(name, mode)

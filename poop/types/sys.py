@@ -173,13 +173,13 @@ class _SysNamespace:
     def path(self) -> List:
         return _path_list()
 
-    def exit(self, code: Int | Str | None = None) -> NoneClass:
-        if code is None:
+    def exit(self, status: Int | Str | None = None, /) -> NoneClass:
+        if status is None:
             _sys.exit()
-        elif isinstance(code, Int | Str):
-            _sys.exit(code._value)
+        elif isinstance(status, Int | Str):
+            _sys.exit(status._value)
         else:
-            _sys.exit(code)
+            _sys.exit(status)
         return none  # pragma: no cover
 
     def getrecursionlimit(self) -> Int:

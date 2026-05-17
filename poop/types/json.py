@@ -82,40 +82,40 @@ class Json:
     def dumps(
         obj: Any,
         *,
-        skipkeys: Boolean | None = None,
-        ensure_ascii: Boolean | None = None,
-        check_circular: Boolean | None = None,
-        allow_nan: Boolean | None = None,
+        skipkeys: Boolean = false,
+        ensure_ascii: Boolean = true,
+        check_circular: Boolean = true,
+        allow_nan: Boolean = true,
         indent: Int | None = None,
-        sort_keys: Boolean | None = None,
+        sort_keys: Boolean = false,
     ) -> Str:
         return Str(
             _json.dumps(
                 _unwrap(obj),
-                skipkeys=False if skipkeys is None else bool(skipkeys),
-                ensure_ascii=True if ensure_ascii is None else bool(ensure_ascii),
-                check_circular=True if check_circular is None else bool(check_circular),
-                allow_nan=True if allow_nan is None else bool(allow_nan),
+                skipkeys=bool(skipkeys),
+                ensure_ascii=bool(ensure_ascii),
+                check_circular=bool(check_circular),
+                allow_nan=bool(allow_nan),
                 indent=None if indent is None else indent._value,
-                sort_keys=False if sort_keys is None else bool(sort_keys),
+                sort_keys=bool(sort_keys),
             )
         )
 
     @staticmethod
-    def loads(s: Str) -> Object:
+    def loads(s: Str, /) -> Object:
         return _wrap(_json.loads(s._value))
 
     @staticmethod
     def dump(
         obj: Any,
-        path: Path,
+        fp: Path,
         *,
-        skipkeys: Boolean | None = None,
-        ensure_ascii: Boolean | None = None,
-        check_circular: Boolean | None = None,
-        allow_nan: Boolean | None = None,
+        skipkeys: Boolean = false,
+        ensure_ascii: Boolean = true,
+        check_circular: Boolean = true,
+        allow_nan: Boolean = true,
         indent: Int | None = None,
-        sort_keys: Boolean | None = None,
+        sort_keys: Boolean = false,
     ) -> NoneClass:
         encoded = Json.dumps(
             obj,
@@ -126,9 +126,9 @@ class Json:
             indent=indent,
             sort_keys=sort_keys,
         )
-        path.write_text(encoded)
+        fp.write_text(encoded)
         return none
 
     @staticmethod
-    def load(path: Path) -> Object:
-        return _wrap(_json.loads(path.read_text()._value))
+    def load(fp: Path) -> Object:
+        return _wrap(_json.loads(fp.read_text()._value))

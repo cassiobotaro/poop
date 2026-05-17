@@ -4,7 +4,7 @@ import shutil as _shutil
 from typing import Any, ClassVar
 
 from poop.types._unwrap import _b, _kwargs_from
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
@@ -97,18 +97,26 @@ class Shutil:
     def copytree(
         src: Path | Str,
         dst: Path | Str,
-        symlinks: Boolean | None = None,
-        ignore_dangling_symlinks: Boolean | None = None,
-        dirs_exist_ok: Boolean | None = None,
+        symlinks: Boolean = false,
+        ignore: Any = None,
+        ignore_dangling_symlinks: Boolean = false,
+        dirs_exist_ok: Boolean = false,
     ) -> Path:
+        # `copy_function` callback is omitted — POOP needs a Block↔callable
+        # bridge before exposing it. `ignore` accepts the CPython callable
+        # shape passthrough.
+        kwargs: dict[str, Any] = {}
+        if ignore is not None:
+            kwargs["ignore"] = ignore
         return Path(
             Str(
                 _shutil.copytree(
                     _path_arg(src),
                     _path_arg(dst),
-                    symlinks=_b(symlinks, False),
-                    ignore_dangling_symlinks=_b(ignore_dangling_symlinks, False),
-                    dirs_exist_ok=_b(dirs_exist_ok, False),
+                    symlinks=bool(symlinks),
+                    ignore_dangling_symlinks=bool(ignore_dangling_symlinks),
+                    dirs_exist_ok=bool(dirs_exist_ok),
+                    **kwargs,
                 )
             )
         )
@@ -143,14 +151,27 @@ class Shutil:
 
     @staticmethod
     def move(src: Path | Str, dst: Path | Str) -> Path:
+        # `copy_function` callback (CPython's third positional arg) is
+        # omitted — POOP needs a Block↔callable bridge before exposing it.
         return Path(Str(_shutil.move(_path_arg(src), _path_arg(dst))))
 
     @staticmethod
     def rmtree(
         path: Path | Str,
-        ignore_errors: Boolean | None = None,
+        ignore_errors: Boolean = false,
+        onerror: Any = None,
+        *,
+        onexc: Any = None,
+        dir_fd: Int | None = None,
     ) -> NoneClass:
-        _shutil.rmtree(_path_arg(path), ignore_errors=_b(ignore_errors, False))
+        kwargs: dict[str, Any] = {}
+        if onerror is not None:
+            kwargs["onerror"] = onerror
+        if onexc is not None:
+            kwargs["onexc"] = onexc
+        if dir_fd is not None:
+            kwargs["dir_fd"] = dir_fd._value
+        _shutil.rmtree(_path_arg(path), ignore_errors=bool(ignore_errors), **kwargs)
         return none
 
     @staticmethod
@@ -173,6 +194,11 @@ class Shutil:
         format: Str,
         root_dir: Path | Str | None = None,
         base_dir: Path | Str | None = None,
+        verbose: Int = Int(0),
+        dry_run: Int = Int(0),
+        owner: Str | None = None,
+        group: Str | None = None,
+        logger: Any = None,
     ) -> Path:
         return Path(
             Str(
@@ -181,6 +207,11 @@ class Shutil:
                     format._value,
                     root_dir=_opt_path_arg(root_dir),
                     base_dir=_opt_path_arg(base_dir),
+                    verbose=bool(verbose._value),
+                    dry_run=bool(dry_run._value),
+                    owner=None if owner is None else owner._value,
+                    group=None if group is None else group._value,
+                    logger=logger,
                 )
             )
         )
@@ -190,12 +221,16 @@ class Shutil:
         filename: Path | Str,
         extract_dir: Path | Str | None = None,
         format: Str | None = None,
+        *,
+        filter: Str | None = None,
     ) -> NoneClass:
         kwargs: dict[str, Any] = {}
         if extract_dir is not None:
             kwargs["extract_dir"] = _path_arg(extract_dir)
         if format is not None:
             kwargs["format"] = format._value
+        if filter is not None:
+            kwargs["filter"] = filter._value
         _shutil.unpack_archive(_path_arg(filename), **kwargs)
         return none
 
@@ -239,7 +274,13 @@ class Shutil:
         path: Path | Str,
         user: Str | Int | None = None,
         group: Str | Int | None = None,
+        *,
+        dir_fd: Int | None = None,
+        follow_symlinks: Boolean = true,
     ) -> NoneClass:
         kwargs = _kwargs_from(user=user, group=group)
+        if dir_fd is not None:
+            kwargs["dir_fd"] = dir_fd._value
+        kwargs["follow_symlinks"] = bool(follow_symlinks)
         _shutil.chown(_path_arg(path), **kwargs)
         return none

@@ -4,7 +4,7 @@ from __future__ import annotations
 import subprocess as _subprocess
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, false
 from poop.types.bytes import Bytes
 from poop.types.float import Float
 from poop.types.int import Int
@@ -150,64 +150,78 @@ class Subprocess:
     @staticmethod
     def run(
         args: List | Str,
-        capture_output: Boolean | None = None,
-        check: Boolean | None = None,
-        shell: Boolean | None = None,
+        *,
+        capture_output: Boolean = false,
+        check: Boolean = false,
+        shell: Boolean = false,
         cwd: Path | Str | None = None,
         timeout: Float | Int | None = None,
-        text: Boolean | None = None,
+        text: Boolean = false,
         input: Bytes | Str | None = None,
     ) -> CompletedProcess:
-        kwargs: dict[str, Any] = {}
-        if capture_output is not None:
-            kwargs["capture_output"] = bool(capture_output)
-        if check is not None:
-            kwargs["check"] = bool(check)
-        if shell is not None:
-            kwargs["shell"] = bool(shell)
+        kwargs: dict[str, Any] = {
+            "capture_output": bool(capture_output),
+            "check": bool(check),
+            "shell": bool(shell),
+            "text": bool(text),
+        }
         if cwd is not None:
             kwargs["cwd"] = _opt_path(cwd)
         if timeout is not None:
             kwargs["timeout"] = timeout._value
-        if text is not None:
-            kwargs["text"] = bool(text)
         if input is not None:
             kwargs["input"] = input._value
         return CompletedProcess(_subprocess.run(_unwrap_args(args), **kwargs))
 
     @staticmethod
-    def call(args: List | Str, shell: Boolean | None = None) -> Int:
-        kwargs: dict[str, Any] = {}
-        if shell is not None:
-            kwargs["shell"] = bool(shell)
+    def call(
+        args: List | Str,
+        *,
+        shell: Boolean = false,
+        timeout: Float | Int | None = None,
+    ) -> Int:
+        kwargs: dict[str, Any] = {"shell": bool(shell)}
+        if timeout is not None:
+            kwargs["timeout"] = timeout._value
         return Int(_subprocess.call(_unwrap_args(args), **kwargs))
 
     @staticmethod
-    def check_call(args: List | Str, shell: Boolean | None = None) -> Int:
-        kwargs: dict[str, Any] = {}
-        if shell is not None:
-            kwargs["shell"] = bool(shell)
-        return Int(_subprocess.check_call(_unwrap_args(args), **kwargs))
+    def check_call(args: List | Str, *, shell: Boolean = false) -> Int:
+        return Int(_subprocess.check_call(_unwrap_args(args), shell=bool(shell)))
 
     @staticmethod
     def check_output(
         args: List | Str,
-        shell: Boolean | None = None,
-        text: Boolean | None = None,
+        *,
+        shell: Boolean = false,
+        text: Boolean = false,
+        timeout: Float | Int | None = None,
     ) -> Bytes | Str:
-        kwargs: dict[str, Any] = {}
-        if shell is not None:
-            kwargs["shell"] = bool(shell)
-        if text is not None:
-            kwargs["text"] = bool(text)
+        kwargs: dict[str, Any] = {"shell": bool(shell), "text": bool(text)}
+        if timeout is not None:
+            kwargs["timeout"] = timeout._value
         result = _subprocess.check_output(_unwrap_args(args), **kwargs)
         return Bytes(result) if isinstance(result, bytes) else Str(result)
 
     @staticmethod
-    def getoutput(cmd: Str) -> Str:
-        return Str(_subprocess.getoutput(cmd._value))
+    def getoutput(
+        cmd: Str, *, encoding: Str | None = None, errors: Str | None = None
+    ) -> Str:
+        return Str(
+            _subprocess.getoutput(
+                cmd._value,
+                encoding=None if encoding is None else encoding._value,
+                errors=None if errors is None else errors._value,
+            )
+        )
 
     @staticmethod
-    def getstatusoutput(cmd: Str) -> Tuple:
-        status, output = _subprocess.getstatusoutput(cmd._value)
+    def getstatusoutput(
+        cmd: Str, *, encoding: Str | None = None, errors: Str | None = None
+    ) -> Tuple:
+        status, output = _subprocess.getstatusoutput(
+            cmd._value,
+            encoding=None if encoding is None else encoding._value,
+            errors=None if errors is None else errors._value,
+        )
         return Tuple(Int(status), Str(output))

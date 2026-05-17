@@ -233,8 +233,8 @@ class Decimal_:
         return Context(_decimal.getcontext())
 
     @staticmethod
-    def setcontext(ctx: Context) -> NoneClass:
-        _decimal.setcontext(ctx._impl)
+    def setcontext(context: Context, /) -> NoneClass:
+        _decimal.setcontext(context._impl)
         return none
 
     @staticmethod

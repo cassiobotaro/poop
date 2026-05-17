@@ -3,7 +3,8 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from poop.types._unwrap import _b
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, false
+from poop.types.int import Int
 from poop.types.list import List
 from poop.types.path import Path
 from poop.types.string import Str
@@ -47,8 +48,9 @@ class Glob:
         pathname: Str,
         *,
         root_dir: Path | Str | None = None,
-        recursive: Boolean | None = None,
-        include_hidden: Boolean | None = None,
+        dir_fd: Int | None = None,
+        recursive: Boolean = false,
+        include_hidden: Boolean = false,
     ) -> List:
         rd: str | None
         if root_dir is None:
@@ -60,8 +62,9 @@ class Glob:
         results = _glob.glob(
             pathname._value,
             root_dir=rd,
-            recursive=_b(recursive, False),
-            include_hidden=_b(include_hidden, False),
+            dir_fd=None if dir_fd is None else dir_fd._value,
+            recursive=bool(recursive),
+            include_hidden=bool(include_hidden),
         )
         return List(*(Path(Str(s)) for s in results))
 
@@ -70,8 +73,9 @@ class Glob:
         pathname: Str,
         *,
         root_dir: Path | Str | None = None,
-        recursive: Boolean | None = None,
-        include_hidden: Boolean | None = None,
+        dir_fd: Int | None = None,
+        recursive: Boolean = false,
+        include_hidden: Boolean = false,
     ) -> GlobIter:
         rd: str | None
         if root_dir is None:
@@ -83,8 +87,9 @@ class Glob:
         gen = _glob.iglob(
             pathname._value,
             root_dir=rd,
-            recursive=_b(recursive, False),
-            include_hidden=_b(include_hidden, False),
+            dir_fd=None if dir_fd is None else dir_fd._value,
+            recursive=bool(recursive),
+            include_hidden=bool(include_hidden),
         )
         return GlobIter(iter(gen))
 

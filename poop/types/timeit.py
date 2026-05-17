@@ -3,7 +3,6 @@ from __future__ import annotations
 import timeit as _timeit
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _kwargs_from
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -59,33 +58,44 @@ class TimeIt:
 
     @staticmethod
     def timeit(
-        stmt: Str | Any = None,
-        setup: Str | Any = None,
-        number: Int | None = None,
+        stmt: Str | Any = Str("pass"),
+        setup: Str | Any = Str("pass"),
+        timer: Any = _timeit.default_timer,
+        number: Int = Int(1000000),
+        globals: Any = None,
     ) -> Float:
-        kwargs: dict[str, Any] = {}
-        if stmt is not None:
-            kwargs["stmt"] = _unwrap_stmt(stmt)
-        if setup is not None:
-            kwargs["setup"] = _unwrap_stmt(setup)
-        if number is not None:
-            kwargs["number"] = number._value
-        return Float(_timeit.timeit(**kwargs))
+        return Float(
+            _timeit.timeit(
+                stmt=_unwrap_stmt(stmt),
+                setup=_unwrap_stmt(setup),
+                timer=timer,
+                number=number._value,
+                globals=globals,
+            )
+        )
 
     @staticmethod
     def repeat(
-        stmt: Str | Any = None,
-        setup: Str | Any = None,
-        repeat: Int | None = None,
-        number: Int | None = None,
+        stmt: Str | Any = Str("pass"),
+        setup: Str | Any = Str("pass"),
+        timer: Any = _timeit.default_timer,
+        repeat: Int = Int(5),
+        number: Int = Int(1000000),
+        globals: Any = None,
     ) -> List:
-        kwargs: dict[str, Any] = {}
-        if stmt is not None:
-            kwargs["stmt"] = _unwrap_stmt(stmt)
-        if setup is not None:
-            kwargs["setup"] = _unwrap_stmt(setup)
-        kwargs.update(_kwargs_from(repeat=repeat, number=number))
-        return List(*(Float(x) for x in _timeit.repeat(**kwargs)))
+        return List(
+            *(
+                Float(x)
+                for x in _timeit.repeat(
+                    stmt=_unwrap_stmt(stmt),
+                    setup=_unwrap_stmt(setup),
+                    timer=timer,
+                    repeat=repeat._value,
+                    number=number._value,
+                    globals=globals,
+                )
+            )
+        )
 
     @staticmethod
     def default_timer() -> Float:

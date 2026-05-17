@@ -146,8 +146,19 @@ class Bz2:
 
     @staticmethod
     def open(
-        path: Path | Str,
-        mode: Str | None = None,
-        compresslevel: Int | None = None,
+        filename: Path | Str,
+        mode: Str = Str("rb"),
+        compresslevel: Int = Int(9),
+        encoding: Str | None = None,
+        errors: Str | None = None,
+        newline: Str | None = None,
     ) -> BZ2File:
-        return BZ2File(path, mode, compresslevel)
+        # `encoding`/`errors`/`newline` are exposed for signature parity
+        # with CPython; POOP's BZ2File is byte-mode-only, so any non-None
+        # value here triggers the same error CPython raises when text
+        # decoding is requested without 't' in the mode.
+        if encoding is not None or errors is not None or newline is not None:
+            raise ValueError(
+                "encoding/errors/newline require text mode; POOP BZ2File is byte-mode only"
+            )
+        return BZ2File(filename, mode, compresslevel)

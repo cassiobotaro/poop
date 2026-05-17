@@ -157,23 +157,23 @@ class CalendarNamespace:
 
     @staticmethod
     def month(
-        year: Int,
-        month: Int,
-        w: Int | None = None,
-        l: Int | None = None,  # noqa: E741 — matches CPython's calendar.month signature
+        theyear: Int,
+        themonth: Int,
+        w: Int = Int(0),
+        l: Int = Int(0),  # noqa: E741 — matches CPython's calendar.month signature
     ) -> Str:
-        return Str(_calendar.month(year._value, month._value, _i(w, 0), _i(l, 0)))
+        return Str(_calendar.month(theyear._value, themonth._value, w._value, l._value))
 
     @staticmethod
     def calendar(
-        year: Int,
-        w: Int | None = None,
-        l: Int | None = None,  # noqa: E741 — matches CPython's calendar.calendar signature
-        c: Int | None = None,
-        m: Int | None = None,
+        theyear: Int,
+        w: Int = Int(2),
+        l: Int = Int(1),  # noqa: E741 — matches CPython's calendar.calendar signature
+        c: Int = Int(6),
+        m: Int = Int(3),
     ) -> Str:
         return Str(
-            _calendar.calendar(year._value, _i(w, 2), _i(l, 1), _i(c, 6), _i(m, 3))
+            _calendar.calendar(theyear._value, w._value, l._value, c._value, m._value)
         )
 
     @staticmethod

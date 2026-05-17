@@ -25,9 +25,9 @@ class Copy:
     Error: ClassVar[type[Exception]] = _copy.Error
 
     @staticmethod
-    def copy(obj: Any) -> Any:
-        return _copy.copy(obj)
+    def copy(x: Any) -> Any:
+        return _copy.copy(x)
 
     @staticmethod
-    def deepcopy(obj: Any) -> Any:
-        return _copy.deepcopy(obj)
+    def deepcopy(x: Any, memo: Any = None) -> Any:
+        return _copy.deepcopy(x, memo)

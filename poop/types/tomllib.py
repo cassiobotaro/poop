@@ -68,13 +68,15 @@ class Tomllib:
     TOMLDecodeError: ClassVar[type[Exception]] = _tomllib.TOMLDecodeError
 
     @staticmethod
-    def loads(s: Str, /) -> Dict:
-        result = _tomllib.loads(s._value)
+    def loads(s: Str, /, *, parse_float: Any = float) -> Dict:
+        result = _tomllib.loads(s._value, parse_float=parse_float)
         # Top-level always a Dict — the TOML grammar guarantees it.
         return _wrap(result)
 
     @staticmethod
-    def load(path: Path, /) -> Dict:
+    def load(fp: Path, /, *, parse_float: Any = float) -> Dict:
         # CPython's load takes a binary file; POOP routes through Path.
-        raw_bytes = path.read_bytes()
-        return _wrap(_tomllib.loads(raw_bytes._value.decode("utf-8")))
+        raw_bytes = fp.read_bytes()
+        return _wrap(
+            _tomllib.loads(raw_bytes._value.decode("utf-8"), parse_float=parse_float)
+        )

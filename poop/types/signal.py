@@ -85,8 +85,8 @@ class Signal:
         return none
 
     @staticmethod
-    def pthread_kill(thread_id: Int, signum: Int) -> NoneClass:
-        _signal.pthread_kill(thread_id._value, signum._value)
+    def pthread_kill(thread_id: Int, signalnum: Int, /) -> NoneClass:
+        _signal.pthread_kill(thread_id._value, signalnum._value)
         return none
 
     @staticmethod

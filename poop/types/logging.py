@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging as _logging
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -140,13 +139,19 @@ class Logging:
         return Str(_logging.getLevelName(level._value))
 
     @staticmethod
-    def addLevelName(level: Int, name: Str) -> NoneClass:
-        _logging.addLevelName(level._value, name._value)
+    def addLevelName(level: Int, levelName: Str) -> NoneClass:
+        _logging.addLevelName(level._value, levelName._value)
         return none
 
     @staticmethod
-    def basicConfig(level: Int | None = None, fmt: Str | None = None) -> NoneClass:
-        kwargs = _kwargs_from(level=level, format=fmt)
+    def basicConfig(
+        *, level: Int | None = None, format: Str | None = None
+    ) -> NoneClass:
+        kwargs: dict[str, Any] = {}
+        if level is not None:
+            kwargs["level"] = level._value
+        if format is not None:
+            kwargs["format"] = format._value
         _logging.basicConfig(**kwargs)
         return none
 

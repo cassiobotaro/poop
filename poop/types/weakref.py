@@ -233,16 +233,16 @@ class Weakref:
         return WeakRef(obj, callback)
 
     @staticmethod
-    def proxy(obj: Object, callback: Callable[..., Any] | None = None) -> Any:
+    def proxy(object: Object, callback: Callable[..., Any] | None = None, /) -> Any:
         # CPython's proxy is a transparent forwarder, not a POOP wrapper.
         # Returning it raw means messages forward to the underlying
         # object as long as the proxy is alive.
-        return _weakref.proxy(obj, _wrap_callback(callback))
+        return _weakref.proxy(object, _wrap_callback(callback))
 
     @staticmethod
-    def getweakrefcount(obj: Object) -> Int:
-        return Int(_weakref.getweakrefcount(obj))
+    def getweakrefcount(object: Object, /) -> Int:
+        return Int(_weakref.getweakrefcount(object))
 
     @staticmethod
-    def getweakrefs(obj: Object) -> List:
-        return List(*(WeakRef._from_impl(r) for r in _weakref.getweakrefs(obj)))
+    def getweakrefs(object: Object, /) -> List:
+        return List(*(WeakRef._from_impl(r) for r in _weakref.getweakrefs(object)))

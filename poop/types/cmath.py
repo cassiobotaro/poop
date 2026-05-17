@@ -37,12 +37,12 @@ class CMath:
     # Power & logarithmic -----------------------------------------
 
     @staticmethod
-    def sqrt(x: Complex) -> Complex:
-        return Complex(_cmath.sqrt(x._value))
+    def sqrt(z: Complex, /) -> Complex:
+        return Complex(_cmath.sqrt(z._value))
 
     @staticmethod
-    def exp(x: Complex) -> Complex:
-        return Complex(_cmath.exp(x._value))
+    def exp(z: Complex, /) -> Complex:
+        return Complex(_cmath.exp(z._value))
 
     @staticmethod
     def log(x: Complex, base: Complex | None = None) -> Complex:
@@ -51,66 +51,66 @@ class CMath:
         return Complex(_cmath.log(x._value, base._value))
 
     @staticmethod
-    def log10(x: Complex) -> Complex:
-        return Complex(_cmath.log10(x._value))
+    def log10(z: Complex, /) -> Complex:
+        return Complex(_cmath.log10(z._value))
 
     # Trigonometric -----------------------------------------------
 
     @staticmethod
-    def sin(x: Complex) -> Complex:
-        return Complex(_cmath.sin(x._value))
+    def sin(z: Complex, /) -> Complex:
+        return Complex(_cmath.sin(z._value))
 
     @staticmethod
-    def cos(x: Complex) -> Complex:
-        return Complex(_cmath.cos(x._value))
+    def cos(z: Complex, /) -> Complex:
+        return Complex(_cmath.cos(z._value))
 
     @staticmethod
-    def tan(x: Complex) -> Complex:
-        return Complex(_cmath.tan(x._value))
+    def tan(z: Complex, /) -> Complex:
+        return Complex(_cmath.tan(z._value))
 
     @staticmethod
-    def asin(x: Complex) -> Complex:
-        return Complex(_cmath.asin(x._value))
+    def asin(z: Complex, /) -> Complex:
+        return Complex(_cmath.asin(z._value))
 
     @staticmethod
-    def acos(x: Complex) -> Complex:
-        return Complex(_cmath.acos(x._value))
+    def acos(z: Complex, /) -> Complex:
+        return Complex(_cmath.acos(z._value))
 
     @staticmethod
-    def atan(x: Complex) -> Complex:
-        return Complex(_cmath.atan(x._value))
+    def atan(z: Complex, /) -> Complex:
+        return Complex(_cmath.atan(z._value))
 
     # Hyperbolic --------------------------------------------------
 
     @staticmethod
-    def sinh(x: Complex) -> Complex:
-        return Complex(_cmath.sinh(x._value))
+    def sinh(z: Complex, /) -> Complex:
+        return Complex(_cmath.sinh(z._value))
 
     @staticmethod
-    def cosh(x: Complex) -> Complex:
-        return Complex(_cmath.cosh(x._value))
+    def cosh(z: Complex, /) -> Complex:
+        return Complex(_cmath.cosh(z._value))
 
     @staticmethod
-    def tanh(x: Complex) -> Complex:
-        return Complex(_cmath.tanh(x._value))
+    def tanh(z: Complex, /) -> Complex:
+        return Complex(_cmath.tanh(z._value))
 
     @staticmethod
-    def asinh(x: Complex) -> Complex:
-        return Complex(_cmath.asinh(x._value))
+    def asinh(z: Complex, /) -> Complex:
+        return Complex(_cmath.asinh(z._value))
 
     @staticmethod
-    def acosh(x: Complex) -> Complex:
-        return Complex(_cmath.acosh(x._value))
+    def acosh(z: Complex, /) -> Complex:
+        return Complex(_cmath.acosh(z._value))
 
     @staticmethod
-    def atanh(x: Complex) -> Complex:
-        return Complex(_cmath.atanh(x._value))
+    def atanh(z: Complex, /) -> Complex:
+        return Complex(_cmath.atanh(z._value))
 
     # Polar / rectangular conversion ------------------------------
 
     @staticmethod
-    def phase(x: Complex) -> Float:
-        return Float(_cmath.phase(x._value))
+    def phase(z: Complex, /) -> Float:
+        return Float(_cmath.phase(z._value))
 
     @staticmethod
     def polar(x: Complex) -> Tuple:

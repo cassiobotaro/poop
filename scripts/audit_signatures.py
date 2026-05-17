@@ -112,10 +112,14 @@ def _classify(py_attr: object, poop_attr: object) -> tuple[str, str]:
             and p.name != "self"
         ]
         if py_params != poop_params:
-            return (
-                "param-mismatch",
-                f"CPython `{py_sig}` vs POOP `{poop_sig}`",
-            )
+            # CPython sometimes shows default-callable instances with `at
+            # 0x…` memory addresses (e.g. shutil.copy_function=copy2)
+            # and absolute paths (e.g. platform.architecture's executable
+            # default); strip both so the doc is stable across runs.
+            sig_str = f"CPython `{py_sig}` vs POOP `{poop_sig}`"
+            sig_str = re.sub(r" at 0x[0-9a-fA-F]+", "", sig_str)
+            sig_str = re.sub(r"='/[^']*python\d*'", "='<sys.executable>'", sig_str)
+            return ("param-mismatch", sig_str)
 
     return "", ""
 

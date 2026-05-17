@@ -163,17 +163,16 @@ class Filecmp:
 
     @staticmethod
     def cmpfiles(
-        dir1: Path | Str,
-        dir2: Path | Str,
+        a: Path | Str,
+        b: Path | Str,
         common: List | Tuple,
-        shallow: Boolean | None = None,
+        shallow: Boolean = true,
     ) -> Tuple:
-        shallow_v = True if shallow is None else bool(shallow)
         match, mismatch, errors = _filecmp.cmpfiles(
-            _path_str(dir1),
-            _path_str(dir2),
+            _path_str(a),
+            _path_str(b),
             _unwrap_str_list(common) or [],
-            shallow_v,
+            bool(shallow),
         )
         return Tuple(
             _wrap_str_list(match),

@@ -140,29 +140,30 @@ class Resource:
     error: ClassVar[type[Exception]] = _resource.error
 
     @staticmethod
-    def getrlimit(resource_id: Int) -> Tuple:
-        soft, hard = _resource.getrlimit(resource_id._value)
+    def getrlimit(resource: Int, /) -> Tuple:
+        soft, hard = _resource.getrlimit(resource._value)
         return Tuple(Int(soft), Int(hard))
 
     @staticmethod
-    def setrlimit(resource_id: Int, limits: Tuple) -> None:
+    def setrlimit(resource: Int, limits: Tuple, /) -> None:
         soft: Any = limits.at(Int(0))
         hard: Any = limits.at(Int(1))
-        _resource.setrlimit(resource_id._value, (soft._value, hard._value))
+        _resource.setrlimit(resource._value, (soft._value, hard._value))
 
     @staticmethod
     def prlimit(
         pid: Int,
-        resource_id: Int,
+        resource: Int,
         limits: Tuple | None = None,
+        /,
     ) -> Tuple:
         if limits is None:
-            soft, hard = _resource.prlimit(pid._value, resource_id._value)
+            soft, hard = _resource.prlimit(pid._value, resource._value)
         else:
             s: Any = limits.at(Int(0))
             h: Any = limits.at(Int(1))
             soft, hard = _resource.prlimit(
-                pid._value, resource_id._value, (s._value, h._value)
+                pid._value, resource._value, (s._value, h._value)
             )
         return Tuple(Int(soft), Int(hard))
 

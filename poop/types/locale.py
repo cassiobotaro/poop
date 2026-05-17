@@ -4,7 +4,7 @@ import locale as _locale
 from typing import Any, ClassVar
 
 from poop.types._unwrap import _b
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, false
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
@@ -106,17 +106,17 @@ class Locale:
 
     @staticmethod
     def format_string(
-        format: Str,
+        f: Str,
         val: Int | Float,
-        grouping: Boolean | None = None,
-        monetary: Boolean | None = None,
+        grouping: Boolean = false,
+        monetary: Boolean = false,
     ) -> Str:
         return Str(
             _locale.format_string(
-                format._value,
+                f._value,
                 val._value,
-                _b(grouping, False),
-                _b(monetary, False),
+                bool(grouping),
+                bool(monetary),
             )
         )
 
@@ -141,7 +141,11 @@ class Locale:
         return Str(_locale.str(val._value))
 
     @staticmethod
-    def atof(string: Str) -> Float:
+    def atof(string: Str, func: Any = None) -> Float:
+        # `func` (CPython callable to convert the parsed Python number) is
+        # ignored — POOP doesn't surface a Float-vs-Decimal sentinel here;
+        # the result is always a POOP `Float`. Defer richer support.
+        del func
         return Float(_locale.atof(string._value))
 
     @staticmethod
@@ -159,8 +163,8 @@ class Locale:
     # Collation ---------------------------------------------------------
 
     @staticmethod
-    def strcoll(string1: Str, string2: Str) -> Int:
-        return Int(_locale.strcoll(string1._value, string2._value))
+    def strcoll(os1: Str, os2: Str, /) -> Int:
+        return Int(_locale.strcoll(os1._value, os2._value))
 
     @staticmethod
     def strxfrm(string: Str) -> Str:

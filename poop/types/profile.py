@@ -5,6 +5,7 @@ import io as _io
 import pstats as _pstats
 from typing import Any, ClassVar, Self
 
+from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.path import Path
@@ -59,13 +60,17 @@ class CProfile:
     Profile: ClassVar[type[Profile]] = Profile
 
     @staticmethod
-    def run(command: Str, filename: Path | Str | None = None) -> NoneClass:
+    def run(
+        statement: Str,
+        filename: Path | Str | None = None,
+        sort: Int = Int(-1),
+    ) -> NoneClass:
         path = (
             None
             if filename is None
             else (filename._value if isinstance(filename, Str) else str(filename))
         )
-        _cProfile.run(command._value, filename=path)
+        _cProfile.run(statement._value, filename=path, sort=sort._value)
         return none
 
 

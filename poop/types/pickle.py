@@ -172,19 +172,78 @@ class PickleNamespace:
     Unpickler: ClassVar[type[Unpickler]] = Unpickler
 
     @staticmethod
-    def dumps(obj: Any, protocol: Int | None = None) -> Bytes:
-        return Bytes(_pickle.dumps(_unwrap(obj), _opt_protocol(protocol)))
+    def dumps(
+        obj: Any,
+        protocol: Int | None = None,
+        *,
+        fix_imports: Boolean = true,
+        buffer_callback: Any = None,
+    ) -> Bytes:
+        return Bytes(
+            _pickle.dumps(
+                _unwrap(obj),
+                _opt_protocol(protocol),
+                fix_imports=bool(fix_imports),
+                buffer_callback=buffer_callback,
+            )
+        )
 
     @staticmethod
-    def loads(data: Bytes) -> Any:
-        return _wrap(_pickle.loads(data._value))  # noqa: S301 — see Unpickler note
+    def loads(
+        data: Bytes,
+        /,
+        *,
+        fix_imports: Boolean = true,
+        encoding: Str = Str("ASCII"),
+        errors: Str = Str("strict"),
+        buffers: Any = (),
+    ) -> Any:
+        return _wrap(
+            _pickle.loads(  # noqa: S301 — see Unpickler note
+                data._value,
+                fix_imports=bool(fix_imports),
+                encoding=encoding._value,
+                errors=errors._value,
+                buffers=buffers,
+            )
+        )
 
     @staticmethod
-    def dump(obj: Any, path: Path, protocol: Int | None = None) -> NoneClass:
-        # POOP convention: path-based instead of file-object-based.
-        path._path.write_bytes(_pickle.dumps(_unwrap(obj), _opt_protocol(protocol)))
+    def dump(
+        obj: Any,
+        file: Path,
+        protocol: Int | None = None,
+        *,
+        fix_imports: Boolean = true,
+        buffer_callback: Any = None,
+    ) -> NoneClass:
+        # POOP convention: path-based instead of file-object-based; the
+        # CPython param name `file` is preserved for kwargs compatibility.
+        file._path.write_bytes(
+            _pickle.dumps(
+                _unwrap(obj),
+                _opt_protocol(protocol),
+                fix_imports=bool(fix_imports),
+                buffer_callback=buffer_callback,
+            )
+        )
         return none
 
     @staticmethod
-    def load(path: Path) -> Any:
-        return _wrap(_pickle.loads(path._path.read_bytes()))  # noqa: S301 — see Unpickler note
+    def load(
+        file: Path,
+        *,
+        fix_imports: Boolean = true,
+        encoding: Str = Str("ASCII"),
+        errors: Str = Str("strict"),
+        buffers: Any = (),
+    ) -> Any:
+        return _wrap(
+            _pickle.loads(  # noqa: S301 — see Unpickler note
+                file._path.read_bytes(),
+                fix_imports=bool(fix_imports),
+                encoding=encoding._value,
+                errors=errors._value,
+                buffers=buffers,
+            )
+        )

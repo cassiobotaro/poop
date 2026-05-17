@@ -132,8 +132,8 @@ class Mimetypes:
         return none
 
     @staticmethod
-    def read_mime_types(filename: Str) -> Dict | NoneClass:
-        result = _mimetypes.read_mime_types(filename._value)
+    def read_mime_types(file: Str) -> Dict | NoneClass:
+        result = _mimetypes.read_mime_types(file._value)
         if result is None:
             return none
         return _str_dict(result)

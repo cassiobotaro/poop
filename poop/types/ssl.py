@@ -5,6 +5,7 @@ from typing import Any, ClassVar
 
 from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, true
+from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
@@ -127,9 +128,15 @@ class SSL:
 
     @staticmethod
     def create_default_context(
+        purpose: Any = _ssl.Purpose.SERVER_AUTH,
+        *,
         cafile: Path | Str | None = None,
         capath: Path | Str | None = None,
+        cadata: Str | Bytes | None = None,
     ) -> SSLContext:
+        # `purpose` is an `ssl.Purpose` enum value; POOP exposes the
+        # enum members directly (`SSL.PROTOCOL_TLS_SERVER` etc.) but
+        # accepts the raw CPython value here as a passthrough.
         cf = (
             None
             if cafile is None
@@ -140,4 +147,7 @@ class SSL:
             if capath is None
             else (capath._value if isinstance(capath, Str) else str(capath))
         )
-        return SSLContext(impl=_ssl.create_default_context(cafile=cf, capath=cp))
+        cd = None if cadata is None else cadata._value
+        return SSLContext(
+            impl=_ssl.create_default_context(purpose, cafile=cf, capath=cp, cadata=cd)
+        )

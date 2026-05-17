@@ -1,7 +1,7 @@
 import binascii as _binascii
 from typing import TYPE_CHECKING, ClassVar
 
-from poop.types._unwrap import _unwrap
+from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 
@@ -36,53 +36,64 @@ class Binascii:
     def b2a_hex(
         data: Bytes,
         sep: Bytes | NoneClass | None = None,
-        bytes_per_sep: Int | None = None,
+        bytes_per_sep: Int = Int(1),
     ) -> Bytes:
         from poop.types.none import NoneClass as _NoneClass
 
         sep_value = None if sep is None or isinstance(sep, _NoneClass) else sep._value
-        n = _unwrap(bytes_per_sep, 1)
         if sep_value is None:
             return Bytes(_binascii.b2a_hex(data._value))
-        return Bytes(_binascii.b2a_hex(data._value, sep_value, n))
+        return Bytes(_binascii.b2a_hex(data._value, sep_value, bytes_per_sep._value))
 
     @staticmethod
     def hexlify(
         data: Bytes,
         sep: Bytes | NoneClass | None = None,
-        bytes_per_sep: Int | None = None,
+        bytes_per_sep: Int = Int(1),
     ) -> Bytes:
         return Binascii.b2a_hex(data, sep, bytes_per_sep)
 
     @staticmethod
-    def a2b_hex(hexstr: Bytes) -> Bytes:
+    def a2b_hex(hexstr: Bytes, /) -> Bytes:
         return Bytes(_binascii.a2b_hex(hexstr._value))
 
     @staticmethod
-    def unhexlify(hexstr: Bytes) -> Bytes:
+    def unhexlify(hexstr: Bytes, /) -> Bytes:
         return Bytes(_binascii.unhexlify(hexstr._value))
 
     # Base64 / qp / uu (one-shot lower-level than `base64`) -----------
 
     @staticmethod
-    def b2a_base64(data: Bytes) -> Bytes:
-        return Bytes(_binascii.b2a_base64(data._value))
+    def b2a_base64(data: Bytes, /, *, newline: Boolean = true) -> Bytes:
+        return Bytes(_binascii.b2a_base64(data._value, newline=bool(newline)))
 
     @staticmethod
-    def a2b_base64(data: Bytes) -> Bytes:
-        return Bytes(_binascii.a2b_base64(data._value))
+    def a2b_base64(data: Bytes, /, *, strict_mode: Boolean = false) -> Bytes:
+        return Bytes(_binascii.a2b_base64(data._value, strict_mode=bool(strict_mode)))
 
     @staticmethod
-    def b2a_qp(data: Bytes) -> Bytes:
-        return Bytes(_binascii.b2a_qp(data._value))
+    def b2a_qp(
+        data: Bytes,
+        quotetabs: Boolean = false,
+        istext: Boolean = true,
+        header: Boolean = false,
+    ) -> Bytes:
+        return Bytes(
+            _binascii.b2a_qp(
+                data._value,
+                quotetabs=bool(quotetabs),
+                istext=bool(istext),
+                header=bool(header),
+            )
+        )
 
     @staticmethod
-    def a2b_qp(data: Bytes) -> Bytes:
-        return Bytes(_binascii.a2b_qp(data._value))
+    def a2b_qp(data: Bytes, header: Boolean = false) -> Bytes:
+        return Bytes(_binascii.a2b_qp(data._value, header=bool(header)))
 
     @staticmethod
-    def b2a_uu(data: Bytes) -> Bytes:
-        return Bytes(_binascii.b2a_uu(data._value))
+    def b2a_uu(data: Bytes, /, *, backtick: Boolean = false) -> Bytes:
+        return Bytes(_binascii.b2a_uu(data._value, backtick=bool(backtick)))
 
     @staticmethod
     def a2b_uu(data: Bytes) -> Bytes:
@@ -91,9 +102,9 @@ class Binascii:
     # CRC --------------------------------------------------------------
 
     @staticmethod
-    def crc_hqx(data: Bytes, value: Int) -> Int:
-        return Int(_binascii.crc_hqx(data._value, value._value))
+    def crc_hqx(data: Bytes, crc: Int, /) -> Int:
+        return Int(_binascii.crc_hqx(data._value, crc._value))
 
     @staticmethod
-    def crc32(data: Bytes, value: Int | None = None) -> Int:
-        return Int(_binascii.crc32(data._value, _unwrap(value, 0)))
+    def crc32(data: Bytes, crc: Int = Int(0), /) -> Int:
+        return Int(_binascii.crc32(data._value, crc._value))

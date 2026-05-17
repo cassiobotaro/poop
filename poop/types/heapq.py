@@ -49,8 +49,8 @@ class Heapq:
         return _heapq.heapreplace(cast(Any, heap._items), item)
 
     @staticmethod
-    def heapify(x: List) -> NoneClass:
-        _heapq.heapify(cast(Any, x._items))
+    def heapify(heap: List, /) -> NoneClass:
+        _heapq.heapify(cast(Any, heap._items))
         return none
 
     @staticmethod

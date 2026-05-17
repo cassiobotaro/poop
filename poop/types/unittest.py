@@ -294,5 +294,5 @@ class UnitTest:
         return _unittest.skipUnless(bool(condition), reason._value)
 
     @staticmethod
-    def expectedFailure(func: Any) -> Any:
-        return _unittest.expectedFailure(func)
+    def expectedFailure(test_item: Any) -> Any:
+        return _unittest.expectedFailure(test_item)

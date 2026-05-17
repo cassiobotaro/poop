@@ -92,8 +92,12 @@ class Gzip:
     GzipFile: ClassVar[type[GzipFile]] = GzipFile
 
     @staticmethod
-    def compress(data: Bytes, compresslevel: Int | None = None) -> Bytes:
-        return Bytes(_gzip.compress(data._value, _opt_int(compresslevel, 9)))
+    def compress(
+        data: Bytes, compresslevel: Int = Int(9), *, mtime: Int = Int(0)
+    ) -> Bytes:
+        return Bytes(
+            _gzip.compress(data._value, compresslevel._value, mtime=mtime._value)
+        )
 
     @staticmethod
     def decompress(data: Bytes) -> Bytes:
@@ -101,8 +105,17 @@ class Gzip:
 
     @staticmethod
     def open(
-        path: Path | Str,
-        mode: Str | None = None,
-        compresslevel: Int | None = None,
+        filename: Path | Str,
+        mode: Str = Str("rb"),
+        compresslevel: Int = Int(9),
+        encoding: Str | None = None,
+        errors: Str | None = None,
+        newline: Str | None = None,
     ) -> GzipFile:
-        return GzipFile(path, mode, compresslevel)
+        # `encoding`/`errors`/`newline` exposed for signature parity;
+        # POOP's GzipFile is byte-mode only.
+        if encoding is not None or errors is not None or newline is not None:
+            raise ValueError(
+                "encoding/errors/newline require text mode; POOP GzipFile is byte-mode only"
+            )
+        return GzipFile(filename, mode, compresslevel)

@@ -43,7 +43,12 @@ def test_basic_config_returns_none() -> None:
 
 
 def test_basic_config_with_args() -> None:
-    assert Logging.basicConfig(Logging.DEBUG, Str("%(levelname)s:%(message)s")) is none
+    assert (
+        Logging.basicConfig(
+            level=Logging.DEBUG, format=Str("%(levelname)s:%(message)s")
+        )
+        is none
+    )
 
 
 # --- Logger methods ---

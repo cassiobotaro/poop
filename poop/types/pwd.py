@@ -62,8 +62,8 @@ class Pwd:
     Passwd: ClassVar[type[Passwd]] = Passwd
 
     @staticmethod
-    def getpwuid(uid: Int) -> Passwd:
-        return Passwd(_pwd.getpwuid(uid._value))
+    def getpwuid(uidobj: Int, /) -> Passwd:
+        return Passwd(_pwd.getpwuid(uidobj._value))
 
     @staticmethod
     def getpwnam(name: Str) -> Passwd:

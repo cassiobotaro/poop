@@ -101,8 +101,8 @@ class OS:
     # --- Random / CPU helpers ---
 
     @staticmethod
-    def urandom(n: Int) -> Bytes:
-        return Bytes(_os.urandom(n._value))
+    def urandom(size: Int, /) -> Bytes:
+        return Bytes(_os.urandom(size._value))
 
     @staticmethod
     def cpu_count() -> Int | NoneClass:

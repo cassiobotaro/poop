@@ -7,7 +7,7 @@ from poop.types.timeit import TimeIt, Timer
 
 
 def test_timeit_with_str_returns_float() -> None:
-    result = TimeIt.timeit(Str("pass"), Str("pass"), Int(100))
+    result = TimeIt.timeit(Str("pass"), Str("pass"), number=Int(100))
     assert isinstance(result, Float)
 
 
@@ -19,7 +19,7 @@ def test_timeit_no_args_returns_float() -> None:
 
 
 def test_timeit_repeat_returns_list_of_float() -> None:
-    result = TimeIt.repeat(Str("pass"), Str("pass"), Int(2), Int(10))
+    result = TimeIt.repeat(Str("pass"), Str("pass"), repeat=Int(2), number=Int(10))
     assert isinstance(result, List)
     assert result.len() == Int(2)
     first = result.at(Int(0))
@@ -61,7 +61,7 @@ def test_timeit_class_attr() -> None:
 
 
 def test_timeit_via_interpreter() -> None:
-    Interpreter().run_source('timeit.timeit("pass", "pass", 10).print()')
+    Interpreter().run_source('timeit.timeit("pass", "pass", number=10).print()')
 
 
 def test_timer_with_setup_and_custom_timer() -> None:

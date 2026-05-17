@@ -61,26 +61,31 @@ class AsyncIO:
     IncompleteReadError: ClassVar[type[BaseException]] = _asyncio.IncompleteReadError
 
     @staticmethod
-    def run(coro: Any, debug: Boolean | None = None) -> Any:
+    def run(
+        main: Any, *, debug: Boolean | None = None, loop_factory: Any = None
+    ) -> Any:
         d = None if debug is None else bool(debug)
-        return _asyncio.run(_as_coro(coro), debug=d)
+        return _asyncio.run(_as_coro(main), debug=d, loop_factory=loop_factory)
 
     @staticmethod
     def sleep(delay: Float | Int, result: Any = None) -> Any:
         return _asyncio.sleep(delay._value, result=result)
 
     @staticmethod
-    def gather(*aws: Any) -> Any:
-        return _asyncio.gather(*(_as_coro(a) for a in aws))
+    def gather(*coros_or_futures: Any, return_exceptions: Boolean = false) -> Any:
+        return _asyncio.gather(
+            *(_as_coro(a) for a in coros_or_futures),
+            return_exceptions=bool(return_exceptions),
+        )
 
     @staticmethod
-    def wait_for(aw: Any, timeout: Float | Int | None = None) -> Any:
+    def wait_for(fut: Any, timeout: Float | Int | None = None) -> Any:
         t = None if timeout is None else timeout._value
-        return _asyncio.wait_for(_as_coro(aw), t)
+        return _asyncio.wait_for(_as_coro(fut), t)
 
     @staticmethod
-    def shield(aw: Any) -> Any:
-        return _asyncio.shield(_as_coro(aw))
+    def shield(arg: Any) -> Any:
+        return _asyncio.shield(_as_coro(arg))
 
     @staticmethod
     def create_task(coro: Any) -> Future:
@@ -88,8 +93,8 @@ class AsyncIO:
         return Future(_asyncio.ensure_future(_as_coro(coro)))
 
     @staticmethod
-    def ensure_future(coro: Any) -> Future:
-        return Future(_asyncio.ensure_future(_as_coro(coro)))
+    def ensure_future(coro_or_future: Any) -> Future:
+        return Future(_asyncio.ensure_future(_as_coro(coro_or_future)))
 
     @staticmethod
     def new_event_loop() -> Any:
