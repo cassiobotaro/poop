@@ -60,6 +60,7 @@ from poop.transformers.none import NoneTransformer
 from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.pickle import NAMESPACE as _pickle_namespace
 from poop.transformers.pprint import NAMESPACE as _pprint_namespace
+from poop.transformers.profile import NAMESPACE as _profile_namespace
 from poop.transformers.pwd import NAMESPACE as _pwd_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.random import NAMESPACE as _random_namespace
@@ -81,10 +82,12 @@ from poop.transformers.sys import NAMESPACE as _sys_namespace
 from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.tempfile import NAMESPACE as _tempfile_namespace
 from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
+from poop.transformers.timeit import NAMESPACE as _timeit_namespace
 from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.unicodedata import NAMESPACE as _unicodedata_namespace
+from poop.transformers.unittest import NAMESPACE as _unittest_namespace
 from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.uuid import NAMESPACE as _uuid_namespace
 from poop.transformers.weakref import NAMESPACE as _weakref_namespace
@@ -209,6 +212,9 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_email_namespace,
     **_html_namespace,
     **_xml_namespace,
+    **_unittest_namespace,
+    **_profile_namespace,
+    **_timeit_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
