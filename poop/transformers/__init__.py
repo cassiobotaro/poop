@@ -18,6 +18,7 @@ from poop.transformers.bytes import BytesTransformer
 from poop.transformers.bz2 import NAMESPACE as _bz2_namespace
 from poop.transformers.calendar import NAMESPACE as _calendar_namespace
 from poop.transformers.class_ import ClassTransformer
+from poop.transformers.cmath import NAMESPACE as _cmath_namespace
 from poop.transformers.codecs import NAMESPACE as _codecs_namespace
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.compression import NAMESPACE as _compression_namespace
@@ -162,6 +163,7 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **BlockTransformer.BINDINGS,
     **_path_namespace,
     **_math_namespace,
+    **_cmath_namespace,
     **_random_namespace,
     **_errno_namespace,
     **_getpass_namespace,
