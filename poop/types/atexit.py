@@ -31,7 +31,9 @@ class Atexit:
     @staticmethod
     def unregister(func: Any) -> NoneClass:
         _atexit.unregister(func)
-        Atexit._handlers[:] = [(f, a, k) for f, a, k in Atexit._handlers if f is not func]
+        Atexit._handlers[:] = [
+            (f, a, k) for f, a, k in Atexit._handlers if f is not func
+        ]
         return none
 
     @staticmethod
