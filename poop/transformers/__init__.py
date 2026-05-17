@@ -27,6 +27,7 @@ from poop.transformers.datetime import NAMESPACE as _datetime_namespace
 from poop.transformers.decimal import NAMESPACE as _decimal_namespace
 from poop.transformers.dict import DictTransformer
 from poop.transformers.difflib import NAMESPACE as _difflib_namespace
+from poop.transformers.email import NAMESPACE as _email_namespace
 from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.errno import NAMESPACE as _errno_namespace
@@ -44,6 +45,7 @@ from poop.transformers.gzip import NAMESPACE as _gzip_namespace
 from poop.transformers.hashlib import NAMESPACE as _hashlib_namespace
 from poop.transformers.heapq import NAMESPACE as _heapq_namespace
 from poop.transformers.hmac import NAMESPACE as _hmac_namespace
+from poop.transformers.html import NAMESPACE as _html_namespace
 from poop.transformers.http import NAMESPACE as _http_namespace
 from poop.transformers.int import IntTransformer
 from poop.transformers.ipaddress import NAMESPACE as _ipaddress_namespace
@@ -88,6 +90,7 @@ from poop.transformers.uuid import NAMESPACE as _uuid_namespace
 from poop.transformers.weakref import NAMESPACE as _weakref_namespace
 from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
+from poop.transformers.xml import NAMESPACE as _xml_namespace
 from poop.transformers.zip import ZipTransformer
 from poop.transformers.zipfile import NAMESPACE as _zipfile_namespace
 from poop.transformers.zlib import NAMESPACE as _zlib_namespace
@@ -203,6 +206,9 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_sys_namespace,
     **_atexit_namespace,
     **_gc_namespace,
+    **_email_namespace,
+    **_html_namespace,
+    **_xml_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
