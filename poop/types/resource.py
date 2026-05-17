@@ -5,6 +5,7 @@ from typing import Any, ClassVar
 
 from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.tuple import Tuple
 
@@ -87,11 +88,11 @@ class RUsage(Object):
     __repr__ = __str__
 
 
-def _const(name: str) -> Int | None:
+def _const(name: str) -> Int | NoneClass:
     """Some `RLIMIT_*` constants are platform-specific; return `Int`
-    when present, `None` otherwise."""
+    when present, POOP `none` otherwise."""
     value = getattr(_resource, name, None)
-    return None if value is None else Int(value)
+    return none if value is None else Int(value)
 
 
 class Resource:

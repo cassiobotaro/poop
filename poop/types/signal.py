@@ -16,9 +16,9 @@ def _as_handler(handler: Any) -> Any:
     return handler
 
 
-def _sig(name: str) -> Int | None:
+def _sig(name: str) -> Int | NoneClass:
     val = getattr(_signal, name, None)
-    return Int(int(val)) if isinstance(val, int) else None
+    return Int(int(val)) if isinstance(val, int) else none
 
 
 class Signal:
@@ -28,42 +28,42 @@ class Signal:
     SIG_DFL: ClassVar[Any] = _signal.SIG_DFL
     SIG_IGN: ClassVar[Any] = _signal.SIG_IGN
 
-    # Common signal numbers — bind to `none` on platforms where they don't exist.
-    SIGABRT: ClassVar[Int | None] = _sig("SIGABRT")
-    SIGALRM: ClassVar[Int | None] = _sig("SIGALRM")
-    SIGBUS: ClassVar[Int | None] = _sig("SIGBUS")
-    SIGCHLD: ClassVar[Int | None] = _sig("SIGCHLD")
-    SIGCONT: ClassVar[Int | None] = _sig("SIGCONT")
-    SIGFPE: ClassVar[Int | None] = _sig("SIGFPE")
-    SIGHUP: ClassVar[Int | None] = _sig("SIGHUP")
-    SIGILL: ClassVar[Int | None] = _sig("SIGILL")
-    SIGINT: ClassVar[Int | None] = _sig("SIGINT")
-    SIGKILL: ClassVar[Int | None] = _sig("SIGKILL")
-    SIGPIPE: ClassVar[Int | None] = _sig("SIGPIPE")
-    SIGQUIT: ClassVar[Int | None] = _sig("SIGQUIT")
-    SIGSEGV: ClassVar[Int | None] = _sig("SIGSEGV")
-    SIGSTOP: ClassVar[Int | None] = _sig("SIGSTOP")
-    SIGTERM: ClassVar[Int | None] = _sig("SIGTERM")
-    SIGTRAP: ClassVar[Int | None] = _sig("SIGTRAP")
-    SIGTSTP: ClassVar[Int | None] = _sig("SIGTSTP")
-    SIGTTIN: ClassVar[Int | None] = _sig("SIGTTIN")
-    SIGTTOU: ClassVar[Int | None] = _sig("SIGTTOU")
-    SIGURG: ClassVar[Int | None] = _sig("SIGURG")
-    SIGUSR1: ClassVar[Int | None] = _sig("SIGUSR1")
-    SIGUSR2: ClassVar[Int | None] = _sig("SIGUSR2")
-    SIGWINCH: ClassVar[Int | None] = _sig("SIGWINCH")
-    SIGXCPU: ClassVar[Int | None] = _sig("SIGXCPU")
-    SIGXFSZ: ClassVar[Int | None] = _sig("SIGXFSZ")
+    # Common signal numbers — bind to POOP `none` on platforms where they don't exist.
+    SIGABRT: ClassVar[Int | NoneClass] = _sig("SIGABRT")
+    SIGALRM: ClassVar[Int | NoneClass] = _sig("SIGALRM")
+    SIGBUS: ClassVar[Int | NoneClass] = _sig("SIGBUS")
+    SIGCHLD: ClassVar[Int | NoneClass] = _sig("SIGCHLD")
+    SIGCONT: ClassVar[Int | NoneClass] = _sig("SIGCONT")
+    SIGFPE: ClassVar[Int | NoneClass] = _sig("SIGFPE")
+    SIGHUP: ClassVar[Int | NoneClass] = _sig("SIGHUP")
+    SIGILL: ClassVar[Int | NoneClass] = _sig("SIGILL")
+    SIGINT: ClassVar[Int | NoneClass] = _sig("SIGINT")
+    SIGKILL: ClassVar[Int | NoneClass] = _sig("SIGKILL")
+    SIGPIPE: ClassVar[Int | NoneClass] = _sig("SIGPIPE")
+    SIGQUIT: ClassVar[Int | NoneClass] = _sig("SIGQUIT")
+    SIGSEGV: ClassVar[Int | NoneClass] = _sig("SIGSEGV")
+    SIGSTOP: ClassVar[Int | NoneClass] = _sig("SIGSTOP")
+    SIGTERM: ClassVar[Int | NoneClass] = _sig("SIGTERM")
+    SIGTRAP: ClassVar[Int | NoneClass] = _sig("SIGTRAP")
+    SIGTSTP: ClassVar[Int | NoneClass] = _sig("SIGTSTP")
+    SIGTTIN: ClassVar[Int | NoneClass] = _sig("SIGTTIN")
+    SIGTTOU: ClassVar[Int | NoneClass] = _sig("SIGTTOU")
+    SIGURG: ClassVar[Int | NoneClass] = _sig("SIGURG")
+    SIGUSR1: ClassVar[Int | NoneClass] = _sig("SIGUSR1")
+    SIGUSR2: ClassVar[Int | NoneClass] = _sig("SIGUSR2")
+    SIGWINCH: ClassVar[Int | NoneClass] = _sig("SIGWINCH")
+    SIGXCPU: ClassVar[Int | NoneClass] = _sig("SIGXCPU")
+    SIGXFSZ: ClassVar[Int | NoneClass] = _sig("SIGXFSZ")
 
-    # Itimer kinds (Unix only — bind to none on platforms missing them)
-    ITIMER_REAL: ClassVar[Int | None] = (
-        Int(_signal.ITIMER_REAL) if hasattr(_signal, "ITIMER_REAL") else None
+    # Itimer kinds (Unix only — bind to POOP none on platforms missing them)
+    ITIMER_REAL: ClassVar[Int | NoneClass] = (
+        Int(_signal.ITIMER_REAL) if hasattr(_signal, "ITIMER_REAL") else none
     )
-    ITIMER_VIRTUAL: ClassVar[Int | None] = (
-        Int(_signal.ITIMER_VIRTUAL) if hasattr(_signal, "ITIMER_VIRTUAL") else None
+    ITIMER_VIRTUAL: ClassVar[Int | NoneClass] = (
+        Int(_signal.ITIMER_VIRTUAL) if hasattr(_signal, "ITIMER_VIRTUAL") else none
     )
-    ITIMER_PROF: ClassVar[Int | None] = (
-        Int(_signal.ITIMER_PROF) if hasattr(_signal, "ITIMER_PROF") else None
+    ITIMER_PROF: ClassVar[Int | NoneClass] = (
+        Int(_signal.ITIMER_PROF) if hasattr(_signal, "ITIMER_PROF") else none
     )
 
     @staticmethod

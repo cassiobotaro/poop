@@ -5,6 +5,7 @@ import pytest
 from poop.interpreter import Interpreter
 from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.none import none
 from poop.types.resource import Resource, RUsage
 from poop.types.tuple import Tuple
 
@@ -90,7 +91,7 @@ def test_constants_are_ints_when_present() -> None:
         "RUSAGE_CHILDREN",
     ):
         attr = getattr(Resource, name)
-        assert attr is None or isinstance(attr, Int)
+        assert attr is none or isinstance(attr, Int)
 
 
 @pytest.mark.skipif(
