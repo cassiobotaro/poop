@@ -20,8 +20,12 @@ def _path_str(p: Path | Str) -> str:
     return p._value if isinstance(p, Str) else str(p)
 
 
-class Env:
-    """Namespace mirroring access to environment variables (`os.environ`)."""
+class Environ:
+    """Namespace mirroring `os.environ` — environment-variable access.
+
+    POOP forbids subscript syntax, so Python's `os.environ["X"] = "y"`
+    becomes the explicit `os.environ.set("X", "y")`.
+    """
 
     @staticmethod
     def get(key: Str, default: Str | NoneClass | None = None) -> Str | NoneClass:
@@ -63,64 +67,15 @@ class Env:
         return d
 
 
-class Process:
-    """Namespace mirroring current-process operations from `os`."""
-
-    @staticmethod
-    def pid() -> Int:
-        return Int(_os.getpid())
-
-    @staticmethod
-    def ppid() -> Int:
-        return Int(_os.getppid())
-
-    @staticmethod
-    def uid() -> Int:
-        return Int(_os.getuid())
-
-    @staticmethod
-    def gid() -> Int:
-        return Int(_os.getgid())
-
-    @staticmethod
-    def euid() -> Int:
-        return Int(_os.geteuid())
-
-    @staticmethod
-    def egid() -> Int:
-        return Int(_os.getegid())
-
-    @staticmethod
-    def umask(mask: Int) -> Int:
-        return Int(_os.umask(mask._value))
-
-    @staticmethod
-    def chdir(path: Path | Str) -> NoneClass:
-        _os.chdir(_path_str(path))
-        return none
-
-    @staticmethod
-    def getcwd() -> Path:
-        return Path(Str(_os.getcwd()))
-
-    @staticmethod
-    def kill(pid: Int, signal: Int) -> NoneClass:
-        _os.kill(pid._value, signal._value)
-        return none
-
-
 class OS:
     """Namespace mirroring (a curated subset of) Python's `os` module.
 
-    Most filesystem ops live on `Path`. The `os` namespace exposes
-    only what `Path` doesn't cover: random bytes, CPU counts,
-    load average, and a small set of low-level constants.
-    `os.path` is intentionally absent — use `Path`.
-    Process state lives on `process`; environment lives on `env`.
+    Most filesystem ops live on `Path`; `os.path` is intentionally
+    absent. Environment access is grouped under the `os.environ`
+    sub-namespace (mirroring Python's `os.environ` attribute).
     """
 
-    process: ClassVar[type[Process]] = Process
-    env: ClassVar[type[Env]] = Env
+    environ: ClassVar[type[Environ]] = Environ
 
     # Path-mode flags for access() / open()
     F_OK: ClassVar[Int] = Int(_os.F_OK)
@@ -143,6 +98,8 @@ class OS:
     pathsep: ClassVar[Str] = Str(_os.pathsep)
     devnull: ClassVar[Str] = Str(_os.devnull)
 
+    # --- Random / CPU helpers ---
+
     @staticmethod
     def urandom(n: Int) -> Bytes:
         return Bytes(_os.urandom(n._value))
@@ -161,3 +118,47 @@ class OS:
     def getloadavg() -> Tuple:
         a, b, c = _os.getloadavg()
         return Tuple(Float(a), Float(b), Float(c))
+
+    # --- Process state (mirroring Python's os.* directly) ---
+
+    @staticmethod
+    def getpid() -> Int:
+        return Int(_os.getpid())
+
+    @staticmethod
+    def getppid() -> Int:
+        return Int(_os.getppid())
+
+    @staticmethod
+    def getuid() -> Int:
+        return Int(_os.getuid())
+
+    @staticmethod
+    def getgid() -> Int:
+        return Int(_os.getgid())
+
+    @staticmethod
+    def geteuid() -> Int:
+        return Int(_os.geteuid())
+
+    @staticmethod
+    def getegid() -> Int:
+        return Int(_os.getegid())
+
+    @staticmethod
+    def umask(mask: Int) -> Int:
+        return Int(_os.umask(mask._value))
+
+    @staticmethod
+    def chdir(path: Path | Str) -> NoneClass:
+        _os.chdir(_path_str(path))
+        return none
+
+    @staticmethod
+    def getcwd() -> Path:
+        return Path(Str(_os.getcwd()))
+
+    @staticmethod
+    def kill(pid: Int, signal: Int) -> NoneClass:
+        _os.kill(pid._value, signal._value)
+        return none

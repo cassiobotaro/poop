@@ -1,7 +1,5 @@
-from poop.types.os import OS, Env, Process
+from poop.types.os import OS
 
 NAMESPACE: dict[str, object] = {
     "os": OS,
-    "process": Process,
-    "env": Env,
 }

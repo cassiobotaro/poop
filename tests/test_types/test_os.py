@@ -9,13 +9,13 @@ from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
-from poop.types.os import OS, Env, Process
+from poop.types.os import OS, Environ
 from poop.types.path import Path
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
-# --- OS namespace ---
+# --- OS: random / CPU helpers ---
 
 
 def test_os_urandom_returns_bytes() -> None:
@@ -44,6 +44,9 @@ def test_os_getloadavg_returns_tuple_of_float() -> None:
     assert result.len() == Int(3)
 
 
+# --- OS: constants ---
+
+
 def test_os_constants_are_ints() -> None:
     for attr in ("F_OK", "R_OK", "W_OK", "X_OK"):
         assert isinstance(getattr(OS, attr), Int)
@@ -56,87 +59,91 @@ def test_os_separators_are_str() -> None:
         assert isinstance(getattr(OS, attr), Str)
 
 
-def test_os_class_refs() -> None:
-    assert OS.process is Process
-    assert OS.env is Env
+def test_os_class_ref() -> None:
+    assert OS.environ is Environ
 
 
-# --- Process namespace ---
+# --- OS: process state (now directly on `os`) ---
 
 
-def test_process_pid_matches_stdlib() -> None:
-    assert Process.pid() == Int(_stdlib_os.getpid())
+def test_os_getpid_matches_stdlib() -> None:
+    assert OS.getpid() == Int(_stdlib_os.getpid())
 
 
-def test_process_ppid_returns_int() -> None:
-    assert isinstance(Process.ppid(), Int)
+def test_os_getppid_returns_int() -> None:
+    assert isinstance(OS.getppid(), Int)
 
 
-def test_process_uid_gid_euid_egid_return_ints() -> None:
-    assert isinstance(Process.uid(), Int)
-    assert isinstance(Process.gid(), Int)
-    assert isinstance(Process.euid(), Int)
-    assert isinstance(Process.egid(), Int)
+def test_os_getuid_gid_euid_egid_return_ints() -> None:
+    assert isinstance(OS.getuid(), Int)
+    assert isinstance(OS.getgid(), Int)
+    assert isinstance(OS.geteuid(), Int)
+    assert isinstance(OS.getegid(), Int)
 
 
-def test_process_umask_round_trip() -> None:
-    old = Process.umask(Int(0o022))
+def test_os_umask_round_trip() -> None:
+    old = OS.umask(Int(0o022))
     try:
         assert isinstance(old, Int)
     finally:
-        Process.umask(old)
+        OS.umask(old)
 
 
-def test_process_getcwd_returns_path() -> None:
-    assert isinstance(Process.getcwd(), Path)
+def test_os_getcwd_returns_path() -> None:
+    assert isinstance(OS.getcwd(), Path)
 
 
-def test_process_chdir_round_trip(tmp_path) -> None:
-    original = Process.getcwd()
+def test_os_chdir_round_trip(tmp_path) -> None:
+    original = OS.getcwd()
     try:
-        assert Process.chdir(Str(str(tmp_path))) is none
-        assert str(Process.getcwd()) == str(tmp_path)
+        assert OS.chdir(Str(str(tmp_path))) is none
+        assert str(OS.getcwd()) == str(tmp_path)
     finally:
-        Process.chdir(original)
+        OS.chdir(original)
 
 
-# --- Env namespace ---
+# --- os.environ ---
 
 
-def test_env_set_get_has(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_environ_set_get_has(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("POOP_TEST_FOO", raising=False)
-    assert Env.has(Str("POOP_TEST_FOO")) is false
-    assert Env.set(Str("POOP_TEST_FOO"), Str("bar")) is none
-    assert Env.has(Str("POOP_TEST_FOO")) is true
-    assert Env.get(Str("POOP_TEST_FOO")) == Str("bar")
-    Env.unset(Str("POOP_TEST_FOO"))
-    assert Env.has(Str("POOP_TEST_FOO")) is false
+    assert Environ.has(Str("POOP_TEST_FOO")) is false
+    assert Environ.set(Str("POOP_TEST_FOO"), Str("bar")) is none
+    assert Environ.has(Str("POOP_TEST_FOO")) is true
+    assert Environ.get(Str("POOP_TEST_FOO")) == Str("bar")
+    Environ.unset(Str("POOP_TEST_FOO"))
+    assert Environ.has(Str("POOP_TEST_FOO")) is false
 
 
-def test_env_get_default() -> None:
-    assert Env.get(Str("POOP_MISSING_KEY"), Str("fallback")) == Str("fallback")
+def test_environ_get_default() -> None:
+    assert Environ.get(Str("POOP_MISSING_KEY"), Str("fallback")) == Str("fallback")
 
 
-def test_env_get_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_environ_get_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("POOP_MISSING_KEY", raising=False)
-    assert Env.get(Str("POOP_MISSING_KEY")) is none
+    assert Environ.get(Str("POOP_MISSING_KEY")) is none
 
 
-def test_env_keys_returns_set() -> None:
-    assert isinstance(Env.keys(), Set)
+def test_environ_keys_returns_set() -> None:
+    assert isinstance(Environ.keys(), Set)
 
 
-def test_env_values_returns_list() -> None:
-    assert isinstance(Env.values(), List)
+def test_environ_values_returns_list() -> None:
+    assert isinstance(Environ.values(), List)
 
 
-def test_env_as_dict_returns_dict() -> None:
-    assert isinstance(Env.as_dict(), Dict)
+def test_environ_as_dict_returns_dict() -> None:
+    assert isinstance(Environ.as_dict(), Dict)
 
 
-def test_env_unset_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_environ_unset_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("POOP_NEVER_SET", raising=False)
-    assert Env.unset(Str("POOP_NEVER_SET")) is none
+    assert Environ.unset(Str("POOP_NEVER_SET")) is none
+
+
+def test_environ_reachable_via_os_attr() -> None:
+    # Both spellings resolve to the same namespace.
+    assert OS.environ.has is Environ.has
 
 
 # --- Interpreter integration ---
@@ -146,9 +153,9 @@ def test_os_via_interpreter() -> None:
     Interpreter().run_source("os.cpu_count().print()")
 
 
-def test_process_via_interpreter() -> None:
-    Interpreter().run_source("process.pid().print()")
+def test_os_pid_via_interpreter() -> None:
+    Interpreter().run_source("os.getpid().print()")
 
 
-def test_env_via_interpreter() -> None:
-    Interpreter().run_source("env.has('PATH').print()")
+def test_environ_via_interpreter() -> None:
+    Interpreter().run_source("os.environ.has('PATH').print()")

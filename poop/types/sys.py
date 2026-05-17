@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys as _sys
-from typing import Any, ClassVar
+from typing import Any
 
 from poop.types.boolean import Boolean, false, true
 from poop.types.dict import Dict
@@ -89,33 +89,19 @@ class Stdin(Object):
             yield Str(line)
 
 
-class Args:
-    """Namespace mirroring a read-only view of `sys.argv`."""
-
-    @staticmethod
-    def list() -> List:
-        return List(*(Str(a) for a in _sys.argv))
-
-    @staticmethod
-    def script() -> Str:
-        return Str(_sys.argv[0] if _sys.argv else "")
-
-    @staticmethod
-    def rest() -> List:
-        return List(*(Str(a) for a in _sys.argv[1:]))
-
-
 class Sys:
     """Namespace mirroring (a curated subset of) Python's `sys` module.
 
     The introspection-heavy pieces (`settrace` / `_getframe` /
-    `monitoring` / `audit*`) are deliberately out of scope. POOP also
-    splits `sys.stdout` / `sys.stderr` / `sys.stdin` into dedicated
-    `stdout` / `stderr` / `stdin` namespaces and exposes a read-only
-    `args` view of `sys.argv`.
+    `monitoring` / `audit*`) are deliberately out of scope. POOP's
+    method-call shape means Python attributes like `sys.argv` /
+    `sys.platform` become callables (`sys.argv()`, `sys.platform()`)
+    that return POOP types.
     """
 
-    args: ClassVar[type[Args]] = Args
+    @staticmethod
+    def argv() -> List:
+        return List(*(Str(a) for a in _sys.argv))
 
     @staticmethod
     def stdout() -> Stdout:

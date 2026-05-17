@@ -10,7 +10,7 @@ from poop.types.list import List
 from poop.types.none import none
 from poop.types.path import Path
 from poop.types.string import Str
-from poop.types.sys import Args, Stdin, Stdout, Sys
+from poop.types.sys import Stdin, Stdout, Sys
 from poop.types.tuple import Tuple
 
 
@@ -89,22 +89,14 @@ def test_sys_exit_no_arg() -> None:
         Sys.exit()
 
 
-# --- args / stdout / stderr / stdin ---
+# --- argv / stdout / stderr / stdin ---
 
 
-def test_args_list_returns_list_of_str() -> None:
-    result = Args.list()
+def test_sys_argv_returns_list_of_str() -> None:
+    result = Sys.argv()
     assert isinstance(result, List)
     if result.len()._value > 0:
         assert isinstance(result.at(Int(0)), Str)
-
-
-def test_args_script_returns_str() -> None:
-    assert isinstance(Args.script(), Str)
-
-
-def test_args_rest_returns_list() -> None:
-    assert isinstance(Args.rest(), List)
 
 
 def test_stdout_returns_stdout_wrapper() -> None:
@@ -195,5 +187,5 @@ def test_sys_platform_via_interpreter() -> None:
     Interpreter().run_source("sys.platform().print()")
 
 
-def test_args_via_interpreter() -> None:
-    Interpreter().run_source("args.list()")
+def test_sys_argv_via_interpreter() -> None:
+    Interpreter().run_source("sys.argv()")
