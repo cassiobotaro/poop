@@ -1409,3 +1409,33 @@ gc.collect().print()                     # Int
 ```
 
 > POOP splits `sys` into focused namespaces: `sys` itself (`executable`/`platform`/`version`/`version_info`/`maxsize`/`byteorder`/`modules`/`path`/`getrecursionlimit`/`setrecursionlimit`/`exit`/`implementation`/`flags`/`float_info`/`int_info`/`hash_info`/`thread_info`), `args` for a read-only view of `sys.argv` (`args.list()`/`args.script()`/`args.rest()`), and `Stdout`/`Stdin` wrappers returned by `sys.stdout()`/`sys.stderr()`/`sys.stdin()`. All return values are POOP types — `Path`, `Str`, `Int`, `List[Str]`, `Dict[Str, module]`, `Tuple`. The introspection-heavy `settrace` / `_getframe` / `monitoring` / `audit*` surface is intentionally absent. `atexit` mirrors CPython directly — `register` accepts a POOP `Block` (lambdas auto-wrap), `unregister` / `_run_exitfuncs` / `_clear` work as expected. `gc` exposes the **control surface only**: `enable`/`disable`/`isenabled`/`collect`/`get_threshold`/`set_threshold`/`get_count`/`get_stats`/`get_debug`/`set_debug`/`freeze`/`unfreeze`/`get_freeze_count`/`callbacks` plus the `DEBUG_*` constants — `get_objects` / `get_referrers` / `is_tracked` are excluded as introspection.
+
+## Internet data / markup (`email`, `html`, `xml`)
+
+```python
+# Python
+import email, html
+from email.message import EmailMessage
+import xml.etree.ElementTree as ET
+
+m = EmailMessage()
+m["Subject"] = "hi"
+m.set_content("body")
+
+safe = html.escape("<a>")
+root = ET.fromstring("<r><a>x</a></r>")
+ET.tostring(root, encoding="unicode")
+```
+
+```python
+# POOP
+m = EmailMessage()
+m.at_put("Subject", "hi")
+m.set_content("body")
+
+safe = html.escape("<a>")              # Str
+root = ET.fromstring("<r><a>x</a></r>")  # Element
+ET.tostring(root).print()                # Str (use encoding="utf-8" for Bytes)
+```
+
+> `email` exposes the modern `EmailMessage` API plus `email.utils` (`parseaddr`/`formataddr`/`getaddresses`/`parsedate`/`formatdate`/`make_msgid`) and the preset `email.policy` constants (`default`, `SMTP`, `SMTPUTF8`, `HTTP`, `strict`, `compat32`). Headers are accessed via the POOP `at`/`at_put` pair (Python's `msg["X"]` is subscript-shaped — banned by `no_subscript`). `html` is small: `html.escape`/`html.unescape` for the safe text helpers, `HTMLParser` for SAX-style parsing, and `html.entities` for the codepoint maps (`name2codepoint`/`codepoint2name`/`html5`/`entitydefs`). `xml` ships **ElementTree only** — `ET.fromstring`/`ET.XML`/`ET.parse`/`ET.tostring`/`ET.SubElement`/`ET.indent`, plus the `Element` / `ElementTree` records. Use `ET.ParseError` in `Try.except_` to catch bad XML. The full `xml.dom.minidom` / `xml.sax` surface is out of scope — ElementTree covers the vast majority of XML use cases in modern Python. As in CPython, the default parser does not load external DTDs, but POOP does **not** swap in `defusedxml` automatically — wrap untrusted XML accordingly.

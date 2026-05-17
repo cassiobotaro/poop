@@ -133,6 +133,11 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `sys.stdout.write(s)` | `sys.stdout().write(s)` |
 | `atexit.register(f)` | `atexit.register(f)` |
 | `gc.collect()` | `gc.collect()` |
+| `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
+| `email.utils.parseaddr(s)` | `email.utils.parseaddr(s)` |
+| `html.escape(s)` | `html.escape(s)` |
+| `ET.fromstring(text)` | `ET.fromstring(text)` |
+| `ET.tostring(elem)` | `ET.tostring(elem)` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 

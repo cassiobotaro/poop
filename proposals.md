@@ -511,124 +511,6 @@ signal state.
 **Out of scope (for v1):** `signal.SIGRTMIN`/`SIGRTMAX` real-time
 signal range — niche.
 
-## Expose `email` as POOP messages
-
-Python's `email` package handles MIME messages: parse, build,
-manipulate, generate. Sub-packages: `email.message`, `email.parser`,
-`email.generator`, `email.policy`, `email.utils`, `email.headerregistry`,
-`email.contentmanager`, `email.iterators`.
-
-**Proposal — `email` (lowercase package) + class set:**
-
-1. **`EmailMessage` class** (modern, 3.4+):
-   `EmailMessage(policy=default)`, `.set_content(content, subtype='plain', ...)`,
-   `.add_alternative(...)`, `.add_related(...)`, `.add_attachment(...)`,
-   `.get_body(preferencelist=('related', 'html', 'plain'))`,
-   `.get_content()`, `.iter_attachments()`, `.iter_parts()`,
-   header manipulation as dict-like, `.is_multipart() -> Boolean`.
-2. **Parser:** `email.message_from_string(s, _class=EmailMessage, *, policy=default) -> EmailMessage`,
-   `email.message_from_bytes(b, ...)`, `message_from_file(fp, ...)`,
-   `message_from_binary_file(fp, ...)`. Plus `BytesParser`/`Parser`
-   classes for streaming.
-3. **Generator:** `email.generator.Generator`, `BytesGenerator` for
-   serialising back to text/bytes.
-4. **Policy:** `email.policy.default`, `email.policy.SMTP`,
-   `email.policy.SMTPUTF8`, `email.policy.HTTP`,
-   `email.policy.strict`, `email.policy.compat32`.
-5. **Utils:** `email.utils.parseaddr(address) -> Tuple[Str, Str]`,
-   `email.utils.formataddr(pair, charset='utf-8') -> Str`,
-   `email.utils.getaddresses(fieldvalues) -> List[Tuple]`,
-   `email.utils.parsedate(date) -> Tuple | NoneClass`,
-   `email.utils.parsedate_tz(date)`, `email.utils.mktime_tz(tuple)`,
-   `email.utils.formatdate(timeval=None, localtime=False, usegmt=False) -> Str`,
-   `email.utils.format_datetime(dt, usegmt=False) -> Str`,
-   `email.utils.localtime(dt=None) -> DateTime`,
-   `email.utils.make_msgid(idstring=None, domain=None) -> Str`.
-
-**Type discipline:** `Str`/`Bytes` for content, `DateTime` for
-date values (depends on `datetime` proposal), `EmailMessage` as
-the POOP record.
-
-**Out of scope (for v1):**
-
-- `email.errors` deep hierarchy — expose only the parent
-  `MessageError`/`MessageParseError`.
-- Compat32-only convenience constructors (legacy).
-
-## Expose `html` as POOP messages
-
-Python's `html` is small: escape/unescape entities, plus
-`html.parser.HTMLParser` for SAX-style parsing and
-`html.entities` for the name⇄codepoint maps.
-
-**Proposal — `html` (lowercase package) + `HTMLParser` class:**
-
-1. **Escape/unescape:** `html.escape(s, quote=True) -> Str`,
-   `html.unescape(s) -> Str`.
-2. **`html.parser.HTMLParser` class** (SAX-style):
-   `HTMLParser(*, convert_charrefs=True)`,
-   `.feed(data)`, `.close()`, `.reset()`, `.getpos() -> Tuple[Int, Int]`,
-   `.get_starttag_text() -> Str | NoneClass`.
-   Override hooks: `.handle_starttag`, `.handle_endtag`,
-   `.handle_startendtag`, `.handle_data`, `.handle_entityref`,
-   `.handle_charref`, `.handle_comment`, `.handle_decl`,
-   `.handle_pi`, `.unknown_decl`.
-3. **`html.entities` namespace:** `name2codepoint -> Dict[Str, Int]`,
-   `codepoint2name -> Dict[Int, Str]`, `html5 -> Dict[Str, Str]`,
-   `entitydefs -> Dict[Str, Str]`.
-
-**Type discipline:** `Str` for HTML strings, `Int` for codepoints,
-`Tuple[Int, Int]` for parser position.
-
-## Expose `xml` as POOP messages
-
-Python's `xml` is a package covering parse/build for XML: DOM (`xml.dom`,
-`xml.dom.minidom`), SAX (`xml.sax`), and ElementTree (`xml.etree.ElementTree`,
-the preferred API). Scope v1 to ElementTree + the safer `defusedxml`
-posture for the others.
-
-**Proposal — `xml` (lowercase package), focused on ElementTree:**
-
-1. **`xml.etree.ElementTree` (`ET`) namespace:**
-   - `ET.parse(source, parser=None) -> ElementTree`,
-     `ET.fromstring(text, parser=None) -> Element`,
-     `ET.fromstringlist(sequence, parser=None) -> Element`,
-     `ET.tostring(element, encoding=None, method='xml', short_empty_elements=True, xml_declaration=None, default_namespace=None) -> Bytes | Str`,
-     `ET.tostringlist(...)`,
-     `ET.XML(text, parser=None)` (alias of `fromstring`),
-     `ET.XMLID(text, parser=None) -> Tuple[Element, Dict]`,
-     `ET.iterparse(source, events=('end',), parser=None) -> Map`,
-     `ET.canonicalize(...)`.
-   - `ET.indent(tree, space='  ', level=0) -> NoneClass`.
-2. **`Element` class** — node with tag, attributes, children,
-   text/tail. Methods `.append`, `.extend`, `.insert`, `.remove`,
-   `.find`, `.findall`, `.findtext`, `.iter`, `.iterfind`,
-   `.iterancestors`, `.iterdescendants`, `.itertext`,
-   `.keys` / `.items` / `.attrib` / `.get`, `.set`, `.clear`,
-   `.getchildren` (deprecated), `.makeelement`.
-3. **`ElementTree` class** — document-level: `.getroot()`,
-   `.parse(source, parser=None)`, `.write(file, ...)`,
-   `.write_c14n(...)`, `.iter()`, `.iterfind()`, `.find()`,
-   `.findall()`, `.findtext()`.
-4. **Builder/parser classes:** `TreeBuilder`, `XMLParser`,
-   `XMLPullParser`.
-5. **Errors:** `ParseError`.
-6. **`xml.dom` minimal aliases:** expose only `Node` constants
-   (`ELEMENT_NODE`, `ATTRIBUTE_NODE`, …) — the full minidom API
-   is out of scope.
-
-**Type discipline:** `Element` is a POOP class. Attributes as POOP
-`Dict[Str, Str]`. Tags/text as `Str`.
-
-**Out of scope (for v1):**
-
-- `xml.sax`, `xml.dom.minidom`, `xml.dom.pulldom`, `xml.dom.expatbuilder` —
-  the SAX and full-DOM APIs are largely superseded by ElementTree.
-- `xml.dom.NodeFilter` and other DOM-specific helpers.
-- Loading external DTDs / general entity expansion — POOP defaults
-  to the safe parser configuration (no entity expansion) to avoid
-  XXE attacks. Document explicitly.
-
 ## Expose `unittest` as POOP messages
 
 Python's `unittest` is the canonical test framework (xUnit style).
@@ -927,7 +809,7 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `email` | proposed | See proposal above |
+| `email` | covered | `email` / `EmailMessage` / `EmailUtils` / `EmailPolicy` namespaces (v0.46.0) |
 | `json` | covered | `json` namespace (shipped in v0.25.0) |
 | `mailbox` | out | Niche legacy |
 | `mimetypes` | covered | `mimetypes` + `MimeTypes` (shipped in v0.15.0) |
@@ -939,8 +821,8 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `html` | proposed | See proposal above |
-| `xml` | proposed | See proposal above |
+| `html` | covered | `html` + `HTMLParser` + `Entities` namespaces (v0.46.0) |
+| `xml` | covered | `xml` + `ET` + `Element` + `ElementTree` namespaces, ElementTree-only (v0.46.0) |
 | `xmlrpc` | out | Legacy protocol |
 | `pyexpat` | out | Internal; covered by `xml` if ever |
 
