@@ -52,7 +52,7 @@ def test_available_timezones_returns_set_of_str() -> None:
 
 
 def test_tzpath_returns_tuple_of_str() -> None:
-    path = Zoneinfo.TZPATH()
+    path = Zoneinfo.TZPATH
     assert isinstance(path, Tuple)
 
 

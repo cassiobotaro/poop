@@ -64,23 +64,20 @@ class ZoneInfo:
         return Str(self._impl.key)
 
 
-class Zoneinfo:
-    """Namespace mirroring Python's `zoneinfo` module.
+class _ZoneinfoNamespace:
+    """Singleton namespace mirroring Python's `zoneinfo` module.
 
-    `available_timezones()` returns the roster as a `Set[Str]`;
-    `reset_tzpath(to=None)` overrides the search path; `TZPATH` is
-    the current path as `Tuple[Str]`. `ZoneInfoNotFoundError` is a
-    raw Python exception class for `Try.except_(...)`.
+    `TZPATH` is a `@property` returning a fresh snapshot — CPython
+    exposes it as a module-level tuple attribute. `reset_tzpath`
+    mutates it.
     """
 
     ZoneInfoNotFoundError: ClassVar[type[Exception]] = _zoneinfo.ZoneInfoNotFoundError
 
-    @staticmethod
-    def available_timezones() -> Set:
+    def available_timezones(self) -> Set:
         return _set_of_str(_zoneinfo.available_timezones())
 
-    @staticmethod
-    def reset_tzpath(to: Tuple | None = None) -> NoneClass:
+    def reset_tzpath(self, to: Tuple | None = None) -> NoneClass:
         if to is None:
             _zoneinfo.reset_tzpath()
         else:
@@ -94,9 +91,9 @@ class Zoneinfo:
             _zoneinfo.reset_tzpath(to=paths)
         return none
 
-    @staticmethod
-    def TZPATH() -> Tuple:
-        # `_zoneinfo.TZPATH` is a Python tuple of strs. Exposed as a
-        # callable so the namespace returns a fresh POOP snapshot
-        # (CPython may mutate the path via `reset_tzpath`).
+    @property
+    def TZPATH(self) -> Tuple:
         return _tuple_of_str(_zoneinfo.TZPATH)
+
+
+Zoneinfo = _ZoneinfoNamespace()

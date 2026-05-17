@@ -89,34 +89,91 @@ class Stdin(Object):
             yield Str(line)
 
 
-class Sys:
-    """Namespace mirroring (a curated subset of) Python's `sys` module.
+class _SysNamespace:
+    """Singleton namespace mirroring (a curated subset of) Python's `sys` module.
+
+    Python `sys` attributes (`sys.argv`, `sys.platform`, `sys.modules`, …)
+    are exposed as POOP `@property` attributes so user code reads the
+    same `sys.argv` / `sys.platform` it would in Python. Real callables
+    (`sys.exit`, `sys.getrecursionlimit`) stay as methods.
 
     The introspection-heavy pieces (`settrace` / `_getframe` /
-    `monitoring` / `audit*`) are deliberately out of scope. POOP's
-    method-call shape means Python attributes like `sys.argv` /
-    `sys.platform` become callables (`sys.argv()`, `sys.platform()`)
-    that return POOP types.
+    `monitoring` / `audit*`) are deliberately out of scope.
     """
 
-    @staticmethod
-    def argv() -> List:
+    @property
+    def argv(self) -> List:
         return List(*(Str(a) for a in _sys.argv))
 
-    @staticmethod
-    def stdout() -> Stdout:
+    @property
+    def stdout(self) -> Stdout:
         return Stdout(_sys.stdout)
 
-    @staticmethod
-    def stderr() -> Stdout:
+    @property
+    def stderr(self) -> Stdout:
         return Stdout(_sys.stderr)
 
-    @staticmethod
-    def stdin() -> Stdin:
+    @property
+    def stdin(self) -> Stdin:
         return Stdin(_sys.stdin)
 
-    @staticmethod
-    def exit(code: Int | Str | None = None) -> NoneClass:
+    @property
+    def executable(self) -> Path:
+        return Path(Str(_sys.executable))
+
+    @property
+    def platform(self) -> Str:
+        return Str(_sys.platform)
+
+    @property
+    def version(self) -> Str:
+        return Str(_sys.version)
+
+    @property
+    def version_info(self) -> Tuple:
+        return _wrap_version_info()
+
+    @property
+    def implementation(self) -> Any:
+        return _sys.implementation
+
+    @property
+    def maxsize(self) -> Int:
+        return Int(_sys.maxsize)
+
+    @property
+    def byteorder(self) -> Str:
+        return Str(_sys.byteorder)
+
+    @property
+    def flags(self) -> Any:
+        return _sys.flags
+
+    @property
+    def float_info(self) -> Any:
+        return _sys.float_info
+
+    @property
+    def int_info(self) -> Any:
+        return _sys.int_info
+
+    @property
+    def hash_info(self) -> Any:
+        return _sys.hash_info
+
+    @property
+    def thread_info(self) -> Any:
+        return _sys.thread_info
+
+    @property
+    def modules(self) -> Dict:
+        return _modules_dict()
+
+    @property
+    def path(self) -> List:
+        return _path_list()
+
+    def exit(self, code: Int | Str | None = None) -> NoneClass:
         if code is None:
             _sys.exit()
         elif isinstance(code, Int | Str):
@@ -125,67 +182,12 @@ class Sys:
             _sys.exit(code)
         return none  # pragma: no cover
 
-    @staticmethod
-    def executable() -> Path:
-        return Path(Str(_sys.executable))
-
-    @staticmethod
-    def platform() -> Str:
-        return Str(_sys.platform)
-
-    @staticmethod
-    def version() -> Str:
-        return Str(_sys.version)
-
-    @staticmethod
-    def version_info() -> Tuple:
-        return _wrap_version_info()
-
-    @staticmethod
-    def implementation() -> Any:
-        return _sys.implementation
-
-    @staticmethod
-    def maxsize() -> Int:
-        return Int(_sys.maxsize)
-
-    @staticmethod
-    def byteorder() -> Str:
-        return Str(_sys.byteorder)
-
-    @staticmethod
-    def flags() -> Any:
-        return _sys.flags
-
-    @staticmethod
-    def float_info() -> Any:
-        return _sys.float_info
-
-    @staticmethod
-    def int_info() -> Any:
-        return _sys.int_info
-
-    @staticmethod
-    def hash_info() -> Any:
-        return _sys.hash_info
-
-    @staticmethod
-    def thread_info() -> Any:
-        return _sys.thread_info
-
-    @staticmethod
-    def modules() -> Dict:
-        return _modules_dict()
-
-    @staticmethod
-    def path() -> List:
-        return _path_list()
-
-    @staticmethod
-    def getrecursionlimit() -> Int:
+    def getrecursionlimit(self) -> Int:
         return Int(_sys.getrecursionlimit())
 
-    @staticmethod
-    def setrecursionlimit(limit: Int) -> NoneClass:
+    def setrecursionlimit(self, limit: Int) -> NoneClass:
         _sys.setrecursionlimit(limit._value)
         return none
+
+
+Sys = _SysNamespace()

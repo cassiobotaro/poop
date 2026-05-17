@@ -71,106 +71,96 @@ class StructTime(Object):
     __repr__ = __str__
 
 
-class Time:
-    """Namespace mirroring Python's `time` module."""
+class _TimeNamespace:
+    """Singleton namespace mirroring Python's `time` module.
+
+    Python `time` attributes (`time.tzname`, `time.timezone`,
+    `time.altzone`, `time.daylight`) are exposed as `@property`;
+    callables stay as methods. `StructTime` is the wrapper class.
+    """
 
     StructTime: ClassVar[type[StructTime]] = StructTime
 
-    @staticmethod
-    def time() -> Float:
+    def time(self) -> Float:
         return Float(_time.time())
 
-    @staticmethod
-    def time_ns() -> Int:
+    def time_ns(self) -> Int:
         return Int(_time.time_ns())
 
-    @staticmethod
-    def monotonic() -> Float:
+    def monotonic(self) -> Float:
         return Float(_time.monotonic())
 
-    @staticmethod
-    def monotonic_ns() -> Int:
+    def monotonic_ns(self) -> Int:
         return Int(_time.monotonic_ns())
 
-    @staticmethod
-    def perf_counter() -> Float:
+    def perf_counter(self) -> Float:
         return Float(_time.perf_counter())
 
-    @staticmethod
-    def perf_counter_ns() -> Int:
+    def perf_counter_ns(self) -> Int:
         return Int(_time.perf_counter_ns())
 
-    @staticmethod
-    def process_time() -> Float:
+    def process_time(self) -> Float:
         return Float(_time.process_time())
 
-    @staticmethod
-    def process_time_ns() -> Int:
+    def process_time_ns(self) -> Int:
         return Int(_time.process_time_ns())
 
-    @staticmethod
-    def thread_time() -> Float:
+    def thread_time(self) -> Float:
         return Float(_time.thread_time())
 
-    @staticmethod
-    def thread_time_ns() -> Int:
+    def thread_time_ns(self) -> Int:
         return Int(_time.thread_time_ns())
 
-    @staticmethod
-    def sleep(seconds: Float | Int) -> NoneClass:
+    def sleep(self, seconds: Float | Int) -> NoneClass:
         _time.sleep(seconds._value)
         return none
 
-    @staticmethod
-    def strftime(fmt: Str, t: StructTime | None = None) -> Str:
+    def strftime(self, fmt: Str, t: StructTime | None = None) -> Str:
         if t is None:
             return Str(_time.strftime(fmt._value))
         return Str(_time.strftime(fmt._value, t._impl))
 
-    @staticmethod
-    def strptime(s: Str, fmt: Str) -> StructTime:
+    def strptime(self, s: Str, fmt: Str) -> StructTime:
         return StructTime(_time.strptime(s._value, fmt._value))
 
-    @staticmethod
-    def gmtime(secs: Float | Int | None = None) -> StructTime:
+    def gmtime(self, secs: Float | Int | None = None) -> StructTime:
         if secs is None:
             return StructTime(_time.gmtime())
         return StructTime(_time.gmtime(secs._value))
 
-    @staticmethod
-    def localtime(secs: Float | Int | None = None) -> StructTime:
+    def localtime(self, secs: Float | Int | None = None) -> StructTime:
         if secs is None:
             return StructTime(_time.localtime())
         return StructTime(_time.localtime(secs._value))
 
-    @staticmethod
-    def mktime(t: StructTime) -> Float:
+    def mktime(self, t: StructTime) -> Float:
         return Float(_time.mktime(t._impl))
 
-    @staticmethod
-    def asctime(t: StructTime | None = None) -> Str:
+    def asctime(self, t: StructTime | None = None) -> Str:
         if t is None:
             return Str(_time.asctime())
         return Str(_time.asctime(t._impl))
 
-    @staticmethod
-    def ctime(secs: Float | Int | None = None) -> Str:
+    def ctime(self, secs: Float | Int | None = None) -> Str:
         if secs is None:
             return Str(_time.ctime())
         return Str(_time.ctime(secs._value))
 
-    @staticmethod
-    def tzname() -> Tuple:
+    @property
+    def tzname(self) -> Tuple:
         return Tuple(*(Str(n) for n in _time.tzname))
 
-    @staticmethod
-    def timezone() -> Int:
+    @property
+    def timezone(self) -> Int:
         return Int(_time.timezone)
 
-    @staticmethod
-    def altzone() -> Int:
+    @property
+    def altzone(self) -> Int:
         return Int(_time.altzone)
 
-    @staticmethod
-    def daylight() -> Int:
+    @property
+    def daylight(self) -> Int:
         return Int(_time.daylight)
+
+
+Time = _TimeNamespace()

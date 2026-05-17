@@ -31,9 +31,9 @@ Rules every namespace wrapper in `poop/types/` must follow. Recorded here so rev
 
 ### Mirror Python's attribute vs method shape
 
-If CPython exposes a name as an **attribute** (`sys.argv`, `time.tzname`, `Element.tag`, `ctx.verify_mode`), POOP exposes it as an attribute too — `ClassVar` for constants, `@property` for computed-on-read values. If CPython exposes it as a **method** (`logger.info(msg)`, `subprocess.run(args)`), POOP exposes it as a method. User code reads `sys.argv`, not `sys.argv()`.
+If CPython exposes a name as an **attribute** (`sys.argv`, `time.tzname`, `Element.tag`, `ctx.verify_mode`), POOP exposes it as an attribute too — `ClassVar` for constants, `@property` for computed-on-read values. If CPython exposes it as a **method** (`logger.info(msg)`, `subprocess.run(args)`), POOP exposes it as a method. User code reads `sys.argv`, not `sys.argv`.
 
-Forcing attribute-shaped surfaces into zero-arg methods (`sys.argv()`, `time.tzname()`) breaks Python intuition and gains nothing for message-passing — `obj.attr` is already a message in Python's data model.
+Forcing attribute-shaped surfaces into zero-arg methods (`sys.argv`, `time.tzname`) breaks Python intuition and gains nothing for message-passing — `obj.attr` is already a message in Python's data model.
 
 ### Assignment, not setter methods
 
@@ -1415,7 +1415,7 @@ The private `ucd_3_2_0` legacy UCD object is out of scope for v1.
 | `ZoneInfo.key` (property) | `Str` | the IANA name |
 | `zoneinfo.available_timezones()` | `Set[Str]` | roster from the local tzdata |
 | `zoneinfo.reset_tzpath(to=none)` | `none` | `to` is an optional `Tuple[Str]` of search paths |
-| `zoneinfo.TZPATH()` | `Tuple[Str]` | current search path (callable rather than attribute — `reset_tzpath` mutates it) |
+| `zoneinfo.TZPATH` | `Tuple[Str]` | current search path (property; `reset_tzpath` mutates it) |
 | `zoneinfo.ZoneInfoNotFoundError` (class attr) | exception class | use with `Try.except_(...)` |
 
 `ZoneInfo.from_file` is deferred — POOP has no file-object abstraction. `InvalidTZPathWarning` is out of scope (POOP has no warning system).
@@ -1649,8 +1649,8 @@ Incremental encoder/decoder construction, `StreamReader` / `StreamWriter`, and t
 | `tempfile.gettempprefix()` | `Str` | |
 | `tempfile.gettempdirb()` | `Bytes` | |
 | `tempfile.gettempprefixb()` | `Bytes` | |
-| `tempfile.tempdir()` | `Path` / `none` | current search-path override |
-| `tempfile.set_tempdir(path)` | `none` | pass `none` to clear |
+| `tempfile.tempdir` | `Path` / `none` | current search-path override (read property) |
+| `tempfile.tempdir = path` | `none` | setter — assign a `Path`/`Str` or `none` to clear |
 | `TemporaryDirectory(suffix=none, prefix=none, dir=none, ignore_cleanup_errors=none)` | `TemporaryDirectory` | `.name` returns `Path`; `.cleanup()` removes; `With` yields the `Path` |
 | `TemporaryFile(mode=none, suffix=none, prefix=none, dir=none)` | `TemporaryFile` | anonymous file; `With` yields the wrapper |
 | `NamedTemporaryFile(mode=none, …, delete=none)` | `NamedTemporaryFile` | `.name` returns `Path`; default `delete=true` |
@@ -2085,22 +2085,22 @@ Three small Unix-specific namespaces shipped together. `pwd` looks up Unix passw
 
 ### sys + Stdout + Stdin, atexit, gc — `poop/types/{sys,atexit,gc}.py`
 
-Three runtime-services namespaces shipped together. `sys` exposes a curated subset of CPython's `sys` module — introspection-heavy bits (`settrace`, `_getframe`, `monitoring`, audit hooks) are deliberately out of scope. Python attributes like `sys.argv` / `sys.platform` map to callables (`sys.argv()`, `sys.platform()`) that return POOP types — POOP code uses `sys.argv().at(0)` instead of `sys.argv[0]`. `sys.stdout` / `sys.stderr` / `sys.stdin` are wrapped by `Stdout` / `Stdin` classes that speak POOP types. `atexit` registers / unregisters shutdown callbacks (POOP `Block`s). `gc` exposes the garbage-collector control surface only — `get_objects` / `get_referrers` / `is_tracked` etc. are excluded for clashing with POOP's no-introspection rule.
+Three runtime-services namespaces shipped together. `sys` exposes a curated subset of CPython's `sys` module — introspection-heavy bits (`settrace`, `_getframe`, `monitoring`, audit hooks) are deliberately out of scope. Python attributes like `sys.argv` / `sys.platform` are POOP `@property` attributes returning POOP types — POOP code reads `sys.argv.at(0)` instead of `sys.argv[0]`. `sys.stdout` / `sys.stderr` / `sys.stdin` are properties returning `Stdout` / `Stdin` wrappers that speak POOP types. Python callables (`sys.exit`, `sys.getrecursionlimit`, `sys.setrecursionlimit`) stay as methods. `atexit` registers / unregisters shutdown callbacks (POOP `Block`s). `gc` exposes the garbage-collector control surface only — `get_objects` / `get_referrers` / `is_tracked` etc. are excluded for clashing with POOP's no-introspection rule.
 
 | Operation | Returns | Notes |
 |---|---|---|
-| `sys.executable()` | `Path` | |
-| `sys.platform()` / `.version()` / `.byteorder()` | `Str` | |
-| `sys.version_info()` | `Tuple(Int, Int, Int, Str, Int)` | `(major, minor, micro, releaselevel, serial)` |
-| `sys.maxsize()` / `.getrecursionlimit()` | `Int` | |
+| `sys.executable` | `Path` | |
+| `sys.platform` / `sys.version` / `sys.byteorder` | `Str` | |
+| `sys.version_info` | `Tuple(Int, Int, Int, Str, Int)` | `(major, minor, micro, releaselevel, serial)` |
+| `sys.maxsize` (property) / `sys.getrecursionlimit()` (method) | `Int` | |
 | `sys.setrecursionlimit(limit)` | `none` | |
-| `sys.implementation()` / `.flags()` / `.float_info()` / `.int_info()` / `.hash_info()` / `.thread_info()` | Python object | opaque named tuples |
-| `sys.modules()` | `Dict[Str, module]` | snapshot at call time |
-| `sys.path()` | `List[Str]` | snapshot at call time |
+| `sys.implementation` / `sys.flags` / `sys.float_info` / `sys.int_info` / `sys.hash_info` / `sys.thread_info` | Python object | opaque named tuples |
+| `sys.modules` | `Dict[Str, module]` | snapshot at call time |
+| `sys.path` | `List[Str]` | snapshot at call time |
 | `sys.exit(code=none)` | raises `SystemExit` | accepts `Int` or `Str` |
-| `sys.argv()` | `List[Str]` | mirrors Python's `sys.argv` |
-| `sys.stdout()` / `sys.stderr()` | `Stdout` | wraps real streams |
-| `sys.stdin()` | `Stdin` | wraps real stream |
+| `sys.argv` | `List[Str]` | mirrors Python's `sys.argv` |
+| `sys.stdout` / `sys.stderr` | `Stdout` | wraps real streams |
+| `sys.stdin` | `Stdin` | wraps real stream |
 | `Stdout.write(s)` | `Int` | bytes written |
 | `Stdout.writeln(s=none)` / `.flush()` | `none` | |
 | `Stdout.isatty()` | `Boolean` | |
@@ -2118,7 +2118,7 @@ Three runtime-services namespaces shipped together. `sys` exposes a curated subs
 | `gc.DEBUG_STATS` / `DEBUG_COLLECTABLE` / `DEBUG_UNCOLLECTABLE` / `DEBUG_SAVEALL` / `DEBUG_LEAK` (class attrs) | `Int` | |
 | `gc.freeze()` / `.unfreeze()` | `none` | |
 | `gc.get_freeze_count()` | `Int` | |
-| `gc.callbacks()` | Python `list` | mutable, shared with CPython's |
+| `gc.callbacks` | Python `list` | mutable, shared with CPython's |
 
 `sys`, `Stdout`, `Stdin`, `atexit`, and `gc` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{sys,atexit,gc}.py` — namespace-only, no AST rewrite. POOP lambdas auto-wrap as `Block`s, so `atexit.register(lambda: ...)` works directly.
 
@@ -2309,8 +2309,8 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `time.strftime(fmt, t=none)` / `.asctime(t=none)` / `.ctime(secs=none)` | `Str` | |
 | `time.strptime(s, fmt)` / `.gmtime(secs=none)` / `.localtime(secs=none)` | `StructTime` | |
 | `time.mktime(t)` | `Float` | |
-| `time.tzname()` | `Tuple(Str, Str)` | |
-| `time.timezone()` / `.altzone()` / `.daylight()` | `Int` | |
+| `time.tzname` | `Tuple(Str, Str)` | |
+| `time.timezone` / `time.altzone` / `time.daylight` | `Int` | |
 | `StructTime.tm_year` / `tm_mon` / `tm_mday` / `tm_hour` / `tm_min` / `tm_sec` / `tm_wday` / `tm_yday` / `tm_isdst` (properties) | `Int` | |
 | `StructTime.tm_zone` / `tm_gmtoff` (properties) | `Str` or `none` / `Int` or `none` | |
 | `logging.getLogger(name=none)` | `Logger` | |

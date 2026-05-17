@@ -150,15 +150,15 @@ def test_structtime_repr() -> None:
 
 
 def test_tzname_returns_tuple_of_str() -> None:
-    tz = Time.tzname()
+    tz = Time.tzname
     assert isinstance(tz, Tuple)
     assert tz.len() == Int(2)
 
 
 def test_timezone_altzone_daylight_are_ints() -> None:
-    assert isinstance(Time.timezone(), Int)
-    assert isinstance(Time.altzone(), Int)
-    assert isinstance(Time.daylight(), Int)
+    assert isinstance(Time.timezone, Int)
+    assert isinstance(Time.altzone, Int)
+    assert isinstance(Time.daylight, Int)
 
 
 def test_time_class_ref() -> None:

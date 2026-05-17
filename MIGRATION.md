@@ -87,9 +87,9 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `pwd.getpwuid(uid)` | `pwd.getpwuid(uid)` |
 | `grp.getgrnam(name)` | `grp.getgrnam(name)` |
 | `resource.getrusage(who)` | `resource.getrusage(who)` |
-| `sys.platform` | `sys.platform()` |
-| `sys.argv[0]` | `sys.argv().at(0)` |
-| `sys.stdout.write(s)` | `sys.stdout().write(s)` |
+| `sys.platform` | `sys.platform` |
+| `sys.argv[0]` | `sys.argv.at(0)` |
+| `sys.stdout.write(s)` | `sys.stdout.write(s)` |
 | `atexit.register(f)` | `atexit.register(f)` |
 | `gc.collect()` | `gc.collect()` |
 | `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
@@ -1326,7 +1326,7 @@ ntf.close()
 result = tempfile.mkstemp()  # Tuple(Int(fd), Path)
 ```
 
-> `TemporaryDirectory` / `TemporaryFile` / `NamedTemporaryFile` / `SpooledTemporaryFile` are bare alongside the `tempfile` namespace. Each is a context manager and exposes the minimal binary surface (`.read` / `.write` / `.seek` / `.tell` / `.flush` / `.close`) so callers can populate or drain the file without a separate POOP I/O abstraction. `NamedTemporaryFile.name` and `TemporaryDirectory.name` return `Path`. `tempfile.tempdir()` reads the current search-path override; `tempfile.set_tempdir(path)` mutates it (pass `none` to clear).
+> `TemporaryDirectory` / `TemporaryFile` / `NamedTemporaryFile` / `SpooledTemporaryFile` are bare alongside the `tempfile` namespace. Each is a context manager and exposes the minimal binary surface (`.read` / `.write` / `.seek` / `.tell` / `.flush` / `.close`) so callers can populate or drain the file without a separate POOP I/O abstraction. `NamedTemporaryFile.name` and `TemporaryDirectory.name` return `Path`. `tempfile.tempdir` reads the current search-path override; assign to it (`tempfile.tempdir = Path("/tmp")` or `tempfile.tempdir = none` to clear) to mutate it.
 
 ## High-level file operations (`shutil` module)
 
@@ -1557,15 +1557,15 @@ gc.collect()
 
 ```python
 # POOP
-sys.platform().print()
-sys.version_info().print()
-sys.stdout().write("hi\n")
-script = sys.argv().at(0)                # Str (sys.argv mirrors Python; subscript → .at)
+sys.platform.print()
+sys.version_info.print()
+sys.stdout.write("hi\n")
+script = sys.argv.at(0)                  # Str (sys.argv mirrors Python; subscript → .at)
 atexit.register(lambda: "bye".print())   # Block (lambda auto-wraps)
 gc.collect().print()                     # Int
 ```
 
-> POOP mirrors Python's `sys` module shape directly — Python's attributes (`sys.argv`, `sys.platform`, `sys.version_info`, `sys.modules`, `sys.path`, `sys.maxsize`, …) become callables returning POOP types. So `sys.argv[0]` (subscript, banned in POOP) becomes `sys.argv().at(0)`. `sys.stdout` / `sys.stderr` / `sys.stdin` are wrapped by `Stdout` / `Stdin` classes (returned by `sys.stdout()` / `sys.stderr()` / `sys.stdin()`). All return values are POOP types — `Path`, `Str`, `Int`, `List[Str]`, `Dict[Str, module]`, `Tuple`. The introspection-heavy `settrace` / `_getframe` / `monitoring` / `audit*` surface is intentionally absent. `atexit` mirrors CPython directly — `register` accepts a POOP `Block` (lambdas auto-wrap), `unregister` / `_run_exitfuncs` / `_clear` work as expected. `gc` exposes the **control surface only**: `enable`/`disable`/`isenabled`/`collect`/`get_threshold`/`set_threshold`/`get_count`/`get_stats`/`get_debug`/`set_debug`/`freeze`/`unfreeze`/`get_freeze_count`/`callbacks` plus the `DEBUG_*` constants — `get_objects` / `get_referrers` / `is_tracked` are excluded as introspection.
+> POOP mirrors Python's `sys` module shape directly — Python attributes (`sys.argv`, `sys.platform`, `sys.version_info`, `sys.modules`, `sys.path`, `sys.maxsize`, …) are exposed as POOP `@property` attributes returning POOP types. So `sys.argv[0]` (subscript, banned in POOP) becomes `sys.argv.at(0)`. `sys.stdout` / `sys.stderr` / `sys.stdin` are properties returning `Stdout` / `Stdin` wrappers. Python callables (`sys.exit(code)`, `sys.getrecursionlimit()`, `sys.setrecursionlimit(n)`) stay as methods. The introspection-heavy `settrace` / `_getframe` / `monitoring` / `audit*` surface is intentionally absent. `atexit` mirrors CPython directly — `register` accepts a POOP `Block` (lambdas auto-wrap), `unregister` / `_run_exitfuncs` / `_clear` work as expected. `gc` exposes the **control surface only**: `enable`/`disable`/`isenabled`/`collect`/`get_threshold`/`set_threshold`/`get_count`/`get_stats`/`get_debug`/`set_debug`/`freeze`/`unfreeze`/`get_freeze_count` as methods plus `callbacks` as `@property` and the `DEBUG_*` constants — `get_objects` / `get_referrers` / `is_tracked` are excluded as introspection.
 
 ## Internet data / markup (`email`, `html`, `xml`)
 

@@ -104,7 +104,7 @@ def test_freeze_unfreeze() -> None:
 
 
 def test_callbacks_returns_list() -> None:
-    callbacks = GC.callbacks()
+    callbacks = GC.callbacks
     assert callbacks is _stdlib_gc.callbacks
 
 

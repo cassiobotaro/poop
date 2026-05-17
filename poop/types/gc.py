@@ -22,14 +22,12 @@ def _wrap_value(value: Any) -> Any:
     return value
 
 
-class GC:
-    """Namespace mirroring (the control surface of) Python's `gc` module.
+class _GCNamespace:
+    """Singleton namespace mirroring (the control surface of) Python's `gc` module.
 
+    Python `gc.callbacks` is an attribute — exposed here as `@property`.
     The introspection-heavy pieces (`get_objects` / `get_referrers` /
-    `get_referents` / `is_tracked` / `is_finalized`) are out of scope
-    — they clash with POOP's no-introspection rule. Toggling,
-    forcing collections, thresholds, stats, debug flags, freeze, and
-    callbacks are all surfaced.
+    `get_referents` / `is_tracked` / `is_finalized`) are out of scope.
     """
 
     DEBUG_STATS: ClassVar[Int] = Int(_gc.DEBUG_STATS)
@@ -38,35 +36,30 @@ class GC:
     DEBUG_SAVEALL: ClassVar[Int] = Int(_gc.DEBUG_SAVEALL)
     DEBUG_LEAK: ClassVar[Int] = Int(_gc.DEBUG_LEAK)
 
-    @staticmethod
-    def enable() -> NoneClass:
+    def enable(self) -> NoneClass:
         _gc.enable()
         return none
 
-    @staticmethod
-    def disable() -> NoneClass:
+    def disable(self) -> NoneClass:
         _gc.disable()
         return none
 
-    @staticmethod
-    def isenabled() -> Boolean:
+    def isenabled(self) -> Boolean:
         return true if _gc.isenabled() else false
 
-    @staticmethod
-    def collect(generation: Int | None = None) -> Int:
+    def collect(self, generation: Int | None = None) -> Int:
         if generation is None:
             return Int(_gc.collect())
         return Int(_gc.collect(generation._value))
 
-    @staticmethod
-    def get_threshold() -> Any:
+    def get_threshold(self) -> Any:
         t = _gc.get_threshold()
         from poop.types.tuple import Tuple
 
         return Tuple(*(Int(v) for v in t))
 
-    @staticmethod
     def set_threshold(
+        self,
         threshold0: Int,
         threshold1: Int | None = None,
         threshold2: Int | None = None,
@@ -79,14 +72,12 @@ class GC:
         _gc.set_threshold(*args)
         return none
 
-    @staticmethod
-    def get_count() -> Any:
+    def get_count(self) -> Any:
         from poop.types.tuple import Tuple
 
         return Tuple(*(Int(v) for v in _gc.get_count()))
 
-    @staticmethod
-    def get_stats() -> List:
+    def get_stats(self) -> List:
         result: list[Dict] = []
         for stat in _gc.get_stats():
             d = Dict()
@@ -97,31 +88,29 @@ class GC:
             result.append(d)
         return List(*result)
 
-    @staticmethod
-    def get_debug() -> Int:
+    def get_debug(self) -> Int:
         return Int(_gc.get_debug())
 
-    @staticmethod
-    def set_debug(flags: Int) -> NoneClass:
+    def set_debug(self, flags: Int) -> NoneClass:
         _gc.set_debug(flags._value)
         return none
 
-    @staticmethod
-    def freeze() -> NoneClass:
+    def freeze(self) -> NoneClass:
         _gc.freeze()
         return none
 
-    @staticmethod
-    def unfreeze() -> NoneClass:
+    def unfreeze(self) -> NoneClass:
         _gc.unfreeze()
         return none
 
-    @staticmethod
-    def get_freeze_count() -> Int:
+    def get_freeze_count(self) -> Int:
         return Int(_gc.get_freeze_count())
 
-    @staticmethod
-    def callbacks() -> Any:
-        # Return the raw list — callbacks are Python callables; users
-        # `.append`/`.remove` directly to register/unregister.
+    @property
+    def callbacks(self) -> Any:
+        # Raw list — callbacks are Python callables; users `.append`/
+        # `.remove` directly to register/unregister.
         return _gc.callbacks
+
+
+GC = _GCNamespace()

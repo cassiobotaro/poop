@@ -78,16 +78,16 @@ def test_gettempprefixb_returns_bytes() -> None:
 
 
 def test_set_tempdir_round_trip(tmp_path: _PyPath) -> None:
-    TempfileNamespace.set_tempdir(Path(Str(str(tmp_path))))
+    TempfileNamespace.tempdir = Path(Str(str(tmp_path)))
     try:
-        assert TempfileNamespace.tempdir() == Path(Str(str(tmp_path)))
+        assert TempfileNamespace.tempdir == Path(Str(str(tmp_path)))
     finally:
-        TempfileNamespace.set_tempdir(none)
+        TempfileNamespace.tempdir = none
 
 
 def test_tempdir_default_is_none() -> None:
-    TempfileNamespace.set_tempdir(none)
-    assert TempfileNamespace.tempdir() is none
+    TempfileNamespace.tempdir = none
+    assert TempfileNamespace.tempdir is none
 
 
 # --- TemporaryDirectory ---

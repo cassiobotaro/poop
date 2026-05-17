@@ -212,18 +212,13 @@ class SpooledTemporaryFile(_TempFileBase):
         return none
 
 
-class TempfileNamespace:
-    """Namespace mirroring Python's `tempfile` module.
+class _TempfileNamespace:
+    """Singleton namespace mirroring Python's `tempfile` module.
 
-    Module-level factories (`mkstemp` / `mkdtemp`) for direct creation,
-    metadata probes (`gettempdir` / `gettempprefix` / `gettempdirb` /
-    `gettempprefixb`), and the four context-manager classes
-    (`TemporaryFile` / `NamedTemporaryFile` / `SpooledTemporaryFile` /
-    `TemporaryDirectory`) exposed alongside this namespace.
-
-    `tempdir()` reads the current search default; `set_tempdir(path)`
-    overrides it. The `_RandomNameSequence` private class is out of
-    scope for v1.
+    Python's `tempfile.tempdir` is exposed as a `@property` with a
+    setter — assign to `tempfile.tempdir` to change the search
+    default, just like in Python. The four context-manager classes
+    are exposed as class attributes.
     """
 
     TemporaryFile: ClassVar[type[TemporaryFile]] = TemporaryFile
@@ -231,8 +226,8 @@ class TempfileNamespace:
     SpooledTemporaryFile: ClassVar[type[SpooledTemporaryFile]] = SpooledTemporaryFile
     TemporaryDirectory: ClassVar[type[TemporaryDirectory]] = TemporaryDirectory
 
-    @staticmethod
     def mkstemp(
+        self,
         suffix: Str | None = None,
         prefix: Str | None = None,
         dir: Path | Str | None = None,
@@ -246,8 +241,8 @@ class TempfileNamespace:
         )
         return Tuple(Int(fd), Path(Str(name)))
 
-    @staticmethod
     def mkdtemp(
+        self,
         suffix: Str | None = None,
         prefix: Str | None = None,
         dir: Path | Str | None = None,
@@ -262,35 +257,33 @@ class TempfileNamespace:
             )
         )
 
-    @staticmethod
-    def gettempdir() -> Path:
+    def gettempdir(self) -> Path:
         return Path(Str(_tempfile.gettempdir()))
 
-    @staticmethod
-    def gettempprefix() -> Str:
+    def gettempprefix(self) -> Str:
         return Str(_tempfile.gettempprefix())
 
-    @staticmethod
-    def gettempdirb() -> Bytes:
+    def gettempdirb(self) -> Bytes:
         return Bytes(_tempfile.gettempdirb())
 
-    @staticmethod
-    def gettempprefixb() -> Bytes:
+    def gettempprefixb(self) -> Bytes:
         return Bytes(_tempfile.gettempprefixb())
 
-    @staticmethod
-    def tempdir() -> Path | NoneClass:
+    @property
+    def tempdir(self) -> Path | NoneClass:
         current = _tempfile.tempdir
         if current is None:
             return none
         return Path(Str(current))
 
-    @staticmethod
-    def set_tempdir(path: Path | Str | NoneClass | None) -> NoneClass:
+    @tempdir.setter
+    def tempdir(self, path: Path | Str | NoneClass | None) -> None:
         if path is None or isinstance(path, NoneClass):
             _tempfile.tempdir = None
         elif isinstance(path, Path):
             _tempfile.tempdir = str(path._path)
         else:
             _tempfile.tempdir = path._value
-        return none
+
+
+TempfileNamespace = _TempfileNamespace()
