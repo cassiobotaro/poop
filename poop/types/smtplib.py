@@ -4,6 +4,7 @@ import smtplib as _smtplib
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types._unwrap import _opt_str
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -12,10 +13,6 @@ from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-
-
-def _opt_str(value: Str | None, default: str) -> str:
-    return default if value is None else value._value
 
 
 def _wrap_helo_tuple(pair: tuple[int, bytes]) -> Tuple:

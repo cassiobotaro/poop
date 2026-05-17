@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, overload
 
 from poop.types.none import NoneClass
 
@@ -40,13 +40,21 @@ def _i(value: object, default: int) -> int:
     return _unwrap(value, default)
 
 
-def _opt_int(value: object, default: int) -> int:
-    """Same as `_i` — kept for parity with stdlib wrapper call sites."""
+@overload
+def _opt_int(value: object, default: int) -> int: ...
+@overload
+def _opt_int(value: object, default: None = None) -> int | None: ...
+def _opt_int(value: object, default: int | None = None) -> int | None:
+    """`Int | None` → `int` (with default) or `int | None` (default omitted)."""
     return _unwrap(value, default)
 
 
-def _opt_str(value: object, default: str) -> str:
-    """`Str | None` → `str` with default."""
+@overload
+def _opt_str(value: object, default: str) -> str: ...
+@overload
+def _opt_str(value: object, default: None = None) -> str | None: ...
+def _opt_str(value: object, default: str | None = None) -> str | None:
+    """`Str | None` → `str` (with default) or `str | None` (default omitted)."""
     return _unwrap(value, default)
 
 

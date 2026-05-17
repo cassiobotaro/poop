@@ -12,8 +12,6 @@ Active engineering backlog. v0.54.1 closed the bug fixes + alto convention viola
 
 | # | Severity | Issue | Estimated LOC |
 |---|---|---|---|
-| C1 | Médio (residual) | `_opt_int` / `_opt_str` / `_unwrap_str` / `_opt_path_arg` still redefined across ~10 files. Each carries a slightly different signature (Path-vs-Str unwrapping, optional return shape) and must be audited per call-site before centralising. The most-duplicated `_b`/`_opt_timeout` already moved to `_unwrap.py` in v0.54.2. | -60 to -100 |
-| C4 | Baixo (residual) | Function-local `from poop.types._unwrap import _unwrap` calls still live in `bytes.py` (11), `string.py` (5), `path.py` (3), `random.py` (8), `secrets.py` (3), `binascii.py` (2), `hash.py`, `sqlite3.py`, `re.py`, `datetime.py`, `decimal.py`. v0.54.2 only hoisted `byte_array.py`/`int.py`/`float.py`. The remaining files need a per-module cycle audit before hoisting (each one *might* be a real cycle dodge). | -30 to -40 |
 | C2 | Alto win | Pattern `if x is not None: kwargs["x"] = x._value` appears in 146 spots across 29 files (`subprocess`, `tarfile`, `shutil`, `zipfile`, `ssl`, `http`, `urllib`, `smtplib`, …). A `_kwargs_from(**named)` helper would shrink each 3-line block to 1 line. Mechanical sweep; needs care with the ~30 sites that also wrap values via `_impl` instead of `_value`. | -290 |
 | C5 | Discutível | Heavy property-delegation blocks in `urllib`, `ipaddress`, `tarfile`, `sys`, `uuid` (16-32 properties each, all `return Str(self._impl.X)` shape). A `@_delegated_property(Str)` decorator could compress them but loses static-type inference, IDE jump-to-def, and per-property docstrings. | -150 to -300 (cosmetic) |
 

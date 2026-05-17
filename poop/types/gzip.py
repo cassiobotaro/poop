@@ -4,16 +4,13 @@ import gzip as _gzip
 from types import TracebackType
 from typing import ClassVar, Self
 
+from poop.types._unwrap import _opt_int
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.path import Path
 from poop.types.string import Str
-
-
-def _opt_int(value: Int | None, default: int) -> int:
-    return default if value is None else value._value
 
 
 def _path_str(value: Path | Str) -> str:

@@ -23,10 +23,6 @@ def _opt_path_arg(value: Path | Str | None) -> str | None:
     return None if value is None else _path_arg(value)
 
 
-def _opt_str(value: Str | None) -> str | None:
-    return None if value is None else value._value
-
-
 def _format_pairs(pairs: list[tuple[str, str]]) -> List:
     return List(*(Tuple(Str(name), Str(desc)) for name, desc in pairs))
 

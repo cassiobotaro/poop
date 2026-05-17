@@ -4,6 +4,7 @@ import zipfile as _zipfile
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types._unwrap import _opt_int
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -18,10 +19,6 @@ def _path_str(value: Path | Str) -> str:
     if isinstance(value, Path):
         return str(value._path)
     return value._value
-
-
-def _opt_int(value: Int | None, default: int) -> int:
-    return default if value is None else value._value
 
 
 class ZipInfo(Object):

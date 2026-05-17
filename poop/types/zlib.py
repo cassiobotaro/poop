@@ -3,13 +3,10 @@ from __future__ import annotations
 import zlib as _zlib
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _opt_int
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.object import Object
-
-
-def _opt_int(value: Int | None, default: int) -> int:
-    return default if value is None else value._value
 
 
 class Compress(Object):

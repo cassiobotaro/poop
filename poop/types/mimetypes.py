@@ -1,6 +1,7 @@
 import mimetypes as _mimetypes
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._unwrap import _b
 from poop.types.boolean import Boolean
 from poop.types.dict import Dict
 from poop.types.list import List
@@ -36,12 +37,6 @@ def _maybe_str(value: str | None) -> Str | NoneClass:
     return none if value is None else Str(value)
 
 
-def _unwrap_strict(strict: Boolean | None) -> bool:
-    if strict is None:
-        return True
-    return bool(strict)
-
-
 class MimeTypes:
     """Reusable registry mirroring Python's `mimetypes.MimeTypes`.
 
@@ -55,38 +50,34 @@ class MimeTypes:
         self, filenames: List | None = None, strict: Boolean | None = None
     ) -> None:
         if filenames is None:
-            self._impl = _mimetypes.MimeTypes(strict=_unwrap_strict(strict))
+            self._impl = _mimetypes.MimeTypes(strict=_b(strict, True))
         else:
             python_paths = tuple(_str_value(s) for s in filenames)
             self._impl = _mimetypes.MimeTypes(
-                filenames=python_paths, strict=_unwrap_strict(strict)
+                filenames=python_paths, strict=_b(strict, True)
             )
 
     def guess_type(self, url: Str, strict: Boolean | None = None) -> Tuple:
-        mime, encoding = self._impl.guess_type(
-            url._value, strict=_unwrap_strict(strict)
-        )
+        mime, encoding = self._impl.guess_type(url._value, strict=_b(strict, True))
         return Tuple(_maybe_str(mime), _maybe_str(encoding))
 
     def guess_extension(
         self, type: Str, strict: Boolean | None = None
     ) -> Str | NoneClass:
         return _maybe_str(
-            self._impl.guess_extension(type._value, strict=_unwrap_strict(strict))
+            self._impl.guess_extension(type._value, strict=_b(strict, True))
         )
 
     def guess_all_extensions(self, type: Str, strict: Boolean | None = None) -> List:
-        exts = self._impl.guess_all_extensions(
-            type._value, strict=_unwrap_strict(strict)
-        )
+        exts = self._impl.guess_all_extensions(type._value, strict=_b(strict, True))
         return _str_list(exts)
 
     def add_type(self, type: Str, ext: Str, strict: Boolean | None = None) -> NoneClass:
-        self._impl.add_type(type._value, ext._value, strict=_unwrap_strict(strict))
+        self._impl.add_type(type._value, ext._value, strict=_b(strict, True))
         return none
 
     def read(self, filename: Str, strict: Boolean | None = None) -> NoneClass:
-        self._impl.read(filename._value, strict=_unwrap_strict(strict))
+        self._impl.read(filename._value, strict=_b(strict, True))
         return none
 
 
@@ -113,27 +104,23 @@ class Mimetypes:
 
     @staticmethod
     def guess_type(url: Str, strict: Boolean | None = None) -> Tuple:
-        mime, encoding = _mimetypes.guess_type(
-            url._value, strict=_unwrap_strict(strict)
-        )
+        mime, encoding = _mimetypes.guess_type(url._value, strict=_b(strict, True))
         return Tuple(_maybe_str(mime), _maybe_str(encoding))
 
     @staticmethod
     def guess_extension(type: Str, strict: Boolean | None = None) -> Str | NoneClass:
         return _maybe_str(
-            _mimetypes.guess_extension(type._value, strict=_unwrap_strict(strict))
+            _mimetypes.guess_extension(type._value, strict=_b(strict, True))
         )
 
     @staticmethod
     def guess_all_extensions(type: Str, strict: Boolean | None = None) -> List:
-        exts = _mimetypes.guess_all_extensions(
-            type._value, strict=_unwrap_strict(strict)
-        )
+        exts = _mimetypes.guess_all_extensions(type._value, strict=_b(strict, True))
         return _str_list(exts)
 
     @staticmethod
     def add_type(type: Str, ext: Str, strict: Boolean | None = None) -> NoneClass:
-        _mimetypes.add_type(type._value, ext._value, strict=_unwrap_strict(strict))
+        _mimetypes.add_type(type._value, ext._value, strict=_b(strict, True))
         return none
 
     @staticmethod

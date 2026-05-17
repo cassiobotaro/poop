@@ -4,6 +4,7 @@ import csv as _csv
 import io as _io
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _opt_str
 from poop.types.boolean import Boolean
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -13,14 +14,6 @@ from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-
-
-def _opt_str(value: Str | None, default: str | None) -> str | None:
-    return default if value is None else value._value
-
-
-def _opt_int(value: Int | None) -> int | None:
-    return None if value is None else value._value
 
 
 def _source_iter(source: List | Str) -> Any:

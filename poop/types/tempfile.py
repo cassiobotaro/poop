@@ -4,7 +4,7 @@ import tempfile as _tempfile
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
-from poop.types._unwrap import _b
+from poop.types._unwrap import _b, _opt_str
 from poop.types.boolean import Boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
@@ -13,10 +13,6 @@ from poop.types.object import Object
 from poop.types.path import Path
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-
-
-def _unwrap_str(value: Str | None) -> str | None:
-    return None if value is None else value._value
 
 
 def _unwrap_dir(value: Path | Str | None) -> str | None:
@@ -46,8 +42,8 @@ class TemporaryDirectory(Object):
         ignore_cleanup_errors: Boolean | None = None,
     ) -> None:
         self._impl = _tempfile.TemporaryDirectory(
-            suffix=_unwrap_str(suffix),
-            prefix=_unwrap_str(prefix),
+            suffix=_opt_str(suffix),
+            prefix=_opt_str(prefix),
             dir=_unwrap_dir(dir),
             ignore_cleanup_errors=_b(ignore_cleanup_errors, False),
         )
@@ -141,8 +137,8 @@ class TemporaryFile(_TempFileBase):
     ) -> None:
         self._impl = _tempfile.TemporaryFile(
             mode="w+b" if mode is None else mode._value,
-            suffix=_unwrap_str(suffix),
-            prefix=_unwrap_str(prefix),
+            suffix=_opt_str(suffix),
+            prefix=_opt_str(prefix),
             dir=_unwrap_dir(dir),
         )
 
@@ -168,8 +164,8 @@ class NamedTemporaryFile(_TempFileBase):
     ) -> None:
         self._impl = _tempfile.NamedTemporaryFile(
             mode="w+b" if mode is None else mode._value,
-            suffix=_unwrap_str(suffix),
-            prefix=_unwrap_str(prefix),
+            suffix=_opt_str(suffix),
+            prefix=_opt_str(prefix),
             dir=_unwrap_dir(dir),
             delete=_b(delete, True),
         )
@@ -199,8 +195,8 @@ class SpooledTemporaryFile(_TempFileBase):
         self._impl = _tempfile.SpooledTemporaryFile(
             max_size=0 if max_size is None else max_size._value,
             mode="w+b" if mode is None else mode._value,
-            suffix=_unwrap_str(suffix),
-            prefix=_unwrap_str(prefix),
+            suffix=_opt_str(suffix),
+            prefix=_opt_str(prefix),
             dir=_unwrap_dir(dir),
         )
 
@@ -231,8 +227,8 @@ class _TempfileNamespace:
         text: Boolean | None = None,
     ) -> Tuple:
         fd, name = _tempfile.mkstemp(
-            suffix=_unwrap_str(suffix),
-            prefix=_unwrap_str(prefix),
+            suffix=_opt_str(suffix),
+            prefix=_opt_str(prefix),
             dir=_unwrap_dir(dir),
             text=_b(text, False),
         )
@@ -247,8 +243,8 @@ class _TempfileNamespace:
         return Path(
             Str(
                 _tempfile.mkdtemp(
-                    suffix=_unwrap_str(suffix),
-                    prefix=_unwrap_str(prefix),
+                    suffix=_opt_str(suffix),
+                    prefix=_opt_str(prefix),
                     dir=_unwrap_dir(dir),
                 )
             )
