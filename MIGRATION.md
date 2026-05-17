@@ -299,6 +299,24 @@ d.includes("key")
 
 > `d.includes(k)` mirrors Python's `key in d` — checks keys. The views also respond to `.includes(...)` for the other axes: `d.keys().includes(k)`, `d.values().includes(v)`, `d.items().includes((k, v))`.
 
+## Identity (`is`, `is None`)
+
+```python
+# Python
+x is None
+x is not None
+x is y
+```
+
+```python
+# POOP
+x.is_none()
+x.not_none()
+x.is_identical(y)
+```
+
+> `is` is forbidden by the `no_is` validator. For `None` checks use `.is_none()` / `.not_none()`; for arbitrary identity use `.is_identical(other)` / `.not_identical(other)`.
+
 ## Raise / try / except
 
 ```python
@@ -1515,7 +1533,7 @@ gc.collect()
 # POOP
 sys.platform().print()
 sys.version_info().print()
-sys.stdout().writeln("hi")
+sys.stdout().write("hi\n")
 script = sys.argv().at(0)                # Str (sys.argv mirrors Python; subscript → .at)
 atexit.register(lambda: "bye".print())   # Block (lambda auto-wraps)
 gc.collect().print()                     # Int

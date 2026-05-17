@@ -65,10 +65,12 @@ POOP runs ~60 validators on every program. Grouped by theme:
 - `map` / `filter` → `col.map(lambda x: …)` / `col.filter(lambda x: …)`
 - `ascii` / `bin` / `chr` / `repr` / `format` → corresponding methods on `Int` / `Str`
 - `input` / `open` → `"prompt".input()` / `Path("file").read_text()`
-- `iter` → `col.iter()` / `it.next()`
+- `iter(col)` → `col.iter()` returns an iterator; `it.next()` advances it
 
-**Introspection** — POOP code talks via messages, not reflection.
-- `isinstance` / `issubclass` / `callable` / `id` / `dir` / `hasattr` / `getattr` / `setattr` / `type(...)` → use polymorphism (subclass dispatch) instead of asking what something is
+**Introspection** — call the method on the receiver, or use polymorphism.
+- `isinstance(x, T)` / `issubclass(C, P)` → `x.is_instance(T)` / `C.is_subclass(P)`
+- `callable(x)` / `id(x)` / `dir(x)` → `x.callable()` / `x.id()` / `x.dir()`
+- `hasattr(x, n)` / `getattr(x, n)` / `setattr(x, n, v)` → `x.has_attr(n)` / `x.get_attr(n)` / `x.set_attr(n, v)`
 
 **Operator sugar** — methods on the receiver.
 - `x[i]` / `x[a:b]` → `x.at(i)` / `x.slice(a, b)`
