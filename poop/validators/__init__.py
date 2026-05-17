@@ -5,7 +5,6 @@ from poop.validators.no_and_or import NoAndOrValidator
 from poop.validators.no_any import NoAnyValidator
 from poop.validators.no_ascii import NoAsciiValidator
 from poop.validators.no_assert import NoAssertValidator
-from poop.validators.no_async import NoAsyncValidator
 from poop.validators.no_bin import NoBinValidator
 from poop.validators.no_breakpoint import NoBreakpointValidator
 from poop.validators.no_callable import NoCallableValidator
@@ -72,7 +71,6 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoTryValidator(),
     NoTypeAliasValidator(),
     NoWithValidator(),
-    NoAsyncValidator(),
     NoNotValidator(),
     NoAndOrValidator(),
     NoUnaryMinusValidator(),

@@ -98,3 +98,57 @@ def test_slice_subscript_is_forbidden() -> None:
     # no_subscript now also blocks slice notation
     with pytest.raises(ValidationError):
         Interpreter().run_source("x = [1, 2, 3]\ny = x[1:2]")
+
+
+def test_async_method_inside_class_passes_pipeline() -> None:
+    Interpreter().run_source(
+        "class Foo:\n    async def bar(self):\n        return 1\nFoo()\n"
+    )
+
+
+def test_await_inside_async_method_passes_pipeline() -> None:
+    Interpreter().run_source(
+        "class Foo:\n"
+        "    async def bar(self):\n"
+        "        return 1\n"
+        "    async def baz(self):\n"
+        "        x = await self.bar()\n"
+        "        return x\n"
+        "Foo()\n"
+    )
+
+
+def test_free_async_function_still_raises() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source("async def foo():\n    return 1\n")
+    assert "free async functions" in str(exc_info.value)
+
+
+def test_async_for_still_raises() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source(
+            "class Foo:\n"
+            "    async def bar(self):\n"
+            "        async for x in self.items():\n"
+            "            x\n"
+        )
+    assert "async for" in str(exc_info.value)
+
+
+def test_async_with_still_raises() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source(
+            "class Foo:\n"
+            "    async def bar(self):\n"
+            "        async with self.lock() as l:\n"
+            "            l\n"
+        )
+    assert "async with" in str(exc_info.value)
+
+
+def test_async_generator_yield_still_raises() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source(
+            "class Foo:\n    async def bar(self):\n        yield 1\n"
+        )
+    assert "yield" in str(exc_info.value)
