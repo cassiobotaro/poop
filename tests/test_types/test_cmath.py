@@ -162,11 +162,8 @@ def test_isfinite_true_for_finite() -> None:
     assert CMath.isfinite(Complex(complex(1, 2))) is true
 
 
-def test_isfinite_false_if_real_is_inf() -> None:
+def test_isfinite_false_if_any_part_nonfinite() -> None:
     assert CMath.isfinite(Complex(complex(_cmath.inf, 0))) is false
-
-
-def test_isfinite_false_if_imag_is_nan() -> None:
     assert CMath.isfinite(Complex(complex(0, _cmath.nan))) is false
 
 
@@ -197,6 +194,13 @@ def test_isclose_true_for_close_values() -> None:
 
 def test_isclose_false_for_distant_values() -> None:
     assert CMath.isclose(Complex(complex(1, 0)), Complex(complex(2, 0))) is false
+
+
+def test_isclose_along_imaginary_axis() -> None:
+    assert (
+        CMath.isclose(Complex(complex(0, 1.0)), Complex(complex(0, 1.0 + 1e-10)))
+        is true
+    )
 
 
 def test_isclose_with_abs_tol() -> None:
