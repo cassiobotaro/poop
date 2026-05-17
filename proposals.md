@@ -343,174 +343,6 @@ between threads.
 **Type discipline:** POOP types for queued elements; `Int` for
 queue sizes; `Boolean` for predicates.
 
-## Expose `asyncio` as POOP messages
-
-Python's `asyncio` is the largest stdlib module: event loop,
-coroutines, futures, streams, queues, subprocess, locks. POOP needs
-async to interact with modern Python ecosystems (web servers, DBs).
-This proposal scopes a minimal-but-useful v1.
-
-**Proposal — `asyncio` (lowercase module) + class set:**
-
-1. **High-level entry points:**
-   `asyncio.run(coro, *, debug=None, loop_factory=None) -> Object`,
-   `asyncio.gather(*aws, return_exceptions=False) -> Future`,
-   `asyncio.wait(aws, *, timeout=None, return_when=ALL_COMPLETED) -> Tuple[Set[Task], Set[Task]]`,
-   `asyncio.wait_for(aw, timeout) -> Object`,
-   `asyncio.shield(aw) -> Future`,
-   `asyncio.sleep(delay, result=None) -> Object`,
-   `asyncio.timeout(delay) -> Timeout`,
-   `asyncio.timeout_at(when) -> Timeout`.
-2. **Task/Future:** `asyncio.create_task(coro, *, name=None, context=None) -> Task`,
-   `asyncio.current_task() -> Task | NoneClass`,
-   `asyncio.all_tasks(loop=None) -> Set[Task]`,
-   `Task` and `Future` POOP classes.
-3. **Event loop:** `asyncio.get_event_loop() -> AbstractEventLoop`,
-   `asyncio.new_event_loop()`, `asyncio.set_event_loop(loop)`,
-   `asyncio.get_running_loop()`. (Most users don't need this with
-   `asyncio.run`.)
-4. **Sync primitives (async-aware):** `asyncio.Lock`, `Event`,
-   `Condition`, `Semaphore`, `BoundedSemaphore`, `Barrier`.
-5. **`asyncio.Queue`** (FIFO), `LifoQueue`, `PriorityQueue`.
-6. **`asyncio.TaskGroup`** (3.11+) for structured concurrency.
-7. **Streams:** `asyncio.StreamReader`, `StreamWriter`,
-   `asyncio.open_connection`, `asyncio.start_server`.
-8. **Errors:** `CancelledError`, `InvalidStateError`,
-   `SendfileNotAvailableError`, `IncompleteReadError`,
-   `LimitOverrunError`, `TimeoutError` (3.11+ unified).
-
-**Type discipline:** coroutines as POOP `Block`-equivalent
-callables; results in POOP types end-to-end.
-
-**Out of scope (for v1):**
-
-- Transport/Protocol low-level API — use Streams instead.
-- `asyncio.subprocess`, `asyncio.unix_events`, `asyncio.windows_events`
-  — pair with future `subprocess` async story.
-
-## Expose `socket` as POOP messages
-
-Python's `socket` is the low-level network API: TCP, UDP, Unix
-sockets, name resolution. Big surface; this proposal scopes v1 to
-the common shape.
-
-**Proposal — `socket` (lowercase module) + `Socket` class:**
-
-1. **`Socket` class** wrapping `socket.socket`:
-   `Socket(family=AF_INET, type=SOCK_STREAM, proto=0, fileno=None)`,
-   `.bind(address)`, `.listen(backlog=0)`,
-   `.accept() -> Tuple[Socket, Address]`,
-   `.connect(address)`, `.connect_ex(address) -> Int`,
-   `.send(bytes, flags=0) -> Int`,
-   `.sendall(bytes, flags=0) -> NoneClass`,
-   `.sendto(bytes, address)`, `.sendmsg(...)`,
-   `.recv(bufsize, flags=0) -> Bytes`,
-   `.recvfrom(bufsize) -> Tuple[Bytes, Address]`,
-   `.recv_into(buffer, nbytes=0, flags=0)`, `.recvmsg(...)`,
-   `.close()`, `.shutdown(how)`,
-   `.setsockopt`/`.getsockopt`, `.settimeout`/`.gettimeout`,
-   `.setblocking(flag)`,
-   `.fileno() -> Int`,
-   `.getsockname()`, `.getpeername()`,
-   `.makefile(mode='r', buffering=None, *, encoding=None, errors=None, newline=None) -> File`.
-2. **Module-level helpers:**
-   `socket.create_connection(address, timeout=None, source_address=None, *, all_errors=False) -> Socket`,
-   `socket.create_server(address, *, family=AF_INET, backlog=None, reuse_port=False, dualstack_ipv6=False) -> Socket`,
-   `socket.has_dualstack_ipv6() -> Boolean`,
-   `socket.gethostname() -> Str`,
-   `socket.gethostbyname(host) -> Str`,
-   `socket.gethostbyname_ex(host) -> Tuple[Str, List, List]`,
-   `socket.gethostbyaddr(addr) -> Tuple`,
-   `socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0) -> List[Tuple]`,
-   `socket.getfqdn(name='') -> Str`,
-   `socket.getservbyname(servicename, protocolname=None) -> Int`,
-   `socket.getservbyport(port, protocolname=None) -> Str`,
-   `socket.htons`/`htonl`/`ntohs`/`ntohl`,
-   `socket.inet_aton(ip_string) -> Bytes`,
-   `socket.inet_ntoa(packed_ip) -> Str`,
-   `socket.inet_pton(family, ip_string) -> Bytes`,
-   `socket.inet_ntop(family, packed_ip) -> Str`.
-3. **Constants:** address families (`AF_INET`, `AF_INET6`,
-   `AF_UNIX`, `AF_BLUETOOTH`, …), socket types (`SOCK_STREAM`,
-   `SOCK_DGRAM`, `SOCK_RAW`, …), socket options (`SO_REUSEADDR`,
-   `SO_KEEPALIVE`, …).
-4. **Errors:** `socket.error` (alias of `OSError`),
-   `socket.herror`, `socket.gaierror`, `socket.timeout` (alias of
-   `TimeoutError`).
-
-**Type discipline:** `Bytes` for buffers, `Str` for hostnames/IPs,
-`Int` for ports/sizes/fileno, `Tuple` for addresses.
-
-## Expose `ssl` as POOP messages
-
-Python's `ssl` wraps a socket with TLS/SSL. Pairs with `socket`.
-
-**Proposal — `ssl` (lowercase module) + class set:**
-
-1. **`SSLContext` class:**
-   `ssl.create_default_context(purpose=Purpose.SERVER_AUTH, *, cafile=None, capath=None, cadata=None) -> SSLContext`,
-   `ssl.SSLContext(protocol=PROTOCOL_TLS_CLIENT)`,
-   `.load_cert_chain(certfile, keyfile=None, password=None)`,
-   `.load_verify_locations(cafile=None, capath=None, cadata=None)`,
-   `.load_default_certs(purpose=Purpose.SERVER_AUTH)`,
-   `.wrap_socket(sock, ...)`, `.wrap_bio(...)`,
-   `.set_ciphers(ciphers)`, `.get_ciphers() -> List[Dict]`,
-   `.minimum_version`, `.maximum_version`, `.verify_mode`,
-   `.check_hostname`.
-2. **`SSLSocket` class** — `socket.Socket` plus SSL-specific:
-   `.do_handshake()`, `.getpeercert(binary_form=False) -> Dict`,
-   `.cipher() -> Tuple[Str, Str, Int]`,
-   `.compression() -> Str | NoneClass`,
-   `.selected_alpn_protocol() -> Str | NoneClass`,
-   `.version() -> Str | NoneClass`,
-   `.session -> SSLSession`,
-   `.unwrap() -> Socket`.
-3. **Constants:** `PROTOCOL_TLS_CLIENT`, `PROTOCOL_TLS_SERVER`,
-   `CERT_NONE`, `CERT_OPTIONAL`, `CERT_REQUIRED`,
-   `Purpose.SERVER_AUTH`, `Purpose.CLIENT_AUTH`,
-   `TLSVersion.MINIMUM_SUPPORTED`/`TLSv1_2`/`TLSv1_3`/etc.
-4. **Errors:** `SSLError`, `SSLZeroReturnError`,
-   `SSLWantReadError`, `SSLWantWriteError`, `SSLSyscallError`,
-   `SSLEOFError`, `SSLCertVerificationError`.
-
-**Type discipline:** all POOP types.
-
-**Out of scope (for v1):** `ssl.RAND_*` (PRNG seeding — POOP uses
-`secrets`), the deprecated PEM password callback machinery.
-
-## Expose `signal` as POOP messages
-
-Python's `signal` installs handlers for OS signals and inspects
-signal state.
-
-**Proposal — `signal` (lowercase module) namespace:**
-
-1. **Handler registration:**
-   `signal.signal(signalnum, handler) -> previous_handler`,
-   `signal.getsignal(signalnum) -> handler`,
-   `signal.set_wakeup_fd(fd, *, warn_on_full_buffer=True) -> Int`.
-2. **Querying:** `signal.pthread_kill(thread_id, signum)`,
-   `signal.pthread_sigmask(how, mask) -> Set[Int]`,
-   `signal.sigpending() -> Set[Int]`,
-   `signal.sigwait(sigset) -> Int`, `signal.sigwaitinfo(sigset)`,
-   `signal.sigtimedwait(sigset, timeout)`.
-3. **Timers (Unix):** `signal.setitimer(which, seconds, interval=0)`,
-   `signal.getitimer(which)`.
-4. **Constants:** all `SIG*` signal numbers Python ships
-   (`SIGABRT`, `SIGINT`, `SIGTERM`, `SIGKILL`, `SIGCHLD`,
-   `SIGUSR1`, `SIGUSR2`, …) plus default-handler sentinels
-   (`SIG_DFL`, `SIG_IGN`) and itimer kinds (`ITIMER_REAL`,
-   `ITIMER_VIRTUAL`, `ITIMER_PROF`).
-5. **Helpers:** `signal.strsignal(signalnum) -> Str | NoneClass`,
-   `signal.Signals` IntEnum + `signal.Handlers` IntEnum +
-   `signal.Sigmasks` IntEnum.
-
-**Type discipline:** `Int` for signal numbers; callable POOP
-`Block` for handlers; `Set[Int]` for sig sets.
-
-**Out of scope (for v1):** `signal.SIGRTMIN`/`SIGRTMAX` real-time
-signal range — niche.
-
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -696,12 +528,12 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `asyncio` | proposed | See proposal above |
-| `socket` | proposed | See proposal above |
-| `ssl` | proposed | See proposal above |
+| `asyncio` | covered | `asyncio` / `Future` namespaces — `async def` source forbidden (v0.48.0) |
+| `socket` | covered | `socket` + `Socket` namespaces (v0.48.0) |
+| `ssl` | covered | `ssl` + `SSLContext` namespaces (v0.48.0) |
 | `select` | out | Low-level — `selectors` is preferred |
 | `selectors` | out | Low-level multiplexing |
-| `signal` | proposed | See proposal above |
+| `signal` | covered | `signal` namespace (v0.48.0) |
 
 ### Internet Data Handling
 

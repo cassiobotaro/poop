@@ -2170,6 +2170,62 @@ Three dev / debug / profile namespaces shipped together. `unittest` is a POOP-fl
 
 `unittest`/`TestCase`/`TestSuite`/`TestRunner`/`TestResult`/`cProfile`/`profile` (alias)/`Profile`/`pstats`/`Stats`/`SortKey`/`timeit`/`Timer` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{unittest,profile,timeit}.py` — namespace-only, no AST rewrite. The full mock surface (`unittest.mock` / `MagicMock` / `patch`) is out of scope for v1.
 
+### signal, socket + Socket, ssl + SSLContext, asyncio + Future — `poop/types/{signal,socket,ssl,asyncio}.py`
+
+Four networking namespaces shipped together. `signal` wraps OS signal registration and exposes the standard signal constants (platform-specific ones bind to `none` when unavailable). `socket` mirrors CPython's `socket.socket` as the POOP `Socket` class plus the module-level helpers (`gethostbyname`, `inet_aton`, `create_connection`/`create_server`, …). `ssl` wraps `SSLContext` and the standard verify / protocol constants. `asyncio` is the **smallest** of the four — POOP forbids `async def` source (`no_async` validator), so coroutines must be built in Python and handed to `asyncio.run`; the namespace also exposes `gather`, `wait_for`, `shield`, `sleep`, `create_task`, and `Future`.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `signal.signal(num, handler)` | previous handler | |
+| `signal.getsignal(num)` | handler | |
+| `signal.strsignal(num)` | `Str` / `none` | |
+| `signal.raise_signal(num)` / `.pthread_kill(tid, num)` | `none` | |
+| `signal.sigpending()` | `Set[Int]` | |
+| `signal.SIG_DFL` / `.SIG_IGN` (class attrs) | sentinel | |
+| `signal.SIGABRT` / `SIGINT` / `SIGTERM` / … (class attrs) | `Int` / `none` | platform-specific |
+| `signal.ITIMER_REAL` / `ITIMER_VIRTUAL` / `ITIMER_PROF` (class attrs) | `Int` / `none` | Unix only |
+| `Socket(family=AF_INET, type=SOCK_STREAM, proto=0)` | `Socket` | also via `with Socket() as s:` |
+| `Socket.bind(addr)` / `.listen(backlog=none)` / `.connect(addr)` / `.shutdown(how)` / `.close()` | `none` | |
+| `Socket.accept()` | `Tuple(Socket, Address)` | |
+| `Socket.connect_ex(addr)` | `Int` | error code |
+| `Socket.send(data)` / `.sendto(data, addr)` | `Int` | bytes sent |
+| `Socket.sendall(data)` | `none` | |
+| `Socket.recv(bufsize)` | `Bytes` | |
+| `Socket.recvfrom(bufsize)` | `Tuple(Bytes, Address)` | |
+| `Socket.setsockopt(level, opt, value)` / `.getsockopt(level, opt)` | `none` / `Int` | |
+| `Socket.settimeout(value)` / `.gettimeout()` | `none` / `Float` or `none` | |
+| `Socket.setblocking(flag)` | `none` | |
+| `Socket.fileno()` | `Int` | |
+| `Socket.getsockname()` / `.getpeername()` | `Tuple` | address |
+| `socket.gethostname()` / `.gethostbyname(host)` / `.getfqdn(...)` | `Str` | |
+| `socket.gethostbyname_ex(host)` / `.gethostbyaddr(addr)` | `Tuple(Str, List, List)` | |
+| `socket.getservbyname(name, proto=none)` / `.getservbyport(port, proto=none)` | `Int` / `Str` | |
+| `socket.htons/htonl/ntohs/ntohl(x)` | `Int` | |
+| `socket.inet_aton/ntoa(...)` / `.inet_pton/ntop(family, ...)` | `Bytes` / `Str` | |
+| `socket.create_connection(addr, timeout=none)` / `.create_server(addr, family=none)` | `Socket` | |
+| `socket.has_dualstack_ipv6()` | `Boolean` | |
+| `socket.AF_INET` / `AF_INET6` / `AF_UNSPEC` / `AF_UNIX` / `SOCK_STREAM` / `SOCK_DGRAM` / `SOCK_RAW` / `SOL_SOCKET` / `SO_REUSEADDR` / `SO_KEEPALIVE` / `SO_BROADCAST` / `SHUT_RD` / `SHUT_WR` / `SHUT_RDWR` (class attrs) | `Int` | platform-specific (`AF_UNIX` may be `none`) |
+| `socket.error` / `.herror` / `.gaierror` / `.timeout` (class attrs) | exception class | for `Try.except_` |
+| `ssl.create_default_context(cafile=none, capath=none)` | `SSLContext` | |
+| `SSLContext()` / `.load_cert_chain(certfile, keyfile=none, password=none)` / `.load_verify_locations(...)` / `.load_default_certs()` | `SSLContext` / `none` | |
+| `SSLContext.set_ciphers(ciphers)` / `.get_ciphers()` | `none` / Python list | |
+| `SSLContext.verify_mode` / `.check_hostname` (properties) + `.set_verify_mode(m)` / `.set_check_hostname(b)` | `Int` / `Boolean` / `none` | |
+| `SSLContext.wrap_socket(sock, server_hostname=none, server_side=none)` | `Socket` | |
+| `ssl.PROTOCOL_TLS_CLIENT` / `PROTOCOL_TLS_SERVER` / `CERT_NONE` / `CERT_OPTIONAL` / `CERT_REQUIRED` (class attrs) | `Int` | |
+| `ssl.SSLError` / `SSLZeroReturnError` / `SSLWantReadError` / `SSLWantWriteError` / `SSLSyscallError` / `SSLEOFError` / `SSLCertVerificationError` (class attrs) | exception class | |
+| `asyncio.run(coro, debug=none)` | result | accepts coroutine or zero-arg callable |
+| `asyncio.sleep(delay, result=none)` | awaitable | |
+| `asyncio.gather(*coros)` | awaitable | resolves to list of results |
+| `asyncio.wait_for(coro, timeout=none)` / `.shield(coro)` | awaitable | |
+| `asyncio.create_task(coro)` / `.ensure_future(coro)` | `Future` | requires running loop |
+| `asyncio.new_event_loop()` / `.set_event_loop(loop)` / `.get_event_loop()` | Python loop / `none` | |
+| `Future.done()` / `.cancelled()` | `Boolean` | |
+| `Future.result()` / `.exception()` | underlying value / exception | |
+| `Future.cancel()` | `Boolean` | |
+| `asyncio.CancelledError` / `TimeoutError` / `InvalidStateError` / `IncompleteReadError` (class attrs) | exception class | |
+
+`signal`/`socket`/`Socket`/`ssl`/`SSLContext`/`asyncio`/`Future` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{signal,socket,ssl,asyncio}.py` — namespace-only, no AST rewrite. **POOP forbids `async def` source** (the `no_async` validator rejects async function definitions), so coroutines for `asyncio.run` are constructed in Python — the namespace is most useful when POOP code is interoperating with an async Python library rather than defining new coroutines itself.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

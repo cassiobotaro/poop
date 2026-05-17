@@ -1473,3 +1473,41 @@ t = timeit.timeit("pass", "pass", 10000)   # Float
 ```
 
 > `unittest` is a POOP-flavoured re-implementation of the xUnit surface. `TestCase` subclasses define `test_*` methods and `setUp`/`tearDown` hooks; the standard assertion family is available (`assertEqual`, `assertTrue`, `assertGreater`, `assertIsInstance`, `assertAlmostEqual`, `assertRaises`, …) and all raise POOP's `AssertionError` on failure with optional `Str` messages. Run a single test via `case.run_method(Str("name"))`, or batch via `TestSuite` + `TestRunner`. The full `unittest.mock` surface (`MagicMock`, `patch`, `sentinel`) is out of scope for v1. `cProfile.Profile` mirrors CPython directly — `enable`/`disable`/`runcall`, plus context-manager support via POOP's `With`. `Stats` wraps `pstats.Stats` with chainable `sort_stats`/`reverse_order`/`strip_dirs`; `print_*` methods return the captured output as `Str` instead of writing to stdout. Sort keys live on the `SortKey` class as POOP `Str`s. `timeit` is straightforward — `timeit.timeit(stmt, setup, number)` returns `Float`, `timeit.repeat` returns `List[Float]`, `Timer.autorange()` returns `Tuple(Int, Float)`.
+
+## Networking (`signal`, `socket`, `ssl`, `asyncio`)
+
+```python
+# Python
+import signal, socket, ssl, asyncio
+
+signal.signal(signal.SIGINT, my_handler)
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect(("example.com", 443))
+
+ctx = ssl.create_default_context()
+secure = ctx.wrap_socket(sock, server_hostname="example.com")
+
+async def go():
+    await asyncio.sleep(1)
+    return 42
+
+asyncio.run(go())
+```
+
+```python
+# POOP
+signal.signal(signal.SIGINT, my_handler)        # POOP Block as handler
+
+sock = Socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect(("example.com", 443))
+
+ctx = ssl.create_default_context()
+secure = ctx.wrap_socket(sock, server_hostname="example.com")
+
+# POOP forbids `async def` — coroutines must be built in Python.
+# Use asyncio.sleep / asyncio.gather to compose them.
+asyncio.run(asyncio.sleep(1)).print()
+```
+
+> POOP exposes `signal.signal`/`getsignal`/`strsignal`/`raise_signal`/`pthread_kill`/`sigpending` plus the common signal constants (`SIGINT`, `SIGTERM`, `SIGABRT`, `SIGCHLD`, `SIGUSR1`, …). Platform-specific constants bind to `none` rather than raising on import. The `Socket` class mirrors `socket.socket` directly — `bind`/`listen`/`accept`/`connect`/`send`/`sendall`/`recv`/`sendto`/`recvfrom`/`shutdown`/`close`, plus the address-resolution module helpers (`gethostbyname`, `gethostbyname_ex`, `getfqdn`, `getservbyname/port`, `inet_aton/ntoa`, `inet_pton/ntop`) and the high-level `create_connection`/`create_server` factories. POOP `Socket` works as a `With` context manager. `ssl.create_default_context()` returns an `SSLContext`; mutators are method-based (`set_verify_mode`, `set_check_hostname`, `set_ciphers`) to keep POOP's no-property-mutation discipline. `ssl.SSLError` and its subclasses are catchable via `Try.except_`. `asyncio` is the smallest of the four — POOP **forbids `async def` syntax** (`no_async` validator), so `async def my_coro(): ...` won't parse. Coroutines must be defined on the Python side (or composed from `asyncio.sleep`/`asyncio.gather`/`asyncio.shield`) and handed to `asyncio.run`. Use `Future.done/cancelled/result/exception/cancel` to inspect tasks.
