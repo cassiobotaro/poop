@@ -2,6 +2,7 @@ import glob as _glob
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
+from poop.types._unwrap import _b
 from poop.types.boolean import Boolean
 from poop.types.list import List
 from poop.types.path import Path
@@ -9,10 +10,6 @@ from poop.types.string import Str
 
 if TYPE_CHECKING:
     pass
-
-
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
 
 
 class GlobIter:

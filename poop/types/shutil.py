@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil as _shutil
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _b
 from poop.types.boolean import Boolean
 from poop.types.int import Int
 from poop.types.list import List
@@ -24,10 +25,6 @@ def _opt_path_arg(value: Path | Str | None) -> str | None:
 
 def _opt_str(value: Str | None) -> str | None:
     return None if value is None else value._value
-
-
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
 
 
 def _format_pairs(pairs: list[tuple[str, str]]) -> List:

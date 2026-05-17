@@ -2,6 +2,7 @@ import difflib as _difflib
 from collections.abc import Iterable
 from typing import Any
 
+from poop.types._unwrap import _b
 from poop.types.boolean import Boolean
 from poop.types.float import Float
 from poop.types.int import Int
@@ -22,10 +23,6 @@ def _str_iter(items: List) -> list[str]:
 
 def _wrap_lines(lines: Iterable[str]) -> List:
     return List(*(Str(line) for line in lines))
-
-
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
 
 
 def _seq_arg(value: Str | List) -> Any:

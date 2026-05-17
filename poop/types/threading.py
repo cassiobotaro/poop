@@ -4,6 +4,7 @@ import threading as _threading
 from typing import Any, ClassVar, Self
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
+from poop.types._unwrap import _opt_timeout
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
@@ -11,10 +12,6 @@ from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
-
-
-def _opt_timeout(timeout: Float | Int | None) -> Any:
-    return None if timeout is None else timeout._value
 
 
 class Thread(_ImplWrapperMixin, Object):

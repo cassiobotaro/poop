@@ -2,14 +2,11 @@ import textwrap as _textwrap
 from collections.abc import Callable
 from typing import Any
 
+from poop.types._unwrap import _b
 from poop.types.boolean import Boolean
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
-
-
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
 
 
 def _i(value: Int | None, default: int) -> int:

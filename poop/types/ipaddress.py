@@ -4,6 +4,7 @@ import ipaddress as _ipaddress
 from collections.abc import Iterator
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _b
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
@@ -11,10 +12,6 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
 from poop.types.string import Str
-
-
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
 
 
 def _addr_arg(value: IPv4Address | IPv6Address | Str | Int | Bytes) -> Any:

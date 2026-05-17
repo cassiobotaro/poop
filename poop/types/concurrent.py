@@ -3,6 +3,7 @@ from __future__ import annotations
 import concurrent.futures as _cf
 from typing import Any, ClassVar, Self
 
+from poop.types._unwrap import _opt_timeout
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
@@ -11,10 +12,6 @@ from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-
-
-def _opt_timeout(timeout: Float | Int | None) -> Any:
-    return None if timeout is None else timeout._value
 
 
 class CFFuture(Object):

@@ -3,17 +3,12 @@ from __future__ import annotations
 import queue as _queue
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _opt_timeout
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
-
-
-def _opt_timeout(timeout: Float | Int | None) -> Any:
-    if timeout is None:
-        return None
-    return timeout._value
 
 
 class _BaseQueue(Object):

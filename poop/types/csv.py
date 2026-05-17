@@ -15,10 +15,6 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
-
-
 def _opt_str(value: Str | None, default: str | None) -> str | None:
     return default if value is None else value._value
 

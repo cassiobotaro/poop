@@ -3,6 +3,7 @@ from __future__ import annotations
 import locale as _locale
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _b
 from poop.types.boolean import Boolean
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -11,10 +12,6 @@ from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-
-
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
 
 
 def _wrap_locale_pair(pair: tuple[Any, Any]) -> Tuple:

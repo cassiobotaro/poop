@@ -4,6 +4,7 @@ import tempfile as _tempfile
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types._unwrap import _b
 from poop.types.boolean import Boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
@@ -24,10 +25,6 @@ def _unwrap_dir(value: Path | Str | None) -> str | None:
     if isinstance(value, Path):
         return str(value._path)
     return value._value
-
-
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
 
 
 class TemporaryDirectory(Object):

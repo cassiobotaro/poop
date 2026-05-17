@@ -1,14 +1,11 @@
 import pprint as _pprint
 from typing import Any
 
+from poop.types._unwrap import _b
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.string import Str
-
-
-def _b(value: Boolean | None, default: bool) -> bool:
-    return default if value is None else bool(value)
 
 
 def _i(value: Int | None, default: int | None) -> int | None:
