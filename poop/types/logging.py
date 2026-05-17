@@ -109,9 +109,9 @@ class Logger(Object):
     def propagate(self) -> Boolean:
         return true if self._impl.propagate else false
 
-    def set_propagate(self, flag: Boolean) -> NoneClass:
-        self._impl.propagate = bool(flag)
-        return none
+    @propagate.setter
+    def propagate(self, value: Boolean) -> None:
+        self._impl.propagate = bool(value)
 
 
 class Logging:

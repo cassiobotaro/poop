@@ -2164,8 +2164,7 @@ Three internet-data / markup namespaces shipped together. `email` exposes the mo
 | `ET.indent(tree, space="  ")` | `none` | |
 | `ET.ParseError` (class attr) | exception class | |
 | `Element(tag, attrib=none)` | `Element` | |
-| `Element.tag` / `.text` / `.tail` / `.attrib` (properties) | `Str` / `Dict` | text/tail may be `none` |
-| `Element.set_text(x)` / `.set_tail(x)` | `none` | accepts `none` or `Str` |
+| `Element.tag` / `.text` / `.tail` / `.attrib` (properties) | `Str` / `Dict` | text/tail may be `none`; `.text` / `.tail` writable via assignment |
 | `Element.get(key, default=none)` / `.set(key, val)` | `Str` / `none` / `none` | |
 | `Element.keys()` / `.items()` | `List` | |
 | `Element.append(child)` / `.extend(children)` / `.insert(i, child)` / `.remove(child)` / `.clear()` | `none` | |
@@ -2258,7 +2257,7 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 | `ssl.create_default_context(cafile=none, capath=none)` | `SSLContext` | |
 | `SSLContext()` / `.load_cert_chain(certfile, keyfile=none, password=none)` / `.load_verify_locations(...)` / `.load_default_certs()` | `SSLContext` / `none` | |
 | `SSLContext.set_ciphers(ciphers)` / `.get_ciphers()` | `none` / Python list | |
-| `SSLContext.verify_mode` / `.check_hostname` (properties) + `.set_verify_mode(m)` / `.set_check_hostname(b)` | `Int` / `Boolean` / `none` | |
+| `SSLContext.verify_mode` / `.check_hostname` (properties) | `Int` / `Boolean` | writable via assignment |
 | `SSLContext.wrap_socket(sock, server_hostname=none, server_side=none)` | `Socket` | |
 | `ssl.PROTOCOL_TLS_CLIENT` / `PROTOCOL_TLS_SERVER` / `CERT_NONE` / `CERT_OPTIONAL` / `CERT_REQUIRED` (class attrs) | `Int` | |
 | `ssl.SSLError` / `SSLZeroReturnError` / `SSLWantReadError` / `SSLWantWriteError` / `SSLSyscallError` / `SSLEOFError` / `SSLCertVerificationError` (class attrs) | exception class | |
@@ -2319,9 +2318,9 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `logging.getLevelName(level)` / `.addLevelName(level, name)` | `Str` / `none` | |
 | `logging.StreamHandler()` / `.NullHandler()` / `.FileHandler(path)` | `Handler` | |
 | `logging.CRITICAL` / `ERROR` / `WARNING` / `INFO` / `DEBUG` / `NOTSET` (class attrs) | `Int` | |
-| `Logger.setLevel(l)` / `.addHandler(h)` / `.removeHandler(h)` / `.set_propagate(b)` | `none` | |
+| `Logger.setLevel(l)` / `.addHandler(h)` / `.removeHandler(h)` | `none` | |
 | `Logger.getEffectiveLevel()` | `Int` | |
-| `Logger.isEnabledFor(level)` / `.propagate` (property) | `Boolean` | |
+| `Logger.isEnabledFor(level)` / `.propagate` (property) | `Boolean` | `.propagate` writable via assignment |
 | `Logger.debug/info/warning/error/critical/exception(msg)` / `.log(level, msg)` | `none` | |
 | `Logger.handlers()` | `List[Handler]` | |
 | `Handler.setLevel(l)` / `.setFormatter(f)` | `none` | |

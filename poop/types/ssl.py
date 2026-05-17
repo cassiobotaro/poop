@@ -75,17 +75,17 @@ class SSLContext(Object):
     def check_hostname(self) -> Boolean:
         return true if self._impl.check_hostname else false
 
-    def set_check_hostname(self, flag: Boolean) -> NoneClass:
-        self._impl.check_hostname = bool(flag)
-        return none
+    @check_hostname.setter
+    def check_hostname(self, value: Boolean) -> None:
+        self._impl.check_hostname = bool(value)
 
     @property
     def verify_mode(self) -> Int:
         return Int(int(self._impl.verify_mode))
 
-    def set_verify_mode(self, mode: Int) -> NoneClass:
-        self._impl.verify_mode = _ssl.VerifyMode(mode._value)
-        return none
+    @verify_mode.setter
+    def verify_mode(self, value: Int) -> None:
+        self._impl.verify_mode = _ssl.VerifyMode(value._value)
 
     def wrap_socket(
         self,

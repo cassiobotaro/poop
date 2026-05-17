@@ -56,21 +56,21 @@ class Element(Object):
     def text(self) -> Str | NoneClass:
         return Str(self._impl.text) if self._impl.text is not None else none
 
+    @text.setter
+    def text(self, value: Str | NoneClass) -> None:
+        self._impl.text = None if isinstance(value, NoneClass) else value._value
+
     @property
     def tail(self) -> Str | NoneClass:
         return Str(self._impl.tail) if self._impl.tail is not None else none
 
+    @tail.setter
+    def tail(self, value: Str | NoneClass) -> None:
+        self._impl.tail = None if isinstance(value, NoneClass) else value._value
+
     @property
     def attrib(self) -> Dict:
         return _wrap_attrib(self._impl.attrib)
-
-    def set_text(self, text: Str | NoneClass) -> NoneClass:
-        self._impl.text = None if isinstance(text, NoneClass) else text._value
-        return none
-
-    def set_tail(self, tail: Str | NoneClass) -> NoneClass:
-        self._impl.tail = None if isinstance(tail, NoneClass) else tail._value
-        return none
 
     def get(self, key: Str, default: Str | NoneClass | None = None) -> Str | NoneClass:
         if default is None or isinstance(default, NoneClass):

@@ -21,8 +21,8 @@ def test_verify_mode_round_trip() -> None:
     # check_hostname=True requires verify_mode != CERT_NONE — disable it first.
     from poop.types.boolean import false
 
-    ctx.set_check_hostname(false)
-    ctx.set_verify_mode(SSL.CERT_NONE)
+    ctx.check_hostname = false
+    ctx.verify_mode = SSL.CERT_NONE
     assert ctx.verify_mode == SSL.CERT_NONE
 
 
@@ -33,7 +33,7 @@ def test_check_hostname_round_trip() -> None:
     # then verify_mode can drop to CERT_NONE.
     from poop.types.boolean import false
 
-    assert ctx.set_check_hostname(false) is none
+    ctx.check_hostname = false
     assert ctx.check_hostname is false
 
 

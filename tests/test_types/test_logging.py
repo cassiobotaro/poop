@@ -97,7 +97,8 @@ def test_logger_propagate_and_set() -> None:
     assert isinstance(logger.propagate, Boolean)
     from poop.types.boolean import false
 
-    assert logger.set_propagate(false) is none
+    logger.propagate = false
+    assert logger.propagate is false
 
 
 def test_logger_handlers_initially_empty() -> None:

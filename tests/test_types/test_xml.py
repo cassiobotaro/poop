@@ -49,8 +49,8 @@ def test_element_get_missing_returns_none() -> None:
 
 def test_element_text_and_tail() -> None:
     e = Element(Str("a"))
-    e.set_text(Str("body"))
-    e.set_tail(Str("trail"))
+    e.text = Str("body")
+    e.tail = Str("trail")
     assert e.text == Str("body")
     assert e.tail == Str("trail")
 
@@ -63,8 +63,8 @@ def test_element_text_unset_is_none() -> None:
 
 def test_element_set_text_to_none() -> None:
     e = Element(Str("a"))
-    e.set_text(Str("x"))
-    e.set_text(none)
+    e.text = Str("x")
+    e.text = none
     assert e.text is none
 
 
