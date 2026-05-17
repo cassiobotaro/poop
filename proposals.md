@@ -511,108 +511,6 @@ signal state.
 **Out of scope (for v1):** `signal.SIGRTMIN`/`SIGRTMAX` real-time
 signal range — niche.
 
-## Expose `unittest` as POOP messages
-
-Python's `unittest` is the canonical test framework (xUnit style).
-POOP currently has no testing API; tests live in pytest at the
-Python layer. Exposing `unittest` lets users write tests in POOP
-source.
-
-**Proposal — `unittest` (lowercase module) + class set:**
-
-1. **`TestCase` class** — base for test methods. Methods to
-   override: `.setUp()`, `.tearDown()`, `.setUpClass()`,
-   `.tearDownClass()`, `.setUpModule()`/`.tearDownModule()`.
-   Per-test assertions: `.assertEqual`, `.assertNotEqual`,
-   `.assertTrue`, `.assertFalse`, `.assertIs`, `.assertIsNot`,
-   `.assertIsNone`, `.assertIsNotNone`, `.assertIn`,
-   `.assertNotIn`, `.assertIsInstance`, `.assertNotIsInstance`,
-   `.assertRaises`, `.assertRaisesRegex`, `.assertWarns`,
-   `.assertWarnsRegex`, `.assertLogs`, `.assertNoLogs`,
-   `.assertAlmostEqual`, `.assertNotAlmostEqual`, `.assertGreater`,
-   `.assertGreaterEqual`, `.assertLess`, `.assertLessEqual`,
-   `.assertRegex`, `.assertNotRegex`, `.assertCountEqual`,
-   `.assertMultiLineEqual`, `.assertSequenceEqual`,
-   `.assertListEqual`, `.assertTupleEqual`, `.assertSetEqual`,
-   `.assertDictEqual`, `.fail`, `.skipTest`. Plus the
-   `.subTest(msg=None, **params)` context manager and
-   `.addCleanup(function, *args, **kwargs)`.
-2. **Decorators:** `@unittest.skip(reason)`,
-   `@unittest.skipIf(condition, reason)`,
-   `@unittest.skipUnless(condition, reason)`,
-   `@unittest.expectedFailure`,
-   `@unittest.skipIfCondition`.
-3. **`TestSuite`/`TestLoader`/`TestRunner`/`TestResult`** classes
-   for orchestration.
-4. **Main:** `unittest.main(...)` (module-level test runner).
-5. **Mock support:** `unittest.mock` sub-namespace with `Mock`,
-   `MagicMock`, `AsyncMock`, `PropertyMock`, `patch`,
-   `patch.object`, `patch.dict`, `patch.multiple`, `sentinel`,
-   `DEFAULT`, `call`, `create_autospec`.
-6. **Errors:** `SkipTest`.
-
-**Type discipline:** all POOP types; assertions raise POOP
-`AssertionError` on failure (`obj.assert_(msg)` already exists).
-
-**Out of scope (for v1):**
-
-- `IsolatedAsyncioTestCase` — pairs with the `asyncio` proposal.
-- The `unittest.test_runner` machinery — niche extension point.
-
-## Expose `profile` / `cProfile` / `pstats` as POOP messages
-
-Python's `profile` (pure-Python) and `cProfile` (C-accelerated)
-share the same API for deterministic profiling. `pstats` formats
-the results.
-
-**Proposal — `cProfile` (lowercase module, the C variant is
-default) + `pstats` (lowercase module):**
-
-1. **`cProfile` namespace:**
-   `cProfile.run(command, filename=None, sort=-1) -> NoneClass`,
-   `cProfile.runctx(command, globals, locals, filename=None, sort=-1)`,
-   `cProfile.Profile(timer=None, timeunit=0.0, subcalls=True, builtins=True)` class
-   with `.enable()`, `.disable()`, `.create_stats()`, `.print_stats(sort=-1)`,
-   `.dump_stats(file)`, `.run(cmd)`, `.runctx(cmd, globals, locals)`,
-   `.runcall(func, /, *args, **kwargs)`,
-   context-manager friendly via `With`.
-2. **`pstats` namespace:** `pstats.Stats(*filenames_or_profiles, stream=None)` class
-   with `.add(*filenames_or_profiles)`, `.dump_stats(filename)`,
-   `.sort_stats(*keys) -> Stats`, `.reverse_order()`,
-   `.print_stats(*restrictions)`, `.print_callers(*restrictions)`,
-   `.print_callees(*restrictions)`, `.strip_dirs()`, `.calc_callees()`.
-3. **`pstats.SortKey`** enum: `CALLS`, `CUMULATIVE`, `FILENAME`,
-   `LINE`, `NAME`, `NFL`, `PCALLS`, `STDNAME`, `TIME`.
-
-**Type discipline:** `Path` for filenames, `Str` for sort keys
-(via the `SortKey` enum), POOP `Profile`/`Stats` classes for the
-state objects.
-
-**Out of scope (for v1):** the pure-Python `profile` flavour
-— exposing only `cProfile` is the modern convention; `profile.Profile`
-becomes an alias.
-
-## Expose `timeit` as POOP messages
-
-Python's `timeit` measures small code snippet performance.
-
-**Proposal — `timeit` (lowercase module) + `Timer` class:**
-
-1. **Module-level shortcuts:**
-   `timeit.timeit(stmt='pass', setup='pass', timer=time.perf_counter, number=1000000, globals=None) -> Float`,
-   `timeit.repeat(stmt='pass', setup='pass', timer=time.perf_counter, repeat=5, number=1000000, globals=None) -> List[Float]`,
-   `timeit.default_timer -> Block` (currently `time.perf_counter`).
-2. **`Timer` class:**
-   `Timer(stmt='pass', setup='pass', timer=time.perf_counter, globals=None)`,
-   `.timeit(number=1000000) -> Float`,
-   `.repeat(repeat=5, number=1000000) -> List[Float]`,
-   `.autorange(callback=None) -> Tuple[Int, Float]`,
-   `.print_exc(file=None)`.
-
-**Type discipline:** `Float` for durations, `Int` for counts,
-`List[Float]` for repeat results, `Str` or callable for code
-snippets.
-
 ## Audit the rest of the Python stdlib for POOP equivalents
 
 The same question that drove the `math` namespace (shipped in
@@ -880,7 +778,7 @@ each annotated with one of:
 | `pydoc` | out | POOP has no docstring tooling |
 | `pydoc_data` | out | Pairs with `pydoc` |
 | `doctest` | out | Depends on `repr` (forbidden) |
-| `unittest` | proposed | See proposal above |
+| `unittest` | covered | `unittest` / `TestCase` / `TestSuite` / `TestRunner` / `TestResult` namespaces (v0.47.0) |
 | `ensurepip` | out | Packaging |
 | `venv` | out | Packaging |
 | `zipapp` | out | Packaging |
@@ -893,8 +791,8 @@ each annotated with one of:
 | `bdb` | out | Debugger framework — depends on introspection |
 | `faulthandler` | out | C-level crash dumps |
 | `pdb` | out | Depends on introspection |
-| `profile` / `cProfile` / `pstats` | proposed | See proposal above |
-| `timeit` | proposed | See proposal above |
+| `profile` / `cProfile` / `pstats` | covered | `cProfile` / `Profile` / `pstats` / `Stats` / `SortKey` namespaces (v0.47.0) |
+| `timeit` | covered | `timeit` / `Timer` namespaces (v0.47.0) |
 | `trace` | out | Depends on introspection |
 | `tracemalloc` | out | Depends on introspection |
 

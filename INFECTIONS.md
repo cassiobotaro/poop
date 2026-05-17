@@ -2130,6 +2130,46 @@ Three internet-data / markup namespaces shipped together. `email` exposes the mo
 
 `email`/`EmailMessage`/`html`/`HTMLParser`/`xml`/`ET`/`Element`/`ElementTree` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{email,html,xml}.py` — namespace-only, no AST rewrite. `xml.etree` uses `xml.etree.ElementTree` directly (suppressed `S314` ruff hints) — users with XXE concerns can swap to `defusedxml` themselves; POOP's transformers do not load external DTDs by default but does not actively block them either.
 
+### unittest + TestCase + TestSuite + TestRunner + TestResult, cProfile + Profile + pstats + Stats + SortKey, timeit + Timer — `poop/types/{unittest,profile,timeit}.py`
+
+Three dev / debug / profile namespaces shipped together. `unittest` is a POOP-flavoured re-implementation of the canonical xUnit surface (the full `unittest.TestCase` would drag in subprocess-style runner internals — POOP keeps the assertions + lightweight runner). `cProfile.Profile` and `pstats.Stats` wrap their Python counterparts directly; the namespaces expose `cProfile.run`, the `Profile` class (works as a context manager via `With`), and the `Stats` aggregator. `timeit` is straightforward — module-level `timeit`/`repeat`/`default_timer` plus a `Timer` class.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `TestCase()` | `TestCase` | subclass to add `test_*` methods |
+| `TestCase.setUp()` / `.tearDown()` | overridable | hooks |
+| `TestCase.assertEqual/NotEqual/True/False/Is/IsNot/IsNone/IsNotNone(...)` | raises `AssertionError` on failure | |
+| `TestCase.assertIsInstance/NotIsInstance(x, cls, msg=none)` | raises on failure | |
+| `TestCase.assertGreater/GreaterEqual/Less/LessEqual(a, b, msg=none)` | raises on failure | |
+| `TestCase.assertAlmostEqual(a, b, places=7, msg=none)` | raises on failure | |
+| `TestCase.assertRaises(exc, callable, *args, **kwargs)` | raises if no exception thrown | |
+| `TestCase.fail(msg=none)` / `.skipTest(reason)` | raises `AssertionError` / `SkipTest` | |
+| `TestCase.run_method(method_name)` | `TestResult` | run a single test method |
+| `TestSuite()` / `.addTest(case, method_name)` / `.countTestCases()` / `.run()` | `TestSuite` / `none` / `Int` / `TestResult` | |
+| `TestRunner().run(suite)` | `TestResult` | |
+| `TestResult.testsRun` (property) | `Int` | |
+| `TestResult.wasSuccessful()` | `Boolean` | |
+| `TestResult.failure_count()` / `.error_count()` / `.skipped_count()` | `Int` | |
+| `unittest.skip(reason)` / `.skipIf(cond, reason)` / `.skipUnless(cond, reason)` / `.expectedFailure(func)` | decorators | |
+| `unittest.SkipTest` (class attr) | exception class | for `Try.except_` |
+| `cProfile.run(command, filename=none)` | `none` | |
+| `Profile()` | `Profile` | `With(Profile())` for scoped capture |
+| `Profile.enable()` / `.disable()` / `.create_stats()` / `.dump_stats(path)` | `none` | |
+| `Profile.print_stats()` | `Str` | captured stdout |
+| `Profile.runcall(func, *args, **kwargs)` | function's result | |
+| `Stats(source)` | `Stats` | source: `Profile` / `Str` (filename) / `Path` |
+| `Stats.sort_stats(*keys)` / `.reverse_order()` / `.strip_dirs()` | `Stats` | chainable |
+| `Stats.print_stats()` / `.print_callers()` / `.print_callees()` | `Str` | captured |
+| `Stats.add(*sources)` | `Stats` | merge additional profile data |
+| `Stats.dump_stats(path)` | `none` | |
+| `SortKey.CALLS` / `.CUMULATIVE` / `.FILENAME` / `.LINE` / `.NAME` / `.NFL` / `.PCALLS` / `.STDNAME` / `.TIME` (class attrs) | `Str` | |
+| `timeit.timeit(stmt, setup, number=1_000_000)` | `Float` | |
+| `timeit.repeat(stmt, setup, repeat=5, number=1_000_000)` | `List[Float]` | |
+| `timeit.default_timer()` | `Float` | current time from `time.perf_counter` |
+| `Timer(stmt, setup, timer=none)` / `.timeit(number)` / `.repeat(repeat, number)` / `.autorange()` | `Timer` / `Float` / `List[Float]` / `Tuple(Int, Float)` | |
+
+`unittest`/`TestCase`/`TestSuite`/`TestRunner`/`TestResult`/`cProfile`/`profile` (alias)/`Profile`/`pstats`/`Stats`/`SortKey`/`timeit`/`Timer` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{unittest,profile,timeit}.py` — namespace-only, no AST rewrite. The full mock surface (`unittest.mock` / `MagicMock` / `patch`) is out of scope for v1.
+
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
 `slice(start, stop, step=None)` is **transformed** by `SliceTransformer` into a call to the POOP `Slice` constructor — the same approach as `range` → `Range`. The free builtin is not forbidden; it is rewritten transparently.

@@ -138,6 +138,10 @@ POOP rewrites Python so that **every operation is a message sent to an object** 
 | `html.escape(s)` | `html.escape(s)` |
 | `ET.fromstring(text)` | `ET.fromstring(text)` |
 | `ET.tostring(elem)` | `ET.tostring(elem)` |
+| `class T(unittest.TestCase):` | `class T(TestCase):` |
+| `cProfile.Profile()` | `Profile()` |
+| `pstats.Stats(p)` | `Stats(p)` |
+| `timeit.timeit("pass")` | `timeit.timeit("pass")` |
 
 For the full set of Python → POOP recipes (iteration, comprehensions, exceptions, file I/O, …), see [`MIGRATION.md`](MIGRATION.md).
 
