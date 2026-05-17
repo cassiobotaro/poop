@@ -22,6 +22,12 @@ def _unwrap_bool(value: object, default: bool) -> bool:
 # Typed thin aliases — readability shortcuts that share `_unwrap`'s body.
 # Centralising them here keeps namespace wrappers from re-declaring the
 # same 2-line helper per module.
+#
+# Note on semantics: all aliases route through `_unwrap` / `_unwrap_bool`,
+# which treat both Python `None` and POOP `NoneClass` as absent. This is
+# slightly wider than the per-file locals they replaced (which often only
+# checked Python `None`) but is the right call for POOP — user code that
+# passes `none` should be handled identically to the missing-arg case.
 
 
 def _b(value: object, default: bool) -> bool:
