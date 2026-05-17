@@ -8,7 +8,6 @@ The "55% bundled vs 99% isolated" claim was folklore (see CONTRIBUTING.md "Testi
 
 | # | Severity | Issue |
 |---|---|---|
-| T2 | Médio | Top 10 worst-covered modules: `multiprocessing` (76%), `struct` (77%), `mimetypes` (80%), `weakref` (81%), `sqlite3` (82%), `repl` (84%), `ssl` (84%), `shutil` (84%), `timeit` (84%), `glob` (85%). Most misses are error paths uncovered by smoke tests. |
 | T3 | Baixo | Only 2 test files use `Try(...)`; 8 `except_(` total. Integration tests don't exercise error paths through `Try.except_`. Pair with T2 — round-trip + Try.except_ tests per module. |
 
 ## Out of scope (per proposal)

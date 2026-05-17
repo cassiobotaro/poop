@@ -149,3 +149,14 @@ def test_multiprocessing_class_refs() -> None:
 
 def test_multiprocessing_via_interpreter() -> None:
     Interpreter().run_source("multiprocessing.cpu_count().print()")
+
+
+def test_pool_context_manager() -> None:
+    with Pool(Int(1)) as pool:
+        assert isinstance(pool, Pool)
+
+
+def test_process_close_returns_none_after_construction() -> None:
+    # close() on a never-started Process is a no-op that returns POOP `none`.
+    p = Process(target=lambda: None)
+    assert p.close() is none

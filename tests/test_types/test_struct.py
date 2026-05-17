@@ -165,3 +165,47 @@ def test_struct_class_reachable_via_interpreter() -> None:
 
 def test_struct_calcsize_reachable_via_interpreter() -> None:
     Interpreter().run_source('struct.calcsize(">IH").print()')
+
+
+# --- Error paths and underused wrapper branches ---
+
+
+def test_pack_bytearray_value() -> None:
+    # Exercises _unwrap_value's ByteArray branch.
+    packed = StructNamespace.pack(Str("3s"), ByteArray(b"xyz"))
+    assert packed._value == b"xyz"
+
+
+def test_pack_into_memoryview_buffer() -> None:
+    from poop.types.memory_view import MemoryView
+
+    raw = bytearray(b"\x00\x00\x00\x00")
+    view = MemoryView(memoryview(raw))
+    assert StructNamespace.pack_into(Str(">I"), view, Int(0), Int(9)) is none
+    assert bytes(raw) == b"\x00\x00\x00\x09"
+
+
+def test_unpack_from_bytearray_buffer() -> None:
+    buf = ByteArray(b"\x00\x00\x00\x03")
+    result = StructNamespace.unpack_from(Str(">I"), buf)
+    assert result.at(Int(0)) == Int(3)
+
+
+def test_unpack_from_rejects_non_buffer() -> None:
+    with pytest.raises(TypeError, match="Bytes / ByteArray / MemoryView"):
+        StructNamespace.unpack_from(Str(">I"), Str("xxxx"))  # ty: ignore[invalid-argument-type]
+
+
+def test_pack_into_rejects_non_buffer_writable() -> None:
+    with pytest.raises(TypeError, match="writable buffer"):
+        StructNamespace.pack_into(Str(">I"), Str("xxxx"), Int(0), Int(1))  # ty: ignore[invalid-argument-type]
+
+
+def test_struct_class_pack_into_via_memoryview() -> None:
+    from poop.types.memory_view import MemoryView
+
+    raw = bytearray(b"\x00\x00\x00\x00")
+    view = MemoryView(memoryview(raw))
+    s = Struct(Str(">I"))
+    s.pack_into(view, Int(0), Int(42))
+    assert bytes(raw) == b"\x00\x00\x00\x2a"

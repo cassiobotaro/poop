@@ -162,3 +162,92 @@ def test_MimeTypes_class_reachable_via_interpreter() -> None:
     Interpreter().run_source(
         'mt = MimeTypes()\nmt.guess_type("file.html").at(0).print()'
     )
+
+
+# --- Underused branches: filenames-loaded MimeTypes, add_type, read,
+#     init, read_mime_types, _str_value error path ---
+
+
+def test_mime_types_with_filenames_constructs() -> None:
+    import os
+    import tempfile
+
+    fd, path = tempfile.mkstemp(suffix=".types")
+    os.write(fd, b"application/x-poop-test poop\n")
+    os.close(fd)
+    try:
+        mt = MimeTypes(filenames=List(Str(path)))
+        mime, _ = mt.guess_type(Str("hello.poop"))
+        assert isinstance(mime, Str)
+        assert mime._value == "application/x-poop-test"
+    finally:
+        os.remove(path)
+
+
+def test_mime_types_add_type_and_read() -> None:
+    import os
+    import tempfile
+
+    mt = MimeTypes()
+    assert mt.add_type(Str("application/x-poop-add"), Str(".pa")) is none
+    mime, _ = mt.guess_type(Str("file.pa"))
+    assert isinstance(mime, Str)
+    assert mime._value == "application/x-poop-add"
+
+    fd, path = tempfile.mkstemp(suffix=".types")
+    os.write(fd, b"application/x-poop-read pr\n")
+    os.close(fd)
+    try:
+        assert mt.read(Str(path)) is none
+        mime2, _ = mt.guess_type(Str("file.pr"))
+        assert isinstance(mime2, Str)
+    finally:
+        os.remove(path)
+
+
+def test_mimetypes_namespace_init_default_and_with_files() -> None:
+    import os
+    import tempfile
+
+    assert Mimetypes.init() is none
+
+    fd, path = tempfile.mkstemp(suffix=".types")
+    os.write(fd, b"application/x-poop-init pi\n")
+    os.close(fd)
+    try:
+        assert Mimetypes.init(List(Str(path))) is none
+    finally:
+        os.remove(path)
+
+
+def test_read_mime_types_returns_dict_when_present() -> None:
+    import os
+    import tempfile
+
+    fd, path = tempfile.mkstemp(suffix=".types")
+    os.write(fd, b"application/x-poop-rm rm\n")
+    os.close(fd)
+    try:
+        result = Mimetypes.read_mime_types(Str(path))
+        assert isinstance(result, Dict)
+    finally:
+        os.remove(path)
+
+
+def test_read_mime_types_returns_none_when_missing() -> None:
+    result = Mimetypes.read_mime_types(Str("/does/not/exist/poop.types"))
+    assert result is none
+
+
+def test_mime_types_filenames_rejects_non_str() -> None:
+    import pytest
+
+    with pytest.raises(TypeError, match="expected POOP Str"):
+        MimeTypes(filenames=List(true))
+
+
+def test_mimetypes_add_type_namespace_form() -> None:
+    assert (
+        Mimetypes.add_type(Str("application/x-poop-ns"), Str(".pns"), strict=false)
+        is none
+    )

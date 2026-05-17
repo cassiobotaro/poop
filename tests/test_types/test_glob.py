@@ -79,3 +79,21 @@ def test_translate_returns_regex_str() -> None:
 def test_glob_reachable_via_interpreter() -> None:
     with tempfile.TemporaryDirectory() as d:
         Interpreter().run_source(f'glob.glob("{d}/*").len().print()')
+
+
+def test_glob_with_root_dir_as_str(sample_tree: pathlib.Path) -> None:
+    # Exercises the Str branch of root_dir handling in Glob.glob.
+    result = Glob.glob(Str("*.txt"), root_dir=Str(str(sample_tree)))
+    assert result.len()._value == 2
+
+
+def test_iglob_with_root_dir_as_path(sample_tree: pathlib.Path) -> None:
+    result = Glob.iglob(Str("*.txt"), root_dir=Path(Str(str(sample_tree))))
+    assert isinstance(result, GlobIter)
+    assert len(list(result)) == 2
+
+
+def test_iglob_with_root_dir_as_str(sample_tree: pathlib.Path) -> None:
+    result = Glob.iglob(Str("*.txt"), root_dir=Str(str(sample_tree)))
+    assert isinstance(result, GlobIter)
+    assert len(list(result)) == 2

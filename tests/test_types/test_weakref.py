@@ -205,3 +205,66 @@ def test_weakset_reachable_via_interpreter() -> None:
         "class Foo:\n    pass\nf = Foo()\nws = WeakSet()\nws.add(f)\nws.len().print()\n"
     )
     Interpreter().run_source(src)
+
+
+# --- Dunder / collection-style coverage ---
+
+
+def test_weakset_constructs_with_initial_items() -> None:
+    a = _UserClass()
+    b = _UserClass()
+    ws = WeakSet([a, b])
+    assert ws.len() == Int(2)
+
+
+def test_weakset_dunder_contains_len_iter() -> None:
+    a = _UserClass()
+    ws = WeakSet()
+    ws.add(a)
+    assert a in ws
+    assert len(ws) == 1
+    assert list(iter(ws)) == [a]
+
+
+def test_weakset_clear_and_copy() -> None:
+    a = _UserClass()
+    b = _UserClass()
+    ws = WeakSet([a, b])
+    copy = ws.copy()
+    assert isinstance(copy, WeakSet)
+    assert copy.len() == Int(2)
+    assert ws.clear() is none
+    assert ws.len() == Int(0)
+    # Original copy is independent.
+    assert copy.len() == Int(2)
+
+
+def test_weak_key_dict_dunders_and_views() -> None:
+    k1 = _UserClass()
+    k2 = _UserClass()
+    d = WeakKeyDictionary()
+    d.at_put(k1, Int(1))
+    d.at_put(k2, Int(2))
+    assert k1 in d
+    assert len(d) == 2
+    assert set(iter(d)) == {k1, k2}
+    assert d.keys().len() == Int(2)
+    assert d.values().len() == Int(2)
+    assert d.clear() is none
+    assert d.len() == Int(0)
+
+
+def test_weak_value_dict_dunders_and_views() -> None:
+    v1 = _UserClass()
+    v2 = _UserClass()
+    d = WeakValueDictionary()
+    d.at_put(Int(1), v1)
+    d.at_put(Int(2), v2)
+    assert Int(1) in d
+    assert len(d) == 2
+    assert set(iter(d)) == {Int(1), Int(2)}
+    assert d.includes(Int(1)) is true
+    assert d.keys().len() == Int(2)
+    assert d.values().len() == Int(2)
+    assert d.clear() is none
+    assert d.len() == Int(0)

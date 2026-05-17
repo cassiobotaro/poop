@@ -229,3 +229,30 @@ def test_shutil_which_reachable_via_interpreter() -> None:
 
 def test_shutil_disk_usage_reachable_via_interpreter() -> None:
     Interpreter().run_source('shutil.disk_usage(".").print()')
+
+
+def test_unpack_archive_with_format_kwarg(tmp_path: _PyPath) -> None:
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "f.txt").write_text("hi")
+    archive = Shutil.make_archive(
+        Path(Str(str(tmp_path / "out"))), Str("zip"), root_dir=Path(Str(str(src)))
+    )
+    target = tmp_path / "extract"
+    target.mkdir()
+    assert (
+        Shutil.unpack_archive(
+            archive, extract_dir=Path(Str(str(target))), format=Str("zip")
+        )
+        is none
+    )
+    assert (target / "f.txt").read_text() == "hi"
+
+
+def test_chown_with_current_user(tmp_path: _PyPath) -> None:
+    import getpass as _getpass
+
+    f = tmp_path / "f.txt"
+    f.write_text("x")
+    # chown to the current user is a no-op but exercises the kwargs path.
+    assert Shutil.chown(Path(Str(str(f))), user=Str(_getpass.getuser())) is none

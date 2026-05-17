@@ -108,3 +108,97 @@ def test_wrap_socket_returns_socket() -> None:
 
 def test_ssl_constants_via_interpreter() -> None:
     Interpreter().run_source("ssl.CERT_REQUIRED.print()")
+
+
+# --- load_cert_chain / load_verify_locations error paths ---
+
+
+def test_load_cert_chain_rejects_missing_file() -> None:
+    import pytest
+
+    from poop.types.string import Str
+
+    ctx = SSL.create_default_context()
+    with pytest.raises(FileNotFoundError):
+        ctx.load_cert_chain(Str("/does/not/exist/poop.pem"))
+
+
+def test_load_cert_chain_with_path_object() -> None:
+    import pytest
+
+    from poop.types.path import Path
+    from poop.types.string import Str
+
+    ctx = SSL.create_default_context()
+    # Path argument triggers the Path-handling branch in load_cert_chain.
+    with pytest.raises(FileNotFoundError):
+        ctx.load_cert_chain(Path(Str("/does/not/exist/poop.pem")))
+
+
+def test_load_cert_chain_with_keyfile_and_password() -> None:
+    import pytest
+
+    from poop.types.string import Str
+
+    ctx = SSL.create_default_context()
+    with pytest.raises(FileNotFoundError):
+        ctx.load_cert_chain(
+            Str("/does/not/exist/poop.pem"),
+            keyfile=Str("/does/not/exist/key.pem"),
+            password=Str("secret"),
+        )
+
+
+def test_load_verify_locations_rejects_missing_cafile() -> None:
+    import pytest
+
+    from poop.types.string import Str
+
+    ctx = SSL.create_default_context()
+    with pytest.raises(FileNotFoundError):
+        ctx.load_verify_locations(cafile=Str("/does/not/exist/poop.pem"))
+
+
+def test_load_verify_locations_with_path_objects() -> None:
+    import pytest
+
+    from poop.types.path import Path
+    from poop.types.string import Str
+
+    ctx = SSL.create_default_context()
+    with pytest.raises((FileNotFoundError, NotADirectoryError, OSError)):
+        ctx.load_verify_locations(
+            cafile=Path(Str("/does/not/exist/poop.pem")),
+            capath=Path(Str("/does/not/exist/dir")),
+        )
+
+
+def test_load_verify_locations_with_cadata_str() -> None:
+    import pytest
+
+    from poop.types.string import Str
+
+    ctx = SSL.create_default_context()
+    # Invalid PEM data raises an SSLError from OpenSSL.
+    with pytest.raises(Exception):  # noqa: B017
+        ctx.load_verify_locations(cadata=Str("not a real PEM cert"))
+
+
+def test_wrap_socket_server_side_branch() -> None:
+    import pytest
+
+    from poop.types.boolean import true
+    from poop.types.socket import Socket
+
+    ctx = SSLContext()
+    raw = Socket()
+    try:
+        # Reaches the server_side kwarg-set path before OpenSSL raises for
+        # a context without a loaded cert chain.
+        with pytest.raises(ValueError):
+            ctx.wrap_socket(raw, server_side=true)
+    finally:
+        try:
+            raw.close()
+        except OSError:
+            pass

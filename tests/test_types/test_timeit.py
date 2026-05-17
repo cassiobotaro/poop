@@ -62,3 +62,26 @@ def test_timeit_class_attr() -> None:
 
 def test_timeit_via_interpreter() -> None:
     Interpreter().run_source('timeit.timeit("pass", "pass", 10).print()')
+
+
+def test_timer_with_setup_and_custom_timer() -> None:
+    import time as _time
+
+    t = Timer(Str("pass"), setup=Str("x = 0"), timer=_time.perf_counter)
+    assert isinstance(t.timeit(Int(10)), Float)
+
+
+def test_timeit_with_callable_stmt() -> None:
+    # _unwrap_stmt's passthrough branch (stmt is not Str).
+    result = TimeIt.timeit(stmt=lambda: None, number=Int(10))
+    assert isinstance(result, Float)
+
+
+def test_timeit_repeat_with_callable_setup() -> None:
+    result = TimeIt.repeat(
+        stmt=lambda: None,
+        setup=lambda: None,
+        repeat=Int(1),
+        number=Int(5),
+    )
+    assert isinstance(result, List)

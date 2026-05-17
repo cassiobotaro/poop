@@ -259,3 +259,92 @@ def test_value_wrapping_returns_poop_types() -> None:
     )
     row = con.execute(Str("SELECT * FROM t")).fetchone()
     assert isinstance(row, Tuple)
+
+
+# --- Coverage: value-wrap branches, connect kwargs, Path arg, executemany,
+#     executescript, lastrowid ---
+
+
+def test_wrap_value_null_int_float_bytes() -> None:
+    from poop.types.bytes import Bytes
+    from poop.types.float import Float
+
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE t(n, i INTEGER, f REAL, b BLOB)"))
+    con.execute(
+        Str("INSERT INTO t VALUES (?, ?, ?, ?)"),
+        Tuple(none, Int(5), Float(2.5), Bytes(b"abc")),
+    )
+    row = con.execute(Str("SELECT * FROM t")).fetchone()
+    assert isinstance(row, Tuple)
+    assert row.at(Int(0)) is none
+    assert row.at(Int(1)) == Int(5)
+    assert isinstance(row.at(Int(2)), Float)
+    assert row.at(Int(3)) == Bytes(b"abc")
+
+
+def test_unwrap_value_bool_and_none() -> None:
+    from poop.types.boolean import true
+
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE t(b, n)"))
+    con.execute(Str("INSERT INTO t VALUES (?, ?)"), Tuple(true, none))
+    row = con.execute(Str("SELECT * FROM t")).fetchone()
+    assert isinstance(row, Tuple)
+
+
+def test_unwrap_params_with_list_form() -> None:
+    con = _make_db()
+    cur = con.execute(Str("SELECT name FROM users WHERE id = ?"), List(Int(2)))
+    row = cur.fetchone()
+    assert isinstance(row, Tuple)
+    assert row.at(Int(0)) == Str("Bob")
+
+
+def test_executemany_and_executescript() -> None:
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE x(n INTEGER)"))
+    cur = con.cursor()
+    cur.executemany(Str("INSERT INTO x VALUES (?)"), List(Tuple(Int(1)), Tuple(Int(2))))
+    rows = con.execute(Str("SELECT n FROM x ORDER BY n")).fetchall()
+    assert rows.len() == Int(2)
+    # executescript runs multiple statements in one call.
+    cur.executescript(Str("DELETE FROM x; INSERT INTO x VALUES (42);"))
+    rows = con.execute(Str("SELECT n FROM x")).fetchall()
+    assert rows.len() == Int(1)
+
+
+def test_cursor_lastrowid_returns_int_after_insert() -> None:
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE t(id INTEGER PRIMARY KEY, n TEXT)"))
+    cur = con.execute(Str("INSERT INTO t(n) VALUES ('a')"))
+    assert isinstance(cur.lastrowid, Int)
+
+
+def test_connect_with_path_arg(tmp_path: object) -> None:
+    from poop.types.path import Path
+
+    p = Path(Str(str(tmp_path) + "/foo.sqlite"))  # type: ignore[unresolved-attribute]
+    con = Sqlite3.connect(p)
+    assert isinstance(con, Connection)
+    con.close()
+
+
+def test_connect_with_full_kwargs() -> None:
+    from poop.types.boolean import true
+    from poop.types.float import Float
+
+    con = Sqlite3.connect(
+        Str(":memory:"),
+        timeout=Float(1.0),
+        detect_types=Int(0),
+        isolation_level=Str("DEFERRED"),
+        cached_statements=Int(50),
+        uri=true,
+    )
+    assert isinstance(con, Connection)
+
+
+def test_row_len_dunder() -> None:
+    row = Row(("a", "b"), (1, 2))
+    assert len(row) == 2
