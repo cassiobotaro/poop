@@ -1,5 +1,7 @@
 import re as _re
 
+import pytest
+
 from poop.interpreter import Interpreter
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -266,6 +268,15 @@ def test_re_in_default_namespace() -> None:
 
 def test_re_reachable_via_interpreter() -> None:
     Interpreter().run_source('re.match("\\\\d+", "123").group().print()')
+
+
+def test_re_error_exposed_for_try_except() -> None:
+    """re.error is the exception raised on bad pattern compilation."""
+    import re as _stdlib_re
+
+    assert Re.error is _stdlib_re.error
+    with pytest.raises(Re.error):
+        Re.compile(Str("("))
 
 
 def test_match_group_for_unmatched_optional_is_none() -> None:

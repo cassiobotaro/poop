@@ -177,6 +177,9 @@ class Re:
     Pattern: ClassVar[type[Pattern]] = Pattern
     Match: ClassVar[type[Match]] = Match
 
+    # Exception class — caught via Try.except_(re.error, ...).
+    error: ClassVar[type[Exception]] = _re.error
+
     @staticmethod
     def compile(pattern: Str, flags: Int | NoneClass | None = None) -> Pattern:
         return Pattern(_re.compile(pattern._value, _unwrap(flags, 0)))
