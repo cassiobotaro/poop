@@ -8,12 +8,6 @@ Active engineering backlog. v0.54.1 closed the bug fixes + alto convention viola
 |---|---|---|---|
 | A3 | Médio | `poop/types/xml.py:67,71`, `poop/types/logging.py:111`, `poop/types/ssl.py:77,85` | Setter-method drift — `Element.set_text/set_tail`, `Logger.set_propagate`, `SSLContext.set_check_hostname/set_verify_mode` violate the post-v0.54 convention "assignment, not setter methods". Collapse to `@property` + `@X.setter` pairs. Breaking — defer to next minor. |
 
-## Boilerplate consolidation
-
-| # | Severity | Issue | Estimated LOC |
-|---|---|---|---|
-| C5 | Discutível | Heavy property-delegation blocks in `urllib`, `ipaddress`, `tarfile`, `sys`, `uuid` (16-32 properties each, all `return Str(self._impl.X)` shape). A `@_delegated_property(Str)` decorator could compress them but loses static-type inference, IDE jump-to-def, and per-property docstrings. | -150 to -300 (cosmetic) |
-
 ## Test coverage
 
 The "55% bundled vs 99% isolated" claim was folklore (see CONTRIBUTING.md "Testing" section for the cov-config recipe). Real coverage gaps:
