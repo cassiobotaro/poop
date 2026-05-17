@@ -29,15 +29,15 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 
 Rules every namespace wrapper in `poop/types/` must follow. Recorded here so reviewers, future PRs, and the `scripts/audit_signatures.py` harness apply the same yardstick.
 
-### Property vs method
+### Mirror Python's attribute vs method shape
 
-Every public name from CPython is exposed as a **method**, not a `@property`, even when the Python counterpart is an attribute (`sys.argv`, `time.tzname`, `Element.tag`). User code writes `sys.argv()` not `sys.argv`. This is the v0.51.0 decision uniformised across the codebase — message-passing reads better when every receiver is queried by a call.
+If CPython exposes a name as an **attribute** (`sys.argv`, `time.tzname`, `Element.tag`, `ctx.verify_mode`), POOP exposes it as an attribute too — `ClassVar` for constants, `@property` for computed-on-read values. If CPython exposes it as a **method** (`logger.info(msg)`, `subprocess.run(args)`), POOP exposes it as a method. User code reads `sys.argv`, not `sys.argv()`.
 
-The only sanctioned exceptions are dunders that Python protocols require to be attribute-shaped (`__name__`, `__module__`, `__slots__`).
+Forcing attribute-shaped surfaces into zero-arg methods (`sys.argv()`, `time.tzname()`) breaks Python intuition and gains nothing for message-passing — `obj.attr` is already a message in Python's data model.
 
-### Setter convention
+### Assignment, not setter methods
 
-When a Python attribute can be mutated (`logger.propagate = True`, `ctx.verify_mode = ssl.CERT_REQUIRED`), POOP exposes the read side as `.X()` and the write side as `.set_X(value)`. Pair of methods, no `@X.setter`, no `.X_(b)` underscore-trailing form.
+When a Python attribute can be mutated (`logger.propagate = True`, `ctx.verify_mode = ssl.CERT_REQUIRED`), POOP uses normal Python assignment — implemented via `@X.setter`. No `.set_X(value)` method convention. The Python idiom is `obj.attr = value`; POOP follows it.
 
 ### Default kwarg policy
 
