@@ -1,0 +1,105 @@
+from __future__ import annotations
+
+import asyncio as _asyncio
+import inspect as _inspect
+from typing import Any, ClassVar
+
+from poop.types.boolean import Boolean, false, true
+from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.none import NoneClass, none
+from poop.types.object import Object
+
+
+def _as_coro(awaitable: Any) -> Any:
+    """Accept either a Python awaitable or a callable that returns one."""
+    if _inspect.iscoroutine(awaitable):
+        return awaitable
+    if hasattr(awaitable, "__await__"):
+        return awaitable
+    if callable(awaitable):
+        return awaitable()
+    return awaitable
+
+
+class Future(Object):
+    """Wraps Python's `asyncio.Future`."""
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, impl: Any = None) -> None:
+        self._impl = impl
+
+    def done(self) -> Boolean:
+        return true if self._impl.done() else false
+
+    def cancelled(self) -> Boolean:
+        return true if self._impl.cancelled() else false
+
+    def result(self) -> Any:
+        return self._impl.result()
+
+    def exception(self) -> Any:
+        return self._impl.exception()
+
+    def cancel(self) -> Boolean:
+        return true if self._impl.cancel() else false
+
+
+class AsyncIO:
+    """Namespace mirroring (a curated subset of) Python's `asyncio` module.
+
+    Coroutines are written as `async def` and run via `asyncio.run`.
+    The introspection-heavy parts of the asyncio API (loop policy,
+    transports/protocols) are deliberately out of scope.
+    """
+
+    Future: ClassVar[type[Future]] = Future
+    CancelledError: ClassVar[type[BaseException]] = _asyncio.CancelledError
+    TimeoutError: ClassVar[type[BaseException]] = _asyncio.TimeoutError
+    InvalidStateError: ClassVar[type[BaseException]] = _asyncio.InvalidStateError
+    IncompleteReadError: ClassVar[type[BaseException]] = _asyncio.IncompleteReadError
+
+    @staticmethod
+    def run(coro: Any, debug: Boolean | None = None) -> Any:
+        d = None if debug is None else bool(debug)
+        return _asyncio.run(_as_coro(coro), debug=d)
+
+    @staticmethod
+    def sleep(delay: Float | Int, result: Any = None) -> Any:
+        return _asyncio.sleep(delay._value, result=result)
+
+    @staticmethod
+    def gather(*aws: Any) -> Any:
+        return _asyncio.gather(*(_as_coro(a) for a in aws))
+
+    @staticmethod
+    def wait_for(aw: Any, timeout: Float | Int | None = None) -> Any:
+        t = None if timeout is None else timeout._value
+        return _asyncio.wait_for(_as_coro(aw), t)
+
+    @staticmethod
+    def shield(aw: Any) -> Any:
+        return _asyncio.shield(_as_coro(aw))
+
+    @staticmethod
+    def create_task(coro: Any) -> Future:
+        # `create_task` requires a running loop. Surface as a Future.
+        return Future(_asyncio.ensure_future(_as_coro(coro)))
+
+    @staticmethod
+    def ensure_future(coro: Any) -> Future:
+        return Future(_asyncio.ensure_future(_as_coro(coro)))
+
+    @staticmethod
+    def new_event_loop() -> Any:
+        return _asyncio.new_event_loop()
+
+    @staticmethod
+    def set_event_loop(loop: Any) -> NoneClass:
+        _asyncio.set_event_loop(loop)
+        return none
+
+    @staticmethod
+    def get_event_loop() -> Any:
+        return _asyncio.get_event_loop()

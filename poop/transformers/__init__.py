@@ -6,6 +6,7 @@ from builtins import (
 )
 
 from poop.transformers.array import NAMESPACE as _array_namespace
+from poop.transformers.asyncio import NAMESPACE as _asyncio_namespace
 from poop.transformers.atexit import NAMESPACE as _atexit_namespace
 from poop.transformers.base import Transformer
 from poop.transformers.binascii import NAMESPACE as _binascii_namespace
@@ -71,9 +72,12 @@ from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
 from poop.transformers.shutil import NAMESPACE as _shutil_namespace
+from poop.transformers.signal import NAMESPACE as _signal_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.smtplib import NAMESPACE as _smtplib_namespace
+from poop.transformers.socket import NAMESPACE as _socket_namespace
 from poop.transformers.sqlite3 import NAMESPACE as _sqlite3_namespace
+from poop.transformers.ssl import NAMESPACE as _ssl_namespace
 from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
@@ -215,6 +219,10 @@ DEFAULT_NAMESPACE: _dict[str, object] = {
     **_unittest_namespace,
     **_profile_namespace,
     **_timeit_namespace,
+    **_signal_namespace,
+    **_socket_namespace,
+    **_ssl_namespace,
+    **_asyncio_namespace,
 }
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
