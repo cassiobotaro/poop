@@ -622,7 +622,7 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `asyncio` | covered | `asyncio` / `Future` namespaces — `async def` source forbidden (v0.48.0) |
+| `asyncio` | covered | `asyncio` / `Future` namespaces — `async def` methods allowed (v0.48.0, source allowance in v0.52.0) |
 | `socket` | covered | `socket` + `Socket` namespaces (v0.48.0) |
 | `ssl` | covered | `ssl` + `SSLContext` namespaces (v0.48.0) |
 | `select` | out | Low-level — `selectors` is preferred |

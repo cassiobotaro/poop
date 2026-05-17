@@ -137,8 +137,10 @@ def test_asyncio_class_refs() -> None:
 
 
 def test_asyncio_run_via_interpreter() -> None:
-    # POOP source can't define `async def` (forbidden by `no_async`),
-    # so the simplest async smoke test is calling `asyncio.sleep`
-    # (which returns an awaitable) inside `asyncio.run`. The return
-    # value is Python `None` — drop it instead of sending `.print()`.
-    Interpreter().run_source("asyncio.run(asyncio.sleep(0))")
+    Interpreter().run_source(
+        "class Foo:\n"
+        "    async def run(self):\n"
+        "        await asyncio.sleep(0)\n"
+        "        return 42\n"
+        "asyncio.run(Foo().run()).print()\n"
+    )
