@@ -256,3 +256,29 @@ def test_chown_with_current_user(tmp_path: _PyPath) -> None:
     f.write_text("x")
     # chown to the current user is a no-op but exercises the kwargs path.
     assert Shutil.chown(Path(Str(str(f))), user=Str(_getpass.getuser())) is none
+
+
+# --- Try.except_ integration ---
+
+
+def test_try_catches_same_file_error(tmp_path: _PyPath) -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    src = tmp_path / "self.txt"
+    src.write_text("x")
+    Try(lambda: Shutil.copyfile(Path(Str(str(src))), Path(Str(str(src))))).except_(
+        Shutil.SameFileError, lambda e: captured.append(e.message())
+    ).run()
+    assert len(captured) == 1
+
+
+def test_try_catches_rmtree_missing(tmp_path: _PyPath) -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    missing = tmp_path / "ghost"
+    Try(lambda: Shutil.rmtree(Path(Str(str(missing))))).except_(
+        FileNotFoundError, lambda e: captured.append(e.kind())
+    ).run()
+    assert len(captured) == 1

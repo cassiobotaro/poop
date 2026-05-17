@@ -284,3 +284,16 @@ def test_match_group_for_unmatched_optional_is_none() -> None:
     assert isinstance(m, Match)
     assert m.group(Int(2)) is none
     assert isinstance(m.group(Int(2)), NoneClass)
+
+
+# --- Try.except_ integration ---
+
+
+def test_try_catches_invalid_regex() -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    Try(lambda: Re.compile(Str("("))).except_(
+        Re.error, lambda e: captured.append(e.kind())
+    ).run()
+    assert len(captured) == 1

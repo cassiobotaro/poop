@@ -177,3 +177,17 @@ def test_round_trip_preserves_types() -> None:
     assert isinstance(decoded.at(Str("admin")), Boolean)
     assert isinstance(decoded.at(Str("note")), NoneClass)
     assert isinstance(decoded.at(Str("tags")), List)
+
+
+# --- Try.except_ integration ---
+
+
+def test_try_catches_json_decode_error() -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    Try(lambda: Json.loads(Str("{invalid"))).except_(
+        Json.JSONDecodeError, lambda e: captured.append(e.message())
+    ).run()
+    assert len(captured) == 1
+    assert isinstance(captured[0], Str)

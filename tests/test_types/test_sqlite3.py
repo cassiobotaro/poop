@@ -348,3 +348,31 @@ def test_connect_with_full_kwargs() -> None:
 def test_row_len_dunder() -> None:
     row = Row(("a", "b"), (1, 2))
     assert len(row) == 2
+
+
+# --- Try.except_ integration ---
+
+
+def test_try_catches_operational_error() -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    con = Sqlite3.connect(Str(":memory:"))
+    Try(lambda: con.execute(Str("SELECT * FROM no_such_table"))).except_(
+        Sqlite3.OperationalError, lambda e: captured.append(e.message())
+    ).run()
+    assert len(captured) == 1
+    assert isinstance(captured[0], Str)
+
+
+def test_try_catches_integrity_error() -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE t(id INTEGER PRIMARY KEY)"))
+    con.execute(Str("INSERT INTO t VALUES (1)"))
+    Try(lambda: con.execute(Str("INSERT INTO t VALUES (1)"))).except_(
+        Sqlite3.IntegrityError, lambda e: captured.append(e.kind())
+    ).run()
+    assert len(captured) == 1

@@ -238,6 +238,29 @@ def test_decimal_reachable_via_interpreter() -> None:
     Interpreter().run_source('Decimal("3.14").print()')
 
 
+# --- Try.except_ integration ---
+
+
+def test_try_catches_division_by_zero() -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    Try(lambda: Decimal(Str("1")) / Decimal(Str("0"))).except_(
+        Decimal_.DivisionByZero, lambda e: captured.append(e.kind())
+    ).run()
+    assert len(captured) == 1
+
+
+def test_try_catches_invalid_operation() -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    Try(lambda: Decimal(Str("not a number"))).except_(
+        Decimal_.InvalidOperation, lambda e: captured.append(e.message())
+    ).run()
+    assert len(captured) == 1
+
+
 def test_context_create_decimal() -> None:
     ctx = Decimal_.getcontext()
     d = ctx.create_decimal(Str("1.5"))

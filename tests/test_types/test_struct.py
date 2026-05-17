@@ -209,3 +209,30 @@ def test_struct_class_pack_into_via_memoryview() -> None:
     s = Struct(Str(">I"))
     s.pack_into(view, Int(0), Int(42))
     assert bytes(raw) == b"\x00\x00\x00\x2a"
+
+
+# --- Try.except_ integration ---
+
+
+def test_try_catches_struct_unpack_size_mismatch() -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    Try(lambda: StructNamespace.unpack(Str(">I"), Bytes(b"\x00"))).except_(
+        StructNamespace.error, lambda e: captured.append(e.message())
+    ).run()
+    assert len(captured) == 1
+    assert isinstance(captured[0], Str)
+
+
+def test_try_catches_pack_into_typeerror() -> None:
+    from typing import Any
+
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    bad: Any = Str("xxxx")  # buffer arg deliberately wrong-typed at runtime
+    Try(lambda: StructNamespace.pack_into(Str(">I"), bad, Int(0), Int(1))).except_(
+        TypeError, lambda e: captured.append(e.kind())
+    ).run()
+    assert len(captured) == 1

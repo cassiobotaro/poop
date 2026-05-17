@@ -202,3 +202,30 @@ def test_wrap_socket_server_side_branch() -> None:
             raw.close()
         except OSError:
             pass
+
+
+# --- Try.except_ integration ---
+
+
+def test_try_catches_missing_cert_file() -> None:
+    from poop.types.string import Str
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    ctx = SSL.create_default_context()
+    Try(lambda: ctx.load_cert_chain(Str("/does/not/exist/poop.pem"))).except_(
+        FileNotFoundError, lambda e: captured.append(e.kind())
+    ).run()
+    assert len(captured) == 1
+
+
+def test_try_catches_invalid_cadata() -> None:
+    from poop.types.string import Str
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    ctx = SSL.create_default_context()
+    Try(lambda: ctx.load_verify_locations(cadata=Str("not real PEM"))).except_(
+        SSL.SSLError, lambda e: captured.append(e.kind())
+    ).run()
+    assert len(captured) == 1

@@ -251,3 +251,17 @@ def test_mimetypes_add_type_namespace_form() -> None:
         Mimetypes.add_type(Str("application/x-poop-ns"), Str(".pns"), strict=false)
         is none
     )
+
+
+# --- Try.except_ integration ---
+
+
+def test_try_catches_filenames_typeerror() -> None:
+    from poop.types.try_ import Try
+
+    captured: list[object] = []
+    Try(lambda: MimeTypes(filenames=List(true))).except_(
+        TypeError, lambda e: captured.append(e.message())
+    ).run()
+    assert len(captured) == 1
+    assert isinstance(captured[0], Str)

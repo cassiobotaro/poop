@@ -8,7 +8,6 @@ The "55% bundled vs 99% isolated" claim was folklore (see CONTRIBUTING.md "Testi
 
 | # | Severity | Issue |
 |---|---|---|
-| T3 | Baixo | Only 2 test files use `Try(...)`; 8 `except_(` total. Integration tests don't exercise error paths through `Try.except_`. Pair with T2 — round-trip + Try.except_ tests per module. |
 
 ## Out of scope (per proposal)
 
