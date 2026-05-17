@@ -25,6 +25,34 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - **Dunders exposed as regular methods**: every relevant dunder on a POOP type gets an alias with the Python name without underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__hash__` → `hash()`, etc. Do not translate to Smalltalk names.
 - **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. True entry points without an AST rewrite or method equivalent fall in two camps: **POOP-specific constructs** (`Try`, `With`, `Path`) keep PascalCase, and **Python stdlib module mirrors** (`math`, `random`, …) keep lowercase to match the source module names. A module that also exposes a class (e.g., `random` ⊃ `Random`) binds both — the lowercase name for module-level entry, the PascalCase name for the class constructor.
 
+## Project conventions
+
+Rules every namespace wrapper in `poop/types/` must follow. Recorded here so reviewers, future PRs, and the `scripts/audit_signatures.py` harness apply the same yardstick.
+
+### Property vs method
+
+Every public name from CPython is exposed as a **method**, not a `@property`, even when the Python counterpart is an attribute (`sys.argv`, `time.tzname`, `Element.tag`). User code writes `sys.argv()` not `sys.argv`. This is the v0.51.0 decision uniformised across the codebase — message-passing reads better when every receiver is queried by a call.
+
+The only sanctioned exceptions are dunders that Python protocols require to be attribute-shaped (`__name__`, `__module__`, `__slots__`).
+
+### Setter convention
+
+When a Python attribute can be mutated (`logger.propagate = True`, `ctx.verify_mode = ssl.CERT_REQUIRED`), POOP exposes the read side as `.X()` and the write side as `.set_X(value)`. Pair of methods, no `@X.setter`, no `.X_(b)` underscore-trailing form.
+
+### Default kwarg policy
+
+POOP method defaults mirror CPython exactly. If CPython writes `subprocess.run(args, *, check=False, capture_output=False)`, POOP writes `check=False`, not `check=none`. Defaulting to `none` silently merges "user passed `False`" with "user did not pass" — for bool flags this is harmless, for tri-state semantics it breaks. Mirror CPython and let the underlying call distinguish.
+
+The only sanctioned `none`-default is when CPython itself uses `None` as the sentinel (e.g., `socket.gethostbyname(name, default=None)`).
+
+### Platform-specific constants
+
+Constants that CPython exposes only on some platforms (`socket.AF_UNIX`, `signal.SIGUSR1`, `resource.RLIMIT_NPROC`) bind to POOP `none` on platforms that lack them — never raise on attribute access, never omit the name entirely. This way user code is portable and falsy-checks (`signal.SIGUSR1.is_none()`) work uniformly.
+
+### Error class exposure
+
+Every exception class that CPython raises through the wrapped surface and that a POOP user might reasonably pass to `Try.except_(...)` is exposed on the wrapping namespace. `json.JSONDecodeError`, `subprocess.CalledProcessError`, `ssl.SSLError`, `urllib.URLError` — all surface. Internal-only error classes (CPython's `_ssl.SSLError` aliases, `_socket.error` aliases) stay hidden.
+
 ## Active infections
 
 ### No `if` — `poop/validators/no_if.py`
