@@ -370,11 +370,11 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `string` | covered | `string` + `Template` (shipped in this PR) |
+| `string` | covered | `string` + `Template` (shipped in v0.34.0) |
 | `re` | covered | `re` + `Pattern` + `Match` (shipped in v0.29.0) |
-| `difflib` | covered | `difflib` + `SequenceMatcher` (shipped in this PR) |
-| `textwrap` | covered | `textwrap` + `TextWrapper` (shipped in this PR) |
-| `unicodedata` | covered | `unicodedata` namespace (shipped in this PR) |
+| `difflib` | covered | `difflib` + `SequenceMatcher` (shipped in v0.34.0) |
+| `textwrap` | covered | `textwrap` + `TextWrapper` (shipped in v0.34.0) |
+| `unicodedata` | covered | `unicodedata` namespace (shipped in v0.34.0) |
 | `stringprep` | out | Internal IDNA helper |
 | `readline` | out | REPL infrastructure — POOP doesn't expose a REPL |
 | `rlcompleter` | out | REPL infrastructure |
@@ -383,26 +383,26 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `struct` | covered | `struct` + `Struct` (shipped in this PR) |
-| `codecs` | covered | `codecs` + `CodecInfo` (shipped in this PR) |
+| `struct` | covered | `struct` + `Struct` (shipped in v0.37.0) |
+| `codecs` | covered | `codecs` + `CodecInfo` (shipped in v0.37.0) |
 
 ### Data Types
 
 | Module | Status | Sketch |
 |---|---|---|
 | `datetime` | covered | `datetime` + `Date` + `Time` + `DateTime` + `TimeDelta` + `TimeZone` (shipped in v0.32.0) |
-| `zoneinfo` | covered | `zoneinfo` + `ZoneInfo` (shipped in this PR) |
-| `calendar` | covered | `calendar` + `Calendar` (shipped in this PR) |
+| `zoneinfo` | covered | `zoneinfo` + `ZoneInfo` (shipped in v0.35.0) |
+| `calendar` | covered | `calendar` + `Calendar` (shipped in v0.35.0) |
 | `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |
 | `heapq` | covered | `heapq` namespace + `HeapMerge` (shipped in v0.22.0) |
 | `bisect` | covered | `bisect` namespace (shipped in v0.21.0) |
-| `array` | covered | `array` + `Array` (shipped in this PR) |
-| `weakref` | covered | `weakref` + `WeakRef` + `WeakSet` + `WeakKeyDictionary` + `WeakValueDictionary` (shipped in this PR) |
+| `array` | covered | `array` + `Array` (shipped in v0.35.0) |
+| `weakref` | covered | `weakref` + `WeakRef` + `WeakSet` + `WeakKeyDictionary` + `WeakValueDictionary` (shipped in v0.35.0) |
 | `types` | out | Introspection — forbidden in POOP |
 | `copy` | covered | `copy` namespace (shipped in v0.19.0) |
 | `pprint` | covered | `pprint` + `PrettyPrinter` (shipped in v0.20.0) |
 | `reprlib` | out | POOP forbids `repr` |
-| `enum` | covered | `enum` + `Enum` + `IntEnum` + `StrEnum` + `Flag` + `IntFlag` + `ReprEnum` (shipped in this PR) |
+| `enum` | covered | `enum` + `Enum` + `IntEnum` + `StrEnum` + `Flag` + `IntFlag` + `ReprEnum` (shipped in v0.35.0) |
 | `graphlib` | covered | `graphlib` + `TopologicalSorter` (shipped in v0.28.0) |
 
 ### Numeric and Mathematical Modules
@@ -413,9 +413,9 @@ each annotated with one of:
 | `math` | covered | `Math` namespace (shipped in v0.6.0) |
 | `cmath` | covered | `cmath` namespace (shipped in v0.53.0) |
 | `decimal` | covered | `decimal` + `Decimal` + `Context` (shipped in v0.32.0) |
-| `fractions` | covered | `fractions` + `Fraction` (shipped in this PR) |
+| `fractions` | covered | `fractions` + `Fraction` (shipped in v0.36.0) |
 | `random` | covered | `Random` namespace (shipped in v0.7.0) |
-| `statistics` | covered | `statistics` + `NormalDist` (shipped in this PR) |
+| `statistics` | covered | `statistics` + `NormalDist` (shipped in v0.36.0) |
 
 ### Functional Programming Modules
 
@@ -433,42 +433,42 @@ each annotated with one of:
 | `os.path` / `posixpath` / `ntpath` / `genericpath` / `nturl2path` | covered | Reachable via `Path` |
 | `fileinput` | out | Niche CLI helper |
 | `stat` | out | Low-level constants — `Path` already exposes the queries |
-| `filecmp` | covered | `filecmp` + `Dircmp` (shipped in this PR) |
-| `tempfile` | covered | `tempfile` + `TemporaryFile` + `NamedTemporaryFile` + `SpooledTemporaryFile` + `TemporaryDirectory` (shipped in this PR) |
+| `filecmp` | covered | `filecmp` + `Dircmp` (shipped in v0.38.0) |
+| `tempfile` | covered | `tempfile` + `TemporaryFile` + `NamedTemporaryFile` + `SpooledTemporaryFile` + `TemporaryDirectory` (shipped in v0.38.0) |
 | `glob` | covered | `glob` namespace + `GlobIter` (shipped in v0.17.0) |
 | `fnmatch` | covered | `fnmatch` namespace (shipped in v0.18.0) |
 | `linecache` | out | Internal traceback helper |
-| `shutil` | covered | `shutil` namespace (shipped in this PR) |
+| `shutil` | covered | `shutil` namespace (shipped in v0.38.0) |
 
 ### Data Persistence
 
 | Module | Status | Sketch |
 |---|---|---|
-| `pickle` | covered | `pickle` + `Pickler` + `Unpickler` (shipped in this PR) |
+| `pickle` | covered | `pickle` + `Pickler` + `Unpickler` (shipped in v0.39.0) |
 | `copyreg` | out | Internal hook for `pickle` |
 | `shelve` | out | Depends on `dbm` |
 | `marshal` | out | CPython internal |
 | `dbm` | out | Niche; prefer `sqlite3` |
-| `sqlite3` | covered | `sqlite3` + `Connection` + `Cursor` + `Row` (shipped in this PR) |
+| `sqlite3` | covered | `sqlite3` + `Connection` + `Cursor` + `Row` (shipped in v0.33.0) |
 
 ### Data Compression and Archiving
 
 | Module | Status | Sketch |
 |---|---|---|
-| `zlib` | covered | `zlib` + `Compress` + `Decompress` (shipped in this PR) |
-| `gzip` | covered | `gzip` + `GzipFile` (shipped in this PR) |
-| `bz2` | covered | `bz2` + `BZ2File` + `BZ2Compressor` + `BZ2Decompressor` (shipped in this PR) |
-| `lzma` | covered | `lzma` + `LZMAFile` + `LZMACompressor` + `LZMADecompressor` (shipped in this PR) |
-| `zipfile` | covered | `zipfile` + `ZipFile` + `ZipInfo` (shipped in this PR) |
-| `tarfile` | covered | `tarfile` + `TarFile` + `TarInfo` (shipped in this PR) |
-| `compression` | covered | `compression` umbrella (shipped in this PR) |
+| `zlib` | covered | `zlib` + `Compress` + `Decompress` (shipped in v0.40.0) |
+| `gzip` | covered | `gzip` + `GzipFile` (shipped in v0.40.0) |
+| `bz2` | covered | `bz2` + `BZ2File` + `BZ2Compressor` + `BZ2Decompressor` (shipped in v0.40.0) |
+| `lzma` | covered | `lzma` + `LZMAFile` + `LZMACompressor` + `LZMADecompressor` (shipped in v0.40.0) |
+| `zipfile` | covered | `zipfile` + `ZipFile` + `ZipInfo` (shipped in v0.40.0) |
+| `tarfile` | covered | `tarfile` + `TarFile` + `TarInfo` (shipped in v0.40.0) |
+| `compression` | covered | `compression` umbrella (shipped in v0.40.0) |
 
 ### File Formats
 
 | Module | Status | Sketch |
 |---|---|---|
-| `csv` | covered | `csv` + `Reader` + `Writer` + `DictReader` + `DictWriter` + `Sniffer` (shipped in this PR) |
-| `configparser` | covered | `configparser` + `ConfigParser` + `RawConfigParser` (shipped in this PR) |
+| `csv` | covered | `csv` + `Reader` + `Writer` + `DictReader` + `DictWriter` + `Sniffer` (shipped in v0.43.0) |
+| `configparser` | covered | `configparser` + `ConfigParser` + `RawConfigParser` (shipped in v0.43.0) |
 | `tomllib` | covered | `tomllib` namespace (shipped in v0.26.0) |
 | `netrc` | out | Niche legacy format |
 | `plistlib` | out | macOS-specific niche |
@@ -477,7 +477,7 @@ each annotated with one of:
 
 | Module | Status | Sketch |
 |---|---|---|
-| `hashlib` | covered | `hashlib` + `Hash` (shipped in this PR) |
+| `hashlib` | covered | `hashlib` + `Hash` (shipped in v0.30.0) |
 | `hmac` | covered | `hmac` + `HMAC` (shipped in v0.27.0) |
 | `secrets` | covered | `secrets` namespace (shipped in v0.12.0) |
 
@@ -547,15 +547,15 @@ each annotated with one of:
 |---|---|---|
 | `webbrowser` | covered | `webbrowser` + `Browser` (shipped in v0.16.0) |
 | `wsgiref` | out | Reference impl |
-| `urllib` | covered | `urllib` + `Request` + `Response` + `ParseResult` + `SplitResult` (shipped in this PR) |
-| `http` | covered | `http` + `HTTPConnection` + `HTTPSConnection` + `HTTPResponse` + `SimpleCookie` + `Morsel` (shipped in this PR) |
+| `urllib` | covered | `urllib` + `Request` + `Response` + `ParseResult` + `SplitResult` (shipped in v0.42.0) |
+| `http` | covered | `http` + `HTTPConnection` + `HTTPSConnection` + `HTTPResponse` + `SimpleCookie` + `Morsel` (shipped in v0.42.0) |
 | `ftplib` | out | Legacy protocol |
 | `poplib` | out | Legacy protocol |
 | `imaplib` | out | Legacy protocol |
-| `smtplib` | covered | `smtplib` + `SMTP` + `SMTP_SSL` + `LMTP` (shipped in this PR) |
+| `smtplib` | covered | `smtplib` + `SMTP` + `SMTP_SSL` + `LMTP` (shipped in v0.42.0) |
 | `uuid` | covered | `uuid` + `UUID` (shipped in v0.24.0) |
 | `socketserver` | out | Pairs with `socket` if ever |
-| `ipaddress` | covered | `ipaddress` + `IPv4Address` + `IPv6Address` + `IPv4Network` + `IPv6Network` + `IPv4Interface` + `IPv6Interface` (shipped in this PR) |
+| `ipaddress` | covered | `ipaddress` + `IPv4Address` + `IPv6Address` + `IPv4Network` + `IPv6Network` + `IPv4Interface` + `IPv6Interface` (shipped in v0.42.0) |
 
 ### Multimedia Services
 
@@ -569,7 +569,7 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `gettext` | out | Niche |
-| `locale` | covered | `locale` namespace (shipped in this PR) |
+| `locale` | covered | `locale` namespace (shipped in v0.41.0) |
 
 ### Program Frameworks
 
@@ -667,11 +667,11 @@ each annotated with one of:
 | Module | Status | Sketch |
 |---|---|---|
 | `posix` | out | Low-level — covered via `os` if at all |
-| `pwd` | covered | `pwd` + `Passwd` (shipped in this PR) |
-| `grp` | covered | `grp` + `Group` (shipped in this PR) |
+| `pwd` | covered | `pwd` + `Passwd` (shipped in v0.44.0) |
+| `grp` | covered | `grp` + `Group` (shipped in v0.44.0) |
 | `termios` / `tty` / `pty` | out | Low-level TTY |
 | `fcntl` | out | Low-level file control |
-| `resource` | covered | `resource` + `RUsage` (shipped in this PR) |
+| `resource` | covered | `resource` + `RUsage` (shipped in v0.44.0) |
 | `syslog` | out | Niche logging |
 
 ### Windows-Specific Services
