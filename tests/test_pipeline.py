@@ -97,3 +97,42 @@ def test_namespace_module_bindings_present_in_default_namespace(
 def test_transformers_with_bindings_discovered() -> None:
     """Guard against subclass discovery silently returning nothing."""
     assert len(TRANSFORMERS_WITH_BINDINGS) > 0
+
+
+def test_no_duplicate_bindings_across_transformers() -> None:
+    """Guard against two transformer modules silently binding the same name.
+
+    `DEFAULT_NAMESPACE` is built by spreading ~88 NAMESPACE dicts and
+    21 *Transformer.BINDINGS dicts. If a future PR redefines an
+    existing key, the manual merge would silently let the second
+    spread win. This test catches that at startup.
+    """
+    import importlib
+    import pkgutil
+    from collections import Counter
+
+    from poop import transformers
+
+    declarations: list[tuple[str, str]] = []
+    for mod_info in pkgutil.iter_modules(transformers.__path__):
+        if mod_info.name == "base":
+            continue
+        mod = importlib.import_module(f"poop.transformers.{mod_info.name}")
+        ns = getattr(mod, "NAMESPACE", None) or {}
+        for name in ns:
+            declarations.append((name, f"NAMESPACE in {mod_info.name}"))
+        for attr_name in dir(mod):
+            attr = getattr(mod, attr_name)
+            if (
+                isinstance(attr, type)
+                and attr_name.endswith("Transformer")
+                and attr.__module__ == mod.__name__
+            ):
+                for name in getattr(attr, "BINDINGS", {}) or {}:
+                    declarations.append(
+                        (name, f"{attr_name}.BINDINGS in {mod_info.name}")
+                    )
+
+    counts = Counter(name for name, _ in declarations)
+    duplicates = {name: count for name, count in counts.items() if count > 1}
+    assert not duplicates, f"duplicate bindings across transformers: {duplicates}"
