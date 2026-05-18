@@ -64,12 +64,14 @@ def _opt_timeout(value: object) -> Any:
 
 
 def _kwargs_from(**named: Any) -> dict[str, Any]:
-    """Drop None values; unwrap survivors via `._value`.
+    """Drop absent values; unwrap survivors via `._value`.
 
-    Collapses the 3-line `if x is not None: kwargs["x"] = x._value`
-    block to one line:
+    Treats both Python `None` and POOP `none` as absent, matching
+    `_unwrap` / `_unwrap_bool` — otherwise a user-passed `none` (which
+    `NoneTransformer` produces from every `None` literal) slips past the
+    filter and crashes on `._value`.
 
         kwargs = _kwargs_from(x=x, y=y)        # builds fresh dict
         kwargs.update(_kwargs_from(x=x, y=y))  # merges into existing dict
     """
-    return {k: v._value for k, v in named.items() if v is not None}
+    return {k: v._value for k, v in named.items() if not _is_absent(v)}
