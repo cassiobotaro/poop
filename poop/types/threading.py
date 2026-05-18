@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading as _threading
+from collections.abc import Callable
 from typing import Any, ClassVar, Self
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
@@ -171,6 +172,131 @@ class Semaphore(Object):
         self._impl.release()
 
 
+class BoundedSemaphore(Semaphore):
+    """Wraps `threading.BoundedSemaphore` — a Semaphore that raises
+    `ValueError` when `release()` is called more times than `acquire()`.
+    """
+
+    def __init__(self, value: Int | None = None) -> None:
+        v = 1 if value is None else value._value
+        self._impl = _threading.BoundedSemaphore(v)
+
+
+class Condition(Object):
+    """Wraps `threading.Condition` — a wait/notify primitive built on a
+    `Lock` or `RLock`.
+
+    Use inside `With(lambda: cond)` for the standard acquire/release
+    discipline; `wait` blocks until `notify` / `notify_all` wakes it.
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, lock: Lock | RLock | None = None) -> None:
+        if lock is None:
+            self._impl = _threading.Condition()
+        else:
+            self._impl = _threading.Condition(lock._impl)
+
+    def acquire(
+        self, blocking: Boolean | None = None, timeout: Float | Int | None = None
+    ) -> Boolean:
+        b = True if blocking is None else bool(blocking)
+        t = _opt_timeout(timeout)
+        if t is None:
+            return true if self._impl.acquire(b) else false
+        return true if self._impl.acquire(b, t) else false
+
+    def release(self) -> NoneClass:
+        self._impl.release()
+        return none
+
+    def wait(self, timeout: Float | Int | None = None) -> Boolean:
+        return true if self._impl.wait(_opt_timeout(timeout)) else false
+
+    def wait_for(
+        self, predicate: Callable[[], Any], timeout: Float | Int | None = None
+    ) -> Boolean:
+        return (
+            true
+            if self._impl.wait_for(lambda: bool(predicate()), _opt_timeout(timeout))
+            else false
+        )
+
+    def notify(self, n: Int = Int(1)) -> NoneClass:
+        self._impl.notify(n._value)
+        return none
+
+    def notify_all(self) -> NoneClass:
+        self._impl.notify_all()
+        return none
+
+    def __enter__(self) -> Self:
+        self._impl.acquire()
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        self._impl.release()
+
+
+class Timer(Object):
+    """Wraps `threading.Timer` — a `Thread` subclass that fires the
+    target callable after a delay.
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(
+        self,
+        interval: Float | Int,
+        function: Callable[..., Any],
+        args: List | None = None,
+        kwargs: Any = None,
+    ) -> None:
+        a = [] if args is None else list(args)
+        k = {} if kwargs is None else kwargs
+        self._impl = _threading.Timer(interval._value, function, a, k)
+
+    def start(self) -> NoneClass:
+        self._impl.start()
+        return none
+
+    def cancel(self) -> NoneClass:
+        self._impl.cancel()
+        return none
+
+    def join(self, timeout: Float | Int | None = None) -> NoneClass:
+        self._impl.join(_opt_timeout(timeout))
+        return none
+
+    def is_alive(self) -> Boolean:
+        return true if self._impl.is_alive() else false
+
+
+class _Local(Object):
+    """Wraps `threading.local` — per-thread attribute storage.
+
+    Attribute access goes through `at(name)` / `at_put(name, value)`
+    to keep the POOP message-passing shape; raw `obj.attr` also works
+    because Python's descriptor protocol routes through `__getattr__`.
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(self) -> None:
+        self._impl = _threading.local()
+
+    def at(self, name: Str) -> Any:
+        return getattr(self._impl, name._value)
+
+    def at_put(self, name: Str, value: Any) -> _Local:
+        setattr(self._impl, name._value, value)
+        return self
+
+    def includes(self, name: Str) -> Boolean:
+        return true if hasattr(self._impl, name._value) else false
+
+
 class Barrier(Object):
     """Wraps `threading.Barrier`."""
 
@@ -213,8 +339,18 @@ class Threading:
     RLock: ClassVar[type[RLock]] = RLock
     Event: ClassVar[type[Event]] = Event
     Semaphore: ClassVar[type[Semaphore]] = Semaphore
+    BoundedSemaphore: ClassVar[type[BoundedSemaphore]] = BoundedSemaphore
+    Condition: ClassVar[type[Condition]] = Condition
+    Timer: ClassVar[type[Timer]] = Timer
+    Local: ClassVar[type[_Local]] = _Local
     Barrier: ClassVar[type[Barrier]] = Barrier
     BrokenBarrierError: ClassVar[type[BaseException]] = _threading.BrokenBarrierError
+
+    @staticmethod
+    def stack_size(size: Int | None = None) -> Int:
+        if size is None:
+            return Int(_threading.stack_size())
+        return Int(_threading.stack_size(size._value))
 
     @staticmethod
     def current_thread() -> Thread:

@@ -146,17 +146,6 @@ POOP exposes the four module-level functions but not the
 unblocks subclass-customisation (custom `persistent_id`,
 `dispatch_table`, etc.).
 
-### Webbrowser controllers (`webbrowser` 16)
-
-POOP exposes `open`/`open_new`/`open_new_tab`/`get` plus a single
-`Browser` wrapper. Deferred: every named-browser controller class
-(`Chrome`, `Chromium`, `Edge`, `Mozilla`, `Opera`, `Konqueror`,
-`Epiphany`, `Elinks`, `BackgroundBrowser`, `GenericBrowser`,
-`UnixBrowser`), and the `register` / `register_*_browsers` entry
-points. The deferred-`webbrowser.register` proposal under "Future
-work" already covers the registration story; the controller
-classes ship as part of the same change.
-
 ### Text & data helpers (`string` 3, `textwrap` 1, `shlex` 1, `re` 4, `difflib` 5, `unicodedata` 1, `random` 5, `hmac` 3, `uuid` 2, `getpass` 4, `fnmatch` 1)
 
 A pile of small one-off defers across text-processing namespaces:
@@ -256,19 +245,6 @@ Two deferrals from v0.19.0:
   not `int`. v0.19.0 ships `deepcopy(obj)` without `memo`; callers
   needing custom memoization should implement `__deepcopy__` on
   their POOP class instead.
-
-### `webbrowser.register` — from the `webbrowser` proposal (v0.16.0)
-
-v0.16.0 ships the read paths (`open`/`open_new`/`open_new_tab`/`get`)
-plus the `Error` exception class and the `Browser` wrapper around
-`webbrowser.BaseBrowser`. `webbrowser.register(name, constructor,
-instance=None, *, preferred=False)` is deferred because the
-`constructor` argument is a Python callable returning a
-`BaseBrowser` subclass instance — there is no clean POOP
-type-discipline mapping for "callable that returns a Browser" in
-v1. When a real caller surfaces, decide whether to accept a POOP
-`Block` returning a `Browser` (and unwrap internally) or fold this
-into a richer factory API.
 
 ### Optional base64 kwargs — from the `base64` proposal (v0.13.0)
 

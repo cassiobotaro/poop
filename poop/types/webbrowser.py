@@ -1,8 +1,10 @@
 import webbrowser as _webbrowser
-from typing import ClassVar
+from collections.abc import Callable
+from typing import Any, ClassVar
 
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
+from poop.types.none import NoneClass, none
 from poop.types.string import Str
 
 
@@ -72,10 +74,11 @@ class Webbrowser:
     `Error` exception class is exposed as a raw Python type so user
     code can pass it to `Try.except_(...)`.
 
-    `register(name, constructor, instance, preferred)` is **deferred
-    to Future work** — the `constructor` argument is a Python
-    callable returning a `BaseBrowser`, which has no clean POOP
-    type-discipline mapping for v1.
+    Concrete browser controller classes (`Chrome`/`Mozilla`/...) are
+    exposed as static factories that return a `Browser`. `register`
+    accepts a POOP callable as `constructor`; the result is unwrapped
+    via the standard Block↔callable bridge so CPython sees a callable
+    returning a `BaseBrowser` while POOP code returns a `Browser`.
     """
 
     Error: ClassVar[type[Exception]] = _webbrowser.Error
@@ -107,3 +110,84 @@ class Webbrowser:
         if using is None:
             return Browser(_webbrowser.get())
         return Browser(_webbrowser.get(using._value))
+
+    # Concrete controllers — each takes the path to a browser executable
+    # and returns a POOP `Browser` wrapping the underlying `BaseBrowser`.
+
+    @staticmethod
+    def GenericBrowser(name: Str) -> Browser:
+        return Browser(_webbrowser.GenericBrowser(name._value))
+
+    @staticmethod
+    def BackgroundBrowser(name: Str) -> Browser:
+        return Browser(_webbrowser.BackgroundBrowser(name._value))
+
+    @staticmethod
+    def UnixBrowser(name: Str = Str("")) -> Browser:
+        return Browser(_webbrowser.UnixBrowser(name._value))
+
+    @staticmethod
+    def Mozilla(name: Str = Str("")) -> Browser:
+        return Browser(_webbrowser.Mozilla(name._value))
+
+    @staticmethod
+    def Chrome(name: Str = Str("")) -> Browser:
+        return Browser(_webbrowser.Chrome(name._value))
+
+    @staticmethod
+    def Chromium(name: Str = Str("")) -> Browser:
+        # ty's webbrowser stub omits Chromium/Edge/Epiphany; they exist at
+        # runtime as subclasses of UnixBrowser.
+        cls: Any = _webbrowser.Chromium  # ty: ignore[unresolved-attribute]
+        return Browser(cls(name._value))
+
+    @staticmethod
+    def Edge(name: Str = Str("")) -> Browser:
+        cls: Any = _webbrowser.Edge  # ty: ignore[unresolved-attribute]
+        return Browser(cls(name._value))
+
+    @staticmethod
+    def Opera(name: Str = Str("")) -> Browser:
+        return Browser(_webbrowser.Opera(name._value))
+
+    @staticmethod
+    def Epiphany(name: Str = Str("")) -> Browser:
+        cls: Any = _webbrowser.Epiphany  # ty: ignore[unresolved-attribute]
+        return Browser(cls(name._value))
+
+    @staticmethod
+    def Elinks(name: Str = Str("")) -> Browser:
+        return Browser(_webbrowser.Elinks(name._value))
+
+    @staticmethod
+    def Konqueror() -> Browser:
+        return Browser(_webbrowser.Konqueror())
+
+    @staticmethod
+    def register(
+        name: Str,
+        constructor: Callable[..., Any] | None = None,
+        instance: Browser | None = None,
+        *,
+        preferred: Boolean = false,
+    ) -> NoneClass:
+        # constructor is a POOP-callable returning a Browser; adapt to a
+        # Python callable returning a BaseBrowser for CPython's registry.
+        py_ctor: Callable[..., _webbrowser.BaseBrowser] | None
+        if constructor is None:
+            py_ctor = None
+        else:
+
+            def py_ctor(*args: Any, **kwargs: Any) -> _webbrowser.BaseBrowser:
+                result = constructor(*args, **kwargs)
+                if isinstance(result, Browser):
+                    return result._impl
+                # POOP code may have returned a raw BaseBrowser already;
+                # accept either shape.
+                return result
+
+        py_instance = None if instance is None else instance._impl
+        _webbrowser.register(
+            name._value, py_ctor, py_instance, preferred=bool(preferred)
+        )
+        return none
