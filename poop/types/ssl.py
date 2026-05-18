@@ -115,6 +115,35 @@ class SSL:
     CERT_OPTIONAL: ClassVar[Int] = Int(int(_ssl.CERT_OPTIONAL))
     CERT_REQUIRED: ClassVar[Int] = Int(int(_ssl.CERT_REQUIRED))
 
+    # Purpose enum members (raw int values).
+    PURPOSE_SERVER_AUTH: ClassVar[Any] = _ssl.Purpose.SERVER_AUTH
+    PURPOSE_CLIENT_AUTH: ClassVar[Any] = _ssl.Purpose.CLIENT_AUTH
+
+    # OP_* options (bitmask flags on SSLContext.options).
+    OP_ALL: ClassVar[Int] = Int(int(_ssl.OP_ALL))
+    OP_NO_COMPRESSION: ClassVar[Int] = Int(int(_ssl.OP_NO_COMPRESSION))
+    OP_NO_TICKET: ClassVar[Int] = Int(int(_ssl.OP_NO_TICKET))
+    OP_NO_SSLv2: ClassVar[Int] = Int(int(_ssl.OP_NO_SSLv2))
+    OP_NO_SSLv3: ClassVar[Int] = Int(int(_ssl.OP_NO_SSLv3))
+    OP_NO_TLSv1: ClassVar[Int] = Int(int(_ssl.OP_NO_TLSv1))
+    OP_NO_TLSv1_1: ClassVar[Int] = Int(int(_ssl.OP_NO_TLSv1_1))
+    OP_NO_TLSv1_2: ClassVar[Int] = Int(int(_ssl.OP_NO_TLSv1_2))
+    OP_NO_TLSv1_3: ClassVar[Int] = Int(int(_ssl.OP_NO_TLSv1_3))
+    OP_CIPHER_SERVER_PREFERENCE: ClassVar[Int] = Int(
+        int(_ssl.OP_CIPHER_SERVER_PREFERENCE)
+    )
+    OP_SINGLE_DH_USE: ClassVar[Int] = Int(int(_ssl.OP_SINGLE_DH_USE))
+    OP_SINGLE_ECDH_USE: ClassVar[Int] = Int(int(_ssl.OP_SINGLE_ECDH_USE))
+
+    # HAS_* capability flags.
+    HAS_SSLv2: ClassVar[Boolean] = true if _ssl.HAS_SSLv2 else false
+    HAS_SSLv3: ClassVar[Boolean] = true if _ssl.HAS_SSLv3 else false
+    HAS_TLSv1: ClassVar[Boolean] = true if _ssl.HAS_TLSv1 else false
+    HAS_TLSv1_1: ClassVar[Boolean] = true if _ssl.HAS_TLSv1_1 else false
+    HAS_TLSv1_2: ClassVar[Boolean] = true if _ssl.HAS_TLSv1_2 else false
+    HAS_TLSv1_3: ClassVar[Boolean] = true if _ssl.HAS_TLSv1_3 else false
+    HAS_ALPN: ClassVar[Boolean] = true if _ssl.HAS_ALPN else false
+
     # Errors
     SSLError: ClassVar[type[BaseException]] = _ssl.SSLError
     SSLZeroReturnError: ClassVar[type[BaseException]] = _ssl.SSLZeroReturnError
@@ -125,6 +154,31 @@ class SSL:
     SSLCertVerificationError: ClassVar[type[BaseException]] = (
         _ssl.SSLCertVerificationError
     )
+    CertificateError: ClassVar[type[BaseException]] = _ssl.CertificateError
+
+    @staticmethod
+    def DER_cert_to_PEM_cert(der_cert_bytes: Bytes, /) -> Str:
+        return Str(_ssl.DER_cert_to_PEM_cert(der_cert_bytes._value))
+
+    @staticmethod
+    def PEM_cert_to_DER_cert(pem_cert_string: Str, /) -> Bytes:
+        return Bytes(_ssl.PEM_cert_to_DER_cert(pem_cert_string._value))
+
+    @staticmethod
+    def get_server_certificate(
+        addr: Any,
+        ssl_version: Any = None,
+        ca_certs: Str | None = None,
+        timeout: Any = None,
+    ) -> Str:
+        kwargs: dict[str, Any] = {}
+        if ssl_version is not None:
+            kwargs["ssl_version"] = ssl_version
+        if ca_certs is not None:
+            kwargs["ca_certs"] = ca_certs._value
+        if timeout is not None:
+            kwargs["timeout"] = timeout
+        return Str(_ssl.get_server_certificate(addr, **kwargs))
 
     @staticmethod
     def create_default_context(

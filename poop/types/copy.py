@@ -12,14 +12,12 @@ class Copy:
     `Try.except_(...)`.
 
     `deepcopy`'s `memo` parameter (an id-keyed dict CPython uses to
-    track recursive identities during traversal) is **not** surfaced
-    in POOP — it's a CPython implementation detail with no clean
-    type-discipline mapping (the dict is keyed by `id(obj)`, an
-    `int`, not a POOP key). Callers wanting custom memoization can
-    implement `__deepcopy__` on their POOP class.
+    track recursive identities during traversal) is exposed as an
+    opaque passthrough; user code typically leaves it `None` and
+    overrides `__deepcopy__` on the POOP class for custom memoization.
 
-    `copy.replace` (3.13+) is out of scope for v1; deferred to
-    Future work.
+    `copy.replace(obj, **changes)` (3.13+) is exposed for POOP classes
+    that implement `__replace__` (dataclass-style or hand-rolled).
     """
 
     Error: ClassVar[type[Exception]] = _copy.Error
@@ -31,3 +29,7 @@ class Copy:
     @staticmethod
     def deepcopy(x: Any, memo: Any = None) -> Any:
         return _copy.deepcopy(x, memo)
+
+    @staticmethod
+    def replace(obj: Any, /, **changes: Any) -> Any:
+        return _copy.replace(obj, **changes)

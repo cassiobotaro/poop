@@ -44,22 +44,6 @@ set (`filename`, `filemode`, `datefmt`, `style`, `handlers`,
 `force`, `encoding`, `errors`, `stream`) ships together with the
 Handler/Filter wrappers.
 
-### TLS / SSL (`ssl` 33)
-
-POOP currently exposes `SSLContext` with the most-used surface and
-the verify-mode / protocol constants. Deferred: the `Purpose` /
-`Options` / `VerifyFlags` / `VerifyMode` enums (currently passed
-as raw `Int`), the `HAS_*` capability constants
-(`HAS_SSLv2`/`HAS_TLSv1`/`HAS_TLSv1_3`/etc.), the legacy protocol
-constants (`PROTOCOL_SSLv23`/`PROTOCOL_TLSv1*`), `MemoryBIO`,
-`SSLObject`, `SSLSession`, the cert-conversion helpers
-(`DER_cert_to_PEM_cert` / `PEM_cert_to_DER_cert` /
-`get_server_certificate`), `enum_certificates` /
-`enum_crls`, and the per-error error-number constants
-(`SSLErrorNumber`, `AlertDescription`). Expose as a single
-extension when a real TLS-server or low-level cert use case
-surfaces.
-
 ### Archive format extras (`zipfile` 24, `tarfile` 17, `gzip` 2)
 
 POOP exposes `ZipFile` / `TarFile` / `GzipFile` with the read /
@@ -103,16 +87,6 @@ exposed. Deferred: `EnumDict`, `EnumType`, `EnumMeta`, `EJECT`,
 `property` (the enum-specific descriptor), `verify`, `unique`,
 `pickle_by_enum_name`, `pickle_by_global_name`. Most are Py3.11+
 extension hooks — defer until used.
-
-### Threading / concurrency primitives (`threading` 11, `queue` 1, `timeit` 6)
-
-POOP exposes `Thread`, `Lock`, `RLock`, `Event`, `Semaphore`,
-`Barrier`. Deferred from `threading`: `Condition`, `BoundedSemaphore`,
-`Timer`, `local`, `excepthook`, `get_native_id`, `main_thread`,
-`stack_size`, `_dangling`, `setprofile_all_threads`,
-`settrace_all_threads`. `queue` defers `ShutDown` (Py 3.13+). The
-`timeit` deferrals (`Timer.print_exc`, `default_number`,
-`reindent`, `template`) are private/internal.
 
 ### Date / time / zone extras (`time` 9, `datetime` 2, `zoneinfo` 1)
 
@@ -227,24 +201,6 @@ attributes `.commenters`/`.wordchars`/`.whitespace`/`.escape`/
 `.pop_source`) is deferred until a real caller needs it. Adding
 each of these is a small additional method or property delegating
 to `self._impl`.
-
-### `copy.replace` and `deepcopy(obj, memo)` — from the `copy` proposal (v0.19.0)
-
-Two deferrals from v0.19.0:
-
-- **`copy.replace(obj, /, **kwargs)`** (Python 3.13+) — a shortcut
-  for "build a new instance with these field updates" on
-  dataclasses / NamedTuple / classes that implement `__replace__`.
-  POOP classes don't use decorators (no `dataclasses` story), and
-  `__replace__` is a recent addition; defer until a real caller
-  surfaces.
-- **`deepcopy(obj, memo)`** — the `memo` parameter is a CPython
-  implementation detail (an `id(obj)`-keyed dict tracking
-  recursive identities during traversal). It has no clean type-
-  discipline mapping because POOP `Dict` keys are POOP `Object`,
-  not `int`. v0.19.0 ships `deepcopy(obj)` without `memo`; callers
-  needing custom memoization should implement `__deepcopy__` on
-  their POOP class instead.
 
 ### Optional base64 kwargs — from the `base64` proposal (v0.13.0)
 
