@@ -49,16 +49,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.slice import Slice
 
         if isinstance(start_or_slice, Slice):
-            s = (
-                start_or_slice._step._value
-                if start_or_slice._step is not None
-                else None
-            )
-            return List(
-                *self._items[
-                    start_or_slice._start._value : start_or_slice._stop._value : s
-                ]
-            )
+            return List(*self._items[start_or_slice._py_slice()])
         if stop is None:
             raise TypeError("stop is required when start is an Int")
         s = step._value if step is not None else None

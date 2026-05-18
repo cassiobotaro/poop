@@ -183,3 +183,57 @@ def test_same_slice_applied_to_multiple_collections() -> None:
         Int(10), Int(20), Int(30)
     )
     assert Str("POOP").slice(window) == Str("POO")
+
+
+# --- None / none for start/stop/step ---
+
+
+def test_slice_none_start_means_from_beginning() -> None:
+    s = Slice(None, Int(3))
+    assert s._start is None
+    assert s._stop == Int(3)
+    assert List(Int(1), Int(2), Int(3), Int(4)).slice(s) == List(Int(1), Int(2), Int(3))
+
+
+def test_slice_none_stop_means_to_end() -> None:
+    s = Slice(Int(1), None)
+    assert s._start == Int(1)
+    assert s._stop is None
+    assert List(Int(1), Int(2), Int(3)).slice(s) == List(Int(2), Int(3))
+
+
+def test_slice_all_none_is_full_copy() -> None:
+    s = Slice()
+    assert List(Int(1), Int(2), Int(3)).slice(s) == List(Int(1), Int(2), Int(3))
+
+
+def test_slice_accepts_poop_none() -> None:
+    s = Slice(none, Int(2))
+    assert s._start is None
+    assert List(Int(1), Int(2), Int(3)).slice(s) == List(Int(1), Int(2))
+
+
+def test_slice_accessors_return_none_when_unset() -> None:
+    s = Slice(None, Int(5))
+    assert s.start() is none
+    assert s.stop() == Int(5)
+
+
+def test_slice_indices_with_none() -> None:
+    assert Slice(None, Int(3)).indices(Int(5)) == Tuple(Int(0), Int(3), Int(1))
+    assert Slice(Int(1), None).indices(Int(5)) == Tuple(Int(1), Int(5), Int(1))
+
+
+def test_slice_str_with_none() -> None:
+    assert str(Slice(None, Int(3))) == "Slice(None, 3)"
+    assert str(Slice(None, None, Int(2))) == "Slice(None, None, 2)"
+
+
+def test_slice_with_none_step_negative_reverses() -> None:
+    s = Slice(None, None, Int(-1))
+    assert List(Int(1), Int(2), Int(3)).slice(s) == List(Int(3), Int(2), Int(1))
+
+
+def test_slice_eq_with_none_fields() -> None:
+    assert Slice(None, Int(3)) == Slice(None, Int(3))
+    assert Slice(None, Int(3)) != Slice(Int(0), Int(3))

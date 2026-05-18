@@ -17,47 +17,54 @@ _slice = slice  # alias to avoid shadowing by Slice class name
 class Slice(Object):
     __slots__ = ("_start", "_stop", "_step")
 
-    def __init__(self, start: Int, stop: Int, step: Int | None = None) -> None:
-        self._start = start
-        self._stop = stop
-        self._step = step
+    def __init__(
+        self,
+        start: Int | NoneClass | None = None,
+        stop: Int | NoneClass | None = None,
+        step: Int | NoneClass | None = None,
+    ) -> None:
+        self._start: Int | None = _coerce(start)
+        self._stop: Int | None = _coerce(stop)
+        self._step: Int | None = _coerce(step)
 
-    def start(self) -> Int:
-        return self._start
+    def start(self) -> Int | NoneClass:
+        from poop.types.none import none
 
-    def stop(self) -> Int:
-        return self._stop
+        return self._start if self._start is not None else none
+
+    def stop(self) -> Int | NoneClass:
+        from poop.types.none import none
+
+        return self._stop if self._stop is not None else none
 
     def step(self) -> Int | NoneClass:
         from poop.types.none import none
 
         return self._step if self._step is not None else none
 
+    def _py_slice(self) -> slice:
+        return _slice(
+            self._start._value if self._start is not None else None,
+            self._stop._value if self._stop is not None else None,
+            self._step._value if self._step is not None else None,
+        )
+
     def indices(self, length: Int) -> Tuple:
         from poop.types.int import Int
         from poop.types.tuple import Tuple
 
-        step = self._step._value if self._step is not None else None
-        start, stop, step = _slice(self._start._value, self._stop._value, step).indices(
-            length._value
-        )
+        start, stop, step = self._py_slice().indices(length._value)
         return Tuple(Int(start), Int(stop), Int(step))
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, Slice):
-            if self._step is None and other._step is None:
-                step_eq = True
-            elif self._step is not None and other._step is not None:
-                step_eq = bool(self._step == other._step)
-            else:
-                step_eq = False
-            return (
-                true
-                if bool(self._start == other._start)
-                and bool(self._stop == other._stop)
-                and step_eq
-                else false
-            )
+            if (
+                _field_eq(self._start, other._start)
+                and _field_eq(self._stop, other._stop)
+                and _field_eq(self._step, other._step)
+            ):
+                return true
+            return false
         return false
 
     def __ne__(self, other: object) -> Boolean:
@@ -70,10 +77,33 @@ class Slice(Object):
 
     def __str__(self) -> str:
         if self._step is None:
-            return f"Slice({self._start}, {self._stop})"
-        return f"Slice({self._start}, {self._stop}, {self._step})"
+            return f"Slice({_field_str(self._start)}, {_field_str(self._stop)})"
+        return (
+            f"Slice({_field_str(self._start)}, {_field_str(self._stop)}, "
+            f"{_field_str(self._step)})"
+        )
 
     __repr__ = __str__
+
+
+def _coerce(value: Int | NoneClass | None) -> Int | None:
+    from poop.types.none import NoneClass
+
+    if value is None or isinstance(value, NoneClass):
+        return None
+    return value
+
+
+def _field_eq(a: Int | None, b: Int | None) -> bool:
+    if a is None and b is None:
+        return True
+    if a is None or b is None:
+        return False
+    return bool(a == b)
+
+
+def _field_str(value: Int | None) -> str:
+    return "None" if value is None else str(value)
 
 
 Slice.__module__ = "builtins"
