@@ -60,6 +60,34 @@ Constants that CPython exposes only on some platforms (`socket.AF_UNIX`, `signal
 
 Every exception class that CPython raises through the wrapped surface and that a POOP user might reasonably pass to `Try.except_(...)` is exposed on the wrapping namespace. `json.JSONDecodeError`, `subprocess.CalledProcessError`, `ssl.SSLError`, `urllib.URLError` — all surface. Internal-only error classes (CPython's `_ssl.SSLError` aliases, `_socket.error` aliases) stay hidden.
 
+## Permanent divergences from CPython
+
+Surfaces POOP intentionally does not mirror — not deferred, not a backlog item, decided out. User code that wants any of these calls into raw CPython (POOP doesn't sandbox you out of `import`-on-the-Python-side; it just doesn't bless these via the POOP namespace).
+
+### No file-descriptor I/O
+
+POOP file I/O routes through `Path`. The CPython fd-integer ABI (`os.open` / `os.close` / `os.read` / `os.write` / `os.dup` / `os.dup2` / `os.pipe` / `os.fdopen` / `os.closerange` / `os.lseek` / `os.fsync` / `os.fdatasync` / `os.ftruncate` / `os.fchmod` / `os.fchown` / `os.fstat` / `os.openpty` / `os.eventfd*` / `os.memfd_create` / `os.pidfd_open` / `signal.set_wakeup_fd`, etc.) stays out. Same for the `*at`-suffixed dir-fd variants (`os.openat`, `os.linkat`, `os.unlinkat`, `os.symlinkat`, `os.fchmodat`, `os.fchownat`, `os.fstatat`, …). Use `Path` and `With(Path(...).open(...))`.
+
+### No process replacement / forking
+
+`Subprocess` and `Multiprocessing` cover the daily-use surface. The lower-level `os.exec*` family (`execv` / `execve` / `execvp` / `execvpe` / `execl` / `execle` / `execlp` / `execlpe`), `os.fork` / `os.forkpty`, `os.posix_spawn` / `os.posix_spawnp`, `os.wait*` (`waitpid` / `wait3` / `wait4` / `waitstatus_to_exitcode`), `os.spawn*` (`spawnv*` / `spawnl*` / `spawnvp*` / `spawnlp*`), and `os.startfile` stay out. Same for scheduling (`os.sched_*`) and resource-priority knobs (`os.nice`, `os.getpriority`, `os.setpriority`).
+
+### No frame-model / refcount / audit introspection
+
+POOP intentionally hides CPython's frame model. `sys.getframe` / `sys._getframe` / `sys._current_frames`, `sys.getrefcount`, `sys.gettrace` / `sys.settrace` / `sys.setprofile`, `sys.audit` / `sys.addaudithook`, `sys.monitoring`, `sys.set_coroutine_origin_tracking_depth`, `sys.set_asyncgen_hooks`, `gc.get_referents` / `gc.get_referrers` / `gc.get_stats` / `gc.set_debug` all stay out. POOP debuggers/profilers are a non-goal — use CPython tools directly on the Python side if you need them.
+
+### No `async for` / `async with` / async generators
+
+`async def` and `await` survive (v0.52.0). The async-flavoured control structures stay banned permanently — POOP-native iteration goes through the `Future` API (`AsyncIO.gather`/`wait_for`/`shield` returning a `Future` you `await`); the synchronous `do`-style works fine inside `async def` once results are awaited. The validator bans (`no_loops` blocks `async for`, `no_with` blocks `async with`, `no_yield` blocks async generators) are by design.
+
+### No `Random` state inspection
+
+`Random.seed(a, version)` is the supported determinism story. `Random.getstate()` and `Random.setstate(state)` stay out — the CPython state tuple is a 625-element Mersenne Twister internal that has no clean POOP type-discipline mapping. If you need exact replay, capture the seed.
+
+### No `GetPassWarning`
+
+`getpass.getpass` emits a `UserWarning` (CPython's `GetPassWarning`) to stderr when echo-suppression fails on the underlying TTY. POOP has no `warnings` model, so the warning is unobservable through the POOP namespace; user code cannot catch or filter it. Upgrading the warning to a raised POOP `Error` would diverge from CPython's actual behaviour — not worth the divergence.
+
 ## Active infections
 
 ### No `if` — `poop/validators/no_if.py`

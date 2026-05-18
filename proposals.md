@@ -13,33 +13,14 @@ currently curates out. They are regrouped below into proposal-shaped
 chunks so each area can be picked up independently when a real caller
 surfaces.
 
-### POSIX low-level surface (`os` 204, `sys` 57, `signal` 8, `resource` 1, `gc` 6, `pwd` 1, `grp` 1, `pstats` 10)
+### POSIX low-level surface (`os`, `sys`, `signal`, `gc`, `pwd`, `grp`) — minus the parts marked out forever
 
-POOP's `os` is a thin curated wrapper: it relies on `Path` for file
-I/O and exposes only the environment / cwd / process-info methods.
-Everything fd-based (`os.open`, `dup`, `dup2`, `pipe`, `read`,
-`write`, `close`, `closerange`, `fdopen`), the `exec*` family
-(`execv*`, `execl*`, `posix_spawn*`), the `fork`/`waitpid`/`spawn*`
-process-control surface, scheduling helpers (`sched_*`), and the
-permission helpers (`chmod`, `chown`, `chroot`, `umask`) all stay
-deferred until a real caller surfaces. POOP would either have to
-mirror the fd integer ABI (uncomfortable — fds are not `Path`) or
-invent a `FileDescriptor` POOP type; pick the path when a user
-forces the choice.
+The fd-based I/O / `exec*` / `fork`+`spawn*` / `sys` frame-and-audit hooks moved to INFECTIONS.md§Permanent-divergences-from-CPython. What remains here is the surface POOP could still wrap when a caller asks:
 
-`sys` defers everything that requires Python-level introspection
-(`getframe`, `getrefcount`, `gettrace`, `settrace`, `setprofile`,
-`audit`, `addaudithook`, `_getframe`, `_current_frames`,
-`monitoring`). The hooks integrate with CPython's frame model, which
-POOP intentionally hides. Defer until a debugger or profiler that
-needs them lands.
-
-`signal` defers `set_wakeup_fd`, `siginterrupt`, `sigwait`,
-`pthread_sigmask`, `sigwaitinfo`, `sigtimedwait` (advanced async
-signal handling). `gc` defers `get_referents`/`get_referrers`,
-`get_stats`, `set_debug` (introspection). `pwd.getpwall` and
-`grp.getgrall` defer (rarely needed). `pstats` defers everything
-except `Stats` (the SortKey enum, helpers like `add`, `print_callees`).
+- `signal.siginterrupt`, `signal.sigwait`, `signal.pthread_sigmask`, `signal.sigwaitinfo`, `signal.sigtimedwait` — synchronous signal-wait helpers (no fd dependency).
+- `pwd.getpwall`, `grp.getgrall` — listing variants.
+- `pstats` — the `SortKey` enum and `Stats.add`/`.print_callees`/etc. Pair with the `profile` proposal if it ever expands.
+- `os` permission helpers (`chmod`, `chown`, `chroot`, `umask`) — Path-compatible already; could surface on `Path` rather than on the `os` namespace.
 
 ### Logging framework (`logging` 35)
 
@@ -211,35 +192,6 @@ when a caller forces the question.
 Items deferred from shipped proposals that need their own follow-up
 once a prerequisite exists.
 
-### `async for` / `async with` / async generators — from the async-ban decision (v0.52.0)
-
-v0.52.0 dropped `NoAsyncValidator` so `async def` methods and `await`
-expressions now pass the pipeline. The async-flavoured control
-structures stayed banned by their existing validators (`async for` by
-`no_loops`, `async with` by `no_with`, async generators indirectly via
-`no_yield`). Lifting any of these requires a separate decision plus
-likely a new POOP-side idiom (`do`-style iteration over async
-iterables, `With` adapter for async context managers, etc.). Deferred
-until a concrete caller surfaces.
-
-### `Random.getstate()` / `Random.setstate(state)` — from the `random` proposal (v0.7.0)
-
-Python's `random.Random.getstate()` returns a tuple of the form
-`(version, internal_state, gauss_next)` where `internal_state` is a
-**625-element tuple of ints** carrying the Mersenne Twister state.
-POOP's type discipline forbids leaking raw Python primitives across
-the namespace boundary, but wrapping every state int into a POOP
-`Int` is pure overhead — nobody inspects the state; it exists only
-to round-trip into `setstate`. The cleanest path requires either an
-opaque-state POOP type that pickles/unpickles via Bytes, or a
-sanctioned divergence allowing the raw tuple through (the user never
-sees what's inside).
-
-For v1, `.seed(a, version)` covers the 95% case of determinism. The
-state pair is deferred until a concrete user need surfaces — at
-which point the trade-off (opaque-Bytes type vs. raw-tuple
-divergence) can be decided with real requirements in hand.
-
 ### TOML date/time/datetime narrowing + `parse_float` — from the `tomllib` proposal (v0.26.0)
 
 v0.26.0 ships `tomllib.loads`/`load` with full POOP-type round-trip
@@ -334,21 +286,4 @@ non-bool flag.
 Legacy file-oriented helpers (`base64.encode`, `decode`,
 `encodebytes`, `decodebytes`) are intentionally out of scope — POOP
 routes file I/O through `Path`.
-
-### `GetPassWarning` — from the `getpass` proposal (v0.11.0)
-
-Python's `getpass.GetPassWarning` is emitted (not raised) when the
-echo-suppression call fails on the underlying TTY. It is a
-`UserWarning` subclass surfaced via the `warnings` module — a model
-POOP does not have (see `warnings` in INFECTIONS.md's "Stdlib
-coverage" tables: "out").
-v0.11.0 ships `getpass.getpass` and `getpass.getuser` but does not
-expose `GetPassWarning`; the underlying CPython call still emits the
-warning to stderr, POOP user code just cannot catch or filter it.
-
-A proper exposure would require either (a) a POOP `Warning`/`Stream`
-story to mirror `warnings.filterwarnings` and friends, or (b)
-upgrading the warning to a raised `Error` and letting POOP's `Try`
-catch it — diverging from Python's actual behavior. Deferred until
-a concrete user need surfaces.
 
