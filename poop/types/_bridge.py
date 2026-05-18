@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from poop.types.boolean import Boolean, false, true
+from poop.types.byte_array import ByteArray
+from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
@@ -20,8 +22,10 @@ def to_python(obj: Any) -> Any:
         return None
     if isinstance(obj, Boolean):
         return bool(obj)
-    if isinstance(obj, (Int, Float, Str)):
+    if isinstance(obj, (Int, Float, Str, Bytes)):
         return obj._value
+    if isinstance(obj, ByteArray):
+        return bytearray(obj._value)
     if isinstance(obj, List):
         return [to_python(item) for item in obj._items]
     if isinstance(obj, Tuple):
@@ -34,7 +38,7 @@ def to_python(obj: Any) -> Any:
     return obj
 
 
-def to_poop(value: Any) -> Any:
+def to_poop(value: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
     if value is None:
         return none
     if isinstance(value, bool):
@@ -45,6 +49,10 @@ def to_poop(value: Any) -> Any:
         return Float(value)
     if isinstance(value, str):
         return Str(value)
+    if isinstance(value, bytearray):
+        return ByteArray(value)
+    if isinstance(value, bytes):
+        return Bytes(value)
     if isinstance(value, list):
         return List(*(to_poop(v) for v in value))
     if isinstance(value, tuple):

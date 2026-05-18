@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import sqlite3 as _sqlite3
+from collections.abc import Callable
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types._bridge import bridge
 from poop.types._unwrap import _unwrap
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, false
 from poop.types.bytes import Bytes
 from poop.types.float import Float
 from poop.types.int import Int
@@ -221,6 +223,32 @@ class Connection(Object):
         )
         return none
 
+    def create_function(
+        self,
+        name: Str,
+        narg: Int,
+        func: Callable[..., Any],
+        *,
+        deterministic: Boolean = false,
+    ) -> NoneClass:
+        self._impl.create_function(
+            name._value,
+            narg._value,
+            bridge(func),
+            deterministic=bool(deterministic),
+        )
+        return none
+
+    def create_collation(
+        self,
+        name: Str,
+        callable_: Callable[..., Any] | None,
+    ) -> NoneClass:
+        # CPython allows None to remove a previously registered collation.
+        adapter = None if callable_ is None else bridge(callable_)
+        self._impl.create_collation(name._value, adapter)
+        return none
+
     def __enter__(self) -> Self:
         self._impl.__enter__()
         return self
@@ -256,6 +284,26 @@ class Sqlite3:
     InternalError: ClassVar[type[Exception]] = _sqlite3.InternalError
     ProgrammingError: ClassVar[type[Exception]] = _sqlite3.ProgrammingError
     NotSupportedError: ClassVar[type[Exception]] = _sqlite3.NotSupportedError
+
+    @staticmethod
+    def register_adapter(type_: type, adapter: Callable[..., Any]) -> NoneClass:
+        """Teach sqlite3 how to convert `type_` into a value it can store.
+
+        The adapter block receives a POOP-wrapped value and returns the
+        Python primitive sqlite3 should write to the database — the
+        bridge handles `to_poop` on input and `to_python` on output.
+        """
+        _sqlite3.register_adapter(type_, bridge(adapter))
+        return none
+
+    @staticmethod
+    def register_converter(typename: Str, converter: Callable[..., Any]) -> NoneClass:
+        """Teach sqlite3 how to decode a stored value for the SQL column
+        type `typename`. The converter receives the raw `Bytes` payload
+        and returns the value to surface to user code.
+        """
+        _sqlite3.register_converter(typename._value, bridge(converter))
+        return none
 
     @staticmethod
     def connect(

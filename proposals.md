@@ -24,11 +24,15 @@ Shipped consumers:
 - **difflib** — `SequenceMatcher(isjunk=, autojunk=)`.
 - **shutil** — `copytree(ignore=, copy_function=)`, `move(copy_function=)`,
   and `Shutil.ignore_patterns(*patterns)` returns a drop-in `Block`.
+- **sqlite3** — `Connection.create_function`, `Connection.create_collation`,
+  `Sqlite3.register_adapter`, `Sqlite3.register_converter`.
+  `create_aggregate` still deferred (needs class-with-methods bridging).
+- **`to_poop`/`to_python`** now also wrap `bytes`/`bytearray` ↔
+  `Bytes`/`ByteArray` (needed by `register_converter`).
 
 Still pending (each waits for a real caller):
-sqlite3 `create_function`/`create_aggregate`/`create_collation`/
-`register_adapter`/`register_converter`; pickle `Pickler.persistent_id`
-/ `dispatch_table` / `Unpickler.persistent_load`; webbrowser
+sqlite3 `create_aggregate`; pickle `Pickler.persistent_id` /
+`dispatch_table` / `Unpickler.persistent_load`; webbrowser
 `register(constructor=)`; os `walk(onerror=)`; signal `signal(handler=)`.
 
 Out of scope (now and later): async callbacks (covered by `AsyncIO`),

@@ -3,7 +3,9 @@ import sqlite3 as _sqlite3
 import pytest
 
 from poop.interpreter import Interpreter
-from poop.types.boolean import false
+from poop.types.block import Block
+from poop.types.boolean import false, true
+from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
@@ -376,3 +378,94 @@ def test_try_catches_integrity_error() -> None:
         Sqlite3.IntegrityError, lambda e: captured.append(e.kind())
     ).run()
     assert len(captured) == 1
+
+
+# --- Bridge consumers: callbacks ---
+
+
+def test_create_function_routes_through_bridge() -> None:
+    seen: list[Str] = []
+
+    def shout(s: Str) -> Str:
+        seen.append(s)
+        return Str(s._value.upper())
+
+    con = Sqlite3.connect(Str(":memory:"))
+    con.create_function(Str("shout"), Int(1), Block(shout))
+    cur = con.execute(Str("SELECT shout('hi')"))
+    row = cur.fetchone()
+    assert isinstance(row, Tuple)
+    assert row.at(Int(0)) == Str("HI")
+    assert seen == [Str("hi")]
+
+
+def test_create_function_deterministic_kwarg() -> None:
+    con = Sqlite3.connect(Str(":memory:"))
+    con.create_function(Str("two"), Int(0), Block(lambda: Int(2)), deterministic=true)
+    cur = con.execute(Str("SELECT two()"))
+    assert cur.fetchone().at(Int(0)) == Int(2)
+
+
+def test_create_collation_routes_through_bridge() -> None:
+    # Sort strings by length, ties by codepoint.
+    def by_len(a: Str, b: Str) -> Int:
+        la, lb = len(a._value), len(b._value)
+        if la != lb:
+            return Int(-1) if la < lb else Int(1)
+        if a._value == b._value:
+            return Int(0)
+        return Int(-1) if a._value < b._value else Int(1)
+
+    con = Sqlite3.connect(Str(":memory:"))
+    con.create_collation(Str("BYLEN"), Block(by_len))
+    con.execute(Str("CREATE TABLE w(s TEXT)"))
+    for word in ("ccc", "a", "bb"):
+        con.execute(Str("INSERT INTO w VALUES (?)"), Tuple(Str(word)))
+    cur = con.execute(Str("SELECT s FROM w ORDER BY s COLLATE BYLEN"))
+    assert [r.at(Int(0)) for r in cur.fetchall()._items] == [
+        Str("a"),
+        Str("bb"),
+        Str("ccc"),
+    ]
+
+
+def test_create_collation_none_removes_registration() -> None:
+    con = Sqlite3.connect(Str(":memory:"))
+    con.create_collation(Str("MYCOLL"), Block(lambda a, b: Int(0)))
+    # Removing it should not raise.
+    assert con.create_collation(Str("MYCOLL"), None) is none
+
+
+def test_register_adapter_routes_through_bridge() -> None:
+    from poop.types.object import Object
+
+    class Money(Object):
+        __slots__ = ("cents",)
+
+        def __init__(self, cents: int) -> None:
+            self.cents = cents
+
+    def adapt(m: Money) -> Int:
+        # The bridge wraps the Money into POOP (opaque pass-through),
+        # then we return a POOP Int — bridge unwraps to int for storage.
+        return Int(m.cents)
+
+    Sqlite3.register_adapter(Money, Block(adapt))
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE p(amount INTEGER)"))
+    con.execute(Str("INSERT INTO p VALUES (?)"), Tuple(Money(199)))
+    cur = con.execute(Str("SELECT amount FROM p"))
+    assert cur.fetchone().at(Int(0)) == Int(199)
+
+
+def test_register_converter_routes_through_bridge() -> None:
+    def revert(raw: Bytes) -> Str:
+        # Bridge wraps raw bytes to POOP Bytes, hand back a POOP Str.
+        return Str(raw._value.decode("utf-8")[::-1])
+
+    Sqlite3.register_converter(Str("REVERSED"), Block(revert))
+    con = Sqlite3.connect(Str(":memory:"), detect_types=Sqlite3.PARSE_DECLTYPES)
+    con.execute(Str("CREATE TABLE r(v REVERSED)"))
+    con.execute(Str("INSERT INTO r VALUES (?)"), Tuple(Str("abc")))
+    cur = con.execute(Str("SELECT v FROM r"))
+    assert cur.fetchone().at(Int(0)) == Str("cba")

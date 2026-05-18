@@ -3,6 +3,8 @@ import pytest
 from poop.types._bridge import bridge, to_poop, to_python
 from poop.types.block import Block
 from poop.types.boolean import Boolean, false, true
+from poop.types.byte_array import ByteArray
+from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
@@ -73,6 +75,18 @@ def test_to_python_opaque_pass_through() -> None:
     assert to_python(m) is m
 
 
+def test_to_python_bytes() -> None:
+    result = to_python(Bytes(b"hi"))
+    assert result == b"hi"
+    assert isinstance(result, bytes)
+
+
+def test_to_python_bytearray() -> None:
+    result = to_python(ByteArray(b"hi"))
+    assert result == bytearray(b"hi")
+    assert isinstance(result, bytearray)
+
+
 # --- to_poop ---
 
 
@@ -125,6 +139,18 @@ def test_to_poop_opaque_pass_through() -> None:
 
     m = Marker()
     assert to_poop(m) is m
+
+
+def test_to_poop_bytes() -> None:
+    result = to_poop(b"hi")
+    assert isinstance(result, Bytes)
+    assert result == Bytes(b"hi")
+
+
+def test_to_poop_bytearray() -> None:
+    result = to_poop(bytearray(b"hi"))
+    assert isinstance(result, ByteArray)
+    assert result._value == bytearray(b"hi")
 
 
 def test_round_trip_python_poop_python() -> None:
