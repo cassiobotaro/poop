@@ -350,3 +350,133 @@ def test_logging_via_interpreter() -> None:
     Interpreter().run_source(
         'logger = logging.getLogger("poop.test.via")\nlogger.info("hi")'
     )
+
+
+# --- LogRecord wrapper ---
+
+
+def test_log_record_exposes_poop_typed_fields() -> None:
+    raw = _stdlib_logging.LogRecord(
+        name="test",
+        level=_stdlib_logging.INFO,
+        pathname="x.py",
+        lineno=10,
+        msg="hello %s",
+        args=("world",),
+        exc_info=None,
+    )
+    from poop.types.logging import LogRecord
+
+    rec = LogRecord(raw)
+    assert rec.name == Str("test")
+    assert rec.levelname == Str("INFO")
+    assert rec.levelno == Int(_stdlib_logging.INFO)
+    assert rec.getMessage() == Str("hello world")
+
+
+def test_logging_log_record_class_ref() -> None:
+    from poop.types.logging import LogRecord
+
+    assert Logging.LogRecord is LogRecord
+
+
+# --- LoggerAdapter ---
+
+
+def test_logger_adapter_passes_extra_through() -> None:
+    from poop.types.dict import Dict
+    from poop.types.logging import LoggerAdapter
+
+    logger = Logging.getLogger(Str("poop.test.adapter"))
+    adapter = LoggerAdapter(logger, Dict().at_put(Str("user"), Str("alice")))
+    assert adapter.info(Str("hi")) is none
+
+
+def test_logging_logger_adapter_class_ref() -> None:
+    from poop.types.logging import LoggerAdapter
+
+    assert Logging.LoggerAdapter is LoggerAdapter
+
+
+# --- Module-level toggles ---
+
+
+def test_logging_raise_exceptions_toggle() -> None:
+    original = Logging.raiseExceptions
+    try:
+        Logging.raiseExceptions = false
+        assert Logging.raiseExceptions is false
+        assert _stdlib_logging.raiseExceptions is False
+        Logging.raiseExceptions = true
+        assert Logging.raiseExceptions is true
+    finally:
+        Logging.raiseExceptions = original
+
+
+def test_logging_log_threads_toggle() -> None:
+    original = Logging.logThreads
+    try:
+        Logging.logThreads = false
+        assert _stdlib_logging.logThreads is False
+    finally:
+        Logging.logThreads = original
+
+
+# --- Module-level functions ---
+
+
+def test_logging_disable_returns_none() -> None:
+    assert Logging.disable(Logging.WARNING) is none
+    # Re-enable everything for subsequent tests.
+    Logging.disable(Int(0))
+
+
+def test_logging_capture_warnings_returns_none() -> None:
+    assert Logging.captureWarnings(true) is none
+    Logging.captureWarnings(false)
+
+
+def test_make_log_record_from_dict() -> None:
+    from poop.types.dict import Dict
+    from poop.types.logging import LogRecord
+
+    d = Dict().at_put(Str("name"), Str("x")).at_put(Str("levelno"), Int(20))
+    rec = Logging.makeLogRecord(d)
+    assert isinstance(rec, LogRecord)
+    assert rec.name == Str("x")
+
+
+def test_get_level_names_mapping_includes_INFO() -> None:
+    from poop.types.dict import Dict
+
+    mapping = Logging.getLevelNamesMapping()
+    assert isinstance(mapping, Dict)
+    assert mapping.at(Str("INFO")) == Logging.INFO
+
+
+def test_get_handler_names_returns_list() -> None:
+    out = Logging.getHandlerNames()
+    assert isinstance(out, List)
+
+
+# --- Style classes / Filterer ---
+
+
+def test_logging_style_class_refs_match_stdlib() -> None:
+    assert Logging.PercentStyle is _stdlib_logging.PercentStyle
+    assert Logging.StrFormatStyle is _stdlib_logging.StrFormatStyle
+    assert Logging.StringTemplateStyle is _stdlib_logging.StringTemplateStyle
+
+
+def test_logging_filterer_class_ref() -> None:
+    assert Logging.Filterer is _stdlib_logging.Filterer
+
+
+# --- BufferingFormatter ---
+
+
+def test_buffering_formatter_constructs() -> None:
+    from poop.types.logging import BufferingFormatter
+
+    bf = BufferingFormatter()
+    assert isinstance(bf, _stdlib_logging.BufferingFormatter)
