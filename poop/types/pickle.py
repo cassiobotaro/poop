@@ -89,6 +89,14 @@ class Pickler(_pickle.Pickler):
     value and returns a POOP value (or `none` for "not persistent"),
     and the bridge layer unwraps the return for CPython.
 
+    `dispatch_table` is a write-bridged property: assign a POOP `Dict`
+    or a Python `dict` mapping `type` → reducer; each reducer value
+    that is a POOP `Block` is wrapped via `block.bridge` on assignment
+    and stored as a plain Python callable for CPython's pickle to
+    read. Class-level `dispatch_table = {...}` declarations in
+    subclasses are *not* auto-bridged in v1 — assign as an instance
+    attribute after construction.
+
     Construction takes the protocol level (default
     `pickle.DEFAULT_PROTOCOL`); `.dump(obj)` appends a pickled object to
     the internal buffer, and `.getvalue()` returns the accumulated
@@ -113,6 +121,40 @@ class Pickler(_pickle.Pickler):
                 return to_python(result)
 
             cls.persistent_id = wrapped_persistent_id  # type: ignore[method-assign]
+
+    # `_pickle.Pickler.dispatch_table` is a C-level getset descriptor backed
+    # by a struct field. A plain Python property would shadow it but leave
+    # the C field NULL, so the C `save` path would never see our entries.
+    # The property below delegates read/write to the parent's descriptor.
+    _parent_dispatch_table: Any = _pickle.Pickler.dispatch_table  # type: ignore[attr-defined]
+
+    @property
+    def dispatch_table(self) -> Any:  # type: ignore[override]
+        # Parent raises AttributeError when unset — preserve that contract.
+        return Pickler._parent_dispatch_table.__get__(self, type(self))
+
+    @dispatch_table.setter
+    def dispatch_table(self, table: Any) -> None:
+        if table is None or isinstance(table, NoneClass):
+            Pickler._parent_dispatch_table.__delete__(self)
+            return
+
+        from poop.types._bridge import bridge as _bridge_fn
+        from poop.types.block import Block
+
+        if isinstance(table, Dict):
+            entries: list[tuple[Any, Any]] = list(table._data.items())
+        elif isinstance(table, dict):
+            entries = list(table.items())
+        else:
+            raise TypeError(
+                f"dispatch_table must be a Dict or dict, got {type(table).__name__}"
+            )
+
+        wrapped: dict[Any, Any] = {}
+        for k, v in entries:
+            wrapped[k] = _bridge_fn(v) if isinstance(v, Block) else v
+        Pickler._parent_dispatch_table.__set__(self, wrapped)
 
     def dump(self, obj: Any) -> NoneClass:  # type: ignore[override]
         super().dump(_unwrap(obj))

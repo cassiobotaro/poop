@@ -49,7 +49,7 @@ Parameter names also mirror CPython where there is no banned-builtin or POOP-spe
 
 - POOP renames params that shadow banned builtins (e.g., `grp.getgrgid` takes `gid` instead of CPython's `id`).
 - File I/O entry points take `Path` instead of file-object / file-descriptor (POOP has no file-object abstraction).
-- Callback kwargs route through `poop.types._bridge.bridge`. One pending consumer (`pickle.Pickler.dispatch_table`) still waits on per-entry callable-map bridging.
+- Callback kwargs route through `poop.types._bridge.bridge`. All originally pending per-namespace consumers are shipped; new namespaces should plug in via the same helper.
 - CPython entry points that take `*args, **kwargs` (e.g., `textwrap.wrap`, `logging.basicConfig`, `pprint.pp`) expose their kwargs explicitly in POOP to preserve type information.
 
 ### Platform-specific constants
@@ -1746,6 +1746,7 @@ The private `_RandomNameSequence` class is out of scope for v1.
 | `Pickler.clear_memo()` | `none` | |
 | `Pickler.fast` (inherited C attr) | `int` (0 / 1) | mirrors the deprecated upstream knob; raw Python because the C extension bypasses Python descriptors |
 | Subclass `Pickler` and override `persistent_id(obj)` | — | override receives POOP value, returns POOP id or `none` (routed via `block.bridge`) |
+| `pickler.dispatch_table = {Type: Block(reducer)}` | `Dict` or `dict` | per-entry `Block` reducers are bridged on assignment; reading returns the bridged dict (or raises `AttributeError` when unset, matching CPython's "no table" sentinel). Class-level `dispatch_table = ...` in subclasses is **not** auto-bridged — assign as instance attribute |
 | `Unpickler(data)` | `Unpickler` | wraps a `Bytes` buffer |
 | `Unpickler.load()` | wrapped POOP value | reads the next pickled object |
 | Subclass `Unpickler` and override `persistent_load(pid)` | — | override receives POOP `pid`, returns POOP object (routed via `block.bridge`) |

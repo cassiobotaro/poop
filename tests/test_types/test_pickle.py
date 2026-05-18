@@ -301,3 +301,80 @@ def test_pickler_is_stdlib_pickler() -> None:
 
     assert issubclass(Pickler, _stdlib_pickle.Pickler)
     assert issubclass(Unpickler, _stdlib_pickle.Unpickler)
+
+
+# --- dispatch_table bridge ---
+
+
+def test_pickler_dispatch_table_block_reducer() -> None:
+    # A reducer block receiving the obj as POOP, returning a POOP Tuple
+    # describing how to reconstruct it.
+    from poop.types.block import Block
+
+    seen: list[UserPoint] = []
+
+    def reduce_point(obj):  # type: ignore[no-untyped-def]
+        seen.append(obj)
+        return Tuple(UserPoint, Tuple(Int(obj.x), Int(obj.y)))  # ty: ignore[invalid-argument-type]
+
+    p = Pickler()
+    p.dispatch_table = {UserPoint: Block(reduce_point)}
+    p.dump(UserPoint(7, 8))
+
+    restored = Unpickler(p.getvalue()).load()
+    assert restored == UserPoint(7, 8)
+    assert seen and isinstance(seen[0], UserPoint)
+
+
+def test_pickler_dispatch_table_accepts_python_callable_directly() -> None:
+    # Non-Block callables pass through without bridging.
+    def reduce_point(obj):  # type: ignore[no-untyped-def]
+        return (UserPoint, (obj.x, obj.y))
+
+    p = Pickler()
+    p.dispatch_table = {UserPoint: reduce_point}
+    p.dump(UserPoint(2, 3))
+    restored = Unpickler(p.getvalue()).load()
+    assert restored == UserPoint(2, 3)
+
+
+def test_pickler_dispatch_table_unset_falls_back_to_default() -> None:
+    p = Pickler()
+    # AttributeError, not None — matches CPython's "no table" sentinel.
+    with pytest.raises(AttributeError):
+        _ = p.dispatch_table
+    # Default behaviour still works (no reducer registered for UserPoint
+    # — copyreg fallback handles user classes generically).
+    p.dump(UserPoint(1, 2))
+    assert Unpickler(p.getvalue()).load() == UserPoint(1, 2)
+
+
+def test_pickler_dispatch_table_assigning_none_clears() -> None:
+    from poop.types.block import Block
+
+    p = Pickler()
+    p.dispatch_table = {UserPoint: Block(lambda obj: (UserPoint, (obj.x, obj.y)))}
+    assert isinstance(p.dispatch_table, dict)
+    p.dispatch_table = None
+    with pytest.raises(AttributeError):
+        _ = p.dispatch_table
+
+
+def test_pickler_dispatch_table_accepts_poop_dict() -> None:
+    from poop.types.block import Block
+
+    def reduce_point(obj):  # type: ignore[no-untyped-def]
+        return Tuple(UserPoint, Tuple(Int(obj.x), Int(obj.y)))  # ty: ignore[invalid-argument-type]
+
+    p = Pickler()
+    table = Dict()
+    table._data[UserPoint] = Block(reduce_point)  # ty: ignore[invalid-assignment]
+    p.dispatch_table = table
+    p.dump(UserPoint(11, 22))
+    assert Unpickler(p.getvalue()).load() == UserPoint(11, 22)
+
+
+def test_pickler_dispatch_table_rejects_non_dict() -> None:
+    p = Pickler()
+    with pytest.raises(TypeError, match="dispatch_table"):
+        p.dispatch_table = [UserPoint, lambda obj: (UserPoint, (obj.x,))]

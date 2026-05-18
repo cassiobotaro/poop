@@ -41,16 +41,20 @@ Shipped consumers:
 - **pickle** — `Pickler` / `Unpickler` now inherit from `_pickle.*`;
   subclass overrides of `persistent_id(obj)` (Pickler) and
   `persistent_load(pid)` (Unpickler) route through the bridge.
-  `dispatch_table` still deferred (per-entry callable map).
+  `Pickler.dispatch_table` accepts POOP `Dict` or Python `dict`;
+  each `Block` value is bridged on assignment and stored via the
+  parent's C-level descriptor (so the C `save` path sees the bridged
+  callables). Reading returns the bridged dict or raises
+  `AttributeError` when unset (mirrors CPython's sentinel).
 - **difflib.ndiff** — `linejunk=` and `charjunk=` kwargs now route
   through the bridge. (Earlier doc text misattributed this to
   `unified_diff`; the kwarg is actually on `ndiff` / `Differ`.)
 - **`to_poop`/`to_python`** now also wrap `bytes`/`bytearray` ↔
   `Bytes`/`ByteArray` (needed by sqlite3 `register_converter`).
 
-Still pending: `pickle.Pickler.dispatch_table` (per-entry
-`type → callable` map; needs a different shape than single-method
-override).
+All originally pending per-namespace consumers are shipped. New
+namespaces should plug callback kwargs / class methods into
+`poop.types._bridge.bridge` directly.
 
 Out of scope (now and later): async callbacks (covered by `AsyncIO`),
 C-API/ctypes callbacks, full subclassing of stdlib base classes
