@@ -88,6 +88,28 @@ class AsyncIO:
         return _asyncio.shield(_as_coro(arg))
 
     @staticmethod
+    async def do(aiterable: Any, block: Any) -> NoneClass:
+        """Async equivalent of `iterable.do(block)` — POOP's substitute
+        for `async for`.
+
+        Iterates an async iterable (anything implementing `__aiter__` /
+        `__anext__`), calling `block` on each item. If `block` returns
+        a coroutine / awaitable, it is awaited before the next iteration
+        — so both sync and async bodies work.
+
+        POOP bans `async for` syntax via the `no_loops` validator; this
+        is the message-passing escape hatch. Usage (inside `async def`):
+
+            await AsyncIO.do(stream, lambda chunk: handle(chunk))
+            await AsyncIO.do(stream, lambda chunk: async_handle(chunk))
+        """
+        async for item in aiterable:
+            result = block(item)
+            if hasattr(result, "__await__"):
+                await result
+        return none
+
+    @staticmethod
     def create_task(coro: Any) -> Future:
         # `create_task` requires a running loop. Surface as a Future.
         return Future(_asyncio.ensure_future(_as_coro(coro)))

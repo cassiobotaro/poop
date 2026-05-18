@@ -76,10 +76,6 @@ POOP file I/O routes through `Path`. The CPython fd-integer ABI (`os.open` / `os
 
 POOP intentionally hides CPython's frame model. `sys.getframe` / `sys._getframe` / `sys._current_frames`, `sys.getrefcount`, `sys.gettrace` / `sys.settrace` / `sys.setprofile`, `sys.audit` / `sys.addaudithook`, `sys.monitoring`, `sys.set_coroutine_origin_tracking_depth`, `sys.set_asyncgen_hooks`, `gc.get_referents` / `gc.get_referrers` / `gc.get_stats` / `gc.set_debug` all stay out. POOP debuggers/profilers are a non-goal — use CPython tools directly on the Python side if you need them.
 
-### No `async for` / `async with` / async generators
-
-`async def` and `await` survive (v0.52.0). The async-flavoured control structures stay banned permanently — POOP-native iteration goes through the `Future` API (`AsyncIO.gather`/`wait_for`/`shield` returning a `Future` you `await`); the synchronous `do`-style works fine inside `async def` once results are awaited. The validator bans (`no_loops` blocks `async for`, `no_with` blocks `async with`, `no_yield` blocks async generators) are by design.
-
 ### No `Random` state inspection
 
 `Random.seed(a, version)` is the supported determinism story. `Random.getstate()` and `Random.setstate(state)` stay out — the CPython state tuple is a 625-element Mersenne Twister internal that has no clean POOP type-discipline mapping. If you need exact replay, capture the seed.
@@ -103,7 +99,7 @@ POOP intentionally hides CPython's frame model. `sys.getframe` / `sys._getframe`
 |---|---|
 | `ast.For` | Loop looks procedural; use `col.do(block)`, `col.map(block)`, recursion |
 | `ast.While` | Same; use `(lambda: cond).while_true(lambda: body)` |
-| `ast.AsyncFor` | Async variant of `for` |
+| `ast.AsyncFor` | Async variant of `for`; use `await AsyncIO.do(aiter, block)` |
 
 ### No free functions — `poop/validators/no_free_functions.py`
 
@@ -144,7 +140,7 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 | AST node | Reason | Substitute |
 |---|---|---|
 | `ast.With` | Control structure — procedural look | `With(lambda: cm()).do(lambda resource: body)` |
-| `ast.AsyncWith` | `async with` variant | same |
+| `ast.AsyncWith` | `async with` variant | `await AsyncWith(lambda: acm()).do(lambda resource: body)` |
 
 ### No `and`/`or` — `poop/validators/no_and_or.py`
 
@@ -163,10 +159,13 @@ to compilation untouched; the coroutines are driven by `AsyncIO.run`
 from the `asyncio` namespace.
 
 The async-flavoured *control structures* remain banned by their
-non-async validators: `ast.AsyncFor` by `no_loops`, `ast.AsyncWith` by
-`no_with`, and `async def` *outside* a class by `no_free_functions`.
-Async generators are forbidden indirectly — `yield` inside any
-function (sync or async) is rejected by `no_yield`.
+non-async validators: `ast.AsyncFor` by `no_loops` (use
+`await AsyncIO.do(aiter, block)`), `ast.AsyncWith` by `no_with`
+(use `await AsyncWith(lambda: acm()).do(block)`), and `async def`
+*outside* a class by `no_free_functions`. Async generators are
+forbidden indirectly — `yield` inside any function (sync or async)
+is rejected by `no_yield`; consume external async iterables via
+`AsyncIO.do` instead of authoring them in POOP.
 
 ### No `not` — `poop/validators/no_not.py`
 

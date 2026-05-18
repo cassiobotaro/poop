@@ -144,3 +144,51 @@ def test_asyncio_run_via_interpreter() -> None:
         "        return 42\n"
         "asyncio.run(Foo().run()).print()\n"
     )
+
+
+# --- D6: AsyncIO.do (async-for substitute) ---
+
+
+def test_async_do_iterates_sync_block() -> None:
+    async def _gen() -> object:
+        for i in range(3):
+            yield i
+
+    seen: list[int] = []
+
+    async def caller() -> None:
+        await AsyncIO.do(_gen(), lambda x: seen.append(x))
+
+    AsyncIO.run(caller())
+    assert seen == [0, 1, 2]
+
+
+def test_async_do_awaits_block_returning_coroutine() -> None:
+    async def _gen() -> object:
+        for i in range(3):
+            yield i
+
+    seen: list[int] = []
+
+    async def _record(x: int) -> None:
+        await _stdlib_asyncio.sleep(0)
+        seen.append(x)
+
+    async def caller() -> None:
+        await AsyncIO.do(_gen(), _record)
+
+    AsyncIO.run(caller())
+    assert seen == [0, 1, 2]
+
+
+def test_async_do_empty_iterable_returns_none() -> None:
+    from poop.types.none import none
+
+    async def _empty() -> object:
+        if False:
+            yield 0
+
+    async def caller() -> object:
+        return await AsyncIO.do(_empty(), lambda _: None)
+
+    assert AsyncIO.run(caller()) is none

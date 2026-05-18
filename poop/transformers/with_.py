@@ -1,3 +1,3 @@
-from poop.types.with_ import With
+from poop.types.with_ import AsyncWith, With
 
-NAMESPACE: dict[str, object] = {"With": With}
+NAMESPACE: dict[str, object] = {"With": With, "AsyncWith": AsyncWith}
