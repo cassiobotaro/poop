@@ -60,11 +60,9 @@ file-config machinery, and the global toggles
 surface (custom Filters/Handlers/Formatters) — pair with the
 "subclassing" decision below.
 
-`logging.basicConfig` is also a `param-mismatch` row: POOP exposes
-two of its ~17 kwargs (`level`, `format`). Expanding to the full
-set (`filename`, `filemode`, `datefmt`, `style`, `handlers`,
-`force`, `encoding`, `errors`, `stream`) ships together with the
-Handler/Filter wrappers.
+`logging.basicConfig` now exposes the full CPython kwarg surface
+except `stream` (POOP has no file-object abstraction — write to a
+`Path` via `filename`, or wire a custom `Handler`).
 
 ### Archive format extras (`zipfile` 24, `tarfile` 17, `gzip` 2)
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging as _logging
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
@@ -145,13 +145,37 @@ class Logging:
 
     @staticmethod
     def basicConfig(
-        *, level: Int | None = None, format: Str | None = None
+        *,
+        filename: Path | None = None,
+        filemode: Str | None = None,
+        format: Str | None = None,
+        datefmt: Str | None = None,
+        style: Str | None = None,
+        level: Int | Str | None = None,
+        handlers: List | None = None,
+        force: Boolean = false,
+        encoding: Str | None = None,
+        errors: Str | None = None,
     ) -> NoneClass:
-        kwargs: dict[str, Any] = {}
-        if level is not None:
-            kwargs["level"] = level._value
+        kwargs: dict[str, Any] = {"force": bool(force)}
+        if filename is not None:
+            kwargs["filename"] = str(filename._path)
+        if filemode is not None:
+            kwargs["filemode"] = filemode._value
         if format is not None:
             kwargs["format"] = format._value
+        if datefmt is not None:
+            kwargs["datefmt"] = datefmt._value
+        if style is not None:
+            kwargs["style"] = style._value
+        if level is not None:
+            kwargs["level"] = _unwrap_level(level)
+        if handlers is not None:
+            kwargs["handlers"] = [cast(Handler, h)._impl for h in handlers._items]
+        if encoding is not None:
+            kwargs["encoding"] = encoding._value
+        if errors is not None:
+            kwargs["errors"] = errors._value
         _logging.basicConfig(**kwargs)
         return none
 

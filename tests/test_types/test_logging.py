@@ -3,11 +3,12 @@ import tempfile
 from pathlib import Path as _PyPath
 
 from poop.interpreter import Interpreter
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, true
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.logging import Formatter, Handler, Logger, Logging
 from poop.types.none import none
+from poop.types.path import Path
 from poop.types.string import Str
 
 
@@ -49,6 +50,73 @@ def test_basic_config_with_args() -> None:
         )
         is none
     )
+
+
+def test_basic_config_filename_and_filemode(tmp_path: _PyPath) -> None:
+    log_path = tmp_path / "app.log"
+    assert (
+        Logging.basicConfig(
+            filename=Path(Str(str(log_path))),
+            filemode=Str("w"),
+            level=Logging.INFO,
+            force=true,
+        )
+        is none
+    )
+    logger = Logging.getLogger(Str("poop.test.filemode"))
+    logger.info(Str("hello"))
+    for h in _stdlib_logging.getLogger().handlers:
+        h.flush()
+    assert "hello" in log_path.read_text()
+
+
+def test_basic_config_datefmt_and_style() -> None:
+    assert (
+        Logging.basicConfig(
+            format=Str("{asctime} {message}"),
+            datefmt=Str("%Y"),
+            style=Str("{"),
+            force=true,
+        )
+        is none
+    )
+
+
+def test_basic_config_force_resets_root_handlers() -> None:
+    Logging.basicConfig(level=Logging.WARNING, force=true)
+    handlers_before = list(_stdlib_logging.getLogger().handlers)
+    assert handlers_before  # basicConfig installed one
+    Logging.basicConfig(level=Logging.DEBUG, force=true)
+    # force=True replaces the prior handler set.
+    handlers_after = _stdlib_logging.getLogger().handlers
+    assert len(handlers_after) == 1
+    assert handlers_after[0] is not handlers_before[0]
+
+
+def test_basic_config_handlers_list() -> None:
+    h = Handler(_stdlib_logging.NullHandler())
+    assert Logging.basicConfig(handlers=List(h), force=true) is none
+    assert h._impl in _stdlib_logging.getLogger().handlers
+
+
+def test_basic_config_encoding_and_errors(tmp_path: _PyPath) -> None:
+    log_path = tmp_path / "utf8.log"
+    assert (
+        Logging.basicConfig(
+            filename=Path(Str(str(log_path))),
+            filemode=Str("w"),
+            encoding=Str("utf-8"),
+            errors=Str("replace"),
+            level=Logging.INFO,
+            force=true,
+        )
+        is none
+    )
+
+
+def test_basic_config_level_accepts_str() -> None:
+    assert Logging.basicConfig(level=Str("DEBUG"), force=true) is none
+    assert _stdlib_logging.getLogger().level == _stdlib_logging.DEBUG
 
 
 # --- Logger methods ---
