@@ -1211,7 +1211,7 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `sqlite3.sqlite_version` (class attr) | `Str` | SQLite library version |
 | `sqlite3.PARSE_DECLTYPES` / `PARSE_COLNAMES` (class attrs) | `Int` | type-detection flags |
 | `sqlite3.Warning` / `Error` / `InterfaceError` / `DatabaseError` / `DataError` / `OperationalError` / `IntegrityError` / `InternalError` / `ProgrammingError` / `NotSupportedError` | Python exception types | usable with `Try.except_` |
-| `sqlite3.Connection` / `Cursor` / `Row` (class attrs) | `type[…]` | wrapper classes |
+| `sqlite3.Connection` / `Cursor` / `Row` / `Blob` (class attrs) | `type[…]` | wrapper classes |
 | `Connection.cursor()` | `Cursor` | |
 | `Connection.commit()` / `.rollback()` / `.close()` / `.interrupt()` | `none` | |
 | `Connection.execute(sql, params=none)` | `Cursor` | shortcut: open cursor + execute |
@@ -1237,6 +1237,10 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `Connection.create_aggregate(name, n_arg, aggregate_class)` | `none` | `aggregate_class` is a regular POOP class with `step(*args)` / `finalize()` methods. `step` receives POOP-wrapped column values; `finalize` returns a POOP value that POOP unwraps to a SQL-storable primitive |
 | `sqlite3.register_adapter(type_, adapter)` | `none` | `adapter` is a `Block` that converts the registered type to a SQL-storable value |
 | `sqlite3.register_converter(typename, converter)` | `none` | `converter` is a `Block` that decodes the raw `Bytes` payload for column type `typename` |
+| `sqlite3.complete_statement(sql)` | `Boolean` | true when `sql` is a complete SQLite statement |
+| `sqlite3.enable_callback_tracebacks(flag)` | `none` | toggle tracebacks for errors in user-defined SQL callbacks |
+| `Connection.blobopen(table, column, row, *, readonly=false, name=none)` | `Blob` | open a Blob for random-access I/O |
+| `Blob.read(length=none)` / `.write(data)` / `.tell()` / `.seek(offset, origin=none)` / `.length()` / `.close()` | `Bytes` / `none` / `Int` / `none` / `Int` / `none` | random-access blob I/O; supports `with` |
 
 Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`Int`, `float`→`Float`, `str`→`Str`, `bytes`→`Bytes`, `None`→`none`). Bound parameters are unwrapped on the way in (POOP `Tuple`/`List` of POOP values → Python tuple of raw values).
 
@@ -2324,7 +2328,11 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 | `socket.inet_aton/ntoa(...)` / `.inet_pton/ntop(family, ...)` | `Bytes` / `Str` | |
 | `socket.create_connection(addr, timeout=none)` / `.create_server(addr, family=none)` | `Socket` | |
 | `socket.has_dualstack_ipv6()` | `Boolean` | |
-| `socket.AF_INET` / `AF_INET6` / `AF_UNSPEC` / `AF_UNIX` / `SOCK_STREAM` / `SOCK_DGRAM` / `SOCK_RAW` / `SOL_SOCKET` / `SO_REUSEADDR` / `SO_KEEPALIVE` / `SO_BROADCAST` / `SHUT_RD` / `SHUT_WR` / `SHUT_RDWR` (class attrs) | `Int` | platform-specific (`AF_UNIX` may be `none`) |
+| `socket.getaddrinfo(host, port, family=none, type=none, proto=none, flags=none)` | `List[Tuple(family, type, proto, canonname, sockaddr)]` | `host`/`port` may be `none` |
+| `socket.getnameinfo(sockaddr, flags)` | `Tuple(Str, Str)` | `(host, port)` |
+| `socket.if_indextoname(idx)` / `.if_nametoindex(name)` / `.if_nameindex()` | `Str` / `Int` / `List[Tuple(Int, Str)]` | network-interface enumeration |
+| `socket.SocketType` (class attr) | underlying `_socket.socket` type | exposed for compat with `isinstance` checks against legacy code |
+| `socket.AF_INET` / `AF_INET6` / `AF_UNSPEC` / `AF_UNIX` / `SOCK_STREAM` / `SOCK_DGRAM` / `SOCK_RAW` / `SOL_SOCKET` / `SO_REUSEADDR` / `SO_KEEPALIVE` / `SO_BROADCAST` / `SHUT_RD` / `SHUT_WR` / `SHUT_RDWR` / `AI_*` / `NI_*` (class attrs) | `Int` | platform-specific (`AF_UNIX` may be `none`) |
 | `socket.error` / `.herror` / `.gaierror` / `.timeout` (class attrs) | exception class | for `Try.except_` |
 | `ssl.create_default_context(cafile=none, capath=none)` | `SSLContext` | |
 | `SSLContext()` / `.load_cert_chain(certfile, keyfile=none, password=none)` / `.load_verify_locations(...)` / `.load_default_certs()` | `SSLContext` / `none` | |

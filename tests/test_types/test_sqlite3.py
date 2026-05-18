@@ -499,6 +499,40 @@ def test_create_aggregate_in_poop_idiom() -> None:
     assert all(isinstance(v, Int) for v in steps)
 
 
+def test_complete_statement_recognises_finished_sql() -> None:
+    assert Sqlite3.complete_statement(Str("SELECT 1;")) is true
+    assert Sqlite3.complete_statement(Str("SELECT 1")) is false
+
+
+def test_enable_callback_tracebacks_returns_none() -> None:
+    assert Sqlite3.enable_callback_tracebacks(true) is none
+    assert Sqlite3.enable_callback_tracebacks(false) is none
+
+
+def test_blob_read_write_round_trip() -> None:
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE b(payload BLOB)"))
+    con.execute(Str("INSERT INTO b VALUES (?)"), Tuple(Bytes(b"abcdef")))
+    rowid = con.execute(Str("SELECT rowid FROM b")).fetchone().at(Int(0))
+    blob = con.blobopen(Str("b"), Str("payload"), rowid)
+    assert blob.length() == Int(6)
+    assert blob.read() == Bytes(b"abcdef")
+    blob.seek(Int(0))
+    blob.write(Bytes(b"AB"))
+    blob.close()
+    refreshed = con.execute(Str("SELECT payload FROM b")).fetchone().at(Int(0))
+    assert refreshed == Bytes(b"ABcdef")
+
+
+def test_blob_context_manager() -> None:
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE b(payload BLOB)"))
+    con.execute(Str("INSERT INTO b VALUES (?)"), Tuple(Bytes(b"hello")))
+    rowid = con.execute(Str("SELECT rowid FROM b")).fetchone().at(Int(0))
+    with con.blobopen(Str("b"), Str("payload"), rowid, readonly=true) as blob:
+        assert blob.read() == Bytes(b"hello")
+
+
 def test_create_aggregate_finalize_pop_return_unwrapped() -> None:
     class CountStr:
         def __init__(self) -> None:

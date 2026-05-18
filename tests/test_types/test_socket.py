@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 
 from poop.interpreter import Interpreter
@@ -384,3 +386,46 @@ def test_socket_class_ref() -> None:
 
 def test_socket_via_interpreter() -> None:
     Interpreter().run_source("s = Socket()\ns.fileno().print()\ns.close()")
+
+
+# --- getaddrinfo / getnameinfo / if_* ---
+
+
+def test_getaddrinfo_returns_list_of_tuples() -> None:
+    from poop.types.list import List
+
+    out = SocketNamespace.getaddrinfo(Str("localhost"), Int(80))
+    assert isinstance(out, List)
+    first = out.at(Int(0))
+    assert isinstance(first, Tuple)
+    family = first.at(Int(0))
+    assert isinstance(family, Int)
+
+
+def test_if_nameindex_returns_list_of_tuples() -> None:
+    from poop.types.list import List
+
+    out = SocketNamespace.if_nameindex()
+    assert isinstance(out, List)
+    if out.len()._value > 0:
+        first = out.at(Int(0))
+        assert isinstance(first, Tuple)
+        assert isinstance(first.at(Int(0)), Int)
+        assert isinstance(first.at(Int(1)), Str)
+
+
+def test_if_nametoindex_round_trip() -> None:
+    out = SocketNamespace.if_nameindex()
+    if out.len()._value == 0:
+        pytest.skip("no network interfaces present")
+    first = cast(Tuple, out.at(Int(0)))
+    name = cast(Str, first.at(Int(1)))
+    idx = SocketNamespace.if_nametoindex(name)
+    assert isinstance(idx, Int)
+    assert SocketNamespace.if_indextoname(idx) == name
+
+
+def test_SocketType_is_underlying_class() -> None:
+    import socket as _stdlib_socket
+
+    assert SocketNamespace.SocketType is _stdlib_socket.socket

@@ -150,10 +150,38 @@ class Socket(Object):
         self._impl.close()
 
 
+def _wrap_sockaddr_item(value: Any) -> Any:
+    if isinstance(value, str):
+        return Str(value)
+    if isinstance(value, int):
+        return Int(value)
+    return value
+
+
+def _unwrap_sockaddr_item(value: Any) -> Any:
+    if isinstance(value, Str):
+        return value._value
+    if isinstance(value, Int):
+        return value._value
+    return value
+
+
 class SocketNamespace:
     """Namespace mirroring Python's `socket` module."""
 
     Socket: ClassVar[type[Socket]] = Socket
+    SocketType: ClassVar[type[_socket.socket]] = _socket.socket
+
+    # getaddrinfo / NI flags
+    AI_PASSIVE: ClassVar[Int] = Int(_socket.AI_PASSIVE)
+    AI_CANONNAME: ClassVar[Int] = Int(_socket.AI_CANONNAME)
+    AI_NUMERICHOST: ClassVar[Int] = Int(_socket.AI_NUMERICHOST)
+    AI_NUMERICSERV: ClassVar[Int] = Int(_socket.AI_NUMERICSERV)
+    NI_NUMERICHOST: ClassVar[Int] = Int(_socket.NI_NUMERICHOST)
+    NI_NUMERICSERV: ClassVar[Int] = Int(_socket.NI_NUMERICSERV)
+    NI_NOFQDN: ClassVar[Int] = Int(_socket.NI_NOFQDN)
+    NI_NAMEREQD: ClassVar[Int] = Int(_socket.NI_NAMEREQD)
+    NI_DGRAM: ClassVar[Int] = Int(_socket.NI_DGRAM)
 
     # Address families
     AF_INET: ClassVar[Int] = Int(_socket.AF_INET)
@@ -301,3 +329,57 @@ class SocketNamespace:
             kwargs["backlog"] = backlog._value
         sock = _socket.create_server(addr, **kwargs)
         return Socket(impl=sock)
+
+    @staticmethod
+    def getaddrinfo(
+        host: Str | NoneClass | None,
+        port: Int | Str | NoneClass | None,
+        family: Int | None = None,
+        type: Int | None = None,
+        proto: Int | None = None,
+        flags: Int | None = None,
+    ) -> List:
+        h = None if host is None or isinstance(host, NoneClass) else host._value
+        if port is None or isinstance(port, NoneClass):
+            p: Any = None
+        else:
+            p = port._value
+        results = _socket.getaddrinfo(
+            h,
+            p,
+            0 if family is None else family._value,
+            0 if type is None else type._value,
+            0 if proto is None else proto._value,
+            0 if flags is None else flags._value,
+        )
+        out: list[Tuple] = []
+        for fam, sock_type, prot, canonname, sockaddr in results:
+            sa_items = tuple(_wrap_sockaddr_item(v) for v in sockaddr)
+            out.append(
+                Tuple(
+                    Int(fam),
+                    Int(sock_type),
+                    Int(prot),
+                    Str(canonname),
+                    Tuple(*sa_items),
+                )
+            )
+        return List(*out)
+
+    @staticmethod
+    def getnameinfo(sockaddr: Tuple, flags: Int) -> Tuple:
+        raw = tuple(_unwrap_sockaddr_item(v) for v in sockaddr._items)
+        host, port = _socket.getnameinfo(raw, flags._value)
+        return Tuple(Str(host), Str(port))
+
+    @staticmethod
+    def if_indextoname(index: Int) -> Str:
+        return Str(_socket.if_indextoname(index._value))
+
+    @staticmethod
+    def if_nametoindex(name: Str) -> Int:
+        return Int(_socket.if_nametoindex(name._value))
+
+    @staticmethod
+    def if_nameindex() -> List:
+        return List(*(Tuple(Int(i), Str(n)) for i, n in _socket.if_nameindex()))

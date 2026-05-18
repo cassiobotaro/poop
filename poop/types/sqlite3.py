@@ -65,6 +65,56 @@ def _unwrap_database(database: Str | Path) -> Any:
     return database._value
 
 
+class Blob(Object):
+    """Wraps Python's `sqlite3.Blob` — random-access blob I/O.
+
+    Opened via `Connection.blobopen(...)`. Reads return POOP `Bytes`;
+    writes accept POOP `Bytes`. Position is tracked via `tell` / `seek`;
+    `length()` returns the total byte length.
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, impl: Any) -> None:
+        self._impl = impl
+
+    def read(self, length: Int | NoneClass | None = None) -> Bytes:
+        n = _unwrap(length, -1)
+        if n == -1:
+            return Bytes(self._impl.read())
+        return Bytes(self._impl.read(n))
+
+    def write(self, data: Bytes) -> NoneClass:
+        self._impl.write(data._value)
+        return none
+
+    def tell(self) -> Int:
+        return Int(self._impl.tell())
+
+    def seek(self, offset: Int, origin: Int | NoneClass | None = None) -> NoneClass:
+        whence = _unwrap(origin, 0)
+        self._impl.seek(offset._value, whence)
+        return none
+
+    def length(self) -> Int:
+        return Int(len(self._impl))
+
+    def close(self) -> NoneClass:
+        self._impl.close()
+        return none
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self._impl.__exit__(exc_type, exc_value, traceback)
+
+
 class Row(Object):
     """Dict-like row access by column name or index."""
 
@@ -249,6 +299,24 @@ class Connection(Object):
         self._impl.create_collation(name._value, adapter)
         return none
 
+    def blobopen(
+        self,
+        table: Str,
+        column: Str,
+        row: Int,
+        *,
+        readonly: Boolean = false,
+        name: Str | None = None,
+    ) -> Blob:
+        impl = self._impl.blobopen(
+            table._value,
+            column._value,
+            row._value,
+            readonly=bool(readonly),
+            name="main" if name is None else name._value,
+        )
+        return Blob(impl)
+
     def create_aggregate(
         self,
         name: Str,
@@ -297,6 +365,7 @@ class Sqlite3:
     Connection: ClassVar[type[Connection]] = Connection
     Cursor: ClassVar[type[Cursor]] = Cursor
     Row: ClassVar[type[Row]] = Row
+    Blob: ClassVar[type[Blob]] = Blob
 
     sqlite_version: ClassVar[Str] = Str(_sqlite3.sqlite_version)
 
@@ -313,6 +382,20 @@ class Sqlite3:
     InternalError: ClassVar[type[Exception]] = _sqlite3.InternalError
     ProgrammingError: ClassVar[type[Exception]] = _sqlite3.ProgrammingError
     NotSupportedError: ClassVar[type[Exception]] = _sqlite3.NotSupportedError
+
+    @staticmethod
+    def complete_statement(sql: Str) -> Boolean:
+        """Return `true` if `sql` is a complete SQLite statement."""
+        from poop.types.boolean import false as _f
+        from poop.types.boolean import true as _t
+
+        return _t if _sqlite3.complete_statement(sql._value) else _f
+
+    @staticmethod
+    def enable_callback_tracebacks(flag: Boolean) -> NoneClass:
+        """Toggle tracebacks for errors in user-defined SQL callbacks."""
+        _sqlite3.enable_callback_tracebacks(bool(flag))
+        return none
 
     @staticmethod
     def register_adapter(type_: type, adapter: Callable[..., Any]) -> NoneClass:

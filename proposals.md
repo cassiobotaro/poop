@@ -48,14 +48,6 @@ incremental encoder/decoder protocol (`IncrementalEncoder`,
 `Codec` class are also out. Codec-customisation is a niche surface;
 defer until someone needs to wire a custom encoder.
 
-### Network / SQL extras (`socket`, `sqlite3`)
-
-`socket` defers `getaddrinfo`, `getnameinfo`, `getfqdn`,
-`gethostname`, `if_indextoname`, `if_nametoindex`, `if_nameindex`,
-`SocketType`, the address-family + protocol introspection helpers.
-`sqlite3` defers the `Blob` type, `complete_statement`, `Cache`,
-`Statement`, `enable_callback_tracebacks` (debug helper).
-
 ### Text & data helpers — difflib leftovers
 
 `difflib.HtmlDiff` and `difflib.Differ` (as a subclassable POOP
