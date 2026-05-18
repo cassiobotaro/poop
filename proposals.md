@@ -25,8 +25,11 @@ Shipped consumers:
 - **shutil** — `copytree(ignore=, copy_function=)`, `move(copy_function=)`,
   and `Shutil.ignore_patterns(*patterns)` returns a drop-in `Block`.
 - **sqlite3** — `Connection.create_function`, `Connection.create_collation`,
-  `Sqlite3.register_adapter`, `Sqlite3.register_converter`.
-  `create_aggregate` still deferred (needs class-with-methods bridging).
+  `Connection.create_aggregate`, `Sqlite3.register_adapter`,
+  `Sqlite3.register_converter`. `create_aggregate` accepts a regular
+  POOP class with `step`/`finalize` methods; the connection wraps
+  them in an internal adapter that bridges args (`to_poop` on step)
+  and return (`to_python` on finalize).
 - **webbrowser** — `Webbrowser.register(name, constructor=...)`. The
   block returns a `Browser` (or raw `BaseBrowser`); the registry
   layer unwraps to `BaseBrowser` for CPython.
@@ -45,9 +48,9 @@ Shipped consumers:
 - **`to_poop`/`to_python`** now also wrap `bytes`/`bytearray` ↔
   `Bytes`/`ByteArray` (needed by sqlite3 `register_converter`).
 
-Still pending (both need shape changes beyond single-method override):
-sqlite3 `create_aggregate` (class-with-methods bridge);
-pickle `Pickler.dispatch_table` (per-entry `type → callable` map).
+Still pending: `pickle.Pickler.dispatch_table` (per-entry
+`type → callable` map; needs a different shape than single-method
+override).
 
 Out of scope (now and later): async callbacks (covered by `AsyncIO`),
 C-API/ctypes callbacks, full subclassing of stdlib base classes

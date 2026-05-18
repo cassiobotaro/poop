@@ -49,7 +49,7 @@ Parameter names also mirror CPython where there is no banned-builtin or POOP-spe
 
 - POOP renames params that shadow banned builtins (e.g., `grp.getgrgid` takes `gid` instead of CPython's `id`).
 - File I/O entry points take `Path` instead of file-object / file-descriptor (POOP has no file-object abstraction).
-- Callback kwargs route through `poop.types._bridge.bridge`. Pending consumers (sqlite3 `create_aggregate`, pickle `dispatch_table`) wait on the same helper — both need class-with-methods or per-entry callable-map bridging beyond the single-method override pattern.
+- Callback kwargs route through `poop.types._bridge.bridge`. One pending consumer (`pickle.Pickler.dispatch_table`) still waits on per-entry callable-map bridging.
 - CPython entry points that take `*args, **kwargs` (e.g., `textwrap.wrap`, `logging.basicConfig`, `pprint.pp`) expose their kwargs explicitly in POOP to preserve type information.
 
 ### Platform-specific constants
@@ -1214,12 +1214,13 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `Row.len()` | `Int` | |
 | `Connection.create_function(name, narg, func, *, deterministic=false)` | `none` | `func` is a `Block` routed through `block.bridge` |
 | `Connection.create_collation(name, callable_)` | `none` | `callable_` is a `Block` routed through the bridge; pass `None` to deregister |
+| `Connection.create_aggregate(name, n_arg, aggregate_class)` | `none` | `aggregate_class` is a regular POOP class with `step(*args)` / `finalize()` methods. `step` receives POOP-wrapped column values; `finalize` returns a POOP value that POOP unwraps to a SQL-storable primitive |
 | `sqlite3.register_adapter(type_, adapter)` | `none` | `adapter` is a `Block` that converts the registered type to a SQL-storable value |
 | `sqlite3.register_converter(typename, converter)` | `none` | `converter` is a `Block` that decodes the raw `Bytes` payload for column type `typename` |
 
 Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`Int`, `float`→`Float`, `str`→`Str`, `bytes`→`Bytes`, `None`→`none`). Bound parameters are unwrapped on the way in (POOP `Tuple`/`List` of POOP values → Python tuple of raw values).
 
-`Connection.create_aggregate` is deferred — it requires class-with-methods bridging (a Python class providing `step` and `finalize`), which the per-namespace bridge consumers do not yet cover. `sqlite3.complete_statement` and `sqlite3.enable_callback_tracebacks` are out of scope (debug/shell helpers).
+`sqlite3.complete_statement` and `sqlite3.enable_callback_tracebacks` are out of scope (debug/shell helpers).
 
 `sqlite3`, `Connection`, `Cursor`, and `Row` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/sqlite3.py` — namespace-only, no AST rewrite.
 

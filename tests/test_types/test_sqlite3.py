@@ -469,3 +469,53 @@ def test_register_converter_routes_through_bridge() -> None:
     con.execute(Str("INSERT INTO r VALUES (?)"), Tuple(Str("abc")))
     cur = con.execute(Str("SELECT v FROM r"))
     assert cur.fetchone().at(Int(0)) == Str("cba")
+
+
+def test_create_aggregate_in_poop_idiom() -> None:
+    steps: list[Int] = []
+
+    class Median:
+        def __init__(self) -> None:
+            self.values: list[Int] = []
+
+        def step(self, value: Int) -> None:
+            steps.append(value)
+            self.values.append(value)
+
+        def finalize(self) -> Int:
+            xs = sorted(v._value for v in self.values)
+            mid = len(xs) // 2
+            return Int(xs[mid])
+
+    con = Sqlite3.connect(Str(":memory:"))
+    con.create_aggregate(Str("median"), Int(1), Median)
+    con.execute(Str("CREATE TABLE t(x INTEGER)"))
+    for x in (10, 5, 30, 20, 15):
+        con.execute(Str("INSERT INTO t VALUES (?)"), Tuple(Int(x)))
+
+    row = con.execute(Str("SELECT median(x) FROM t")).fetchone()
+    assert row.at(Int(0)) == Int(15)
+    # step was invoked with POOP Int instances (bridge wrap).
+    assert all(isinstance(v, Int) for v in steps)
+
+
+def test_create_aggregate_finalize_pop_return_unwrapped() -> None:
+    class CountStr:
+        def __init__(self) -> None:
+            self.n = 0
+
+        def step(self, value: Str) -> None:
+            assert isinstance(value, Str)
+            self.n += 1
+
+        def finalize(self) -> Str:
+            return Str(f"saw={self.n}")
+
+    con = Sqlite3.connect(Str(":memory:"))
+    con.create_aggregate(Str("count_str"), Int(1), CountStr)
+    con.execute(Str("CREATE TABLE w(s TEXT)"))
+    for s in ("a", "b", "c"):
+        con.execute(Str("INSERT INTO w VALUES (?)"), Tuple(Str(s)))
+
+    row = con.execute(Str("SELECT count_str(s) FROM w")).fetchone()
+    assert row.at(Int(0)) == Str("saw=3")

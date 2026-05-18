@@ -249,6 +249,35 @@ class Connection(Object):
         self._impl.create_collation(name._value, adapter)
         return none
 
+    def create_aggregate(
+        self,
+        name: Str,
+        n_arg: Int,
+        aggregate_class: type,
+    ) -> NoneClass:
+        """Register a user-defined aggregate.
+
+        `aggregate_class` is a regular POOP class with `step(*args)` and
+        `finalize()` methods. SQLite calls `step` with raw column
+        values; POOP wraps them to POOP types before invoking the
+        user's method. `finalize` returns a POOP value; POOP unwraps it
+        to the native primitive SQLite expects.
+        """
+        from poop.types._bridge import to_poop, to_python
+
+        class _PoopAggregateAdapter:
+            def __init__(self) -> None:
+                self._inner = aggregate_class()
+
+            def step(self, *args: Any) -> None:
+                self._inner.step(*(to_poop(a) for a in args))
+
+            def finalize(self) -> Any:
+                return to_python(self._inner.finalize())
+
+        self._impl.create_aggregate(name._value, n_arg._value, _PoopAggregateAdapter)
+        return none
+
     def __enter__(self) -> Self:
         self._impl.__enter__()
         return self
