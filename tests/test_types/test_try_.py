@@ -96,3 +96,20 @@ def test_try_finally_no_arg_executes_block() -> None:
 
 def test_try_repr_delegates_to_str() -> None:
     assert repr(Try(lambda: None)) == "Try"
+
+
+def test_try_run_twice_raises() -> None:
+    calls: list[bool] = []
+    t = Try(lambda: calls.append(True)).run()
+    assert calls == [True]
+    with pytest.raises(RuntimeError, match="already been executed"):
+        t.run()
+    assert calls == [True]
+
+
+def test_try_finally_after_run_raises() -> None:
+    calls: list[bool] = []
+    t = Try(lambda: calls.append(True)).run()
+    with pytest.raises(RuntimeError, match="already been executed"):
+        t.finally_(lambda: calls.append(False))
+    assert calls == [True]

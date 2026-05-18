@@ -17,12 +17,13 @@ class Try(Object):
         Try(lambda: risky()).except_(ValueError, handler).finally_(lambda: cleanup())
     """
 
-    __slots__ = ("_block", "_finally_block", "_handlers")
+    __slots__ = ("_block", "_executed", "_finally_block", "_handlers")
 
     def __init__(self, block: Callable[[], object]) -> None:
         self._block = block
         self._handlers: list[tuple[type[BaseException], Callable[[Error], object]]] = []
         self._finally_block: Callable[[], object] | None = None
+        self._executed = False
 
     def except_(
         self,
@@ -40,6 +41,11 @@ class Try(Object):
         return self._execute()
 
     def _execute(self) -> Try:
+        if self._executed:
+            raise RuntimeError(
+                "Try has already been executed; create a new Try instance to retry."
+            )
+        self._executed = True
         try:
             self._block()
         except BaseException as e:
