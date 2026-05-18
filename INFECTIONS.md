@@ -27,7 +27,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 
 ## Project conventions
 
-Rules every namespace wrapper in `poop/types/` must follow. Recorded here so reviewers, future PRs, and the `scripts/audit_signatures.py` harness apply the same yardstick.
+Rules every namespace wrapper in `poop/types/` must follow. Recorded here so reviewers and future PRs apply the same yardstick.
 
 ### Mirror Python's attribute vs method shape
 
@@ -45,7 +45,12 @@ POOP method defaults mirror CPython exactly. If CPython writes `subprocess.run(a
 
 The only sanctioned `none`-default is when CPython itself uses `None` as the sentinel (e.g., `socket.gethostbyname(name, default=None)`).
 
-Parameter names also mirror CPython where there is no banned-builtin or POOP-specific clarification at stake. Audit drift via `scripts/audit_signatures.py` (output: `docs/signature-audit.md`); each surfaced row is either fixed or marked `OK-sanctioned` with rationale. The audit script preserves decisions across regenerations.
+Parameter names also mirror CPython where there is no banned-builtin or POOP-specific clarification at stake. Documented divergences:
+
+- POOP renames params that shadow banned builtins (e.g., `grp.getgrgid` takes `gid` instead of CPython's `id`).
+- File I/O entry points take `Path` instead of file-object / file-descriptor (POOP has no file-object abstraction).
+- Callback kwargs (`copy_function=`, `linejunk=`, `onerror=`, `cls=`/`object_hook=`/`parse_float=` for `json`, `constructor=` for `webbrowser.register`, etc.) wait on a Block↔callable bridge.
+- CPython entry points that take `*args, **kwargs` (e.g., `textwrap.wrap`, `logging.basicConfig`, `pprint.pp`) expose their kwargs explicitly in POOP to preserve type information.
 
 ### Platform-specific constants
 

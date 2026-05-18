@@ -2,19 +2,16 @@
 
 No open design proposals. The post-v0.54 engineering backlog from the
 expert code review (refactors A3, C1, C2, C4; coverage T2, T3;
-declined C5) and the v0.55.0 signature-audit sweep (param-mismatch
-retroactive fix; audit noise filter; decision preservation) both
-shipped on `main`.
+declined C5) and the v0.55.0 signature-audit sweep (retroactive
+Default kwarg policy + sanctioned-divergence triage) both shipped on
+`main`.
 
-## v0.6.0 stdlib expansion backlog — from the signature audit (v0.55.0)
+## v0.6.0 stdlib expansion backlog
 
-`docs/signature-audit.md` triaged 779 findings against 84 stdlib
-mirrors. 127 rows are sanctioned divergences (closed); the remaining
-652 are `defer-v0.6.0` — names CPython exposes that POOP currently
-curates out. Below they are regrouped into proposal-shaped chunks so
-each one can be picked up independently. The audit doc remains the
-canonical per-row inventory; this section adds the rationale and
-expected scope per area.
+The v0.55.0 signature-audit pass surfaced 652 CPython names that POOP
+currently curates out. They are regrouped below into proposal-shaped
+chunks so each area can be picked up independently when a real caller
+surfaces.
 
 ### POSIX low-level surface (`os` 204, `sys` 57, `signal` 8, `resource` 1, `gc` 6, `pwd` 1, `grp` 1, `pstats` 10)
 
