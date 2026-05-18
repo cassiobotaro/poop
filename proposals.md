@@ -48,12 +48,6 @@ incremental encoder/decoder protocol (`IncrementalEncoder`,
 `Codec` class are also out. Codec-customisation is a niche surface;
 defer until someone needs to wire a custom encoder.
 
-### Text & data helpers — difflib leftovers
-
-`difflib.HtmlDiff` and `difflib.Differ` (as a subclassable POOP
-class, plus exposing `IS_CHARACTER_JUNK` as a public class attribute
-rather than the internal `ndiff` default).
-
 ### Misc one-offs (`array`, `copy`, `email`, `ipaddress`, `json`, `pprint`, `profile`, `pwd`, `queue`, `resource`, `smtplib`, `statistics`, `subprocess`, `weakref`, `platform`)
 
 Tracked individually in the audit doc; no grouping advantage. Pull

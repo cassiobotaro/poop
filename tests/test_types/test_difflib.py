@@ -202,3 +202,47 @@ def test_ndiff_charjunk_block() -> None:
     out = Difflib.ndiff(a, b, charjunk=Block(is_space))
     assert isinstance(out, List)
     assert out.len()._value > 0
+
+
+# --- Differ / HtmlDiff / IS_CHARACTER_JUNK ---
+
+
+def test_differ_compare_returns_list_of_marker_lines() -> None:
+    from poop.types.difflib import Differ
+
+    out = Differ().compare(List(Str("a\n")), List(Str("b\n")))
+    assert isinstance(out, List)
+    assert out == List(Str("- a\n"), Str("+ b\n"))
+
+
+def test_differ_namespace_attribute() -> None:
+    from poop.types.difflib import Differ
+
+    assert Difflib.Differ is Differ
+
+
+def test_html_diff_make_table_returns_html() -> None:
+    from poop.types.difflib import HtmlDiff
+
+    html = HtmlDiff().make_table(List(Str("a\n")), List(Str("b\n")))
+    assert isinstance(html, Str)
+    assert "<table" in html._value
+
+
+def test_html_diff_make_file_wraps_table_in_document() -> None:
+    from poop.types.difflib import HtmlDiff
+
+    doc = HtmlDiff().make_file(List(Str("a\n")), List(Str("b\n")))
+    assert "<!DOCTYPE" in doc._value or "<html" in doc._value
+
+
+def test_is_character_junk_default_predicate() -> None:
+    assert Difflib.IS_CHARACTER_JUNK(Str(" ")) is true
+    assert Difflib.IS_CHARACTER_JUNK(Str("\t")) is true
+    assert Difflib.IS_CHARACTER_JUNK(Str("a")) is false
+
+
+def test_is_line_junk_default_predicate() -> None:
+    # CPython's IS_LINE_JUNK marks blank lines as junk.
+    assert Difflib.IS_LINE_JUNK(Str("\n")) is true
+    assert Difflib.IS_LINE_JUNK(Str("real content\n")) is false

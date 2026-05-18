@@ -1,10 +1,10 @@
 import difflib as _difflib
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, ClassVar
 
 from poop.types._bridge import bridge
 from poop.types._unwrap import _b, _kwargs_from
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -103,17 +103,119 @@ class SequenceMatcher:
         return Tuple(Int(m.a), Int(m.b), Int(m.size))
 
 
+class Differ:
+    """Wraps Python's `difflib.Differ` — `compare` between two line lists.
+
+    Construction takes optional `linejunk` / `charjunk` `Block`s routed
+    through `block.bridge`. `compare(a, b)` returns a `List[Str]` of
+    marker-prefixed lines (`?`/`-`/`+`/space).
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(
+        self,
+        linejunk: Callable[..., Any] | None = None,
+        charjunk: Callable[..., Any] | None = None,
+    ) -> None:
+        self._impl = _difflib.Differ(
+            linejunk=None if linejunk is None else bridge(linejunk),
+            charjunk=(
+                _difflib.IS_CHARACTER_JUNK if charjunk is None else bridge(charjunk)
+            ),
+        )
+
+    def compare(self, a: List, b: List) -> List:
+        return _wrap_lines(self._impl.compare(_str_iter(a), _str_iter(b)))
+
+
+class HtmlDiff:
+    """Wraps Python's `difflib.HtmlDiff` — HTML diff renderer."""
+
+    __slots__ = ("_impl",)
+
+    def __init__(
+        self,
+        tabsize: Int | None = None,
+        wrapcolumn: Int | None = None,
+        linejunk: Callable[..., Any] | None = None,
+        charjunk: Callable[..., Any] | None = None,
+    ) -> None:
+        self._impl = _difflib.HtmlDiff(
+            tabsize=8 if tabsize is None else tabsize._value,
+            wrapcolumn=None if wrapcolumn is None else wrapcolumn._value,
+            linejunk=None if linejunk is None else bridge(linejunk),
+            charjunk=(
+                _difflib.IS_CHARACTER_JUNK if charjunk is None else bridge(charjunk)
+            ),
+        )
+
+    def make_file(
+        self,
+        fromlines: List,
+        tolines: List,
+        fromdesc: Str | None = None,
+        todesc: Str | None = None,
+        context: Boolean = false,
+        numlines: Int | None = None,
+    ) -> Str:
+        return Str(
+            self._impl.make_file(
+                _str_iter(fromlines),
+                _str_iter(tolines),
+                "" if fromdesc is None else fromdesc._value,
+                "" if todesc is None else todesc._value,
+                context=bool(context),
+                numlines=5 if numlines is None else numlines._value,
+            )
+        )
+
+    def make_table(
+        self,
+        fromlines: List,
+        tolines: List,
+        fromdesc: Str | None = None,
+        todesc: Str | None = None,
+        context: Boolean = false,
+        numlines: Int | None = None,
+    ) -> Str:
+        return Str(
+            self._impl.make_table(
+                _str_iter(fromlines),
+                _str_iter(tolines),
+                "" if fromdesc is None else fromdesc._value,
+                "" if todesc is None else todesc._value,
+                context=bool(context),
+                numlines=5 if numlines is None else numlines._value,
+            )
+        )
+
+
+def _is_character_junk(ch: Str, ws: Str | None = None) -> Boolean:
+    """Mirror of `difflib.IS_CHARACTER_JUNK` (default whitespace check)."""
+    ws_arg = " \t" if ws is None else ws._value
+    return true if _difflib.IS_CHARACTER_JUNK(ch._value, ws_arg) else false
+
+
+def _is_line_junk(line: Str) -> Boolean:
+    """Mirror of `difflib.IS_LINE_JUNK` (default: blank or '#'-prefixed)."""
+    return true if _difflib.IS_LINE_JUNK(line._value) else false
+
+
 class Difflib:
     """Namespace mirroring Python's `difflib` module.
 
     Diff producers return `List[Str]` of lines. `get_close_matches`
     does fuzzy matching against a list of candidates. The
-    `SequenceMatcher` class is exposed alongside this namespace for
-    detailed diff queries.
-
-    `HtmlDiff` and the line/character junk predicates are deliberately
-    omitted in v1 — the line-based diff producers cover the common case.
+    `SequenceMatcher` / `Differ` / `HtmlDiff` classes are exposed
+    alongside this namespace for detailed diff queries.
     """
+
+    Differ: ClassVar[type[Differ]] = Differ
+    HtmlDiff: ClassVar[type[HtmlDiff]] = HtmlDiff
+
+    IS_CHARACTER_JUNK: ClassVar[Callable[..., Boolean]] = _is_character_junk
+    IS_LINE_JUNK: ClassVar[Callable[..., Boolean]] = _is_line_junk
 
     @staticmethod
     def unified_diff(

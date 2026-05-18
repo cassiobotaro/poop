@@ -1424,10 +1424,13 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 | `SequenceMatcher.get_matching_blocks()` | `List[Tuple(Int, Int, Int)]` | `(a, b, size)` per block |
 | `SequenceMatcher.get_opcodes()` | `List[Tuple(Str, Int, Int, Int, Int)]` | `(tag, i1, i2, j1, j2)` |
 | `SequenceMatcher.find_longest_match(alo=none, ahi=none, blo=none, bhi=none)` | `Tuple(Int, Int, Int)` | |
+| `Differ(linejunk=none, charjunk=none)` | `Differ` | constructor accepts `Block` predicates |
+| `Differ.compare(a, b)` | `List[Str]` | marker-prefixed line diff |
+| `HtmlDiff(tabsize=none, wrapcolumn=none, linejunk=none, charjunk=none)` | `HtmlDiff` | HTML diff renderer |
+| `HtmlDiff.make_file(fromlines, tolines, fromdesc=none, todesc=none, context=false, numlines=none)` / `.make_table(...)` | `Str` | full HTML document / inner `<table>` only |
+| `difflib.IS_CHARACTER_JUNK(ch, ws=none)` / `.IS_LINE_JUNK(line)` | `Boolean` | default predicates exposed for reuse |
 
-`HtmlDiff` and the `IS_LINE_JUNK`/`IS_CHARACTER_JUNK` predicates are out of scope for v1.
-
-`difflib` and `SequenceMatcher` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/difflib.py` — namespace-only, no AST rewrite.
+`difflib`, `SequenceMatcher`, `Differ`, and `HtmlDiff` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/difflib.py` — namespace-only, no AST rewrite.
 
 ### textwrap + TextWrapper — `poop/types/textwrap.py` + `poop/transformers/textwrap.py`
 
