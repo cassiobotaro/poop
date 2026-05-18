@@ -1,8 +1,10 @@
 import os as _stdlib_os
+from pathlib import Path as _PyPath
 
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.types.block import Block
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
@@ -159,3 +161,40 @@ def test_os_pid_via_interpreter() -> None:
 
 def test_environ_via_interpreter() -> None:
     Interpreter().run_source("os.environ.has('PATH').print()")
+
+
+# --- os.walk ---
+
+
+def test_walk_yields_tuples_of_path_dirs_files(tmp_path: _PyPath) -> None:
+    (tmp_path / "a").mkdir()
+    (tmp_path / "a" / "file.txt").write_text("x")
+    result = OS.walk(Path(Str(str(tmp_path))))
+    assert isinstance(result, List)
+    first = result.at(Int(0))
+    assert isinstance(first, Tuple)
+    root, dirs, files = first.at(Int(0)), first.at(Int(1)), first.at(Int(2))
+    assert isinstance(root, Path)
+    assert isinstance(dirs, List)
+    assert isinstance(files, List)
+
+
+def test_walk_topdown_false() -> None:
+    # Just verifying the kwarg threads through without raising.
+    result = OS.walk(Path(Str(".")), topdown=false)
+    assert isinstance(result, List)
+
+
+def test_walk_onerror_block_receives_oserror(tmp_path: _PyPath) -> None:
+    seen: list[OSError] = []
+
+    def handler(err: OSError) -> None:
+        seen.append(err)
+
+    # Walk a nonexistent dir under followlinks=false; onerror fires on
+    # the listdir failure.
+    OS.walk(
+        Path(Str(str(tmp_path / "nonexistent"))),
+        onerror=Block(handler),
+    )
+    assert seen and isinstance(seen[0], OSError)

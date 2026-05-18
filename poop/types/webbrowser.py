@@ -2,6 +2,7 @@ import webbrowser as _webbrowser
 from collections.abc import Callable
 from typing import Any, ClassVar
 
+from poop.types._bridge import bridge
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -171,19 +172,20 @@ class Webbrowser:
         *,
         preferred: Boolean = false,
     ) -> NoneClass:
-        # constructor is a POOP-callable returning a Browser; adapt to a
-        # Python callable returning a BaseBrowser for CPython's registry.
+        # `constructor` is a POOP `Block` returning a `Browser`. The
+        # bridge handles arg-wrap; we keep the return as POOP and unwrap
+        # to `BaseBrowser` ourselves since `to_python` does not know
+        # about POOP `Browser`.
         py_ctor: Callable[..., _webbrowser.BaseBrowser] | None
         if constructor is None:
             py_ctor = None
         else:
+            bridged = bridge(constructor, unwrap_return=False)
 
             def py_ctor(*args: Any, **kwargs: Any) -> _webbrowser.BaseBrowser:
-                result = constructor(*args, **kwargs)
+                result = bridged(*args, **kwargs)
                 if isinstance(result, Browser):
                     return result._impl
-                # POOP code may have returned a raw BaseBrowser already;
-                # accept either shape.
                 return result
 
         py_instance = None if instance is None else instance._impl

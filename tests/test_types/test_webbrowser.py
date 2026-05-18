@@ -4,6 +4,7 @@ from unittest import mock
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.types.block import Block
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.string import Str
@@ -146,3 +147,23 @@ def test_Browser_in_default_namespace() -> None:
     from poop.transformers import DEFAULT_NAMESPACE
 
     assert DEFAULT_NAMESPACE["Browser"] is Browser
+
+
+# --- register constructor via bridge ---
+
+
+def test_register_constructor_block_returning_browser() -> None:
+    calls: list[int] = []
+    stub_impl = _webbrowser.GenericBrowser("/bin/echo")
+
+    def factory() -> Browser:
+        calls.append(1)
+        return Browser(stub_impl)
+
+    Webbrowser.register(
+        Str("poop-test-stub"), constructor=Block(factory), preferred=false
+    )
+    # Pulling it back from the registry should call our factory.
+    got = _webbrowser.get("poop-test-stub")
+    assert got is stub_impl
+    assert calls == [1]

@@ -3,6 +3,8 @@ from __future__ import annotations
 import signal as _signal
 from typing import Any, ClassVar
 
+from poop.types._bridge import bridge
+from poop.types.block import Block
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.set import Set
@@ -10,9 +12,18 @@ from poop.types.string import Str
 
 
 def _as_handler(handler: Any) -> Any:
-    """Accept either Python callable, POOP Block, or signal sentinel."""
-    if handler is _signal.SIG_DFL or handler is _signal.SIG_IGN:
+    """Adapt a handler argument for `signal.signal` / friends.
+
+    Signal sentinels (`SIG_DFL`, `SIG_IGN`) pass through untouched.
+    `None` (CPython's "no previous handler" placeholder) also passes
+    through. POOP `Block`s route through `block.bridge` so the handler
+    receives a POOP `Int` signum and a raw Python frame (frame stays
+    opaque — POOP has no frame model).
+    """
+    if handler is None or handler is _signal.SIG_DFL or handler is _signal.SIG_IGN:
         return handler
+    if isinstance(handler, Block):
+        return bridge(handler)
     return handler
 
 

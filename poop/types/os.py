@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os as _os
-from typing import ClassVar
+from collections.abc import Callable
+from typing import Any, ClassVar
 
+from poop.types._bridge import bridge
 from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
@@ -162,3 +164,34 @@ class OS:
     def kill(pid: Int, signal: Int) -> NoneClass:
         _os.kill(pid._value, signal._value)
         return none
+
+    @staticmethod
+    def walk(
+        top: Path | Str,
+        topdown: Boolean = true,
+        onerror: Callable[..., Any] | None = None,
+        followlinks: Boolean = false,
+    ) -> List:
+        """Eager `os.walk`. Returns a `List` of `Tuple(root, dirs, files)`.
+
+        `root` is a `Path`; `dirs` / `files` are `List[Str]` of basenames.
+        `onerror` accepts a POOP `Block` routed through `block.bridge` —
+        the block receives an `OSError` (raw Python exception, mirroring
+        CPython's contract) and can re-raise or log.
+        """
+        py_onerror = None if onerror is None else bridge(onerror)
+        out: list[Tuple] = []
+        for root, dirs, files in _os.walk(
+            _path_str(top),
+            topdown=bool(topdown),
+            onerror=py_onerror,
+            followlinks=bool(followlinks),
+        ):
+            out.append(
+                Tuple(
+                    Path(Str(root)),
+                    List(*(Str(d) for d in dirs)),
+                    List(*(Str(f) for f in files)),
+                )
+            )
+        return List(*out)

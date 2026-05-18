@@ -49,7 +49,7 @@ Parameter names also mirror CPython where there is no banned-builtin or POOP-spe
 
 - POOP renames params that shadow banned builtins (e.g., `grp.getgrgid` takes `gid` instead of CPython's `id`).
 - File I/O entry points take `Path` instead of file-object / file-descriptor (POOP has no file-object abstraction).
-- Callback kwargs route through `poop.types._bridge.bridge`. Pending consumers (`constructor=` for `webbrowser.register`, `onerror=` for `os.walk`, `signum/handler=` for `signal.signal`, `linejunk=` for `difflib.unified_diff`) wait on the same helper.
+- Callback kwargs route through `poop.types._bridge.bridge`. Pending consumers (`linejunk=` for `difflib.unified_diff`, pickle `Pickler.persistent_id`, sqlite3 `create_aggregate`) wait on the same helper.
 - CPython entry points that take `*args, **kwargs` (e.g., `textwrap.wrap`, `logging.basicConfig`, `pprint.pp`) expose their kwargs explicitly in POOP to preserve type information.
 
 ### Platform-specific constants
@@ -962,7 +962,7 @@ The constant dicts are **snapshotted** from CPython's globals at import time. Su
 
 POOP collapses Python's concrete browser classes (Chrome, Edge, Mozilla, …) into a single `Browser` POOP type because every concrete class carries the same public surface. Class identity is preserved internally for dispatch.
 
-`webbrowser.register(name, constructor, instance, preferred)` is **not** surfaced — its `constructor` argument is a Python callable returning a `BaseBrowser` subclass, with no clean POOP type-discipline mapping in v1. See proposals.md § Future work.
+`webbrowser.register(name, constructor=none, instance=none, *, preferred=false)` accepts a POOP `Block` for `constructor`. The block runs through `block.bridge` and must return a `Browser` (or a raw `BaseBrowser`) — the registry layer unwraps to `BaseBrowser` for CPython.
 
 `webbrowser` and `Browser` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/webbrowser.py` — namespace-only, no AST rewrite.
 
@@ -2265,7 +2265,7 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 
 | Operation | Returns | Notes |
 |---|---|---|
-| `signal.signal(num, handler)` | previous handler | |
+| `signal.signal(num, handler)` | previous handler | `handler` accepts a POOP `Block` routed through `block.bridge`, or the sentinels `Signal.SIG_DFL` / `SIG_IGN` |
 | `signal.getsignal(num)` | handler | |
 | `signal.strsignal(num)` | `Str` / `none` | |
 | `signal.raise_signal(num)` / `.pthread_kill(tid, num)` | `none` | |
@@ -2330,6 +2330,7 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `os.umask(m)` | `Int` | previous mask |
 | `os.chdir(p)` / `.kill(pid, sig)` | `none` | |
 | `os.getcwd()` | `Path` | |
+| `os.walk(top, topdown=true, onerror=none, followlinks=false)` | `List[Tuple(Path, List[Str], List[Str])]` | eager; `onerror` accepts a `Block` routed through `block.bridge` |
 | `os.environ.get(key, default=none)` | `Str` / `none` | |
 | `os.environ.set(key, value)` / `.unset(key)` | `none` | mutators (replace Python's `environ[k]=v` / `del environ[k]`) |
 | `os.environ.has(key)` | `Boolean` | |

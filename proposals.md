@@ -27,13 +27,20 @@ Shipped consumers:
 - **sqlite3** — `Connection.create_function`, `Connection.create_collation`,
   `Sqlite3.register_adapter`, `Sqlite3.register_converter`.
   `create_aggregate` still deferred (needs class-with-methods bridging).
+- **webbrowser** — `Webbrowser.register(name, constructor=...)`. The
+  block returns a `Browser` (or raw `BaseBrowser`); the registry
+  layer unwraps to `BaseBrowser` for CPython.
+- **os** — new `OS.walk(top, topdown=, onerror=, followlinks=)`
+  returning `List[Tuple(Path, List[Str], List[Str])]`; `onerror`
+  accepts a `Block`.
+- **signal** — `Signal.signal(signum, handler)` accepts a `Block`
+  (or `SIG_DFL`/`SIG_IGN` sentinels).
 - **`to_poop`/`to_python`** now also wrap `bytes`/`bytearray` ↔
-  `Bytes`/`ByteArray` (needed by `register_converter`).
+  `Bytes`/`ByteArray` (needed by sqlite3 `register_converter`).
 
 Still pending (each waits for a real caller):
 sqlite3 `create_aggregate`; pickle `Pickler.persistent_id` /
-`dispatch_table` / `Unpickler.persistent_load`; webbrowser
-`register(constructor=)`; os `walk(onerror=)`; signal `signal(handler=)`.
+`dispatch_table` / `Unpickler.persistent_load`.
 
 Out of scope (now and later): async callbacks (covered by `AsyncIO`),
 C-API/ctypes callbacks, full subclassing of stdlib base classes

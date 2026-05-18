@@ -3,6 +3,7 @@ import signal as _stdlib_signal
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.types.block import Block
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.set import Set
@@ -87,3 +88,36 @@ def test_itimer_constants() -> None:
 
 def test_signal_constants_via_interpreter() -> None:
     Interpreter().run_source("signal.SIGINT.print()")
+
+
+# --- signal.signal handler bridge ---
+
+
+def test_signal_accepts_block_handler() -> None:
+    seen: list[Int] = []
+
+    def handler(signum: Int, frame: object) -> None:
+        seen.append(signum)
+
+    sigusr1 = Signal.SIGUSR1
+    if isinstance(sigusr1, type(none)):
+        pytest.skip("SIGUSR1 unavailable on this platform")
+    previous = Signal.signal(sigusr1, Block(handler))
+    try:
+        Signal.raise_signal(sigusr1)
+        assert seen and isinstance(seen[0], Int)
+        assert seen[0] == sigusr1
+    finally:
+        Signal.signal(sigusr1, previous)
+
+
+def test_signal_sigign_pass_through() -> None:
+    sigusr2 = Signal.SIGUSR2
+    if isinstance(sigusr2, type(none)):
+        pytest.skip("SIGUSR2 unavailable on this platform")
+    previous = Signal.signal(sigusr2, Signal.SIG_IGN)
+    try:
+        # Should not raise — handler was SIG_IGN.
+        Signal.raise_signal(sigusr2)
+    finally:
+        Signal.signal(sigusr2, previous)
