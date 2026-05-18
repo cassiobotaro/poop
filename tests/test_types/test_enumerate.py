@@ -42,6 +42,13 @@ def test_enumerate_custom_start() -> None:
     assert pairs[1] == Tuple(Int(6), Str("b"))
 
 
+def test_enumerate_poop_none_start_uses_default() -> None:
+    from poop.types.none import none
+
+    pairs = list(List(Str("a")).enumerate(start=none))
+    assert pairs[0] == Tuple(Int(0), Str("a"))
+
+
 def test_enumerate_restartable() -> None:
     e = List(Int(1), Int(2)).enumerate()
     first = list(e)

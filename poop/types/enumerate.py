@@ -3,21 +3,23 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._unwrap import _unwrap
 from poop.types.int import Int
 from poop.types.object import Object
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
 
 
 class Enumerate(_IterableMixin, Object):
     __slots__ = ("_iter", "_source", "_start")
 
-    def __init__(self, source: Any, start: Int | None = None) -> None:
+    def __init__(self, source: Any, start: Int | NoneClass | None = None) -> None:
         iter(source)
         self._source = source
-        self._start: Int = Int(0) if start is None else start
+        self._start: Int = Int(_unwrap(start, 0))
         self._iter: Iterator[Tuple] | None = None
 
     def _gen(self) -> Iterator[Tuple]:
