@@ -1,10 +1,32 @@
 # Proposals
 
-No open design proposals. The post-v0.54 engineering backlog from the
-expert code review (refactors A3, C1, C2, C4; coverage T2, T3;
-declined C5) and the v0.55.0 signature-audit sweep (retroactive
-Default kwarg policy + sanctioned-divergence triage) both shipped on
-`main`.
+## Block ↔ callable bridge — foundation + json shipped
+
+The bridge foundation and the json proving ground both shipped on
+`main`. Remaining work is per-namespace wiring (each lands in its own
+commit when a caller surfaces): tomllib `parse_float`, logging
+Filter/Handler/Formatter overrides, pickle `Pickler`/`Unpickler`
+subclassing, sqlite3 `create_function`/`create_aggregate`/
+`create_collation`/`register_adapter`/`register_converter`, shutil
+`copytree(ignore=, copy_function=)`, webbrowser `register(constructor=)`,
+difflib `SequenceMatcher(isjunk=)`, os `walk(onerror=)`, signal
+`signal(handler=)`. Out of scope (now and later): async callbacks
+(covered by `AsyncIO`), C-API/ctypes callbacks, full subclassing of
+stdlib base classes beyond callback overrides.
+
+Shipped surface:
+
+- `poop/types/_bridge.py` — `to_python` (POOP → native Python),
+  `to_poop` (native Python → POOP), `bridge(block, *, wrap_args=True,
+  unwrap_return=True)`.
+- `Block.__call__` accepts `**kwargs` (was positional-only).
+- `Json.dumps(default=, cls=, separators=)` and
+  `Json.loads(object_hook=, parse_float=, parse_int=, parse_constant=,
+  object_pairs_hook=, cls=)` accept POOP `Block`s routed through the
+  bridge; `dump` / `load` thread the same kwargs.
+- `Json.JSONEncoder` / `Json.JSONDecoder` exposed; subclassing
+  `JSONEncoder.default(o)` works in POOP idiom (override receives a
+  POOP value and returns one — wrap/unwrap is automatic).
 
 ## v0.6.0 stdlib expansion backlog
 
@@ -148,22 +170,12 @@ callable defaulting to `Float`, but routing TOML floats into
 proposal landing first. Write support stays out of scope (`tomllib`
 is read-only upstream).
 
-### `JSONEncoder` / `JSONDecoder` subclassing + advanced kwargs — from the `json` proposal (v0.25.0)
+### `JSONEncoder` / `JSONDecoder` subclassing + advanced kwargs — from the `json` proposal (v0.25.0) — shipped
 
-v0.25.0 ships `json.dumps`/`loads`/`dump`/`load` with round-trip POOP
-type discipline plus the common formatting flags (`skipkeys`,
-`ensure_ascii`, `check_circular`, `allow_nan`, `indent`,
-`sort_keys`) and `json.JSONDecodeError` for use with `Try.except_`.
-
-Deferred:
-- **`JSONEncoder` / `JSONDecoder` classes** — POOP doesn't yet
-  expose enough subclassing surface to let users override
-  `.default(obj)` or `.object_hook` and have it dispatch through the
-  unwrap/wrap layer cleanly.
-- **`cls=...` / `default=` / `object_hook=` / `parse_float=` /
-  `parse_int=` / `parse_constant=` / `object_pairs_hook=` /
-  `separators=`** — callback hooks that need POOP `Block` →
-  Python `callable` adaptation with type discipline still preserved.
+`cls=`, `default=`, `object_hook=`, `parse_float=`, `parse_int=`,
+`parse_constant=`, `object_pairs_hook=`, `separators=` and the
+`JSONEncoder` / `JSONDecoder` subclassing surface all landed together
+with the Block ↔ callable bridge.
 
 `json.tool` (CLI module) stays out of scope.
 

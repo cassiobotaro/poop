@@ -14,8 +14,8 @@ class Block(Object):
     def __init__(self, fn: Callable[..., Any]) -> None:
         self._fn = fn
 
-    def __call__(self, *args: Any) -> Any:
-        return self._fn(*args)
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        return self._fn(*args, **kwargs)
 
     def while_true(self, body: Block) -> NoneClass:
         while bool(self._fn()):
