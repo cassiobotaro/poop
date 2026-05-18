@@ -231,3 +231,13 @@ def test_other_items_set_of_non_tuples() -> None:
     other = Set(Int(99))  # not a Tuple
     result = items.isdisjoint(other)
     assert result is true
+
+
+def test_other_items_skips_non_pair_tuple() -> None:
+    # Sets may contain tuples of arity != 2; the set-op helper must skip them
+    # rather than blindly indexing _items[0]/_items[1].
+    items = DictItems(_make())
+    other = Set(Tuple(Str("a")), Tuple(Str("a"), Int(1), Int(99)))
+    assert (items & other)._data == set()
+    assert (items | other)._data == {Tuple(Str("a"), Int(1)), Tuple(Str("b"), Int(2))}
+    assert items.isdisjoint(other) is true

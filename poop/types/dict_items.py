@@ -24,7 +24,11 @@ def _other_items(other: Any) -> Any:
     if isinstance(other, DictItems):
         return other._dict._data.items()
     if isinstance(other, (Set, FrozenSet)):
-        return {(t._items[0], t._items[1]) for t in other._data if isinstance(t, Tuple)}
+        return {
+            (t._items[0], t._items[1])
+            for t in other._data
+            if isinstance(t, Tuple) and len(t._items) == 2
+        }
     if isinstance(other, set):
         return other
     return other
