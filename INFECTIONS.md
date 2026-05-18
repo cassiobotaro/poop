@@ -2359,8 +2359,10 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `Logger.isEnabledFor(level)` / `.propagate` (property) | `Boolean` | `.propagate` writable via assignment |
 | `Logger.debug/info/warning/error/critical/exception(msg)` / `.log(level, msg)` | `none` | |
 | `Logger.handlers()` | `List[Handler]` | |
-| `Handler.setLevel(l)` / `.setFormatter(f)` | `none` | |
-| `Formatter()` / `Formatter(fmt=...)` | `Formatter` | |
+| `Handler.setLevel(l)` / `.setFormatter(f)` / `.addFilter(f)` / `.removeFilter(f)` | `none` | |
+| `Formatter(fmt=none, datefmt=none, style=none, validate=true, defaults=none)` | `Formatter` | |
+| `Filter(name=none)` | `Filter` | |
+| Subclass `Filter` / `Handler` / `Formatter` and override `filter(record)` / `emit(record)` / `format(record)` | — | overrides routed through `block.bridge` (`record` is raw `_logging.LogRecord`); no POOP `LogRecord` wrapper yet |
 | `platform.system()` / `.release()` / `.version()` / `.machine()` / `.processor()` / `.node()` / `.platform(...)` | `Str` | |
 | `platform.uname()` | `Uname` | |
 | `platform.architecture()` | `Tuple(Str, Str)` | `(bits, linkage)` |

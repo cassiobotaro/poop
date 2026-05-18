@@ -3,10 +3,10 @@ import tempfile
 from pathlib import Path as _PyPath
 
 from poop.interpreter import Interpreter
-from poop.types.boolean import Boolean, true
+from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
-from poop.types.logging import Formatter, Handler, Logger, Logging
+from poop.types.logging import Filter, Formatter, Handler, Logger, Logging
 from poop.types.none import none
 from poop.types.path import Path
 from poop.types.string import Str
@@ -94,9 +94,9 @@ def test_basic_config_force_resets_root_handlers() -> None:
 
 
 def test_basic_config_handlers_list() -> None:
-    h = Handler(_stdlib_logging.NullHandler())
+    h = Logging.NullHandler()
     assert Logging.basicConfig(handlers=List(h), force=true) is none
-    assert h._impl in _stdlib_logging.getLogger().handlers
+    assert h in _stdlib_logging.getLogger().handlers
 
 
 def test_basic_config_encoding_and_errors(tmp_path: _PyPath) -> None:
@@ -199,7 +199,7 @@ def test_file_handler_returns_handler() -> None:
         try:
             assert isinstance(h, Handler)
         finally:
-            h._impl.close()
+            h.close()
 
 
 def test_handler_set_level() -> None:
@@ -234,11 +234,6 @@ def test_formatter_with_fmt() -> None:
     assert isinstance(f, Formatter)
 
 
-def test_formatter_from_impl() -> None:
-    f = Formatter(impl=_stdlib_logging.Formatter())
-    assert isinstance(f, Formatter)
-
-
 # --- Module-level convenience ---
 
 
@@ -257,6 +252,95 @@ def test_logging_class_refs() -> None:
     assert Logging.Logger is Logger
     assert Logging.Handler is Handler
     assert Logging.Formatter is Formatter
+    assert Logging.Filter is Filter
+
+
+# --- Subclassing surface (bridge consumer) ---
+
+
+def test_filter_subclass_returning_poop_boolean() -> None:
+    captured: list[_stdlib_logging.LogRecord] = []
+
+    class OnlyWarnings(Filter):
+        def filter(self, record):  # type: ignore[override,no-untyped-def]
+            captured.append(record)
+            return true if record.levelno >= _stdlib_logging.WARNING else false
+
+    logger = Logging.getLogger(Str("poop.test.filter.subclass"))
+    logger.addHandler(Logging.NullHandler())
+    logger.addFilter(OnlyWarnings())
+    logger.setLevel(Logging.DEBUG)
+
+    logger.info(Str("not interesting"))
+    logger.warning(Str("hot"))
+
+    assert len(captured) == 2
+    assert any(r.levelname == "WARNING" for r in captured)
+
+
+def test_formatter_subclass_returning_poop_str() -> None:
+    class ShoutFormatter(Formatter):
+        def format(self, record):  # type: ignore[override,no-untyped-def]
+            return Str(record.getMessage().upper() + "!!")
+
+    f = ShoutFormatter()
+    rec = _stdlib_logging.LogRecord(
+        name="x",
+        level=_stdlib_logging.INFO,
+        pathname="",
+        lineno=0,
+        msg="hello",
+        args=None,
+        exc_info=None,
+    )
+    assert f.format(rec) == "HELLO!!"
+
+
+def test_handler_subclass_emits() -> None:
+    seen: list[str] = []
+
+    class CaptureHandler(Handler):
+        def emit(self, record):  # type: ignore[override,no-untyped-def]
+            seen.append(record.getMessage())
+
+    h = CaptureHandler()
+    logger = Logging.getLogger(Str("poop.test.handler.subclass"))
+    logger.addHandler(h)
+    logger.setLevel(Logging.DEBUG)
+
+    logger.info(Str("captured-1"))
+    logger.warning(Str("captured-2"))
+
+    assert "captured-1" in seen
+    assert "captured-2" in seen
+    logger.removeHandler(h)
+
+
+def test_handler_is_stdlib_handler() -> None:
+    # POOP Handler IS a CPython logging.Handler — no _impl wrapping.
+    assert issubclass(Handler, _stdlib_logging.Handler)
+    assert issubclass(Filter, _stdlib_logging.Filter)
+    assert issubclass(Formatter, _stdlib_logging.Formatter)
+    assert isinstance(Logging.NullHandler(), _stdlib_logging.Handler)
+
+
+def test_formatter_constructor_kwargs() -> None:
+    f = Formatter(
+        fmt=Str("%(levelname)s|%(message)s"),
+        datefmt=Str("%Y"),
+        style=Str("%"),
+        validate=true,
+    )
+    rec = _stdlib_logging.LogRecord(
+        name="x",
+        level=_stdlib_logging.WARNING,
+        pathname="",
+        lineno=0,
+        msg="msg",
+        args=None,
+        exc_info=None,
+    )
+    assert f.format(rec) == "WARNING|msg"
 
 
 # --- Interpreter integration ---

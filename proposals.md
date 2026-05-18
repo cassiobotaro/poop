@@ -46,21 +46,26 @@ The fd-based I/O / `exec*` / `fork`+`spawn*` / `sys` frame-and-audit hooks moved
 
 ### Logging framework (`logging` 35)
 
-POOP exposes `Logger`, `Handler`, `Formatter`, and the basic level
-constants. Deferred: `BufferingFormatter`, `Filter` / `Filterer`,
-`LogRecord`, `LoggerAdapter`, the style classes
-(`PercentStyle`/`StrFormatStyle`/`StringTemplateStyle`), `Manager`,
-`RootLogger`, `PlaceHolder`, the introspection helpers
-(`getHandlerByName`/`getHandlerNames`/`getLevelNamesMapping`/
-`getLogRecordFactory`/`getLoggerClass`), `captureWarnings`,
-`makeLogRecord`, `disable`, `exception`, the dict-config and
-file-config machinery, and the global toggles
-(`logAsyncioTasks`/`logMultiprocessing`/`logProcesses`/`logThreads`/
-`raiseExceptions`). Most of these need POOP subclass-extension
-surface (custom Filters/Handlers/Formatters) — pair with the
-"subclassing" decision below.
+POOP exposes `Logger`, `Filter`, `Handler` (+ `StreamHandler`,
+`NullHandler`, `FileHandler`), `Formatter`, and the basic level
+constants. The subclass-extension surface landed: user subclasses
+of `Filter` / `Handler` / `Formatter` override `filter(record)` /
+`emit(record)` / `format(record)` in POOP idiom (the bridge wraps
+the return value). The `record` argument stays as raw
+`_logging.LogRecord` — a POOP `LogRecord` wrapper is a separate
+follow-up.
 
-`logging.basicConfig` now exposes the full CPython kwarg surface
+Still deferred: `BufferingFormatter`, `Filterer`, `LoggerAdapter`,
+the style classes (`PercentStyle`/`StrFormatStyle`/
+`StringTemplateStyle`), `Manager`, `RootLogger`, `PlaceHolder`, the
+introspection helpers (`getHandlerByName`/`getHandlerNames`/
+`getLevelNamesMapping`/`getLogRecordFactory`/`getLoggerClass`),
+`captureWarnings`, `makeLogRecord`, `disable`, `exception`, the
+dict-config and file-config machinery, and the global toggles
+(`logAsyncioTasks`/`logMultiprocessing`/`logProcesses`/`logThreads`/
+`raiseExceptions`). All wait for a real caller.
+
+`logging.basicConfig` exposes the full CPython kwarg surface
 except `stream` (POOP has no file-object abstraction — write to a
 `Path` via `filename`, or wire a custom `Handler`).
 
