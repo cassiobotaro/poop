@@ -195,10 +195,9 @@ from commit subjects since the previous tag, so following [Conventional
 Commits](https://www.conventionalcommits.org/) gives a readable
 changelog for free:
 
-- `fix:` → patch (`0.1.0` → `0.1.1`)
-- `feat:` → minor (`0.1.0` → `0.2.0`)
-- `feat!:` / `BREAKING CHANGE:` → major **once the project reaches
-  `1.0.0`**. While we are pre-1.0, breaking changes bump the minor.
+- `fix:` → patch (`1.0.0` → `1.0.1`)
+- `feat:` → minor (`1.0.0` → `1.1.0`)
+- `feat!:` / `BREAKING CHANGE:` → major (`1.0.0` → `2.0.0`).
 - `docs:`, `chore:`, `refactor:`, `test:`, `style:` → no version
   bump.
 

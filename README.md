@@ -6,11 +6,9 @@
 
 **POOP** — **P**ython **O**bject **O**riented **P**rogramming. A Python 3.14 interpreter that enforces Smalltalk-style message passing by rejecting `if`/`for`/`print`/`isinstance` and rewriting Python literals (`1`, `"hi"`, `True`, `[…]`, `{…}`) into POOP types where every operation is a message to a receiver.
 
-POOP is for **educational exploration of message-passing semantics inside the Python ecosystem**, not for production. Status: **experimental** — the API changes between minor versions.
+POOP is for **educational exploration of message-passing semantics inside the Python ecosystem**, not for production. Status: **stable** — breaking changes ship in major releases (`1.x` → `2.0`). POOP is not distributed via PyPI by design; clone and run it locally.
 
 ## Install
-
-End user (until POOP is published to PyPI):
 
 ```bash
 git clone https://github.com/cassiobotaro/poop.git
