@@ -1,6 +1,8 @@
 from typing import cast
 
 from poop.interpreter import Interpreter
+from poop.types.block import Block
+from poop.types.boolean import Boolean, false, true
 from poop.types.difflib import Difflib, SequenceMatcher
 from poop.types.float import Float
 from poop.types.int import Int
@@ -152,6 +154,21 @@ def test_difflib_unified_diff_reachable_via_interpreter() -> None:
 
 def test_SequenceMatcher_reachable_via_interpreter() -> None:
     Interpreter().run_source('SequenceMatcher("abc", "abd").ratio().print()')
+
+
+def test_sequence_matcher_isjunk_block_filters_chars() -> None:
+    seen: list[Str] = []
+
+    def is_space(c: Str) -> Boolean:
+        seen.append(c)
+        return true if c == Str(" ") else false
+
+    a, b = Str("ab cd"), Str("ab cd")
+    sm = SequenceMatcher(a, b, isjunk=Block(is_space))
+    # Identical strings still match perfectly even with the junk hook,
+    # and the predicate runs over the inputs.
+    assert sm.ratio() == Float(1.0)
+    assert any(c == Str(" ") for c in seen)
 
 
 def test_difflib_get_close_matches_reachable_via_interpreter() -> None:

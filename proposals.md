@@ -1,32 +1,39 @@
 # Proposals
 
-## Block ↔ callable bridge — foundation + json shipped
+## Block ↔ callable bridge — foundation + per-namespace consumers landing
 
-The bridge foundation and the json proving ground both shipped on
-`main`. Remaining work is per-namespace wiring (each lands in its own
-commit when a caller surfaces): tomllib `parse_float`, logging
-Filter/Handler/Formatter overrides, pickle `Pickler`/`Unpickler`
-subclassing, sqlite3 `create_function`/`create_aggregate`/
-`create_collation`/`register_adapter`/`register_converter`, shutil
-`copytree(ignore=, copy_function=)`, webbrowser `register(constructor=)`,
-difflib `SequenceMatcher(isjunk=)`, os `walk(onerror=)`, signal
-`signal(handler=)`. Out of scope (now and later): async callbacks
-(covered by `AsyncIO`), C-API/ctypes callbacks, full subclassing of
-stdlib base classes beyond callback overrides.
+The bridge foundation lives in `poop/types/_bridge.py` (`to_python`,
+`to_poop`, `bridge(block, *, wrap_args=True, unwrap_return=True)`)
+and `Block.__call__` forwards `**kwargs`. Per-namespace consumers
+land in their own commits as callers surface.
 
-Shipped surface:
+Shipped consumers:
 
-- `poop/types/_bridge.py` — `to_python` (POOP → native Python),
-  `to_poop` (native Python → POOP), `bridge(block, *, wrap_args=True,
-  unwrap_return=True)`.
-- `Block.__call__` accepts `**kwargs` (was positional-only).
-- `Json.dumps(default=, cls=, separators=)` and
+- **json** — `Json.dumps(default=, cls=, separators=)` and
   `Json.loads(object_hook=, parse_float=, parse_int=, parse_constant=,
-  object_pairs_hook=, cls=)` accept POOP `Block`s routed through the
-  bridge; `dump` / `load` thread the same kwargs.
-- `Json.JSONEncoder` / `Json.JSONDecoder` exposed; subclassing
-  `JSONEncoder.default(o)` works in POOP idiom (override receives a
-  POOP value and returns one — wrap/unwrap is automatic).
+  object_pairs_hook=, cls=)`; `JSONEncoder.default(o)` subclassing.
+- **tomllib** — `Tomllib.loads/load(parse_float=)`; TOML
+  date/time/datetime values land as POOP `Date`/`Time`/`DateTime`.
+- **logging** — `Filter` (new) + `Handler` / `Formatter` /
+  `StreamHandler` / `NullHandler` / `FileHandler` inherit from
+  `_logging.*`; subclass overrides of `filter(record)` / `emit(record)`
+  / `format(record)` route through the bridge. `basicConfig` covers
+  the full CPython kwarg surface (except `stream`).
+- **textwrap** — `textwrap.indent(predicate=)` migrated off its
+  local `_bridge_predicate` onto the central helper.
+- **difflib** — `SequenceMatcher(isjunk=, autojunk=)`.
+- **shutil** — `copytree(ignore=, copy_function=)`, `move(copy_function=)`,
+  and `Shutil.ignore_patterns(*patterns)` returns a drop-in `Block`.
+
+Still pending (each waits for a real caller):
+sqlite3 `create_function`/`create_aggregate`/`create_collation`/
+`register_adapter`/`register_converter`; pickle `Pickler.persistent_id`
+/ `dispatch_table` / `Unpickler.persistent_load`; webbrowser
+`register(constructor=)`; os `walk(onerror=)`; signal `signal(handler=)`.
+
+Out of scope (now and later): async callbacks (covered by `AsyncIO`),
+C-API/ctypes callbacks, full subclassing of stdlib base classes
+beyond callback overrides, POOP `LogRecord` wrapper.
 
 ## v0.6.0 stdlib expansion backlog
 
@@ -139,7 +146,7 @@ be added one-at-a-time when a caller asks.
 
 POOP curates these around `Path`. Deferred:
 `shutil.{disk_usage,sameopenfile,sameopenstat,specialbits,...}`,
-`shutil.ignore_patterns`, `configparser.LegacyInterpolation`,
+`configparser.LegacyInterpolation`,
 `configparser.MAX_INTERPOLATION_DEPTH`, `tempfile.tempdir`,
 `tempfile.SpooledTemporaryFile`, `glob.has_magic`,
 `glob.has_magic_chars`, `glob.tab_completion_glob`, `io.IOBase` and

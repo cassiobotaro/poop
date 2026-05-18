@@ -49,7 +49,7 @@ Parameter names also mirror CPython where there is no banned-builtin or POOP-spe
 
 - POOP renames params that shadow banned builtins (e.g., `grp.getgrgid` takes `gid` instead of CPython's `id`).
 - File I/O entry points take `Path` instead of file-object / file-descriptor (POOP has no file-object abstraction).
-- Callback kwargs (`copy_function=`, `linejunk=`, `onerror=`, `cls=`/`object_hook=`/`parse_float=` for `json`, `constructor=` for `webbrowser.register`, etc.) wait on a Block↔callable bridge.
+- Callback kwargs route through `poop.types._bridge.bridge`. Pending consumers (`constructor=` for `webbrowser.register`, `onerror=` for `os.walk`, `signum/handler=` for `signal.signal`, `linejunk=` for `difflib.unified_diff`, sqlite3 `create_function`/`register_adapter`/etc.) wait on the same helper.
 - CPython entry points that take `*args, **kwargs` (e.g., `textwrap.wrap`, `logging.basicConfig`, `pprint.pp`) expose their kwargs explicitly in POOP to preserve type information.
 
 ### Platform-specific constants
@@ -1388,7 +1388,7 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 | `difflib.ndiff(a, b)` | `List[Str]` | `?`/`-`/`+`/` ` marker per line |
 | `difflib.restore(seq, which)` | `List[Str]` | `which` is `Int(1)` or `Int(2)` |
 | `difflib.get_close_matches(word, possibilities, n=none, cutoff=none)` | `List[Str]` | defaults match CPython (`n=3`, `cutoff=0.6`) |
-| `SequenceMatcher(a, b, autojunk=none)` | `SequenceMatcher` | `a` / `b` are `Str` (per-char) or `List[Str]` (per-line) |
+| `SequenceMatcher(a, b, isjunk=none, autojunk=none)` | `SequenceMatcher` | `a` / `b` are `Str` (per-char) or `List[Str]` (per-line); `isjunk` is a `Block` routed through `block.bridge` |
 | `SequenceMatcher.ratio()` / `.quick_ratio()` / `.real_quick_ratio()` | `Float` | |
 | `SequenceMatcher.get_matching_blocks()` | `List[Tuple(Int, Int, Int)]` | `(a, b, size)` per block |
 | `SequenceMatcher.get_opcodes()` | `List[Tuple(Str, Int, Int, Int, Int)]` | `(tag, i1, i2, j1, j2)` |
@@ -1704,9 +1704,10 @@ The private `_RandomNameSequence` class is out of scope for v1.
 | Operation | Returns | Notes |
 |---|---|---|
 | `shutil.copy(src, dst, follow_symlinks=none)` / `.copy2(...)` / `.copyfile(...)` | `Path` | metadata-aware variants follow CPython |
-| `shutil.copytree(src, dst, symlinks=none, ignore_dangling_symlinks=none, dirs_exist_ok=none)` | `Path` | recursive |
+| `shutil.copytree(src, dst, symlinks=none, ignore=none, copy_function=none, ignore_dangling_symlinks=none, dirs_exist_ok=none)` | `Path` | recursive; `ignore` / `copy_function` accept `Block`s |
+| `shutil.ignore_patterns(*patterns)` | `Block` | factory for `copytree(ignore=...)` |
 | `shutil.copymode(src, dst, follow_symlinks=none)` / `.copystat(...)` | `none` | metadata-only copies |
-| `shutil.move(src, dst)` | `Path` | |
+| `shutil.move(src, dst, copy_function=none)` | `Path` | `copy_function` accepts a `Block` |
 | `shutil.rmtree(path, ignore_errors=none)` | `none` | recursive remove |
 | `shutil.which(cmd, mode=none, path=none)` | `Path` / `none` | locate executable on `PATH` |
 | `shutil.make_archive(base_name, format, root_dir=none, base_dir=none)` | `Path` | `format` is `"zip"`, `"tar"`, `"gztar"`, …  |
@@ -1718,7 +1719,7 @@ The private `_RandomNameSequence` class is out of scope for v1.
 | `shutil.chown(path, user=none, group=none)` | `none` | |
 | `shutil.Error` / `.SameFileError` (class attrs) | exception class | for `Try.except_` |
 
-The `ignore_patterns` factory and the `copy_function` callback argument plumbing are out of scope for v1 — defer until POOP has a Block↔callable bridge.
+`copytree(ignore=, copy_function=)` and `move(copy_function=)` accept POOP `Block`s routed through `block.bridge`. `shutil.ignore_patterns(*patterns)` returns a POOP `Block` that drops in directly to `copytree(ignore=...)`.
 
 `shutil` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/shutil.py` — namespace-only, no AST rewrite.
 

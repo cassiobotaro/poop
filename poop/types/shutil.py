@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import shutil as _shutil
-from typing import Any, ClassVar
+from collections.abc import Callable
+from typing import Any, ClassVar, cast
 
+from poop.types._bridge import bridge
 from poop.types._unwrap import _b, _kwargs_from
+from poop.types.block import Block
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -35,9 +38,10 @@ class Shutil:
     accept either `Path` or `Str` everywhere; return values are `Path`
     when CPython returns a path-like.
 
-    The `ignore_patterns` factory and the `copy_function` callback
-    argument plumbing are out of scope for v1 — defer until POOP has
-    a Block↔callable bridge.
+    `ignore` (on `copytree`) and `copy_function` (on `copytree` /
+    `move`) accept POOP `Block`s routed through `block.bridge`.
+    `Shutil.ignore_patterns(*patterns)` returns a passthrough callable
+    suitable for `ignore=`.
     """
 
     Error: ClassVar[type[Exception]] = _shutil.Error
@@ -98,16 +102,16 @@ class Shutil:
         src: Path | Str,
         dst: Path | Str,
         symlinks: Boolean = false,
-        ignore: Any = None,
+        ignore: Callable[..., Any] | None = None,
+        copy_function: Callable[..., Any] | None = None,
         ignore_dangling_symlinks: Boolean = false,
         dirs_exist_ok: Boolean = false,
     ) -> Path:
-        # `copy_function` callback is omitted — POOP needs a Block↔callable
-        # bridge before exposing it. `ignore` accepts the CPython callable
-        # shape passthrough.
         kwargs: dict[str, Any] = {}
         if ignore is not None:
-            kwargs["ignore"] = ignore
+            kwargs["ignore"] = bridge(ignore)
+        if copy_function is not None:
+            kwargs["copy_function"] = bridge(copy_function)
         return Path(
             Str(
                 _shutil.copytree(
@@ -120,6 +124,24 @@ class Shutil:
                 )
             )
         )
+
+    @staticmethod
+    def ignore_patterns(*patterns: Str) -> Block:
+        """Mirror of `shutil.ignore_patterns`, returning a POOP `Block`.
+
+        Pass the result directly to `copytree(ignore=...)`. The block
+        receives (path: Str, names: List[Str]) and returns the names
+        to skip; `copytree`'s bridge layer unwraps/wraps at the
+        boundary.
+        """
+        impl = _shutil.ignore_patterns(*(p._value for p in patterns))
+
+        def adapter(path: Str, names: List) -> List:
+            raw_names = [cast(Str, n)._value for n in names._items]
+            ignored = impl(path._value, raw_names)
+            return List(*(Str(n) for n in ignored))
+
+        return Block(adapter)
 
     @staticmethod
     def copymode(
@@ -150,10 +172,15 @@ class Shutil:
     # Move / remove -----------------------------------------------------
 
     @staticmethod
-    def move(src: Path | Str, dst: Path | Str) -> Path:
-        # `copy_function` callback (CPython's third positional arg) is
-        # omitted — POOP needs a Block↔callable bridge before exposing it.
-        return Path(Str(_shutil.move(_path_arg(src), _path_arg(dst))))
+    def move(
+        src: Path | Str,
+        dst: Path | Str,
+        copy_function: Callable[..., Any] | None = None,
+    ) -> Path:
+        kwargs: dict[str, Any] = {}
+        if copy_function is not None:
+            kwargs["copy_function"] = bridge(copy_function)
+        return Path(Str(_shutil.move(_path_arg(src), _path_arg(dst), **kwargs)))
 
     @staticmethod
     def rmtree(

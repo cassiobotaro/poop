@@ -2,6 +2,7 @@ import textwrap as _textwrap
 from collections.abc import Callable
 from typing import Any
 
+from poop.types._bridge import bridge
 from poop.types._unwrap import _b
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
@@ -19,18 +20,6 @@ def _opt_i(value: Int | None) -> int | None:
 
 def _opt_s(value: Str | None, default: str | None) -> str | None:
     return default if value is None else value._value
-
-
-def _bridge_predicate(
-    predicate: Callable[..., Any] | None,
-) -> Callable[[str], bool] | None:
-    if predicate is None:
-        return None
-
-    def adapter(line: str) -> bool:
-        return bool(predicate(Str(line)))
-
-    return adapter
 
 
 def _wrap_lines(lines: list[str]) -> List:
@@ -190,7 +179,7 @@ class Textwrap:
             _textwrap.indent(
                 text._value,
                 prefix._value,
-                predicate=_bridge_predicate(predicate),
+                predicate=None if predicate is None else bridge(predicate),
             )
         )
 

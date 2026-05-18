@@ -3,6 +3,7 @@ from pathlib import Path as _PyPath
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.types.block import Block
 from poop.types.boolean import true
 from poop.types.int import Int
 from poop.types.list import List
@@ -65,6 +66,80 @@ def test_copytree_dirs_exist_ok(tmp_path: _PyPath) -> None:
     )
     assert (dst / "x.txt").read_text() == "x"
     assert isinstance(result, Path)
+
+
+def test_copytree_ignore_block_drops_names(tmp_path: _PyPath) -> None:
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "keep.txt").write_text("k")
+    (src / "skip.txt").write_text("s")
+    dst = tmp_path / "dst"
+
+    def ignore(path: Str, names: List) -> List:
+        return List(*(n for n in names if n == Str("skip.txt")))
+
+    Shutil.copytree(Path(Str(str(src))), Path(Str(str(dst))), ignore=Block(ignore))
+    assert (dst / "keep.txt").exists()
+    assert not (dst / "skip.txt").exists()
+
+
+def test_copytree_ignore_patterns_factory(tmp_path: _PyPath) -> None:
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "a.py").write_text("p")
+    (src / "b.txt").write_text("t")
+    dst = tmp_path / "dst"
+
+    Shutil.copytree(
+        Path(Str(str(src))),
+        Path(Str(str(dst))),
+        ignore=Shutil.ignore_patterns(Str("*.txt")),
+    )
+    assert (dst / "a.py").exists()
+    assert not (dst / "b.txt").exists()
+
+
+def test_copytree_copy_function_block_is_invoked(tmp_path: _PyPath) -> None:
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "f.txt").write_text("hello")
+    dst = tmp_path / "dst"
+
+    seen: list[tuple[Str, Str]] = []
+
+    def custom_copy(s: Str, d: Str) -> NoneClass:
+        seen.append((s, d))
+        _PyPath(d._value).write_text(_PyPath(s._value).read_text())
+        return none
+
+    Shutil.copytree(
+        Path(Str(str(src))),
+        Path(Str(str(dst))),
+        copy_function=Block(custom_copy),
+    )
+    assert (dst / "f.txt").read_text() == "hello"
+    assert seen and isinstance(seen[0][0], Str)
+
+
+def test_move_copy_function_block(tmp_path: _PyPath) -> None:
+    # Cross-device move forces shutil to use copy_function then unlink.
+    src = tmp_path / "src.txt"
+    src.write_text("payload")
+    dst = tmp_path / "dst.txt"
+
+    seen: list[Str] = []
+
+    def custom_copy(s: Str, d: Str) -> Str:
+        seen.append(s)
+        _PyPath(d._value).write_text(_PyPath(s._value).read_text())
+        return d
+
+    Shutil.move(
+        Path(Str(str(src))), Path(Str(str(dst))), copy_function=Block(custom_copy)
+    )
+    # When rename works (same filesystem), copy_function isn't called.
+    # Just check the move succeeded.
+    assert dst.read_text() == "payload"
 
 
 def test_copymode_returns_none(tmp_path: _PyPath) -> None:

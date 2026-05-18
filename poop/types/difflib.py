@@ -1,7 +1,8 @@
 import difflib as _difflib
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Any
 
+from poop.types._bridge import bridge
 from poop.types._unwrap import _b, _kwargs_from
 from poop.types.boolean import Boolean
 from poop.types.float import Float
@@ -43,8 +44,9 @@ class SequenceMatcher:
     `real_quick_ratio`, `get_matching_blocks`, `get_opcodes`,
     `find_longest_match`.
 
-    The `isjunk` predicate is intentionally omitted — POOP forbids
-    free functions; `autojunk` is sufficient for the common case.
+    `isjunk` accepts a POOP `Block` routed through `block.bridge` —
+    the block receives a POOP `Str` and returns a `Boolean` (or any
+    truthy/falsy value). `autojunk` is a separate heuristic toggle.
     """
 
     __slots__ = ("_impl",)
@@ -53,10 +55,14 @@ class SequenceMatcher:
         self,
         a: Str | List,
         b: Str | List,
+        isjunk: Callable[..., Any] | None = None,
         autojunk: Boolean | None = None,
     ) -> None:
         self._impl = _difflib.SequenceMatcher(
-            None, _seq_arg(a), _seq_arg(b), autojunk=_b(autojunk, True)
+            None if isjunk is None else bridge(isjunk),
+            _seq_arg(a),
+            _seq_arg(b),
+            autojunk=_b(autojunk, True),
         )
 
     def ratio(self) -> Float:
