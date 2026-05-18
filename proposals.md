@@ -155,20 +155,13 @@ when a caller forces the question.
 Items deferred from shipped proposals that need their own follow-up
 once a prerequisite exists.
 
-### TOML date/time/datetime narrowing + `parse_float` — from the `tomllib` proposal (v0.26.0)
+### TOML date/time/datetime narrowing + `parse_float` — from the `tomllib` proposal (v0.26.0) — shipped
 
-v0.26.0 ships `tomllib.loads`/`load` with full POOP-type round-trip
-for everything except date/time/datetime, which **flatten to ISO-8601
-`Str`** as a transient divergence — POOP doesn't yet have a `DateTime`
-type. When the `datetime` proposal lands, `tomllib._wrap` tightens to
-return a `DateTime` POOP type for these values; tests will need a
-small update.
-
-`parse_float` kwarg also deferred — the proposal mentions a Python
-callable defaulting to `Float`, but routing TOML floats into
-`Decimal` (the documented motivation) pairs with the `decimal`
-proposal landing first. Write support stays out of scope (`tomllib`
-is read-only upstream).
+`tomllib._wrap` now returns POOP `Date` / `Time` / `DateTime` for the
+TOML date/time/datetime grammar (previously ISO-8601 `Str`).
+`parse_float=` accepts a POOP `Block` routed through `block.bridge`
+(default mirrors CPython exactly — Python `float`). Write support
+stays out of scope (`tomllib` is read-only upstream).
 
 ### `JSONEncoder` / `JSONDecoder` subclassing + advanced kwargs — from the `json` proposal (v0.25.0) — shipped
 

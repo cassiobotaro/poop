@@ -3,7 +3,10 @@ import pathlib
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.types.block import Block
 from poop.types.boolean import false, true
+from poop.types.datetime import Date, DateTime, Time
+from poop.types.decimal import Decimal
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
@@ -45,11 +48,52 @@ def test_loads_booleans() -> None:
     assert result.at(Str("b")) is false
 
 
-def test_loads_date_flattened_to_iso_str() -> None:
+def test_loads_local_date_returns_poop_date() -> None:
     result = Tomllib.loads(Str("d = 2026-05-15"))
     d = result.at(Str("d"))
-    assert isinstance(d, Str)
-    assert d._value == "2026-05-15"
+    assert isinstance(d, Date)
+    assert d == Date(Int(2026), Int(5), Int(15))
+
+
+def test_loads_local_time_returns_poop_time() -> None:
+    result = Tomllib.loads(Str("t = 09:30:00"))
+    t = result.at(Str("t"))
+    assert isinstance(t, Time)
+    assert t == Time(Int(9), Int(30), Int(0))
+
+
+def test_loads_local_datetime_returns_poop_datetime() -> None:
+    result = Tomllib.loads(Str("ts = 2026-05-15T09:30:00"))
+    ts = result.at(Str("ts"))
+    assert isinstance(ts, DateTime)
+
+
+def test_loads_offset_datetime_returns_poop_datetime() -> None:
+    result = Tomllib.loads(Str("ts = 2026-05-15T09:30:00Z"))
+    ts = result.at(Str("ts"))
+    assert isinstance(ts, DateTime)
+
+
+def test_loads_parse_float_bridged_to_decimal() -> None:
+    captured: list[Str] = []
+
+    def to_decimal(s: Str) -> Decimal:
+        captured.append(s)
+        return Decimal(s)
+
+    result = Tomllib.loads(
+        Str("pi = 3.14"),
+        parse_float=Block(to_decimal),
+    )
+    pi = result.at(Str("pi"))
+    assert isinstance(pi, Decimal)
+    assert captured == [Str("3.14")]
+
+
+def test_loads_parse_float_default_is_python_float() -> None:
+    # Default mirrors CPython: stays as Python float, wrapped to POOP Float.
+    result = Tomllib.loads(Str("pi = 3.14"))
+    assert isinstance(result.at(Str("pi")), Float)
 
 
 def test_loads_invalid_raises_decode_error() -> None:

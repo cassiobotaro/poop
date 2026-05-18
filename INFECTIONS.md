@@ -1136,13 +1136,11 @@ v0.25.0 covers the common 95%; subclassing (`JSONEncoder` / `JSONDecoder`) and c
 
 | Operation | Returns | Notes |
 |---|---|---|
-| `tomllib.loads(s, /)` | `Dict[Str, …]` | from `Str` |
-| `tomllib.load(path, /)` | `Dict[Str, …]` | from POOP `Path` — receiver-type divergence: CPython takes a binary file, POOP has no file-object abstraction |
+| `tomllib.loads(s, /, *, parse_float=float)` | `Dict[Str, …]` | from `Str`; `parse_float` accepts a POOP `Block` routed through `block.bridge` |
+| `tomllib.load(path, /, *, parse_float=float)` | `Dict[Str, …]` | from POOP `Path` — receiver-type divergence: CPython takes a binary file, POOP has no file-object abstraction |
 | `tomllib.TOMLDecodeError` | Python exception type | usable with `Try.except_` |
 
-**Type discipline divergence.** TOML date / time / datetime values flatten to ISO-8601 `Str` for now. POOP doesn't yet have a `DateTime` POOP type; when the `datetime` proposal lands, the internal `_wrap` tightens. Documented divergence; tests will need a small update at that point.
-
-`parse_float` (CPython's hook for routing floats to e.g. `Decimal`) is deferred to Future work pending the `decimal` proposal. Write support stays out of scope (`tomllib` is read-only upstream).
+TOML date / time / datetime values land as POOP `Date` / `Time` / `DateTime`. Write support stays out of scope (`tomllib` is read-only upstream).
 
 `tomllib` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/tomllib.py` — namespace-only, no AST rewrite.
 
