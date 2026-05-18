@@ -58,16 +58,6 @@ the encoding helpers (`itn`/`nti`/`stn`/`nts`/`calc_chksums`).
 Most are CPython internals. The `zstd` module export from `zipfile`
 needs its own wrapping decision.
 
-### Calendar output formatters (`calendar` 24)
-
-`Calendar` and the module-level `month`/`calendar` strings are
-exposed. Deferred: `HTMLCalendar`, `LocaleHTMLCalendar`,
-`LocaleTextCalendar`, `TextCalendar` (more specific output
-formatters than the plain functions), the `Day`/`Month` enums,
-`mdays`, `prcal`, `prmonth`, `prweek`, `_localized_day` /
-`_localized_month` private helpers. Ship as a "calendar
-formatting" mini-proposal when an HTML/Locale caller surfaces.
-
 ### Codec registry (`codecs` 27)
 
 POOP doesn't expose the registry surface at all (`register`,
@@ -79,15 +69,6 @@ incremental encoder/decoder protocol (`IncrementalEncoder`,
 `Codec` class are also out. Codec-customisation is a niche surface;
 defer until someone needs to wire a custom encoder.
 
-### Enum subclasses (`enum` 14)
-
-`Enum` / `IntEnum` / `StrEnum` / `Flag` / `IntFlag` / `auto` are
-exposed. Deferred: `EnumDict`, `EnumType`, `EnumMeta`, `EJECT`,
-`KEEP`, `CONFORM`, `STRICT`, `member`, `nonmember`, `global_enum`,
-`property` (the enum-specific descriptor), `verify`, `unique`,
-`pickle_by_enum_name`, `pickle_by_global_name`. Most are Py3.11+
-extension hooks — defer until used.
-
 ### Date / time / zone extras (`time` 9, `datetime` 2, `zoneinfo` 1)
 
 POOP's `time` / `datetime` / `zoneinfo` cover the daily-use surface.
@@ -98,17 +79,14 @@ Deferred: `time.clock_*` family (`clock_gettime`, `clock_settime`,
 the `Date` type's range checks), `zoneinfo.reset_tzpath`. Most
 need a real per-system caller before they land.
 
-### Network / SQL / decimal extras (`socket` 13, `sqlite3` 8, `decimal` 9)
+### Network / SQL extras (`socket` 13, `sqlite3` 8)
 
 `socket` defers `getaddrinfo`, `getnameinfo`, `getfqdn`,
 `gethostname`, `if_indextoname`, `if_nametoindex`, `if_nameindex`,
 `SocketType`, the address-family + protocol introspection helpers.
 `sqlite3` defers the `Blob` type, `enable_callback_tracebacks`,
 `register_adapter` / `register_converter`, `complete_statement`,
-`Cache`, `Statement`. `decimal` defers the special-context flags
-(`Underflow`, `Overflow`, `Subnormal`, `Rounded`, `Inexact`,
-`Clamped`, `DivisionImpossible`, `FloatOperation`,
-`InvalidContextError`).
+`Cache`, `Statement`.
 
 ### Pickle classes (`pickle` 9)
 
@@ -202,20 +180,4 @@ attributes `.commenters`/`.wordchars`/`.whitespace`/`.escape`/
 each of these is a small additional method or property delegating
 to `self._impl`.
 
-### Optional base64 kwargs — from the `base64` proposal (v0.13.0)
-
-v0.13.0 ships the 9 encoders + 9 decoders that mirror `base64.*` with
-their Python defaults. Optional kwargs are deferred: `altchars` and
-`validate` on `b64encode`/`b64decode`, `casefold` and `map01` on
-`b32decode`/`b32hexdecode`/`b16decode`, `foldspaces`/`wrapcol`/`pad`/
-`adobe` on `a85encode`, `foldspaces`/`adobe`/`ignorechars` on
-`a85decode`, and `pad` on `b85encode`. None of these affect the
-common case (encoding/decoding with stdlib defaults); when a real
-caller surfaces, add the kwargs to the relevant `Bytes`/`Str` methods
-and update the type discipline note to allow `Bytes`/`Str` for any
-non-bool flag.
-
-Legacy file-oriented helpers (`base64.encode`, `decode`,
-`encodebytes`, `decodebytes`) are intentionally out of scope — POOP
-routes file I/O through `Path`.
 

@@ -133,7 +133,18 @@ class EnumNamespace:
     verify: ClassVar[Any] = staticmethod(_enum.verify)
     member: ClassVar[Any] = staticmethod(_enum.member)
     nonmember: ClassVar[Any] = staticmethod(_enum.nonmember)
+    global_enum: ClassVar[Any] = staticmethod(_enum.global_enum)
+    pickle_by_enum_name: ClassVar[Any] = staticmethod(_enum.pickle_by_enum_name)
+    pickle_by_global_name: ClassVar[Any] = staticmethod(_enum.pickle_by_global_name)
+    property: ClassVar[Any] = _enum.property  # enum-specific @property descriptor
 
+    # Flag.boundary policies.
+    STRICT: ClassVar[Any] = _enum.STRICT
+    CONFORM: ClassVar[Any] = _enum.CONFORM
+    EJECT: ClassVar[Any] = _enum.EJECT
+    KEEP: ClassVar[Any] = _enum.KEEP
+
+    # `verify` policies.
     CONTINUOUS: ClassVar[Any] = _enum.CONTINUOUS
     NAMED_FLAGS: ClassVar[Any] = _enum.NAMED_FLAGS
     UNIQUE: ClassVar[Any] = _enum.UNIQUE

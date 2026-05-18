@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import Boolean, false, true
 from poop.types.bytes_iterator import BytesIterator
 from poop.types.object import Object
 
@@ -264,8 +264,11 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def b32hexencode(self) -> Bytes:
         return Bytes(_base64.b32hexencode(self._value))
 
-    def b64encode(self) -> Bytes:
-        return Bytes(_base64.b64encode(self._value))
+    def b64encode(self, altchars: Bytes | None = None) -> Bytes:
+        kwargs: dict[str, _bytes] = {}
+        if altchars is not None:
+            kwargs["altchars"] = altchars._value
+        return Bytes(_base64.b64encode(self._value, **kwargs))
 
     def standard_b64encode(self) -> Bytes:
         return Bytes(_base64.standard_b64encode(self._value))
@@ -273,28 +276,72 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def urlsafe_b64encode(self) -> Bytes:
         return Bytes(_base64.urlsafe_b64encode(self._value))
 
-    def a85encode(self) -> Bytes:
-        return Bytes(_base64.a85encode(self._value))
+    def a85encode(
+        self,
+        *,
+        foldspaces: Boolean | None = None,
+        wrapcol: Int | None = None,
+        pad: Boolean | None = None,
+        adobe: Boolean | None = None,
+    ) -> Bytes:
+        from typing import Any as _Any
 
-    def b85encode(self) -> Bytes:
-        return Bytes(_base64.b85encode(self._value))
+        kwargs: dict[str, _Any] = {}
+        if foldspaces is not None:
+            kwargs["foldspaces"] = bool(foldspaces)
+        if wrapcol is not None:
+            kwargs["wrapcol"] = wrapcol._value
+        if pad is not None:
+            kwargs["pad"] = bool(pad)
+        if adobe is not None:
+            kwargs["adobe"] = bool(adobe)
+        return Bytes(_base64.a85encode(self._value, **kwargs))
+
+    def b85encode(self, pad: Boolean | None = None) -> Bytes:
+        if pad is None:
+            return Bytes(_base64.b85encode(self._value))
+        return Bytes(_base64.b85encode(self._value, pad=bool(pad)))
 
     def z85encode(self) -> Bytes:
         return Bytes(_base64.z85encode(self._value))
 
     # base64 — decoders on Bytes. Each returns Bytes.
 
-    def b16decode(self) -> Bytes:
-        return Bytes(_base64.b16decode(self._value))
+    def b16decode(self, casefold: Boolean | None = None) -> Bytes:
+        if casefold is None:
+            return Bytes(_base64.b16decode(self._value))
+        return Bytes(_base64.b16decode(self._value, casefold=bool(casefold)))
 
-    def b32decode(self) -> Bytes:
-        return Bytes(_base64.b32decode(self._value))
+    def b32decode(
+        self,
+        casefold: Boolean | None = None,
+        map01: Bytes | None = None,
+    ) -> Bytes:
+        from typing import Any as _Any
 
-    def b32hexdecode(self) -> Bytes:
-        return Bytes(_base64.b32hexdecode(self._value))
+        kwargs: dict[str, _Any] = {}
+        if casefold is not None:
+            kwargs["casefold"] = bool(casefold)
+        if map01 is not None:
+            kwargs["map01"] = map01._value
+        return Bytes(_base64.b32decode(self._value, **kwargs))
 
-    def b64decode(self) -> Bytes:
-        return Bytes(_base64.b64decode(self._value))
+    def b32hexdecode(self, casefold: Boolean | None = None) -> Bytes:
+        if casefold is None:
+            return Bytes(_base64.b32hexdecode(self._value))
+        return Bytes(_base64.b32hexdecode(self._value, casefold=bool(casefold)))
+
+    def b64decode(
+        self, altchars: Bytes | None = None, validate: Boolean | None = None
+    ) -> Bytes:
+        from typing import Any as _Any
+
+        kwargs: dict[str, _Any] = {}
+        if altchars is not None:
+            kwargs["altchars"] = altchars._value
+        if validate is not None:
+            kwargs["validate"] = bool(validate)
+        return Bytes(_base64.b64decode(self._value, **kwargs))
 
     def standard_b64decode(self) -> Bytes:
         return Bytes(_base64.standard_b64decode(self._value))

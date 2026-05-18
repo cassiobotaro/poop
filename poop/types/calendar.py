@@ -1,5 +1,5 @@
 import calendar as _calendar
-from typing import ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types.boolean import Boolean, false, true
 from poop.types.datetime import Date
@@ -7,6 +7,9 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from poop.types.bytes import Bytes
 
 
 def _i(value: Int | None, default: int) -> int:
@@ -93,17 +96,132 @@ class Calendar:
         )
 
 
+class TextCalendar(Calendar):
+    """Wraps `calendar.TextCalendar` — produces plain-text month and
+    year output via `formatmonth` / `formatyear`.
+    """
+
+    def __init__(self, firstweekday: Int | None = None) -> None:
+        self._impl = _calendar.TextCalendar(_i(firstweekday, 0))
+
+    def formatmonth(
+        self,
+        theyear: Int,
+        themonth: Int,
+        w: Int = Int(0),
+        l: Int = Int(0),  # noqa: E741 — CPython names the line-spacing param `l`
+    ) -> Str:
+        impl: Any = self._impl
+        return Str(
+            impl.formatmonth(theyear._value, themonth._value, w._value, l._value)
+        )
+
+    def formatyear(
+        self,
+        theyear: Int,
+        w: Int = Int(2),
+        l: Int = Int(1),  # noqa: E741
+        c: Int = Int(6),
+        m: Int = Int(3),
+    ) -> Str:
+        impl: Any = self._impl
+        return Str(
+            impl.formatyear(theyear._value, w._value, l._value, c._value, m._value)
+        )
+
+
+class HTMLCalendar(Calendar):
+    """Wraps `calendar.HTMLCalendar` — produces HTML month/year output.
+
+    `formatmonth` / `formatyear` / `formatyearpage` mirror CPython.
+    The CSS class names default to CPython's `month` / `year` etc.;
+    pass `cssclasses` / `cssclass_month` etc. via `_impl` if you need
+    custom styling (rarely used).
+    """
+
+    def __init__(self, firstweekday: Int | None = None) -> None:
+        self._impl = _calendar.HTMLCalendar(_i(firstweekday, 0))
+
+    def formatmonth(
+        self,
+        theyear: Int,
+        themonth: Int,
+        withyear: Boolean = true,
+    ) -> Str:
+        impl: Any = self._impl
+        return Str(
+            impl.formatmonth(theyear._value, themonth._value, withyear=bool(withyear))
+        )
+
+    def formatyear(self, theyear: Int, width: Int = Int(3)) -> Str:
+        impl: Any = self._impl
+        return Str(impl.formatyear(theyear._value, width._value))
+
+    def formatyearpage(
+        self,
+        theyear: Int,
+        width: Int = Int(3),
+        css: Str = Str("calendar.css"),
+        encoding: Str = Str("ascii"),
+    ) -> Bytes:
+        from poop.types.bytes import Bytes
+
+        impl: Any = self._impl
+        return Bytes(
+            impl.formatyearpage(
+                theyear._value,
+                width=width._value,
+                css=css._value,
+                encoding=encoding._value,
+            )
+        )
+
+
+class LocaleTextCalendar(TextCalendar):
+    """Wraps `calendar.LocaleTextCalendar` — TextCalendar that honours
+    a `locale` setting for day/month names.
+    """
+
+    def __init__(
+        self, firstweekday: Int | None = None, locale: Str | None = None
+    ) -> None:
+        # CPython locale arg is `tuple[str | None, str | None] | None`;
+        # POOP accepts either the canonical "LC_CATEGORY.encoding" Str or
+        # the (lang, encoding) Tuple — collapse to None for the simple path.
+        loc: Any = None if locale is None else (locale._value, None)
+        self._impl = _calendar.LocaleTextCalendar(_i(firstweekday, 0), loc)
+
+
+class LocaleHTMLCalendar(HTMLCalendar):
+    """Wraps `calendar.LocaleHTMLCalendar` — HTMLCalendar that honours
+    a `locale` setting for day/month names.
+    """
+
+    def __init__(
+        self, firstweekday: Int | None = None, locale: Str | None = None
+    ) -> None:
+        # CPython locale arg is `tuple[str | None, str | None] | None`;
+        # POOP accepts either the canonical "LC_CATEGORY.encoding" Str or
+        # the (lang, encoding) Tuple — collapse to None for the simple path.
+        loc: Any = None if locale is None else (locale._value, None)
+        self._impl = _calendar.LocaleHTMLCalendar(_i(firstweekday, 0), loc)
+
+
 class CalendarNamespace:
     """Namespace mirroring Python's `calendar` module.
 
     Module-level shortcuts (`isleap`, `leapdays`, `weekday`,
     `monthrange`, `monthcalendar`, `month`, `calendar`, `timegm`)
-    plus the weekday constants (`MONDAY` … `SUNDAY`). The reusable
-    `Calendar` class is exposed alongside this namespace.
-
-    `HTMLCalendar`, `LocaleTextCalendar`, and `LocaleHTMLCalendar`
-    are out of scope for v1 (niche output formats).
+    plus the weekday constants (`MONDAY` … `SUNDAY`). Calendar
+    classes (`Calendar`, `TextCalendar`, `HTMLCalendar`,
+    `LocaleTextCalendar`, `LocaleHTMLCalendar`) are exposed
+    alongside this namespace.
     """
+
+    TextCalendar: ClassVar[type[TextCalendar]] = TextCalendar
+    HTMLCalendar: ClassVar[type[HTMLCalendar]] = HTMLCalendar
+    LocaleTextCalendar: ClassVar[type[LocaleTextCalendar]] = LocaleTextCalendar
+    LocaleHTMLCalendar: ClassVar[type[LocaleHTMLCalendar]] = LocaleHTMLCalendar
 
     MONDAY: ClassVar[Int] = Int(_calendar.MONDAY)
     TUESDAY: ClassVar[Int] = Int(_calendar.TUESDAY)

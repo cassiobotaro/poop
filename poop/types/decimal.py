@@ -6,7 +6,7 @@ from typing import Any, ClassVar
 
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -219,7 +219,11 @@ class Decimal_:
     # Signal/exception classes — exposed raw for use with Try.except_.
     DecimalException: ClassVar[type[Exception]] = _decimal.DecimalException
     InvalidOperation: ClassVar[type[Exception]] = _decimal.InvalidOperation
+    ConversionSyntax: ClassVar[type[Exception]] = _decimal.ConversionSyntax
     DivisionByZero: ClassVar[type[Exception]] = _decimal.DivisionByZero
+    DivisionImpossible: ClassVar[type[Exception]] = _decimal.DivisionImpossible
+    DivisionUndefined: ClassVar[type[Exception]] = _decimal.DivisionUndefined
+    InvalidContext: ClassVar[type[Exception]] = _decimal.InvalidContext
     Overflow: ClassVar[type[Exception]] = _decimal.Overflow
     Underflow: ClassVar[type[Exception]] = _decimal.Underflow
     Inexact: ClassVar[type[Exception]] = _decimal.Inexact
@@ -227,6 +231,17 @@ class Decimal_:
     Subnormal: ClassVar[type[Exception]] = _decimal.Subnormal
     Clamped: ClassVar[type[Exception]] = _decimal.Clamped
     FloatOperation: ClassVar[type[Exception]] = _decimal.FloatOperation
+
+    # Context profiles + precision limits.
+    BasicContext: ClassVar[Any] = _decimal.BasicContext
+    ExtendedContext: ClassVar[Any] = _decimal.ExtendedContext
+    DefaultContext: ClassVar[Any] = _decimal.DefaultContext
+    MAX_PREC: ClassVar[Int] = Int(_decimal.MAX_PREC)
+    MAX_EMAX: ClassVar[Int] = Int(_decimal.MAX_EMAX)
+    MIN_EMIN: ClassVar[Int] = Int(_decimal.MIN_EMIN)
+    MIN_ETINY: ClassVar[Int] = Int(_decimal.MIN_ETINY)
+    HAVE_THREADS: ClassVar[Boolean] = true if _decimal.HAVE_THREADS else false
+    HAVE_CONTEXTVAR: ClassVar[Boolean] = true if _decimal.HAVE_CONTEXTVAR else false
 
     @staticmethod
     def getcontext() -> Context:
