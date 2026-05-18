@@ -111,6 +111,49 @@ class _TimeNamespace:
     def thread_time_ns(self) -> Int:
         return Int(_time.thread_time_ns())
 
+    # POSIX clock_* — bind to none on platforms without the helper.
+    CLOCK_REALTIME: ClassVar[Int | NoneClass] = (
+        Int(_time.CLOCK_REALTIME) if hasattr(_time, "CLOCK_REALTIME") else none
+    )
+    CLOCK_MONOTONIC: ClassVar[Int | NoneClass] = (
+        Int(_time.CLOCK_MONOTONIC) if hasattr(_time, "CLOCK_MONOTONIC") else none
+    )
+    CLOCK_MONOTONIC_RAW: ClassVar[Int | NoneClass] = (
+        Int(_time.CLOCK_MONOTONIC_RAW)
+        if hasattr(_time, "CLOCK_MONOTONIC_RAW")
+        else none
+    )
+    CLOCK_PROCESS_CPUTIME_ID: ClassVar[Int | NoneClass] = (
+        Int(_time.CLOCK_PROCESS_CPUTIME_ID)
+        if hasattr(_time, "CLOCK_PROCESS_CPUTIME_ID")
+        else none
+    )
+    CLOCK_THREAD_CPUTIME_ID: ClassVar[Int | NoneClass] = (
+        Int(_time.CLOCK_THREAD_CPUTIME_ID)
+        if hasattr(_time, "CLOCK_THREAD_CPUTIME_ID")
+        else none
+    )
+    CLOCK_BOOTTIME: ClassVar[Int | NoneClass] = (
+        Int(_time.CLOCK_BOOTTIME) if hasattr(_time, "CLOCK_BOOTTIME") else none
+    )
+
+    def clock_gettime(self, clk_id: Int) -> Float:
+        return Float(_time.clock_gettime(clk_id._value))
+
+    def clock_gettime_ns(self, clk_id: Int) -> Int:
+        return Int(_time.clock_gettime_ns(clk_id._value))
+
+    def clock_settime(self, clk_id: Int, t: Float) -> NoneClass:
+        _time.clock_settime(clk_id._value, t._value)
+        return none
+
+    def clock_settime_ns(self, clk_id: Int, t: Int) -> NoneClass:
+        _time.clock_settime_ns(clk_id._value, t._value)
+        return none
+
+    def clock_getres(self, clk_id: Int) -> Float:
+        return Float(_time.clock_getres(clk_id._value))
+
     def sleep(self, seconds: Float | Int) -> NoneClass:
         _time.sleep(seconds._value)
         return none

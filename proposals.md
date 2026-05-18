@@ -57,16 +57,6 @@ incremental encoder/decoder protocol (`IncrementalEncoder`,
 `Codec` class are also out. Codec-customisation is a niche surface;
 defer until someone needs to wire a custom encoder.
 
-### Date / time / zone extras (`time`, `datetime`, `zoneinfo`)
-
-POOP's `time` / `datetime` / `zoneinfo` cover the daily-use surface.
-Deferred: `time.clock_*` family (`clock_gettime`, `clock_settime`,
-`clock_getres`, etc. — POSIX-only), `time.thread_time*`,
-`time.pthread_getcpuclockid`, `datetime.MAXYEAR` /
-`datetime.MINYEAR` constants (intentionally hidden behind
-the `Date` type's range checks), `zoneinfo.reset_tzpath`. Most
-need a real per-system caller before they land.
-
 ### Network / SQL extras (`socket`, `sqlite3`)
 
 `socket` defers `getaddrinfo`, `getnameinfo`, `getfqdn`,

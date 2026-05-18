@@ -170,3 +170,32 @@ def test_time_class_ref() -> None:
 
 def test_time_via_interpreter() -> None:
     Interpreter().run_source("time.time().print()")
+
+
+# --- clock_* family ---
+
+
+def test_clock_constants_present_on_posix() -> None:
+    import platform
+
+    if platform.system() == "Linux":
+        assert isinstance(Time.CLOCK_REALTIME, Int)
+        assert isinstance(Time.CLOCK_MONOTONIC, Int)
+
+
+def test_clock_gettime_returns_float() -> None:
+    if isinstance(Time.CLOCK_MONOTONIC, Int):
+        v = Time.clock_gettime(Time.CLOCK_MONOTONIC)
+        assert isinstance(v, Float)
+
+
+def test_clock_gettime_ns_returns_int() -> None:
+    if isinstance(Time.CLOCK_MONOTONIC, Int):
+        v = Time.clock_gettime_ns(Time.CLOCK_MONOTONIC)
+        assert isinstance(v, Int)
+
+
+def test_clock_getres_returns_float() -> None:
+    if isinstance(Time.CLOCK_MONOTONIC, Int):
+        v = Time.clock_getres(Time.CLOCK_MONOTONIC)
+        assert isinstance(v, Float)

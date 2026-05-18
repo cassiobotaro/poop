@@ -96,6 +96,10 @@ POOP intentionally hides CPython's frame model. `sys.getframe` / `sys._getframe`
 
 `uuid.UUID.is_safe` returns a `uuid.SafeUUID` enum value (`safe` / `unsafe` / `unknown`). POOP flattens this to a `Str` token on the wrapped `UUID`, sidestepping a one-shot enum exposure that nothing else in the namespace uses.
 
+### No `datetime.MAXYEAR` / `datetime.MINYEAR`
+
+CPython exposes `datetime.MAXYEAR` (`9999`) and `datetime.MINYEAR` (`1`) as module-level constants. POOP hides them behind `Date(year, month, day)`'s range-check semantics — passing an out-of-range year raises `ValueError` through the `Date` constructor, which is the same enforcement at a more natural call site. Surfacing the constants separately would just duplicate values already implicit in the type.
+
 ## Active infections
 
 ### No `if` — `poop/validators/no_if.py`
@@ -2366,6 +2370,10 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `time.mktime(t)` | `Float` | |
 | `time.tzname` | `Tuple(Str, Str)` | |
 | `time.timezone` / `time.altzone` / `time.daylight` | `Int` | |
+| `time.CLOCK_REALTIME` / `CLOCK_MONOTONIC` / `CLOCK_MONOTONIC_RAW` / `CLOCK_PROCESS_CPUTIME_ID` / `CLOCK_THREAD_CPUTIME_ID` / `CLOCK_BOOTTIME` (class attrs) | `Int` or `none` | POSIX clock IDs; `none` on platforms without the helper |
+| `time.clock_gettime(id)` / `.clock_getres(id)` | `Float` | POSIX clock read |
+| `time.clock_gettime_ns(id)` | `Int` | nanosecond precision read |
+| `time.clock_settime(id, t)` / `.clock_settime_ns(id, t)` | `none` | privileged write (typically `CLOCK_REALTIME` only) |
 | `StructTime.tm_year` / `tm_mon` / `tm_mday` / `tm_hour` / `tm_min` / `tm_sec` / `tm_wday` / `tm_yday` / `tm_isdst` (properties) | `Int` | |
 | `StructTime.tm_zone` / `tm_gmtoff` (properties) | `Str` or `none` / `Int` or `none` | |
 | `logging.getLogger(name=none)` | `Logger` | |
