@@ -59,6 +59,99 @@ class Shlex:
     def whitespace_split(self, value: Boolean) -> None:
         self._impl.whitespace_split = bool(value)
 
+    # Extended streaming surface (CPython's full Shlex).
+
+    def read_token(self) -> Str | NoneClass:
+        tok = self._impl.read_token()
+        if tok is None or tok == self._impl.eof:
+            return none
+        return Str(tok)
+
+    def push_token(self, tok: Str) -> NoneClass:
+        self._impl.push_token(tok._value)
+        return none
+
+    def push_source(self, newstream: Str, newfile: Str | None = None) -> NoneClass:
+        nf = None if newfile is None else newfile._value
+        self._impl.push_source(newstream._value, nf)
+        return none
+
+    def pop_source(self) -> NoneClass:
+        self._impl.pop_source()
+        return none
+
+    def error_leader(self, infile: Str | None = None, lineno: Any = None) -> Str:
+        ifname = None if infile is None else infile._value
+        return Str(self._impl.error_leader(ifname, lineno))
+
+    @property
+    def commenters(self) -> Str:
+        return Str(self._impl.commenters)
+
+    @commenters.setter
+    def commenters(self, value: Str) -> None:
+        self._impl.commenters = value._value
+
+    @property
+    def wordchars(self) -> Str:
+        return Str(self._impl.wordchars)
+
+    @wordchars.setter
+    def wordchars(self, value: Str) -> None:
+        self._impl.wordchars = value._value
+
+    @property
+    def whitespace(self) -> Str:
+        return Str(self._impl.whitespace)
+
+    @whitespace.setter
+    def whitespace(self, value: Str) -> None:
+        self._impl.whitespace = value._value
+
+    @property
+    def escape(self) -> Str:
+        return Str(self._impl.escape)
+
+    @escape.setter
+    def escape(self, value: Str) -> None:
+        self._impl.escape = value._value
+
+    @property
+    def quotes(self) -> Str:
+        return Str(self._impl.quotes)
+
+    @quotes.setter
+    def quotes(self, value: Str) -> None:
+        self._impl.quotes = value._value
+
+    @property
+    def escapedquotes(self) -> Str:
+        return Str(self._impl.escapedquotes)
+
+    @escapedquotes.setter
+    def escapedquotes(self, value: Str) -> None:
+        self._impl.escapedquotes = value._value
+
+    @property
+    def debug(self) -> int:
+        return self._impl.debug
+
+    @debug.setter
+    def debug(self, value: Any) -> None:
+        self._impl.debug = int(value._value) if hasattr(value, "_value") else int(value)
+
+    @property
+    def token(self) -> Str:
+        return Str(self._impl.token)
+
+    @property
+    def infile(self) -> Str | NoneClass:
+        return Str(self._impl.infile) if self._impl.infile is not None else none
+
+    @property
+    def source(self) -> Str | NoneClass:
+        return Str(self._impl.source) if self._impl.source is not None else none
+
 
 class Shlex_:
     """Namespace mirroring Python's `shlex` module.

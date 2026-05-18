@@ -167,17 +167,4 @@ Deferred:
 
 `json.tool` (CLI module) stays out of scope.
 
-### Streaming-lexer extras on `Shlex` — from the `shlex` proposal (v0.23.0)
-
-v0.23.0 ships the module-level functions (`split`/`join`/`quote`)
-and a `Shlex` class with `.get_token()`, iteration, and the
-`.lineno`/`.whitespace_split` properties. The full CPython surface
-(`.read_token`, `.sourcehook`, the configurable character-class
-attributes `.commenters`/`.wordchars`/`.whitespace`/`.escape`/
-`.quotes`/`.escapedquotes`/`.escapedquotes`, plus `.infile`/`.source`/
-`.debug`/`.token`/`.error_leader`/`.push_token`/`.push_source`/
-`.pop_source`) is deferred until a real caller needs it. Adding
-each of these is a small additional method or property delegating
-to `self._impl`.
-
 
