@@ -175,3 +175,30 @@ def test_difflib_get_close_matches_reachable_via_interpreter() -> None:
     Interpreter().run_source(
         'difflib.get_close_matches("appel", ["apple", "peach"]).len().print()'
     )
+
+
+def test_ndiff_linejunk_block_filters_lines() -> None:
+    seen: list[Str] = []
+
+    def junk(line: Str) -> Boolean:
+        seen.append(line)
+        # Mark blank lines as junk.
+        return true if line._value.strip() == "" else false
+
+    a = List(Str("alpha\n"), Str("\n"), Str("beta\n"))
+    b = List(Str("alpha\n"), Str("\n"), Str("gamma\n"))
+    out = Difflib.ndiff(a, b, linejunk=Block(junk))
+    assert isinstance(out, List)
+    # `junk` ran over at least one POOP Str line.
+    assert seen and isinstance(seen[0], Str)
+
+
+def test_ndiff_charjunk_block() -> None:
+    def is_space(c: Str) -> Boolean:
+        return true if c == Str(" ") else false
+
+    a = List(Str("abc\n"))
+    b = List(Str("a c\n"))
+    out = Difflib.ndiff(a, b, charjunk=Block(is_space))
+    assert isinstance(out, List)
+    assert out.len()._value > 0

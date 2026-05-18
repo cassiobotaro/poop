@@ -164,8 +164,22 @@ class Difflib:
         )
 
     @staticmethod
-    def ndiff(a: List, b: List) -> List:
-        return _wrap_lines(_difflib.ndiff(_str_iter(a), _str_iter(b)))
+    def ndiff(
+        a: List,
+        b: List,
+        linejunk: Callable[..., Any] | None = None,
+        charjunk: Callable[..., Any] | None = None,
+    ) -> List:
+        return _wrap_lines(
+            _difflib.ndiff(
+                _str_iter(a),
+                _str_iter(b),
+                linejunk=None if linejunk is None else bridge(linejunk),
+                charjunk=(
+                    _difflib.IS_CHARACTER_JUNK if charjunk is None else bridge(charjunk)
+                ),
+            )
+        )
 
     @staticmethod
     def restore(seq: List, which: Int) -> List:

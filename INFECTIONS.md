@@ -49,7 +49,7 @@ Parameter names also mirror CPython where there is no banned-builtin or POOP-spe
 
 - POOP renames params that shadow banned builtins (e.g., `grp.getgrgid` takes `gid` instead of CPython's `id`).
 - File I/O entry points take `Path` instead of file-object / file-descriptor (POOP has no file-object abstraction).
-- Callback kwargs route through `poop.types._bridge.bridge`. Pending consumers (`linejunk=` for `difflib.unified_diff`, sqlite3 `create_aggregate`, pickle `dispatch_table`) wait on the same helper.
+- Callback kwargs route through `poop.types._bridge.bridge`. Pending consumers (sqlite3 `create_aggregate`, pickle `dispatch_table`) wait on the same helper — both need class-with-methods or per-entry callable-map bridging beyond the single-method override pattern.
 - CPython entry points that take `*args, **kwargs` (e.g., `textwrap.wrap`, `logging.basicConfig`, `pprint.pp`) expose their kwargs explicitly in POOP to preserve type information.
 
 ### Platform-specific constants
@@ -1389,7 +1389,7 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 |---|---|---|
 | `difflib.unified_diff(a, b, fromfile=none, tofile=none, fromfiledate=none, tofiledate=none, n=none, lineterm=none)` | `List[Str]` | `a` / `b` are `List[Str]` of lines |
 | `difflib.context_diff(a, b, …)` | `List[Str]` | same arg shape as `unified_diff` |
-| `difflib.ndiff(a, b)` | `List[Str]` | `?`/`-`/`+`/` ` marker per line |
+| `difflib.ndiff(a, b, linejunk=none, charjunk=none)` | `List[Str]` | `?`/`-`/`+`/` ` marker per line; `linejunk` / `charjunk` are `Block`s routed through `block.bridge` (`charjunk=none` uses CPython's default `IS_CHARACTER_JUNK`) |
 | `difflib.restore(seq, which)` | `List[Str]` | `which` is `Int(1)` or `Int(2)` |
 | `difflib.get_close_matches(word, possibilities, n=none, cutoff=none)` | `List[Str]` | defaults match CPython (`n=3`, `cutoff=0.6`) |
 | `SequenceMatcher(a, b, isjunk=none, autojunk=none)` | `SequenceMatcher` | `a` / `b` are `Str` (per-char) or `List[Str]` (per-line); `isjunk` is a `Block` routed through `block.bridge` |

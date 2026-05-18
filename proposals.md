@@ -39,12 +39,15 @@ Shipped consumers:
   subclass overrides of `persistent_id(obj)` (Pickler) and
   `persistent_load(pid)` (Unpickler) route through the bridge.
   `dispatch_table` still deferred (per-entry callable map).
+- **difflib.ndiff** — `linejunk=` and `charjunk=` kwargs now route
+  through the bridge. (Earlier doc text misattributed this to
+  `unified_diff`; the kwarg is actually on `ndiff` / `Differ`.)
 - **`to_poop`/`to_python`** now also wrap `bytes`/`bytearray` ↔
   `Bytes`/`ByteArray` (needed by sqlite3 `register_converter`).
 
-Still pending (each waits for a real caller):
-sqlite3 `create_aggregate`; pickle `Pickler.dispatch_table`;
-`difflib.unified_diff(linejunk=)`.
+Still pending (both need shape changes beyond single-method override):
+sqlite3 `create_aggregate` (class-with-methods bridge);
+pickle `Pickler.dispatch_table` (per-entry `type → callable` map).
 
 Out of scope (now and later): async callbacks (covered by `AsyncIO`),
 C-API/ctypes callbacks, full subclassing of stdlib base classes
