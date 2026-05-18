@@ -64,6 +64,10 @@ Every exception class that CPython raises through the wrapped surface and that a
 
 When a wrapped namespace exposes a callback kwarg (`default=` on `json.dumps`, `object_hook=` on `json.loads`, `predicate=` on `textwrap.indent`, etc.), the user-supplied `Block` runs through `poop.types._bridge.bridge(...)`. The bridge wraps stdlib-supplied arguments into POOP types via `to_poop` before invoking the block, then unwraps the block's return value via `to_python` so the stdlib caller sees the type it asked for. Do not re-implement wrap/unwrap per module — every namespace shares one helper. Use `wrap_args=False` when the stdlib already hands a meaningful POOP-side value; use `unwrap_return=False` when the block's return flows back into POOP-side code that re-wraps at an outer boundary anyway (`json.object_hook` and friends).
 
+### Pull deferred surface only when a caller asks
+
+POOP's stdlib mirrors cover the daily-use surface of each wrapped module; long-tail items (rare-call helpers, debug-only flags, niche per-platform constants) stay out until a real caller surfaces. Surfacing them upfront just inflates the API and creates churn — wait for a concrete use case, then wrap with the same POOP-type-discipline contract as the rest of the namespace. New requests open issues against the project; they should not gate the 1.0 release.
+
 ## Permanent divergences from CPython
 
 Surfaces POOP intentionally does not mirror — not deferred, not a backlog item, decided out. User code that wants any of these calls into raw CPython (POOP doesn't sandbox you out of `import`-on-the-Python-side; it just doesn't bless these via the POOP namespace).
