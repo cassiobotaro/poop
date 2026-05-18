@@ -12,7 +12,6 @@ from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
-from poop.types.object import Object
 from poop.types.path import Path
 from poop.types.set import Set
 from poop.types.string import Str
@@ -82,64 +81,82 @@ def _wrap(value: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one bran
     return value
 
 
-class Pickler(Object):
-    """Wraps Python's `pickle.Pickler` over an internal byte buffer.
+class Pickler(_pickle.Pickler):
+    """POOP wrapper around `pickle.Pickler`.
 
-    Construction takes the protocol level (default `pickle.DEFAULT_PROTOCOL`);
-    `.dump(obj)` appends a pickled object to the buffer, and
-    `.getvalue()` returns the accumulated `Bytes`. The CPython
-    file-object constructor is absent — POOP has no generic file
-    abstraction, so the Pickler is in-memory by design. The
-    `clear_memo` / `fast` API is exposed for parity.
+    Inherits directly from `_pickle.Pickler` so subclasses can override
+    `persistent_id(obj)` in POOP idiom — the override receives a POOP
+    value and returns a POOP value (or `none` for "not persistent"),
+    and the bridge layer unwraps the return for CPython.
+
+    Construction takes the protocol level (default
+    `pickle.DEFAULT_PROTOCOL`); `.dump(obj)` appends a pickled object to
+    the internal buffer, and `.getvalue()` returns the accumulated
+    `Bytes`. The CPython file-object constructor is absent — POOP has
+    no generic file abstraction, so the Pickler is in-memory by design.
     """
-
-    __slots__ = ("_buf", "_impl")
 
     def __init__(self, protocol: Int | None = None) -> None:
         self._buf = _io.BytesIO()
-        self._impl = _pickle.Pickler(self._buf, _opt_protocol(protocol))
+        super().__init__(self._buf, _opt_protocol(protocol))
 
-    def dump(self, obj: Any) -> NoneClass:
-        self._impl.dump(_unwrap(obj))
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        user_persistent_id = cls.__dict__.get("persistent_id")
+        if user_persistent_id is not None:
+            from poop.types._bridge import to_poop, to_python
+
+            def wrapped_persistent_id(self: _pickle.Pickler, obj: Any) -> Any:
+                result = user_persistent_id(self, to_poop(obj))
+                if result is none or isinstance(result, NoneClass):
+                    return None
+                return to_python(result)
+
+            cls.persistent_id = wrapped_persistent_id  # type: ignore[method-assign]
+
+    def dump(self, obj: Any) -> NoneClass:  # type: ignore[override]
+        super().dump(_unwrap(obj))
         return none
 
     def getvalue(self) -> Bytes:
         return Bytes(self._buf.getvalue())
 
-    def clear_memo(self) -> NoneClass:
-        self._impl.clear_memo()
+    def clear_memo(self) -> NoneClass:  # type: ignore[override]
+        super().clear_memo()
         return none
 
-    @property
-    def fast(self) -> Boolean:
-        # Deprecated upstream but still part of the API surface.
-        return true if self._impl.fast else false
 
-    @fast.setter
-    def fast(self, value: Boolean | bool) -> None:
-        self._impl.fast = bool(value)
+class Unpickler(_pickle.Unpickler):
+    """POOP wrapper around `pickle.Unpickler`.
 
-
-class Unpickler(Object):
-    """Wraps Python's `pickle.Unpickler` over a `Bytes` buffer.
+    Inherits directly from `_pickle.Unpickler` so subclasses can
+    override `persistent_load(pid)` in POOP idiom — the override
+    receives the POOP-wrapped persistent ID and returns the
+    reconstructed POOP object; the bridge handles wrap/unwrap.
 
     Construction takes the serialized `Bytes`; `.load()` reads the
-    next pickled object from the stream. Multiple `dump` /
-    `load` round-trips on the same buffer are supported as long as
-    the caller advances the cursor.
+    next pickled object from the stream. Multiple `dump` / `load`
+    round-trips on the same buffer are supported as long as the
+    caller advances the cursor.
     """
-
-    __slots__ = ("_buf", "_impl")
 
     def __init__(self, data: Bytes) -> None:
         self._buf = _io.BytesIO(data._value)
-        # noqa: S301 — pickle is inherently unsafe with untrusted data;
-        # documented in the namespace docstring. Callers are responsible
-        # for validating the source.
-        self._impl = _pickle.Unpickler(self._buf)  # noqa: S301
+        super().__init__(self._buf)  # noqa: S301
 
-    def load(self) -> Any:
-        return _wrap(self._impl.load())
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        user_persistent_load = cls.__dict__.get("persistent_load")
+        if user_persistent_load is not None:
+            from poop.types._bridge import to_poop, to_python
+
+            def wrapped_persistent_load(self: _pickle.Unpickler, pid: Any) -> Any:
+                return to_python(user_persistent_load(self, to_poop(pid)))
+
+            cls.persistent_load = wrapped_persistent_load  # type: ignore[method-assign]
+
+    def load(self) -> Any:  # type: ignore[override]
+        return _wrap(super().load())
 
 
 class PickleNamespace:

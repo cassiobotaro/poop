@@ -35,12 +35,16 @@ Shipped consumers:
   accepts a `Block`.
 - **signal** — `Signal.signal(signum, handler)` accepts a `Block`
   (or `SIG_DFL`/`SIG_IGN` sentinels).
+- **pickle** — `Pickler` / `Unpickler` now inherit from `_pickle.*`;
+  subclass overrides of `persistent_id(obj)` (Pickler) and
+  `persistent_load(pid)` (Unpickler) route through the bridge.
+  `dispatch_table` still deferred (per-entry callable map).
 - **`to_poop`/`to_python`** now also wrap `bytes`/`bytearray` ↔
   `Bytes`/`ByteArray` (needed by sqlite3 `register_converter`).
 
 Still pending (each waits for a real caller):
-sqlite3 `create_aggregate`; pickle `Pickler.persistent_id` /
-`dispatch_table` / `Unpickler.persistent_load`.
+sqlite3 `create_aggregate`; pickle `Pickler.dispatch_table`;
+`difflib.unified_diff(linejunk=)`.
 
 Out of scope (now and later): async callbacks (covered by `AsyncIO`),
 C-API/ctypes callbacks, full subclassing of stdlib base classes

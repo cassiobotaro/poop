@@ -218,11 +218,14 @@ def test_pickler_clear_memo_returns_none() -> None:
     assert p.clear_memo() is none
 
 
-def test_pickler_fast_property() -> None:
+def test_pickler_fast_attribute() -> None:
+    # `fast` is now the inherited stdlib C-struct attribute (int 0/1) —
+    # POOP no longer shimms it to Boolean because the C extension
+    # bypasses Python descriptors.
     p = Pickler()
-    assert p.fast is false
+    assert p.fast == 0
     p.fast = True
-    assert p.fast is true
+    assert p.fast == 1
     p.fast = False
 
 
@@ -254,3 +257,47 @@ def test_Pickler_Unpickler_reachable_via_interpreter() -> None:
 
 def test_pickle_constants_reachable_via_interpreter() -> None:
     Interpreter().run_source("pickle.HIGHEST_PROTOCOL.print()")
+
+
+# --- Subclassing surface: persistent_id / persistent_load (bridge) ---
+
+
+def test_pickler_persistent_id_override_in_poop_idiom() -> None:
+    # When pickling a value that the override considers "external",
+    # the override returns a POOP Str ID; the bridge unwraps to Python
+    # str for CPython's pickle protocol, which embeds the ID instead
+    # of serialising the value.
+    class TaggedPickler(Pickler):
+        def persistent_id(self, obj):  # type: ignore[no-untyped-def]
+            if isinstance(obj, Str) and obj == Str("secret"):
+                return Str("REF:secret")
+            return none
+
+    class TaggedUnpickler(Unpickler):
+        def persistent_load(self, pid):  # type: ignore[no-untyped-def]
+            return Str("RESOLVED:" + pid._value)
+
+    p = TaggedPickler()
+    p.dump(List(Str("public"), Str("secret"), Str("also-public")))
+    raw = p.getvalue()
+
+    u = TaggedUnpickler(raw)
+    loaded = u.load()
+    assert loaded == List(Str("public"), Str("RESOLVED:REF:secret"), Str("also-public"))
+
+
+def test_pickler_persistent_id_none_means_pickle_normally() -> None:
+    class IdleP(Pickler):
+        def persistent_id(self, obj):  # type: ignore[no-untyped-def]
+            return none
+
+    p = IdleP()
+    p.dump(Int(42))
+    assert Unpickler(p.getvalue()).load() == Int(42)
+
+
+def test_pickler_is_stdlib_pickler() -> None:
+    import pickle as _stdlib_pickle
+
+    assert issubclass(Pickler, _stdlib_pickle.Pickler)
+    assert issubclass(Unpickler, _stdlib_pickle.Unpickler)
