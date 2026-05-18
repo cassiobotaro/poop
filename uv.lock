@@ -121,7 +121,7 @@ wheels = [
 
 [[package]]
 name = "poop"
-version = "0.61.0"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "typer" },
