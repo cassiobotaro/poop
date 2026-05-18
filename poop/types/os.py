@@ -152,6 +152,28 @@ class OS:
         return Int(_os.umask(mask._value))
 
     @staticmethod
+    def chmod(
+        path: Path | Str, mode: Int, follow_symlinks: Boolean = true
+    ) -> NoneClass:
+        _os.chmod(_path_str(path), mode._value, follow_symlinks=bool(follow_symlinks))
+        return none
+
+    @staticmethod
+    def chown(
+        path: Path | Str,
+        uid: Int,
+        gid: Int,
+        follow_symlinks: Boolean = true,
+    ) -> NoneClass:
+        _os.chown(
+            _path_str(path),
+            uid._value,
+            gid._value,
+            follow_symlinks=bool(follow_symlinks),
+        )
+        return none
+
+    @staticmethod
     def chdir(path: Path | Str) -> NoneClass:
         _os.chdir(_path_str(path))
         return none

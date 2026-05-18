@@ -7,15 +7,6 @@ currently curates out. They are regrouped below into proposal-shaped
 chunks so each area can be picked up independently when a real caller
 surfaces.
 
-### POSIX low-level surface (`os`, `sys`, `signal`, `gc`, `pwd`, `grp`) — minus the parts marked out forever
-
-The fd-based I/O / `exec*` / `fork`+`spawn*` / `sys` frame-and-audit hooks moved to INFECTIONS.md§Permanent-divergences-from-CPython. What remains here is the surface POOP could still wrap when a caller asks:
-
-- `signal.siginterrupt`, `signal.sigwait`, `signal.pthread_sigmask`, `signal.sigwaitinfo`, `signal.sigtimedwait` — synchronous signal-wait helpers (no fd dependency).
-- `pwd.getpwall`, `grp.getgrall` — listing variants.
-- `pstats` — the `SortKey` enum and `Stats.add`/`.print_callees`/etc. Pair with the `profile` proposal if it ever expands.
-- `os` permission helpers (`chmod`, `chown`, `chroot`, `umask`) — Path-compatible already; could surface on `Path` rather than on the `os` namespace.
-
 ### Logging framework (`logging`)
 
 Still deferred: `BufferingFormatter`, `Filterer`, `LogRecord` (a POOP

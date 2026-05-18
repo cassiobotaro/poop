@@ -1,14 +1,33 @@
 from __future__ import annotations
 
 import signal as _signal
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from poop.types._bridge import bridge
 from poop.types.block import Block
+from poop.types.dict import Dict
+from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.set import Set
 from poop.types.string import Str
+
+
+def _sigset_to_raw(sigset: Set) -> set[int]:
+    out: set[int] = set()
+    for s in sigset._data:
+        out.add(cast(Int, s)._value)
+    return out
+
+
+def _siginfo_to_dict(info: Any) -> Dict:
+    d = Dict()
+    for name in ("si_signo", "si_code", "si_errno", "si_pid", "si_uid", "si_status"):
+        if hasattr(info, name):
+            d.at_put(Str(name), Int(getattr(info, name)))
+    if hasattr(info, "si_band"):
+        d.at_put(Str("si_band"), Int(info.si_band))
+    return d
 
 
 def _as_handler(handler: Any) -> Any:
@@ -103,3 +122,43 @@ class Signal:
     @staticmethod
     def sigpending() -> Set:
         return Set(*(Int(s) for s in _signal.sigpending()))
+
+    @staticmethod
+    def siginterrupt(signalnum: Int, flag: Any) -> NoneClass:
+        _signal.siginterrupt(signalnum._value, bool(flag))
+        return none
+
+    # Signal-set ops below are POSIX-only — guarded with hasattr so the
+    # namespace stays importable on Windows.
+
+    SIG_BLOCK: ClassVar[Int | NoneClass] = (
+        Int(_signal.SIG_BLOCK) if hasattr(_signal, "SIG_BLOCK") else none
+    )
+    SIG_UNBLOCK: ClassVar[Int | NoneClass] = (
+        Int(_signal.SIG_UNBLOCK) if hasattr(_signal, "SIG_UNBLOCK") else none
+    )
+    SIG_SETMASK: ClassVar[Int | NoneClass] = (
+        Int(_signal.SIG_SETMASK) if hasattr(_signal, "SIG_SETMASK") else none
+    )
+
+    @staticmethod
+    def sigwait(sigset: Set) -> Int:
+        raw = _sigset_to_raw(sigset)
+        return Int(_signal.sigwait(raw))
+
+    @staticmethod
+    def pthread_sigmask(how: Int, mask: Set) -> Set:
+        prev = _signal.pthread_sigmask(how._value, _sigset_to_raw(mask))
+        return Set(*(Int(s) for s in prev))
+
+    @staticmethod
+    def sigwaitinfo(sigset: Set) -> Any:
+        # Returns a struct_siginfo; flatten the common fields to a POOP
+        # Dict so user code can inspect without a sibling wrapper.
+        info = _signal.sigwaitinfo(_sigset_to_raw(sigset))
+        return _siginfo_to_dict(info)
+
+    @staticmethod
+    def sigtimedwait(sigset: Set, timeout: Float | Int) -> Any:
+        info = _signal.sigtimedwait(_sigset_to_raw(sigset), timeout._value)
+        return none if info is None else _siginfo_to_dict(info)

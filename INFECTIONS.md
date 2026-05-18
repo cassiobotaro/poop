@@ -100,6 +100,14 @@ POOP intentionally hides CPython's frame model. `sys.getframe` / `sys._getframe`
 
 CPython exposes `datetime.MAXYEAR` (`9999`) and `datetime.MINYEAR` (`1`) as module-level constants. POOP hides them behind `Date(year, month, day)`'s range-check semantics — passing an out-of-range year raises `ValueError` through the `Date` constructor, which is the same enforcement at a more natural call site. Surfacing the constants separately would just duplicate values already implicit in the type.
 
+### No `os.chroot`
+
+`os.chroot(path)` is a privileged-process operation that changes the calling process's root directory. POOP omits it: it has no clean reversible POOP idiom (a `Path` argument suggests symmetry with regular path ops, but `chroot` reshapes the *process's* filesystem view irrevocably), and the use case (jail/sandbox setup) is system-administration territory that POOP doesn't try to mirror.
+
+### No `time.pthread_getcpuclockid`
+
+Linux-only helper that maps a `pthread` thread ID to a per-thread CPU clock ID for `time.clock_gettime`. POOP exposes `CLOCK_THREAD_CPUTIME_ID` for the current thread's CPU clock, which covers the common case; cross-thread clock inspection via `pthread` IDs requires platform-conditional plumbing for a niche use case.
+
 ## Active infections
 
 ### No `if` — `poop/validators/no_if.py`
@@ -2288,6 +2296,11 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 | `signal.strsignal(num)` | `Str` / `none` | |
 | `signal.raise_signal(num)` / `.pthread_kill(tid, num)` | `none` | |
 | `signal.sigpending()` | `Set[Int]` | |
+| `signal.siginterrupt(num, flag)` | `none` | toggle whether the syscall restarts after the signal |
+| `signal.sigwait(sigset)` | `Int` | block until one of the signals in `sigset` is delivered |
+| `signal.pthread_sigmask(how, mask)` | `Set[Int]` | POSIX-only; uses `SIG_BLOCK` / `SIG_UNBLOCK` / `SIG_SETMASK` |
+| `signal.sigwaitinfo(sigset)` / `.sigtimedwait(sigset, timeout)` | `Dict[Str, Int]` | siginfo flattened to a dict; `sigtimedwait` returns `none` on timeout |
+| `signal.SIG_BLOCK` / `SIG_UNBLOCK` / `SIG_SETMASK` (class attrs) | `Int` or `none` | POSIX-only; `none` on Windows |
 | `signal.SIG_DFL` / `.SIG_IGN` (class attrs) | sentinel | |
 | `signal.SIGABRT` / `SIGINT` / `SIGTERM` / … (class attrs) | `Int` / `none` | platform-specific |
 | `signal.ITIMER_REAL` / `ITIMER_VIRTUAL` / `ITIMER_PROF` (class attrs) | `Int` / `none` | Unix only |
@@ -2346,6 +2359,8 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `os.sep` / `linesep` / `pathsep` / `devnull` (class attrs) | `Str` | |
 | `os.getpid()` / `.getppid()` / `.getuid()` / `.getgid()` / `.geteuid()` / `.getegid()` | `Int` | |
 | `os.umask(m)` | `Int` | previous mask |
+| `os.chmod(path, mode, follow_symlinks=true)` | `none` | path-mode permission bits |
+| `os.chown(path, uid, gid, follow_symlinks=true)` | `none` | path ownership |
 | `os.chdir(p)` / `.kill(pid, sig)` | `none` | |
 | `os.getcwd()` | `Path` | |
 | `os.walk(top, topdown=true, onerror=none, followlinks=false)` | `List[Tuple(Path, List[Str], List[Str])]` | eager; `onerror` accepts a `Block` routed through `block.bridge` |

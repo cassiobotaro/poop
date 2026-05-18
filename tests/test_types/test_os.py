@@ -198,3 +198,24 @@ def test_walk_onerror_block_receives_oserror(tmp_path: _PyPath) -> None:
         onerror=Block(handler),
     )
     assert seen and isinstance(seen[0], OSError)
+
+
+# --- chmod / chown ---
+
+
+def test_chmod_changes_mode(tmp_path: _PyPath) -> None:
+    target = tmp_path / "f.txt"
+    target.write_text("x")
+    assert OS.chmod(Path(Str(str(target))), Int(0o600)) is none
+    mode = target.stat().st_mode & 0o777
+    assert mode == 0o600
+
+
+def test_chown_keeps_self_owner(tmp_path: _PyPath) -> None:
+    # Calling chown with the current uid/gid is a no-op that exercises
+    # the wrapper without requiring privileged operations.
+    target = tmp_path / "f.txt"
+    target.write_text("x")
+    uid = _stdlib_os.getuid()
+    gid = _stdlib_os.getgid()
+    assert OS.chown(Path(Str(str(target))), Int(uid), Int(gid)) is none

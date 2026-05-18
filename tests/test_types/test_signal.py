@@ -121,3 +121,41 @@ def test_signal_sigign_pass_through() -> None:
         Signal.raise_signal(sigusr2)
     finally:
         Signal.signal(sigusr2, previous)
+
+
+# --- POSIX sig-* extras ---
+
+
+def test_siginterrupt_returns_none() -> None:
+    sigusr1 = Signal.SIGUSR1
+    if isinstance(sigusr1, type(none)):
+        pytest.skip("SIGUSR1 unavailable on this platform")
+    assert Signal.siginterrupt(sigusr1, True) is none
+    # restore default behaviour
+    Signal.siginterrupt(sigusr1, False)
+
+
+def test_pthread_sigmask_round_trip() -> None:
+    import platform
+
+    if platform.system() == "Windows":
+        pytest.skip("pthread_sigmask is POSIX-only")
+    sigusr1 = Signal.SIGUSR1
+    if isinstance(sigusr1, type(none)):
+        pytest.skip("SIGUSR1 unavailable on this platform")
+    from poop.types.set import Set
+
+    prev = Signal.pthread_sigmask(Signal.SIG_BLOCK, Set(sigusr1))  # ty: ignore[invalid-argument-type]
+    assert isinstance(prev, Set)
+    # Unblock again to restore.
+    Signal.pthread_sigmask(Signal.SIG_UNBLOCK, Set(sigusr1))  # ty: ignore[invalid-argument-type]
+
+
+def test_sig_block_constants() -> None:
+    import platform
+
+    if platform.system() == "Windows":
+        pytest.skip("SIG_BLOCK constants are POSIX-only")
+    assert isinstance(Signal.SIG_BLOCK, Int)
+    assert isinstance(Signal.SIG_UNBLOCK, Int)
+    assert isinstance(Signal.SIG_SETMASK, Int)
