@@ -378,3 +378,29 @@ def test_pickler_dispatch_table_rejects_non_dict() -> None:
     p = Pickler()
     with pytest.raises(TypeError, match="dispatch_table"):
         p.dispatch_table = [UserPoint, lambda obj: (UserPoint, (obj.x,))]
+
+
+# --- PickleBuffer ---
+
+
+def test_pickle_buffer_wraps_bytes() -> None:
+    from poop.types.memory_view import MemoryView
+    from poop.types.pickle import PickleBuffer
+
+    buf = PickleBuffer(Bytes(b"payload"))
+    raw = buf.raw()
+    assert isinstance(raw, MemoryView)
+    buf.release()
+
+
+def test_pickle_buffer_accepts_raw_bytes() -> None:
+    from poop.types.pickle import PickleBuffer
+
+    buf = PickleBuffer(b"raw")
+    assert buf.release() is none
+
+
+def test_pickle_buffer_namespace_attribute_matches_class() -> None:
+    from poop.types.pickle import PickleBuffer
+
+    assert PickleNamespace.PickleBuffer is PickleBuffer

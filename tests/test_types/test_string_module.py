@@ -105,3 +105,14 @@ def test_template_substitute_reachable_via_interpreter() -> None:
 
 def test_template_safe_substitute_reachable_via_interpreter() -> None:
     Interpreter().run_source('Template("$a/$b").safe_substitute({"a": "1"}).print()')
+
+
+# --- capwords ---
+
+
+def test_capwords_default_separator() -> None:
+    assert String.capwords(Str("hello world from poop")) == Str("Hello World From Poop")
+
+
+def test_capwords_with_explicit_separator() -> None:
+    assert String.capwords(Str("a-b-c"), sep=Str("-")) == Str("A-B-C")

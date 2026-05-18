@@ -12,6 +12,7 @@ from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
+from poop.types.object import Object
 from poop.types.path import Path
 from poop.types.set import Set
 from poop.types.string import Str
@@ -201,6 +202,31 @@ class Unpickler(_pickle.Unpickler):
         return _wrap(super().load())
 
 
+class PickleBuffer(Object):
+    """Wraps `pickle.PickleBuffer` — out-of-band buffer for zero-copy
+    pickle.
+
+    Construct from POOP `Bytes` / `ByteArray` (or any buffer-protocol
+    object). `.raw()` returns a `MemoryView` over the underlying bytes;
+    `.release()` releases the buffer.
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, data: Bytes | Any) -> None:
+        raw = data._value if isinstance(data, Bytes) else data
+        self._impl = _pickle.PickleBuffer(raw)
+
+    def raw(self) -> Any:
+        from poop.types.memory_view import MemoryView
+
+        return MemoryView(self._impl.raw())
+
+    def release(self) -> NoneClass:
+        self._impl.release()
+        return none
+
+
 class PickleNamespace:
     """Namespace mirroring Python's `pickle` module.
 
@@ -229,6 +255,7 @@ class PickleNamespace:
 
     Pickler: ClassVar[type[Pickler]] = Pickler
     Unpickler: ClassVar[type[Unpickler]] = Unpickler
+    PickleBuffer: ClassVar[type[PickleBuffer]] = PickleBuffer
 
     @staticmethod
     def dumps(

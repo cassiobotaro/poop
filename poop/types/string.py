@@ -412,10 +412,10 @@ class String:
 
     ASCII character-class constants plus the `Template` class (exposed
     separately under its own PascalCase binding, matching the
-    `hmac`/`HMAC` and `uuid`/`UUID` convention).
+    `hmac`/`HMAC` and `uuid`/`UUID` convention) and `capwords`.
 
-    `string.Formatter` and `string.capwords` are deliberately omitted
-    in v1 — `Str.format` and `Str.title` cover the common cases.
+    `string.Formatter` is deliberately omitted — `Str.format` covers
+    the common case.
     """
 
     ascii_letters: ClassVar[Str] = Str(_string.ascii_letters)
@@ -427,3 +427,8 @@ class String:
     punctuation: ClassVar[Str] = Str(_string.punctuation)
     printable: ClassVar[Str] = Str(_string.printable)
     whitespace: ClassVar[Str] = Str(_string.whitespace)
+
+    @staticmethod
+    def capwords(s: Str, sep: Str | None = None) -> Str:
+        sep_arg = None if sep is None else sep._value
+        return Str(_string.capwords(s._value, sep_arg))

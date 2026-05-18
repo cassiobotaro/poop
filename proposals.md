@@ -75,21 +75,11 @@ need a real per-system caller before they land.
 `sqlite3` defers the `Blob` type, `complete_statement`, `Cache`,
 `Statement`, `enable_callback_tracebacks` (debug helper).
 
-### Pickle extras
+### Text & data helpers — difflib leftovers
 
-`PickleBuffer` (out-of-band buffer protocol for zero-copy pickle)
-stays deferred — niche use case.
-
-### Text & data helpers (`string`, `textwrap`, `shlex`, `re`, `difflib`, `unicodedata`, `random`, `hmac`, `uuid`, `fnmatch`)
-
-A pile of small one-off defers across text-processing namespaces:
-`string.capwords`, `string.whitespace`, `string.printable`;
-`textwrap.dedent`; `shlex.SHLEX_NEWLINE`; `re.purge`, `re.template`,
-`re.NOFLAG`; `difflib.HtmlDiff`, `Differ`, `IS_CHARACTER_JUNK` (as
-a public class attr — used internally as the `ndiff` default);
-`random.SystemRandom`; `hmac.compare_digest`, `hmac.digest`,
-`hmac.new`; `uuid.SafeUUID`; `fnmatch.translate` extras. Each can
-be added one-at-a-time when a caller asks.
+`difflib.HtmlDiff` and `difflib.Differ` (as a subclassable POOP
+class, plus exposing `IS_CHARACTER_JUNK` as a public class attribute
+rather than the internal `ndiff` default).
 
 ### File / config / I/O extras (`shutil`, `configparser`, `tempfile`, `glob`, `io`, `filecmp`, `mimetypes`)
 

@@ -88,6 +88,14 @@ POOP intentionally hides CPython's frame model. `sys.getframe` / `sys._getframe`
 
 `getpass.getpass` emits a `UserWarning` (CPython's `GetPassWarning`) to stderr when echo-suppression fails on the underlying TTY. POOP has no `warnings` model, so the warning is unobservable through the POOP namespace; user code cannot catch or filter it. Upgrading the warning to a raised POOP `Error` would diverge from CPython's actual behaviour — not worth the divergence.
 
+### No `random.SystemRandom`
+
+`random.SystemRandom` (cryptographic-quality randomness via `os.urandom`) stays out of the `random` namespace by design — POOP routes cryptographic draws through the `secrets` namespace, which already wraps the same underlying source. Splitting "use-as-stand-in-for-Random" vs. "I want crypto" by namespace makes the security intent visible at the call site.
+
+### No `uuid.SafeUUID`
+
+`uuid.UUID.is_safe` returns a `uuid.SafeUUID` enum value (`safe` / `unsafe` / `unknown`). POOP flattens this to a `Str` token on the wrapped `UUID`, sidestepping a one-shot enum exposure that nothing else in the namespace uses.
+
 ## Active infections
 
 ### No `if` — `poop/validators/no_if.py`
@@ -1321,7 +1329,8 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 | `re.split(pattern, string, maxsplit=none, flags=none)` | `List[Str]` | |
 | `re.escape(pattern)` | `Str` | escape regex meta-chars |
 | `re.compile(pattern, flags=none)` | `Pattern` | |
-| `re.IGNORECASE` / `MULTILINE` / `DOTALL` / `VERBOSE` / `ASCII` / `UNICODE` / `LOCALE` / `DEBUG` | `Int` | flag constants |
+| `re.IGNORECASE` / `MULTILINE` / `DOTALL` / `VERBOSE` / `ASCII` / `UNICODE` / `LOCALE` / `DEBUG` / `NOFLAG` | `Int` | flag constants |
+| `re.purge()` | `none` | clears the compiled-pattern cache |
 | `Pattern.match` / `.search` / `.fullmatch` / `.findall` / `.finditer` / `.sub` / `.subn` / `.split` | same as module-level | reuses the compiled regex |
 | `Pattern.pattern` / `.flags` / `.groups` / `.groupindex` (properties) | `Str` / `Int` / `Int` / `Dict[Str, Int]` | |
 | `Match.group()` | `Str` | whole match |
@@ -1373,12 +1382,13 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 | `string.ascii_letters` / `ascii_lowercase` / `ascii_uppercase` (class attrs) | `Str` | |
 | `string.digits` / `hexdigits` / `octdigits` (class attrs) | `Str` | |
 | `string.punctuation` / `printable` / `whitespace` (class attrs) | `Str` | |
+| `string.capwords(s, sep=none)` | `Str` | title-cases each word separated by `sep` (whitespace by default) |
 | `Template(template_str)` | `Template` | source kept on `.template` |
 | `Template.substitute(mapping)` | `Str` | raises `KeyError` on missing key |
 | `Template.safe_substitute(mapping)` | `Str` | leaves missing `$name` in place |
 | `Template.template` (property) | `Str` | original source string |
 
-`string.Formatter` and `string.capwords` are deliberately out of scope — `Str.format` and `Str.title` cover the common cases.
+`string.Formatter` is deliberately out of scope — `Str.format` covers the common case.
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
 

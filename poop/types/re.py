@@ -173,12 +173,19 @@ class Re:
     UNICODE: ClassVar[Int] = Int(int(_re.UNICODE))
     LOCALE: ClassVar[Int] = Int(int(_re.LOCALE))
     DEBUG: ClassVar[Int] = Int(int(_re.DEBUG))
+    NOFLAG: ClassVar[Int] = Int(int(_re.NOFLAG))
 
     Pattern: ClassVar[type[Pattern]] = Pattern
     Match: ClassVar[type[Match]] = Match
 
     # Exception class — caught via Try.except_(re.error, ...).
     error: ClassVar[type[Exception]] = _re.error
+
+    @staticmethod
+    def purge() -> NoneClass:
+        """Clear the regular expression cache."""
+        _re.purge()
+        return none
 
     @staticmethod
     def compile(pattern: Str, flags: Int | NoneClass | None = None) -> Pattern:

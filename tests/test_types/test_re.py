@@ -297,3 +297,15 @@ def test_try_catches_invalid_regex() -> None:
         Re.error, lambda e: captured.append(e.kind())
     ).run()
     assert len(captured) == 1
+
+
+# --- purge / NOFLAG ---
+
+
+def test_re_purge_returns_none() -> None:
+    assert Re.purge() is none
+
+
+def test_re_noflag_constant() -> None:
+    assert isinstance(Re.NOFLAG, Int)
+    assert Re.NOFLAG == Int(int(_re.NOFLAG))
