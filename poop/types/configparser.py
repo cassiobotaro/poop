@@ -314,6 +314,8 @@ class Configparser:
     BasicInterpolation: ClassVar[type[Any]] = _configparser.BasicInterpolation
     ExtendedInterpolation: ClassVar[type[Any]] = _configparser.ExtendedInterpolation
 
+    MAX_INTERPOLATION_DEPTH: ClassVar[Int] = Int(_configparser.MAX_INTERPOLATION_DEPTH)
+
     # Error hierarchy.
     Error: ClassVar[type[Exception]] = _configparser.Error
     NoSectionError: ClassVar[type[Exception]] = _configparser.NoSectionError

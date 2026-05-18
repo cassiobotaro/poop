@@ -161,3 +161,19 @@ def test_io_via_interpreter() -> None:
     Interpreter().run_source(
         "buf = StringIO()\nbuf.write('hi')\nbuf.getvalue().print()"
     )
+
+
+def test_io_base_class_attrs_match_stdlib() -> None:
+    import io as _stdlib_io
+
+    assert IO.IOBase is _stdlib_io.IOBase
+    assert IO.RawIOBase is _stdlib_io.RawIOBase
+    assert IO.BufferedIOBase is _stdlib_io.BufferedIOBase
+    assert IO.TextIOBase is _stdlib_io.TextIOBase
+
+
+def test_io_textiobase_supports_isinstance() -> None:
+    import io as _stdlib_io
+
+    raw = _stdlib_io.StringIO()
+    assert isinstance(raw, IO.TextIOBase)

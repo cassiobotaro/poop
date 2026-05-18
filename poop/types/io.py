@@ -113,6 +113,15 @@ class IO:
     StringIO: ClassVar[type[StringIO]] = StringIO
     BytesIO: ClassVar[type[BytesIO]] = BytesIO
 
+    # Base classes — exposed as raw type refs for `isinstance` checks
+    # against POOP-wrapped or raw Python file-like objects. POOP does
+    # not subclass these directly (file I/O routes through `Path`),
+    # but user code interoperating with raw Python streams can use them.
+    IOBase: ClassVar[type] = _io.IOBase
+    RawIOBase: ClassVar[type] = _io.RawIOBase
+    BufferedIOBase: ClassVar[type] = _io.BufferedIOBase
+    TextIOBase: ClassVar[type] = _io.TextIOBase
+
     # Seek constants
     SEEK_SET: ClassVar[Int] = Int(_io.SEEK_SET)
     SEEK_CUR: ClassVar[Int] = Int(_io.SEEK_CUR)

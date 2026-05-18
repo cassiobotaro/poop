@@ -384,3 +384,14 @@ def test_configparser_namespace_via_interpreter() -> None:
         'cp = configparser.ConfigParser()\ncp.read_string("[s]\\nk=v\\n")\n'
         "cp.sections().print()"
     )
+
+
+def test_configparser_max_interpolation_depth_is_int() -> None:
+    import configparser as _stdlib_cp
+
+    from poop.types.int import Int
+
+    assert isinstance(Configparser.MAX_INTERPOLATION_DEPTH, Int)
+    assert Configparser.MAX_INTERPOLATION_DEPTH == Int(
+        _stdlib_cp.MAX_INTERPOLATION_DEPTH
+    )

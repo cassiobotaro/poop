@@ -54,17 +54,6 @@ defer until someone needs to wire a custom encoder.
 class, plus exposing `IS_CHARACTER_JUNK` as a public class attribute
 rather than the internal `ndiff` default).
 
-### File / config / I/O extras (`shutil`, `configparser`, `tempfile`, `glob`, `io`, `filecmp`, `mimetypes`)
-
-POOP curates these around `Path`. Deferred:
-`shutil.{disk_usage,sameopenfile,sameopenstat,specialbits,...}`,
-`configparser.LegacyInterpolation`,
-`configparser.MAX_INTERPOLATION_DEPTH`, `tempfile.tempdir`,
-`tempfile.SpooledTemporaryFile`, `glob.has_magic`,
-`glob.has_magic_chars`, `glob.tab_completion_glob`, `io.IOBase` and
-the buffered-base classes, `filecmp.DEFAULT_IGNORES`,
-`mimetypes.knownfiles`, etc. Surface piecemeal.
-
 ### Misc one-offs (`array`, `copy`, `email`, `ipaddress`, `json`, `pprint`, `profile`, `pwd`, `queue`, `resource`, `smtplib`, `statistics`, `subprocess`, `weakref`, `platform`)
 
 Tracked individually in the audit doc; no grouping advantage. Pull

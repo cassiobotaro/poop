@@ -97,3 +97,12 @@ def test_iglob_with_root_dir_as_str(sample_tree: pathlib.Path) -> None:
     result = Glob.iglob(Str("*.txt"), root_dir=Str(str(sample_tree)))
     assert isinstance(result, GlobIter)
     assert len(list(result)) == 2
+
+
+def test_has_magic_detects_wildcards() -> None:
+    from poop.types.boolean import Boolean, false
+
+    assert Glob.has_magic(Str("plain")) is false
+    assert Glob.has_magic(Str("*.txt")) is true
+    assert Glob.has_magic(Str("a?b")) is true
+    assert isinstance(Glob.has_magic(Str("[abc]")), Boolean)
