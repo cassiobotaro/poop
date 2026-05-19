@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import datetime as _datetime
+import zoneinfo as _zoneinfo
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -275,12 +276,16 @@ class Time(_ValueEqMixin, Object):
         return Int(self._impl.microsecond)
 
     @property
-    def tzinfo(self) -> TimeZone | NoneClass:
+    def tzinfo(self) -> TimeZone | ZoneInfo | NoneClass:
+        from poop.types.zoneinfo import ZoneInfo as _ZoneInfo
+
         tz = self._impl.tzinfo
         if tz is None:
             return none
         if isinstance(tz, _datetime.timezone):
             return TimeZone._from_impl(tz)
+        if isinstance(tz, _zoneinfo.ZoneInfo):
+            return _ZoneInfo._from_impl(tz)
         return none
 
     def isoformat(self) -> Str:
@@ -404,12 +409,16 @@ class DateTime(_ValueEqMixin, Object):
         return Int(self._impl.microsecond)
 
     @property
-    def tzinfo(self) -> TimeZone | NoneClass:
+    def tzinfo(self) -> TimeZone | ZoneInfo | NoneClass:
+        from poop.types.zoneinfo import ZoneInfo as _ZoneInfo
+
         tz = self._impl.tzinfo
         if tz is None:
             return none
         if isinstance(tz, _datetime.timezone):
             return TimeZone._from_impl(tz)
+        if isinstance(tz, _zoneinfo.ZoneInfo):
+            return _ZoneInfo._from_impl(tz)
         return none
 
     def date(self) -> Date:
@@ -474,16 +483,16 @@ class DateTime(_ValueEqMixin, Object):
     def __hash__(self) -> int:
         return hash(self._impl)
 
-    def __lt__(self, other: DateTime) -> Any:
+    def __lt__(self, other: DateTime) -> Boolean:
         return true if self._impl < other._impl else false
 
-    def __le__(self, other: DateTime) -> Any:
+    def __le__(self, other: DateTime) -> Boolean:
         return true if self._impl <= other._impl else false
 
-    def __gt__(self, other: DateTime) -> Any:
+    def __gt__(self, other: DateTime) -> Boolean:
         return true if self._impl > other._impl else false
 
-    def __ge__(self, other: DateTime) -> Any:
+    def __ge__(self, other: DateTime) -> Boolean:
         return true if self._impl >= other._impl else false
 
 
