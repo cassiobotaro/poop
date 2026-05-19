@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–70 here was fully resolved
+The leak/signature/bug audit logged as 1–73 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1.
@@ -18,8 +18,11 @@ across the v1.0.x and v1.1.x cycles:
 - Item 65 → v1.1.8.
 - Items 66–67 → v1.1.9.
 - Item 68 → v1.1.10.
-- Items 69–70 → v1.1.11 (`Path.read_text`/`write_text` accept
-  `encoding`/`errors`/`newline`; `Secrets.choice` annotates `Object`).
+- Items 69–70 → v1.1.11.
+- Items 71–73 → v1.1.12 (`ConfigParser.get*` accept `vars` and enforce
+  keyword-only; `TemporaryDirectory` / `NamedTemporaryFile` gain
+  `delete` / `delete_on_close`; `LogRecord.created` / `Gc.get_threshold`
+  / `Gc.get_count` / `Sqlite3.Row.at` tighten `-> Any` to POOP types).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
