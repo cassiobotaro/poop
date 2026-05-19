@@ -5,6 +5,7 @@ from poop.types._unwrap import _unwrap
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
+from poop.types.object import Object
 from poop.types.string import Str
 
 if TYPE_CHECKING:
@@ -41,7 +42,7 @@ class Secrets:
     # Secure draws -----------------------------------------------------
 
     @staticmethod
-    def choice(seq: Any) -> Any:
+    def choice(seq: Any) -> Object:
         # seq is a POOP iterable; iterate to get a Python list of POOP
         # objects, then delegate to secrets.choice.
         return _secrets.choice(list(seq))
