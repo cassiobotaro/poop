@@ -83,10 +83,18 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
             )
         )
 
-    def hex(self) -> Str:
+    def hex(
+        self,
+        sep: Str | Bytes | NoneClass | None = None,
+        bytes_per_sep: Int | NoneClass | None = None,
+    ) -> Str:
+        from poop.types._unwrap import _is_absent, _opt_int
         from poop.types.string import Str
 
-        return Str(self._value.hex())
+        if _is_absent(sep):
+            return Str(self._value.hex())
+        sep_value = sep._value  # ty: ignore[unresolved-attribute]
+        return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
 
     @classmethod
     def fromhex(cls, s: Str) -> Bytes:

@@ -89,8 +89,18 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             )
         )
 
-    def hex(self) -> Str:
-        return Str(self._value.hex())
+    def hex(
+        self,
+        sep: Str | ByteArray | NoneClass | None = None,
+        bytes_per_sep: Int | NoneClass | None = None,
+    ) -> Str:
+        from poop.types._unwrap import _is_absent, _opt_int
+
+        if _is_absent(sep):
+            return Str(self._value.hex())
+        raw = sep._value  # ty: ignore[unresolved-attribute]
+        sep_value: str | bytes = raw if isinstance(raw, str) else bytes(raw)
+        return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
 
     def __iter__(self) -> Iterator[Int]:
         return (Int(b) for b in self._value)
