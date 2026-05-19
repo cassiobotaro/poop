@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–87 here was fully resolved
+The leak/signature/bug audit logged as 1–88 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1.
@@ -25,11 +25,9 @@ across the v1.0.x and v1.1.x cycles:
 - Items 80–82 → v1.1.15.
 - Items 83–84 → v1.1.16.
 - Items 85–86 → v1.1.17.
-- Item 87 → v1.1.18 (four leftover hand-coded `None`-fallback call
-  sites routed through `_unwrap` helpers — `asyncio.wait_for` uses
-  `_opt_timeout`, `Codecs.encode`/`decode` use `_opt_str`,
-  `Decimal.LocalContext` uses `_is_absent`, `Bisect` drops its
-  duplicate `_i` for `_opt_int`).
+- Item 87 → v1.1.18.
+- Item 88 → v1.1.19 (`Slice.__repr__` mirrors `repr(slice(...))` —
+  lowercase `slice` and always three positions, matching CPython).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
