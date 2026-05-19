@@ -61,8 +61,8 @@ class ZipInfo(Object):
         return Int(self._impl.CRC)
 
     @property
-    def is_dir(self) -> bool:
-        return self._impl.is_dir()
+    def is_dir(self) -> Boolean:
+        return true if self._impl.is_dir() else false
 
 
 class ZipFile(Object):
@@ -80,11 +80,13 @@ class ZipFile(Object):
         file: Path | Str,
         mode: Str | None = None,
         compression: Int | None = None,
-        allowZip64: bool = True,
+        allowZip64: Boolean | NoneClass | None = None,
         compresslevel: Int | None = None,
     ) -> None:
+        from poop.types._unwrap import _unwrap_bool
+
         kwargs: dict[str, Any] = {
-            "allowZip64": allowZip64,
+            "allowZip64": _unwrap_bool(allowZip64, True),
         }
         if compresslevel is not None:
             kwargs["compresslevel"] = compresslevel._value

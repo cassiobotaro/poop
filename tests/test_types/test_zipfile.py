@@ -3,7 +3,7 @@ from pathlib import Path as _PyPath
 import pytest
 
 from poop.interpreter import Interpreter
-from poop.types.boolean import false, true
+from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -67,7 +67,8 @@ def test_zipinfo_properties(tmp_path: _PyPath) -> None:
     assert isinstance(info.date_time, Tuple)
     assert info.date_time.len() == Int(6)
     assert isinstance(info.CRC, Int)
-    assert isinstance(info.is_dir, bool)
+    assert isinstance(info.is_dir, Boolean)
+    assert info.is_dir is false
 
 
 def test_zipfile_write_from_disk(tmp_path: _PyPath) -> None:

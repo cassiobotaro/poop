@@ -219,5 +219,5 @@ class Lzma:
         return LZMAFile(filename, mode, format, check, preset)
 
     @staticmethod
-    def is_check_supported(check_id: Int, /) -> bool:
-        return _lzma.is_check_supported(check_id._value)
+    def is_check_supported(check_id: Int, /) -> Boolean:
+        return true if _lzma.is_check_supported(check_id._value) else false

@@ -1,7 +1,7 @@
 from pathlib import Path as _PyPath
 
 from poop.interpreter import Interpreter
-from poop.types.boolean import true
+from poop.types.boolean import Boolean, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.lzma import Lzma, LZMACompressor, LZMADecompressor, LZMAFile
@@ -130,7 +130,9 @@ def test_preset_constants_are_ints() -> None:
 
 
 def test_is_check_supported() -> None:
-    assert isinstance(Lzma.is_check_supported(Lzma.CHECK_NONE), bool)
+    result = Lzma.is_check_supported(Lzma.CHECK_NONE)
+    assert isinstance(result, Boolean)
+    assert result is true
 
 
 # --- Extra coverage ---

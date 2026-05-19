@@ -188,8 +188,10 @@ class TarFile(Object):
     def getmember(self, name: Str) -> TarInfo:
         return TarInfo(self._impl.getmember(name._value))
 
-    def list(self, verbose: bool = True) -> NoneClass:
-        self._impl.list(verbose=verbose)
+    def list(self, verbose: Boolean | NoneClass | None = None) -> NoneClass:
+        from poop.types._unwrap import _unwrap_bool
+
+        self._impl.list(verbose=_unwrap_bool(verbose, True))
         return none
 
     # Lifecycle ---------------------------------------------------------
