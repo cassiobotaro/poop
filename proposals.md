@@ -226,25 +226,11 @@ so passing POOP `none` fails the type checker.
 
 ## Bugs
 
-Bugs 26–30 were fixed in v1.0.1. Only bug 31 remains, as a design
-question rather than a defect.
-
-### 31. `no_unary_minus` admits inconsistent constant forms — `poop/validators/no_unary_minus.py:12-19` *(lower confidence)*
-
-The validator allows `USub` only when `node.operand` is a plain `Constant`,
-which excludes `-(-5)` while admitting `-5` and `-1.5j`. The error message
-("unary minus on expressions is forbidden — use `.negated()`") does not
-define "expression" cleanly, so the gate behaves inconsistently for
-parenthesised constant expressions vs flat literals. Flagged for reviewer
-judgment.
-
-**Python behavior:** Python accepts every unary-minus form uniformly —
-`-(-5)`, `--5`, `-(-1.5)` all evaluate without complaint. POOP is
-intentionally stricter; the inconsistency is in *which* expressions slip
-through, not in being strict at all.
-
-**Fix:** decide on the precise rule (e.g. "only `Constant` of type
-`int`/`float`/`complex`/`bool`") and reject everything else uniformly.
+Bugs 26–30 were fixed in v1.0.1. Bug 31 was fixed in v1.0.2 — the
+`no_unary_minus` allow-list was narrowed to `int`/`float`/`complex`
+literals (excluding `bool`, since POOP does not treat Boolean as a
+subclass of Int), so `-(-3)`, `-True`, `-"x"`, and `-None` now all
+fail validation uniformly.
 
 ---
 
