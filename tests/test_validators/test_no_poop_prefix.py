@@ -29,6 +29,12 @@ def test_poop_prefixed_attribute_raises() -> None:
         NoPoopPrefixValidator().validate(tree)
 
 
+def test_poop_prefixed_class_name_raises() -> None:
+    tree = ast.parse("class _poop_int:\n    pass")
+    with pytest.raises(ValidationError, match="_poop_int is forbidden"):
+        NoPoopPrefixValidator().validate(tree)
+
+
 def test_other_underscore_names_pass() -> None:
     tree = ast.parse("x = _private\ny = __dunder__")
     NoPoopPrefixValidator().validate(tree)

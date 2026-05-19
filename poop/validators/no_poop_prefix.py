@@ -21,6 +21,15 @@ class _Visitor(ast.NodeVisitor):
             )
         self.generic_visit(node)
 
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        if node.name.startswith("_poop_"):
+            raise ValidationError(
+                f"{node.name} is forbidden — names starting with _poop_ are reserved for the runtime",
+                lineno=getattr(node, "lineno", 0),
+                col_offset=getattr(node, "col_offset", 0),
+            )
+        self.generic_visit(node)
+
 
 class NoPoopPrefixValidator:
     def validate(self, tree: ast.Module) -> None:
