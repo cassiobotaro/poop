@@ -160,7 +160,7 @@ def test_array_fromlist() -> None:
 def test_array_do() -> None:
     a = Array(Str("i"), List(Int(1), Int(2), Int(3)))
     collected: list[int] = []
-    a.do(lambda v: collected.append(v._value))
+    a.do(lambda v: collected.append(v._value))  # ty: ignore[unresolved-attribute]
     assert collected == [1, 2, 3]
 
 

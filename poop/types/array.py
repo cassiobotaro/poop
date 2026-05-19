@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import array as _array
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._value_eq import _ValueEqMixin
@@ -14,7 +15,7 @@ from poop.types.object import Object
 from poop.types.string import Str
 
 if TYPE_CHECKING:
-    pass
+    from poop.types.slice import Slice
 
 
 _INT_TYPECODES = frozenset("bBhHiIlLqQ")
@@ -108,9 +109,20 @@ class Array(_ValueEqMixin, Object):
     def at(self, index: Int) -> Object:
         return _wrap_value(self._impl.typecode, self._impl[index._value])
 
-    def slice(self, start: Int, stop: Int, step: Int | None = None) -> Array:
+    def slice(
+        self,
+        start_or_slice: Int | Slice,
+        stop: Int | None = None,
+        step: Int | None = None,
+    ) -> Array:
+        from poop.types.slice import Slice
+
+        if isinstance(start_or_slice, Slice):
+            return Array._from_impl(self._impl[start_or_slice._py_slice()])
+        if stop is None:
+            raise TypeError("stop is required when start is an Int")
         s = step._value if step is not None else None
-        return Array._from_impl(self._impl[start._value : stop._value : s])
+        return Array._from_impl(self._impl[start_or_slice._value : stop._value : s])
 
     def append(self, value: Object) -> NoneClass:
         self._impl.append(_unwrap_value(self._impl.typecode, value))
@@ -166,7 +178,7 @@ class Array(_ValueEqMixin, Object):
             self._impl.append(_unwrap_value(code, v))
         return none
 
-    def do(self, block: Any) -> NoneClass:
+    def do(self, block: Callable[[Object], Any]) -> NoneClass:
         code = self._impl.typecode
         for v in self._impl:
             block(_wrap_value(code, v))
