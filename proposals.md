@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–88 here was fully resolved
+The leak/signature/bug audit logged as 1–89 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1.
@@ -26,8 +26,10 @@ across the v1.0.x and v1.1.x cycles:
 - Items 83–84 → v1.1.16.
 - Items 85–86 → v1.1.17.
 - Item 87 → v1.1.18.
-- Item 88 → v1.1.19 (`Slice.__repr__` mirrors `repr(slice(...))` —
-  lowercase `slice` and always three positions, matching CPython).
+- Item 88 → v1.1.19.
+- Item 89 → v1.1.20 (`Dict` gains `__or__` and `__ior__` for PEP 584
+  shallow merge — `d1 | d2` returns a new `Dict`, `d1 |= d2` mutates
+  in place, both isinstance-guarded).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
