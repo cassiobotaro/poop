@@ -113,16 +113,16 @@ class _AddressBase(_ValueEqMixin, Object):
     def __sub__(self, other: Int) -> _AddressBase:
         return _wrap_address(self._impl - other._value)
 
-    def __lt__(self, other: _AddressBase) -> Any:
+    def __lt__(self, other: _AddressBase) -> Boolean:
         return true if self._impl < other._impl else false
 
-    def __le__(self, other: _AddressBase) -> Any:
+    def __le__(self, other: _AddressBase) -> Boolean:
         return true if self._impl <= other._impl else false
 
-    def __gt__(self, other: _AddressBase) -> Any:
+    def __gt__(self, other: _AddressBase) -> Boolean:
         return true if self._impl > other._impl else false
 
-    def __ge__(self, other: _AddressBase) -> Any:
+    def __ge__(self, other: _AddressBase) -> Boolean:
         return true if self._impl >= other._impl else false
 
     def __hash__(self) -> int:

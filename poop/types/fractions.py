@@ -4,9 +4,10 @@ import fractions as _fractions
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.none import NoneClass
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -44,12 +45,14 @@ class Fraction(_ValueEqMixin, Object):
 
     def __init__(
         self,
-        numerator: Int | Float | Str | Fraction | None = None,
-        denominator: Int | None = None,
+        numerator: Int | Float | Str | Fraction | NoneClass | None = None,
+        denominator: Int | NoneClass | None = None,
     ) -> None:
-        if numerator is None:
+        from poop.types._unwrap import _is_absent
+
+        if _is_absent(numerator):
             self._impl = _fractions.Fraction()
-        elif denominator is not None:
+        elif not _is_absent(denominator):
             # Two-argument form: both numerator and denominator are Int.
             self._impl = _fractions.Fraction(
                 _to_python_num(numerator), _to_python_num(denominator)
@@ -81,10 +84,16 @@ class Fraction(_ValueEqMixin, Object):
     def denominator(self) -> Int:
         return Int(self._impl.denominator)
 
-    def limit_denominator(self, max_denominator: Int | None = None) -> Fraction:
-        if max_denominator is None:
+    def limit_denominator(
+        self, max_denominator: Int | NoneClass | None = None
+    ) -> Fraction:
+        from poop.types._unwrap import _is_absent
+
+        if _is_absent(max_denominator):
             return Fraction._from_impl(self._impl.limit_denominator())
-        return Fraction._from_impl(self._impl.limit_denominator(max_denominator._value))
+        return Fraction._from_impl(
+            self._impl.limit_denominator(max_denominator._value)  # ty: ignore[unresolved-attribute]
+        )
 
     def as_integer_ratio(self) -> Tuple:
         n, d = self._impl.as_integer_ratio()
@@ -172,16 +181,16 @@ class Fraction(_ValueEqMixin, Object):
             return true if op(float(self._impl), other._value) else false
         return NotImplemented
 
-    def __lt__(self, other: Any) -> Any:
+    def __lt__(self, other: Any) -> Boolean:
         return self._cmp(other, lambda a, b: a < b)
 
-    def __le__(self, other: Any) -> Any:
+    def __le__(self, other: Any) -> Boolean:
         return self._cmp(other, lambda a, b: a <= b)
 
-    def __gt__(self, other: Any) -> Any:
+    def __gt__(self, other: Any) -> Boolean:
         return self._cmp(other, lambda a, b: a > b)
 
-    def __ge__(self, other: Any) -> Any:
+    def __ge__(self, other: Any) -> Boolean:
         return self._cmp(other, lambda a, b: a >= b)
 
     def __hash__(self) -> int:
