@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import logging as _logging
 import logging.config as _logging_config
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._bridge import to_python
 from poop.types.boolean import Boolean, false, true
 from poop.types.dict import Dict
 from poop.types.int import Int
+
+if TYPE_CHECKING:
+    from poop.types.float import Float
 from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
@@ -75,7 +78,7 @@ class LogRecord(Object):
         return Str(self._impl.funcName)
 
     @property
-    def created(self) -> Any:
+    def created(self) -> Float:
         from poop.types.float import Float
 
         return Float(self._impl.created)

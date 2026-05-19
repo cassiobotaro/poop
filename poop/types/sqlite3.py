@@ -124,7 +124,7 @@ class Row(Object):
         self._columns = columns
         self._values = values
 
-    def at(self, key: Int | Str) -> Any:
+    def at(self, key: Int | Str) -> Object:
         if isinstance(key, Int):
             return _wrap_value(self._values[key._value])
         idx = self._columns.index(key._value)

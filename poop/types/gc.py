@@ -8,6 +8,7 @@ from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
+from poop.types.tuple import Tuple
 
 
 def _wrap_value(value: Any) -> Any:
@@ -52,11 +53,8 @@ class _GCNamespace:
             return Int(_gc.collect())
         return Int(_gc.collect(generation._value))
 
-    def get_threshold(self) -> Any:
-        t = _gc.get_threshold()
-        from poop.types.tuple import Tuple
-
-        return Tuple(*(Int(v) for v in t))
+    def get_threshold(self) -> Tuple:
+        return Tuple(*(Int(v) for v in _gc.get_threshold()))
 
     def set_threshold(
         self,
@@ -72,9 +70,7 @@ class _GCNamespace:
         _gc.set_threshold(*args)
         return none
 
-    def get_count(self) -> Any:
-        from poop.types.tuple import Tuple
-
+    def get_count(self) -> Tuple:
         return Tuple(*(Int(v) for v in _gc.get_count()))
 
     def get_stats(self) -> List:
