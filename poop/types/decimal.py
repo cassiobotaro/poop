@@ -77,16 +77,16 @@ class Decimal(_ValueEqMixin, Object):
     def __hash__(self) -> int:
         return hash(self._impl)
 
-    def __lt__(self, other: Decimal) -> Any:
+    def __lt__(self, other: Decimal) -> Boolean:
         return true if self._impl < other._impl else false
 
-    def __le__(self, other: Decimal) -> Any:
+    def __le__(self, other: Decimal) -> Boolean:
         return true if self._impl <= other._impl else false
 
-    def __gt__(self, other: Decimal) -> Any:
+    def __gt__(self, other: Decimal) -> Boolean:
         return true if self._impl > other._impl else false
 
-    def __ge__(self, other: Decimal) -> Any:
+    def __ge__(self, other: Decimal) -> Boolean:
         return true if self._impl >= other._impl else false
 
     def quantize(

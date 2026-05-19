@@ -143,12 +143,12 @@ class NormalDist:
     def __truediv__(self, other: Float | Int) -> NormalDist:
         return NormalDist._from_impl(self._impl / _to_number(other))
 
-    def __eq__(self, other: object) -> Any:
+    def __eq__(self, other: object) -> Boolean:
         if not isinstance(other, NormalDist):
             return false
         return true if self._impl == other._impl else false
 
-    def __ne__(self, other: object) -> Any:
+    def __ne__(self, other: object) -> Boolean:
         if not isinstance(other, NormalDist):
             return true
         return false if self._impl == other._impl else true
