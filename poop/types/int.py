@@ -109,16 +109,21 @@ class Int(_ValueEqMixin, Object):
     def __mod__(self, other: Int) -> Int:
         return Int(self._value % other._value)
 
-    def __pow__(self, other: Int) -> Int | Float:
+    def __pow__(
+        self, other: Int, modulus: Int | NoneClass | None = None
+    ) -> Int | Float:
+        from poop.types._unwrap import _is_absent
         from poop.types.float import Float
 
-        result = self._value**other._value
-        if isinstance(result, float):
-            return Float(result)
-        return Int(result)
+        if _is_absent(modulus):
+            result = self._value**other._value
+            if isinstance(result, float):
+                return Float(result)
+            return Int(result)
+        return Int(pow(self._value, other._value, modulus._value))  # ty: ignore[unresolved-attribute]
 
-    def pow(self, other: Int) -> Int | Float:
-        return self.__pow__(other)
+    def pow(self, other: Int, modulus: Int | NoneClass | None = None) -> Int | Float:
+        return self.__pow__(other, modulus)
 
     def __divmod__(self, other: Int) -> Tuple:
         from poop.types.tuple import Tuple
