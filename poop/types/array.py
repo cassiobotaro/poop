@@ -140,11 +140,13 @@ class Array(_ValueEqMixin, Object):
         self._impl.insert(i._value, _unwrap_value(self._impl.typecode, value))
         return none
 
-    def pop(self, i: Int | None = None) -> Object:
-        if i is None:
+    def pop(self, i: Int | NoneClass | None = None) -> Object:
+        from poop.types._unwrap import _is_absent
+
+        if _is_absent(i):
             value = self._impl.pop()
         else:
-            value = self._impl.pop(i._value)
+            value = self._impl.pop(i._value)  # ty: ignore[unresolved-attribute]
         return _wrap_value(self._impl.typecode, value)
 
     def remove(self, value: Object) -> NoneClass:

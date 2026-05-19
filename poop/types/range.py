@@ -9,20 +9,31 @@ from poop.types.range_iterator import RangeIterator
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
 
 class Range(_IterableMixin, Object):
     __slots__ = ("_start", "_stop", "_step")
 
-    def __init__(self, start: Int, stop: Int, step: Int | None = None) -> None:
-        if step is not None and step._value == 0:
+    def __init__(
+        self,
+        start: Int,
+        stop: Int,
+        step: Int | NoneClass | None = None,
+    ) -> None:
+        from poop.types._unwrap import _is_absent
+
+        resolved: Int
+        if _is_absent(step):
+            resolved = Int(1 if start._value <= stop._value else -1)
+        else:
+            resolved = step  # ty: ignore[invalid-assignment]
+        if resolved._value == 0:
             raise ValueError("step must not be zero")
         self._start = start
         self._stop = stop
-        self._step = (
-            step if step is not None else Int(1 if start._value <= stop._value else -1)
-        )
+        self._step: Int = resolved
 
     def _range(self) -> range:
         start, stop, step = self._start._value, self._stop._value, self._step._value

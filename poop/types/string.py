@@ -495,6 +495,5 @@ class String:
     whitespace: ClassVar[Str] = Str(_string.whitespace)
 
     @staticmethod
-    def capwords(s: Str, sep: Str | None = None) -> Str:
-        sep_arg = None if sep is None else sep._value
-        return Str(_string.capwords(s._value, sep_arg))
+    def capwords(s: Str, sep: Str | NoneClass | None = None) -> Str:
+        return Str(_string.capwords(s._value, _unwrap(sep, None)))
