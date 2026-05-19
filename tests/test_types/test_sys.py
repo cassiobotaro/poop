@@ -5,6 +5,7 @@ import pytest
 from poop.interpreter import Interpreter
 from poop.types.boolean import Boolean
 from poop.types.dict import Dict
+from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
@@ -61,17 +62,18 @@ def test_sys_recursion_limit_round_trip() -> None:
         Sys.setrecursionlimit(original)
 
 
-def test_sys_implementation_is_python_object() -> None:
+def test_sys_implementation_wraps_python_struct() -> None:
     impl = Sys.implementation
-    assert impl.name in ("cpython", "pypy")
+    assert impl.name in (Str("cpython"), Str("pypy"))
 
 
 def test_sys_flags_float_int_hash_thread_info() -> None:
-    assert Sys.flags is _stdlib_sys.flags
-    assert Sys.float_info is _stdlib_sys.float_info
-    assert Sys.int_info is _stdlib_sys.int_info
-    assert Sys.hash_info is _stdlib_sys.hash_info
-    assert Sys.thread_info is _stdlib_sys.thread_info
+    # Each info struct is a POOP shim; primitive fields surface as POOP types.
+    assert isinstance(Sys.flags.debug, Int)
+    assert isinstance(Sys.float_info.max, Float)
+    assert isinstance(Sys.int_info.bits_per_digit, Int)
+    assert isinstance(Sys.hash_info.width, Int)
+    assert isinstance(Sys.thread_info.name, Str)
 
 
 def test_sys_exit_raises() -> None:

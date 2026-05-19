@@ -40,6 +40,44 @@ def _modules_dict() -> Dict:
     return d
 
 
+class _StructShim(Object):
+    """Wraps a CPython informational struct (`sys.flags`, `sys.float_info`, …)
+    so attribute access returns POOP types instead of raw `int`/`bool`/`str`.
+
+    The underlying CPython object is structseq-like (immutable, attribute-
+    addressable). The shim never enumerates the fields up front — it just
+    wraps whatever the user asks for, type-by-type.
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, impl: Any) -> None:
+        self._impl = impl
+
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith("_"):
+            raise AttributeError(name)
+        value = getattr(self._impl, name)
+        if isinstance(value, bool):
+            from poop.types.boolean import false, true
+
+            return true if value else false
+        if isinstance(value, int):
+            return Int(value)
+        if isinstance(value, float):
+            from poop.types.float import Float
+
+            return Float(value)
+        if isinstance(value, str):
+            return Str(value)
+        return value
+
+    def __str__(self) -> str:
+        return str(self._impl)
+
+    __repr__ = __str__
+
+
 def _path_list() -> List:
     return List(*(Str(p) for p in _sys.path))
 
@@ -142,8 +180,8 @@ class _SysNamespace:
         return _wrap_version_info()
 
     @property
-    def implementation(self) -> Any:
-        return _sys.implementation
+    def implementation(self) -> _StructShim:
+        return _StructShim(_sys.implementation)
 
     @property
     def maxsize(self) -> Int:
@@ -154,24 +192,24 @@ class _SysNamespace:
         return Str(_sys.byteorder)
 
     @property
-    def flags(self) -> Any:
-        return _sys.flags
+    def flags(self) -> _StructShim:
+        return _StructShim(_sys.flags)
 
     @property
-    def float_info(self) -> Any:
-        return _sys.float_info
+    def float_info(self) -> _StructShim:
+        return _StructShim(_sys.float_info)
 
     @property
-    def int_info(self) -> Any:
-        return _sys.int_info
+    def int_info(self) -> _StructShim:
+        return _StructShim(_sys.int_info)
 
     @property
-    def hash_info(self) -> Any:
-        return _sys.hash_info
+    def hash_info(self) -> _StructShim:
+        return _StructShim(_sys.hash_info)
 
     @property
-    def thread_info(self) -> Any:
-        return _sys.thread_info
+    def thread_info(self) -> _StructShim:
+        return _StructShim(_sys.thread_info)
 
     @property
     def modules(self) -> Dict:
