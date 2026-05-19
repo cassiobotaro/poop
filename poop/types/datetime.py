@@ -377,7 +377,9 @@ class DateTime(_ValueEqMixin, Object):
         time: Time,
         tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
     ) -> DateTime:
-        tz = _opt_tz(tzinfo) if tzinfo is not None else time._impl.tzinfo
+        from poop.types._unwrap import _is_absent
+
+        tz = time._impl.tzinfo if _is_absent(tzinfo) else _opt_tz(tzinfo)
         return cls._from_impl(_datetime.datetime.combine(date._impl, time._impl, tz))
 
     @property

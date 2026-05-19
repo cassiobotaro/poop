@@ -73,10 +73,14 @@ class Lock(Object):
         self._impl = _threading.Lock()
 
     def acquire(
-        self, blocking: Boolean | None = None, timeout: Float | Int | None = None
+        self,
+        blocking: Boolean | NoneClass | None = None,
+        timeout: Float | Int | NoneClass | None = None,
     ) -> Boolean:
-        b = True if blocking is None else bool(blocking)
-        t = -1 if timeout is None else timeout._value
+        from poop.types._unwrap import _is_absent, _unwrap_bool
+
+        b = _unwrap_bool(blocking, True)
+        t = -1 if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
         return true if self._impl.acquire(b, t) else false
 
     def release(self) -> NoneClass:
@@ -103,10 +107,14 @@ class RLock(Object):
         self._impl = _threading.RLock()
 
     def acquire(
-        self, blocking: Boolean | None = None, timeout: Float | Int | None = None
+        self,
+        blocking: Boolean | NoneClass | None = None,
+        timeout: Float | Int | NoneClass | None = None,
     ) -> Boolean:
-        b = True if blocking is None else bool(blocking)
-        t = -1 if timeout is None else timeout._value
+        from poop.types._unwrap import _is_absent, _unwrap_bool
+
+        b = _unwrap_bool(blocking, True)
+        t = -1 if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
         return true if self._impl.acquire(b, t) else false
 
     def release(self) -> NoneClass:
@@ -154,10 +162,14 @@ class Semaphore(Object):
         self._impl = _threading.Semaphore(v)
 
     def acquire(
-        self, blocking: Boolean | None = None, timeout: Float | Int | None = None
+        self,
+        blocking: Boolean | NoneClass | None = None,
+        timeout: Float | Int | NoneClass | None = None,
     ) -> Boolean:
-        b = True if blocking is None else bool(blocking)
-        t = None if timeout is None else timeout._value
+        from poop.types._unwrap import _is_absent, _unwrap_bool
+
+        b = _unwrap_bool(blocking, True)
+        t = None if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
         return true if self._impl.acquire(b, t) else false
 
     def release(self) -> NoneClass:
@@ -288,10 +300,10 @@ class _Local(Object):
     def __init__(self) -> None:
         self._impl = _threading.local()
 
-    def at(self, name: Str) -> Any:
+    def at(self, name: Str) -> Object:
         return getattr(self._impl, name._value)
 
-    def at_put(self, name: Str, value: Any) -> _Local:
+    def at_put(self, name: Str, value: Object) -> _Local:
         setattr(self._impl, name._value, value)
         return self
 
