@@ -3,8 +3,10 @@ from __future__ import annotations
 import codecs as _codecs
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _opt_str
 from poop.types.bytes import Bytes
 from poop.types.int import Int
+from poop.types.none import NoneClass
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -23,8 +25,8 @@ def _wrap_result(value: Any) -> Bytes | Str:
     raise TypeError(f"codec returned unsupported type: {type(value).__name__}")
 
 
-def _opt_errors(errors: Str | None) -> str:
-    return "strict" if errors is None else errors._value
+def _opt_errors(errors: Str | NoneClass | None) -> str:
+    return _opt_str(errors, "strict")
 
 
 class CodecInfo:
@@ -98,7 +100,7 @@ class Codecs:
         encoding: Str | None = None,
         errors: Str | None = None,
     ) -> Bytes | Str:
-        enc = "utf-8" if encoding is None else encoding._value
+        enc = _opt_str(encoding, "utf-8")
         return _wrap_result(_codecs.encode(_unwrap_arg(obj), enc, _opt_errors(errors)))
 
     @staticmethod
@@ -107,7 +109,7 @@ class Codecs:
         encoding: Str | None = None,
         errors: Str | None = None,
     ) -> Bytes | Str:
-        enc = "utf-8" if encoding is None else encoding._value
+        enc = _opt_str(encoding, "utf-8")
         return _wrap_result(_codecs.decode(_unwrap_arg(obj), enc, _opt_errors(errors)))
 
     @staticmethod

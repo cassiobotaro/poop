@@ -83,9 +83,10 @@ class AsyncIO:
         )
 
     @staticmethod
-    def wait_for(fut: Any, timeout: Float | Int | None = None) -> Any:
-        t = None if timeout is None else timeout._value
-        return _asyncio.wait_for(_as_coro(fut), t)
+    def wait_for(fut: Any, timeout: Float | Int | NoneClass | None = None) -> Any:
+        from poop.types._unwrap import _opt_timeout
+
+        return _asyncio.wait_for(_as_coro(fut), _opt_timeout(timeout))
 
     @staticmethod
     def shield(arg: Any) -> Any:

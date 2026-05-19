@@ -184,8 +184,10 @@ class _LocalContextWrapper:
     __slots__ = ("_cm", "_ctx")
 
     def __init__(self, ctx: Context | NoneClass | None = None) -> None:
-        c = ctx if (ctx is not None and not isinstance(ctx, NoneClass)) else None
-        self._cm = _decimal.localcontext(c._impl if c is not None else None)
+        from poop.types._unwrap import _is_absent
+
+        impl = None if _is_absent(ctx) else ctx._impl  # ty: ignore[unresolved-attribute]
+        self._cm = _decimal.localcontext(impl)
         self._ctx: Context | None = None
 
     def __enter__(self) -> Context:

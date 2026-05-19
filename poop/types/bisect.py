@@ -2,15 +2,10 @@ import bisect as _bisect
 from collections.abc import Callable
 from typing import Any, cast
 
+from poop.types._unwrap import _opt_int
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
-
-
-def _i(value: Int | None, default: int | None) -> int | None:
-    if value is None:
-        return default
-    return value._value
 
 
 class Bisect:
@@ -35,8 +30,8 @@ class Bisect:
         *,
         key: Callable[[Any], Any] | None = None,
     ) -> Int:
-        lo_val = _i(lo, 0) or 0
-        hi_val = _i(hi, None) or len(a._items)
+        lo_val = _opt_int(lo, 0)
+        hi_val = _opt_int(hi, len(a._items))
         items = cast(Any, a._items)
         if key is None:
             return Int(_bisect.bisect_left(items, x, lo_val, hi_val))
@@ -51,8 +46,8 @@ class Bisect:
         *,
         key: Callable[[Any], Any] | None = None,
     ) -> Int:
-        lo_val = _i(lo, 0) or 0
-        hi_val = _i(hi, None) or len(a._items)
+        lo_val = _opt_int(lo, 0)
+        hi_val = _opt_int(hi, len(a._items))
         items = cast(Any, a._items)
         if key is None:
             return Int(_bisect.bisect_right(items, x, lo_val, hi_val))
@@ -78,8 +73,8 @@ class Bisect:
         *,
         key: Callable[[Any], Any] | None = None,
     ) -> NoneClass:
-        lo_val = _i(lo, 0) or 0
-        hi_val = _i(hi, None) or len(a._items)
+        lo_val = _opt_int(lo, 0)
+        hi_val = _opt_int(hi, len(a._items))
         items = cast(Any, a._items)
         if key is None:
             _bisect.insort_left(items, x, lo_val, hi_val)
@@ -96,8 +91,8 @@ class Bisect:
         *,
         key: Callable[[Any], Any] | None = None,
     ) -> NoneClass:
-        lo_val = _i(lo, 0) or 0
-        hi_val = _i(hi, None) or len(a._items)
+        lo_val = _opt_int(lo, 0)
+        hi_val = _opt_int(hi, len(a._items))
         items = cast(Any, a._items)
         if key is None:
             _bisect.insort_right(items, x, lo_val, hi_val)
