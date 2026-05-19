@@ -68,10 +68,20 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
             return item._value in self._value
         return False
 
-    def decode(self, encoding: Str) -> Str:
+    def decode(
+        self,
+        encoding: Str | NoneClass | None = None,
+        errors: Str | NoneClass | None = None,
+    ) -> Str:
+        from poop.types._unwrap import _opt_str
         from poop.types.string import Str
 
-        return Str(self._value.decode(encoding._value))
+        return Str(
+            self._value.decode(
+                _opt_str(encoding, "utf-8"),
+                _opt_str(errors, "strict"),
+            )
+        )
 
     def hex(self) -> Str:
         from poop.types.string import Str
@@ -292,10 +302,13 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
             ]
         )
 
-    def splitlines(self) -> List:
+    def splitlines(self, keepends: Boolean | NoneClass | None = None) -> List:
+        from poop.types._unwrap import _unwrap_bool
         from poop.types.list import List
 
-        return List(*[Bytes(p) for p in self._value.splitlines()])
+        return List(
+            *[Bytes(p) for p in self._value.splitlines(_unwrap_bool(keepends, False))]
+        )
 
     def startswith(
         self,

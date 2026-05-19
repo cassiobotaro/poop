@@ -75,8 +75,19 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             return item._value in self._value
         return False
 
-    def decode(self, encoding: Str) -> Str:
-        return Str(self._value.decode(encoding._value))
+    def decode(
+        self,
+        encoding: Str | NoneClass | None = None,
+        errors: Str | NoneClass | None = None,
+    ) -> Str:
+        from poop.types._unwrap import _opt_str
+
+        return Str(
+            self._value.decode(
+                _opt_str(encoding, "utf-8"),
+                _opt_str(errors, "strict"),
+            )
+        )
 
     def hex(self) -> Str:
         return Str(self._value.hex())
@@ -322,8 +333,15 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             ]
         )
 
-    def splitlines(self) -> List:
-        return List(*[ByteArray(p) for p in self._value.splitlines()])
+    def splitlines(self, keepends: Boolean | NoneClass | None = None) -> List:
+        from poop.types._unwrap import _unwrap_bool
+
+        return List(
+            *[
+                ByteArray(p)
+                for p in self._value.splitlines(_unwrap_bool(keepends, False))
+            ]
+        )
 
     def startswith(
         self,

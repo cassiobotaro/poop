@@ -249,10 +249,20 @@ class Str(_ValueEqMixin, Object):
             return Str(self._value.center(width._value))
         return Str(self._value.center(width._value, fill))
 
-    def encode(self, encoding: Str) -> Bytes:
+    def encode(
+        self,
+        encoding: Str | NoneClass | None = None,
+        errors: Str | NoneClass | None = None,
+    ) -> Bytes:
+        from poop.types._unwrap import _opt_str
         from poop.types.bytes import Bytes
 
-        return Bytes(self._value.encode(encoding._value))
+        return Bytes(
+            self._value.encode(
+                _opt_str(encoding, "utf-8"),
+                _opt_str(errors, "strict"),
+            )
+        )
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> Str:
         size = _unwrap(tabsize, None)
@@ -347,10 +357,13 @@ class Str(_ValueEqMixin, Object):
             )
         )
 
-    def splitlines(self) -> List:
+    def splitlines(self, keepends: Boolean | NoneClass | None = None) -> List:
+        from poop.types._unwrap import _unwrap_bool
         from poop.types.list import List
 
-        return List(*[Str(s) for s in self._value.splitlines()])
+        return List(
+            *[Str(s) for s in self._value.splitlines(_unwrap_bool(keepends, False))]
+        )
 
     def __add__(self, other: Str) -> Str:
         return Str(self._value + other._value)
