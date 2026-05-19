@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @final
-class DictItemIterator(_IteratorBase, name="dict_itemiterator"):
+class DictItemIterator(_IteratorBase[Tuple], name="dict_itemiterator"):
     __slots__ = ()
 
     def next(self) -> Tuple:

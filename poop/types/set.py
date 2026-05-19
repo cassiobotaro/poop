@@ -102,15 +102,23 @@ class Set(_ValueEqMixin, _IterableMixin, Object):
         return item in self._data
 
     def __and__(self, other: Set) -> Set:
+        if not isinstance(other, Set):
+            return NotImplemented
         return Set(*self._data & other._data)
 
     def __or__(self, other: Set) -> Set:
+        if not isinstance(other, Set):
+            return NotImplemented
         return Set(*self._data | other._data)
 
     def __sub__(self, other: Set) -> Set:
+        if not isinstance(other, Set):
+            return NotImplemented
         return Set(*self._data - other._data)
 
     def __xor__(self, other: Set) -> Set:
+        if not isinstance(other, Set):
+            return NotImplemented
         return Set(*self._data ^ other._data)
 
     def __str__(self) -> str:

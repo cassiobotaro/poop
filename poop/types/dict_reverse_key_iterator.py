@@ -1,8 +1,9 @@
 from typing import final
 
 from poop.types._iterator_base import _IteratorBase
+from poop.types.object import Object
 
 
 @final
-class DictReverseKeyIterator(_IteratorBase, name="dict_reversekeyiterator"):
+class DictReverseKeyIterator(_IteratorBase[Object], name="dict_reversekeyiterator"):
     __slots__ = ()

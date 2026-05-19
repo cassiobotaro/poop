@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @final
-class DictReverseItemIterator(_IteratorBase, name="dict_reverseitemiterator"):
+class DictReverseItemIterator(_IteratorBase[Tuple], name="dict_reverseitemiterator"):
     __slots__ = ()
 
     def next(self) -> Tuple:

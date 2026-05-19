@@ -11,17 +11,19 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class _IteratorBase(Object):
+class _IteratorBase[T](Object):
     """Base for one-shot POOP iterators.
 
     Wraps a Python iterator. `next()` raises `StopIteration` on exhaustion —
     catch it via `Try(...).except_(StopIteration, handler).run()`.
 
-    Subclasses declare their Python-style repr name as a class kwarg, which
-    `__init_subclass__` lifts onto the class so a single `__str__` can serve
-    every iterator type:
+    Generic over the element type `T`: each concrete iterator declares
+    the POOP type it yields (`ListIterator(_IteratorBase[Object])`,
+    `StrIterator(_IteratorBase[Str])`, etc.). The `name=` kwarg sets
+    the Python-style repr name so a single `__str__` can serve every
+    iterator type:
 
-        class ListIterator(_IteratorBase, name="list_iterator"):
+        class ListIterator(_IteratorBase[Object], name="list_iterator"):
             __slots__ = ()
     """
 
@@ -36,16 +38,16 @@ class _IteratorBase(Object):
     def __init__(self, iterable: Iterable[Any]) -> None:
         self._iter: Iterator[Any] = iter(iterable)
 
-    def __iter__(self) -> Iterator[Any]:
+    def __iter__(self) -> Iterator[T]:
         return self
 
-    def __next__(self) -> Any:
+    def __next__(self) -> T:
         return next(self._iter)
 
-    def next(self) -> Any:
+    def next(self) -> T:
         return next(self._iter)
 
-    def do(self, block: Callable[[Any], Any]) -> NoneClass:
+    def do(self, block: Callable[[T], Any]) -> NoneClass:
         deque(map(block, self._iter), maxlen=0)
         return none
 

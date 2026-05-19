@@ -3,6 +3,7 @@ import pytest
 from poop.types.frozen_set import FrozenSet
 from poop.types.frozen_set_iterator import FrozenSetIterator
 from poop.types.int import Int
+from poop.types.object import Object
 
 
 def test_iter_returns_frozen_set_iterator() -> None:
@@ -13,7 +14,7 @@ def test_iter_returns_frozen_set_iterator() -> None:
 def test_next_yields_all_elements() -> None:
     s = FrozenSet(Int(1), Int(2), Int(3))
     it = s.iter()
-    collected: set[Int] = {it.next(), it.next(), it.next()}
+    collected: set[Object] = {it.next(), it.next(), it.next()}
     assert collected == {Int(1), Int(2), Int(3)}
 
 

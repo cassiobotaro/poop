@@ -3,6 +3,7 @@ import pytest
 from poop.types.dict import Dict
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.int import Int
+from poop.types.object import Object
 from poop.types.string import Str
 
 
@@ -17,7 +18,7 @@ def test_next_yields_keys() -> None:
     d.at_put(Str("a"), Int(1))
     d.at_put(Str("b"), Int(2))
     it = d.iter()
-    collected: set[Str] = {it.next(), it.next()}
+    collected: set[Object] = {it.next(), it.next()}
     assert collected == {Str("a"), Str("b")}
 
 
