@@ -288,8 +288,10 @@ class Time(_ValueEqMixin, Object):
             return _ZoneInfo._from_impl(tz)
         return none
 
-    def isoformat(self) -> Str:
-        return Str(self._impl.isoformat())
+    def isoformat(self, timespec: Str | NoneClass | None = None) -> Str:
+        from poop.types._unwrap import _opt_str
+
+        return Str(self._impl.isoformat(_opt_str(timespec, "auto")))
 
     def strftime(self, fmt: Str) -> Str:
         return Str(self._impl.strftime(fmt._value))
@@ -441,9 +443,14 @@ class DateTime(_ValueEqMixin, Object):
     def isoweekday(self) -> Int:
         return Int(self._impl.isoweekday())
 
-    def isoformat(self, sep: Str | NoneClass | None = None) -> Str:
-        s = _unwrap(sep, "T")
-        return Str(self._impl.isoformat(s))
+    def isoformat(
+        self,
+        sep: Str | NoneClass | None = None,
+        timespec: Str | NoneClass | None = None,
+    ) -> Str:
+        from poop.types._unwrap import _opt_str
+
+        return Str(self._impl.isoformat(_unwrap(sep, "T"), _opt_str(timespec, "auto")))
 
     def strftime(self, fmt: Str) -> Str:
         return Str(self._impl.strftime(fmt._value))
