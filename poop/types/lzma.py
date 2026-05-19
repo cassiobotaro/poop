@@ -91,14 +91,18 @@ class LZMAFile(Object):
     def __init__(
         self,
         path: Path | Str,
-        mode: Str | None = None,
+        mode: Str | NoneClass | None = None,
         format: Int | None = None,
-        check: Int | None = None,
+        check: Int | NoneClass | None = None,
         preset: Int | None = None,
     ) -> None:
+        from poop.types._unwrap import _is_absent
+
         kwargs = _kwargs_from(format=format, check=check, preset=preset)
         self._impl = _lzma.LZMAFile(
-            _path_str(path), "rb" if mode is None else mode._value, **kwargs
+            _path_str(path),
+            "rb" if _is_absent(mode) else mode._value,  # ty: ignore[unresolved-attribute]
+            **kwargs,
         )
 
     def read(self, size: Int | None = None) -> Bytes:
@@ -201,14 +205,14 @@ class Lzma:
     @staticmethod
     def open(
         filename: Path | Str,
-        mode: Str = Str("rb"),
+        mode: Str | NoneClass | None = None,
         *,
         format: Int | None = None,
-        check: Int = Int(-1),
+        check: Int | NoneClass | None = None,
         preset: Int | None = None,
-        encoding: Str | None = None,
         errors: Str | None = None,
         newline: Str | None = None,
+        encoding: Str | None = None,
     ) -> LZMAFile:
         # `encoding`/`errors`/`newline` exposed for signature parity;
         # POOP's LZMAFile is byte-mode only.

@@ -80,12 +80,14 @@ class BZ2File(Object):
     def __init__(
         self,
         path: Path | Str,
-        mode: Str | None = None,
-        compresslevel: Int | None = None,
+        mode: Str | NoneClass | None = None,
+        compresslevel: Int | NoneClass | None = None,
     ) -> None:
+        from poop.types._unwrap import _is_absent
+
         self._impl = _bz2.BZ2File(  # ty: ignore[no-matching-overload]
             _path_str(path),
-            "rb" if mode is None else mode._value,
+            "rb" if _is_absent(mode) else mode._value,  # ty: ignore[unresolved-attribute]
             compresslevel=_opt_int(compresslevel, 9),
         )
 
@@ -148,8 +150,8 @@ class Bz2:
     @staticmethod
     def open(
         filename: Path | Str,
-        mode: Str = Str("rb"),
-        compresslevel: Int = Int(9),
+        mode: Str | NoneClass | None = None,
+        compresslevel: Int | NoneClass | None = None,
         encoding: Str | None = None,
         errors: Str | None = None,
         newline: Str | None = None,
