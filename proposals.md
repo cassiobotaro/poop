@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–86 here was fully resolved
+The leak/signature/bug audit logged as 1–87 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1.
@@ -24,10 +24,12 @@ across the v1.0.x and v1.1.x cycles:
 - Items 74–79 → v1.1.14.
 - Items 80–82 → v1.1.15.
 - Items 83–84 → v1.1.16.
-- Items 85–86 → v1.1.17 (`Int` binary ops promote to `Float` on a
-  `Float` operand, mirroring v1.1.9's `__pow__` fix across the rest
-  of the arithmetic surface; `Int` / `Float` cross-type equality
-  matches Python so `1 == 1.0` is `True` at user level).
+- Items 85–86 → v1.1.17.
+- Item 87 → v1.1.18 (four leftover hand-coded `None`-fallback call
+  sites routed through `_unwrap` helpers — `asyncio.wait_for` uses
+  `_opt_timeout`, `Codecs.encode`/`decode` use `_opt_str`,
+  `Decimal.LocalContext` uses `_is_absent`, `Bisect` drops its
+  duplicate `_i` for `_opt_int`).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
