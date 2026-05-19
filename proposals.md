@@ -30,6 +30,8 @@ across the v1.0.x and v1.1.x cycles:
 - Item 89 → v1.1.20 (`Dict` gains `__or__` and `__ior__` for PEP 584
   shallow merge — `d1 | d2` returns a new `Dict`, `d1 |= d2` mutates
   in place, both isinstance-guarded).
+- Examples reorganized into `basics/`, `idiomatic/`, and `patterns/`
+  subfolders → v1.1.21.
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
