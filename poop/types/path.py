@@ -47,15 +47,41 @@ class Path(_ValueEqMixin, Object):
     def home(cls) -> Path:
         return cls._from_pathlib(_pathlib.Path.home())
 
-    def read_text(self) -> Str:
+    def read_text(
+        self,
+        encoding: Str | NoneClass | None = None,
+        errors: Str | NoneClass | None = None,
+        newline: Str | NoneClass | None = None,
+    ) -> Str:
+        from poop.types._unwrap import _opt_str
         from poop.types.string import Str
 
-        return Str(self._path.read_text(encoding="utf-8"))
+        return Str(
+            self._path.read_text(
+                encoding=_opt_str(encoding, "utf-8"),
+                errors=_opt_str(errors),
+                newline=_opt_str(newline),
+            )
+        )
 
-    def write_text(self, content: Str) -> Int:
+    def write_text(
+        self,
+        content: Str,
+        encoding: Str | NoneClass | None = None,
+        errors: Str | NoneClass | None = None,
+        newline: Str | NoneClass | None = None,
+    ) -> Int:
+        from poop.types._unwrap import _opt_str
         from poop.types.int import Int
 
-        return Int(self._path.write_text(content._value, encoding="utf-8"))
+        return Int(
+            self._path.write_text(
+                content._value,
+                encoding=_opt_str(encoding, "utf-8"),
+                errors=_opt_str(errors),
+                newline=_opt_str(newline),
+            )
+        )
 
     def read_bytes(self) -> Bytes:
         from poop.types.bytes import Bytes
