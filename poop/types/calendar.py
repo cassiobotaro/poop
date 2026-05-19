@@ -5,6 +5,7 @@ from poop.types.boolean import Boolean, false, true
 from poop.types.datetime import Date
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import NoneClass
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -12,8 +13,10 @@ if TYPE_CHECKING:
     from poop.types.bytes import Bytes
 
 
-def _i(value: Int | None, default: int) -> int:
-    return default if value is None else value._value
+def _i(value: Int | NoneClass | None, default: int) -> int:
+    from poop.types._unwrap import _is_absent
+
+    return default if _is_absent(value) else value._value  # ty: ignore[unresolved-attribute]
 
 
 class Calendar:
@@ -108,25 +111,25 @@ class TextCalendar(Calendar):
         self,
         theyear: Int,
         themonth: Int,
-        w: Int = Int(0),
-        l: Int = Int(0),  # noqa: E741 — CPython names the line-spacing param `l`
+        w: Int | NoneClass | None = None,
+        l: Int | NoneClass | None = None,  # noqa: E741 — CPython names the line-spacing param `l`
     ) -> Str:
         impl: Any = self._impl
         return Str(
-            impl.formatmonth(theyear._value, themonth._value, w._value, l._value)
+            impl.formatmonth(theyear._value, themonth._value, _i(w, 0), _i(l, 0))
         )
 
     def formatyear(
         self,
         theyear: Int,
-        w: Int = Int(2),
-        l: Int = Int(1),  # noqa: E741
-        c: Int = Int(6),
-        m: Int = Int(3),
+        w: Int | NoneClass | None = None,
+        l: Int | NoneClass | None = None,  # noqa: E741
+        c: Int | NoneClass | None = None,
+        m: Int | NoneClass | None = None,
     ) -> Str:
         impl: Any = self._impl
         return Str(
-            impl.formatyear(theyear._value, w._value, l._value, c._value, m._value)
+            impl.formatyear(theyear._value, _i(w, 2), _i(l, 1), _i(c, 6), _i(m, 3))
         )
 
 
@@ -153,14 +156,14 @@ class HTMLCalendar(Calendar):
             impl.formatmonth(theyear._value, themonth._value, withyear=bool(withyear))
         )
 
-    def formatyear(self, theyear: Int, width: Int = Int(3)) -> Str:
+    def formatyear(self, theyear: Int, width: Int | NoneClass | None = None) -> Str:
         impl: Any = self._impl
-        return Str(impl.formatyear(theyear._value, width._value))
+        return Str(impl.formatyear(theyear._value, _i(width, 3)))
 
     def formatyearpage(
         self,
         theyear: Int,
-        width: Int = Int(3),
+        width: Int | NoneClass | None = None,
         css: Str = Str("calendar.css"),
         encoding: Str = Str("ascii"),
     ) -> Bytes:
@@ -170,7 +173,7 @@ class HTMLCalendar(Calendar):
         return Bytes(
             impl.formatyearpage(
                 theyear._value,
-                width=width._value,
+                width=_i(width, 3),
                 css=css._value,
                 encoding=encoding._value,
             )
@@ -277,21 +280,21 @@ class CalendarNamespace:
     def month(
         theyear: Int,
         themonth: Int,
-        w: Int = Int(0),
-        l: Int = Int(0),  # noqa: E741 — matches CPython's calendar.month signature
+        w: Int | NoneClass | None = None,
+        l: Int | NoneClass | None = None,  # noqa: E741 — matches CPython's calendar.month signature
     ) -> Str:
-        return Str(_calendar.month(theyear._value, themonth._value, w._value, l._value))
+        return Str(_calendar.month(theyear._value, themonth._value, _i(w, 0), _i(l, 0)))
 
     @staticmethod
     def calendar(
         theyear: Int,
-        w: Int = Int(2),
-        l: Int = Int(1),  # noqa: E741 — matches CPython's calendar.calendar signature
-        c: Int = Int(6),
-        m: Int = Int(3),
+        w: Int | NoneClass | None = None,
+        l: Int | NoneClass | None = None,  # noqa: E741 — matches CPython's calendar.calendar signature
+        c: Int | NoneClass | None = None,
+        m: Int | NoneClass | None = None,
     ) -> Str:
         return Str(
-            _calendar.calendar(theyear._value, w._value, l._value, c._value, m._value)
+            _calendar.calendar(theyear._value, _i(w, 2), _i(l, 1), _i(c, 6), _i(m, 3))
         )
 
     @staticmethod

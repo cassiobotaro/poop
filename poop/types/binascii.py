@@ -36,20 +36,21 @@ class Binascii:
     def b2a_hex(
         data: Bytes,
         sep: Bytes | NoneClass | None = None,
-        bytes_per_sep: Int = Int(1),
+        bytes_per_sep: Int | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types.none import NoneClass as _NoneClass
+        from poop.types._unwrap import _is_absent, _opt_int
 
-        sep_value = None if sep is None or isinstance(sep, _NoneClass) else sep._value
-        if sep_value is None:
+        if _is_absent(sep):
             return Bytes(_binascii.b2a_hex(data._value))
-        return Bytes(_binascii.b2a_hex(data._value, sep_value, bytes_per_sep._value))
+        return Bytes(
+            _binascii.b2a_hex(data._value, sep._value, _opt_int(bytes_per_sep, 1))  # ty: ignore[unresolved-attribute]
+        )
 
     @staticmethod
     def hexlify(
         data: Bytes,
         sep: Bytes | NoneClass | None = None,
-        bytes_per_sep: Int = Int(1),
+        bytes_per_sep: Int | NoneClass | None = None,
     ) -> Bytes:
         return Binascii.b2a_hex(data, sep, bytes_per_sep)
 
@@ -106,5 +107,7 @@ class Binascii:
         return Int(_binascii.crc_hqx(data._value, crc._value))
 
     @staticmethod
-    def crc32(data: Bytes, crc: Int = Int(0), /) -> Int:
-        return Int(_binascii.crc32(data._value, crc._value))
+    def crc32(data: Bytes, crc: Int | NoneClass | None = None, /) -> Int:
+        from poop.types._unwrap import _opt_int
+
+        return Int(_binascii.crc32(data._value, _opt_int(crc, 0)))

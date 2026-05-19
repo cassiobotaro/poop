@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from poop.types.boolean import false, true
 from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.none import NoneClass
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
@@ -47,8 +48,10 @@ class Math:
         return Int(_math.comb(n._value, k._value))
 
     @staticmethod
-    def perm(n: Int, k: Int | None = None) -> Int:
-        return Int(_math.perm(n._value, k._value if k is not None else None))
+    def perm(n: Int, k: Int | NoneClass | None = None) -> Int:
+        from poop.types._unwrap import _is_absent
+
+        return Int(_math.perm(n._value, None if _is_absent(k) else k._value))  # ty: ignore[unresolved-attribute]
 
     @staticmethod
     def isqrt(n: Int) -> Int:
@@ -263,8 +266,13 @@ class Math:
         return Float(_math.fsum(x._value for x in seq))
 
     @staticmethod
-    def prod(iterable: Any, *, start: Int | Float = Int(1)) -> Int | Float:
-        result = _math.prod((x._value for x in iterable), start=start._value)
+    def prod(
+        iterable: Any, *, start: Int | Float | NoneClass | None = None
+    ) -> Int | Float:
+        from poop.types._unwrap import _is_absent
+
+        start_value = 1 if _is_absent(start) else start._value  # ty: ignore[unresolved-attribute]
+        result = _math.prod((x._value for x in iterable), start=start_value)
         return Float(result) if isinstance(result, float) else Int(result)
 
     @staticmethod

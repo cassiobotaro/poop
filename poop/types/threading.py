@@ -223,8 +223,10 @@ class Condition(Object):
             else false
         )
 
-    def notify(self, n: Int = Int(1)) -> NoneClass:
-        self._impl.notify(n._value)
+    def notify(self, n: Int | NoneClass | None = None) -> NoneClass:
+        from poop.types._unwrap import _opt_int
+
+        self._impl.notify(_opt_int(n, 1))
         return none
 
     def notify_all(self) -> NoneClass:
