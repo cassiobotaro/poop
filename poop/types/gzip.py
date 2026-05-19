@@ -4,7 +4,7 @@ import gzip as _gzip
 from types import TracebackType
 from typing import ClassVar, Self
 
-from poop.types._unwrap import _opt_int
+from poop.types._unwrap import _is_absent, _opt_int
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -32,13 +32,13 @@ class GzipFile(Object):
     def __init__(
         self,
         path: Path | Str,
-        mode: Str | None = None,
-        compresslevel: Int | None = None,
+        mode: Str | NoneClass | None = None,
+        compresslevel: Int | NoneClass | None = None,
     ) -> None:
         # CPython's gzip default compresslevel is 9 (best).
         self._impl = _gzip.GzipFile(
             _path_str(path),
-            "rb" if mode is None else mode._value,
+            "rb" if _is_absent(mode) else mode._value,  # ty: ignore[unresolved-attribute]
             _opt_int(compresslevel, 9),
         )
 
@@ -93,10 +93,17 @@ class Gzip:
 
     @staticmethod
     def compress(
-        data: Bytes, compresslevel: Int = Int(9), *, mtime: Int = Int(0)
+        data: Bytes,
+        compresslevel: Int | NoneClass | None = None,
+        *,
+        mtime: Int | NoneClass | None = None,
     ) -> Bytes:
         return Bytes(
-            _gzip.compress(data._value, compresslevel._value, mtime=mtime._value)
+            _gzip.compress(
+                data._value,
+                _opt_int(compresslevel, 9),
+                mtime=_opt_int(mtime, 0),
+            )
         )
 
     @staticmethod
@@ -106,8 +113,8 @@ class Gzip:
     @staticmethod
     def open(
         filename: Path | Str,
-        mode: Str = Str("rb"),
-        compresslevel: Int = Int(9),
+        mode: Str | NoneClass | None = None,
+        compresslevel: Int | NoneClass | None = None,
         encoding: Str | None = None,
         errors: Str | None = None,
         newline: Str | None = None,
