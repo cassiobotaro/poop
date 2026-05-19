@@ -76,10 +76,10 @@ class Slice(Object):
         return hash((self._start, self._stop, self._step))
 
     def __str__(self) -> str:
-        if self._step is None:
-            return f"Slice({_field_str(self._start)}, {_field_str(self._stop)})"
+        # Mirror Python's `repr(slice(...))` exactly: lowercase `slice`,
+        # always emit all three components (None becomes the literal `None`).
         return (
-            f"Slice({_field_str(self._start)}, {_field_str(self._stop)}, "
+            f"slice({_field_str(self._start)}, {_field_str(self._stop)}, "
             f"{_field_str(self._step)})"
         )
 

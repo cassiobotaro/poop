@@ -115,11 +115,12 @@ def test_hashable_usable_as_dict_key() -> None:
 
 
 def test_str_two_arg() -> None:
-    assert str(Slice(Int(0), Int(5))) == "Slice(0, 5)"
+    # Mirrors Python's `repr(slice(0, 5))` → "slice(0, 5, None)".
+    assert str(Slice(Int(0), Int(5))) == "slice(0, 5, None)"
 
 
 def test_str_three_arg() -> None:
-    assert str(Slice(Int(0), Int(5), Int(2))) == "Slice(0, 5, 2)"
+    assert str(Slice(Int(0), Int(5), Int(2))) == "slice(0, 5, 2)"
 
 
 def test_repr_equals_str() -> None:
@@ -225,8 +226,8 @@ def test_slice_indices_with_none() -> None:
 
 
 def test_slice_str_with_none() -> None:
-    assert str(Slice(None, Int(3))) == "Slice(None, 3)"
-    assert str(Slice(None, None, Int(2))) == "Slice(None, None, 2)"
+    assert str(Slice(None, Int(3))) == "slice(None, 3, None)"
+    assert str(Slice(None, None, Int(2))) == "slice(None, None, 2)"
 
 
 def test_slice_with_none_step_negative_reverses() -> None:
