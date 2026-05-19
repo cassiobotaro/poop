@@ -120,9 +120,11 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         return none
 
     def sort(
-        self, key: Callable[[Object], Any] | None = None, reverse: bool = False
+        self,
+        key: Callable[[Object], Any] | None = None,
+        reverse: Boolean = false,
     ) -> NoneClass:
-        self._items[:] = builtins_sorted(self._items, key=key, reverse=reverse)
+        self._items[:] = builtins_sorted(self._items, key=key, reverse=bool(reverse))
         return none
 
     def print(

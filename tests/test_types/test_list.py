@@ -339,7 +339,7 @@ def test_sort_with_key() -> None:
 
 def test_sort_reverse() -> None:
     lst = List(Int(1), Int(2), Int(3))
-    lst.sort(reverse=True)
+    lst.sort(reverse=true)
     assert lst == List(Int(3), Int(2), Int(1))
 
 
