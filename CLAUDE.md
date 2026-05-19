@@ -63,4 +63,4 @@ Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate →
 - `poop/executor.py` — compiles and executes AST with an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
 
-`examples/` contains valid POOP programs. Files there use names injected at runtime (`True`→POOP boolean, etc.) so they are excluded from `ty` and ruff `F821`.
+`examples/` contains valid POOP programs, organized into three subfolders: `basics/` (language fundamentals), `idiomatic/` (idiomatic POOP usage), and `patterns/` (Sandi Metz / GoF OO patterns). Files there use names injected at runtime (`True`→POOP boolean, etc.) so they are excluded from `ty` and ruff `F821` (pattern `examples/**/*.py` in `pyproject.toml`).

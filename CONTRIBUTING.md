@@ -16,7 +16,7 @@ cd poop
 uv sync --dev
 prek install                        # enable git hooks
 uv run pytest                       # run the test suite
-uv run poop examples/hello_world.py # run an example
+uv run poop examples/basics/hello_world.py # run an example
 ```
 
 The pipeline is `parse → validate → transform → execute(namespace)`. Source files:
@@ -92,6 +92,14 @@ Smalltalk:
 
 The Smalltalk version anchors the language design — POOP code should look like
 its Smalltalk twin.
+
+Place a new example in the subfolder that matches what it teaches:
+
+- `examples/basics/` — language fundamentals (control flow, collections, classes
+  with state).
+- `examples/idiomatic/` — idiomatic POOP usage (method chaining, null-safe
+  cascades, `async`, etc.).
+- `examples/patterns/` — Sandi Metz / GoF object-oriented patterns.
 
 ### Use the actual current year
 

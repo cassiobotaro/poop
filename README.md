@@ -14,7 +14,7 @@ POOP is for **educational exploration of message-passing semantics inside the Py
 git clone https://github.com/cassiobotaro/poop.git
 cd poop
 uv sync
-uv run poop examples/hello_world.py
+uv run poop examples/basics/hello_world.py
 ```
 
 Contributor / development setup lives in [`CONTRIBUTING.md`](CONTRIBUTING.md).
@@ -88,39 +88,39 @@ The full catalog with one row per validator and the substitute recipe lives in [
 
 ## Learn by example
 
-[`examples/`](examples/) ships ~25 programs grouped by what they teach.
+[`examples/`](examples/) ships 26 programs across three subfolders, grouped by what they teach.
 
-**Language basics**
-- [`hello_world.py`](examples/hello_world.py) — the smallest POOP program
-- [`greet.py`](examples/greet.py) — string input + concatenation
-- [`fizzbuzz.py`](examples/fizzbuzz.py) — control flow via `if_true_if_false`
-- [`leap_year.py`](examples/leap_year.py) — `and_` / `or_` / `not_`
-- [`collatz.py`](examples/collatz.py) — while-style recursion
-- [`grades.py`](examples/grades.py) — collection processing
-- [`geometry.py`](examples/geometry.py) — classes with state
-- [`slicing.py`](examples/slicing.py) — `Slice` as a reusable value object
-- [`bank_account.py`](examples/bank_account.py) — encapsulation
+**Language basics** ([`examples/basics/`](examples/basics/))
+- [`hello_world.py`](examples/basics/hello_world.py) — the smallest POOP program
+- [`greet.py`](examples/basics/greet.py) — string input + concatenation
+- [`fizzbuzz.py`](examples/basics/fizzbuzz.py) — control flow via `if_true_if_false`
+- [`leap_year.py`](examples/basics/leap_year.py) — `and_` / `or_` / `not_`
+- [`collatz.py`](examples/basics/collatz.py) — while-style recursion
+- [`grades.py`](examples/basics/grades.py) — collection processing
+- [`geometry.py`](examples/basics/geometry.py) — classes with state
+- [`slicing.py`](examples/basics/slicing.py) — `Slice` as a reusable value object
+- [`bank_account.py`](examples/basics/bank_account.py) — encapsulation
 
-**Idiomatic POOP**
-- [`pipeline.py`](examples/pipeline.py) — `filter` / `filter_false` / `map` / `do` chain
-- [`safe_config.py`](examples/safe_config.py) — `if_none` / `if_not_none` cascade
-- [`common_interests.py`](examples/common_interests.py) — set operations
-- [`statistics.py`](examples/statistics.py) — number aggregation
-- [`rpn_calculator.py`](examples/rpn_calculator.py) — stack as a POOP `List`
-- [`roman_numerals.py`](examples/roman_numerals.py) — string mapping
-- [`async_greeter.py`](examples/async_greeter.py) — `async def` + `await asyncio.sleep` (since v0.52.0)
+**Idiomatic POOP** ([`examples/idiomatic/`](examples/idiomatic/))
+- [`pipeline.py`](examples/idiomatic/pipeline.py) — `filter` / `filter_false` / `map` / `do` chain
+- [`safe_config.py`](examples/idiomatic/safe_config.py) — `if_none` / `if_not_none` cascade
+- [`common_interests.py`](examples/idiomatic/common_interests.py) — set operations
+- [`statistics.py`](examples/idiomatic/statistics.py) — number aggregation
+- [`rpn_calculator.py`](examples/idiomatic/rpn_calculator.py) — stack as a POOP `List`
+- [`roman_numerals.py`](examples/idiomatic/roman_numerals.py) — string mapping
+- [`async_greeter.py`](examples/idiomatic/async_greeter.py) — `async def` + `await asyncio.sleep` (since v0.52.0)
 
-**Classic OO patterns** (Sandi Metz / GoF)
-- [`null_customer.py`](examples/null_customer.py) — Null Object
-- [`discounts.py`](examples/discounts.py) — Strategy
-- [`door.py`](examples/door.py) — State
-- [`payroll.py`](examples/payroll.py) — polymorphism replacing `if employee.type == ...`
-- [`tree.py`](examples/tree.py) — Composite replacing `isinstance`
-- [`decorators.py`](examples/decorators.py) — Decorator (composition by delegation)
-- [`observer.py`](examples/observer.py) — Observer
-- [`template_method.py`](examples/template_method.py) — Template Method
-- [`visitor.py`](examples/visitor.py) — Visitor
-- [`house_jack_built.py`](examples/house_jack_built.py) — recursive composition refactor
+**Classic OO patterns** (Sandi Metz / GoF) ([`examples/patterns/`](examples/patterns/))
+- [`null_customer.py`](examples/patterns/null_customer.py) — Null Object
+- [`discounts.py`](examples/patterns/discounts.py) — Strategy
+- [`door.py`](examples/patterns/door.py) — State
+- [`payroll.py`](examples/patterns/payroll.py) — polymorphism replacing `if employee.type == ...`
+- [`tree.py`](examples/patterns/tree.py) — Composite replacing `isinstance`
+- [`decorators.py`](examples/patterns/decorators.py) — Decorator (composition by delegation)
+- [`observer.py`](examples/patterns/observer.py) — Observer
+- [`template_method.py`](examples/patterns/template_method.py) — Template Method
+- [`visitor.py`](examples/patterns/visitor.py) — Visitor
+- [`house_jack_built.py`](examples/patterns/house_jack_built.py) — recursive composition refactor
 
 ## Type annotations
 

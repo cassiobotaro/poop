@@ -25,7 +25,7 @@ from poop.transformers.try_ import NAMESPACE as TRY_NAMESPACE
 from poop.transformers.with_ import NAMESPACE as WITH_NAMESPACE
 
 EXAMPLES_DIR = Path(__file__).parent.parent / "examples"
-EXAMPLE_FILES = sorted(EXAMPLES_DIR.glob("*.py"))
+EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.py"))
 
 TRANSFORMERS_WITH_BINDINGS = sorted(
     (cls for cls in BaseTransformer.__subclasses__() if cls.BINDINGS),
@@ -41,7 +41,9 @@ NAMESPACE_ONLY_MODULES: list[tuple[str, dict[str, object]]] = [
 ]
 
 
-@pytest.mark.parametrize("example", EXAMPLE_FILES, ids=lambda p: p.name)
+@pytest.mark.parametrize(
+    "example", EXAMPLE_FILES, ids=lambda p: str(p.relative_to(EXAMPLES_DIR))
+)
 def test_example_runs_through_full_pipeline(
     example: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
