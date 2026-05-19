@@ -108,10 +108,17 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
             return Bytes(self._value.center(width._value))
         return Bytes(self._value.center(width._value, fill))
 
-    def count(self, sub: Bytes) -> Int:
+    def count(
+        self,
+        sub: Bytes,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.count(sub._value))
+        return Int(
+            self._value.count(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
     def endswith(self, suffix: Bytes) -> Boolean:
         return true if self._value.endswith(suffix._value) else false
@@ -122,15 +129,29 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
             return Bytes(self._value.expandtabs())
         return Bytes(self._value.expandtabs(size))
 
-    def find(self, sub: Bytes) -> Int:
+    def find(
+        self,
+        sub: Bytes,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.find(sub._value))
+        return Int(
+            self._value.find(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def index(self, sub: Bytes) -> Int:
+    def index(
+        self,
+        sub: Bytes,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.index(sub._value))
+        return Int(
+            self._value.index(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
     def isalnum(self) -> Boolean:
         return true if self._value.isalnum() else false
@@ -186,15 +207,29 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def replace(self, old: Bytes, new: Bytes) -> Bytes:
         return Bytes(self._value.replace(old._value, new._value))
 
-    def rfind(self, sub: Bytes) -> Int:
+    def rfind(
+        self,
+        sub: Bytes,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.rfind(sub._value))
+        return Int(
+            self._value.rfind(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def rindex(self, sub: Bytes) -> Int:
+    def rindex(
+        self,
+        sub: Bytes,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.rindex(sub._value))
+        return Int(
+            self._value.rindex(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
     def rjust(self, width: Int, fillchar: Bytes | NoneClass | None = None) -> Bytes:
         fill = _unwrap(fillchar, None)

@@ -546,3 +546,35 @@ def test_z85encode_returns_bytes() -> None:
 def test_z85decode_roundtrip() -> None:
     original = Bytes(b"abcd")
     assert original.z85encode().z85decode() == original
+
+
+# --- New: optional parameters (proposals 36 & 39, v1.2.0) ---
+
+
+def test_count_with_start_and_end() -> None:
+    assert Bytes(b"hello hello").count(Bytes(b"hello"), Int(6)) == Int(1)
+    assert Bytes(b"hello hello").count(Bytes(b"hello"), Int(0), Int(4)) == Int(0)
+
+
+def test_find_with_start_and_end() -> None:
+    assert Bytes(b"hello hello").find(Bytes(b"hello"), Int(1)) == Int(6)
+    assert Bytes(b"hello hello").find(Bytes(b"hello"), Int(0), Int(4)) == Int(-1)
+
+
+def test_index_with_start_raises_when_absent() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        Bytes(b"hello hello").index(Bytes(b"hello"), Int(0), Int(4))
+
+
+def test_index_with_start_finds() -> None:
+    assert Bytes(b"hello hello").index(Bytes(b"hello"), Int(1)) == Int(6)
+
+
+def test_rfind_with_end() -> None:
+    assert Bytes(b"hello hello").rfind(Bytes(b"hello"), Int(0), Int(5)) == Int(0)
+
+
+def test_rindex_with_end() -> None:
+    assert Bytes(b"hello hello").rindex(Bytes(b"hello"), Int(0), Int(5)) == Int(0)
