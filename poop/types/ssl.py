@@ -7,6 +7,7 @@ from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.path import Path
@@ -69,8 +70,10 @@ class SSLContext(Object):
         self._impl.set_ciphers(ciphers._value)
         return none
 
-    def get_ciphers(self) -> Any:
-        return self._impl.get_ciphers()
+    def get_ciphers(self) -> List:
+        from poop.types._bridge import to_poop
+
+        return List(*(to_poop(cipher) for cipher in self._impl.get_ciphers()))
 
     @property
     def check_hostname(self) -> Boolean:

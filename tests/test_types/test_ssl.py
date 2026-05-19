@@ -37,10 +37,15 @@ def test_check_hostname_round_trip() -> None:
     assert ctx.check_hostname is false
 
 
-def test_get_ciphers_returns_object() -> None:
+def test_get_ciphers_returns_poop_list() -> None:
+    from poop.types.dict import Dict
+    from poop.types.list import List
+
     ctx = SSL.create_default_context()
     ciphers = ctx.get_ciphers()
-    assert isinstance(ciphers, list)
+    assert isinstance(ciphers, List)
+    if len(ciphers) > 0:
+        assert isinstance(ciphers.at(Int(0)), Dict)
 
 
 def test_set_ciphers_returns_none() -> None:
