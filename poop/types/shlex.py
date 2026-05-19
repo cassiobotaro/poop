@@ -81,9 +81,16 @@ class Shlex:
         self._impl.pop_source()
         return none
 
-    def error_leader(self, infile: Str | None = None, lineno: Any = None) -> Str:
-        ifname = None if infile is None else infile._value
-        return Str(self._impl.error_leader(ifname, lineno))
+    def error_leader(
+        self,
+        infile: Str | NoneClass | None = None,
+        lineno: Int | NoneClass | None = None,
+    ) -> Str:
+        from poop.types._unwrap import _is_absent
+
+        ifname = None if _is_absent(infile) else infile._value  # ty: ignore[unresolved-attribute]
+        lineno_val = None if _is_absent(lineno) else lineno._value  # ty: ignore[unresolved-attribute]
+        return Str(self._impl.error_leader(ifname, lineno_val))
 
     @property
     def commenters(self) -> Str:
@@ -138,8 +145,8 @@ class Shlex:
         return Int(self._impl.debug)
 
     @debug.setter
-    def debug(self, value: Any) -> None:
-        self._impl.debug = int(value._value) if hasattr(value, "_value") else int(value)
+    def debug(self, value: Int) -> None:
+        self._impl.debug = value._value
 
     @property
     def token(self) -> Str:
