@@ -51,3 +51,51 @@ def test_nested_unary_minus_inside_class_is_rejected() -> None:
 def test_bitwise_invert_is_not_affected() -> None:
     tree = ast.parse("x = ~y")
     NoUnaryMinusValidator().validate(tree)
+
+
+def test_negative_complex_literal_is_allowed() -> None:
+    tree = ast.parse("x = -1.5j")
+    NoUnaryMinusValidator().validate(tree)
+
+
+def test_unary_minus_on_true_is_rejected() -> None:
+    # bool subclasses int in Python, but POOP treats Boolean as its own
+    # type — negating a boolean literal must fail.
+    tree = ast.parse("x = -True")
+    with pytest.raises(ValidationError, match=r"numeric literals"):
+        NoUnaryMinusValidator().validate(tree)
+
+
+def test_unary_minus_on_false_is_rejected() -> None:
+    tree = ast.parse("x = -False")
+    with pytest.raises(ValidationError, match=r"numeric literals"):
+        NoUnaryMinusValidator().validate(tree)
+
+
+def test_unary_minus_on_double_negation_is_rejected() -> None:
+    # `-(-3)` parses as `UnaryOp(USub, UnaryOp(USub, Constant(3)))` — the
+    # outer operand is an expression, not a literal, so it must fail.
+    tree = ast.parse("x = -(-3)")
+    with pytest.raises(ValidationError, match=r"numeric literals"):
+        NoUnaryMinusValidator().validate(tree)
+
+
+def test_unary_minus_on_parenthesised_literal_is_rejected() -> None:
+    # `-(3)` collapses to the same AST as `-3`, so this still passes
+    # — included for documentation, not a behavioural assertion.
+    tree = ast.parse("x = -(3)")
+    NoUnaryMinusValidator().validate(tree)
+
+
+def test_unary_minus_on_string_constant_is_rejected() -> None:
+    # `Constant` covers more than numbers; only numeric literals get
+    # the `-` privilege.
+    tree = ast.parse('x = -"foo"')
+    with pytest.raises(ValidationError, match=r"numeric literals"):
+        NoUnaryMinusValidator().validate(tree)
+
+
+def test_unary_minus_on_none_constant_is_rejected() -> None:
+    tree = ast.parse("x = -None")
+    with pytest.raises(ValidationError, match=r"numeric literals"):
+        NoUnaryMinusValidator().validate(tree)
