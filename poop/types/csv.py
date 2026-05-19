@@ -229,6 +229,47 @@ def _unwrap_dict(row: Dict) -> dict[Any, Any]:
     return out
 
 
+class Dialect(Object):
+    """Wraps Python's `csv.Dialect` — describes how a CSV stream is parsed.
+
+    Built by `Sniffer.sniff(...)`. Exposes the dialect's six tuning knobs
+    as POOP types so downstream user code stays in POOP-land.
+    """
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, impl: Any) -> None:
+        self._impl = impl
+
+    @property
+    def delimiter(self) -> Str:
+        return Str(self._impl.delimiter)
+
+    @property
+    def quotechar(self) -> Str | NoneClass:
+        return Str(self._impl.quotechar) if self._impl.quotechar is not None else none
+
+    @property
+    def lineterminator(self) -> Str:
+        return Str(self._impl.lineterminator)
+
+    @property
+    def doublequote(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._impl.doublequote else false
+
+    @property
+    def skipinitialspace(self) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return true if self._impl.skipinitialspace else false
+
+    @property
+    def quoting(self) -> Int:
+        return Int(self._impl.quoting)
+
+
 class Sniffer(Object):
     """Wraps Python's `csv.Sniffer` — autodetects dialect from a sample."""
 
@@ -237,9 +278,9 @@ class Sniffer(Object):
     def __init__(self) -> None:
         self._impl = _csv.Sniffer()
 
-    def sniff(self, sample: Str, delimiters: Str | None = None) -> Any:
+    def sniff(self, sample: Str, delimiters: Str | None = None) -> Dialect:
         kwargs = _kwargs_from(delimiters=delimiters)
-        return self._impl.sniff(sample._value, **kwargs)
+        return Dialect(self._impl.sniff(sample._value, **kwargs))
 
     def has_header(self, sample: Str) -> Boolean:
         from poop.types.boolean import false, true

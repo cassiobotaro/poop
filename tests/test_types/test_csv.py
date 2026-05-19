@@ -1,7 +1,8 @@
 import pytest
 
 from poop.interpreter import Interpreter
-from poop.types.csv import CSV, DictReader, DictWriter, Reader, Sniffer, Writer
+from poop.types.boolean import Boolean
+from poop.types.csv import CSV, Dialect, DictReader, DictWriter, Reader, Sniffer, Writer
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
@@ -231,14 +232,18 @@ def test_sniffer_sniff_returns_dialect() -> None:
     sample = Str("a;b;c\n1;2;3\n")
     sniffer = Sniffer()
     d = sniffer.sniff(sample)
-    assert d is not None
+    assert isinstance(d, Dialect)
+    assert d.delimiter == Str(";")
+    assert isinstance(d.doublequote, Boolean)
+    assert isinstance(d.skipinitialspace, Boolean)
+    assert isinstance(d.quoting, Int)
 
 
 def test_sniffer_sniff_with_delimiters() -> None:
     sample = Str("a|b|c\n1|2|3\n")
     sniffer = Sniffer()
     d = sniffer.sniff(sample, delimiters=Str("|"))
-    assert d is not None
+    assert d.delimiter == Str("|")
 
 
 # --- Constants / errors ---
