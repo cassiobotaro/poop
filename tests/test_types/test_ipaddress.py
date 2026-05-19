@@ -275,10 +275,32 @@ def test_collapse_addresses_rejects_non_addresses() -> None:
         Ipaddress.collapse_addresses(List(Int(1)))
 
 
-def test_get_mixed_type_key() -> None:
+def test_get_mixed_type_key_address_returns_poop_tuple() -> None:
+    from poop.types.tuple import Tuple
+
     a = IPv4Address(Str("192.0.2.1"))
     result = Ipaddress.get_mixed_type_key(a)
-    assert result is not None
+    assert isinstance(result, Tuple)
+    assert result.at(Int(0)) == Int(4)
+    assert isinstance(result.at(Int(1)), IPv4Address)
+
+
+def test_get_mixed_type_key_network_returns_poop_tuple() -> None:
+    from poop.types.tuple import Tuple
+
+    n = IPv4Network(Str("192.0.2.0/24"))
+    result = Ipaddress.get_mixed_type_key(n)
+    assert isinstance(result, Tuple)
+    assert result.len() == Int(3)
+    assert result.at(Int(0)) == Int(4)
+    assert isinstance(result.at(Int(1)), IPv4Address)
+    assert isinstance(result.at(Int(2)), IPv4Address)
+
+
+def test_get_mixed_type_key_unsupported_returns_none() -> None:
+    from poop.types.none import none
+
+    assert Ipaddress.get_mixed_type_key(Str("not-an-address")) is none
 
 
 # --- Errors ---

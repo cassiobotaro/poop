@@ -10,8 +10,10 @@ from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def _addr_arg(value: IPv4Address | IPv6Address | Str | Int | Bytes) -> Any:
@@ -470,11 +472,11 @@ class Ipaddress:
         )
 
     @staticmethod
-    def get_mixed_type_key(obj: Any) -> Any:
+    def get_mixed_type_key(obj: Any) -> Tuple | NoneClass:
         impl = obj._impl if hasattr(obj, "_impl") else obj
         result = _ipaddress.get_mixed_type_key(impl)
-        if result is None:
-            from poop.types.none import none
-
+        if result is NotImplemented:
             return none
-        return result
+        version = Int(result[0])
+        wrapped = [_wrap_address(item) for item in result[1:]]
+        return Tuple(version, *wrapped)
