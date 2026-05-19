@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any
+from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
@@ -40,11 +41,11 @@ class Range(_IterableMixin, Object):
         sign = 1 if step > 0 else -1
         return range(start, stop + sign, step)
 
-    def _iter(self) -> Any:
+    def _iter(self) -> Iterator[Int]:
         for i in self._range():
             yield Int(i)
 
-    def __iter__(self) -> Any:
+    def __iter__(self) -> Iterator[Int]:
         return self._iter()
 
     def iter(self) -> RangeIterator:
