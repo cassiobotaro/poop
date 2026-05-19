@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -101,24 +101,16 @@ class Set(_ValueEqMixin, _IterableMixin, Object):
     def __contains__(self, item: object) -> bool:
         return item in self._data
 
-    def __and__(self, other: object) -> Any:
-        if not isinstance(other, Set):
-            return NotImplemented
+    def __and__(self, other: Set) -> Set:
         return Set(*self._data & other._data)
 
-    def __or__(self, other: object) -> Any:
-        if not isinstance(other, Set):
-            return NotImplemented
+    def __or__(self, other: Set) -> Set:
         return Set(*self._data | other._data)
 
-    def __sub__(self, other: object) -> Any:
-        if not isinstance(other, Set):
-            return NotImplemented
+    def __sub__(self, other: Set) -> Set:
         return Set(*self._data - other._data)
 
-    def __xor__(self, other: object) -> Any:
-        if not isinstance(other, Set):
-            return NotImplemented
+    def __xor__(self, other: Set) -> Set:
         return Set(*self._data ^ other._data)
 
     def __str__(self) -> str:
