@@ -1,7 +1,7 @@
 import builtins
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from poop.types._iterable_mixin import _MISSING
 from poop.types._value_eq import _ValueEqMixin
@@ -116,6 +116,19 @@ class Dict(_ValueEqMixin, Object):
         new = Dict()
         new._data = self._data.copy()
         return new
+
+    def __or__(self, other: Dict) -> Dict:
+        if not isinstance(other, Dict):
+            return NotImplemented
+        merged = self.copy()
+        merged._data.update(other._data)
+        return merged
+
+    def __ior__(self, other: Dict) -> Self:
+        if not isinstance(other, Dict):
+            return NotImplemented
+        self._data.update(other._data)
+        return self
 
     def items(self) -> DictItems:
         return DictItems(self)

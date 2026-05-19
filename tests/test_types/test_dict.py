@@ -332,3 +332,36 @@ def test_pop_with_explicit_default() -> None:
     d.at_put(Int(1), Int(10))
     assert d.pop(Int(99), Str("missing")) == Str("missing")
     assert d.pop(Int(1), Str("missing")) == Int(10)
+
+
+# --- Dict | merge (proposal 89, Python 3.9+) ---
+
+
+def test_or_merges_two_dicts() -> None:
+    d1 = _dict_with([(1, 10)])
+    d2 = _dict_with([(2, 20)])
+    merged = d1 | d2
+    assert isinstance(merged, Dict)
+    assert merged.at(Int(1)) == Int(10)
+    assert merged.at(Int(2)) == Int(20)
+
+
+def test_or_right_wins_on_key_collision() -> None:
+    d1 = _dict_with([(1, 10)])
+    d2 = _dict_with([(1, 99)])
+    assert (d1 | d2).at(Int(1)) == Int(99)
+
+
+def test_ior_mutates_in_place() -> None:
+    d1 = _dict_with([(1, 10)])
+    d2 = _dict_with([(2, 20)])
+    before = d1
+    d1 |= d2
+    assert d1 is before
+    assert d1.at(Int(2)) == Int(20)
+
+
+def test_or_with_non_dict_returns_notimplemented() -> None:
+    d = _dict_with([(1, 10)])
+    with pytest.raises(TypeError):
+        _ = d | "not a dict"  # ty: ignore[unsupported-operator]
