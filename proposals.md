@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–68 here was fully resolved
+The leak/signature/bug audit logged as 1–70 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1.
@@ -14,10 +14,12 @@ across the v1.0.x and v1.1.x cycles:
 - Items 52–56 → v1.1.4.
 - Items 57–60 → v1.1.5.
 - Map/Filter/Zip/Enumerate one-shot → v1.1.6.
-- Item 64 (Dict.pop without default raises KeyError) → v1.1.7.
-- Item 65 (Range.__iter__ annotation) → v1.1.8.
+- Item 64 → v1.1.7.
+- Item 65 → v1.1.8.
 - Items 66–67 → v1.1.9.
-- Item 68 (Pattern search methods accept pos/endpos) → v1.1.10.
+- Item 68 → v1.1.10.
+- Items 69–70 → v1.1.11 (`Path.read_text`/`write_text` accept
+  `encoding`/`errors`/`newline`; `Secrets.choice` annotates `Object`).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
