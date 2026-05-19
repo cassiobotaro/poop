@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–45 here was fully resolved
+The leak/signature/bug audit logged as 1–51 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1 (Slice None handling, _kwargs_from filter,
@@ -24,6 +24,14 @@ across the v1.0.x and v1.1.x cycles:
   `start`/`end` on `startswith`/`endswith` and `count` on
   `replace` across all three text wrappers; plus
   `Ipaddress.get_mixed_type_key` wrapping its tuple return).
+- Items 46–51 → v1.1.3 (10-agent partitioned sweep — six survivors
+  from ~30 raw findings: Boolean wrapping on `ZipInfo.is_dir`,
+  `Lzma.is_check_supported`, `ZipFile.allowZip64`, and
+  `TarFile.list.verbose`; `-> Boolean` annotations on the
+  `Decimal.is_finite` predicate family; `NoneClass` widening on
+  `String.capwords`, `Array.pop`, and `Range.__init__`; plus
+  `Gzip.compress` / `Gzip.open` realigned to the `Bz2` / `Zlib`
+  optional-default pattern).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks):
