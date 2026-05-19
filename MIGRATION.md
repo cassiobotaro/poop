@@ -1094,7 +1094,7 @@ dt = datetime.datetime.now(tz=ZoneInfo("America/Sao_Paulo"))
 dt = DateTime.now(ZoneInfo("America/Sao_Paulo"))
 ```
 
-> `ZoneInfo` is bare (PascalCase). The lowercase `zoneinfo` namespace exposes `available_timezones()` (`Set[Str]`), `reset_tzpath(to=none)`, and `TZPATH()` (callable rather than attribute — `reset_tzpath` mutates it). `ZoneInfoNotFoundError` is a Python exception class for `Try.except_(...)`. `ZoneInfo.from_file` is deferred (POOP has no file-object abstraction). All `DateTime` constructors / `.now(tz=...)` / `.astimezone(tz)` entry points were widened to accept either `TimeZone` or `ZoneInfo`.
+> `ZoneInfo` is bare (PascalCase). The lowercase `zoneinfo` namespace exposes `available_timezones()` (`Set[Str]`), `reset_tzpath(to=none)`, and `TZPATH` (attribute, not a method — `reset_tzpath` mutates it). `ZoneInfoNotFoundError` is a Python exception class for `Try.except_(...)`. `ZoneInfo.from_file` is deferred (POOP has no file-object abstraction). All `DateTime` constructors / `.now(tz=...)` / `.astimezone(tz)` entry points were widened to accept either `TimeZone` or `ZoneInfo`.
 
 ## Calendars (`calendar` module + `Calendar` class)
 
