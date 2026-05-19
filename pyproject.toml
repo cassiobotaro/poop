@@ -1,6 +1,6 @@
 [project]
 name = "poop"
-version = "1.1.16"
+version = "1.1.17"
 description = "Python Object Oriented Programming — a Python interpreter infected by Smalltalk"
 readme = "README.md"
 requires-python = ">=3.14"

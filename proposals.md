@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–84 here was fully resolved
+The leak/signature/bug audit logged as 1–86 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1.
@@ -23,10 +23,11 @@ across the v1.0.x and v1.1.x cycles:
 - Coverage lifted above 95% → v1.1.13.
 - Items 74–79 → v1.1.14.
 - Items 80–82 → v1.1.15.
-- Items 83–84 → v1.1.16 (`Int.pow` accepts an optional modulus for
-  modular exponentiation; `Math.floor`/`ceil`/`trunc` accept
-  `Decimal`/`Fraction` via a `_unwrap_num` helper that routes
-  `_impl` into the stdlib protocol).
+- Items 83–84 → v1.1.16.
+- Items 85–86 → v1.1.17 (`Int` binary ops promote to `Float` on a
+  `Float` operand, mirroring v1.1.9's `__pow__` fix across the rest
+  of the arithmetic surface; `Int` / `Float` cross-type equality
+  matches Python so `1 == 1.0` is `True` at user level).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
