@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import re as _re
+import sys as _sys
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _unwrap
+from poop.types._unwrap import _opt_int, _unwrap
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
@@ -106,20 +107,68 @@ class Pattern(Object):
     def __init__(self, impl: _re.Pattern[str]) -> None:
         self._impl = impl
 
-    def match(self, string: Str) -> Match | NoneClass:
-        return _wrap_match(self._impl.match(string._value))
+    def match(
+        self,
+        string: Str,
+        pos: Int | NoneClass | None = None,
+        endpos: Int | NoneClass | None = None,
+    ) -> Match | NoneClass:
+        return _wrap_match(
+            self._impl.match(
+                string._value, _opt_int(pos, 0), _opt_int(endpos, _sys.maxsize)
+            )
+        )
 
-    def search(self, string: Str) -> Match | NoneClass:
-        return _wrap_match(self._impl.search(string._value))
+    def search(
+        self,
+        string: Str,
+        pos: Int | NoneClass | None = None,
+        endpos: Int | NoneClass | None = None,
+    ) -> Match | NoneClass:
+        return _wrap_match(
+            self._impl.search(
+                string._value, _opt_int(pos, 0), _opt_int(endpos, _sys.maxsize)
+            )
+        )
 
-    def fullmatch(self, string: Str) -> Match | NoneClass:
-        return _wrap_match(self._impl.fullmatch(string._value))
+    def fullmatch(
+        self,
+        string: Str,
+        pos: Int | NoneClass | None = None,
+        endpos: Int | NoneClass | None = None,
+    ) -> Match | NoneClass:
+        return _wrap_match(
+            self._impl.fullmatch(
+                string._value, _opt_int(pos, 0), _opt_int(endpos, _sys.maxsize)
+            )
+        )
 
-    def findall(self, string: Str) -> List:
-        return _findall_result(self._impl.findall(string._value))
+    def findall(
+        self,
+        string: Str,
+        pos: Int | NoneClass | None = None,
+        endpos: Int | NoneClass | None = None,
+    ) -> List:
+        return _findall_result(
+            self._impl.findall(
+                string._value, _opt_int(pos, 0), _opt_int(endpos, _sys.maxsize)
+            )
+        )
 
-    def finditer(self, string: Str) -> Tuple:
-        return Tuple(*[Match(m) for m in self._impl.finditer(string._value)])
+    def finditer(
+        self,
+        string: Str,
+        pos: Int | NoneClass | None = None,
+        endpos: Int | NoneClass | None = None,
+    ) -> Tuple:
+        return Tuple(
+            *[
+                Match(m)
+                for m in self._impl.finditer(
+                    string._value, _opt_int(pos, 0), _opt_int(endpos, _sys.maxsize)
+                )
+            ]
+        )
 
     def sub(self, repl: Str, string: Str, count: Int | NoneClass | None = None) -> Str:
         n = _unwrap(count, 0)
