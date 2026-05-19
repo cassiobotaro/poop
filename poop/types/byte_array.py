@@ -93,6 +93,9 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     def __mul__(self, other: Int) -> ByteArray:
         return ByteArray(self._value * other._value)
 
+    def __rmul__(self, other: Int) -> ByteArray:
+        return ByteArray(self._value * other._value)
+
     def append(self, byte: Int) -> NoneClass:
         self._value.append(byte._value)
         return none

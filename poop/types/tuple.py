@@ -60,6 +60,9 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
     def __mul__(self, other: Int) -> Tuple:
         return Tuple(*self._items * other._value)
 
+    def __rmul__(self, other: Int) -> Tuple:
+        return Tuple(*self._items * other._value)
+
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)
 

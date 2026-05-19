@@ -571,3 +571,9 @@ def test_methods_accept_poop_none_kwargs() -> None:
     assert ByteArray(bytearray(b"a\tb")).expandtabs(tabsize=none) == ByteArray(
         bytearray(b"a       b")
     )
+
+
+def test_rmul_returns_repeated_bytearray() -> None:
+    assert ByteArray(bytearray(b"ab")).__rmul__(Int(3)) == ByteArray(
+        bytearray(b"ababab")
+    )

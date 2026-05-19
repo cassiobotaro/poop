@@ -309,3 +309,9 @@ def test_print_accepts_poop_none_kwargs(capsys: pytest.CaptureFixture[str]) -> N
     Tuple(Int(1), Int(2)).print(sep=none, end=none, flush=none)
     captured = capsys.readouterr()
     assert captured.out == "1 2\n"
+
+
+def test_rmul_returns_repeated_tuple() -> None:
+    assert Tuple(Int(1), Int(2)).__rmul__(Int(3)) == Tuple(
+        Int(1), Int(2), Int(1), Int(2), Int(1), Int(2)
+    )

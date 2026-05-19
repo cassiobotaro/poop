@@ -99,6 +99,9 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def __mul__(self, other: Int) -> Bytes:
         return Bytes(self._value * other._value)
 
+    def __rmul__(self, other: Int) -> Bytes:
+        return Bytes(self._value * other._value)
+
     def capitalize(self) -> Bytes:
         return Bytes(self._value.capitalize())
 

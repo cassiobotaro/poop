@@ -578,3 +578,7 @@ def test_rfind_with_end() -> None:
 
 def test_rindex_with_end() -> None:
     assert Bytes(b"hello hello").rindex(Bytes(b"hello"), Int(0), Int(5)) == Int(0)
+
+
+def test_rmul_returns_repeated_bytes() -> None:
+    assert Bytes(b"ab").__rmul__(Int(3)) == Bytes(b"ababab")
