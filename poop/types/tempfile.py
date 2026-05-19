@@ -15,12 +15,14 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
-def _unwrap_dir(value: Path | Str | None) -> str | None:
-    if value is None:
+def _unwrap_dir(value: Path | Str | NoneClass | None) -> str | None:
+    from poop.types._unwrap import _is_absent
+
+    if _is_absent(value):
         return None
     if isinstance(value, Path):
         return str(value._path)
-    return value._value
+    return value._value  # ty: ignore[unresolved-attribute]
 
 
 class TemporaryDirectory(Object):
@@ -36,16 +38,19 @@ class TemporaryDirectory(Object):
 
     def __init__(
         self,
-        suffix: Str | None = None,
-        prefix: Str | None = None,
-        dir: Path | Str | None = None,
-        ignore_cleanup_errors: Boolean | None = None,
+        suffix: Str | NoneClass | None = None,
+        prefix: Str | NoneClass | None = None,
+        dir: Path | Str | NoneClass | None = None,
+        ignore_cleanup_errors: Boolean | NoneClass | None = None,
+        *,
+        delete: Boolean | NoneClass | None = None,
     ) -> None:
         self._impl = _tempfile.TemporaryDirectory(
             suffix=_opt_str(suffix),
             prefix=_opt_str(prefix),
             dir=_unwrap_dir(dir),
             ignore_cleanup_errors=_b(ignore_cleanup_errors, False),
+            delete=_b(delete, True),
         )
 
     @property
@@ -156,18 +161,21 @@ class NamedTemporaryFile(_TempFileBase):
 
     def __init__(
         self,
-        mode: Str | None = None,
-        suffix: Str | None = None,
-        prefix: Str | None = None,
-        dir: Path | Str | None = None,
-        delete: Boolean | None = None,
+        mode: Str | NoneClass | None = None,
+        suffix: Str | NoneClass | None = None,
+        prefix: Str | NoneClass | None = None,
+        dir: Path | Str | NoneClass | None = None,
+        delete: Boolean | NoneClass | None = None,
+        *,
+        delete_on_close: Boolean | NoneClass | None = None,
     ) -> None:
         self._impl = _tempfile.NamedTemporaryFile(
-            mode="w+b" if mode is None else mode._value,
+            mode="w+b" if mode is None or isinstance(mode, NoneClass) else mode._value,
             suffix=_opt_str(suffix),
             prefix=_opt_str(prefix),
             dir=_unwrap_dir(dir),
             delete=_b(delete, True),
+            delete_on_close=_b(delete_on_close, True),
         )
 
     @property
