@@ -26,9 +26,17 @@ def _wrap_version_info() -> Tuple:
 
 
 def _modules_dict() -> Dict:
+    """Snapshot of `sys.modules` mapping name → file path (or `none`).
+
+    The original dict held raw CPython module objects as values, which
+    leaked the Python module type through POOP's surface. The file path
+    is the only field user code typically cares about; everything else
+    is reachable through `imports` / dedicated wrappers.
+    """
     d = Dict()
     for k, v in list(_sys.modules.items()):
-        d.at_put(Str(k), v)  # ty: ignore[invalid-argument-type]
+        path = getattr(v, "__file__", None)
+        d.at_put(Str(k), Str(path) if isinstance(path, str) else none)
     return d
 
 

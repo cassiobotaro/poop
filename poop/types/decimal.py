@@ -233,9 +233,9 @@ class Decimal_:
     FloatOperation: ClassVar[type[Exception]] = _decimal.FloatOperation
 
     # Context profiles + precision limits.
-    BasicContext: ClassVar[Any] = _decimal.BasicContext
-    ExtendedContext: ClassVar[Any] = _decimal.ExtendedContext
-    DefaultContext: ClassVar[Any] = _decimal.DefaultContext
+    BasicContext: ClassVar[Context] = Context(_decimal.BasicContext)
+    ExtendedContext: ClassVar[Context] = Context(_decimal.ExtendedContext)
+    DefaultContext: ClassVar[Context] = Context(_decimal.DefaultContext)
     MAX_PREC: ClassVar[Int] = Int(_decimal.MAX_PREC)
     MAX_EMAX: ClassVar[Int] = Int(_decimal.MAX_EMAX)
     MIN_EMIN: ClassVar[Int] = Int(_decimal.MIN_EMIN)
