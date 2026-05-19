@@ -124,40 +124,70 @@ class Str(_ValueEqMixin, Object):
     def swapcase(self) -> Str:
         return Str(self._value.swapcase())
 
-    def strip(self) -> Str:
-        return Str(self._value.strip())
+    def strip(self, chars: Str | NoneClass | None = None) -> Str:
+        return Str(self._value.strip(_unwrap(chars, None)))
 
-    def lstrip(self) -> Str:
-        return Str(self._value.lstrip())
+    def lstrip(self, chars: Str | NoneClass | None = None) -> Str:
+        return Str(self._value.lstrip(_unwrap(chars, None)))
 
-    def rstrip(self) -> Str:
-        return Str(self._value.rstrip())
+    def rstrip(self, chars: Str | NoneClass | None = None) -> Str:
+        return Str(self._value.rstrip(_unwrap(chars, None)))
 
     def replace(self, old: Str, new: Str) -> Str:
         return Str(self._value.replace(old._value, new._value))
 
-    def split(self, sep: Str | NoneClass | None = None) -> List:
+    def split(
+        self,
+        sep: Str | NoneClass | None = None,
+        maxsplit: Int | NoneClass | None = None,
+    ) -> List:
         from poop.types.list import List
 
-        return List(*(Str(p) for p in self._value.split(_unwrap(sep, None))))
+        return List(
+            *(
+                Str(p)
+                for p in self._value.split(_unwrap(sep, None), _unwrap(maxsplit, -1))
+            )
+        )
 
     def join(self, parts: List) -> Str:
         return Str(self._value.join(str(p) for p in parts))
 
-    def find(self, sub: Str) -> Int:
+    def find(
+        self,
+        sub: Str,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.find(sub._value))
+        return Int(
+            self._value.find(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def index(self, sub: Str) -> Int:
+    def index(
+        self,
+        sub: Str,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.index(sub._value))
+        return Int(
+            self._value.index(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def count(self, sub: Str) -> Int:
+    def count(
+        self,
+        sub: Str,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.count(sub._value))
+        return Int(
+            self._value.count(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
     def startswith(self, prefix: Str) -> Boolean:
         return true if self._value.startswith(prefix._value) else false
@@ -252,24 +282,42 @@ class Str(_ValueEqMixin, Object):
     def removesuffix(self, suffix: Str) -> Str:
         return Str(self._value.removesuffix(suffix._value))
 
-    def rfind(self, sub: Str) -> Int:
+    def rfind(
+        self,
+        sub: Str,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.rfind(sub._value))
+        return Int(
+            self._value.rfind(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def rindex(self, sub: Str) -> Int:
+    def rindex(
+        self,
+        sub: Str,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value.rindex(sub._value))
+        return Int(
+            self._value.rindex(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def rsplit(self, sep: Str | None = None) -> List:
+    def rsplit(
+        self,
+        sep: Str | NoneClass | None = None,
+        maxsplit: Int | NoneClass | None = None,
+    ) -> List:
         from poop.types.list import List
 
         return List(
-            *[
+            *(
                 Str(s)
-                for s in self._value.rsplit(sep._value if sep is not None else None)
-            ]
+                for s in self._value.rsplit(_unwrap(sep, None), _unwrap(maxsplit, -1))
+            )
         )
 
     def splitlines(self) -> List:

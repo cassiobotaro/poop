@@ -5,6 +5,7 @@ from poop.types.bytes import Bytes
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -552,3 +553,77 @@ def test_z85decode_from_str() -> None:
 
     encoded = Bytes(b"abcd").z85encode()
     assert encoded.decode(Str("ascii")).z85decode() == Bytes(b"abcd")
+
+
+# --- New: optional parameters (proposals 32-39, v1.2.0) ---
+
+
+def test_strip_with_chars_arg() -> None:
+    assert Str("###hi###").strip(Str("#")) == Str("hi")
+
+
+def test_lstrip_with_chars_arg() -> None:
+    assert Str("xxhi").lstrip(Str("x")) == Str("hi")
+
+
+def test_rstrip_with_chars_arg() -> None:
+    assert Str("hixx").rstrip(Str("x")) == Str("hi")
+
+
+def test_strip_with_poop_none_chars() -> None:
+    assert Str("  hi  ").strip(chars=none) == Str("hi")
+    assert Str("  hi  ").lstrip(chars=none) == Str("hi  ")
+    assert Str("  hi  ").rstrip(chars=none) == Str("  hi")
+
+
+def test_split_with_maxsplit() -> None:
+    assert Str("a:b:c:d").split(Str(":"), Int(2)) == List(
+        Str("a"), Str("b"), Str("c:d")
+    )
+
+
+def test_split_with_poop_none_maxsplit() -> None:
+    assert Str("a:b:c").split(Str(":"), maxsplit=none) == List(
+        Str("a"), Str("b"), Str("c")
+    )
+
+
+def test_rsplit_with_maxsplit() -> None:
+    assert Str("a:b:c:d").rsplit(Str(":"), Int(2)) == List(
+        Str("a:b"), Str("c"), Str("d")
+    )
+
+
+def test_rsplit_default_sep() -> None:
+    assert Str("a b c").rsplit() == List(Str("a"), Str("b"), Str("c"))
+
+
+def test_find_with_start() -> None:
+    assert Str("hello hello").find(Str("hello"), Int(1)) == Int(6)
+
+
+def test_find_with_start_and_end() -> None:
+    assert Str("hello hello").find(Str("hello"), Int(0), Int(5)) == Int(0)
+    assert Str("hello hello").find(Str("hello"), Int(0), Int(4)) == Int(-1)
+
+
+def test_index_with_start() -> None:
+    assert Str("hello hello").index(Str("hello"), Int(1)) == Int(6)
+
+
+def test_index_with_start_and_end_not_found_raises() -> None:
+    with pytest.raises(ValueError):
+        Str("hello hello").index(Str("hello"), Int(0), Int(4))
+
+
+def test_count_with_start_and_end() -> None:
+    assert Str("hello hello hello").count(Str("hello"), Int(6)) == Int(2)
+    assert Str("hello hello hello").count(Str("hello"), Int(6), Int(11)) == Int(1)
+
+
+def test_rfind_with_start() -> None:
+    assert Str("hello hello").rfind(Str("hello"), Int(0), Int(5)) == Int(0)
+
+
+def test_rindex_with_start() -> None:
+    assert Str("hello hello").rindex(Str("hello"), Int(0), Int(5)) == Int(0)
