@@ -3,6 +3,7 @@ from pathlib import Path as _PyPath
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -162,13 +163,13 @@ def test_is_zipfile_true(tmp_path: _PyPath) -> None:
     archive = tmp_path / "x.zip"
     with ZipFile(Path(Str(str(archive))), mode=Str("w")) as z:
         z.writestr(Str("a"), Bytes(b"a"))
-    assert Zipfile.is_zipfile(Path(Str(str(archive)))) is True
+    assert Zipfile.is_zipfile(Path(Str(str(archive)))) is true
 
 
 def test_is_zipfile_false(tmp_path: _PyPath) -> None:
     not_zip = tmp_path / "no.zip"
     not_zip.write_text("not a zip")
-    assert Zipfile.is_zipfile(Path(Str(str(not_zip)))) is False
+    assert Zipfile.is_zipfile(Path(Str(str(not_zip)))) is false
 
 
 def test_bad_zip_file_raises(tmp_path: _PyPath) -> None:

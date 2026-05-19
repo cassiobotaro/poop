@@ -3,6 +3,7 @@ from pathlib import Path as _PyPath
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
@@ -115,13 +116,13 @@ def test_is_tarfile_true(tmp_path: _PyPath) -> None:
     archive = tmp_path / "yes.tar"
     with TarFile.open(Path(Str(str(archive))), mode=Str("w")) as tar:
         tar.add(Path(Str(str(src))), arcname=Str("s"))
-    assert TarFile.is_tarfile(Path(Str(str(archive)))) is True
+    assert TarFile.is_tarfile(Path(Str(str(archive)))) is true
 
 
 def test_is_tarfile_false(tmp_path: _PyPath) -> None:
     not_tar = tmp_path / "no.tar"
     not_tar.write_text("not a tar")
-    assert TarFile.is_tarfile(Path(Str(str(not_tar)))) is False
+    assert TarFile.is_tarfile(Path(Str(str(not_tar)))) is false
 
 
 def test_read_error_on_invalid(tmp_path: _PyPath) -> None:
@@ -162,10 +163,10 @@ def test_tarinfo_properties(tmp_path: _PyPath) -> None:
     assert isinstance(info.gid, Int)
     assert isinstance(info.uname, Str)
     assert isinstance(info.gname, Str)
-    assert info.is_file is True
-    assert info.is_dir is False
-    assert info.is_symlink is False
-    assert info.is_link is False
+    assert info.is_file is true
+    assert info.is_dir is false
+    assert info.is_symlink is false
+    assert info.is_link is false
 
 
 # --- Constants / errors ---

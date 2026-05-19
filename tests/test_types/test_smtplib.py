@@ -1,4 +1,5 @@
 from poop.interpreter import Interpreter
+from poop.types.boolean import true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.smtplib import LMTP, SMTP, SMTP_SSL, Smtplib
@@ -209,7 +210,7 @@ def test_ehlo_unwraps_and_wraps() -> None:
 
 def test_has_extn_returns_bool() -> None:
     smtp, mock = _make_mock_smtp()
-    assert smtp.has_extn(Str("STARTTLS")) is True
+    assert smtp.has_extn(Str("STARTTLS")) is true
     assert mock.calls[0] == ("has_extn", ("STARTTLS",), {})
 
 

@@ -1,6 +1,7 @@
 from pathlib import Path as _PyPath
 
 from poop.interpreter import Interpreter
+from poop.types.boolean import true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.lzma import Lzma, LZMACompressor, LZMADecompressor, LZMAFile
@@ -50,12 +51,12 @@ def test_lzma_decompressor_streaming() -> None:
     compressed = Lzma.compress(Bytes(b"chunked"))
     d = LZMADecompressor()
     assert d.decompress(compressed) == Bytes(b"chunked")
-    assert d.eof is True
+    assert d.eof is true
 
 
 def test_lzma_decompressor_state() -> None:
     d = LZMADecompressor()
-    assert d.needs_input is True
+    assert d.needs_input is true
     assert isinstance(d.unused_data, Bytes)
     assert isinstance(d.check, Int)
 

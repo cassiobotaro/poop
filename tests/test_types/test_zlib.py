@@ -1,6 +1,7 @@
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.types.boolean import true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.zlib import Compress, Decompress, Zlib
@@ -67,7 +68,7 @@ def test_decompressobj_eof_and_unused_data() -> None:
     do = Zlib.decompressobj()
     do.decompress(compressed)
     do.flush()
-    assert do.eof is True
+    assert do.eof is true
     assert isinstance(do.unused_data, Bytes)
     assert isinstance(do.unconsumed_tail, Bytes)
 

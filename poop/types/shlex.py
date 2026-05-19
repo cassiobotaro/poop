@@ -2,7 +2,8 @@ import shlex as _shlex
 from typing import Any
 
 from poop.types._unwrap import _b
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, false, true
+from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.string import Str
@@ -48,12 +49,12 @@ class Shlex:
             yield Str(tok)
 
     @property
-    def lineno(self) -> int:
-        return self._impl.lineno
+    def lineno(self) -> Int:
+        return Int(self._impl.lineno)
 
     @property
-    def whitespace_split(self) -> bool:
-        return self._impl.whitespace_split
+    def whitespace_split(self) -> Boolean:
+        return true if self._impl.whitespace_split else false
 
     @whitespace_split.setter
     def whitespace_split(self, value: Boolean) -> None:
@@ -133,8 +134,8 @@ class Shlex:
         self._impl.escapedquotes = value._value
 
     @property
-    def debug(self) -> int:
-        return self._impl.debug
+    def debug(self) -> Int:
+        return Int(self._impl.debug)
 
     @debug.setter
     def debug(self, value: Any) -> None:

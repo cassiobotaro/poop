@@ -5,6 +5,7 @@ from types import TracebackType
 from typing import Any, ClassVar, Self
 
 from poop.types._unwrap import _kwargs_from, _opt_int
+from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -204,5 +205,5 @@ class Zipfile:
     LargeZipFile: ClassVar[type[Exception]] = _zipfile.LargeZipFile
 
     @staticmethod
-    def is_zipfile(filename: Path | Str) -> bool:
-        return _zipfile.is_zipfile(_path_str(filename))
+    def is_zipfile(filename: Path | Str) -> Boolean:
+        return true if _zipfile.is_zipfile(_path_str(filename)) else false

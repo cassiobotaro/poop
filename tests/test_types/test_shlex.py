@@ -1,5 +1,6 @@
 from poop.interpreter import Interpreter
 from poop.types.boolean import true
+from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
 from poop.types.shlex import Shlex, Shlex_
@@ -68,7 +69,7 @@ def test_shlex_class_lineno() -> None:
     lex = Shlex(Str("a\nb\nc"))
     list(lex)
     # After consuming all tokens, lineno reflects the file position.
-    assert lex.lineno >= 1
+    assert lex.lineno >= Int(1)
 
 
 # --- Interpreter integration ---

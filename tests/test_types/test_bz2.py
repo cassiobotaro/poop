@@ -1,6 +1,7 @@
 from pathlib import Path as _PyPath
 
 from poop.interpreter import Interpreter
+from poop.types.boolean import true
 from poop.types.bytes import Bytes
 from poop.types.bz2 import Bz2, BZ2Compressor, BZ2Decompressor, BZ2File
 from poop.types.int import Int
@@ -38,12 +39,12 @@ def test_bz2_decompressor_streaming() -> None:
     compressed = Bz2.compress(Bytes(b"chunked"))
     d = BZ2Decompressor()
     assert d.decompress(compressed) == Bytes(b"chunked")
-    assert d.eof is True
+    assert d.eof is true
 
 
 def test_bz2_decompressor_state() -> None:
     d = BZ2Decompressor()
-    assert d.needs_input is True
+    assert d.needs_input is true
     assert isinstance(d.unused_data, Bytes)
 
 

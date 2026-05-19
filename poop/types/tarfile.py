@@ -4,6 +4,7 @@ import tarfile as _tarfile
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -68,20 +69,20 @@ class TarInfo(Object):
         return Str(self._impl.gname)
 
     @property
-    def is_file(self) -> bool:
-        return self._impl.isfile()
+    def is_file(self) -> Boolean:
+        return true if self._impl.isfile() else false
 
     @property
-    def is_dir(self) -> bool:
-        return self._impl.isdir()
+    def is_dir(self) -> Boolean:
+        return true if self._impl.isdir() else false
 
     @property
-    def is_symlink(self) -> bool:
-        return self._impl.issym()
+    def is_symlink(self) -> Boolean:
+        return true if self._impl.issym() else false
 
     @property
-    def is_link(self) -> bool:
-        return self._impl.islnk()
+    def is_link(self) -> Boolean:
+        return true if self._impl.islnk() else false
 
 
 class TarFile(Object):
@@ -110,8 +111,8 @@ class TarFile(Object):
         )
 
     @classmethod
-    def is_tarfile(cls, name: Path | Str) -> bool:
-        return _tarfile.is_tarfile(_path_str(name))
+    def is_tarfile(cls, name: Path | Str) -> Boolean:
+        return true if _tarfile.is_tarfile(_path_str(name)) else false
 
     # Adding ------------------------------------------------------------
 

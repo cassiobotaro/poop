@@ -5,6 +5,7 @@ from types import TracebackType
 from typing import ClassVar, Self
 
 from poop.types._unwrap import _kwargs_from
+from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -63,12 +64,12 @@ class LZMADecompressor(Object):
         return Bytes(self._impl.decompress(data._value, max_length._value))
 
     @property
-    def eof(self) -> bool:
-        return self._impl.eof
+    def eof(self) -> Boolean:
+        return true if self._impl.eof else false
 
     @property
-    def needs_input(self) -> bool:
-        return self._impl.needs_input
+    def needs_input(self) -> Boolean:
+        return true if self._impl.needs_input else false
 
     @property
     def unused_data(self) -> Bytes:

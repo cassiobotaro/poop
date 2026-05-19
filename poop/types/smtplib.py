@@ -5,6 +5,7 @@ from types import TracebackType
 from typing import Any, ClassVar, Self
 
 from poop.types._unwrap import _kwargs_from, _opt_str
+from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -47,8 +48,8 @@ class _SMTPBase(Object):
     def ehlo(self, name: Str | None = None) -> Tuple:
         return _wrap_helo_tuple(self._impl.ehlo(_opt_str(name, "")))
 
-    def has_extn(self, name: Str) -> bool:
-        return self._impl.has_extn(name._value)
+    def has_extn(self, name: Str) -> Boolean:
+        return true if self._impl.has_extn(name._value) else false
 
     def docmd(self, cmd: Str, args: Str | None = None) -> Tuple:
         return _wrap_helo_tuple(self._impl.docmd(cmd._value, _opt_str(args, "")))
