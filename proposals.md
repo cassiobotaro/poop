@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–40 here was fully resolved
+The leak/signature/bug audit logged as 1–45 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1 (Slice None handling, _kwargs_from filter,
@@ -18,6 +18,12 @@ across the v1.0.x and v1.1.x cycles:
   index/rfind/rindex/strip/lstrip/rstrip` and `Bytes.count/find/
   index/rfind/rindex`; `__rmul__` on `List/Tuple/Bytes/ByteArray`;
   and the `html.entities` map shape).
+- Items 41–45 → v1.1.2 (sibling-extension sweep finishing what
+  v1.1.1 started: `maxsplit` on `Bytes/ByteArray.split/rsplit`;
+  `start`/`end` on `ByteArray.count/find/index/rfind/rindex`;
+  `start`/`end` on `startswith`/`endswith` and `count` on
+  `replace` across all three text wrappers; plus
+  `Ipaddress.get_mixed_type_key` wrapping its tuple return).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks):
