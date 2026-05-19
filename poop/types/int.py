@@ -109,10 +109,15 @@ class Int(_ValueEqMixin, Object):
     def __mod__(self, other: Int) -> Int:
         return Int(self._value % other._value)
 
-    def __pow__(self, other: Int) -> Int:
-        return Int(self._value**other._value)
+    def __pow__(self, other: Int) -> Int | Float:
+        from poop.types.float import Float
 
-    def pow(self, other: Int) -> Int:
+        result = self._value**other._value
+        if isinstance(result, float):
+            return Float(result)
+        return Int(result)
+
+    def pow(self, other: Int) -> Int | Float:
         return self.__pow__(other)
 
     def __divmod__(self, other: Int) -> Tuple:
