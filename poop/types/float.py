@@ -142,6 +142,20 @@ class Float(_ValueEqMixin, Object):
     def __ge__(self, other: Float) -> Boolean:
         return true if self._value >= other._value else false
 
+    def __eq__(self, other: object) -> Boolean:
+        from poop.types.int import Int as _Int
+
+        if isinstance(other, Float | _Int):
+            return true if self._value == other._value else false
+        return false
+
+    def __ne__(self, other: object) -> Boolean:
+        from poop.types.int import Int as _Int
+
+        if isinstance(other, Float | _Int):
+            return false if self._value == other._value else true
+        return true
+
     def __hash__(self) -> _int:
         return hash(self._value)
 

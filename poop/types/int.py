@@ -89,13 +89,25 @@ class Int(_ValueEqMixin, Object):
     def abs(self) -> Int:
         return self.__abs__()
 
-    def __add__(self, other: Int) -> Int:
+    def __add__(self, other: Int | Float) -> Int | Float:
+        from poop.types.float import Float as _Float
+
+        if isinstance(other, _Float):
+            return _Float(self._value + other._value)
         return Int(self._value + other._value)
 
-    def __sub__(self, other: Int) -> Int:
+    def __sub__(self, other: Int | Float) -> Int | Float:
+        from poop.types.float import Float as _Float
+
+        if isinstance(other, _Float):
+            return _Float(self._value - other._value)
         return Int(self._value - other._value)
 
-    def __mul__(self, other: Int) -> Int:
+    def __mul__(self, other: Int | Float) -> Int | Float:
+        from poop.types.float import Float as _Float
+
+        if isinstance(other, _Float):
+            return _Float(self._value * other._value)
         return Int(self._value * other._value)
 
     def __truediv__(self, other: Int) -> Float:
@@ -103,10 +115,18 @@ class Int(_ValueEqMixin, Object):
 
         return Float(self._value / other._value)
 
-    def __floordiv__(self, other: Int) -> Int:
+    def __floordiv__(self, other: Int | Float) -> Int | Float:
+        from poop.types.float import Float as _Float
+
+        if isinstance(other, _Float):
+            return _Float(self._value // other._value)
         return Int(self._value // other._value)
 
-    def __mod__(self, other: Int) -> Int:
+    def __mod__(self, other: Int | Float) -> Int | Float:
+        from poop.types.float import Float as _Float
+
+        if isinstance(other, _Float):
+            return _Float(self._value % other._value)
         return Int(self._value % other._value)
 
     def __pow__(
@@ -177,6 +197,20 @@ class Int(_ValueEqMixin, Object):
 
     def __ge__(self, other: Int) -> Boolean:
         return true if self._value >= other._value else false
+
+    def __eq__(self, other: object) -> Boolean:
+        from poop.types.float import Float as _Float
+
+        if isinstance(other, Int | _Float):
+            return true if self._value == other._value else false
+        return false
+
+    def __ne__(self, other: object) -> Boolean:
+        from poop.types.float import Float as _Float
+
+        if isinstance(other, Int | _Float):
+            return false if self._value == other._value else true
+        return true
 
     def __hash__(self) -> _int:
         return hash(self._value)

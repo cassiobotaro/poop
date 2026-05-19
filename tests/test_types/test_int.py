@@ -284,3 +284,44 @@ def test_from_bytes_roundtrips_with_to_bytes() -> None:
     n = Int(12345)
     b = n.to_bytes(Int(4), Str("big"))
     assert Int.from_bytes(b, Str("big")) == n
+
+
+# --- Cross-POOP-type numeric equality (proposal 86) ---
+
+
+def test_eq_with_float_same_value() -> None:
+    from poop.types.float import Float
+
+    assert Int(1) == Float(1.0)
+    assert Int(2) != Float(2.5)
+
+
+def test_ne_with_float_same_value() -> None:
+    from poop.types.float import Float
+
+    assert (Int(1) != Float(1.0)) is false
+    assert (Int(2) != Float(2.5)) is true
+
+
+def test_ne_with_non_numeric_returns_true() -> None:
+    assert (Int(5) != Str("5")) is true
+
+
+def test_arith_with_float_operand_promotes_to_float() -> None:
+    from poop.types.float import Float
+
+    for op, expected_val in [
+        (Int(1) + Float(2.5), 3.5),
+        (Int(5) - Float(2.0), 3.0),
+        (Int(3) * Float(2.0), 6.0),
+        (Int(5) // Float(2.0), 2.0),
+        (Int(5) % Float(2.0), 1.0),
+    ]:
+        assert isinstance(op, Float)
+        assert op == Float(expected_val)
+
+
+def test_pow_with_modulus() -> None:
+    # 3-arg modular exponentiation (proposal 83).
+    assert Int(5).pow(Int(3), Int(7)) == Int(6)
+    assert Int(2).__pow__(Int(10), Int(1000)) == Int(24)

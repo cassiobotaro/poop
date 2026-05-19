@@ -220,3 +220,33 @@ def test_fromhex_parses_hex_string() -> None:
 def test_fromhex_roundtrips_with_hex() -> None:
     f = Float(3.14)
     assert Float.fromhex(f.hex()) == f
+
+
+# --- Cross-POOP-type numeric equality (proposal 86) ---
+
+
+def test_eq_with_int_same_value() -> None:
+    from poop.types.int import Int
+
+    assert Float(1.0) == Int(1)
+    assert Float(2.5) != Int(2)
+
+
+def test_ne_with_int_same_value() -> None:
+    from poop.types.int import Int
+
+    assert (Float(1.0) != Int(1)) is false
+    assert (Float(2.5) != Int(2)) is true
+
+
+def test_ne_with_non_numeric_returns_true() -> None:
+    assert (Float(1.5) != "1.5") is true
+
+
+def test_ceil_floor_trunc_protocol() -> None:
+    # __ceil__/__floor__/__trunc__ used by math.ceil/floor/trunc
+    import math
+
+    assert math.ceil(Float(3.2)) == Int(4)
+    assert math.floor(Float(3.7)) == Int(3)
+    assert math.trunc(Float(3.7)) == Int(3)

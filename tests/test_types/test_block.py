@@ -23,7 +23,7 @@ def test_block_while_true_executes_body() -> None:
 
     def body() -> None:
         results.append(int(x[0]._value))
-        x[0] = x[0] + Int(1)
+        x[0] = x[0] + Int(1)  # ty: ignore[invalid-assignment]
 
     Block(cond).while_true(Block(body))
     assert results == [0, 1, 2]
@@ -43,7 +43,7 @@ def test_block_while_false_executes_body() -> None:
 
     def body() -> None:
         results.append(int(x[0]._value))
-        x[0] = x[0] + Int(1)
+        x[0] = x[0] + Int(1)  # ty: ignore[invalid-assignment]
 
     Block(cond).while_false(Block(body))
     assert results == []
