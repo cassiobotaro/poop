@@ -64,15 +64,23 @@ class FrozenSet(_ValueEqMixin, _IterableMixin, Object):
         return item in self._data
 
     def __and__(self, other: FrozenSet) -> FrozenSet:
+        if not isinstance(other, FrozenSet):
+            return NotImplemented
         return FrozenSet(*self._data & other._data)
 
     def __or__(self, other: FrozenSet) -> FrozenSet:
+        if not isinstance(other, FrozenSet):
+            return NotImplemented
         return FrozenSet(*self._data | other._data)
 
     def __sub__(self, other: FrozenSet) -> FrozenSet:
+        if not isinstance(other, FrozenSet):
+            return NotImplemented
         return FrozenSet(*self._data - other._data)
 
     def __xor__(self, other: FrozenSet) -> FrozenSet:
+        if not isinstance(other, FrozenSet):
+            return NotImplemented
         return FrozenSet(*self._data ^ other._data)
 
     def __hash__(self) -> int:

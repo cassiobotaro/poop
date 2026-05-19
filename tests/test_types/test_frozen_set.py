@@ -277,3 +277,19 @@ def test_dunder_xor_symmetric_difference() -> None:
     a = FrozenSet(Int(1), Int(2))
     b = FrozenSet(Int(2), Int(3))
     assert a ^ b == FrozenSet(Int(1), Int(3))
+
+
+def test_dunder_ops_return_notimplemented_on_wrong_type() -> None:
+    # Matches Set's defensive pattern: operators against non-FrozenSet
+    # return NotImplemented so Python falls through to TypeError.
+    f = FrozenSet(Int(1))
+    import pytest as _pytest
+
+    with _pytest.raises(TypeError):
+        _ = f & "wrong"  # ty: ignore[unsupported-operator]
+    with _pytest.raises(TypeError):
+        _ = f | "wrong"  # ty: ignore[unsupported-operator]
+    with _pytest.raises(TypeError):
+        _ = f - "wrong"  # ty: ignore[unsupported-operator]
+    with _pytest.raises(TypeError):
+        _ = f ^ "wrong"  # ty: ignore[unsupported-operator]
