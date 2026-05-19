@@ -111,19 +111,19 @@ class Decimal(_ValueEqMixin, Object):
         n, d = self._impl.as_integer_ratio()
         return Tuple(Int(n), Int(d))
 
-    def is_finite(self) -> Any:
+    def is_finite(self) -> Boolean:
         return true if self._impl.is_finite() else false
 
-    def is_infinite(self) -> Any:
+    def is_infinite(self) -> Boolean:
         return true if self._impl.is_infinite() else false
 
-    def is_nan(self) -> Any:
+    def is_nan(self) -> Boolean:
         return true if self._impl.is_nan() else false
 
-    def is_signed(self) -> Any:
+    def is_signed(self) -> Boolean:
         return true if self._impl.is_signed() else false
 
-    def is_zero(self) -> Any:
+    def is_zero(self) -> Boolean:
         return true if self._impl.is_zero() else false
 
     def sqrt(self) -> Decimal:
