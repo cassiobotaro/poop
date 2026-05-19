@@ -32,6 +32,9 @@ across the v1.0.x and v1.1.x cycles:
   in place, both isinstance-guarded).
 - Examples reorganized into `basics/`, `idiomatic/`, and `patterns/`
   subfolders → v1.1.21.
+- Doc consistency fixes (INFECTIONS.md `Dict views` path prefixes,
+  MIGRATION.md `zoneinfo.TZPATH` described as attribute, not callable)
+  → v1.1.22.
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
