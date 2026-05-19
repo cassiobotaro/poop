@@ -51,8 +51,11 @@ class CompletedProcess(Object):
         return Int(self._impl.returncode)
 
     @property
-    def args(self) -> Any:
-        return self._impl.args
+    def args(self) -> Str | List:
+        a = self._impl.args
+        if isinstance(a, (list, tuple)):
+            return List(*[Str(item) if isinstance(item, str) else item for item in a])
+        return Str(a)
 
     @property
     def stdout(self) -> Str | Bytes | NoneClass:

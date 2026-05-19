@@ -9,6 +9,7 @@ from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
+from poop.types.object import Object
 from poop.types.set import Set
 from poop.types.string import Str
 
@@ -44,6 +45,27 @@ def _as_handler(handler: Any) -> Any:
     if isinstance(handler, Block):
         return bridge(handler)
     return handler
+
+
+def _wrap_handler(handler: Any) -> Object:
+    """Wrap a handler returned by `signal.signal`/`getsignal` for POOP.
+
+    Signal sentinels (`SIG_DFL`, `SIG_IGN`) and `None` (no previous
+    handler) flow back to the user unchanged so identity comparisons
+    against `Signal.SIG_IGN`/`Signal.SIG_DFL` keep working. Plain
+    callables also pass through — POOP has no first-class wrapper for
+    arbitrary function objects.
+    """
+    if (
+        handler is None
+        or handler is _signal.SIG_DFL
+        or handler is _signal.SIG_IGN
+        or callable(handler)
+    ):
+        return handler
+    from poop.types._bridge import to_poop
+
+    return to_poop(handler)
 
 
 def _sig(name: str) -> Int | NoneClass:
@@ -97,12 +119,12 @@ class Signal:
     )
 
     @staticmethod
-    def signal(signalnum: Int, handler: Any) -> Any:
-        return _signal.signal(signalnum._value, _as_handler(handler))
+    def signal(signalnum: Int, handler: Any) -> Object:
+        return _wrap_handler(_signal.signal(signalnum._value, _as_handler(handler)))
 
     @staticmethod
-    def getsignal(signalnum: Int) -> Any:
-        return _signal.getsignal(signalnum._value)
+    def getsignal(signalnum: Int) -> Object:
+        return _wrap_handler(_signal.getsignal(signalnum._value))
 
     @staticmethod
     def strsignal(signalnum: Int) -> Str | NoneClass:

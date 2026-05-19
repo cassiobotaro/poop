@@ -22,12 +22,16 @@ class CFFuture(Object):
     def __init__(self, impl: Any) -> None:
         self._impl = impl
 
-    def result(self, timeout: Float | Int | None = None) -> Any:
-        return self._impl.result(_opt_timeout(timeout))
+    def result(self, timeout: Float | Int | None = None) -> Object:
+        from poop.types._bridge import to_poop
 
-    def exception(self, timeout: Float | Int | None = None) -> Any:
+        return to_poop(self._impl.result(_opt_timeout(timeout)))
+
+    def exception(self, timeout: Float | Int | None = None) -> Object:
+        from poop.types._bridge import to_poop
+
         result = self._impl.exception(_opt_timeout(timeout))
-        return none if result is None else result
+        return none if result is None else to_poop(result)
 
     def cancel(self) -> Boolean:
         return true if self._impl.cancel() else false

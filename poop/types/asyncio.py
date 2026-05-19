@@ -36,11 +36,15 @@ class Future(Object):
     def cancelled(self) -> Boolean:
         return true if self._impl.cancelled() else false
 
-    def result(self) -> Any:
-        return self._impl.result()
+    def result(self) -> Object:
+        from poop.types._bridge import to_poop
 
-    def exception(self) -> Any:
-        return self._impl.exception()
+        return to_poop(self._impl.result())
+
+    def exception(self) -> Object:
+        from poop.types._bridge import to_poop
+
+        return to_poop(self._impl.exception())
 
     def cancel(self) -> Boolean:
         return true if self._impl.cancel() else false

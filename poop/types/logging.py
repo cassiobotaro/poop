@@ -35,12 +35,16 @@ class LogRecord(Object):
         return Str(self._impl.name)
 
     @property
-    def msg(self) -> Any:
-        return self._impl.msg
+    def msg(self) -> Object:
+        from poop.types._bridge import to_poop
+
+        return to_poop(self._impl.msg)
 
     @property
-    def args(self) -> Any:
-        return self._impl.args
+    def args(self) -> Object:
+        from poop.types._bridge import to_poop
+
+        return to_poop(self._impl.args)
 
     @property
     def levelname(self) -> Str:

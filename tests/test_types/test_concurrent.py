@@ -40,7 +40,7 @@ def test_threadpool_submit_returns_future() -> None:
     with ThreadPoolExecutor() as ex:
         fut = ex.submit(_square, 3)
         assert isinstance(fut, CFFuture)
-        assert fut.result() == 9
+        assert fut.result() == Int(9)
 
 
 def test_threadpool_map_returns_list() -> None:
@@ -72,7 +72,7 @@ def test_processpool_constructs_with_workers() -> None:
 def test_processpool_submit() -> None:
     with ProcessPoolExecutor(Int(2)) as ex:
         fut = ex.submit(_square, 4)
-        assert fut.result(Float(10.0)) == 16
+        assert fut.result(Float(10.0)) == Int(16)
 
 
 # --- Future ---
@@ -126,7 +126,7 @@ def test_future_cancel_after_done() -> None:
 def test_future_result_with_timeout() -> None:
     with ThreadPoolExecutor() as ex:
         fut = ex.submit(_square, 5)
-        assert fut.result(Float(5.0)) == 25
+        assert fut.result(Float(5.0)) == Int(25)
 
 
 # --- Module helpers ---
