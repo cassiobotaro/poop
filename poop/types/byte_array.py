@@ -115,10 +115,12 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         self._value.insert(i._value, byte._value)
         return none
 
-    def pop(self, index: Int | None = None) -> Int:
-        if index is None:
+    def pop(self, index: Int | NoneClass | None = None) -> Int:
+        from poop.types._unwrap import _is_absent
+
+        if _is_absent(index):
             return Int(self._value.pop())
-        return Int(self._value.pop(index._value))
+        return Int(self._value.pop(index._value))  # ty: ignore[unresolved-attribute]
 
     def remove(self, byte: Int) -> NoneClass:
         self._value.remove(byte._value)

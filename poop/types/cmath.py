@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, ClassVar
 from poop.types.boolean import false, true
 from poop.types.complex import Complex
 from poop.types.float import Float
+from poop.types.none import NoneClass
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
@@ -45,10 +46,12 @@ class CMath:
         return Complex(_cmath.exp(z._value))
 
     @staticmethod
-    def log(x: Complex, base: Complex | None = None) -> Complex:
-        if base is None:
+    def log(x: Complex, base: Complex | NoneClass | None = None) -> Complex:
+        from poop.types._unwrap import _is_absent
+
+        if _is_absent(base):
             return Complex(_cmath.log(x._value))
-        return Complex(_cmath.log(x._value, base._value))
+        return Complex(_cmath.log(x._value, base._value))  # ty: ignore[unresolved-attribute]
 
     @staticmethod
     def log10(z: Complex, /) -> Complex:
