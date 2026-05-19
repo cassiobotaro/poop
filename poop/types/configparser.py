@@ -26,6 +26,25 @@ def _path_str(value: Path | Str) -> str:
 _DEFAULT = object()
 
 
+def _vars_kwarg(vars_dict: Dict | NoneClass | None) -> dict[str, Any]:
+    """Convert POOP `Dict` to the `vars` kwarg shape expected by configparser.
+
+    `vars` lets callers supplement the interpolation variables for a
+    single `.get*()` call. Returns an empty mapping when absent so the
+    stdlib default applies.
+    """
+    from poop.types._unwrap import _is_absent
+
+    if _is_absent(vars_dict):
+        return {}
+    unwrapped: dict[str, str] = {}
+    for k, v in vars_dict._data.items():  # ty: ignore[unresolved-attribute]
+        unwrapped[k._value if isinstance(k, Str) else str(k)] = (
+            v._value if isinstance(v, Str) else str(v)
+        )
+    return {"vars": unwrapped}
+
+
 class ConfigParser(Object):
     """Wraps Python's `configparser.ConfigParser` — INI-style config
     files.
@@ -189,10 +208,13 @@ class ConfigParser(Object):
         self,
         section: Str,
         option: Str,
-        raw: Boolean | None = None,
+        *,
+        raw: Boolean | NoneClass | None = None,
+        vars: Dict | NoneClass | None = None,
         fallback: Any = _DEFAULT,
     ) -> Str:
         kwargs: dict[str, Any] = {"raw": _b(raw, False)}
+        kwargs.update(_vars_kwarg(vars))
         if fallback is not _DEFAULT:
             kwargs["fallback"] = (
                 fallback._value if isinstance(fallback, Str) else fallback
@@ -203,10 +225,13 @@ class ConfigParser(Object):
         self,
         section: Str,
         option: Str,
-        raw: Boolean | None = None,
+        *,
+        raw: Boolean | NoneClass | None = None,
+        vars: Dict | NoneClass | None = None,
         fallback: Any = _DEFAULT,
     ) -> Int:
         kwargs: dict[str, Any] = {"raw": _b(raw, False)}
+        kwargs.update(_vars_kwarg(vars))
         if fallback is not _DEFAULT:
             kwargs["fallback"] = (
                 fallback._value if isinstance(fallback, Int) else fallback
@@ -217,10 +242,13 @@ class ConfigParser(Object):
         self,
         section: Str,
         option: Str,
-        raw: Boolean | None = None,
+        *,
+        raw: Boolean | NoneClass | None = None,
+        vars: Dict | NoneClass | None = None,
         fallback: Any = _DEFAULT,
     ) -> Float:
         kwargs: dict[str, Any] = {"raw": _b(raw, False)}
+        kwargs.update(_vars_kwarg(vars))
         if fallback is not _DEFAULT:
             kwargs["fallback"] = (
                 fallback._value if isinstance(fallback, Float) else fallback
@@ -231,10 +259,13 @@ class ConfigParser(Object):
         self,
         section: Str,
         option: Str,
-        raw: Boolean | None = None,
+        *,
+        raw: Boolean | NoneClass | None = None,
+        vars: Dict | NoneClass | None = None,
         fallback: Any = _DEFAULT,
     ) -> Boolean:
         kwargs: dict[str, Any] = {"raw": _b(raw, False)}
+        kwargs.update(_vars_kwarg(vars))
         if fallback is not _DEFAULT:
             kwargs["fallback"] = (
                 bool(fallback) if isinstance(fallback, Boolean) else fallback
