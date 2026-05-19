@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–82 here was fully resolved
+The leak/signature/bug audit logged as 1–84 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1.
@@ -22,10 +22,11 @@ across the v1.0.x and v1.1.x cycles:
 - Items 71–73 → v1.1.12.
 - Coverage lifted above 95% → v1.1.13.
 - Items 74–79 → v1.1.14.
-- Items 80–82 → v1.1.15 (`Bytes.hex` / `ByteArray.hex` accept
-  `sep` / `bytes_per_sep`; `Time.isoformat` and `DateTime.isoformat`
-  accept `timespec`; `FrozenSet` binops add `isinstance` guards
-  matching `Set`'s defensive pattern).
+- Items 80–82 → v1.1.15.
+- Items 83–84 → v1.1.16 (`Int.pow` accepts an optional modulus for
+  modular exponentiation; `Math.floor`/`ceil`/`trunc` accept
+  `Decimal`/`Fraction` via a `_unwrap_num` helper that routes
+  `_impl` into the stdlib protocol).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
