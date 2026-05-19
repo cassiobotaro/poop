@@ -121,8 +121,10 @@ class Dict(_ValueEqMixin, Object):
         return DictItems(self)
 
     def pop(
-        self, key: Object, default: Object | NoneClass = none
+        self, key: Object, default: Object | NoneClass | Any = _MISSING
     ) -> Object | NoneClass:
+        if default is _MISSING:
+            return self._data.pop(key)
         return self._data.pop(key, default)
 
     def popitem(self) -> Tuple:

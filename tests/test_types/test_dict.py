@@ -248,9 +248,17 @@ def test_pop_removes_and_returns_value() -> None:
     assert d.len() == Int(1)
 
 
-def test_pop_missing_key_returns_none() -> None:
+def test_pop_missing_key_raises_keyerror() -> None:
+    # Matches Python: dict.pop(key) without default raises KeyError.
     d = _dict_with([(1, 10)])
-    assert d.pop(Int(99)) == none
+    with pytest.raises(KeyError):
+        d.pop(Int(99))
+
+
+def test_pop_missing_key_with_explicit_default_returns_default() -> None:
+    d = _dict_with([(1, 10)])
+    assert d.pop(Int(99), none) is none
+    assert d.pop(Int(99), Int(-1)) == Int(-1)
 
 
 def test_popitem_returns_last_pair() -> None:
