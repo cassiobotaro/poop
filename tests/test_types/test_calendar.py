@@ -146,3 +146,64 @@ def test_calendar_class_reachable_via_interpreter() -> None:
 
 def test_calendar_monthrange_reachable_via_interpreter() -> None:
     Interpreter().run_source("calendar.monthrange(2026, 5).print()")
+
+
+# --- TextCalendar / HTMLCalendar coverage ---
+
+
+def test_text_calendar_formatmonth() -> None:
+    from poop.types.calendar import TextCalendar
+
+    result = TextCalendar().formatmonth(Int(2026), Int(5))
+    assert isinstance(result, Str)
+    assert "May" in str(result)
+
+
+def test_text_calendar_formatyear() -> None:
+    from poop.types.calendar import TextCalendar
+
+    result = TextCalendar().formatyear(Int(2026))
+    assert isinstance(result, Str)
+    assert "2026" in str(result)
+
+
+def test_html_calendar_formatmonth() -> None:
+    from poop.types.calendar import HTMLCalendar
+
+    result = HTMLCalendar().formatmonth(Int(2026), Int(5))
+    assert isinstance(result, Str)
+    assert "<table" in str(result)
+
+
+def test_html_calendar_formatyear() -> None:
+    from poop.types.calendar import HTMLCalendar
+
+    result = HTMLCalendar().formatyear(Int(2026))
+    assert isinstance(result, Str)
+
+
+def test_html_calendar_formatyearpage() -> None:
+    from poop.types.bytes import Bytes
+    from poop.types.calendar import HTMLCalendar
+
+    result = HTMLCalendar().formatyearpage(Int(2026))
+    assert isinstance(result, Bytes)
+
+
+def test_calendar_itermonthdays3() -> None:
+    cal = Calendar()
+    entries = cal.itermonthdays3(Int(2026), Int(5))
+    assert isinstance(entries, List)
+    assert entries.len()._value > 0
+
+
+def test_calendar_monthdatescalendar() -> None:
+    cal = Calendar()
+    weeks = cal.monthdatescalendar(Int(2026), Int(5))
+    assert isinstance(weeks, List)
+
+
+def test_calendar_monthdayscalendar() -> None:
+    cal = Calendar()
+    weeks = cal.monthdayscalendar(Int(2026), Int(5))
+    assert isinstance(weeks, List)

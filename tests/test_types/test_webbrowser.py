@@ -167,3 +167,33 @@ def test_register_constructor_block_returning_browser() -> None:
     got = _webbrowser.get("poop-test-stub")
     assert got is stub_impl
     assert calls == [1]
+
+
+# --- Browser controllers (raise coverage on the controller cluster) ---
+
+
+def test_browser_controllers_construct() -> None:
+    from poop.types.string import Str
+    from poop.types.webbrowser import Browser, Webbrowser
+
+    for fn_name in (
+        "GenericBrowser",
+        "BackgroundBrowser",
+        "UnixBrowser",
+        "Mozilla",
+        "Chrome",
+        "Chromium",
+        "Edge",
+        "Opera",
+        "Epiphany",
+        "Elinks",
+    ):
+        fn = getattr(Webbrowser, fn_name)
+        b = fn(Str("/usr/bin/false"))
+        assert isinstance(b, Browser)
+
+
+def test_browser_konqueror_constructs() -> None:
+    from poop.types.webbrowser import Browser, Webbrowser
+
+    assert isinstance(Webbrowser.Konqueror(), Browser)

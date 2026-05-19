@@ -242,3 +242,123 @@ def test_broken_barrier_error_class() -> None:
 
 def test_threading_via_interpreter() -> None:
     Interpreter().run_source("threading.get_ident().print()")
+
+
+# --- Condition ---
+
+
+def test_condition_constructs() -> None:
+    assert isinstance(Threading.Condition(), Threading.Condition)
+
+
+def test_condition_constructs_with_lock() -> None:
+    lock = Lock()
+    cond = Threading.Condition(lock)
+    assert isinstance(cond, Threading.Condition)
+
+
+def test_condition_acquire_release() -> None:
+    cond = Threading.Condition()
+    assert cond.acquire() is true
+    assert cond.release() is none
+
+
+def test_condition_acquire_with_blocking_and_timeout() -> None:
+    cond = Threading.Condition()
+    assert cond.acquire(true, Float(0.0)) is true
+    cond.release()
+
+
+def test_condition_context_manager() -> None:
+    cond = Threading.Condition()
+    with cond:
+        pass
+
+
+def test_condition_wait_returns_false_on_timeout() -> None:
+    cond = Threading.Condition()
+    with cond:
+        result = cond.wait(Float(0.001))
+    assert result is false
+
+
+def test_condition_wait_for_returns_false_on_timeout() -> None:
+    cond = Threading.Condition()
+    with cond:
+        result = cond.wait_for(lambda: false, Float(0.001))
+    assert result is false
+
+
+def test_condition_wait_for_returns_true_when_predicate_holds() -> None:
+    cond = Threading.Condition()
+    with cond:
+        result = cond.wait_for(lambda: true)
+    assert result is true
+
+
+def test_condition_notify_and_notify_all() -> None:
+    cond = Threading.Condition()
+    with cond:
+        assert cond.notify() is none
+        assert cond.notify(Int(2)) is none
+        assert cond.notify_all() is none
+
+
+# --- BoundedSemaphore ---
+
+
+def test_bounded_semaphore_default() -> None:
+    bs = Threading.BoundedSemaphore()
+    assert isinstance(bs, Threading.BoundedSemaphore)
+    assert bs.acquire() is true
+    bs.release()
+
+
+def test_bounded_semaphore_with_value() -> None:
+    bs = Threading.BoundedSemaphore(Int(2))
+    bs.acquire()
+    bs.acquire()
+
+
+# --- Timer ---
+
+
+def test_timer_constructs_and_starts_and_cancels() -> None:
+    fired: list[bool] = []
+    t = Threading.Timer(Float(10.0), lambda: fired.append(True))
+    assert t.start() is none
+    assert t.cancel() is none
+
+
+def test_timer_with_args() -> None:
+    recorded: list[int] = []
+    t = Threading.Timer(
+        Float(10.0),
+        lambda x: recorded.append(int(x)),
+        args=List(Int(42)),
+    )
+    t.cancel()
+
+
+def test_timer_join_and_is_alive() -> None:
+    t = Threading.Timer(Float(10.0), lambda: None)
+    t.start()
+    t.cancel()
+    t.join(Float(0.1))
+    assert isinstance(t.is_alive(), Boolean)
+
+
+# --- _Local ---
+
+
+def test_local_at_put_and_at() -> None:
+    loc = Threading.Local()
+    loc.at_put(Str("greeting"), Str("hello"))
+    assert loc.at(Str("greeting")) == Str("hello")
+
+
+def test_local_includes() -> None:
+    loc = Threading.Local()
+    assert loc.includes(Str("missing")) is false
+    loc.at_put(Str("present"), Int(1))
+    assert loc.includes(Str("present")) is true

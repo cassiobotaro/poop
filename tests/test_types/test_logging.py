@@ -6,7 +6,14 @@ from poop.interpreter import Interpreter
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
-from poop.types.logging import Filter, Formatter, Handler, Logger, Logging
+from poop.types.logging import (
+    Filter,
+    Formatter,
+    Handler,
+    Logger,
+    Logging,
+    LogRecord,
+)
 from poop.types.none import none
 from poop.types.path import Path
 from poop.types.string import Str
@@ -480,3 +487,94 @@ def test_buffering_formatter_constructs() -> None:
 
     bf = BufferingFormatter()
     assert isinstance(bf, _stdlib_logging.BufferingFormatter)
+
+
+# --- LogRecord properties (raise coverage on the property cluster) ---
+
+
+_LOG_RECORD_PATHNAME = str(_PyPath(__file__))
+
+
+def _make_log_record() -> _stdlib_logging.LogRecord:
+    return _stdlib_logging.LogRecord(
+        name="poop.test",
+        level=_stdlib_logging.WARNING,
+        pathname=_LOG_RECORD_PATHNAME,
+        lineno=42,
+        msg="hi %s",
+        args=("there",),
+        exc_info=None,
+        func="my_func",
+    )
+
+
+def _make_record() -> LogRecord:
+    return LogRecord(_make_log_record())
+
+
+def test_log_record_name_msg_args() -> None:
+    r = _make_record()
+    assert r.name == Str("poop.test")
+    assert isinstance(r.msg, Str)
+    assert isinstance(r.args, object)  # Tuple via to_poop
+
+
+def test_log_record_level_props() -> None:
+    r = _make_record()
+    assert r.levelname == Str("WARNING")
+    assert r.levelno == Int(_stdlib_logging.WARNING)
+
+
+def test_log_record_location_props() -> None:
+    r = _make_record()
+    assert r.pathname == Str(_LOG_RECORD_PATHNAME)
+    assert isinstance(r.filename, Str)
+    assert isinstance(r.module, Str)
+    assert r.lineno == Int(42)
+    assert r.funcName == Str("my_func")
+
+
+def test_log_record_created_is_float() -> None:
+    from poop.types.float import Float
+
+    assert isinstance(_make_record().created, Float)
+
+
+def test_log_record_thread_process_props() -> None:
+    r = _make_record()
+    assert isinstance(r.thread, Int) or r.thread is none
+    assert isinstance(r.threadName, Str) or r.threadName is none
+    assert isinstance(r.process, Int) or r.process is none
+    assert isinstance(r.processName, Str) or r.processName is none
+
+
+def test_log_record_get_message() -> None:
+    assert _make_record().getMessage() == Str("hi there")
+
+
+# --- LoggerAdapter ---
+
+
+def test_logger_adapter_debug_info_warning_error_critical() -> None:
+    from poop.types.dict import Dict
+    from poop.types.logging import LoggerAdapter
+
+    logger = Logging.getLogger(Str("poop.adapter.test"))
+    extras = Dict()
+    extras.at_put(Str("user"), Str("alice"))
+    adapter = LoggerAdapter(logger, extras)
+    assert adapter.debug(Str("d")) is none
+    assert adapter.info(Str("i")) is none
+    assert adapter.warning(Str("w")) is none
+    assert adapter.error(Str("e")) is none
+    assert adapter.critical(Str("c")) is none
+
+
+def test_logger_adapter_log_and_setlevel() -> None:
+    from poop.types.logging import LoggerAdapter
+
+    logger = Logging.getLogger(Str("poop.adapter.log"))
+    adapter = LoggerAdapter(logger)
+    assert adapter.log(Int(_stdlib_logging.INFO), Str("msg")) is none
+    assert adapter.setLevel(Int(_stdlib_logging.WARNING)) is none
+    assert adapter.setLevel(Str("DEBUG")) is none
