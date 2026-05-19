@@ -43,23 +43,16 @@ def _html5_dict() -> Dict:
 
 
 class Entities:
-    """Namespace mirroring Python's `html.entities` — named/numeric entity maps."""
+    """Namespace mirroring Python's `html.entities` — named/numeric entity maps.
 
-    @staticmethod
-    def name2codepoint() -> Dict:
-        return _name2cp_dict()
+    Exposed as class attributes to match CPython's `html.entities.<name>`
+    access shape: `Entities.name2codepoint` reads the dict, not calls it.
+    """
 
-    @staticmethod
-    def codepoint2name() -> Dict:
-        return _cp2name_dict()
-
-    @staticmethod
-    def entitydefs() -> Dict:
-        return _entitydefs_dict()
-
-    @staticmethod
-    def html5() -> Dict:
-        return _html5_dict()
+    name2codepoint: ClassVar[Dict] = _name2cp_dict()
+    codepoint2name: ClassVar[Dict] = _cp2name_dict()
+    entitydefs: ClassVar[Dict] = _entitydefs_dict()
+    html5: ClassVar[Dict] = _html5_dict()
 
 
 class HTMLParser(Object):

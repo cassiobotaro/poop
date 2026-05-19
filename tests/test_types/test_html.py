@@ -32,26 +32,26 @@ def test_has_entity_unknown_returns_false() -> None:
     assert HTML.has_entity(Str("not_a_real_entity_name")) is false
 
 
-def test_entities_name2codepoint_returns_dict() -> None:
-    d = Entities.name2codepoint()
+def test_entities_name2codepoint_is_dict_attr() -> None:
+    d = Entities.name2codepoint
     assert isinstance(d, Dict)
     assert d.at(Str("amp")) == Int(38)
 
 
-def test_entities_codepoint2name_returns_dict() -> None:
-    d = Entities.codepoint2name()
+def test_entities_codepoint2name_is_dict_attr() -> None:
+    d = Entities.codepoint2name
     assert isinstance(d, Dict)
     assert d.at(Int(38)) == Str("amp")
 
 
-def test_entities_html5_returns_dict() -> None:
-    d = Entities.html5()
+def test_entities_html5_is_dict_attr() -> None:
+    d = Entities.html5
     assert isinstance(d, Dict)
     assert d.at(Str("amp;")) == Str("&")
 
 
-def test_entities_entitydefs_returns_dict() -> None:
-    d = Entities.entitydefs()
+def test_entities_entitydefs_is_dict_attr() -> None:
+    d = Entities.entitydefs
     assert isinstance(d, Dict)
 
 
