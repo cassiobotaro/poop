@@ -2,7 +2,7 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–79 here was fully resolved
+The leak/signature/bug audit logged as 1–82 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1.
@@ -21,10 +21,11 @@ across the v1.0.x and v1.1.x cycles:
 - Items 69–70 → v1.1.11.
 - Items 71–73 → v1.1.12.
 - Coverage lifted above 95% → v1.1.13.
-- Items 74–79 → v1.1.14 (`Str.encode` / `Bytes.decode` / `ByteArray.
-  decode` accept `errors`; `Str` / `Bytes` / `ByteArray.splitlines`
-  accept `keepends`; `Re.I`/`M`/`S`/`X`/`A`/`U`/`L` short-flag
-  aliases; `Os.curdir` / `pardir` / `extsep` constants).
+- Items 74–79 → v1.1.14.
+- Items 80–82 → v1.1.15 (`Bytes.hex` / `ByteArray.hex` accept
+  `sep` / `bytes_per_sep`; `Time.isoformat` and `DateTime.isoformat`
+  accept `timespec`; `FrozenSet` binops add `isinstance` guards
+  matching `Set`'s defensive pattern).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
