@@ -142,11 +142,29 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             return ByteArray(self._value.center(width._value))
         return ByteArray(self._value.center(width._value, bytes(fill)))
 
-    def count(self, sub: ByteArray) -> Int:
-        return Int(self._value.count(sub._value))
+    def count(
+        self,
+        sub: ByteArray,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
+        return Int(
+            self._value.count(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def endswith(self, suffix: ByteArray) -> Boolean:
-        return true if self._value.endswith(bytes(suffix._value)) else false
+    def endswith(
+        self,
+        suffix: ByteArray,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Boolean:
+        return (
+            true
+            if self._value.endswith(
+                bytes(suffix._value), _unwrap(start, None), _unwrap(end, None)
+            )
+            else false
+        )
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> ByteArray:
 
@@ -155,11 +173,25 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             return ByteArray(self._value.expandtabs())
         return ByteArray(self._value.expandtabs(size))
 
-    def find(self, sub: ByteArray) -> Int:
-        return Int(self._value.find(sub._value))
+    def find(
+        self,
+        sub: ByteArray,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
+        return Int(
+            self._value.find(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def index(self, sub: ByteArray) -> Int:
-        return Int(self._value.index(sub._value))
+    def index(
+        self,
+        sub: ByteArray,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
+        return Int(
+            self._value.index(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
     def isalnum(self) -> Boolean:
         return true if self._value.isalnum() else false
@@ -216,14 +248,35 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     def removesuffix(self, suffix: ByteArray) -> ByteArray:
         return ByteArray(self._value.removesuffix(bytes(suffix._value)))
 
-    def replace(self, old: ByteArray, new: ByteArray) -> ByteArray:
-        return ByteArray(self._value.replace(old._value, new._value))
+    def replace(
+        self,
+        old: ByteArray,
+        new: ByteArray,
+        count: Int | NoneClass | None = None,
+    ) -> ByteArray:
+        return ByteArray(
+            self._value.replace(old._value, new._value, _unwrap(count, -1))
+        )
 
-    def rfind(self, sub: ByteArray) -> Int:
-        return Int(self._value.rfind(sub._value))
+    def rfind(
+        self,
+        sub: ByteArray,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
+        return Int(
+            self._value.rfind(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
-    def rindex(self, sub: ByteArray) -> Int:
-        return Int(self._value.rindex(sub._value))
+    def rindex(
+        self,
+        sub: ByteArray,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Int:
+        return Int(
+            self._value.rindex(sub._value, _unwrap(start, None), _unwrap(end, None))
+        )
 
     def rjust(
         self,
@@ -239,23 +292,50 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     def rpartition(self, sep: ByteArray) -> Tuple:
         return Tuple(*[ByteArray(p) for p in self._value.rpartition(sep._value)])
 
-    def rsplit(self, sep: ByteArray | NoneClass | None = None) -> List:
-
-        return List(*[ByteArray(p) for p in self._value.rsplit(_unwrap(sep, None))])
+    def rsplit(
+        self,
+        sep: ByteArray | NoneClass | None = None,
+        maxsplit: Int | NoneClass | None = None,
+    ) -> List:
+        return List(
+            *[
+                ByteArray(p)
+                for p in self._value.rsplit(_unwrap(sep, None), _unwrap(maxsplit, -1))
+            ]
+        )
 
     def rstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
 
         return ByteArray(self._value.rstrip(_unwrap(chars, None)))
 
-    def split(self, sep: ByteArray | NoneClass | None = None) -> List:
-
-        return List(*[ByteArray(p) for p in self._value.split(_unwrap(sep, None))])
+    def split(
+        self,
+        sep: ByteArray | NoneClass | None = None,
+        maxsplit: Int | NoneClass | None = None,
+    ) -> List:
+        return List(
+            *[
+                ByteArray(p)
+                for p in self._value.split(_unwrap(sep, None), _unwrap(maxsplit, -1))
+            ]
+        )
 
     def splitlines(self) -> List:
         return List(*[ByteArray(p) for p in self._value.splitlines()])
 
-    def startswith(self, prefix: ByteArray) -> Boolean:
-        return true if self._value.startswith(bytes(prefix._value)) else false
+    def startswith(
+        self,
+        prefix: ByteArray,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Boolean:
+        return (
+            true
+            if self._value.startswith(
+                bytes(prefix._value), _unwrap(start, None), _unwrap(end, None)
+            )
+            else false
+        )
 
     def strip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
 

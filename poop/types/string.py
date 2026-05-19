@@ -133,8 +133,13 @@ class Str(_ValueEqMixin, Object):
     def rstrip(self, chars: Str | NoneClass | None = None) -> Str:
         return Str(self._value.rstrip(_unwrap(chars, None)))
 
-    def replace(self, old: Str, new: Str) -> Str:
-        return Str(self._value.replace(old._value, new._value))
+    def replace(
+        self,
+        old: Str,
+        new: Str,
+        count: Int | NoneClass | None = None,
+    ) -> Str:
+        return Str(self._value.replace(old._value, new._value, _unwrap(count, -1)))
 
     def split(
         self,
@@ -189,11 +194,33 @@ class Str(_ValueEqMixin, Object):
             self._value.count(sub._value, _unwrap(start, None), _unwrap(end, None))
         )
 
-    def startswith(self, prefix: Str) -> Boolean:
-        return true if self._value.startswith(prefix._value) else false
+    def startswith(
+        self,
+        prefix: Str,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Boolean:
+        return (
+            true
+            if self._value.startswith(
+                prefix._value, _unwrap(start, None), _unwrap(end, None)
+            )
+            else false
+        )
 
-    def endswith(self, suffix: Str) -> Boolean:
-        return true if self._value.endswith(suffix._value) else false
+    def endswith(
+        self,
+        suffix: Str,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Boolean:
+        return (
+            true
+            if self._value.endswith(
+                suffix._value, _unwrap(start, None), _unwrap(end, None)
+            )
+            else false
+        )
 
     def isalpha(self) -> Boolean:
         return true if self._value.isalpha() else false

@@ -627,3 +627,32 @@ def test_rfind_with_start() -> None:
 
 def test_rindex_with_start() -> None:
     assert Str("hello hello").rindex(Str("hello"), Int(0), Int(5)) == Int(0)
+
+
+# --- New: optional parameters (proposals 43-44, v1.1.2) ---
+
+
+def test_startswith_with_start() -> None:
+    assert Str("hello world").startswith(Str("world"), Int(6)) is true
+
+
+def test_startswith_with_start_and_end() -> None:
+    assert Str("hello world").startswith(Str("world"), Int(6), Int(11)) is true
+    assert Str("hello world").startswith(Str("world"), Int(0), Int(5)) is false
+
+
+def test_endswith_with_start() -> None:
+    assert Str("hello world").endswith(Str("hello"), Int(0), Int(5)) is true
+
+
+def test_endswith_with_poop_none_bounds() -> None:
+    assert Str("hello").endswith(Str("lo"), start=none, end=none) is true
+
+
+def test_replace_with_count() -> None:
+    assert Str("aaa").replace(Str("a"), Str("b"), Int(1)) == Str("baa")
+    assert Str("aaaa").replace(Str("a"), Str("b"), Int(2)) == Str("bbaa")
+
+
+def test_replace_with_poop_none_count() -> None:
+    assert Str("aaa").replace(Str("a"), Str("b"), count=none) == Str("bbb")

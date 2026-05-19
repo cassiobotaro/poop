@@ -577,3 +577,77 @@ def test_rmul_returns_repeated_bytearray() -> None:
     assert ByteArray(bytearray(b"ab")).__rmul__(Int(3)) == ByteArray(
         bytearray(b"ababab")
     )
+
+
+# --- New: optional parameters (proposals 41-44, v1.1.2) ---
+
+
+def test_split_with_maxsplit() -> None:
+    assert ByteArray(bytearray(b"a:b:c:d")).split(
+        ByteArray(bytearray(b":")), Int(2)
+    ) == List(
+        ByteArray(bytearray(b"a")),
+        ByteArray(bytearray(b"b")),
+        ByteArray(bytearray(b"c:d")),
+    )
+
+
+def test_rsplit_with_maxsplit() -> None:
+    assert ByteArray(bytearray(b"a:b:c:d")).rsplit(
+        ByteArray(bytearray(b":")), Int(2)
+    ) == List(
+        ByteArray(bytearray(b"a:b")),
+        ByteArray(bytearray(b"c")),
+        ByteArray(bytearray(b"d")),
+    )
+
+
+def test_count_with_start_and_end() -> None:
+    ba = ByteArray(bytearray(b"hello hello hello"))
+    sub = ByteArray(bytearray(b"hello"))
+    assert ba.count(sub, Int(6)) == Int(2)
+    assert ba.count(sub, Int(6), Int(11)) == Int(1)
+
+
+def test_find_with_start() -> None:
+    ba = ByteArray(bytearray(b"hello hello"))
+    sub = ByteArray(bytearray(b"hello"))
+    assert ba.find(sub, Int(1)) == Int(6)
+
+
+def test_index_with_start_raises_when_absent() -> None:
+    import pytest
+
+    ba = ByteArray(bytearray(b"hello hello"))
+    sub = ByteArray(bytearray(b"hello"))
+    with pytest.raises(ValueError):
+        ba.index(sub, Int(0), Int(4))
+
+
+def test_rfind_with_end() -> None:
+    ba = ByteArray(bytearray(b"hello hello"))
+    sub = ByteArray(bytearray(b"hello"))
+    assert ba.rfind(sub, Int(0), Int(5)) == Int(0)
+
+
+def test_rindex_with_start() -> None:
+    ba = ByteArray(bytearray(b"hello hello"))
+    sub = ByteArray(bytearray(b"hello"))
+    assert ba.rindex(sub, Int(0), Int(5)) == Int(0)
+
+
+def test_startswith_with_start() -> None:
+    ba = ByteArray(bytearray(b"hello world"))
+    assert ba.startswith(ByteArray(bytearray(b"world")), Int(6)) is true
+
+
+def test_endswith_with_end() -> None:
+    ba = ByteArray(bytearray(b"hello world"))
+    assert ba.endswith(ByteArray(bytearray(b"hello")), Int(0), Int(5)) is true
+
+
+def test_replace_with_count() -> None:
+    ba = ByteArray(bytearray(b"aaa"))
+    assert ba.replace(
+        ByteArray(bytearray(b"a")), ByteArray(bytearray(b"b")), Int(1)
+    ) == ByteArray(bytearray(b"baa"))

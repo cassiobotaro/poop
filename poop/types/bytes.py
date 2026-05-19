@@ -123,8 +123,19 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
             self._value.count(sub._value, _unwrap(start, None), _unwrap(end, None))
         )
 
-    def endswith(self, suffix: Bytes) -> Boolean:
-        return true if self._value.endswith(suffix._value) else false
+    def endswith(
+        self,
+        suffix: Bytes,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Boolean:
+        return (
+            true
+            if self._value.endswith(
+                suffix._value, _unwrap(start, None), _unwrap(end, None)
+            )
+            else false
+        )
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> Bytes:
         size = _unwrap(tabsize, None)
@@ -207,8 +218,13 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def removesuffix(self, suffix: Bytes) -> Bytes:
         return Bytes(self._value.removesuffix(suffix._value))
 
-    def replace(self, old: Bytes, new: Bytes) -> Bytes:
-        return Bytes(self._value.replace(old._value, new._value))
+    def replace(
+        self,
+        old: Bytes,
+        new: Bytes,
+        count: Int | NoneClass | None = None,
+    ) -> Bytes:
+        return Bytes(self._value.replace(old._value, new._value, _unwrap(count, -1)))
 
     def rfind(
         self,
@@ -245,26 +261,55 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
         return Tuple(*[Bytes(p) for p in self._value.rpartition(sep._value)])
 
-    def rsplit(self, sep: Bytes | NoneClass | None = None) -> List:
+    def rsplit(
+        self,
+        sep: Bytes | NoneClass | None = None,
+        maxsplit: Int | NoneClass | None = None,
+    ) -> List:
         from poop.types.list import List
 
-        return List(*[Bytes(p) for p in self._value.rsplit(_unwrap(sep, None))])
+        return List(
+            *[
+                Bytes(p)
+                for p in self._value.rsplit(_unwrap(sep, None), _unwrap(maxsplit, -1))
+            ]
+        )
 
     def rstrip(self, chars: Bytes | NoneClass | None = None) -> Bytes:
         return Bytes(self._value.rstrip(_unwrap(chars, None)))
 
-    def split(self, sep: Bytes | NoneClass | None = None) -> List:
+    def split(
+        self,
+        sep: Bytes | NoneClass | None = None,
+        maxsplit: Int | NoneClass | None = None,
+    ) -> List:
         from poop.types.list import List
 
-        return List(*[Bytes(p) for p in self._value.split(_unwrap(sep, None))])
+        return List(
+            *[
+                Bytes(p)
+                for p in self._value.split(_unwrap(sep, None), _unwrap(maxsplit, -1))
+            ]
+        )
 
     def splitlines(self) -> List:
         from poop.types.list import List
 
         return List(*[Bytes(p) for p in self._value.splitlines()])
 
-    def startswith(self, prefix: Bytes) -> Boolean:
-        return true if self._value.startswith(prefix._value) else false
+    def startswith(
+        self,
+        prefix: Bytes,
+        start: Int | NoneClass | None = None,
+        end: Int | NoneClass | None = None,
+    ) -> Boolean:
+        return (
+            true
+            if self._value.startswith(
+                prefix._value, _unwrap(start, None), _unwrap(end, None)
+            )
+            else false
+        )
 
     def strip(self, chars: Bytes | NoneClass | None = None) -> Bytes:
         return Bytes(self._value.strip(_unwrap(chars, None)))

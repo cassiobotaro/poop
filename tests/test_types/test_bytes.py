@@ -582,3 +582,34 @@ def test_rindex_with_end() -> None:
 
 def test_rmul_returns_repeated_bytes() -> None:
     assert Bytes(b"ab").__rmul__(Int(3)) == Bytes(b"ababab")
+
+
+# --- New: optional parameters (proposals 41, 43-44, v1.1.2) ---
+
+
+def test_split_with_maxsplit() -> None:
+    assert Bytes(b"a:b:c:d").split(Bytes(b":"), Int(2)) == List(
+        Bytes(b"a"), Bytes(b"b"), Bytes(b"c:d")
+    )
+
+
+def test_rsplit_with_maxsplit() -> None:
+    assert Bytes(b"a:b:c:d").rsplit(Bytes(b":"), Int(2)) == List(
+        Bytes(b"a:b"), Bytes(b"c"), Bytes(b"d")
+    )
+
+
+def test_startswith_with_start() -> None:
+    assert Bytes(b"hello world").startswith(Bytes(b"world"), Int(6)) is true
+
+
+def test_startswith_with_end_excludes_match() -> None:
+    assert Bytes(b"hello world").startswith(Bytes(b"world"), Int(0), Int(5)) is false
+
+
+def test_endswith_with_start_and_end() -> None:
+    assert Bytes(b"hello world").endswith(Bytes(b"hello"), Int(0), Int(5)) is true
+
+
+def test_replace_with_count() -> None:
+    assert Bytes(b"aaa").replace(Bytes(b"a"), Bytes(b"b"), Int(1)) == Bytes(b"baa")
