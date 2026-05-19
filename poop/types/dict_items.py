@@ -81,60 +81,60 @@ class DictItems(_IterableMixin, Object):
     def mapping(self) -> MappingProxy:
         return MappingProxy(self._dict)
 
-    def _own_set(self) -> set:
+    def _poop_own_set(self) -> set:
         return set(self._dict._data.items())
 
     def __or__(self, other: Any) -> Set:
-        merged = self._own_set() | set(_other_items(other))
+        merged = self._poop_own_set() | set(_other_items(other))
         return Set(*(Tuple(k, v) for k, v in merged))
 
     def __ror__(self, other: Any) -> Set:
-        merged = set(_other_items(other)) | self._own_set()
+        merged = set(_other_items(other)) | self._poop_own_set()
         return Set(*(Tuple(k, v) for k, v in merged))
 
     def __and__(self, other: Any) -> Set:
-        result = self._own_set() & set(_other_items(other))
+        result = self._poop_own_set() & set(_other_items(other))
         return Set(*(Tuple(k, v) for k, v in result))
 
     def __rand__(self, other: Any) -> Set:
-        result = set(_other_items(other)) & self._own_set()
+        result = set(_other_items(other)) & self._poop_own_set()
         return Set(*(Tuple(k, v) for k, v in result))
 
     def __sub__(self, other: Any) -> Set:
-        result = self._own_set() - set(_other_items(other))
+        result = self._poop_own_set() - set(_other_items(other))
         return Set(*(Tuple(k, v) for k, v in result))
 
     def __rsub__(self, other: Any) -> Set:
-        result = set(_other_items(other)) - self._own_set()
+        result = set(_other_items(other)) - self._poop_own_set()
         return Set(*(Tuple(k, v) for k, v in result))
 
     def __xor__(self, other: Any) -> Set:
-        result = self._own_set() ^ set(_other_items(other))
+        result = self._poop_own_set() ^ set(_other_items(other))
         return Set(*(Tuple(k, v) for k, v in result))
 
     def __rxor__(self, other: Any) -> Set:
-        result = set(_other_items(other)) ^ self._own_set()
+        result = set(_other_items(other)) ^ self._poop_own_set()
         return Set(*(Tuple(k, v) for k, v in result))
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, (DictItems, Set, FrozenSet)):
-            return true if self._own_set() == set(_other_items(other)) else false
+            return true if self._poop_own_set() == set(_other_items(other)) else false
         return false
 
     def __ne__(self, other: object) -> Boolean:
         return false if bool(self.__eq__(other)) else true
 
     def __le__(self, other: Any) -> Boolean:
-        return true if self._own_set() <= set(_other_items(other)) else false
+        return true if self._poop_own_set() <= set(_other_items(other)) else false
 
     def __lt__(self, other: Any) -> Boolean:
-        return true if self._own_set() < set(_other_items(other)) else false
+        return true if self._poop_own_set() < set(_other_items(other)) else false
 
     def __ge__(self, other: Any) -> Boolean:
-        return true if self._own_set() >= set(_other_items(other)) else false
+        return true if self._poop_own_set() >= set(_other_items(other)) else false
 
     def __gt__(self, other: Any) -> Boolean:
-        return true if self._own_set() > set(_other_items(other)) else false
+        return true if self._poop_own_set() > set(_other_items(other)) else false
 
     def __str__(self) -> str:
         items = ", ".join(f"({k!r}, {v!r})" for k, v in self._dict._data.items())
