@@ -48,8 +48,12 @@ class Dict(_ValueEqMixin, Object):
         return true if key in self._data else false
 
     @classmethod
-    def fromkeys(cls, keys: Iterable[Object], value: Object | None = None) -> Dict:
-        fill: Object = none if value is None else value
+    def fromkeys(
+        cls, keys: Iterable[Object], value: Object | NoneClass | None = None
+    ) -> Dict:
+        from poop.types._unwrap import _is_absent
+
+        fill: Object = none if _is_absent(value) else value  # ty: ignore[invalid-assignment]
         d = cls()
         for k in keys:
             d._data[k] = fill
@@ -130,12 +134,12 @@ class Dict(_ValueEqMixin, Object):
         self._data.update(other._data)
         return none
 
-    def enumerate(self, start: Int | None = None) -> Enumerate:
+    def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:
         from poop.types.enumerate import Enumerate
 
         return Enumerate(self, start)
 
-    def zip(self, *others: object, strict: Boolean | None = None) -> Zip:
+    def zip(self, *others: Object, strict: Boolean | NoneClass | None = None) -> Zip:
         from poop.types.zip import Zip
 
         return Zip(self, *others, strict=strict)

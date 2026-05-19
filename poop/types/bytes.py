@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._unwrap import _unwrap
+from poop.types._unwrap import _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.bytes_iterator import BytesIterator
@@ -255,10 +255,10 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def b32hexencode(self) -> Bytes:
         return Bytes(_base64.b32hexencode(self._value))
 
-    def b64encode(self, altchars: Bytes | None = None) -> Bytes:
+    def b64encode(self, altchars: Bytes | NoneClass | None = None) -> Bytes:
         kwargs: dict[str, _bytes] = {}
-        if altchars is not None:
-            kwargs["altchars"] = altchars._value
+        if not _is_absent(altchars):
+            kwargs["altchars"] = altchars._value  # ty: ignore[unresolved-attribute]
         return Bytes(_base64.b64encode(self._value, **kwargs))
 
     def standard_b64encode(self) -> Bytes:
@@ -270,26 +270,26 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def a85encode(
         self,
         *,
-        foldspaces: Boolean | None = None,
+        foldspaces: Boolean | NoneClass | None = None,
         wrapcol: Int | None = None,
-        pad: Boolean | None = None,
-        adobe: Boolean | None = None,
+        pad: Boolean | NoneClass | None = None,
+        adobe: Boolean | NoneClass | None = None,
     ) -> Bytes:
         from typing import Any as _Any
 
         kwargs: dict[str, _Any] = {}
-        if foldspaces is not None:
+        if not _is_absent(foldspaces):
             kwargs["foldspaces"] = bool(foldspaces)
-        if wrapcol is not None:
-            kwargs["wrapcol"] = wrapcol._value
-        if pad is not None:
+        if not _is_absent(wrapcol):
+            kwargs["wrapcol"] = wrapcol._value  # ty: ignore[unresolved-attribute]
+        if not _is_absent(pad):
             kwargs["pad"] = bool(pad)
-        if adobe is not None:
+        if not _is_absent(adobe):
             kwargs["adobe"] = bool(adobe)
         return Bytes(_base64.a85encode(self._value, **kwargs))
 
-    def b85encode(self, pad: Boolean | None = None) -> Bytes:
-        if pad is None:
+    def b85encode(self, pad: Boolean | NoneClass | None = None) -> Bytes:
+        if _is_absent(pad):
             return Bytes(_base64.b85encode(self._value))
         return Bytes(_base64.b85encode(self._value, pad=bool(pad)))
 
@@ -298,39 +298,41 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
     # base64 — decoders on Bytes. Each returns Bytes.
 
-    def b16decode(self, casefold: Boolean | None = None) -> Bytes:
-        if casefold is None:
+    def b16decode(self, casefold: Boolean | NoneClass | None = None) -> Bytes:
+        if _is_absent(casefold):
             return Bytes(_base64.b16decode(self._value))
         return Bytes(_base64.b16decode(self._value, casefold=bool(casefold)))
 
     def b32decode(
         self,
-        casefold: Boolean | None = None,
-        map01: Bytes | None = None,
+        casefold: Boolean | NoneClass | None = None,
+        map01: Bytes | NoneClass | None = None,
     ) -> Bytes:
         from typing import Any as _Any
 
         kwargs: dict[str, _Any] = {}
-        if casefold is not None:
+        if not _is_absent(casefold):
             kwargs["casefold"] = bool(casefold)
-        if map01 is not None:
-            kwargs["map01"] = map01._value
+        if not _is_absent(map01):
+            kwargs["map01"] = map01._value  # ty: ignore[unresolved-attribute]
         return Bytes(_base64.b32decode(self._value, **kwargs))
 
-    def b32hexdecode(self, casefold: Boolean | None = None) -> Bytes:
-        if casefold is None:
+    def b32hexdecode(self, casefold: Boolean | NoneClass | None = None) -> Bytes:
+        if _is_absent(casefold):
             return Bytes(_base64.b32hexdecode(self._value))
         return Bytes(_base64.b32hexdecode(self._value, casefold=bool(casefold)))
 
     def b64decode(
-        self, altchars: Bytes | None = None, validate: Boolean | None = None
+        self,
+        altchars: Bytes | NoneClass | None = None,
+        validate: Boolean | NoneClass | None = None,
     ) -> Bytes:
         from typing import Any as _Any
 
         kwargs: dict[str, _Any] = {}
-        if altchars is not None:
-            kwargs["altchars"] = altchars._value
-        if validate is not None:
+        if not _is_absent(altchars):
+            kwargs["altchars"] = altchars._value  # ty: ignore[unresolved-attribute]
+        if not _is_absent(validate):
             kwargs["validate"] = bool(validate)
         return Bytes(_base64.b64decode(self._value, **kwargs))
 
