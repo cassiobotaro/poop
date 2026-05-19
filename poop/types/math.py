@@ -11,6 +11,20 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 
+def _unwrap_num(x: Any) -> Any:
+    """Extract the underlying Python number from a POOP numeric wrapper.
+
+    `Int` / `Float` store the value in `_value`; `Decimal` / `Fraction`
+    keep it in `_impl`. `math.floor` / `ceil` / `trunc` go through
+    Python's `__floor__` / `__ceil__` / `__trunc__` protocol, so
+    handing the impl directly lets `decimal.Decimal` / `fractions.
+    Fraction` route through their stdlib hooks.
+    """
+    if hasattr(x, "_impl"):
+        return x._impl
+    return x._value
+
+
 class Math:
     """Namespace mirroring Python's `math` module.
 
@@ -158,16 +172,16 @@ class Math:
     # Rounding & float decomposition ------------------------------
 
     @staticmethod
-    def floor(x: Float) -> Int:
-        return Int(_math.floor(x._value))
+    def floor(x: Float | Int) -> Int:
+        return Int(_math.floor(_unwrap_num(x)))
 
     @staticmethod
-    def ceil(x: Float) -> Int:
-        return Int(_math.ceil(x._value))
+    def ceil(x: Float | Int) -> Int:
+        return Int(_math.ceil(_unwrap_num(x)))
 
     @staticmethod
-    def trunc(x: Float) -> Int:
-        return Int(_math.trunc(x._value))
+    def trunc(x: Float | Int) -> Int:
+        return Int(_math.trunc(_unwrap_num(x)))
 
     @staticmethod
     def modf(x: Float) -> Tuple:
