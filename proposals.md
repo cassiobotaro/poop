@@ -2,8 +2,8 @@
 
 No open design proposals.
 
-The leak/signature/bug audit logged as 1–31 here was fully resolved
-across the v1.0.x cycle:
+The leak/signature/bug audit logged as 1–40 here was fully resolved
+across the v1.0.x and v1.1.x cycles:
 
 - Bugs 26–30 → v1.0.1 (Slice None handling, _kwargs_from filter,
   DictItems non-pair guard, Enumerate start normalization, Try
@@ -13,6 +13,11 @@ across the v1.0.x cycle:
   through sys/decimal/subprocess/logging/asyncio/concurrent/codecs/
   signal/csv plus the `_IteratorBase` generic and several
   `NoneClass` widenings).
+- Items 32–40 → v1.1.1 (a follow-up audit closing optional-param
+  gaps on `Dict.pop`, `List.pop`, `Str.split/rsplit/count/find/
+  index/rfind/rindex/strip/lstrip/rstrip` and `Bytes.count/find/
+  index/rfind/rindex`; `__rmul__` on `List/Tuple/Bytes/ByteArray`;
+  and the `html.entities` map shape).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks):
