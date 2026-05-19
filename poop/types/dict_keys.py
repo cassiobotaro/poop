@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, final
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
@@ -17,14 +17,14 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.dict import Dict
 
+_KeySetLike = "DictKeys | Set | FrozenSet"
 
-def _other_keys(other: Any) -> Any:
-    """Extract the underlying Python iterable from another set-like collection."""
+
+def _other_keys(other: DictKeys | Set | FrozenSet) -> set[Object] | frozenset[Object]:
+    """Extract the underlying Python set-like from another set-like POOP view."""
     if isinstance(other, DictKeys):
-        return other._dict._data.keys()
-    if isinstance(other, (Set, FrozenSet)):
-        return other._data
-    return other
+        return set(other._dict._data.keys())
+    return other._data
 
 
 @final
@@ -61,34 +61,34 @@ class DictKeys(_IterableMixin, Object):
     def __contains__(self, item: object) -> bool:
         return item in self._dict._data
 
-    def isdisjoint(self, other: Any) -> Boolean:
+    def isdisjoint(self, other: DictKeys | Set | FrozenSet) -> Boolean:
         return true if self._dict._data.keys().isdisjoint(_other_keys(other)) else false
 
     def mapping(self) -> MappingProxy:
         return MappingProxy(self._dict)
 
-    def __or__(self, other: Any) -> Set:
+    def __or__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(self._dict._data.keys() | _other_keys(other)))
 
-    def __ror__(self, other: Any) -> Set:
+    def __ror__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(_other_keys(other) | self._dict._data.keys()))
 
-    def __and__(self, other: Any) -> Set:
+    def __and__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(self._dict._data.keys() & _other_keys(other)))
 
-    def __rand__(self, other: Any) -> Set:
+    def __rand__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(_other_keys(other) & self._dict._data.keys()))
 
-    def __sub__(self, other: Any) -> Set:
+    def __sub__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(self._dict._data.keys() - _other_keys(other)))
 
-    def __rsub__(self, other: Any) -> Set:
+    def __rsub__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(_other_keys(other) - self._dict._data.keys()))
 
-    def __xor__(self, other: Any) -> Set:
+    def __xor__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(self._dict._data.keys() ^ _other_keys(other)))
 
-    def __rxor__(self, other: Any) -> Set:
+    def __rxor__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(_other_keys(other) ^ self._dict._data.keys()))
 
     def __eq__(self, other: object) -> Boolean:
@@ -103,16 +103,16 @@ class DictKeys(_IterableMixin, Object):
     def __ne__(self, other: object) -> Boolean:
         return false if bool(self.__eq__(other)) else true
 
-    def __le__(self, other: Any) -> Boolean:
+    def __le__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
         return true if self._dict._data.keys() <= set(_other_keys(other)) else false
 
-    def __lt__(self, other: Any) -> Boolean:
+    def __lt__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
         return true if self._dict._data.keys() < set(_other_keys(other)) else false
 
-    def __ge__(self, other: Any) -> Boolean:
+    def __ge__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
         return true if self._dict._data.keys() >= set(_other_keys(other)) else false
 
-    def __gt__(self, other: Any) -> Boolean:
+    def __gt__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
         return true if self._dict._data.keys() > set(_other_keys(other)) else false
 
     def __str__(self) -> str:

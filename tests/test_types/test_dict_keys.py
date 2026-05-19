@@ -198,11 +198,9 @@ def test_ne() -> None:
     assert (a != a) is false
 
 
-def test_other_keys_passthrough() -> None:
-    # When other is a raw Python set, _other_keys returns it as-is
+def test_isdisjoint_with_empty_set() -> None:
     keys = DictKeys(_make())
-    result = keys.isdisjoint(set())
-    assert result is true
+    assert keys.isdisjoint(Set()) is true
 
 
 def test_reversed_dunder() -> None:

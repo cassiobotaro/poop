@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, final
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
@@ -19,19 +19,15 @@ if TYPE_CHECKING:
     from poop.types.dict import Dict
 
 
-def _other_items(other: Any) -> Any:
-    """Extract the underlying Python iterable of (k, v) pairs."""
+def _other_items(other: DictItems | Set | FrozenSet) -> set[tuple[Object, Object]]:
+    """Extract the underlying (k, v) pairs from a set-like POOP view."""
     if isinstance(other, DictItems):
-        return other._dict._data.items()
-    if isinstance(other, (Set, FrozenSet)):
-        return {
-            (t._items[0], t._items[1])
-            for t in other._data
-            if isinstance(t, Tuple) and len(t._items) == 2
-        }
-    if isinstance(other, set):
-        return other
-    return other
+        return set(other._dict._data.items())
+    return {
+        (t._items[0], t._items[1])
+        for t in other._data
+        if isinstance(t, Tuple) and len(t._items) == 2
+    }
 
 
 @final
@@ -74,7 +70,7 @@ class DictItems(_IterableMixin, Object):
         k, v = item._items
         return k in self._dict._data and bool(self._dict._data[k] == v)
 
-    def isdisjoint(self, other: Any) -> Boolean:
+    def isdisjoint(self, other: DictItems | Set | FrozenSet) -> Boolean:
         own = set(self._dict._data.items())
         return true if own.isdisjoint(_other_items(other)) else false
 
@@ -84,35 +80,35 @@ class DictItems(_IterableMixin, Object):
     def _poop_own_set(self) -> set:
         return set(self._dict._data.items())
 
-    def __or__(self, other: Any) -> Set:
+    def __or__(self, other: DictItems | Set | FrozenSet) -> Set:
         merged = self._poop_own_set() | set(_other_items(other))
         return Set(*(Tuple(k, v) for k, v in merged))
 
-    def __ror__(self, other: Any) -> Set:
+    def __ror__(self, other: DictItems | Set | FrozenSet) -> Set:
         merged = set(_other_items(other)) | self._poop_own_set()
         return Set(*(Tuple(k, v) for k, v in merged))
 
-    def __and__(self, other: Any) -> Set:
+    def __and__(self, other: DictItems | Set | FrozenSet) -> Set:
         result = self._poop_own_set() & set(_other_items(other))
         return Set(*(Tuple(k, v) for k, v in result))
 
-    def __rand__(self, other: Any) -> Set:
+    def __rand__(self, other: DictItems | Set | FrozenSet) -> Set:
         result = set(_other_items(other)) & self._poop_own_set()
         return Set(*(Tuple(k, v) for k, v in result))
 
-    def __sub__(self, other: Any) -> Set:
+    def __sub__(self, other: DictItems | Set | FrozenSet) -> Set:
         result = self._poop_own_set() - set(_other_items(other))
         return Set(*(Tuple(k, v) for k, v in result))
 
-    def __rsub__(self, other: Any) -> Set:
+    def __rsub__(self, other: DictItems | Set | FrozenSet) -> Set:
         result = set(_other_items(other)) - self._poop_own_set()
         return Set(*(Tuple(k, v) for k, v in result))
 
-    def __xor__(self, other: Any) -> Set:
+    def __xor__(self, other: DictItems | Set | FrozenSet) -> Set:
         result = self._poop_own_set() ^ set(_other_items(other))
         return Set(*(Tuple(k, v) for k, v in result))
 
-    def __rxor__(self, other: Any) -> Set:
+    def __rxor__(self, other: DictItems | Set | FrozenSet) -> Set:
         result = set(_other_items(other)) ^ self._poop_own_set()
         return Set(*(Tuple(k, v) for k, v in result))
 
@@ -124,16 +120,16 @@ class DictItems(_IterableMixin, Object):
     def __ne__(self, other: object) -> Boolean:
         return false if bool(self.__eq__(other)) else true
 
-    def __le__(self, other: Any) -> Boolean:
+    def __le__(self, other: DictItems | Set | FrozenSet) -> Boolean:
         return true if self._poop_own_set() <= set(_other_items(other)) else false
 
-    def __lt__(self, other: Any) -> Boolean:
+    def __lt__(self, other: DictItems | Set | FrozenSet) -> Boolean:
         return true if self._poop_own_set() < set(_other_items(other)) else false
 
-    def __ge__(self, other: Any) -> Boolean:
+    def __ge__(self, other: DictItems | Set | FrozenSet) -> Boolean:
         return true if self._poop_own_set() >= set(_other_items(other)) else false
 
-    def __gt__(self, other: Any) -> Boolean:
+    def __gt__(self, other: DictItems | Set | FrozenSet) -> Boolean:
         return true if self._poop_own_set() > set(_other_items(other)) else false
 
     def __str__(self) -> str:
