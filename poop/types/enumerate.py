@@ -27,7 +27,9 @@ class Enumerate(_IterableMixin, Object):
             yield Tuple(Int(i), item)
 
     def __iter__(self) -> Iterator[Tuple]:
-        return self._gen()
+        if self._iter is None:
+            self._iter = self._gen()
+        return self._iter
 
     def iter(self) -> Enumerate:
         return self

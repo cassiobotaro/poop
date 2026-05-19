@@ -49,11 +49,13 @@ def test_enumerate_poop_none_start_uses_default() -> None:
     assert pairs[0] == Tuple(Int(0), Str("a"))
 
 
-def test_enumerate_restartable() -> None:
+def test_enumerate_is_one_shot() -> None:
+    # Matches Python's enumerate: once exhausted, further iteration is empty.
     e = List(Int(1), Int(2)).enumerate()
     first = list(e)
     second = list(e)
-    assert first == second
+    assert first == [Tuple(Int(0), Int(1)), Tuple(Int(1), Int(2))]
+    assert second == []
 
 
 def test_enumerate_do() -> None:
@@ -197,10 +199,12 @@ def test_exhaustion_raises_stop_iteration() -> None:
         e.next()
 
 
-def test_do_remains_restartable() -> None:
+def test_do_consumes_one_shot() -> None:
+    # `.do()` iterates the Enumerate, consuming it; a second call yields nothing.
     e = List(Int(1), Int(2)).enumerate()
     seen_a: list[Tuple] = []
     e.do(lambda t: seen_a.append(t))
     seen_b: list[Tuple] = []
     e.do(lambda t: seen_b.append(t))
-    assert seen_a == seen_b == [Tuple(Int(0), Int(1)), Tuple(Int(1), Int(2))]
+    assert seen_a == [Tuple(Int(0), Int(1)), Tuple(Int(1), Int(2))]
+    assert seen_b == []

@@ -35,13 +35,14 @@ def test_filter_next_raises_stop_iteration_when_exhausted() -> None:
         f.next()
 
 
-def test_filter_iter_creates_fresh_generator_when_source_is_restartable() -> None:
+def test_filter_is_one_shot() -> None:
+    # Matches Python's filter: once exhausted, further iteration is empty.
     src = List(Int(1), Int(2), Int(3))
     f = Filter(src, lambda x: x._value > 1)
     first = list(f)
     second = list(f)
     assert first == [Int(2), Int(3)]
-    assert second == [Int(2), Int(3)]
+    assert second == []
 
 
 def test_filter_self_iter_returns_self() -> None:

@@ -24,7 +24,9 @@ class Filter(_IterableMixin, Object):
                 yield item
 
     def __iter__(self) -> Iterator[Any]:
-        return self._gen()
+        if self._iter is None:
+            self._iter = self._gen()
+        return self._iter
 
     def iter(self) -> Filter:
         return self

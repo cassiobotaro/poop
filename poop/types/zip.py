@@ -31,7 +31,9 @@ class Zip(_IterableMixin, Object):
             yield Tuple(*items)
 
     def __iter__(self) -> Iterator[Tuple]:
-        return self._gen()
+        if self._iter is None:
+            self._iter = self._gen()
+        return self._iter
 
     def iter(self) -> Zip:
         return self

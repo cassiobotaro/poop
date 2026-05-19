@@ -33,13 +33,14 @@ def test_map_next_raises_stop_iteration_when_exhausted() -> None:
         m.next()
 
 
-def test_map_iter_creates_fresh_generator_when_source_is_restartable() -> None:
+def test_map_is_one_shot() -> None:
+    # Matches Python's map: once exhausted, further iteration is empty.
     src = List(Int(1), Int(2))
     m = Map(src, lambda x: Int(x._value + 100))
     first = list(m)
     second = list(m)
     assert first == [Int(101), Int(102)]
-    assert second == [Int(101), Int(102)]
+    assert second == []
 
 
 def test_map_self_iter_returns_self() -> None:

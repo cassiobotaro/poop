@@ -52,11 +52,13 @@ def test_zip_returns_zip_instance() -> None:
     assert isinstance(List(Int(1)).zip(List(Int(2))), Zip)
 
 
-def test_zip_restartable() -> None:
+def test_zip_is_one_shot() -> None:
+    # Matches Python's zip: once exhausted, further iteration is empty.
     z = List(Int(1), Int(2)).zip(List(Str("a"), Str("b")))
     first = list(z)
     second = list(z)
-    assert first == second
+    assert first == [Tuple(Int(1), Str("a")), Tuple(Int(2), Str("b"))]
+    assert second == []
 
 
 def test_zip_do() -> None:
@@ -190,14 +192,15 @@ def test_exhaustion_raises_stop_iteration() -> None:
         z.next()
 
 
-def test_do_remains_restartable() -> None:
+def test_do_consumes_one_shot() -> None:
+    # `.do()` iterates the Zip, consuming it; a second call yields nothing.
     z = List(Int(1), Int(2)).zip(List(Int(10), Int(20)))
     seen_a: list[Tuple] = []
     z.do(lambda t: seen_a.append(t))
     seen_b: list[Tuple] = []
     z.do(lambda t: seen_b.append(t))
-    expected = [Tuple(Int(1), Int(10)), Tuple(Int(2), Int(20))]
-    assert seen_a == seen_b == expected
+    assert seen_a == [Tuple(Int(1), Int(10)), Tuple(Int(2), Int(20))]
+    assert seen_b == []
 
 
 def test_poop_zip_accepts_python_none_strict() -> None:

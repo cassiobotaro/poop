@@ -117,15 +117,18 @@ def test_empty_min_via_interpreter_surfaces_value_error() -> None:
 
 
 def test_min_max_on_enumerate() -> None:
-    pairs = Enumerate(List(*_ints(7, 3, 5)), Int(0))
-    assert pairs.min() == Tuple(Int(0), Int(7))
-    assert pairs.max() == Tuple(Int(2), Int(5))
+    # Map/Filter/Zip/Enumerate are one-shot iterators (matching Python),
+    # so .min() / .max() each need a fresh instance.
+    src = List(*_ints(7, 3, 5))
+    assert Enumerate(src, Int(0)).min() == Tuple(Int(0), Int(7))
+    assert Enumerate(src, Int(0)).max() == Tuple(Int(2), Int(5))
 
 
 def test_min_max_on_zip() -> None:
-    zipped = Zip(List(*_ints(3, 1, 2)), List(Str("a"), Str("b"), Str("c")))
-    assert zipped.min() == Tuple(Int(1), Str("b"))
-    assert zipped.max() == Tuple(Int(3), Str("a"))
+    nums = List(*_ints(3, 1, 2))
+    letters = List(Str("a"), Str("b"), Str("c"))
+    assert Zip(nums, letters).min() == Tuple(Int(1), Str("b"))
+    assert Zip(nums, letters).max() == Tuple(Int(3), Str("a"))
 
 
 def test_min_on_boolean_via_iteration() -> None:

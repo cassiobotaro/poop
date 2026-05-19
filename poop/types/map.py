@@ -23,7 +23,9 @@ class Map(_IterableMixin, Object):
             yield self._block(item)
 
     def __iter__(self) -> Iterator[Any]:
-        return self._gen()
+        if self._iter is None:
+            self._iter = self._gen()
+        return self._iter
 
     def iter(self) -> Map:
         return self
