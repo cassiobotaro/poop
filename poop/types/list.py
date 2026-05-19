@@ -61,6 +61,9 @@ class List(_ValueEqMixin, _IterableMixin, Object):
     def __mul__(self, other: Int) -> List:
         return List(*self._items * other._value)
 
+    def __rmul__(self, other: Int) -> List:
+        return List(*self._items * other._value)
+
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)
 
@@ -83,8 +86,12 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         self._items.append(obj)
         return none
 
-    def pop(self) -> Object:
-        return self._items.pop()
+    def pop(self, index: Int | NoneClass | None = None) -> Object:
+        from poop.types._unwrap import _is_absent
+
+        if _is_absent(index):
+            return self._items.pop()
+        return self._items.pop(index._value)  # ty: ignore[unresolved-attribute]
 
     def clear(self) -> NoneClass:
         self._items.clear()

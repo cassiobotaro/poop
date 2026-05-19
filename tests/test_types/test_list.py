@@ -371,3 +371,23 @@ def test_print_accepts_poop_none_kwargs(capsys: pytest.CaptureFixture[str]) -> N
     List(Int(1), Int(2)).print(sep=none, end=none, flush=none)
     captured = capsys.readouterr()
     assert captured.out == "1 2\n"
+
+
+# --- New: optional parameters (proposals 33 & 39, v1.2.0) ---
+
+
+def test_pop_at_index() -> None:
+    lst = List(Int(1), Int(2), Int(3))
+    assert lst.pop(Int(0)) == Int(1)
+    assert lst == List(Int(2), Int(3))
+
+
+def test_pop_with_poop_none_index() -> None:
+    lst = List(Int(1), Int(2))
+    assert lst.pop(none) == Int(2)
+
+
+def test_rmul_returns_repeated_list() -> None:
+    assert List(Int(1), Int(2)).__rmul__(Int(3)) == List(
+        Int(1), Int(2), Int(1), Int(2), Int(1), Int(2)
+    )
