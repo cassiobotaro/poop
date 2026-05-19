@@ -120,8 +120,10 @@ class Dict(_ValueEqMixin, Object):
     def items(self) -> DictItems:
         return DictItems(self)
 
-    def pop(self, key: Object) -> Object:
-        return self._data.pop(key, none)
+    def pop(
+        self, key: Object, default: Object | NoneClass = none
+    ) -> Object | NoneClass:
+        return self._data.pop(key, default)
 
     def popitem(self) -> Tuple:
         k, v = self._data.popitem()

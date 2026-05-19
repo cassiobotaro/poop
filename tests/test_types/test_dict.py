@@ -314,3 +314,13 @@ def test_fromkeys_with_explicit_value() -> None:
 def test_fromkeys_empty_keys() -> None:
     result = Dict.fromkeys(List())
     assert result.len() == Int(0)
+
+
+# --- New: explicit default for pop (proposal 32, v1.2.0) ---
+
+
+def test_pop_with_explicit_default() -> None:
+    d = Dict()
+    d.at_put(Int(1), Int(10))
+    assert d.pop(Int(99), Str("missing")) == Str("missing")
+    assert d.pop(Int(1), Str("missing")) == Int(10)
