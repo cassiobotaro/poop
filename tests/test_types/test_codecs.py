@@ -124,12 +124,6 @@ def test_codec_info_decode_returns_tuple() -> None:
     assert decoded == Str("abc")
 
 
-def test_codec_info_incremental_classes() -> None:
-    info = Codecs.lookup(Str("utf-8"))
-    assert info.incrementalencoder is not None
-    assert info.incrementaldecoder is not None
-
-
 def test_codec_info_repr_includes_name() -> None:
     info = Codecs.lookup(Str("utf-8"))
     assert "utf-8" in str(info)

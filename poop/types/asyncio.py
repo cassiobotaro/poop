@@ -121,16 +121,3 @@ class AsyncIO:
     @staticmethod
     def ensure_future(coro_or_future: Any) -> Future:
         return Future(_asyncio.ensure_future(_as_coro(coro_or_future)))
-
-    @staticmethod
-    def new_event_loop() -> Any:
-        return _asyncio.new_event_loop()
-
-    @staticmethod
-    def set_event_loop(loop: Any) -> NoneClass:
-        _asyncio.set_event_loop(loop)
-        return none
-
-    @staticmethod
-    def get_event_loop() -> Any:
-        return _asyncio.get_event_loop()

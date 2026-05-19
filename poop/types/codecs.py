@@ -31,9 +31,9 @@ class CodecInfo:
     """Wraps Python's `codecs.CodecInfo` namedtuple.
 
     Exposes the codec name plus `.encode` / `.decode` shortcuts (each
-    returns `(result, length_consumed)` as a `Tuple`, matching CPython)
-    and the incremental class refs (`.incrementalencoder` /
-    `.incrementaldecoder`) for callers that need stateful streaming.
+    returns `(result, length_consumed)` as a `Tuple`, matching CPython).
+    Incremental codec construction is out of scope — those entry points
+    would expose raw CPython encoder/decoder classes.
     """
 
     __slots__ = ("_impl",)
@@ -52,14 +52,6 @@ class CodecInfo:
     def decode(self, obj: Bytes | Str, errors: Str | None = None) -> Tuple:
         result, length = self._impl.decode(_unwrap_arg(obj), _opt_errors(errors))
         return Tuple(_wrap_result(result), Int(length))
-
-    @property
-    def incrementalencoder(self) -> Any:
-        return self._impl.incrementalencoder
-
-    @property
-    def incrementaldecoder(self) -> Any:
-        return self._impl.incrementaldecoder
 
     def __str__(self) -> str:
         return f"<CodecInfo {self._impl.name}>"

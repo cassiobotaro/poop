@@ -118,17 +118,6 @@ def test_future_cancel_inside_loop() -> None:
     AsyncIO.run(caller())
 
 
-def test_event_loop_factory() -> None:
-    loop = AsyncIO.new_event_loop()
-    try:
-        from poop.types.none import none
-
-        assert AsyncIO.set_event_loop(loop) is none
-        assert AsyncIO.get_event_loop() is loop
-    finally:
-        loop.close()
-
-
 def test_asyncio_class_refs() -> None:
     assert AsyncIO.Future is Future
 
