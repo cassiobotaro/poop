@@ -222,6 +222,15 @@ class Re:
     UNICODE: ClassVar[Int] = Int(int(_re.UNICODE))
     LOCALE: ClassVar[Int] = Int(int(_re.LOCALE))
     DEBUG: ClassVar[Int] = Int(int(_re.DEBUG))
+    # Single-letter aliases mirroring `re.I` / `re.M` / etc., the form
+    # most regex tutorials and example code in the wild reach for.
+    I: ClassVar[Int] = IGNORECASE  # noqa: E741
+    M: ClassVar[Int] = MULTILINE
+    S: ClassVar[Int] = DOTALL
+    X: ClassVar[Int] = VERBOSE
+    A: ClassVar[Int] = ASCII
+    U: ClassVar[Int] = UNICODE
+    L: ClassVar[Int] = LOCALE  # noqa: E741
     NOFLAG: ClassVar[Int] = Int(int(_re.NOFLAG))
 
     Pattern: ClassVar[type[Pattern]] = Pattern

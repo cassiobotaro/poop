@@ -99,6 +99,9 @@ class OS:
     linesep: ClassVar[Str] = Str(_os.linesep)
     pathsep: ClassVar[Str] = Str(_os.pathsep)
     devnull: ClassVar[Str] = Str(_os.devnull)
+    curdir: ClassVar[Str] = Str(_os.curdir)
+    pardir: ClassVar[Str] = Str(_os.pardir)
+    extsep: ClassVar[Str] = Str(_os.extsep)
 
     # --- Random / CPU helpers ---
 
