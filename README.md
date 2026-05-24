@@ -120,8 +120,13 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`singleton.py`](examples/patterns/singleton.py) — Singleton (class-side cached instance)
 
 *Structural*
+- [`adapter.py`](examples/patterns/adapter.py) — Adapter
+- [`bridge.py`](examples/patterns/bridge.py) — Bridge
 - [`tree.py`](examples/patterns/tree.py) — Composite (replacing `isinstance`)
 - [`decorators.py`](examples/patterns/decorators.py) — Decorator (composition by delegation)
+- [`facade.py`](examples/patterns/facade.py) — Facade
+- [`flyweight.py`](examples/patterns/flyweight.py) — Flyweight (shared intrinsic state)
+- [`proxy.py`](examples/patterns/proxy.py) — Proxy (lazy-loading virtual proxy)
 
 *Behavioral*
 - [`observer.py`](examples/patterns/observer.py) — Observer
