@@ -111,15 +111,28 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`async_greeter.py`](examples/idiomatic/async_greeter.py) — `async def` + `await asyncio.sleep` (since v0.52.0)
 
 **Classic OO patterns** (Sandi Metz / GoF) ([`examples/patterns/`](examples/patterns/))
-- [`null_customer.py`](examples/patterns/null_customer.py) — Null Object
-- [`discounts.py`](examples/patterns/discounts.py) — Strategy
-- [`door.py`](examples/patterns/door.py) — State
-- [`payroll.py`](examples/patterns/payroll.py) — polymorphism replacing `if employee.type == ...`
-- [`tree.py`](examples/patterns/tree.py) — Composite replacing `isinstance`
+
+*Creational*
+- [`abstract_factory.py`](examples/patterns/abstract_factory.py) — Abstract Factory
+- [`builder.py`](examples/patterns/builder.py) — Builder
+- [`factory_method.py`](examples/patterns/factory_method.py) — Factory Method
+- [`prototype.py`](examples/patterns/prototype.py) — Prototype (`copy.copy`)
+- [`singleton.py`](examples/patterns/singleton.py) — Singleton (class-side cached instance)
+
+*Structural*
+- [`tree.py`](examples/patterns/tree.py) — Composite (replacing `isinstance`)
 - [`decorators.py`](examples/patterns/decorators.py) — Decorator (composition by delegation)
+
+*Behavioral*
 - [`observer.py`](examples/patterns/observer.py) — Observer
+- [`door.py`](examples/patterns/door.py) — State
+- [`discounts.py`](examples/patterns/discounts.py) — Strategy
 - [`template_method.py`](examples/patterns/template_method.py) — Template Method
 - [`visitor.py`](examples/patterns/visitor.py) — Visitor
+
+*Other OO refactors (Fowler / Metz)*
+- [`null_customer.py`](examples/patterns/null_customer.py) — Null Object
+- [`payroll.py`](examples/patterns/payroll.py) — polymorphism replacing `if employee.type == ...`
 - [`house_jack_built.py`](examples/patterns/house_jack_built.py) — recursive composition refactor
 
 ## Type annotations
