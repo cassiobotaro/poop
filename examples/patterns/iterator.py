@@ -1,0 +1,57 @@
+"""
+Iterator — walk a collection without exposing how it is stored
+
+A `Playlist` keeps its songs privately and hands out a
+`PlaylistIterator` that exposes only `has_next` and `next`. The caller
+walks the songs through that cursor and never touches the underlying
+list — swap the storage and the traversal code is unchanged.
+
+Compare with the procedural Python version, which reaches straight
+into the structure with an index:
+
+    i = 0
+    while i < len(playlist.songs):
+        play(playlist.songs[i])
+        i += 1
+
+POOP forbids `while`, `len`, and `[]` indexing. The iterator object
+holds the cursor; a `while_true` block drives it by sending
+`has_next`/`next`, so the loop variable lives inside the iterator, not
+the caller.
+
+Smalltalk:
+    PlaylistIterator>>hasNext ^position < songs size
+    PlaylistIterator>>next
+        | song | song := songs at: position.
+        position := position + 1. ^song
+
+    [iterator hasNext] whileTrue: [Transcript showCr: iterator next]
+"""
+
+
+class Playlist:
+    def __init__(self, songs):
+        self._songs = songs
+
+    def iterator(self):
+        return PlaylistIterator(self._songs)
+
+
+class PlaylistIterator:
+    def __init__(self, songs):
+        self._songs = songs
+        self._position = 0
+
+    def has_next(self):
+        return self._position < self._songs.len()
+
+    def next(self):
+        song = self._songs.at(self._position)
+        self._position = self._position + 1
+        return song
+
+
+playlist = Playlist(["Imagine", "Hey Jude", "Yesterday"])
+cursor = playlist.iterator()
+
+(lambda: cursor.has_next()).while_true(lambda: cursor.next().print())

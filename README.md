@@ -129,6 +129,12 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`proxy.py`](examples/patterns/proxy.py) — Proxy (lazy-loading virtual proxy)
 
 *Behavioral*
+- [`chain_of_responsibility.py`](examples/patterns/chain_of_responsibility.py) — Chain of Responsibility
+- [`command.py`](examples/patterns/command.py) — Command (with undo)
+- [`interpreter.py`](examples/patterns/interpreter.py) — Interpreter
+- [`iterator.py`](examples/patterns/iterator.py) — Iterator
+- [`mediator.py`](examples/patterns/mediator.py) — Mediator
+- [`memento.py`](examples/patterns/memento.py) — Memento
 - [`observer.py`](examples/patterns/observer.py) — Observer
 - [`door.py`](examples/patterns/door.py) — State
 - [`discounts.py`](examples/patterns/discounts.py) — Strategy
