@@ -40,6 +40,9 @@ across the v1.0.x and v1.1.x cycles:
   Singleton, Adapter, Bridge, Facade, Flyweight, Proxy, Chain of
   Responsibility, Command, Interpreter, Iterator, Mediator, Memento)
   added to `examples/patterns/` → v1.1.23.
+- Non-GoF OO pattern examples added — Specification (Evans/Fowler),
+  Money value object (Fowler), and Execute Around Method (Beck) in
+  `examples/patterns/` → v1.1.24.
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
