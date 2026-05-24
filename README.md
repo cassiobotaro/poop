@@ -141,9 +141,12 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`template_method.py`](examples/patterns/template_method.py) — Template Method
 - [`visitor.py`](examples/patterns/visitor.py) — Visitor
 
-*Other OO refactors (Fowler / Metz)*
+*Other OO patterns (Fowler / Beck / Evans / Metz)*
 - [`null_customer.py`](examples/patterns/null_customer.py) — Null Object
 - [`payroll.py`](examples/patterns/payroll.py) — polymorphism replacing `if employee.type == ...`
+- [`specification.py`](examples/patterns/specification.py) — Specification (composable rules replacing `and`/`or`/`not`)
+- [`money.py`](examples/patterns/money.py) — Money value object
+- [`execute_around.py`](examples/patterns/execute_around.py) — Execute Around Method
 - [`house_jack_built.py`](examples/patterns/house_jack_built.py) — recursive composition refactor
 
 ## Type annotations
