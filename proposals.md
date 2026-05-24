@@ -35,6 +35,11 @@ across the v1.0.x and v1.1.x cycles:
 - Doc consistency fixes (INFECTIONS.md `Dict views` path prefixes,
   MIGRATION.md `zoneinfo.TZPATH` described as attribute, not callable)
   → v1.1.22.
+- GoF pattern catalogue completed — examples for the 16 remaining
+  patterns (Factory Method, Abstract Factory, Builder, Prototype,
+  Singleton, Adapter, Bridge, Facade, Flyweight, Proxy, Chain of
+  Responsibility, Command, Interpreter, Iterator, Mediator, Memento)
+  added to `examples/patterns/` → v1.1.23.
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
