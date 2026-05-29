@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import ClassVar, Self
 
 from poop.types._unwrap import _opt_int
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -58,11 +58,11 @@ class BZ2Decompressor(Object):
 
     @property
     def eof(self) -> Boolean:
-        return true if self._impl.eof else false
+        return to_boolean(self._impl.eof)
 
     @property
     def needs_input(self) -> Boolean:
-        return true if self._impl.needs_input else false
+        return to_boolean(self._impl.needs_input)
 
     @property
     def unused_data(self) -> Bytes:

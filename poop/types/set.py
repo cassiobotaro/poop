@@ -3,14 +3,14 @@ from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.set_iterator import SetIterator
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.none import NoneClass
 
 _set = set  # alias to avoid shadowing by Set class name in annotations
@@ -75,16 +75,16 @@ class Set(_ValueEqMixin, _IterableMixin, Object):
         return none
 
     def isdisjoint(self, other: Set) -> Boolean:
-        return true if self._data.isdisjoint(other._data) else false
+        return to_boolean(self._data.isdisjoint(other._data))
 
     def issubset(self, other: Set) -> Boolean:
-        return true if self._data.issubset(other._data) else false
+        return to_boolean(self._data.issubset(other._data))
 
     def issuperset(self, other: Set) -> Boolean:
-        return true if self._data.issuperset(other._data) else false
+        return to_boolean(self._data.issuperset(other._data))
 
     def includes(self, obj: Object) -> Boolean:
-        return true if obj in self._data else false
+        return to_boolean(obj in self._data)
 
     def len(self) -> Int:
         return Int(len(self._data))

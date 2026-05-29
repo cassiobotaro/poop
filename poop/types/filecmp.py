@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 from typing import Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean, true
 from poop.types.dict import Dict
 from poop.types.list import List
 from poop.types.none import NoneClass, none
@@ -154,7 +154,7 @@ class Filecmp:
     @staticmethod
     def cmp(f1: Path | Str, f2: Path | Str, shallow: Boolean | None = None) -> Boolean:
         shallow_v = True if shallow is None else bool(shallow)
-        return true if _filecmp.cmp(_path_str(f1), _path_str(f2), shallow_v) else false
+        return to_boolean(_filecmp.cmp(_path_str(f1), _path_str(f2), shallow_v))
 
     @staticmethod
     def cmpfiles(

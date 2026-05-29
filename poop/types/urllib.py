@@ -7,7 +7,7 @@ from types import TracebackType
 from typing import Any, ClassVar, Self
 
 from poop.types._unwrap import _b, _kwargs_from, _opt_str
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -359,9 +359,8 @@ class Request(Object):
         return none
 
     def has_header(self, key: Str) -> Boolean:
-        from poop.types.boolean import false, true
 
-        return true if self._impl.has_header(key._value) else false
+        return to_boolean(self._impl.has_header(key._value))
 
     @property
     def full_url(self) -> Str:

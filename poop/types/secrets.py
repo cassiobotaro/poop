@@ -2,14 +2,14 @@ import secrets as _secrets
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._unwrap import _unwrap
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.object import Object
 from poop.types.string import Str
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
 
 
 class Secrets:
@@ -59,4 +59,4 @@ class Secrets:
 
     @staticmethod
     def compare_digest(a: Str | Bytes, b: Str | Bytes, /) -> Boolean:
-        return true if _secrets.compare_digest(a._value, b._value) else false
+        return to_boolean(_secrets.compare_digest(a._value, b._value))

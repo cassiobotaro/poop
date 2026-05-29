@@ -3,7 +3,7 @@ from __future__ import annotations
 import graphlib as _graphlib
 from typing import Any, ClassVar, cast
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.none import NoneClass, none
 from poop.types.tuple import Tuple
@@ -45,7 +45,7 @@ class TopologicalSorter:
         return none
 
     def is_active(self) -> Boolean:
-        return true if self._impl.is_active() else false
+        return to_boolean(self._impl.is_active())
 
     def get_ready(self) -> Tuple:
         return Tuple(*self._impl.get_ready())

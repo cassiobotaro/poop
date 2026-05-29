@@ -1,13 +1,13 @@
 import cmath as _cmath
 from typing import TYPE_CHECKING, ClassVar
 
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.none import NoneClass
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.tuple import Tuple
 
 
@@ -130,15 +130,15 @@ class CMath:
 
     @staticmethod
     def isfinite(x: Complex) -> Boolean:
-        return true if _cmath.isfinite(x._value) else false
+        return to_boolean(_cmath.isfinite(x._value))
 
     @staticmethod
     def isinf(x: Complex) -> Boolean:
-        return true if _cmath.isinf(x._value) else false
+        return to_boolean(_cmath.isinf(x._value))
 
     @staticmethod
     def isnan(x: Complex) -> Boolean:
-        return true if _cmath.isnan(x._value) else false
+        return to_boolean(_cmath.isnan(x._value))
 
     @staticmethod
     def isclose(

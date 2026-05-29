@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterable, Iterator
 from typing import Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
@@ -48,7 +48,7 @@ class WeakRef(_ImplWrapperMixin, Object):
         return self.get()
 
     def is_alive(self) -> Boolean:
-        return true if self._impl() is not None else false
+        return to_boolean(self._impl() is not None)
 
 
 class WeakSet(Object):
@@ -79,7 +79,7 @@ class WeakSet(Object):
         return none
 
     def includes(self, obj: Object) -> Boolean:
-        return true if obj in self._impl else false
+        return to_boolean(obj in self._impl)
 
     def __contains__(self, obj: object) -> bool:
         return obj in self._impl
@@ -128,7 +128,7 @@ class WeakKeyDictionary(Object):
         return self._impl.get(key, default)
 
     def includes(self, key: Object) -> Boolean:
-        return true if key in self._impl else false
+        return to_boolean(key in self._impl)
 
     def __contains__(self, key: object) -> bool:
         return key in self._impl
@@ -178,7 +178,7 @@ class WeakValueDictionary(Object):
         return self._impl.get(key, default)
 
     def includes(self, key: Object) -> Boolean:
-        return true if key in self._impl else false
+        return to_boolean(key in self._impl)
 
     def __contains__(self, key: object) -> bool:
         return key in self._impl

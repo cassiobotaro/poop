@@ -1,7 +1,7 @@
 import fnmatch as _fnmatch
 from typing import Any
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.list import List
 from poop.types.string import Str
 
@@ -13,11 +13,11 @@ class Fnmatch:
 
     @staticmethod
     def fnmatch(name: Str, pat: Str) -> Boolean:
-        return true if _fnmatch.fnmatch(name._value, pat._value) else false
+        return to_boolean(_fnmatch.fnmatch(name._value, pat._value))
 
     @staticmethod
     def fnmatchcase(name: Str, pat: Str) -> Boolean:
-        return true if _fnmatch.fnmatchcase(name._value, pat._value) else false
+        return to_boolean(_fnmatch.fnmatchcase(name._value, pat._value))
 
     @staticmethod
     def filter(names: Any, pat: Str) -> List:

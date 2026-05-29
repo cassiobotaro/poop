@@ -1,7 +1,7 @@
 import unicodedata as _unicodedata
 from typing import ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -30,7 +30,7 @@ class Unicodedata:
     @staticmethod
     def is_normalized(form: Str, unistr: Str) -> Boolean:
         ok = _unicodedata.is_normalized(form._value, unistr._value)  # ty: ignore[invalid-argument-type]
-        return true if ok else false
+        return to_boolean(ok)
 
     # Character properties -----------------------------------------------
 

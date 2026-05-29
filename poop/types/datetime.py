@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -464,16 +464,16 @@ class DateTime(_ImplWrapperMixin, _ValueEqMixin, Object):
         return hash(self._impl)
 
     def __lt__(self, other: DateTime) -> Boolean:
-        return true if self._impl < other._impl else false
+        return to_boolean(self._impl < other._impl)
 
     def __le__(self, other: DateTime) -> Boolean:
-        return true if self._impl <= other._impl else false
+        return to_boolean(self._impl <= other._impl)
 
     def __gt__(self, other: DateTime) -> Boolean:
-        return true if self._impl > other._impl else false
+        return to_boolean(self._impl > other._impl)
 
     def __ge__(self, other: DateTime) -> Boolean:
-        return true if self._impl >= other._impl else false
+        return to_boolean(self._impl >= other._impl)
 
 
 class Datetime:

@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.int import Int
     from poop.types.none import NoneClass
     from poop.types.string import Str
@@ -34,7 +34,7 @@ class Float(_ValueEqMixin, Object):
         return self if self._value <= other._value else other
 
     def is_integer(self) -> Boolean:
-        return true if self._value.is_integer() else false
+        return to_boolean(self._value.is_integer())
 
     def as_integer_ratio(self) -> Tuple:
         from poop.types.int import Int
@@ -131,22 +131,22 @@ class Float(_ValueEqMixin, Object):
         return _int(self._value)
 
     def __lt__(self, other: Float) -> Boolean:
-        return true if self._value < other._value else false
+        return to_boolean(self._value < other._value)
 
     def __le__(self, other: Float) -> Boolean:
-        return true if self._value <= other._value else false
+        return to_boolean(self._value <= other._value)
 
     def __gt__(self, other: Float) -> Boolean:
-        return true if self._value > other._value else false
+        return to_boolean(self._value > other._value)
 
     def __ge__(self, other: Float) -> Boolean:
-        return true if self._value >= other._value else false
+        return to_boolean(self._value >= other._value)
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.int import Int as _Int
 
         if isinstance(other, Float | _Int):
-            return true if self._value == other._value else false
+            return to_boolean(self._value == other._value)
         return false
 
     def __ne__(self, other: object) -> Boolean:

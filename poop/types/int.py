@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.bytes import Bytes
     from poop.types.float import Float
     from poop.types.none import NoneClass
@@ -187,22 +187,22 @@ class Int(_ValueEqMixin, Object):
         return self.__round__(ndigits)
 
     def __lt__(self, other: Int) -> Boolean:
-        return true if self._value < other._value else false
+        return to_boolean(self._value < other._value)
 
     def __le__(self, other: Int) -> Boolean:
-        return true if self._value <= other._value else false
+        return to_boolean(self._value <= other._value)
 
     def __gt__(self, other: Int) -> Boolean:
-        return true if self._value > other._value else false
+        return to_boolean(self._value > other._value)
 
     def __ge__(self, other: Int) -> Boolean:
-        return true if self._value >= other._value else false
+        return to_boolean(self._value >= other._value)
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.float import Float as _Float
 
         if isinstance(other, Int | _Float):
-            return true if self._value == other._value else false
+            return to_boolean(self._value == other._value)
         return false
 
     def __ne__(self, other: object) -> Boolean:

@@ -3,7 +3,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from poop.types._unwrap import _b
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.path import Path
@@ -118,4 +118,4 @@ class Glob:
     @staticmethod
     def has_magic(s: Str) -> Boolean:
         """Return `true` when `s` contains glob metacharacters."""
-        return true if _glob.has_magic(s._value) else false
+        return to_boolean(_glob.has_magic(s._value))

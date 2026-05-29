@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from poop.types._iterable_mixin import _MISSING
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.dict_items import DictItems
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_keys import DictKeys
@@ -16,7 +16,7 @@ from poop.types.object import Object
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.enumerate import Enumerate
     from poop.types.none import NoneClass
     from poop.types.zip import Zip
@@ -45,7 +45,7 @@ class Dict(_ValueEqMixin, Object):
         return self
 
     def includes(self, key: Object) -> Boolean:
-        return true if key in self._data else false
+        return to_boolean(key in self._data)
 
     @classmethod
     def fromkeys(

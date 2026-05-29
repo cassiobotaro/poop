@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_item_iterator import DictItemIterator
 from poop.types.dict_reverse_item_iterator import DictReverseItemIterator
 from poop.types.frozen_set import FrozenSet
@@ -15,7 +15,7 @@ from poop.types.set import Set
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.dict import Dict
 
 
@@ -62,7 +62,7 @@ class DictItems(_IterableMixin, Object):
         if len(pair._items) != 2:
             return false
         k, v = pair._items
-        return true if k in self._dict._data and self._dict._data[k] == v else false
+        return to_boolean(k in self._dict._data and self._dict._data[k] == v)
 
     def __contains__(self, item: object) -> bool:
         if not isinstance(item, Tuple) or len(item._items) != 2:
@@ -72,7 +72,7 @@ class DictItems(_IterableMixin, Object):
 
     def isdisjoint(self, other: DictItems | Set | FrozenSet) -> Boolean:
         own = set(self._dict._data.items())
-        return true if own.isdisjoint(_other_items(other)) else false
+        return to_boolean(own.isdisjoint(_other_items(other)))
 
     def mapping(self) -> MappingProxy:
         return MappingProxy(self._dict)
@@ -114,23 +114,23 @@ class DictItems(_IterableMixin, Object):
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, (DictItems, Set, FrozenSet)):
-            return true if self._poop_own_set() == set(_other_items(other)) else false
+            return to_boolean(self._poop_own_set() == set(_other_items(other)))
         return false
 
     def __ne__(self, other: object) -> Boolean:
         return false if bool(self.__eq__(other)) else true
 
     def __le__(self, other: DictItems | Set | FrozenSet) -> Boolean:
-        return true if self._poop_own_set() <= set(_other_items(other)) else false
+        return to_boolean(self._poop_own_set() <= set(_other_items(other)))
 
     def __lt__(self, other: DictItems | Set | FrozenSet) -> Boolean:
-        return true if self._poop_own_set() < set(_other_items(other)) else false
+        return to_boolean(self._poop_own_set() < set(_other_items(other)))
 
     def __ge__(self, other: DictItems | Set | FrozenSet) -> Boolean:
-        return true if self._poop_own_set() >= set(_other_items(other)) else false
+        return to_boolean(self._poop_own_set() >= set(_other_items(other)))
 
     def __gt__(self, other: DictItems | Set | FrozenSet) -> Boolean:
-        return true if self._poop_own_set() > set(_other_items(other)) else false
+        return to_boolean(self._poop_own_set() > set(_other_items(other)))
 
     def __str__(self) -> str:
         items = ", ".join(f"({k!r}, {v!r})" for k, v in self._dict._data.items())

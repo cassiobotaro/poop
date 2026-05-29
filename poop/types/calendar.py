@@ -1,7 +1,7 @@
 import calendar as _calendar
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean, true
 from poop.types.datetime import Date
 from poop.types.int import Int
 from poop.types.list import List
@@ -252,7 +252,7 @@ class CalendarNamespace:
 
     @staticmethod
     def isleap(year: Int) -> Boolean:
-        return true if _calendar.isleap(year._value) else false
+        return to_boolean(_calendar.isleap(year._value))
 
     @staticmethod
     def leapdays(y1: Int, y2: Int) -> Int:

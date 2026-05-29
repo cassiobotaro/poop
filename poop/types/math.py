@@ -1,13 +1,13 @@
 import math as _math
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.tuple import Tuple
 
 
@@ -247,15 +247,15 @@ class Math:
 
     @staticmethod
     def isfinite(x: Float) -> Boolean:
-        return true if _math.isfinite(x._value) else false
+        return to_boolean(_math.isfinite(x._value))
 
     @staticmethod
     def isinf(x: Float) -> Boolean:
-        return true if _math.isinf(x._value) else false
+        return to_boolean(_math.isinf(x._value))
 
     @staticmethod
     def isnan(x: Float) -> Boolean:
-        return true if _math.isnan(x._value) else false
+        return to_boolean(_math.isnan(x._value))
 
     @staticmethod
     def isclose(

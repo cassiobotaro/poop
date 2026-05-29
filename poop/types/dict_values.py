@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.dict_reverse_value_iterator import DictReverseValueIterator
 from poop.types.dict_value_iterator import DictValueIterator
 from poop.types.int import Int
@@ -12,7 +12,7 @@ from poop.types.mapping_proxy import MappingProxy
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.dict import Dict
 
 
@@ -45,7 +45,7 @@ class DictValues(_IterableMixin, Object):
         return DictReverseValueIterator(reversed(self._dict._data.values()))
 
     def includes(self, value: Object) -> Boolean:
-        return true if value in self._dict._data.values() else false
+        return to_boolean(value in self._dict._data.values())
 
     def __contains__(self, item: object) -> bool:
         return item in self._dict._data.values()

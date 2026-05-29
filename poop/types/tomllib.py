@@ -6,7 +6,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar
 
 from poop.types._bridge import bridge
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.datetime import Date, DateTime, Time
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -27,7 +27,7 @@ def _wrap_collection(value: list[Any] | dict[Any, Any]) -> Any:
 
 def _wrap(value: Any) -> Any:
     if isinstance(value, bool):
-        return true if value else false
+        return to_boolean(value)
     if isinstance(value, int):
         return Int(value)
     if isinstance(value, float):

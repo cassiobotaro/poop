@@ -31,9 +31,9 @@ class Object:
         return true
 
     def is_identical(self, other: Object) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if self is other else false
+        return to_boolean(self is other)
 
     def not_identical(self, other: Object) -> Boolean:
         from poop.types.boolean import false, true
@@ -68,20 +68,20 @@ class Object:
         return Int(id(self))
 
     def callable(self) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if builtins.callable(self) else false
+        return to_boolean(builtins.callable(self))
 
     def is_instance(self, type_: type) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if isinstance(self, type_) else false
+        return to_boolean(isinstance(self, type_))
 
     @classmethod
     def is_subclass(cls, other: type) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if issubclass(cls, other) else false
+        return to_boolean(issubclass(cls, other))
 
     def repr(self) -> Str:
         from poop.types.string import Str
@@ -111,9 +111,9 @@ class Object:
         return builtins.getattr(self, name._value, *default)
 
     def has_attr(self, symbol: Str) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if hasattr(self, symbol._value) else false
+        return to_boolean(hasattr(self, symbol._value))
 
     def set_attr(self, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
@@ -147,9 +147,9 @@ class Object:
         return str(self)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if self is other else false
+        return to_boolean(self is other)
 
     def __ne__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true

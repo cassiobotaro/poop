@@ -2,7 +2,7 @@ import shlex as _shlex
 from typing import Any
 
 from poop.types._unwrap import _b
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
@@ -54,7 +54,7 @@ class Shlex:
 
     @property
     def whitespace_split(self) -> Boolean:
-        return true if self._impl.whitespace_split else false
+        return to_boolean(self._impl.whitespace_split)
 
     @whitespace_split.setter
     def whitespace_split(self, value: Boolean) -> None:

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.float import Float
 from poop.types.int import Int
@@ -200,7 +200,7 @@ class Array(_ImplWrapperMixin, _ValueEqMixin, Object):
             unwrapped = _unwrap_value(self._impl.typecode, value)
         except TypeError:
             return false
-        return true if unwrapped in self._impl else false
+        return to_boolean(unwrapped in self._impl)
 
     def __str__(self) -> str:
         return str(self._impl)

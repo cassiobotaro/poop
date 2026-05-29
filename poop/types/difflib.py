@@ -4,7 +4,7 @@ from typing import Any, ClassVar
 
 from poop.types._bridge import bridge
 from poop.types._unwrap import _b, _kwargs_from
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -194,12 +194,12 @@ class HtmlDiff:
 def _is_character_junk(ch: Str, ws: Str | None = None) -> Boolean:
     """Mirror of `difflib.IS_CHARACTER_JUNK` (default whitespace check)."""
     ws_arg = " \t" if ws is None else ws._value
-    return true if _difflib.IS_CHARACTER_JUNK(ch._value, ws_arg) else false
+    return to_boolean(_difflib.IS_CHARACTER_JUNK(ch._value, ws_arg))
 
 
 def _is_line_junk(line: Str) -> Boolean:
     """Mirror of `difflib.IS_LINE_JUNK` (default: blank or '#'-prefixed)."""
-    return true if _difflib.IS_LINE_JUNK(line._value) else false
+    return to_boolean(_difflib.IS_LINE_JUNK(line._value))
 
 
 class Difflib:

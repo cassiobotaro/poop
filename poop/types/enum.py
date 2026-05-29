@@ -12,9 +12,9 @@ from poop.types.string import Str
 
 def _wrap_value(value: Any) -> Any:
     if isinstance(value, bool):
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if value else false
+        return to_boolean(value)
     if isinstance(value, int):
         return Int(value)
     if isinstance(value, float):

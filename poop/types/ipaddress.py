@@ -7,7 +7,7 @@ from typing import Any, ClassVar
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _b, _kwargs_from
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -71,31 +71,31 @@ class _AddressBase(_ImplWrapperMixin, _ValueEqMixin, Object):
 
     @property
     def is_private(self) -> Boolean:
-        return true if self._impl.is_private else false
+        return to_boolean(self._impl.is_private)
 
     @property
     def is_global(self) -> Boolean:
-        return true if self._impl.is_global else false
+        return to_boolean(self._impl.is_global)
 
     @property
     def is_multicast(self) -> Boolean:
-        return true if self._impl.is_multicast else false
+        return to_boolean(self._impl.is_multicast)
 
     @property
     def is_unspecified(self) -> Boolean:
-        return true if self._impl.is_unspecified else false
+        return to_boolean(self._impl.is_unspecified)
 
     @property
     def is_reserved(self) -> Boolean:
-        return true if self._impl.is_reserved else false
+        return to_boolean(self._impl.is_reserved)
 
     @property
     def is_loopback(self) -> Boolean:
-        return true if self._impl.is_loopback else false
+        return to_boolean(self._impl.is_loopback)
 
     @property
     def is_link_local(self) -> Boolean:
-        return true if self._impl.is_link_local else false
+        return to_boolean(self._impl.is_link_local)
 
     @property
     def version(self) -> Int:
@@ -115,16 +115,16 @@ class _AddressBase(_ImplWrapperMixin, _ValueEqMixin, Object):
         return _wrap_address(self._impl - other._value)
 
     def __lt__(self, other: _AddressBase) -> Boolean:
-        return true if self._impl < other._impl else false
+        return to_boolean(self._impl < other._impl)
 
     def __le__(self, other: _AddressBase) -> Boolean:
-        return true if self._impl <= other._impl else false
+        return to_boolean(self._impl <= other._impl)
 
     def __gt__(self, other: _AddressBase) -> Boolean:
-        return true if self._impl > other._impl else false
+        return to_boolean(self._impl > other._impl)
 
     def __ge__(self, other: _AddressBase) -> Boolean:
-        return true if self._impl >= other._impl else false
+        return to_boolean(self._impl >= other._impl)
 
     def __hash__(self) -> int:
         return hash(self._impl)
@@ -205,15 +205,15 @@ class _NetworkBase(_ImplWrapperMixin, _ValueEqMixin, Object):
 
     @property
     def is_private(self) -> Boolean:
-        return true if self._impl.is_private else false
+        return to_boolean(self._impl.is_private)
 
     @property
     def is_global(self) -> Boolean:
-        return true if self._impl.is_global else false
+        return to_boolean(self._impl.is_global)
 
     @property
     def is_multicast(self) -> Boolean:
-        return true if self._impl.is_multicast else false
+        return to_boolean(self._impl.is_multicast)
 
     def hosts(self) -> List:
         return List(*(_wrap_address(h) for h in self._impl.hosts()))
@@ -241,7 +241,7 @@ class _NetworkBase(_ImplWrapperMixin, _ValueEqMixin, Object):
         return _wrap_network(self._impl.supernet(**kwargs))
 
     def overlaps(self, other: _NetworkBase) -> Boolean:
-        return true if self._impl.overlaps(other._impl) else false
+        return to_boolean(self._impl.overlaps(other._impl))
 
     def compare_networks(self, other: _NetworkBase) -> Int:
         return Int(self._impl.compare_networks(other._impl))
@@ -252,10 +252,10 @@ class _NetworkBase(_ImplWrapperMixin, _ValueEqMixin, Object):
         )
 
     def subnet_of(self, other: _NetworkBase) -> Boolean:
-        return true if self._impl.subnet_of(other._impl) else false
+        return to_boolean(self._impl.subnet_of(other._impl))
 
     def supernet_of(self, other: _NetworkBase) -> Boolean:
-        return true if self._impl.supernet_of(other._impl) else false
+        return to_boolean(self._impl.supernet_of(other._impl))
 
     def __iter__(self) -> Iterator[_AddressBase]:
         for addr in self._impl:

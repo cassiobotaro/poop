@@ -4,7 +4,7 @@ import zlib as _zlib
 from typing import Any, ClassVar
 
 from poop.types._unwrap import _kwargs_from, _opt_int
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.object import Object
@@ -72,7 +72,7 @@ class Decompress(Object):
 
     @property
     def eof(self) -> Boolean:
-        return true if self._impl.eof else false
+        return to_boolean(self._impl.eof)
 
 
 class Zlib:

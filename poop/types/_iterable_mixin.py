@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.int import Int
 from poop.types.none import none
 
@@ -83,14 +83,10 @@ class _IterableMixin:
         return _builtins.max(self._iter_items(), **kwargs)
 
     def all(self, block: Callable[[Any], Any]) -> Any:
-        return (
-            true if _builtins.all(bool(block(x)) for x in self._iter_items()) else false
-        )
+        return to_boolean(_builtins.all(bool(block(x)) for x in self._iter_items()))
 
     def any(self, block: Callable[[Any], Any]) -> Any:
-        return (
-            true if _builtins.any(bool(block(x)) for x in self._iter_items()) else false
-        )
+        return to_boolean(_builtins.any(bool(block(x)) for x in self._iter_items()))
 
     def enumerate(self, start: Any = None) -> Any:
         from poop.types.enumerate import Enumerate

@@ -5,7 +5,7 @@ import logging.config as _logging_config
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._bridge import to_python
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.dict import Dict
 from poop.types.int import Int
 
@@ -164,7 +164,7 @@ class _LoggingMeta(type):
 
     @property
     def raiseExceptions(cls) -> Boolean:
-        return true if _logging.raiseExceptions else false
+        return to_boolean(_logging.raiseExceptions)
 
     @raiseExceptions.setter
     def raiseExceptions(cls, value: Boolean) -> None:
@@ -172,7 +172,7 @@ class _LoggingMeta(type):
 
     @property
     def logThreads(cls) -> Boolean:
-        return true if _logging.logThreads else false
+        return to_boolean(_logging.logThreads)
 
     @logThreads.setter
     def logThreads(cls, value: Boolean) -> None:
@@ -180,7 +180,7 @@ class _LoggingMeta(type):
 
     @property
     def logProcesses(cls) -> Boolean:
-        return true if _logging.logProcesses else false
+        return to_boolean(_logging.logProcesses)
 
     @logProcesses.setter
     def logProcesses(cls, value: Boolean) -> None:
@@ -188,7 +188,7 @@ class _LoggingMeta(type):
 
     @property
     def logMultiprocessing(cls) -> Boolean:
-        return true if _logging.logMultiprocessing else false
+        return to_boolean(_logging.logMultiprocessing)
 
     @logMultiprocessing.setter
     def logMultiprocessing(cls, value: Boolean) -> None:
@@ -196,7 +196,7 @@ class _LoggingMeta(type):
 
     @property
     def logAsyncioTasks(cls) -> Boolean:
-        return true if getattr(_logging, "logAsyncioTasks", False) else false
+        return to_boolean(getattr(_logging, "logAsyncioTasks", False))
 
     @logAsyncioTasks.setter
     def logAsyncioTasks(cls, value: Boolean) -> None:
@@ -366,7 +366,7 @@ class Logger(Object):
         return Int(self._impl.getEffectiveLevel())
 
     def isEnabledFor(self, level: Int) -> Boolean:
-        return true if self._impl.isEnabledFor(level._value) else false
+        return to_boolean(self._impl.isEnabledFor(level._value))
 
     def debug(self, msg: Str) -> NoneClass:
         self._impl.debug(msg._value)
@@ -417,7 +417,7 @@ class Logger(Object):
 
     @property
     def propagate(self) -> Boolean:
-        return true if self._impl.propagate else false
+        return to_boolean(self._impl.propagate)
 
     @propagate.setter
     def propagate(self, value: Boolean) -> None:

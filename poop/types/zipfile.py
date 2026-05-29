@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import Any, ClassVar, Self
 
 from poop.types._unwrap import _kwargs_from, _opt_int
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -62,7 +62,7 @@ class ZipInfo(Object):
 
     @property
     def is_dir(self) -> Boolean:
-        return true if self._impl.is_dir() else false
+        return to_boolean(self._impl.is_dir())
 
 
 class ZipFile(Object):
@@ -208,4 +208,4 @@ class Zipfile:
 
     @staticmethod
     def is_zipfile(filename: Path | Str) -> Boolean:
-        return true if _zipfile.is_zipfile(_path_str(filename)) else false
+        return to_boolean(_zipfile.is_zipfile(_path_str(filename)))

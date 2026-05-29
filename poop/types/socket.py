@@ -3,7 +3,7 @@ from __future__ import annotations
 import socket as _socket
 from typing import Any, ClassVar, Self
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.float import Float
 from poop.types.int import Int
@@ -247,7 +247,7 @@ class SocketNamespace:
 
     @staticmethod
     def has_dualstack_ipv6() -> Boolean:
-        return true if _socket.has_dualstack_ipv6() else false
+        return to_boolean(_socket.has_dualstack_ipv6())
 
     @staticmethod
     def getservbyname(servicename: Str, protocolname: Str | None = None) -> Int:

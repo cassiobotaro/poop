@@ -5,7 +5,7 @@ import html.entities as _html_entities
 import html.parser as _html_parser
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -105,4 +105,4 @@ class HTML:
 
     @staticmethod
     def has_entity(name: Str) -> Boolean:
-        return true if name._value in _html_entities.entitydefs else false
+        return to_boolean(name._value in _html_entities.entitydefs)

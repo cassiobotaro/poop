@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.int import Int
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
@@ -71,7 +71,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         return ListIterator(self._items)
 
     def includes(self, obj: Object) -> Boolean:
-        return true if obj in self._items else false
+        return to_boolean(obj in self._items)
 
     def __contains__(self, item: object) -> bool:
         return item in self._items

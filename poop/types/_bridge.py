@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
@@ -42,7 +42,7 @@ def to_poop(value: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one br
     if value is None:
         return none
     if isinstance(value, bool):
-        return true if value else false
+        return to_boolean(value)
     if isinstance(value, int):
         return Int(value)
     if isinstance(value, float):

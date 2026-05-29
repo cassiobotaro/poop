@@ -6,7 +6,7 @@ from typing import Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _b, _kwargs_from, _opt_str
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
@@ -172,13 +172,13 @@ class ConfigParser(_ImplWrapperMixin, Object):
         return List(*(Str(s) for s in self._impl.sections()))
 
     def has_section(self, section: Str) -> Boolean:
-        return true if self._impl.has_section(section._value) else false
+        return to_boolean(self._impl.has_section(section._value))
 
     def options(self, section: Str) -> List:
         return List(*(Str(o) for o in self._impl.options(section._value)))
 
     def has_option(self, section: Str, option: Str) -> Boolean:
-        return true if self._impl.has_option(section._value, option._value) else false
+        return to_boolean(self._impl.has_option(section._value, option._value))
 
     def items(self, section: Str | None = None) -> List:
         if section is None:
@@ -266,7 +266,7 @@ class ConfigParser(_ImplWrapperMixin, Object):
                 bool(fallback) if isinstance(fallback, Boolean) else fallback
             )
         result = self._impl.getboolean(section._value, option._value, **kwargs)
-        return true if result else false
+        return to_boolean(result)
 
     def defaults(self) -> Dict:
         result = Dict()
@@ -281,16 +281,14 @@ class ConfigParser(_ImplWrapperMixin, Object):
         return none
 
     def remove_section(self, section: Str) -> Boolean:
-        return true if self._impl.remove_section(section._value) else false
+        return to_boolean(self._impl.remove_section(section._value))
 
     def set(self, section: Str, option: Str, value: Str) -> NoneClass:
         self._impl.set(section._value, option._value, value._value)
         return none
 
     def remove_option(self, section: Str, option: Str) -> Boolean:
-        return (
-            true if self._impl.remove_option(section._value, option._value) else false
-        )
+        return to_boolean(self._impl.remove_option(section._value, option._value))
 
     def clear(self) -> NoneClass:
         self._impl.clear()

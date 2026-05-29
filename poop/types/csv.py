@@ -5,7 +5,7 @@ import io as _io
 from typing import Any, ClassVar
 
 from poop.types._unwrap import _kwargs_from, _opt_str
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
@@ -255,15 +255,13 @@ class Dialect(Object):
 
     @property
     def doublequote(self) -> Boolean:
-        from poop.types.boolean import false, true
 
-        return true if self._impl.doublequote else false
+        return to_boolean(self._impl.doublequote)
 
     @property
     def skipinitialspace(self) -> Boolean:
-        from poop.types.boolean import false, true
 
-        return true if self._impl.skipinitialspace else false
+        return to_boolean(self._impl.skipinitialspace)
 
     @property
     def quoting(self) -> Int:
@@ -283,9 +281,8 @@ class Sniffer(Object):
         return Dialect(self._impl.sniff(sample._value, **kwargs))
 
     def has_header(self, sample: Str) -> Boolean:
-        from poop.types.boolean import false, true
 
-        return true if self._impl.has_header(sample._value) else false
+        return to_boolean(self._impl.has_header(sample._value))
 
 
 class CSV:

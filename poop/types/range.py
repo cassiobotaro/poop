@@ -2,14 +2,14 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
 from poop.types.range_iterator import RangeIterator
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
@@ -68,7 +68,7 @@ class Range(_IterableMixin, Object):
         return List(*items[start_or_slice._value : stop._value : s])
 
     def includes(self, item: Int) -> Boolean:
-        return true if item._value in self._range() else false
+        return to_boolean(item._value in self._range())
 
     def count(self, value: Int) -> Int:
         return Int(self._range().count(value._value))

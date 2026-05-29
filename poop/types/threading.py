@@ -6,7 +6,7 @@ from typing import Any, ClassVar, Self
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _opt_timeout
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -44,7 +44,7 @@ class Thread(_ImplWrapperMixin, Object):
         return none
 
     def is_alive(self) -> Boolean:
-        return true if self._impl.is_alive() else false
+        return to_boolean(self._impl.is_alive())
 
     @property
     def name(self) -> Str:
@@ -61,7 +61,7 @@ class Thread(_ImplWrapperMixin, Object):
 
     @property
     def daemon(self) -> Boolean:
-        return true if self._impl.daemon else false
+        return to_boolean(self._impl.daemon)
 
 
 class Lock(Object):
@@ -81,14 +81,14 @@ class Lock(Object):
 
         b = _unwrap_bool(blocking, True)
         t = -1 if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
-        return true if self._impl.acquire(b, t) else false
+        return to_boolean(self._impl.acquire(b, t))
 
     def release(self) -> NoneClass:
         self._impl.release()
         return none
 
     def locked(self) -> Boolean:
-        return true if self._impl.locked() else false
+        return to_boolean(self._impl.locked())
 
     def __enter__(self) -> Self:
         self._impl.acquire()
@@ -115,7 +115,7 @@ class RLock(Object):
 
         b = _unwrap_bool(blocking, True)
         t = -1 if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
-        return true if self._impl.acquire(b, t) else false
+        return to_boolean(self._impl.acquire(b, t))
 
     def release(self) -> NoneClass:
         self._impl.release()
@@ -146,10 +146,10 @@ class Event(Object):
         return none
 
     def is_set(self) -> Boolean:
-        return true if self._impl.is_set() else false
+        return to_boolean(self._impl.is_set())
 
     def wait(self, timeout: Float | Int | None = None) -> Boolean:
-        return true if self._impl.wait(_opt_timeout(timeout)) else false
+        return to_boolean(self._impl.wait(_opt_timeout(timeout)))
 
 
 class Semaphore(Object):
@@ -170,7 +170,7 @@ class Semaphore(Object):
 
         b = _unwrap_bool(blocking, True)
         t = None if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
-        return true if self._impl.acquire(b, t) else false
+        return to_boolean(self._impl.acquire(b, t))
 
     def release(self) -> NoneClass:
         self._impl.release()
@@ -216,15 +216,15 @@ class Condition(Object):
         b = True if blocking is None else bool(blocking)
         t = _opt_timeout(timeout)
         if t is None:
-            return true if self._impl.acquire(b) else false
-        return true if self._impl.acquire(b, t) else false
+            return to_boolean(self._impl.acquire(b))
+        return to_boolean(self._impl.acquire(b, t))
 
     def release(self) -> NoneClass:
         self._impl.release()
         return none
 
     def wait(self, timeout: Float | Int | None = None) -> Boolean:
-        return true if self._impl.wait(_opt_timeout(timeout)) else false
+        return to_boolean(self._impl.wait(_opt_timeout(timeout)))
 
     def wait_for(
         self, predicate: Callable[[], Any], timeout: Float | Int | None = None
@@ -284,7 +284,7 @@ class Timer(Object):
         return none
 
     def is_alive(self) -> Boolean:
-        return true if self._impl.is_alive() else false
+        return to_boolean(self._impl.is_alive())
 
 
 class _Local(Object):
@@ -308,7 +308,7 @@ class _Local(Object):
         return self
 
     def includes(self, name: Str) -> Boolean:
-        return true if hasattr(self._impl, name._value) else false
+        return to_boolean(hasattr(self._impl, name._value))
 
 
 class Barrier(Object):
@@ -342,7 +342,7 @@ class Barrier(Object):
 
     @property
     def broken(self) -> Boolean:
-        return true if self._impl.broken else false
+        return to_boolean(self._impl.broken)
 
 
 class Threading:

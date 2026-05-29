@@ -1,4 +1,4 @@
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.boolean import false as false2
 from poop.types.boolean import true as true2
 from poop.types.none import none
@@ -201,3 +201,16 @@ def test_true_gt_false() -> None:
 
 def test_false_ge_false() -> None:
     assert (false >= false) is true
+
+
+def test_to_boolean_truthy_returns_true_singleton() -> None:
+    assert to_boolean(1) is true
+
+
+def test_to_boolean_falsy_returns_false_singleton() -> None:
+    assert to_boolean(0) is false
+
+
+def test_to_boolean_accepts_poop_boolean() -> None:
+    assert to_boolean(true) is true
+    assert to_boolean(false) is false

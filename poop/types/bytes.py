@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, ClassVar
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.bytes_iterator import BytesIterator
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.hash import Hash
     from poop.types.int import Int
     from poop.types.list import List
@@ -59,7 +59,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Bytes(self._value[start_or_slice._value : stop._value : s])
 
     def includes(self, byte: Int) -> Boolean:
-        return true if byte._value in self._value else false
+        return to_boolean(byte._value in self._value)
 
     def __contains__(self, item: object) -> bool:
         from poop.types.int import Int
@@ -186,28 +186,28 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         )
 
     def isalnum(self) -> Boolean:
-        return true if self._value.isalnum() else false
+        return to_boolean(self._value.isalnum())
 
     def isalpha(self) -> Boolean:
-        return true if self._value.isalpha() else false
+        return to_boolean(self._value.isalpha())
 
     def isascii(self) -> Boolean:
-        return true if self._value.isascii() else false
+        return to_boolean(self._value.isascii())
 
     def isdigit(self) -> Boolean:
-        return true if self._value.isdigit() else false
+        return to_boolean(self._value.isdigit())
 
     def islower(self) -> Boolean:
-        return true if self._value.islower() else false
+        return to_boolean(self._value.islower())
 
     def isspace(self) -> Boolean:
-        return true if self._value.isspace() else false
+        return to_boolean(self._value.isspace())
 
     def istitle(self) -> Boolean:
-        return true if self._value.istitle() else false
+        return to_boolean(self._value.istitle())
 
     def isupper(self) -> Boolean:
-        return true if self._value.isupper() else false
+        return to_boolean(self._value.isupper())
 
     def join(self, parts: List) -> Bytes:
         pieces: list[_bytes] = [p._value for p in parts if isinstance(p, Bytes)]  # type: ignore[unresolved-attribute]

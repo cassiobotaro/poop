@@ -3,7 +3,7 @@ from __future__ import annotations
 import gc as _gc
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
@@ -13,7 +13,7 @@ from poop.types.tuple import Tuple
 
 def _wrap_value(value: Any) -> Any:
     if isinstance(value, bool):
-        return true if value else false
+        return to_boolean(value)
     if isinstance(value, int):
         return Int(value)
     if isinstance(value, str):
@@ -46,7 +46,7 @@ class _GCNamespace:
         return none
 
     def isenabled(self) -> Boolean:
-        return true if _gc.isenabled() else false
+        return to_boolean(_gc.isenabled())
 
     def collect(self, generation: Int | None = None) -> Int:
         if generation is None:

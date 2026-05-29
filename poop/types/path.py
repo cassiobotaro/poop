@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._unwrap import _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.bytes import Bytes
     from poop.types.int import Int
     from poop.types.map import Map
@@ -94,19 +94,19 @@ class Path(_ValueEqMixin, Object):
         return Int(self._path.write_bytes(data._value))
 
     def exists(self) -> Boolean:
-        return true if self._path.exists() else false
+        return to_boolean(self._path.exists())
 
     def is_file(self) -> Boolean:
-        return true if self._path.is_file() else false
+        return to_boolean(self._path.is_file())
 
     def is_dir(self) -> Boolean:
-        return true if self._path.is_dir() else false
+        return to_boolean(self._path.is_dir())
 
     def is_symlink(self) -> Boolean:
-        return true if self._path.is_symlink() else false
+        return to_boolean(self._path.is_symlink())
 
     def is_absolute(self) -> Boolean:
-        return true if self._path.is_absolute() else false
+        return to_boolean(self._path.is_absolute())
 
     def mkdir(
         self,
@@ -242,16 +242,16 @@ class Path(_ValueEqMixin, Object):
         return Path._from_pathlib(self._path / target)
 
     def __lt__(self, other: Path) -> Boolean:
-        return true if self._path < other._path else false
+        return to_boolean(self._path < other._path)
 
     def __le__(self, other: Path) -> Boolean:
-        return true if self._path <= other._path else false
+        return to_boolean(self._path <= other._path)
 
     def __gt__(self, other: Path) -> Boolean:
-        return true if self._path > other._path else false
+        return to_boolean(self._path > other._path)
 
     def __ge__(self, other: Path) -> Boolean:
-        return true if self._path >= other._path else false
+        return to_boolean(self._path >= other._path)
 
     def __hash__(self) -> int:
         return hash(self._path)

@@ -64,16 +64,16 @@ class Boolean(Object, ABC):
     def __str__(self) -> str: ...
 
     def __lt__(self, other: Boolean) -> Boolean:
-        return true if bool(self) < bool(other) else false
+        return to_boolean(bool(self) < bool(other))
 
     def __le__(self, other: Boolean) -> Boolean:
-        return true if bool(self) <= bool(other) else false
+        return to_boolean(bool(self) <= bool(other))
 
     def __gt__(self, other: Boolean) -> Boolean:
-        return true if bool(self) > bool(other) else false
+        return to_boolean(bool(self) > bool(other))
 
     def __ge__(self, other: Boolean) -> Boolean:
-        return true if bool(self) >= bool(other) else false
+        return to_boolean(bool(self) >= bool(other))
 
 
 @final
@@ -192,6 +192,11 @@ class _FalseClass(Boolean):
 
 true: Boolean = _TrueClass()
 false: Boolean = _FalseClass()
+
+
+def to_boolean(value: object) -> Boolean:
+    """Map any Python truth value onto the POOP `Boolean` singletons."""
+    return true if value else false
 
 
 Boolean.__module__ = "builtins"

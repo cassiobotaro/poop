@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
 from poop.types.frozen_set import FrozenSet
@@ -14,7 +14,7 @@ from poop.types.object import Object
 from poop.types.set import Set
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.dict import Dict
 
 _KeySetLike = "DictKeys | Set | FrozenSet"
@@ -56,13 +56,13 @@ class DictKeys(_IterableMixin, Object):
         return DictReverseKeyIterator(reversed(self._dict._data))
 
     def includes(self, key: Object) -> Boolean:
-        return true if key in self._dict._data else false
+        return to_boolean(key in self._dict._data)
 
     def __contains__(self, item: object) -> bool:
         return item in self._dict._data
 
     def isdisjoint(self, other: DictKeys | Set | FrozenSet) -> Boolean:
-        return true if self._dict._data.keys().isdisjoint(_other_keys(other)) else false
+        return to_boolean(self._dict._data.keys().isdisjoint(_other_keys(other)))
 
     def mapping(self) -> MappingProxy:
         return MappingProxy(self._dict)
@@ -104,16 +104,16 @@ class DictKeys(_IterableMixin, Object):
         return false if bool(self.__eq__(other)) else true
 
     def __le__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
-        return true if self._dict._data.keys() <= set(_other_keys(other)) else false
+        return to_boolean(self._dict._data.keys() <= set(_other_keys(other)))
 
     def __lt__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
-        return true if self._dict._data.keys() < set(_other_keys(other)) else false
+        return to_boolean(self._dict._data.keys() < set(_other_keys(other)))
 
     def __ge__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
-        return true if self._dict._data.keys() >= set(_other_keys(other)) else false
+        return to_boolean(self._dict._data.keys() >= set(_other_keys(other)))
 
     def __gt__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
-        return true if self._dict._data.keys() > set(_other_keys(other)) else false
+        return to_boolean(self._dict._data.keys() > set(_other_keys(other)))
 
     def __str__(self) -> str:
         items = ", ".join(repr(k) for k in self._dict._data)

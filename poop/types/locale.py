@@ -24,9 +24,9 @@ def _wrap_locale_pair(pair: tuple[Any, Any]) -> Tuple:
 
 def _wrap_localeconv_value(value: Any) -> Any:
     if isinstance(value, bool):
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if value else false
+        return to_boolean(value)
     if isinstance(value, int):
         return Int(value)
     if isinstance(value, float):

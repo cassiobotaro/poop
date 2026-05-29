@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hmac as _hmac
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -74,4 +74,4 @@ class Hmac:
 
     @staticmethod
     def compare_digest(a: Str | Bytes, b: Str | Bytes, /) -> Boolean:
-        return true if _hmac.compare_digest(a._value, b._value) else false
+        return to_boolean(_hmac.compare_digest(a._value, b._value))

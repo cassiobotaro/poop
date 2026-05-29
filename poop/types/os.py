@@ -5,7 +5,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar
 
 from poop.types._bridge import bridge
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -51,7 +51,7 @@ class Environ:
 
     @staticmethod
     def has(key: Str) -> Boolean:
-        return true if key._value in _os.environ else false
+        return to_boolean(key._value in _os.environ)
 
     @staticmethod
     def keys() -> Set:

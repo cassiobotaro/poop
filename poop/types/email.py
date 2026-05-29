@@ -6,7 +6,7 @@ import email.policy as _email_policy
 import email.utils as _email_utils
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -104,7 +104,7 @@ class EmailMessage(Object):
         return none
 
     def is_multipart(self) -> Boolean:
-        return true if self._impl.is_multipart() else false
+        return to_boolean(self._impl.is_multipart())
 
     def at(self, key: Str) -> Str | NoneClass:
         val = self._impl.get(key._value)

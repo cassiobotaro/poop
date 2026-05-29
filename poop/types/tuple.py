@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.tuple_iterator import TupleIterator
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.int import Int
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
@@ -70,7 +70,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         return TupleIterator(self._items)
 
     def includes(self, obj: Object) -> Boolean:
-        return true if obj in self._items else false
+        return to_boolean(obj in self._items)
 
     def __contains__(self, item: object) -> bool:
         return item in self._items
@@ -94,22 +94,22 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
     def __lt__(self, other: Tuple) -> Boolean:
         a = cast("tuple[Any, ...]", self._items)
         b = cast("tuple[Any, ...]", other._items)
-        return true if a < b else false
+        return to_boolean(a < b)
 
     def __le__(self, other: Tuple) -> Boolean:
         a = cast("tuple[Any, ...]", self._items)
         b = cast("tuple[Any, ...]", other._items)
-        return true if a <= b else false
+        return to_boolean(a <= b)
 
     def __gt__(self, other: Tuple) -> Boolean:
         a = cast("tuple[Any, ...]", self._items)
         b = cast("tuple[Any, ...]", other._items)
-        return true if a > b else false
+        return to_boolean(a > b)
 
     def __ge__(self, other: Tuple) -> Boolean:
         a = cast("tuple[Any, ...]", self._items)
         b = cast("tuple[Any, ...]", other._items)
-        return true if a >= b else false
+        return to_boolean(a >= b)
 
     def __hash__(self) -> int:
         return hash(self._items)

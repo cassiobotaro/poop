@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest as _unittest
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
@@ -31,7 +31,7 @@ class TestResult(Object):
         return Int(self._impl.testsRun)
 
     def wasSuccessful(self) -> Boolean:
-        return true if self._impl.wasSuccessful() else false
+        return to_boolean(self._impl.wasSuccessful())
 
     def failure_count(self) -> Int:
         return Int(len(self._impl.failures))

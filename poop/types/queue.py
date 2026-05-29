@@ -4,7 +4,7 @@ import queue as _queue
 from typing import Any, ClassVar
 
 from poop.types._unwrap import _opt_timeout
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -48,10 +48,10 @@ class _BaseQueue(Object):
         return Int(self._impl.qsize())
 
     def empty(self) -> Boolean:
-        return true if self._impl.empty() else false
+        return to_boolean(self._impl.empty())
 
     def full(self) -> Boolean:
-        return true if self._impl.full() else false
+        return to_boolean(self._impl.full())
 
 
 class Queue(_BaseQueue):
@@ -133,7 +133,7 @@ class SimpleQueue(Object):
         return Int(self._impl.qsize())
 
     def empty(self) -> Boolean:
-        return true if self._impl.empty() else false
+        return to_boolean(self._impl.empty())
 
 
 class QueueNamespace:

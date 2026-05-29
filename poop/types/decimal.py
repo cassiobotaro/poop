@@ -7,7 +7,7 @@ from typing import Any, ClassVar
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -73,16 +73,16 @@ class Decimal(_ImplWrapperMixin, _ValueEqMixin, Object):
         return hash(self._impl)
 
     def __lt__(self, other: Decimal) -> Boolean:
-        return true if self._impl < other._impl else false
+        return to_boolean(self._impl < other._impl)
 
     def __le__(self, other: Decimal) -> Boolean:
-        return true if self._impl <= other._impl else false
+        return to_boolean(self._impl <= other._impl)
 
     def __gt__(self, other: Decimal) -> Boolean:
-        return true if self._impl > other._impl else false
+        return to_boolean(self._impl > other._impl)
 
     def __ge__(self, other: Decimal) -> Boolean:
-        return true if self._impl >= other._impl else false
+        return to_boolean(self._impl >= other._impl)
 
     def quantize(
         self, exp: Decimal, rounding: Str | NoneClass | None = None
@@ -107,19 +107,19 @@ class Decimal(_ImplWrapperMixin, _ValueEqMixin, Object):
         return Tuple(Int(n), Int(d))
 
     def is_finite(self) -> Boolean:
-        return true if self._impl.is_finite() else false
+        return to_boolean(self._impl.is_finite())
 
     def is_infinite(self) -> Boolean:
-        return true if self._impl.is_infinite() else false
+        return to_boolean(self._impl.is_infinite())
 
     def is_nan(self) -> Boolean:
-        return true if self._impl.is_nan() else false
+        return to_boolean(self._impl.is_nan())
 
     def is_signed(self) -> Boolean:
-        return true if self._impl.is_signed() else false
+        return to_boolean(self._impl.is_signed())
 
     def is_zero(self) -> Boolean:
-        return true if self._impl.is_zero() else false
+        return to_boolean(self._impl.is_zero())
 
     def sqrt(self) -> Decimal:
         return Decimal._from_impl(self._impl.sqrt())
@@ -237,8 +237,8 @@ class Decimal_:
     MAX_EMAX: ClassVar[Int] = Int(_decimal.MAX_EMAX)
     MIN_EMIN: ClassVar[Int] = Int(_decimal.MIN_EMIN)
     MIN_ETINY: ClassVar[Int] = Int(_decimal.MIN_ETINY)
-    HAVE_THREADS: ClassVar[Boolean] = true if _decimal.HAVE_THREADS else false
-    HAVE_CONTEXTVAR: ClassVar[Boolean] = true if _decimal.HAVE_CONTEXTVAR else false
+    HAVE_THREADS: ClassVar[Boolean] = to_boolean(_decimal.HAVE_THREADS)
+    HAVE_CONTEXTVAR: ClassVar[Boolean] = to_boolean(_decimal.HAVE_CONTEXTVAR)
 
     @staticmethod
     def getcontext() -> Context:

@@ -4,7 +4,7 @@ import io as _io
 import pickle as _pickle
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -57,7 +57,7 @@ def _wrap(value: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one bran
     if value is None:
         return none
     if isinstance(value, bool):
-        return true if value else false
+        return to_boolean(value)
     if isinstance(value, int):
         return Int(value)
     if isinstance(value, float):

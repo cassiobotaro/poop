@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys as _sys
 from typing import Any
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
@@ -59,9 +59,9 @@ class _StructShim(Object):
             raise AttributeError(name)
         value = getattr(self._impl, name)
         if isinstance(value, bool):
-            from poop.types.boolean import false, true
+            from poop.types.boolean import to_boolean
 
-            return true if value else false
+            return to_boolean(value)
         if isinstance(value, int):
             return Int(value)
         if isinstance(value, float):
@@ -103,7 +103,7 @@ class Stdout(Object):
         return none
 
     def isatty(self) -> Boolean:
-        return true if self._stream.isatty() else false
+        return to_boolean(self._stream.isatty())
 
 
 class Stdin(Object):
@@ -128,7 +128,7 @@ class Stdin(Object):
         return List(*(Str(line) for line in self._stream.readlines()))
 
     def isatty(self) -> Boolean:
-        return true if self._stream.isatty() else false
+        return to_boolean(self._stream.isatty())
 
     def __iter__(self) -> Any:
         for line in self._stream:

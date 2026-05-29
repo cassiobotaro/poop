@@ -36,9 +36,9 @@ class Map(_IterableMixin, Object):
         return next(self._iter)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if self is other else false
+        return to_boolean(self is other)
 
     def __ne__(self, other: object) -> Boolean:
         from poop.types.boolean import false, true

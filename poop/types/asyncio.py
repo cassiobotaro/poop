@@ -4,7 +4,7 @@ import asyncio as _asyncio
 import inspect as _inspect
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -31,10 +31,10 @@ class Future(Object):
         self._impl = impl
 
     def done(self) -> Boolean:
-        return true if self._impl.done() else false
+        return to_boolean(self._impl.done())
 
     def cancelled(self) -> Boolean:
-        return true if self._impl.cancelled() else false
+        return to_boolean(self._impl.cancelled())
 
     def result(self) -> Object:
         from poop.types._bridge import to_poop
@@ -47,7 +47,7 @@ class Future(Object):
         return to_poop(self._impl.exception())
 
     def cancel(self) -> Boolean:
-        return true if self._impl.cancel() else false
+        return to_boolean(self._impl.cancel())
 
 
 class AsyncIO:

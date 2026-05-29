@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct as _struct
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.float import Float
@@ -28,7 +28,7 @@ def _unwrap_value(value: Any) -> Any:
 
 def _wrap_value(value: Any) -> Object:
     if isinstance(value, bool):
-        return true if value else false
+        return to_boolean(value)
     if isinstance(value, int):
         return Int(value)
     if isinstance(value, float):

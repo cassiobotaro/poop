@@ -5,7 +5,7 @@ from typing import Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.float import Float
 from poop.types.fractions import Fraction
 from poop.types.int import Int
@@ -40,7 +40,7 @@ def _wrap_result(value: Any) -> Any:
     # float depending on the data; `mode`/`multimode` return whatever
     # the data carries.
     if isinstance(value, bool):
-        return true if value else false
+        return to_boolean(value)
     if isinstance(value, float):
         return Float(value)
     if isinstance(value, int):
@@ -141,7 +141,7 @@ class NormalDist(_ImplWrapperMixin):
     def __eq__(self, other: object) -> Boolean:
         if not isinstance(other, NormalDist):
             return false
-        return true if self._impl == other._impl else false
+        return to_boolean(self._impl == other._impl)
 
     def __ne__(self, other: object) -> Boolean:
         if not isinstance(other, NormalDist):

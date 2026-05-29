@@ -2,7 +2,7 @@ import pprint as _pprint
 from typing import Any
 
 from poop.types._unwrap import _b
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.string import Str
@@ -55,10 +55,10 @@ class PrettyPrinter:
         return Str(self._impl.pformat(obj))
 
     def isreadable(self, obj: Any) -> Boolean:
-        return true if self._impl.isreadable(obj) else false
+        return to_boolean(self._impl.isreadable(obj))
 
     def isrecursive(self, obj: Any) -> Boolean:
-        return true if self._impl.isrecursive(obj) else false
+        return to_boolean(self._impl.isrecursive(obj))
 
 
 class Pprint:
@@ -141,11 +141,11 @@ class Pprint:
 
     @staticmethod
     def isreadable(object: Any) -> Boolean:
-        return true if _pprint.isreadable(object) else false
+        return to_boolean(_pprint.isreadable(object))
 
     @staticmethod
     def isrecursive(object: Any) -> Boolean:
-        return true if _pprint.isrecursive(object) else false
+        return to_boolean(_pprint.isrecursive(object))
 
     @staticmethod
     def saferepr(object: Any) -> Str:

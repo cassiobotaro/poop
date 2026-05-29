@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass
@@ -169,11 +169,11 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
 
     def _cmp(self, other: Any, op: Any) -> Any:
         if isinstance(other, Fraction):
-            return true if op(self._impl, other._impl) else false
+            return to_boolean(op(self._impl, other._impl))
         if isinstance(other, Int):
-            return true if op(self._impl, other._value) else false
+            return to_boolean(op(self._impl, other._value))
         if isinstance(other, Float):
-            return true if op(float(self._impl), other._value) else false
+            return to_boolean(op(float(self._impl), other._value))
         return NotImplemented
 
     def __lt__(self, other: Any) -> Boolean:

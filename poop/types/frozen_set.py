@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.frozen_set_iterator import FrozenSetIterator
 from poop.types.int import Int
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
 
 _frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name
 
@@ -22,7 +22,7 @@ class FrozenSet(_ValueEqMixin, _IterableMixin, Object):
         self._data: _frozenset[Object] = _frozenset(elements)
 
     def includes(self, obj: Object) -> Boolean:
-        return true if obj in self._data else false
+        return to_boolean(obj in self._data)
 
     def len(self) -> Int:
         return Int(len(self._data))
@@ -46,13 +46,13 @@ class FrozenSet(_ValueEqMixin, _IterableMixin, Object):
         return FrozenSet(*self._data.symmetric_difference(other._data))
 
     def isdisjoint(self, other: FrozenSet) -> Boolean:
-        return true if self._data.isdisjoint(other._data) else false
+        return to_boolean(self._data.isdisjoint(other._data))
 
     def issubset(self, other: FrozenSet) -> Boolean:
-        return true if self._data.issubset(other._data) else false
+        return to_boolean(self._data.issubset(other._data))
 
     def issuperset(self, other: FrozenSet) -> Boolean:
-        return true if self._data.issuperset(other._data) else false
+        return to_boolean(self._data.issuperset(other._data))
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._data)

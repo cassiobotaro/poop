@@ -3,12 +3,12 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.object import Object
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.none import NoneClass
 
 
@@ -23,7 +23,7 @@ class Zip(_IterableMixin, Object):
         for source in sources:
             iter(source)
         self._sources = sources
-        self._strict: Boolean = true if _unwrap_bool(strict, False) else false
+        self._strict: Boolean = to_boolean(_unwrap_bool(strict, False))
         self._iter: Iterator[Tuple] | None = None
 
     def _gen(self) -> Iterator[Tuple]:
@@ -44,12 +44,11 @@ class Zip(_IterableMixin, Object):
         return next(self._iter)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return true if self is other else false
+        return to_boolean(self is other)
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
 
         return false if self is other else true
 

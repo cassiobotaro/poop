@@ -4,7 +4,7 @@ import ssl as _ssl
 from typing import Any, ClassVar
 
 from poop.types._unwrap import _kwargs_from
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -77,7 +77,7 @@ class SSLContext(Object):
 
     @property
     def check_hostname(self) -> Boolean:
-        return true if self._impl.check_hostname else false
+        return to_boolean(self._impl.check_hostname)
 
     @check_hostname.setter
     def check_hostname(self, value: Boolean) -> None:
@@ -139,13 +139,13 @@ class SSL:
     OP_SINGLE_ECDH_USE: ClassVar[Int] = Int(int(_ssl.OP_SINGLE_ECDH_USE))
 
     # HAS_* capability flags.
-    HAS_SSLv2: ClassVar[Boolean] = true if _ssl.HAS_SSLv2 else false
-    HAS_SSLv3: ClassVar[Boolean] = true if _ssl.HAS_SSLv3 else false
-    HAS_TLSv1: ClassVar[Boolean] = true if _ssl.HAS_TLSv1 else false
-    HAS_TLSv1_1: ClassVar[Boolean] = true if _ssl.HAS_TLSv1_1 else false
-    HAS_TLSv1_2: ClassVar[Boolean] = true if _ssl.HAS_TLSv1_2 else false
-    HAS_TLSv1_3: ClassVar[Boolean] = true if _ssl.HAS_TLSv1_3 else false
-    HAS_ALPN: ClassVar[Boolean] = true if _ssl.HAS_ALPN else false
+    HAS_SSLv2: ClassVar[Boolean] = to_boolean(_ssl.HAS_SSLv2)
+    HAS_SSLv3: ClassVar[Boolean] = to_boolean(_ssl.HAS_SSLv3)
+    HAS_TLSv1: ClassVar[Boolean] = to_boolean(_ssl.HAS_TLSv1)
+    HAS_TLSv1_1: ClassVar[Boolean] = to_boolean(_ssl.HAS_TLSv1_1)
+    HAS_TLSv1_2: ClassVar[Boolean] = to_boolean(_ssl.HAS_TLSv1_2)
+    HAS_TLSv1_3: ClassVar[Boolean] = to_boolean(_ssl.HAS_TLSv1_3)
+    HAS_ALPN: ClassVar[Boolean] = to_boolean(_ssl.HAS_ALPN)
 
     # Errors
     SSLError: ClassVar[type[BaseException]] = _ssl.SSLError

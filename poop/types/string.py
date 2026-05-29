@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from poop.types._iterable_mixin import _MISSING
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.object import Object
 from poop.types.str_iterator import StrIterator
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.bytes import Bytes
     from poop.types.dict import Dict
     from poop.types.int import Int
@@ -97,7 +97,7 @@ class Str(_ValueEqMixin, Object):
         return builtins.max(self, **kwargs)
 
     def includes(self, char: Str) -> Boolean:
-        return true if char._value in self._value else false
+        return to_boolean(char._value in self._value)
 
     def __contains__(self, item: object) -> bool:
         if isinstance(item, Str):
@@ -223,22 +223,22 @@ class Str(_ValueEqMixin, Object):
         )
 
     def isalpha(self) -> Boolean:
-        return true if self._value.isalpha() else false
+        return to_boolean(self._value.isalpha())
 
     def isdigit(self) -> Boolean:
-        return true if self._value.isdigit() else false
+        return to_boolean(self._value.isdigit())
 
     def isalnum(self) -> Boolean:
-        return true if self._value.isalnum() else false
+        return to_boolean(self._value.isalnum())
 
     def isspace(self) -> Boolean:
-        return true if self._value.isspace() else false
+        return to_boolean(self._value.isspace())
 
     def isupper(self) -> Boolean:
-        return true if self._value.isupper() else false
+        return to_boolean(self._value.isupper())
 
     def islower(self) -> Boolean:
-        return true if self._value.islower() else false
+        return to_boolean(self._value.islower())
 
     def casefold(self) -> Str:
         return Str(self._value.casefold())
@@ -271,22 +271,22 @@ class Str(_ValueEqMixin, Object):
         return Str(self._value.expandtabs(size))
 
     def isascii(self) -> Boolean:
-        return true if self._value.isascii() else false
+        return to_boolean(self._value.isascii())
 
     def isdecimal(self) -> Boolean:
-        return true if self._value.isdecimal() else false
+        return to_boolean(self._value.isdecimal())
 
     def isidentifier(self) -> Boolean:
-        return true if self._value.isidentifier() else false
+        return to_boolean(self._value.isidentifier())
 
     def isnumeric(self) -> Boolean:
-        return true if self._value.isnumeric() else false
+        return to_boolean(self._value.isnumeric())
 
     def isprintable(self) -> Boolean:
-        return true if self._value.isprintable() else false
+        return to_boolean(self._value.isprintable())
 
     def istitle(self) -> Boolean:
-        return true if self._value.istitle() else false
+        return to_boolean(self._value.istitle())
 
     def ljust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
         fill = _unwrap(fillchar, None)
@@ -375,16 +375,16 @@ class Str(_ValueEqMixin, Object):
         return Str(self._value * other._value)
 
     def __lt__(self, other: Str) -> Boolean:
-        return true if self._value < other._value else false
+        return to_boolean(self._value < other._value)
 
     def __le__(self, other: Str) -> Boolean:
-        return true if self._value <= other._value else false
+        return to_boolean(self._value <= other._value)
 
     def __gt__(self, other: Str) -> Boolean:
-        return true if self._value > other._value else false
+        return to_boolean(self._value > other._value)
 
     def __ge__(self, other: Str) -> Boolean:
-        return true if self._value >= other._value else false
+        return to_boolean(self._value >= other._value)
 
     def __hash__(self) -> int:
         return hash(self._value)

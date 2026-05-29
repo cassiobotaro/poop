@@ -5,7 +5,7 @@ from typing import Any, ClassVar, Self
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _opt_timeout
-from poop.types.boolean import Boolean, false, true
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -43,7 +43,7 @@ class Process(_ImplWrapperMixin, Object):
         return none
 
     def is_alive(self) -> Boolean:
-        return true if self._impl.is_alive() else false
+        return to_boolean(self._impl.is_alive())
 
     def terminate(self) -> NoneClass:
         self._impl.terminate()
@@ -102,10 +102,10 @@ class MPQueue(Object):
         return Int(self._impl.qsize())
 
     def empty(self) -> Boolean:
-        return true if self._impl.empty() else false
+        return to_boolean(self._impl.empty())
 
     def full(self) -> Boolean:
-        return true if self._impl.full() else false
+        return to_boolean(self._impl.full())
 
     def close(self) -> NoneClass:
         self._impl.close()

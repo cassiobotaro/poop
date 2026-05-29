@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
-from poop.types.boolean import false, true
+from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
 from poop.types.int import Int
@@ -11,7 +11,7 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from poop.types.boolean import Boolean, to_boolean
     from poop.types.dict import Dict
     from poop.types.dict_items import DictItems
     from poop.types.dict_keys import DictKeys
@@ -75,11 +75,11 @@ class MappingProxy(Object):
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, MappingProxy):
-            return true if self._dict == other._dict else false
+            return to_boolean(self._dict == other._dict)
         from poop.types.dict import Dict
 
         if isinstance(other, Dict):
-            return true if self._dict == other else false
+            return to_boolean(self._dict == other)
         return false
 
     def __ne__(self, other: object) -> Boolean:
