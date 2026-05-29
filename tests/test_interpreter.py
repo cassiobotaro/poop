@@ -4,7 +4,12 @@ from pathlib import Path
 import pytest
 
 from poop import Interpreter
-from poop.errors import ExecutionError, ParseError, ValidationError
+from poop.errors import (
+    ExecutionError,
+    ParseError,
+    TransformError,
+    ValidationError,
+)
 from poop.transformers.boolean import BooleanTransformer
 from poop.types.boolean import Boolean
 from poop.types.float import Float
@@ -46,6 +51,19 @@ def test_runtime_error_raises_execution_error() -> None:
 
 def test_custom_validators_replace_defaults() -> None:
     Interpreter(validators=[]).run_source("if True:\n    pass")
+
+
+def test_transformer_failure_raises_transform_error() -> None:
+    class BoomTransformer:
+        def transform(self, tree: ast.Module) -> ast.Module:
+            raise RuntimeError("boom")
+
+    with pytest.raises(TransformError) as exc_info:
+        Interpreter(transformers=[BoomTransformer()]).run_source("x = 1")
+    assert "boom" in str(exc_info.value)
+    assert "BoomTransformer" in str(exc_info.value)
+    assert exc_info.value.transformer == "BoomTransformer"
+    assert isinstance(exc_info.value.__cause__, RuntimeError)
 
 
 def test_run_file_reads_and_executes(tmp_path: Path) -> None:

@@ -2,7 +2,7 @@ import ast
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from poop.errors import ValidationError
+from poop.errors import TransformError, ValidationError
 from poop.executor import execute
 from poop.parser import parse
 from poop.transformers import DEFAULT_NAMESPACE, DEFAULT_TRANSFORMERS
@@ -62,5 +62,8 @@ class Interpreter:
         for validator in self._validators:
             validator.validate(tree)
         for transformer in self._transformers:
-            tree = transformer.transform(tree)
+            try:
+                tree = transformer.transform(tree)
+            except Exception as exc:
+                raise TransformError(str(exc), type(transformer).__name__) from exc
         return tree
