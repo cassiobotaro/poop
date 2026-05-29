@@ -109,9 +109,7 @@ class NormalDist(_ImplWrapperMixin):
         return Float(self._impl.overlap(other._impl))
 
     def quantiles(self, n: Int | None = None) -> List:
-        kwargs: dict[str, int] = {}
-        if n is not None:
-            kwargs["n"] = n._value
+        kwargs = _kwargs_from(n=n)
         return List(*(Float(q) for q in self._impl.quantiles(**kwargs)))
 
     # Affine arithmetic between NormalDist instances --------------------

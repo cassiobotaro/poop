@@ -3,6 +3,7 @@ from __future__ import annotations
 import struct as _struct
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -113,9 +114,7 @@ class Struct:
         buffer: Bytes | ByteArray | MemoryView,
         offset: Int | None = None,
     ) -> Tuple:
-        kwargs: dict[str, int] = {}
-        if offset is not None:
-            kwargs["offset"] = offset._value
+        kwargs = _kwargs_from(offset=offset)
         return _wrap_tuple(self._impl.unpack_from(_read_buffer(buffer), **kwargs))
 
     def iter_unpack(self, buffer: Bytes | ByteArray | MemoryView) -> List:
@@ -166,9 +165,7 @@ class StructNamespace:
         buffer: Bytes | ByteArray | MemoryView,
         offset: Int | None = None,
     ) -> Tuple:
-        kwargs: dict[str, int] = {}
-        if offset is not None:
-            kwargs["offset"] = offset._value
+        kwargs = _kwargs_from(offset=offset)
         return _wrap_tuple(
             _struct.unpack_from(format._value, _read_buffer(buffer), **kwargs)
         )
