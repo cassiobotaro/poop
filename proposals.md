@@ -43,6 +43,15 @@ across the v1.0.x and v1.1.x cycles:
 - Non-GoF OO pattern examples added — Specification (Evans/Fowler),
   Money value object (Fowler), and Execute Around Method (Beck) in
   `examples/patterns/` → v1.1.24.
+- Internal-quality refactoring batch (no user-facing change): the
+  `_ImplWrapperMixin` (now returning `Self`) adopted across the 11
+  wrapper modules that hand-wrote `_from_impl`; a `to_boolean()` helper
+  in `boolean.py` replacing the 253 `true if X else false` ternaries
+  spread over the type layer; transformer failures wrapped in a new
+  `TransformError` so every pipeline stage surfaces a domain error; and
+  `_kwargs_from` applied to the remaining pure optional-kwarg blocks
+  (`Struct`/`StructNamespace.unpack_from`, `NormalDist.quantiles`).
+  Pending next patch release.
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
