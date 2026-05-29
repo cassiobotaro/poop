@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid as _uuid
 from typing import TYPE_CHECKING, ClassVar, cast
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.bytes import Bytes
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     pass
 
 
-class UUID(_ValueEqMixin, Object):
+class UUID(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `uuid.UUID` as a POOP value.
 
     Instances are immutable. Construction mirrors `uuid.UUID(...)`
@@ -44,12 +45,6 @@ class UUID(_ValueEqMixin, Object):
         # The native `bytes` and `int` names are shadowed by parameters
         # above; build the uuid lazily with what we have.
         self._impl = _uuid.UUID(**kwargs)
-
-    @classmethod
-    def _from_impl(cls, impl: _uuid.UUID) -> UUID:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     # Representations -------------------------------------------------
 

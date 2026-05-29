@@ -2,6 +2,7 @@ import zoneinfo as _zoneinfo
 from collections.abc import Iterable
 from typing import ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types.none import NoneClass, none
 from poop.types.set import Set
 from poop.types.string import Str
@@ -16,7 +17,7 @@ def _tuple_of_str(items: Iterable[str]) -> Tuple:
     return Tuple(*(Str(s) for s in items))
 
 
-class ZoneInfo:
+class ZoneInfo(_ImplWrapperMixin):
     """Wraps Python's `zoneinfo.ZoneInfo` — an IANA timezone.
 
     `ZoneInfo(key)` resolves through the standard cache;
@@ -33,12 +34,6 @@ class ZoneInfo:
 
     def __init__(self, key: Str) -> None:
         self._impl = _zoneinfo.ZoneInfo(key._value)
-
-    @classmethod
-    def _from_impl(cls, impl: _zoneinfo.ZoneInfo) -> ZoneInfo:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @classmethod
     def no_cache(cls, key: Str) -> ZoneInfo:

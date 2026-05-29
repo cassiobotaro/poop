@@ -4,6 +4,7 @@ import datetime as _datetime
 import zoneinfo as _zoneinfo
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, true
@@ -23,7 +24,7 @@ def _opt_tz(tz: TimeZone | ZoneInfo | NoneClass | None) -> _datetime.tzinfo | No
     return tz._impl
 
 
-class TimeDelta(_ValueEqMixin, Object):
+class TimeDelta(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.timedelta` — a duration."""
 
     __slots__ = ("_impl",)
@@ -48,12 +49,6 @@ class TimeDelta(_ValueEqMixin, Object):
             hours=_unwrap(hours, 0),
             weeks=_unwrap(weeks, 0),
         )
-
-    @classmethod
-    def _from_impl(cls, impl: _datetime.timedelta) -> TimeDelta:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @property
     def days(self) -> Int:
@@ -99,7 +94,7 @@ class TimeDelta(_ValueEqMixin, Object):
         return hash(self._impl)
 
 
-class TimeZone(_ValueEqMixin, Object):
+class TimeZone(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.timezone` — a fixed UTC offset."""
 
     __slots__ = ("_impl",)
@@ -117,12 +112,6 @@ class TimeZone(_ValueEqMixin, Object):
             self._impl = _datetime.timezone(offset._impl)
         else:
             self._impl = _datetime.timezone(offset._impl, n)
-
-    @classmethod
-    def _from_impl(cls, impl: _datetime.timezone) -> TimeZone:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     def utcoffset(self, dt: DateTime | NoneClass | None = None) -> TimeDelta:
         impl_dt: _datetime.datetime | None = None
@@ -143,7 +132,7 @@ class TimeZone(_ValueEqMixin, Object):
 TimeZone.utc = TimeZone._from_impl(_datetime.UTC)
 
 
-class Date(_ValueEqMixin, Object):
+class Date(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.date`."""
 
     __slots__ = ("_impl",)
@@ -151,12 +140,6 @@ class Date(_ValueEqMixin, Object):
 
     def __init__(self, year: Int, month: Int, day: Int) -> None:
         self._impl = _datetime.date(year._value, month._value, day._value)
-
-    @classmethod
-    def _from_impl(cls, impl: _datetime.date) -> Date:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @classmethod
     def today(cls) -> Date:
@@ -227,7 +210,7 @@ class Date(_ValueEqMixin, Object):
         return hash(self._impl)
 
 
-class Time(_ValueEqMixin, Object):
+class Time(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.time`."""
 
     __slots__ = ("_impl",)
@@ -248,12 +231,6 @@ class Time(_ValueEqMixin, Object):
             microsecond=_unwrap(microsecond, 0),
             tzinfo=_opt_tz(tzinfo),
         )
-
-    @classmethod
-    def _from_impl(cls, impl: _datetime.time) -> Time:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @classmethod
     def fromisoformat(cls, s: Str) -> Time:
@@ -320,7 +297,7 @@ class Time(_ValueEqMixin, Object):
         return hash(self._impl)
 
 
-class DateTime(_ValueEqMixin, Object):
+class DateTime(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.datetime`."""
 
     __slots__ = ("_impl",)
@@ -347,12 +324,6 @@ class DateTime(_ValueEqMixin, Object):
             _unwrap(microsecond, 0),
             _opt_tz(tzinfo),
         )
-
-    @classmethod
-    def _from_impl(cls, impl: _datetime.datetime) -> DateTime:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @classmethod
     def now(cls, tz: TimeZone | ZoneInfo | NoneClass | None = None) -> DateTime:

@@ -5,6 +5,7 @@ import io as _io
 from contextlib import redirect_stdout
 from typing import Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.dict import Dict
 from poop.types.list import List
@@ -36,7 +37,7 @@ def _wrap_str_list(items: list[str]) -> List:
     return List(*(Str(s) for s in items))
 
 
-class Dircmp(Object):
+class Dircmp(_ImplWrapperMixin, Object):
     """Wraps Python's `filecmp.dircmp` for recursive directory comparison.
 
     `Dircmp(a, b, ignore=none, hide=none)` builds a comparison tree
@@ -65,12 +66,6 @@ class Dircmp(Object):
         if hide_list is not None:
             kwargs["hide"] = hide_list
         self._impl = _filecmp.dircmp(_path_str(a), _path_str(b), **kwargs)
-
-    @classmethod
-    def _from_impl(cls, impl: _filecmp.dircmp) -> Dircmp:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @property
     def left(self) -> Str:

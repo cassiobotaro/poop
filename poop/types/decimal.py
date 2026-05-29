@@ -4,6 +4,7 @@ import decimal as _decimal
 from types import TracebackType
 from typing import Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, true
@@ -28,7 +29,7 @@ def _to_decimal(value: Decimal | Int | Float | Str | Tuple) -> _decimal.Decimal:
     return _decimal.Decimal(value._value)
 
 
-class Decimal(_ValueEqMixin, Object):
+class Decimal(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `decimal.Decimal` — arbitrary-precision decimal
     arithmetic."""
 
@@ -37,12 +38,6 @@ class Decimal(_ValueEqMixin, Object):
 
     def __init__(self, value: Decimal | Int | Float | Str | Tuple) -> None:
         self._impl = _to_decimal(value)
-
-    @classmethod
-    def _from_impl(cls, impl: _decimal.Decimal) -> Decimal:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     def __add__(self, other: Decimal) -> Decimal:
         return Decimal._from_impl(self._impl + other._impl)

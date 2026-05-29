@@ -17,7 +17,7 @@ This mixin makes the bypass explicit: every wrapper gains a uniform
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Self
 
 
 class _ImplWrapperMixin:
@@ -26,7 +26,7 @@ class _ImplWrapperMixin:
     __slots__ = ()
 
     @classmethod
-    def _from_impl(cls, impl: Any) -> Any:
+    def _from_impl(cls, impl: Any) -> Self:
         obj = cls.__new__(cls)
         obj._impl = impl
         return obj

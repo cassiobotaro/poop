@@ -4,6 +4,7 @@ import array as _array
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.bytes import Bytes
@@ -63,7 +64,7 @@ def _initializer_iter(typecode: str, initializer: List | Bytes) -> Any:
     )
 
 
-class Array(_ValueEqMixin, Object):
+class Array(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `array.array` — a homogeneous, memory-compact
     sequence keyed by a single typecode.
 
@@ -85,12 +86,6 @@ class Array(_ValueEqMixin, Object):
             self._impl = _array.array(code)
         else:
             self._impl = _array.array(code, _initializer_iter(code, initializer))
-
-    @classmethod
-    def _from_impl(cls, impl: _array.array) -> Array:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @property
     def typecode(self) -> Str:

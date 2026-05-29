@@ -4,6 +4,7 @@ import ipaddress as _ipaddress
 from collections.abc import Iterator
 from typing import Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _b, _kwargs_from
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, true
@@ -44,7 +45,7 @@ def _wrap_interface(impl: Any) -> IPv4Interface | IPv6Interface:
     return IPv6Interface._from_impl(impl)
 
 
-class _AddressBase(_ValueEqMixin, Object):
+class _AddressBase(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Shared scaffolding for `IPv4Address` / `IPv6Address` wrappers."""
 
     __slots__ = ("_impl",)
@@ -143,12 +144,6 @@ class IPv4Address(_AddressBase):
         else:
             self._impl = _ipaddress.IPv4Address(_addr_arg(address))
 
-    @classmethod
-    def _from_impl(cls, impl: _ipaddress.IPv4Address) -> IPv4Address:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
-
 
 class IPv6Address(_AddressBase):
     """Wraps Python's `ipaddress.IPv6Address`."""
@@ -159,14 +154,8 @@ class IPv6Address(_AddressBase):
         else:
             self._impl = _ipaddress.IPv6Address(_addr_arg(address))
 
-    @classmethod
-    def _from_impl(cls, impl: _ipaddress.IPv6Address) -> IPv6Address:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
-
-class _NetworkBase(_ValueEqMixin, Object):
+class _NetworkBase(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Shared scaffolding for `IPv4Network` / `IPv6Network` wrappers."""
 
     __slots__ = ("_impl",)
@@ -301,12 +290,6 @@ class IPv4Network(_NetworkBase):
                 _addr_arg(address), strict=_b(strict, True)
             )
 
-    @classmethod
-    def _from_impl(cls, impl: _ipaddress.IPv4Network) -> IPv4Network:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
-
 
 class IPv6Network(_NetworkBase):
     """Wraps Python's `ipaddress.IPv6Network`."""
@@ -323,14 +306,8 @@ class IPv6Network(_NetworkBase):
                 _addr_arg(address), strict=_b(strict, True)
             )
 
-    @classmethod
-    def _from_impl(cls, impl: _ipaddress.IPv6Network) -> IPv6Network:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
-
-class _InterfaceBase(_ValueEqMixin, Object):
+class _InterfaceBase(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Shared scaffolding for `IPv4Interface` / `IPv6Interface` wrappers."""
 
     __slots__ = ("_impl",)
@@ -382,12 +359,6 @@ class IPv4Interface(_InterfaceBase):
         else:
             self._impl = _ipaddress.IPv4Interface(_addr_arg(address))
 
-    @classmethod
-    def _from_impl(cls, impl: _ipaddress.IPv4Interface) -> IPv4Interface:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
-
 
 class IPv6Interface(_InterfaceBase):
     """Wraps Python's `ipaddress.IPv6Interface`."""
@@ -399,12 +370,6 @@ class IPv6Interface(_InterfaceBase):
             self._impl = address._impl
         else:
             self._impl = _ipaddress.IPv6Interface(_addr_arg(address))
-
-    @classmethod
-    def _from_impl(cls, impl: _ipaddress.IPv6Interface) -> IPv6Interface:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
 
 class Ipaddress:

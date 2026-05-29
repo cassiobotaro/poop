@@ -3,6 +3,7 @@ from __future__ import annotations
 import fractions as _fractions
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
@@ -24,7 +25,7 @@ def _to_python_num(value: Any) -> Any:
     return value
 
 
-class Fraction(_ValueEqMixin, Object):
+class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `fractions.Fraction` — exact rational arithmetic.
 
     Constructors mirror CPython:
@@ -61,12 +62,6 @@ class Fraction(_ValueEqMixin, Object):
             self._impl = numerator._impl
         else:
             self._impl = _fractions.Fraction(_to_python_num(numerator))
-
-    @classmethod
-    def _from_impl(cls, impl: _fractions.Fraction) -> Fraction:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @classmethod
     def from_float(cls, f: Float) -> Fraction:

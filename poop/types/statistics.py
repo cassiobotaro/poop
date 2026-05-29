@@ -3,6 +3,7 @@ from __future__ import annotations
 import statistics as _statistics
 from typing import Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, true
 from poop.types.float import Float
@@ -49,7 +50,7 @@ def _wrap_result(value: Any) -> Any:
     return value
 
 
-class NormalDist:
+class NormalDist(_ImplWrapperMixin):
     """Wraps Python's `statistics.NormalDist` — a normal distribution.
 
     Construct with `(mu=0.0, sigma=1.0)`, sample with `.samples(n)`,
@@ -63,12 +64,6 @@ class NormalDist:
         kwargs: dict[str, float] = {}
         kwargs.update(_kwargs_from(mu=mu, sigma=sigma))
         self._impl = _statistics.NormalDist(**kwargs)
-
-    @classmethod
-    def _from_impl(cls, impl: _statistics.NormalDist) -> NormalDist:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     @classmethod
     def from_samples(cls, data: List | Tuple) -> NormalDist:

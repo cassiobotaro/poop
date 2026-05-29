@@ -8,6 +8,7 @@ import http.server as _http_server
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
@@ -103,7 +104,7 @@ class HTTPResponse(Object):
         self._impl.close()
 
 
-class HTTPConnection(Object):
+class HTTPConnection(_ImplWrapperMixin, Object):
     """Wraps Python's `http.client.HTTPConnection`."""
 
     __slots__ = ("_impl",)
@@ -116,12 +117,6 @@ class HTTPConnection(Object):
     ) -> None:
         kwargs = _kwargs_from(port=port, timeout=timeout)
         self._impl = _http_client.HTTPConnection(host._value, **kwargs)
-
-    @classmethod
-    def _from_impl(cls, impl: Any) -> HTTPConnection:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     def request(
         self,

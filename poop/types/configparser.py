@@ -4,6 +4,7 @@ import configparser as _configparser
 import io as _io
 from typing import Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _b, _kwargs_from, _opt_str
 from poop.types.boolean import Boolean, false, true
 from poop.types.dict import Dict
@@ -45,7 +46,7 @@ def _vars_kwarg(vars_dict: Dict | NoneClass | None) -> dict[str, Any]:
     return {"vars": unwrapped}
 
 
-class ConfigParser(Object):
+class ConfigParser(_ImplWrapperMixin, Object):
     """Wraps Python's `configparser.ConfigParser` — INI-style config
     files.
 
@@ -100,12 +101,6 @@ class ConfigParser(Object):
         if interpolation is not None:
             kwargs["interpolation"] = interpolation
         self._impl = _configparser.ConfigParser(**kwargs)
-
-    @classmethod
-    def _from_impl(cls, impl: Any) -> ConfigParser:
-        obj = cls.__new__(cls)
-        obj._impl = impl
-        return obj
 
     # Reading -----------------------------------------------------------
 
