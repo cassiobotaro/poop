@@ -7,9 +7,11 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
+from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
+from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -87,6 +89,18 @@ def test_to_python_bytearray() -> None:
     assert isinstance(result, bytearray)
 
 
+def test_to_python_set() -> None:
+    result = to_python(Set(Int(1), Int(2)))
+    assert result == {1, 2}
+    assert isinstance(result, set)
+
+
+def test_to_python_frozen_set() -> None:
+    result = to_python(FrozenSet(Int(1), Int(2)))
+    assert result == frozenset({1, 2})
+    assert isinstance(result, frozenset)
+
+
 # --- to_poop ---
 
 
@@ -151,6 +165,18 @@ def test_to_poop_bytearray() -> None:
     result = to_poop(bytearray(b"hi"))
     assert isinstance(result, ByteArray)
     assert result._value == bytearray(b"hi")
+
+
+def test_to_poop_set() -> None:
+    result = to_poop({1, 2})
+    assert isinstance(result, Set)
+    assert result.len() == Int(2)
+
+
+def test_to_poop_frozen_set() -> None:
+    result = to_poop(frozenset({1, 2}))
+    assert isinstance(result, FrozenSet)
+    assert result.len() == Int(2)
 
 
 def test_round_trip_python_poop_python() -> None:

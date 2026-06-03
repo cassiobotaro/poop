@@ -4,6 +4,7 @@ import pytest
 
 from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
+from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
@@ -108,6 +109,15 @@ def test_dumps_loads_frozen_set_round_trip() -> None:
     original = FrozenSet(Int(1), Int(2))
     result = PickleNamespace.loads(PickleNamespace.dumps(original))
     assert isinstance(result, FrozenSet)
+
+
+def test_dumps_loads_byte_array_round_trip() -> None:
+    # Delegating to _bridge gives ByteArray a proper round-trip (the local
+    # pickle ladder used to leak a raw Python bytearray on load).
+    original = ByteArray(b"hi")
+    result = PickleNamespace.loads(PickleNamespace.dumps(original))
+    assert isinstance(result, ByteArray)
+    assert result._value == bytearray(b"hi")
 
 
 def test_dumps_loads_nested_round_trip() -> None:

@@ -4,82 +4,19 @@ import io as _io
 import pickle as _pickle
 from typing import Any, ClassVar
 
-from poop.types.boolean import Boolean, to_boolean, true
+from poop.types._bridge import to_poop, to_python
+from poop.types.boolean import Boolean, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
-from poop.types.float import Float
-from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
-from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.path import Path
-from poop.types.set import Set
 from poop.types.string import Str
-from poop.types.tuple import Tuple
 
 
 def _opt_protocol(protocol: Int | None) -> int | None:
     return None if protocol is None else protocol._value
-
-
-def _unwrap(value: Any) -> Any:
-    """Recursively convert a POOP value graph into native Python.
-
-    POOP primitive wrappers (`Int` / `Str` / `Float` / `Bytes` /
-    `Boolean` / `NoneClass`) and POOP collection types (`List` /
-    `Tuple` / `Dict` / `Set` / `FrozenSet`) are unwrapped to their
-    Python equivalents so the underlying `pickle` can serialize them
-    by reference. POOP user-class instances and anything else passes
-    through untouched.
-    """
-    if value is none or isinstance(value, NoneClass):
-        return None
-    if isinstance(value, Boolean):
-        return bool(value)
-    if isinstance(value, Int | Float | Str | Bytes):
-        return value._value
-    if isinstance(value, List):
-        return [_unwrap(item) for item in value._items]
-    if isinstance(value, Tuple):
-        return tuple(_unwrap(item) for item in value._items)
-    if isinstance(value, Dict):
-        return {_unwrap(k): _unwrap(v) for k, v in value._data.items()}
-    if isinstance(value, Set):
-        return {_unwrap(item) for item in value._data}
-    if isinstance(value, FrozenSet):
-        return frozenset(_unwrap(item) for item in value._data)
-    return value
-
-
-def _wrap(value: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
-    """Recursively convert a Python value graph back into POOP."""
-    if value is None:
-        return none
-    if isinstance(value, bool):
-        return to_boolean(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, float):
-        return Float(value)
-    if isinstance(value, str):
-        return Str(value)
-    if isinstance(value, bytes):
-        return Bytes(value)
-    if isinstance(value, list):
-        return List(*(_wrap(v) for v in value))
-    if isinstance(value, tuple):
-        return Tuple(*(_wrap(v) for v in value))
-    if isinstance(value, dict):
-        d = Dict()
-        for k, v in value.items():
-            d.at_put(_wrap(k), _wrap(v))
-        return d
-    if isinstance(value, set):
-        return Set(*(_wrap(v) for v in value))
-    if isinstance(value, frozenset):
-        return FrozenSet(*(_wrap(v) for v in value))
-    return value
 
 
 class Pickler(_pickle.Pickler):
@@ -113,7 +50,6 @@ class Pickler(_pickle.Pickler):
         super().__init_subclass__(**kwargs)
         user_persistent_id = cls.__dict__.get("persistent_id")
         if user_persistent_id is not None:
-            from poop.types._bridge import to_poop, to_python
 
             def wrapped_persistent_id(self: _pickle.Pickler, obj: Any) -> Any:
                 result = user_persistent_id(self, to_poop(obj))
@@ -158,7 +94,7 @@ class Pickler(_pickle.Pickler):
         Pickler._parent_dispatch_table.__set__(self, wrapped)
 
     def dump(self, obj: Any) -> NoneClass:  # type: ignore[override]
-        super().dump(_unwrap(obj))
+        super().dump(to_python(obj))
         return none
 
     def getvalue(self) -> Bytes:
@@ -191,7 +127,6 @@ class Unpickler(_pickle.Unpickler):
         super().__init_subclass__(**kwargs)
         user_persistent_load = cls.__dict__.get("persistent_load")
         if user_persistent_load is not None:
-            from poop.types._bridge import to_poop, to_python
 
             def wrapped_persistent_load(self: _pickle.Unpickler, pid: Any) -> Any:
                 return to_python(user_persistent_load(self, to_poop(pid)))
@@ -199,7 +134,7 @@ class Unpickler(_pickle.Unpickler):
             cls.persistent_load = wrapped_persistent_load  # type: ignore[method-assign]
 
     def load(self) -> Any:  # type: ignore[override]
-        return _wrap(super().load())
+        return to_poop(super().load())
 
 
 class PickleBuffer(Object):
@@ -267,7 +202,7 @@ class PickleNamespace:
     ) -> Bytes:
         return Bytes(
             _pickle.dumps(
-                _unwrap(obj),
+                to_python(obj),
                 _opt_protocol(protocol),
                 fix_imports=bool(fix_imports),
                 buffer_callback=buffer_callback,
@@ -284,7 +219,7 @@ class PickleNamespace:
         errors: Str = Str("strict"),
         buffers: Any = (),
     ) -> Any:
-        return _wrap(
+        return to_poop(
             _pickle.loads(  # noqa: S301 — see Unpickler note
                 data._value,
                 fix_imports=bool(fix_imports),
@@ -307,7 +242,7 @@ class PickleNamespace:
         # CPython param name `file` is preserved for kwargs compatibility.
         file._path.write_bytes(
             _pickle.dumps(
-                _unwrap(obj),
+                to_python(obj),
                 _opt_protocol(protocol),
                 fix_imports=bool(fix_imports),
                 buffer_callback=buffer_callback,
@@ -324,7 +259,7 @@ class PickleNamespace:
         errors: Str = Str("strict"),
         buffers: Any = (),
     ) -> Any:
-        return _wrap(
+        return to_poop(
             _pickle.loads(  # noqa: S301 — see Unpickler note
                 file._path.read_bytes(),
                 fix_imports=bool(fix_imports),

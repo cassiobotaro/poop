@@ -7,9 +7,11 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
+from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
+from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -17,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def to_python(obj: Any) -> Any:
+def to_python(obj: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
     if obj is none or isinstance(obj, NoneClass):
         return None
     if isinstance(obj, Boolean):
@@ -35,6 +37,10 @@ def to_python(obj: Any) -> Any:
         for k, v in obj._data.items():
             out[to_python(k)] = to_python(v)
         return out
+    if isinstance(obj, Set):
+        return {to_python(item) for item in obj._data}
+    if isinstance(obj, FrozenSet):
+        return frozenset(to_python(item) for item in obj._data)
     return obj
 
 
@@ -62,6 +68,10 @@ def to_poop(value: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one br
         for k, v in value.items():
             d.at_put(Str(k) if isinstance(k, str) else to_poop(k), to_poop(v))
         return d
+    if isinstance(value, set):
+        return Set(*(to_poop(v) for v in value))
+    if isinstance(value, frozenset):
+        return FrozenSet(*(to_poop(v) for v in value))
     return value
 
 
