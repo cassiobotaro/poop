@@ -272,6 +272,12 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|---|
 | `ast.Match` | control structure with procedural look | polymorphism + `if_true(block)`/`if_false(block)` |
 
+### No f-strings — `poop/validators/no_fstring.py`
+
+| AST node | Reason | Substitute |
+|---|---|---|
+| `ast.JoinedStr` | `{...}` interpolation hides message sends and bypasses POOP `Str` | concatenation: `("Hello, " + name)`, `("count: " + str(n))` |
+
 ### No `len` — `poop/validators/no_len.py`
 
 | Call | Reason | Substitute |
