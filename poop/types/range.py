@@ -92,7 +92,21 @@ class Range(_IterableMixin, Object):
         return Int(self._range()[index._value])
 
     def reversed(self) -> Range:
-        return Range(self._stop, self._start, Int(-self._step._value))
+        # Reverse the materialized forward sequence and re-encode it as a
+        # POOP Range. POOP ranges use an inclusive upper bound (`_range`
+        # adds `sign` to stop), so the forward sequence's last element is
+        # not necessarily `_stop`: Range(0, 10, 3) yields [0, 3, 6, 9], so
+        # seeding the reversed range from `_stop` (10) would produce the
+        # non-members [10, 7, 4, 1]. Slice-reverse gives the correct,
+        # empty-safe sequence; shift the resulting exclusive stop back by
+        # `sign` to round-trip through __init__'s inclusive convention.
+        reversed_range = self._range()[::-1]
+        sign = 1 if reversed_range.step > 0 else -1
+        return Range(
+            Int(reversed_range.start),
+            Int(reversed_range.stop - sign),
+            Int(reversed_range.step),
+        )
 
     def len(self) -> Int:
         return Int(len(self._range()))

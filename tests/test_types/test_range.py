@@ -154,6 +154,38 @@ def test_reversed_with_step() -> None:
     assert results == [9, 7, 5, 3, 1]
 
 
+# Regression: when stop is not on a step boundary, the forward sequence's last
+# element is not stop, so seeding the reversed range from stop produced
+# non-members. reversed() must mirror CPython's reversed(range(...)).
+def test_reversed_with_step_off_boundary() -> None:
+    results: list[int] = []
+    Range(Int(0), Int(10), Int(3)).reversed().do(lambda i: results.append(int(i)))
+    assert results == [9, 6, 3, 0]
+    assert results == list(reversed(range(0, 11, 3)))
+
+
+def test_reversed_descending_off_boundary() -> None:
+    results: list[int] = []
+    Range(Int(10), Int(0), Int(-3)).reversed().do(lambda i: results.append(int(i)))
+    assert results == [1, 4, 7, 10]
+    assert results == list(reversed(range(10, -1, -3)))
+
+
+def test_reversed_single_element() -> None:
+    results: list[int] = []
+    Range(Int(5), Int(5), Int(1)).reversed().do(lambda i: results.append(int(i)))
+    assert results == [5]
+
+
+def test_reversed_empty_stays_empty() -> None:
+    empty = Range(Int(5), Int(3), Int(1))
+    assert empty.len() == Int(0)
+    results: list[int] = []
+    empty.reversed().do(lambda i: results.append(int(i)))
+    assert results == []
+    assert empty.reversed().len() == Int(0)
+
+
 def test_start() -> None:
     assert _range(3, 7).start == Int(3)
 
