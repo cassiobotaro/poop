@@ -3,8 +3,9 @@ from __future__ import annotations
 import struct as _struct
 from typing import Any, ClassVar
 
+from poop.types._bridge import to_poop
 from poop.types._unwrap import _kwargs_from
-from poop.types.boolean import Boolean, to_boolean
+from poop.types.boolean import Boolean
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.float import Float
@@ -24,20 +25,6 @@ def _unwrap_value(value: Any) -> Any:
         return bool(value)
     if isinstance(value, ByteArray):
         return bytes(value._value)
-    return value
-
-
-def _wrap_value(value: Any) -> Object:
-    if isinstance(value, bool):
-        return to_boolean(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, float):
-        return Float(value)
-    if isinstance(value, bytes):
-        return Bytes(value)
-    if isinstance(value, str):
-        return Str(value)
     return value
 
 
@@ -65,7 +52,7 @@ def _writable_buffer(buffer: ByteArray | MemoryView) -> Any:
 
 
 def _wrap_tuple(raw: tuple[Any, ...]) -> Tuple:
-    return Tuple(*(_wrap_value(v) for v in raw))
+    return Tuple(*(to_poop(v) for v in raw))
 
 
 class Struct:

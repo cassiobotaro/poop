@@ -3,24 +3,13 @@ from __future__ import annotations
 import gc as _gc
 from typing import Any, ClassVar
 
+from poop.types._bridge import to_poop
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.tuple import Tuple
-
-
-def _wrap_value(value: Any) -> Any:
-    if isinstance(value, bool):
-        return to_boolean(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, str):
-        from poop.types.string import Str
-
-        return Str(value)
-    return value
 
 
 class _GCNamespace:
@@ -80,7 +69,7 @@ class _GCNamespace:
             for k, v in stat.items():
                 from poop.types.string import Str
 
-                d.at_put(Str(k), _wrap_value(v))
+                d.at_put(Str(k), to_poop(v))
             result.append(d)
         return List(*result)
 

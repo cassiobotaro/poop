@@ -3,6 +3,7 @@ from __future__ import annotations
 import statistics as _statistics
 from typing import Any, ClassVar
 
+from poop.types._bridge import to_poop
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, to_boolean, true
@@ -33,21 +34,6 @@ def _opt_unwrap(value: Float | Int | None) -> Any:
     if value is None:
         return None
     return value._value
-
-
-def _wrap_result(value: Any) -> Any:
-    # `mean`, `stdev`, etc. return floats; `median*` may return int or
-    # float depending on the data; `mode`/`multimode` return whatever
-    # the data carries.
-    if isinstance(value, bool):
-        return to_boolean(value)
-    if isinstance(value, float):
-        return Float(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, str):
-        return Str(value)
-    return value
 
 
 class NormalDist(_ImplWrapperMixin):
@@ -176,7 +162,7 @@ class Statistics:
 
     @staticmethod
     def mean(data: List | Tuple) -> Any:
-        return _wrap_result(_statistics.mean(_unwrap_data(data)))
+        return to_poop(_statistics.mean(_unwrap_data(data)))
 
     @staticmethod
     def fmean(
@@ -204,15 +190,15 @@ class Statistics:
 
     @staticmethod
     def median(data: List | Tuple) -> Any:
-        return _wrap_result(_statistics.median(_unwrap_data(data)))
+        return to_poop(_statistics.median(_unwrap_data(data)))
 
     @staticmethod
     def median_low(data: List | Tuple) -> Any:
-        return _wrap_result(_statistics.median_low(_unwrap_data(data)))
+        return to_poop(_statistics.median_low(_unwrap_data(data)))
 
     @staticmethod
     def median_high(data: List | Tuple) -> Any:
-        return _wrap_result(_statistics.median_high(_unwrap_data(data)))
+        return to_poop(_statistics.median_high(_unwrap_data(data)))
 
     @staticmethod
     def median_grouped(
@@ -227,13 +213,11 @@ class Statistics:
 
     @staticmethod
     def mode(data: List | Tuple) -> Any:
-        return _wrap_result(_statistics.mode(_unwrap_data(data)))
+        return to_poop(_statistics.mode(_unwrap_data(data)))
 
     @staticmethod
     def multimode(data: List | Tuple) -> List:
-        return List(
-            *(_wrap_result(v) for v in _statistics.multimode(_unwrap_data(data)))
-        )
+        return List(*(to_poop(v) for v in _statistics.multimode(_unwrap_data(data))))
 
     # Spread -------------------------------------------------------------
 

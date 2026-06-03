@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys as _sys
 from typing import Any
 
+from poop.types._bridge import to_poop
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -58,19 +59,7 @@ class _StructShim(Object):
         if name.startswith("_"):
             raise AttributeError(name)
         value = getattr(self._impl, name)
-        if isinstance(value, bool):
-            from poop.types.boolean import to_boolean
-
-            return to_boolean(value)
-        if isinstance(value, int):
-            return Int(value)
-        if isinstance(value, float):
-            from poop.types.float import Float
-
-            return Float(value)
-        if isinstance(value, str):
-            return Str(value)
-        return value
+        return to_poop(value)
 
     def __str__(self) -> str:
         return str(self._impl)

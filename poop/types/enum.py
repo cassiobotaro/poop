@@ -3,25 +3,12 @@ from __future__ import annotations
 import enum as _enum
 from typing import Any, ClassVar
 
+from poop.types._bridge import to_poop
 from poop.types.boolean import Boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
-
-
-def _wrap_value(value: Any) -> Any:
-    if isinstance(value, bool):
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, float):
-        return Float(value)
-    if isinstance(value, str):
-        return Str(value)
-    return value
 
 
 def _unwrap_for_lookup(value: Any) -> Any:
@@ -59,7 +46,7 @@ class _PoopEnumMixin:
         return Str(self._name_)
 
     def value_object(self) -> Any:
-        return _wrap_value(self._value_)
+        return to_poop(self._value_)
 
     @classmethod
     def iter(cls) -> List:

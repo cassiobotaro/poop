@@ -3,12 +3,12 @@ from __future__ import annotations
 import locale as _locale
 from typing import Any, ClassVar
 
+from poop.types._bridge import to_poop
 from poop.types._unwrap import _b
 from poop.types.boolean import Boolean, false
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
-from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -20,22 +20,6 @@ def _wrap_locale_pair(pair: tuple[Any, Any]) -> Tuple:
         none if lang is None else Str(lang),
         none if enc is None else Str(enc),
     )
-
-
-def _wrap_localeconv_value(value: Any) -> Any:
-    if isinstance(value, bool):
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, float):
-        return Float(value)
-    if isinstance(value, str):
-        return Str(value)
-    if isinstance(value, list):
-        return List(*(_wrap_localeconv_value(v) for v in value))
-    return value
 
 
 class Locale:
@@ -101,7 +85,7 @@ class Locale:
         raw = _locale.localeconv()
         result = Dict()
         for key, value in raw.items():
-            result.at_put(Str(key), _wrap_localeconv_value(value))
+            result.at_put(Str(key), to_poop(value))
         return result
 
     @staticmethod
