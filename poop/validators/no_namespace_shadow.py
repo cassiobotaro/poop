@@ -43,6 +43,27 @@ class _Visitor(ast.NodeVisitor):
         self._check(node.name, node)
         self.generic_visit(node)
 
+    def _check_args(self, args: ast.arguments) -> None:
+        # A parameter named after a namespace binding shadows it inside the
+        # body exactly like a local assignment does, so `def m(self, math):`
+        # makes `math.sqrt(...)` fail in confusing ways — the same hazard the
+        # assignment check guards against.
+        params = [*args.posonlyargs, *args.args, *args.kwonlyargs]
+        if args.vararg is not None:
+            params.append(args.vararg)
+        if args.kwarg is not None:
+            params.append(args.kwarg)
+        for param in params:
+            self._check(param.arg, param)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._check_args(node.args)
+        self.generic_visit(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self._check_args(node.args)
+        self.generic_visit(node)
+
 
 class NoNamespaceShadowValidator:
     def __init__(self) -> None:

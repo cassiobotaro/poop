@@ -89,6 +89,37 @@ def test_assignment_inside_method_also_raises() -> None:
         NoNamespaceShadowValidator().validate(tree)
 
 
+def test_method_parameter_with_protected_name_raises() -> None:
+    # A parameter named after a binding shadows it inside the body exactly
+    # like a local assignment does (math.sqrt would fail confusingly).
+    tree = ast.parse("class Foo:\n    def m(self, math):\n        return math")
+    with pytest.raises(ValidationError, match="POOP namespace"):
+        NoNamespaceShadowValidator().validate(tree)
+
+
+def test_async_method_parameter_with_protected_name_raises() -> None:
+    tree = ast.parse("class Foo:\n    async def m(self, json):\n        return json")
+    with pytest.raises(ValidationError, match="POOP namespace"):
+        NoNamespaceShadowValidator().validate(tree)
+
+
+def test_keyword_only_parameter_with_protected_name_raises() -> None:
+    tree = ast.parse("class Foo:\n    def m(self, *, copy):\n        return copy")
+    with pytest.raises(ValidationError, match="POOP namespace"):
+        NoNamespaceShadowValidator().validate(tree)
+
+
+def test_vararg_with_protected_name_raises() -> None:
+    tree = ast.parse("class Foo:\n    def m(self, *re):\n        return re")
+    with pytest.raises(ValidationError, match="POOP namespace"):
+        NoNamespaceShadowValidator().validate(tree)
+
+
+def test_ordinary_parameters_pass() -> None:
+    tree = ast.parse("class Foo:\n    def m(self, value, other):\n        return value")
+    NoNamespaceShadowValidator().validate(tree)
+
+
 def test_assigning_unrelated_name_passes() -> None:
     tree = ast.parse("mathematics = 42\nm = 'something'")
     NoNamespaceShadowValidator().validate(tree)
