@@ -31,3 +31,12 @@ class TransformError(PoopError):
 
 class ExecutionError(PoopError):
     """Raised when exec() raises during evaluation."""
+
+    def __init__(self, message: str, lineno: int | None = None) -> None:
+        self.lineno = lineno
+        super().__init__(message)
+
+    def __str__(self) -> str:
+        if self.lineno is None:
+            return super().__str__()
+        return f"{super().__str__()} (line {self.lineno})"

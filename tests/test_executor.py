@@ -17,6 +17,31 @@ def test_execute_raises_execution_error_on_runtime_exception() -> None:
         execute(tree)
 
 
+def test_execution_error_without_lineno_is_bare_message() -> None:
+    assert str(ExecutionError("boom")) == "boom"
+
+
+def test_execution_error_with_lineno_appends_line() -> None:
+    assert str(ExecutionError("boom", 5)) == "boom (line 5)"
+
+
+def test_execution_error_reports_user_line() -> None:
+    tree = ast.parse("x = 1\ny = 2\nraise ValueError('boom')")
+    with pytest.raises(ExecutionError) as exc_info:
+        execute(tree, filename="prog.py")
+    assert exc_info.value.lineno == 3
+    assert "(line 3)" in str(exc_info.value)
+
+
+def test_execution_error_reports_deepest_user_line() -> None:
+    # The error surfaces inside a helper on line 2, called from line 3 — the
+    # deepest user-source frame (line 2) is the relevant one.
+    tree = ast.parse("def f():\n    return 1 / 0\nf()")
+    with pytest.raises(ExecutionError) as exc_info:
+        execute(tree, filename="prog.py")
+    assert exc_info.value.lineno == 2
+
+
 def test_execute_mutates_provided_namespace() -> None:
     ns: dict[str, object] = {}
     tree = ast.parse("x = 42")

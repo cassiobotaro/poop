@@ -1,6 +1,22 @@
 import ast
+import traceback
 
 from poop.errors import ExecutionError
+
+
+def _user_lineno(exc: BaseException, filename: str) -> int | None:
+    """Line of the deepest user-source frame, for the error message.
+
+    Walk the traceback and keep the last frame whose filename matches the
+    compiled program. Internal POOP frames (executor.py, the type methods)
+    are skipped, so a failure inside `Int.__truediv__` still reports the
+    user line that triggered it. Returns None when no user frame is present.
+    """
+    lineno: int | None = None
+    for frame in traceback.extract_tb(exc.__traceback__):
+        if frame.filename == filename:
+            lineno = frame.lineno
+    return lineno
 
 
 def execute(
@@ -20,4 +36,4 @@ def execute(
     try:
         exec(code, ns)  # noqa: S102
     except Exception as exc:
-        raise ExecutionError(str(exc)) from exc
+        raise ExecutionError(str(exc), _user_lineno(exc, filename)) from exc
