@@ -20,7 +20,12 @@ def _poop_str_from(value: object = None) -> Str:
 
 class _StrRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "str":
+        if (
+            isinstance(node.func, ast.Name)
+            and node.func.id == "str"
+            and not node.keywords
+            and len(node.args) <= 1
+        ):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_str_from", ctx=ast.Load()),

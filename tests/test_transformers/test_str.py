@@ -49,6 +49,30 @@ def test_str_call_is_rewritten() -> None:
     assert expr.value.func.id == "_poop_str_from"
 
 
+# Regression: str(b"x", encoding=...) must not be rewritten to the single-arg
+# _poop_str_from factory, which would silently drop the keyword and stringify
+# the bytes repr (returning "b'x'" instead of decoding). With the keyword/arity
+# guard it falls through to the _poop_str class rename, so the unsupported
+# keyword reaches Str and raises a clean error.
+def test_str_call_with_keyword_falls_through_to_class() -> None:
+    tree = _transform('str(b"x", encoding="utf-8")')
+    expr = tree.body[0]
+    assert isinstance(expr, ast.Expr)
+    assert isinstance(expr.value, ast.Call)
+    assert isinstance(expr.value.func, ast.Name)
+    assert expr.value.func.id == "_poop_str"
+    assert expr.value.keywords  # the encoding keyword is preserved, not dropped
+
+
+def test_str_call_with_two_positional_args_falls_through_to_class() -> None:
+    tree = _transform('str(b"x", "utf-8")')
+    expr = tree.body[0]
+    assert isinstance(expr, ast.Expr)
+    assert isinstance(expr.value, ast.Call)
+    assert isinstance(expr.value.func, ast.Name)
+    assert expr.value.func.id == "_poop_str"
+
+
 def test_method_named_str_is_not_rewritten() -> None:
     tree = _transform("x.str()")
     expr = tree.body[0]
