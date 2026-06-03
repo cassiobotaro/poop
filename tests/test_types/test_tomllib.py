@@ -74,6 +74,24 @@ def test_loads_offset_datetime_returns_poop_datetime() -> None:
     assert isinstance(ts, DateTime)
 
 
+def test_loads_date_nested_in_array_returns_poop_date() -> None:
+    # Datetimes nested inside arrays must still wrap to POOP types: the
+    # recursion runs through _wrap, since to_poop has no datetime branch.
+    result = Tomllib.loads(Str("dates = [2026-05-15, 2026-05-16]"))
+    arr = result.at(Str("dates"))
+    assert isinstance(arr, List)
+    first = arr.at(Int(0))
+    assert isinstance(first, Date)
+    assert first == Date(Int(2026), Int(5), Int(15))
+
+
+def test_loads_datetime_nested_in_table_returns_poop_datetime() -> None:
+    result = Tomllib.loads(Str("[event]\nwhen = 2026-05-15T09:30:00"))
+    table = result.at(Str("event"))
+    assert isinstance(table, Dict)
+    assert isinstance(table.at(Str("when")), DateTime)
+
+
 def test_loads_parse_float_bridged_to_decimal() -> None:
     captured: list[Str] = []
 

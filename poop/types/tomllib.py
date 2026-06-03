@@ -5,45 +5,34 @@ import tomllib as _tomllib
 from collections.abc import Callable
 from typing import Any, ClassVar
 
-from poop.types._bridge import bridge
-from poop.types.boolean import to_boolean
+from poop.types._bridge import bridge, to_poop
 from poop.types.datetime import Date, DateTime, Time
 from poop.types.dict import Dict
-from poop.types.float import Float
-from poop.types.int import Int
 from poop.types.list import List
 from poop.types.path import Path
 from poop.types.string import Str
 
 
-def _wrap_collection(value: list[Any] | dict[Any, Any]) -> Any:
-    if isinstance(value, list):
-        return List(*(_wrap(v) for v in value))
-    d = Dict()
-    for k, v in value.items():
-        d.at_put(Str(k) if isinstance(k, str) else _wrap(k), _wrap(v))
-    return d
-
-
 def _wrap(value: Any) -> Any:
-    if isinstance(value, bool):
-        return to_boolean(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, float):
-        return Float(value)
-    if isinstance(value, str):
-        return Str(value)
-    if isinstance(value, (list, dict)):
-        return _wrap_collection(value)
-    # `datetime.datetime` is a subclass of `datetime.date`; check it first.
+    # TOML nests dates/times inside arrays and tables, so the recursion
+    # has to run through _wrap: to_poop has no datetime branch and would
+    # leak a raw `datetime.date` at depth. `datetime.datetime` is a
+    # subclass of `datetime.date`, so check it first. Leaf scalars
+    # (bool/int/float/str) fall through to the shared to_poop ladder.
     if isinstance(value, _datetime.datetime):
         return DateTime._from_impl(value)
     if isinstance(value, _datetime.date):
         return Date._from_impl(value)
     if isinstance(value, _datetime.time):
         return Time._from_impl(value)
-    return value
+    if isinstance(value, list):
+        return List(*(_wrap(v) for v in value))
+    if isinstance(value, dict):
+        d = Dict()
+        for k, v in value.items():
+            d.at_put(Str(k) if isinstance(k, str) else _wrap(k), _wrap(v))
+        return d
+    return to_poop(value)
 
 
 class Tomllib:
