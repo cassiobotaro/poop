@@ -5,7 +5,7 @@ from collections.abc import Callable
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
-from poop.types._bridge import bridge
+from poop.types._bridge import bridge, to_poop, to_python
 from poop.types._unwrap import _unwrap
 from poop.types.boolean import Boolean, false
 from poop.types.bytes import Bytes
@@ -19,43 +19,17 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
-def _wrap_value(value: Any) -> Any:
-    if value is None:
-        return none
-    if isinstance(value, bool):
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, float):
-        return Float(value)
-    if isinstance(value, bytes):
-        return Bytes(value)
-    if isinstance(value, str):
-        return Str(value)
-    return value
-
-
 def _wrap_row(raw: tuple[Any, ...]) -> Tuple:
-    return Tuple(*[_wrap_value(v) for v in raw])
-
-
-def _unwrap_value(value: Any) -> Any:
-    if value is None or isinstance(value, NoneClass):
-        return None
-    if isinstance(value, Boolean):
-        return bool(value)
-    if hasattr(value, "_value"):
-        return value._value
-    return value
+    return Tuple(*(to_poop(v) for v in raw))
 
 
 def _unwrap_params(params: Any) -> Any:
+    # to_python(none) returns None, not (), so keep the absent->() guard:
+    # sqlite expects an empty sequence when a statement takes no params.
     if params is None or isinstance(params, NoneClass):
         return ()
     if isinstance(params, Tuple | List):
-        return tuple(_unwrap_value(p) for p in params)
+        return tuple(to_python(p) for p in params)
     return params
 
 
@@ -126,15 +100,15 @@ class Row(Object):
 
     def at(self, key: Int | Str) -> Object:
         if isinstance(key, Int):
-            return _wrap_value(self._values[key._value])
+            return to_poop(self._values[key._value])
         idx = self._columns.index(key._value)
-        return _wrap_value(self._values[idx])
+        return to_poop(self._values[idx])
 
     def keys(self) -> Tuple:
         return Tuple(*[Str(c) for c in self._columns])
 
     def values(self) -> Tuple:
-        return Tuple(*[_wrap_value(v) for v in self._values])
+        return Tuple(*[to_poop(v) for v in self._values])
 
     def len(self) -> Int:
         return Int(len(self._values))
@@ -331,7 +305,6 @@ class Connection(Object):
         user's method. `finalize` returns a POOP value; POOP unwraps it
         to the native primitive SQLite expects.
         """
-        from poop.types._bridge import to_poop, to_python
 
         class _PoopAggregateAdapter:
             def __init__(self) -> None:
