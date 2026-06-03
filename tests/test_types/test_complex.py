@@ -63,6 +63,58 @@ def test_radd_int() -> None:
     assert Complex(1 + 2j).__radd__(Int(3)) == Complex(4 + 2j)
 
 
+# Regression: Int/Float arithmetic with a Complex right operand must yield a
+# real Complex (Int/Float.__op__ return NotImplemented so Complex.__r__ fires),
+# not a corrupted Int/Float wrapper holding a Python complex. These exercise the
+# actual operator path, unlike the direct __radd__ call above.
+def test_int_plus_complex_yields_complex() -> None:
+    result = Int(3) + Complex(1 + 2j)
+    assert isinstance(result, Complex)
+    assert result == Complex(4 + 2j)
+
+
+def test_int_minus_complex_yields_complex() -> None:
+    result = Int(3) - Complex(1 + 2j)
+    assert isinstance(result, Complex)
+    assert result == Complex(2 - 2j)
+
+
+def test_int_times_complex_yields_complex() -> None:
+    result = Int(3) * Complex(1 + 2j)
+    assert isinstance(result, Complex)
+    assert result == Complex(3 + 6j)
+
+
+def test_int_div_complex_yields_complex() -> None:
+    result = Int(4) / Complex(2 + 0j)
+    assert isinstance(result, Complex)
+    assert result == Complex(2 + 0j)
+
+
+def test_int_pow_complex_yields_complex() -> None:
+    result = Int(2) ** Complex(1 + 0j)
+    assert isinstance(result, Complex)
+    assert result == Complex(2 + 0j)
+
+
+def test_float_plus_complex_yields_complex() -> None:
+    result = Float(0.5) + Complex(1 + 2j)
+    assert isinstance(result, Complex)
+    assert result == Complex(1.5 + 2j)
+
+
+def test_float_times_complex_yields_complex() -> None:
+    result = Float(2.0) * Complex(1 + 2j)
+    assert isinstance(result, Complex)
+    assert result == Complex(2 + 4j)
+
+
+def test_float_pow_complex_yields_complex() -> None:
+    result = Float(2.0) ** Complex(1 + 0j)
+    assert isinstance(result, Complex)
+    assert result == Complex(2 + 0j)
+
+
 def test_sub_complex() -> None:
     assert Complex(5 + 6j) - Complex(1 + 2j) == Complex(4 + 4j)
 

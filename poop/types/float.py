@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, ClassVar
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean, true
+from poop.types.complex import Complex
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -69,16 +70,24 @@ class Float(_ValueEqMixin, Object):
     def abs(self) -> Float:
         return self.__abs__()
 
-    def __add__(self, other: Float) -> Float:
+    def __add__(self, other: Float | Complex) -> Float:
+        if isinstance(other, Complex):
+            return NotImplemented
         return Float(self._value + other._value)
 
-    def __sub__(self, other: Float) -> Float:
+    def __sub__(self, other: Float | Complex) -> Float:
+        if isinstance(other, Complex):
+            return NotImplemented
         return Float(self._value - other._value)
 
-    def __mul__(self, other: Float) -> Float:
+    def __mul__(self, other: Float | Complex) -> Float:
+        if isinstance(other, Complex):
+            return NotImplemented
         return Float(self._value * other._value)
 
-    def __truediv__(self, other: Float) -> Float:
+    def __truediv__(self, other: Float | Complex) -> Float:
+        if isinstance(other, Complex):
+            return NotImplemented
         return Float(self._value / other._value)
 
     def __floordiv__(self, other: Float) -> Float:
@@ -87,7 +96,9 @@ class Float(_ValueEqMixin, Object):
     def __mod__(self, other: Float) -> Float:
         return Float(self._value % other._value)
 
-    def __pow__(self, other: Float) -> Float:
+    def __pow__(self, other: Float | Complex) -> Float:
+        if isinstance(other, Complex):
+            return NotImplemented
         return Float(self._value**other._value)
 
     def pow(self, other: Float) -> Float:

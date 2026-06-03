@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal, cast
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean, true
+from poop.types.complex import Complex
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -89,30 +90,38 @@ class Int(_ValueEqMixin, Object):
     def abs(self) -> Int:
         return self.__abs__()
 
-    def __add__(self, other: Int | Float) -> Int | Float:
+    def __add__(self, other: Int | Float | Complex) -> Int | Float:
         from poop.types.float import Float as _Float
 
+        if isinstance(other, Complex):
+            return NotImplemented
         if isinstance(other, _Float):
             return _Float(self._value + other._value)
         return Int(self._value + other._value)
 
-    def __sub__(self, other: Int | Float) -> Int | Float:
+    def __sub__(self, other: Int | Float | Complex) -> Int | Float:
         from poop.types.float import Float as _Float
 
+        if isinstance(other, Complex):
+            return NotImplemented
         if isinstance(other, _Float):
             return _Float(self._value - other._value)
         return Int(self._value - other._value)
 
-    def __mul__(self, other: Int | Float) -> Int | Float:
+    def __mul__(self, other: Int | Float | Complex) -> Int | Float:
         from poop.types.float import Float as _Float
 
+        if isinstance(other, Complex):
+            return NotImplemented
         if isinstance(other, _Float):
             return _Float(self._value * other._value)
         return Int(self._value * other._value)
 
-    def __truediv__(self, other: Int) -> Float:
+    def __truediv__(self, other: Int | Complex) -> Float:
         from poop.types.float import Float
 
+        if isinstance(other, Complex):
+            return NotImplemented
         return Float(self._value / other._value)
 
     def __floordiv__(self, other: Int | Float) -> Int | Float:
@@ -130,11 +139,13 @@ class Int(_ValueEqMixin, Object):
         return Int(self._value % other._value)
 
     def __pow__(
-        self, other: Int, modulus: Int | NoneClass | None = None
+        self, other: Int | Complex, modulus: Int | NoneClass | None = None
     ) -> Int | Float:
         from poop.types._unwrap import _is_absent
         from poop.types.float import Float
 
+        if isinstance(other, Complex):
+            return NotImplemented
         if _is_absent(modulus):
             result = self._value**other._value
             if isinstance(result, float):
