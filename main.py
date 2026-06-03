@@ -1,4 +1,4 @@
-from poop.cli import main
+from poop.cli import entry_point
 
 if __name__ == "__main__":
-    main()
+    entry_point()

@@ -54,7 +54,7 @@ AI-specific guidance:
 
 ## Architecture
 
-Entry point is `main.py` (CLI via `argparse`). Pipeline: `parse → validate → transform → execute(namespace)`.
+Entry point is `poop/cli.py` (CLI via `typer`); `main.py` is a thin wrapper that calls `entry_point()` for the uninstalled `python main.py <file>` path. Pipeline: `parse → validate → transform → execute(namespace)`.
 
 - `poop/parser.py` — wraps `ast.parse`
 - `poop/validators/` — AST validators (reject forbidden constructs); registered in `DEFAULT_VALIDATORS`: `no_if`, `no_loops`, `no_comprehension`, `no_free_functions`, `no_print`, `no_assert`, `no_raise`, `no_try`, `no_type_alias`, `no_with`, `no_not`, `no_and_or`, `no_unary_minus`, `no_unary_plus`, `no_invert`, `no_is`, `no_in`, `no_global`, `no_yield`, `no_walrus`, `no_match`, `no_fstring`, `no_len`, `no_abs`, `no_hash`, `no_isinstance`, `no_issubclass`, `no_callable`, `no_id`, `no_ascii`, `no_all`, `no_any`, `no_min`, `no_max`, `no_map`, `no_filter`, `no_round`, `no_bin`, `no_breakpoint`, `no_chr`, `no_divmod`, `no_exec`, `no_exit`, `no_format`, `no_getattr`, `no_hasattr`, `no_input`, `no_dir`, `no_introspection`, `no_iter`, `no_open`, `no_pow`, `no_repr`, `no_setattr`, `no_sorted`, `no_reversed`, `no_subscript`, `no_sum`, `no_del`, `no_poop_prefix`, `no_namespace_shadow`

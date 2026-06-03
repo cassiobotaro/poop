@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -5,6 +7,8 @@ from typer.testing import CliRunner
 from poop.cli import app
 
 runner = CliRunner()
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_cli_runs_valid_file(tmp_path: Path) -> None:
@@ -55,3 +59,22 @@ def test_cli_transformers_only_dumps_ast(tmp_path: Path) -> None:
     result = runner.invoke(app, [str(f), "--transformers-only"])
     assert result.exit_code == 0
     assert "_poop_str" in result.output
+
+
+def test_main_module_runs_file_via_argv(tmp_path: Path) -> None:
+    # Regression: `python main.py <file>` used to call the command function
+    # directly (file=None default), ignoring argv and dropping into the REPL.
+    # Run it as a subprocess so the wiring in main.py is exercised end to end.
+    f = tmp_path / "ok.py"
+    f.write_text('"hi".print()\n', encoding="utf-8")
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, str(REPO_ROOT / "main.py"), str(f)],
+        capture_output=True,
+        text=True,
+        stdin=subprocess.DEVNULL,
+        cwd=REPO_ROOT,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert "hi" in result.stdout
