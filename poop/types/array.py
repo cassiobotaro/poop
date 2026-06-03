@@ -141,7 +141,7 @@ class Array(_ImplWrapperMixin, _ValueEqMixin, Object):
         if _is_absent(i):
             value = self._impl.pop()
         else:
-            value = self._impl.pop(i._value)  # ty: ignore[unresolved-attribute]
+            value = self._impl.pop(i._value)
         return _wrap_value(self._impl.typecode, value)
 
     def remove(self, value: Object) -> NoneClass:

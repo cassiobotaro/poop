@@ -181,7 +181,7 @@ class _LocalContextWrapper:
     def __init__(self, ctx: Context | NoneClass | None = None) -> None:
         from poop.types._unwrap import _is_absent
 
-        impl = None if _is_absent(ctx) else ctx._impl  # ty: ignore[unresolved-attribute]
+        impl = None if _is_absent(ctx) else ctx._impl
         self._cm = _decimal.localcontext(impl)
         self._ctx: Context | None = None
 

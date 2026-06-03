@@ -51,7 +51,7 @@ class CMath:
 
         if _is_absent(base):
             return Complex(_cmath.log(x._value))
-        return Complex(_cmath.log(x._value, base._value))  # ty: ignore[unresolved-attribute]
+        return Complex(_cmath.log(x._value, base._value))
 
     @staticmethod
     def log10(z: Complex, /) -> Complex:

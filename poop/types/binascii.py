@@ -43,7 +43,7 @@ class Binascii:
         if _is_absent(sep):
             return Bytes(_binascii.b2a_hex(data._value))
         return Bytes(
-            _binascii.b2a_hex(data._value, sep._value, _opt_int(bytes_per_sep, 1))  # ty: ignore[unresolved-attribute]
+            _binascii.b2a_hex(data._value, sep._value, _opt_int(bytes_per_sep, 1))
         )
 
     @staticmethod

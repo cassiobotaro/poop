@@ -80,7 +80,7 @@ class Lock(Object):
         from poop.types._unwrap import _is_absent, _unwrap_bool
 
         b = _unwrap_bool(blocking, True)
-        t = -1 if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
+        t = -1 if _is_absent(timeout) else timeout._value
         return to_boolean(self._impl.acquire(b, t))
 
     def release(self) -> NoneClass:
@@ -114,7 +114,7 @@ class RLock(Object):
         from poop.types._unwrap import _is_absent, _unwrap_bool
 
         b = _unwrap_bool(blocking, True)
-        t = -1 if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
+        t = -1 if _is_absent(timeout) else timeout._value
         return to_boolean(self._impl.acquire(b, t))
 
     def release(self) -> NoneClass:
@@ -169,7 +169,7 @@ class Semaphore(Object):
         from poop.types._unwrap import _is_absent, _unwrap_bool
 
         b = _unwrap_bool(blocking, True)
-        t = None if _is_absent(timeout) else timeout._value  # ty: ignore[unresolved-attribute]
+        t = None if _is_absent(timeout) else timeout._value
         return to_boolean(self._impl.acquire(b, t))
 
     def release(self) -> NoneClass:

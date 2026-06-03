@@ -101,7 +101,7 @@ class LZMAFile(Object):
         kwargs = _kwargs_from(format=format, check=check, preset=preset)
         self._impl = _lzma.LZMAFile(
             _path_str(path),
-            "rb" if _is_absent(mode) else mode._value,  # ty: ignore[unresolved-attribute]
+            "rb" if _is_absent(mode) else mode._value,
             **kwargs,
         )
 

@@ -88,8 +88,8 @@ class Shlex:
     ) -> Str:
         from poop.types._unwrap import _is_absent
 
-        ifname = None if _is_absent(infile) else infile._value  # ty: ignore[unresolved-attribute]
-        lineno_val = None if _is_absent(lineno) else lineno._value  # ty: ignore[unresolved-attribute]
+        ifname = None if _is_absent(infile) else infile._value
+        lineno_val = None if _is_absent(lineno) else lineno._value
         return Str(self._impl.error_leader(ifname, lineno_val))
 
     @property

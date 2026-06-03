@@ -93,7 +93,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
         if _is_absent(sep):
             return Str(self._value.hex())
-        sep_value = sep._value  # ty: ignore[unresolved-attribute]
+        sep_value = sep._value
         return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
 
     @classmethod
@@ -362,7 +362,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def b64encode(self, altchars: Bytes | NoneClass | None = None) -> Bytes:
         kwargs: dict[str, _bytes] = {}
         if not _is_absent(altchars):
-            kwargs["altchars"] = altchars._value  # ty: ignore[unresolved-attribute]
+            kwargs["altchars"] = altchars._value
         return Bytes(_base64.b64encode(self._value, **kwargs))
 
     def standard_b64encode(self) -> Bytes:
@@ -385,7 +385,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         if not _is_absent(foldspaces):
             kwargs["foldspaces"] = bool(foldspaces)
         if not _is_absent(wrapcol):
-            kwargs["wrapcol"] = wrapcol._value  # ty: ignore[unresolved-attribute]
+            kwargs["wrapcol"] = wrapcol._value
         if not _is_absent(pad):
             kwargs["pad"] = bool(pad)
         if not _is_absent(adobe):
@@ -418,7 +418,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         if not _is_absent(casefold):
             kwargs["casefold"] = bool(casefold)
         if not _is_absent(map01):
-            kwargs["map01"] = map01._value  # ty: ignore[unresolved-attribute]
+            kwargs["map01"] = map01._value
         return Bytes(_base64.b32decode(self._value, **kwargs))
 
     def b32hexdecode(self, casefold: Boolean | NoneClass | None = None) -> Bytes:
@@ -435,7 +435,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
         kwargs: dict[str, _Any] = {}
         if not _is_absent(altchars):
-            kwargs["altchars"] = altchars._value  # ty: ignore[unresolved-attribute]
+            kwargs["altchars"] = altchars._value
         if not _is_absent(validate):
             kwargs["validate"] = bool(validate)
         return Bytes(_base64.b64decode(self._value, **kwargs))

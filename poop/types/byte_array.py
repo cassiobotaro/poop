@@ -98,7 +98,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
         if _is_absent(sep):
             return Str(self._value.hex())
-        raw = sep._value  # ty: ignore[unresolved-attribute]
+        raw = sep._value
         sep_value: str | bytes = raw if isinstance(raw, str) else bytes(raw)
         return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
 
@@ -141,7 +141,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
         if _is_absent(index):
             return Int(self._value.pop())
-        return Int(self._value.pop(index._value))  # ty: ignore[unresolved-attribute]
+        return Int(self._value.pop(index._value))
 
     def remove(self, byte: Int) -> NoneClass:
         self._value.remove(byte._value)

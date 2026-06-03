@@ -86,9 +86,7 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
 
         if _is_absent(max_denominator):
             return Fraction._from_impl(self._impl.limit_denominator())
-        return Fraction._from_impl(
-            self._impl.limit_denominator(max_denominator._value)  # ty: ignore[unresolved-attribute]
-        )
+        return Fraction._from_impl(self._impl.limit_denominator(max_denominator._value))
 
     def as_integer_ratio(self) -> Tuple:
         n, d = self._impl.as_integer_ratio()

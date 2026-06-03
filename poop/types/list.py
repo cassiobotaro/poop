@@ -91,7 +91,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
 
         if _is_absent(index):
             return self._items.pop()
-        return self._items.pop(index._value)  # ty: ignore[unresolved-attribute]
+        return self._items.pop(index._value)
 
     def clear(self) -> NoneClass:
         self._items.clear()

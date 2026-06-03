@@ -29,7 +29,7 @@ class Range(_IterableMixin, Object):
         if _is_absent(step):
             resolved = Int(1 if start._value <= stop._value else -1)
         else:
-            resolved = step  # ty: ignore[invalid-assignment]
+            resolved = step
         if resolved._value == 0:
             raise ValueError("step must not be zero")
         self._start = start

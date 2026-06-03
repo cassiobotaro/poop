@@ -38,7 +38,7 @@ class GzipFile(Object):
         # CPython's gzip default compresslevel is 9 (best).
         self._impl = _gzip.GzipFile(
             _path_str(path),
-            "rb" if _is_absent(mode) else mode._value,  # ty: ignore[unresolved-attribute]
+            "rb" if _is_absent(mode) else mode._value,
             _opt_int(compresslevel, 9),
         )
 

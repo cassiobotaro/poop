@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 def _i(value: Int | NoneClass | None, default: int) -> int:
     from poop.types._unwrap import _is_absent
 
-    return default if _is_absent(value) else value._value  # ty: ignore[unresolved-attribute]
+    return default if _is_absent(value) else value._value
 
 
 class Calendar:

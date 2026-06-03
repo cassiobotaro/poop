@@ -53,7 +53,7 @@ class Dict(_ValueEqMixin, Object):
     ) -> Dict:
         from poop.types._unwrap import _is_absent
 
-        fill: Object = none if _is_absent(value) else value  # ty: ignore[invalid-assignment]
+        fill: Object = none if _is_absent(value) else value
         d = cls()
         for k in keys:
             d._data[k] = fill

@@ -1,9 +1,12 @@
-from typing import Any, overload
+from typing import Any, TypeIs, overload
 
 from poop.types.none import NoneClass
 
 
-def _is_absent(value: object) -> bool:
+def _is_absent(value: object) -> TypeIs[NoneClass | None]:
+    # TypeIs (PEP 742) narrows callers: after `if _is_absent(x): ...` the
+    # else/fall-through branch sees `x` with NoneClass | None removed, so
+    # `x._value` resolves without a per-call-site ignore directive.
     return value is None or isinstance(value, NoneClass)
 
 

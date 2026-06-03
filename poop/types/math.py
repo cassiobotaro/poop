@@ -65,7 +65,7 @@ class Math:
     def perm(n: Int, k: Int | NoneClass | None = None) -> Int:
         from poop.types._unwrap import _is_absent
 
-        return Int(_math.perm(n._value, None if _is_absent(k) else k._value))  # ty: ignore[unresolved-attribute]
+        return Int(_math.perm(n._value, None if _is_absent(k) else k._value))
 
     @staticmethod
     def isqrt(n: Int) -> Int:
@@ -285,7 +285,7 @@ class Math:
     ) -> Int | Float:
         from poop.types._unwrap import _is_absent
 
-        start_value = 1 if _is_absent(start) else start._value  # ty: ignore[unresolved-attribute]
+        start_value = 1 if _is_absent(start) else start._value
         result = _math.prod((x._value for x in iterable), start=start_value)
         return Float(result) if isinstance(result, float) else Int(result)
 

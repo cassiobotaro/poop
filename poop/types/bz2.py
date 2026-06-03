@@ -87,7 +87,7 @@ class BZ2File(Object):
 
         self._impl = _bz2.BZ2File(  # ty: ignore[no-matching-overload]
             _path_str(path),
-            "rb" if _is_absent(mode) else mode._value,  # ty: ignore[unresolved-attribute]
+            "rb" if _is_absent(mode) else mode._value,
             compresslevel=_opt_int(compresslevel, 9),
         )
 

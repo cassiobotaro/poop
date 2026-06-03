@@ -151,7 +151,7 @@ class Int(_ValueEqMixin, Object):
             if isinstance(result, float):
                 return Float(result)
             return Int(result)
-        return Int(pow(self._value, other._value, modulus._value))  # ty: ignore[unresolved-attribute]
+        return Int(pow(self._value, other._value, modulus._value))
 
     def pow(self, other: Int, modulus: Int | NoneClass | None = None) -> Int | Float:
         return self.__pow__(other, modulus)

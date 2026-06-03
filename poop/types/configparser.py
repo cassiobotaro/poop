@@ -39,7 +39,7 @@ def _vars_kwarg(vars_dict: Dict | NoneClass | None) -> dict[str, Any]:
     if _is_absent(vars_dict):
         return {}
     unwrapped: dict[str, str] = {}
-    for k, v in vars_dict._data.items():  # ty: ignore[unresolved-attribute]
+    for k, v in vars_dict._data.items():
         unwrapped[k._value if isinstance(k, Str) else str(k)] = (
             v._value if isinstance(v, Str) else str(v)
         )

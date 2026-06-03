@@ -22,7 +22,7 @@ def _unwrap_dir(value: Path | Str | NoneClass | None) -> str | None:
         return None
     if isinstance(value, Path):
         return str(value._path)
-    return value._value  # ty: ignore[unresolved-attribute]
+    return value._value
 
 
 class TemporaryDirectory(Object):
