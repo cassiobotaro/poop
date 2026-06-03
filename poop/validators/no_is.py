@@ -1,26 +1,11 @@
 import ast
 
-from poop.errors import ValidationError
+from poop.validators._op import make_op_validator
 
-
-class NoIsValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoIsVisitor().visit(tree)
-
-
-class _NoIsVisitor(ast.NodeVisitor):
-    def visit_Compare(self, node: ast.Compare) -> None:
-        for op in node.ops:
-            if isinstance(op, ast.Is):
-                raise ValidationError(
-                    "is operator is forbidden — use .is_none() for None checks or .is_identical(other) for identity",
-                    lineno=node.lineno,
-                    col_offset=node.col_offset,
-                )
-            if isinstance(op, ast.IsNot):
-                raise ValidationError(
-                    "is not operator is forbidden — use .not_none() for None checks or .not_identical(other) for identity",
-                    lineno=node.lineno,
-                    col_offset=node.col_offset,
-                )
-        self.generic_visit(node)
+NoIsValidator = make_op_validator(
+    ast.Compare,
+    {
+        ast.Is: "is operator is forbidden — use .is_none() for None checks or .is_identical(other) for identity",
+        ast.IsNot: "is not operator is forbidden — use .not_none() for None checks or .not_identical(other) for identity",
+    },
+)

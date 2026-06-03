@@ -36,6 +36,13 @@ class Foo:
         )
 
 
+def test_in_in_chained_comparison_raises() -> None:
+    # The banned `in` is the second op of a chained comparison, so the
+    # validator must scan every op in node.ops, not just the first.
+    with pytest.raises(ValidationError, match=r"col\.includes"):
+        _validate("a < b in c")
+
+
 def test_equality_allowed() -> None:
     _validate("x == y")
 

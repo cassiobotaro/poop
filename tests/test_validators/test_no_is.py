@@ -48,6 +48,14 @@ def test_is_not_error_mentions_not_none() -> None:
         NoIsValidator().validate(tree)
 
 
+def test_is_in_chained_comparison_raises() -> None:
+    # The banned `is` is the second op of a chained comparison, so the
+    # validator must scan every op in node.ops, not just the first.
+    tree = ast.parse("x = a < b is c")
+    with pytest.raises(ValidationError, match=r"is operator"):
+        NoIsValidator().validate(tree)
+
+
 def test_error_carries_line_number() -> None:
     tree = ast.parse("x = 1\ny = a is None")
     with pytest.raises(ValidationError) as exc_info:
