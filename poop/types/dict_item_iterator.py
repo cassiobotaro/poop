@@ -1,26 +1,8 @@
-from collections import deque
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, final
+from typing import final
 
-from poop.types._iterator_base import _IteratorBase
-from poop.types.none import none
-from poop.types.tuple import Tuple
-
-if TYPE_CHECKING:
-    from poop.types.none import NoneClass
+from poop.types._dict_item_iterator_base import _DictItemIteratorBase
 
 
 @final
-class DictItemIterator(_IteratorBase[Tuple], name="dict_itemiterator"):
+class DictItemIterator(_DictItemIteratorBase, name="dict_itemiterator"):
     __slots__ = ()
-
-    def next(self) -> Tuple:
-        k, v = next(self._iter)
-        return Tuple(k, v)
-
-    def __next__(self) -> Tuple:
-        return self.next()
-
-    def do(self, block: Callable[[Tuple], Any]) -> NoneClass:
-        deque((block(Tuple(k, v)) for k, v in self._iter), maxlen=0)
-        return none
