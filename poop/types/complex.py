@@ -32,13 +32,13 @@ class Complex(_ValueEqMixin, Object):
     def conjugate(self) -> Complex:
         return Complex(self._value.conjugate())
 
-    def abs(self) -> Float:
+    def __abs__(self) -> Float:
         from poop.types.float import Float
 
         return Float(abs(self._value))
 
-    def __abs__(self) -> Float:
-        return self.abs()
+    def abs(self) -> Float:
+        return self.__abs__()
 
     def _coerce(self, other: object) -> _complex | None:
         from poop.types.float import Float
