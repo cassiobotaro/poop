@@ -154,16 +154,16 @@ class Float(_ValueEqMixin, Object):
         return to_boolean(self._value >= other._value)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.int import Int as _Int
+        from poop.types.int import Int
 
-        if isinstance(other, Float | _Int):
+        if isinstance(other, Float | Int):
             return to_boolean(self._value == other._value)
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.int import Int as _Int
+        from poop.types.int import Int
 
-        if isinstance(other, Float | _Int):
+        if isinstance(other, Float | Int):
             return false if self._value == other._value else true
         return true
 

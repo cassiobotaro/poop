@@ -91,30 +91,30 @@ class Int(_ValueEqMixin, Object):
         return self.__abs__()
 
     def __add__(self, other: Int | Float | Complex) -> Int | Float:
-        from poop.types.float import Float as _Float
+        from poop.types.float import Float
 
         if isinstance(other, Complex):
             return NotImplemented
-        if isinstance(other, _Float):
-            return _Float(self._value + other._value)
+        if isinstance(other, Float):
+            return Float(self._value + other._value)
         return Int(self._value + other._value)
 
     def __sub__(self, other: Int | Float | Complex) -> Int | Float:
-        from poop.types.float import Float as _Float
+        from poop.types.float import Float
 
         if isinstance(other, Complex):
             return NotImplemented
-        if isinstance(other, _Float):
-            return _Float(self._value - other._value)
+        if isinstance(other, Float):
+            return Float(self._value - other._value)
         return Int(self._value - other._value)
 
     def __mul__(self, other: Int | Float | Complex) -> Int | Float:
-        from poop.types.float import Float as _Float
+        from poop.types.float import Float
 
         if isinstance(other, Complex):
             return NotImplemented
-        if isinstance(other, _Float):
-            return _Float(self._value * other._value)
+        if isinstance(other, Float):
+            return Float(self._value * other._value)
         return Int(self._value * other._value)
 
     def __truediv__(self, other: Int | Complex) -> Float:
@@ -125,17 +125,17 @@ class Int(_ValueEqMixin, Object):
         return Float(self._value / other._value)
 
     def __floordiv__(self, other: Int | Float) -> Int | Float:
-        from poop.types.float import Float as _Float
+        from poop.types.float import Float
 
-        if isinstance(other, _Float):
-            return _Float(self._value // other._value)
+        if isinstance(other, Float):
+            return Float(self._value // other._value)
         return Int(self._value // other._value)
 
     def __mod__(self, other: Int | Float) -> Int | Float:
-        from poop.types.float import Float as _Float
+        from poop.types.float import Float
 
-        if isinstance(other, _Float):
-            return _Float(self._value % other._value)
+        if isinstance(other, Float):
+            return Float(self._value % other._value)
         return Int(self._value % other._value)
 
     def __pow__(
@@ -210,16 +210,16 @@ class Int(_ValueEqMixin, Object):
         return to_boolean(self._value >= other._value)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.float import Float as _Float
+        from poop.types.float import Float
 
-        if isinstance(other, Int | _Float):
+        if isinstance(other, Int | Float):
             return to_boolean(self._value == other._value)
         return false
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.float import Float as _Float
+        from poop.types.float import Float
 
-        if isinstance(other, Int | _Float):
+        if isinstance(other, Int | Float):
             return false if self._value == other._value else true
         return true
 
