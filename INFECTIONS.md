@@ -2426,7 +2426,7 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `StructTime.tm_zone` / `tm_gmtoff` (properties) | `Str` or `none` / `Int` or `none` | |
 | `logging.getLogger(name=none)` | `Logger` | |
 | `logging.basicConfig(*, filename=none, filemode=none, format=none, datefmt=none, style=none, level=none, handlers=none, force=false, encoding=none, errors=none)` | `none` | `filename` is a POOP `Path`; `stream` omitted (no file-object abstraction) |
-| `logging.debug/info/warning/error/critical(msg)` | `none` | root logger shortcuts |
+| `logging.debug/info/warning/error/critical(msg)` / `.log(level, msg)` | `none` | root logger shortcuts |
 | `logging.getLevelName(level)` / `.addLevelName(level, name)` | `Str` / `none` | |
 | `logging.StreamHandler()` / `.NullHandler()` / `.FileHandler(path)` | `Handler` | |
 | `logging.CRITICAL` / `ERROR` / `WARNING` / `INFO` / `DEBUG` / `NOTSET` (class attrs) | `Int` | |

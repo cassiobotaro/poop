@@ -543,6 +543,11 @@ class Logging(metaclass=_LoggingMeta):
         return none
 
     @staticmethod
+    def log(level: Int, msg: Str) -> NoneClass:
+        _logging.log(level._value, msg._value)
+        return none
+
+    @staticmethod
     def exception(msg: Str) -> NoneClass:
         """Log a message with severity `ERROR` plus traceback info on
         the root logger; intended to be called from inside an exception

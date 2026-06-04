@@ -252,6 +252,10 @@ def test_module_debug_info_warning_error_critical() -> None:
     assert Logging.critical(Str("c")) is none
 
 
+def test_module_log_with_explicit_level() -> None:
+    assert Logging.log(Logging.WARNING, Str("m")) is none
+
+
 # --- Class refs ---
 
 
