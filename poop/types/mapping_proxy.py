@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 
 @final
-class MappingProxy(Object):
+class MappingProxy(_IterableMixin, Object):
     """Read-only view over a Dict. Mirrors types.MappingProxyType."""
 
     __slots__ = ("_dict",)

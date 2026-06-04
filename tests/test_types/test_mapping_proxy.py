@@ -1,5 +1,6 @@
 import pytest
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -164,3 +165,32 @@ def test_ne_with_dict_proxy() -> None:
     b = MappingProxy(Dict())
     assert (a != b) is true
     assert (a != a) is false
+
+
+def test_mapping_proxy_is_iterable_mixin() -> None:
+    assert isinstance(MappingProxy(_make()), _IterableMixin)
+
+
+def test_map_iterates_over_keys() -> None:
+    mp = MappingProxy(_make())
+    result = mp.map(lambda k: k)
+    assert [str(k) for k in result] == ["a", "b"]
+
+
+def test_do_iterates_over_keys() -> None:
+    mp = MappingProxy(_make())
+    seen: list[str] = []
+    mp.do(lambda k: seen.append(str(k)))
+    assert seen == ["a", "b"]
+
+
+def test_find_over_keys() -> None:
+    mp = MappingProxy(_make())
+    assert mp.find(lambda k: bool(k == Str("b"))) == Str("b")
+
+
+def test_keys_mapping_map_chain() -> None:
+    # Regression: d.keys().mapping().map(...) raised AttributeError because
+    # MappingProxy did not inherit _IterableMixin, unlike the dict views.
+    result = _make().keys().mapping().map(lambda k: k)
+    assert [str(k) for k in result] == ["a", "b"]
