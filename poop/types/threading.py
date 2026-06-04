@@ -5,7 +5,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar, Self
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
-from poop.types._unwrap import _opt_timeout
+from poop.types._unwrap import _is_absent, _opt_timeout, _unwrap_bool
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.float import Float
 from poop.types.int import Int
@@ -13,6 +13,20 @@ from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
+
+
+def _acquire(
+    impl_acquire: Callable[..., bool],
+    blocking: Boolean | NoneClass | None,
+    timeout: Float | Int | NoneClass | None,
+    *,
+    absent_timeout: int | None,
+) -> Boolean:
+    # Lock/RLock default an absent timeout to -1, Semaphore to None — the
+    # sentinel stays an explicit per-call arg so the two never conflate.
+    b = _unwrap_bool(blocking, True)
+    t = absent_timeout if _is_absent(timeout) else timeout._value
+    return to_boolean(impl_acquire(b, t))
 
 
 class Thread(_ImplWrapperMixin, Object):
@@ -77,11 +91,7 @@ class Lock(Object):
         blocking: Boolean | NoneClass | None = None,
         timeout: Float | Int | NoneClass | None = None,
     ) -> Boolean:
-        from poop.types._unwrap import _is_absent, _unwrap_bool
-
-        b = _unwrap_bool(blocking, True)
-        t = -1 if _is_absent(timeout) else timeout._value
-        return to_boolean(self._impl.acquire(b, t))
+        return _acquire(self._impl.acquire, blocking, timeout, absent_timeout=-1)
 
     def release(self) -> NoneClass:
         self._impl.release()
@@ -111,11 +121,7 @@ class RLock(Object):
         blocking: Boolean | NoneClass | None = None,
         timeout: Float | Int | NoneClass | None = None,
     ) -> Boolean:
-        from poop.types._unwrap import _is_absent, _unwrap_bool
-
-        b = _unwrap_bool(blocking, True)
-        t = -1 if _is_absent(timeout) else timeout._value
-        return to_boolean(self._impl.acquire(b, t))
+        return _acquire(self._impl.acquire, blocking, timeout, absent_timeout=-1)
 
     def release(self) -> NoneClass:
         self._impl.release()
@@ -166,11 +172,7 @@ class Semaphore(Object):
         blocking: Boolean | NoneClass | None = None,
         timeout: Float | Int | NoneClass | None = None,
     ) -> Boolean:
-        from poop.types._unwrap import _is_absent, _unwrap_bool
-
-        b = _unwrap_bool(blocking, True)
-        t = None if _is_absent(timeout) else timeout._value
-        return to_boolean(self._impl.acquire(b, t))
+        return _acquire(self._impl.acquire, blocking, timeout, absent_timeout=None)
 
     def release(self) -> NoneClass:
         self._impl.release()
