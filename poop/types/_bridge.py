@@ -16,7 +16,16 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
+
+
+def _str_str_dict(pairs: Iterable[tuple[str, str]]) -> Dict:
+    """Build a POOP Dict of Str -> Str from any (str, str) pair iterable,
+    e.g. an HTTP header list from `getheaders()` or `headers.items()`."""
+    result = Dict()
+    for k, v in pairs:
+        result.at_put(Str(k), Str(v))
+    return result
 
 
 def to_python(obj: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container

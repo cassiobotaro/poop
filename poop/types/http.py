@@ -8,6 +8,7 @@ import http.server as _http_server
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types._bridge import _str_str_dict
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from
 from poop.types.bytes import Bytes
@@ -76,10 +77,7 @@ class HTTPResponse(Object):
 
     @property
     def headers(self) -> Dict:
-        result = Dict()
-        for k, v in self._impl.getheaders():
-            result.at_put(Str(k), Str(v))
-        return result
+        return _str_str_dict(self._impl.getheaders())
 
     def read(self, amt: Int | None = None) -> Bytes:
         if amt is None:

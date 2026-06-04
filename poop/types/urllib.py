@@ -6,6 +6,7 @@ import urllib.request as _urllib_request
 from types import TracebackType
 from typing import Any, ClassVar, Self
 
+from poop.types._bridge import _str_str_dict
 from poop.types._unwrap import _b, _kwargs_from, _opt_str
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
@@ -390,10 +391,7 @@ class Request(Object):
 
     @property
     def headers(self) -> Dict:
-        result = Dict()
-        for k, v in self._impl.headers.items():
-            result.at_put(Str(k), Str(v))
-        return result
+        return _str_str_dict(self._impl.headers.items())
 
 
 class Response(Object):
@@ -437,10 +435,7 @@ class Response(Object):
 
     @property
     def headers(self) -> Dict:
-        result = Dict()
-        for k, v in self._impl.headers.items():
-            result.at_put(Str(k), Str(v))
-        return result
+        return _str_str_dict(self._impl.headers.items())
 
     def geturl(self) -> Str:
         return Str(self._impl.geturl())
