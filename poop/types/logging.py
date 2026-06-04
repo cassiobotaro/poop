@@ -339,7 +339,7 @@ class FileHandler(_logging.FileHandler, Handler):
         if isinstance(path, Str):
             filename = path._value
         else:
-            filename = str(path._path)
+            filename = str(path)
         _logging.FileHandler.__init__(
             self,
             filename,
@@ -497,7 +497,7 @@ class Logging(metaclass=_LoggingMeta):
     ) -> NoneClass:
         kwargs: dict[str, Any] = {"force": bool(force)}
         if filename is not None:
-            kwargs["filename"] = str(filename._path)
+            kwargs["filename"] = str(filename)
         if filemode is not None:
             kwargs["filemode"] = filemode._value
         if format is not None:
@@ -624,7 +624,7 @@ class Logging(metaclass=_LoggingMeta):
     ) -> NoneClass:
         """Configure logging from an INI file (mirrors `logging.config.fileConfig`)."""
         if isinstance(path, Path):
-            fname: Any = str(path._path)
+            fname: Any = str(path)
         else:
             fname = path._value
         kwargs: dict[str, Any] = {
