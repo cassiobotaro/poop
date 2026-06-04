@@ -41,6 +41,17 @@ _http.HTTPStatus._missing_ = classmethod(_http_status_missing)  # type: ignore[m
 _http.HTTPMethod._missing_ = classmethod(_http_method_missing)  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
 
 
+def _headers_to_py(headers: Dict, what: str) -> dict[str, str]:
+    """Convert a POOP Str->Str header Dict to a native dict, rejecting
+    non-Str keys/values with a `what`-prefixed TypeError."""
+    out: dict[str, str] = {}
+    for k, v in headers._data.items():
+        if not (isinstance(k, Str) and isinstance(v, Str)):
+            raise TypeError(f"{what} headers must map Str → Str")
+        out[k._value] = v._value
+    return out
+
+
 class HTTPResponse(Object):
     """Wraps Python's `http.client.HTTPResponse` — the response object
     returned by `HTTPConnection.getresponse()`.
@@ -127,12 +138,7 @@ class HTTPConnection(_ImplWrapperMixin, Object):
     ) -> NoneClass:
         kwargs = _kwargs_from(body=body)
         if headers is not None:
-            h: dict[str, str] = {}
-            for k, v in headers._data.items():
-                if not (isinstance(k, Str) and isinstance(v, Str)):
-                    raise TypeError("HTTP headers must map Str → Str")
-                h[k._value] = v._value
-            kwargs["headers"] = h
+            kwargs["headers"] = _headers_to_py(headers, "HTTP")
         self._impl.request(method._value, url._value, **kwargs)
         return none
 
@@ -151,12 +157,7 @@ class HTTPConnection(_ImplWrapperMixin, Object):
     ) -> NoneClass:
         kwargs = _kwargs_from(port=port)
         if headers is not None:
-            h: dict[str, str] = {}
-            for k, v in headers._data.items():
-                if not (isinstance(k, Str) and isinstance(v, Str)):
-                    raise TypeError("set_tunnel headers must map Str → Str")
-                h[k._value] = v._value
-            kwargs["headers"] = h
+            kwargs["headers"] = _headers_to_py(headers, "set_tunnel")
         self._impl.set_tunnel(host._value, **kwargs)
         return none
 

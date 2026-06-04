@@ -11,6 +11,7 @@ from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.float import Float
+from poop.types.http import _headers_to_py
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
@@ -336,12 +337,7 @@ class Request(Object):
         headers: Dict | None = None,
         method: Str | None = None,
     ) -> None:
-        header_dict: dict[str, str] = {}
-        if headers is not None:
-            for k, v in headers._data.items():
-                if not (isinstance(k, Str) and isinstance(v, Str)):
-                    raise TypeError("Request headers must map Str → Str")
-                header_dict[k._value] = v._value
+        header_dict = _headers_to_py(headers, "Request") if headers is not None else {}
         # noqa: S310 — caller is responsible for URL scheme allowlisting.
         self._impl = _urllib_request.Request(  # noqa: S310
             url._value,
