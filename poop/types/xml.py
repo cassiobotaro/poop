@@ -3,6 +3,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as _ET
 from typing import Any, ClassVar
 
+from poop.types._bridge import _str_str_dict
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -23,13 +24,6 @@ def _unwrap_attrib(attrib: Dict | None) -> dict[str, str]:
             raise TypeError("Element attrib must be Dict[Str, Str]")
         result[key._value] = val._value
     return result
-
-
-def _wrap_attrib(attrib: dict[str, str]) -> Dict:
-    d = Dict()
-    for k, v in attrib.items():
-        d.at_put(Str(k), Str(v))
-    return d
 
 
 class Element(Object):
@@ -70,7 +64,7 @@ class Element(Object):
 
     @property
     def attrib(self) -> Dict:
-        return _wrap_attrib(self._impl.attrib)
+        return _str_str_dict(self._impl.attrib.items())
 
     def get(self, key: Str, default: Str | NoneClass | None = None) -> Str | NoneClass:
         if default is None or isinstance(default, NoneClass):

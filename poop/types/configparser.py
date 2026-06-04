@@ -4,6 +4,7 @@ import configparser as _configparser
 import io as _io
 from typing import Any, ClassVar
 
+from poop.types._bridge import _str_str_dict
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _b, _kwargs_from, _opt_str
 from poop.types.boolean import Boolean, to_boolean
@@ -194,10 +195,7 @@ class ConfigParser(_ImplWrapperMixin, Object):
 
     @staticmethod
     def _wrap_section_proxy(proxy: Any) -> Dict:
-        result = Dict()
-        for k, v in proxy.items():
-            result.at_put(Str(k), Str(v))
-        return result
+        return _str_str_dict(proxy.items())
 
     def get(
         self,
@@ -269,10 +267,7 @@ class ConfigParser(_ImplWrapperMixin, Object):
         return to_boolean(result)
 
     def defaults(self) -> Dict:
-        result = Dict()
-        for k, v in self._impl.defaults().items():
-            result.at_put(Str(k), Str(v))
-        return result
+        return _str_str_dict(self._impl.defaults().items())
 
     # Mutating ----------------------------------------------------------
 

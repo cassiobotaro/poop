@@ -4,7 +4,7 @@ import os as _os
 from collections.abc import Callable
 from typing import Any, ClassVar
 
-from poop.types._bridge import bridge
+from poop.types._bridge import _str_str_dict, bridge
 from poop.types._unwrap import _path_or_str
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.bytes import Bytes
@@ -60,10 +60,7 @@ class Environ:
 
     @staticmethod
     def as_dict() -> Dict:
-        d = Dict()
-        for k, v in _os.environ.items():
-            d.at_put(Str(k), Str(v))
-        return d
+        return _str_str_dict(_os.environ.items())
 
 
 class OS:

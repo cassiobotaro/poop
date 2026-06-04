@@ -1,6 +1,7 @@
 import mimetypes as _mimetypes
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._bridge import _str_str_dict
 from poop.types._unwrap import _b
 from poop.types.boolean import Boolean
 from poop.types.dict import Dict
@@ -14,10 +15,7 @@ if TYPE_CHECKING:
 
 
 def _str_dict(d: dict[str, str]) -> Dict:
-    result = Dict()
-    for k, v in d.items():
-        result.at_put(Str(k), Str(v))
-    return result
+    return _str_str_dict(d.items())
 
 
 def _str_list(items: list[str]) -> List:

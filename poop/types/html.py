@@ -5,6 +5,7 @@ import html.entities as _html_entities
 import html.parser as _html_parser
 from typing import Any, ClassVar
 
+from poop.types._bridge import _str_str_dict
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -28,20 +29,6 @@ def _cp2name_dict() -> Dict:
     return d
 
 
-def _entitydefs_dict() -> Dict:
-    d = Dict()
-    for k, v in _html_entities.entitydefs.items():
-        d.at_put(Str(k), Str(v))
-    return d
-
-
-def _html5_dict() -> Dict:
-    d = Dict()
-    for k, v in _html_entities.html5.items():
-        d.at_put(Str(k), Str(v))
-    return d
-
-
 class Entities:
     """Namespace mirroring Python's `html.entities` — named/numeric entity maps.
 
@@ -51,8 +38,8 @@ class Entities:
 
     name2codepoint: ClassVar[Dict] = _name2cp_dict()
     codepoint2name: ClassVar[Dict] = _cp2name_dict()
-    entitydefs: ClassVar[Dict] = _entitydefs_dict()
-    html5: ClassVar[Dict] = _html5_dict()
+    entitydefs: ClassVar[Dict] = _str_str_dict(_html_entities.entitydefs.items())
+    html5: ClassVar[Dict] = _str_str_dict(_html_entities.html5.items())
 
 
 class HTMLParser(Object):
