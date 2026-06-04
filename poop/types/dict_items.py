@@ -3,20 +3,17 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
-from poop.types._iterable_mixin import _IterableMixin
+from poop.types._dict_view import _DictView
 from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_item_iterator import DictItemIterator
 from poop.types.dict_reverse_item_iterator import DictReverseItemIterator
 from poop.types.frozen_set import FrozenSet
-from poop.types.int import Int
-from poop.types.mapping_proxy import MappingProxy
 from poop.types.object import Object
 from poop.types.set import Set
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean, to_boolean
-    from poop.types.dict import Dict
 
 
 def _other_items(other: DictItems | Set | FrozenSet) -> set[tuple[Object, Object]]:
@@ -31,20 +28,10 @@ def _other_items(other: DictItems | Set | FrozenSet) -> set[tuple[Object, Object
 
 
 @final
-class DictItems(_IterableMixin, Object):
+class DictItems(_DictView, name="dict_items"):
     """Live view over a Dict's items, mirroring Python's dict_items."""
 
-    __slots__ = ("_dict",)
-    __hash__ = None  # type: ignore[assignment]
-
-    def __init__(self, dict_: Dict) -> None:
-        self._dict = dict_
-
-    def len(self) -> Int:
-        return Int(len(self._dict))
-
-    def __len__(self) -> int:
-        return len(self._dict)
+    __slots__ = ()
 
     def __iter__(self) -> Iterator[Tuple]:
         return (Tuple(k, v) for k, v in self._dict._data.items())
@@ -73,9 +60,6 @@ class DictItems(_IterableMixin, Object):
     def isdisjoint(self, other: DictItems | Set | FrozenSet) -> Boolean:
         own = set(self._dict._data.items())
         return to_boolean(own.isdisjoint(_other_items(other)))
-
-    def mapping(self) -> MappingProxy:
-        return MappingProxy(self._dict)
 
     def _poop_own_set(self) -> set:
         return set(self._dict._data.items())
@@ -132,8 +116,5 @@ class DictItems(_IterableMixin, Object):
     def __gt__(self, other: DictItems | Set | FrozenSet) -> Boolean:
         return to_boolean(self._poop_own_set() > set(_other_items(other)))
 
-    def __str__(self) -> str:
-        items = ", ".join(f"({k!r}, {v!r})" for k, v in self._dict._data.items())
-        return f"dict_items([{items}])"
-
-    __repr__ = __str__
+    def _repr_items(self) -> str:
+        return ", ".join(f"({k!r}, {v!r})" for k, v in self._dict._data.items())

@@ -3,19 +3,16 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
-from poop.types._iterable_mixin import _IterableMixin
+from poop.types._dict_view import _DictView
 from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
 from poop.types.frozen_set import FrozenSet
-from poop.types.int import Int
-from poop.types.mapping_proxy import MappingProxy
 from poop.types.object import Object
 from poop.types.set import Set
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean, to_boolean
-    from poop.types.dict import Dict
 
 _KeySetLike = "DictKeys | Set | FrozenSet"
 
@@ -28,20 +25,10 @@ def _other_keys(other: DictKeys | Set | FrozenSet) -> set[Object] | frozenset[Ob
 
 
 @final
-class DictKeys(_IterableMixin, Object):
+class DictKeys(_DictView, name="dict_keys"):
     """Live view over a Dict's keys, mirroring Python's dict_keys."""
 
-    __slots__ = ("_dict",)
-    __hash__ = None  # type: ignore[assignment]
-
-    def __init__(self, dict_: Dict) -> None:
-        self._dict = dict_
-
-    def len(self) -> Int:
-        return Int(len(self._dict))
-
-    def __len__(self) -> int:
-        return len(self._dict)
+    __slots__ = ()
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._dict._data)
@@ -63,9 +50,6 @@ class DictKeys(_IterableMixin, Object):
 
     def isdisjoint(self, other: DictKeys | Set | FrozenSet) -> Boolean:
         return to_boolean(self._dict._data.keys().isdisjoint(_other_keys(other)))
-
-    def mapping(self) -> MappingProxy:
-        return MappingProxy(self._dict)
 
     def __or__(self, other: DictKeys | Set | FrozenSet) -> Set:
         return Set(*(self._dict._data.keys() | _other_keys(other)))
@@ -115,8 +99,5 @@ class DictKeys(_IterableMixin, Object):
     def __gt__(self, other: DictKeys | Set | FrozenSet) -> Boolean:
         return to_boolean(self._dict._data.keys() > set(_other_keys(other)))
 
-    def __str__(self) -> str:
-        items = ", ".join(repr(k) for k in self._dict._data)
-        return f"dict_keys([{items}])"
-
-    __repr__ = __str__
+    def _repr_items(self) -> str:
+        return ", ".join(repr(k) for k in self._dict._data)
