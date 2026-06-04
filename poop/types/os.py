@@ -5,6 +5,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar
 
 from poop.types._bridge import bridge
+from poop.types._unwrap import _path_or_str
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
@@ -16,10 +17,6 @@ from poop.types.path import Path
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-
-
-def _path_str(p: Path | Str) -> str:
-    return p._value if isinstance(p, Str) else str(p)
 
 
 class Environ:
@@ -158,7 +155,9 @@ class OS:
     def chmod(
         path: Path | Str, mode: Int, follow_symlinks: Boolean = true
     ) -> NoneClass:
-        _os.chmod(_path_str(path), mode._value, follow_symlinks=bool(follow_symlinks))
+        _os.chmod(
+            _path_or_str(path), mode._value, follow_symlinks=bool(follow_symlinks)
+        )
         return none
 
     @staticmethod
@@ -169,7 +168,7 @@ class OS:
         follow_symlinks: Boolean = true,
     ) -> NoneClass:
         _os.chown(
-            _path_str(path),
+            _path_or_str(path),
             uid._value,
             gid._value,
             follow_symlinks=bool(follow_symlinks),
@@ -178,7 +177,7 @@ class OS:
 
     @staticmethod
     def chdir(path: Path | Str) -> NoneClass:
-        _os.chdir(_path_str(path))
+        _os.chdir(_path_or_str(path))
         return none
 
     @staticmethod
@@ -207,7 +206,7 @@ class OS:
         py_onerror = None if onerror is None else bridge(onerror)
         out: list[Tuple] = []
         for root, dirs, files in _os.walk(
-            _path_str(top),
+            _path_or_str(top),
             topdown=bool(topdown),
             onerror=py_onerror,
             followlinks=bool(followlinks),

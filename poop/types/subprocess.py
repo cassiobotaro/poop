@@ -4,6 +4,7 @@ from __future__ import annotations
 import subprocess as _subprocess
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _opt_path_or_str
 from poop.types.boolean import Boolean, false
 from poop.types.bytes import Bytes
 from poop.types.float import Float
@@ -30,12 +31,6 @@ def _unwrap_args(args: List | Str) -> Any:
                 unwrapped.append(item)
         return unwrapped
     return args
-
-
-def _opt_path(p: Path | Str | None) -> Any:
-    if p is None:
-        return None
-    return p._value if isinstance(p, Str) else str(p)
 
 
 class CompletedProcess(Object):
@@ -169,7 +164,7 @@ class Subprocess:
             "text": bool(text),
         }
         if cwd is not None:
-            kwargs["cwd"] = _opt_path(cwd)
+            kwargs["cwd"] = _opt_path_or_str(cwd)
         if timeout is not None:
             kwargs["timeout"] = timeout._value
         if input is not None:

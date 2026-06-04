@@ -3,7 +3,7 @@ from __future__ import annotations
 import ssl as _ssl
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _kwargs_from
+from poop.types._unwrap import _kwargs_from, _opt_path_or_str, _path_or_str
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
@@ -32,12 +32,8 @@ class SSLContext(Object):
         keyfile: Path | Str | None = None,
         password: Str | None = None,
     ) -> NoneClass:
-        cf = certfile._value if isinstance(certfile, Str) else str(certfile)
-        kf = (
-            None
-            if keyfile is None
-            else (keyfile._value if isinstance(keyfile, Str) else str(keyfile))
-        )
+        cf = _path_or_str(certfile)
+        kf = _opt_path_or_str(keyfile)
         pw = None if password is None else password._value
         self._impl.load_cert_chain(cf, kf, pw)
         return none
@@ -48,16 +44,8 @@ class SSLContext(Object):
         capath: Path | Str | None = None,
         cadata: Str | None = None,
     ) -> NoneClass:
-        cf = (
-            None
-            if cafile is None
-            else (cafile._value if isinstance(cafile, Str) else str(cafile))
-        )
-        cp = (
-            None
-            if capath is None
-            else (capath._value if isinstance(capath, Str) else str(capath))
-        )
+        cf = _opt_path_or_str(cafile)
+        cp = _opt_path_or_str(capath)
         cd = None if cadata is None else cadata._value
         self._impl.load_verify_locations(cf, cp, cd)
         return none
@@ -194,16 +182,8 @@ class SSL:
         # `purpose` is an `ssl.Purpose` enum value; POOP exposes the
         # enum members directly (`SSL.PROTOCOL_TLS_SERVER` etc.) but
         # accepts the raw CPython value here as a passthrough.
-        cf = (
-            None
-            if cafile is None
-            else (cafile._value if isinstance(cafile, Str) else str(cafile))
-        )
-        cp = (
-            None
-            if capath is None
-            else (capath._value if isinstance(capath, Str) else str(capath))
-        )
+        cf = _opt_path_or_str(cafile)
+        cp = _opt_path_or_str(capath)
         cd = None if cadata is None else cadata._value
         return SSLContext(
             impl=_ssl.create_default_context(purpose, cafile=cf, capath=cp, cadata=cd)

@@ -66,6 +66,21 @@ def _opt_timeout(value: object) -> Any:
     return _unwrap(value, None)
 
 
+def _path_or_str(p: Any) -> str:
+    """`Path | Str` → `str` for stdlib path arguments.
+
+    Duck-typed on `_value` (Str carries it, Path does not) so this module
+    need not import `Str` — `string.py` already imports `_unwrap`, which
+    would make a top-level `Str` import circular.
+    """
+    return p._value if hasattr(p, "_value") else str(p)
+
+
+def _opt_path_or_str(p: Any) -> str | None:
+    """`Path | Str | None` (or POOP `none`) → `str | None`."""
+    return None if _is_absent(p) else _path_or_str(p)
+
+
 def _kwargs_from(**named: Any) -> dict[str, Any]:
     """Drop absent values; unwrap survivors via `._value`.
 
