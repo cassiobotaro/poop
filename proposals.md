@@ -1,145 +1,6 @@
 # Proposals
 
-## Open proposals
-
-Backlog from the June 2026 repository survey (philosophy gaps verified by
-execution; duplication figures verified by inspection). Suggested order:
-90–91 first (small, restore language consistency), then 92/94/95 (low-risk
-internal refactors), 96 and 98 as the highest-value features, and
-93/97/99–102 on demand.
-
-### ~~90. `no_type` validator~~ — DONE
-
-Decision: `type()` rejected via `make_call_name_validator`; message points
-to `obj.class_name()` and polymorphism. Implemented with registration,
-tests, INFECTIONS.md entry, and a MIGRATION.md recipe.
-
-### ~~91. `no_help` validator~~ — DONE
-
-Decision: `help()` rejected via `make_call_name_validator` — interactive
-escape hatch, no POOP equivalent. Implemented with registration, tests,
-and an INFECTIONS.md entry.
-
-### ~~92. Collection-transformer factory~~ — DONE
-
-Decision: shared machinery extracted to
-`poop/transformers/_collection.py` — a ClassVar-driven
-`CollectionRewriter` base (statically subclassable, ty-friendly) plus
-`make_constructor`/`make_iterable_from`/`wrap_elts`; dict and frozenset
-keep only their genuinely specific converters. 359 → 291 lines, zero
-behavior change (full suite passed unmodified).
-
-### ~~93. Property-forwarding helper for `_ImplWrapperMixin` types~~ — DONE (as mixins, generator rejected)
-
-Decision: the declarative generator was rejected on inspection —
-`logging.py`'s "21 repeated properties" are really four heterogeneous
-shapes (plain wrap, optional-`none`, `to_poop` bridge, metaclass
-toggles), so a table either covers only ~8 trivial cases or grows
-escape hatches, and ty-visibility would force annotation + table
-double bookkeeping. The *real* duplication was across classes, and it
-shipped as plain mixins with real defs (the proposal-95 pattern):
-`_DateFieldsMixin`/`_TimeFieldsMixin` in `datetime.py` (Date/Time/
-DateTime shared fields incl. the 11-line `tzinfo` cascade) and
-`_VersionMixin`/`_ScopeFlagsMixin`/`_MaskFormsMixin` in
-`ipaddress.py` (version ×3, scope flags ×2, mask forms ×2). ~160
-duplicated lines now single-sourced; full suite passed unmodified.
-
-### ~~94. Consolidate ad-hoc unwrappers into `_unwrap.py`~~ — DONE
-
-Decision: implemented the slim version. `logging._unwrap_level` was the
-only genuine duplication — removed in favour of the already-imported
-`_bridge.to_python`. The other three (`fractions._to_python_num`,
-`socket._unwrap_address`, `ipaddress._addr_arg`) are legitimate
-domain dispatch: each cascade maps different types to `_impl` vs
-`_value` vs passthrough (socket's is recursive over `Tuple`), and a
-shared duck-typed helper would change edge-case behavior (e.g.
-`Fraction(Decimal)`, `Fraction(Boolean)`). Kept as-is by design.
-
-### ~~95. Logger level-method mixin~~ — DONE
-
-Decision: `_LevelMethodsMixin` (real defs, ty-visible — no class-body
-loop) now carries `debug`/`info`/`warning`/`error`/`critical`/`log`/
-`setLevel`, shared by `Logger` and `LoggerAdapter`. `exception` stays
-Logger-only (adding it to LoggerAdapter would be an API change) and
-the `Logging` static forwarders keep their module-function shape.
-
-### ~~96. `collections` infection~~ — DONE
-
-Decision: `Counter` (Smalltalk `Bag`), `deque` (`OrderedCollection`),
-`defaultdict` (factory as a block — no bridging needed), `OrderedDict`
-(a reordering `Dict` subclass), `namedtuple` (class factory returning
-a `Tuple` subclass with property fields), and `ChainMap` (live lookup
-chain over `Dict`s — pulled in when a caller asked) shipped in
-`poop/types/collections.py` + namespace-only
-`poop/transformers/collections.py`. Entry points keep Python's exact
-casing. Remaining tail (`UserDict`/`UserList`/`UserString` —
-subclassing helpers with no POOP use case; `collections.abc` — exists
-for isinstance checks, against the philosophy) is out of scope.
-
-### ~~97. `functools` infection~~ — SUPERSEDED by #103
-
-Original framing (PascalCase `Partial` entry point, caching deferred
-without a path) was replaced by a fresh maintainer-requested entry;
-see #103.
-
-### ~~98. `itertools` as messages on iterables~~ — REJECTED (implemented, then reverted)
-
-Maintainer decision: the mixin earns a message when it **substitutes a
-forbidden construct** — `reduce` exists because the comprehension/
-accumulation idiom it replaces is banned. The itertools combinators
-substitute nothing forbidden and are derivable from the existing
-message surface (`map`/`filter`/`zip`/`enumerate`/`reduce`), so they
-add API weight without philosophical payoff. Shipped in `016b099`,
-reverted in full.
-
-### ~~99. `base64` namespace~~ — WITHDRAWN
-
-The premise was wrong: base64 is already fully infected as **messages on
-the value** — `Bytes` carries 9 encoder/decoder variants each
-(b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85, including the
-`altchars` kwarg), `Str` carries the decoders (see `poop/types/bytes.py`
-and the MIGRATION.md "Base64" section). A namespace mirror would be
-strictly less idiomatic than what exists. Nothing to do.
-
-### ~~100. `Object.subclass_responsibility()`~~ — REJECTED (implemented, then reverted)
-
-Maintainer decision: the Python way to mark abstract methods is the
-`@abstractmethod` decorator; POOP follows Python idioms where one
-exists (the same principle behind `map` not `collect`), so a
-Smalltalk-only message is not wanted. Shipped in `cecf271`, reverted
-in full. If abstract-method support is ever desired, it should arrive
-through a decorator story instead.
-
-### ~~101. Source-line caret in validation errors~~ — DONE
-
-Decision: `_format_error` in `poop/cli.py` appends the offending
-source line in a numbered gutter plus a `^` at the column when the
-error carries position info (`ValidationError` gets line + caret,
-`ExecutionError` line only). Both the run path and `--validators-only`
-use it; errors without position keep the old one-line form.
-
-### ~~102. REPL meta-commands~~ — DONE
-
-Decision: `:methods <expr>` (evaluates a variable or safe literal
-through the transformer pipeline, so `"abc"` answers `Str`'s messages,
-and lists the non-underscored surface), `:explain <construct>` (runs a
-minimal snippet through the validators and prints their own messages —
-explanations can never drift from the rejection text), and `:help`.
-Lines starting with `:` are intercepted before the normal pipeline.
-
-### ~~103. `functools` infection~~ — DONE
-
-Decision: shipped as proposed. `partial` (lowercase entry point,
-freezes arguments of any callable — blocks, bound methods,
-constructors, other partials), `functools.cmp_to_key` (unwraps the
-comparison block's `Int` so the stdlib key object can compare it),
-`functools.reduce` (parity mirror; `col.reduce` stays idiomatic), and
-`functools.cache`/`lru_cache` as explicit wrapper calls returning
-`Block`s — caching without a decorator story. `wraps`/
-`singledispatch`/`total_ordering`/`partialmethod` out of scope
-(decorator/class machinery), per pull-when-asked.
-
-## Resolved
+No open design proposals.
 
 The leak/signature/bug audit logged as 1–89 here was fully resolved
 across the v1.0.x and v1.1.x cycles:
@@ -191,6 +52,20 @@ across the v1.0.x and v1.1.x cycles:
   `_kwargs_from` applied to the remaining pure optional-kwarg blocks
   (`Struct`/`StructNamespace.unpack_from`, `NormalDist.quantiles`).
   Pending next patch release.
+- The June 2026 repository-survey backlog (90–103) closed → v1.5.0.
+  Shipped: `no_type`/`no_help` validators (90–91); collection-
+  transformer factory, cross-class property mixins, unwrap and logger
+  consolidation (92–95); the full `collections` infection — `Counter`,
+  `deque`, `defaultdict`, `OrderedDict`, `namedtuple`, `ChainMap`
+  (96); source-line caret diagnostics in the CLI (101); REPL
+  `:methods`/`:explain`/`:help` meta-commands (102); the `functools`
+  infection — `partial`, `cmp_to_key`, `reduce`, decorator-free
+  `cache`/`lru_cache` (97 → 103). Rejected after trial, reverted in
+  full: itertools combinators as iterable messages (98 — they
+  substitute no forbidden construct) and
+  `Object.subclass_responsibility()` (100 — Python's idiom is the
+  `@abstractmethod` decorator). Withdrawn: `base64` namespace (99 —
+  already shipped as `Bytes`/`Str` messages).
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
