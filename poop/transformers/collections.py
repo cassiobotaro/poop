@@ -1,9 +1,20 @@
-from poop.types.collections import CollectionsNamespace, Counter, Deque
+from poop.types.collections import (
+    CollectionsNamespace,
+    Counter,
+    DefaultDict,
+    Deque,
+    OrderedDict,
+    namedtuple,
+)
 
 NAMESPACE: dict[str, object] = {
     "collections": CollectionsNamespace,
+    # Entry points keep Python's exact casing (deque/defaultdict/
+    # namedtuple are lowercase in CPython) — same precedent as enum's
+    # `auto`.
     "Counter": Counter,
-    # Python exposes the class lowercase (collections.deque), so the
-    # entry point mirrors that — same precedent as enum's `auto`.
     "deque": Deque,
+    "defaultdict": DefaultDict,
+    "OrderedDict": OrderedDict,
+    "namedtuple": namedtuple,
 }

@@ -1123,7 +1123,7 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 
 ### collections + Counter + Deque — `poop/types/collections.py` + `poop/transformers/collections.py`
 
-`collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Three namespace entries: `collections` (lowercase module mirror), plus the direct entry points `Counter` and `deque` — each keeping its Python casing (`deque` is lowercase in CPython, same precedent as enum's `auto`). Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as.
+`collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Six namespace entries: `collections` (lowercase module mirror), plus the direct entry points `Counter`, `deque`, `defaultdict`, `OrderedDict`, and `namedtuple` — each keeping its Python casing (`deque`/`defaultdict`/`namedtuple` are lowercase in CPython, same precedent as enum's `auto`). Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as. `defaultdict` and `OrderedDict` subclass `Dict`, so the full `Dict` surface (`at_put`, `keys`, `do`, `pop`, views, `|` merge, …) applies.
 
 | Operation | Returns | Notes |
 |---|---|---|
@@ -1147,8 +1147,17 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `deque.maxlen` (property) | `Int` or `none` | |
 | `deque.len()` / `.includes(x)` | `Int` / `Boolean` | |
 | `deque.do/map/filter/...` | typed | full `_IterableMixin` surface |
+| `defaultdict(default_factory=none)` | `defaultdict` | factory is a block (`lambda: List()`); `at` on a missing key calls it, stores, and answers — no `KeyError` |
+| `defaultdict.default_factory` (property) | block or `none` | |
+| `defaultdict.<Dict surface>` | typed | inherits everything from `Dict` |
+| `OrderedDict()` | `OrderedDict` | order-aware `Dict` |
+| `OrderedDict.move_to_end(key, last=true)` | `none` | `last=false` moves to front |
+| `OrderedDict.popitem(last=true)` | `Tuple` | directional pop |
+| `OrderedDict.<Dict surface>` | typed | inherits everything from `Dict` |
+| `namedtuple(typename, field_names)` | class | class factory: fields as a `Str` (`"x y"` / `"x, y"`) or iterable of `Str` |
+| `Point(...)` (generated class) | instance | a `Tuple` subclass — fields read as properties (`p.x`), arity-checked constructor, `Point(x=1, y=2)`-style repr |
 
-`defaultdict`, `OrderedDict`, `namedtuple`, and `ChainMap` are deferred per the [pull-when-asked policy](#pull-deferred-surface-only-when-a-caller-asks) (proposal 96 tracks them).
+`ChainMap` is deferred per the [pull-when-asked policy](#pull-deferred-surface-only-when-a-caller-asks).
 
 ### shlex + Shlex — `poop/types/shlex.py` + `poop/transformers/shlex.py`
 

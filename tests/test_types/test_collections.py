@@ -469,3 +469,19 @@ def test_deque_via_interpreter() -> None:
 
 def test_deque_via_collections_namespace() -> None:
     Interpreter().run_source("collections.deque().len().print()")
+
+
+def test_defaultdict_via_interpreter() -> None:
+    Interpreter().run_source('d = defaultdict(lambda: 0)\nd.at("missing").print()')
+
+
+def test_ordereddict_via_interpreter() -> None:
+    Interpreter().run_source(
+        'od = OrderedDict()\nod.at_put("a", 1)\nod.popitem().print()'
+    )
+
+
+def test_namedtuple_via_interpreter() -> None:
+    Interpreter().run_source(
+        'Point = namedtuple("Point", "x y")\np = Point(1, 2)\np.x.print()'
+    )
