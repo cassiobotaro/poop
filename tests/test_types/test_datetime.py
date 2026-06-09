@@ -353,3 +353,14 @@ def test_datetime_reachable_via_interpreter() -> None:
 def test_invalid_date_raises() -> None:
     with pytest.raises(ValueError):
         Date(Int(2026), Int(13), Int(1))
+
+
+def test_date_min_max_class_attributes() -> None:
+    assert isinstance(Date.min, Date)
+    assert isinstance(Date.max, Date)
+    assert Date.min.year == Int(1)
+    assert Date.max.year == Int(9999)
+
+
+def test_date_min_max_via_interpreter() -> None:
+    Interpreter().run_source("Date.max.year.print()")

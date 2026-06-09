@@ -203,6 +203,9 @@ class Date(_DateFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
     __slots__ = ("_impl",)
     _eq_attr: ClassVar[str] = "_impl"
 
+    min: ClassVar[Date]
+    max: ClassVar[Date]
+
     def __init__(self, year: Int, month: Int, day: Int) -> None:
         self._impl = _datetime.date(year._value, month._value, day._value)
 
@@ -255,6 +258,10 @@ class Date(_DateFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
 
     def __hash__(self) -> int:
         return hash(self._impl)
+
+
+Date.min = Date._from_impl(_datetime.date.min)
+Date.max = Date._from_impl(_datetime.date.max)
 
 
 class Time(_TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):

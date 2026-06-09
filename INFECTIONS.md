@@ -1412,11 +1412,12 @@ Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`
 | `TimeDelta % TimeDelta` | `TimeDelta` | |
 | `-TimeDelta` | `TimeDelta` | |
 | `TimeZone(offset, name=none)` | `TimeZone` | |
+| `Date.min` / `Date.max` (class attrs) | `Date` | years 1 and 9999, mirroring the stdlib |
 | `TimeZone.utc` (class attr) | `TimeZone` | UTC constant |
 | `TimeZone.utcoffset(dt=none)` | `TimeDelta` | |
 | `TimeZone.tzname(dt=none)` | `Str` | |
 
-The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetime.tzinfo`) is out of scope; users get `TimeZone` for fixed offsets. The `Date.min`/`Date.max` class attributes and the `datetime.MINYEAR`/`MAXYEAR` integer constants are deferred until a caller asks for them.
+The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetime.tzinfo`) is out of scope; users get `TimeZone` for fixed offsets. `Date.min`/`Date.max` are exposed as class attributes (`Date` instances for years 1 and 9999); the bare `datetime.MINYEAR`/`MAXYEAR` integer constants stay out — see the [permanent divergence](#no-datetimemaxyear--datetimeminyear) (the values are implicit in `Date.min`/`Date.max` and in the constructor's range check).
 
 `datetime`, `Date`, `Time`, `DateTime`, `TimeDelta`, and `TimeZone` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/datetime.py` — namespace-only, no AST rewrite.
 
