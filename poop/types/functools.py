@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import functools as _functools
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _is_absent, _opt_int
 from poop.types.block import Block
 from poop.types.dict import Dict
+from poop.types.int import Int
+from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -55,10 +57,33 @@ Partial.__module__ = "functools"
 Partial.__name__ = "partial"
 
 
+class _CachedBlock(Block):
+    """A memoized block — a `Block` that also answers the cache's
+    bookkeeping messages."""
+
+    __slots__ = ()
+
+    def cache_info(self) -> Dict:
+        info = cast("Any", self._fn).cache_info()
+        d = Dict()
+        d.at_put(Str("hits"), Int(info.hits))
+        d.at_put(Str("misses"), Int(info.misses))
+        d.at_put(Str("maxsize"), none if info.maxsize is None else Int(info.maxsize))
+        d.at_put(Str("currsize"), Int(info.currsize))
+        return d
+
+    def cache_clear(self) -> NoneClass:
+        cast("Any", self._fn).cache_clear()
+        return none
+
+
 class FunctoolsNamespace:
     """Namespace mirroring Python's `functools` module."""
 
     partial: ClassVar[type[Partial]] = Partial
+    # The descriptor works untouched in a POOP class body:
+    #     deposit_100 = functools.partialmethod(deposit, 100)
+    partialmethod: ClassVar[type] = _functools.partialmethod
 
     @staticmethod
     def cmp_to_key(block: Any) -> Block:
@@ -77,9 +102,9 @@ class FunctoolsNamespace:
         return _functools.reduce(block, iter(iterable), init)
 
     @staticmethod
-    def cache(block: Any) -> Block:
-        return Block(_functools.cache(block))
+    def cache(block: Any) -> _CachedBlock:
+        return _CachedBlock(_functools.cache(block))
 
     @staticmethod
-    def lru_cache(block: Any, maxsize: Any = None) -> Block:
-        return Block(_functools.lru_cache(maxsize=_opt_int(maxsize))(block))
+    def lru_cache(block: Any, maxsize: Any = None) -> _CachedBlock:
+        return _CachedBlock(_functools.lru_cache(maxsize=_opt_int(maxsize))(block))

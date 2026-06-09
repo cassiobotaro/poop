@@ -182,3 +182,72 @@ def test_cache_via_interpreter() -> None:
     Interpreter().run_source(
         "quadrado = functools.cache(lambda n: n * n)\nquadrado(4).print()"
     )
+
+
+# --- cache bookkeeping (pulled when a caller asked) ---
+
+
+def test_cache_info_reports_hits_and_misses() -> None:
+    cached = FunctoolsNamespace.cache(lambda n: n)
+    cached(Int(1))
+    cached(Int(1))
+    info = cached.cache_info()
+    assert info.at(Str("hits")) == Int(1)
+    assert info.at(Str("misses")) == Int(1)
+    assert info.at(Str("maxsize")) is none
+    assert info.at(Str("currsize")) == Int(1)
+
+
+def test_lru_cache_info_reports_maxsize() -> None:
+    cached = FunctoolsNamespace.lru_cache(lambda n: n, maxsize=Int(8))
+    info = cached.cache_info()
+    assert info.at(Str("maxsize")) == Int(8)
+
+
+def test_cache_clear_resets_the_cache() -> None:
+    calls: list[Int] = []
+
+    def expensive(n: Int) -> Any:
+        calls.append(n)
+        return n
+
+    cached = FunctoolsNamespace.cache(expensive)
+    cached(Int(1))
+    assert cached.cache_clear() is none
+    cached(Int(1))
+    assert len(calls) == 2
+
+
+def test_cached_block_is_still_a_block() -> None:
+    cached = FunctoolsNamespace.cache(lambda n: n)
+    assert isinstance(cached, Block)
+
+
+# --- partialmethod (pulled when a caller asked) ---
+
+
+def test_partialmethod_binds_in_class_body() -> None:
+    class Account:
+        def __init__(self) -> None:
+            self.balance: Any = Int(0)
+
+        def deposit(self, amount: Int) -> Any:
+            self.balance = self.balance + amount
+            return self.balance
+
+        deposit_100 = FunctoolsNamespace.partialmethod(deposit, Int(100))
+
+    account = Account()
+    assert account.deposit_100() == Int(100)
+
+
+def test_partialmethod_via_interpreter() -> None:
+    Interpreter().run_source(
+        "class Greeter:\n"
+        "    def greet(self, greeting, name):\n"
+        "        return greeting + name\n"
+        "\n"
+        '    hello = functools.partialmethod(greet, "Olá, ")\n'
+        "\n"
+        'Greeter().hello("Ana").print()'
+    )
