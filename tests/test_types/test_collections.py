@@ -613,3 +613,105 @@ def test_chainmap_via_interpreter() -> None:
         "config = ChainMap(user, defaults)\n"
         'config.at("theme").print()'
     )
+
+
+# --- deque tail (pulled when a caller asked) ---
+
+
+def test_deque_insert_at_position() -> None:
+    d = Deque(List(Int(1), Int(3)))
+    assert d.insert(Int(1), Int(2)) is none
+    assert d.at(Int(1)) == Int(2)
+
+
+def test_deque_index_finds_first_occurrence() -> None:
+    d = Deque(List(Int(9), Int(7), Int(9)))
+    assert d.index(Int(9)) == Int(0)
+
+
+def test_deque_index_with_start_and_stop() -> None:
+    d = Deque(List(Int(9), Int(7), Int(9)))
+    assert d.index(Int(9), Int(1)) == Int(2)
+    assert d.index(Int(7), Int(0), Int(2)) == Int(1)
+
+
+def test_deque_index_missing_raises() -> None:
+    with pytest.raises(ValueError):
+        Deque(List(Int(1))).index(Int(9))
+
+
+def test_deque_copy_preserves_items_and_maxlen() -> None:
+    d = Deque(List(Int(1)), maxlen=Int(5))
+    c = d.copy()
+    assert isinstance(c, Deque)
+    assert c == d
+    assert c.maxlen == Int(5)
+    c.append(Int(2))
+    assert d.len() == Int(1)
+
+
+def test_deque_add_concatenates() -> None:
+    combined = Deque(List(Int(1))) + Deque(List(Int(2)))
+    assert isinstance(combined, Deque)
+    assert combined == Deque(List(Int(1), Int(2)))
+
+
+def test_deque_add_rejects_non_deque() -> None:
+    with pytest.raises(TypeError):
+        Deque() + List(Int(1))
+
+
+def test_deque_mul_repeats() -> None:
+    tripled = Deque(List(Int(1))) * Int(3)
+    assert tripled == Deque(List(Int(1), Int(1), Int(1)))
+
+
+# --- seeded constructors (pulled when a caller asked) ---
+
+
+def test_defaultdict_seeds_from_dict() -> None:
+    d = DefaultDict(lambda: Int(0), _dict_of("a", 1))
+    assert d.at(Str("a")) == Int(1)
+    assert d.at(Str("missing")) == Int(0)
+
+
+def test_ordereddict_seeds_from_dict() -> None:
+    od = OrderedDict(_dict_of("a", 1))
+    assert od.at(Str("a")) == Int(1)
+    assert isinstance(od, OrderedDict)
+
+
+# --- namedtuple utilities (pulled when a caller asked) ---
+
+
+def test_namedtuple_fields_attribute() -> None:
+    point: Any = namedtuple(Str("Point"), Str("x y"))
+    assert point._fields == Tuple(Str("x"), Str("y"))
+
+
+def test_namedtuple_make_from_iterable() -> None:
+    point: Any = namedtuple(Str("Point"), Str("x y"))
+    p = point._make(List(Int(1), Int(2)))
+    assert p.x == Int(1)
+    assert p.y == Int(2)
+
+
+def test_namedtuple_asdict() -> None:
+    point = namedtuple(Str("Point"), Str("x y"))
+    d = point(Int(1), Int(2))._asdict()
+    assert isinstance(d, Dict)
+    assert d.at(Str("x")) == Int(1)
+    assert d.at(Str("y")) == Int(2)
+
+
+def test_namedtuple_replace_swaps_named_fields() -> None:
+    point = namedtuple(Str("Point"), Str("x y"))
+    p = point(Int(1), Int(2))._replace(y=Int(9))
+    assert p.x == Int(1)
+    assert p.y == Int(9)
+
+
+def test_namedtuple_replace_rejects_unknown_field() -> None:
+    point = namedtuple(Str("Point"), Str("x y"))
+    with pytest.raises(ValueError):
+        point(Int(1), Int(2))._replace(z=Int(9))

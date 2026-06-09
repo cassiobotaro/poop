@@ -165,6 +165,34 @@ class Deque(_ImplWrapperMixin, _ValueEqMixin, _IterableMixin, Object):
         self._impl.extendleft(iter(source))
         return none
 
+    def insert(self, index: Int, item: Object) -> NoneClass:
+        self._impl.insert(index._value, item)
+        return none
+
+    def index(
+        self,
+        item: Object,
+        start: Int | NoneClass | None = None,
+        stop: Int | NoneClass | None = None,
+    ) -> Int:
+        s = _opt_int(start, 0)
+        if stop is None or isinstance(stop, NoneClass):
+            return Int(self._impl.index(item, s))
+        return Int(self._impl.index(item, s, stop._value))
+
+    def copy(self) -> Deque:
+        return Deque._from_impl(self._impl.copy())
+
+    def __add__(self, other: object) -> Deque:
+        if not isinstance(other, Deque):
+            return NotImplemented
+        return Deque._from_impl(self._impl + other._impl)
+
+    def __mul__(self, n: object) -> Deque:
+        if not isinstance(n, Int):
+            return NotImplemented
+        return Deque._from_impl(self._impl * n._value)
+
     def rotate(self, n: Int | None = None) -> NoneClass:
         self._impl.rotate(1 if n is None else n._value)
         return none
@@ -223,13 +251,15 @@ class DefaultDict(Dict):
 
     __slots__ = ()
 
-    def __init__(self, default_factory: Any = None) -> None:
+    def __init__(self, default_factory: Any = None, source: Dict | None = None) -> None:
         factory = (
             None
             if default_factory is None or isinstance(default_factory, NoneClass)
             else default_factory
         )
         self._data = _collections.defaultdict(factory)
+        if source is not None and not isinstance(source, NoneClass):
+            self._data.update(source._data)
 
     @property
     def default_factory(self) -> Any:
@@ -248,8 +278,10 @@ class OrderedDict(Dict):
 
     __slots__ = ()
 
-    def __init__(self) -> None:
+    def __init__(self, source: Dict | None = None) -> None:
         self._data = _collections.OrderedDict()
+        if source is not None and not isinstance(source, NoneClass):
+            self._data.update(source._data)
 
     def _ordered(self) -> _collections.OrderedDict[Object, Object]:
         return cast("_collections.OrderedDict[Object, Object]", self._data)
@@ -341,6 +373,49 @@ class ChainMap(_ValueEqMixin, Object):
     __repr__ = __str__
 
 
+def _namedtuple_namespace(name: str, fields: list[str]) -> dict[str, Any]:
+    def _make_property(index: int) -> property:
+        return property(lambda self: self._items[index])
+
+    def _nt_init(self: Tuple, *elements: Object) -> None:
+        if len(elements) != len(fields):
+            raise TypeError(
+                f"{name} expects {len(fields)} arguments, got {len(elements)}"
+            )
+        Tuple.__init__(self, *elements)
+
+    def _nt_str(self: Tuple) -> str:
+        pairs = ", ".join(f"{f}={self._items[i]!r}" for i, f in enumerate(fields))
+        return f"{name}({pairs})"
+
+    def _nt_make(cls: type, iterable: Any) -> Any:
+        return cls(*iterable)
+
+    def _nt_asdict(self: Tuple) -> Dict:
+        d = Dict()
+        for i, f in enumerate(fields):
+            d.at_put(Str(f), self._items[i])
+        return d
+
+    def _nt_replace(self: Tuple, **changes: Any) -> Any:
+        unexpected = set(changes) - set(fields)
+        if unexpected:
+            raise ValueError(f"got unexpected field names: {sorted(unexpected)!r}")
+        values = (changes.get(f, self._items[i]) for i, f in enumerate(fields))
+        return type(self)(*values)
+
+    namespace: dict[str, Any] = {f: _make_property(i) for i, f in enumerate(fields)}
+    namespace["__slots__"] = ()
+    namespace["__init__"] = _nt_init
+    namespace["__str__"] = _nt_str
+    namespace["__repr__"] = _nt_str
+    namespace["_fields"] = Tuple(*(Str(f) for f in fields))
+    namespace["_make"] = classmethod(_nt_make)
+    namespace["_asdict"] = _nt_asdict
+    namespace["_replace"] = _nt_replace
+    return namespace
+
+
 def namedtuple(typename: Str, field_names: Any) -> type:
     """Build a lightweight value class — a `Tuple` subclass whose
     fields read as properties (`p.x`), mirroring `collections.namedtuple`
@@ -359,27 +434,7 @@ def namedtuple(typename: Str, field_names: Any) -> type:
         raise ValueError(f"field names must be valid identifiers: {bad[0]!r}")
     if len(set(fields)) != len(fields):
         raise ValueError("field names must be unique")
-
-    def _make_property(index: int) -> property:
-        return property(lambda self: self._items[index])
-
-    def _nt_init(self: Tuple, *elements: Object) -> None:
-        if len(elements) != len(fields):
-            raise TypeError(
-                f"{name} expects {len(fields)} arguments, got {len(elements)}"
-            )
-        Tuple.__init__(self, *elements)
-
-    def _nt_str(self: Tuple) -> str:
-        pairs = ", ".join(f"{f}={self._items[i]!r}" for i, f in enumerate(fields))
-        return f"{name}({pairs})"
-
-    namespace: dict[str, Any] = {f: _make_property(i) for i, f in enumerate(fields)}
-    namespace["__slots__"] = ()
-    namespace["__init__"] = _nt_init
-    namespace["__str__"] = _nt_str
-    namespace["__repr__"] = _nt_str
-    return type(name, (Tuple,), namespace)
+    return type(name, (Tuple,), _namedtuple_namespace(name, fields))
 
 
 class CollectionsNamespace:
