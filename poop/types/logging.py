@@ -113,19 +113,13 @@ class BufferingFormatter(_logging.BufferingFormatter):
         super().__init__(linefmt if linefmt is not None else None)
 
 
-class LoggerAdapter(Object):
-    """Wraps Python's `logging.LoggerAdapter` — pass an `extra` dict
-    through every log call on a wrapped Logger."""
+class _LevelMethodsMixin:
+    """Level methods shared by `Logger` and `LoggerAdapter` — both
+    forward to an `_impl` exposing the stdlib logger API."""
 
-    __slots__ = ("_impl",)
+    __slots__ = ()
 
-    def __init__(self, logger: Logger, extra: Dict | NoneClass | None = None) -> None:
-        extra_dict: dict[str, Any] | None
-        if extra is None or isinstance(extra, NoneClass):
-            extra_dict = None
-        else:
-            extra_dict = cast(dict[str, Any], to_python(extra))
-        self._impl = _logging.LoggerAdapter(logger._impl, extra_dict)
+    _impl: Any
 
     def debug(self, msg: Str) -> NoneClass:
         self._impl.debug(msg._value)
@@ -154,6 +148,21 @@ class LoggerAdapter(Object):
     def setLevel(self, level: Int | Str) -> NoneClass:
         self._impl.setLevel(to_python(level))
         return none
+
+
+class LoggerAdapter(_LevelMethodsMixin, Object):
+    """Wraps Python's `logging.LoggerAdapter` — pass an `extra` dict
+    through every log call on a wrapped Logger."""
+
+    __slots__ = ("_impl",)
+
+    def __init__(self, logger: Logger, extra: Dict | NoneClass | None = None) -> None:
+        extra_dict: dict[str, Any] | None
+        if extra is None or isinstance(extra, NoneClass):
+            extra_dict = None
+        else:
+            extra_dict = cast(dict[str, Any], to_python(extra))
+        self._impl = _logging.LoggerAdapter(logger._impl, extra_dict)
 
 
 class _LoggingMeta(type):
@@ -346,7 +355,7 @@ class FileHandler(_logging.FileHandler, Handler):
         )
 
 
-class Logger(Object):
+class Logger(_LevelMethodsMixin, Object):
     """Wraps Python's `logging.Logger`."""
 
     __slots__ = ("_impl",)
@@ -354,42 +363,14 @@ class Logger(Object):
     def __init__(self, impl: Any) -> None:
         self._impl = impl
 
-    def setLevel(self, level: Int | Str) -> NoneClass:
-        self._impl.setLevel(to_python(level))
-        return none
-
     def getEffectiveLevel(self) -> Int:
         return Int(self._impl.getEffectiveLevel())
 
     def isEnabledFor(self, level: Int) -> Boolean:
         return to_boolean(self._impl.isEnabledFor(level._value))
 
-    def debug(self, msg: Str) -> NoneClass:
-        self._impl.debug(msg._value)
-        return none
-
-    def info(self, msg: Str) -> NoneClass:
-        self._impl.info(msg._value)
-        return none
-
-    def warning(self, msg: Str) -> NoneClass:
-        self._impl.warning(msg._value)
-        return none
-
-    def error(self, msg: Str) -> NoneClass:
-        self._impl.error(msg._value)
-        return none
-
-    def critical(self, msg: Str) -> NoneClass:
-        self._impl.critical(msg._value)
-        return none
-
     def exception(self, msg: Str) -> NoneClass:
         self._impl.exception(msg._value)
-        return none
-
-    def log(self, level: Int, msg: Str) -> NoneClass:
-        self._impl.log(level._value, msg._value)
         return none
 
     def addHandler(self, h: _logging.Handler) -> NoneClass:
