@@ -44,19 +44,16 @@ proposal is to prototype on `logging.py` first and decide.
 
 **Scope.** One helper in the type layer + adoption in 2–3 wrapper modules.
 
-### 94. Consolidate ad-hoc unwrappers into `_unwrap.py`
+### ~~94. Consolidate ad-hoc unwrappers into `_unwrap.py`~~ — DONE
 
-**What exists today.** Several modules re-implement coercion that belongs
-beside the shared `_unwrap` helpers: `_to_python_num` in
-`poop/types/fractions.py`, `_unwrap_address` in `poop/types/socket.py`,
-`_addr_arg` in `poop/types/ipaddress.py`, `_unwrap_level` in
-`poop/types/logging.py`.
-
-**Proposal.** Move/merge these into `poop/types/_unwrap.py` as typed thin
-aliases (the established pattern there), leaving only genuinely
-domain-specific dispatch in the owning modules.
-
-**Scope.** `_unwrap.py` + the four modules above; no behavior change.
+Decision: implemented the slim version. `logging._unwrap_level` was the
+only genuine duplication — removed in favour of the already-imported
+`_bridge.to_python`. The other three (`fractions._to_python_num`,
+`socket._unwrap_address`, `ipaddress._addr_arg`) are legitimate
+domain dispatch: each cascade maps different types to `_impl` vs
+`_value` vs passthrough (socket's is recursive over `Tuple`), and a
+shared duck-typed helper would change edge-case behavior (e.g.
+`Fraction(Decimal)`, `Fraction(Boolean)`). Kept as-is by design.
 
 ### 95. Logger level-method mixin
 
