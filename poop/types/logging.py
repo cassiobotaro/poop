@@ -152,7 +152,7 @@ class LoggerAdapter(Object):
         return none
 
     def setLevel(self, level: Int | Str) -> NoneClass:
-        self._impl.setLevel(_unwrap_level(level))
+        self._impl.setLevel(to_python(level))
         return none
 
 
@@ -203,10 +203,6 @@ class _LoggingMeta(type):
         # Python 3.12+ exposes logAsyncioTasks. setattr keeps us flexible
         # for older versions where it might be absent.
         setattr(_logging, "logAsyncioTasks", bool(value))  # noqa: B010
-
-
-def _unwrap_level(level: Int | Str) -> Any:
-    return level._value
 
 
 class Filter(_logging.Filter):
@@ -287,7 +283,7 @@ class Handler(_logging.Handler):
     """
 
     def __init__(self, level: Int | Str | None = None) -> None:
-        super().__init__(_logging.NOTSET if level is None else _unwrap_level(level))
+        super().__init__(_logging.NOTSET if level is None else to_python(level))
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -301,7 +297,7 @@ class Handler(_logging.Handler):
         cls.emit = wrapped_emit  # type: ignore[method-assign]
 
     def setLevel(self, level: Int | Str) -> NoneClass:  # type: ignore[override]
-        super().setLevel(_unwrap_level(level))
+        super().setLevel(to_python(level))
         return none
 
     def setFormatter(self, fmt: _logging.Formatter | None) -> NoneClass:  # type: ignore[override]
@@ -359,7 +355,7 @@ class Logger(Object):
         self._impl = impl
 
     def setLevel(self, level: Int | Str) -> NoneClass:
-        self._impl.setLevel(_unwrap_level(level))
+        self._impl.setLevel(to_python(level))
         return none
 
     def getEffectiveLevel(self) -> Int:
@@ -507,7 +503,7 @@ class Logging(metaclass=_LoggingMeta):
         if style is not None:
             kwargs["style"] = style._value
         if level is not None:
-            kwargs["level"] = _unwrap_level(level)
+            kwargs["level"] = to_python(level)
         if handlers is not None:
             kwargs["handlers"] = list(handlers._items)
         if encoding is not None:
