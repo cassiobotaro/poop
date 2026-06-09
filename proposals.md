@@ -8,20 +8,11 @@ execution; duplication figures verified by inspection). Suggested order:
 internal refactors), 96 and 98 as the highest-value features, and
 93/97/99–102 on demand.
 
-### 90. `no_type` validator
+### ~~90. `no_type` validator~~ — DONE
 
-**What exists today.** `type(x)` escapes every validator — a program calling
-`type(self)` inside a method runs successfully and receives the raw Python
-class, leaking mangled `_poop_*` internals (verified by execution). All other
-introspection escape hatches (`globals`/`locals`/`vars`, `exec`/`eval`/
-`compile`, `dir`, `id`) are already rejected.
-
-**Proposal.** Add a `no_type` validator via `make_call_name_validator`
-forbidding `type`. Message should point to `.class_name()`
-(`poop/types/object.py:55`) and polymorphism over type inspection.
-
-**Scope.** One validator module + registration in
-`poop/validators/__init__.py` + tests + INFECTIONS.md entry.
+Decision: `type()` rejected via `make_call_name_validator`; message points
+to `obj.class_name()` and polymorphism. Implemented with registration,
+tests, INFECTIONS.md entry, and a MIGRATION.md recipe.
 
 ### 91. `no_help` validator
 
