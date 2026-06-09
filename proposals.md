@@ -14,16 +14,11 @@ Decision: `type()` rejected via `make_call_name_validator`; message points
 to `obj.class_name()` and polymorphism. Implemented with registration,
 tests, INFECTIONS.md entry, and a MIGRATION.md recipe.
 
-### 91. `no_help` validator
+### ~~91. `no_help` validator~~ — DONE
 
-**What exists today.** `help` (bare reference or call) escapes validation
-(verified by execution). It is an interactive escape hatch in the same family
-as `breakpoint`, `exit`, and `input`, all of which are already forbidden.
-
-**Proposal.** Add a `no_help` validator via `make_call_name_validator`
-forbidding `help`.
-
-**Scope.** One validator module + registration + tests + INFECTIONS.md entry.
+Decision: `help()` rejected via `make_call_name_validator` — interactive
+escape hatch, no POOP equivalent. Implemented with registration, tests,
+and an INFECTIONS.md entry.
 
 ### 92. Collection-transformer factory
 
