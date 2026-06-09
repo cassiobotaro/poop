@@ -752,17 +752,8 @@ Concrete root of all POOP types. The table below highlights the universal method
 | — | `any(block)` | `true` if block holds for at least one element |
 | — | `enumerate(start=Int(0))` | returns an `Enumerate` of `Tuple(Int(i), item)` pairs |
 | — | `zip(*others, strict=false)` | returns a `Zip` of `Tuple(...)` |
-| — | `pairwise()` | lazy `(a, b)` `Tuple`s of adjacent elements (itertools.pairwise) |
-| — | `batched(n)` | lazy `Tuple`s of up to `n` elements (itertools.batched) |
-| — | `chain(*others)` | lazy concatenation of the receiver and the others |
-| — | `accumulate(block=none)` | lazy running totals; default block is `+` |
-| — | `product(*others)` | lazy cartesian-product `Tuple`s |
-| — | `combinations(n)` | lazy sorted-subset `Tuple`s of length `n` |
-| — | `permutations(n=none)` | lazy ordering `Tuple`s; full length when `n` omitted |
 
 `map`/`filter`/`filter_false` are **lazy** — they return `Map`/`Filter` iterators (same family as `Enumerate`/`Zip`) regardless of the receiver's type, mirroring Python's `map`/`filter` builtins. The block runs only as the result is consumed. To materialize, pass the lazy result to a constructor: `list(col.map(f))`, `tuple(col.filter(g))`, `set(col.map(f))`, `bytes(col.map(g))`. Methods that consume the iterator (`do`, `sum`, `min`, `max`, `find`, `reduce`, `all`, `any`) work on `Map`/`Filter` directly without materialization.
-
-The seven itertools-flavoured combinators (`pairwise`/`batched`/`chain`/`accumulate`/`product`/`combinations`/`permutations`) return lazy iterator types from `poop/types/itertools.py` — POOP's `itertools`, surfaced as **messages on iterables** instead of free functions (there is no `itertools` namespace by design). Each result type masquerades as its CPython counterpart (`type(col.pairwise()).__name__` is `"pairwise"`), is one-shot like `Map`/`Filter`, inherits the full `_IterableMixin` so combinators compose (`col.chain(other).pairwise().map(f)`), and is internal — reachable only through the mixin methods, never from `DEFAULT_NAMESPACE`.
 
 `Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements. `Bytes` and `ByteArray` override `find` for substring search (different semantics from the mixin's element-finding `find`).
 

@@ -90,17 +90,15 @@ decorators are currently impossible — free functions are forbidden).
 **Scope.** New transformer + `functools.py` type module + tests +
 INFECTIONS.md.
 
-### ~~98. `itertools` as messages on iterables~~ — DONE
+### ~~98. `itertools` as messages on iterables~~ — REJECTED (implemented, then reverted)
 
-Decision: `pairwise`/`batched`/`chain`/`accumulate`/`product`/
-`combinations`/`permutations` shipped as `_IterableMixin` messages —
-no `itertools` namespace by design. Each returns a lazy one-shot
-iterator from `poop/types/itertools.py` masquerading as its CPython
-counterpart and composing with `map`/`filter` and each other. `Str`
-is out of scope (it has its own iteration surface, not the mixin);
-remaining itertools tail (`groupby`, `starmap`, `takewhile`/
-`dropwhile`, `cycle`/`repeat`/`count`, `islice`, `zip_longest`)
-follows pull-when-asked.
+Maintainer decision: the mixin earns a message when it **substitutes a
+forbidden construct** — `reduce` exists because the comprehension/
+accumulation idiom it replaces is banned. The itertools combinators
+substitute nothing forbidden and are derivable from the existing
+message surface (`map`/`filter`/`zip`/`enumerate`/`reduce`), so they
+add API weight without philosophical payoff. Shipped in `016b099`,
+reverted in full.
 
 ### ~~99. `base64` namespace~~ — WITHDRAWN
 
@@ -153,9 +151,6 @@ INFECTIONS.md rationale and the idiomatic substitute.
 **Scope.** `poop/repl.py` + a validator→rationale table + REPL tests.
 
 ## Resolved
-
-The leak/signature/bug audit logged as 1–89 here was fully resolved
-across the v1.0.x and v1.1.x cycles:
 
 The leak/signature/bug audit logged as 1–89 here was fully resolved
 across the v1.0.x and v1.1.x cycles:

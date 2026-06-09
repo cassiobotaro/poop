@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import builtins as _builtins
-import itertools as _itertools
 from abc import abstractmethod
 from collections import deque
 from collections.abc import Callable, Iterator
@@ -98,68 +97,3 @@ class _IterableMixin:
         from poop.types.zip import Zip
 
         return Zip(self, *others, strict=strict)
-
-    def pairwise(self) -> Any:
-        from poop.types.itertools import Pairwise
-        from poop.types.tuple import Tuple
-
-        return Pairwise(
-            lambda: (Tuple(a, b) for a, b in _itertools.pairwise(self._iter_items()))
-        )
-
-    def batched(self, n: Any) -> Any:
-        from poop.types.itertools import Batched
-        from poop.types.tuple import Tuple
-
-        return Batched(
-            lambda: (
-                Tuple(*batch)
-                for batch in _itertools.batched(self._iter_items(), n._value)
-            )
-        )
-
-    def chain(self, *others: Any) -> Any:
-        from poop.types.itertools import Chain
-
-        return Chain(lambda: _itertools.chain(self._iter_items(), *others))
-
-    def accumulate(self, block: Callable[[Any, Any], Any] | None = None) -> Any:
-        from poop.types._unwrap import _is_absent
-        from poop.types.itertools import Accumulate
-
-        func = None if _is_absent(block) else block
-        return Accumulate(lambda: _itertools.accumulate(self._iter_items(), func))
-
-    def product(self, *others: Any) -> Any:
-        from poop.types.itertools import Product
-        from poop.types.tuple import Tuple
-
-        return Product(
-            lambda: (
-                Tuple(*combo)
-                for combo in _itertools.product(self._iter_items(), *others)
-            )
-        )
-
-    def combinations(self, n: Any) -> Any:
-        from poop.types.itertools import Combinations
-        from poop.types.tuple import Tuple
-
-        return Combinations(
-            lambda: (
-                Tuple(*combo)
-                for combo in _itertools.combinations(self._iter_items(), n._value)
-            )
-        )
-
-    def permutations(self, n: Any = None) -> Any:
-        from poop.types._unwrap import _opt_int
-        from poop.types.itertools import Permutations
-        from poop.types.tuple import Tuple
-
-        return Permutations(
-            lambda: (
-                Tuple(*combo)
-                for combo in _itertools.permutations(self._iter_items(), _opt_int(n))
-            )
-        )
