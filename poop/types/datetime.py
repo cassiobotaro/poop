@@ -132,7 +132,72 @@ class TimeZone(_ImplWrapperMixin, _ValueEqMixin, Object):
 TimeZone.utc = TimeZone._from_impl(_datetime.UTC)
 
 
-class Date(_ImplWrapperMixin, _ValueEqMixin, Object):
+class _DateFieldsMixin:
+    """Calendar fields shared by `Date` and `DateTime` — both forward
+    to a stdlib `_impl` exposing the date API."""
+
+    __slots__ = ()
+
+    _impl: Any
+
+    @property
+    def year(self) -> Int:
+        return Int(self._impl.year)
+
+    @property
+    def month(self) -> Int:
+        return Int(self._impl.month)
+
+    @property
+    def day(self) -> Int:
+        return Int(self._impl.day)
+
+    def weekday(self) -> Int:
+        return Int(self._impl.weekday())
+
+    def isoweekday(self) -> Int:
+        return Int(self._impl.isoweekday())
+
+
+class _TimeFieldsMixin:
+    """Clock fields shared by `Time` and `DateTime` — both forward to
+    a stdlib `_impl` exposing the time API."""
+
+    __slots__ = ()
+
+    _impl: Any
+
+    @property
+    def hour(self) -> Int:
+        return Int(self._impl.hour)
+
+    @property
+    def minute(self) -> Int:
+        return Int(self._impl.minute)
+
+    @property
+    def second(self) -> Int:
+        return Int(self._impl.second)
+
+    @property
+    def microsecond(self) -> Int:
+        return Int(self._impl.microsecond)
+
+    @property
+    def tzinfo(self) -> TimeZone | ZoneInfo | NoneClass:
+        from poop.types.zoneinfo import ZoneInfo as _ZoneInfo
+
+        tz = self._impl.tzinfo
+        if tz is None:
+            return none
+        if isinstance(tz, _datetime.timezone):
+            return TimeZone._from_impl(tz)
+        if isinstance(tz, _zoneinfo.ZoneInfo):
+            return _ZoneInfo._from_impl(tz)
+        return none
+
+
+class Date(_DateFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.date`."""
 
     __slots__ = ("_impl",)
@@ -156,24 +221,6 @@ class Date(_ImplWrapperMixin, _ValueEqMixin, Object):
     @classmethod
     def fromordinal(cls, n: Int) -> Date:
         return cls._from_impl(_datetime.date.fromordinal(n._value))
-
-    @property
-    def year(self) -> Int:
-        return Int(self._impl.year)
-
-    @property
-    def month(self) -> Int:
-        return Int(self._impl.month)
-
-    @property
-    def day(self) -> Int:
-        return Int(self._impl.day)
-
-    def weekday(self) -> Int:
-        return Int(self._impl.weekday())
-
-    def isoweekday(self) -> Int:
-        return Int(self._impl.isoweekday())
 
     def isoformat(self) -> Str:
         return Str(self._impl.isoformat())
@@ -210,7 +257,7 @@ class Date(_ImplWrapperMixin, _ValueEqMixin, Object):
         return hash(self._impl)
 
 
-class Time(_ImplWrapperMixin, _ValueEqMixin, Object):
+class Time(_TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.time`."""
 
     __slots__ = ("_impl",)
@@ -235,35 +282,6 @@ class Time(_ImplWrapperMixin, _ValueEqMixin, Object):
     @classmethod
     def fromisoformat(cls, s: Str) -> Time:
         return cls._from_impl(_datetime.time.fromisoformat(s._value))
-
-    @property
-    def hour(self) -> Int:
-        return Int(self._impl.hour)
-
-    @property
-    def minute(self) -> Int:
-        return Int(self._impl.minute)
-
-    @property
-    def second(self) -> Int:
-        return Int(self._impl.second)
-
-    @property
-    def microsecond(self) -> Int:
-        return Int(self._impl.microsecond)
-
-    @property
-    def tzinfo(self) -> TimeZone | ZoneInfo | NoneClass:
-        from poop.types.zoneinfo import ZoneInfo as _ZoneInfo
-
-        tz = self._impl.tzinfo
-        if tz is None:
-            return none
-        if isinstance(tz, _datetime.timezone):
-            return TimeZone._from_impl(tz)
-        if isinstance(tz, _zoneinfo.ZoneInfo):
-            return _ZoneInfo._from_impl(tz)
-        return none
 
     def isoformat(self, timespec: Str | NoneClass | None = None) -> Str:
         from poop.types._unwrap import _opt_str
@@ -297,7 +315,9 @@ class Time(_ImplWrapperMixin, _ValueEqMixin, Object):
         return hash(self._impl)
 
 
-class DateTime(_ImplWrapperMixin, _ValueEqMixin, Object):
+class DateTime(
+    _DateFieldsMixin, _TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object
+):
     """Wraps Python's `datetime.datetime`."""
 
     __slots__ = ("_impl",)
@@ -355,47 +375,6 @@ class DateTime(_ImplWrapperMixin, _ValueEqMixin, Object):
         tz = time._impl.tzinfo if _is_absent(tzinfo) else _opt_tz(tzinfo)
         return cls._from_impl(_datetime.datetime.combine(date._impl, time._impl, tz))
 
-    @property
-    def year(self) -> Int:
-        return Int(self._impl.year)
-
-    @property
-    def month(self) -> Int:
-        return Int(self._impl.month)
-
-    @property
-    def day(self) -> Int:
-        return Int(self._impl.day)
-
-    @property
-    def hour(self) -> Int:
-        return Int(self._impl.hour)
-
-    @property
-    def minute(self) -> Int:
-        return Int(self._impl.minute)
-
-    @property
-    def second(self) -> Int:
-        return Int(self._impl.second)
-
-    @property
-    def microsecond(self) -> Int:
-        return Int(self._impl.microsecond)
-
-    @property
-    def tzinfo(self) -> TimeZone | ZoneInfo | NoneClass:
-        from poop.types.zoneinfo import ZoneInfo as _ZoneInfo
-
-        tz = self._impl.tzinfo
-        if tz is None:
-            return none
-        if isinstance(tz, _datetime.timezone):
-            return TimeZone._from_impl(tz)
-        if isinstance(tz, _zoneinfo.ZoneInfo):
-            return _ZoneInfo._from_impl(tz)
-        return none
-
     def date(self) -> Date:
         return Date._from_impl(self._impl.date())
 
@@ -407,12 +386,6 @@ class DateTime(_ImplWrapperMixin, _ValueEqMixin, Object):
 
     def astimezone(self, tz: TimeZone | ZoneInfo | NoneClass | None = None) -> DateTime:
         return DateTime._from_impl(self._impl.astimezone(_opt_tz(tz)))
-
-    def weekday(self) -> Int:
-        return Int(self._impl.weekday())
-
-    def isoweekday(self) -> Int:
-        return Int(self._impl.isoweekday())
 
     def isoformat(
         self,
