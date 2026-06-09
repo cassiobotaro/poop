@@ -1,8 +1,17 @@
+from typing import Any
+
 import pytest
 
 from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
-from poop.types.collections import Counter, DefaultDict, Deque, OrderedDict, namedtuple
+from poop.types.collections import (
+    ChainMap,
+    Counter,
+    DefaultDict,
+    Deque,
+    OrderedDict,
+    namedtuple,
+)
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
@@ -448,6 +457,116 @@ def test_namedtuple_equality_compares_items() -> None:
     point = namedtuple(Str("Point"), Str("x y"))
     assert (point(Int(1), Int(2)) == point(Int(1), Int(2))) is true
     assert (point(Int(1), Int(2)) == point(Int(9), Int(2))) is false
+
+
+# --- ChainMap ---
+
+
+def _dict_of(key: str, val: int) -> Dict:
+    d = Dict()
+    d.at_put(Str(key), Int(val))
+    return d
+
+
+def test_chainmap_constructs_empty_with_one_map() -> None:
+    cm = ChainMap()
+    assert cm.maps.len() == Int(1)
+    assert cm.len() == Int(0)
+
+
+def test_chainmap_lookup_searches_in_order() -> None:
+    cm = ChainMap(_dict_of("a", 1), _dict_of("a", 99))
+    assert cm.at(Str("a")) == Int(1)
+
+
+def test_chainmap_lookup_falls_through_to_later_maps() -> None:
+    cm = ChainMap(_dict_of("a", 1), _dict_of("b", 2))
+    assert cm.at(Str("b")) == Int(2)
+
+
+def test_chainmap_missing_key_raises() -> None:
+    with pytest.raises(KeyError):
+        ChainMap().at(Str("ghost"))
+
+
+def test_chainmap_get_with_default() -> None:
+    assert ChainMap().get(Str("ghost")) is none
+    assert ChainMap().get(Str("ghost"), Int(7)) == Int(7)
+
+
+def test_chainmap_at_put_writes_first_map() -> None:
+    first = Dict()
+    second = _dict_of("a", 1)
+    cm = ChainMap(first, second)
+    assert cm.at_put(Str("a"), Int(5)) is cm
+    assert first.at(Str("a")) == Int(5)
+    assert second.at(Str("a")) == Int(1)
+
+
+def test_chainmap_is_live_over_underlying_dicts() -> None:
+    d = Dict()
+    cm = ChainMap(d)
+    d.at_put(Str("late"), Int(1))
+    assert cm.at(Str("late")) == Int(1)
+
+
+def test_chainmap_includes_and_len_deduplicate() -> None:
+    cm = ChainMap(_dict_of("a", 1), _dict_of("a", 2))
+    assert cm.includes(Str("a")) is true
+    assert cm.includes(Str("z")) is false
+    assert cm.len() == Int(1)
+
+
+def test_chainmap_do_iterates_key_value_pairs() -> None:
+    seen = []
+    ChainMap(_dict_of("a", 1)).do(lambda pair: seen.append(pair))
+    assert seen == [Tuple(Str("a"), Int(1))]
+
+
+def test_chainmap_maps_lists_poop_dicts() -> None:
+    first = _dict_of("a", 1)
+    cm = ChainMap(first)
+    assert cm.maps.at(Int(0)) is first
+
+
+def test_chainmap_new_child_prepends_empty_dict() -> None:
+    cm = ChainMap(_dict_of("a", 1))
+    child = cm.new_child()
+    assert child.maps.len() == Int(2)
+    child.at_put(Str("a"), Int(9))
+    assert cm.at(Str("a")) == Int(1)
+
+
+def test_chainmap_new_child_accepts_dict() -> None:
+    cm = ChainMap(_dict_of("a", 1))
+    child = cm.new_child(_dict_of("a", 9))
+    assert child.at(Str("a")) == Int(9)
+
+
+def test_chainmap_parents_drops_first_map() -> None:
+    cm = ChainMap(_dict_of("a", 1), _dict_of("a", 2))
+    assert cm.parents.at(Str("a")) == Int(2)
+
+
+def test_chainmap_rejects_non_dict_maps() -> None:
+    not_a_dict: Any = Int(1)
+    with pytest.raises(TypeError):
+        ChainMap(not_a_dict)
+
+
+def test_chainmap_accepts_dict_subclasses() -> None:
+    dd = DefaultDict(lambda: Int(0))
+    dd.at_put(Str("a"), Int(1))
+    assert ChainMap(dd).at(Str("a")) == Int(1)
+
+
+def test_chainmap_eq_compares_chains() -> None:
+    assert (ChainMap(_dict_of("a", 1)) == ChainMap(_dict_of("a", 1))) is true
+    assert (ChainMap(_dict_of("a", 1)) == ChainMap(_dict_of("a", 2))) is false
+
+
+def test_chainmap_str_masquerades_as_python_chainmap() -> None:
+    assert str(ChainMap(_dict_of("a", 1))) == "ChainMap({'a': 1})"
 
 
 # --- Interpreter integration ---

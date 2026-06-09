@@ -270,6 +270,77 @@ class OrderedDict(Dict):
         return new
 
 
+class ChainMap(_ValueEqMixin, Object):
+    """Wraps `collections.ChainMap` — a lookup chain over POOP `Dict`s.
+
+    Reads search each map in order; writes land on the first map. The
+    chain is live: mutating an underlying `Dict` is visible through
+    the chain immediately.
+    """
+
+    __slots__ = ("_impl", "_maps")
+
+    _eq_attr: ClassVar[str] = "_impl"
+
+    def __init__(self, *maps: Dict) -> None:
+        bad = next((m for m in maps if not isinstance(m, Dict)), None)
+        if bad is not None:
+            raise TypeError(
+                f"ChainMap maps must be dicts, got {type(bad).__qualname__}"
+            )
+        self._maps: list[Dict] = list(maps) if maps else [Dict()]
+        self._impl = _collections.ChainMap(*(m._data for m in self._maps))
+
+    def at(self, key: Object) -> Object:
+        return self._impl[key]
+
+    def get(self, key: Object, default: Object | NoneClass = none) -> Any:
+        return self._impl.get(key, default)
+
+    def at_put(self, key: Object, val: Object) -> ChainMap:
+        self._impl[key] = val
+        return self
+
+    def includes(self, key: Object) -> Boolean:
+        return to_boolean(key in self._impl)
+
+    def __contains__(self, key: object) -> bool:
+        return key in self._impl
+
+    def len(self) -> Int:
+        return Int(len(self._impl))
+
+    def __len__(self) -> int:
+        return len(self._impl)
+
+    def __iter__(self) -> Any:
+        return iter(self._impl)
+
+    def do(self, block: Any) -> NoneClass:
+        # Mirrors Dict.do — the block receives (key, value) pairs.
+        _collections.deque(
+            (block(Tuple(k, v)) for k, v in self._impl.items()), maxlen=0
+        )
+        return none
+
+    @property
+    def maps(self) -> List:
+        return List(*self._maps)
+
+    def new_child(self, m: Dict | NoneClass | None = None) -> ChainMap:
+        front = Dict() if m is None or isinstance(m, NoneClass) else m
+        return ChainMap(front, *self._maps)
+
+    @property
+    def parents(self) -> ChainMap:
+        return ChainMap(*self._maps[1:])
+
+    def __str__(self) -> str:
+        return str(self._impl)
+
+    __repr__ = __str__
+
+
 def namedtuple(typename: Str, field_names: Any) -> type:
     """Build a lightweight value class — a `Tuple` subclass whose
     fields read as properties (`p.x`), mirroring `collections.namedtuple`
@@ -318,4 +389,5 @@ class CollectionsNamespace:
     deque: ClassVar[type[Deque]] = Deque
     defaultdict: ClassVar[type[DefaultDict]] = DefaultDict
     OrderedDict: ClassVar[type[OrderedDict]] = OrderedDict
+    ChainMap: ClassVar[type[ChainMap]] = ChainMap
     namedtuple = staticmethod(namedtuple)
