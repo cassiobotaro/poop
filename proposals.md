@@ -110,18 +110,13 @@ Smalltalk-only message is not wanted. Shipped in `cecf271`, reverted
 in full. If abstract-method support is ever desired, it should arrive
 through a decorator story instead.
 
-### 101. Source-line caret in validation errors
+### ~~101. Source-line caret in validation errors~~ — DONE
 
-**What exists today.** `poop/cli.py:20-21` prints `poop: <message> (line N,
-col M)`. The offending source line is never shown, although `PoopError`
-already carries `lineno`/`col_offset`.
-
-**Proposal.** Rust-style diagnostics: print the source line followed by a
-`^` marker at the column. Applies to both single-error mode and
-`--validators-only` (which lists all errors).
-
-**Scope.** `poop/cli.py` (and the error-formatting path in `poop/errors.py`
-if formatting belongs there) + CLI tests.
+Decision: `_format_error` in `poop/cli.py` appends the offending
+source line in a numbered gutter plus a `^` at the column when the
+error carries position info (`ValidationError` gets line + caret,
+`ExecutionError` line only). Both the run path and `--validators-only`
+use it; errors without position keep the old one-line form.
 
 ### 102. REPL meta-commands
 
