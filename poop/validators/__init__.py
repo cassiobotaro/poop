@@ -23,6 +23,7 @@ from poop.validators.no_getattr import NoGetattrValidator
 from poop.validators.no_global import NoGlobalValidator
 from poop.validators.no_hasattr import NoHasattrValidator
 from poop.validators.no_hash import NoHashValidator
+from poop.validators.no_help import NoHelpValidator
 from poop.validators.no_id import NoIdValidator
 from poop.validators.no_if import NoIfValidator
 from poop.validators.no_in import NoInValidator
@@ -102,6 +103,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoRoundValidator(),
     NoBinValidator(),
     NoBreakpointValidator(),
+    NoHelpValidator(),
     NoChrValidator(),
     NoDivmodValidator(),
     NoExecValidator(),

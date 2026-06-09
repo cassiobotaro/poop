@@ -498,6 +498,12 @@ All three views are unhashable (`__hash__ = None`), expose `len()`/`includes()`/
 |---|---|
 | `breakpoint()` | Python-specific debugging — no POOP equivalent |
 
+### No `help` — `poop/validators/no_help.py`
+
+| Call | Reason |
+|---|---|
+| `help(obj)` | interactive escape hatch (opens the Python pager) exposing wrapper internals — no POOP equivalent |
+
 ### No `input` — `poop/validators/no_input.py`
 
 | Call | Reason | Substitute |
