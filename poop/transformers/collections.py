@@ -1,4 +1,5 @@
 from poop.types.collections import (
+    ChainMap,
     CollectionsNamespace,
     Counter,
     DefaultDict,
@@ -16,5 +17,6 @@ NAMESPACE: dict[str, object] = {
     "deque": Deque,
     "defaultdict": DefaultDict,
     "OrderedDict": OrderedDict,
+    "ChainMap": ChainMap,
     "namedtuple": namedtuple,
 }

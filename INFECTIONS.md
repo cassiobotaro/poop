@@ -1123,7 +1123,7 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 
 ### collections + Counter + Deque — `poop/types/collections.py` + `poop/transformers/collections.py`
 
-`collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Six namespace entries: `collections` (lowercase module mirror), plus the direct entry points `Counter`, `deque`, `defaultdict`, `OrderedDict`, and `namedtuple` — each keeping its Python casing (`deque`/`defaultdict`/`namedtuple` are lowercase in CPython, same precedent as enum's `auto`). Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as. `defaultdict` and `OrderedDict` subclass `Dict`, so the full `Dict` surface (`at_put`, `keys`, `do`, `pop`, views, `|` merge, …) applies.
+`collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Seven namespace entries: `collections` (lowercase module mirror), plus the direct entry points `Counter`, `deque`, `defaultdict`, `OrderedDict`, `ChainMap`, and `namedtuple` — each keeping its Python casing (`deque`/`defaultdict`/`namedtuple` are lowercase in CPython, same precedent as enum's `auto`). Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as. `defaultdict` and `OrderedDict` subclass `Dict`, so the full `Dict` surface (`at_put`, `keys`, `do`, `pop`, views, `|` merge, …) applies.
 
 | Operation | Returns | Notes |
 |---|---|---|
@@ -1154,10 +1154,15 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `OrderedDict.move_to_end(key, last=true)` | `none` | `last=false` moves to front |
 | `OrderedDict.popitem(last=true)` | `Tuple` | directional pop |
 | `OrderedDict.<Dict surface>` | typed | inherits everything from `Dict` |
+| `ChainMap(*maps)` | `ChainMap` | lookup chain over `Dict`s (subclasses welcome); empty call seeds one empty `Dict`; live over the underlying maps |
+| `ChainMap.at(key)` / `.get(key, default=none)` | value | searches each map in order |
+| `ChainMap.at_put(key, val)` | `ChainMap` | writes land on the first map; returns self |
+| `ChainMap.includes(key)` / `.len()` | `Boolean` / `Int` | deduplicated across maps |
+| `ChainMap.do(block)` | `none` | `(key, value)` pairs, mirroring `Dict.do` |
+| `ChainMap.maps` (property) | `List[Dict]` | the chain, first map first |
+| `ChainMap.new_child(m=none)` / `.parents` (property) | `ChainMap` | prepend a map / drop the first |
 | `namedtuple(typename, field_names)` | class | class factory: fields as a `Str` (`"x y"` / `"x, y"`) or iterable of `Str` |
 | `Point(...)` (generated class) | instance | a `Tuple` subclass — fields read as properties (`p.x`), arity-checked constructor, `Point(x=1, y=2)`-style repr |
-
-`ChainMap` is deferred per the [pull-when-asked policy](#pull-deferred-surface-only-when-a-caller-asks).
 
 ### shlex + Shlex — `poop/types/shlex.py` + `poop/transformers/shlex.py`
 

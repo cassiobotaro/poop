@@ -604,3 +604,12 @@ def test_namedtuple_via_interpreter() -> None:
     Interpreter().run_source(
         'Point = namedtuple("Point", "x y")\np = Point(1, 2)\np.x.print()'
     )
+
+
+def test_chainmap_via_interpreter() -> None:
+    Interpreter().run_source(
+        'defaults = {"theme": "dark"}\n'
+        "user = {}\n"
+        "config = ChainMap(user, defaults)\n"
+        'config.at("theme").print()'
+    )
