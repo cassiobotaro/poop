@@ -754,6 +754,9 @@ od.move_to_end("a")
 Point = collections.namedtuple("Point", "x y")
 p = Point(1, 2)
 print(p.x)
+
+config = collections.ChainMap(user, defaults)
+theme = config["theme"]
 ```
 
 ```python
@@ -776,9 +779,12 @@ od.move_to_end("a")
 Point = namedtuple("Point", "x y")
 p = Point(1, 2)
 p.x.print()
+
+config = ChainMap(user, defaults)
+theme = config.at("theme")
 ```
 
-> `Counter` is Smalltalk's `Bag`: `.at(key)` answers `Int(0)` for missing keys (subscripting is forbidden anyway), `.do(block)` hands the block `(element, count)` pairs like `Dict.do`, and `+`/`-`/`&`/`|` combine counters. `deque` is `OrderedCollection`: O(1) `append`/`appendleft`, `pop`/`popleft`, `rotate`, negative `.at` indexing, and the full `do`/`map`/`filter` iteration surface — lowercase like in Python. `defaultdict` takes its factory as a block (`lambda: List()`) and `.at` on a missing key calls it; `OrderedDict` adds `move_to_end`/directional `popitem` on top of the full `Dict` surface; `namedtuple` returns a `Tuple` subclass whose fields read as properties. `ChainMap` is not yet infected.
+> `Counter` is Smalltalk's `Bag`: `.at(key)` answers `Int(0)` for missing keys (subscripting is forbidden anyway), `.do(block)` hands the block `(element, count)` pairs like `Dict.do`, and `+`/`-`/`&`/`|` combine counters. `deque` is `OrderedCollection`: O(1) `append`/`appendleft`, `pop`/`popleft`, `rotate`, negative `.at` indexing, and the full `do`/`map`/`filter` iteration surface — lowercase like in Python. `defaultdict` takes its factory as a block (`lambda: List()`) and `.at` on a missing key calls it; `OrderedDict` adds `move_to_end`/directional `popitem` on top of the full `Dict` surface; `namedtuple` returns a `Tuple` subclass whose fields read as properties. `ChainMap` chains `Dict`s: reads search in order, writes land on the first map, `.new_child()`/`.parents` walk the chain.
 
 ## Shell tokenization (`shlex` module + `Shlex` class)
 

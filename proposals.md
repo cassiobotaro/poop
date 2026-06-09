@@ -67,11 +67,14 @@ the `Logging` static forwarders keep their module-function shape.
 
 Decision: `Counter` (Smalltalk `Bag`), `deque` (`OrderedCollection`),
 `defaultdict` (factory as a block — no bridging needed), `OrderedDict`
-(a reordering `Dict` subclass), and `namedtuple` (class factory
-returning a `Tuple` subclass with property fields) shipped in
+(a reordering `Dict` subclass), `namedtuple` (class factory returning
+a `Tuple` subclass with property fields), and `ChainMap` (live lookup
+chain over `Dict`s — pulled in when a caller asked) shipped in
 `poop/types/collections.py` + namespace-only
 `poop/transformers/collections.py`. Entry points keep Python's exact
-casing. `ChainMap` stays deferred under the pull-when-asked policy.
+casing. Remaining tail (`UserDict`/`UserList`/`UserString` —
+subclassing helpers with no POOP use case; `collections.abc` — exists
+for isinstance checks, against the philosophy) is out of scope.
 
 ### 97. `functools` infection
 
