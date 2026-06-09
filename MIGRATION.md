@@ -730,7 +730,7 @@ sorted_merge = heapq.merge(*iterables).to_list()
 
 > `heapq` operates on POOP `List` in place — `heappush`/`heappop`/`heapify` are mutators that return `none` (`heappop` returns the popped element). `heapq.merge` returns a `HeapMerge` lazy iterator with `.to_list()` to materialize.
 
-## Counters and deques (`collections` module + `Counter`/`deque` classes)
+## Collections (`collections` module — `Counter`/`deque`/`defaultdict`/`OrderedDict`/`namedtuple`)
 
 ```python
 # Python
@@ -744,6 +744,16 @@ queue = collections.deque(maxlen=10)
 queue.append(job)
 queue.appendleft(urgent)
 nxt = queue.popleft()
+
+groups = collections.defaultdict(list)
+groups["new"].append("ana")
+
+od = collections.OrderedDict()
+od.move_to_end("a")
+
+Point = collections.namedtuple("Point", "x y")
+p = Point(1, 2)
+print(p.x)
 ```
 
 ```python
@@ -756,9 +766,19 @@ queue = deque(maxlen=10)           # or collections.deque(...)
 queue.append(job)
 queue.appendleft(urgent)
 nxt = queue.popleft()
+
+groups = defaultdict(lambda: List())
+groups.at("new").append("ana")
+
+od = OrderedDict()
+od.move_to_end("a")
+
+Point = namedtuple("Point", "x y")
+p = Point(1, 2)
+p.x.print()
 ```
 
-> `Counter` is Smalltalk's `Bag`: `.at(key)` answers `Int(0)` for missing keys (subscripting is forbidden anyway), `.do(block)` hands the block `(element, count)` pairs like `Dict.do`, and `+`/`-`/`&`/`|` combine counters. `deque` is `OrderedCollection`: O(1) `append`/`appendleft`, `pop`/`popleft`, `rotate`, negative `.at` indexing, and the full `do`/`map`/`filter` iteration surface — lowercase like in Python. `defaultdict`/`OrderedDict`/`namedtuple` are not yet infected.
+> `Counter` is Smalltalk's `Bag`: `.at(key)` answers `Int(0)` for missing keys (subscripting is forbidden anyway), `.do(block)` hands the block `(element, count)` pairs like `Dict.do`, and `+`/`-`/`&`/`|` combine counters. `deque` is `OrderedCollection`: O(1) `append`/`appendleft`, `pop`/`popleft`, `rotate`, negative `.at` indexing, and the full `do`/`map`/`filter` iteration surface — lowercase like in Python. `defaultdict` takes its factory as a block (`lambda: List()`) and `.at` on a missing key calls it; `OrderedDict` adds `move_to_end`/directional `popitem` on top of the full `Dict` surface; `namedtuple` returns a `Tuple` subclass whose fields read as properties. `ChainMap` is not yet infected.
 
 ## Shell tokenization (`shlex` module + `Shlex` class)
 

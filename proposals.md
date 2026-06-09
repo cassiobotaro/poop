@@ -63,18 +63,15 @@ loop) now carries `debug`/`info`/`warning`/`error`/`critical`/`log`/
 Logger-only (adding it to LoggerAdapter would be an API change) and
 the `Logging` static forwarders keep their module-function shape.
 
-### 96. `collections` infection — PARTIAL (Counter + Deque shipped)
+### ~~96. `collections` infection~~ — DONE
 
-**Shipped.** `Counter` (Smalltalk `Bag`) and `Deque` (`OrderedCollection`)
-in `poop/types/collections.py`, exposed via the namespace-only
-`poop/transformers/collections.py` (`collections` lowercase mirror +
-entry points keeping Python casing: `Counter`, `deque`), with tests,
-INFECTIONS.md, and MIGRATION.md coverage.
-
-**Still open.** `DefaultDict`, `OrderedDict`, `NamedTuple`, `ChainMap` —
-deferred per the pull-when-asked policy. `DefaultDict`'s factory should
-arrive as a Block/lambda (adapted via `_bridge.bridge`); `NamedTuple`
-needs a class-factory story that does not leak decorator syntax.
+Decision: `Counter` (Smalltalk `Bag`), `deque` (`OrderedCollection`),
+`defaultdict` (factory as a block — no bridging needed), `OrderedDict`
+(a reordering `Dict` subclass), and `namedtuple` (class factory
+returning a `Tuple` subclass with property fields) shipped in
+`poop/types/collections.py` + namespace-only
+`poop/transformers/collections.py`. Entry points keep Python's exact
+casing. `ChainMap` stays deferred under the pull-when-asked policy.
 
 ### 97. `functools` infection
 
