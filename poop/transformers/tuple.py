@@ -1,67 +1,29 @@
 import ast
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import ClassVar
 
+from poop.transformers._collection import (
+    CollectionRewriter,
+    make_constructor,
+    make_iterable_from,
+    wrap_elts,
+)
 from poop.transformers.base import BaseTransformer
-from poop.types.range import Range
 from poop.types.tuple import Tuple
 
-if TYPE_CHECKING:
-    from poop.types.object import Object
+_poop_tuple = make_constructor(Tuple)
+_poop_tuple_from = make_iterable_from(Tuple, "Tuple")
 
 
-def _poop_tuple(*elements: Object) -> Tuple:
-    return Tuple(*elements)
-
-
-def _poop_tuple_from(arg: object = None) -> Tuple:
-    if arg is None:
-        return Tuple()
-    if isinstance(arg, Tuple):
-        return arg
-    if isinstance(arg, Range):
-        return Tuple(*arg._iter())
-    if isinstance(arg, Iterable):
-        return Tuple(*cast("Iterable[Object]", arg))
-    raise TypeError(f"cannot convert {type(arg).__qualname__} to Tuple")
-
-
-class _TupleRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == "tuple"
-            and not node.keywords
-            and len(node.args) <= 1
-        ):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_tuple_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
+class _TupleRewriter(CollectionRewriter):
+    builtin = "tuple"
+    call_target = "_poop_tuple_from"
+    name_target = "_poop_tuple_cls"
 
     def visit_Tuple(self, node: ast.Tuple) -> ast.AST:
         self.generic_visit(node)
         if not isinstance(node.ctx, ast.Load):
             return node
-        return ast.copy_location(
-            ast.Call(
-                func=ast.Name(id="_poop_tuple", ctx=ast.Load()),
-                args=node.elts,
-                keywords=[],
-            ),
-            node,
-        )
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "tuple":
-            return ast.copy_location(ast.Name(id="_poop_tuple_cls", ctx=node.ctx), node)
-        return node
+        return wrap_elts(node, "_poop_tuple")
 
 
 class TupleTransformer(BaseTransformer):

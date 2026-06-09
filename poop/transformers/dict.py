@@ -2,6 +2,7 @@ import ast
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar, cast
 
+from poop.transformers._collection import CollectionRewriter
 from poop.transformers.base import BaseTransformer
 from poop.types.dict import Dict
 from poop.types.list import List
@@ -39,24 +40,10 @@ def _poop_dict_from(arg: object = None) -> Dict:
     raise TypeError(f"cannot convert {type(arg).__qualname__} to Dict")
 
 
-class _DictRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == "dict"
-            and not node.keywords
-            and len(node.args) <= 1
-        ):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_dict_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
+class _DictRewriter(CollectionRewriter):
+    builtin = "dict"
+    call_target = "_poop_dict_from"
+    name_target = "_poop_dict"
 
     def visit_Dict(self, node: ast.Dict) -> ast.AST:
         self.generic_visit(node)
@@ -76,11 +63,6 @@ class _DictRewriter(ast.NodeTransformer):
             ),
             node,
         )
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "dict":
-            return ast.copy_location(ast.Name(id="_poop_dict", ctx=node.ctx), node)
-        return node
 
 
 class DictTransformer(BaseTransformer):

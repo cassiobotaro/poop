@@ -1,7 +1,7 @@
-import ast
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.transformers._collection import CollectionRewriter
 from poop.transformers.base import BaseTransformer
 from poop.types.frozen_set import FrozenSet
 
@@ -15,29 +15,10 @@ def _poop_frozenset_from(iterable: Iterable[Object] | None = None) -> FrozenSet:
     return FrozenSet()
 
 
-class _FrozenSetRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == "frozenset"
-            and not node.keywords
-            and len(node.args) <= 1
-        ):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_frozenset_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "frozenset":
-            return ast.copy_location(ast.Name(id="_poop_frozenset", ctx=node.ctx), node)
-        return node
+class _FrozenSetRewriter(CollectionRewriter):
+    builtin = "frozenset"
+    call_target = "_poop_frozenset_from"
+    name_target = "_poop_frozenset"
 
 
 class FrozenSetTransformer(BaseTransformer):
