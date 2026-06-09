@@ -1121,6 +1121,35 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 
 `heapq` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/heapq.py` — namespace-only, no AST rewrite.
 
+### collections + Counter + Deque — `poop/types/collections.py` + `poop/transformers/collections.py`
+
+`collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Three namespace entries: `collections` (lowercase module mirror exposing `Counter` and `deque`), plus the PascalCase entry points `Counter` and `Deque`. Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `Counter(source=none)` | `Counter` | from iterable, `Dict` of counts, or another `Counter`; Smalltalk's `Bag` |
+| `Counter.at(key)` | `Int` | missing keys answer `0`, never raise |
+| `Counter.at_put(key, count)` | `Counter` | sets the count, returns self |
+| `Counter.most_common(n=none)` | `List[Tuple]` | `(element, Int)` pairs, descending count |
+| `Counter.elements()` | `List` | each element repeated by its count |
+| `Counter.total()` | `Int` | sum of all counts |
+| `Counter.update(source)` / `.subtract(source)` | `none` | add / subtract counts; `none` is a no-op |
+| `Counter.len()` / `.includes(key)` | `Int` / `Boolean` | distinct elements / membership |
+| `Counter.do(block)` | `none` | block receives `(element, count)` `Tuple`s, mirroring `Dict.do` |
+| `c1 + c2` / `c1 - c2` / `c1 & c2` / `c1 \| c2` | `Counter` | merge / saturating subtract / min / max; isinstance-guarded |
+| `Deque(source=none, maxlen=none)` | `Deque` | Smalltalk's `OrderedCollection`; bounded when `maxlen` given |
+| `Deque.append(x)` / `.appendleft(x)` | `none` | O(1) at both ends |
+| `Deque.pop()` / `.popleft()` | element | raises `IndexError` on empty |
+| `Deque.extend(iter)` / `.extendleft(iter)` | `none` | `extendleft` reverses, like the stdlib |
+| `Deque.rotate(n=1)` | `none` | negative rotates left |
+| `Deque.count(x)` / `.remove(x)` / `.reverse()` / `.clear()` | `Int` / `none` | |
+| `Deque.at(i)` | element | negative indexing supported |
+| `Deque.maxlen` (property) | `Int` or `none` | |
+| `Deque.len()` / `.includes(x)` | `Int` / `Boolean` | |
+| `Deque.do/map/filter/...` | typed | full `_IterableMixin` surface |
+
+`defaultdict`, `OrderedDict`, `namedtuple`, and `ChainMap` are deferred per the [pull-when-asked policy](#pull-deferred-surface-only-when-a-caller-asks) (proposal 96 tracks them).
+
 ### shlex + Shlex — `poop/types/shlex.py` + `poop/transformers/shlex.py`
 
 `shlex` mirrors Python's `shlex` module — POSIX-style shell tokenization, joining, and safe quoting. Two namespace entries follow the `random`/`Random` convention:

@@ -210,3 +210,10 @@ class Deque(_ImplWrapperMixin, _ValueEqMixin, _IterableMixin, Object):
         return str(self._impl)
 
     __repr__ = __str__
+
+
+class CollectionsNamespace:
+    """Namespace mirroring Python's `collections` module."""
+
+    Counter: ClassVar[type[Counter]] = Counter
+    deque: ClassVar[type[Deque]] = Deque

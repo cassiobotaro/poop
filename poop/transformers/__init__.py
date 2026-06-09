@@ -20,6 +20,7 @@ from poop.transformers.calendar import NAMESPACE as _calendar_namespace
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.cmath import NAMESPACE as _cmath_namespace
 from poop.transformers.codecs import NAMESPACE as _codecs_namespace
+from poop.transformers.collections import NAMESPACE as _collections_namespace
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.compression import NAMESPACE as _compression_namespace
 from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
@@ -183,6 +184,7 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _pprint_namespace,
     _bisect_namespace,
     _heapq_namespace,
+    _collections_namespace,
     _shlex_namespace,
     _uuid_namespace,
     _json_namespace,

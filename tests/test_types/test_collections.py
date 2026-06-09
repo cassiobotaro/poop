@@ -1,5 +1,6 @@
 import pytest
 
+from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
 from poop.types.collections import Counter, Deque
 from poop.types.dict import Dict
@@ -296,3 +297,24 @@ def test_deque_eq_compares_contents() -> None:
 
 def test_deque_str_masquerades_as_python_deque() -> None:
     assert str(Deque(List(Int(1)))) == "deque([1])"
+
+
+# --- Interpreter integration ---
+
+
+def test_counter_via_interpreter() -> None:
+    Interpreter().run_source('votes = Counter("aabbb")\nvotes.total().print()')
+
+
+def test_counter_via_collections_namespace() -> None:
+    Interpreter().run_source('collections.Counter("ab").len().print()')
+
+
+def test_deque_via_interpreter() -> None:
+    Interpreter().run_source(
+        "d = Deque()\nd.append(1)\nd.appendleft(0)\nd.popleft().print()"
+    )
+
+
+def test_deque_via_collections_namespace() -> None:
+    Interpreter().run_source("collections.deque().len().print()")
