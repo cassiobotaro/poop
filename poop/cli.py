@@ -13,12 +13,29 @@ from poop.repl import Repl
 app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
 
 
+def _format_error(exc: PoopError, source: str | None) -> str:
+    message = f"poop: {exc}"
+    lineno = getattr(exc, "lineno", None)
+    if source is None or lineno is None:
+        return message
+    lines = source.splitlines()
+    if not 1 <= lineno <= len(lines):
+        return message
+    gutter = f"  {lineno} | "
+    parts = [message, f"{gutter}{lines[lineno - 1]}"]
+    col = getattr(exc, "col_offset", None)
+    if col is not None:
+        caret_gutter = "  " + " " * len(str(lineno)) + " | "
+        parts.append(f"{caret_gutter}{' ' * col}^")
+    return "\n".join(parts)
+
+
 @contextmanager
-def _poop_errors() -> Iterator[None]:
+def _poop_errors(source: str | None = None) -> Iterator[None]:
     try:
         yield
     except PoopError as exc:
-        typer.echo(f"poop: {exc}", err=True)
+        typer.echo(_format_error(exc, source), err=True)
         raise typer.Exit(1) from exc
 
 
@@ -48,22 +65,22 @@ def main(
     filename = str(file)
 
     if validators_only:
-        with _poop_errors():
+        with _poop_errors(source):
             errors = interpreter.validate_all(source, filename)
         if not errors:
             typer.echo("No validation errors.")
             return
         for err in errors:
-            typer.echo(str(err), err=True)
+            typer.echo(_format_error(err, source), err=True)
         raise typer.Exit(1)
 
     if transformers_only:
-        with _poop_errors():
+        with _poop_errors(source):
             tree = interpreter.transform_source(source, filename)
         typer.echo(ast.unparse(tree))
         return
 
-    with _poop_errors():
+    with _poop_errors(source):
         interpreter.run_file(file)
 
 

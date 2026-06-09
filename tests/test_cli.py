@@ -27,6 +27,33 @@ def test_cli_exits_with_error_on_invalid_code(tmp_path: Path) -> None:
     assert "poop:" in result.output
 
 
+def test_cli_error_shows_source_line_with_caret(tmp_path: Path) -> None:
+    f = tmp_path / "bad.py"
+    f.write_text("x = 1\ny = len(x)\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f)])
+    assert result.exit_code == 1
+    assert "  2 | y = len(x)" in result.output
+    assert "    |     ^" in result.output
+
+
+def test_cli_caret_column_matches_offset(tmp_path: Path) -> None:
+    f = tmp_path / "bad.py"
+    f.write_text("if x:\n    pass\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f)])
+    assert result.exit_code == 1
+    assert "  1 | if x:" in result.output
+    assert "    | ^" in result.output
+
+
+def test_cli_runtime_error_shows_line_without_caret(tmp_path: Path) -> None:
+    f = tmp_path / "boom.py"
+    f.write_text("x = 1\ny = x / 0\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f)])
+    assert result.exit_code == 1
+    assert "  2 | y = x / 0" in result.output
+    assert "^" not in result.output
+
+
 def test_cli_validators_only_no_errors(tmp_path: Path) -> None:
     f = tmp_path / "ok.py"
     f.write_text('"hi".print()\n', encoding="utf-8")
@@ -43,6 +70,16 @@ def test_cli_validators_only_reports_all_errors(tmp_path: Path) -> None:
     # Both if and print should be reported
     assert "if" in result.output
     assert "print" in result.output
+
+
+def test_cli_validators_only_shows_snippet_per_error(tmp_path: Path) -> None:
+    f = tmp_path / "bad.py"
+    f.write_text("if x:\n    print(x)\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f), "--validators-only"])
+    assert result.exit_code == 1
+    assert "  1 | if x:" in result.output
+    assert "  2 |     print(x)" in result.output
+    assert "    |     ^" in result.output
 
 
 def test_cli_validators_only_reports_parse_error(tmp_path: Path) -> None:
