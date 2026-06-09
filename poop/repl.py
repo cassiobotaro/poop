@@ -2,6 +2,7 @@ import ast
 import atexit
 import codeop
 import sys
+import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -182,11 +183,175 @@ def _readline_input(prompt: str, indent: str) -> str:
         readline.set_pre_input_hook(None)
 
 
+# Forbidden builtins explained by running `<name>(x)` through the
+# validators — the explanation is the validator's own message, so the
+# two can never drift apart.
+_EXPLAIN_CALLS = frozenset(
+    {
+        "abs",
+        "aiter",
+        "all",
+        "anext",
+        "any",
+        "ascii",
+        "bin",
+        "breakpoint",
+        "callable",
+        "chr",
+        "compile",
+        "dir",
+        "divmod",
+        "eval",
+        "exec",
+        "exit",
+        "filter",
+        "format",
+        "getattr",
+        "globals",
+        "hasattr",
+        "hash",
+        "help",
+        "hex",
+        "id",
+        "input",
+        "isinstance",
+        "issubclass",
+        "iter",
+        "len",
+        "locals",
+        "map",
+        "max",
+        "min",
+        "next",
+        "oct",
+        "open",
+        "ord",
+        "pow",
+        "print",
+        "quit",
+        "repr",
+        "reversed",
+        "round",
+        "setattr",
+        "sorted",
+        "sum",
+        "type",
+        "vars",
+    }
+)
+
+# Forbidden statements and operators need a minimal valid snippet.
+_EXPLAIN_SNIPPETS: dict[str, str] = {
+    "if": "if x:\n    pass",
+    "ternary": "x if y else z",
+    "for": "for i in x:\n    pass",
+    "while": "while x:\n    pass",
+    "comprehension": "[i for i in x]",
+    "def": "def f():\n    pass",
+    "assert": "assert x",
+    "raise": "raise ValueError(x)",
+    "try": "try:\n    pass\nexcept Exception:\n    pass",
+    "with": "with x:\n    pass",
+    "not": "not x",
+    "and": "x and y",
+    "or": "x or y",
+    "in": "x in y",
+    "is": "x is y",
+    "del": "del x",
+    "global": "class C:\n    def m(self):\n        global x",
+    "yield": "class C:\n    def m(self):\n        yield x",
+    "walrus": "(x := 1)",
+    "match": "match x:\n    case _:\n        pass",
+    "fstring": 'f"{x}"',
+    "subscript": "x[0]",
+}
+
+_META_HELP = """\
+:methods <expr>     list the messages an object understands (expr is a
+                    variable or literal — calls are not evaluated)
+:explain <name>     why a construct is forbidden and what to use instead
+                    (e.g. :explain if, :explain len, :explain fstring)
+:help               show this help"""
+
+
+def _explain_snippet(construct: str) -> str | None:
+    if construct in _EXPLAIN_CALLS:
+        return f"{construct}(x)"
+    return _EXPLAIN_SNIPPETS.get(construct)
+
+
 class Repl:
     def __init__(self, interpreter: Interpreter) -> None:
         self._interpreter = interpreter
         self._ns: dict[str, object] = dict(DEFAULT_NAMESPACE)
         _setup_readline(self._ns)
+
+    def _meta(self, line: str) -> None:
+        parts = line[1:].split(maxsplit=1)
+        cmd = parts[0] if parts else ""
+        arg = parts[1].strip() if len(parts) > 1 else ""
+        if cmd == "methods":
+            self._meta_methods(arg)
+        elif cmd == "explain":
+            self._meta_explain(arg)
+        elif cmd == "help":
+            print(_META_HELP)  # noqa: T201
+        else:
+            print(  # noqa: T201
+                _color(f"poop: unknown meta-command :{cmd} — try :help", _RED),
+                file=sys.stderr,
+            )
+
+    def _meta_methods(self, arg: str) -> None:
+        if not arg:
+            print("usage: :methods <expr>")  # noqa: T201
+            return
+        if not _is_safe_expr(arg):
+            print(  # noqa: T201
+                _color(
+                    "poop: :methods takes a variable or literal — calls are "
+                    "not evaluated",
+                    _RED,
+                ),
+                file=sys.stderr,
+            )
+            return
+        try:
+            # Run the expression through the pipeline so literals become
+            # POOP values ("abc" must answer Str's messages, not str's).
+            tree = self._interpreter.transform_source(arg, "<methods>")
+            stmt = tree.body[0]
+            if not isinstance(stmt, ast.Expr):
+                raise SyntaxError("not an expression")  # noqa: TRY301
+            code = compile(ast.Expression(stmt.value), "<methods>", "eval")
+            obj = eval(code, self._ns)  # noqa: S307
+        except Exception as exc:  # noqa: BLE001
+            print(_color(f"poop: {exc}", _RED), file=sys.stderr)  # noqa: T201
+            return
+        names = sorted(n for n in dir(obj) if not n.startswith("_"))
+        header = f"{type(obj).__name__} understands {len(names)} messages:"
+        print(_color(header, _DIM))  # noqa: T201
+        print(textwrap.fill("  ".join(names), width=80))  # noqa: T201
+
+    def _meta_explain(self, arg: str) -> None:
+        if not arg:
+            print("usage: :explain <construct>")  # noqa: T201
+            return
+        snippet = _explain_snippet(arg)
+        if snippet is None:
+            known = sorted(_EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS))
+            print(  # noqa: T201
+                f"poop: nothing to explain about {arg!r} — it may simply be "
+                "allowed.\nKnown constructs:"
+            )
+            print(textwrap.fill("  ".join(known), width=80))  # noqa: T201
+            return
+        errors = self._interpreter.validate_all(snippet, "<explain>")
+        if not errors:
+            print(f"{arg} is allowed in POOP.")  # noqa: T201
+            return
+        for err in errors:
+            print(err.args[0])  # noqa: T201
 
     def _displayhook(self, value: object) -> None:
         if value is None:
@@ -216,6 +381,10 @@ class Repl:
                 except KeyboardInterrupt:
                     print()  # noqa: T201
                     buffer = []
+                    continue
+
+                if not buffer and line.lstrip().startswith(":"):
+                    self._meta(line.lstrip())
                     continue
 
                 buffer.append(line)

@@ -327,3 +327,157 @@ def test_color_wraps_ansi_when_tty(monkeypatch: pytest.MonkeyPatch) -> None:
     result = _color("text", "\x1b[31m")
     assert result.startswith("\x1b[31m")
     assert "text" in result
+
+
+# --- meta-commands ---
+
+
+def test_meta_methods_lists_messages(capsys: pytest.CaptureFixture[str]) -> None:
+    repl, _ = _repl()
+    repl._meta(':methods "abc"')
+    out = capsys.readouterr().out
+    assert "upper" in out
+    assert "understands" in out
+
+
+def test_meta_methods_literal_answers_poop_messages(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The literal must go through the pipeline: "abc" is a POOP Str,
+    # not a Python str — it answers at/print/class_name.
+    repl, _ = _repl()
+    repl._meta(':methods "abc"')
+    out = capsys.readouterr().out
+    assert "class_name" in out
+    assert "print" in out
+
+
+def test_meta_methods_hides_underscored_names(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, _ = _repl()
+    repl._meta(':methods "abc"')
+    out = capsys.readouterr().out
+    assert "__init__" not in out
+    assert "_value" not in out
+
+
+def test_meta_methods_works_on_namespace_variable(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, ns = _repl()
+    repl._interpreter.run_source_repl("nums = [1, 2]", ns)
+    repl._meta(":methods nums")
+    out = capsys.readouterr().out
+    assert "append" in out
+
+
+def test_meta_methods_without_arg_shows_usage(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, _ = _repl()
+    repl._meta(":methods")
+    assert "usage" in capsys.readouterr().out
+
+
+def test_meta_methods_rejects_calls(capsys: pytest.CaptureFixture[str]) -> None:
+    repl, _ = _repl()
+    repl._meta(":methods danger()")
+    err = capsys.readouterr().err
+    assert "calls are not evaluated" in err
+
+
+def test_meta_methods_unknown_name_reports_error(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, _ = _repl()
+    repl._meta(":methods missing_thing")
+    assert "poop:" in capsys.readouterr().err
+
+
+def test_meta_explain_statement_uses_validator_message(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, _ = _repl()
+    repl._meta(":explain if")
+    out = capsys.readouterr().out
+    assert "if_true" in out
+    assert "(line" not in out
+
+
+def test_meta_explain_builtin_call(capsys: pytest.CaptureFixture[str]) -> None:
+    repl, _ = _repl()
+    repl._meta(":explain len")
+    assert "obj.len()" in capsys.readouterr().out
+
+
+def test_meta_explain_fstring(capsys: pytest.CaptureFixture[str]) -> None:
+    repl, _ = _repl()
+    repl._meta(":explain fstring")
+    assert "forbidden" in capsys.readouterr().out
+
+
+def test_meta_explain_unknown_lists_known_constructs(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, _ = _repl()
+    repl._meta(":explain banana")
+    out = capsys.readouterr().out
+    assert "Known constructs" in out
+    assert "if" in out
+
+
+def test_meta_explain_without_arg_shows_usage(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, _ = _repl()
+    repl._meta(":explain")
+    assert "usage" in capsys.readouterr().out
+
+
+def test_meta_explain_every_known_construct_produces_output(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from poop.repl import _EXPLAIN_CALLS, _EXPLAIN_SNIPPETS
+
+    repl, _ = _repl()
+    for construct in sorted(_EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)):
+        repl._meta(f":explain {construct}")
+        out = capsys.readouterr().out
+        assert "forbidden" in out, f"no validator message for {construct!r}"
+
+
+def test_meta_help_lists_commands(capsys: pytest.CaptureFixture[str]) -> None:
+    repl, _ = _repl()
+    repl._meta(":help")
+    out = capsys.readouterr().out
+    assert ":methods" in out
+    assert ":explain" in out
+
+
+def test_meta_unknown_command_suggests_help(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, _ = _repl()
+    repl._meta(":banana")
+    assert ":help" in capsys.readouterr().err
+
+
+def test_run_dispatches_meta_command(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repl = Repl(Interpreter())
+    monkeypatch.setattr("builtins.input", _fake_input(":explain if", EOFError()))
+    repl.run()
+    assert "if_true" in capsys.readouterr().out
+
+
+def test_run_meta_command_does_not_touch_buffer(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repl = Repl(Interpreter())
+    monkeypatch.setattr(
+        "builtins.input", _fake_input(":help", "x = 1 + 1", "x", EOFError())
+    )
+    repl.run()
+    assert repl._ns.get("x") == Int(2)
