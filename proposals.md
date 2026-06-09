@@ -127,33 +127,17 @@ minimal snippet through the validators and prints their own messages —
 explanations can never drift from the rejection text), and `:help`.
 Lines starting with `:` are intercepted before the normal pipeline.
 
-### 103. `functools` infection
+### ~~103. `functools` infection~~ — DONE
 
-**What exists today.** No `functools` namespace — user code referencing
-`functools` gets `NameError` (verified by execution). The only trace is
-internal: `_iterable_mixin.py` imports `functools.reduce` to power the
-`col.reduce(init, block)` message. Requested by the maintainer
-(pull-when-asked).
-
-**Proposal.** Namespace-only infection following the `queue`/`heapq`
-precedent: a lowercase `functools` mirror exposing, with Python's exact
-casing (all lowercase in CPython):
-
-- `partial(block, *args, **kwargs)` — a call-transparent POOP type
-  wrapping `functools.partial`; also bound as a direct entry point.
-  Useful when the frozen args are computed values, where a `lambda`
-  closure would capture variables late.
-- `cmp_to_key(block)` — adapts a two-argument comparison block for the
-  `key=` parameters the sorting messages already accept.
-- `reduce(block, iterable, init)` — module mirror for parity; docs point
-  to `col.reduce(init, block)` as the idiomatic message form.
-- `cache(block)` / `lru_cache(block, maxsize=none)` — applied as
-  **explicit wrapper calls on blocks** (`cached = functools.cache(block)`),
-  not as decorators; no decorator story required. Memoized callables
-  stay call-transparent.
-
-**Scope.** New transformer + `functools.py` type module + tests +
-INFECTIONS.md + MIGRATION.md recipes + CLAUDE.md lists.
+Decision: shipped as proposed. `partial` (lowercase entry point,
+freezes arguments of any callable — blocks, bound methods,
+constructors, other partials), `functools.cmp_to_key` (unwraps the
+comparison block's `Int` so the stdlib key object can compare it),
+`functools.reduce` (parity mirror; `col.reduce` stays idiomatic), and
+`functools.cache`/`lru_cache` as explicit wrapper calls returning
+`Block`s — caching without a decorator story. `wraps`/
+`singledispatch`/`total_ordering`/`partialmethod` out of scope
+(decorator/class machinery), per pull-when-asked.
 
 ## Resolved
 

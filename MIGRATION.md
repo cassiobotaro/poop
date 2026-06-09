@@ -786,6 +786,36 @@ theme = config.at("theme")
 
 > `Counter` is Smalltalk's `Bag`: `.at(key)` answers `Int(0)` for missing keys (subscripting is forbidden anyway), `.do(block)` hands the block `(element, count)` pairs like `Dict.do`, and `+`/`-`/`&`/`|` combine counters. `deque` is `OrderedCollection`: O(1) `append`/`appendleft`, `pop`/`popleft`, `rotate`, negative `.at` indexing, and the full `do`/`map`/`filter` iteration surface — lowercase like in Python. `defaultdict` takes its factory as a block (`lambda: List()`) and `.at` on a missing key calls it; `OrderedDict` adds `move_to_end`/directional `popitem` on top of the full `Dict` surface; `namedtuple` returns a `Tuple` subclass whose fields read as properties. `ChainMap` chains `Dict`s: reads search in order, writes land on the first map, `.new_child()`/`.parents` walk the chain.
 
+## Partial application and caching (`functools` module + `partial` class)
+
+```python
+# Python
+import functools
+
+greet = functools.partial(say, "Hello, ")
+deposit_100 = functools.partial(account.deposit, 100)
+
+@functools.cache
+def square(n):
+    return n * n
+
+total = functools.reduce(lambda acc, x: acc + x, nums, 0)
+ordered = sorted(items, key=functools.cmp_to_key(compare))
+```
+
+```python
+# POOP
+greet = partial(lambda s, n: s + n, "Hello, ")
+deposit_100 = partial(account.deposit, 100)     # bound methods work too
+
+square = functools.cache(lambda n: n * n)       # explicit call, no decorator
+
+total = functools.reduce(lambda acc, x: acc + x, nums, 0)
+ordered = items.sorted(key=functools.cmp_to_key(compare))
+```
+
+> `partial` freezes arguments of **any** callable — blocks, bound methods, constructors, other `partial`s — and the entry point is lowercase like in CPython. Caching is an explicit wrapper call on a block (decorator syntax has no POOP story): the memoized callable is a `Block`; arguments must be hashable, same rule as Python. For folding, prefer the message form `nums.reduce(0, block)` — the `functools.reduce` mirror exists for parity.
+
 ## Shell tokenization (`shlex` module + `Shlex` class)
 
 ```python

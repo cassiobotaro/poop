@@ -1162,6 +1162,22 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `namedtuple(typename, field_names)` | class | class factory: fields as a `Str` (`"x y"` / `"x, y"`) or iterable of `Str` |
 | `Point(...)` (generated class) | instance | a `Tuple` subclass — fields read as properties (`p.x`), arity-checked constructor, `Point(x=1, y=2)`-style repr |
 
+### functools + partial — `poop/types/functools.py` + `poop/transformers/functools.py`
+
+`functools` mirrors Python's `functools` module. Two namespace entries: `functools` (lowercase module mirror) and `partial` (direct entry point — lowercase, matching CPython's casing like collections' `deque`). `reduce` already lives on every iterable as `col.reduce(init, block)` — the module mirror exists for parity. Caching arrives as **explicit wrapper calls on blocks**, not decorators, so no decorator story is required.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `partial(block, *args, **kwargs)` | `partial` | freezes arguments of **any** callable — a block, a bound method (`account.deposit`), a constructor, another `partial`; frozen values stay POOP objects |
+| `partial(...)(*more)` | value | call-transparent; call-site kwargs override frozen ones |
+| `partial.func` / `.args` / `.keywords` (properties) | callable / `Tuple` / `Dict` | mirror the stdlib triple |
+| `functools.cmp_to_key(block)` | `Block` | block receives two values and answers a negative/zero/positive `Int`; feed the result to the `key=` of the sorting messages |
+| `functools.reduce(block, iterable, init=none)` | value | `none` init means absent, like the stdlib two-arg form; `col.reduce(init, block)` is the idiomatic message |
+| `functools.cache(block)` | `Block` | memoized callable: `quadrado = functools.cache(lambda n: n * n)`; arguments must be hashable (Int/Str/Tuple are; List/Dict are not — same rule as Python) |
+| `functools.lru_cache(block, maxsize=none)` | `Block` | bounded memoization; `none` maxsize means unbounded |
+
+`cache_info()`/`cache_clear()` on the memoized callable, `wraps`, `singledispatch`, `total_ordering`, and `partialmethod` (decorator/class-machinery surface) are out of scope per the [pull-when-asked policy](#pull-deferred-surface-only-when-a-caller-asks).
+
 ### shlex + Shlex — `poop/types/shlex.py` + `poop/transformers/shlex.py`
 
 `shlex` mirrors Python's `shlex` module — POSIX-style shell tokenization, joining, and safe quoting. Two namespace entries follow the `random`/`Random` convention:
