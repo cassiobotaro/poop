@@ -63,19 +63,18 @@ loop) now carries `debug`/`info`/`warning`/`error`/`critical`/`log`/
 Logger-only (adding it to LoggerAdapter would be an API change) and
 the `Logging` static forwarders keep their module-function shape.
 
-### 96. `collections` infection
+### 96. `collections` infection — PARTIAL (Counter + Deque shipped)
 
-**What exists today.** No `collections` transformer or types —
-`Counter`, `deque`, `defaultdict`, `namedtuple`, `OrderedDict` are
-unreachable from POOP programs. This is the stdlib gap with the strongest
-Smalltalk affinity: `Counter` ≈ `Bag`, `deque` ≈ `OrderedCollection`.
+**Shipped.** `Counter` (Smalltalk `Bag`) and `Deque` (`OrderedCollection`)
+in `poop/types/collections.py`, exposed via the namespace-only
+`poop/transformers/collections.py` (`collections` lowercase mirror +
+PascalCase entry points), with tests, INFECTIONS.md, and MIGRATION.md
+coverage.
 
-**Proposal.** Namespace-only infection following the established pattern
-(lowercase `collections` mirror + PascalCase entry points `Counter`, `Deque`,
-`DefaultDict`, `NamedTuple`, `OrderedDict`), with POOP types wrapping each.
-
-**Scope.** New transformer + type module(s) + tests + INFECTIONS.md; large
-but mechanical, following the `queue`/`heapq` precedent.
+**Still open.** `DefaultDict`, `OrderedDict`, `NamedTuple`, `ChainMap` —
+deferred per the pull-when-asked policy. `DefaultDict`'s factory should
+arrive as a Block/lambda (adapted via `_bridge.bridge`); `NamedTuple`
+needs a class-factory story that does not leak decorator syntax.
 
 ### 97. `functools` infection
 
@@ -106,19 +105,14 @@ type.
 **Scope.** `_iterable_mixin.py` + iterator/collection types + tests +
 INFECTIONS.md + MIGRATION.md recipes (`itertools.x(col)` → `col.x()`).
 
-### 99. `base64` namespace
+### ~~99. `base64` namespace~~ — WITHDRAWN
 
-**What exists today.** Already flagged as deferred in INFECTIONS.md (the
-optional-kwargs tail). No namespace exists, so even the core surface is
-unreachable.
-
-**Proposal.** Namespace-only infection exposing the core encode/decode
-surface (`b64encode`/`b64decode`, `b32`, `b16`, `urlsafe_*`) over POOP
-`Bytes`/`Str`. Optional kwargs (`altchars`, `validate`, `casefold`) stay
-deferred per the pull-when-asked policy.
-
-**Scope.** New transformer + `base64.py` type module + tests +
-INFECTIONS.md.
+The premise was wrong: base64 is already fully infected as **messages on
+the value** — `Bytes` carries 9 encoder/decoder variants each
+(b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85, including the
+`altchars` kwarg), `Str` carries the decoders (see `poop/types/bytes.py`
+and the MIGRATION.md "Base64" section). A namespace mirror would be
+strictly less idiomatic than what exists. Nothing to do.
 
 ### 100. `Object.subclass_responsibility()`
 

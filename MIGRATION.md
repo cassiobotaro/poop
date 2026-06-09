@@ -730,6 +730,36 @@ sorted_merge = heapq.merge(*iterables).to_list()
 
 > `heapq` operates on POOP `List` in place — `heappush`/`heappop`/`heapify` are mutators that return `none` (`heappop` returns the popped element). `heapq.merge` returns a `HeapMerge` lazy iterator with `.to_list()` to materialize.
 
+## Counters and deques (`collections` module + `Counter`/`Deque` classes)
+
+```python
+# Python
+import collections
+
+votes = collections.Counter("aabbb")
+top = votes.most_common(1)
+count_a = votes["a"]
+
+queue = collections.deque(maxlen=10)
+queue.append(job)
+queue.appendleft(urgent)
+nxt = queue.popleft()
+```
+
+```python
+# POOP
+votes = Counter("aabbb")           # or collections.Counter(...)
+top = votes.most_common(1)
+count_a = votes.at("a")
+
+queue = Deque(maxlen=10)           # or collections.deque(...)
+queue.append(job)
+queue.appendleft(urgent)
+nxt = queue.popleft()
+```
+
+> `Counter` is Smalltalk's `Bag`: `.at(key)` answers `Int(0)` for missing keys (subscripting is forbidden anyway), `.do(block)` hands the block `(element, count)` pairs like `Dict.do`, and `+`/`-`/`&`/`|` combine counters. `Deque` is `OrderedCollection`: O(1) `append`/`appendleft`, `pop`/`popleft`, `rotate`, negative `.at` indexing, and the full `do`/`map`/`filter` iteration surface. `defaultdict`/`OrderedDict`/`namedtuple` are not yet infected.
+
 ## Shell tokenization (`shlex` module + `Shlex` class)
 
 ```python
