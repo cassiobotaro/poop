@@ -29,20 +29,20 @@ Decision: shared machinery extracted to
 keep only their genuinely specific converters. 359 → 291 lines, zero
 behavior change (full suite passed unmodified).
 
-### 93. Property-forwarding helper for `_ImplWrapperMixin` types
+### ~~93. Property-forwarding helper for `_ImplWrapperMixin` types~~ — DONE (as mixins, generator rejected)
 
-**What exists today.** Wrapper types declare long runs of properties that
-only re-wrap an `_impl` attribute — e.g. `poop/types/logging.py` has 21
-properties of the shape `return Str(self._impl.name)`; `datetime.py` and
-`ipaddress.py` follow the same pattern.
-
-**Proposal.** A declarative helper (table of `attr → wrapper type`) that
-generates the forwarding properties. Caveat to resolve in design: generated
-properties must stay visible to `ty` as statically typed attributes — if that
-forces type-stub gymnastics, the readability cost may not be worth it; the
-proposal is to prototype on `logging.py` first and decide.
-
-**Scope.** One helper in the type layer + adoption in 2–3 wrapper modules.
+Decision: the declarative generator was rejected on inspection —
+`logging.py`'s "21 repeated properties" are really four heterogeneous
+shapes (plain wrap, optional-`none`, `to_poop` bridge, metaclass
+toggles), so a table either covers only ~8 trivial cases or grows
+escape hatches, and ty-visibility would force annotation + table
+double bookkeeping. The *real* duplication was across classes, and it
+shipped as plain mixins with real defs (the proposal-95 pattern):
+`_DateFieldsMixin`/`_TimeFieldsMixin` in `datetime.py` (Date/Time/
+DateTime shared fields incl. the 11-line `tzinfo` cascade) and
+`_VersionMixin`/`_ScopeFlagsMixin`/`_MaskFormsMixin` in
+`ipaddress.py` (version ×3, scope flags ×2, mask forms ×2). ~160
+duplicated lines now single-sourced; full suite passed unmodified.
 
 ### ~~94. Consolidate ad-hoc unwrappers into `_unwrap.py`~~ — DONE
 
