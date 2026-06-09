@@ -90,20 +90,17 @@ decorators are currently impossible — free functions are forbidden).
 **Scope.** New transformer + `functools.py` type module + tests +
 INFECTIONS.md.
 
-### 98. `itertools` as messages on iterables
+### ~~98. `itertools` as messages on iterables~~ — DONE
 
-**What exists today.** No `itertools` surface. A free-function-style
-namespace mirror (`itertools.pairwise(col)`) would fight the message-passing
-philosophy.
-
-**Proposal.** Implement the useful combinators as messages on
-`_IterableMixin` instead: `.pairwise()`, `.batched(n)`, `.chain(other)`,
-`.accumulate(block)`, `.product(other)`, `.combinations(n)`,
-`.permutations(n)`. Each returns the appropriate POOP collection/iterator
-type.
-
-**Scope.** `_iterable_mixin.py` + iterator/collection types + tests +
-INFECTIONS.md + MIGRATION.md recipes (`itertools.x(col)` → `col.x()`).
+Decision: `pairwise`/`batched`/`chain`/`accumulate`/`product`/
+`combinations`/`permutations` shipped as `_IterableMixin` messages —
+no `itertools` namespace by design. Each returns a lazy one-shot
+iterator from `poop/types/itertools.py` masquerading as its CPython
+counterpart and composing with `map`/`filter` and each other. `Str`
+is out of scope (it has its own iteration surface, not the mixin);
+remaining itertools tail (`groupby`, `starmap`, `takewhile`/
+`dropwhile`, `cycle`/`repeat`/`count`, `islice`, `zip_longest`)
+follows pull-when-asked.
 
 ### ~~99. `base64` namespace~~ — WITHDRAWN
 

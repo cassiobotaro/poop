@@ -786,6 +786,34 @@ theme = config.at("theme")
 
 > `Counter` is Smalltalk's `Bag`: `.at(key)` answers `Int(0)` for missing keys (subscripting is forbidden anyway), `.do(block)` hands the block `(element, count)` pairs like `Dict.do`, and `+`/`-`/`&`/`|` combine counters. `deque` is `OrderedCollection`: O(1) `append`/`appendleft`, `pop`/`popleft`, `rotate`, negative `.at` indexing, and the full `do`/`map`/`filter` iteration surface — lowercase like in Python. `defaultdict` takes its factory as a block (`lambda: List()`) and `.at` on a missing key calls it; `OrderedDict` adds `move_to_end`/directional `popitem` on top of the full `Dict` surface; `namedtuple` returns a `Tuple` subclass whose fields read as properties. `ChainMap` chains `Dict`s: reads search in order, writes land on the first map, `.new_child()`/`.parents` walk the chain.
 
+## Iterator combinators (`itertools` module)
+
+```python
+# Python
+import itertools
+
+pairs = itertools.pairwise(values)
+rows = itertools.batched(values, 3)
+both = itertools.chain(xs, ys)
+totals = itertools.accumulate(values)
+grid = itertools.product(xs, ys)
+hands = itertools.combinations(cards, 2)
+orders = itertools.permutations(items)
+```
+
+```python
+# POOP — messages on the iterable, no itertools namespace
+pairs = values.pairwise()
+rows = values.batched(3)
+both = xs.chain(ys)
+totals = values.accumulate()
+grid = xs.product(ys)
+hands = cards.combinations(2)
+orders = items.permutations()
+```
+
+> There is deliberately no `itertools` namespace — `itertools.pairwise(col)` is a free function with a procedural look; `col.pairwise()` is a message. All seven combinators are lazy one-shot iterators (same family as `.map()`/`.filter()`), compose freely (`xs.chain(ys).pairwise().map(f)`), and materialize via `list(...)`. `accumulate` takes an optional binary block (`values.accumulate(lambda a, b: a * b)`); `permutations` takes an optional length. Available on every `_IterableMixin` collection (`List`, `Tuple`, `Set`, `deque`, `Range`, views, …).
+
 ## Shell tokenization (`shlex` module + `Shlex` class)
 
 ```python
