@@ -20,22 +20,14 @@ Decision: `help()` rejected via `make_call_name_validator` — interactive
 escape hatch, no POOP equivalent. Implemented with registration, tests,
 and an INFECTIONS.md entry.
 
-### 92. Collection-transformer factory
+### ~~92. Collection-transformer factory~~ — DONE
 
-**What exists today.** `poop/transformers/list.py`, `tuple.py`, `set.py`,
-`frozen_set.py`, and `dict.py` (~70 lines each) repeat the same triple
-pattern: a `visit_Call` intercepting the builtin constructor, a
-`visit_<Literal>` wrapping the literal node, and a `visit_Name` renaming the
-builtin to the mangled POOP class.
-
-**Proposal.** Extract a parametrized factory in
-`poop/transformers/_collection.py` (mirroring how
-`poop/validators/_call_name.py` collapsed the call-name validators),
-parameterizing only the collection-specific pieces (dict needs key/value
-pairs). Roughly ~330 lines collapse to ~120.
-
-**Scope.** One new private module + five thinned transformers; behavior
-unchanged, existing transformer tests must pass as-is.
+Decision: shared machinery extracted to
+`poop/transformers/_collection.py` — a ClassVar-driven
+`CollectionRewriter` base (statically subclassable, ty-friendly) plus
+`make_constructor`/`make_iterable_from`/`wrap_elts`; dict and frozenset
+keep only their genuinely specific converters. 359 → 291 lines, zero
+behavior change (full suite passed unmodified).
 
 ### 93. Property-forwarding helper for `_ImplWrapperMixin` types
 
