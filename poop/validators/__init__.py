@@ -54,6 +54,7 @@ from poop.validators.no_sorted import NoSortedValidator
 from poop.validators.no_subscript import NoSubscriptValidator
 from poop.validators.no_sum import NoSumValidator
 from poop.validators.no_try import NoTryValidator
+from poop.validators.no_type import NoTypeValidator
 from poop.validators.no_type_alias import NoTypeAliasValidator
 from poop.validators.no_unary_minus import NoUnaryMinusValidator
 from poop.validators.no_unary_plus import NoUnaryPlusValidator
@@ -110,6 +111,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoHasattrValidator(),
     NoInputValidator(),
     NoDirValidator(),
+    NoTypeValidator(),
     NoIntrospectionValidator(),
     NoIterValidator(),
     NoOpenValidator(),

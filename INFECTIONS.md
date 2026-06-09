@@ -471,6 +471,12 @@ All three views are unhashable (`__hash__ = None`), expose `len()`/`includes()`/
 |---|---|---|
 | `dir(obj)` | free function with procedural look | `obj.dir()` |
 
+### No `type` — `poop/validators/no_type.py`
+
+| Call | Reason | Substitute |
+|---|---|---|
+| `type(x)` | free function returning a raw class object that is not a POOP value; the three-arg form is a metaprogramming escape — type dispatch belongs in methods | `x.class_name()` or polymorphism |
+
 ### No `exec`/`eval`/`compile` — `poop/validators/no_exec.py`
 
 | Call | Reason |
