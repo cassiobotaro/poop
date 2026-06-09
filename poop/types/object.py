@@ -1,7 +1,8 @@
 import builtins
+import sys
 from builtins import print as _builtins_print
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NoReturn
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
@@ -51,6 +52,15 @@ class Object:
         if message is None:
             raise AssertionError
         raise AssertionError(message._value)
+
+    def subclass_responsibility(self) -> NoReturn:
+        # Smalltalk's `self subclassResponsibility` — the caller frame
+        # names the abstract method, the receiver names the concrete
+        # class that failed to override it.
+        method = sys._getframe(1).f_code.co_name
+        raise NotImplementedError(
+            f"{type(self).__name__}.{method}() is a subclass responsibility"
+        )
 
     def class_name(self) -> Str:
         from poop.types.string import Str

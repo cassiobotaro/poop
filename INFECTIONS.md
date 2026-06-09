@@ -684,6 +684,7 @@ Concrete root of all POOP types. The table below highlights the universal method
 | `not` | `not_()` | `false if bool(self) else true` |
 | `class` | `class_name()` | `type(self).__name__` as `Str` |
 | `perform:` | `get_attr(name)` | `getattr` with optional default |
+| `subclassResponsibility` | `subclass_responsibility()` | raises `NotImplementedError` naming the receiver's concrete class and the calling method — the abstract-method idiom (`def area(self): return self.subclass_responsibility()`); catchable via `Try(...).except_(NotImplementedError, handler)` |
 | — | `dir()` | sorted `List` of `Str` attribute names (`builtins.dir(self)`) |
 
 `__str__` returns `"<ClassName>"` as fallback; `__repr__` delegates to `__str__`.
