@@ -118,19 +118,14 @@ error carries position info (`ValidationError` gets line + caret,
 `ExecutionError` line only). Both the run path and `--validators-only`
 use it; errors without position keep the old one-line form.
 
-### 102. REPL meta-commands
+### ~~102. REPL meta-commands~~ — DONE
 
-**What exists today.** The REPL (`poop/repl.py`) has history and tab
-completion but no exploration commands; discovering an object's messages
-requires `obj.dir()` knowledge, and a rejected construct gives no pointer to
-its rationale.
-
-**Proposal.** Colon-prefixed meta-commands, Smalltalk-browser-flavored:
-`:methods <expr>` lists the messages an object understands;
-`:explain <construct>` maps a validator rejection (e.g. `if`, `len`) to its
-INFECTIONS.md rationale and the idiomatic substitute.
-
-**Scope.** `poop/repl.py` + a validator→rationale table + REPL tests.
+Decision: `:methods <expr>` (evaluates a variable or safe literal
+through the transformer pipeline, so `"abc"` answers `Str`'s messages,
+and lists the non-underscored surface), `:explain <construct>` (runs a
+minimal snippet through the validators and prints their own messages —
+explanations can never drift from the rejection text), and `:help`.
+Lines starting with `:` are intercepted before the normal pipeline.
 
 ### 103. `functools` infection
 

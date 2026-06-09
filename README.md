@@ -32,6 +32,15 @@ poop hello.py            # run a file
 poop                     # interactive REPL (Ctrl+D to exit)
 ```
 
+Inside the REPL, colon-prefixed meta-commands help you explore,
+Smalltalk-browser style:
+
+```
+>>> :methods "abc"       # the messages an object understands
+>>> :explain if          # why a construct is forbidden + the substitute
+>>> :help                # list the meta-commands
+```
+
 ## The ten essentials
 
 | Python | POOP |
