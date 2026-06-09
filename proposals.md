@@ -101,19 +101,14 @@ the value** — `Bytes` carries 9 encoder/decoder variants each
 and the MIGRATION.md "Base64" section). A namespace mirror would be
 strictly less idiomatic than what exists. Nothing to do.
 
-### 100. `Object.subclass_responsibility()`
+### ~~100. `Object.subclass_responsibility()`~~ — DONE
 
-**What exists today.** No way to mark a method as abstract: `abc` is not
-infected, and decorator syntax has no story. Smalltalk's native idiom is
-`self subclassResponsibility`.
-
-**Proposal.** Add `subclass_responsibility()` to `Object`
-(`poop/types/object.py`), raising a POOP error naming the receiver's class
-and the calling method — an abstract-method idiom with no new syntax,
-truer to Smalltalk than wrapping `ABCMeta`.
-
-**Scope.** `object.py` + tests + INFECTIONS.md + possibly a Template Method
-example update in `examples/patterns/`.
+Decision: shipped as a universal `Object` message raising
+`NotImplementedError` that names the receiver's concrete class and the
+calling method (caller frame supplies the selector, as in Smalltalk).
+Template Method example hooks now use it, and MIGRATION.md gained the
+`abc.abstractmethod` recipe. Instantiation stays allowed — failure
+happens at the call, matching Smalltalk semantics.
 
 ### 101. Source-line caret in validation errors
 
