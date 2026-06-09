@@ -45,7 +45,57 @@ def _wrap_interface(impl: Any) -> IPv4Interface | IPv6Interface:
     return IPv6Interface._from_impl(impl)
 
 
-class _AddressBase(_ImplWrapperMixin, _ValueEqMixin, Object):
+class _VersionMixin:
+    """IP version field shared by every ipaddress wrapper."""
+
+    __slots__ = ()
+
+    _impl: Any
+
+    @property
+    def version(self) -> Int:
+        return Int(self._impl.version)
+
+
+class _ScopeFlagsMixin(_VersionMixin):
+    """Scope flags shared by the address and network wrappers."""
+
+    __slots__ = ()
+
+    @property
+    def is_private(self) -> Boolean:
+        return to_boolean(self._impl.is_private)
+
+    @property
+    def is_global(self) -> Boolean:
+        return to_boolean(self._impl.is_global)
+
+    @property
+    def is_multicast(self) -> Boolean:
+        return to_boolean(self._impl.is_multicast)
+
+
+class _MaskFormsMixin:
+    """`with_*` string forms shared by the network and interface wrappers."""
+
+    __slots__ = ()
+
+    _impl: Any
+
+    @property
+    def with_prefixlen(self) -> Str:
+        return Str(self._impl.with_prefixlen)
+
+    @property
+    def with_netmask(self) -> Str:
+        return Str(self._impl.with_netmask)
+
+    @property
+    def with_hostmask(self) -> Str:
+        return Str(self._impl.with_hostmask)
+
+
+class _AddressBase(_ScopeFlagsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
     """Shared scaffolding for `IPv4Address` / `IPv6Address` wrappers."""
 
     __slots__ = ("_impl",)
@@ -70,18 +120,6 @@ class _AddressBase(_ImplWrapperMixin, _ValueEqMixin, Object):
         return Str(self._impl.reverse_pointer)
 
     @property
-    def is_private(self) -> Boolean:
-        return to_boolean(self._impl.is_private)
-
-    @property
-    def is_global(self) -> Boolean:
-        return to_boolean(self._impl.is_global)
-
-    @property
-    def is_multicast(self) -> Boolean:
-        return to_boolean(self._impl.is_multicast)
-
-    @property
     def is_unspecified(self) -> Boolean:
         return to_boolean(self._impl.is_unspecified)
 
@@ -96,10 +134,6 @@ class _AddressBase(_ImplWrapperMixin, _ValueEqMixin, Object):
     @property
     def is_link_local(self) -> Boolean:
         return to_boolean(self._impl.is_link_local)
-
-    @property
-    def version(self) -> Int:
-        return Int(self._impl.version)
 
     @property
     def max_prefixlen(self) -> Int:
@@ -155,7 +189,9 @@ class IPv6Address(_AddressBase):
             self._impl = _ipaddress.IPv6Address(_addr_arg(address))
 
 
-class _NetworkBase(_ImplWrapperMixin, _ValueEqMixin, Object):
+class _NetworkBase(
+    _ScopeFlagsMixin, _MaskFormsMixin, _ImplWrapperMixin, _ValueEqMixin, Object
+):
     """Shared scaffolding for `IPv4Network` / `IPv6Network` wrappers."""
 
     __slots__ = ("_impl",)
@@ -184,36 +220,8 @@ class _NetworkBase(_ImplWrapperMixin, _ValueEqMixin, Object):
         return Int(self._impl.prefixlen)
 
     @property
-    def with_prefixlen(self) -> Str:
-        return Str(self._impl.with_prefixlen)
-
-    @property
-    def with_netmask(self) -> Str:
-        return Str(self._impl.with_netmask)
-
-    @property
-    def with_hostmask(self) -> Str:
-        return Str(self._impl.with_hostmask)
-
-    @property
     def num_addresses(self) -> Int:
         return Int(self._impl.num_addresses)
-
-    @property
-    def version(self) -> Int:
-        return Int(self._impl.version)
-
-    @property
-    def is_private(self) -> Boolean:
-        return to_boolean(self._impl.is_private)
-
-    @property
-    def is_global(self) -> Boolean:
-        return to_boolean(self._impl.is_global)
-
-    @property
-    def is_multicast(self) -> Boolean:
-        return to_boolean(self._impl.is_multicast)
 
     def hosts(self) -> List:
         return List(*(_wrap_address(h) for h in self._impl.hosts()))
@@ -307,7 +315,9 @@ class IPv6Network(_NetworkBase):
             )
 
 
-class _InterfaceBase(_ImplWrapperMixin, _ValueEqMixin, Object):
+class _InterfaceBase(
+    _VersionMixin, _MaskFormsMixin, _ImplWrapperMixin, _ValueEqMixin, Object
+):
     """Shared scaffolding for `IPv4Interface` / `IPv6Interface` wrappers."""
 
     __slots__ = ("_impl",)
@@ -322,22 +332,6 @@ class _InterfaceBase(_ImplWrapperMixin, _ValueEqMixin, Object):
     @property
     def network(self) -> _NetworkBase:
         return _wrap_network(self._impl.network)
-
-    @property
-    def with_prefixlen(self) -> Str:
-        return Str(self._impl.with_prefixlen)
-
-    @property
-    def with_netmask(self) -> Str:
-        return Str(self._impl.with_netmask)
-
-    @property
-    def with_hostmask(self) -> Str:
-        return Str(self._impl.with_hostmask)
-
-    @property
-    def version(self) -> Int:
-        return Int(self._impl.version)
 
     def __hash__(self) -> int:
         return hash(self._impl)
