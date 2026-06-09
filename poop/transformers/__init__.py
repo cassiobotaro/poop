@@ -40,6 +40,7 @@ from poop.transformers.float import FloatTransformer
 from poop.transformers.fnmatch import NAMESPACE as _fnmatch_namespace
 from poop.transformers.fractions import NAMESPACE as _fractions_namespace
 from poop.transformers.frozen_set import FrozenSetTransformer
+from poop.transformers.functools import NAMESPACE as _functools_namespace
 from poop.transformers.gc import NAMESPACE as _gc_namespace
 from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
@@ -185,6 +186,7 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _bisect_namespace,
     _heapq_namespace,
     _collections_namespace,
+    _functools_namespace,
     _shlex_namespace,
     _uuid_namespace,
     _json_namespace,
