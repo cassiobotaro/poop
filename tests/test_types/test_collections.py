@@ -2,7 +2,7 @@ import pytest
 
 from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
-from poop.types.collections import Counter, Deque
+from poop.types.collections import Counter, DefaultDict, Deque, OrderedDict, namedtuple
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
@@ -297,6 +297,157 @@ def test_deque_eq_compares_contents() -> None:
 
 def test_deque_str_masquerades_as_python_deque() -> None:
     assert str(Deque(List(Int(1)))) == "deque([1])"
+
+
+# --- DefaultDict ---
+
+
+def test_defaultdict_missing_key_calls_factory() -> None:
+    d = DefaultDict(lambda: List())
+    lst = d.at(Str("new"))
+    assert lst == List()
+    assert d.includes(Str("new")) is true
+
+
+def test_defaultdict_existing_key_skips_factory() -> None:
+    d = DefaultDict(lambda: Int(0))
+    d.at_put(Str("a"), Int(5))
+    assert d.at(Str("a")) == Int(5)
+
+
+def test_defaultdict_without_factory_raises_keyerror() -> None:
+    with pytest.raises(KeyError):
+        DefaultDict().at(Str("ghost"))
+
+
+def test_defaultdict_none_factory_behaves_like_dict() -> None:
+    with pytest.raises(KeyError):
+        DefaultDict(none).at(Str("ghost"))
+
+
+def test_defaultdict_default_factory_property() -> None:
+    factory = lambda: Int(0)  # noqa: E731
+    assert DefaultDict(factory).default_factory is factory
+    assert DefaultDict().default_factory is none
+
+
+def test_defaultdict_inherits_dict_surface() -> None:
+    d = DefaultDict(lambda: Int(0))
+    d.at_put(Str("a"), Int(1))
+    assert d.len() == Int(1)
+    assert d.keys().includes(Str("a")) is true
+
+
+def test_defaultdict_copy_preserves_factory() -> None:
+    d = DefaultDict(lambda: Int(7))
+    d.at_put(Str("a"), Int(1))
+    c = d.copy()
+    assert c.at(Str("a")) == Int(1)
+    assert c.at(Str("missing")) == Int(7)
+
+
+# --- OrderedDict ---
+
+
+def test_ordereddict_keeps_insertion_order() -> None:
+    od = OrderedDict()
+    od.at_put(Str("a"), Int(1))
+    od.at_put(Str("b"), Int(2))
+    assert list(od) == [Str("a"), Str("b")]
+
+
+def test_ordereddict_move_to_end() -> None:
+    od = OrderedDict()
+    od.at_put(Str("a"), Int(1))
+    od.at_put(Str("b"), Int(2))
+    assert od.move_to_end(Str("a")) is none
+    assert list(od) == [Str("b"), Str("a")]
+
+
+def test_ordereddict_move_to_front() -> None:
+    od = OrderedDict()
+    od.at_put(Str("a"), Int(1))
+    od.at_put(Str("b"), Int(2))
+    od.move_to_end(Str("b"), false)
+    assert list(od) == [Str("b"), Str("a")]
+
+
+def test_ordereddict_popitem_last_by_default() -> None:
+    od = OrderedDict()
+    od.at_put(Str("a"), Int(1))
+    od.at_put(Str("b"), Int(2))
+    assert od.popitem() == Tuple(Str("b"), Int(2))
+
+
+def test_ordereddict_popitem_first() -> None:
+    od = OrderedDict()
+    od.at_put(Str("a"), Int(1))
+    od.at_put(Str("b"), Int(2))
+    assert od.popitem(false) == Tuple(Str("a"), Int(1))
+
+
+def test_ordereddict_copy_preserves_order_and_type() -> None:
+    od = OrderedDict()
+    od.at_put(Str("a"), Int(1))
+    c = od.copy()
+    assert isinstance(c, OrderedDict)
+    c.move_to_end(Str("a"))
+    assert c.at(Str("a")) == Int(1)
+
+
+# --- namedtuple ---
+
+
+def test_namedtuple_fields_read_as_properties() -> None:
+    point = namedtuple(Str("Point"), Str("x y"))
+    p = point(Int(1), Int(2))
+    assert p.x == Int(1)
+    assert p.y == Int(2)
+
+
+def test_namedtuple_accepts_comma_separated_fields() -> None:
+    pair = namedtuple(Str("Pair"), Str("first, second"))
+    assert pair(Int(1), Int(2)).second == Int(2)
+
+
+def test_namedtuple_accepts_list_of_fields() -> None:
+    pair = namedtuple(Str("Pair"), List(Str("a"), Str("b")))
+    assert pair(Int(1), Int(2)).a == Int(1)
+
+
+def test_namedtuple_is_a_tuple() -> None:
+    point = namedtuple(Str("Point"), Str("x y"))
+    p = point(Int(1), Int(2))
+    assert isinstance(p, Tuple)
+    assert p.at(Int(0)) == Int(1)
+    assert p.len() == Int(2)
+
+
+def test_namedtuple_enforces_arity() -> None:
+    point = namedtuple(Str("Point"), Str("x y"))
+    with pytest.raises(TypeError):
+        point(Int(1))
+
+
+def test_namedtuple_rejects_bad_identifiers() -> None:
+    with pytest.raises(ValueError):
+        namedtuple(Str("Bad"), Str("not-valid"))
+
+
+def test_namedtuple_rejects_duplicate_fields() -> None:
+    with pytest.raises(ValueError):
+        namedtuple(Str("Dup"), Str("x x"))
+
+
+def test_namedtuple_str_shows_fields() -> None:
+    point = namedtuple(Str("Point"), Str("x y"))
+    assert str(point(Int(1), Int(2))) == "Point(x=1, y=2)"
+
+
+def test_namedtuple_equality_compares_items() -> None:
+    point = namedtuple(Str("Point"), Str("x y"))
+    assert (point(Int(1), Int(2)) == point(Int(1), Int(2))) is true
+    assert (point(Int(1), Int(2)) == point(Int(9), Int(2))) is false
 
 
 # --- Interpreter integration ---

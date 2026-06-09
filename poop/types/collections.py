@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import collections as _collections
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._unwrap import _opt_int
+from poop.types._unwrap import _b, _opt_int
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
@@ -13,6 +13,7 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
+from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
@@ -212,8 +213,109 @@ class Deque(_ImplWrapperMixin, _ValueEqMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
+class DefaultDict(Dict):
+    """Wraps `collections.defaultdict` behind the full `Dict` surface.
+
+    The default factory is a block (`lambda: List()`); `at` on a
+    missing key calls it, stores the result, and answers it — no
+    `KeyError`, no bridging, since blocks already return POOP values.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, default_factory: Any = None) -> None:
+        factory = (
+            None
+            if default_factory is None or isinstance(default_factory, NoneClass)
+            else default_factory
+        )
+        self._data = _collections.defaultdict(factory)
+
+    @property
+    def default_factory(self) -> Any:
+        impl = cast("_collections.defaultdict[Object, Object]", self._data)
+        return none if impl.default_factory is None else impl.default_factory
+
+    def copy(self) -> DefaultDict:
+        new = DefaultDict.__new__(DefaultDict)
+        new._data = self._data.copy()
+        return new
+
+
+class OrderedDict(Dict):
+    """Wraps `collections.OrderedDict` — a `Dict` that can reorder:
+    `move_to_end` and a directional `popitem`."""
+
+    __slots__ = ()
+
+    def __init__(self) -> None:
+        self._data = _collections.OrderedDict()
+
+    def _ordered(self) -> _collections.OrderedDict[Object, Object]:
+        return cast("_collections.OrderedDict[Object, Object]", self._data)
+
+    def move_to_end(
+        self, key: Object, last: Boolean | NoneClass | None = None
+    ) -> NoneClass:
+        self._ordered().move_to_end(key, _b(last, True))
+        return none
+
+    def popitem(self, last: Boolean | NoneClass | None = None) -> Tuple:
+        k, v = self._ordered().popitem(_b(last, True))
+        return Tuple(k, v)
+
+    def copy(self) -> OrderedDict:
+        new = OrderedDict()
+        new._data.update(self._data)
+        return new
+
+
+def namedtuple(typename: Str, field_names: Any) -> type:
+    """Build a lightweight value class — a `Tuple` subclass whose
+    fields read as properties (`p.x`), mirroring `collections.namedtuple`
+    without decorator or metaclass syntax.
+
+    `field_names` is a `Str` (`"x y"` or `"x, y"`) or an iterable of
+    `Str`.
+    """
+    name = typename._value
+    if isinstance(field_names, Str):
+        fields = field_names._value.replace(",", " ").split()
+    else:
+        fields = [f._value for f in field_names]
+    bad = [f for f in fields if not f.isidentifier()]
+    if bad:
+        raise ValueError(f"field names must be valid identifiers: {bad[0]!r}")
+    if len(set(fields)) != len(fields):
+        raise ValueError("field names must be unique")
+
+    def _make_property(index: int) -> property:
+        return property(lambda self: self._items[index])
+
+    def _nt_init(self: Tuple, *elements: Object) -> None:
+        if len(elements) != len(fields):
+            raise TypeError(
+                f"{name} expects {len(fields)} arguments, got {len(elements)}"
+            )
+        Tuple.__init__(self, *elements)
+
+    def _nt_str(self: Tuple) -> str:
+        pairs = ", ".join(f"{f}={self._items[i]!r}" for i, f in enumerate(fields))
+        return f"{name}({pairs})"
+
+    namespace: dict[str, Any] = {f: _make_property(i) for i, f in enumerate(fields)}
+    namespace["__slots__"] = ()
+    namespace["__init__"] = _nt_init
+    namespace["__str__"] = _nt_str
+    namespace["__repr__"] = _nt_str
+    return type(name, (Tuple,), namespace)
+
+
 class CollectionsNamespace:
     """Namespace mirroring Python's `collections` module."""
 
     Counter: ClassVar[type[Counter]] = Counter
     deque: ClassVar[type[Deque]] = Deque
+    defaultdict: ClassVar[type[DefaultDict]] = DefaultDict
+    OrderedDict: ClassVar[type[OrderedDict]] = OrderedDict
+    namedtuple = staticmethod(namedtuple)
