@@ -68,8 +68,8 @@ the `Logging` static forwarders keep their module-function shape.
 **Shipped.** `Counter` (Smalltalk `Bag`) and `Deque` (`OrderedCollection`)
 in `poop/types/collections.py`, exposed via the namespace-only
 `poop/transformers/collections.py` (`collections` lowercase mirror +
-PascalCase entry points), with tests, INFECTIONS.md, and MIGRATION.md
-coverage.
+entry points keeping Python casing: `Counter`, `deque`), with tests,
+INFECTIONS.md, and MIGRATION.md coverage.
 
 **Still open.** `DefaultDict`, `OrderedDict`, `NamedTuple`, `ChainMap` —
 deferred per the pull-when-asked policy. `DefaultDict`'s factory should

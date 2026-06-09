@@ -1123,7 +1123,7 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 
 ### collections + Counter + Deque — `poop/types/collections.py` + `poop/transformers/collections.py`
 
-`collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Three namespace entries: `collections` (lowercase module mirror exposing `Counter` and `deque`), plus the PascalCase entry points `Counter` and `Deque`. Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as.
+`collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Three namespace entries: `collections` (lowercase module mirror), plus the direct entry points `Counter` and `deque` — each keeping its Python casing (`deque` is lowercase in CPython, same precedent as enum's `auto`). Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as.
 
 | Operation | Returns | Notes |
 |---|---|---|
@@ -1137,16 +1137,16 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `Counter.len()` / `.includes(key)` | `Int` / `Boolean` | distinct elements / membership |
 | `Counter.do(block)` | `none` | block receives `(element, count)` `Tuple`s, mirroring `Dict.do` |
 | `c1 + c2` / `c1 - c2` / `c1 & c2` / `c1 \| c2` | `Counter` | merge / saturating subtract / min / max; isinstance-guarded |
-| `Deque(source=none, maxlen=none)` | `Deque` | Smalltalk's `OrderedCollection`; bounded when `maxlen` given |
-| `Deque.append(x)` / `.appendleft(x)` | `none` | O(1) at both ends |
-| `Deque.pop()` / `.popleft()` | element | raises `IndexError` on empty |
-| `Deque.extend(iter)` / `.extendleft(iter)` | `none` | `extendleft` reverses, like the stdlib |
-| `Deque.rotate(n=1)` | `none` | negative rotates left |
-| `Deque.count(x)` / `.remove(x)` / `.reverse()` / `.clear()` | `Int` / `none` | |
-| `Deque.at(i)` | element | negative indexing supported |
-| `Deque.maxlen` (property) | `Int` or `none` | |
-| `Deque.len()` / `.includes(x)` | `Int` / `Boolean` | |
-| `Deque.do/map/filter/...` | typed | full `_IterableMixin` surface |
+| `deque(source=none, maxlen=none)` | `deque` | Smalltalk's `OrderedCollection`; bounded when `maxlen` given |
+| `deque.append(x)` / `.appendleft(x)` | `none` | O(1) at both ends |
+| `deque.pop()` / `.popleft()` | element | raises `IndexError` on empty |
+| `deque.extend(iter)` / `.extendleft(iter)` | `none` | `extendleft` reverses, like the stdlib |
+| `deque.rotate(n=1)` | `none` | negative rotates left |
+| `deque.count(x)` / `.remove(x)` / `.reverse()` / `.clear()` | `Int` / `none` | |
+| `deque.at(i)` | element | negative indexing supported |
+| `deque.maxlen` (property) | `Int` or `none` | |
+| `deque.len()` / `.includes(x)` | `Int` / `Boolean` | |
+| `deque.do/map/filter/...` | typed | full `_IterableMixin` surface |
 
 `defaultdict`, `OrderedDict`, `namedtuple`, and `ChainMap` are deferred per the [pull-when-asked policy](#pull-deferred-surface-only-when-a-caller-asks) (proposal 96 tracks them).
 

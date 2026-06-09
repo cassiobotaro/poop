@@ -312,7 +312,7 @@ def test_counter_via_collections_namespace() -> None:
 
 def test_deque_via_interpreter() -> None:
     Interpreter().run_source(
-        "d = Deque()\nd.append(1)\nd.appendleft(0)\nd.popleft().print()"
+        "d = deque()\nd.append(1)\nd.appendleft(0)\nd.popleft().print()"
     )
 
 
