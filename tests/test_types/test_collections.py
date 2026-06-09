@@ -1,5 +1,7 @@
+import pytest
+
 from poop.types.boolean import false, true
-from poop.types.collections import Counter
+from poop.types.collections import Counter, Deque
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
@@ -161,3 +163,136 @@ def test_counter_eq_compares_counts() -> None:
 
 def test_counter_str_masquerades_as_python_counter() -> None:
     assert str(Counter(Str("aa"))) == "Counter({'a': 2})"
+
+
+# --- Deque ---
+
+
+def test_deque_constructs_empty() -> None:
+    assert isinstance(Deque(), Deque)
+    assert Deque().len() == Int(0)
+
+
+def test_deque_constructs_from_iterable() -> None:
+    d = Deque(List(Int(1), Int(2)))
+    assert d.len() == Int(2)
+    assert d.at(Int(0)) == Int(1)
+
+
+def test_deque_constructs_from_none() -> None:
+    assert Deque(none).len() == Int(0)
+
+
+def test_deque_maxlen_discards_from_opposite_end() -> None:
+    d = Deque(List(Int(1), Int(2), Int(3)), maxlen=Int(2))
+    assert d.len() == Int(2)
+    assert d.at(Int(0)) == Int(2)
+
+
+def test_deque_maxlen_property() -> None:
+    assert Deque(maxlen=Int(5)).maxlen == Int(5)
+    assert Deque().maxlen is none
+
+
+def test_deque_append_and_pop() -> None:
+    d = Deque()
+    assert d.append(Int(1)) is none
+    d.append(Int(2))
+    assert d.pop() == Int(2)
+    assert d.len() == Int(1)
+
+
+def test_deque_appendleft_and_popleft() -> None:
+    d = Deque(List(Int(2)))
+    assert d.appendleft(Int(1)) is none
+    assert d.popleft() == Int(1)
+    assert d.popleft() == Int(2)
+
+
+def test_deque_pop_empty_raises() -> None:
+    with pytest.raises(IndexError):
+        Deque().pop()
+
+
+def test_deque_extend_appends_right() -> None:
+    d = Deque(List(Int(1)))
+    assert d.extend(List(Int(2), Int(3))) is none
+    assert d.at(Int(2)) == Int(3)
+
+
+def test_deque_extendleft_reverses_order() -> None:
+    d = Deque(List(Int(3)))
+    assert d.extendleft(List(Int(2), Int(1))) is none
+    assert d.at(Int(0)) == Int(1)
+
+
+def test_deque_rotate_defaults_to_one() -> None:
+    d = Deque(List(Int(1), Int(2), Int(3)))
+    assert d.rotate() is none
+    assert d.at(Int(0)) == Int(3)
+
+
+def test_deque_rotate_negative_rotates_left() -> None:
+    d = Deque(List(Int(1), Int(2), Int(3)))
+    d.rotate(Int(-1))
+    assert d.at(Int(0)) == Int(2)
+
+
+def test_deque_clear_empties() -> None:
+    d = Deque(List(Int(1)))
+    assert d.clear() is none
+    assert d.len() == Int(0)
+
+
+def test_deque_count() -> None:
+    d = Deque(List(Int(1), Int(1), Int(2)))
+    assert d.count(Int(1)) == Int(2)
+
+
+def test_deque_remove_first_occurrence() -> None:
+    d = Deque(List(Int(1), Int(2), Int(1)))
+    assert d.remove(Int(1)) is none
+    assert d.len() == Int(2)
+    assert d.at(Int(0)) == Int(2)
+
+
+def test_deque_reverse() -> None:
+    d = Deque(List(Int(1), Int(2)))
+    assert d.reverse() is none
+    assert d.at(Int(0)) == Int(2)
+
+
+def test_deque_at_supports_negative_index() -> None:
+    d = Deque(List(Int(1), Int(2)))
+    assert d.at(Int(-1)) == Int(2)
+
+
+def test_deque_includes() -> None:
+    d = Deque(List(Int(1)))
+    assert d.includes(Int(1)) is true
+    assert d.includes(Int(9)) is false
+    assert Int(1) in d
+
+
+def test_deque_do_iterates_items() -> None:
+    seen = []
+    Deque(List(Int(1), Int(2))).do(lambda x: seen.append(x))
+    assert seen == [Int(1), Int(2)]
+
+
+def test_deque_map_and_filter_via_iterable_mixin() -> None:
+    d = Deque(List(Int(1), Int(2), Int(3)))
+    doubled = [x for x in d.map(lambda x: x + Int(1))]
+    assert doubled == [Int(2), Int(3), Int(4)]
+    odd = [x for x in d.filter(lambda x: bool(x % Int(2)))]
+    assert odd == [Int(1), Int(3)]
+
+
+def test_deque_eq_compares_contents() -> None:
+    assert (Deque(List(Int(1))) == Deque(List(Int(1)))) is true
+    assert (Deque(List(Int(1))) == Deque(List(Int(2)))) is false
+    assert (Deque() == Int(0)) is false
+
+
+def test_deque_str_masquerades_as_python_deque() -> None:
+    assert str(Deque(List(Int(1)))) == "deque([1])"
