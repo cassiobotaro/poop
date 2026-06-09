@@ -55,16 +55,13 @@ domain dispatch: each cascade maps different types to `_impl` vs
 shared duck-typed helper would change edge-case behavior (e.g.
 `Fraction(Decimal)`, `Fraction(Boolean)`). Kept as-is by design.
 
-### 95. Logger level-method mixin
+### ~~95. Logger level-method mixin~~ — DONE
 
-**What exists today.** `poop/types/logging.py` writes the five level methods
-(`debug`/`info`/`warning`/`error`/`critical`) three times — on `Logger`, on
-`LoggerAdapter`, and as module-level forwarders — ~15 near-identical methods.
-
-**Proposal.** Generate them from a single level table (mixin or class-body
-loop), keeping signatures and return types identical.
-
-**Scope.** `logging.py` only; existing tests must pass unchanged.
+Decision: `_LevelMethodsMixin` (real defs, ty-visible — no class-body
+loop) now carries `debug`/`info`/`warning`/`error`/`critical`/`log`/
+`setLevel`, shared by `Logger` and `LoggerAdapter`. `exception` stays
+Logger-only (adding it to LoggerAdapter would be an API change) and
+the `Logging` static forwarders keep their module-function shape.
 
 ### 96. `collections` infection
 
