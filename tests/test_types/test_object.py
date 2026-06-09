@@ -1,6 +1,5 @@
 import pytest
 
-from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -317,59 +316,3 @@ def test_ne_different_objects_returns_true() -> None:
     a, b = Object(), Object()
     result = a.__ne__(b)
     assert result is true
-
-
-def test_subclass_responsibility_raises_not_implemented() -> None:
-    class Shape(Object):
-        def area(self):  # type: ignore[no-untyped-def]
-            return self.subclass_responsibility()
-
-    with pytest.raises(
-        NotImplementedError, match=r"Shape\.area\(\) is a subclass responsibility"
-    ):
-        Shape().area()
-
-
-def test_subclass_responsibility_names_the_concrete_class() -> None:
-    class Shape(Object):
-        def area(self):  # type: ignore[no-untyped-def]
-            return self.subclass_responsibility()
-
-    class Circle(Shape):
-        pass
-
-    with pytest.raises(NotImplementedError, match=r"Circle\.area\(\)"):
-        Circle().area()
-
-
-def test_subclass_responsibility_skipped_when_overridden() -> None:
-    class Shape(Object):
-        def area(self):  # type: ignore[no-untyped-def]
-            return self.subclass_responsibility()
-
-    class Square(Shape):
-        def area(self):  # type: ignore[no-untyped-def]
-            return 16
-
-    assert Square().area() == 16
-
-
-def test_subclass_responsibility_via_interpreter() -> None:
-    source = (
-        "class Shape:\n"
-        "    def area(self):\n"
-        "        return self.subclass_responsibility()\n"
-        "\n"
-        "class Square(Shape):\n"
-        "    def __init__(self, side):\n"
-        "        self.side = side\n"
-        "\n"
-        "    def area(self):\n"
-        "        return self.side * self.side\n"
-        "\n"
-        "Square(4).area().print()\n"
-        "Try(lambda: Shape().area()).except_(\n"
-        "    NotImplementedError, lambda e: e.message().print()\n"
-        ").run()\n"
-    )
-    Interpreter().run_source(source)

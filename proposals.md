@@ -101,14 +101,14 @@ the value** — `Bytes` carries 9 encoder/decoder variants each
 and the MIGRATION.md "Base64" section). A namespace mirror would be
 strictly less idiomatic than what exists. Nothing to do.
 
-### ~~100. `Object.subclass_responsibility()`~~ — DONE
+### ~~100. `Object.subclass_responsibility()`~~ — REJECTED (implemented, then reverted)
 
-Decision: shipped as a universal `Object` message raising
-`NotImplementedError` that names the receiver's concrete class and the
-calling method (caller frame supplies the selector, as in Smalltalk).
-Template Method example hooks now use it, and MIGRATION.md gained the
-`abc.abstractmethod` recipe. Instantiation stays allowed — failure
-happens at the call, matching Smalltalk semantics.
+Maintainer decision: the Python way to mark abstract methods is the
+`@abstractmethod` decorator; POOP follows Python idioms where one
+exists (the same principle behind `map` not `collect`), so a
+Smalltalk-only message is not wanted. Shipped in `cecf271`, reverted
+in full. If abstract-method support is ever desired, it should arrive
+through a decorator story instead.
 
 ### 101. Source-line caret in validation errors
 

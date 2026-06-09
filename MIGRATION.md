@@ -348,26 +348,6 @@ Try(lambda: risky()).except_(ValueError, lambda e: handle(e)).run()
 
 > Inside lambdas you cannot `raise` — write `ExcType.raise_("msg")`. The `RaiseTransformer` rewrites it to a callable so it composes inside blocks.
 
-## Abstract methods (`abc` module)
-
-```python
-# Python
-import abc
-
-class Shape(abc.ABC):
-    @abc.abstractmethod
-    def area(self): ...
-```
-
-```python
-# POOP
-class Shape:
-    def area(self):
-        return self.subclass_responsibility()
-```
-
-> Smalltalk's `self subclassResponsibility`, available on every object. Calling the unoverridden method raises `NotImplementedError` naming the concrete class and method (`Circle.area() is a subclass responsibility`) — catchable via `Try(...).except_(NotImplementedError, handler)`. Unlike `abc.ABC`, instantiation is allowed and the failure happens at the call — which is also how Smalltalk behaves.
-
 ## Context managers (`with`)
 
 ```python

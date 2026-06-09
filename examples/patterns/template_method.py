@@ -29,12 +29,6 @@ Smalltalk:
             s nextPutAll: self header; cr.
             s nextPutAll: self body; cr.
             s nextPutAll: self footer]
-    Report>>header
-        ^self subclassResponsibility
-    Report>>body
-        ^self subclassResponsibility
-    Report>>footer
-        ^self subclassResponsibility
 
     Report subclass: #MarkdownReport.
     MarkdownReport>>header ^'# ', title
@@ -49,15 +43,6 @@ class Report:
 
     def render(self):
         return "\n".join([self.header(), self.body(), self.footer()])
-
-    def header(self):
-        return self.subclass_responsibility()
-
-    def body(self):
-        return self.subclass_responsibility()
-
-    def footer(self):
-        return self.subclass_responsibility()
 
 
 class MarkdownReport(Report):
