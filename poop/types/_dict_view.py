@@ -30,6 +30,9 @@ class _DictView(_IterableMixin, Object):
         super().__init_subclass__(**kwargs)
         if name is not None:
             cls._repr_name = name
+            # class_name() reads type(x).__name__ — answer the CPython name.
+            cls.__name__ = name
+            cls.__module__ = "builtins"
 
     def __init__(self, dict_: Dict) -> None:
         self._dict: Dict = dict_

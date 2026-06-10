@@ -101,3 +101,7 @@ class MappingProxy(_IterableMixin, Object):
         return f"mappingproxy({self._dict})"
 
     __repr__ = __str__
+
+
+MappingProxy.__module__ = "builtins"
+MappingProxy.__name__ = "mappingproxy"

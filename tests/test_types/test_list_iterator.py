@@ -3,11 +3,16 @@ import pytest
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.list_iterator import ListIterator
+from poop.types.string import Str
 
 
 def test_iter_returns_list_iterator() -> None:
     it = List(Int(1), Int(2)).iter()
     assert isinstance(it, ListIterator)
+
+
+def test_class_name_answers_list_iterator() -> None:
+    assert List(Int(1)).iter().class_name() == Str("list_iterator")
 
 
 def test_next_advances() -> None:

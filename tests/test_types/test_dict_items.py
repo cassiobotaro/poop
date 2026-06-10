@@ -26,6 +26,10 @@ def test_iter_returns_dict_item_iterator() -> None:
     assert isinstance(items.iter(), DictItemIterator)
 
 
+def test_class_name_answers_dict_items() -> None:
+    assert DictItems(_make()).class_name() == Str("dict_items")
+
+
 def test_iter_yields_tuples() -> None:
     items = DictItems(_make())
     it = items.iter()

@@ -21,6 +21,10 @@ def test_at() -> None:
     assert mp.at(Str("a")) == Int(1)
 
 
+def test_class_name_answers_mappingproxy() -> None:
+    assert MappingProxy(_make()).class_name() == Str("mappingproxy")
+
+
 def test_at_missing_raises() -> None:
     mp = MappingProxy(Dict())
     with pytest.raises(KeyError):
