@@ -67,5 +67,17 @@ across the v1.0.x and v1.1.x cycles:
   `@abstractmethod` decorator). Withdrawn: `base64` namespace (99 —
   already shipped as `Bytes`/`Str` messages).
 
+- Pull-when-asked batch (maintainer request): `Date.min`/`Date.max`
+  class attributes (bare `MINYEAR`/`MAXYEAR` stay out per the existing
+  permanent divergence); collections tail — `deque`
+  `insert`/`index`/`copy`/`+`/`*`, namedtuple
+  `_fields`/`_make`/`_asdict`/`_replace`, seeded
+  `defaultdict`/`OrderedDict` constructors; functools tail —
+  `cache_info()`/`cache_clear()` on memoized blocks and
+  `partialmethod` (`wraps`/`singledispatch`/`total_ordering` stay out:
+  decorator machinery / type dispatch). The json "deferred" note was
+  stale — subclassing and all callback kwargs had already shipped via
+  `block.bridge`; INFECTIONS.md corrected. Pending next release.
+
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).

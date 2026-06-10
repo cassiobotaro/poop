@@ -1141,14 +1141,17 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `deque.extend(iter)` / `.extendleft(iter)` | `none` | `extendleft` reverses, like the stdlib |
 | `deque.rotate(n=1)` | `none` | negative rotates left |
 | `deque.count(x)` / `.remove(x)` / `.reverse()` / `.clear()` | `Int` / `none` | |
+| `deque.insert(i, x)` / `.index(x, start=none, stop=none)` | `none` / `Int` | `index` raises `ValueError` when absent |
+| `deque.copy()` | `deque` | preserves `maxlen` |
+| `d1 + d2` / `d * n` | `deque` | concatenation / repetition; isinstance-guarded |
 | `deque.at(i)` | element | negative indexing supported |
 | `deque.maxlen` (property) | `Int` or `none` | |
 | `deque.len()` / `.includes(x)` | `Int` / `Boolean` | |
 | `deque.do/map/filter/...` | typed | full `_IterableMixin` surface |
-| `defaultdict(default_factory=none)` | `defaultdict` | factory is a block (`lambda: List()`); `at` on a missing key calls it, stores, and answers — no `KeyError` |
+| `defaultdict(default_factory=none, source=none)` | `defaultdict` | factory is a block (`lambda: List()`); `at` on a missing key calls it, stores, and answers — no `KeyError`; optional `Dict` source seeds the contents |
 | `defaultdict.default_factory` (property) | block or `none` | |
 | `defaultdict.<Dict surface>` | typed | inherits everything from `Dict` |
-| `OrderedDict()` | `OrderedDict` | order-aware `Dict` |
+| `OrderedDict(source=none)` | `OrderedDict` | order-aware `Dict`; optional `Dict` source seeds the contents |
 | `OrderedDict.move_to_end(key, last=true)` | `none` | `last=false` moves to front |
 | `OrderedDict.popitem(last=true)` | `Tuple` | directional pop |
 | `OrderedDict.<Dict surface>` | typed | inherits everything from `Dict` |
@@ -1161,6 +1164,10 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `ChainMap.new_child(m=none)` / `.parents` (property) | `ChainMap` | prepend a map / drop the first |
 | `namedtuple(typename, field_names)` | class | class factory: fields as a `Str` (`"x y"` / `"x, y"`) or iterable of `Str` |
 | `Point(...)` (generated class) | instance | a `Tuple` subclass — fields read as properties (`p.x`), arity-checked constructor, `Point(x=1, y=2)`-style repr |
+| `Point._fields` (class attr) | `Tuple[Str]` | field names, Python's underscore convention kept verbatim |
+| `Point._make(iterable)` | instance | classmethod, builds from an iterable |
+| `p._asdict()` | `Dict` | `Str` field names → values |
+| `p._replace(**changes)` | instance | new value with named fields swapped; unknown names raise `ValueError` |
 
 ### functools + partial — `poop/types/functools.py` + `poop/transformers/functools.py`
 
@@ -1173,10 +1180,13 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `partial.func` / `.args` / `.keywords` (properties) | callable / `Tuple` / `Dict` | mirror the stdlib triple |
 | `functools.cmp_to_key(block)` | `Block` | block receives two values and answers a negative/zero/positive `Int`; feed the result to the `key=` of the sorting messages |
 | `functools.reduce(block, iterable, init=none)` | value | `none` init means absent, like the stdlib two-arg form; `col.reduce(init, block)` is the idiomatic message |
-| `functools.cache(block)` | `Block` | memoized callable: `quadrado = functools.cache(lambda n: n * n)`; arguments must be hashable (Int/Str/Tuple are; List/Dict are not — same rule as Python) |
-| `functools.lru_cache(block, maxsize=none)` | `Block` | bounded memoization; `none` maxsize means unbounded |
+| `functools.cache(block)` | memoized `Block` | `quadrado = functools.cache(lambda n: n * n)`; arguments must be hashable (Int/Str/Tuple are; List/Dict are not — same rule as Python) |
+| `functools.lru_cache(block, maxsize=none)` | memoized `Block` | bounded memoization; `none` maxsize means unbounded |
+| `<memoized>.cache_info()` | `Dict` | `hits`/`misses`/`maxsize`/`currsize` as `Int` (`maxsize` is `none` when unbounded) |
+| `<memoized>.cache_clear()` | `none` | resets the cache |
+| `functools.partialmethod(method, *args, **kwargs)` | descriptor | assign in a class body (`deposit_100 = functools.partialmethod(deposit, 100)`); binds like the stdlib |
 
-`cache_info()`/`cache_clear()` on the memoized callable, `wraps`, `singledispatch`, `total_ordering`, and `partialmethod` (decorator/class-machinery surface) are out of scope per the [pull-when-asked policy](#pull-deferred-surface-only-when-a-caller-asks).
+`wraps`, `singledispatch`, and `total_ordering` stay out: the first two are machinery for writing decorators (POOP has no user decorators) and `singledispatch` is type dispatch — polymorphism's job.
 
 ### shlex + Shlex — `poop/types/shlex.py` + `poop/transformers/shlex.py`
 
@@ -1237,7 +1247,7 @@ v0.23.0 ships the common iterative surface; the full `Shlex` API (`read_token`, 
 
 **Round-trip type discipline.** The native `json` library walks Python types; this namespace wraps every entry/exit with `_unwrap`/`_wrap` so callers never see a raw `dict`/`list`/`str`/`int`/`float`/`bool`/`None`. `Json.loads('{"a":1, "b":true}')` returns a `Dict[Str, Int | Boolean]` — every value is a POOP type. `Json.dumps(d)` accepts a POOP value graph and returns POOP `Str`.
 
-v0.25.0 covers the common 95%; subclassing (`JSONEncoder` / `JSONDecoder`) and callback kwargs (`cls`, `default`, `object_hook`, `parse_int`/`parse_float`/`parse_constant`, `object_pairs_hook`, `separators`) are deferred to Future work pending a POOP `Block` → Python `callable` adaptation story. `json.tool` (CLI) stays out of scope.
+The full surface is covered: subclassing (`JSONEncoder` with a bridged `default` override via `__init_subclass__`; `JSONDecoder` taking the hook kwargs as blocks) and the callback kwargs on `dumps`/`loads`/`dump`/`load` (`cls`, `default`, `object_hook`, `parse_int`/`parse_float`/`parse_constant`, `object_pairs_hook`, `separators`) — all blocks route through `block.bridge`, so they receive and return POOP values. Only `json.tool` (CLI) stays out of scope.
 
 `json` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/json.py` — namespace-only, no AST rewrite.
 
