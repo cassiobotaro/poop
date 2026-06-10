@@ -1597,9 +1597,9 @@ The private `ucd_3_2_0` legacy UCD object is out of scope for v1.
 
 `zoneinfo` and `ZoneInfo` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/zoneinfo.py` — namespace-only, no AST rewrite.
 
-### calendar + Calendar — `poop/types/calendar.py` + `poop/transformers/calendar.py`
+### calendar + Calendar + TextCalendar + HTMLCalendar + LocaleTextCalendar + LocaleHTMLCalendar — `poop/types/calendar.py` + `poop/transformers/calendar.py`
 
-`calendar` mirrors Python's `calendar` module — formatting month/year calendars, leap-year queries, weekday math. The reusable `Calendar` class iterates dates with a configurable first-weekday.
+`calendar` mirrors Python's `calendar` module — formatting month/year calendars, leap-year queries, weekday math. The reusable `Calendar` class iterates dates with a configurable first-weekday; `TextCalendar` / `HTMLCalendar` render formatted output, and the `Locale*` variants honour a locale for day/month names.
 
 | Operation | Returns | Notes |
 |---|---|---|
@@ -1623,10 +1623,18 @@ The private `ucd_3_2_0` legacy UCD object is out of scope for v1.
 | `Calendar.monthdatescalendar(year, month)` | `List[List[Date]]` | weeks of full `Date`s |
 | `Calendar.monthdayscalendar(year, month)` | `List[List[Int]]` | weeks of day numbers |
 | `Calendar.yeardatescalendar(year, width=none)` | nested `List` | row × month × week × day |
+| `TextCalendar(firstweekday=none)` | `TextCalendar` | plain-text rendering |
+| `TextCalendar.formatmonth(year, month, w=none, l=none)` | `Str` | |
+| `TextCalendar.formatyear(year, w=none, l=none, c=none, m=none)` | `Str` | |
+| `HTMLCalendar(firstweekday=none)` | `HTMLCalendar` | HTML rendering |
+| `HTMLCalendar.formatmonth(year, month, withyear=true)` | `Str` | |
+| `HTMLCalendar.formatyear(year, width=none)` | `Str` | |
+| `HTMLCalendar.formatyearpage(year, width=none, css="calendar.css", encoding="ascii")` | `Bytes` | full HTML page |
+| `LocaleTextCalendar(firstweekday=none, locale=none)` / `LocaleHTMLCalendar(firstweekday=none, locale=none)` | locale-aware variants | `locale` is a `Str` like `"pt_BR.UTF-8"` |
 
-POOP collections are materialized eagerly — the `iter*` methods return `List` instead of Python's generators. `HTMLCalendar`, `LocaleTextCalendar`, and `LocaleHTMLCalendar` are out of scope for v1.
+POOP collections are materialized eagerly — the `iter*` methods return `List` instead of Python's generators.
 
-`calendar` and `Calendar` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/calendar.py` — namespace-only, no AST rewrite.
+`calendar`, `Calendar`, `TextCalendar`, `HTMLCalendar`, `LocaleTextCalendar`, and `LocaleHTMLCalendar` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/calendar.py` — namespace-only, no AST rewrite (the four rendering classes are also reachable as `calendar.<Class>`, mirroring CPython).
 
 ### array + Array — `poop/types/array.py` + `poop/transformers/array.py`
 
@@ -2801,7 +2809,7 @@ Every newly-wrapped or intentionally-skipped module should land here in the same
 |---|---|---|
 | `datetime` | covered | `datetime` + `Date` + `Time` + `DateTime` + `TimeDelta` + `TimeZone` (shipped in v0.32.0) |
 | `zoneinfo` | covered | `zoneinfo` + `ZoneInfo` (shipped in v0.35.0) |
-| `calendar` | covered | `calendar` + `Calendar` (shipped in v0.35.0) |
+| `calendar` | covered | `calendar` + `Calendar` (shipped in v0.35.0); `TextCalendar` / `HTMLCalendar` / `Locale*` (v0.56.0) |
 | `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |
 | `heapq` | covered | `heapq` namespace + `HeapMerge` (shipped in v0.22.0) |
 | `bisect` | covered | `bisect` namespace (shipped in v0.21.0) |

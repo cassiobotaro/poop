@@ -1202,7 +1202,7 @@ cal = Calendar()
 weeks = cal.monthdatescalendar(2026, 5)
 ```
 
-> Module-level shortcuts (`isleap`, `leapdays`, `weekday`, `monthrange`, `monthcalendar`, `month`, `calendar`, `timegm`) plus the weekday/month constants (`MONDAY` … `SUNDAY`, `JANUARY` … `DECEMBER`) live on the namespace. The reusable `Calendar` class is bare (PascalCase); its `iter*` methods return materialized POOP `List`s — POOP collections are not lazy. `HTMLCalendar`, `LocaleTextCalendar`, and `LocaleHTMLCalendar` are out of scope for v1.
+> Module-level shortcuts (`isleap`, `leapdays`, `weekday`, `monthrange`, `monthcalendar`, `month`, `calendar`, `timegm`) plus the weekday/month constants (`MONDAY` … `SUNDAY`, `JANUARY` … `DECEMBER`) live on the namespace. The reusable `Calendar` class is bare (PascalCase); its `iter*` methods return materialized POOP `List`s — POOP collections are not lazy. The rendering classes are bare too: `TextCalendar` (`formatmonth`/`formatyear`), `HTMLCalendar` (`formatmonth`/`formatyear`/`formatyearpage`), and the locale-aware `LocaleTextCalendar` / `LocaleHTMLCalendar`.
 
 ## Typed arrays (`array` module + `Array` class)
 
