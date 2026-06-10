@@ -2160,12 +2160,12 @@ POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for 
 
 `http` mirrors Python's `http` package — `http.client` (low-level HTTP), `http.server` (server framework), `http.cookies` (RFC 2109/6265 parsing), `http.cookiejar` (storage).
 
-`HTTPStatus` (IntEnum) and `HTTPMethod` (StrEnum) are re-exported directly from CPython. POOP patches their `_missing_` hook so calling them with POOP `Int` / `Str` wrappers resolves to the right member (e.g. `http.HTTPStatus(Int(200))` returns `HTTPStatus.OK`).
+`HTTPStatus` (IntEnum) and `HTTPMethod` (StrEnum) are rebuilt over the POOP enum bases (from CPython's members) rather than re-exported, so members answer POOP messages — `==` returns a `Boolean` (so `(status == HTTPStatus.OK).if_true(...)` works for status dispatch), `.phrase`/`.description` return `Str`, and the `is_*` predicates return `Boolean`. The inherited `_missing_` unwraps POOP `Int`/`Str`, so `http.HTTPStatus(Int(200))` returns `HTTPStatus.OK`.
 
 | Operation | Returns | Notes |
 |---|---|---|
-| `http.HTTPStatus` (class attr) | IntEnum | `.OK` / `.NOT_FOUND` / … members; `.value` / `.phrase` / `.description` properties; `.is_success` / `.is_client_error` / `.is_server_error` / `.is_redirection` / `.is_informational` predicates |
-| `http.HTTPMethod` (class attr) | StrEnum | `.GET` / `.POST` / `.PUT` / `.PATCH` / `.DELETE` / `.HEAD` / `.OPTIONS` / `.TRACE` / `.CONNECT` |
+| `http.HTTPStatus` (class attr) | POOP `IntEnum` | `.OK` / `.NOT_FOUND` / … members; `.value` (raw int) / `.value_object()` (`Int`); `.phrase` / `.description` → `Str`; `.is_success` / `.is_client_error` / `.is_server_error` / `.is_redirection` / `.is_informational` → `Boolean` |
+| `http.HTTPMethod` (class attr) | POOP `StrEnum` | `.GET` / `.POST` / `.PUT` / `.PATCH` / `.DELETE` / `.HEAD` / `.OPTIONS` / `.TRACE` / `.CONNECT`; `.description` → `Str` |
 | `http.client.HTTPConnection(host, port=none, timeout=none)` | `HTTPConnection` | |
 | `http.client.HTTPSConnection(host, port=none, timeout=none)` | `HTTPSConnection` | |
 | `HTTPConnection.request(method, url, body=none, headers=none)` | `none` | body is `Bytes` / `Str`; headers is `Dict[Str, Str]` |
