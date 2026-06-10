@@ -21,21 +21,9 @@
 
 - **Proposed fix:** in `TimeDelta.__add__`/`__sub__`, `isinstance`-check the operand: return `Date._from_impl(...)`/`DateTime._from_impl(...)` for date-like operands (or return `NotImplemented` and rely on `Date.__radd__`); add `__rmul__ = __mul__` (and `__radd__` for `Date`/`DateTime` symmetry) so reflected forms work once the `Int`/`Float` operators yield `NotImplemented`.
 
-### 117. `Date`, `Time`, and `TimeDelta` cannot be ordered (`<` crashes)
+### ~~117. `Date`, `Time`, and `TimeDelta` cannot be ordered (`<` crashes)~~ — DONE
 
-- **Where:** `poop/types/datetime.py:27` (`TimeDelta`), `poop/types/datetime.py:200` (`Date`), `poop/types/datetime.py:267` (`Time`) — none define `__lt__`/`__le__`/`__gt__`/`__ge__`; only `DateTime` does (`poop/types/datetime.py:446`)
-- **Bug:** ordering two dates, times, or durations raises `TypeError`. Real Python orders all of them, and POOP itself orders `DateTime`, `Decimal`, and `Fraction`, so the gap is an oversight, not a design rule.
-- **Repro:**
-
-  ```python
-  (Date(2024, 1, 1) < Date(2024, 6, 1)).print()
-  # poop: '<' not supported between instances of 'Date' and 'Date'
-  (TimeDelta(days=1) < TimeDelta(days=2)).print()   # same crash
-  (Time(10, 0) < Time(11, 0)).print()               # same crash
-  ```
-
-  Real Python: all three answer `True`.
-- **Proposed fix:** add the four comparison dunders to `Date`, `Time`, and `TimeDelta`, mirroring the existing `DateTime` block (`to_boolean(self._impl < other._impl)`, etc.) — ideally via a tiny shared mixin in `datetime.py`.
+**Decision + implemented:** added a shared `_OrderedImplMixin` in `poop/types/datetime.py` (`__lt__`/`__le__`/`__gt__`/`__ge__` over `self._impl`) and mixed it into `TimeDelta`, `Date`, and `Time`. `DateTime` now inherits it too (its inline copies were removed). All three orderings answer a POOP `Boolean`. Tests in `tests/test_types/test_datetime.py`.
 
 ### 118. `replace(tzinfo=None)` cannot strip a timezone — aware values can never become naive
 
@@ -173,26 +161,9 @@
 
   (The `NoneClass` branch in `_colorize_value` then becomes dead and can go.)
 
-### 126. The datetime family prints `<Date>` instead of its value
+### ~~126. The datetime family prints `<Date>` instead of its value~~ — DONE
 
-- **Where:** `poop/types/datetime.py` — `TimeDelta` (27), `TimeZone` (97), `Date` (200), `Time` (267), `DateTime` (325); none define `__str__`/`__repr__`
-- **Bug:** all five wrappers fall back to `Object.__str__`, so `.print()` and the REPL show `<Date>`, `<TimeDelta>`, etc. Every sibling value wrapper (`Decimal`, `Fraction`, `UUID`, the `ipaddress` family) delegates `__str__` to its `_impl`, and real Python prints `2024-01-01` / `1 day, 2:00:00`.
-- **Repro:**
-
-  ```python
-  Date(2024, 1, 1).print()          # <Date>      (Python: 2024-01-01)
-  TimeDelta(days=1, hours=2).print()  # <TimeDelta> (Python: 1 day, 2:00:00)
-  DateTime(2024, 1, 1).print()      # <DateTime>  (Python: 2024-01-01 00:00:00)
-  ```
-
-- **Proposed fix:** add to each of the five classes (or to a tiny shared mixin):
-
-  ```python
-  def __str__(self) -> str:
-      return str(self._impl)
-
-  __repr__ = __str__
-  ```
+**Decision + implemented:** added a shared `_StrReprMixin` in `poop/types/datetime.py` (`__str__` delegating to `str(self._impl)`, `__repr__ = __str__`) and mixed it into all five wrappers (`TimeDelta`, `TimeZone`, `Date`, `Time`, `DateTime`). `.print()` now shows `2024-01-01` / `1 day, 2:00:00` / `UTC`. Tests in `tests/test_types/test_datetime.py`.
 
 ### 127. asyncio `Future.exception()` answers the raw Python exception
 

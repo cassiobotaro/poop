@@ -364,3 +364,45 @@ def test_date_min_max_class_attributes() -> None:
 
 def test_date_min_max_via_interpreter() -> None:
     Interpreter().run_source("Date.max.year.print()")
+
+
+# str/repr — proposal 126
+
+
+def test_str_delegates_to_impl() -> None:
+    assert str(Date(Int(2024), Int(1), Int(1))) == "2024-01-01"
+    assert str(TimeDelta(days=Int(1), hours=Int(2))) == "1 day, 2:00:00"
+    assert str(DateTime(Int(2024), Int(1), Int(1))) == "2024-01-01 00:00:00"
+    assert str(Time(Int(10), Int(30))) == "10:30:00"
+    assert str(TimeZone.utc) == "UTC"
+
+
+def test_repr_delegates_to_str() -> None:
+    assert repr(Date(Int(2024), Int(1), Int(1))) == "2024-01-01"
+    assert repr(TimeDelta(days=Int(1))) == "1 day, 0:00:00"
+
+
+# ordering — proposal 117
+
+
+def test_date_ordering() -> None:
+    from poop.types.boolean import false, true
+
+    assert (Date(Int(2024), Int(1), Int(1)) < Date(Int(2024), Int(6), Int(1))) is true
+    assert (Date(Int(2024), Int(6), Int(1)) <= Date(Int(2024), Int(6), Int(1))) is true
+    assert (Date(Int(2024), Int(6), Int(1)) > Date(Int(2024), Int(1), Int(1))) is true
+    assert (Date(Int(2024), Int(1), Int(1)) >= Date(Int(2024), Int(6), Int(1))) is false
+
+
+def test_timedelta_ordering() -> None:
+    from poop.types.boolean import true
+
+    assert (TimeDelta(days=Int(1)) < TimeDelta(days=Int(2))) is true
+    assert (TimeDelta(days=Int(2)) > TimeDelta(days=Int(1))) is true
+
+
+def test_time_ordering() -> None:
+    from poop.types.boolean import true
+
+    assert (Time(Int(10), Int(0)) < Time(Int(11), Int(0))) is true
+    assert (Time(Int(11), Int(0)) >= Time(Int(10), Int(0))) is true

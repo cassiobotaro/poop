@@ -24,7 +24,51 @@ def _opt_tz(tz: TimeZone | ZoneInfo | NoneClass | None) -> _datetime.tzinfo | No
     return tz._impl
 
 
-class TimeDelta(_ImplWrapperMixin, _ValueEqMixin, Object):
+class _StrReprMixin:
+    """`__str__`/`__repr__` delegating to the wrapped stdlib `self._impl`.
+
+    Mirrors how every other value wrapper (Decimal, Fraction, UUID, the
+    ipaddress family) prints, so `.print()` and the REPL show the value
+    (`2024-01-01`, `1 day, 2:00:00`) instead of `Object`'s `<Date>`.
+    """
+
+    __slots__ = ()
+
+    _impl: Any
+
+    def __str__(self) -> str:
+        return str(self._impl)
+
+    __repr__ = __str__
+
+
+class _OrderedImplMixin:
+    """Total ordering for wrappers exposing a comparable `self._impl`.
+
+    `Date`, `Time`, `TimeDelta`, and `DateTime` all order against another
+    instance of the same kind via their stdlib `_impl`.
+    """
+
+    __slots__ = ()
+
+    _impl: Any
+
+    def __lt__(self, other: Any) -> Boolean:
+        return to_boolean(self._impl < other._impl)
+
+    def __le__(self, other: Any) -> Boolean:
+        return to_boolean(self._impl <= other._impl)
+
+    def __gt__(self, other: Any) -> Boolean:
+        return to_boolean(self._impl > other._impl)
+
+    def __ge__(self, other: Any) -> Boolean:
+        return to_boolean(self._impl >= other._impl)
+
+
+class TimeDelta(
+    _StrReprMixin, _OrderedImplMixin, _ImplWrapperMixin, _ValueEqMixin, Object
+):
     """Wraps Python's `datetime.timedelta` — a duration."""
 
     __slots__ = ("_impl",)
@@ -94,7 +138,7 @@ class TimeDelta(_ImplWrapperMixin, _ValueEqMixin, Object):
         return hash(self._impl)
 
 
-class TimeZone(_ImplWrapperMixin, _ValueEqMixin, Object):
+class TimeZone(_StrReprMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.timezone` — a fixed UTC offset."""
 
     __slots__ = ("_impl",)
@@ -197,7 +241,14 @@ class _TimeFieldsMixin:
         return none
 
 
-class Date(_DateFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
+class Date(
+    _StrReprMixin,
+    _OrderedImplMixin,
+    _DateFieldsMixin,
+    _ImplWrapperMixin,
+    _ValueEqMixin,
+    Object,
+):
     """Wraps Python's `datetime.date`."""
 
     __slots__ = ("_impl",)
@@ -264,7 +315,14 @@ Date.min = Date._from_impl(_datetime.date.min)
 Date.max = Date._from_impl(_datetime.date.max)
 
 
-class Time(_TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
+class Time(
+    _StrReprMixin,
+    _OrderedImplMixin,
+    _TimeFieldsMixin,
+    _ImplWrapperMixin,
+    _ValueEqMixin,
+    Object,
+):
     """Wraps Python's `datetime.time`."""
 
     __slots__ = ("_impl",)
@@ -323,7 +381,13 @@ class Time(_TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
 
 
 class DateTime(
-    _DateFieldsMixin, _TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object
+    _StrReprMixin,
+    _OrderedImplMixin,
+    _DateFieldsMixin,
+    _TimeFieldsMixin,
+    _ImplWrapperMixin,
+    _ValueEqMixin,
+    Object,
 ):
     """Wraps Python's `datetime.datetime`."""
 
@@ -442,18 +506,6 @@ class DateTime(
 
     def __hash__(self) -> int:
         return hash(self._impl)
-
-    def __lt__(self, other: DateTime) -> Boolean:
-        return to_boolean(self._impl < other._impl)
-
-    def __le__(self, other: DateTime) -> Boolean:
-        return to_boolean(self._impl <= other._impl)
-
-    def __gt__(self, other: DateTime) -> Boolean:
-        return to_boolean(self._impl > other._impl)
-
-    def __ge__(self, other: DateTime) -> Boolean:
-        return to_boolean(self._impl >= other._impl)
 
 
 class Datetime:
