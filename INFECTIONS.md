@@ -2804,7 +2804,7 @@ Every newly-wrapped or intentionally-skipped module should land here in the same
 | `textwrap` | covered | `textwrap` + `TextWrapper` (shipped in v0.34.0) |
 | `unicodedata` | covered | `unicodedata` namespace (shipped in v0.34.0) |
 | `stringprep` | out | Internal IDNA helper |
-| `readline` | out | REPL infrastructure — POOP doesn't expose a REPL |
+| `readline` | out | REPL infrastructure — powers POOP's own REPL internally, not user-facing surface |
 | `rlcompleter` | out | REPL infrastructure |
 
 ### Binary Data Services
@@ -2821,7 +2821,7 @@ Every newly-wrapped or intentionally-skipped module should land here in the same
 | `datetime` | covered | `datetime` + `Date` + `Time` + `DateTime` + `TimeDelta` + `TimeZone` (shipped in v0.32.0) |
 | `zoneinfo` | covered | `zoneinfo` + `ZoneInfo` (shipped in v0.35.0) |
 | `calendar` | covered | `calendar` + `Calendar` (shipped in v0.35.0); `TextCalendar` / `HTMLCalendar` / `Locale*` (v0.56.0) |
-| `collections` | covered | `OrderedDict` / `Counter` / `deque` redundant — POOP collections carry the methods |
+| `collections` | covered | `collections` namespace + `Counter` / `deque` / `defaultdict` / `OrderedDict` / `ChainMap` / `namedtuple` (v1.5.0) |
 | `heapq` | covered | `heapq` namespace + `HeapMerge` (shipped in v0.22.0) |
 | `bisect` | covered | `bisect` namespace (shipped in v0.21.0) |
 | `array` | covered | `array` + `Array` (shipped in v0.35.0) |
@@ -2850,7 +2850,7 @@ Every newly-wrapped or intentionally-skipped module should land here in the same
 | Module | Status | Sketch |
 |---|---|---|
 | `itertools` | covered | Mixin methods on iterables |
-| `functools` | covered | `coll.reduce(…)`; partial application via `Block` |
+| `functools` | covered | `functools` + `partial` namespaces (v1.5.0); `coll.reduce(…)` stays the idiomatic message |
 | `operator` | out | Reflective access — clashes with no-introspection rule |
 
 ### File and Directory Access
