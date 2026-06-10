@@ -2549,9 +2549,9 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 
 `os`/`io`/`StringIO`/`BytesIO`/`time`/`StructTime`/`logging`/`Logger`/`Handler`/`Formatter`/`platform`/`Uname` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{os,io,time,logging,platform}.py` — namespace-only, no AST rewrite. The `Environ` sub-namespace is reachable via `os.environ` rather than the top-level (mirroring Python's `os.environ` attribute). The pure-Python `os.path` family is **intentionally absent** — every operation is reachable via `Path` (POOP's `pathlib.Path` mirror). Likewise, `io.open` is replaced by `Path.read_text` / `write_text` / `read_bytes` / `write_bytes`. `logging.config` (file/dict configuration) and `logging.handlers` (rotating, SMTP, syslog) are out of scope for v1.
 
-### threading + Thread + Lock/RLock + Event + Semaphore + Barrier, multiprocessing + Process + MPQueue + Pool, concurrent + ThreadPoolExecutor + ProcessPoolExecutor + CFFuture, subprocess + Popen + CompletedProcess, queue + Queue + LifoQueue + PriorityQueue + SimpleQueue — `poop/types/{threading,multiprocessing,concurrent,subprocess,queue}.py`
+### threading + Thread + Lock/RLock + Event + Semaphore/BoundedSemaphore + Condition + Barrier + Local, multiprocessing + Process + MPQueue + Pool, concurrent + ThreadPoolExecutor + ProcessPoolExecutor + CFFuture, subprocess + Popen + CompletedProcess, queue + Queue + LifoQueue + PriorityQueue + SimpleQueue — `poop/types/{threading,multiprocessing,concurrent,subprocess,queue}.py`
 
-Five concurrent-execution namespaces shipped together. `threading` exposes `Thread` + the synchronisation primitives (`Lock`/`RLock`/`Event`/`Semaphore`/`Barrier`) — all primitives are `With`-friendly. `multiprocessing` mirrors the structure for cross-process execution: `Process` + `MPQueue` + `Pool` plus the module helpers. `concurrent.futures` exposes `ThreadPoolExecutor` + `ProcessPoolExecutor` + `CFFuture` (named to disambiguate from `asyncio.Future`). `subprocess` is the canonical shell-out API: high-level `run` (returning `CompletedProcess`), the backward-compat `call`/`check_call`/`check_output`/`getoutput`/`getstatusoutput`, and the full-lifecycle `Popen`. `queue` provides synchronised FIFO/LIFO/priority/simple queues.
+Five concurrent-execution namespaces shipped together. `threading` exposes `Thread` + the synchronisation primitives (`Lock`/`RLock`/`Event`/`Semaphore`/`BoundedSemaphore`/`Condition`/`Barrier`) — all primitives are `With`-friendly — plus `Local` (per-thread storage) and `threading.Timer`. `multiprocessing` mirrors the structure for cross-process execution: `Process` + `MPQueue` + `Pool` plus the module helpers. `concurrent.futures` exposes `ThreadPoolExecutor` + `ProcessPoolExecutor` + `CFFuture` (named to disambiguate from `asyncio.Future`). `subprocess` is the canonical shell-out API: high-level `run` (returning `CompletedProcess`), the backward-compat `call`/`check_call`/`check_output`/`getoutput`/`getstatusoutput`, and the full-lifecycle `Popen`. `queue` provides synchronised FIFO/LIFO/priority/simple queues.
 
 | Operation | Returns | Notes |
 |---|---|---|
@@ -2566,8 +2566,14 @@ Five concurrent-execution namespaces shipped together. `threading` exposes `Thre
 | `Semaphore.acquire(...)` / `.release()` | `Boolean` / `none` | |
 | `Barrier.wait(timeout=none)` / `.reset()` / `.abort()` | `Int` / `none` | |
 | `Barrier.parties` / `.n_waiting` / `.broken` (properties) | `Int` / `Boolean` | |
+| `BoundedSemaphore(value=1)` | primitive | `Semaphore` subclass; over-`release` raises `ValueError` |
+| `Condition(lock=none)` | primitive | `With`-friendly; wraps a fresh `RLock` when `lock` omitted |
+| `Condition.acquire(...)` / `.release()` / `.wait(timeout=none)` / `.wait_for(predicate, timeout=none)` / `.notify(n=1)` / `.notify_all()` | `Boolean` / `none` | `predicate` is a block |
+| `Local()` | `Local` | per-thread storage; `at(name)` / `at_put(name, value)` / `includes(name)` |
+| `threading.Timer(interval, function, args=none, kwargs=none)` | `Timer` | `start`/`cancel`/`join`/`is_alive`; namespace-only — a bare `Timer` would collide with `timeit.Timer` |
 | `threading.current_thread()` / `.main_thread()` | `Thread` | |
 | `threading.active_count()` / `.get_ident()` / `.get_native_id()` | `Int` | |
+| `threading.stack_size(size=none)` | `Int` | |
 | `threading.enumerate()` | `List[Thread]` | |
 | `threading.BrokenBarrierError` (class attr) | exception class | |
 | `multiprocessing.Process(target=none, name=none, daemon=none)` | `Process` | same shape as `Thread` |
@@ -2607,7 +2613,7 @@ Five concurrent-execution namespaces shipped together. `threading` exposes `Thre
 | `Queue.task_done()` / `.join()` | `none` | LifoQueue/PriorityQueue also expose these |
 | `queue.Empty` / `Full` (class attrs) | exception class | |
 
-`threading`/`Thread`/`Lock`/`RLock`/`Event`/`Semaphore`/`Barrier`/`multiprocessing`/`Pool`/`MPQueue`/`concurrent`/`ThreadPoolExecutor`/`ProcessPoolExecutor`/`CFFuture`/`subprocess`/`Popen`/`CompletedProcess`/`queue`/`Queue`/`LifoQueue`/`PriorityQueue`/`SimpleQueue` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{threading,multiprocessing,concurrent,subprocess,queue}.py` — namespace-only, no AST rewrite. `multiprocessing.Process` is **only reachable via `multiprocessing.Process`** (not bound as a top-level name) — that matches Python's idiomatic usage and avoids ambiguity with future `Process`-named types. POOP's `Block` (lambda-wrapping) does not pickle across the `multiprocessing` boundary on `forkserver` start methods — module-level Python functions must be used as `target=...` for `Process` / `Pool` workers.
+`threading`/`Thread`/`Lock`/`RLock`/`Event`/`Semaphore`/`BoundedSemaphore`/`Condition`/`Local`/`Barrier`/`multiprocessing`/`Pool`/`MPQueue`/`concurrent`/`ThreadPoolExecutor`/`ProcessPoolExecutor`/`CFFuture`/`subprocess`/`Popen`/`CompletedProcess`/`queue`/`Queue`/`LifoQueue`/`PriorityQueue`/`SimpleQueue` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{threading,multiprocessing,concurrent,subprocess,queue}.py` — namespace-only, no AST rewrite. `multiprocessing.Process` is **only reachable via `multiprocessing.Process`** (not bound as a top-level name) — that matches Python's idiomatic usage and avoids ambiguity with future `Process`-named types. POOP's `Block` (lambda-wrapping) does not pickle across the `multiprocessing` boundary on `forkserver` start methods — module-level Python functions must be used as `target=...` for `Process` / `Pool` workers.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
@@ -2918,7 +2924,7 @@ Every newly-wrapped or intentionally-skipped module should land here in the same
 
 | Module | Status | Sketch |
 |---|---|---|
-| `threading` | covered | `threading` / `Thread` / `Lock` / `RLock` / `Event` / `Semaphore` / `Barrier` namespaces (v0.50.0) |
+| `threading` | covered | `threading` / `Thread` / `Lock` / `RLock` / `Event` / `Semaphore` / `Barrier` namespaces (v0.50.0); `BoundedSemaphore` / `Condition` / `Local` / `threading.Timer` / `stack_size` (v0.56.0) |
 | `multiprocessing` | covered | `multiprocessing` / `Pool` / `MPQueue` namespaces (`Process` via the namespace) (v0.50.0) |
 | `concurrent` | covered | `concurrent` / `ThreadPoolExecutor` / `ProcessPoolExecutor` / `CFFuture` namespaces (v0.50.0) |
 | `subprocess` | covered | `subprocess` / `Popen` / `CompletedProcess` namespaces (v0.50.0) |
