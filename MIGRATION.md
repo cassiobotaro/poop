@@ -610,7 +610,7 @@ firefox = webbrowser.get("firefox")
 firefox.open_new("https://example.com")
 ```
 
-> POOP exposes both `webbrowser` (lowercase, module-level API) and `Browser` (the controller wrapper, returned by `webbrowser.get(using=none)`). `webbrowser.Error` is a raw Python exception class for use with `Try.except_(...)`. `webbrowser.register(...)` is deferred to Future work — its `constructor` argument is a Python callable with no clean POOP mapping.
+> POOP exposes both `webbrowser` (lowercase, module-level API) and `Browser` (the controller wrapper, returned by `webbrowser.get(using=none)` or by the named factories `webbrowser.Chrome(...)`, `webbrowser.Mozilla(...)`, …). `webbrowser.Error` is a raw Python exception class for use with `Try.except_(...)`. `webbrowser.register(name, constructor=none, instance=none, *, preferred=false)` accepts a POOP lambda as `constructor` — it must return a `Browser`.
 
 ## Shell-style wildcard expansion (`glob` module)
 

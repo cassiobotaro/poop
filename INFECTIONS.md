@@ -1015,7 +1015,7 @@ The constant dicts are **snapshotted** from CPython's globals at import time. Su
 | `Browser.open` / `.open_new` / `.open_new_tab` | `Boolean` | per-instance dispatch |
 | `Browser.name` | `Str` | controller name (e.g. `"chrome"`) |
 
-POOP collapses Python's concrete browser classes (Chrome, Edge, Mozilla, …) into a single `Browser` POOP type because every concrete class carries the same public surface. Class identity is preserved internally for dispatch.
+POOP collapses Python's concrete browser classes (Chrome, Edge, Mozilla, …) into a single `Browser` POOP type because every concrete class carries the same public surface. Class identity is preserved internally for dispatch. Each named controller is reachable as a `Browser`-returning factory on the namespace — `webbrowser.GenericBrowser(name)`, `BackgroundBrowser(name)`, and the executable-path constructors `UnixBrowser` / `Mozilla` / `Chrome` / `Chromium` / `Edge` / `Opera` / `Epiphany` / `Elinks` (all `name=""`) plus `Konqueror()`.
 
 `webbrowser.register(name, constructor=none, instance=none, *, preferred=false)` accepts a POOP `Block` for `constructor`. The block runs through `block.bridge` and must return a `Browser` (or a raw `BaseBrowser`) — the registry layer unwraps to `BaseBrowser` for CPython.
 
