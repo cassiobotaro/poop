@@ -2551,6 +2551,8 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `Logger.handlers()` | `List[Handler]` | |
 | `Handler.setLevel(l)` / `.setFormatter(f)` / `.addFilter(f)` / `.removeFilter(f)` | `none` | |
 | `Formatter(fmt=none, datefmt=none, style=none, validate=true, defaults=none)` | `Formatter` | |
+| `Formatter.default_time_format` / `default_msec_format` (class attrs) | `Str` | blessed as POOP `Str`; `formatTime` unwraps them, so assigning a POOP `Str` knob works |
+| `Logger(name, level=none)` | `Logger` | direct construction mirrors CPython (standalone, level `NOTSET`) |
 | `Filter(name=none)` | `Filter` | |
 | Subclass `Filter` / `Handler` / `Formatter` and override `filter(record)` / `emit(record)` / `format(record)` | — | overrides routed through `block.bridge`; override receives the raw `_logging.LogRecord`, wrap it in `LogRecord(record)` for POOP-typed fields |
 | `LogRecord(record)` exposes `.name` / `.msg` / `.args` / `.levelname` / `.levelno` / `.pathname` / `.filename` / `.module` / `.lineno` / `.funcName` / `.created` / `.thread` / `.threadName` / `.process` / `.processName` (properties) and `.getMessage()` | POOP types | wraps `_logging.LogRecord` for handler/formatter overrides |

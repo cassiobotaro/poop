@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging as _logging
 import logging.config as _logging_config
+import time as _time
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._bridge import to_python
@@ -249,6 +250,12 @@ class Formatter(_logging.Formatter):
     unwraps the return to a Python `str`.
     """
 
+    # CPython's formatTime knobs, blessed as POOP values so reads answer a
+    # Str and a user assignment of a POOP Str works (the inherited
+    # formatTime cannot %-format a Str). formatTime below unwraps them.
+    default_time_format: Any = Str(_logging.Formatter.default_time_format)
+    default_msec_format: Any = Str(cast(str, _logging.Formatter.default_msec_format))
+
     def __init__(
         self,
         fmt: Str | None = None,
@@ -264,6 +271,20 @@ class Formatter(_logging.Formatter):
             validate=bool(validate),
             defaults=None if defaults is None else to_python(defaults),
         )
+
+    def formatTime(self, record: _logging.LogRecord, datefmt: str | None = None) -> str:
+        # Mirror CPython's formatTime, but unwrap the POOP `Str` knobs so a
+        # user-assigned `Str` (or the blessed default) %-formats correctly.
+        ct = self.converter(record.created)
+        if datefmt:
+            return _time.strftime(datefmt, ct)
+        tf = self.default_time_format
+        s = _time.strftime(tf._value if isinstance(tf, Str) else tf, ct)
+        mf = self.default_msec_format
+        msec = mf._value if isinstance(mf, Str) else mf
+        if msec:
+            s = msec % (s, record.msecs)
+        return s
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)

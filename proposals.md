@@ -200,60 +200,9 @@
 
 **Decision + implemented:** added `_arith`/`_cmp` helpers to `Decimal` (mirroring `Fraction`). Arithmetic accepts `Decimal`/`Int` and returns `NotImplemented` for `Float` (so `Decimal + float` raises `TypeError`, matching CPython) and foreign types; reflected dunders (`__radd__`…`__rpow__`) were added so `1 + d` works (reachable via proposal 115). Comparisons and `__eq__`/`__ne__` accept `Int`/`Float` via the raw `_decimal.Decimal` mixed-type comparison, falling back to `false`/`true` for foreign types. Tests in `tests/test_types/test_decimal.py`.
 
-### 149. logging `Formatter.default_time_format` / `default_msec_format` answer bare Python `str` — and the msec knob is unusable in both directions
+### ~~149. logging `Formatter.default_time_format` / `default_msec_format` answer bare Python `str` — and the msec knob is unusable in both directions~~ — DONE
 
-- **Where:** `poop/types/logging.py:242` — `class Formatter(_logging.Formatter)`
-  neither rebinds nor intercepts the two CPython class-attribute knobs, so
-  `default_time_format` and `default_msec_format` are inherited raw from
-  `logging.Formatter`.
-- **Leak:** reading `Formatter.default_time_format` or
-  `Formatter.default_msec_format` answers a bare Python `str` — every POOP
-  message on it crashes. These are CPython's documented `formatTime` knobs,
-  and `default_msec_format` matters on its own: changing the asctime
-  millisecond separator (`,` → `.`) is its canonical use, and nothing else on
-  the POOP surface covers it (`Formatter(datefmt=...)` replaces the
-  seconds-level format but never the msec suffix). The write direction is
-  broken symmetrically: `Formatter.default_msec_format = "%s.%03d"` stores a
-  POOP `Str` that the raw `formatTime` cannot `%`-format, so the next
-  `%(asctime)s` log line dumps a CPython "Logging error" traceback instead of
-  logging. An automated sweep over every `DEFAULT_NAMESPACE` entry point (plus
-  one level of sub-namespaces) shows these are the only bare constants left
-  that are not catalogued pass-throughs — `csv.excel`/`Logging.Filterer` are
-  documented "Python class refs", and `enum.STRICT` / `signal.SIG_DFL` /
-  `ssl.PURPOSE_*` are documented argument tokens.
-- **Evidence:** e2e (`uv run python main.py ...`):
-
-  ```python
-  Formatter.default_msec_format.print()
-  # poop: 'str' object has no attribute 'print' (line 1)
-  ```
-
-  Write path:
-
-  ```python
-  Formatter.default_msec_format = "%s.%03d"
-  lg = logging.getLogger("t")
-  h = logging.StreamHandler()
-  h.setFormatter(Formatter("%(asctime)s %(message)s"))
-  lg.addHandler(h)
-  lg.warning("hello")
-  # --- Logging error --- ... TypeError: unsupported operand type(s)
-  # for %: 'str' and 'tuple'   (the stored Str cannot service formatTime)
-  ```
-
-  Identity probe: `Formatter.default_time_format.__class__ is builtins.str`
-  → `True`, and the object `is logging.Formatter.default_time_format` (the
-  raw stdlib attribute, untouched by the wrapper).
-- **Proposed fix:** follow the `zlib.ZLIB_VERSION` precedent and bless the
-  knobs as POOP values: rebind both on the wrapper —
-  `default_time_format: ClassVar[Str] = Str(_logging.Formatter.default_time_format)`
-  (same for `default_msec_format`) — and override `formatTime` in the POOP
-  `Formatter` to unwrap before delegating (mirror CPython's four-line body,
-  reading each knob through `v._value if isinstance(v, Str) else v`). That
-  makes reads answer `Str` and makes user assignment of a POOP `Str` work.
-  Optionally, a metaclass `__setattr__` can propagate the raw value to
-  `_logging.Formatter` so formatters built by `logging.basicConfig` (raw
-  instances) honor the knob globally, matching CPython.
+**Decision + implemented:** blessed both `formatTime` knobs as POOP values — `Formatter.default_time_format`/`default_msec_format` (`poop/types/logging.py`) are now `Str(...)` class attributes — and overrode `formatTime` to mirror CPython's body while unwrapping each knob (`v._value if isinstance(v, Str) else v`). Reads answer a `Str`, and assigning a POOP `Str` knob (`Formatter.default_msec_format = "%s.%03d"`) now `%`-formats correctly instead of dumping a "Logging error" traceback. (Skipped the optional metaclass propagation to raw `logging.Formatter` instances.) Tests in `tests/test_types/test_logging.py`; catalogued in INFECTIONS.md.
 
 ### ~~150. `List` cannot be ordered — `<` crashes and `.sorted()` over nested lists fails~~ — DONE
 

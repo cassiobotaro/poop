@@ -257,6 +257,25 @@ def test_formatter_with_fmt() -> None:
     assert isinstance(f, Formatter)
 
 
+def test_formatter_time_format_knobs_are_str() -> None:
+    # proposal 149: the formatTime knobs answer POOP Str, not bare str.
+    assert isinstance(Formatter.default_time_format, Str)
+    assert isinstance(Formatter.default_msec_format, Str)
+
+
+def test_formatter_format_time_uses_knobs() -> None:
+    # formatTime unwraps the POOP Str knobs and %-formats without error.
+    record = _stdlib_logging.LogRecord(
+        "t", _stdlib_logging.WARNING, __file__, 1, "msg", None, None
+    )
+    record.created = 0.0
+    record.msecs = 123.0
+    f = Formatter(Str("%(asctime)s %(message)s"))
+    formatted = f.formatTime(record)
+    assert isinstance(formatted, str)
+    assert ",123" in formatted
+
+
 # --- Module-level convenience ---
 
 
