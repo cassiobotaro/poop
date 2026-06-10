@@ -116,20 +116,9 @@
 
 - **Proposed fix:** make the public constructor accept what CPython's does — `def __init__(self, name: Str, level: Int | Str | None = None)` building `_logging.Logger(name._value, ...)` — and move internal wrapping to a `_from_impl` classmethod (the pattern the impl-wrapper types already use); update `Logging.getLogger` and `LoggerAdapter` to call `_from_impl`. Alternatively, if direct construction should stay discouraged, raise an immediate `TypeError("use logging.getLogger(name)")` instead of corrupting silently.
 
-### 133. `SSLContext(ssl.PROTOCOL_TLS_CLIENT)` silently stores the protocol Int as the context
+### ~~133. `SSLContext(ssl.PROTOCOL_TLS_CLIENT)` silently stores the protocol Int as the context~~ — DONE
 
-- **Where:** `poop/types/ssl.py:23-27` (`SSLContext.__init__`)
-- **Bug:** the constructor treats any argument as a ready-made raw `ssl.SSLContext` (`self._impl = impl`). Passing a protocol constant — CPython's canonical constructor call, with `ssl.PROTOCOL_TLS_CLIENT`/`PROTOCOL_TLS_SERVER` exposed as `Int`s in the very same namespace — silently stores the `Int` as `_impl`; every subsequent attribute access crashes. There is also no other way to build a `PROTOCOL_TLS_SERVER` context from the protocol constant (the no-arg form hardcodes `PROTOCOL_TLS_CLIENT`).
-- **Repro:**
-
-  ```python
-  ctx = SSLContext(ssl.PROTOCOL_TLS_CLIENT)   # accepted
-  ctx.check_hostname.print()
-  # poop: 'int' object has no attribute 'check_hostname'
-  # Python: ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT).check_hostname -> True
-  ```
-
-- **Proposed fix:** accept the protocol form: `if isinstance(impl, Int): self._impl = _ssl.SSLContext(impl._value)` (keep the no-arg TLS-client default), and move raw-impl wrapping (used by `create_default_context` / `wrap_socket`) to a `_from_impl` classmethod so an arbitrary object can no longer be smuggled into `_impl`.
+**Decision + implemented:** `SSLContext.__init__` (`poop/types/ssl.py`) now takes a `protocol: Int` (CPython's canonical ctor argument) — `ssl.SSLContext(protocol._value)` — keeping the no-arg `PROTOCOL_TLS_CLIENT` default. Raw-impl wrapping moved to the `_ImplWrapperMixin._from_impl` classmethod (used by `create_default_context`), so an arbitrary object can no longer be smuggled into `_impl`. Tests in `tests/test_types/test_ssl.py`.
 
 ### ~~134. `MPQueue.put` of any POOP value poisons the queue — `get()` deadlocks~~ — DONE
 
