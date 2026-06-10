@@ -84,6 +84,29 @@ def test_dict_from_no_arg_returns_empty() -> None:
     assert result == Dict()
 
 
+def test_dict_from_kwargs() -> None:
+    # proposal 135: dict(a=1, b=2) keyword form.
+    result = _poop_dict_from(a=Int(1), b=Int(2))
+    expected = Dict()
+    expected._data[Str("a")] = Int(1)
+    expected._data[Str("b")] = Int(2)
+    assert result == expected
+
+
+def test_dict_from_mapping_and_kwargs() -> None:
+    base = Dict()
+    base._data[Str("p")] = Int(1)
+    result = _poop_dict_from(base, q=Int(2))
+    assert result.at(Str("p")) == Int(1)
+    assert result.at(Str("q")) == Int(2)
+
+
+def test_dict_kwargs_via_interpreter() -> None:
+    from poop.interpreter import Interpreter
+
+    Interpreter().run_source('dict(a=1, b=2).at("a").print()')
+
+
 def test_dict_from_dict_returns_shallow_copy() -> None:
     d = Dict()
     d._data[Str("x")] = Int(1)

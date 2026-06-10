@@ -101,19 +101,9 @@
 
 **Decision + implemented:** `MPQueue.put`/`get` (`poop/types/multiprocessing.py`) now bridge at the boundary like `pickle.py` — `put(to_python(item), ...)` and `get` returns `to_poop(...)`. A POOP value survives the round trip (it previously failed to pickle in the feeder thread and deadlocked `get()`). Tests in `tests/test_types/test_multiprocessing.py`.
 
-### 135. `dict(a=1, b=2)` rejects the keyword constructor form
+### ~~135. `dict(a=1, b=2)` rejects the keyword constructor form~~ — DONE
 
-- **Where:** `poop/transformers/_collection.py:31-47` (`CollectionRewriter.visit_Call` skips calls with keywords), `poop/transformers/dict.py:23-40` (`_poop_dict_from` takes a single positional)
-- **Bug:** `dict(key=value, ...)` — a core CPython constructor form — is not routed through the dict factory: `visit_Call` bails out on keywords, `visit_Name` then renames `dict` to the bare `Dict` class, and `Dict.__init__()` (which takes nothing) raises `TypeError: Dict.__init__() got an unexpected keyword argument 'a'`. The documented contract is "constructor builtins are intercepted, not banned"; `dict()`, `dict(d)` and `dict(pairs)` all work — only the kwargs form crashes.
-- **Repro:**
-
-  ```python
-  dict(a=1, b=2).print()
-  # poop: Dict.__init__() got an unexpected keyword argument 'a'
-  # Python: {'a': 1, 'b': 2}
-  ```
-
-- **Proposed fix:** in `_DictRewriter`, override `visit_Call` (or relax the shared guard for `dict` only) to also rewrite calls with keywords, forwarding them: `_poop_dict_from(*args, **kwargs)`; extend `_poop_dict_from(arg=None, **kwargs)` to seed from `arg` as today and then `d._data[Str(k)] = v` for each keyword. Other collection rewriters keep the no-keyword guard (their builtins accept none).
+**Decision + implemented:** `_DictRewriter.visit_Call` (`poop/transformers/dict.py`) now forwards named keywords to `_poop_dict_from`, and `_poop_dict_from(arg=None, **kwargs)` seeds from `arg` (as before) then sets `d._data[Str(k)] = v` for each keyword. `dict(a=1, b=2)` → `{'a': 1, 'b': 2}`, and `dict(mapping, a=1)` works too. A `**` splat (`kw.arg is None`) is left to the generic path (its own concern). Other collection rewriters keep the no-keyword guard. Tests in `tests/test_transformers/test_dict.py`.
 
 ### ~~136. `Str.startswith`/`endswith` crash on a tuple of prefixes~~ — DONE
 
