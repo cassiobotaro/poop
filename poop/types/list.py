@@ -2,7 +2,7 @@ from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -57,6 +57,26 @@ class List(_ValueEqMixin, _IterableMixin, Object):
 
     def __add__(self, other: List) -> List:
         return List(*self._items + other._items)
+
+    def __lt__(self, other: List) -> Boolean:
+        a = cast("_list[Any]", self._items)
+        b = cast("_list[Any]", other._items)
+        return to_boolean(a < b)
+
+    def __le__(self, other: List) -> Boolean:
+        a = cast("_list[Any]", self._items)
+        b = cast("_list[Any]", other._items)
+        return to_boolean(a <= b)
+
+    def __gt__(self, other: List) -> Boolean:
+        a = cast("_list[Any]", self._items)
+        b = cast("_list[Any]", other._items)
+        return to_boolean(a > b)
+
+    def __ge__(self, other: List) -> Boolean:
+        a = cast("_list[Any]", self._items)
+        b = cast("_list[Any]", other._items)
+        return to_boolean(a >= b)
 
     def __mul__(self, other: Int) -> List:
         return List(*self._items * other._value)

@@ -806,20 +806,9 @@
   `_logging.Formatter` so formatters built by `logging.basicConfig` (raw
   instances) honor the knob globally, matching CPython.
 
-### 150. `List` cannot be ordered — `<` crashes and `.sorted()` over nested lists fails
+### ~~150. `List` cannot be ordered — `<` crashes and `.sorted()` over nested lists fails~~ — DONE
 
-- **Where:** `poop/types/list.py:24` (`List` defines no `__lt__`/`__le__`/`__gt__`/`__ge__`; equality only via `_ValueEqMixin`), `poop/types/list.py:79` (`sorted` delegates to `builtins_sorted`, which needs `<` between elements)
-- **Bug:** `Tuple` (`poop/types/tuple.py:94-113`) and `Str` (`poop/types/string.py:377-387`) define all four ordering dunders; `List` defines none. So `[1, 2] < [1, 3]` raises `TypeError`, and `.sorted()` over a list of `List`s — sorting rows, pairs, buckets — crashes inside `builtins_sorted`, while the identical data as `Tuple`s sorts fine. CPython orders lists lexicographically. Distinct from entry 117, which logs the same gap on the datetime family; this is the core collection type, and it breaks POOP's own `sorted` surface.
-- **Repro:**
-
-  ```python
-  ([1, 2] < [1, 3]).print()
-  # poop: '<' not supported between instances of 'list' and 'list'   (Python: True)
-  [[2, 1], [1, 9]].sorted().print()
-  # poop: '<' not supported between instances of 'list' and 'list'   (Python: [[1, 9], [2, 1]])
-  ```
-
-- **Proposed fix:** mirror `Tuple` (`poop/types/tuple.py:94-113`): add the four comparison dunders to `List` returning `to_boolean(self._items < other._items)` etc. — the raw sequence comparison already delegates elementwise to the POOP dunders, whose `Boolean` results are truthiness-compatible — and return `NotImplemented` for non-`List` operands.
+**Decision + implemented:** added `__lt__`/`__le__`/`__gt__`/`__ge__` to `List` (`poop/types/list.py`), mirroring `Tuple` — each delegates to the raw `list` comparison (`to_boolean(self._items < other._items)`), which dispatches elementwise to the POOP element dunders. `[1, 2] < [1, 3]` and `.sorted()` over nested lists now work. Tests in `tests/test_types/test_list.py`.
 
 ### 151. The documented `Str.format` template form does not exist — the argument is parsed as a format spec
 

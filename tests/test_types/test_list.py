@@ -367,6 +367,25 @@ def test_ne_with_non_list_returns_true() -> None:
     assert List(Int(1)).__ne__(Int(1)) is true
 
 
+# Lexicographic ordering — proposal 150
+
+
+def test_list_lt_lexicographic() -> None:
+    assert (List(Int(1), Int(2)) < List(Int(1), Int(3))) is true
+    assert (List(Int(1), Int(3)) < List(Int(1), Int(2))) is false
+
+
+def test_list_le_ge_gt() -> None:
+    assert (List(Int(1), Int(2)) <= List(Int(1), Int(2))) is true
+    assert (List(Int(2)) > List(Int(1), Int(9))) is true
+    assert (List(Int(1), Int(9)) >= List(Int(1), Int(9))) is true
+
+
+def test_sorted_over_nested_lists() -> None:
+    nested = List(List(Int(2), Int(1)), List(Int(1), Int(9)))
+    assert nested.sorted() == List(List(Int(1), Int(9)), List(Int(2), Int(1)))
+
+
 def test_print_accepts_poop_none_kwargs(capsys: pytest.CaptureFixture[str]) -> None:
     List(Int(1), Int(2)).print(sep=none, end=none, flush=none)
     captured = capsys.readouterr()
