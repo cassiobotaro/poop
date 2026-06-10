@@ -63,6 +63,15 @@ def test_iglob_to_list(sample_tree: pathlib.Path) -> None:
     assert result.len()._value == 2
 
 
+def test_iglob_do_iterates_paths(sample_tree: pathlib.Path) -> None:
+    # proposal 121: GlobIter mixes in _IterableMixin, so .do works.
+    pattern = Str(str(sample_tree / "*.txt"))
+    collected: list[object] = []
+    Glob.iglob(pattern).do(lambda p: collected.append(p))
+    assert len(collected) == 2
+    assert all(isinstance(p, Path) for p in collected)
+
+
 def test_escape_returns_poop_str() -> None:
     result = Glob.escape(Str("file[1].txt"))
     assert isinstance(result, Str)

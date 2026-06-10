@@ -34,22 +34,9 @@
   (Plain attribute assignment is impossible inside the `do` lambda, and no other entry point mutates a context.) Real Python: `with decimal.localcontext() as ctx: ctx.prec = 5` works, as does `decimal.localcontext(prec=5)` on 3.11+.
 - **Proposed fix:** mirror CPython 3.11+ kwargs on the namespace entry point — `decimal.localcontext(ctx=none, prec=none, rounding=none)` forwarding via `_kwargs_from` — and/or add `set_prec(Int)` / `set_rounding(Str)` mutator methods to `Context` (same pattern as `SSLContext.set_verify_mode`).
 
-### 121. Documented `.do(...)` recipes crash: `GlobIter`, `csv.Reader`/`DictReader`, and `Shlex` lack the iteration surface
+### ~~121. Documented `.do(...)` recipes crash: `GlobIter`, `csv.Reader`/`DictReader`, and `Shlex` lack the iteration surface~~ — DONE
 
-- **Where:** `poop/types/glob.py:16` (`GlobIter`), `poop/types/csv.py:53` (`Reader`), `poop/types/csv.py:118` (`DictReader`), `poop/types/shlex.py:12` (`Shlex`)
-- **Bug:** all four classes define `__iter__` but do not mix in `_IterableMixin` (nor define `do`/`map`/`filter`). Since loops are forbidden, a bare `__iter__` is unreachable from user code except through the `list()`/`tuple()` converters. MIGRATION.md explicitly shows `glob.iglob("*.txt").do(lambda f: process(f))` (line 629), `lexer.do(lambda token: handle(token))` (line 841), and `csv.reader(text).do(Block(lambda row: row.print()))` (line 1614), and `GlobIter`'s own docstring promises "yields POOP `Path` objects on each `do(block)` call" — every one of those crashes.
-- **Repro:**
-
-  ```python
-  glob.iglob("*.py").do(lambda f: f.print())
-  # poop: 'GlobIter' object has no attribute 'do'
-  csv.reader("a,b\r\n1,2\r\n").do(lambda row: row.print())
-  # poop: 'Reader' object has no attribute 'do'
-  Shlex("a b c").do(lambda token: token.print())
-  # poop: 'Shlex' object has no attribute 'do'
-  ```
-
-- **Proposed fix:** add `_IterableMixin` to the bases of `GlobIter`, `Reader`, `DictReader`, and `Shlex` (their existing `__iter__` already yields POOP values, which is all the mixin needs).
+**Decision + implemented:** mixed `_IterableMixin` into `GlobIter` (`poop/types/glob.py`), `Reader`/`DictReader` (`poop/types/csv.py`), and `Shlex` (`poop/types/shlex.py`); their existing `__iter__` already yields POOP values, so `.do`/`.map`/`.filter` now work. The documented MIGRATION.md recipes (`glob.iglob(...).do(...)`, `csv.reader(...).do(...)`, `lexer.do(...)`) run. Tests in the three corresponding test files.
 
 ### 122. `sqlite3` `Row` is an injected entry point that cannot be used at all
 

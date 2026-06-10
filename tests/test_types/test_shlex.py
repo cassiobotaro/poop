@@ -20,6 +20,13 @@ def test_split_quoted_args() -> None:
     assert result == List(Str("echo"), Str("hello world"), Str("foo"))
 
 
+def test_shlex_do_iterates_tokens() -> None:
+    # proposal 121: Shlex mixes in _IterableMixin, so .do works.
+    collected: list[object] = []
+    Shlex(Str("a b c")).do(lambda tok: collected.append(tok))
+    assert collected == [Str("a"), Str("b"), Str("c")]
+
+
 def test_split_with_comments() -> None:
     result = Shlex_.split(Str("echo foo # comment"), comments=true)
     assert result == List(Str("echo"), Str("foo"))
