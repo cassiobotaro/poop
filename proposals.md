@@ -20,19 +20,9 @@
 
 **Decision + implemented:** `Fraction` now overrides `__eq__`/`__ne__` to route through `_cmp` (the same dispatch used by `<`/`<=`/`>`/`>=`), so `Fraction(2) == 2` answers `true` and Float equality matches the ordering operators (`Fraction(1,2) == 0.5` → `true`, matching CPython). Foreign operands still fall back to `false`/`true`. Updated the stale `test_fraction_compared_to_float` and added tests in `tests/test_types/test_fractions.py`.
 
-### 120. `decimal` precision/rounding can never be changed — the documented `localcontext` recipe is impossible
+### ~~120. `decimal` precision/rounding can never be changed — the documented `localcontext` recipe is impossible~~ — DONE
 
-- **Where:** `poop/types/decimal.py:153-176` (`Context` — `prec` and `rounding` are read-only properties, `__slots__ = ("_impl",)`, constructor takes only a raw `_decimal.Context`), `poop/types/decimal.py:253` (`localcontext`)
-- **Bug:** MIGRATION.md tells users to "use `With(lambda: decimal.localcontext()).do(lambda ctx: …)` to scope precision/rounding changes", but the `Context` the body receives exposes no way to change anything: `prec`/`rounding` have no setters, `Context` is not an `Object` (no `set_attr`), and user code cannot construct a `Context` with different settings (the constructor takes a raw CPython context users can't make). Net effect: decimal precision in POOP is permanently stuck at the default.
-- **Repro:**
-
-  ```python
-  With(lambda: decimal.localcontext()).do(lambda ctx: ctx.set_attr("prec", 5))
-  # poop: 'Context' object has no attribute 'set_attr'
-  ```
-
-  (Plain attribute assignment is impossible inside the `do` lambda, and no other entry point mutates a context.) Real Python: `with decimal.localcontext() as ctx: ctx.prec = 5` works, as does `decimal.localcontext(prec=5)` on 3.11+.
-- **Proposed fix:** mirror CPython 3.11+ kwargs on the namespace entry point — `decimal.localcontext(ctx=none, prec=none, rounding=none)` forwarding via `_kwargs_from` — and/or add `set_prec(Int)` / `set_rounding(Str)` mutator methods to `Context` (same pattern as `SSLContext.set_verify_mode`).
+**Decision + implemented:** did both — `decimal.localcontext(ctx=none, prec=none, rounding=none)` now mirrors CPython 3.11+ (forwarding `prec`/`rounding` via `_kwargs_from` to seed the scoped context), and `Context` gained `set_prec(Int)` / `set_rounding(Str)` mutator methods for the `With(lambda: decimal.localcontext()).do(lambda ctx: ctx.set_prec(5))` recipe. Precision/rounding scope correctly and revert after the block. Tests in `tests/test_types/test_decimal.py`; INFECTIONS.md and MIGRATION.md updated.
 
 ### ~~121. Documented `.do(...)` recipes crash: `GlobIter`, `csv.Reader`/`DictReader`, and `Shlex` lack the iteration surface~~ — DONE
 

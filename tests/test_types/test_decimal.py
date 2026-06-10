@@ -265,6 +265,33 @@ def test_decimal_localcontext_as_with() -> None:
         assert isinstance(ctx, Context)
 
 
+def test_localcontext_prec_kwarg_scopes_precision() -> None:
+    # proposal 120: localcontext(prec=...) seeds the scoped precision.
+    with Decimal_.localcontext(prec=Int(2)) as ctx:
+        assert ctx.prec == Int(2)
+        result = Decimal(Str("1")) / Decimal(Str("3"))
+    assert str(result) == "0.33"
+
+
+def test_context_set_prec_mutates_scoped_context() -> None:
+    with Decimal_.localcontext() as ctx:
+        assert ctx.set_prec(Int(3)) is none
+        assert ctx.prec == Int(3)
+        result = Decimal(Str("1")) / Decimal(Str("7"))
+    assert str(result) == "0.143"
+
+
+def test_context_set_rounding_mutates_scoped_context() -> None:
+    with Decimal_.localcontext() as ctx:
+        assert ctx.set_rounding(Decimal_.ROUND_UP) is none
+        assert ctx.rounding == Decimal_.ROUND_UP
+
+
+def test_localcontext_rounding_kwarg() -> None:
+    with Decimal_.localcontext(rounding=Decimal_.ROUND_DOWN) as ctx:
+        assert ctx.rounding == Decimal_.ROUND_DOWN
+
+
 def test_decimal_division_by_zero_raises() -> None:
     with pytest.raises(_decimal.DivisionByZero):
         Decimal(Str("1")) / Decimal(Str("0"))

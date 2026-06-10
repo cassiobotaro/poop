@@ -1394,8 +1394,9 @@ Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`
 | `decimal.BasicContext` / `ExtendedContext` / `DefaultContext` (class attrs) | `Context` | the stdlib context profiles (v0.56.0) |
 | `decimal.getcontext()` | `Context` | |
 | `decimal.setcontext(ctx)` | `none` | |
-| `decimal.localcontext(ctx=none)` | context manager | use with `With` |
+| `decimal.localcontext(ctx=none, prec=none, rounding=none)` | context manager | use with `With`; `prec`/`rounding` seed the scoped context (CPython 3.11+) |
 | `Context.prec` / `.rounding` (properties) | `Int` / `Str` | |
+| `Context.set_prec(Int)` / `.set_rounding(Str)` | `none` | mutate a scoped context inside a `localcontext` `do` block |
 | `Context.create_decimal(value)` | `Decimal` | builds a Decimal under this context |
 
 `decimal`, `Decimal`, and `Context` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/decimal.py` — namespace-only, no AST rewrite.

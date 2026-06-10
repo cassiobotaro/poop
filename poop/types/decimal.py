@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
-from poop.types._unwrap import _unwrap
+from poop.types._unwrap import _kwargs_from, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.float import Float
@@ -222,6 +222,17 @@ class Context:
     def rounding(self) -> Str:
         return Str(self._impl.rounding)
 
+    def set_prec(self, prec: Int) -> NoneClass:
+        # `prec`/`rounding` are read-only properties here, so mutating a
+        # context (e.g. inside a localcontext `do` block) goes through
+        # these setters — the documented way to scope precision/rounding.
+        self._impl.prec = prec._value
+        return none
+
+    def set_rounding(self, rounding: Str) -> NoneClass:
+        self._impl.rounding = rounding._value
+        return none
+
     def create_decimal(self, value: Decimal | Int | Float | Str | Tuple) -> Decimal:
         raw = _to_decimal(value)
         return Decimal._from_impl(self._impl.create_decimal(raw))
@@ -233,11 +244,18 @@ class _LocalContextWrapper:
 
     __slots__ = ("_cm", "_ctx")
 
-    def __init__(self, ctx: Context | NoneClass | None = None) -> None:
+    def __init__(
+        self,
+        ctx: Context | NoneClass | None = None,
+        prec: Int | NoneClass | None = None,
+        rounding: Str | NoneClass | None = None,
+    ) -> None:
         from poop.types._unwrap import _is_absent
 
         impl = None if _is_absent(ctx) else ctx._impl
-        self._cm = _decimal.localcontext(impl)
+        # CPython 3.11+ localcontext(ctx, **kwargs) seeds prec/rounding.
+        kwargs = _kwargs_from(prec=prec, rounding=rounding)
+        self._cm = _decimal.localcontext(impl, **kwargs)
         self._ctx: Context | None = None
 
     def __enter__(self) -> Context:
@@ -305,5 +323,9 @@ class Decimal_:
         return none
 
     @staticmethod
-    def localcontext(ctx: Context | NoneClass | None = None) -> _LocalContextWrapper:
-        return _LocalContextWrapper(ctx)
+    def localcontext(
+        ctx: Context | NoneClass | None = None,
+        prec: Int | NoneClass | None = None,
+        rounding: Str | NoneClass | None = None,
+    ) -> _LocalContextWrapper:
+        return _LocalContextWrapper(ctx, prec, rounding)
