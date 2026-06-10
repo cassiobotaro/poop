@@ -12,7 +12,9 @@ def _poop_memoryview_from(arg: object = None) -> MemoryView:
         return MemoryView(memoryview(arg._value))
     if isinstance(arg, ByteArray):
         return MemoryView(memoryview(arg._value))
-    return MemoryView(memoryview(b""))
+    raise TypeError(
+        f"memoryview: a bytes-like object is required, not {type(arg).__qualname__}"
+    )
 
 
 class _MemoryViewRewriter(ast.NodeTransformer):

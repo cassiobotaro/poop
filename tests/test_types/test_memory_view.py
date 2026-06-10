@@ -1,3 +1,5 @@
+import pytest
+
 from poop.parser import parse
 from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
 from poop.transformers.bytes import BytesTransformer
@@ -129,10 +131,9 @@ def test_factory_from_bytearray_object() -> None:
     assert mv.len() == Int(2)
 
 
-def test_factory_fallback_empty() -> None:
-    mv = _poop_memoryview_from(None)
-    assert isinstance(mv, MemoryView)
-    assert mv.len() == Int(0)
+def test_factory_from_unsupported_type_raises() -> None:
+    with pytest.raises(TypeError, match="bytes-like object is required"):
+        _poop_memoryview_from(Int(5))
 
 
 def test_eq_with_non_memory_view_returns_false() -> None:
