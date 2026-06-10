@@ -35,8 +35,8 @@ source → parse → validate → transform → execute(namespace)
 
 ## Adding a Validator
 
-1. Create `poop/validators/no_<thing>.py` with a `No<Thing>Validator` class and a private `_No<Thing>Visitor(ast.NodeVisitor)`.
-2. Raise `ValidationError(message, lineno=node.lineno, col_offset=node.col_offset)` from the visitor.
+1. Create `poop/validators/no_<thing>.py`. Prefer the factories: `_node.make_node_validator` (forbidden AST node types), `_call_name.make_call_name_validator` (forbidden builtin calls), `_op.make_op_validator` (forbidden operators). Hand-write a `No<Thing>Validator` class with a private `_NodeVisitor` only when no factory fits.
+2. Raise `ValidationError(message, lineno=node.lineno, col_offset=node.col_offset)` from the visitor (the factories do this for you).
 3. Register the validator instance in `DEFAULT_VALIDATORS` in `poop/validators/__init__.py`.
 4. Add a test file `tests/test_validators/test_no_<thing>.py`.
 5. Document the infection in `INFECTIONS.md`.
@@ -45,10 +45,9 @@ source → parse → validate → transform → execute(namespace)
 
 ## Adding a Transformer
 
-1. Create `poop/transformers/<thing>.py` with a `<Thing>Transformer` class and a private `_<Thing>Rewriter(ast.NodeTransformer)`.
-2. Define `BINDINGS: ClassVar[dict[str, object]]` on the transformer — these are injected into the runtime namespace so the rewritten AST can resolve the replacement names.
-3. Call `ast.fix_missing_locations(tree)` before returning from `transform()`.
-4. Register the transformer in `DEFAULT_TRANSFORMERS` and merge its `BINDINGS` into `DEFAULT_NAMESPACE` in `poop/transformers/__init__.py`.
+1. Create `poop/transformers/<thing>.py` with a `<Thing>Transformer(BaseTransformer)` class and a private `_<Thing>Rewriter(ast.NodeTransformer)` assigned to its `rewriter` attribute — `BaseTransformer.transform` runs the rewriter and calls `ast.fix_missing_locations` for you.
+2. Define `BINDINGS: ClassVar[dict[str, object]]` on the transformer — these are injected into the runtime namespace so the rewritten AST can resolve the replacement names. Namespace-only modules (stdlib mirrors) export a `NAMESPACE` dict instead and skip the rewriter.
+3. Register the transformer in `DEFAULT_TRANSFORMERS` and add its `BINDINGS` (or `NAMESPACE`) to `_BINDING_SOURCES` in `poop/transformers/__init__.py` so it lands in `DEFAULT_NAMESPACE`.
 
 ## Adding a Type
 
