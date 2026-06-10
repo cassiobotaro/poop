@@ -713,6 +713,8 @@ Concrete root of all POOP types. The table below highlights the universal method
 
 `__bool__` returns `False`. `__str__` returns `"None"`.
 
+`ReturnTransformer` (`poop/transformers/return_.py`) keeps the implicit-return path on the POOP side: a bare `return` becomes `return _poop_none`, and a function body that does not end in `return`/`raise` gets a trailing `return _poop_none` appended, so a void method answers the `none` singleton instead of raw `NoneType`. `__init__` is skipped (CPython requires it to return real `None`).
+
 ### Boolean — `poop/types/boolean.py`
 
 `Boolean(Object, ABC)` with private subclasses `_TrueClass` and `_FalseClass`. Singletons `true`/`false` replace `True`/`False` via transformer.

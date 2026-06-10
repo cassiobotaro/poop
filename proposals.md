@@ -186,39 +186,9 @@
   (`lambda *xs: body` → `lambda *xs: (lambda xs: body)(_poop_tuple_from(xs))`)
   since a prologue cannot be inserted into an expression body.
 
-### 140. User methods without an explicit `return` answer raw Python `None`, not POOP `none`
+### ~~140. User methods without an explicit `return` answer raw Python `None`, not POOP `none`~~ — DONE
 
-- **Where:** transformer layer — nothing rewrites function bodies
-  (`poop/transformers/class_.py` touches only class bases), so a method that
-  falls off the end or uses a bare `return` answers CPython's implicit
-  `None` inside `exec` (`poop/executor.py:37`). The `none` transformer
-  (`poop/transformers/none.py`) only rewrites the `None` *literal*; the
-  implicit return has no AST node to rewrite.
-- **Leak:** the single most common method shape — a side-effecting method
-  with no `return` — hands raw `NoneType` to its caller. `result.is_none()`,
-  `result.print()`, `result.if_none(...)` all crash, even though POOP's own
-  wrappers scrupulously return the `none` singleton from every void method.
-- **Evidence:** e2e (`uv run python main.py /tmp/poop_implicit_none.py`):
-
-  ```python
-  class Greeter:
-      def greet(self):
-          "hi".print()
-
-  r = Greeter().greet()
-  r.is_none().print()
-  # poop: 'NoneType' object has no attribute 'is_none' (line 6)
-  ```
-
-  A bare `return` leaks identically.
-- **Proposed fix:** add a `return_` transformer that, for every
-  `FunctionDef`/`AsyncFunctionDef`: (1) rewrites `return` (no value) to
-  `return _poop_none`, and (2) appends `return _poop_none` when the last
-  body statement is not a `Return`/`Raise` (an unreachable trailing return
-  is harmless otherwise). The `_poop_none` binding already exists
-  (`poop/transformers/none.py:17`). Must skip `__init__` — CPython raises
-  `TypeError: __init__() should return None` for non-`None` returns;
-  generators cannot occur (`no_yield`), so the rewrite is otherwise safe.
+**Decision + implemented:** added a `ReturnTransformer` (`poop/transformers/return_.py`, registered in `DEFAULT_TRANSFORMERS`) that, for every `FunctionDef`/`AsyncFunctionDef` except `__init__`, rewrites a bare `return` to `return _poop_none` and appends `return _poop_none` when the body does not already end in a `return`/`raise`. Void methods now answer the `none` singleton, so `result.is_none()` / `.print()` / `.if_none(...)` work. `__init__` is skipped (CPython requires real `None`); the `_poop_none` binding comes from `NoneTransformer`. Tests in `tests/test_transformers/test_return_.py`; catalogued in INFECTIONS.md.
 
 ### ~~141. `import` statements pass validation and bind raw Python modules — shadowing injected namespaces~~ — DONE
 
