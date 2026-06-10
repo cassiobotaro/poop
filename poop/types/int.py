@@ -139,8 +139,8 @@ class Int(_ValueEqMixin, Object):
         return Int(self._value % other._value)
 
     def __pow__(
-        self, other: Int | Complex, modulus: Int | NoneClass | None = None
-    ) -> Int | Float:
+        self, other: Int | Float | Complex, modulus: Int | NoneClass | None = None
+    ) -> Int | Float | Complex:
         from poop.types._unwrap import _is_absent
         from poop.types.float import Float
 
@@ -148,12 +148,20 @@ class Int(_ValueEqMixin, Object):
             return NotImplemented
         if _is_absent(modulus):
             result = self._value**other._value
+            if isinstance(result, complex):
+                return Complex(result)
             if isinstance(result, float):
                 return Float(result)
             return Int(result)
+        if isinstance(other, Float):
+            raise TypeError(
+                "pow() 3rd argument not allowed unless all arguments are integers"
+            )
         return Int(pow(self._value, other._value, modulus._value))
 
-    def pow(self, other: Int, modulus: Int | NoneClass | None = None) -> Int | Float:
+    def pow(
+        self, other: Int, modulus: Int | NoneClass | None = None
+    ) -> Int | Float | Complex:
         return self.__pow__(other, modulus)
 
     def __divmod__(self, other: Int) -> Tuple:

@@ -69,6 +69,12 @@ def test_pow() -> None:
     assert (Float(2.0) ** Float(3.0))._value == pytest.approx(8.0)
 
 
+def test_pow_negative_base_fractional_exponent_returns_complex() -> None:
+    result = Float(-1.0) ** Float(0.5)
+    assert isinstance(result, Complex)
+    assert result == Complex((-1.0) ** 0.5)
+
+
 def test_eq_returns_boolean() -> None:
     assert Float(1.5).__eq__(Float(1.5)) is true
     assert Float(1.5).__eq__(Float(2.5)) is false

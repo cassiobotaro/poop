@@ -96,12 +96,15 @@ class Float(_ValueEqMixin, Object):
     def __mod__(self, other: Float) -> Float:
         return Float(self._value % other._value)
 
-    def __pow__(self, other: Float | Complex) -> Float:
+    def __pow__(self, other: Float | Complex) -> Float | Complex:
         if isinstance(other, Complex):
             return NotImplemented
-        return Float(self._value**other._value)
+        result = self._value**other._value
+        if isinstance(result, complex):
+            return Complex(result)
+        return Float(result)
 
-    def pow(self, other: Float) -> Float:
+    def pow(self, other: Float) -> Float | Complex:
         return self.__pow__(other)
 
     def __divmod__(self, other: Float) -> Tuple:

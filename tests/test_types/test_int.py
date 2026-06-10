@@ -76,6 +76,17 @@ def test_pow() -> None:
     assert Int(2) ** Int(10) == Int(1024)
 
 
+def test_pow_negative_base_fractional_exponent_returns_complex() -> None:
+    result = Int(-8) ** Float(0.5)
+    assert isinstance(result, Complex)
+    assert result == Complex((-8) ** 0.5)
+
+
+def test_pow_with_modulus_rejects_float_exponent() -> None:
+    with pytest.raises(TypeError, match="all arguments are integers"):
+        Int(2).__pow__(Float(0.5), Int(3))
+
+
 def test_eq_returns_boolean() -> None:
     assert Int(5).__eq__(Int(5)) is true
     assert Int(5).__eq__(Int(6)) is false
