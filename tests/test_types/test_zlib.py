@@ -4,9 +4,14 @@ from poop.interpreter import Interpreter
 from poop.types.boolean import true
 from poop.types.bytes import Bytes
 from poop.types.int import Int
+from poop.types.string import Str
 from poop.types.zlib import Compress, Decompress, Zlib
 
 # --- Round trip ---
+
+
+def test_zlib_version_is_str() -> None:
+    assert isinstance(Zlib.ZLIB_VERSION, Str)
 
 
 def test_compress_decompress_round_trip() -> None:

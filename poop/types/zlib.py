@@ -8,6 +8,7 @@ from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.object import Object
+from poop.types.string import Str
 
 
 class Compress(Object):
@@ -113,7 +114,7 @@ class Zlib:
     DEFLATED: ClassVar[Int] = Int(_zlib.DEFLATED)
     DEF_MEM_LEVEL: ClassVar[Int] = Int(_zlib.DEF_MEM_LEVEL)
     DEF_BUF_SIZE: ClassVar[Int] = Int(_zlib.DEF_BUF_SIZE)
-    ZLIB_VERSION: ClassVar[Any] = _zlib.ZLIB_VERSION  # raw str (version banner)
+    ZLIB_VERSION: ClassVar[Str] = Str(_zlib.ZLIB_VERSION)
 
     Compress: ClassVar[type[Compress]] = Compress
     Decompress: ClassVar[type[Decompress]] = Decompress
