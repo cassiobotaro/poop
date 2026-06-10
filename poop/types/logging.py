@@ -5,6 +5,7 @@ import logging.config as _logging_config
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._bridge import to_python
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -355,13 +356,18 @@ class FileHandler(_logging.FileHandler, Handler):
         )
 
 
-class Logger(_LevelMethodsMixin, Object):
+class Logger(_ImplWrapperMixin, _LevelMethodsMixin, Object):
     """Wraps Python's `logging.Logger`."""
 
     __slots__ = ("_impl",)
 
-    def __init__(self, impl: Any) -> None:
-        self._impl = impl
+    def __init__(self, name: Str, level: Int | Str | NoneClass | None = None) -> None:
+        # Mirror CPython's logging.Logger(name, level=NOTSET). Internal
+        # wrapping of an existing logger uses _from_impl, not this ctor.
+        if level is None or isinstance(level, NoneClass):
+            self._impl = _logging.Logger(name._value)
+        else:
+            self._impl = _logging.Logger(name._value, level._value)
 
     def getEffectiveLevel(self) -> Int:
         return Int(self._impl.getEffectiveLevel())
@@ -446,8 +452,8 @@ class Logging(metaclass=_LoggingMeta):
     @staticmethod
     def getLogger(name: Str | None = None) -> Logger:
         if name is None:
-            return Logger(_logging.getLogger())
-        return Logger(_logging.getLogger(name._value))
+            return Logger._from_impl(_logging.getLogger())
+        return Logger._from_impl(_logging.getLogger(name._value))
 
     @staticmethod
     def getLevelName(level: Int) -> Str:

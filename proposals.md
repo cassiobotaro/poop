@@ -103,18 +103,9 @@
 
 - **Proposed fix:** in all four methods, unwrap a `NoneClass` fallback to Python `None` before the kwargs dict is built, and check the impl result before wrapping: `result = self._impl.get(...)`; `return none if result is None else Str(result)` (resp. `Int`/`Float`/`to_boolean`).
 
-### 132. `Logger("app")` builds a corrupt logger that explodes on first use
+### ~~132. `Logger("app")` builds a corrupt logger that explodes on first use~~ — DONE
 
-- **Where:** `poop/types/logging.py:358-364` (`Logger.__init__`)
-- **Bug:** `Logger` is an injected user-visible entry point, but its constructor is the internal impl-wrapping one (`__init__(self, impl: Any)`). `Logger("app")` therefore silently stores the POOP `Str` as `_impl`; construction succeeds, and the first message send crashes with a baffling `'str' object has no attribute 'info'`. CPython's `logging.Logger("app")` constructs a working logger (named, level `NOTSET`).
-- **Repro:**
-
-  ```python
-  lg = Logger("app")        # accepted
-  lg.info("hello")          # poop: 'str' object has no attribute 'info'
-  ```
-
-- **Proposed fix:** make the public constructor accept what CPython's does — `def __init__(self, name: Str, level: Int | Str | None = None)` building `_logging.Logger(name._value, ...)` — and move internal wrapping to a `_from_impl` classmethod (the pattern the impl-wrapper types already use); update `Logging.getLogger` and `LoggerAdapter` to call `_from_impl`. Alternatively, if direct construction should stay discouraged, raise an immediate `TypeError("use logging.getLogger(name)")` instead of corrupting silently.
+**Decision + implemented:** `Logger.__init__` (`poop/types/logging.py`) now mirrors CPython — `def __init__(self, name: Str, level: Int | Str | None = None)` building `_logging.Logger(name._value, ...)` — so `Logger("app")` constructs a working logger (standalone, level `NOTSET`). Internal wrapping moved to `_ImplWrapperMixin._from_impl` and `Logging.getLogger` updated to call it. Tests in `tests/test_types/test_logging.py`.
 
 ### ~~133. `SSLContext(ssl.PROTOCOL_TLS_CLIENT)` silently stores the protocol Int as the context~~ — DONE
 
