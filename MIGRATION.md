@@ -841,7 +841,7 @@ lexer = Shlex(text)
 lexer.do(lambda token: handle(token))
 ```
 
-> `shlex.split` returns `List[Str]`. The `Shlex` class is the streaming lexer (mirrors `shlex.shlex`); v0.23.0 ships the common iterative surface (`.get_token()`, iteration, `.lineno`, `.whitespace_split`). Deeper lexer configuration (character classes, push sources, etc.) is deferred to Future work.
+> `shlex.split` returns `List[Str]`. The `Shlex` class is the streaming lexer (mirrors `shlex.shlex`): the iterative surface (`.get_token()`, iteration, `.lineno`, `.whitespace_split`), the character-class attributes (`wordchars`, `whitespace`, `quotes`, `punctuation_chars`, …), and `push_token` / `push_source` / `pop_source` are all covered. The remainder (`eof`, `sourcehook`, parser internals) is out by design, not deferred.
 
 ## UUIDs (`uuid` module + `UUID` class)
 
@@ -885,7 +885,7 @@ json.dump(obj, Path("data.json"))
 loaded = json.load(Path("data.json"))
 ```
 
-> POOP's `json` is path-based — `dump`/`load` accept a `Path` instead of a file object (no `open` in POOP). The round-trip preserves POOP types: `json.loads(s)` returns a POOP value graph (`Dict`/`List`/`Str`/`Int`/`Float`/`Boolean`/`none`), and `json.dumps` accepts the same graph back. `json.JSONDecodeError` is exposed as a Python exception class for use with `Try.except_(...)`. Custom encoders/decoders and callback kwargs (`object_hook`, `default`, …) are deferred to Future work.
+> POOP's `json` is path-based — `dump`/`load` accept a `Path` instead of a file object (no `open` in POOP). The round-trip preserves POOP types: `json.loads(s)` returns a POOP value graph (`Dict`/`List`/`Str`/`Int`/`Float`/`Boolean`/`none`), and `json.dumps` accepts the same graph back. `json.JSONDecodeError` is exposed as a Python exception class for use with `Try.except_(...)`. Custom encoders/decoders are covered: subclass `json.JSONEncoder` overriding `default`, or pass the callback kwargs (`object_hook`, `default`, `parse_int` / `parse_float` / `parse_constant`, `object_pairs_hook`, …) as POOP lambdas — they route through the block bridge.
 
 ## TOML (`tomllib` module)
 
@@ -1069,7 +1069,7 @@ con.commit()
 rows = con.execute("SELECT * FROM users").fetchall()
 ```
 
-> Bound parameters are POOP `Tuple` or `List`; rows come back as POOP `Tuple` of POOP values (`Int`/`Float`/`Str`/`Bytes`/`none`). `Connection` is a context manager (`with sqlite3.connect(...) as con:` — commits on clean exit, rolls back on exception). `Connection.execute` returns a `Cursor` directly; chain `.fetchall()` / `.fetchone()` / iterate. Error classes (`sqlite3.OperationalError`, `IntegrityError`, …) are Python exception classes — pass them to `Try.except_(...)`. Callback-based methods (`create_function`, `register_adapter`, …) are deferred until a POOP `Block` → Python `callable` bridge lands.
+> Bound parameters are POOP `Tuple` or `List`; rows come back as POOP `Tuple` of POOP values (`Int`/`Float`/`Str`/`Bytes`/`none`). `Connection` is a context manager (`with sqlite3.connect(...) as con:` — commits on clean exit, rolls back on exception). `Connection.execute` returns a `Cursor` directly; chain `.fetchall()` / `.fetchone()` / iterate. Error classes (`sqlite3.OperationalError`, `IntegrityError`, …) are Python exception classes — pass them to `Try.except_(...)`. Callback-based methods are covered via the block bridge: `create_function` / `create_collation` take POOP lambdas, `create_aggregate` takes a POOP class with `step`/`finalize` methods, and `sqlite3.register_adapter` takes a lambda adapter.
 
 ## ASCII character classes and string templates (`string` module + `Template` class)
 
