@@ -1720,6 +1720,7 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 | `Color.RED.value` | whatever was assigned | raw Python primitive or POOP type |
 | `Color.RED.value_object()` | `Int` / `Str` / `Float` / `Boolean` | wrapped POOP form |
 | `Color(value)` / `Color(Int(value))` | enum member | POOP wrappers are unwrapped before lookup |
+| `Enum("Color", names)` (functional API) | enum class | `names` may be a `List` of `Str`, a space/comma `Str`, or `List` of `(name, value)` `Tuple`s — unwrapped via a metaclass `__call__` before delegating |
 | `Color.iter()` | `List` | materialized member list |
 | `IntEnum` / `StrEnum` / `Flag` / `IntFlag` | enum classes | same POOP helpers, plus the data-type mixin from CPython |
 | `ReprEnum` | enum class (re-exported) | requires a data-type mixin (`class Color(int, ReprEnum): ...`); `.name`/`.value` stay raw Python types in this path |

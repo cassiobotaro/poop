@@ -129,7 +129,35 @@ class _IntEnumArithmeticMixin:
         return to_poop(self._value_ / to_python(other))
 
 
-class Enum(_PoopEnumMixin, _enum.Enum):
+_NOT_GIVEN: Any = object()
+
+
+class _PoopEnumMeta(_enum.EnumType):
+    """Metaclass intercepting the functional API (`Enum("Color", names)`).
+
+    CPython's `EnumType.__call__` receives the POOP `Str`/`List`/`Dict`
+    arguments and tries to unpack them, failing in three different ways.
+    When the functional form is used (a `names` argument is present),
+    unwrap every argument via `to_python` before delegating; the bare
+    lookup form (`Color(Int(1))`) is left untouched so `_missing_` runs
+    (CPython distinguishes the two via a `_not_given` sentinel, so the
+    `names` argument must be omitted entirely for the lookup path).
+    """
+
+    def __call__(
+        cls, value: Any, names: Any = _NOT_GIVEN, *args: Any, **kwargs: Any
+    ) -> Any:
+        if names is _NOT_GIVEN:
+            return super().__call__(value, **kwargs)
+        return super().__call__(
+            to_python(value),
+            to_python(names),
+            *(to_python(a) for a in args),
+            **{k: to_python(v) for k, v in kwargs.items()},
+        )
+
+
+class Enum(_PoopEnumMixin, _enum.Enum, metaclass=_PoopEnumMeta):
     """POOP-flavoured `Enum` base — mirrors Python's `enum.Enum`.
 
     Members are class-side singletons (`Color.RED`, `Color(1)`).
@@ -142,19 +170,23 @@ class Enum(_PoopEnumMixin, _enum.Enum):
     """
 
 
-class IntEnum(_PoopEnumMixin, _IntEnumArithmeticMixin, _enum.IntEnum):
+class IntEnum(
+    _PoopEnumMixin, _IntEnumArithmeticMixin, _enum.IntEnum, metaclass=_PoopEnumMeta
+):
     """Mirror of Python's `enum.IntEnum` — members are also `int`s."""
 
 
-class StrEnum(_PoopEnumMixin, _enum.StrEnum):
+class StrEnum(_PoopEnumMixin, _enum.StrEnum, metaclass=_PoopEnumMeta):
     """Mirror of Python's `enum.StrEnum` — members are also `str`s."""
 
 
-class Flag(_PoopEnumMixin, _enum.Flag):
+class Flag(_PoopEnumMixin, _enum.Flag, metaclass=_PoopEnumMeta):
     """Mirror of Python's `enum.Flag` — bitwise-combinable members."""
 
 
-class IntFlag(_PoopEnumMixin, _IntEnumArithmeticMixin, _enum.IntFlag):
+class IntFlag(
+    _PoopEnumMixin, _IntEnumArithmeticMixin, _enum.IntFlag, metaclass=_PoopEnumMeta
+):
     """Mirror of Python's `enum.IntFlag` — int-valued combinable flags.
 
     Bitwise `|`/`&`/`^`/`~` keep CPython's flag-combination semantics

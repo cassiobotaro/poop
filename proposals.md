@@ -36,20 +36,9 @@
 
 **Decision + implemented:** `_unwrap_repl` (`poop/types/re.py`) now bridges a POOP `Block` replacement into a raw `match -> str` adapter (`lambda m: to_python(repl(Match(m)))`), returning the raw string only for `Str`. Widened the `repl` annotations on `Pattern.sub`/`subn` and `Re.sub`/`subn` to `Str | Block`. `re.sub("a", lambda m: "X", "banana")` → `"bXnXnX"`. Tests in `tests/test_types/test_re.py`.
 
-### 124. The `Enum` functional API crashes in every form CPython supports
+### ~~124. The `Enum` functional API crashes in every form CPython supports~~ — DONE
 
-- **Where:** `poop/types/enum.py:56` (`Enum` and siblings — no interception of the functional form)
-- **Bug:** `Enum("Color", ...)` delegates to CPython's `EnumType.__call__`, which receives POOP values: the member list is a POOP `List` of `Str`s, and since `Str` is iterable the enum machinery tries to unpack each name as a `(name, value)` pair. All three CPython call shapes fail, each with a different confusing message.
-- **Repro:**
-
-  ```python
-  Enum("Color", ["RED", "GREEN"])        # poop: too many values to unpack (expected 2)
-  Enum("Color", "RED GREEN")             # poop: not enough values to unpack (expected 2, got 1)
-  Enum("Color", [("RED", 1), ("GREEN", 2)])  # poop: 'str' object is not subscriptable
-  ```
-
-  Real Python: all three produce a working `Color` enum.
-- **Proposed fix:** give the POOP bases a small metaclass overriding `__call__`: when `names`-style arguments are present, unwrap them with `to_python` (Str → str, List/Tuple → list, Dict → dict) before delegating to `EnumType.__call__`. At minimum, raise a clear `TypeError` pointing at the class-statement form instead of leaking unpack errors.
+**Decision + implemented:** added a `_PoopEnumMeta` metaclass (`poop/types/enum.py`) on all five enum bases, overriding `__call__` to unwrap the functional-API arguments via `to_python` (Str → str, List/Tuple → list, Dict → dict) before delegating to `EnumType.__call__`. Used a private `_NOT_GIVEN` sentinel so the bare lookup form (`Color(Int(1))`) omits `names` entirely — CPython 3.14 distinguishes the two via its own `_not_given` sentinel, so passing `names=None` would wrongly trigger the functional branch. All three call shapes (`Enum("Color", ["RED", "GREEN"])`, `Enum("Color", "RED GREEN")`, `Enum("Color", [("RED", 1), ...])`) now build a working enum. Tests in `tests/test_types/test_enum.py`; catalogued in INFECTIONS.md.
 
 ### ~~125. REPL echoes `None` after every `.print()` (and clobbers `_`)~~ — DONE
 

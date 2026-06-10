@@ -12,6 +12,7 @@ from poop.types.enum import (
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 # --- Basic Enum ---
 
@@ -53,6 +54,35 @@ def test_enum_iter_returns_list() -> None:
     members = Color.iter()
     assert isinstance(members, List)
     assert members.len() == Int(3)
+
+
+# Functional API (proposal 124)
+
+
+def test_functional_api_list_of_names() -> None:
+    made = Enum("Mades1", List(Str("RED"), Str("GREEN")))
+    assert made.RED.value_object() == Int(1)  # ty: ignore[unresolved-attribute]
+    assert made.GREEN.value_object() == Int(2)  # ty: ignore[unresolved-attribute]
+
+
+def test_functional_api_space_separated_str() -> None:
+    made = Enum("Mades2", Str("RED GREEN BLUE"))
+    assert made.BLUE.value_object() == Int(3)  # ty: ignore[unresolved-attribute]
+
+
+def test_functional_api_name_value_pairs() -> None:
+    made = Enum(
+        "Mades3",
+        List(Tuple(Str("RED"), Int(10)), Tuple(Str("GREEN"), Int(20))),
+    )
+    assert made.GREEN.value_object() == Int(20)  # ty: ignore[unresolved-attribute]
+
+
+def test_functional_api_int_enum() -> None:
+    from poop.types.boolean import true
+
+    made = IntEnum("Mades4", List(Str("A"), Str("B"), Str("C")))
+    assert (made.A < made.C) is true  # ty: ignore[unresolved-attribute]
 
 
 def test_enum_unknown_value_raises() -> None:
