@@ -1372,6 +1372,8 @@ Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`
 | `decimal.Decimal` (class attr) | `type[Decimal]` | |
 | `decimal.ROUND_UP/DOWN/HALF_UP/HALF_DOWN/HALF_EVEN/CEILING/FLOOR/05UP` | `Str` | rounding constants |
 | `decimal.InvalidOperation` / `DivisionByZero` / `Overflow` / `Underflow` / `Inexact` / `Rounded` / `Subnormal` / `Clamped` / `FloatOperation` / `DecimalException` | Python exception types | usable with `Try.except_` |
+| `decimal.ConversionSyntax` / `DivisionImpossible` / `DivisionUndefined` / `InvalidContext` | Python exception types | the `InvalidOperation` sub-signals (v0.56.0) |
+| `decimal.BasicContext` / `ExtendedContext` / `DefaultContext` (class attrs) | `Context` | the stdlib context profiles (v0.56.0) |
 | `decimal.getcontext()` | `Context` | |
 | `decimal.setcontext(ctx)` | `none` | |
 | `decimal.localcontext(ctx=none)` | context manager | use with `With` |
