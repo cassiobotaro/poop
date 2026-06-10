@@ -74,6 +74,36 @@ def test_subn_returns_str_count_tuple() -> None:
     assert out.at(Int(1)) == Int(2)
 
 
+def test_sub_with_callable_replacement() -> None:
+    # proposal 123: re.sub accepts a callable (Block) replacement.
+    from poop.types.block import Block
+
+    out = Re.sub(Str("a"), Block(lambda m: Str("X")), Str("banana"))
+    assert out == Str("bXnXnX")
+
+
+def test_sub_callable_receives_match() -> None:
+    from poop.types.block import Block
+
+    out = Re.sub(
+        Str(r"\d+"),
+        Block(lambda m: Str(m.group()._value * 2)),
+        Str("a1b2"),
+    )
+    assert out == Str("a11b22")
+
+
+def test_pattern_sub_with_callable() -> None:
+    from poop.types.block import Block
+
+    p = Re.compile(Str("a"))
+    assert p.sub(Block(lambda m: Str("Z")), Str("banana")) == Str("bZnZnZ")
+
+
+def test_sub_callable_via_interpreter() -> None:
+    Interpreter().run_source('re.sub("a", lambda m: "X", "banana").print()')
+
+
 def test_split_returns_list() -> None:
     out = Re.split(Str(r"\s+"), Str("a  b   c"))
     assert isinstance(out, List)

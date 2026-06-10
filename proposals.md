@@ -53,26 +53,9 @@
   Real Python (`sqlite3.Row` via `row_factory`): `r["a"]` → `1`.
 - **Proposed fix:** either wire real support — `Connection.row_factory_row()` (or a `row_factory` kwarg) that makes cursors build `Row(tuple(col[0] for col in description), values)` — or make `Row.__init__` unwrap POOP `Tuple`/`List` inputs via `to_python` so the documented class is at least constructible; today it is dead weight that only crashes.
 
-### 123. `re.sub`/`subn` reject a lambda replacement with an `AttributeError`
+### ~~123. `re.sub`/`subn` reject a lambda replacement with an `AttributeError`~~ — DONE
 
-- **Where:** `poop/types/re.py:25` (`_unwrap_repl`), used by `Pattern.sub`/`Pattern.subn` (`poop/types/re.py:173,177`) and `Re.sub`/`Re.subn` (`poop/types/re.py:292,310`)
-- **Bug:** `_unwrap_repl` unconditionally reads `repl._value`, so only `Str` replacements work. CPython's `re.sub` accepts a callable replacement (match → str), and POOP's own convention bridges POOP blocks into every other stdlib callback slot (`json` hooks, `sqlite3.create_function`, `difflib` `isjunk`, `shutil.copy_function`). Dynamic replacement is otherwise impossible in POOP (no loops to rebuild the string around `finditer`).
-- **Repro:**
-
-  ```python
-  re.sub("a", lambda m: "X", "banana").print()
-  # poop: 'Block' object has no attribute '_value'
-  ```
-
-  Real Python: `re.sub("a", lambda m: "X", "banana")` → `'bXnXnX'`.
-- **Proposed fix:** teach `_unwrap_repl` to detect a callable and adapt it:
-
-  ```python
-  def _unwrap_repl(repl: Str | Block) -> Any:
-      if callable(repl):
-          return lambda m: to_python(repl(Match(m)))
-      return repl._value
-  ```
+**Decision + implemented:** `_unwrap_repl` (`poop/types/re.py`) now bridges a POOP `Block` replacement into a raw `match -> str` adapter (`lambda m: to_python(repl(Match(m)))`), returning the raw string only for `Str`. Widened the `repl` annotations on `Pattern.sub`/`subn` and `Re.sub`/`subn` to `Str | Block`. `re.sub("a", lambda m: "X", "banana")` → `"bXnXnX"`. Tests in `tests/test_types/test_re.py`.
 
 ### 124. The `Enum` functional API crashes in every form CPython supports
 
