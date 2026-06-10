@@ -544,23 +544,9 @@
 
 - **Proposed fix:** make the 16 rewritten builtin names reserved identifiers, mirroring how `no_namespace_shadow` already treats namespace bindings: extend that validator (or add a sibling `no_builtin_shadow`) with the fixed name set, rejecting assignment targets, class names, and `def`/lambda parameters with a message like `'int' is a POOP builtin name; it cannot be rebound`. This is the same "reserved identifier" direction entry 145 proposes for the call-name validators, and it turns all three silent-corruption flavors into a clear parse-time diagnostic. (Scope-aware rewriting would preserve Python's shadowing semantics but costs a symbol table; rejection matches POOP's existing posture.)
 
-### 147. sqlite3 named-placeholder parameters (`:name` + dict) are rejected — "parameters are of unsupported type"
+### ~~147. sqlite3 named-placeholder parameters (`:name` + dict) are rejected — "parameters are of unsupported type"~~ — DONE
 
-- **Where:** `poop/types/sqlite3.py:26-33` (`_unwrap_params`) — used by both `Connection.execute`/`executemany` (`poop/types/sqlite3.py:212-223`) and `Cursor.execute`/`executemany` (`poop/types/sqlite3.py:129-141`)
-- **Bug:** `_unwrap_params` converts only `Tuple | List` sequences; any other value (notably a POOP `Dict`) is passed through raw, and the underlying `sqlite3` rejects the wrapper with `ProgrammingError: parameters are of unsupported type`. CPython documents named placeholders with a dict as one of the two first-class parameter styles, and the qmark style next to it works fine, so the failure looks like a SQL error rather than a wrapper gap. The annotations (`params: Tuple | List | NoneClass`) likewise exclude the mapping form.
-- **Repro:**
-
-  ```python
-  conn = sqlite3.connect(":memory:")
-  conn.execute("CREATE TABLE t (id INTEGER, name TEXT)")
-  conn.execute("INSERT INTO t VALUES (?, ?)", (1, "alice"))         # qmark style: OK
-  conn.execute("SELECT name FROM t WHERE id = :id", {"id": 1})
-  # poop: parameters are of unsupported type        (Python: ('alice',))
-  conn.executemany("INSERT INTO t VALUES (:id, :name)", [{"id": 2, "name": "b"}])
-  # poop: parameters are of unsupported type        (Python: inserts the row)
-  ```
-
-- **Proposed fix:** add a `Dict` branch to `_unwrap_params` — `if isinstance(params, Dict): return to_python(params)` (the module already imports `to_python`, which deep-converts `Dict` via `_data`) — and widen the `params` annotations on all four execute methods to `Tuple | List | Dict | NoneClass`.
+**Decision + implemented:** added a `Dict` branch to `_unwrap_params` (`poop/types/sqlite3.py`) — `return to_python(params)` deep-converts to a raw mapping — so named placeholders (`:name` + Dict) work in `execute`/`executemany` for both `Connection` and `Cursor`. Widened the `params` annotations to `Tuple | List | Dict | NoneClass`. Tests in `tests/test_types/test_sqlite3.py`.
 
 ### ~~148. `Decimal` is sealed off from `Int`/`Float`: mixed arithmetic and ordering crash, mixed equality answers `false`~~ — DONE
 

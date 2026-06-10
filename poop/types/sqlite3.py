@@ -9,6 +9,7 @@ from poop.types._bridge import bridge, to_poop, to_python
 from poop.types._unwrap import _unwrap
 from poop.types.boolean import Boolean, false
 from poop.types.bytes import Bytes
+from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -30,6 +31,10 @@ def _unwrap_params(params: Any) -> Any:
         return ()
     if isinstance(params, Tuple | List):
         return tuple(to_python(p) for p in params)
+    if isinstance(params, Dict):
+        # Named placeholders (:name) take a mapping; deep-convert keys
+        # and values to raw Python so sqlite accepts it.
+        return to_python(params)
     return params
 
 
@@ -127,7 +132,7 @@ class Cursor(Object):
         self._impl = impl
 
     def execute(
-        self, sql: Str, params: Tuple | List | NoneClass | None = None
+        self, sql: Str, params: Tuple | List | Dict | NoneClass | None = None
     ) -> Cursor:
         self._impl.execute(sql._value, _unwrap_params(params))
         return self
@@ -210,7 +215,7 @@ class Connection(Object):
         return none
 
     def execute(
-        self, sql: Str, params: Tuple | List | NoneClass | None = None
+        self, sql: Str, params: Tuple | List | Dict | NoneClass | None = None
     ) -> Cursor:
         return Cursor(self._impl.execute(sql._value, _unwrap_params(params)))
 

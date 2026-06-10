@@ -44,6 +44,31 @@ def test_connection_execute_with_params() -> None:
     assert row.at(Int(0)) == Str("Alice")
 
 
+def test_connection_execute_with_named_params() -> None:
+    # proposal 147: named placeholders take a POOP Dict.
+    from poop.types.dict import Dict
+
+    con = _make_db()
+    cur = con.execute(
+        Str("SELECT name FROM users WHERE id = :id"),
+        Dict().at_put(Str("id"), Int(1)),
+    )
+    row = cur.fetchone()
+    assert isinstance(row, Tuple)
+    assert row.at(Int(0)) == Str("Alice")
+
+
+def test_executemany_with_named_params() -> None:
+    from poop.types.dict import Dict
+
+    con = Sqlite3.connect(Str(":memory:"))
+    con.execute(Str("CREATE TABLE t(id INTEGER, name TEXT)"))
+    row = Dict().at_put(Str("id"), Int(2)).at_put(Str("name"), Str("b"))
+    con.executemany(Str("INSERT INTO t VALUES (:id, :name)"), List(row))
+    rows = con.execute(Str("SELECT name FROM t WHERE id = 2")).fetchall()
+    assert rows.at(Int(0)).at(Int(0)) == Str("b")
+
+
 def test_connection_executemany() -> None:
     con = Sqlite3.connect(Str(":memory:"))
     con.execute(Str("CREATE TABLE t(x INTEGER)"))
