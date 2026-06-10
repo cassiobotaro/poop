@@ -1039,7 +1039,7 @@ rounded = total.quantize(Decimal("0.01"), decimal.ROUND_HALF_UP)
 # precision setting: use a Context via decimal.localcontext()
 ```
 
-> `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.). Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Use `with decimal.localcontext() as ctx:` to scope precision/rounding changes.
+> `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.). Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Use `With(lambda: decimal.localcontext()).do(lambda ctx: …)` to scope precision/rounding changes.
 
 ## SQLite (`sqlite3` module + `Connection` / `Cursor` / `Row` classes)
 
