@@ -680,3 +680,93 @@
   single coercion site in `poop/types/slice.py` handles `None`/`NoneClass`/`Int`
   uniformly for every type. (The current `if stop is None` Int-required guard can
   then be dropped, since an absent/`none` stop becomes a valid open-ended slice.)
+
+### 144. Enum-family members answer raw `bool`/`int` from every operator message — enum dispatch is impossible
+
+- **Where:** `poop/types/enum.py:23` — `_PoopEnumMixin` adds `name_str` /
+  `value_object` / `iter` / `_missing_`, but members do not inherit `Object`
+  and no operator dunder is bridged: `Enum` members fall back to
+  `object.__eq__`, `IntEnum`/`IntFlag` members to `int.__eq__` / `int.__lt__`
+  / `int.__add__` / etc.
+- **Leak:** `Color.RED == Color.GREEN` answers a raw Python `bool` (same for
+  `!=`, and for `<`/`<=`/`>`/`>=` on `IntEnum`/`IntFlag`); `IntEnum` member
+  arithmetic (`Priority.LOW + Priority.HIGH`) answers a raw `int`. Because
+  `is` is forbidden (`no_is`) and members are not `Object`s (no
+  `is_identical`), there is **no** POOP-typed way to compare two members at
+  all — so the one branching idiom the language offers,
+  `(state == State.IDLE).if_true(...)`, crashes, making state dispatch on an
+  enum impossible. (`.name` / `.value` raw pass-through is documented by
+  design in the module docstring; the operator results are not.)
+- **Evidence:** e2e (`uv run python main.py ...`):
+
+  ```python
+  class State(Enum):
+      IDLE = 1
+      BUSY = 2
+
+  current = State.IDLE
+  (current == State.IDLE).if_true(lambda: "idle".print())
+  # poop: 'bool' object has no attribute 'if_true' (line 6)
+  ```
+
+  `(Color.RED == Color.GREEN).print()` → `poop: 'bool' object has no
+  attribute 'print'`; with `IntEnum`, `(LOW < HIGH).print()` → same, and
+  `(LOW + HIGH).print()` → `poop: 'int' object has no attribute 'print'`;
+  `IntFlag` equality leaks identically. Identity probe (display names are
+  masked — `Boolean.__name__` is rebound to `"bool"`):
+  `(Color.RED == Color.GREEN).__class__ is builtins.bool` → `True`,
+  `isinstance(..., Boolean)` → `False`; `(LOW + HIGH).__class__ is
+  builtins.int` → `True`; `hasattr(Color.RED, "is_identical")` → `False`.
+- **Proposed fix:** bridge operator results in `_PoopEnumMixin`: add
+  `__eq__`/`__ne__` returning `to_boolean(...)` — delegate to
+  `super().__eq__(other)` and fall back to identity when it answers
+  `NotImplemented` — plus `def __hash__(self): return super().__hash__()` to
+  keep each family's hash; wrap `__lt__`/`__le__`/`__gt__`/`__ge__` the same
+  way for the int-based families, and route `IntEnum` arithmetic results
+  through `to_poop`. Verified feasible: a probe mixin with exactly that
+  `__eq__` answers a POOP `Boolean` while alias resolution
+  (`CRIMSON = 1` → `is RED`) and member-keyed dict lookup keep working,
+  because `Boolean.__bool__` preserves truthiness for enum internals.
+
+### 145. Rebinding (or passing) a forbidden builtin bypasses every call-name validator — raw `int`/`list`/class objects flow out
+
+- **Where:** `poop/validators/_call_name.py:24` — the `_Visitor` produced by
+  `make_call_name_validator` only rejects `ast.Call` nodes whose `func` is an
+  `ast.Name`. A bare `ast.Name` reference to a forbidden builtin in any other
+  position — assignment RHS, call argument, decorator, default value — passes
+  all 39 validators built by the factory, and the executor's namespace
+  (`poop/executor.py:37`, `exec` with implicit `__builtins__`) resolves it to
+  the raw CPython builtin.
+- **Leak:** one assignment reopens every blocked door: `f = len; f(xs)`
+  answers a raw `int` (wrappers expose `__len__` for protocol interop),
+  `srt = sorted; srt(xs)` answers a raw Python `list`, `t = type; t(x)`
+  answers the raw class object. Argument position needs no assignment at
+  all: `words.map(len)` yields raw `int` elements. Same shape as the
+  `import` door (an unvalidated statement binding raw Python objects), but
+  through names the validators were specifically built to block.
+- **Evidence:** e2e (`uv run python main.py ...`):
+
+  ```python
+  f = len
+  n = f([1, 2, 3])
+  n.print()
+  # poop: 'int' object has no attribute 'print' (line 3)
+  ```
+
+  `srt = sorted; srt([3, 1, 2]).print()` → `poop: 'list' object has no
+  attribute 'print'`; `t = type; t(5).print()` → `poop: Object.print()
+  missing 1 required positional argument: 'self'` (the raw class leaked, so
+  `.print` is an unbound method); `["ab", "abc"].map(len).next().print()` →
+  `poop: 'int' object has no attribute 'print'`. Not every alias leaks —
+  `h = hex; h(255)` crashes because `Int` lacks `__index__` — but every
+  blocked builtin satisfied by a wrapper dunder (`len`, `sorted`, `type`,
+  `id`, `hash`, `isinstance`, ...) does.
+- **Proposed fix:** in `make_call_name_validator`, replace `visit_Call` with
+  a `visit_Name` that rejects any reference to a forbidden name regardless
+  of context (Load, Store, decorator, argument), reusing the same message
+  template. Method substitutes are unaffected — `n.hex()` / `xs.len()` are
+  `ast.Attribute` nodes, and keyword-argument names are not `Name` nodes.
+  Trade-off to state in the message: the 39 forbidden names become fully
+  reserved identifiers (`len = 5` is rejected too), which matches the spirit
+  of `no_namespace_shadow`. Structural validators not built by the factory
+  (`no_subscript`, `no_if`, ...) need no change.
