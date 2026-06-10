@@ -35,6 +35,11 @@ class Dict(_ValueEqMixin, Object):
     def at(self, key: Object) -> Object:
         return self._data[key]
 
+    def __getitem__(self, key: Object) -> Object:
+        # Satisfies the mapping protocol (`{**d}` merge / `**d` unpacking
+        # read `d[k]`). User subscript syntax stays forbidden by no_subscript.
+        return self._data[key]
+
     def get(
         self, key: Object, default: Object | NoneClass = none
     ) -> Object | NoneClass:

@@ -257,50 +257,9 @@
   gain `visit_Import`/`visit_ImportFrom` over `alias.asname or alias.name`,
   but with `no_import` active that branch is unreachable.
 
-### 142. `{**a, ...}` dict-literal splat (and `f(**kw)`) crash — POOP `Dict` cannot be used as a `**`-unpacking mapping
+### ~~142. `{**a, ...}` dict-literal splat (and `f(**kw)`) crash — POOP `Dict` cannot be used as a `**`-unpacking mapping~~ — DONE
 
-- **Where:** `poop/types/dict.py` (the `Dict` class exposes `at`/`keys`/`values`
-  but no `__getitem__`, so it does not satisfy the mapping protocol Python's
-  `**` unpacking needs), and `poop/transformers/dict.py:50-53` (the dict
-  rewriter *bails out* — `return node` — whenever a display contains a `**`
-  entry, leaving the raw Python `ast.Dict` in place to be merged at runtime by
-  `dict.update`-style logic that the POOP `Dict` cannot service).
-- **Bug:** A dict display with `**` unpacking (`{**a, "y": 2}`, `{**a, **b}`)
-  crashes with `'dict' object is not subscriptable`, and so does a call-site
-  keyword splat `f(**kw)` when `kw` is a POOP `Dict`. Python's `**` merge calls
-  `kw.keys()` (which works — `keys()` exists) and then subscripts `kw[k]`, but
-  `Dict` has no `__getitem__`, so the subscription raises. Both are the *natural*
-  POOP translations of everyday Python: there is no other literal way to splice
-  one dict into another, and `f(*args)` (positional splat) already works, so the
-  asymmetry is surprising.
-- **Repro** (`uv run python main.py file.py`):
-
-  ```python
-  a = {"x": 1}
-  b = {**a, "y": 2}        # poop: 'dict' object is not subscriptable (line 2)
-  ```
-
-  ```python
-  class Adder:
-      def add(self, a, b):
-          return a + b
-  kw = {"a": 1, "b": 2}
-  Adder().add(**kw).print() # poop: 'dict' object is not subscriptable
-  ```
-
-  By contrast `[*a, *b]`, `(*a, 3)`, `{*a, *b}` and `f(*list)` all work, because
-  iteration (not the mapping protocol) is all they need.
-- **Proposed fix:** stop bailing in `_DictRewriter.visit_Dict` — instead of
-  `return node` when a `**` entry is present, rewrite the display into a POOP
-  merge helper (e.g. `_poop_dict_merge(<entry>, ...)`, where each plain pair
-  becomes a one-key `_poop_dict_from_pairs(...)` and each `**x` stays as `x`),
-  building a real POOP `Dict` and keeping POOP semantics for keys/values. For the
-  call-site `f(**kw)` path (which the transformer cannot reach), give `Dict` a
-  `__getitem__` delegating to `self._data[key]` so it satisfies the mapping
-  protocol; note that kwargs additionally require Python-`str` keys, so a fully
-  correct `f(**kw)` also needs `keys()` to yield raw `str` for that one path
-  (or a documented restriction that `**`-splatting a POOP `Dict` into a call is
-  unsupported). The dict-literal fix is the high-value, self-contained one.
+**Decision + implemented:** `_DictRewriter.visit_Dict` (`poop/transformers/dict.py`) no longer bails on a `**` entry — it rewrites the display into `_poop_dict_merge(...)`, folding runs of plain pairs (`_poop_dict_from_pairs(...)`) and each `**x` entry left to right (later keys win). `{**a, "y": 2}` and `{**a, **b}` now build a real POOP `Dict`. Added `Dict.__getitem__` (`poop/types/dict.py`) so the mapping protocol's read side works (user subscript stays forbidden by `no_subscript`). The call-site `f(**kw)` splat with a POOP `Dict` remains unsupported — Python requires raw-`str` keys for `**`-into-a-call, which conflicts with POOP `Str` keys — but now fails with the clearer `keywords must be strings` rather than `not subscriptable`. Tests in `tests/test_transformers/test_dict.py`.
 
 ### 143. Open-ended slice `obj.slice(start, None)` crashes on every sliceable type
 

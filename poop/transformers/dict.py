@@ -21,6 +21,21 @@ def _poop_dict_from_pairs(*pairs: Object) -> Dict:
     return d
 
 
+def _poop_dict_merge(*parts: Dict) -> Dict:
+    """Merge POOP `Dict`s left to right for a `{**a, **b, ...}` display.
+
+    Later parts override earlier keys, matching CPython's `**` merge.
+    """
+    d = Dict()
+    for part in parts:
+        if not isinstance(part, Dict):
+            raise TypeError(
+                f"cannot ** -unpack {type(part).__qualname__} into a dict display"
+            )
+        d._data.update(part._data)
+    return d
+
+
 def _poop_dict_from(arg: object = None, **kwargs: Object) -> Dict:
     if arg is None:
         d = Dict()
@@ -74,20 +89,45 @@ class _DictRewriter(CollectionRewriter):
             )
         return super().visit_Call(node)
 
-    def visit_Dict(self, node: ast.Dict) -> ast.AST:
-        self.generic_visit(node)
-        # Collect non-None keys; bail out if dict has unpacking (**d)
-        pairs = [(k, v) for k, v in zip(node.keys, node.values) if k is not None]
-        if len(pairs) != len(node.keys):
-            return node
-        args: list[ast.expr] = []
-        for k, v in pairs:
-            args.append(k)
-            args.append(v)
+    @staticmethod
+    def _pairs_call(flat: list[ast.expr], ref: ast.AST) -> ast.expr:
         return ast.copy_location(
             ast.Call(
                 func=ast.Name(id="_poop_dict_from_pairs", ctx=ast.Load()),
-                args=args,
+                args=flat,
+                keywords=[],
+            ),
+            ref,
+        )
+
+    def visit_Dict(self, node: ast.Dict) -> ast.AST:
+        self.generic_visit(node)
+        if all(k is not None for k in node.keys):
+            flat: list[ast.expr] = []
+            for k, v in zip(node.keys, node.values):
+                flat.append(cast("ast.expr", k))
+                flat.append(v)
+            return self._pairs_call(flat, node)
+        # A `**x` entry (key is None) makes this a merge: each run of plain
+        # pairs becomes a _poop_dict_from_pairs(...), each **x stays as x,
+        # and _poop_dict_merge folds them left to right.
+        parts: list[ast.expr] = []
+        pending: list[ast.expr] = []
+        for k, v in zip(node.keys, node.values):
+            if k is None:
+                if pending:
+                    parts.append(self._pairs_call(pending, node))
+                    pending = []
+                parts.append(v)
+            else:
+                pending.append(k)
+                pending.append(v)
+        if pending:
+            parts.append(self._pairs_call(pending, node))
+        return ast.copy_location(
+            ast.Call(
+                func=ast.Name(id="_poop_dict_merge", ctx=ast.Load()),
+                args=parts,
                 keywords=[],
             ),
             node,
@@ -100,4 +140,5 @@ class DictTransformer(BaseTransformer):
         "_poop_dict": Dict,
         "_poop_dict_from_pairs": _poop_dict_from_pairs,
         "_poop_dict_from": _poop_dict_from,
+        "_poop_dict_merge": _poop_dict_merge,
     }
