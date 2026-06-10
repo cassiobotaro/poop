@@ -228,47 +228,9 @@
 
 **Decision + implemented:** `_DictRewriter.visit_Dict` (`poop/transformers/dict.py`) no longer bails on a `**` entry — it rewrites the display into `_poop_dict_merge(...)`, folding runs of plain pairs (`_poop_dict_from_pairs(...)`) and each `**x` entry left to right (later keys win). `{**a, "y": 2}` and `{**a, **b}` now build a real POOP `Dict`. Added `Dict.__getitem__` (`poop/types/dict.py`) so the mapping protocol's read side works (user subscript stays forbidden by `no_subscript`). The call-site `f(**kw)` splat with a POOP `Dict` remains unsupported — Python requires raw-`str` keys for `**`-into-a-call, which conflicts with POOP `Str` keys — but now fails with the clearer `keywords must be strings` rather than `not subscriptable`. Tests in `tests/test_transformers/test_dict.py`.
 
-### 143. Open-ended slice `obj.slice(start, None)` crashes on every sliceable type
+### ~~143. Open-ended slice `obj.slice(start, None)` crashes on every sliceable type~~ — DONE
 
-- **Where:** the `slice` method of `poop/types/string.py:53`,
-  `poop/types/list.py:43`, `poop/types/tuple.py:42`, `poop/types/bytes.py:46`,
-  `poop/types/byte_array.py:49`, `poop/types/array.py:107`, and
-  `poop/types/range.py:54`. Each ends with
-  `s = step._value if step is not None else None` and
-  `self._value[start_or_slice._value : stop._value : s]`.
-- **Bug:** A `None` literal in POOP source is rewritten to the POOP `none`
-  (`NoneClass`, whose `__name__` is set to `"NoneType"`), **not** Python's
-  `None`. The `slice` methods guard with `if stop is None:` (a Python-identity
-  check that POOP `none` never satisfies) and then read `stop._value` /
-  `step._value` directly — but `NoneClass` has no `_value`, so any
-  `obj.slice(start, None)` or `obj.slice(start, stop, None)` raises
-  `'NoneType' object has no attribute '_value'`. This is the natural translation
-  of Python's `obj[start:]` / open-ended slices, and the `no_subscript`
-  validator explicitly directs users to `obj.slice(start, stop)`. There is no
-  way to express "to the end" through the 3-arg form (omitting `stop` hits the
-  `"stop is required when start is an Int"` guard instead). The `Slice`
-  constructor *does* handle this — `poop/types/slice.py:_coerce` accepts both
-  Python `None` and `NoneClass` — so only `obj.slice(slice(start, None))` works,
-  which is awkward and undocumented.
-- **Repro** (`uv run python main.py file.py`):
-
-  ```python
-  "hello".slice(2, None).print()        # poop: 'NoneType' object has no attribute '_value'
-  [1, 2, 3, 4, 5].slice(1, None).print()
-  range(0, 10).slice(2, None).print()
-  (1, 2, 3, 4).slice(1, None).print()
-  b"abcdef".slice(2, None).print()
-  # all crash identically; only obj.slice(slice(2, None)) works
-  ```
-
-- **Proposed fix:** in each `slice` method coerce a POOP `none` argument the same
-  way `Slice._coerce` does — treat both Python `None` and `NoneClass` as
-  "absent". The smallest robust change is to route the 3-arg form through the
-  existing `Slice` helper, e.g. build
-  `Slice(start_or_slice, stop, step)._py_slice()` and index with it, so the
-  single coercion site in `poop/types/slice.py` handles `None`/`NoneClass`/`Int`
-  uniformly for every type. (The current `if stop is None` Int-required guard can
-  then be dropped, since an absent/`none` stop becomes a valid open-ended slice.)
+**Decision + implemented:** routed the Int form of every `slice` method (`Str`, `List`, `Tuple`, `Bytes`, `ByteArray`, `Array`, `Range`) through the existing `Slice` helper — `Slice(start_or_slice, stop, step)._py_slice()` — whose `_coerce` already treats both Python `None` and POOP `none` as absent. `obj.slice(2, none)` now means open-ended (`obj[2:]`), and the `"stop is required"` guard was dropped (so `obj.slice(2)` is also open-ended). Widened the `stop`/`step` annotations to `Int | NoneClass | None`. Tests in the affected type test files.
 
 ### 144. Enum-family members answer raw `bool`/`int` from every operator message — enum dispatch is impossible
 

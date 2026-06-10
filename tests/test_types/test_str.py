@@ -463,6 +463,19 @@ def test_slice_with_step() -> None:
     assert Str("abcdef").slice(Int(0), Int(6), Int(2)) == Str("ace")
 
 
+def test_slice_open_ended_with_none_stop() -> None:
+    # proposal 143: a POOP `none` stop means "to the end" (obj[2:]).
+    assert Str("hello").slice(Int(2), none) == Str("llo")
+
+
+def test_slice_open_ended_with_none_step() -> None:
+    assert Str("abcdef").slice(Int(1), Int(5), none) == Str("bcde")
+
+
+def test_slice_stop_omitted_means_open_ended() -> None:
+    assert Str("hello").slice(Int(2)) == Str("llo")
+
+
 def test_contains_non_str_returns_false() -> None:
     assert (Int(1) in Str("123")) is False
 
