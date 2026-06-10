@@ -102,29 +102,9 @@
   Real Python: all three produce a working `Color` enum.
 - **Proposed fix:** give the POOP bases a small metaclass overriding `__call__`: when `names`-style arguments are present, unwrap them with `to_python` (Str → str, List/Tuple → list, Dict → dict) before delegating to `EnumType.__call__`. At minimum, raise a clear `TypeError` pointing at the class-statement form instead of leaking unpack errors.
 
-### 125. REPL echoes `None` after every `.print()` (and clobbers `_`)
+### ~~125. REPL echoes `None` after every `.print()` (and clobbers `_`)~~ — DONE
 
-- **Where:** `poop/repl.py:356-360` (`Repl._displayhook`)
-- **Bug:** the displayhook suppresses only the raw Python `None` (`if value is None: return`). Every POOP message that answers `none` — including `.print()`, the single most common REPL expression — returns a `NoneClass`, which gets displayed as `None` and stored into `_`. CPython's REPL displays nothing for `None`-valued expressions (`>>> print("hi")` shows only `hi`) and leaves `_` untouched.
-- **Repro:**
-
-  ```text
-  >>> "hi".print()
-  hi
-  None
-  ```
-
-  Expected (CPython behavior): just `hi`.
-- **Proposed fix:** suppress `NoneClass` results in `_displayhook`:
-
-  ```python
-  def _displayhook(self, value: object) -> None:
-      if value is None or isinstance(value, NoneClass):
-          return
-      ...
-  ```
-
-  (The `NoneClass` branch in `_colorize_value` then becomes dead and can go.)
+**Decision + implemented:** `Repl._displayhook` (`poop/repl.py`) now suppresses POOP `none` (`isinstance(value, NoneClass)`) as well as raw `None`, so `.print()` no longer echoes `None` or clobbers `_`. The now-dead `NoneClass` branch in `_colorize_value` was removed. Tests in `tests/test_repl.py`.
 
 ### ~~126. The datetime family prints `<Date>` instead of its value~~ — DONE
 

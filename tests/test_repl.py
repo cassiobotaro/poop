@@ -148,6 +148,28 @@ def test_displayhook_none_prints_nothing(capsys: pytest.CaptureFixture[str]) -> 
     assert capsys.readouterr().out == ""
 
 
+def test_displayhook_poop_none_prints_nothing(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # proposal 125: `.print()` answers POOP none, which must not echo.
+    from poop.types.none import none
+
+    repl, _ = _repl()
+    repl._displayhook(none)
+    assert capsys.readouterr().out == ""
+
+
+def test_displayhook_poop_none_does_not_clobber_underscore(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from poop.types.none import none
+
+    repl, ns = _repl()
+    repl._displayhook(Int(7))
+    repl._displayhook(none)
+    assert ns["_"] == Int(7)
+
+
 # --- run() integration ---
 
 
