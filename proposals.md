@@ -770,3 +770,81 @@
   reserved identifiers (`len = 5` is rejected too), which matches the spirit
   of `no_namespace_shadow`. Structural validators not built by the factory
   (`no_subscript`, `no_if`, ...) need no change.
+
+### 146. Binding a lowercase builtin name (`int = 5`, `def __init__(self, dict)`) silently rebinds the interpreter's mangled internals
+
+- **Where:** every type transformer's `visit_Name` rewrites with `ctx=node.ctx` — Store and parameter-body loads included: `poop/transformers/int.py:73-75`, `float.py:64-66`, `string.py:52-54`, `boolean.py:35-37`, `bytes.py:58-60`, `byte_array.py:43-45`, `memory_view.py:39-41`, `complex.py:96-98`, `range.py:38-40`, `enumerate.py:30-33`, `zip.py:36-38`, and `_collection.py:49-52` (shared by `list`/`tuple`/`set`/`dict`/`frozen_set`). No validator covers these 16 names — `no_namespace_shadow` protects only `DEFAULT_NAMESPACE` bindings (`math = 5` is rejected; `int = 5` is not), and the entry-145 call-name validators don't include the rewritten type names at all.
+- **Bug:** the rewrite is context-blind, so a user binding of `bool`/`int`/`float`/`complex`/`str`/`bytes`/`bytearray`/`memoryview`/`list`/`tuple`/`dict`/`set`/`frozenset`/`range`/`enumerate`/`zip` becomes a binding of the mangled `_poop_*` global. Three flavors, all legal Python:
+  1. module-scope assignment to a name whose rewrite target is also the literal constructor (`int`, `float`, `str`, `bytes`) replaces the constructor itself, so **every later literal of that type crashes**;
+  2. function-scope assignment compiles to `_poop_str = _poop_str("hello")`, an `UnboundLocalError` that leaks the mangled name in the diagnostic;
+  3. a `def`/lambda parameter keeps its name while body loads rewrite to the mangled global, so the body silently operates on the internal class instead of the argument.
+- **Repro:**
+
+  ```python
+  str = "hello"
+  "world".print()
+  # poop: 'str' object is not callable   (Python: prints world)
+  ```
+
+  ```python
+  int = 5
+  x = 3
+  # poop: 'int' object is not callable   (Python: x == 3)
+  ```
+
+  ```python
+  class App:
+      def run(self):
+          str = "hello"
+          return str
+  App().run()
+  # poop: cannot access local variable '_poop_str' where it is not associated with a value
+  ```
+
+  ```python
+  class Tag:
+      def __init__(self, dict):
+          self._d = dict
+      def get(self, k):
+          return self._d.get(k)
+  Tag({"a": 1}).get("a").print()
+  # poop: Dict.get() missing 1 required positional argument: 'key'
+  # (self._d silently bound the internal Dict class, not the argument; Python: prints 1)
+  ```
+
+- **Proposed fix:** make the 16 rewritten builtin names reserved identifiers, mirroring how `no_namespace_shadow` already treats namespace bindings: extend that validator (or add a sibling `no_builtin_shadow`) with the fixed name set, rejecting assignment targets, class names, and `def`/lambda parameters with a message like `'int' is a POOP builtin name; it cannot be rebound`. This is the same "reserved identifier" direction entry 145 proposes for the call-name validators, and it turns all three silent-corruption flavors into a clear parse-time diagnostic. (Scope-aware rewriting would preserve Python's shadowing semantics but costs a symbol table; rejection matches POOP's existing posture.)
+
+### 147. sqlite3 named-placeholder parameters (`:name` + dict) are rejected — "parameters are of unsupported type"
+
+- **Where:** `poop/types/sqlite3.py:26-33` (`_unwrap_params`) — used by both `Connection.execute`/`executemany` (`poop/types/sqlite3.py:212-223`) and `Cursor.execute`/`executemany` (`poop/types/sqlite3.py:129-141`)
+- **Bug:** `_unwrap_params` converts only `Tuple | List` sequences; any other value (notably a POOP `Dict`) is passed through raw, and the underlying `sqlite3` rejects the wrapper with `ProgrammingError: parameters are of unsupported type`. CPython documents named placeholders with a dict as one of the two first-class parameter styles, and the qmark style next to it works fine, so the failure looks like a SQL error rather than a wrapper gap. The annotations (`params: Tuple | List | NoneClass`) likewise exclude the mapping form.
+- **Repro:**
+
+  ```python
+  conn = sqlite3.connect(":memory:")
+  conn.execute("CREATE TABLE t (id INTEGER, name TEXT)")
+  conn.execute("INSERT INTO t VALUES (?, ?)", (1, "alice"))         # qmark style: OK
+  conn.execute("SELECT name FROM t WHERE id = :id", {"id": 1})
+  # poop: parameters are of unsupported type        (Python: ('alice',))
+  conn.executemany("INSERT INTO t VALUES (:id, :name)", [{"id": 2, "name": "b"}])
+  # poop: parameters are of unsupported type        (Python: inserts the row)
+  ```
+
+- **Proposed fix:** add a `Dict` branch to `_unwrap_params` — `if isinstance(params, Dict): return to_python(params)` (the module already imports `to_python`, which deep-converts `Dict` via `_data`) — and widen the `params` annotations on all four execute methods to `Tuple | List | Dict | NoneClass`.
+
+### 148. `Decimal` is sealed off from `Int`/`Float`: mixed arithmetic and ordering crash, mixed equality answers `false`
+
+- **Where:** `poop/types/decimal.py:42-86` (`Decimal.__add__`/`__sub__`/`__mul__`/`__truediv__`/`__floordiv__`/`__mod__`/`__pow__` and `__lt__`/`__le__`/`__gt__`/`__ge__` all dereference `other._impl`), `poop/types/decimal.py:32-37` (`_ValueEqMixin` equality keyed on `_impl`, same-class only)
+- **Bug:** every binary operator assumes the operand is another `Decimal`, so `Decimal("2.5") + 1` and `Decimal("2.5") >= 1` raise `AttributeError: 'int' object has no attribute '_impl'`, while `Decimal("2.5") == 2.5` silently answers `false`. CPython supports `int` operands in Decimal arithmetic and `int`/`float` in comparisons and equality. POOP's own `Fraction` already accepts `Int`/`Float` in `_combine`/`_cmp`, so `Decimal` is the odd one out — and the constructor itself accepts `Int | Float`, making the operator refusal internally inconsistent. Distinct from entry 115 (the `Int`/`Float` side of the same expressions) and entry 119 (`Fraction` equality): fixing those leaves `Decimal`'s own dunders crashing, since `Decimal` defines no reflected dunders and accepts nothing but `Decimal`.
+- **Repro:**
+
+  ```python
+  d = Decimal("2.5")
+  (d + 1).print()     # poop: 'int' object has no attribute '_impl'   (Python: 3.5)
+  (d * 3).print()     # poop: 'int' object has no attribute '_impl'   (Python: 7.5)
+  (d >= 1).print()    # poop: 'int' object has no attribute '_impl'   (Python: True)
+  (d < 3.0).print()   # poop: 'float' object has no attribute '_impl' (Python: True)
+  (d == 2.5).print()  # False                                         (Python: True)
+  ```
+
+- **Proposed fix:** mirror CPython's contract. Arithmetic: accept `Int` by converting via `_decimal.Decimal(other._value)`, return `NotImplemented` for `Float` (CPython raises `TypeError` for `Decimal + float`), and add the matching reflected dunders (`__radd__`, `__rsub__`, ...) so `1 + d` works once entry 115's `NotImplemented` fix lands. Comparisons and `__eq__`/`__ne__`: accept `Int` and `Float` (CPython compares `Decimal` against both), falling back to `false`/`true` for foreign types — the same dispatch shape entry 119 proposes for `Fraction`.
