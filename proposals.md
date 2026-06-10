@@ -848,3 +848,58 @@
   ```
 
 - **Proposed fix:** mirror CPython's contract. Arithmetic: accept `Int` by converting via `_decimal.Decimal(other._value)`, return `NotImplemented` for `Float` (CPython raises `TypeError` for `Decimal + float`), and add the matching reflected dunders (`__radd__`, `__rsub__`, ...) so `1 + d` works once entry 115's `NotImplemented` fix lands. Comparisons and `__eq__`/`__ne__`: accept `Int` and `Float` (CPython compares `Decimal` against both), falling back to `false`/`true` for foreign types — the same dispatch shape entry 119 proposes for `Fraction`.
+
+### 149. logging `Formatter.default_time_format` / `default_msec_format` answer bare Python `str` — and the msec knob is unusable in both directions
+
+- **Where:** `poop/types/logging.py:242` — `class Formatter(_logging.Formatter)`
+  neither rebinds nor intercepts the two CPython class-attribute knobs, so
+  `default_time_format` and `default_msec_format` are inherited raw from
+  `logging.Formatter`.
+- **Leak:** reading `Formatter.default_time_format` or
+  `Formatter.default_msec_format` answers a bare Python `str` — every POOP
+  message on it crashes. These are CPython's documented `formatTime` knobs,
+  and `default_msec_format` matters on its own: changing the asctime
+  millisecond separator (`,` → `.`) is its canonical use, and nothing else on
+  the POOP surface covers it (`Formatter(datefmt=...)` replaces the
+  seconds-level format but never the msec suffix). The write direction is
+  broken symmetrically: `Formatter.default_msec_format = "%s.%03d"` stores a
+  POOP `Str` that the raw `formatTime` cannot `%`-format, so the next
+  `%(asctime)s` log line dumps a CPython "Logging error" traceback instead of
+  logging. An automated sweep over every `DEFAULT_NAMESPACE` entry point (plus
+  one level of sub-namespaces) shows these are the only bare constants left
+  that are not catalogued pass-throughs — `csv.excel`/`Logging.Filterer` are
+  documented "Python class refs", and `enum.STRICT` / `signal.SIG_DFL` /
+  `ssl.PURPOSE_*` are documented argument tokens.
+- **Evidence:** e2e (`uv run python main.py ...`):
+
+  ```python
+  Formatter.default_msec_format.print()
+  # poop: 'str' object has no attribute 'print' (line 1)
+  ```
+
+  Write path:
+
+  ```python
+  Formatter.default_msec_format = "%s.%03d"
+  lg = logging.getLogger("t")
+  h = logging.StreamHandler()
+  h.setFormatter(Formatter("%(asctime)s %(message)s"))
+  lg.addHandler(h)
+  lg.warning("hello")
+  # --- Logging error --- ... TypeError: unsupported operand type(s)
+  # for %: 'str' and 'tuple'   (the stored Str cannot service formatTime)
+  ```
+
+  Identity probe: `Formatter.default_time_format.__class__ is builtins.str`
+  → `True`, and the object `is logging.Formatter.default_time_format` (the
+  raw stdlib attribute, untouched by the wrapper).
+- **Proposed fix:** follow the `zlib.ZLIB_VERSION` precedent and bless the
+  knobs as POOP values: rebind both on the wrapper —
+  `default_time_format: ClassVar[Str] = Str(_logging.Formatter.default_time_format)`
+  (same for `default_msec_format`) — and override `formatTime` in the POOP
+  `Formatter` to unwrap before delegating (mirror CPython's four-line body,
+  reading each knob through `v._value if isinstance(v, Str) else v`). That
+  makes reads answer `Str` and makes user assignment of a POOP `Str` work.
+  Optionally, a metaclass `__setattr__` can propagate the raw value to
+  `_logging.Formatter` so formatters built by `logging.basicConfig` (raw
+  instances) honor the knob globally, matching CPython.
