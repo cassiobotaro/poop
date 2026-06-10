@@ -942,7 +942,7 @@ Python's `base64.*` is reachable as **methods on the value**, not a namespace. B
 | Encode | `Bytes` | `b16encode`, `b32encode`, `b32hexencode`, `b64encode`, `standard_b64encode`, `urlsafe_b64encode`, `a85encode`, `b85encode`, `z85encode` |
 | Decode | `Bytes`, `Str` | `b16decode`, `b32decode`, `b32hexdecode`, `b64decode`, `standard_b64decode`, `urlsafe_b64decode`, `a85decode`, `b85decode`, `z85decode` |
 
-Every method takes no arguments (v0.13.0 ships Python's defaults; optional kwargs like `altchars`/`validate`/`casefold` are deferred to Future work). Encoders return `Bytes` (ASCII-bearing), mirroring `base64.<name>(b)` in Python — callers wanting a textual `Str` must explicitly `.decode(Str("ascii"))` afterward, exactly as in Python. Decoders also return `Bytes`.
+The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` / `b64decode(altchars, validate)`, `b16decode(casefold)`, `b32decode(casefold, map01)`, `b32hexdecode(casefold)`, `a85encode(foldspaces, wrapcol, pad, adobe)` / `a85decode(foldspaces, adobe, ignorechars)`, `b85encode(pad)` — on `Str` receivers the `Str`-typed kwargs (`altchars`, `map01`, `ignorechars`) are accepted as `Str` and coerced. Encoders return `Bytes` (ASCII-bearing), mirroring `base64.<name>(b)` in Python — callers wanting a textual `Str` must explicitly `.decode(Str("ascii"))` afterward, exactly as in Python. Decoders also return `Bytes`.
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
@@ -1206,7 +1206,7 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `Shlex.lineno` (property) | `int` | source line counter |
 | `Shlex.whitespace_split` (property) | `bool` | configurable splitting mode |
 
-v0.23.0 ships the common iterative surface; the full `Shlex` API (`read_token`, `sourcehook`, the character-class attributes, push/pop sources, etc.) is deferred to Future work. See proposals.md.
+The lexer API is covered: `get_token`/`read_token`/`push_token`, `push_source`/`pop_source`, `error_leader`, `lineno`, and the character-class attributes (`commenters`, `wordchars`, `whitespace`, `escape`, `quotes`, `escapedquotes`, `whitespace_split`, `debug`, `token`, `infile`, `source`, `punctuation_chars`). The remainder is out by design, not deferred: `eof` (POOP answers `none` at end of input instead of a sentinel), `sourcehook` (returns an open file object — POOP has no file-object abstraction, same family as `ZoneInfo.from_file`), and `instream`/`state`/`pushback`/`filestack` (parser internals; exposing them breaks encapsulation).
 
 `shlex` and `Shlex` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/shlex.py` — namespace-only, no AST rewrite.
 
