@@ -1151,7 +1151,7 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `deque.maxlen` (property) | `Int` or `none` | |
 | `deque.len()` / `.includes(x)` | `Int` / `Boolean` | |
 | `deque.do/map/filter/...` | typed | full `_IterableMixin` surface |
-| `defaultdict(default_factory=none, source=none)` | `defaultdict` | factory is a block (`lambda: List()`); `at` on a missing key calls it, stores, and answers — no `KeyError`; optional `Dict` source seeds the contents |
+| `defaultdict(default_factory=none, source=none)` | `defaultdict` | factory is a block (`lambda: list()`); `at` on a missing key calls it, stores, and answers — no `KeyError`; optional `Dict` source seeds the contents |
 | `defaultdict.default_factory` (property) | block or `none` | |
 | `defaultdict.<Dict surface>` | typed | inherits everything from `Dict` |
 | `OrderedDict(source=none)` | `OrderedDict` | order-aware `Dict`; optional `Dict` source seeds the contents |
