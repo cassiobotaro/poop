@@ -203,19 +203,32 @@ def test_cursor_iteration() -> None:
 
 
 def test_row_construction_and_access() -> None:
-    row = Row(("id", "name"), (1, "Alice"))
+    row = Row(Tuple(Str("id"), Str("name")), Tuple(Int(1), Str("Alice")))
     assert row.at(Int(0)) == Int(1)
     assert row.at(Str("name")) == Str("Alice")
     assert row.len() == Int(2)
 
 
 def test_row_keys_values() -> None:
-    row = Row(("id", "name"), (1, "Alice"))
+    row = Row(Tuple(Str("id"), Str("name")), Tuple(Int(1), Str("Alice")))
     keys = row.keys()
     assert isinstance(keys, Tuple)
     assert keys.at(Int(0)) == Str("id")
     values = row.values()
     assert values.at(Int(1)) == Str("Alice")
+
+
+def test_row_constructible_from_poop_tuples() -> None:
+    # proposal 122: user code passes POOP Tuples; Row must unwrap them.
+    row = Row(Tuple(Str("a"), Str("b")), Tuple(Int(1), Str("x")))
+    assert row.at(Str("a")) == Int(1)
+    assert row.at(Str("b")) == Str("x")
+    assert row.at(Int(0)) == Int(1)
+    assert row.keys() == Tuple(Str("a"), Str("b"))
+
+
+def test_row_constructible_via_interpreter() -> None:
+    Interpreter().run_source('Row(("a", "b"), (1, "x")).at("a").print()')
 
 
 def test_sqlite3_constants() -> None:
@@ -373,7 +386,7 @@ def test_connect_with_full_kwargs() -> None:
 
 
 def test_row_len_dunder() -> None:
-    row = Row(("a", "b"), (1, 2))
+    row = Row(Tuple(Str("a"), Str("b")), Tuple(Int(1), Int(2)))
     assert len(row) == 2
 
 

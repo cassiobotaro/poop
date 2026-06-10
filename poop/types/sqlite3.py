@@ -99,9 +99,12 @@ class Row(Object):
 
     __slots__ = ("_columns", "_values")
 
-    def __init__(self, columns: tuple[str, ...], values: tuple[Any, ...]) -> None:
-        self._columns = columns
-        self._values = values
+    def __init__(self, columns: Tuple | List, values: Tuple | List) -> None:
+        # The columns/values come from user code as POOP Tuple/List; unwrap
+        # to raw Python so `at`/`keys`/`values` (which expect raw column
+        # strings and re-wrap via to_poop) work.
+        self._columns = tuple(to_python(columns))
+        self._values = tuple(to_python(values))
 
     def at(self, key: Int | Str) -> Object:
         if isinstance(key, Int):

@@ -38,20 +38,9 @@
 
 **Decision + implemented:** mixed `_IterableMixin` into `GlobIter` (`poop/types/glob.py`), `Reader`/`DictReader` (`poop/types/csv.py`), and `Shlex` (`poop/types/shlex.py`); their existing `__iter__` already yields POOP values, so `.do`/`.map`/`.filter` now work. The documented MIGRATION.md recipes (`glob.iglob(...).do(...)`, `csv.reader(...).do(...)`, `lexer.do(...)`) run. Tests in the three corresponding test files.
 
-### 122. `sqlite3` `Row` is an injected entry point that cannot be used at all
+### ~~122. `sqlite3` `Row` is an injected entry point that cannot be used at all~~ — DONE
 
-- **Where:** `poop/types/sqlite3.py:92-117` (`Row`)
-- **Bug:** `Row` is bound into the namespace (per the `sqlite3` transformer) but nothing in `poop/types/sqlite3.py` ever constructs it — `fetchone`/`fetchall` always build `Tuple`s and there is no `row_factory` hook. Constructing it from user code is the only path left, and that is broken: `__init__` stores the POOP `Tuple`s as-is while `at`/`keys`/`values` are written for raw Python tuples (`self._columns.index(key._value)` searches a POOP `Tuple` for a raw `str`), so every lookup fails.
-- **Repro:**
-
-  ```python
-  r = Row(("a", "b"), (1, "x"))
-  r.at("a").print()
-  # poop: tuple.index(x): x not in tuple
-  ```
-
-  Real Python (`sqlite3.Row` via `row_factory`): `r["a"]` → `1`.
-- **Proposed fix:** either wire real support — `Connection.row_factory_row()` (or a `row_factory` kwarg) that makes cursors build `Row(tuple(col[0] for col in description), values)` — or make `Row.__init__` unwrap POOP `Tuple`/`List` inputs via `to_python` so the documented class is at least constructible; today it is dead weight that only crashes.
+**Decision + implemented:** made `Row.__init__` (`poop/types/sqlite3.py`) unwrap its `columns`/`values` arguments via `to_python` (and `tuple(...)`), so the documented class is constructible from user code passing POOP `Tuple`/`List` (`Row(("a", "b"), (1, "x")).at("a")` → `1`). The `at`/`keys`/`values` methods, written for raw column strings, now work. Tests in `tests/test_types/test_sqlite3.py` (existing raw-tuple unit tests updated to POOP `Tuple`s, matching how user code calls it).
 
 ### ~~123. `re.sub`/`subn` reject a lambda replacement with an `AttributeError`~~ — DONE
 
