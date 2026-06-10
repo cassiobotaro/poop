@@ -113,41 +113,9 @@
 
 **Decision + implemented:** wrapped the `file.read_text` call in `poop/cli.py` in `try/except OSError`, emitting `poop: cannot read '<path>': <strerror>` and exiting 1 — keeping the established one-line `poop:` style for missing files, directories, and permission errors instead of leaking a rich traceback. Tests in `tests/test_cli.py`.
 
-### 138. Starred unpacking binds the rest-target to a raw Python `list`
+### ~~138. Starred unpacking binds the rest-target to a raw Python `list`~~ — DONE
 
-- **Where:** transformer layer — no transformer in `DEFAULT_TRANSFORMERS`
-  (`poop/transformers/__init__.py`) visits assignment targets, so
-  `c, *rest = xs` reaches `exec` (`poop/executor.py:37`) untouched and
-  CPython's `UNPACK_EX` builds the rest-collection as a native `list`.
-  (`poop/validators/no_namespace_shadow.py:18` already walks `ast.Starred`
-  targets, so the syntax is reachable and anticipated.)
-- **Leak:** the starred name binds a raw `builtins.list` (its elements are
-  POOP values, the container is not). Every POOP message on it crashes; the
-  source type does not matter — `List`, `Tuple`, and `Str` right-hand sides
-  all leak, including nested targets like `a, (b, *inner) = ...`.
-- **Evidence:** e2e (`uv run python main.py /tmp/poop_star.py`):
-
-  ```python
-  c, *rest = [1, 2, 3]
-  c.print()       # 1 — plain targets are fine
-  rest.print()    # poop: 'list' object has no attribute 'print' (line 3)
-  ```
-
-  Direct probe through `Interpreter.transform_source` + `exec`:
-  `rest.__class__ is [].__class__` → `True` (raw list), while
-  `all(isinstance(e, Int) for e in rest)` → `True` and the plain target `c`
-  is a POOP `Int`. Same result for `a, *b = (1, 2, 3)` and
-  `first, *others = "xyz"`.
-- **Proposed fix:** add an `unpack` transformer whose `visit_Assign` (and
-  `visit_AnnAssign` is irrelevant — annotated targets cannot be starred)
-  detects `ast.Starred` anywhere in the target tree and appends one rebind
-  statement per starred name after the assignment, e.g.
-  `c, *rest = xs` → `c, *rest = xs; rest = _poop_list_from(rest)` (the
-  binding already exists: `_poop_list_from` in `poop/transformers/list.py:14`
-  accepts any iterable of POOP elements). For attribute/starred targets like
-  `a, *self.rest = xs`, emit the equivalent
-  `self.rest = _poop_list_from(self.rest)`. `visit_Assign` may return a
-  statement list, so the expansion is a plain `NodeTransformer`.
+**Decision + implemented:** added an `UnpackTransformer` (`poop/transformers/unpack.py`, registered in `DEFAULT_TRANSFORMERS`) whose `visit_Assign` detects `ast.Starred` anywhere in the target tree and appends `target = _poop_list_from(target)` per starred name after the assignment — handling nested (`a, (b, *inner) = …`) and attribute (`a, *self.rest = …`) targets. The starred rest-collection is now a POOP `List` instead of a raw `list`. Tests in `tests/test_transformers/test_unpack.py`; catalogued in INFECTIONS.md.
 
 ### ~~139. `*args` / `**kwargs` parameters bind a raw `tuple` / raw `dict` (with raw `str` keys)~~ — DONE
 
