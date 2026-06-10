@@ -142,24 +142,9 @@
 
 **Decision + implemented:** added a local `_wrap_number` helper in `poop/types/statistics.py` that re-wraps a raw `fractions.Fraction` as a POOP `Fraction` (falling back to `to_poop`), used in `mean`/`median`/`median_low`/`median_high`/`mode`/`multimode`. `statistics.mean` over POOP Fractions now answers a POOP `Fraction`. (Kept the fix local rather than touching the global `to_poop`.) Tests in `tests/test_types/test_statistics.py`. Proposal 130 extends `_wrap_number` to `Decimal`.
 
-### 130. `statistics` functions crash on `Decimal` data
+### ~~130. `statistics` functions crash on `Decimal` data~~ — DONE
 
-- **Where:** `poop/types/statistics.py:19-26` (`_to_number`), `poop/types/_bridge.py:56-84` (`to_poop` has no `decimal.Decimal` branch)
-- **Bug:** `_to_number` unwraps `Int`/`Float`/`Str`/`Fraction`/`Boolean` but passes `Decimal` wrappers through untouched, so every `statistics` function that goes through `_unwrap_data` feeds POOP `Decimal` objects to the stdlib. `mean`/`stdev`/`variance` blow up inside `statistics._sum` (the wrapper's `as_integer_ratio()` answers a POOP `Tuple` of `Int`s, which the stdlib then mixes with raw ints), `median` of an even-length dataset crashes averaging the two middle wrappers, and `fmean` rejects the wrapper outright. CPython supports `Decimal` data in all of these.
-- **Repro:**
-
-  ```python
-  statistics.mean(list(Decimal("1.5"), Decimal("2.5"))).print()
-  # poop: unsupported operand type(s) for +: 'int' and 'int'   (Python: 2)
-  statistics.stdev(list(Decimal("1"), Decimal("3"))).print()
-  # poop: unsupported operand type(s) for +=: 'int' and 'int'  (Python: 1.4142...)
-  statistics.median(list(Decimal("1"), Decimal("3"))).print()
-  # poop: 'int' object has no attribute '_impl'                (Python: 2)
-  statistics.fmean(list(Decimal("1.5"), Decimal("2.5"))).print()
-  # poop: must be real number, not Decimal                     (Python: 2.0)
-  ```
-
-- **Proposed fix:** add a `Decimal` branch to `_to_number` (`if isinstance(value, Decimal): return value._impl`), and add a `decimal.Decimal` branch to `to_poop` (`return Decimal._from_impl(value)` via a local import to dodge the cycle) so `mean`/`median`/`mode`, which return through `to_poop`, answer a POOP `Decimal` instead of a raw one. `stdev`/`variance`/`pstdev`/`pvariance` wrap results in `Float(...)`; route those through `to_poop` as well so Decimal-in gives Decimal-out, matching CPython.
+**Decision + implemented:** added a `Decimal` branch to `_to_number` (`return value._impl`) so the stdlib receives raw decimals, and a `decimal.Decimal` branch to the local `_wrap_number` helper so `mean`/`median`/`mode` answer a POOP `Decimal`. The spread functions (`stdev`/`variance`/`pstdev`/`pvariance`) route through a new `_wrap_spread` helper that answers `Decimal` for Decimal input and `Float` otherwise — preserving POOP's established Float convention for int/float spread results (kept the fix local to `statistics.py` rather than touching the global `to_poop`, whose CPython-natural typing would have changed `pvariance` of ints from `Float` to `Int`). Tests in `tests/test_types/test_statistics.py`.
 
 ### 131. `configparser` `fallback=None` answers corrupted wrappers — `getboolean` silently answers `false`
 

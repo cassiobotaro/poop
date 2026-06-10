@@ -32,6 +32,41 @@ def test_median_over_fractions_answers_fraction() -> None:
     assert isinstance(Statistics.median(data), Fraction)
 
 
+# Decimal data — proposal 130
+
+
+def test_mean_over_decimals_answers_decimal() -> None:
+    from poop.types.decimal import Decimal
+
+    data = List(Decimal(Str("1.5")), Decimal(Str("2.5")))
+    result = Statistics.mean(data)
+    assert isinstance(result, Decimal)
+    assert result == Decimal(Str("2"))
+
+
+def test_median_over_decimals_answers_decimal() -> None:
+    from poop.types.decimal import Decimal
+
+    data = List(Decimal(Str("1")), Decimal(Str("3")))
+    result = Statistics.median(data)
+    assert isinstance(result, Decimal)
+    assert result == Decimal(Str("2"))
+
+
+def test_stdev_over_decimals_answers_decimal() -> None:
+    from poop.types.decimal import Decimal
+
+    data = List(Decimal(Str("1")), Decimal(Str("3")))
+    assert isinstance(Statistics.stdev(data), Decimal)
+
+
+def test_fmean_over_decimals_answers_float() -> None:
+    from poop.types.decimal import Decimal
+
+    data = List(Decimal(Str("1.5")), Decimal(Str("2.5")))
+    assert Statistics.fmean(data) == Float(2.0)
+
+
 def test_fmean_returns_float() -> None:
     result = Statistics.fmean(List(Int(1), Int(2), Int(3)))
     assert isinstance(result, Float)
