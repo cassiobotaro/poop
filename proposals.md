@@ -1,29 +1,8 @@
 # Proposals
 
-### 115. `Int`/`Float` arithmetic raises `AttributeError` instead of returning `NotImplemented`, killing every reflected dunder
+### ~~115. `Int`/`Float` arithmetic raises `AttributeError` instead of returning `NotImplemented`, killing every reflected dunder~~ — DONE
 
-- **Where:** `poop/types/int.py:93-138` (`Int.__add__` / `__sub__` / `__mul__` / `__truediv__` / `__floordiv__` / `__mod__`), `poop/types/float.py:73-97` (same methods on `Float`)
-- **Bug:** the binary operators special-case `Complex` (returning `NotImplemented`) but for any other non-`Int`/`Float` operand they fall through to `other._value`, raising `AttributeError`. Python therefore never gets the chance to try the right operand's reflected dunder, so `Fraction.__radd__`, `NormalDist.__rmul__`, etc. — which the wrappers carefully define — are unreachable. The same expressions with the operands swapped work fine.
-- **Repro:**
-
-  ```python
-  (Fraction(1, 2) + 2).print()      # 5/2 — OK
-  (2 + Fraction(1, 2)).print()      # poop: 'Fraction' object has no attribute '_value'
-  (2.5 + Fraction(1, 2)).print()    # poop: 'Fraction' object has no attribute '_value'
-  (2 * NormalDist(0.0, 1.0)).print()  # poop: 'NormalDist' object has no attribute '_value'
-  ```
-
-  Real Python: `2 + Fraction(1, 2)` → `Fraction(5, 2)`, `2 * NormalDist(0.0, 1.0)` → `NormalDist(mu=0.0, sigma=2.0)`.
-- **Proposed fix:** in every `Int`/`Float` binary operator, return `NotImplemented` when the operand is not one of the known numeric wrappers, e.g.:
-
-  ```python
-  def __add__(self, other: Int | Float | Complex) -> Int | Float:
-      if isinstance(other, Complex):
-          return NotImplemented
-      if not isinstance(other, Int | Float):
-          return NotImplemented          # let other.__radd__ run
-      ...
-  ```
+**Decision + implemented:** the six binary operators (`__add__`/`__sub__`/`__mul__`/`__truediv__`/`__floordiv__`/`__mod__`) on `Int` (`poop/types/int.py`) and `Float` (`poop/types/float.py`) now guard with `if not isinstance(other, Int | Float): return NotImplemented`, so Python falls back to the right operand's reflected dunder. `2 + Fraction(1, 2)` → `Fraction(5, 2)`, `2 * NormalDist(...)` reaches `__rmul__`. This subsumes proposal 152 (`3 * "ab"` now answers `Str("ababab")` via `Str.__rmul__`). Tests in `tests/test_types/test_int.py` and `test_float.py`.
 
 ### 116. `TimeDelta + Date` answers a corrupted `TimeDelta` wrapping a `datetime.date`
 
@@ -932,21 +911,9 @@
 
 - **Proposed fix:** implement the real template method on `Str` — `def format(self, *args: Object, **kwargs: Object) -> Str` answering `Str(self._value.format(*map(to_python, args), **{k: to_python(v) for k, v in kwargs.items()}))` — matching CPython, where `str.format` *is* the template method. Other types keep `Object.format(spec)`; the rare "apply a spec to a string" case stays expressible through the template form (`"{:^10}".format(s)`).
 
-### 152. `3 * "ab"` silently fabricates a corrupted `Int` wrapping a `str`
+### ~~152. `3 * "ab"` silently fabricates a corrupted `Int` wrapping a `str`~~ — DONE
 
-- **Where:** `poop/types/int.py:111-118` (`Int.__mul__` falls through to `Int(self._value * other._value)` for any operand exposing `_value`), `poop/types/int.py:24-25` (the constructor stores the result unchecked)
-- **Bug:** entry 115 logs the `AttributeError` crash when the right operand *lacks* `_value` (`Fraction`, `NormalDist`); this is the worse sibling for operands that *have* `_value` but are not numbers. `3 * "ab"` (likewise `3 * b"ab"` and `bytearray`) computes raw `3 * "ab"` → `"ababab"` and stuffs it inside an `Int` shell: `class_name()` answers `int`, `print()` shows `ababab`, and the first arithmetic touch dies far from the faulty expression. No crash at the call site — a silently wrong, corrupted value flows on (the entry-116 failure mode, here on the core `Int`). CPython answers the `str` `'ababab'`, and the correct path already exists in POOP — `Str.__rmul__` (`poop/types/string.py:374`), `Bytes.__rmul__` (`poop/types/bytes.py:120`), `ByteArray.__rmul__` (`poop/types/byte_array.py:117`) — it is just shadowed by the fall-through.
-- **Repro:**
-
-  ```python
-  r = 3 * "ab"
-  r.class_name().print()   # int      (Python: str)
-  r.print()                # ababab — looks right, is a corrupted Int shell
-  (r + 1).print()
-  # poop: can only concatenate str (not "int") to str   (Python: TypeError too, but POOP corrupted r three lines earlier)
-  ```
-
-- **Proposed fix:** the entry-115 guard (`return NotImplemented` unless `isinstance(other, Int | Float)`) must land in `__mul__` as well — this entry pins down that the guard is needed even where no `AttributeError` occurs. With it, Python falls back to the wrappers' existing `__rmul__` and `3 * "ab"` answers `Str("ababab")`.
+**Decision + implemented:** fixed together with proposal 115 — `Int.__mul__` now returns `NotImplemented` for non-`Int`/`Float` operands, so `3 * "ab"` falls back to `Str.__rmul__` and answers `Str("ababab")` (likewise `Bytes`/`ByteArray`). Test `test_mul_by_str_repeats_via_str_rmul` in `tests/test_types/test_int.py`.
 
 ### 153. Lambda parameters bypass `no_namespace_shadow` — `def m(self, math)` is rejected, `lambda math: ...` is accepted
 

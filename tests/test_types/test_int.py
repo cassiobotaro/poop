@@ -72,6 +72,35 @@ def test_mod() -> None:
     assert Int(7) % Int(3) == Int(1)
 
 
+def test_arithmetic_returns_notimplemented_for_foreign_operand() -> None:
+    # A non-Int/Float operand must yield NotImplemented so Python can try the
+    # right operand's reflected dunder (proposal 115).
+    from poop.types.fractions import Fraction
+
+    f = Fraction(Int(1), Int(2))
+    assert Int(2).__add__(f) is NotImplemented
+    assert Int(2).__sub__(f) is NotImplemented
+    assert Int(2).__mul__(f) is NotImplemented
+    assert Int(2).__truediv__(f) is NotImplemented
+    assert Int(2).__floordiv__(f) is NotImplemented
+    assert Int(2).__mod__(f) is NotImplemented
+
+
+def test_reflected_add_reaches_fraction_radd() -> None:
+    from poop.types.fractions import Fraction
+
+    assert Int(2) + Fraction(Int(1), Int(2)) == Fraction(Int(5), Int(2))
+
+
+def test_mul_by_str_repeats_via_str_rmul() -> None:
+    # proposal 152: 3 * "ab" must answer Str("ababab"), not a corrupted Int.
+    assert Int(3) * Str("ab") == Str("ababab")
+
+
+def test_mul_by_str_is_notimplemented() -> None:
+    assert Int(3).__mul__(Str("ab")) is NotImplemented
+
+
 def test_pow() -> None:
     assert Int(2) ** Int(10) == Int(1024)
 
