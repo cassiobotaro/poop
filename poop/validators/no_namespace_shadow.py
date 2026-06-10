@@ -64,6 +64,13 @@ class _Visitor(ast.NodeVisitor):
         self._check_args(node.args)
         self.generic_visit(node)
 
+    def visit_Lambda(self, node: ast.Lambda) -> None:
+        # Lambdas are POOP's block form and carry most user code, so the
+        # same shadowing hazard the def check guards against applies here
+        # too (`lambda math: math.sqrt(2)` silently shadows the namespace).
+        self._check_args(node.args)
+        self.generic_visit(node)
+
 
 class NoNamespaceShadowValidator:
     def __init__(self) -> None:

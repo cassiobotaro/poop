@@ -478,28 +478,9 @@
 
 **Decision + implemented:** fixed together with proposal 115 — `Int.__mul__` now returns `NotImplemented` for non-`Int`/`Float` operands, so `3 * "ab"` falls back to `Str.__rmul__` and answers `Str("ababab")` (likewise `Bytes`/`ByteArray`). Test `test_mul_by_str_repeats_via_str_rmul` in `tests/test_types/test_int.py`.
 
-### 153. Lambda parameters bypass `no_namespace_shadow` — `def m(self, math)` is rejected, `lambda math: ...` is accepted
+### ~~153. Lambda parameters bypass `no_namespace_shadow` — `def m(self, math)` is rejected, `lambda math: ...` is accepted~~ — DONE
 
-- **Where:** `poop/validators/no_namespace_shadow.py:46-66` (`_check_args` is called from `visit_FunctionDef` / `visit_AsyncFunctionDef` only; the visitor has no `visit_Lambda`)
-- **Bug:** the validator's own comment spells out the hazard — "a parameter named after a namespace binding shadows it inside the body … fails in confusing ways" — and rejects the `def` form, but every lambda slips through with the exact same hazard. Since lambdas are POOP's block form (wrapped into `Block` by the block transformer) and carry most user code, the unchecked form is the *more* common one. Distinct from entry 146 (rewritten builtin names like `dict` as parameters — a transformer corruption) and entry 141 (imports): this is the namespace-binding validator missing one binding form it was built to police.
-- **Repro:**
-
-  ```python
-  f = lambda math: math.sqrt(2)
-  f(4).print()
-  # poop: 'int' object has no attribute 'sqrt' (line 1)
-  # while the def spelling is caught at validation time:
-  #   def m(self, math): ...
-  #   poop: 'math' is a POOP namespace binding; reassigning it shadows the runtime entry point
-  ```
-
-- **Proposed fix:** add to `_Visitor`:
-
-  ```python
-  def visit_Lambda(self, node: ast.Lambda) -> None:
-      self._check_args(node.args)
-      self.generic_visit(node)
-  ```
+**Decision + implemented:** added `visit_Lambda` to `_Visitor` (`poop/validators/no_namespace_shadow.py`), calling the existing `_check_args`, so a lambda parameter named after a namespace binding (`lambda math: math.sqrt(2)`) is rejected at validation time like the `def` form. Lambdas are POOP's block form and carry most user code, so this was the more common unchecked path. Tests in `tests/test_validators/test_no_namespace_shadow.py`.
 
 ### ~~154. `int(True)` / `float(True)` reject Boolean — and the diagnostic leaks the internal `_TrueClass` name~~ — DONE
 

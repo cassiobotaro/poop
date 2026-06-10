@@ -115,6 +115,25 @@ def test_vararg_with_protected_name_raises() -> None:
         NoNamespaceShadowValidator().validate(tree)
 
 
+def test_lambda_parameter_with_protected_name_raises() -> None:
+    # proposal 153: lambdas (POOP's block form) carry most user code, so
+    # the shadowing hazard applies to them too.
+    tree = ast.parse("f = lambda math: math")
+    with pytest.raises(ValidationError, match="POOP namespace"):
+        NoNamespaceShadowValidator().validate(tree)
+
+
+def test_lambda_vararg_with_protected_name_raises() -> None:
+    tree = ast.parse("f = lambda *json: json")
+    with pytest.raises(ValidationError, match="POOP namespace"):
+        NoNamespaceShadowValidator().validate(tree)
+
+
+def test_lambda_ordinary_parameter_passes() -> None:
+    tree = ast.parse("f = lambda x: x")
+    NoNamespaceShadowValidator().validate(tree)
+
+
 def test_ordinary_parameters_pass() -> None:
     tree = ast.parse("class Foo:\n    def m(self, value, other):\n        return value")
     NoNamespaceShadowValidator().validate(tree)
