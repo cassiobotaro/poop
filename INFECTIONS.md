@@ -1703,7 +1703,10 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 | `ReprEnum` | enum class (re-exported) | requires a data-type mixin (`class Color(int, ReprEnum): ...`); `.name`/`.value` stay raw Python types in this path |
 | `auto()` | sentinel | for sequential value generation inside an enum body |
 | `enum.unique` / `verify` / `member` / `nonmember` (class attrs) | decorators | apply directly on enum classes |
+| `enum.global_enum` / `pickle_by_enum_name` / `pickle_by_global_name` (class attrs) | decorators | module-level repr / pickling policy, re-exported from CPython |
+| `enum.property` (class attr) | descriptor | enum-specific `@property` that coexists with member names |
 | `enum.CONTINUOUS` / `NAMED_FLAGS` / `UNIQUE` (class attrs) | constants | for `@verify` |
+| `enum.STRICT` / `CONFORM` / `EJECT` / `KEEP` (class attrs) | constants | `Flag` boundary policies (`boundary=` kwarg) |
 
 `EnumType` metaclass access is out of scope (POOP forbids introspection).
 
