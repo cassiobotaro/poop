@@ -15,6 +15,23 @@ def test_mean_simple() -> None:
     assert Statistics.mean(List(Int(1), Int(2), Int(3), Int(4))) == Float(2.5)
 
 
+def test_mean_over_fractions_answers_fraction() -> None:
+    # proposal 129: exact-rational input must not leak a raw Fraction.
+    from poop.types.fractions import Fraction
+
+    data = List(Fraction(Str("1/4")), Fraction(Str("1/2")), Fraction(Str("3/4")))
+    result = Statistics.mean(data)
+    assert isinstance(result, Fraction)
+    assert result == Fraction(Int(1), Int(2))
+
+
+def test_median_over_fractions_answers_fraction() -> None:
+    from poop.types.fractions import Fraction
+
+    data = List(Fraction(Str("1/4")), Fraction(Str("1/2")), Fraction(Str("3/4")))
+    assert isinstance(Statistics.median(data), Fraction)
+
+
 def test_fmean_returns_float() -> None:
     result = Statistics.fmean(List(Int(1), Int(2), Int(3)))
     assert isinstance(result, Float)

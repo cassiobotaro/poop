@@ -138,45 +138,9 @@
 
 **Decision + implemented:** `CFFuture.exception(timeout)` (`poop/types/concurrent.py`) now answers `none` or `Error(result)` (importing `Error` from `poop.types.error`) instead of routing a `BaseException` through `to_poop`. Tests in `tests/test_types/test_concurrent.py`.
 
-### 129. `statistics` central-tendency functions leak raw `fractions.Fraction`
+### ~~129. `statistics` central-tendency functions leak raw `fractions.Fraction`~~ — DONE
 
-- **Where:** `poop/types/statistics.py:164` (`mean`), `:192` (`median`),
-  `:196` (`median_low`), `:200` (`median_high`), `:215` (`mode`); root cause
-  in `_to_number` (`:19`), which unwraps POOP `Fraction` to its raw
-  `fractions.Fraction` impl.
-- **Leak:** `_unwrap_data` converts POOP `Fraction` elements to raw
-  `fractions.Fraction` so the stdlib can do exact arithmetic, but the result
-  is re-wrapped with `to_poop`, which has no `fractions.Fraction` branch —
-  the raw stdlib `Fraction` escapes to user space. Exact-rational data is the
-  documented reason CPython's `statistics.mean` supports `Fraction` input, so
-  this is a mainline path, not an exotic one. (`Decimal` data does not leak:
-  `_to_number` passes the POOP wrapper through, so `median` answers the POOP
-  `Decimal`; `mean` over Decimals raises instead — a separate, non-leak bug.)
-- **Evidence:** e2e POOP program (`uv run python main.py /tmp/poop_stats_leak.py`):
-
-  ```python
-  data = list(Fraction("1/4"), Fraction("1/2"), Fraction("3/4"))
-  m = statistics.mean(data)
-  m.class_name().print()
-  ```
-
-  Output: `poop: 'Fraction' object has no attribute 'class_name' (line 3)`.
-  Direct probe: `Statistics.mean(...)`, `Statistics.median(...)`, and
-  `Statistics.mode(...)` over POOP Fractions all answer
-  `<class 'fractions.Fraction'>`.
-- **Proposed fix:** add a local re-wrap helper and use it instead of bare
-  `to_poop` in `mean` / `median` / `median_low` / `median_high` / `mode`
-  (and for `multimode` elements, which take the same `to_poop` path):
-
-  ```python
-  def _wrap_number(value: Any) -> Any:
-      if isinstance(value, _fractions.Fraction):
-          return Fraction._from_impl(value)
-      return to_poop(value)
-  ```
-
-  (`poop/types/fractions.py` already exposes `_from_impl` via
-  `_ImplWrapperMixin`; `import fractions as _fractions` at top.)
+**Decision + implemented:** added a local `_wrap_number` helper in `poop/types/statistics.py` that re-wraps a raw `fractions.Fraction` as a POOP `Fraction` (falling back to `to_poop`), used in `mean`/`median`/`median_low`/`median_high`/`mode`/`multimode`. `statistics.mean` over POOP Fractions now answers a POOP `Fraction`. (Kept the fix local rather than touching the global `to_poop`.) Tests in `tests/test_types/test_statistics.py`. Proposal 130 extends `_wrap_number` to `Decimal`.
 
 ### 130. `statistics` functions crash on `Decimal` data
 

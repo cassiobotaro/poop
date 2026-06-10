@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fractions as _fractions
 import statistics as _statistics
 from typing import Any, ClassVar
 
@@ -24,6 +25,14 @@ def _to_number(value: Object) -> Any:
     if isinstance(value, Boolean):
         return bool(value)
     return value
+
+
+def _wrap_number(value: Any) -> Any:
+    """Re-wrap a stdlib result, including the exact-rational/decimal
+    types `to_poop` has no branch for (they would otherwise leak raw)."""
+    if isinstance(value, _fractions.Fraction):
+        return Fraction._from_impl(value)
+    return to_poop(value)
 
 
 def _unwrap_data(data: List | Tuple) -> list[Any]:
@@ -162,7 +171,7 @@ class Statistics:
 
     @staticmethod
     def mean(data: List | Tuple) -> Any:
-        return to_poop(_statistics.mean(_unwrap_data(data)))
+        return _wrap_number(_statistics.mean(_unwrap_data(data)))
 
     @staticmethod
     def fmean(
@@ -190,15 +199,15 @@ class Statistics:
 
     @staticmethod
     def median(data: List | Tuple) -> Any:
-        return to_poop(_statistics.median(_unwrap_data(data)))
+        return _wrap_number(_statistics.median(_unwrap_data(data)))
 
     @staticmethod
     def median_low(data: List | Tuple) -> Any:
-        return to_poop(_statistics.median_low(_unwrap_data(data)))
+        return _wrap_number(_statistics.median_low(_unwrap_data(data)))
 
     @staticmethod
     def median_high(data: List | Tuple) -> Any:
-        return to_poop(_statistics.median_high(_unwrap_data(data)))
+        return _wrap_number(_statistics.median_high(_unwrap_data(data)))
 
     @staticmethod
     def median_grouped(
@@ -213,11 +222,13 @@ class Statistics:
 
     @staticmethod
     def mode(data: List | Tuple) -> Any:
-        return to_poop(_statistics.mode(_unwrap_data(data)))
+        return _wrap_number(_statistics.mode(_unwrap_data(data)))
 
     @staticmethod
     def multimode(data: List | Tuple) -> List:
-        return List(*(to_poop(v) for v in _statistics.multimode(_unwrap_data(data))))
+        return List(
+            *(_wrap_number(v) for v in _statistics.multimode(_unwrap_data(data)))
+        )
 
     # Spread -------------------------------------------------------------
 
