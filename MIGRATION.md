@@ -482,13 +482,13 @@ name = errno.errorcode.at(exc.errno)
 import getpass
 
 user = getpass.getuser()
-pwd = getpass.getpass("Password: ")
+password = getpass.getpass("Password: ")
 ```
 
 ```python
 # POOP
 user = getpass.getuser()
-pwd = getpass.getpass("Password: ")
+password = getpass.getpass("Password: ")
 ```
 
 > Both `getpass.getuser()` and `getpass.getpass(prompt)` return POOP `Str`. `getpass.GetPassWarning` is not exposed in POOP — the underlying CPython call still emits it to stderr, but POOP has no warning model to catch it.
@@ -740,10 +740,10 @@ votes = collections.Counter("aabbb")
 top = votes.most_common(1)
 count_a = votes["a"]
 
-queue = collections.deque(maxlen=10)
-queue.append(job)
-queue.appendleft(urgent)
-nxt = queue.popleft()
+jobs = collections.deque(maxlen=10)
+jobs.append(job)
+jobs.appendleft(urgent)
+nxt = jobs.popleft()
 
 groups = collections.defaultdict(list)
 groups["new"].append("ana")
@@ -765,10 +765,10 @@ votes = Counter("aabbb")           # or collections.Counter(...)
 top = votes.most_common(1)
 count_a = votes.at("a")
 
-queue = deque(maxlen=10)           # or collections.deque(...)
-queue.append(job)
-queue.appendleft(urgent)
-nxt = queue.popleft()
+jobs = deque(maxlen=10)            # or collections.deque(...)
+jobs.append(job)
+jobs.appendleft(urgent)
+nxt = jobs.popleft()
 
 groups = defaultdict(lambda: List())
 groups.at("new").append("ana")
