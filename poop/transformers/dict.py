@@ -21,6 +21,15 @@ def _poop_dict_from_pairs(*pairs: Object) -> Dict:
     return d
 
 
+def _poop_dict_from_kwargs(raw: dict[str, Object]) -> Dict:
+    """Wrap a `**kwargs` parameter (a raw `dict` with `str` keys, POOP
+    values) as a POOP `Dict` with `Str` keys."""
+    d = Dict()
+    for k, v in raw.items():
+        d._data[Str(k)] = v
+    return d
+
+
 def _poop_dict_merge(*parts: Dict) -> Dict:
     """Merge POOP `Dict`s left to right for a `{**a, **b, ...}` display.
 
@@ -141,4 +150,5 @@ class DictTransformer(BaseTransformer):
         "_poop_dict_from_pairs": _poop_dict_from_pairs,
         "_poop_dict_from": _poop_dict_from,
         "_poop_dict_merge": _poop_dict_merge,
+        "_poop_dict_from_kwargs": _poop_dict_from_kwargs,
     }

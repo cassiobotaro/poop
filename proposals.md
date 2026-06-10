@@ -149,42 +149,9 @@
   `self.rest = _poop_list_from(self.rest)`. `visit_Assign` may return a
   statement list, so the expansion is a plain `NodeTransformer`.
 
-### 139. `*args` / `**kwargs` parameters bind a raw `tuple` / raw `dict` (with raw `str` keys)
+### ~~139. `*args` / `**kwargs` parameters bind a raw `tuple` / raw `dict` (with raw `str` keys)~~ — DONE
 
-- **Where:** transformer layer — `poop/transformers/class_.py:9` rewrites
-  only `ClassDef` bases; method signatures are untouched, so CPython's call
-  machinery packs variadic parameters natively inside `exec`
-  (`poop/executor.py:37`). `poop/validators/no_namespace_shadow.py` already
-  validates `vararg`/`kwarg` names, so the syntax is sanctioned.
-- **Leak:** inside a user method `def m(self, *args, **kw):`, `args` is a
-  raw `builtins.tuple` and `kw` a raw `builtins.dict` whose keys are raw
-  `str` (the values are POOP — they come from the transformed call site).
-  Every POOP message on either container crashes.
-- **Evidence:** e2e (`uv run python main.py /tmp/poop_varargs.py`):
-
-  ```python
-  class Calc:
-      def total(self, *args):
-          args.print()
-
-  Calc().total(1, 2, 3)
-  # poop: 'tuple' object has no attribute 'print' (line 3)
-  ```
-
-  Same for `**opts`: `poop: 'dict' object has no attribute 'print'`.
-  Identity probe: `o.a.__class__ is (1,).__class__` → `True`,
-  `o.k.__class__ is {}.__class__` → `True`, and every key satisfies
-  `k.__class__ is "".__class__`.
-- **Proposed fix:** in a signature transformer (same pass as the fix above,
-  or a sibling), for every `FunctionDef`/`AsyncFunctionDef` with
-  `args.vararg`/`args.kwarg`, inject a prologue as the first body
-  statements: `args = _poop_tuple_from(args)` and
-  `kw = _poop_dict_from_kwargs(kw)` — `_poop_tuple_from` already exists
-  (`poop/transformers/tuple.py`); add a tiny `_poop_dict_from_kwargs(d)`
-  binding that builds a `Dict` mapping `Str(k) → v`. Lambdas with variadic
-  parameters need the nested-lambda form
-  (`lambda *xs: body` → `lambda *xs: (lambda xs: body)(_poop_tuple_from(xs))`)
-  since a prologue cannot be inserted into an expression body.
+**Decision + implemented:** added a `VarargsTransformer` (`poop/transformers/varargs.py`, registered in `DEFAULT_TRANSFORMERS`). For every `FunctionDef`/`AsyncFunctionDef` with `args.vararg`/`args.kwarg` it injects a prologue (`args = _poop_tuple_from(args)`, `kw = _poop_dict_from_kwargs(kw)`); variadic lambdas wrap their body in a nested lambda receiving the converted values. `args` is now a POOP `Tuple`, `kw` a POOP `Dict` with `Str` keys. Added a `_poop_dict_from_kwargs` binding to the dict transformer (`_poop_tuple_from` already existed). Tests in `tests/test_transformers/test_varargs.py`; catalogued in INFECTIONS.md.
 
 ### ~~140. User methods without an explicit `return` answer raw Python `None`, not POOP `none`~~ — DONE
 

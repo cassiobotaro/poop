@@ -108,6 +108,7 @@ from poop.transformers.unicodedata import NAMESPACE as _unicodedata_namespace
 from poop.transformers.unittest import NAMESPACE as _unittest_namespace
 from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.uuid import NAMESPACE as _uuid_namespace
+from poop.transformers.varargs import VarargsTransformer
 from poop.transformers.weakref import NAMESPACE as _weakref_namespace
 from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
@@ -139,6 +140,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     ClassTransformer(),
     ReturnTransformer(),
     BlockTransformer(),
+    VarargsTransformer(),
     SliceTransformer(),
 ]
 # Bindings sourced from class-based transformers (PascalCase types
