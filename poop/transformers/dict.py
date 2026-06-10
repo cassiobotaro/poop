@@ -24,7 +24,7 @@ def _poop_dict_from(arg: object = None) -> Dict:
     if arg is None:
         return Dict()
     if isinstance(arg, Dict):
-        return arg
+        return arg.copy()
     if isinstance(arg, Iterable):
         d = Dict()
         for item in cast("Iterable[Object]", arg):

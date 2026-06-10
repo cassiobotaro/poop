@@ -84,10 +84,14 @@ def test_dict_from_no_arg_returns_empty() -> None:
     assert result == Dict()
 
 
-def test_dict_from_dict_returns_same() -> None:
+def test_dict_from_dict_returns_shallow_copy() -> None:
     d = Dict()
     d._data[Str("x")] = Int(1)
-    assert _poop_dict_from(d) is d
+    result = _poop_dict_from(d)
+    assert result == d
+    assert result is not d
+    result._data[Str("y")] = Int(2)
+    assert Str("y") not in d._data
 
 
 def test_dict_from_list_of_tuples() -> None:
