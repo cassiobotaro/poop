@@ -198,7 +198,8 @@ def test_register_and_unregister_dialect() -> None:
 
 def test_get_dialect_existing() -> None:
     d = CSV.get_dialect(Str("excel"))
-    assert d is not None
+    assert isinstance(d, Dialect)
+    assert d.delimiter == Str(",")
 
 
 def test_field_size_limit_read_only() -> None:

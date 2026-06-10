@@ -285,6 +285,11 @@ class Sniffer(Object):
         return to_boolean(self._impl.has_header(sample._value))
 
 
+# Inside the CSV class body the `Dialect` ClassVar (the re-exported
+# CPython class) shadows the POOP wrapper's name.
+_Dialect = Dialect
+
+
 class CSV:
     """Namespace mirroring Python's `csv` module.
 
@@ -333,8 +338,8 @@ class CSV:
         return List(*(Str(n) for n in _csv.list_dialects()))
 
     @staticmethod
-    def get_dialect(name: Str) -> Any:
-        return _csv.get_dialect(name._value)
+    def get_dialect(name: Str) -> _Dialect:
+        return _Dialect(_csv.get_dialect(name._value))
 
     @staticmethod
     def register_dialect(
