@@ -78,6 +78,34 @@ def test_gather_return_exceptions_wraps_errors() -> None:
     assert error.kind() == Str("ValueError")
 
 
+def test_task_exception_wraps_failure_as_error() -> None:
+    # proposal 127: an inspected task failure answers an Error, not the
+    # raw Python exception.
+    async def boom() -> int:
+        raise ValueError("nope")
+
+    async def caller() -> object:
+        task = AsyncIO.create_task(boom())
+        await AsyncIO.sleep(Float(0.01))
+        return task.exception()
+
+    error = AsyncIO.run(caller())
+    assert isinstance(error, Error)
+    assert error.kind() == Str("ValueError")
+    assert error.message() == Str("nope")
+
+
+def test_task_exception_none_on_success() -> None:
+    from poop.types.none import none
+
+    async def caller() -> object:
+        task = AsyncIO.create_task(_coro_sleep_then_return(5))
+        await AsyncIO.sleep(Float(0.01))
+        return task.exception()
+
+    assert AsyncIO.run(caller()) is none
+
+
 def test_wait_for_completes() -> None:
     async def caller() -> int:
         return await AsyncIO.wait_for(_coro_sleep_then_return(5), Float(1.0))

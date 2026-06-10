@@ -5,6 +5,7 @@ from typing import Any, ClassVar, Self
 
 from poop.types._unwrap import _kwargs_from, _opt_timeout
 from poop.types.boolean import Boolean, to_boolean
+from poop.types.error import Error
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -28,10 +29,10 @@ class CFFuture(Object):
         return to_poop(self._impl.result(_opt_timeout(timeout)))
 
     def exception(self, timeout: Float | Int | None = None) -> Object:
-        from poop.types._bridge import to_poop
-
+        # none when there is no exception, Error otherwise — to_poop has
+        # no BaseException branch, so it would leak the raw exception.
         result = self._impl.exception(_opt_timeout(timeout))
-        return none if result is None else to_poop(result)
+        return none if result is None else Error(result)
 
     def cancel(self) -> Boolean:
         return to_boolean(self._impl.cancel())

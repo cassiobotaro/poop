@@ -130,76 +130,13 @@
 
 **Decision + implemented:** added a shared `_StrReprMixin` in `poop/types/datetime.py` (`__str__` delegating to `str(self._impl)`, `__repr__ = __str__`) and mixed it into all five wrappers (`TimeDelta`, `TimeZone`, `Date`, `Time`, `DateTime`). `.print()` now shows `2024-01-01` / `1 day, 2:00:00` / `UTC`. Tests in `tests/test_types/test_datetime.py`.
 
-### 127. asyncio `Future.exception()` answers the raw Python exception
+### ~~127. asyncio `Future.exception()` answers the raw Python exception~~ — DONE
 
-- **Where:** `poop/types/asyncio.py:46`
-- **Leak:** `Future.exception()` returns `to_poop(self._impl.exception())`, and
-  `to_poop` has no branch for `BaseException` — the raw Python exception
-  instance falls through to user space. This is inconsistent with the
-  surrounding design: `asyncio.gather` (same file, line 89) wraps exceptions as
-  `Error` precisely to "mirror what Try hands to handlers", and `Try.except_`
-  handlers receive `Error`. A task's failure inspected via `.exception()` is
-  the one asyncio path that still hands back the naked exception, so
-  `.message()` / `.kind()` / `.class_name()` all blow up on it.
-- **Evidence:** e2e POOP program (`uv run python main.py /tmp/poop_aio_leak.py`):
+**Decision + implemented:** `Future.exception()` (`poop/types/asyncio.py`) now answers `none` when there is no exception and `Error(result)` otherwise, mirroring the `gather` contract instead of leaking the raw `BaseException` through `to_poop`. Tests in `tests/test_types/test_asyncio.py`.
 
-  ```python
-  class App:
-      async def boom(self):
-          ValueError.raise_("nope")
+### ~~128. concurrent `CFFuture.exception()` answers the raw Python exception~~ — DONE
 
-      async def main(self):
-          t = asyncio.create_task(self.boom())
-          await asyncio.sleep(0.01)
-          return t.exception()
-
-
-  e = asyncio.run(App().main())
-  e.class_name().print()
-  ```
-
-  Output: `poop: 'ValueError' object has no attribute 'class_name' (line 12)`.
-  Direct probe confirms `type(t.exception())` is `<class 'ValueError'>`, not
-  `Error`.
-- **Proposed fix:** mirror the gather contract — `none` when there is no
-  exception, `Error` otherwise:
-
-  ```python
-  def exception(self) -> Object:
-      result = self._impl.exception()
-      return none if result is None else Error(result)
-  ```
-
-  (`Error` is already imported in `poop/types/asyncio.py` for gather.)
-
-### 128. concurrent `CFFuture.exception()` answers the raw Python exception
-
-- **Where:** `poop/types/concurrent.py:30`
-- **Leak:** same pattern as the asyncio twin: `CFFuture.exception(timeout)`
-  returns `none if result is None else to_poop(result)`, and `to_poop` passes
-  `BaseException` instances through raw. A failed `executor.submit(...)`
-  future hands the naked Python exception to user code instead of `Error`.
-- **Evidence:** e2e POOP program (`uv run python main.py /tmp/poop_cf_leak.py`):
-
-  ```python
-  ex = ThreadPoolExecutor()
-  f = ex.submit(lambda: ValueError.raise_("kaput"))
-  e = f.exception()
-  e.class_name().print()
-  ```
-
-  Output: `poop: 'ValueError' object has no attribute 'class_name' (line 4)`.
-  Direct probe confirms `type(f.exception())` is `<class 'ValueError'>`.
-- **Proposed fix:**
-
-  ```python
-  def exception(self, timeout: Float | Int | None = None) -> Object:
-      result = self._impl.exception(_opt_timeout(timeout))
-      return none if result is None else Error(result)
-  ```
-
-  (import `Error` from `poop.types.error`; the `to_poop` local import and
-  its `none`-check dance go away.)
+**Decision + implemented:** `CFFuture.exception(timeout)` (`poop/types/concurrent.py`) now answers `none` or `Error(result)` (importing `Error` from `poop.types.error`) instead of routing a `BaseException` through `to_poop`. Tests in `tests/test_types/test_concurrent.py`.
 
 ### 129. `statistics` central-tendency functions leak raw `fractions.Fraction`
 
