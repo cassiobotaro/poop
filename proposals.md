@@ -4,22 +4,9 @@
 
 **Decision + implemented:** the six binary operators (`__add__`/`__sub__`/`__mul__`/`__truediv__`/`__floordiv__`/`__mod__`) on `Int` (`poop/types/int.py`) and `Float` (`poop/types/float.py`) now guard with `if not isinstance(other, Int | Float): return NotImplemented`, so Python falls back to the right operand's reflected dunder. `2 + Fraction(1, 2)` → `Fraction(5, 2)`, `2 * NormalDist(...)` reaches `__rmul__`. This subsumes proposal 152 (`3 * "ab"` now answers `Str("ababab")` via `Str.__rmul__`). Tests in `tests/test_types/test_int.py` and `test_float.py`.
 
-### 116. `TimeDelta + Date` answers a corrupted `TimeDelta` wrapping a `datetime.date`
+### ~~116. `TimeDelta + Date` answers a corrupted `TimeDelta` wrapping a `datetime.date`~~ — DONE
 
-- **Where:** `poop/types/datetime.py:68-72` (`TimeDelta.__add__` / `__sub__`), also `poop/types/datetime.py:74` (`TimeDelta.__mul__` has no `__rmul__` counterpart)
-- **Bug:** `TimeDelta.__add__` is typed `other: TimeDelta` but never checks; it computes `self._impl + other._impl` and unconditionally wraps the result with `TimeDelta._from_impl`. With a `Date`/`DateTime` right operand the stdlib returns a `date`/`datetime`, which gets stuffed inside a `TimeDelta` shell — `class_name()` answers `TimeDelta` but every accessor explodes. Real Python answers a `date`. Relatedly, `2 * TimeDelta(days=1)` (valid in Python, `timedelta` defines `__rmul__`) crashes because `TimeDelta` has no `__rmul__`.
-- **Repro:**
-
-  ```python
-  r = TimeDelta(days=1) + Date(2024, 1, 1)
-  r.class_name().print()   # TimeDelta  (Python: date 2024-01-02)
-  r.days.print()           # poop: 'datetime.date' object has no attribute 'days'
-
-  (2 * TimeDelta(days=1)).days.print()
-  # poop: 'TimeDelta' object has no attribute '_value'  (Python: 2)
-  ```
-
-- **Proposed fix:** in `TimeDelta.__add__`/`__sub__`, `isinstance`-check the operand: return `Date._from_impl(...)`/`DateTime._from_impl(...)` for date-like operands (or return `NotImplemented` and rely on `Date.__radd__`); add `__rmul__ = __mul__` (and `__radd__` for `Date`/`DateTime` symmetry) so reflected forms work once the `Int`/`Float` operators yield `NotImplemented`.
+**Decision + implemented:** `TimeDelta.__add__`/`__sub__` now return `NotImplemented` for non-`TimeDelta` operands, and `Date`/`DateTime` gained an `__radd__` (delegating to `__add__`), so `TimeDelta + Date` answers a `Date` (and `+ DateTime` a `DateTime`) via reflected dispatch. Added `TimeDelta.__rmul__ = __mul__` so `2 * TimeDelta(...)` works (reachable now that proposal 115's `Int.__mul__` yields `NotImplemented`). Tests in `tests/test_types/test_datetime.py`.
 
 ### ~~117. `Date`, `Time`, and `TimeDelta` cannot be ordered (`<` crashes)~~ — DONE
 

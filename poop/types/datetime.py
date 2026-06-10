@@ -109,14 +109,24 @@ class TimeDelta(
     def total_seconds(self) -> Float:
         return Float(self._impl.total_seconds())
 
-    def __add__(self, other: TimeDelta) -> TimeDelta:
+    def __add__(self, other: object) -> TimeDelta:
+        # Only timedelta + timedelta is a TimeDelta. For Date/DateTime
+        # operands return NotImplemented so their __radd__ answers a
+        # Date/DateTime instead of a corrupted TimeDelta shell.
+        if not isinstance(other, TimeDelta):
+            return NotImplemented
         return TimeDelta._from_impl(self._impl + other._impl)
 
-    def __sub__(self, other: TimeDelta) -> TimeDelta:
+    def __sub__(self, other: object) -> TimeDelta:
+        if not isinstance(other, TimeDelta):
+            return NotImplemented
         return TimeDelta._from_impl(self._impl - other._impl)
 
     def __mul__(self, other: Int | Float) -> TimeDelta:
         return TimeDelta._from_impl(self._impl * other._value)
+
+    # timedelta * n and n * timedelta are both valid in Python.
+    __rmul__ = __mul__
 
     def __truediv__(self, other: Int | Float | TimeDelta) -> TimeDelta | Float:
         if isinstance(other, TimeDelta):
@@ -301,6 +311,11 @@ class Date(
 
     def __add__(self, other: TimeDelta) -> Date:
         return Date._from_impl(self._impl + other._impl)
+
+    # Reached when a TimeDelta is on the left (timedelta + date); date
+    # addition commutes, so reuse __add__.
+    def __radd__(self, other: TimeDelta) -> Date:
+        return self.__add__(other)
 
     def __sub__(self, other: Date | TimeDelta) -> Date | TimeDelta:
         if isinstance(other, TimeDelta):
@@ -498,6 +513,10 @@ class DateTime(
 
     def __add__(self, other: TimeDelta) -> DateTime:
         return DateTime._from_impl(self._impl + other._impl)
+
+    # Reached when a TimeDelta is on the left (timedelta + datetime).
+    def __radd__(self, other: TimeDelta) -> DateTime:
+        return self.__add__(other)
 
     def __sub__(self, other: DateTime | TimeDelta) -> DateTime | TimeDelta:
         if isinstance(other, TimeDelta):

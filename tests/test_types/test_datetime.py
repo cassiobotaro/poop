@@ -382,6 +382,32 @@ def test_repr_delegates_to_str() -> None:
     assert repr(TimeDelta(days=Int(1))) == "1 day, 0:00:00"
 
 
+# reflected timedelta arithmetic — proposal 116
+
+
+def test_timedelta_plus_date_answers_date() -> None:
+    r = TimeDelta(days=Int(1)) + Date(Int(2024), Int(1), Int(1))
+    assert isinstance(r, Date)
+    assert r == Date(Int(2024), Int(1), Int(2))
+
+
+def test_timedelta_plus_datetime_answers_datetime() -> None:
+    r = TimeDelta(hours=Int(1)) + DateTime(Int(2024), Int(1), Int(1))
+    assert isinstance(r, DateTime)
+    assert r == DateTime(Int(2024), Int(1), Int(1), Int(1))
+
+
+def test_int_times_timedelta_via_rmul() -> None:
+    r = Int(2) * TimeDelta(days=Int(1))
+    assert isinstance(r, TimeDelta)
+    assert r.days == Int(2)
+
+
+def test_timedelta_add_foreign_is_notimplemented() -> None:
+    assert TimeDelta(days=Int(1)).__add__(Int(1)) is NotImplemented
+    assert TimeDelta(days=Int(1)).__sub__(Int(1)) is NotImplemented
+
+
 # ordering — proposal 117
 
 
