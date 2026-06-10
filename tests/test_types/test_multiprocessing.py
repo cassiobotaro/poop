@@ -10,6 +10,7 @@ interacts badly with the pytest collector.
 
 from poop.interpreter import Interpreter
 from poop.types.boolean import Boolean, true
+from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.multiprocessing import MPQueue, Multiprocessing, Pool, Process
@@ -73,6 +74,21 @@ def test_mpqueue_constructs_with_maxsize() -> None:
     q = MPQueue(Int(5))
     try:
         assert isinstance(q, MPQueue)
+    finally:
+        q.close()
+
+
+def test_mpqueue_put_get_roundtrips_poop_value() -> None:
+    # proposal 134: a POOP value must survive put/get (it crashed the
+    # feeder's pickling and deadlocked get() before).
+    q = MPQueue()
+    try:
+        q.put(Int(1))
+        assert q.get(timeout=Float(5.0)) == Int(1)
+        q.put(Str("hello"))
+        assert q.get(timeout=Float(5.0)) == Str("hello")
+        q.put(List(Int(1), Int(2)))
+        assert q.get(timeout=Float(5.0)) == List(Int(1), Int(2))
     finally:
         q.close()
 

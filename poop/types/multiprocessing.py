@@ -3,6 +3,7 @@ from __future__ import annotations
 import multiprocessing as _mp
 from typing import Any, ClassVar, Self
 
+from poop.types._bridge import to_poop, to_python
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _opt_timeout
 from poop.types.boolean import Boolean, to_boolean
@@ -87,7 +88,10 @@ class MPQueue(Object):
         timeout: Float | Int | None = None,
     ) -> NoneClass:
         b = True if block is None else bool(block)
-        self._impl.put(item, b, _opt_timeout(timeout))
+        # Bridge to raw Python so the feeder thread can pickle it — a POOP
+        # wrapper patches __module__/__name__, so by-name pickling fails and
+        # the item silently never reaches the pipe (get() then deadlocks).
+        self._impl.put(to_python(item), b, _opt_timeout(timeout))
         return none
 
     def get(
@@ -96,7 +100,7 @@ class MPQueue(Object):
         timeout: Float | Int | None = None,
     ) -> Any:
         b = True if block is None else bool(block)
-        return self._impl.get(b, _opt_timeout(timeout))
+        return to_poop(self._impl.get(b, _opt_timeout(timeout)))
 
     def qsize(self) -> Int:
         return Int(self._impl.qsize())

@@ -131,21 +131,9 @@
 
 - **Proposed fix:** accept the protocol form: `if isinstance(impl, Int): self._impl = _ssl.SSLContext(impl._value)` (keep the no-arg TLS-client default), and move raw-impl wrapping (used by `create_default_context` / `wrap_socket`) to a `_from_impl` classmethod so an arbitrary object can no longer be smuggled into `_impl`.
 
-### 134. `MPQueue.put` of any POOP value poisons the queue — `get()` deadlocks
+### ~~134. `MPQueue.put` of any POOP value poisons the queue — `get()` deadlocks~~ — DONE
 
-- **Where:** `poop/types/multiprocessing.py:83-99` (`MPQueue.put` / `get`)
-- **Bug:** `put` hands the POOP wrapper to `multiprocessing.Queue` unchanged. The feeder thread then fails to pickle it (wrappers patch `__module__ = "builtins"`/`__name__`, so by-name lookup fails: `Can't pickle <class 'int'>: it's not found as builtins.Int`), the error is printed asynchronously on stderr, the item never reaches the pipe, and a plain `get()` blocks forever — the program hangs. With a timeout, the user gets `poop: ` with an empty message (`queue.Empty` has no text). CPython's `q.put(1); q.get()` answers `1`. The sibling `pickle` wrapper already solves exactly this with `to_python`/`to_poop` at the boundary.
-- **Repro:**
-
-  ```python
-  q = MPQueue()
-  q.put(1)
-  q.get().print()
-  # stderr: _pickle.PicklingError: Can't pickle <class 'int'>: it's not found as builtins.Int
-  # ... then hangs forever (with get(timeout=3): "poop: " with empty message)
-  ```
-
-- **Proposed fix:** bridge at the boundary like `poop/types/pickle.py` does — `self._impl.put(to_python(item), b, ...)` in `put`/`put_nowait`, and `return to_poop(self._impl.get(...))` in `get`/`get_nowait`.
+**Decision + implemented:** `MPQueue.put`/`get` (`poop/types/multiprocessing.py`) now bridge at the boundary like `pickle.py` — `put(to_python(item), ...)` and `get` returns `to_poop(...)`. A POOP value survives the round trip (it previously failed to pickle in the feeder thread and deadlocked `get()`). Tests in `tests/test_types/test_multiprocessing.py`.
 
 ### 135. `dict(a=1, b=2)` rejects the keyword constructor form
 
