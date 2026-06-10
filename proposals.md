@@ -903,3 +903,86 @@
   Optionally, a metaclass `__setattr__` can propagate the raw value to
   `_logging.Formatter` so formatters built by `logging.basicConfig` (raw
   instances) honor the knob globally, matching CPython.
+
+### 150. `List` cannot be ordered — `<` crashes and `.sorted()` over nested lists fails
+
+- **Where:** `poop/types/list.py:24` (`List` defines no `__lt__`/`__le__`/`__gt__`/`__ge__`; equality only via `_ValueEqMixin`), `poop/types/list.py:79` (`sorted` delegates to `builtins_sorted`, which needs `<` between elements)
+- **Bug:** `Tuple` (`poop/types/tuple.py:94-113`) and `Str` (`poop/types/string.py:377-387`) define all four ordering dunders; `List` defines none. So `[1, 2] < [1, 3]` raises `TypeError`, and `.sorted()` over a list of `List`s — sorting rows, pairs, buckets — crashes inside `builtins_sorted`, while the identical data as `Tuple`s sorts fine. CPython orders lists lexicographically. Distinct from entry 117, which logs the same gap on the datetime family; this is the core collection type, and it breaks POOP's own `sorted` surface.
+- **Repro:**
+
+  ```python
+  ([1, 2] < [1, 3]).print()
+  # poop: '<' not supported between instances of 'list' and 'list'   (Python: True)
+  [[2, 1], [1, 9]].sorted().print()
+  # poop: '<' not supported between instances of 'list' and 'list'   (Python: [[1, 9], [2, 1]])
+  ```
+
+- **Proposed fix:** mirror `Tuple` (`poop/types/tuple.py:94-113`): add the four comparison dunders to `List` returning `to_boolean(self._items < other._items)` etc. — the raw sequence comparison already delegates elementwise to the POOP dunders, whose `Boolean` results are truthiness-compatible — and return `NotImplemented` for non-`List` operands.
+
+### 151. The documented `Str.format` template form does not exist — the argument is parsed as a format spec
+
+- **Where:** `poop/types/string.py:27` (`Str` defines no `format`), `poop/types/object.py:102-108` (the inherited `Object.format(spec)` treats its argument as a format *spec* applied to the receiver), `INFECTIONS.md:1514` ("`string.Formatter` is deliberately out of scope — `Str.format` covers the common case")
+- **Bug:** f-strings are forbidden (`no_fstring`) and `format()` is forbidden with the message "use `obj.format(spec)` instead", so `.format` is the documented formatting surface — and INFECTIONS.md explicitly claims `Str.format` covers the `string.Formatter` use case. But `Str` only inherits `Object.format`, so `"Hello, {}!".format("world")` becomes `format("Hello, {}!", "world")` — the argument is parsed as a format spec — and crashes with `Invalid format specifier`. CPython's `str.format` template substitution is unreachable; placeholders cannot be filled at all, and the `no_fstring` hint (concatenation) cannot express alignment or precision. Distinct from entry 149 and the leak entries: nothing escapes — a documented method is simply missing, and the inherited fallback misparses the call.
+- **Repro:**
+
+  ```python
+  "Hello, {}!".format("world").print()
+  # poop: Invalid format specifier 'world' for object of type 'str'   (Python: Hello, world!)
+  ```
+
+- **Proposed fix:** implement the real template method on `Str` — `def format(self, *args: Object, **kwargs: Object) -> Str` answering `Str(self._value.format(*map(to_python, args), **{k: to_python(v) for k, v in kwargs.items()}))` — matching CPython, where `str.format` *is* the template method. Other types keep `Object.format(spec)`; the rare "apply a spec to a string" case stays expressible through the template form (`"{:^10}".format(s)`).
+
+### 152. `3 * "ab"` silently fabricates a corrupted `Int` wrapping a `str`
+
+- **Where:** `poop/types/int.py:111-118` (`Int.__mul__` falls through to `Int(self._value * other._value)` for any operand exposing `_value`), `poop/types/int.py:24-25` (the constructor stores the result unchecked)
+- **Bug:** entry 115 logs the `AttributeError` crash when the right operand *lacks* `_value` (`Fraction`, `NormalDist`); this is the worse sibling for operands that *have* `_value` but are not numbers. `3 * "ab"` (likewise `3 * b"ab"` and `bytearray`) computes raw `3 * "ab"` → `"ababab"` and stuffs it inside an `Int` shell: `class_name()` answers `int`, `print()` shows `ababab`, and the first arithmetic touch dies far from the faulty expression. No crash at the call site — a silently wrong, corrupted value flows on (the entry-116 failure mode, here on the core `Int`). CPython answers the `str` `'ababab'`, and the correct path already exists in POOP — `Str.__rmul__` (`poop/types/string.py:374`), `Bytes.__rmul__` (`poop/types/bytes.py:120`), `ByteArray.__rmul__` (`poop/types/byte_array.py:117`) — it is just shadowed by the fall-through.
+- **Repro:**
+
+  ```python
+  r = 3 * "ab"
+  r.class_name().print()   # int      (Python: str)
+  r.print()                # ababab — looks right, is a corrupted Int shell
+  (r + 1).print()
+  # poop: can only concatenate str (not "int") to str   (Python: TypeError too, but POOP corrupted r three lines earlier)
+  ```
+
+- **Proposed fix:** the entry-115 guard (`return NotImplemented` unless `isinstance(other, Int | Float)`) must land in `__mul__` as well — this entry pins down that the guard is needed even where no `AttributeError` occurs. With it, Python falls back to the wrappers' existing `__rmul__` and `3 * "ab"` answers `Str("ababab")`.
+
+### 153. Lambda parameters bypass `no_namespace_shadow` — `def m(self, math)` is rejected, `lambda math: ...` is accepted
+
+- **Where:** `poop/validators/no_namespace_shadow.py:46-66` (`_check_args` is called from `visit_FunctionDef` / `visit_AsyncFunctionDef` only; the visitor has no `visit_Lambda`)
+- **Bug:** the validator's own comment spells out the hazard — "a parameter named after a namespace binding shadows it inside the body … fails in confusing ways" — and rejects the `def` form, but every lambda slips through with the exact same hazard. Since lambdas are POOP's block form (wrapped into `Block` by the block transformer) and carry most user code, the unchecked form is the *more* common one. Distinct from entry 146 (rewritten builtin names like `dict` as parameters — a transformer corruption) and entry 141 (imports): this is the namespace-binding validator missing one binding form it was built to police.
+- **Repro:**
+
+  ```python
+  f = lambda math: math.sqrt(2)
+  f(4).print()
+  # poop: 'int' object has no attribute 'sqrt' (line 1)
+  # while the def spelling is caught at validation time:
+  #   def m(self, math): ...
+  #   poop: 'math' is a POOP namespace binding; reassigning it shadows the runtime entry point
+  ```
+
+- **Proposed fix:** add to `_Visitor`:
+
+  ```python
+  def visit_Lambda(self, node: ast.Lambda) -> None:
+      self._check_args(node.args)
+      self.generic_visit(node)
+  ```
+
+### 154. `int(True)` / `float(True)` reject Boolean — and the diagnostic leaks the internal `_TrueClass` name
+
+- **Where:** `poop/transformers/int.py:10-23` (`_poop_int_from` accepts `Int | Float | Str` only; the error message uses `type(value).__qualname__`), `poop/transformers/float.py:19` (`_poop_float_from`, same pattern)
+- **Bug:** CPython's `int(True)` → `1`, `float(False)` → `0.0` — the canonical flag-to-number bridge. POOP's conversion factories have no Boolean branch, so the conversion crashes; and because the identity masking rebinds only `__name__` (booleans answer `bool` per v1.7.1), the `__qualname__`-based message exposes internals: `cannot convert _TrueClass to Int` — both `_TrueClass` and `Int` are names users should never see. POOP deliberately keeps Boolean out of *implicit* arithmetic (see the design note in `poop/validators/no_unary_minus.py`), but explicit conversion is the sanctioned bridge — `str(True)` already answers `"True"`.
+- **Repro:**
+
+  ```python
+  int(True).print()
+  # poop: cannot convert _TrueClass to Int   (Python: 1)
+  x = True
+  float(x).print()
+  # poop: cannot convert _TrueClass to Float   (Python: 1.0)
+  ```
+
+- **Proposed fix:** add a Boolean branch to both factories — `if isinstance(value, Boolean): return Int(1 if bool(value) else 0)` (resp. `Float(1.0 ... 0.0)`); independently of that decision, build the error with `type(value).__name__` so the masked public names (`bool`, `int`, `float`) appear in diagnostics instead of internal class names.
