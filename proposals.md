@@ -325,3 +325,127 @@
 
   (`poop/types/fractions.py` already exposes `_from_impl` via
   `_ImplWrapperMixin`; `import fractions as _fractions` at top.)
+
+### 130. `statistics` functions crash on `Decimal` data
+
+- **Where:** `poop/types/statistics.py:19-26` (`_to_number`), `poop/types/_bridge.py:56-84` (`to_poop` has no `decimal.Decimal` branch)
+- **Bug:** `_to_number` unwraps `Int`/`Float`/`Str`/`Fraction`/`Boolean` but passes `Decimal` wrappers through untouched, so every `statistics` function that goes through `_unwrap_data` feeds POOP `Decimal` objects to the stdlib. `mean`/`stdev`/`variance` blow up inside `statistics._sum` (the wrapper's `as_integer_ratio()` answers a POOP `Tuple` of `Int`s, which the stdlib then mixes with raw ints), `median` of an even-length dataset crashes averaging the two middle wrappers, and `fmean` rejects the wrapper outright. CPython supports `Decimal` data in all of these.
+- **Repro:**
+
+  ```python
+  statistics.mean(list(Decimal("1.5"), Decimal("2.5"))).print()
+  # poop: unsupported operand type(s) for +: 'int' and 'int'   (Python: 2)
+  statistics.stdev(list(Decimal("1"), Decimal("3"))).print()
+  # poop: unsupported operand type(s) for +=: 'int' and 'int'  (Python: 1.4142...)
+  statistics.median(list(Decimal("1"), Decimal("3"))).print()
+  # poop: 'int' object has no attribute '_impl'                (Python: 2)
+  statistics.fmean(list(Decimal("1.5"), Decimal("2.5"))).print()
+  # poop: must be real number, not Decimal                     (Python: 2.0)
+  ```
+
+- **Proposed fix:** add a `Decimal` branch to `_to_number` (`if isinstance(value, Decimal): return value._impl`), and add a `decimal.Decimal` branch to `to_poop` (`return Decimal._from_impl(value)` via a local import to dodge the cycle) so `mean`/`median`/`mode`, which return through `to_poop`, answer a POOP `Decimal` instead of a raw one. `stdev`/`variance`/`pstdev`/`pvariance` wrap results in `Float(...)`; route those through `to_poop` as well so Decimal-in gives Decimal-out, matching CPython.
+
+### 131. `configparser` `fallback=None` answers corrupted wrappers — `getboolean` silently answers `false`
+
+- **Where:** `poop/types/configparser.py:200-266` (`ConfigParser.get` / `getint` / `getfloat` / `getboolean`; same helpers serve `RawConfigParser`)
+- **Bug:** when the option is missing and `fallback=None` is passed (the canonical CPython idiom for "give me None back"), the POOP `none` singleton is forwarded to the stdlib, comes back as the result, and is then force-wrapped: `get` answers `Str(none)` — a `Str` whose `print()` explodes with `__str__ returned non-string (type NoneType)`; `getint`/`getfloat` answer `Int(none)`/`Float(none)` shells that crash on first arithmetic; `getboolean` runs `to_boolean(none)` and answers **`false`**, silently making a missing option indistinguishable from a real `false`. CPython answers `None` in all four cases.
+- **Repro:**
+
+  ```python
+  cp = ConfigParser()
+  cp.read_string("[s]\na = 1\n")
+  v = cp.get("s", "missing", fallback=None)
+  v.class_name().print()    # str
+  v.print()                 # poop: __str__ returned non-string (type NoneType)
+  cp.getboolean("s", "missing", fallback=None).print()  # False  (Python: None)
+  cp.getint("s", "missing", fallback=None).class_name().print()  # int — corrupt shell
+  ```
+
+- **Proposed fix:** in all four methods, unwrap a `NoneClass` fallback to Python `None` before the kwargs dict is built, and check the impl result before wrapping: `result = self._impl.get(...)`; `return none if result is None else Str(result)` (resp. `Int`/`Float`/`to_boolean`).
+
+### 132. `Logger("app")` builds a corrupt logger that explodes on first use
+
+- **Where:** `poop/types/logging.py:358-364` (`Logger.__init__`)
+- **Bug:** `Logger` is an injected user-visible entry point, but its constructor is the internal impl-wrapping one (`__init__(self, impl: Any)`). `Logger("app")` therefore silently stores the POOP `Str` as `_impl`; construction succeeds, and the first message send crashes with a baffling `'str' object has no attribute 'info'`. CPython's `logging.Logger("app")` constructs a working logger (named, level `NOTSET`).
+- **Repro:**
+
+  ```python
+  lg = Logger("app")        # accepted
+  lg.info("hello")          # poop: 'str' object has no attribute 'info'
+  ```
+
+- **Proposed fix:** make the public constructor accept what CPython's does — `def __init__(self, name: Str, level: Int | Str | None = None)` building `_logging.Logger(name._value, ...)` — and move internal wrapping to a `_from_impl` classmethod (the pattern the impl-wrapper types already use); update `Logging.getLogger` and `LoggerAdapter` to call `_from_impl`. Alternatively, if direct construction should stay discouraged, raise an immediate `TypeError("use logging.getLogger(name)")` instead of corrupting silently.
+
+### 133. `SSLContext(ssl.PROTOCOL_TLS_CLIENT)` silently stores the protocol Int as the context
+
+- **Where:** `poop/types/ssl.py:23-27` (`SSLContext.__init__`)
+- **Bug:** the constructor treats any argument as a ready-made raw `ssl.SSLContext` (`self._impl = impl`). Passing a protocol constant — CPython's canonical constructor call, with `ssl.PROTOCOL_TLS_CLIENT`/`PROTOCOL_TLS_SERVER` exposed as `Int`s in the very same namespace — silently stores the `Int` as `_impl`; every subsequent attribute access crashes. There is also no other way to build a `PROTOCOL_TLS_SERVER` context from the protocol constant (the no-arg form hardcodes `PROTOCOL_TLS_CLIENT`).
+- **Repro:**
+
+  ```python
+  ctx = SSLContext(ssl.PROTOCOL_TLS_CLIENT)   # accepted
+  ctx.check_hostname.print()
+  # poop: 'int' object has no attribute 'check_hostname'
+  # Python: ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT).check_hostname -> True
+  ```
+
+- **Proposed fix:** accept the protocol form: `if isinstance(impl, Int): self._impl = _ssl.SSLContext(impl._value)` (keep the no-arg TLS-client default), and move raw-impl wrapping (used by `create_default_context` / `wrap_socket`) to a `_from_impl` classmethod so an arbitrary object can no longer be smuggled into `_impl`.
+
+### 134. `MPQueue.put` of any POOP value poisons the queue — `get()` deadlocks
+
+- **Where:** `poop/types/multiprocessing.py:83-99` (`MPQueue.put` / `get`)
+- **Bug:** `put` hands the POOP wrapper to `multiprocessing.Queue` unchanged. The feeder thread then fails to pickle it (wrappers patch `__module__ = "builtins"`/`__name__`, so by-name lookup fails: `Can't pickle <class 'int'>: it's not found as builtins.Int`), the error is printed asynchronously on stderr, the item never reaches the pipe, and a plain `get()` blocks forever — the program hangs. With a timeout, the user gets `poop: ` with an empty message (`queue.Empty` has no text). CPython's `q.put(1); q.get()` answers `1`. The sibling `pickle` wrapper already solves exactly this with `to_python`/`to_poop` at the boundary.
+- **Repro:**
+
+  ```python
+  q = MPQueue()
+  q.put(1)
+  q.get().print()
+  # stderr: _pickle.PicklingError: Can't pickle <class 'int'>: it's not found as builtins.Int
+  # ... then hangs forever (with get(timeout=3): "poop: " with empty message)
+  ```
+
+- **Proposed fix:** bridge at the boundary like `poop/types/pickle.py` does — `self._impl.put(to_python(item), b, ...)` in `put`/`put_nowait`, and `return to_poop(self._impl.get(...))` in `get`/`get_nowait`.
+
+### 135. `dict(a=1, b=2)` rejects the keyword constructor form
+
+- **Where:** `poop/transformers/_collection.py:31-47` (`CollectionRewriter.visit_Call` skips calls with keywords), `poop/transformers/dict.py:23-40` (`_poop_dict_from` takes a single positional)
+- **Bug:** `dict(key=value, ...)` — a core CPython constructor form — is not routed through the dict factory: `visit_Call` bails out on keywords, `visit_Name` then renames `dict` to the bare `Dict` class, and `Dict.__init__()` (which takes nothing) raises `TypeError: Dict.__init__() got an unexpected keyword argument 'a'`. The documented contract is "constructor builtins are intercepted, not banned"; `dict()`, `dict(d)` and `dict(pairs)` all work — only the kwargs form crashes.
+- **Repro:**
+
+  ```python
+  dict(a=1, b=2).print()
+  # poop: Dict.__init__() got an unexpected keyword argument 'a'
+  # Python: {'a': 1, 'b': 2}
+  ```
+
+- **Proposed fix:** in `_DictRewriter`, override `visit_Call` (or relax the shared guard for `dict` only) to also rewrite calls with keywords, forwarding them: `_poop_dict_from(*args, **kwargs)`; extend `_poop_dict_from(arg=None, **kwargs)` to seed from `arg` as today and then `d._data[Str(k)] = v` for each keyword. Other collection rewriters keep the no-keyword guard (their builtins accept none).
+
+### 136. `Str.startswith`/`endswith` crash on a tuple of prefixes
+
+- **Where:** `poop/types/string.py:197-225` (`Str.startswith` / `Str.endswith`)
+- **Bug:** both methods assume the first argument is a single `Str` and dereference `prefix._value`. CPython's contract also accepts a tuple of strings — and in POOP that form matters doubly, because `s.startswith("a") or s.startswith("b")` is forbidden (`no_and_or`), making the tuple form the only message-shaped substitute for the disjunction. Passing a `Tuple` crashes with `AttributeError`.
+- **Repro:**
+
+  ```python
+  "abc".startswith(tuple("a", "z")).print()
+  # poop: 'tuple' object has no attribute '_value'   (Python: True)
+  "abc".endswith(tuple("c", "z")).print()
+  # poop: 'tuple' object has no attribute '_value'   (Python: True)
+  ```
+
+- **Proposed fix:** widen the parameter to `Str | Tuple` and unwrap accordingly: `needle = prefix._value if isinstance(prefix, Str) else tuple(p._value for p in prefix._items)` before calling `self._value.startswith(needle, ...)`; same for `endswith`.
+
+### 137. CLI dumps a raw rich traceback when the source file does not exist
+
+- **Where:** `poop/cli.py:64` (`source = file.read_text(encoding="utf-8")`)
+- **Bug:** every pipeline error (syntax, validator, runtime) prints a clean one-line `poop: ...` diagnostic, but an unreadable path escapes the `_poop_errors` guard: `poop missing.py` prints a full rich-formatted `FileNotFoundError` traceback through typer, and `poop somedir/` an `IsADirectoryError` traceback — internal frames (`cli.py`, `pathlib`) exposed for an ordinary user mistake.
+- **Repro:**
+
+  ```bash
+  uv run python main.py /tmp/nonexistent_file.py
+  # ╭─── Traceback (most recent call last) ───╮ ... FileNotFoundError: [Errno 2] ...
+  # expected something like: poop: cannot read '/tmp/nonexistent_file.py': No such file or directory
+  ```
+
+- **Proposed fix:** either declare the constraint on the argument — `typer.Argument(exists=True, dir_okay=False, readable=True)` — letting typer print its standard short error, or wrap the `read_text` call in `try/except OSError as exc` and `typer.echo(f"poop: cannot read '{file}': {exc.strerror}", err=True)` + `typer.Exit(1)`, keeping the established error style.
