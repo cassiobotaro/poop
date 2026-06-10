@@ -81,8 +81,12 @@ across the v1.0.x and v1.1.x cycles:
   `a85decode` kwargs and full kwarg parity on the `Str` decoders;
   `Shlex` gained the `punctuation_chars` read property (its remaining
   gaps — `eof`, `sourcehook`, parser internals — reclassified as
-  out-by-design); both stale "deferred" notes corrected. Pending next
-  release.
+  out-by-design); both stale "deferred" notes corrected. Third sweep:
+  `Random.getstate`/`setstate` shipped as an opaque `RandomState`
+  checkpoint token (maintainer request — deliberately reverses the
+  earlier "No Random state inspection" permanent divergence, whose
+  "no clean mapping" rationale the sealed token resolves). Pending
+  next release.
 
 Long-tail per-namespace tail items follow the
 [pull-when-asked policy](INFECTIONS.md#pull-deferred-surface-only-when-a-caller-asks).
