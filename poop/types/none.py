@@ -34,3 +34,6 @@ class NoneClass(Object):
 
 
 none: NoneClass = NoneClass()
+
+NoneClass.__module__ = "builtins"
+NoneClass.__name__ = "NoneType"

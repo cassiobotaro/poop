@@ -2,10 +2,16 @@ from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.boolean import false as false2
 from poop.types.boolean import true as true2
 from poop.types.none import none
+from poop.types.string import Str
 
 
 def test_true_is_instance_of_boolean() -> None:
     assert isinstance(true, Boolean)
+
+
+def test_class_name_answers_bool() -> None:
+    assert true.class_name() == Str("bool")
+    assert false.class_name() == Str("bool")
 
 
 def test_false_is_instance_of_boolean() -> None:

@@ -201,3 +201,10 @@ def to_boolean(value: object) -> Boolean:
 
 Boolean.__module__ = "builtins"
 Boolean.__name__ = "bool"
+
+# The singleton classes answer "bool" too — class_name() and error
+# messages read type(true).__name__, not the abstract base's.
+_TrueClass.__module__ = "builtins"
+_TrueClass.__name__ = "bool"
+_FalseClass.__module__ = "builtins"
+_FalseClass.__name__ = "bool"
