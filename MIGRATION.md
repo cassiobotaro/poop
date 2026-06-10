@@ -1111,7 +1111,7 @@ sm = SequenceMatcher("abcd", "abef")
 ratio = sm.ratio()
 ```
 
-> Diff producers (`unified_diff`, `context_diff`, `ndiff`, `restore`) return `List[Str]` — POOP collections are not lazy. `get_close_matches` defaults match CPython (`n=3`, `cutoff=0.6`). `SequenceMatcher` is in scope without the `difflib.` prefix; the `isjunk` predicate is omitted (POOP has no free-function callables for it), but `autojunk` is exposed. `HtmlDiff` and the line/character junk predicates are out of scope for v1.
+> Diff producers (`unified_diff`, `context_diff`, `ndiff`, `restore`) return `List[Str]` — POOP collections are not lazy. `get_close_matches` defaults match CPython (`n=3`, `cutoff=0.6`). `SequenceMatcher` is in scope without the `difflib.` prefix; the `isjunk` / `linejunk` / `charjunk` predicates take POOP lambdas (routed through the block bridge) and `autojunk` is exposed. `Differ` and `HtmlDiff` are bare too; the default junk predicates are reachable as `difflib.IS_CHARACTER_JUNK` / `difflib.IS_LINE_JUNK`.
 
 ## Reflowing text (`textwrap` module + `TextWrapper` class)
 
@@ -1454,7 +1454,7 @@ usage = shutil.disk_usage(".")  # Tuple(Int, Int, Int)
 shutil.make_archive(Path("bundle"), "zip", root_dir=Path("."), base_dir="src")
 ```
 
-> `Path` and `Str` are interchangeable everywhere `shutil` takes a filesystem location. Return values are `Path` when CPython returns a path-like. `shutil.which` returns `Path` or `none`. `shutil.disk_usage` returns `Tuple(total, used, free)` of `Int`; `shutil.get_terminal_size` returns `Tuple(columns, lines)`. Archive helpers (`make_archive`, `unpack_archive`, `get_archive_formats`, `get_unpack_formats`) all wrap the CPython surface. `shutil.Error` and `shutil.SameFileError` are exposed as class attributes for use with `Try.except_`. The `ignore_patterns` factory and `copy_function` callback argument plumbing are out of scope for v1 — defer until POOP has a Block↔callable bridge.
+> `Path` and `Str` are interchangeable everywhere `shutil` takes a filesystem location. Return values are `Path` when CPython returns a path-like. `shutil.which` returns `Path` or `none`. `shutil.disk_usage` returns `Tuple(total, used, free)` of `Int`; `shutil.get_terminal_size` returns `Tuple(columns, lines)`. Archive helpers (`make_archive`, `unpack_archive`, `get_archive_formats`, `get_unpack_formats`) all wrap the CPython surface. `shutil.Error` and `shutil.SameFileError` are exposed as class attributes for use with `Try.except_`. `shutil.ignore_patterns(*patterns)` returns a block that drops into `copytree(ignore=...)`; `copytree` / `move` also accept a POOP lambda as `copy_function` via the block bridge.
 
 ## Pickle (`pickle` module + `Pickler` / `Unpickler` classes)
 
