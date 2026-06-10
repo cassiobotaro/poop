@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from poop.types._iterable_mixin import _MISSING
 from poop.types._unwrap import _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, to_boolean, true
+from poop.types.boolean import to_boolean
 from poop.types.object import Object
 from poop.types.str_iterator import StrIterator
 
@@ -158,6 +158,21 @@ class Str(_ValueEqMixin, Object):
     def join(self, parts: List) -> Str:
         return Str(self._value.join(str(p) for p in parts))
 
+    def format(self, *args: Object, **kwargs: Object) -> Str:
+        # CPython's str.format template substitution. Overrides the
+        # inherited Object.format(spec); f-strings are forbidden, so this
+        # is POOP's documented template-formatting surface. The rare
+        # "apply a spec to a string" case stays expressible as
+        # "{:^10}".format(s).
+        from poop.types._bridge import to_python
+
+        return Str(
+            self._value.format(
+                *(to_python(a) for a in args),
+                **{k: to_python(v) for k, v in kwargs.items()},
+            )
+        )
+
     def find(
         self,
         sub: Str,
@@ -196,30 +211,35 @@ class Str(_ValueEqMixin, Object):
 
     def startswith(
         self,
-        prefix: Str,
+        prefix: Str | Tuple,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        return (
-            true
-            if self._value.startswith(
-                prefix._value, _unwrap(start, None), _unwrap(end, None)
-            )
-            else false
+        # CPython accepts a tuple of prefixes; in POOP this is the only
+        # message-shaped substitute for the forbidden `s.startswith("a")
+        # or s.startswith("b")`.
+        needle: _str | tuple[_str, ...] = (
+            prefix._value
+            if isinstance(prefix, Str)
+            else tuple(str(p) for p in prefix._items)
+        )
+        return to_boolean(
+            self._value.startswith(needle, _unwrap(start, None), _unwrap(end, None))
         )
 
     def endswith(
         self,
-        suffix: Str,
+        suffix: Str | Tuple,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        return (
-            true
-            if self._value.endswith(
-                suffix._value, _unwrap(start, None), _unwrap(end, None)
-            )
-            else false
+        needle: _str | tuple[_str, ...] = (
+            suffix._value
+            if isinstance(suffix, Str)
+            else tuple(str(p) for p in suffix._items)
+        )
+        return to_boolean(
+            self._value.endswith(needle, _unwrap(start, None), _unwrap(end, None))
         )
 
     def isalpha(self) -> Boolean:

@@ -243,7 +243,10 @@ def test_format_int_with_hex_spec() -> None:
 
     assert Int(42).format(Str("x")) == Str("2a")
     assert Float(3.14159).format(Str(".2f")) == Str("3.14")
-    assert Str("abc").format(Str(">5")) == Str("  abc")
+    # Str overrides Object.format with str.format template semantics
+    # (proposal 151), so the "apply a spec to a string" case is written
+    # via the template form instead of Str("abc").format(Str(">5")).
+    assert Str("{:>5}").format(Str("abc")) == Str("  abc")
 
 
 def test_format_invalid_spec_raises_value_error() -> None:

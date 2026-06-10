@@ -1511,7 +1511,7 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 | `Template.safe_substitute(mapping)` | `Str` | leaves missing `$name` in place |
 | `Template.template` (property) | `Str` | original source string |
 
-`string.Formatter` is deliberately out of scope — `Str.format` covers the common case.
+`string.Formatter` is deliberately out of scope — `Str.format(*args, **kwargs)` is CPython's `str.format` template method (overriding the inherited `Object.format(spec)`), which covers the common case.
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
 

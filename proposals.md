@@ -336,20 +336,9 @@
 
 - **Proposed fix:** in `_DictRewriter`, override `visit_Call` (or relax the shared guard for `dict` only) to also rewrite calls with keywords, forwarding them: `_poop_dict_from(*args, **kwargs)`; extend `_poop_dict_from(arg=None, **kwargs)` to seed from `arg` as today and then `d._data[Str(k)] = v` for each keyword. Other collection rewriters keep the no-keyword guard (their builtins accept none).
 
-### 136. `Str.startswith`/`endswith` crash on a tuple of prefixes
+### ~~136. `Str.startswith`/`endswith` crash on a tuple of prefixes~~ — DONE
 
-- **Where:** `poop/types/string.py:197-225` (`Str.startswith` / `Str.endswith`)
-- **Bug:** both methods assume the first argument is a single `Str` and dereference `prefix._value`. CPython's contract also accepts a tuple of strings — and in POOP that form matters doubly, because `s.startswith("a") or s.startswith("b")` is forbidden (`no_and_or`), making the tuple form the only message-shaped substitute for the disjunction. Passing a `Tuple` crashes with `AttributeError`.
-- **Repro:**
-
-  ```python
-  "abc".startswith(tuple("a", "z")).print()
-  # poop: 'tuple' object has no attribute '_value'   (Python: True)
-  "abc".endswith(tuple("c", "z")).print()
-  # poop: 'tuple' object has no attribute '_value'   (Python: True)
-  ```
-
-- **Proposed fix:** widen the parameter to `Str | Tuple` and unwrap accordingly: `needle = prefix._value if isinstance(prefix, Str) else tuple(p._value for p in prefix._items)` before calling `self._value.startswith(needle, ...)`; same for `endswith`.
+**Decision + implemented:** widened `Str.startswith`/`endswith` (`poop/types/string.py`) to `prefix: Str | Tuple`, unwrapping a `Tuple` into a raw `tuple` of strings (`tuple(str(p) for p in prefix._items)`) before delegating. `"abc".startswith(tuple("a", "z"))` now answers `true` — the message-shaped substitute for the forbidden `startswith(...) or startswith(...)`. Tests in `tests/test_types/test_str.py`.
 
 ### 137. CLI dumps a raw rich traceback when the source file does not exist
 
@@ -810,18 +799,9 @@
 
 **Decision + implemented:** added `__lt__`/`__le__`/`__gt__`/`__ge__` to `List` (`poop/types/list.py`), mirroring `Tuple` — each delegates to the raw `list` comparison (`to_boolean(self._items < other._items)`), which dispatches elementwise to the POOP element dunders. `[1, 2] < [1, 3]` and `.sorted()` over nested lists now work. Tests in `tests/test_types/test_list.py`.
 
-### 151. The documented `Str.format` template form does not exist — the argument is parsed as a format spec
+### ~~151. The documented `Str.format` template form does not exist — the argument is parsed as a format spec~~ — DONE
 
-- **Where:** `poop/types/string.py:27` (`Str` defines no `format`), `poop/types/object.py:102-108` (the inherited `Object.format(spec)` treats its argument as a format *spec* applied to the receiver), `INFECTIONS.md:1514` ("`string.Formatter` is deliberately out of scope — `Str.format` covers the common case")
-- **Bug:** f-strings are forbidden (`no_fstring`) and `format()` is forbidden with the message "use `obj.format(spec)` instead", so `.format` is the documented formatting surface — and INFECTIONS.md explicitly claims `Str.format` covers the `string.Formatter` use case. But `Str` only inherits `Object.format`, so `"Hello, {}!".format("world")` becomes `format("Hello, {}!", "world")` — the argument is parsed as a format spec — and crashes with `Invalid format specifier`. CPython's `str.format` template substitution is unreachable; placeholders cannot be filled at all, and the `no_fstring` hint (concatenation) cannot express alignment or precision. Distinct from entry 149 and the leak entries: nothing escapes — a documented method is simply missing, and the inherited fallback misparses the call.
-- **Repro:**
-
-  ```python
-  "Hello, {}!".format("world").print()
-  # poop: Invalid format specifier 'world' for object of type 'str'   (Python: Hello, world!)
-  ```
-
-- **Proposed fix:** implement the real template method on `Str` — `def format(self, *args: Object, **kwargs: Object) -> Str` answering `Str(self._value.format(*map(to_python, args), **{k: to_python(v) for k, v in kwargs.items()}))` — matching CPython, where `str.format` *is* the template method. Other types keep `Object.format(spec)`; the rare "apply a spec to a string" case stays expressible through the template form (`"{:^10}".format(s)`).
+**Decision + implemented:** implemented `Str.format(*args, **kwargs)` (`poop/types/string.py`) as CPython's `str.format` template method, unwrapping POOP args via `to_python` and overriding the inherited `Object.format(spec)`. `"Hello, {}!".format("world")` → `"Hello, world!"`, named/indexed/spec placeholders all work. The "apply a spec to a string" case is now expressed via the template form (`"{:^10}".format(s)`); the stale `Str` case in `test_format_int_with_hex_spec` was updated accordingly, and INFECTIONS.md:1514 clarified. Tests in `tests/test_types/test_str.py`.
 
 ### ~~152. `3 * "ab"` silently fabricates a corrupted `Int` wrapping a `str`~~ — DONE
 
