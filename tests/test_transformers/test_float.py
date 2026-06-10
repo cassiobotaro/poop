@@ -104,8 +104,16 @@ def test_float_from_str_parses() -> None:
     assert result._value == pytest.approx(3.14)
 
 
+def test_float_from_boolean() -> None:
+    # proposal 154: float(True) -> 1.0, float(False) -> 0.0.
+    from poop.types.boolean import false, true
+
+    assert _poop_float_from(true) == Float(1.0)
+    assert _poop_float_from(false) == Float(0.0)
+
+
 def test_float_from_unsupported_type_raises() -> None:
-    with pytest.raises(TypeError, match="cannot convert"):
+    with pytest.raises(TypeError, match="cannot convert complex to Float"):
         _poop_float_from(Complex(complex(1, 2)))
 
 

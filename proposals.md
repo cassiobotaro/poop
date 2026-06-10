@@ -585,21 +585,9 @@
       self.generic_visit(node)
   ```
 
-### 154. `int(True)` / `float(True)` reject Boolean — and the diagnostic leaks the internal `_TrueClass` name
+### ~~154. `int(True)` / `float(True)` reject Boolean — and the diagnostic leaks the internal `_TrueClass` name~~ — DONE
 
-- **Where:** `poop/transformers/int.py:10-23` (`_poop_int_from` accepts `Int | Float | Str` only; the error message uses `type(value).__qualname__`), `poop/transformers/float.py:19` (`_poop_float_from`, same pattern)
-- **Bug:** CPython's `int(True)` → `1`, `float(False)` → `0.0` — the canonical flag-to-number bridge. POOP's conversion factories have no Boolean branch, so the conversion crashes; and because the identity masking rebinds only `__name__` (booleans answer `bool` per v1.7.1), the `__qualname__`-based message exposes internals: `cannot convert _TrueClass to Int` — both `_TrueClass` and `Int` are names users should never see. POOP deliberately keeps Boolean out of *implicit* arithmetic (see the design note in `poop/validators/no_unary_minus.py`), but explicit conversion is the sanctioned bridge — `str(True)` already answers `"True"`.
-- **Repro:**
-
-  ```python
-  int(True).print()
-  # poop: cannot convert _TrueClass to Int   (Python: 1)
-  x = True
-  float(x).print()
-  # poop: cannot convert _TrueClass to Float   (Python: 1.0)
-  ```
-
-- **Proposed fix:** add a Boolean branch to both factories — `if isinstance(value, Boolean): return Int(1 if bool(value) else 0)` (resp. `Float(1.0 ... 0.0)`); independently of that decision, build the error with `type(value).__name__` so the masked public names (`bool`, `int`, `float`) appear in diagnostics instead of internal class names.
+**Decision + implemented:** added a `Boolean` branch to `_poop_int_from` (`int(True)` → `1`) and `_poop_float_from` (`float(True)` → `1.0`) — the sanctioned explicit flag-to-number bridge — and switched both error messages from `__qualname__` to `__name__` so diagnostics show the masked public names (`bool`/`int`/`float`/`complex`) instead of internal class names. Tests in `tests/test_transformers/test_int.py` and `test_float.py`.
 
 ### 155. `http.HTTPStatus` / `http.HTTPMethod` members are raw CPython enum objects — every read path leaks
 
