@@ -24,6 +24,29 @@ def _opt_tz(tz: TimeZone | ZoneInfo | NoneClass | None) -> _datetime.tzinfo | No
     return tz._impl
 
 
+class _AbsentType:
+    """Sentinel for `replace(tzinfo=...)` so the three cases stay distinct:
+    argument omitted (keep current tzinfo), explicit POOP `none` (strip to
+    naive), or a wrapper (set it). A bare default of `none` cannot express
+    'strip', leaving aware values unable to ever become naive."""
+
+    __slots__ = ()
+
+
+_ABSENT = _AbsentType()
+
+
+def _replace_tz(
+    tzinfo: TimeZone | ZoneInfo | NoneClass | _AbsentType,
+    current: _datetime.tzinfo | None,
+) -> _datetime.tzinfo | None:
+    if isinstance(tzinfo, _AbsentType):
+        return current  # argument omitted -> keep current tzinfo
+    if isinstance(tzinfo, NoneClass):
+        return None  # explicit none -> strip to naive
+    return tzinfo._impl  # wrapper -> set the tzinfo
+
+
 class _StrReprMixin:
     """`__str__`/`__repr__` delegating to the wrapped stdlib `self._impl`.
 
@@ -377,18 +400,15 @@ class Time(
         minute: Int | NoneClass | None = None,
         second: Int | NoneClass | None = None,
         microsecond: Int | NoneClass | None = None,
-        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | _AbsentType = _ABSENT,
     ) -> Time:
         kwargs: dict[str, Any] = {
             "hour": _unwrap(hour, self._impl.hour),
             "minute": _unwrap(minute, self._impl.minute),
             "second": _unwrap(second, self._impl.second),
             "microsecond": _unwrap(microsecond, self._impl.microsecond),
+            "tzinfo": _replace_tz(tzinfo, self._impl.tzinfo),
         }
-        if tzinfo is not None and not isinstance(tzinfo, NoneClass):
-            kwargs["tzinfo"] = tzinfo._impl
-        else:
-            kwargs["tzinfo"] = self._impl.tzinfo
         return Time._from_impl(self._impl.replace(**kwargs))
 
     def __hash__(self) -> int:
@@ -494,7 +514,7 @@ class DateTime(
         minute: Int | NoneClass | None = None,
         second: Int | NoneClass | None = None,
         microsecond: Int | NoneClass | None = None,
-        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | _AbsentType = _ABSENT,
     ) -> DateTime:
         kwargs: dict[str, Any] = {
             "year": _unwrap(year, self._impl.year),
@@ -504,11 +524,8 @@ class DateTime(
             "minute": _unwrap(minute, self._impl.minute),
             "second": _unwrap(second, self._impl.second),
             "microsecond": _unwrap(microsecond, self._impl.microsecond),
+            "tzinfo": _replace_tz(tzinfo, self._impl.tzinfo),
         }
-        if tzinfo is not None and not isinstance(tzinfo, NoneClass):
-            kwargs["tzinfo"] = tzinfo._impl
-        else:
-            kwargs["tzinfo"] = self._impl.tzinfo
         return DateTime._from_impl(self._impl.replace(**kwargs))
 
     def __add__(self, other: TimeDelta) -> DateTime:

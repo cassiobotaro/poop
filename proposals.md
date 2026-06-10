@@ -12,20 +12,9 @@
 
 **Decision + implemented:** added a shared `_OrderedImplMixin` in `poop/types/datetime.py` (`__lt__`/`__le__`/`__gt__`/`__ge__` over `self._impl`) and mixed it into `TimeDelta`, `Date`, and `Time`. `DateTime` now inherits it too (its inline copies were removed). All three orderings answer a POOP `Boolean`. Tests in `tests/test_types/test_datetime.py`.
 
-### 118. `replace(tzinfo=None)` cannot strip a timezone — aware values can never become naive
+### ~~118. `replace(tzinfo=None)` cannot strip a timezone — aware values can never become naive~~ — DONE
 
-- **Where:** `poop/types/datetime.py:315-318` (`Time.replace`), `poop/types/datetime.py:429-432` (`DateTime.replace`)
-- **Bug:** both `replace` implementations treat an explicit `tzinfo=None` the same as "argument absent" and keep `self._impl.tzinfo`. In real Python, `dt.replace(tzinfo=None)` is *the* idiom to drop the timezone; in POOP there is no way at all to turn an aware `DateTime`/`Time` into a naive one.
-- **Repro:**
-
-  ```python
-  aware = DateTime(2024, 1, 1, 12, tzinfo=TimeZone.utc)
-  aware.replace(tzinfo=None).tzinfo.is_none().print()   # False
-  Time(10, 0, tzinfo=TimeZone.utc).replace(tzinfo=None).tzinfo.is_none().print()  # False
-  ```
-
-  Real Python: `aware.replace(tzinfo=None).tzinfo is None` → `True`.
-- **Proposed fix:** use a module-level `_ABSENT = object()` sentinel as the `tzinfo` default in both `replace` signatures so the three cases are distinguishable: absent → keep current tzinfo, POOP `none` → pass `tzinfo=None` (strip), wrapper → pass `tzinfo._impl`.
+**Decision + implemented:** added a typed `_ABSENT` sentinel (`_AbsentType`) and a `_replace_tz` helper in `poop/types/datetime.py`; `Time.replace`/`DateTime.replace` now default `tzinfo` to `_ABSENT` so the three cases are distinct — omitted keeps the current tzinfo, POOP `none` strips to naive, a wrapper sets it. `aware.replace(tzinfo=none).tzinfo` now answers `none`. Tests in `tests/test_types/test_datetime.py`.
 
 ### 119. `Fraction == Int` answers `false` while `Fraction >= Int` answers `true`
 

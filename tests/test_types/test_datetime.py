@@ -136,6 +136,34 @@ def test_time_replace() -> None:
     assert t.replace(hour=Int(13)) == Time(Int(13), Int(30), Int(45))
 
 
+# replace(tzinfo=none) strips the timezone — proposal 118
+
+
+def test_time_replace_tzinfo_none_strips() -> None:
+    aware = Time(Int(10), Int(0), tzinfo=TimeZone.utc)
+    assert aware.replace(tzinfo=none).tzinfo is none
+
+
+def test_time_replace_omitting_tzinfo_keeps_it() -> None:
+    aware = Time(Int(10), Int(0), tzinfo=TimeZone.utc)
+    assert aware.replace(hour=Int(11)).tzinfo == TimeZone.utc
+
+
+def test_datetime_replace_tzinfo_none_strips() -> None:
+    aware = DateTime(Int(2024), Int(1), Int(1), Int(12), tzinfo=TimeZone.utc)
+    assert aware.replace(tzinfo=none).tzinfo is none
+
+
+def test_datetime_replace_omitting_tzinfo_keeps_it() -> None:
+    aware = DateTime(Int(2024), Int(1), Int(1), Int(12), tzinfo=TimeZone.utc)
+    assert aware.replace(hour=Int(6)).tzinfo == TimeZone.utc
+
+
+def test_datetime_replace_tzinfo_wrapper_sets_it() -> None:
+    naive = DateTime(Int(2024), Int(1), Int(1), Int(12))
+    assert naive.replace(tzinfo=TimeZone.utc).tzinfo == TimeZone.utc
+
+
 def test_datetime_basic_construction() -> None:
     dt = DateTime(Int(2026), Int(5), Int(15), Int(12), Int(30), Int(45))
     assert dt.year == Int(2026)
