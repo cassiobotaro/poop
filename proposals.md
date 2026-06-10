@@ -85,23 +85,9 @@
 
 **Decision + implemented:** added a `Decimal` branch to `_to_number` (`return value._impl`) so the stdlib receives raw decimals, and a `decimal.Decimal` branch to the local `_wrap_number` helper so `mean`/`median`/`mode` answer a POOP `Decimal`. The spread functions (`stdev`/`variance`/`pstdev`/`pvariance`) route through a new `_wrap_spread` helper that answers `Decimal` for Decimal input and `Float` otherwise — preserving POOP's established Float convention for int/float spread results (kept the fix local to `statistics.py` rather than touching the global `to_poop`, whose CPython-natural typing would have changed `pvariance` of ints from `Float` to `Int`). Tests in `tests/test_types/test_statistics.py`.
 
-### 131. `configparser` `fallback=None` answers corrupted wrappers — `getboolean` silently answers `false`
+### ~~131. `configparser` `fallback=None` answers corrupted wrappers — `getboolean` silently answers `false`~~ — DONE
 
-- **Where:** `poop/types/configparser.py:200-266` (`ConfigParser.get` / `getint` / `getfloat` / `getboolean`; same helpers serve `RawConfigParser`)
-- **Bug:** when the option is missing and `fallback=None` is passed (the canonical CPython idiom for "give me None back"), the POOP `none` singleton is forwarded to the stdlib, comes back as the result, and is then force-wrapped: `get` answers `Str(none)` — a `Str` whose `print()` explodes with `__str__ returned non-string (type NoneType)`; `getint`/`getfloat` answer `Int(none)`/`Float(none)` shells that crash on first arithmetic; `getboolean` runs `to_boolean(none)` and answers **`false`**, silently making a missing option indistinguishable from a real `false`. CPython answers `None` in all four cases.
-- **Repro:**
-
-  ```python
-  cp = ConfigParser()
-  cp.read_string("[s]\na = 1\n")
-  v = cp.get("s", "missing", fallback=None)
-  v.class_name().print()    # str
-  v.print()                 # poop: __str__ returned non-string (type NoneType)
-  cp.getboolean("s", "missing", fallback=None).print()  # False  (Python: None)
-  cp.getint("s", "missing", fallback=None).class_name().print()  # int — corrupt shell
-  ```
-
-- **Proposed fix:** in all four methods, unwrap a `NoneClass` fallback to Python `None` before the kwargs dict is built, and check the impl result before wrapping: `result = self._impl.get(...)`; `return none if result is None else Str(result)` (resp. `Int`/`Float`/`to_boolean`).
+**Decision + implemented:** added an `_unwrap_fallback` helper in `poop/types/configparser.py` that converts a POOP `none` fallback to real Python `None` (and unwraps typed fallbacks); `get`/`getint`/`getfloat`/`getboolean` now check the impl result and `return none if result is None else <wrap>(result)`. A missing option with `fallback=none` answers POOP `none` (so `getboolean` no longer silently answers `false`), and the return annotations widened to `… | NoneClass`. Tests in `tests/test_types/test_configparser.py`.
 
 ### ~~132. `Logger("app")` builds a corrupt logger that explodes on first use~~ — DONE
 

@@ -185,6 +185,31 @@ def test_getboolean_with_fallback() -> None:
     assert cp.getboolean(Str("section"), Str("missing"), fallback=false) is false
 
 
+# fallback=none answers POOP none, not a corrupt shell — proposal 131
+
+
+def test_get_fallback_none_answers_none() -> None:
+    cp = _make_loaded()
+    assert cp.get(Str("section"), Str("missing"), fallback=none) is none
+
+
+def test_getint_fallback_none_answers_none() -> None:
+    cp = _make_loaded()
+    assert cp.getint(Str("section"), Str("missing"), fallback=none) is none
+
+
+def test_getfloat_fallback_none_answers_none() -> None:
+    cp = _make_loaded()
+    assert cp.getfloat(Str("section"), Str("missing"), fallback=none) is none
+
+
+def test_getboolean_fallback_none_answers_none_not_false() -> None:
+    # The dangerous one: a missing option must be distinguishable from a
+    # real `false`.
+    cp = _make_loaded()
+    assert cp.getboolean(Str("section"), Str("missing"), fallback=none) is none
+
+
 def test_get_raw() -> None:
     cp = ConfigParser()
     cp.read_string(Str("[s]\nv = %(other)s\nother = x\n"))
