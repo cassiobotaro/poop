@@ -2429,7 +2429,7 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 | `signal.SIG_DFL` / `.SIG_IGN` (class attrs) | sentinel | |
 | `signal.SIGABRT` / `SIGINT` / `SIGTERM` / … (class attrs) | `Int` / `none` | platform-specific |
 | `signal.ITIMER_REAL` / `ITIMER_VIRTUAL` / `ITIMER_PROF` (class attrs) | `Int` / `none` | Unix only |
-| `Socket(family=AF_INET, type=SOCK_STREAM, proto=0)` | `Socket` | also via `with Socket() as s:` |
+| `Socket(family=AF_INET, type=SOCK_STREAM, proto=0)` | `Socket` | `With`-friendly (`With(lambda: Socket()).do(...)`) |
 | `Socket.bind(addr)` / `.listen(backlog=none)` / `.connect(addr)` / `.shutdown(how)` / `.close()` | `none` | |
 | `Socket.accept()` | `Tuple(Socket, Address)` | |
 | `Socket.connect_ex(addr)` | `Int` | error code |

@@ -1069,7 +1069,7 @@ con.commit()
 rows = con.execute("SELECT * FROM users").fetchall()
 ```
 
-> Bound parameters are POOP `Tuple` or `List`; rows come back as POOP `Tuple` of POOP values (`Int`/`Float`/`Str`/`Bytes`/`none`). `Connection` is a context manager (`with sqlite3.connect(...) as con:` — commits on clean exit, rolls back on exception). `Connection.execute` returns a `Cursor` directly; chain `.fetchall()` / `.fetchone()` / iterate. Error classes (`sqlite3.OperationalError`, `IntegrityError`, …) are Python exception classes — pass them to `Try.except_(...)`. Callback-based methods are covered via the block bridge: `create_function` / `create_collation` take POOP lambdas, `create_aggregate` takes a POOP class with `step`/`finalize` methods, and `sqlite3.register_adapter` takes a lambda adapter.
+> Bound parameters are POOP `Tuple` or `List`; rows come back as POOP `Tuple` of POOP values (`Int`/`Float`/`Str`/`Bytes`/`none`). `Connection` is a context manager (`With(lambda: sqlite3.connect(...)).do(lambda con: …)` — commits on clean exit, rolls back on exception). `Connection.execute` returns a `Cursor` directly; chain `.fetchall()` / `.fetchone()` / iterate. Error classes (`sqlite3.OperationalError`, `IntegrityError`, …) are Python exception classes — pass them to `Try.except_(...)`. Callback-based methods are covered via the block bridge: `create_function` / `create_collation` take POOP lambdas, `create_aggregate` takes a POOP class with `step`/`finalize` methods, and `sqlite3.register_adapter` takes a lambda adapter.
 
 ## ASCII character classes and string templates (`string` module + `Template` class)
 
