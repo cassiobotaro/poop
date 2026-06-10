@@ -98,9 +98,13 @@ def test_list_from_no_arg_returns_empty() -> None:
     assert result == List()
 
 
-def test_list_from_list_returns_same() -> None:
+def test_list_from_list_returns_copy() -> None:
     lst = List(Int(1), Int(2))
-    assert _poop_list_from(lst) is lst
+    result = _poop_list_from(lst)
+    assert result == lst
+    assert result is not lst
+    result.append(Int(3))
+    assert lst == List(Int(1), Int(2))
 
 
 def test_list_from_tuple() -> None:

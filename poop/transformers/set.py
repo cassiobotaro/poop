@@ -11,7 +11,7 @@ from poop.transformers.base import BaseTransformer
 from poop.types.set import Set
 
 _poop_set = make_constructor(Set)
-_poop_set_from = make_iterable_from(Set, "Set")
+_poop_set_from = make_iterable_from(Set, "Set", copy=True)
 
 
 class _SetRewriter(CollectionRewriter):

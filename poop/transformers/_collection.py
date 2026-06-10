@@ -70,11 +70,17 @@ def make_constructor[T](poop_type: type[T]) -> Callable[..., T]:
     return _constructor
 
 
-def make_iterable_from[T](poop_type: type[T], display_name: str) -> Callable[..., T]:
+def make_iterable_from[T](
+    poop_type: type[T], display_name: str, *, copy: bool = False
+) -> Callable[..., T]:
     def _from(arg: object = None) -> T:
         if arg is None:
             return poop_type()
         if isinstance(arg, poop_type):
+            # Mutable collections must not alias their source; CPython's
+            # tuple(t) / frozenset(fs) do return the same object.
+            if copy:
+                return poop_type(*cast("Iterable[Object]", arg))
             return arg
         if isinstance(arg, Range):
             return poop_type(*arg._iter())

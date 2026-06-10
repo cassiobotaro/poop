@@ -76,9 +76,13 @@ def test_set_from_no_arg_returns_empty() -> None:
     assert result == Set()
 
 
-def test_set_from_set_returns_same() -> None:
+def test_set_from_set_returns_copy() -> None:
     s = Set(Int(1), Int(2))
-    assert _poop_set_from(s) is s
+    result = _poop_set_from(s)
+    assert result == s
+    assert result is not s
+    result.add(Int(3))
+    assert s == Set(Int(1), Int(2))
 
 
 def test_set_from_list() -> None:
