@@ -127,52 +127,9 @@
 
 **Decision + implemented:** routed the Int form of every `slice` method (`Str`, `List`, `Tuple`, `Bytes`, `ByteArray`, `Array`, `Range`) through the existing `Slice` helper — `Slice(start_or_slice, stop, step)._py_slice()` — whose `_coerce` already treats both Python `None` and POOP `none` as absent. `obj.slice(2, none)` now means open-ended (`obj[2:]`), and the `"stop is required"` guard was dropped (so `obj.slice(2)` is also open-ended). Widened the `stop`/`step` annotations to `Int | NoneClass | None`. Tests in the affected type test files.
 
-### 144. Enum-family members answer raw `bool`/`int` from every operator message — enum dispatch is impossible
+### ~~144. Enum-family members answer raw `bool`/`int` from every operator message — enum dispatch is impossible~~ — DONE
 
-- **Where:** `poop/types/enum.py:23` — `_PoopEnumMixin` adds `name_str` /
-  `value_object` / `iter` / `_missing_`, but members do not inherit `Object`
-  and no operator dunder is bridged: `Enum` members fall back to
-  `object.__eq__`, `IntEnum`/`IntFlag` members to `int.__eq__` / `int.__lt__`
-  / `int.__add__` / etc.
-- **Leak:** `Color.RED == Color.GREEN` answers a raw Python `bool` (same for
-  `!=`, and for `<`/`<=`/`>`/`>=` on `IntEnum`/`IntFlag`); `IntEnum` member
-  arithmetic (`Priority.LOW + Priority.HIGH`) answers a raw `int`. Because
-  `is` is forbidden (`no_is`) and members are not `Object`s (no
-  `is_identical`), there is **no** POOP-typed way to compare two members at
-  all — so the one branching idiom the language offers,
-  `(state == State.IDLE).if_true(...)`, crashes, making state dispatch on an
-  enum impossible. (`.name` / `.value` raw pass-through is documented by
-  design in the module docstring; the operator results are not.)
-- **Evidence:** e2e (`uv run python main.py ...`):
-
-  ```python
-  class State(Enum):
-      IDLE = 1
-      BUSY = 2
-
-  current = State.IDLE
-  (current == State.IDLE).if_true(lambda: "idle".print())
-  # poop: 'bool' object has no attribute 'if_true' (line 6)
-  ```
-
-  `(Color.RED == Color.GREEN).print()` → `poop: 'bool' object has no
-  attribute 'print'`; with `IntEnum`, `(LOW < HIGH).print()` → same, and
-  `(LOW + HIGH).print()` → `poop: 'int' object has no attribute 'print'`;
-  `IntFlag` equality leaks identically. Identity probe (display names are
-  masked — `Boolean.__name__` is rebound to `"bool"`):
-  `(Color.RED == Color.GREEN).__class__ is builtins.bool` → `True`,
-  `isinstance(..., Boolean)` → `False`; `(LOW + HIGH).__class__ is
-  builtins.int` → `True`; `hasattr(Color.RED, "is_identical")` → `False`.
-- **Proposed fix:** bridge operator results in `_PoopEnumMixin`: add
-  `__eq__`/`__ne__` returning `to_boolean(...)` — delegate to
-  `super().__eq__(other)` and fall back to identity when it answers
-  `NotImplemented` — plus `def __hash__(self): return super().__hash__()` to
-  keep each family's hash; wrap `__lt__`/`__le__`/`__gt__`/`__ge__` the same
-  way for the int-based families, and route `IntEnum` arithmetic results
-  through `to_poop`. Verified feasible: a probe mixin with exactly that
-  `__eq__` answers a POOP `Boolean` while alias resolution
-  (`CRIMSON = 1` → `is RED`) and member-keyed dict lookup keep working,
-  because `Boolean.__bool__` preserves truthiness for enum internals.
+**Decision + implemented:** bridged operator results in `_PoopEnumMixin` (`poop/types/enum.py`): `__eq__`/`__ne__` answer a POOP `Boolean` (delegating to `super()` and falling back to identity on `NotImplemented`), `__hash__` is preserved (alias resolution and member-keyed dict lookup keep working), and `__lt__`/`__le__`/`__gt__`/`__ge__` wrap the same way (the int families order, plain `Enum` raises `TypeError` like CPython). Added an `_IntEnumArithmeticMixin` (on `IntEnum`/`IntFlag`) routing arithmetic results through `to_poop` so `LOW + HIGH` answers a POOP `Int`; `IntFlag` bitwise `|`/`&`/`^`/`~` keep flag-combination semantics. `(state == State.IDLE).if_true(...)` now works — state dispatch is possible. Tests in `tests/test_types/test_enum.py`; catalogued in INFECTIONS.md.
 
 ### ~~145. Rebinding (or passing) a forbidden builtin bypasses every call-name validator — raw `int`/`list`/class objects flow out~~ — DONE
 

@@ -81,6 +81,55 @@ def test_int_enum_lookup_by_poop_int() -> None:
     assert HTTPStatus(Int(404)) is HTTPStatus.NOT_FOUND
 
 
+# --- Operator bridging (proposal 144) ---
+
+
+def test_enum_eq_returns_poop_boolean() -> None:
+    from poop.types.boolean import Boolean, false, true
+
+    assert isinstance(Color.RED == Color.RED, Boolean)
+    assert (Color.RED == Color.RED) is true
+    assert (Color.RED == Color.GREEN) is false
+    assert (Color.RED != Color.GREEN) is true
+
+
+def test_enum_eq_enables_dispatch_via_interpreter() -> None:
+    Interpreter().run_source(
+        "class State(Enum):\n"
+        "    IDLE = 1\n"
+        "    BUSY = 2\n"
+        "(State.IDLE == State.IDLE).if_true(lambda: 'idle'.print())"
+    )
+
+
+def test_int_enum_ordering_returns_boolean() -> None:
+    from poop.types.boolean import Boolean, true
+
+    assert isinstance(HTTPStatus.OK < HTTPStatus.NOT_FOUND, Boolean)
+    assert (HTTPStatus.OK < HTTPStatus.NOT_FOUND) is true
+    assert (HTTPStatus.NOT_FOUND >= HTTPStatus.OK) is true
+
+
+def test_int_enum_arithmetic_returns_poop_int() -> None:
+    result = HTTPStatus.OK + HTTPStatus.OK
+    assert isinstance(result, Int)
+    assert result == Int(400)
+
+
+def test_enum_hash_keeps_member_dict_lookup() -> None:
+    # The override must not break hash-based member identity.
+    seen = {Color.RED: Str("r"), Color.GREEN: Str("g")}
+    assert seen[Color.RED] == Str("r")
+
+
+def test_enum_alias_resolution_survives_eq_override() -> None:
+    class Named(Enum):
+        RED = 1
+        CRIMSON = 1
+
+    assert Named.CRIMSON is Named.RED
+
+
 # --- StrEnum ---
 
 

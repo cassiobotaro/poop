@@ -1710,6 +1710,7 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 - `.value_object()` returning a wrapped POOP value (`Int`/`Str`/`Float`/`Boolean`) — `.value` returns whatever was assigned (raw Python primitives stay raw; POOP types pass through unchanged).
 - `_missing_` is wired so `Color(Int(1))` resolves to `Color.RED` exactly like `Color(1)`.
 - `Enum.iter()` returns a POOP `List` of members.
+- Operator results are POOP-typed: `==`/`!=` answer a POOP `Boolean` (so `(state == State.IDLE).if_true(...)` works), `<`/`<=`/`>`/`>=` answer a `Boolean` for the int-based families, and `IntEnum`/`IntFlag` arithmetic (`LOW + HIGH`) answers a POOP `Int`. `__hash__` is preserved, so alias resolution and member-keyed dict lookup keep working; `IntFlag` bitwise `|`/`&`/`^`/`~` keep CPython's flag-combination semantics (they answer flag members).
 
 | Operation | Returns | Notes |
 |---|---|---|
