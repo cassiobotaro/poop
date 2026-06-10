@@ -2464,7 +2464,7 @@ Four networking namespaces shipped together. `signal` wraps OS signal registrati
 | `ssl.SSLError` / `SSLZeroReturnError` / `SSLWantReadError` / `SSLWantWriteError` / `SSLSyscallError` / `SSLEOFError` / `SSLCertVerificationError` (class attrs) | exception class | |
 | `asyncio.run(coro, debug=none)` | result | accepts coroutine or zero-arg callable |
 | `asyncio.sleep(delay, result=none)` | awaitable | |
-| `asyncio.gather(*coros)` | awaitable | resolves to list of results |
+| `asyncio.gather(*coros, return_exceptions=false)` | awaitable | resolves to `List` of results; with `return_exceptions=true`, exceptions arrive wrapped as `Error` |
 | `asyncio.wait_for(coro, timeout=none)` / `.shield(coro)` | awaitable | |
 | `asyncio.create_task(coro)` / `.ensure_future(coro)` | `Future` | requires running loop |
 | `asyncio.new_event_loop()` / `.set_event_loop(loop)` / `.get_event_loop()` | Python loop / `none` | |

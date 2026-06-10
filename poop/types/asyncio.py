@@ -5,8 +5,10 @@ import inspect as _inspect
 from typing import Any, ClassVar
 
 from poop.types.boolean import Boolean, false, to_boolean
+from poop.types.error import Error
 from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 
@@ -76,11 +78,15 @@ class AsyncIO:
         return _asyncio.sleep(delay._value, result=result)
 
     @staticmethod
-    def gather(*coros_or_futures: Any, return_exceptions: Boolean = false) -> Any:
-        return _asyncio.gather(
+    async def gather(
+        *coros_or_futures: Any, return_exceptions: Boolean = false
+    ) -> List:
+        results = await _asyncio.gather(
             *(_as_coro(a) for a in coros_or_futures),
             return_exceptions=bool(return_exceptions),
         )
+        # Mirror what Try hands to handlers: exceptions arrive as Error.
+        return List(*(Error(r) if isinstance(r, BaseException) else r for r in results))
 
     @staticmethod
     def wait_for(fut: Any, timeout: Float | Int | NoneClass | None = None) -> Any:

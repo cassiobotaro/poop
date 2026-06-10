@@ -5,7 +5,11 @@ import pytest
 from poop.interpreter import Interpreter
 from poop.types.asyncio import AsyncIO, Future
 from poop.types.boolean import false, true
+from poop.types.error import Error
 from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.list import List
+from poop.types.string import Str
 
 
 async def _coro_returning(n: int) -> int:
@@ -47,15 +51,31 @@ def test_sleep_via_run() -> None:
 
 
 def test_gather_with_run() -> None:
-    async def caller() -> list[int]:
-        results = await AsyncIO.gather(
+    async def caller() -> object:
+        return await AsyncIO.gather(
             _coro_returning(1),
             _coro_returning(2),
             _coro_returning(3),
         )
-        return results
 
-    assert AsyncIO.run(caller()) == [1, 2, 3]
+    result = AsyncIO.run(caller())
+    assert isinstance(result, List)
+    assert list(result) == [1, 2, 3]
+
+
+def test_gather_return_exceptions_wraps_errors() -> None:
+    async def boom() -> int:
+        raise ValueError("boom")
+
+    async def caller() -> object:
+        return await AsyncIO.gather(_coro_returning(1), boom(), return_exceptions=true)
+
+    result = AsyncIO.run(caller())
+    assert isinstance(result, List)
+    assert result.at(Int(0)) == 1
+    error = result.at(Int(1))
+    assert isinstance(error, Error)
+    assert error.kind() == Str("ValueError")
 
 
 def test_wait_for_completes() -> None:
