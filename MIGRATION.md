@@ -1841,8 +1841,9 @@ q.put(item); item = q.get()
 t = Thread(target=do_work)
 t.start(); t.join()
 
-with ThreadPoolExecutor(4) as ex:
-    results = ex.map(square, List(*range(10)))
+With(lambda: ThreadPoolExecutor(4)).do(
+    lambda ex: ex.map(square, list(range(10))).do(lambda r: r.print())
+)
 
 result = subprocess.run(["ls", "-la"], capture_output=true, text=true)
 result.stdout.print()
