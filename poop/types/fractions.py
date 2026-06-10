@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import Boolean, to_boolean
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass
@@ -185,6 +185,17 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
 
     def __ge__(self, other: Any) -> Boolean:
         return self._cmp(other, lambda a, b: a >= b)
+
+    # Equality mirrors _cmp (accepting Int/Float) rather than the
+    # same-class-only _ValueEqMixin, so `Fraction(2) == 2` matches the
+    # ordering operators instead of contradicting them.
+    def __eq__(self, other: object) -> Boolean:
+        result = self._cmp(other, lambda a, b: a == b)
+        return false if result is NotImplemented else result
+
+    def __ne__(self, other: object) -> Boolean:
+        result = self._cmp(other, lambda a, b: a != b)
+        return true if result is NotImplemented else result
 
     def __hash__(self) -> int:
         return hash(self._impl)

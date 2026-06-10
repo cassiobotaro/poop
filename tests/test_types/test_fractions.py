@@ -232,10 +232,24 @@ def test_fraction_gt_int() -> None:
 
 
 def test_fraction_compared_to_float() -> None:
-    assert (Fraction(Int(1), Int(2)) == Float(0.5)) is false
-    # Note: Fraction.__eq__ is exact; mixed comparison via Float
-    # promotion isn't transitive — comparisons via <,>,<=,>= work.
+    # Equality mirrors the ordering operators (float promotion), so a
+    # Fraction equals the Float it promotes to (matching CPython).
+    assert (Fraction(Int(1), Int(2)) == Float(0.5)) is true
     assert (Fraction(Int(1), Int(2)) >= Float(0.5)) is true
+
+
+def test_fraction_eq_int_matches_ordering() -> None:
+    # proposal 119: == must agree with >=/<= for Int operands.
+    f = Fraction(Int(2))
+    assert (f == Int(2)) is true
+    assert (f != Int(2)) is false
+    assert (f >= Int(2)) is true
+    assert (f <= Int(2)) is true
+
+
+def test_fraction_eq_foreign_is_false() -> None:
+    assert (Fraction(Int(2)) == Str("x")) is false
+    assert (Fraction(Int(2)) != Str("x")) is true
 
 
 # --- Namespace ---

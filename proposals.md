@@ -16,20 +16,9 @@
 
 **Decision + implemented:** added a typed `_ABSENT` sentinel (`_AbsentType`) and a `_replace_tz` helper in `poop/types/datetime.py`; `Time.replace`/`DateTime.replace` now default `tzinfo` to `_ABSENT` so the three cases are distinct — omitted keeps the current tzinfo, POOP `none` strips to naive, a wrapper sets it. `aware.replace(tzinfo=none).tzinfo` now answers `none`. Tests in `tests/test_types/test_datetime.py`.
 
-### 119. `Fraction == Int` answers `false` while `Fraction >= Int` answers `true`
+### ~~119. `Fraction == Int` answers `false` while `Fraction >= Int` answers `true`~~ — DONE
 
-- **Where:** `poop/types/fractions.py:45` (`_eq_attr` via `_ValueEqMixin`) vs `poop/types/fractions.py:168` (`_cmp`)
-- **Bug:** `Fraction` inherits `_ValueEqMixin.__eq__`, which only matches operands of the same class, so equality against `Int`/`Float` is always `false` — yet the class's own `_cmp` (used by `<`, `<=`, `>`, `>=`) and `_combine` (arithmetic) deliberately accept `Int` and `Float`. The result is internally inconsistent: `f >= 2` and `f <= 2` are both `true` while `f == 2` is `false`. Real Python: `Fraction(2) == 2` → `True`.
-- **Repro:**
-
-  ```python
-  f = Fraction(2)
-  (f >= 2).print()   # True
-  (f == 2).print()   # False  (Python: True)
-  (f != 2).print()   # True   (Python: False)
-  ```
-
-- **Proposed fix:** override `__eq__`/`__ne__` on `Fraction` with the `_cmp` dispatch (`Fraction`/`Int` compare against `self._impl`, `Float` against `float(self._impl)`), falling back to `false`/`true` for foreign types as today.
+**Decision + implemented:** `Fraction` now overrides `__eq__`/`__ne__` to route through `_cmp` (the same dispatch used by `<`/`<=`/`>`/`>=`), so `Fraction(2) == 2` answers `true` and Float equality matches the ordering operators (`Fraction(1,2) == 0.5` → `true`, matching CPython). Foreign operands still fall back to `false`/`true`. Updated the stale `test_fraction_compared_to_float` and added tests in `tests/test_types/test_fractions.py`.
 
 ### 120. `decimal` precision/rounding can never be changed — the documented `localcontext` recipe is impossible
 
