@@ -46,6 +46,10 @@ def test_negated() -> None:
     assert Complex(1 + 2j).negated() == Complex(-1 - 2j)
 
 
+def test_dunder_neg() -> None:
+    assert -Complex(2j) == Complex(-2j)
+
+
 def test_add_complex() -> None:
     assert Complex(1 + 2j) + Complex(3 + 4j) == Complex(4 + 6j)
 
@@ -183,6 +187,16 @@ def test_transformer_j_literal() -> None:
     result = ns["c"]
     assert isinstance(result, Complex)
     assert result == Complex(2j)
+
+
+def test_transformer_negative_j_literal() -> None:
+    tree = parse("c = -2j")
+    tree = ComplexTransformer().transform(tree)
+    ns: dict[str, object] = {"_poop_complex_literal": _poop_complex_literal}
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    result = ns["c"]
+    assert isinstance(result, Complex)
+    assert result == Complex(-2j)
 
 
 def test_transformer_binop_literal() -> None:

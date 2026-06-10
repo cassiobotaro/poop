@@ -113,6 +113,9 @@ class Complex(_ValueEqMixin, Object):
     def negated(self) -> Complex:
         return Complex(-self._value)
 
+    def __neg__(self) -> Complex:
+        return self.negated()
+
     def __hash__(self) -> int:
         return hash(self._value)
 
