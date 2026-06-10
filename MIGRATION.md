@@ -730,7 +730,7 @@ sorted_merge = heapq.merge(*iterables).to_list()
 
 > `heapq` operates on POOP `List` in place — `heappush`/`heappop`/`heapify` are mutators that return `none` (`heappop` returns the popped element). `heapq.merge` returns a `HeapMerge` lazy iterator with `.to_list()` to materialize.
 
-## Collections (`collections` module — `Counter`/`deque`/`defaultdict`/`OrderedDict`/`namedtuple`)
+## Collections (`collections` module — `Counter`/`deque`/`defaultdict`/`OrderedDict`/`ChainMap`/`namedtuple`)
 
 ```python
 # Python

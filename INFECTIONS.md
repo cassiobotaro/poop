@@ -1122,7 +1122,7 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 
 `heapq` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/heapq.py` — namespace-only, no AST rewrite.
 
-### collections + Counter + Deque — `poop/types/collections.py` + `poop/transformers/collections.py`
+### collections + Counter + deque + defaultdict + OrderedDict + ChainMap + namedtuple — `poop/types/collections.py` + `poop/transformers/collections.py`
 
 `collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Seven namespace entries: `collections` (lowercase module mirror), plus the direct entry points `Counter`, `deque`, `defaultdict`, `OrderedDict`, `ChainMap`, and `namedtuple` — each keeping its Python casing (`deque`/`defaultdict`/`namedtuple` are lowercase in CPython, same precedent as enum's `auto`). Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as. `defaultdict` and `OrderedDict` subclass `Dict`, so the full `Dict` surface (`at_put`, `keys`, `do`, `pop`, views, `|` merge, …) applies.
 
