@@ -2,15 +2,21 @@ import ast
 
 from poop.errors import ValidationError
 
+_NAMESPACE_MESSAGE = (
+    "{name!r} is a POOP namespace binding; reassigning it shadows the "
+    "runtime entry point"
+)
+
 
 class _Visitor(ast.NodeVisitor):
-    def __init__(self, protected: frozenset[str]) -> None:
+    def __init__(self, protected: frozenset[str], message: str) -> None:
         self._protected = protected
+        self._message = message
 
     def _check(self, name: str, node: ast.AST) -> None:
         if name in self._protected:
             raise ValidationError(
-                f"{name!r} is a POOP namespace binding; reassigning it shadows the runtime entry point",
+                self._message.format(name=name),
                 lineno=getattr(node, "lineno", 0),
                 col_offset=getattr(node, "col_offset", 0),
             )
@@ -87,4 +93,4 @@ class NoNamespaceShadowValidator:
         )
 
     def validate(self, tree: ast.Module) -> None:
-        _Visitor(self._protected).visit(tree)
+        _Visitor(self._protected, _NAMESPACE_MESSAGE).visit(tree)

@@ -321,48 +321,9 @@
 
 **Decision + implemented:** `make_call_name_validator` (`poop/validators/_call_name.py`) now visits `ast.Name` instead of `ast.Call`, rejecting any reference to a forbidden name regardless of context (assignment RHS/target, argument, decorator, default), so the ~39 forbidden builtins are fully reserved identifiers and the wrapper layer can't be reopened by `f = len` / `words.map(len)` / `len = 5`. Method substitutes (`xs.len()`, `n.hex()`) are `ast.Attribute` nodes and keyword-argument names aren't `Name` nodes, so both stay unaffected. The full suite passes unchanged. Tests in `tests/test_validators/test_no_len.py`.
 
-### 146. Binding a lowercase builtin name (`int = 5`, `def __init__(self, dict)`) silently rebinds the interpreter's mangled internals
+### ~~146. Binding a lowercase builtin name (`int = 5`, `def __init__(self, dict)`) silently rebinds the interpreter's mangled internals~~ — DONE
 
-- **Where:** every type transformer's `visit_Name` rewrites with `ctx=node.ctx` — Store and parameter-body loads included: `poop/transformers/int.py:73-75`, `float.py:64-66`, `string.py:52-54`, `boolean.py:35-37`, `bytes.py:58-60`, `byte_array.py:43-45`, `memory_view.py:39-41`, `complex.py:96-98`, `range.py:38-40`, `enumerate.py:30-33`, `zip.py:36-38`, and `_collection.py:49-52` (shared by `list`/`tuple`/`set`/`dict`/`frozen_set`). No validator covers these 16 names — `no_namespace_shadow` protects only `DEFAULT_NAMESPACE` bindings (`math = 5` is rejected; `int = 5` is not), and the entry-145 call-name validators don't include the rewritten type names at all.
-- **Bug:** the rewrite is context-blind, so a user binding of `bool`/`int`/`float`/`complex`/`str`/`bytes`/`bytearray`/`memoryview`/`list`/`tuple`/`dict`/`set`/`frozenset`/`range`/`enumerate`/`zip` becomes a binding of the mangled `_poop_*` global. Three flavors, all legal Python:
-  1. module-scope assignment to a name whose rewrite target is also the literal constructor (`int`, `float`, `str`, `bytes`) replaces the constructor itself, so **every later literal of that type crashes**;
-  2. function-scope assignment compiles to `_poop_str = _poop_str("hello")`, an `UnboundLocalError` that leaks the mangled name in the diagnostic;
-  3. a `def`/lambda parameter keeps its name while body loads rewrite to the mangled global, so the body silently operates on the internal class instead of the argument.
-- **Repro:**
-
-  ```python
-  str = "hello"
-  "world".print()
-  # poop: 'str' object is not callable   (Python: prints world)
-  ```
-
-  ```python
-  int = 5
-  x = 3
-  # poop: 'int' object is not callable   (Python: x == 3)
-  ```
-
-  ```python
-  class App:
-      def run(self):
-          str = "hello"
-          return str
-  App().run()
-  # poop: cannot access local variable '_poop_str' where it is not associated with a value
-  ```
-
-  ```python
-  class Tag:
-      def __init__(self, dict):
-          self._d = dict
-      def get(self, k):
-          return self._d.get(k)
-  Tag({"a": 1}).get("a").print()
-  # poop: Dict.get() missing 1 required positional argument: 'key'
-  # (self._d silently bound the internal Dict class, not the argument; Python: prints 1)
-  ```
-
-- **Proposed fix:** make the 16 rewritten builtin names reserved identifiers, mirroring how `no_namespace_shadow` already treats namespace bindings: extend that validator (or add a sibling `no_builtin_shadow`) with the fixed name set, rejecting assignment targets, class names, and `def`/lambda parameters with a message like `'int' is a POOP builtin name; it cannot be rebound`. This is the same "reserved identifier" direction entry 145 proposes for the call-name validators, and it turns all three silent-corruption flavors into a clear parse-time diagnostic. (Scope-aware rewriting would preserve Python's shadowing semantics but costs a symbol table; rejection matches POOP's existing posture.)
+**Decision + implemented:** added a `no_builtin_shadow` validator (`poop/validators/no_builtin_shadow.py`) that reuses the `no_namespace_shadow` `_Visitor` (generalized to take a message) over the fixed set of 16 rewritten builtin names (`bool`/`int`/`float`/…/`zip`), registered in `DEFAULT_VALIDATORS`. Rebinding one via assignment, class name, or `def`/`lambda` parameter now raises `'<name>' is a POOP builtin name; it cannot be rebound` at parse time instead of silently corrupting the interpreter internals; constructor calls (`int("5")`) are unaffected. Tests in `tests/test_validators/test_no_builtin_shadow.py`; catalogued in INFECTIONS.md (also corrected the stale "does not catch parameters" note there).
 
 ### ~~147. sqlite3 named-placeholder parameters (`:name` + dict) are rejected — "parameters are of unsupported type"~~ — DONE
 
