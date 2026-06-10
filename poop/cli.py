@@ -61,7 +61,14 @@ def main(
         Repl(interpreter).run()
         return
 
-    source = file.read_text(encoding="utf-8")
+    try:
+        source = file.read_text(encoding="utf-8")
+    except OSError as exc:
+        # An unreadable path (missing file, a directory, no permission) is
+        # an ordinary user mistake; keep the one-line `poop:` style instead
+        # of leaking a rich-formatted traceback through typer.
+        typer.echo(f"poop: cannot read '{file}': {exc.strerror}", err=True)
+        raise typer.Exit(1) from exc
     filename = str(file)
 
     if validators_only:

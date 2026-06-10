@@ -206,19 +206,9 @@
 
 **Decision + implemented:** widened `Str.startswith`/`endswith` (`poop/types/string.py`) to `prefix: Str | Tuple`, unwrapping a `Tuple` into a raw `tuple` of strings (`tuple(str(p) for p in prefix._items)`) before delegating. `"abc".startswith(tuple("a", "z"))` now answers `true` — the message-shaped substitute for the forbidden `startswith(...) or startswith(...)`. Tests in `tests/test_types/test_str.py`.
 
-### 137. CLI dumps a raw rich traceback when the source file does not exist
+### ~~137. CLI dumps a raw rich traceback when the source file does not exist~~ — DONE
 
-- **Where:** `poop/cli.py:64` (`source = file.read_text(encoding="utf-8")`)
-- **Bug:** every pipeline error (syntax, validator, runtime) prints a clean one-line `poop: ...` diagnostic, but an unreadable path escapes the `_poop_errors` guard: `poop missing.py` prints a full rich-formatted `FileNotFoundError` traceback through typer, and `poop somedir/` an `IsADirectoryError` traceback — internal frames (`cli.py`, `pathlib`) exposed for an ordinary user mistake.
-- **Repro:**
-
-  ```bash
-  uv run python main.py /tmp/nonexistent_file.py
-  # ╭─── Traceback (most recent call last) ───╮ ... FileNotFoundError: [Errno 2] ...
-  # expected something like: poop: cannot read '/tmp/nonexistent_file.py': No such file or directory
-  ```
-
-- **Proposed fix:** either declare the constraint on the argument — `typer.Argument(exists=True, dir_okay=False, readable=True)` — letting typer print its standard short error, or wrap the `read_text` call in `try/except OSError as exc` and `typer.echo(f"poop: cannot read '{file}': {exc.strerror}", err=True)` + `typer.Exit(1)`, keeping the established error style.
+**Decision + implemented:** wrapped the `file.read_text` call in `poop/cli.py` in `try/except OSError`, emitting `poop: cannot read '<path>': <strerror>` and exiting 1 — keeping the established one-line `poop:` style for missing files, directories, and permission errors instead of leaking a rich traceback. Tests in `tests/test_cli.py`.
 
 ### 138. Starred unpacking binds the rest-target to a raw Python `list`
 
