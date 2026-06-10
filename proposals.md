@@ -220,42 +220,9 @@
   `TypeError: __init__() should return None` for non-`None` returns;
   generators cannot occur (`no_yield`), so the rewrite is otherwise safe.
 
-### 141. `import` statements pass validation and bind raw Python modules — shadowing injected namespaces
+### ~~141. `import` statements pass validation and bind raw Python modules — shadowing injected namespaces~~ — DONE
 
-- **Where:** `poop/validators/__init__.py:66` (`DEFAULT_VALIDATORS` has no
-  validator for `ast.Import`/`ast.ImportFrom`), and
-  `poop/validators/no_namespace_shadow.py:6` (`_Visitor` checks
-  `Assign`/`AnnAssign`/`AugAssign`/`ClassDef`/parameters but not import
-  aliases, so even rebinding a protected namespace name via `import` slips
-  through).
-- **Leak:** `import os` binds the raw CPython module *over* POOP's injected
-  `os` namespace, and every call on it returns raw Python values —
-  the entire wrapper layer is bypassed in one line. `from os import getcwd`
-  and `import json as j` leak the same way. MIGRATION.md's design statement
-  ("No `import math` needed in POOP — the namespace is injected globally")
-  and the import-free `examples/` tree show imports were never meant to be
-  part of the language; they are simply unvalidated.
-- **Evidence:** e2e (`uv run python main.py /tmp/poop_import_os.py`):
-
-  ```python
-  import os
-  cwd = os.getcwd()
-  cwd.print()
-  # poop: 'str' object has no attribute 'print' (line 3)
-  ```
-
-  `from os import getcwd` produces the same raw `str`. Direct probe:
-  after `import os`, `type(ns["os"])` is `<class 'module'>` and
-  `os.getcwd()` returns a raw `str`. (`__import__("json")` is already
-  unusable — POOP `Str` is not accepted as a module name — so the statement
-  form is the only open door.)
-- **Proposed fix:** add a `no_import` validator rejecting `ast.Import` and
-  `ast.ImportFrom` with a message that names the substitute, e.g.
-  `"import is forbidden — POOP injects its stdlib namespaces (math, os,
-  json, …); the names are already in scope"`, and register it in
-  `DEFAULT_VALIDATORS`. As defense-in-depth, `no_namespace_shadow` can also
-  gain `visit_Import`/`visit_ImportFrom` over `alias.asname or alias.name`,
-  but with `no_import` active that branch is unreachable.
+**Decision + implemented:** added a `no_import` validator (`poop/validators/no_import.py`, via `make_node_validator`) rejecting `ast.Import` and `ast.ImportFrom` with a message naming the substitute ("POOP injects its stdlib namespaces … the names are already in scope"), registered in `DEFAULT_VALIDATORS`. `import os` / `from os import getcwd` / `import json as j` are now caught at validation time instead of leaking raw Python modules. Tests in `tests/test_validators/test_no_import.py`; catalogued in INFECTIONS.md.
 
 ### ~~142. `{**a, ...}` dict-literal splat (and `f(**kw)`) crash — POOP `Dict` cannot be used as a `**`-unpacking mapping~~ — DONE
 

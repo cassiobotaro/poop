@@ -542,6 +542,13 @@ Out of v1 (filed if demand appears): `open(mode)` returning a POOP `File`, `stat
 |---|---|
 | `ast.Delete` | objects have no explicit destruction — simply do not delete |
 
+### No `import` — `poop/validators/no_import.py`
+
+| AST node | Reason |
+|---|---|
+| `ast.Import` | POOP injects its stdlib namespaces (`math`, `os`, `json`, …) — `import` would bind the raw CPython module over the wrapper layer |
+| `ast.ImportFrom` | same — the names are already in scope; `from os import getcwd` would leak raw Python values |
+
 ### No `_poop_*` prefix — `poop/validators/no_poop_prefix.py`
 
 | AST node | Reason |
