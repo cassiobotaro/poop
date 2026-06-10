@@ -656,3 +656,41 @@ def test_replace_with_count() -> None:
 
 def test_replace_with_poop_none_count() -> None:
     assert Str("aaa").replace(Str("a"), Str("b"), count=none) == Str("bbb")
+
+
+def test_str_b64decode_with_validate() -> None:
+    assert Str("YWJj").b64decode(validate=true) == Bytes(b"abc")
+
+
+def test_str_b64decode_validate_rejects_garbage() -> None:
+    with pytest.raises(Exception):  # noqa: B017, PT011 — binascii.Error
+        Str("YW Jj").b64decode(validate=true)
+
+
+def test_str_b64decode_altchars() -> None:
+    encoded = Bytes(b"\xfb\xff").b64encode(altchars=Bytes(b"-_"))
+    assert Str(encoded._value.decode()).b64decode(altchars=Str("-_")) == Bytes(
+        b"\xfb\xff"
+    )
+
+
+def test_str_b16decode_casefold() -> None:
+    assert Str("6162").b16decode(casefold=true) == Bytes(b"ab")
+
+
+def test_str_b32decode_casefold_and_map01() -> None:
+    encoded = Bytes(b"ab").b32encode()._value.decode().lower()
+    assert Str(encoded).b32decode(casefold=true) == Bytes(b"ab")
+    swapped = Str(encoded.replace("o", "0"))
+    assert swapped.b32decode(casefold=true, map01=Str("L")) == Bytes(b"ab")
+
+
+def test_str_b32hexdecode_casefold() -> None:
+    encoded = Bytes(b"ab").b32hexencode()._value.decode().lower()
+    assert Str(encoded).b32hexdecode(casefold=true) == Bytes(b"ab")
+
+
+def test_str_a85decode_with_kwargs() -> None:
+    encoded = Bytes(b"hello").a85encode()._value.decode()
+    spaced = Str(" " + encoded + " ")
+    assert spaced.a85decode(ignorechars=Str(" ")) == Bytes(b"hello")

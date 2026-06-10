@@ -81,3 +81,9 @@ def test_shlex_split_reachable_via_interpreter() -> None:
 
 def test_Shlex_class_reachable_via_interpreter() -> None:
     Interpreter().run_source('Shlex("a b c").get_token().print()')
+
+
+def test_punctuation_chars_reads_back_resolved_set() -> None:
+    assert Shlex(Str("a;b")).punctuation_chars == Str("")
+    enabled = Shlex(Str("a;b"), punctuation_chars=true)
+    assert enabled.punctuation_chars.includes(Str(";")) is true

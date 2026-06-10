@@ -149,6 +149,12 @@ class Shlex:
         self._impl.debug = value._value
 
     @property
+    def punctuation_chars(self) -> Str:
+        # Stdlib stores the resolved character set (empty when the
+        # constructor got False, the default set when True).
+        return Str(self._impl.punctuation_chars)
+
+    @property
     def token(self) -> Str:
         return Str(self._impl.token)
 

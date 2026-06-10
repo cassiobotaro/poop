@@ -613,3 +613,15 @@ def test_endswith_with_start_and_end() -> None:
 
 def test_replace_with_count() -> None:
     assert Bytes(b"aaa").replace(Bytes(b"a"), Bytes(b"b"), Int(1)) == Bytes(b"baa")
+
+
+def test_a85decode_with_kwargs() -> None:
+    original = Bytes(b"poop data")
+    encoded = original.a85encode(foldspaces=true, adobe=true)
+    assert encoded.a85decode(foldspaces=true, adobe=true) == original
+
+
+def test_a85decode_ignorechars() -> None:
+    encoded = Bytes(b"hello").a85encode()
+    spaced = Bytes(b" " + encoded._value + b" ")
+    assert spaced.a85decode(ignorechars=Bytes(b" ")) == Bytes(b"hello")

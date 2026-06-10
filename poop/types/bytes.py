@@ -446,8 +446,22 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def urlsafe_b64decode(self) -> Bytes:
         return Bytes(_base64.urlsafe_b64decode(self._value))
 
-    def a85decode(self) -> Bytes:
-        return Bytes(_base64.a85decode(self._value))
+    def a85decode(
+        self,
+        foldspaces: Boolean | NoneClass | None = None,
+        adobe: Boolean | NoneClass | None = None,
+        ignorechars: Bytes | NoneClass | None = None,
+    ) -> Bytes:
+        from typing import Any as _Any
+
+        kwargs: dict[str, _Any] = {}
+        if not _is_absent(foldspaces):
+            kwargs["foldspaces"] = bool(foldspaces)
+        if not _is_absent(adobe):
+            kwargs["adobe"] = bool(adobe)
+        if not _is_absent(ignorechars):
+            kwargs["ignorechars"] = ignorechars._value
+        return Bytes(_base64.a85decode(self._value, **kwargs))
 
     def b85decode(self) -> Bytes:
         return Bytes(_base64.b85decode(self._value))
