@@ -449,3 +449,147 @@
   ```
 
 - **Proposed fix:** either declare the constraint on the argument — `typer.Argument(exists=True, dir_okay=False, readable=True)` — letting typer print its standard short error, or wrap the `read_text` call in `try/except OSError as exc` and `typer.echo(f"poop: cannot read '{file}': {exc.strerror}", err=True)` + `typer.Exit(1)`, keeping the established error style.
+
+### 138. Starred unpacking binds the rest-target to a raw Python `list`
+
+- **Where:** transformer layer — no transformer in `DEFAULT_TRANSFORMERS`
+  (`poop/transformers/__init__.py`) visits assignment targets, so
+  `c, *rest = xs` reaches `exec` (`poop/executor.py:37`) untouched and
+  CPython's `UNPACK_EX` builds the rest-collection as a native `list`.
+  (`poop/validators/no_namespace_shadow.py:18` already walks `ast.Starred`
+  targets, so the syntax is reachable and anticipated.)
+- **Leak:** the starred name binds a raw `builtins.list` (its elements are
+  POOP values, the container is not). Every POOP message on it crashes; the
+  source type does not matter — `List`, `Tuple`, and `Str` right-hand sides
+  all leak, including nested targets like `a, (b, *inner) = ...`.
+- **Evidence:** e2e (`uv run python main.py /tmp/poop_star.py`):
+
+  ```python
+  c, *rest = [1, 2, 3]
+  c.print()       # 1 — plain targets are fine
+  rest.print()    # poop: 'list' object has no attribute 'print' (line 3)
+  ```
+
+  Direct probe through `Interpreter.transform_source` + `exec`:
+  `rest.__class__ is [].__class__` → `True` (raw list), while
+  `all(isinstance(e, Int) for e in rest)` → `True` and the plain target `c`
+  is a POOP `Int`. Same result for `a, *b = (1, 2, 3)` and
+  `first, *others = "xyz"`.
+- **Proposed fix:** add an `unpack` transformer whose `visit_Assign` (and
+  `visit_AnnAssign` is irrelevant — annotated targets cannot be starred)
+  detects `ast.Starred` anywhere in the target tree and appends one rebind
+  statement per starred name after the assignment, e.g.
+  `c, *rest = xs` → `c, *rest = xs; rest = _poop_list_from(rest)` (the
+  binding already exists: `_poop_list_from` in `poop/transformers/list.py:14`
+  accepts any iterable of POOP elements). For attribute/starred targets like
+  `a, *self.rest = xs`, emit the equivalent
+  `self.rest = _poop_list_from(self.rest)`. `visit_Assign` may return a
+  statement list, so the expansion is a plain `NodeTransformer`.
+
+### 139. `*args` / `**kwargs` parameters bind a raw `tuple` / raw `dict` (with raw `str` keys)
+
+- **Where:** transformer layer — `poop/transformers/class_.py:9` rewrites
+  only `ClassDef` bases; method signatures are untouched, so CPython's call
+  machinery packs variadic parameters natively inside `exec`
+  (`poop/executor.py:37`). `poop/validators/no_namespace_shadow.py` already
+  validates `vararg`/`kwarg` names, so the syntax is sanctioned.
+- **Leak:** inside a user method `def m(self, *args, **kw):`, `args` is a
+  raw `builtins.tuple` and `kw` a raw `builtins.dict` whose keys are raw
+  `str` (the values are POOP — they come from the transformed call site).
+  Every POOP message on either container crashes.
+- **Evidence:** e2e (`uv run python main.py /tmp/poop_varargs.py`):
+
+  ```python
+  class Calc:
+      def total(self, *args):
+          args.print()
+
+  Calc().total(1, 2, 3)
+  # poop: 'tuple' object has no attribute 'print' (line 3)
+  ```
+
+  Same for `**opts`: `poop: 'dict' object has no attribute 'print'`.
+  Identity probe: `o.a.__class__ is (1,).__class__` → `True`,
+  `o.k.__class__ is {}.__class__` → `True`, and every key satisfies
+  `k.__class__ is "".__class__`.
+- **Proposed fix:** in a signature transformer (same pass as the fix above,
+  or a sibling), for every `FunctionDef`/`AsyncFunctionDef` with
+  `args.vararg`/`args.kwarg`, inject a prologue as the first body
+  statements: `args = _poop_tuple_from(args)` and
+  `kw = _poop_dict_from_kwargs(kw)` — `_poop_tuple_from` already exists
+  (`poop/transformers/tuple.py`); add a tiny `_poop_dict_from_kwargs(d)`
+  binding that builds a `Dict` mapping `Str(k) → v`. Lambdas with variadic
+  parameters need the nested-lambda form
+  (`lambda *xs: body` → `lambda *xs: (lambda xs: body)(_poop_tuple_from(xs))`)
+  since a prologue cannot be inserted into an expression body.
+
+### 140. User methods without an explicit `return` answer raw Python `None`, not POOP `none`
+
+- **Where:** transformer layer — nothing rewrites function bodies
+  (`poop/transformers/class_.py` touches only class bases), so a method that
+  falls off the end or uses a bare `return` answers CPython's implicit
+  `None` inside `exec` (`poop/executor.py:37`). The `none` transformer
+  (`poop/transformers/none.py`) only rewrites the `None` *literal*; the
+  implicit return has no AST node to rewrite.
+- **Leak:** the single most common method shape — a side-effecting method
+  with no `return` — hands raw `NoneType` to its caller. `result.is_none()`,
+  `result.print()`, `result.if_none(...)` all crash, even though POOP's own
+  wrappers scrupulously return the `none` singleton from every void method.
+- **Evidence:** e2e (`uv run python main.py /tmp/poop_implicit_none.py`):
+
+  ```python
+  class Greeter:
+      def greet(self):
+          "hi".print()
+
+  r = Greeter().greet()
+  r.is_none().print()
+  # poop: 'NoneType' object has no attribute 'is_none' (line 6)
+  ```
+
+  A bare `return` leaks identically.
+- **Proposed fix:** add a `return_` transformer that, for every
+  `FunctionDef`/`AsyncFunctionDef`: (1) rewrites `return` (no value) to
+  `return _poop_none`, and (2) appends `return _poop_none` when the last
+  body statement is not a `Return`/`Raise` (an unreachable trailing return
+  is harmless otherwise). The `_poop_none` binding already exists
+  (`poop/transformers/none.py:17`). Must skip `__init__` — CPython raises
+  `TypeError: __init__() should return None` for non-`None` returns;
+  generators cannot occur (`no_yield`), so the rewrite is otherwise safe.
+
+### 141. `import` statements pass validation and bind raw Python modules — shadowing injected namespaces
+
+- **Where:** `poop/validators/__init__.py:66` (`DEFAULT_VALIDATORS` has no
+  validator for `ast.Import`/`ast.ImportFrom`), and
+  `poop/validators/no_namespace_shadow.py:6` (`_Visitor` checks
+  `Assign`/`AnnAssign`/`AugAssign`/`ClassDef`/parameters but not import
+  aliases, so even rebinding a protected namespace name via `import` slips
+  through).
+- **Leak:** `import os` binds the raw CPython module *over* POOP's injected
+  `os` namespace, and every call on it returns raw Python values —
+  the entire wrapper layer is bypassed in one line. `from os import getcwd`
+  and `import json as j` leak the same way. MIGRATION.md's design statement
+  ("No `import math` needed in POOP — the namespace is injected globally")
+  and the import-free `examples/` tree show imports were never meant to be
+  part of the language; they are simply unvalidated.
+- **Evidence:** e2e (`uv run python main.py /tmp/poop_import_os.py`):
+
+  ```python
+  import os
+  cwd = os.getcwd()
+  cwd.print()
+  # poop: 'str' object has no attribute 'print' (line 3)
+  ```
+
+  `from os import getcwd` produces the same raw `str`. Direct probe:
+  after `import os`, `type(ns["os"])` is `<class 'module'>` and
+  `os.getcwd()` returns a raw `str`. (`__import__("json")` is already
+  unusable — POOP `Str` is not accepted as a module name — so the statement
+  form is the only open door.)
+- **Proposed fix:** add a `no_import` validator rejecting `ast.Import` and
+  `ast.ImportFrom` with a message that names the substitute, e.g.
+  `"import is forbidden — POOP injects its stdlib namespaces (math, os,
+  json, …); the names are already in scope"`, and register it in
+  `DEFAULT_VALIDATORS`. As defense-in-depth, `no_namespace_shadow` can also
+  gain `visit_Import`/`visit_ImportFrom` over `alias.asname or alias.name`,
+  but with `no_import` active that branch is unreachable.
