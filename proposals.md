@@ -593,3 +593,90 @@
   `DEFAULT_VALIDATORS`. As defense-in-depth, `no_namespace_shadow` can also
   gain `visit_Import`/`visit_ImportFrom` over `alias.asname or alias.name`,
   but with `no_import` active that branch is unreachable.
+
+### 142. `{**a, ...}` dict-literal splat (and `f(**kw)`) crash — POOP `Dict` cannot be used as a `**`-unpacking mapping
+
+- **Where:** `poop/types/dict.py` (the `Dict` class exposes `at`/`keys`/`values`
+  but no `__getitem__`, so it does not satisfy the mapping protocol Python's
+  `**` unpacking needs), and `poop/transformers/dict.py:50-53` (the dict
+  rewriter *bails out* — `return node` — whenever a display contains a `**`
+  entry, leaving the raw Python `ast.Dict` in place to be merged at runtime by
+  `dict.update`-style logic that the POOP `Dict` cannot service).
+- **Bug:** A dict display with `**` unpacking (`{**a, "y": 2}`, `{**a, **b}`)
+  crashes with `'dict' object is not subscriptable`, and so does a call-site
+  keyword splat `f(**kw)` when `kw` is a POOP `Dict`. Python's `**` merge calls
+  `kw.keys()` (which works — `keys()` exists) and then subscripts `kw[k]`, but
+  `Dict` has no `__getitem__`, so the subscription raises. Both are the *natural*
+  POOP translations of everyday Python: there is no other literal way to splice
+  one dict into another, and `f(*args)` (positional splat) already works, so the
+  asymmetry is surprising.
+- **Repro** (`uv run python main.py file.py`):
+
+  ```python
+  a = {"x": 1}
+  b = {**a, "y": 2}        # poop: 'dict' object is not subscriptable (line 2)
+  ```
+
+  ```python
+  class Adder:
+      def add(self, a, b):
+          return a + b
+  kw = {"a": 1, "b": 2}
+  Adder().add(**kw).print() # poop: 'dict' object is not subscriptable
+  ```
+
+  By contrast `[*a, *b]`, `(*a, 3)`, `{*a, *b}` and `f(*list)` all work, because
+  iteration (not the mapping protocol) is all they need.
+- **Proposed fix:** stop bailing in `_DictRewriter.visit_Dict` — instead of
+  `return node` when a `**` entry is present, rewrite the display into a POOP
+  merge helper (e.g. `_poop_dict_merge(<entry>, ...)`, where each plain pair
+  becomes a one-key `_poop_dict_from_pairs(...)` and each `**x` stays as `x`),
+  building a real POOP `Dict` and keeping POOP semantics for keys/values. For the
+  call-site `f(**kw)` path (which the transformer cannot reach), give `Dict` a
+  `__getitem__` delegating to `self._data[key]` so it satisfies the mapping
+  protocol; note that kwargs additionally require Python-`str` keys, so a fully
+  correct `f(**kw)` also needs `keys()` to yield raw `str` for that one path
+  (or a documented restriction that `**`-splatting a POOP `Dict` into a call is
+  unsupported). The dict-literal fix is the high-value, self-contained one.
+
+### 143. Open-ended slice `obj.slice(start, None)` crashes on every sliceable type
+
+- **Where:** the `slice` method of `poop/types/string.py:53`,
+  `poop/types/list.py:43`, `poop/types/tuple.py:42`, `poop/types/bytes.py:46`,
+  `poop/types/byte_array.py:49`, `poop/types/array.py:107`, and
+  `poop/types/range.py:54`. Each ends with
+  `s = step._value if step is not None else None` and
+  `self._value[start_or_slice._value : stop._value : s]`.
+- **Bug:** A `None` literal in POOP source is rewritten to the POOP `none`
+  (`NoneClass`, whose `__name__` is set to `"NoneType"`), **not** Python's
+  `None`. The `slice` methods guard with `if stop is None:` (a Python-identity
+  check that POOP `none` never satisfies) and then read `stop._value` /
+  `step._value` directly — but `NoneClass` has no `_value`, so any
+  `obj.slice(start, None)` or `obj.slice(start, stop, None)` raises
+  `'NoneType' object has no attribute '_value'`. This is the natural translation
+  of Python's `obj[start:]` / open-ended slices, and the `no_subscript`
+  validator explicitly directs users to `obj.slice(start, stop)`. There is no
+  way to express "to the end" through the 3-arg form (omitting `stop` hits the
+  `"stop is required when start is an Int"` guard instead). The `Slice`
+  constructor *does* handle this — `poop/types/slice.py:_coerce` accepts both
+  Python `None` and `NoneClass` — so only `obj.slice(slice(start, None))` works,
+  which is awkward and undocumented.
+- **Repro** (`uv run python main.py file.py`):
+
+  ```python
+  "hello".slice(2, None).print()        # poop: 'NoneType' object has no attribute '_value'
+  [1, 2, 3, 4, 5].slice(1, None).print()
+  range(0, 10).slice(2, None).print()
+  (1, 2, 3, 4).slice(1, None).print()
+  b"abcdef".slice(2, None).print()
+  # all crash identically; only obj.slice(slice(2, None)) works
+  ```
+
+- **Proposed fix:** in each `slice` method coerce a POOP `none` argument the same
+  way `Slice._coerce` does — treat both Python `None` and `NoneClass` as
+  "absent". The smallest robust change is to route the 3-arg form through the
+  existing `Slice` helper, e.g. build
+  `Slice(start_or_slice, stop, step)._py_slice()` and index with it, so the
+  single coercion site in `poop/types/slice.py` handles `None`/`NoneClass`/`Int`
+  uniformly for every type. (The current `if stop is None` Int-required guard can
+  then be dropped, since an absent/`none` stop becomes a valid open-ended slice.)
