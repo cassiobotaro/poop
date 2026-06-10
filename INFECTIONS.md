@@ -84,10 +84,6 @@ POOP file I/O routes through `Path`. The CPython fd-integer ABI (`os.open` / `os
 
 POOP intentionally hides CPython's frame model. `sys.getframe` / `sys._getframe` / `sys._current_frames`, `sys.getrefcount`, `sys.gettrace` / `sys.settrace` / `sys.setprofile`, `sys.audit` / `sys.addaudithook`, `sys.monitoring`, `sys.set_coroutine_origin_tracking_depth`, `sys.set_asyncgen_hooks`, `gc.get_referents` / `gc.get_referrers` / `gc.get_stats` / `gc.set_debug` all stay out. POOP debuggers/profilers are a non-goal — use CPython tools directly on the Python side if you need them.
 
-### No `Random` state inspection
-
-`Random.seed(a, version)` is the supported determinism story. `Random.getstate()` and `Random.setstate(state)` stay out — the CPython state tuple is a 625-element Mersenne Twister internal that has no clean POOP type-discipline mapping. If you need exact replay, capture the seed.
-
 ### No `GetPassWarning`
 
 `getpass.getpass` emits a `UserWarning` (CPython's `GetPassWarning`) to stderr when echo-suppression fails on the underlying TTY. POOP has no `warnings` model, so the warning is unobservable through the POOP namespace; user code cannot catch or filter it. Upgrading the warning to a raised POOP `Error` would diverge from CPython's actual behaviour — not worth the divergence.
@@ -903,7 +899,14 @@ This is the first POOP namespace where two names point to related but distinct o
 | Collection draws | `choice(seq)`, `shuffle(x)` mutates list, returns `none`, `choices(population, weights=None, *, cum_weights=None, k=Int(1))`, `sample(population, k, *, counts=None)` | element / `none` / `List` |
 | Distributions | `gauss`, `normalvariate`, `lognormvariate`, `expovariate`, `gammavariate`, `betavariate`, `paretovariate`, `weibullvariate`, `vonmisesvariate`, `triangular`, `binomialvariate` (Python 3.12+) | `Float` (10) / `Int` (binomialvariate) |
 
-The same method set is available on both `random` (module API, uses singleton state) and on `Random(seed)` instances (independent state per instance). Anything cryptographic goes through `secrets`, not `random`. `getstate` / `setstate` are deferred to Future work (see `proposals.md`) because the Mersenne Twister state is opaque (625 ints) and has no clean POOP type-discipline mapping.
+The same method set is available on both `random` (module API, uses singleton state) and on `Random(seed)` instances (independent state per instance). Anything cryptographic goes through `secrets`, not `random`.
+
+`getstate()` answers a `RandomState` — an **opaque checkpoint token**. The CPython state tuple (version, the 625 Mersenne Twister words, the cached spare `gauss` value) stays sealed inside; the token answers equality and `setstate(state)` accepts it back, resuming the sequence mid-stream (including the `gauss()` pair cache). This mirrors the stdlib contract — "can be passed to setstate() later" — without pretending the 625 words are meaningful data. For plain reproducibility from the start, `seed(a)` remains the simpler story.
+
+| Operation | Returns | Notes |
+|---|---|---|
+| `rng.getstate()` / `random.getstate()` | `RandomState` | opaque checkpoint |
+| `rng.setstate(state)` / `random.setstate(state)` | `none` | resumes exactly at the checkpoint; the token transfers between generators |
 
 `random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
 

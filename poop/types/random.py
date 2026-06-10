@@ -1,16 +1,39 @@
 import random as _random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _unwrap
+from poop.types._value_eq import _ValueEqMixin
 from poop.types.float import Float
 from poop.types.none import none
+from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.bytes import Bytes
     from poop.types.int import Int
     from poop.types.list import List
     from poop.types.none import NoneClass
-    from poop.types.object import Object
+
+
+class RandomState(_ImplWrapperMixin, _ValueEqMixin, Object):
+    """Opaque checkpoint of a generator's Mersenne Twister state.
+
+    Created by `getstate()`; its only purpose is to be handed back to
+    `setstate(state)` to resume the sequence mid-stream. The CPython
+    state tuple (version, 625 words, cached gauss value) stays sealed
+    inside — the token answers equality and nothing more, mirroring
+    the "can be passed to setstate() later" contract of the stdlib.
+    """
+
+    __slots__ = ("_impl",)
+    _eq_attr: ClassVar[str] = "_impl"
+
+    _impl: Any
+
+    def __str__(self) -> str:
+        return "<random state>"
+
+    __repr__ = __str__
 
 
 class Random:
@@ -38,6 +61,13 @@ class Random:
 
     def seed(self, a: Int | None = None, version: Int | None = None) -> NoneClass:
         self._impl.seed(_unwrap(a, None), version=_unwrap(version, 2))
+        return none
+
+    def getstate(self) -> RandomState:
+        return RandomState._from_impl(self._impl.getstate())
+
+    def setstate(self, state: RandomState) -> NoneClass:
+        self._impl.setstate(state._impl)
         return none
 
     # Core draws -----------------------------------------------------

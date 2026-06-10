@@ -3,7 +3,7 @@ from typing import cast
 from poop.interpreter import Interpreter
 from poop.types.float import Float
 from poop.types.int import Int
-from poop.types.random import _DEFAULT, Random
+from poop.types.random import _DEFAULT, Random, RandomState
 
 
 def test_random_returns_poop_float_in_unit_range() -> None:
@@ -322,3 +322,59 @@ def test_binomialvariate_defaults() -> None:
     result = r.binomialvariate()
     assert isinstance(result, Int)
     assert result._value in (0, 1)  # n=1, single Bernoulli trial
+
+
+# --- getstate / setstate (pulled when a caller asked) ---
+
+
+def test_getstate_returns_opaque_token() -> None:
+    state = Random(Int(42)).getstate()
+    assert isinstance(state, RandomState)
+    assert str(state) == "<random state>"
+
+
+def test_setstate_resumes_mid_sequence() -> None:
+    r = Random(Int(42))
+    r.random()  # advance past the seed point
+    checkpoint = r.getstate()
+    first_run = [r.random()._value for _ in range(3)]
+    r.setstate(checkpoint)
+    replay = [r.random()._value for _ in range(3)]
+    assert replay == first_run
+
+
+def test_setstate_resumes_gauss_pair_cache() -> None:
+    r = Random(Int(7))
+    r.gauss(Float(0.0), Float(1.0))  # leaves the spare normal cached
+    checkpoint = r.getstate()
+    first = r.gauss(Float(0.0), Float(1.0))._value
+    r.setstate(checkpoint)
+    assert r.gauss(Float(0.0), Float(1.0))._value == first
+
+
+def test_state_tokens_compare_by_content() -> None:
+    from poop.types.boolean import false, true
+
+    a = Random(Int(1)).getstate()
+    b = Random(Int(1)).getstate()
+    c = Random(Int(2)).getstate()
+    assert (a == b) is true
+    assert (a == c) is false
+
+
+def test_state_transfers_between_generators() -> None:
+    source = Random(Int(99))
+    source.random()
+    clone = Random()
+    clone.setstate(source.getstate())
+    assert clone.random() == source.random()
+
+
+def test_getstate_setstate_via_interpreter() -> None:
+    Interpreter().run_source(
+        "rng = Random(42)\n"
+        "checkpoint = rng.getstate()\n"
+        "first = rng.random()\n"
+        "rng.setstate(checkpoint)\n"
+        "(rng.random() == first).print()"
+    )
