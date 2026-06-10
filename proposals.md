@@ -317,48 +317,9 @@
   (`CRIMSON = 1` → `is RED`) and member-keyed dict lookup keep working,
   because `Boolean.__bool__` preserves truthiness for enum internals.
 
-### 145. Rebinding (or passing) a forbidden builtin bypasses every call-name validator — raw `int`/`list`/class objects flow out
+### ~~145. Rebinding (or passing) a forbidden builtin bypasses every call-name validator — raw `int`/`list`/class objects flow out~~ — DONE
 
-- **Where:** `poop/validators/_call_name.py:24` — the `_Visitor` produced by
-  `make_call_name_validator` only rejects `ast.Call` nodes whose `func` is an
-  `ast.Name`. A bare `ast.Name` reference to a forbidden builtin in any other
-  position — assignment RHS, call argument, decorator, default value — passes
-  all 39 validators built by the factory, and the executor's namespace
-  (`poop/executor.py:37`, `exec` with implicit `__builtins__`) resolves it to
-  the raw CPython builtin.
-- **Leak:** one assignment reopens every blocked door: `f = len; f(xs)`
-  answers a raw `int` (wrappers expose `__len__` for protocol interop),
-  `srt = sorted; srt(xs)` answers a raw Python `list`, `t = type; t(x)`
-  answers the raw class object. Argument position needs no assignment at
-  all: `words.map(len)` yields raw `int` elements. Same shape as the
-  `import` door (an unvalidated statement binding raw Python objects), but
-  through names the validators were specifically built to block.
-- **Evidence:** e2e (`uv run python main.py ...`):
-
-  ```python
-  f = len
-  n = f([1, 2, 3])
-  n.print()
-  # poop: 'int' object has no attribute 'print' (line 3)
-  ```
-
-  `srt = sorted; srt([3, 1, 2]).print()` → `poop: 'list' object has no
-  attribute 'print'`; `t = type; t(5).print()` → `poop: Object.print()
-  missing 1 required positional argument: 'self'` (the raw class leaked, so
-  `.print` is an unbound method); `["ab", "abc"].map(len).next().print()` →
-  `poop: 'int' object has no attribute 'print'`. Not every alias leaks —
-  `h = hex; h(255)` crashes because `Int` lacks `__index__` — but every
-  blocked builtin satisfied by a wrapper dunder (`len`, `sorted`, `type`,
-  `id`, `hash`, `isinstance`, ...) does.
-- **Proposed fix:** in `make_call_name_validator`, replace `visit_Call` with
-  a `visit_Name` that rejects any reference to a forbidden name regardless
-  of context (Load, Store, decorator, argument), reusing the same message
-  template. Method substitutes are unaffected — `n.hex()` / `xs.len()` are
-  `ast.Attribute` nodes, and keyword-argument names are not `Name` nodes.
-  Trade-off to state in the message: the 39 forbidden names become fully
-  reserved identifiers (`len = 5` is rejected too), which matches the spirit
-  of `no_namespace_shadow`. Structural validators not built by the factory
-  (`no_subscript`, `no_if`, ...) need no change.
+**Decision + implemented:** `make_call_name_validator` (`poop/validators/_call_name.py`) now visits `ast.Name` instead of `ast.Call`, rejecting any reference to a forbidden name regardless of context (assignment RHS/target, argument, decorator, default), so the ~39 forbidden builtins are fully reserved identifiers and the wrapper layer can't be reopened by `f = len` / `words.map(len)` / `len = 5`. Method substitutes (`xs.len()`, `n.hex()`) are `ast.Attribute` nodes and keyword-argument names aren't `Name` nodes, so both stay unaffected. The full suite passes unchanged. Tests in `tests/test_validators/test_no_len.py`.
 
 ### 146. Binding a lowercase builtin name (`int = 5`, `def __init__(self, dict)`) silently rebinds the interpreter's mangled internals
 
