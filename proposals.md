@@ -747,22 +747,9 @@
 
 - **Proposed fix:** add a `Dict` branch to `_unwrap_params` — `if isinstance(params, Dict): return to_python(params)` (the module already imports `to_python`, which deep-converts `Dict` via `_data`) — and widen the `params` annotations on all four execute methods to `Tuple | List | Dict | NoneClass`.
 
-### 148. `Decimal` is sealed off from `Int`/`Float`: mixed arithmetic and ordering crash, mixed equality answers `false`
+### ~~148. `Decimal` is sealed off from `Int`/`Float`: mixed arithmetic and ordering crash, mixed equality answers `false`~~ — DONE
 
-- **Where:** `poop/types/decimal.py:42-86` (`Decimal.__add__`/`__sub__`/`__mul__`/`__truediv__`/`__floordiv__`/`__mod__`/`__pow__` and `__lt__`/`__le__`/`__gt__`/`__ge__` all dereference `other._impl`), `poop/types/decimal.py:32-37` (`_ValueEqMixin` equality keyed on `_impl`, same-class only)
-- **Bug:** every binary operator assumes the operand is another `Decimal`, so `Decimal("2.5") + 1` and `Decimal("2.5") >= 1` raise `AttributeError: 'int' object has no attribute '_impl'`, while `Decimal("2.5") == 2.5` silently answers `false`. CPython supports `int` operands in Decimal arithmetic and `int`/`float` in comparisons and equality. POOP's own `Fraction` already accepts `Int`/`Float` in `_combine`/`_cmp`, so `Decimal` is the odd one out — and the constructor itself accepts `Int | Float`, making the operator refusal internally inconsistent. Distinct from entry 115 (the `Int`/`Float` side of the same expressions) and entry 119 (`Fraction` equality): fixing those leaves `Decimal`'s own dunders crashing, since `Decimal` defines no reflected dunders and accepts nothing but `Decimal`.
-- **Repro:**
-
-  ```python
-  d = Decimal("2.5")
-  (d + 1).print()     # poop: 'int' object has no attribute '_impl'   (Python: 3.5)
-  (d * 3).print()     # poop: 'int' object has no attribute '_impl'   (Python: 7.5)
-  (d >= 1).print()    # poop: 'int' object has no attribute '_impl'   (Python: True)
-  (d < 3.0).print()   # poop: 'float' object has no attribute '_impl' (Python: True)
-  (d == 2.5).print()  # False                                         (Python: True)
-  ```
-
-- **Proposed fix:** mirror CPython's contract. Arithmetic: accept `Int` by converting via `_decimal.Decimal(other._value)`, return `NotImplemented` for `Float` (CPython raises `TypeError` for `Decimal + float`), and add the matching reflected dunders (`__radd__`, `__rsub__`, ...) so `1 + d` works once entry 115's `NotImplemented` fix lands. Comparisons and `__eq__`/`__ne__`: accept `Int` and `Float` (CPython compares `Decimal` against both), falling back to `false`/`true` for foreign types — the same dispatch shape entry 119 proposes for `Fraction`.
+**Decision + implemented:** added `_arith`/`_cmp` helpers to `Decimal` (mirroring `Fraction`). Arithmetic accepts `Decimal`/`Int` and returns `NotImplemented` for `Float` (so `Decimal + float` raises `TypeError`, matching CPython) and foreign types; reflected dunders (`__radd__`…`__rpow__`) were added so `1 + d` works (reachable via proposal 115). Comparisons and `__eq__`/`__ne__` accept `Int`/`Float` via the raw `_decimal.Decimal` mixed-type comparison, falling back to `false`/`true` for foreign types. Tests in `tests/test_types/test_decimal.py`.
 
 ### 149. logging `Formatter.default_time_format` / `default_msec_format` answer bare Python `str` — and the msec knob is unusable in both directions
 

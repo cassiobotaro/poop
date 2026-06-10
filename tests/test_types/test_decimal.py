@@ -76,6 +76,50 @@ def test_decimal_comparisons() -> None:
     assert (a >= a) is true
 
 
+# Mixed-mode arithmetic, comparison, equality — proposal 148
+
+
+def test_decimal_plus_int() -> None:
+    assert Decimal(Str("2.5")) + Int(1) == Decimal(Str("3.5"))
+
+
+def test_decimal_times_int() -> None:
+    assert Decimal(Str("2.5")) * Int(3) == Decimal(Str("7.5"))
+
+
+def test_int_plus_decimal_reflected() -> None:
+    assert Int(1) + Decimal(Str("2.5")) == Decimal(Str("3.5"))
+
+
+def test_int_minus_decimal_reflected() -> None:
+    assert Int(10) - Decimal(Str("2.5")) == Decimal(Str("7.5"))
+
+
+def test_decimal_compared_to_int() -> None:
+    assert (Decimal(Str("2.5")) >= Int(1)) is true
+    assert (Decimal(Str("2.5")) <= Int(1)) is false
+
+
+def test_decimal_compared_to_float() -> None:
+    assert (Decimal(Str("2.5")) < Float(3.0)) is true
+
+
+def test_decimal_eq_int_and_float() -> None:
+    assert (Decimal(Str("2.5")) == Float(2.5)) is true
+    assert (Decimal(Str("3")) == Int(3)) is true
+    assert (Decimal(Str("3")) != Int(3)) is false
+
+
+def test_decimal_eq_foreign_is_false() -> None:
+    assert (Decimal(Str("3")) == Str("x")) is false
+    assert (Decimal(Str("3")) != Str("x")) is true
+
+
+def test_decimal_plus_float_raises() -> None:
+    with pytest.raises(TypeError):
+        Decimal(Str("2.5")) + Float(1.0)
+
+
 def test_decimal_quantize() -> None:
     d = Decimal(Str("3.14159"))
     assert d.quantize(Decimal(Str("0.01"))) == Decimal(Str("3.14"))
