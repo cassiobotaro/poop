@@ -1,0 +1,101 @@
+import ast
+from typing import ClassVar
+
+from poop.transformers.base import BaseTransformer
+
+
+def _rebind(name: str, helper: str) -> ast.Assign:
+    """`<name> = <helper>(<name>)` — convert a variadic parameter to POOP."""
+    return ast.Assign(
+        targets=[ast.Name(id=name, ctx=ast.Store())],
+        value=ast.Call(
+            func=ast.Name(id=helper, ctx=ast.Load()),
+            args=[ast.Name(id=name, ctx=ast.Load())],
+            keywords=[],
+        ),
+    )
+
+
+def _prologue(args: ast.arguments) -> list[ast.stmt]:
+    stmts: list[ast.stmt] = []
+    if args.vararg is not None:
+        stmts.append(_rebind(args.vararg.arg, "_poop_tuple_from"))
+    if args.kwarg is not None:
+        stmts.append(_rebind(args.kwarg.arg, "_poop_dict_from_kwargs"))
+    return stmts
+
+
+class _VarargsRewriter(ast.NodeTransformer):
+    """Bind `*args` / `**kwargs` parameters to POOP `Tuple` / `Dict`.
+
+    CPython packs variadic parameters natively: inside `def m(self, *args,
+    **kw)`, `args` is a raw `tuple` and `kw` a raw `dict` with raw `str`
+    keys, so every POOP message on them crashes. Inject a prologue
+    (`args = _poop_tuple_from(args)`, `kw = _poop_dict_from_kwargs(kw)`) as
+    the first body statements; for lambdas (no statement body), wrap the
+    expression in a nested lambda that receives the converted values.
+    """
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        return self._rewrite_function(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:
+        return self._rewrite_function(node)
+
+    def _rewrite_function(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> ast.AST:
+        self.generic_visit(node)
+        prologue = _prologue(node.args)
+        if prologue:
+            node.body = prologue + node.body
+        return node
+
+    def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
+        self.generic_visit(node)
+        names: list[tuple[str, str]] = []
+        if node.args.vararg is not None:
+            names.append((node.args.vararg.arg, "_poop_tuple_from"))
+        if node.args.kwarg is not None:
+            names.append((node.args.kwarg.arg, "_poop_dict_from_kwargs"))
+        if not names:
+            return node
+        # lambda <params>: body  ->
+        # lambda <params>: (lambda xs, kw: body)(conv(xs), conv(kw))
+        inner = ast.Lambda(
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[ast.arg(arg=name) for name, _ in names],
+                vararg=None,
+                kwonlyargs=[],
+                kw_defaults=[],
+                kwarg=None,
+                defaults=[],
+            ),
+            body=node.body,
+        )
+        call = ast.Call(
+            func=inner,
+            args=[
+                ast.Call(
+                    func=ast.Name(id=helper, ctx=ast.Load()),
+                    args=[ast.Name(id=name, ctx=ast.Load())],
+                    keywords=[],
+                )
+                for name, helper in names
+            ],
+            keywords=[],
+        )
+        node.body = call
+        return node
+
+
+class VarargsTransformer(BaseTransformer):
+    """Rebinds variadic parameters to POOP types.
+
+    `_poop_tuple_from` and `_poop_dict_from_kwargs` are provided by the
+    tuple and dict transformers.
+    """
+
+    rewriter = _VarargsRewriter
+    BINDINGS: ClassVar[dict[str, object]] = {}

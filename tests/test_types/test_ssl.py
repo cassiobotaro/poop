@@ -15,6 +15,19 @@ def test_ssl_context_constructs() -> None:
     assert isinstance(ctx, SSLContext)
 
 
+def test_ssl_context_constructs_from_protocol_constant() -> None:
+    # proposal 133: the protocol form is CPython's canonical ctor call.
+    ctx = SSLContext(SSL.PROTOCOL_TLS_CLIENT)
+    assert isinstance(ctx, SSLContext)
+    assert isinstance(ctx.check_hostname, Boolean)
+
+
+def test_ssl_context_server_protocol() -> None:
+    ctx = SSLContext(SSL.PROTOCOL_TLS_SERVER)
+    assert isinstance(ctx, SSLContext)
+    assert isinstance(ctx.verify_mode, Int)
+
+
 def test_verify_mode_round_trip() -> None:
     ctx = SSL.create_default_context()
     assert isinstance(ctx.verify_mode, Int)

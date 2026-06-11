@@ -44,9 +44,11 @@ class Future(Object):
         return to_poop(self._impl.result())
 
     def exception(self) -> Object:
-        from poop.types._bridge import to_poop
-
-        return to_poop(self._impl.exception())
+        # Mirror the gather contract: none when there is no exception,
+        # Error otherwise (to_poop has no BaseException branch, so a raw
+        # exception would leak to user space).
+        result = self._impl.exception()
+        return none if result is None else Error(result)
 
     def cancel(self) -> Boolean:
         return to_boolean(self._impl.cancel())

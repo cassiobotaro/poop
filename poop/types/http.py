@@ -11,8 +11,10 @@ from typing import Any, ClassVar, Self
 from poop.types._bridge import _str_str_dict
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from
+from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
+from poop.types.enum import IntEnum, StrEnum
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
@@ -20,26 +22,41 @@ from poop.types.object import Object
 from poop.types.string import Str
 
 
-# CPython's HTTPStatus / HTTPMethod don't natively accept POOP `Int` /
-# `Str` wrappers, because their IntEnum / StrEnum constructors call
-# `int(value)` / `str(value)` and POOP wrappers don't match the
-# inherited `_value_` comparison. Patch `_missing_` so they unwrap
-# POOP types and recurse. This is additive — non-POOP Python code
-# never passes POOP types, so the patch is a no-op for them.
-def _http_status_missing(cls: Any, value: Any) -> Any:
-    if isinstance(value, Int):
-        return cls(value._value)
-    return None
+# Rebuild HTTPStatus / HTTPMethod over the POOP enum bases instead of
+# re-exporting CPython's raw enums, so members answer POOP messages
+# (`==` → Boolean for status dispatch, `.phrase`/`.description` → Str).
+# The POOP IntEnum/StrEnum `_missing_` unwraps POOP `Int`/`Str`, so
+# `HTTPStatus(Int(200))` still resolves — now to a POOP member.
+def _str_prop(table: dict[Any, Any]) -> property:
+    return property(lambda self: Str(table[self._value_]))
 
 
-def _http_method_missing(cls: Any, value: Any) -> Any:
-    if isinstance(value, Str):
-        return cls(value._value)
-    return None
+def _bool_prop(table: dict[Any, Any]) -> property:
+    return property(lambda self: to_boolean(table[self._value_]))
 
 
-_http.HTTPStatus._missing_ = classmethod(_http_status_missing)  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
-_http.HTTPMethod._missing_ = classmethod(_http_method_missing)  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+def _build_http_status() -> Any:
+    src = list(_http.HTTPStatus)
+    cls: Any = IntEnum("HTTPStatus", [(m.name, m.value) for m in src])
+    cls.phrase = _str_prop({m.value: m.phrase for m in src})
+    cls.description = _str_prop({m.value: m.description for m in src})
+    cls.is_informational = _bool_prop({m.value: m.is_informational for m in src})
+    cls.is_success = _bool_prop({m.value: m.is_success for m in src})
+    cls.is_redirection = _bool_prop({m.value: m.is_redirection for m in src})
+    cls.is_client_error = _bool_prop({m.value: m.is_client_error for m in src})
+    cls.is_server_error = _bool_prop({m.value: m.is_server_error for m in src})
+    return cls
+
+
+def _build_http_method() -> Any:
+    src = list(_http.HTTPMethod)
+    cls: Any = StrEnum("HTTPMethod", [(m.name, m.value) for m in src])
+    cls.description = _str_prop({m.value: m.description for m in src})
+    return cls
+
+
+_HTTPStatus = _build_http_status()
+_HTTPMethod = _build_http_method()
 
 
 def _headers_to_py(headers: Dict, what: str) -> dict[str, str]:
@@ -318,14 +335,16 @@ class HTTPCookieJar:
 class Http:
     """Namespace mirroring Python's `http` package.
 
-    `HTTPStatus` and `HTTPMethod` are re-exported directly from
-    CPython (with a `_missing_` patch so POOP `Int` / `Str` wrappers
-    resolve to members). Submodules `client` / `server` / `cookies` /
-    `cookiejar` are exposed under attribute access.
+    `HTTPStatus` and `HTTPMethod` are POOP enums rebuilt from CPython's
+    (members answer POOP messages; `.phrase`/`.description` return `Str`,
+    the `is_*` predicates return `Boolean`). POOP `Int` / `Str` wrappers
+    resolve to members via the inherited `_missing_`. Submodules
+    `client` / `server` / `cookies` / `cookiejar` are exposed under
+    attribute access.
     """
 
-    HTTPStatus: ClassVar[type[Any]] = _http.HTTPStatus
-    HTTPMethod: ClassVar[type[Any]] = _http.HTTPMethod
+    HTTPStatus: ClassVar[type[Any]] = _HTTPStatus
+    HTTPMethod: ClassVar[type[Any]] = _HTTPMethod
 
     client: ClassVar[type[HTTPClient]] = HTTPClient
     server: ClassVar[type[HTTPServerNamespace]] = HTTPServerNamespace

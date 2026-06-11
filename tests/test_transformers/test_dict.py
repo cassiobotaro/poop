@@ -84,6 +84,57 @@ def test_dict_from_no_arg_returns_empty() -> None:
     assert result == Dict()
 
 
+def test_dict_from_kwargs() -> None:
+    # proposal 135: dict(a=1, b=2) keyword form.
+    result = _poop_dict_from(a=Int(1), b=Int(2))
+    expected = Dict()
+    expected._data[Str("a")] = Int(1)
+    expected._data[Str("b")] = Int(2)
+    assert result == expected
+
+
+def test_dict_from_mapping_and_kwargs() -> None:
+    base = Dict()
+    base._data[Str("p")] = Int(1)
+    result = _poop_dict_from(base, q=Int(2))
+    assert result.at(Str("p")) == Int(1)
+    assert result.at(Str("q")) == Int(2)
+
+
+def test_dict_kwargs_via_interpreter() -> None:
+    from poop.interpreter import Interpreter
+
+    Interpreter().run_source('dict(a=1, b=2).at("a").print()')
+
+
+def test_dict_merge_helper() -> None:
+    from poop.transformers.dict import _poop_dict_merge
+
+    a = Dict()
+    a._data[Str("x")] = Int(1)
+    b = Dict()
+    b._data[Str("y")] = Int(2)
+    merged = _poop_dict_merge(a, b)
+    assert merged.at(Str("x")) == Int(1)
+    assert merged.at(Str("y")) == Int(2)
+
+
+def test_dict_merge_later_overrides_earlier() -> None:
+    from poop.transformers.dict import _poop_dict_merge
+
+    a = Dict()
+    a._data[Str("x")] = Int(1)
+    b = Dict()
+    b._data[Str("x")] = Int(99)
+    assert _poop_dict_merge(a, b).at(Str("x")) == Int(99)
+
+
+def test_dict_splat_via_interpreter() -> None:
+    from poop.interpreter import Interpreter
+
+    Interpreter().run_source('{**{"x": 1}, "y": 2}.at("y").print()')
+
+
 def test_dict_from_dict_returns_shallow_copy() -> None:
     d = Dict()
     d._data[Str("x")] = Int(1)
@@ -138,8 +189,11 @@ def test_dict_from_unsupported_type_raises() -> None:
         _poop_dict_from(Int(42))
 
 
-def test_dict_literal_with_unpacking_not_rewritten() -> None:
+def test_dict_literal_with_unpacking_rewritten_to_merge() -> None:
+    # proposal 142: a `**` display is now rewritten to _poop_dict_merge.
     tree = _transform("x = {**d, 'a': 1}")
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Dict)
+    assert isinstance(assign.value, ast.Call)
+    assert isinstance(assign.value.func, ast.Name)
+    assert assign.value.func.id == "_poop_dict_merge"

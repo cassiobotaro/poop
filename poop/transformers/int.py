@@ -2,6 +2,7 @@ import ast
 from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
+from poop.types.boolean import Boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -12,15 +13,20 @@ def _poop_int_from(value: object = None, base: object = None) -> Int:
         return Int(0)
     if isinstance(value, Int):
         return value
+    if isinstance(value, Boolean):
+        # CPython's int(True) -> 1 / int(False) -> 0 (the flag-to-number
+        # bridge). Boolean is kept out of *implicit* arithmetic, but
+        # explicit conversion is sanctioned (like str(True)).
+        return Int(1 if bool(value) else 0)
     if isinstance(value, Float):
         return Int(int(value._value))
     if isinstance(value, Str):
         if base is not None:
             if not isinstance(base, Int):
-                raise TypeError(f"base must be Int, got {type(base).__qualname__}")
+                raise TypeError(f"base must be Int, got {type(base).__name__}")
             return Int(int(value._value, base._value))
         return Int(int(value._value))
-    raise TypeError(f"cannot convert {type(value).__qualname__} to Int")
+    raise TypeError(f"cannot convert {type(value).__name__} to Int")
 
 
 class _IntRewriter(ast.NodeTransformer):

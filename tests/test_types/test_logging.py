@@ -28,6 +28,22 @@ def test_get_logger_no_name_returns_root() -> None:
     assert isinstance(Logging.getLogger(), Logger)
 
 
+def test_logger_direct_construction_works() -> None:
+    # proposal 132: Logger("app") must build a usable logger, not store
+    # the Str as _impl and crash on first message.
+    logger = Logger(Str("app"))
+    assert isinstance(logger, Logger)
+    logger.info(Str("hello"))  # must not raise
+    # A directly-constructed logger is standalone (no parent), so its
+    # effective level is its own NOTSET — matching CPython.
+    assert logger.getEffectiveLevel() == Int(_stdlib_logging.NOTSET)
+
+
+def test_logger_construction_with_level() -> None:
+    logger = Logger(Str("app.debug"), Int(_stdlib_logging.DEBUG))
+    assert logger.getEffectiveLevel() == Int(_stdlib_logging.DEBUG)
+
+
 def test_level_constants() -> None:
     assert Logging.CRITICAL == Int(50)
     assert Logging.ERROR == Int(40)
@@ -239,6 +255,25 @@ def test_formatter_default() -> None:
 def test_formatter_with_fmt() -> None:
     f = Formatter(fmt=Str("%(message)s"))
     assert isinstance(f, Formatter)
+
+
+def test_formatter_time_format_knobs_are_str() -> None:
+    # proposal 149: the formatTime knobs answer POOP Str, not bare str.
+    assert isinstance(Formatter.default_time_format, Str)
+    assert isinstance(Formatter.default_msec_format, Str)
+
+
+def test_formatter_format_time_uses_knobs() -> None:
+    # formatTime unwraps the POOP Str knobs and %-formats without error.
+    record = _stdlib_logging.LogRecord(
+        "t", _stdlib_logging.WARNING, __file__, 1, "msg", None, None
+    )
+    record.created = 0.0
+    record.msecs = 123.0
+    f = Formatter(Str("%(asctime)s %(message)s"))
+    formatted = f.formatTime(record)
+    assert isinstance(formatted, str)
+    assert ",123" in formatted
 
 
 # --- Module-level convenience ---

@@ -78,6 +78,7 @@ from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
 from poop.transformers.re import NAMESPACE as _re_namespace
 from poop.transformers.resource import NAMESPACE as _resource_namespace
+from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.secrets import NAMESPACE as _secrets_namespace
 from poop.transformers.set import SetTransformer
 from poop.transformers.shlex import NAMESPACE as _shlex_namespace
@@ -105,8 +106,10 @@ from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.unicodedata import NAMESPACE as _unicodedata_namespace
 from poop.transformers.unittest import NAMESPACE as _unittest_namespace
+from poop.transformers.unpack import UnpackTransformer
 from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.uuid import NAMESPACE as _uuid_namespace
+from poop.transformers.varargs import VarargsTransformer
 from poop.transformers.weakref import NAMESPACE as _weakref_namespace
 from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
@@ -136,7 +139,10 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     FrozenSetTransformer(),
     RaiseTransformer(),
     ClassTransformer(),
+    ReturnTransformer(),
     BlockTransformer(),
+    VarargsTransformer(),
+    UnpackTransformer(),
     SliceTransformer(),
 ]
 # Bindings sourced from class-based transformers (PascalCase types

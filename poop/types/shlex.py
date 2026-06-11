@@ -1,6 +1,7 @@
 import shlex as _shlex
 from typing import Any
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _b
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.int import Int
@@ -9,7 +10,7 @@ from poop.types.none import NoneClass, none
 from poop.types.string import Str
 
 
-class Shlex:
+class Shlex(_IterableMixin):
     """Wraps Python's `shlex.shlex` lexer for streaming tokenization.
 
     Construction parameters mirror CPython:

@@ -7,6 +7,7 @@ from poop.validators.no_ascii import NoAsciiValidator
 from poop.validators.no_assert import NoAssertValidator
 from poop.validators.no_bin import NoBinValidator
 from poop.validators.no_breakpoint import NoBreakpointValidator
+from poop.validators.no_builtin_shadow import NoBuiltinShadowValidator
 from poop.validators.no_callable import NoCallableValidator
 from poop.validators.no_chr import NoChrValidator
 from poop.validators.no_comprehension import NoComprehensionValidator
@@ -26,6 +27,7 @@ from poop.validators.no_hash import NoHashValidator
 from poop.validators.no_help import NoHelpValidator
 from poop.validators.no_id import NoIdValidator
 from poop.validators.no_if import NoIfValidator
+from poop.validators.no_import import NoImportValidator
 from poop.validators.no_in import NoInValidator
 from poop.validators.no_input import NoInputValidator
 from poop.validators.no_introspection import NoIntrospectionValidator
@@ -125,8 +127,10 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoSubscriptValidator(),
     NoSumValidator(),
     NoDelValidator(),
+    NoImportValidator(),
     NoPoopPrefixValidator(),
     NoNamespaceShadowValidator(),
+    NoBuiltinShadowValidator(),
 ]
 
 __all__ = ["DEFAULT_VALIDATORS", "Validator"]

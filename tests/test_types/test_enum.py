@@ -12,6 +12,7 @@ from poop.types.enum import (
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 # --- Basic Enum ---
 
@@ -55,6 +56,35 @@ def test_enum_iter_returns_list() -> None:
     assert members.len() == Int(3)
 
 
+# Functional API (proposal 124)
+
+
+def test_functional_api_list_of_names() -> None:
+    made = Enum("Mades1", List(Str("RED"), Str("GREEN")))
+    assert made.RED.value_object() == Int(1)  # ty: ignore[unresolved-attribute]
+    assert made.GREEN.value_object() == Int(2)  # ty: ignore[unresolved-attribute]
+
+
+def test_functional_api_space_separated_str() -> None:
+    made = Enum("Mades2", Str("RED GREEN BLUE"))
+    assert made.BLUE.value_object() == Int(3)  # ty: ignore[unresolved-attribute]
+
+
+def test_functional_api_name_value_pairs() -> None:
+    made = Enum(
+        "Mades3",
+        List(Tuple(Str("RED"), Int(10)), Tuple(Str("GREEN"), Int(20))),
+    )
+    assert made.GREEN.value_object() == Int(20)  # ty: ignore[unresolved-attribute]
+
+
+def test_functional_api_int_enum() -> None:
+    from poop.types.boolean import true
+
+    made = IntEnum("Mades4", List(Str("A"), Str("B"), Str("C")))
+    assert (made.A < made.C) is true  # ty: ignore[unresolved-attribute]
+
+
 def test_enum_unknown_value_raises() -> None:
     with pytest.raises(ValueError):
         Color(99)
@@ -79,6 +109,55 @@ def test_int_enum_compares_to_int() -> None:
 
 def test_int_enum_lookup_by_poop_int() -> None:
     assert HTTPStatus(Int(404)) is HTTPStatus.NOT_FOUND
+
+
+# --- Operator bridging (proposal 144) ---
+
+
+def test_enum_eq_returns_poop_boolean() -> None:
+    from poop.types.boolean import Boolean, false, true
+
+    assert isinstance(Color.RED == Color.RED, Boolean)
+    assert (Color.RED == Color.RED) is true
+    assert (Color.RED == Color.GREEN) is false
+    assert (Color.RED != Color.GREEN) is true
+
+
+def test_enum_eq_enables_dispatch_via_interpreter() -> None:
+    Interpreter().run_source(
+        "class State(Enum):\n"
+        "    IDLE = 1\n"
+        "    BUSY = 2\n"
+        "(State.IDLE == State.IDLE).if_true(lambda: 'idle'.print())"
+    )
+
+
+def test_int_enum_ordering_returns_boolean() -> None:
+    from poop.types.boolean import Boolean, true
+
+    assert isinstance(HTTPStatus.OK < HTTPStatus.NOT_FOUND, Boolean)
+    assert (HTTPStatus.OK < HTTPStatus.NOT_FOUND) is true
+    assert (HTTPStatus.NOT_FOUND >= HTTPStatus.OK) is true
+
+
+def test_int_enum_arithmetic_returns_poop_int() -> None:
+    result = HTTPStatus.OK + HTTPStatus.OK
+    assert isinstance(result, Int)
+    assert result == Int(400)
+
+
+def test_enum_hash_keeps_member_dict_lookup() -> None:
+    # The override must not break hash-based member identity.
+    seen = {Color.RED: Str("r"), Color.GREEN: Str("g")}
+    assert seen[Color.RED] == Str("r")
+
+
+def test_enum_alias_resolution_survives_eq_override() -> None:
+    class Named(Enum):
+        RED = 1
+        CRIMSON = 1
+
+    assert Named.CRIMSON is Named.RED
 
 
 # --- StrEnum ---

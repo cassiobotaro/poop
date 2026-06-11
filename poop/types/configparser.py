@@ -28,6 +28,20 @@ def _path_str(value: Path | Str) -> str:
 _DEFAULT = object()
 
 
+def _unwrap_fallback(fallback: Any) -> Any:
+    """Unwrap a POOP fallback for a configparser get*. A NoneClass becomes
+    real `None` — the canonical 'give me None back when missing' idiom —
+    so the result can be re-wrapped as POOP `none` rather than a corrupt
+    `Str(none)`/`Int(none)` shell."""
+    if isinstance(fallback, NoneClass):
+        return None
+    if isinstance(fallback, Boolean):
+        return bool(fallback)
+    if isinstance(fallback, Str | Int | Float):
+        return fallback._value
+    return fallback
+
+
 def _vars_kwarg(vars_dict: Dict | NoneClass | None) -> dict[str, Any]:
     """Convert POOP `Dict` to the `vars` kwarg shape expected by configparser.
 
@@ -205,14 +219,13 @@ class ConfigParser(_ImplWrapperMixin, Object):
         raw: Boolean | NoneClass | None = None,
         vars: Dict | NoneClass | None = None,
         fallback: Any = _DEFAULT,
-    ) -> Str:
+    ) -> Str | NoneClass:
         kwargs: dict[str, Any] = {"raw": _b(raw, False)}
         kwargs.update(_vars_kwarg(vars))
         if fallback is not _DEFAULT:
-            kwargs["fallback"] = (
-                fallback._value if isinstance(fallback, Str) else fallback
-            )
-        return Str(self._impl.get(section._value, option._value, **kwargs))
+            kwargs["fallback"] = _unwrap_fallback(fallback)
+        result = self._impl.get(section._value, option._value, **kwargs)
+        return none if result is None else Str(result)
 
     def getint(
         self,
@@ -222,14 +235,13 @@ class ConfigParser(_ImplWrapperMixin, Object):
         raw: Boolean | NoneClass | None = None,
         vars: Dict | NoneClass | None = None,
         fallback: Any = _DEFAULT,
-    ) -> Int:
+    ) -> Int | NoneClass:
         kwargs: dict[str, Any] = {"raw": _b(raw, False)}
         kwargs.update(_vars_kwarg(vars))
         if fallback is not _DEFAULT:
-            kwargs["fallback"] = (
-                fallback._value if isinstance(fallback, Int) else fallback
-            )
-        return Int(self._impl.getint(section._value, option._value, **kwargs))
+            kwargs["fallback"] = _unwrap_fallback(fallback)
+        result = self._impl.getint(section._value, option._value, **kwargs)
+        return none if result is None else Int(result)
 
     def getfloat(
         self,
@@ -239,14 +251,13 @@ class ConfigParser(_ImplWrapperMixin, Object):
         raw: Boolean | NoneClass | None = None,
         vars: Dict | NoneClass | None = None,
         fallback: Any = _DEFAULT,
-    ) -> Float:
+    ) -> Float | NoneClass:
         kwargs: dict[str, Any] = {"raw": _b(raw, False)}
         kwargs.update(_vars_kwarg(vars))
         if fallback is not _DEFAULT:
-            kwargs["fallback"] = (
-                fallback._value if isinstance(fallback, Float) else fallback
-            )
-        return Float(self._impl.getfloat(section._value, option._value, **kwargs))
+            kwargs["fallback"] = _unwrap_fallback(fallback)
+        result = self._impl.getfloat(section._value, option._value, **kwargs)
+        return none if result is None else Float(result)
 
     def getboolean(
         self,
@@ -256,15 +267,13 @@ class ConfigParser(_ImplWrapperMixin, Object):
         raw: Boolean | NoneClass | None = None,
         vars: Dict | NoneClass | None = None,
         fallback: Any = _DEFAULT,
-    ) -> Boolean:
+    ) -> Boolean | NoneClass:
         kwargs: dict[str, Any] = {"raw": _b(raw, False)}
         kwargs.update(_vars_kwarg(vars))
         if fallback is not _DEFAULT:
-            kwargs["fallback"] = (
-                bool(fallback) if isinstance(fallback, Boolean) else fallback
-            )
+            kwargs["fallback"] = _unwrap_fallback(fallback)
         result = self._impl.getboolean(section._value, option._value, **kwargs)
-        return to_boolean(result)
+        return none if result is None else to_boolean(result)
 
     def defaults(self) -> Dict:
         return _str_str_dict(self._impl.defaults().items())

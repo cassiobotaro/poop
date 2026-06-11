@@ -3,8 +3,8 @@ from __future__ import annotations
 import enum as _enum
 from typing import Any, ClassVar
 
-from poop.types._bridge import to_poop
-from poop.types.boolean import Boolean
+from poop.types._bridge import to_poop, to_python
+from poop.types.boolean import Boolean, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -52,8 +52,112 @@ class _PoopEnumMixin:
     def iter(cls) -> List:
         return List(*cls)  # ty: ignore[not-iterable]
 
+    # Operator bridging — members answer POOP values so the one branching
+    # idiom (`(state == State.IDLE).if_true(...)`) works. Boolean preserves
+    # truthiness, so the enum machinery (alias resolution, dict lookup via
+    # __hash__) keeps working.
 
-class Enum(_PoopEnumMixin, _enum.Enum):
+    def __eq__(self, other: object) -> Boolean:
+        result = super().__eq__(other)
+        if result is NotImplemented:
+            return to_boolean(self is other)
+        return to_boolean(result)
+
+    def __ne__(self, other: object) -> Boolean:
+        result = super().__ne__(other)
+        if result is NotImplemented:
+            return to_boolean(self is not other)
+        return to_boolean(result)
+
+    def __hash__(self) -> int:
+        return super().__hash__()
+
+    def __lt__(self, other: Any) -> Any:
+        result = super().__lt__(other)  # ty: ignore[unresolved-attribute]
+        return result if result is NotImplemented else to_boolean(result)
+
+    def __le__(self, other: Any) -> Any:
+        result = super().__le__(other)  # ty: ignore[unresolved-attribute]
+        return result if result is NotImplemented else to_boolean(result)
+
+    def __gt__(self, other: Any) -> Any:
+        result = super().__gt__(other)  # ty: ignore[unresolved-attribute]
+        return result if result is NotImplemented else to_boolean(result)
+
+    def __ge__(self, other: Any) -> Any:
+        result = super().__ge__(other)  # ty: ignore[unresolved-attribute]
+        return result if result is NotImplemented else to_boolean(result)
+
+
+class _IntEnumArithmeticMixin:
+    """Routes IntEnum arithmetic (raw `int` in CPython) through to_poop so
+    `Priority.LOW + Priority.HIGH` answers a POOP `Int`. Operands are
+    unwrapped via `to_python` (POOP `Int`/`Float` or another member)."""
+
+    __slots__ = ()
+
+    _value_: Any
+
+    def __add__(self, other: Any) -> Any:
+        return to_poop(self._value_ + to_python(other))
+
+    def __radd__(self, other: Any) -> Any:
+        return to_poop(to_python(other) + self._value_)
+
+    def __sub__(self, other: Any) -> Any:
+        return to_poop(self._value_ - to_python(other))
+
+    def __rsub__(self, other: Any) -> Any:
+        return to_poop(to_python(other) - self._value_)
+
+    def __mul__(self, other: Any) -> Any:
+        return to_poop(self._value_ * to_python(other))
+
+    def __rmul__(self, other: Any) -> Any:
+        return to_poop(to_python(other) * self._value_)
+
+    def __floordiv__(self, other: Any) -> Any:
+        return to_poop(self._value_ // to_python(other))
+
+    def __mod__(self, other: Any) -> Any:
+        return to_poop(self._value_ % to_python(other))
+
+    def __pow__(self, other: Any) -> Any:
+        return to_poop(self._value_ ** to_python(other))
+
+    def __truediv__(self, other: Any) -> Any:
+        return to_poop(self._value_ / to_python(other))
+
+
+_NOT_GIVEN: Any = object()
+
+
+class _PoopEnumMeta(_enum.EnumType):
+    """Metaclass intercepting the functional API (`Enum("Color", names)`).
+
+    CPython's `EnumType.__call__` receives the POOP `Str`/`List`/`Dict`
+    arguments and tries to unpack them, failing in three different ways.
+    When the functional form is used (a `names` argument is present),
+    unwrap every argument via `to_python` before delegating; the bare
+    lookup form (`Color(Int(1))`) is left untouched so `_missing_` runs
+    (CPython distinguishes the two via a `_not_given` sentinel, so the
+    `names` argument must be omitted entirely for the lookup path).
+    """
+
+    def __call__(
+        cls, value: Any, names: Any = _NOT_GIVEN, *args: Any, **kwargs: Any
+    ) -> Any:
+        if names is _NOT_GIVEN:
+            return super().__call__(value, **kwargs)
+        return super().__call__(
+            to_python(value),
+            to_python(names),
+            *(to_python(a) for a in args),
+            **{k: to_python(v) for k, v in kwargs.items()},
+        )
+
+
+class Enum(_PoopEnumMixin, _enum.Enum, metaclass=_PoopEnumMeta):
     """POOP-flavoured `Enum` base — mirrors Python's `enum.Enum`.
 
     Members are class-side singletons (`Color.RED`, `Color(1)`).
@@ -66,20 +170,29 @@ class Enum(_PoopEnumMixin, _enum.Enum):
     """
 
 
-class IntEnum(_PoopEnumMixin, _enum.IntEnum):
+class IntEnum(
+    _PoopEnumMixin, _IntEnumArithmeticMixin, _enum.IntEnum, metaclass=_PoopEnumMeta
+):
     """Mirror of Python's `enum.IntEnum` — members are also `int`s."""
 
 
-class StrEnum(_PoopEnumMixin, _enum.StrEnum):
+class StrEnum(_PoopEnumMixin, _enum.StrEnum, metaclass=_PoopEnumMeta):
     """Mirror of Python's `enum.StrEnum` — members are also `str`s."""
 
 
-class Flag(_PoopEnumMixin, _enum.Flag):
+class Flag(_PoopEnumMixin, _enum.Flag, metaclass=_PoopEnumMeta):
     """Mirror of Python's `enum.Flag` — bitwise-combinable members."""
 
 
-class IntFlag(_PoopEnumMixin, _enum.IntFlag):
-    """Mirror of Python's `enum.IntFlag` — int-valued combinable flags."""
+class IntFlag(
+    _PoopEnumMixin, _IntEnumArithmeticMixin, _enum.IntFlag, metaclass=_PoopEnumMeta
+):
+    """Mirror of Python's `enum.IntFlag` — int-valued combinable flags.
+
+    Bitwise `|`/`&`/`^`/`~` keep CPython's flag-combination semantics
+    (they answer flag members); only plain arithmetic (`+`/`-`/…) is
+    bridged to POOP `Int`.
+    """
 
 
 # `enum.ReprEnum` cannot be subclassed without a data-type mixin, so

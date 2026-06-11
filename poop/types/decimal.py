@@ -5,9 +5,9 @@ from types import TracebackType
 from typing import Any, ClassVar
 
 from poop.types._impl_wrapper import _ImplWrapperMixin
-from poop.types._unwrap import _unwrap
+from poop.types._unwrap import _kwargs_from, _unwrap
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import Boolean, to_boolean
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -39,26 +39,61 @@ class Decimal(_ImplWrapperMixin, _ValueEqMixin, Object):
     def __init__(self, value: Decimal | Int | Float | Str | Tuple) -> None:
         self._impl = _to_decimal(value)
 
-    def __add__(self, other: Decimal) -> Decimal:
-        return Decimal._from_impl(self._impl + other._impl)
+    # Arithmetic -----------------------------------------------------
+    #
+    # CPython's Decimal accepts int operands (Decimal + 1) but raises
+    # TypeError for float (Decimal + 1.0). Mirror that: combine with
+    # Decimal/Int, return NotImplemented for Float and foreign types so
+    # the reflected dunder (or a TypeError) takes over.
 
-    def __sub__(self, other: Decimal) -> Decimal:
-        return Decimal._from_impl(self._impl - other._impl)
+    def _arith(self, other: Any, op: Any) -> Any:
+        if isinstance(other, Decimal):
+            return Decimal._from_impl(op(self._impl, other._impl))
+        if isinstance(other, Int):
+            return Decimal._from_impl(op(self._impl, other._value))
+        return NotImplemented
 
-    def __mul__(self, other: Decimal) -> Decimal:
-        return Decimal._from_impl(self._impl * other._impl)
+    def __add__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: a + b)
 
-    def __truediv__(self, other: Decimal) -> Decimal:
-        return Decimal._from_impl(self._impl / other._impl)
+    def __radd__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: b + a)
 
-    def __floordiv__(self, other: Decimal) -> Decimal:
-        return Decimal._from_impl(self._impl // other._impl)
+    def __sub__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: a - b)
 
-    def __mod__(self, other: Decimal) -> Decimal:
-        return Decimal._from_impl(self._impl % other._impl)
+    def __rsub__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: b - a)
 
-    def __pow__(self, other: Decimal) -> Decimal:
-        return Decimal._from_impl(self._impl**other._impl)
+    def __mul__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: a * b)
+
+    def __rmul__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: b * a)
+
+    def __truediv__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: a / b)
+
+    def __rtruediv__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: b / a)
+
+    def __floordiv__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: a // b)
+
+    def __rfloordiv__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: b // a)
+
+    def __mod__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: a % b)
+
+    def __rmod__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: b % a)
+
+    def __pow__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: a**b)
+
+    def __rpow__(self, other: Any) -> Any:
+        return self._arith(other, lambda a, b: b**a)
 
     def __neg__(self) -> Decimal:
         return Decimal._from_impl(-self._impl)
@@ -72,17 +107,37 @@ class Decimal(_ImplWrapperMixin, _ValueEqMixin, Object):
     def __hash__(self) -> int:
         return hash(self._impl)
 
-    def __lt__(self, other: Decimal) -> Boolean:
-        return to_boolean(self._impl < other._impl)
+    # Comparison -----------------------------------------------------
+    #
+    # CPython compares Decimal against both int and float; the raw
+    # _decimal.Decimal handles the mixed-type comparison natively.
 
-    def __le__(self, other: Decimal) -> Boolean:
-        return to_boolean(self._impl <= other._impl)
+    def _cmp(self, other: Any, op: Any) -> Any:
+        if isinstance(other, Decimal):
+            return to_boolean(op(self._impl, other._impl))
+        if isinstance(other, Int | Float):
+            return to_boolean(op(self._impl, other._value))
+        return NotImplemented
 
-    def __gt__(self, other: Decimal) -> Boolean:
-        return to_boolean(self._impl > other._impl)
+    def __lt__(self, other: Any) -> Boolean:
+        return self._cmp(other, lambda a, b: a < b)
 
-    def __ge__(self, other: Decimal) -> Boolean:
-        return to_boolean(self._impl >= other._impl)
+    def __le__(self, other: Any) -> Boolean:
+        return self._cmp(other, lambda a, b: a <= b)
+
+    def __gt__(self, other: Any) -> Boolean:
+        return self._cmp(other, lambda a, b: a > b)
+
+    def __ge__(self, other: Any) -> Boolean:
+        return self._cmp(other, lambda a, b: a >= b)
+
+    def __eq__(self, other: object) -> Boolean:
+        result = self._cmp(other, lambda a, b: a == b)
+        return false if result is NotImplemented else result
+
+    def __ne__(self, other: object) -> Boolean:
+        result = self._cmp(other, lambda a, b: a != b)
+        return true if result is NotImplemented else result
 
     def quantize(
         self, exp: Decimal, rounding: Str | NoneClass | None = None
@@ -167,6 +222,17 @@ class Context:
     def rounding(self) -> Str:
         return Str(self._impl.rounding)
 
+    def set_prec(self, prec: Int) -> NoneClass:
+        # `prec`/`rounding` are read-only properties here, so mutating a
+        # context (e.g. inside a localcontext `do` block) goes through
+        # these setters — the documented way to scope precision/rounding.
+        self._impl.prec = prec._value
+        return none
+
+    def set_rounding(self, rounding: Str) -> NoneClass:
+        self._impl.rounding = rounding._value
+        return none
+
     def create_decimal(self, value: Decimal | Int | Float | Str | Tuple) -> Decimal:
         raw = _to_decimal(value)
         return Decimal._from_impl(self._impl.create_decimal(raw))
@@ -178,11 +244,18 @@ class _LocalContextWrapper:
 
     __slots__ = ("_cm", "_ctx")
 
-    def __init__(self, ctx: Context | NoneClass | None = None) -> None:
+    def __init__(
+        self,
+        ctx: Context | NoneClass | None = None,
+        prec: Int | NoneClass | None = None,
+        rounding: Str | NoneClass | None = None,
+    ) -> None:
         from poop.types._unwrap import _is_absent
 
         impl = None if _is_absent(ctx) else ctx._impl
-        self._cm = _decimal.localcontext(impl)
+        # CPython 3.11+ localcontext(ctx, **kwargs) seeds prec/rounding.
+        kwargs = _kwargs_from(prec=prec, rounding=rounding)
+        self._cm = _decimal.localcontext(impl, **kwargs)
         self._ctx: Context | None = None
 
     def __enter__(self) -> Context:
@@ -250,5 +323,9 @@ class Decimal_:
         return none
 
     @staticmethod
-    def localcontext(ctx: Context | NoneClass | None = None) -> _LocalContextWrapper:
-        return _LocalContextWrapper(ctx)
+    def localcontext(
+        ctx: Context | NoneClass | None = None,
+        prec: Int | NoneClass | None = None,
+        rounding: Str | NoneClass | None = None,
+    ) -> _LocalContextWrapper:
+        return _LocalContextWrapper(ctx, prec, rounding)

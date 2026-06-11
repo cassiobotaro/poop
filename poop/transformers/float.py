@@ -2,6 +2,7 @@ import ast
 from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
+from poop.types.boolean import Boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -12,11 +13,14 @@ def _poop_float_from(value: object = None) -> Float:
         return Float(0.0)
     if isinstance(value, Float):
         return value
+    if isinstance(value, Boolean):
+        # CPython's float(True) -> 1.0 / float(False) -> 0.0.
+        return Float(1.0 if bool(value) else 0.0)
     if isinstance(value, Int):
         return Float(float(value._value))
     if isinstance(value, Str):
         return Float(float(value._value))
-    raise TypeError(f"cannot convert {type(value).__qualname__} to Float")
+    raise TypeError(f"cannot convert {type(value).__name__} to Float")
 
 
 class _FloatRewriter(ast.NodeTransformer):

@@ -9,22 +9,29 @@ def make_call_name_validator(
     forbidden: Iterable[str],
     message: str,
 ) -> type:
-    """Factory for validators that forbid calling functions by name.
+    """Factory for validators that forbid referencing a builtin by name.
+
+    Rejects any reference to a forbidden name regardless of context —
+    call (`len(xs)`), assignment (`f = len`), argument (`xs.map(len)`),
+    decorator, or default — so the forbidden names are fully reserved
+    identifiers and the wrapper layer cannot be reopened by aliasing.
+    Method substitutes are unaffected: `xs.len()` / `n.hex()` are
+    `ast.Attribute` nodes and keyword-argument names are not `Name` nodes.
 
     Args:
-        forbidden: Function names to forbid (e.g., {"len", "abs"})
+        forbidden: Builtin names to forbid (e.g., {"len", "abs"})
         message: Error message template with {name} placeholder
 
     Returns:
-        A Validator class that forbids calls to the given names.
+        A Validator class that forbids any reference to the given names.
     """
     names = frozenset(forbidden)
 
     class _Visitor(ast.NodeVisitor):
-        def visit_Call(self, node: ast.Call) -> None:
-            if isinstance(node.func, ast.Name) and node.func.id in names:
+        def visit_Name(self, node: ast.Name) -> None:
+            if node.id in names:
                 raise ValidationError(
-                    message.format(name=node.func.id),
+                    message.format(name=node.id),
                     lineno=node.lineno,
                     col_offset=node.col_offset,
                 )

@@ -65,6 +65,25 @@ def test_mod() -> None:
     assert (Float(7.0) % Float(3.0))._value == pytest.approx(1.0)
 
 
+def test_arithmetic_returns_notimplemented_for_foreign_operand() -> None:
+    # A non-Int/Float operand must yield NotImplemented so Python can try the
+    # right operand's reflected dunder (proposal 115).
+    from poop.types.fractions import Fraction
+
+    f = Fraction(Int(1), Int(2))
+    assert Float(2.5).__add__(f) is NotImplemented
+    assert Float(2.5).__sub__(f) is NotImplemented
+    assert Float(2.5).__mul__(f) is NotImplemented
+    assert Float(2.5).__truediv__(f) is NotImplemented
+    assert Float(2.5).__floordiv__(f) is NotImplemented
+    assert Float(2.5).__mod__(f) is NotImplemented
+
+
+def test_arithmetic_with_int_operand_still_works() -> None:
+    assert (Float(2.5) + Int(2))._value == pytest.approx(4.5)
+    assert (Float(2.5) * Int(2))._value == pytest.approx(5.0)
+
+
 def test_pow() -> None:
     assert (Float(2.0) ** Float(3.0))._value == pytest.approx(8.0)
 

@@ -23,6 +23,19 @@ def test_reader_from_str() -> None:
     ]
 
 
+def test_reader_do_iterates_rows() -> None:
+    # proposal 121: Reader mixes in _IterableMixin, so .do works.
+    collected: list[object] = []
+    Reader(Str("a,b\n1,2\n")).do(lambda row: collected.append(row))
+    assert collected == [List(Str("a"), Str("b")), List(Str("1"), Str("2"))]
+
+
+def test_dictreader_do_iterates_rows() -> None:
+    collected: list[object] = []
+    DictReader(Str("a,b\n1,2\n")).do(lambda row: collected.append(row))
+    assert len(collected) == 1
+
+
 def test_reader_from_list_of_str() -> None:
     source = List(Str("x,y\n"), Str("1,2\n"))
     reader = Reader(source)

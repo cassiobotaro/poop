@@ -117,6 +117,14 @@ def test_array_slice() -> None:
     assert result.len() == Int(3)
 
 
+def test_array_slice_open_ended() -> None:
+    # proposal 143: open-ended slice with a POOP `none` stop.
+    a = Array(Str("i"), List(Int(0), Int(1), Int(2), Int(3), Int(4)))
+    result = a.slice(Int(2), none)
+    assert isinstance(result, Array)
+    assert result.len() == Int(3)
+
+
 def test_array_includes() -> None:
     a = Array(Str("i"), List(Int(1), Int(2)))
     assert a.includes(Int(2)) is true

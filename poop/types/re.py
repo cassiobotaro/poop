@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re as _re
 import sys as _sys
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._unwrap import _opt_int, _unwrap
 from poop.types.dict import Dict
@@ -13,6 +13,9 @@ from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
+if TYPE_CHECKING:
+    from poop.types.block import Block
+
 
 def _wrap_match(m: _re.Match[str] | None) -> Match | NoneClass:
     return none if m is None else Match(m)
@@ -22,8 +25,14 @@ def _wrap_group_value(value: str | None) -> Str | NoneClass:
     return none if value is None else Str(value)
 
 
-def _unwrap_repl(repl: Str) -> str:
-    return repl._value
+def _unwrap_repl(repl: Str | Block) -> Any:
+    # CPython's re.sub accepts a callable replacement (match -> str). A
+    # POOP block bridges to a raw match -> raw str adapter.
+    if isinstance(repl, Str):
+        return repl._value
+    from poop.types._bridge import to_python
+
+    return lambda m: to_python(repl(Match(m)))
 
 
 class Match(Object):
@@ -170,12 +179,14 @@ class Pattern(Object):
             ]
         )
 
-    def sub(self, repl: Str, string: Str, count: Int | NoneClass | None = None) -> Str:
+    def sub(
+        self, repl: Str | Block, string: Str, count: Int | NoneClass | None = None
+    ) -> Str:
         n = _unwrap(count, 0)
         return Str(self._impl.sub(_unwrap_repl(repl), string._value, n))
 
     def subn(
-        self, repl: Str, string: Str, count: Int | NoneClass | None = None
+        self, repl: Str | Block, string: Str, count: Int | NoneClass | None = None
     ) -> Tuple:
         n = _unwrap(count, 0)
         new, num = self._impl.subn(_unwrap_repl(repl), string._value, n)
@@ -291,7 +302,7 @@ class Re:
     @staticmethod
     def sub(
         pattern: Str,
-        repl: Str,
+        repl: Str | Block,
         string: Str,
         count: Int | NoneClass | None = None,
         flags: Int | NoneClass | None = None,
@@ -309,7 +320,7 @@ class Re:
     @staticmethod
     def subn(
         pattern: Str,
-        repl: Str,
+        repl: Str | Block,
         string: Str,
         count: Int | NoneClass | None = None,
         flags: Int | NoneClass | None = None,

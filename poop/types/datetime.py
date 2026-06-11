@@ -24,7 +24,74 @@ def _opt_tz(tz: TimeZone | ZoneInfo | NoneClass | None) -> _datetime.tzinfo | No
     return tz._impl
 
 
-class TimeDelta(_ImplWrapperMixin, _ValueEqMixin, Object):
+class _AbsentType:
+    """Sentinel for `replace(tzinfo=...)` so the three cases stay distinct:
+    argument omitted (keep current tzinfo), explicit POOP `none` (strip to
+    naive), or a wrapper (set it). A bare default of `none` cannot express
+    'strip', leaving aware values unable to ever become naive."""
+
+    __slots__ = ()
+
+
+_ABSENT = _AbsentType()
+
+
+def _replace_tz(
+    tzinfo: TimeZone | ZoneInfo | NoneClass | _AbsentType,
+    current: _datetime.tzinfo | None,
+) -> _datetime.tzinfo | None:
+    if isinstance(tzinfo, _AbsentType):
+        return current  # argument omitted -> keep current tzinfo
+    if isinstance(tzinfo, NoneClass):
+        return None  # explicit none -> strip to naive
+    return tzinfo._impl  # wrapper -> set the tzinfo
+
+
+class _StrReprMixin:
+    """`__str__`/`__repr__` delegating to the wrapped stdlib `self._impl`.
+
+    Mirrors how every other value wrapper (Decimal, Fraction, UUID, the
+    ipaddress family) prints, so `.print()` and the REPL show the value
+    (`2024-01-01`, `1 day, 2:00:00`) instead of `Object`'s `<Date>`.
+    """
+
+    __slots__ = ()
+
+    _impl: Any
+
+    def __str__(self) -> str:
+        return str(self._impl)
+
+    __repr__ = __str__
+
+
+class _OrderedImplMixin:
+    """Total ordering for wrappers exposing a comparable `self._impl`.
+
+    `Date`, `Time`, `TimeDelta`, and `DateTime` all order against another
+    instance of the same kind via their stdlib `_impl`.
+    """
+
+    __slots__ = ()
+
+    _impl: Any
+
+    def __lt__(self, other: Any) -> Boolean:
+        return to_boolean(self._impl < other._impl)
+
+    def __le__(self, other: Any) -> Boolean:
+        return to_boolean(self._impl <= other._impl)
+
+    def __gt__(self, other: Any) -> Boolean:
+        return to_boolean(self._impl > other._impl)
+
+    def __ge__(self, other: Any) -> Boolean:
+        return to_boolean(self._impl >= other._impl)
+
+
+class TimeDelta(
+    _StrReprMixin, _OrderedImplMixin, _ImplWrapperMixin, _ValueEqMixin, Object
+):
     """Wraps Python's `datetime.timedelta` — a duration."""
 
     __slots__ = ("_impl",)
@@ -65,14 +132,24 @@ class TimeDelta(_ImplWrapperMixin, _ValueEqMixin, Object):
     def total_seconds(self) -> Float:
         return Float(self._impl.total_seconds())
 
-    def __add__(self, other: TimeDelta) -> TimeDelta:
+    def __add__(self, other: object) -> TimeDelta:
+        # Only timedelta + timedelta is a TimeDelta. For Date/DateTime
+        # operands return NotImplemented so their __radd__ answers a
+        # Date/DateTime instead of a corrupted TimeDelta shell.
+        if not isinstance(other, TimeDelta):
+            return NotImplemented
         return TimeDelta._from_impl(self._impl + other._impl)
 
-    def __sub__(self, other: TimeDelta) -> TimeDelta:
+    def __sub__(self, other: object) -> TimeDelta:
+        if not isinstance(other, TimeDelta):
+            return NotImplemented
         return TimeDelta._from_impl(self._impl - other._impl)
 
     def __mul__(self, other: Int | Float) -> TimeDelta:
         return TimeDelta._from_impl(self._impl * other._value)
+
+    # timedelta * n and n * timedelta are both valid in Python.
+    __rmul__ = __mul__
 
     def __truediv__(self, other: Int | Float | TimeDelta) -> TimeDelta | Float:
         if isinstance(other, TimeDelta):
@@ -94,7 +171,7 @@ class TimeDelta(_ImplWrapperMixin, _ValueEqMixin, Object):
         return hash(self._impl)
 
 
-class TimeZone(_ImplWrapperMixin, _ValueEqMixin, Object):
+class TimeZone(_StrReprMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `datetime.timezone` — a fixed UTC offset."""
 
     __slots__ = ("_impl",)
@@ -197,7 +274,14 @@ class _TimeFieldsMixin:
         return none
 
 
-class Date(_DateFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
+class Date(
+    _StrReprMixin,
+    _OrderedImplMixin,
+    _DateFieldsMixin,
+    _ImplWrapperMixin,
+    _ValueEqMixin,
+    Object,
+):
     """Wraps Python's `datetime.date`."""
 
     __slots__ = ("_impl",)
@@ -251,6 +335,11 @@ class Date(_DateFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
     def __add__(self, other: TimeDelta) -> Date:
         return Date._from_impl(self._impl + other._impl)
 
+    # Reached when a TimeDelta is on the left (timedelta + date); date
+    # addition commutes, so reuse __add__.
+    def __radd__(self, other: TimeDelta) -> Date:
+        return self.__add__(other)
+
     def __sub__(self, other: Date | TimeDelta) -> Date | TimeDelta:
         if isinstance(other, TimeDelta):
             return Date._from_impl(self._impl - other._impl)
@@ -264,7 +353,14 @@ Date.min = Date._from_impl(_datetime.date.min)
 Date.max = Date._from_impl(_datetime.date.max)
 
 
-class Time(_TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
+class Time(
+    _StrReprMixin,
+    _OrderedImplMixin,
+    _TimeFieldsMixin,
+    _ImplWrapperMixin,
+    _ValueEqMixin,
+    Object,
+):
     """Wraps Python's `datetime.time`."""
 
     __slots__ = ("_impl",)
@@ -304,18 +400,15 @@ class Time(_TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
         minute: Int | NoneClass | None = None,
         second: Int | NoneClass | None = None,
         microsecond: Int | NoneClass | None = None,
-        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | _AbsentType = _ABSENT,
     ) -> Time:
         kwargs: dict[str, Any] = {
             "hour": _unwrap(hour, self._impl.hour),
             "minute": _unwrap(minute, self._impl.minute),
             "second": _unwrap(second, self._impl.second),
             "microsecond": _unwrap(microsecond, self._impl.microsecond),
+            "tzinfo": _replace_tz(tzinfo, self._impl.tzinfo),
         }
-        if tzinfo is not None and not isinstance(tzinfo, NoneClass):
-            kwargs["tzinfo"] = tzinfo._impl
-        else:
-            kwargs["tzinfo"] = self._impl.tzinfo
         return Time._from_impl(self._impl.replace(**kwargs))
 
     def __hash__(self) -> int:
@@ -323,7 +416,13 @@ class Time(_TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object):
 
 
 class DateTime(
-    _DateFieldsMixin, _TimeFieldsMixin, _ImplWrapperMixin, _ValueEqMixin, Object
+    _StrReprMixin,
+    _OrderedImplMixin,
+    _DateFieldsMixin,
+    _TimeFieldsMixin,
+    _ImplWrapperMixin,
+    _ValueEqMixin,
+    Object,
 ):
     """Wraps Python's `datetime.datetime`."""
 
@@ -415,7 +514,7 @@ class DateTime(
         minute: Int | NoneClass | None = None,
         second: Int | NoneClass | None = None,
         microsecond: Int | NoneClass | None = None,
-        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | _AbsentType = _ABSENT,
     ) -> DateTime:
         kwargs: dict[str, Any] = {
             "year": _unwrap(year, self._impl.year),
@@ -425,15 +524,16 @@ class DateTime(
             "minute": _unwrap(minute, self._impl.minute),
             "second": _unwrap(second, self._impl.second),
             "microsecond": _unwrap(microsecond, self._impl.microsecond),
+            "tzinfo": _replace_tz(tzinfo, self._impl.tzinfo),
         }
-        if tzinfo is not None and not isinstance(tzinfo, NoneClass):
-            kwargs["tzinfo"] = tzinfo._impl
-        else:
-            kwargs["tzinfo"] = self._impl.tzinfo
         return DateTime._from_impl(self._impl.replace(**kwargs))
 
     def __add__(self, other: TimeDelta) -> DateTime:
         return DateTime._from_impl(self._impl + other._impl)
+
+    # Reached when a TimeDelta is on the left (timedelta + datetime).
+    def __radd__(self, other: TimeDelta) -> DateTime:
+        return self.__add__(other)
 
     def __sub__(self, other: DateTime | TimeDelta) -> DateTime | TimeDelta:
         if isinstance(other, TimeDelta):
@@ -442,18 +542,6 @@ class DateTime(
 
     def __hash__(self) -> int:
         return hash(self._impl)
-
-    def __lt__(self, other: DateTime) -> Boolean:
-        return to_boolean(self._impl < other._impl)
-
-    def __le__(self, other: DateTime) -> Boolean:
-        return to_boolean(self._impl <= other._impl)
-
-    def __gt__(self, other: DateTime) -> Boolean:
-        return to_boolean(self._impl > other._impl)
-
-    def __ge__(self, other: DateTime) -> Boolean:
-        return to_boolean(self._impl >= other._impl)
 
 
 class Datetime:

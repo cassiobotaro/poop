@@ -27,6 +27,22 @@ def test_cli_exits_with_error_on_invalid_code(tmp_path: Path) -> None:
     assert "poop:" in result.output
 
 
+def test_cli_missing_file_shows_clean_diagnostic(tmp_path: Path) -> None:
+    # proposal 137: an unreadable path is a user mistake, not a traceback.
+    missing = tmp_path / "nope.py"
+    result = runner.invoke(app, [str(missing)])
+    assert result.exit_code == 1
+    assert "poop: cannot read" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_cli_directory_argument_shows_clean_diagnostic(tmp_path: Path) -> None:
+    result = runner.invoke(app, [str(tmp_path)])
+    assert result.exit_code == 1
+    assert "poop: cannot read" in result.output
+    assert "Traceback" not in result.output
+
+
 def test_cli_error_shows_source_line_with_caret(tmp_path: Path) -> None:
     f = tmp_path / "bad.py"
     f.write_text("x = 1\ny = len(x)\n", encoding="utf-8")

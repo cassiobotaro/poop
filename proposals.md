@@ -1,1038 +1,165 @@
 # Proposals
 
-### 115. `Int`/`Float` arithmetic raises `AttributeError` instead of returning `NotImplemented`, killing every reflected dunder
-
-- **Where:** `poop/types/int.py:93-138` (`Int.__add__` / `__sub__` / `__mul__` / `__truediv__` / `__floordiv__` / `__mod__`), `poop/types/float.py:73-97` (same methods on `Float`)
-- **Bug:** the binary operators special-case `Complex` (returning `NotImplemented`) but for any other non-`Int`/`Float` operand they fall through to `other._value`, raising `AttributeError`. Python therefore never gets the chance to try the right operand's reflected dunder, so `Fraction.__radd__`, `NormalDist.__rmul__`, etc. — which the wrappers carefully define — are unreachable. The same expressions with the operands swapped work fine.
-- **Repro:**
+### ~~115. `Int`/`Float` arithmetic raises `AttributeError` instead of returning `NotImplemented`, killing every reflected dunder~~ — DONE
 
-  ```python
-  (Fraction(1, 2) + 2).print()      # 5/2 — OK
-  (2 + Fraction(1, 2)).print()      # poop: 'Fraction' object has no attribute '_value'
-  (2.5 + Fraction(1, 2)).print()    # poop: 'Fraction' object has no attribute '_value'
-  (2 * NormalDist(0.0, 1.0)).print()  # poop: 'NormalDist' object has no attribute '_value'
-  ```
+**Decision + implemented:** the six binary operators (`__add__`/`__sub__`/`__mul__`/`__truediv__`/`__floordiv__`/`__mod__`) on `Int` (`poop/types/int.py`) and `Float` (`poop/types/float.py`) now guard with `if not isinstance(other, Int | Float): return NotImplemented`, so Python falls back to the right operand's reflected dunder. `2 + Fraction(1, 2)` → `Fraction(5, 2)`, `2 * NormalDist(...)` reaches `__rmul__`. This subsumes proposal 152 (`3 * "ab"` now answers `Str("ababab")` via `Str.__rmul__`). Tests in `tests/test_types/test_int.py` and `test_float.py`.
 
-  Real Python: `2 + Fraction(1, 2)` → `Fraction(5, 2)`, `2 * NormalDist(0.0, 1.0)` → `NormalDist(mu=0.0, sigma=2.0)`.
-- **Proposed fix:** in every `Int`/`Float` binary operator, return `NotImplemented` when the operand is not one of the known numeric wrappers, e.g.:
-
-  ```python
-  def __add__(self, other: Int | Float | Complex) -> Int | Float:
-      if isinstance(other, Complex):
-          return NotImplemented
-      if not isinstance(other, Int | Float):
-          return NotImplemented          # let other.__radd__ run
-      ...
-  ```
+### ~~116. `TimeDelta + Date` answers a corrupted `TimeDelta` wrapping a `datetime.date`~~ — DONE
 
-### 116. `TimeDelta + Date` answers a corrupted `TimeDelta` wrapping a `datetime.date`
+**Decision + implemented:** `TimeDelta.__add__`/`__sub__` now return `NotImplemented` for non-`TimeDelta` operands, and `Date`/`DateTime` gained an `__radd__` (delegating to `__add__`), so `TimeDelta + Date` answers a `Date` (and `+ DateTime` a `DateTime`) via reflected dispatch. Added `TimeDelta.__rmul__ = __mul__` so `2 * TimeDelta(...)` works (reachable now that proposal 115's `Int.__mul__` yields `NotImplemented`). Tests in `tests/test_types/test_datetime.py`.
 
-- **Where:** `poop/types/datetime.py:68-72` (`TimeDelta.__add__` / `__sub__`), also `poop/types/datetime.py:74` (`TimeDelta.__mul__` has no `__rmul__` counterpart)
-- **Bug:** `TimeDelta.__add__` is typed `other: TimeDelta` but never checks; it computes `self._impl + other._impl` and unconditionally wraps the result with `TimeDelta._from_impl`. With a `Date`/`DateTime` right operand the stdlib returns a `date`/`datetime`, which gets stuffed inside a `TimeDelta` shell — `class_name()` answers `TimeDelta` but every accessor explodes. Real Python answers a `date`. Relatedly, `2 * TimeDelta(days=1)` (valid in Python, `timedelta` defines `__rmul__`) crashes because `TimeDelta` has no `__rmul__`.
-- **Repro:**
-
-  ```python
-  r = TimeDelta(days=1) + Date(2024, 1, 1)
-  r.class_name().print()   # TimeDelta  (Python: date 2024-01-02)
-  r.days.print()           # poop: 'datetime.date' object has no attribute 'days'
+### ~~117. `Date`, `Time`, and `TimeDelta` cannot be ordered (`<` crashes)~~ — DONE
 
-  (2 * TimeDelta(days=1)).days.print()
-  # poop: 'TimeDelta' object has no attribute '_value'  (Python: 2)
-  ```
+**Decision + implemented:** added a shared `_OrderedImplMixin` in `poop/types/datetime.py` (`__lt__`/`__le__`/`__gt__`/`__ge__` over `self._impl`) and mixed it into `TimeDelta`, `Date`, and `Time`. `DateTime` now inherits it too (its inline copies were removed). All three orderings answer a POOP `Boolean`. Tests in `tests/test_types/test_datetime.py`.
 
-- **Proposed fix:** in `TimeDelta.__add__`/`__sub__`, `isinstance`-check the operand: return `Date._from_impl(...)`/`DateTime._from_impl(...)` for date-like operands (or return `NotImplemented` and rely on `Date.__radd__`); add `__rmul__ = __mul__` (and `__radd__` for `Date`/`DateTime` symmetry) so reflected forms work once the `Int`/`Float` operators yield `NotImplemented`.
+### ~~118. `replace(tzinfo=None)` cannot strip a timezone — aware values can never become naive~~ — DONE
 
-### 117. `Date`, `Time`, and `TimeDelta` cannot be ordered (`<` crashes)
+**Decision + implemented:** added a typed `_ABSENT` sentinel (`_AbsentType`) and a `_replace_tz` helper in `poop/types/datetime.py`; `Time.replace`/`DateTime.replace` now default `tzinfo` to `_ABSENT` so the three cases are distinct — omitted keeps the current tzinfo, POOP `none` strips to naive, a wrapper sets it. `aware.replace(tzinfo=none).tzinfo` now answers `none`. Tests in `tests/test_types/test_datetime.py`.
 
-- **Where:** `poop/types/datetime.py:27` (`TimeDelta`), `poop/types/datetime.py:200` (`Date`), `poop/types/datetime.py:267` (`Time`) — none define `__lt__`/`__le__`/`__gt__`/`__ge__`; only `DateTime` does (`poop/types/datetime.py:446`)
-- **Bug:** ordering two dates, times, or durations raises `TypeError`. Real Python orders all of them, and POOP itself orders `DateTime`, `Decimal`, and `Fraction`, so the gap is an oversight, not a design rule.
-- **Repro:**
+### ~~119. `Fraction == Int` answers `false` while `Fraction >= Int` answers `true`~~ — DONE
 
-  ```python
-  (Date(2024, 1, 1) < Date(2024, 6, 1)).print()
-  # poop: '<' not supported between instances of 'Date' and 'Date'
-  (TimeDelta(days=1) < TimeDelta(days=2)).print()   # same crash
-  (Time(10, 0) < Time(11, 0)).print()               # same crash
-  ```
-
-  Real Python: all three answer `True`.
-- **Proposed fix:** add the four comparison dunders to `Date`, `Time`, and `TimeDelta`, mirroring the existing `DateTime` block (`to_boolean(self._impl < other._impl)`, etc.) — ideally via a tiny shared mixin in `datetime.py`.
+**Decision + implemented:** `Fraction` now overrides `__eq__`/`__ne__` to route through `_cmp` (the same dispatch used by `<`/`<=`/`>`/`>=`), so `Fraction(2) == 2` answers `true` and Float equality matches the ordering operators (`Fraction(1,2) == 0.5` → `true`, matching CPython). Foreign operands still fall back to `false`/`true`. Updated the stale `test_fraction_compared_to_float` and added tests in `tests/test_types/test_fractions.py`.
 
-### 118. `replace(tzinfo=None)` cannot strip a timezone — aware values can never become naive
+### ~~120. `decimal` precision/rounding can never be changed — the documented `localcontext` recipe is impossible~~ — DONE
 
-- **Where:** `poop/types/datetime.py:315-318` (`Time.replace`), `poop/types/datetime.py:429-432` (`DateTime.replace`)
-- **Bug:** both `replace` implementations treat an explicit `tzinfo=None` the same as "argument absent" and keep `self._impl.tzinfo`. In real Python, `dt.replace(tzinfo=None)` is *the* idiom to drop the timezone; in POOP there is no way at all to turn an aware `DateTime`/`Time` into a naive one.
-- **Repro:**
+**Decision + implemented:** did both — `decimal.localcontext(ctx=none, prec=none, rounding=none)` now mirrors CPython 3.11+ (forwarding `prec`/`rounding` via `_kwargs_from` to seed the scoped context), and `Context` gained `set_prec(Int)` / `set_rounding(Str)` mutator methods for the `With(lambda: decimal.localcontext()).do(lambda ctx: ctx.set_prec(5))` recipe. Precision/rounding scope correctly and revert after the block. Tests in `tests/test_types/test_decimal.py`; INFECTIONS.md and MIGRATION.md updated.
 
-  ```python
-  aware = DateTime(2024, 1, 1, 12, tzinfo=TimeZone.utc)
-  aware.replace(tzinfo=None).tzinfo.is_none().print()   # False
-  Time(10, 0, tzinfo=TimeZone.utc).replace(tzinfo=None).tzinfo.is_none().print()  # False
-  ```
-
-  Real Python: `aware.replace(tzinfo=None).tzinfo is None` → `True`.
-- **Proposed fix:** use a module-level `_ABSENT = object()` sentinel as the `tzinfo` default in both `replace` signatures so the three cases are distinguishable: absent → keep current tzinfo, POOP `none` → pass `tzinfo=None` (strip), wrapper → pass `tzinfo._impl`.
+### ~~121. Documented `.do(...)` recipes crash: `GlobIter`, `csv.Reader`/`DictReader`, and `Shlex` lack the iteration surface~~ — DONE
 
-### 119. `Fraction == Int` answers `false` while `Fraction >= Int` answers `true`
+**Decision + implemented:** mixed `_IterableMixin` into `GlobIter` (`poop/types/glob.py`), `Reader`/`DictReader` (`poop/types/csv.py`), and `Shlex` (`poop/types/shlex.py`); their existing `__iter__` already yields POOP values, so `.do`/`.map`/`.filter` now work. The documented MIGRATION.md recipes (`glob.iglob(...).do(...)`, `csv.reader(...).do(...)`, `lexer.do(...)`) run. Tests in the three corresponding test files.
 
-- **Where:** `poop/types/fractions.py:45` (`_eq_attr` via `_ValueEqMixin`) vs `poop/types/fractions.py:168` (`_cmp`)
-- **Bug:** `Fraction` inherits `_ValueEqMixin.__eq__`, which only matches operands of the same class, so equality against `Int`/`Float` is always `false` — yet the class's own `_cmp` (used by `<`, `<=`, `>`, `>=`) and `_combine` (arithmetic) deliberately accept `Int` and `Float`. The result is internally inconsistent: `f >= 2` and `f <= 2` are both `true` while `f == 2` is `false`. Real Python: `Fraction(2) == 2` → `True`.
-- **Repro:**
+### ~~122. `sqlite3` `Row` is an injected entry point that cannot be used at all~~ — DONE
 
-  ```python
-  f = Fraction(2)
-  (f >= 2).print()   # True
-  (f == 2).print()   # False  (Python: True)
-  (f != 2).print()   # True   (Python: False)
-  ```
+**Decision + implemented:** made `Row.__init__` (`poop/types/sqlite3.py`) unwrap its `columns`/`values` arguments via `to_python` (and `tuple(...)`), so the documented class is constructible from user code passing POOP `Tuple`/`List` (`Row(("a", "b"), (1, "x")).at("a")` → `1`). The `at`/`keys`/`values` methods, written for raw column strings, now work. Tests in `tests/test_types/test_sqlite3.py` (existing raw-tuple unit tests updated to POOP `Tuple`s, matching how user code calls it).
 
-- **Proposed fix:** override `__eq__`/`__ne__` on `Fraction` with the `_cmp` dispatch (`Fraction`/`Int` compare against `self._impl`, `Float` against `float(self._impl)`), falling back to `false`/`true` for foreign types as today.
+### ~~123. `re.sub`/`subn` reject a lambda replacement with an `AttributeError`~~ — DONE
 
-### 120. `decimal` precision/rounding can never be changed — the documented `localcontext` recipe is impossible
-
-- **Where:** `poop/types/decimal.py:153-176` (`Context` — `prec` and `rounding` are read-only properties, `__slots__ = ("_impl",)`, constructor takes only a raw `_decimal.Context`), `poop/types/decimal.py:253` (`localcontext`)
-- **Bug:** MIGRATION.md tells users to "use `With(lambda: decimal.localcontext()).do(lambda ctx: …)` to scope precision/rounding changes", but the `Context` the body receives exposes no way to change anything: `prec`/`rounding` have no setters, `Context` is not an `Object` (no `set_attr`), and user code cannot construct a `Context` with different settings (the constructor takes a raw CPython context users can't make). Net effect: decimal precision in POOP is permanently stuck at the default.
-- **Repro:**
-
-  ```python
-  With(lambda: decimal.localcontext()).do(lambda ctx: ctx.set_attr("prec", 5))
-  # poop: 'Context' object has no attribute 'set_attr'
-  ```
+**Decision + implemented:** `_unwrap_repl` (`poop/types/re.py`) now bridges a POOP `Block` replacement into a raw `match -> str` adapter (`lambda m: to_python(repl(Match(m)))`), returning the raw string only for `Str`. Widened the `repl` annotations on `Pattern.sub`/`subn` and `Re.sub`/`subn` to `Str | Block`. `re.sub("a", lambda m: "X", "banana")` → `"bXnXnX"`. Tests in `tests/test_types/test_re.py`.
 
-  (Plain attribute assignment is impossible inside the `do` lambda, and no other entry point mutates a context.) Real Python: `with decimal.localcontext() as ctx: ctx.prec = 5` works, as does `decimal.localcontext(prec=5)` on 3.11+.
-- **Proposed fix:** mirror CPython 3.11+ kwargs on the namespace entry point — `decimal.localcontext(ctx=none, prec=none, rounding=none)` forwarding via `_kwargs_from` — and/or add `set_prec(Int)` / `set_rounding(Str)` mutator methods to `Context` (same pattern as `SSLContext.set_verify_mode`).
+### ~~124. The `Enum` functional API crashes in every form CPython supports~~ — DONE
 
-### 121. Documented `.do(...)` recipes crash: `GlobIter`, `csv.Reader`/`DictReader`, and `Shlex` lack the iteration surface
+**Decision + implemented:** added a `_PoopEnumMeta` metaclass (`poop/types/enum.py`) on all five enum bases, overriding `__call__` to unwrap the functional-API arguments via `to_python` (Str → str, List/Tuple → list, Dict → dict) before delegating to `EnumType.__call__`. Used a private `_NOT_GIVEN` sentinel so the bare lookup form (`Color(Int(1))`) omits `names` entirely — CPython 3.14 distinguishes the two via its own `_not_given` sentinel, so passing `names=None` would wrongly trigger the functional branch. All three call shapes (`Enum("Color", ["RED", "GREEN"])`, `Enum("Color", "RED GREEN")`, `Enum("Color", [("RED", 1), ...])`) now build a working enum. Tests in `tests/test_types/test_enum.py`; catalogued in INFECTIONS.md.
 
-- **Where:** `poop/types/glob.py:16` (`GlobIter`), `poop/types/csv.py:53` (`Reader`), `poop/types/csv.py:118` (`DictReader`), `poop/types/shlex.py:12` (`Shlex`)
-- **Bug:** all four classes define `__iter__` but do not mix in `_IterableMixin` (nor define `do`/`map`/`filter`). Since loops are forbidden, a bare `__iter__` is unreachable from user code except through the `list()`/`tuple()` converters. MIGRATION.md explicitly shows `glob.iglob("*.txt").do(lambda f: process(f))` (line 629), `lexer.do(lambda token: handle(token))` (line 841), and `csv.reader(text).do(Block(lambda row: row.print()))` (line 1614), and `GlobIter`'s own docstring promises "yields POOP `Path` objects on each `do(block)` call" — every one of those crashes.
-- **Repro:**
+### ~~125. REPL echoes `None` after every `.print()` (and clobbers `_`)~~ — DONE
 
-  ```python
-  glob.iglob("*.py").do(lambda f: f.print())
-  # poop: 'GlobIter' object has no attribute 'do'
-  csv.reader("a,b\r\n1,2\r\n").do(lambda row: row.print())
-  # poop: 'Reader' object has no attribute 'do'
-  Shlex("a b c").do(lambda token: token.print())
-  # poop: 'Shlex' object has no attribute 'do'
-  ```
+**Decision + implemented:** `Repl._displayhook` (`poop/repl.py`) now suppresses POOP `none` (`isinstance(value, NoneClass)`) as well as raw `None`, so `.print()` no longer echoes `None` or clobbers `_`. The now-dead `NoneClass` branch in `_colorize_value` was removed. Tests in `tests/test_repl.py`.
 
-- **Proposed fix:** add `_IterableMixin` to the bases of `GlobIter`, `Reader`, `DictReader`, and `Shlex` (their existing `__iter__` already yields POOP values, which is all the mixin needs).
+### ~~126. The datetime family prints `<Date>` instead of its value~~ — DONE
 
-### 122. `sqlite3` `Row` is an injected entry point that cannot be used at all
+**Decision + implemented:** added a shared `_StrReprMixin` in `poop/types/datetime.py` (`__str__` delegating to `str(self._impl)`, `__repr__ = __str__`) and mixed it into all five wrappers (`TimeDelta`, `TimeZone`, `Date`, `Time`, `DateTime`). `.print()` now shows `2024-01-01` / `1 day, 2:00:00` / `UTC`. Tests in `tests/test_types/test_datetime.py`.
 
-- **Where:** `poop/types/sqlite3.py:92-117` (`Row`)
-- **Bug:** `Row` is bound into the namespace (per the `sqlite3` transformer) but nothing in `poop/types/sqlite3.py` ever constructs it — `fetchone`/`fetchall` always build `Tuple`s and there is no `row_factory` hook. Constructing it from user code is the only path left, and that is broken: `__init__` stores the POOP `Tuple`s as-is while `at`/`keys`/`values` are written for raw Python tuples (`self._columns.index(key._value)` searches a POOP `Tuple` for a raw `str`), so every lookup fails.
-- **Repro:**
+### ~~127. asyncio `Future.exception()` answers the raw Python exception~~ — DONE
 
-  ```python
-  r = Row(("a", "b"), (1, "x"))
-  r.at("a").print()
-  # poop: tuple.index(x): x not in tuple
-  ```
-
-  Real Python (`sqlite3.Row` via `row_factory`): `r["a"]` → `1`.
-- **Proposed fix:** either wire real support — `Connection.row_factory_row()` (or a `row_factory` kwarg) that makes cursors build `Row(tuple(col[0] for col in description), values)` — or make `Row.__init__` unwrap POOP `Tuple`/`List` inputs via `to_python` so the documented class is at least constructible; today it is dead weight that only crashes.
-
-### 123. `re.sub`/`subn` reject a lambda replacement with an `AttributeError`
-
-- **Where:** `poop/types/re.py:25` (`_unwrap_repl`), used by `Pattern.sub`/`Pattern.subn` (`poop/types/re.py:173,177`) and `Re.sub`/`Re.subn` (`poop/types/re.py:292,310`)
-- **Bug:** `_unwrap_repl` unconditionally reads `repl._value`, so only `Str` replacements work. CPython's `re.sub` accepts a callable replacement (match → str), and POOP's own convention bridges POOP blocks into every other stdlib callback slot (`json` hooks, `sqlite3.create_function`, `difflib` `isjunk`, `shutil.copy_function`). Dynamic replacement is otherwise impossible in POOP (no loops to rebuild the string around `finditer`).
-- **Repro:**
+**Decision + implemented:** `Future.exception()` (`poop/types/asyncio.py`) now answers `none` when there is no exception and `Error(result)` otherwise, mirroring the `gather` contract instead of leaking the raw `BaseException` through `to_poop`. Tests in `tests/test_types/test_asyncio.py`.
 
-  ```python
-  re.sub("a", lambda m: "X", "banana").print()
-  # poop: 'Block' object has no attribute '_value'
-  ```
+### ~~128. concurrent `CFFuture.exception()` answers the raw Python exception~~ — DONE
 
-  Real Python: `re.sub("a", lambda m: "X", "banana")` → `'bXnXnX'`.
-- **Proposed fix:** teach `_unwrap_repl` to detect a callable and adapt it:
-
-  ```python
-  def _unwrap_repl(repl: Str | Block) -> Any:
-      if callable(repl):
-          return lambda m: to_python(repl(Match(m)))
-      return repl._value
-  ```
-
-### 124. The `Enum` functional API crashes in every form CPython supports
-
-- **Where:** `poop/types/enum.py:56` (`Enum` and siblings — no interception of the functional form)
-- **Bug:** `Enum("Color", ...)` delegates to CPython's `EnumType.__call__`, which receives POOP values: the member list is a POOP `List` of `Str`s, and since `Str` is iterable the enum machinery tries to unpack each name as a `(name, value)` pair. All three CPython call shapes fail, each with a different confusing message.
-- **Repro:**
+**Decision + implemented:** `CFFuture.exception(timeout)` (`poop/types/concurrent.py`) now answers `none` or `Error(result)` (importing `Error` from `poop.types.error`) instead of routing a `BaseException` through `to_poop`. Tests in `tests/test_types/test_concurrent.py`.
 
-  ```python
-  Enum("Color", ["RED", "GREEN"])        # poop: too many values to unpack (expected 2)
-  Enum("Color", "RED GREEN")             # poop: not enough values to unpack (expected 2, got 1)
-  Enum("Color", [("RED", 1), ("GREEN", 2)])  # poop: 'str' object is not subscriptable
-  ```
-
-  Real Python: all three produce a working `Color` enum.
-- **Proposed fix:** give the POOP bases a small metaclass overriding `__call__`: when `names`-style arguments are present, unwrap them with `to_python` (Str → str, List/Tuple → list, Dict → dict) before delegating to `EnumType.__call__`. At minimum, raise a clear `TypeError` pointing at the class-statement form instead of leaking unpack errors.
-
-### 125. REPL echoes `None` after every `.print()` (and clobbers `_`)
-
-- **Where:** `poop/repl.py:356-360` (`Repl._displayhook`)
-- **Bug:** the displayhook suppresses only the raw Python `None` (`if value is None: return`). Every POOP message that answers `none` — including `.print()`, the single most common REPL expression — returns a `NoneClass`, which gets displayed as `None` and stored into `_`. CPython's REPL displays nothing for `None`-valued expressions (`>>> print("hi")` shows only `hi`) and leaves `_` untouched.
-- **Repro:**
-
-  ```text
-  >>> "hi".print()
-  hi
-  None
-  ```
-
-  Expected (CPython behavior): just `hi`.
-- **Proposed fix:** suppress `NoneClass` results in `_displayhook`:
-
-  ```python
-  def _displayhook(self, value: object) -> None:
-      if value is None or isinstance(value, NoneClass):
-          return
-      ...
-  ```
-
-  (The `NoneClass` branch in `_colorize_value` then becomes dead and can go.)
-
-### 126. The datetime family prints `<Date>` instead of its value
-
-- **Where:** `poop/types/datetime.py` — `TimeDelta` (27), `TimeZone` (97), `Date` (200), `Time` (267), `DateTime` (325); none define `__str__`/`__repr__`
-- **Bug:** all five wrappers fall back to `Object.__str__`, so `.print()` and the REPL show `<Date>`, `<TimeDelta>`, etc. Every sibling value wrapper (`Decimal`, `Fraction`, `UUID`, the `ipaddress` family) delegates `__str__` to its `_impl`, and real Python prints `2024-01-01` / `1 day, 2:00:00`.
-- **Repro:**
-
-  ```python
-  Date(2024, 1, 1).print()          # <Date>      (Python: 2024-01-01)
-  TimeDelta(days=1, hours=2).print()  # <TimeDelta> (Python: 1 day, 2:00:00)
-  DateTime(2024, 1, 1).print()      # <DateTime>  (Python: 2024-01-01 00:00:00)
-  ```
-
-- **Proposed fix:** add to each of the five classes (or to a tiny shared mixin):
-
-  ```python
-  def __str__(self) -> str:
-      return str(self._impl)
-
-  __repr__ = __str__
-  ```
-
-### 127. asyncio `Future.exception()` answers the raw Python exception
-
-- **Where:** `poop/types/asyncio.py:46`
-- **Leak:** `Future.exception()` returns `to_poop(self._impl.exception())`, and
-  `to_poop` has no branch for `BaseException` — the raw Python exception
-  instance falls through to user space. This is inconsistent with the
-  surrounding design: `asyncio.gather` (same file, line 89) wraps exceptions as
-  `Error` precisely to "mirror what Try hands to handlers", and `Try.except_`
-  handlers receive `Error`. A task's failure inspected via `.exception()` is
-  the one asyncio path that still hands back the naked exception, so
-  `.message()` / `.kind()` / `.class_name()` all blow up on it.
-- **Evidence:** e2e POOP program (`uv run python main.py /tmp/poop_aio_leak.py`):
-
-  ```python
-  class App:
-      async def boom(self):
-          ValueError.raise_("nope")
-
-      async def main(self):
-          t = asyncio.create_task(self.boom())
-          await asyncio.sleep(0.01)
-          return t.exception()
-
-
-  e = asyncio.run(App().main())
-  e.class_name().print()
-  ```
-
-  Output: `poop: 'ValueError' object has no attribute 'class_name' (line 12)`.
-  Direct probe confirms `type(t.exception())` is `<class 'ValueError'>`, not
-  `Error`.
-- **Proposed fix:** mirror the gather contract — `none` when there is no
-  exception, `Error` otherwise:
-
-  ```python
-  def exception(self) -> Object:
-      result = self._impl.exception()
-      return none if result is None else Error(result)
-  ```
-
-  (`Error` is already imported in `poop/types/asyncio.py` for gather.)
-
-### 128. concurrent `CFFuture.exception()` answers the raw Python exception
-
-- **Where:** `poop/types/concurrent.py:30`
-- **Leak:** same pattern as the asyncio twin: `CFFuture.exception(timeout)`
-  returns `none if result is None else to_poop(result)`, and `to_poop` passes
-  `BaseException` instances through raw. A failed `executor.submit(...)`
-  future hands the naked Python exception to user code instead of `Error`.
-- **Evidence:** e2e POOP program (`uv run python main.py /tmp/poop_cf_leak.py`):
-
-  ```python
-  ex = ThreadPoolExecutor()
-  f = ex.submit(lambda: ValueError.raise_("kaput"))
-  e = f.exception()
-  e.class_name().print()
-  ```
-
-  Output: `poop: 'ValueError' object has no attribute 'class_name' (line 4)`.
-  Direct probe confirms `type(f.exception())` is `<class 'ValueError'>`.
-- **Proposed fix:**
-
-  ```python
-  def exception(self, timeout: Float | Int | None = None) -> Object:
-      result = self._impl.exception(_opt_timeout(timeout))
-      return none if result is None else Error(result)
-  ```
-
-  (import `Error` from `poop.types.error`; the `to_poop` local import and
-  its `none`-check dance go away.)
-
-### 129. `statistics` central-tendency functions leak raw `fractions.Fraction`
-
-- **Where:** `poop/types/statistics.py:164` (`mean`), `:192` (`median`),
-  `:196` (`median_low`), `:200` (`median_high`), `:215` (`mode`); root cause
-  in `_to_number` (`:19`), which unwraps POOP `Fraction` to its raw
-  `fractions.Fraction` impl.
-- **Leak:** `_unwrap_data` converts POOP `Fraction` elements to raw
-  `fractions.Fraction` so the stdlib can do exact arithmetic, but the result
-  is re-wrapped with `to_poop`, which has no `fractions.Fraction` branch —
-  the raw stdlib `Fraction` escapes to user space. Exact-rational data is the
-  documented reason CPython's `statistics.mean` supports `Fraction` input, so
-  this is a mainline path, not an exotic one. (`Decimal` data does not leak:
-  `_to_number` passes the POOP wrapper through, so `median` answers the POOP
-  `Decimal`; `mean` over Decimals raises instead — a separate, non-leak bug.)
-- **Evidence:** e2e POOP program (`uv run python main.py /tmp/poop_stats_leak.py`):
-
-  ```python
-  data = list(Fraction("1/4"), Fraction("1/2"), Fraction("3/4"))
-  m = statistics.mean(data)
-  m.class_name().print()
-  ```
-
-  Output: `poop: 'Fraction' object has no attribute 'class_name' (line 3)`.
-  Direct probe: `Statistics.mean(...)`, `Statistics.median(...)`, and
-  `Statistics.mode(...)` over POOP Fractions all answer
-  `<class 'fractions.Fraction'>`.
-- **Proposed fix:** add a local re-wrap helper and use it instead of bare
-  `to_poop` in `mean` / `median` / `median_low` / `median_high` / `mode`
-  (and for `multimode` elements, which take the same `to_poop` path):
-
-  ```python
-  def _wrap_number(value: Any) -> Any:
-      if isinstance(value, _fractions.Fraction):
-          return Fraction._from_impl(value)
-      return to_poop(value)
-  ```
-
-  (`poop/types/fractions.py` already exposes `_from_impl` via
-  `_ImplWrapperMixin`; `import fractions as _fractions` at top.)
-
-### 130. `statistics` functions crash on `Decimal` data
-
-- **Where:** `poop/types/statistics.py:19-26` (`_to_number`), `poop/types/_bridge.py:56-84` (`to_poop` has no `decimal.Decimal` branch)
-- **Bug:** `_to_number` unwraps `Int`/`Float`/`Str`/`Fraction`/`Boolean` but passes `Decimal` wrappers through untouched, so every `statistics` function that goes through `_unwrap_data` feeds POOP `Decimal` objects to the stdlib. `mean`/`stdev`/`variance` blow up inside `statistics._sum` (the wrapper's `as_integer_ratio()` answers a POOP `Tuple` of `Int`s, which the stdlib then mixes with raw ints), `median` of an even-length dataset crashes averaging the two middle wrappers, and `fmean` rejects the wrapper outright. CPython supports `Decimal` data in all of these.
-- **Repro:**
-
-  ```python
-  statistics.mean(list(Decimal("1.5"), Decimal("2.5"))).print()
-  # poop: unsupported operand type(s) for +: 'int' and 'int'   (Python: 2)
-  statistics.stdev(list(Decimal("1"), Decimal("3"))).print()
-  # poop: unsupported operand type(s) for +=: 'int' and 'int'  (Python: 1.4142...)
-  statistics.median(list(Decimal("1"), Decimal("3"))).print()
-  # poop: 'int' object has no attribute '_impl'                (Python: 2)
-  statistics.fmean(list(Decimal("1.5"), Decimal("2.5"))).print()
-  # poop: must be real number, not Decimal                     (Python: 2.0)
-  ```
-
-- **Proposed fix:** add a `Decimal` branch to `_to_number` (`if isinstance(value, Decimal): return value._impl`), and add a `decimal.Decimal` branch to `to_poop` (`return Decimal._from_impl(value)` via a local import to dodge the cycle) so `mean`/`median`/`mode`, which return through `to_poop`, answer a POOP `Decimal` instead of a raw one. `stdev`/`variance`/`pstdev`/`pvariance` wrap results in `Float(...)`; route those through `to_poop` as well so Decimal-in gives Decimal-out, matching CPython.
-
-### 131. `configparser` `fallback=None` answers corrupted wrappers — `getboolean` silently answers `false`
-
-- **Where:** `poop/types/configparser.py:200-266` (`ConfigParser.get` / `getint` / `getfloat` / `getboolean`; same helpers serve `RawConfigParser`)
-- **Bug:** when the option is missing and `fallback=None` is passed (the canonical CPython idiom for "give me None back"), the POOP `none` singleton is forwarded to the stdlib, comes back as the result, and is then force-wrapped: `get` answers `Str(none)` — a `Str` whose `print()` explodes with `__str__ returned non-string (type NoneType)`; `getint`/`getfloat` answer `Int(none)`/`Float(none)` shells that crash on first arithmetic; `getboolean` runs `to_boolean(none)` and answers **`false`**, silently making a missing option indistinguishable from a real `false`. CPython answers `None` in all four cases.
-- **Repro:**
-
-  ```python
-  cp = ConfigParser()
-  cp.read_string("[s]\na = 1\n")
-  v = cp.get("s", "missing", fallback=None)
-  v.class_name().print()    # str
-  v.print()                 # poop: __str__ returned non-string (type NoneType)
-  cp.getboolean("s", "missing", fallback=None).print()  # False  (Python: None)
-  cp.getint("s", "missing", fallback=None).class_name().print()  # int — corrupt shell
-  ```
-
-- **Proposed fix:** in all four methods, unwrap a `NoneClass` fallback to Python `None` before the kwargs dict is built, and check the impl result before wrapping: `result = self._impl.get(...)`; `return none if result is None else Str(result)` (resp. `Int`/`Float`/`to_boolean`).
-
-### 132. `Logger("app")` builds a corrupt logger that explodes on first use
-
-- **Where:** `poop/types/logging.py:358-364` (`Logger.__init__`)
-- **Bug:** `Logger` is an injected user-visible entry point, but its constructor is the internal impl-wrapping one (`__init__(self, impl: Any)`). `Logger("app")` therefore silently stores the POOP `Str` as `_impl`; construction succeeds, and the first message send crashes with a baffling `'str' object has no attribute 'info'`. CPython's `logging.Logger("app")` constructs a working logger (named, level `NOTSET`).
-- **Repro:**
-
-  ```python
-  lg = Logger("app")        # accepted
-  lg.info("hello")          # poop: 'str' object has no attribute 'info'
-  ```
-
-- **Proposed fix:** make the public constructor accept what CPython's does — `def __init__(self, name: Str, level: Int | Str | None = None)` building `_logging.Logger(name._value, ...)` — and move internal wrapping to a `_from_impl` classmethod (the pattern the impl-wrapper types already use); update `Logging.getLogger` and `LoggerAdapter` to call `_from_impl`. Alternatively, if direct construction should stay discouraged, raise an immediate `TypeError("use logging.getLogger(name)")` instead of corrupting silently.
-
-### 133. `SSLContext(ssl.PROTOCOL_TLS_CLIENT)` silently stores the protocol Int as the context
-
-- **Where:** `poop/types/ssl.py:23-27` (`SSLContext.__init__`)
-- **Bug:** the constructor treats any argument as a ready-made raw `ssl.SSLContext` (`self._impl = impl`). Passing a protocol constant — CPython's canonical constructor call, with `ssl.PROTOCOL_TLS_CLIENT`/`PROTOCOL_TLS_SERVER` exposed as `Int`s in the very same namespace — silently stores the `Int` as `_impl`; every subsequent attribute access crashes. There is also no other way to build a `PROTOCOL_TLS_SERVER` context from the protocol constant (the no-arg form hardcodes `PROTOCOL_TLS_CLIENT`).
-- **Repro:**
-
-  ```python
-  ctx = SSLContext(ssl.PROTOCOL_TLS_CLIENT)   # accepted
-  ctx.check_hostname.print()
-  # poop: 'int' object has no attribute 'check_hostname'
-  # Python: ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT).check_hostname -> True
-  ```
-
-- **Proposed fix:** accept the protocol form: `if isinstance(impl, Int): self._impl = _ssl.SSLContext(impl._value)` (keep the no-arg TLS-client default), and move raw-impl wrapping (used by `create_default_context` / `wrap_socket`) to a `_from_impl` classmethod so an arbitrary object can no longer be smuggled into `_impl`.
-
-### 134. `MPQueue.put` of any POOP value poisons the queue — `get()` deadlocks
-
-- **Where:** `poop/types/multiprocessing.py:83-99` (`MPQueue.put` / `get`)
-- **Bug:** `put` hands the POOP wrapper to `multiprocessing.Queue` unchanged. The feeder thread then fails to pickle it (wrappers patch `__module__ = "builtins"`/`__name__`, so by-name lookup fails: `Can't pickle <class 'int'>: it's not found as builtins.Int`), the error is printed asynchronously on stderr, the item never reaches the pipe, and a plain `get()` blocks forever — the program hangs. With a timeout, the user gets `poop: ` with an empty message (`queue.Empty` has no text). CPython's `q.put(1); q.get()` answers `1`. The sibling `pickle` wrapper already solves exactly this with `to_python`/`to_poop` at the boundary.
-- **Repro:**
-
-  ```python
-  q = MPQueue()
-  q.put(1)
-  q.get().print()
-  # stderr: _pickle.PicklingError: Can't pickle <class 'int'>: it's not found as builtins.Int
-  # ... then hangs forever (with get(timeout=3): "poop: " with empty message)
-  ```
-
-- **Proposed fix:** bridge at the boundary like `poop/types/pickle.py` does — `self._impl.put(to_python(item), b, ...)` in `put`/`put_nowait`, and `return to_poop(self._impl.get(...))` in `get`/`get_nowait`.
-
-### 135. `dict(a=1, b=2)` rejects the keyword constructor form
-
-- **Where:** `poop/transformers/_collection.py:31-47` (`CollectionRewriter.visit_Call` skips calls with keywords), `poop/transformers/dict.py:23-40` (`_poop_dict_from` takes a single positional)
-- **Bug:** `dict(key=value, ...)` — a core CPython constructor form — is not routed through the dict factory: `visit_Call` bails out on keywords, `visit_Name` then renames `dict` to the bare `Dict` class, and `Dict.__init__()` (which takes nothing) raises `TypeError: Dict.__init__() got an unexpected keyword argument 'a'`. The documented contract is "constructor builtins are intercepted, not banned"; `dict()`, `dict(d)` and `dict(pairs)` all work — only the kwargs form crashes.
-- **Repro:**
-
-  ```python
-  dict(a=1, b=2).print()
-  # poop: Dict.__init__() got an unexpected keyword argument 'a'
-  # Python: {'a': 1, 'b': 2}
-  ```
-
-- **Proposed fix:** in `_DictRewriter`, override `visit_Call` (or relax the shared guard for `dict` only) to also rewrite calls with keywords, forwarding them: `_poop_dict_from(*args, **kwargs)`; extend `_poop_dict_from(arg=None, **kwargs)` to seed from `arg` as today and then `d._data[Str(k)] = v` for each keyword. Other collection rewriters keep the no-keyword guard (their builtins accept none).
-
-### 136. `Str.startswith`/`endswith` crash on a tuple of prefixes
-
-- **Where:** `poop/types/string.py:197-225` (`Str.startswith` / `Str.endswith`)
-- **Bug:** both methods assume the first argument is a single `Str` and dereference `prefix._value`. CPython's contract also accepts a tuple of strings — and in POOP that form matters doubly, because `s.startswith("a") or s.startswith("b")` is forbidden (`no_and_or`), making the tuple form the only message-shaped substitute for the disjunction. Passing a `Tuple` crashes with `AttributeError`.
-- **Repro:**
-
-  ```python
-  "abc".startswith(tuple("a", "z")).print()
-  # poop: 'tuple' object has no attribute '_value'   (Python: True)
-  "abc".endswith(tuple("c", "z")).print()
-  # poop: 'tuple' object has no attribute '_value'   (Python: True)
-  ```
-
-- **Proposed fix:** widen the parameter to `Str | Tuple` and unwrap accordingly: `needle = prefix._value if isinstance(prefix, Str) else tuple(p._value for p in prefix._items)` before calling `self._value.startswith(needle, ...)`; same for `endswith`.
-
-### 137. CLI dumps a raw rich traceback when the source file does not exist
-
-- **Where:** `poop/cli.py:64` (`source = file.read_text(encoding="utf-8")`)
-- **Bug:** every pipeline error (syntax, validator, runtime) prints a clean one-line `poop: ...` diagnostic, but an unreadable path escapes the `_poop_errors` guard: `poop missing.py` prints a full rich-formatted `FileNotFoundError` traceback through typer, and `poop somedir/` an `IsADirectoryError` traceback — internal frames (`cli.py`, `pathlib`) exposed for an ordinary user mistake.
-- **Repro:**
-
-  ```bash
-  uv run python main.py /tmp/nonexistent_file.py
-  # ╭─── Traceback (most recent call last) ───╮ ... FileNotFoundError: [Errno 2] ...
-  # expected something like: poop: cannot read '/tmp/nonexistent_file.py': No such file or directory
-  ```
-
-- **Proposed fix:** either declare the constraint on the argument — `typer.Argument(exists=True, dir_okay=False, readable=True)` — letting typer print its standard short error, or wrap the `read_text` call in `try/except OSError as exc` and `typer.echo(f"poop: cannot read '{file}': {exc.strerror}", err=True)` + `typer.Exit(1)`, keeping the established error style.
-
-### 138. Starred unpacking binds the rest-target to a raw Python `list`
-
-- **Where:** transformer layer — no transformer in `DEFAULT_TRANSFORMERS`
-  (`poop/transformers/__init__.py`) visits assignment targets, so
-  `c, *rest = xs` reaches `exec` (`poop/executor.py:37`) untouched and
-  CPython's `UNPACK_EX` builds the rest-collection as a native `list`.
-  (`poop/validators/no_namespace_shadow.py:18` already walks `ast.Starred`
-  targets, so the syntax is reachable and anticipated.)
-- **Leak:** the starred name binds a raw `builtins.list` (its elements are
-  POOP values, the container is not). Every POOP message on it crashes; the
-  source type does not matter — `List`, `Tuple`, and `Str` right-hand sides
-  all leak, including nested targets like `a, (b, *inner) = ...`.
-- **Evidence:** e2e (`uv run python main.py /tmp/poop_star.py`):
-
-  ```python
-  c, *rest = [1, 2, 3]
-  c.print()       # 1 — plain targets are fine
-  rest.print()    # poop: 'list' object has no attribute 'print' (line 3)
-  ```
-
-  Direct probe through `Interpreter.transform_source` + `exec`:
-  `rest.__class__ is [].__class__` → `True` (raw list), while
-  `all(isinstance(e, Int) for e in rest)` → `True` and the plain target `c`
-  is a POOP `Int`. Same result for `a, *b = (1, 2, 3)` and
-  `first, *others = "xyz"`.
-- **Proposed fix:** add an `unpack` transformer whose `visit_Assign` (and
-  `visit_AnnAssign` is irrelevant — annotated targets cannot be starred)
-  detects `ast.Starred` anywhere in the target tree and appends one rebind
-  statement per starred name after the assignment, e.g.
-  `c, *rest = xs` → `c, *rest = xs; rest = _poop_list_from(rest)` (the
-  binding already exists: `_poop_list_from` in `poop/transformers/list.py:14`
-  accepts any iterable of POOP elements). For attribute/starred targets like
-  `a, *self.rest = xs`, emit the equivalent
-  `self.rest = _poop_list_from(self.rest)`. `visit_Assign` may return a
-  statement list, so the expansion is a plain `NodeTransformer`.
-
-### 139. `*args` / `**kwargs` parameters bind a raw `tuple` / raw `dict` (with raw `str` keys)
-
-- **Where:** transformer layer — `poop/transformers/class_.py:9` rewrites
-  only `ClassDef` bases; method signatures are untouched, so CPython's call
-  machinery packs variadic parameters natively inside `exec`
-  (`poop/executor.py:37`). `poop/validators/no_namespace_shadow.py` already
-  validates `vararg`/`kwarg` names, so the syntax is sanctioned.
-- **Leak:** inside a user method `def m(self, *args, **kw):`, `args` is a
-  raw `builtins.tuple` and `kw` a raw `builtins.dict` whose keys are raw
-  `str` (the values are POOP — they come from the transformed call site).
-  Every POOP message on either container crashes.
-- **Evidence:** e2e (`uv run python main.py /tmp/poop_varargs.py`):
-
-  ```python
-  class Calc:
-      def total(self, *args):
-          args.print()
-
-  Calc().total(1, 2, 3)
-  # poop: 'tuple' object has no attribute 'print' (line 3)
-  ```
-
-  Same for `**opts`: `poop: 'dict' object has no attribute 'print'`.
-  Identity probe: `o.a.__class__ is (1,).__class__` → `True`,
-  `o.k.__class__ is {}.__class__` → `True`, and every key satisfies
-  `k.__class__ is "".__class__`.
-- **Proposed fix:** in a signature transformer (same pass as the fix above,
-  or a sibling), for every `FunctionDef`/`AsyncFunctionDef` with
-  `args.vararg`/`args.kwarg`, inject a prologue as the first body
-  statements: `args = _poop_tuple_from(args)` and
-  `kw = _poop_dict_from_kwargs(kw)` — `_poop_tuple_from` already exists
-  (`poop/transformers/tuple.py`); add a tiny `_poop_dict_from_kwargs(d)`
-  binding that builds a `Dict` mapping `Str(k) → v`. Lambdas with variadic
-  parameters need the nested-lambda form
-  (`lambda *xs: body` → `lambda *xs: (lambda xs: body)(_poop_tuple_from(xs))`)
-  since a prologue cannot be inserted into an expression body.
-
-### 140. User methods without an explicit `return` answer raw Python `None`, not POOP `none`
-
-- **Where:** transformer layer — nothing rewrites function bodies
-  (`poop/transformers/class_.py` touches only class bases), so a method that
-  falls off the end or uses a bare `return` answers CPython's implicit
-  `None` inside `exec` (`poop/executor.py:37`). The `none` transformer
-  (`poop/transformers/none.py`) only rewrites the `None` *literal*; the
-  implicit return has no AST node to rewrite.
-- **Leak:** the single most common method shape — a side-effecting method
-  with no `return` — hands raw `NoneType` to its caller. `result.is_none()`,
-  `result.print()`, `result.if_none(...)` all crash, even though POOP's own
-  wrappers scrupulously return the `none` singleton from every void method.
-- **Evidence:** e2e (`uv run python main.py /tmp/poop_implicit_none.py`):
-
-  ```python
-  class Greeter:
-      def greet(self):
-          "hi".print()
-
-  r = Greeter().greet()
-  r.is_none().print()
-  # poop: 'NoneType' object has no attribute 'is_none' (line 6)
-  ```
-
-  A bare `return` leaks identically.
-- **Proposed fix:** add a `return_` transformer that, for every
-  `FunctionDef`/`AsyncFunctionDef`: (1) rewrites `return` (no value) to
-  `return _poop_none`, and (2) appends `return _poop_none` when the last
-  body statement is not a `Return`/`Raise` (an unreachable trailing return
-  is harmless otherwise). The `_poop_none` binding already exists
-  (`poop/transformers/none.py:17`). Must skip `__init__` — CPython raises
-  `TypeError: __init__() should return None` for non-`None` returns;
-  generators cannot occur (`no_yield`), so the rewrite is otherwise safe.
-
-### 141. `import` statements pass validation and bind raw Python modules — shadowing injected namespaces
-
-- **Where:** `poop/validators/__init__.py:66` (`DEFAULT_VALIDATORS` has no
-  validator for `ast.Import`/`ast.ImportFrom`), and
-  `poop/validators/no_namespace_shadow.py:6` (`_Visitor` checks
-  `Assign`/`AnnAssign`/`AugAssign`/`ClassDef`/parameters but not import
-  aliases, so even rebinding a protected namespace name via `import` slips
-  through).
-- **Leak:** `import os` binds the raw CPython module *over* POOP's injected
-  `os` namespace, and every call on it returns raw Python values —
-  the entire wrapper layer is bypassed in one line. `from os import getcwd`
-  and `import json as j` leak the same way. MIGRATION.md's design statement
-  ("No `import math` needed in POOP — the namespace is injected globally")
-  and the import-free `examples/` tree show imports were never meant to be
-  part of the language; they are simply unvalidated.
-- **Evidence:** e2e (`uv run python main.py /tmp/poop_import_os.py`):
-
-  ```python
-  import os
-  cwd = os.getcwd()
-  cwd.print()
-  # poop: 'str' object has no attribute 'print' (line 3)
-  ```
-
-  `from os import getcwd` produces the same raw `str`. Direct probe:
-  after `import os`, `type(ns["os"])` is `<class 'module'>` and
-  `os.getcwd()` returns a raw `str`. (`__import__("json")` is already
-  unusable — POOP `Str` is not accepted as a module name — so the statement
-  form is the only open door.)
-- **Proposed fix:** add a `no_import` validator rejecting `ast.Import` and
-  `ast.ImportFrom` with a message that names the substitute, e.g.
-  `"import is forbidden — POOP injects its stdlib namespaces (math, os,
-  json, …); the names are already in scope"`, and register it in
-  `DEFAULT_VALIDATORS`. As defense-in-depth, `no_namespace_shadow` can also
-  gain `visit_Import`/`visit_ImportFrom` over `alias.asname or alias.name`,
-  but with `no_import` active that branch is unreachable.
-
-### 142. `{**a, ...}` dict-literal splat (and `f(**kw)`) crash — POOP `Dict` cannot be used as a `**`-unpacking mapping
-
-- **Where:** `poop/types/dict.py` (the `Dict` class exposes `at`/`keys`/`values`
-  but no `__getitem__`, so it does not satisfy the mapping protocol Python's
-  `**` unpacking needs), and `poop/transformers/dict.py:50-53` (the dict
-  rewriter *bails out* — `return node` — whenever a display contains a `**`
-  entry, leaving the raw Python `ast.Dict` in place to be merged at runtime by
-  `dict.update`-style logic that the POOP `Dict` cannot service).
-- **Bug:** A dict display with `**` unpacking (`{**a, "y": 2}`, `{**a, **b}`)
-  crashes with `'dict' object is not subscriptable`, and so does a call-site
-  keyword splat `f(**kw)` when `kw` is a POOP `Dict`. Python's `**` merge calls
-  `kw.keys()` (which works — `keys()` exists) and then subscripts `kw[k]`, but
-  `Dict` has no `__getitem__`, so the subscription raises. Both are the *natural*
-  POOP translations of everyday Python: there is no other literal way to splice
-  one dict into another, and `f(*args)` (positional splat) already works, so the
-  asymmetry is surprising.
-- **Repro** (`uv run python main.py file.py`):
-
-  ```python
-  a = {"x": 1}
-  b = {**a, "y": 2}        # poop: 'dict' object is not subscriptable (line 2)
-  ```
-
-  ```python
-  class Adder:
-      def add(self, a, b):
-          return a + b
-  kw = {"a": 1, "b": 2}
-  Adder().add(**kw).print() # poop: 'dict' object is not subscriptable
-  ```
-
-  By contrast `[*a, *b]`, `(*a, 3)`, `{*a, *b}` and `f(*list)` all work, because
-  iteration (not the mapping protocol) is all they need.
-- **Proposed fix:** stop bailing in `_DictRewriter.visit_Dict` — instead of
-  `return node` when a `**` entry is present, rewrite the display into a POOP
-  merge helper (e.g. `_poop_dict_merge(<entry>, ...)`, where each plain pair
-  becomes a one-key `_poop_dict_from_pairs(...)` and each `**x` stays as `x`),
-  building a real POOP `Dict` and keeping POOP semantics for keys/values. For the
-  call-site `f(**kw)` path (which the transformer cannot reach), give `Dict` a
-  `__getitem__` delegating to `self._data[key]` so it satisfies the mapping
-  protocol; note that kwargs additionally require Python-`str` keys, so a fully
-  correct `f(**kw)` also needs `keys()` to yield raw `str` for that one path
-  (or a documented restriction that `**`-splatting a POOP `Dict` into a call is
-  unsupported). The dict-literal fix is the high-value, self-contained one.
-
-### 143. Open-ended slice `obj.slice(start, None)` crashes on every sliceable type
-
-- **Where:** the `slice` method of `poop/types/string.py:53`,
-  `poop/types/list.py:43`, `poop/types/tuple.py:42`, `poop/types/bytes.py:46`,
-  `poop/types/byte_array.py:49`, `poop/types/array.py:107`, and
-  `poop/types/range.py:54`. Each ends with
-  `s = step._value if step is not None else None` and
-  `self._value[start_or_slice._value : stop._value : s]`.
-- **Bug:** A `None` literal in POOP source is rewritten to the POOP `none`
-  (`NoneClass`, whose `__name__` is set to `"NoneType"`), **not** Python's
-  `None`. The `slice` methods guard with `if stop is None:` (a Python-identity
-  check that POOP `none` never satisfies) and then read `stop._value` /
-  `step._value` directly — but `NoneClass` has no `_value`, so any
-  `obj.slice(start, None)` or `obj.slice(start, stop, None)` raises
-  `'NoneType' object has no attribute '_value'`. This is the natural translation
-  of Python's `obj[start:]` / open-ended slices, and the `no_subscript`
-  validator explicitly directs users to `obj.slice(start, stop)`. There is no
-  way to express "to the end" through the 3-arg form (omitting `stop` hits the
-  `"stop is required when start is an Int"` guard instead). The `Slice`
-  constructor *does* handle this — `poop/types/slice.py:_coerce` accepts both
-  Python `None` and `NoneClass` — so only `obj.slice(slice(start, None))` works,
-  which is awkward and undocumented.
-- **Repro** (`uv run python main.py file.py`):
-
-  ```python
-  "hello".slice(2, None).print()        # poop: 'NoneType' object has no attribute '_value'
-  [1, 2, 3, 4, 5].slice(1, None).print()
-  range(0, 10).slice(2, None).print()
-  (1, 2, 3, 4).slice(1, None).print()
-  b"abcdef".slice(2, None).print()
-  # all crash identically; only obj.slice(slice(2, None)) works
-  ```
-
-- **Proposed fix:** in each `slice` method coerce a POOP `none` argument the same
-  way `Slice._coerce` does — treat both Python `None` and `NoneClass` as
-  "absent". The smallest robust change is to route the 3-arg form through the
-  existing `Slice` helper, e.g. build
-  `Slice(start_or_slice, stop, step)._py_slice()` and index with it, so the
-  single coercion site in `poop/types/slice.py` handles `None`/`NoneClass`/`Int`
-  uniformly for every type. (The current `if stop is None` Int-required guard can
-  then be dropped, since an absent/`none` stop becomes a valid open-ended slice.)
-
-### 144. Enum-family members answer raw `bool`/`int` from every operator message — enum dispatch is impossible
-
-- **Where:** `poop/types/enum.py:23` — `_PoopEnumMixin` adds `name_str` /
-  `value_object` / `iter` / `_missing_`, but members do not inherit `Object`
-  and no operator dunder is bridged: `Enum` members fall back to
-  `object.__eq__`, `IntEnum`/`IntFlag` members to `int.__eq__` / `int.__lt__`
-  / `int.__add__` / etc.
-- **Leak:** `Color.RED == Color.GREEN` answers a raw Python `bool` (same for
-  `!=`, and for `<`/`<=`/`>`/`>=` on `IntEnum`/`IntFlag`); `IntEnum` member
-  arithmetic (`Priority.LOW + Priority.HIGH`) answers a raw `int`. Because
-  `is` is forbidden (`no_is`) and members are not `Object`s (no
-  `is_identical`), there is **no** POOP-typed way to compare two members at
-  all — so the one branching idiom the language offers,
-  `(state == State.IDLE).if_true(...)`, crashes, making state dispatch on an
-  enum impossible. (`.name` / `.value` raw pass-through is documented by
-  design in the module docstring; the operator results are not.)
-- **Evidence:** e2e (`uv run python main.py ...`):
-
-  ```python
-  class State(Enum):
-      IDLE = 1
-      BUSY = 2
-
-  current = State.IDLE
-  (current == State.IDLE).if_true(lambda: "idle".print())
-  # poop: 'bool' object has no attribute 'if_true' (line 6)
-  ```
-
-  `(Color.RED == Color.GREEN).print()` → `poop: 'bool' object has no
-  attribute 'print'`; with `IntEnum`, `(LOW < HIGH).print()` → same, and
-  `(LOW + HIGH).print()` → `poop: 'int' object has no attribute 'print'`;
-  `IntFlag` equality leaks identically. Identity probe (display names are
-  masked — `Boolean.__name__` is rebound to `"bool"`):
-  `(Color.RED == Color.GREEN).__class__ is builtins.bool` → `True`,
-  `isinstance(..., Boolean)` → `False`; `(LOW + HIGH).__class__ is
-  builtins.int` → `True`; `hasattr(Color.RED, "is_identical")` → `False`.
-- **Proposed fix:** bridge operator results in `_PoopEnumMixin`: add
-  `__eq__`/`__ne__` returning `to_boolean(...)` — delegate to
-  `super().__eq__(other)` and fall back to identity when it answers
-  `NotImplemented` — plus `def __hash__(self): return super().__hash__()` to
-  keep each family's hash; wrap `__lt__`/`__le__`/`__gt__`/`__ge__` the same
-  way for the int-based families, and route `IntEnum` arithmetic results
-  through `to_poop`. Verified feasible: a probe mixin with exactly that
-  `__eq__` answers a POOP `Boolean` while alias resolution
-  (`CRIMSON = 1` → `is RED`) and member-keyed dict lookup keep working,
-  because `Boolean.__bool__` preserves truthiness for enum internals.
-
-### 145. Rebinding (or passing) a forbidden builtin bypasses every call-name validator — raw `int`/`list`/class objects flow out
-
-- **Where:** `poop/validators/_call_name.py:24` — the `_Visitor` produced by
-  `make_call_name_validator` only rejects `ast.Call` nodes whose `func` is an
-  `ast.Name`. A bare `ast.Name` reference to a forbidden builtin in any other
-  position — assignment RHS, call argument, decorator, default value — passes
-  all 39 validators built by the factory, and the executor's namespace
-  (`poop/executor.py:37`, `exec` with implicit `__builtins__`) resolves it to
-  the raw CPython builtin.
-- **Leak:** one assignment reopens every blocked door: `f = len; f(xs)`
-  answers a raw `int` (wrappers expose `__len__` for protocol interop),
-  `srt = sorted; srt(xs)` answers a raw Python `list`, `t = type; t(x)`
-  answers the raw class object. Argument position needs no assignment at
-  all: `words.map(len)` yields raw `int` elements. Same shape as the
-  `import` door (an unvalidated statement binding raw Python objects), but
-  through names the validators were specifically built to block.
-- **Evidence:** e2e (`uv run python main.py ...`):
-
-  ```python
-  f = len
-  n = f([1, 2, 3])
-  n.print()
-  # poop: 'int' object has no attribute 'print' (line 3)
-  ```
-
-  `srt = sorted; srt([3, 1, 2]).print()` → `poop: 'list' object has no
-  attribute 'print'`; `t = type; t(5).print()` → `poop: Object.print()
-  missing 1 required positional argument: 'self'` (the raw class leaked, so
-  `.print` is an unbound method); `["ab", "abc"].map(len).next().print()` →
-  `poop: 'int' object has no attribute 'print'`. Not every alias leaks —
-  `h = hex; h(255)` crashes because `Int` lacks `__index__` — but every
-  blocked builtin satisfied by a wrapper dunder (`len`, `sorted`, `type`,
-  `id`, `hash`, `isinstance`, ...) does.
-- **Proposed fix:** in `make_call_name_validator`, replace `visit_Call` with
-  a `visit_Name` that rejects any reference to a forbidden name regardless
-  of context (Load, Store, decorator, argument), reusing the same message
-  template. Method substitutes are unaffected — `n.hex()` / `xs.len()` are
-  `ast.Attribute` nodes, and keyword-argument names are not `Name` nodes.
-  Trade-off to state in the message: the 39 forbidden names become fully
-  reserved identifiers (`len = 5` is rejected too), which matches the spirit
-  of `no_namespace_shadow`. Structural validators not built by the factory
-  (`no_subscript`, `no_if`, ...) need no change.
-
-### 146. Binding a lowercase builtin name (`int = 5`, `def __init__(self, dict)`) silently rebinds the interpreter's mangled internals
-
-- **Where:** every type transformer's `visit_Name` rewrites with `ctx=node.ctx` — Store and parameter-body loads included: `poop/transformers/int.py:73-75`, `float.py:64-66`, `string.py:52-54`, `boolean.py:35-37`, `bytes.py:58-60`, `byte_array.py:43-45`, `memory_view.py:39-41`, `complex.py:96-98`, `range.py:38-40`, `enumerate.py:30-33`, `zip.py:36-38`, and `_collection.py:49-52` (shared by `list`/`tuple`/`set`/`dict`/`frozen_set`). No validator covers these 16 names — `no_namespace_shadow` protects only `DEFAULT_NAMESPACE` bindings (`math = 5` is rejected; `int = 5` is not), and the entry-145 call-name validators don't include the rewritten type names at all.
-- **Bug:** the rewrite is context-blind, so a user binding of `bool`/`int`/`float`/`complex`/`str`/`bytes`/`bytearray`/`memoryview`/`list`/`tuple`/`dict`/`set`/`frozenset`/`range`/`enumerate`/`zip` becomes a binding of the mangled `_poop_*` global. Three flavors, all legal Python:
-  1. module-scope assignment to a name whose rewrite target is also the literal constructor (`int`, `float`, `str`, `bytes`) replaces the constructor itself, so **every later literal of that type crashes**;
-  2. function-scope assignment compiles to `_poop_str = _poop_str("hello")`, an `UnboundLocalError` that leaks the mangled name in the diagnostic;
-  3. a `def`/lambda parameter keeps its name while body loads rewrite to the mangled global, so the body silently operates on the internal class instead of the argument.
-- **Repro:**
-
-  ```python
-  str = "hello"
-  "world".print()
-  # poop: 'str' object is not callable   (Python: prints world)
-  ```
-
-  ```python
-  int = 5
-  x = 3
-  # poop: 'int' object is not callable   (Python: x == 3)
-  ```
-
-  ```python
-  class App:
-      def run(self):
-          str = "hello"
-          return str
-  App().run()
-  # poop: cannot access local variable '_poop_str' where it is not associated with a value
-  ```
-
-  ```python
-  class Tag:
-      def __init__(self, dict):
-          self._d = dict
-      def get(self, k):
-          return self._d.get(k)
-  Tag({"a": 1}).get("a").print()
-  # poop: Dict.get() missing 1 required positional argument: 'key'
-  # (self._d silently bound the internal Dict class, not the argument; Python: prints 1)
-  ```
-
-- **Proposed fix:** make the 16 rewritten builtin names reserved identifiers, mirroring how `no_namespace_shadow` already treats namespace bindings: extend that validator (or add a sibling `no_builtin_shadow`) with the fixed name set, rejecting assignment targets, class names, and `def`/lambda parameters with a message like `'int' is a POOP builtin name; it cannot be rebound`. This is the same "reserved identifier" direction entry 145 proposes for the call-name validators, and it turns all three silent-corruption flavors into a clear parse-time diagnostic. (Scope-aware rewriting would preserve Python's shadowing semantics but costs a symbol table; rejection matches POOP's existing posture.)
-
-### 147. sqlite3 named-placeholder parameters (`:name` + dict) are rejected — "parameters are of unsupported type"
-
-- **Where:** `poop/types/sqlite3.py:26-33` (`_unwrap_params`) — used by both `Connection.execute`/`executemany` (`poop/types/sqlite3.py:212-223`) and `Cursor.execute`/`executemany` (`poop/types/sqlite3.py:129-141`)
-- **Bug:** `_unwrap_params` converts only `Tuple | List` sequences; any other value (notably a POOP `Dict`) is passed through raw, and the underlying `sqlite3` rejects the wrapper with `ProgrammingError: parameters are of unsupported type`. CPython documents named placeholders with a dict as one of the two first-class parameter styles, and the qmark style next to it works fine, so the failure looks like a SQL error rather than a wrapper gap. The annotations (`params: Tuple | List | NoneClass`) likewise exclude the mapping form.
-- **Repro:**
-
-  ```python
-  conn = sqlite3.connect(":memory:")
-  conn.execute("CREATE TABLE t (id INTEGER, name TEXT)")
-  conn.execute("INSERT INTO t VALUES (?, ?)", (1, "alice"))         # qmark style: OK
-  conn.execute("SELECT name FROM t WHERE id = :id", {"id": 1})
-  # poop: parameters are of unsupported type        (Python: ('alice',))
-  conn.executemany("INSERT INTO t VALUES (:id, :name)", [{"id": 2, "name": "b"}])
-  # poop: parameters are of unsupported type        (Python: inserts the row)
-  ```
-
-- **Proposed fix:** add a `Dict` branch to `_unwrap_params` — `if isinstance(params, Dict): return to_python(params)` (the module already imports `to_python`, which deep-converts `Dict` via `_data`) — and widen the `params` annotations on all four execute methods to `Tuple | List | Dict | NoneClass`.
-
-### 148. `Decimal` is sealed off from `Int`/`Float`: mixed arithmetic and ordering crash, mixed equality answers `false`
-
-- **Where:** `poop/types/decimal.py:42-86` (`Decimal.__add__`/`__sub__`/`__mul__`/`__truediv__`/`__floordiv__`/`__mod__`/`__pow__` and `__lt__`/`__le__`/`__gt__`/`__ge__` all dereference `other._impl`), `poop/types/decimal.py:32-37` (`_ValueEqMixin` equality keyed on `_impl`, same-class only)
-- **Bug:** every binary operator assumes the operand is another `Decimal`, so `Decimal("2.5") + 1` and `Decimal("2.5") >= 1` raise `AttributeError: 'int' object has no attribute '_impl'`, while `Decimal("2.5") == 2.5` silently answers `false`. CPython supports `int` operands in Decimal arithmetic and `int`/`float` in comparisons and equality. POOP's own `Fraction` already accepts `Int`/`Float` in `_combine`/`_cmp`, so `Decimal` is the odd one out — and the constructor itself accepts `Int | Float`, making the operator refusal internally inconsistent. Distinct from entry 115 (the `Int`/`Float` side of the same expressions) and entry 119 (`Fraction` equality): fixing those leaves `Decimal`'s own dunders crashing, since `Decimal` defines no reflected dunders and accepts nothing but `Decimal`.
-- **Repro:**
-
-  ```python
-  d = Decimal("2.5")
-  (d + 1).print()     # poop: 'int' object has no attribute '_impl'   (Python: 3.5)
-  (d * 3).print()     # poop: 'int' object has no attribute '_impl'   (Python: 7.5)
-  (d >= 1).print()    # poop: 'int' object has no attribute '_impl'   (Python: True)
-  (d < 3.0).print()   # poop: 'float' object has no attribute '_impl' (Python: True)
-  (d == 2.5).print()  # False                                         (Python: True)
-  ```
-
-- **Proposed fix:** mirror CPython's contract. Arithmetic: accept `Int` by converting via `_decimal.Decimal(other._value)`, return `NotImplemented` for `Float` (CPython raises `TypeError` for `Decimal + float`), and add the matching reflected dunders (`__radd__`, `__rsub__`, ...) so `1 + d` works once entry 115's `NotImplemented` fix lands. Comparisons and `__eq__`/`__ne__`: accept `Int` and `Float` (CPython compares `Decimal` against both), falling back to `false`/`true` for foreign types — the same dispatch shape entry 119 proposes for `Fraction`.
-
-### 149. logging `Formatter.default_time_format` / `default_msec_format` answer bare Python `str` — and the msec knob is unusable in both directions
-
-- **Where:** `poop/types/logging.py:242` — `class Formatter(_logging.Formatter)`
-  neither rebinds nor intercepts the two CPython class-attribute knobs, so
-  `default_time_format` and `default_msec_format` are inherited raw from
-  `logging.Formatter`.
-- **Leak:** reading `Formatter.default_time_format` or
-  `Formatter.default_msec_format` answers a bare Python `str` — every POOP
-  message on it crashes. These are CPython's documented `formatTime` knobs,
-  and `default_msec_format` matters on its own: changing the asctime
-  millisecond separator (`,` → `.`) is its canonical use, and nothing else on
-  the POOP surface covers it (`Formatter(datefmt=...)` replaces the
-  seconds-level format but never the msec suffix). The write direction is
-  broken symmetrically: `Formatter.default_msec_format = "%s.%03d"` stores a
-  POOP `Str` that the raw `formatTime` cannot `%`-format, so the next
-  `%(asctime)s` log line dumps a CPython "Logging error" traceback instead of
-  logging. An automated sweep over every `DEFAULT_NAMESPACE` entry point (plus
-  one level of sub-namespaces) shows these are the only bare constants left
-  that are not catalogued pass-throughs — `csv.excel`/`Logging.Filterer` are
-  documented "Python class refs", and `enum.STRICT` / `signal.SIG_DFL` /
-  `ssl.PURPOSE_*` are documented argument tokens.
-- **Evidence:** e2e (`uv run python main.py ...`):
-
-  ```python
-  Formatter.default_msec_format.print()
-  # poop: 'str' object has no attribute 'print' (line 1)
-  ```
-
-  Write path:
-
-  ```python
-  Formatter.default_msec_format = "%s.%03d"
-  lg = logging.getLogger("t")
-  h = logging.StreamHandler()
-  h.setFormatter(Formatter("%(asctime)s %(message)s"))
-  lg.addHandler(h)
-  lg.warning("hello")
-  # --- Logging error --- ... TypeError: unsupported operand type(s)
-  # for %: 'str' and 'tuple'   (the stored Str cannot service formatTime)
-  ```
-
-  Identity probe: `Formatter.default_time_format.__class__ is builtins.str`
-  → `True`, and the object `is logging.Formatter.default_time_format` (the
-  raw stdlib attribute, untouched by the wrapper).
-- **Proposed fix:** follow the `zlib.ZLIB_VERSION` precedent and bless the
-  knobs as POOP values: rebind both on the wrapper —
-  `default_time_format: ClassVar[Str] = Str(_logging.Formatter.default_time_format)`
-  (same for `default_msec_format`) — and override `formatTime` in the POOP
-  `Formatter` to unwrap before delegating (mirror CPython's four-line body,
-  reading each knob through `v._value if isinstance(v, Str) else v`). That
-  makes reads answer `Str` and makes user assignment of a POOP `Str` work.
-  Optionally, a metaclass `__setattr__` can propagate the raw value to
-  `_logging.Formatter` so formatters built by `logging.basicConfig` (raw
-  instances) honor the knob globally, matching CPython.
-
-### 150. `List` cannot be ordered — `<` crashes and `.sorted()` over nested lists fails
-
-- **Where:** `poop/types/list.py:24` (`List` defines no `__lt__`/`__le__`/`__gt__`/`__ge__`; equality only via `_ValueEqMixin`), `poop/types/list.py:79` (`sorted` delegates to `builtins_sorted`, which needs `<` between elements)
-- **Bug:** `Tuple` (`poop/types/tuple.py:94-113`) and `Str` (`poop/types/string.py:377-387`) define all four ordering dunders; `List` defines none. So `[1, 2] < [1, 3]` raises `TypeError`, and `.sorted()` over a list of `List`s — sorting rows, pairs, buckets — crashes inside `builtins_sorted`, while the identical data as `Tuple`s sorts fine. CPython orders lists lexicographically. Distinct from entry 117, which logs the same gap on the datetime family; this is the core collection type, and it breaks POOP's own `sorted` surface.
-- **Repro:**
-
-  ```python
-  ([1, 2] < [1, 3]).print()
-  # poop: '<' not supported between instances of 'list' and 'list'   (Python: True)
-  [[2, 1], [1, 9]].sorted().print()
-  # poop: '<' not supported between instances of 'list' and 'list'   (Python: [[1, 9], [2, 1]])
-  ```
-
-- **Proposed fix:** mirror `Tuple` (`poop/types/tuple.py:94-113`): add the four comparison dunders to `List` returning `to_boolean(self._items < other._items)` etc. — the raw sequence comparison already delegates elementwise to the POOP dunders, whose `Boolean` results are truthiness-compatible — and return `NotImplemented` for non-`List` operands.
-
-### 151. The documented `Str.format` template form does not exist — the argument is parsed as a format spec
-
-- **Where:** `poop/types/string.py:27` (`Str` defines no `format`), `poop/types/object.py:102-108` (the inherited `Object.format(spec)` treats its argument as a format *spec* applied to the receiver), `INFECTIONS.md:1514` ("`string.Formatter` is deliberately out of scope — `Str.format` covers the common case")
-- **Bug:** f-strings are forbidden (`no_fstring`) and `format()` is forbidden with the message "use `obj.format(spec)` instead", so `.format` is the documented formatting surface — and INFECTIONS.md explicitly claims `Str.format` covers the `string.Formatter` use case. But `Str` only inherits `Object.format`, so `"Hello, {}!".format("world")` becomes `format("Hello, {}!", "world")` — the argument is parsed as a format spec — and crashes with `Invalid format specifier`. CPython's `str.format` template substitution is unreachable; placeholders cannot be filled at all, and the `no_fstring` hint (concatenation) cannot express alignment or precision. Distinct from entry 149 and the leak entries: nothing escapes — a documented method is simply missing, and the inherited fallback misparses the call.
-- **Repro:**
-
-  ```python
-  "Hello, {}!".format("world").print()
-  # poop: Invalid format specifier 'world' for object of type 'str'   (Python: Hello, world!)
-  ```
-
-- **Proposed fix:** implement the real template method on `Str` — `def format(self, *args: Object, **kwargs: Object) -> Str` answering `Str(self._value.format(*map(to_python, args), **{k: to_python(v) for k, v in kwargs.items()}))` — matching CPython, where `str.format` *is* the template method. Other types keep `Object.format(spec)`; the rare "apply a spec to a string" case stays expressible through the template form (`"{:^10}".format(s)`).
-
-### 152. `3 * "ab"` silently fabricates a corrupted `Int` wrapping a `str`
-
-- **Where:** `poop/types/int.py:111-118` (`Int.__mul__` falls through to `Int(self._value * other._value)` for any operand exposing `_value`), `poop/types/int.py:24-25` (the constructor stores the result unchecked)
-- **Bug:** entry 115 logs the `AttributeError` crash when the right operand *lacks* `_value` (`Fraction`, `NormalDist`); this is the worse sibling for operands that *have* `_value` but are not numbers. `3 * "ab"` (likewise `3 * b"ab"` and `bytearray`) computes raw `3 * "ab"` → `"ababab"` and stuffs it inside an `Int` shell: `class_name()` answers `int`, `print()` shows `ababab`, and the first arithmetic touch dies far from the faulty expression. No crash at the call site — a silently wrong, corrupted value flows on (the entry-116 failure mode, here on the core `Int`). CPython answers the `str` `'ababab'`, and the correct path already exists in POOP — `Str.__rmul__` (`poop/types/string.py:374`), `Bytes.__rmul__` (`poop/types/bytes.py:120`), `ByteArray.__rmul__` (`poop/types/byte_array.py:117`) — it is just shadowed by the fall-through.
-- **Repro:**
-
-  ```python
-  r = 3 * "ab"
-  r.class_name().print()   # int      (Python: str)
-  r.print()                # ababab — looks right, is a corrupted Int shell
-  (r + 1).print()
-  # poop: can only concatenate str (not "int") to str   (Python: TypeError too, but POOP corrupted r three lines earlier)
-  ```
-
-- **Proposed fix:** the entry-115 guard (`return NotImplemented` unless `isinstance(other, Int | Float)`) must land in `__mul__` as well — this entry pins down that the guard is needed even where no `AttributeError` occurs. With it, Python falls back to the wrappers' existing `__rmul__` and `3 * "ab"` answers `Str("ababab")`.
-
-### 153. Lambda parameters bypass `no_namespace_shadow` — `def m(self, math)` is rejected, `lambda math: ...` is accepted
-
-- **Where:** `poop/validators/no_namespace_shadow.py:46-66` (`_check_args` is called from `visit_FunctionDef` / `visit_AsyncFunctionDef` only; the visitor has no `visit_Lambda`)
-- **Bug:** the validator's own comment spells out the hazard — "a parameter named after a namespace binding shadows it inside the body … fails in confusing ways" — and rejects the `def` form, but every lambda slips through with the exact same hazard. Since lambdas are POOP's block form (wrapped into `Block` by the block transformer) and carry most user code, the unchecked form is the *more* common one. Distinct from entry 146 (rewritten builtin names like `dict` as parameters — a transformer corruption) and entry 141 (imports): this is the namespace-binding validator missing one binding form it was built to police.
-- **Repro:**
-
-  ```python
-  f = lambda math: math.sqrt(2)
-  f(4).print()
-  # poop: 'int' object has no attribute 'sqrt' (line 1)
-  # while the def spelling is caught at validation time:
-  #   def m(self, math): ...
-  #   poop: 'math' is a POOP namespace binding; reassigning it shadows the runtime entry point
-  ```
-
-- **Proposed fix:** add to `_Visitor`:
-
-  ```python
-  def visit_Lambda(self, node: ast.Lambda) -> None:
-      self._check_args(node.args)
-      self.generic_visit(node)
-  ```
-
-### 154. `int(True)` / `float(True)` reject Boolean — and the diagnostic leaks the internal `_TrueClass` name
-
-- **Where:** `poop/transformers/int.py:10-23` (`_poop_int_from` accepts `Int | Float | Str` only; the error message uses `type(value).__qualname__`), `poop/transformers/float.py:19` (`_poop_float_from`, same pattern)
-- **Bug:** CPython's `int(True)` → `1`, `float(False)` → `0.0` — the canonical flag-to-number bridge. POOP's conversion factories have no Boolean branch, so the conversion crashes; and because the identity masking rebinds only `__name__` (booleans answer `bool` per v1.7.1), the `__qualname__`-based message exposes internals: `cannot convert _TrueClass to Int` — both `_TrueClass` and `Int` are names users should never see. POOP deliberately keeps Boolean out of *implicit* arithmetic (see the design note in `poop/validators/no_unary_minus.py`), but explicit conversion is the sanctioned bridge — `str(True)` already answers `"True"`.
-- **Repro:**
-
-  ```python
-  int(True).print()
-  # poop: cannot convert _TrueClass to Int   (Python: 1)
-  x = True
-  float(x).print()
-  # poop: cannot convert _TrueClass to Float   (Python: 1.0)
-  ```
-
-- **Proposed fix:** add a Boolean branch to both factories — `if isinstance(value, Boolean): return Int(1 if bool(value) else 0)` (resp. `Float(1.0 ... 0.0)`); independently of that decision, build the error with `type(value).__name__` so the masked public names (`bool`, `int`, `float`) appear in diagnostics instead of internal class names.
-
-### 155. `http.HTTPStatus` / `http.HTTPMethod` members are raw CPython enum objects — every read path leaks
-
-- **Where:** `poop/types/http.py:327-328` (`Http.HTTPStatus` / `Http.HTTPMethod` re-export `_http.HTTPStatus` / `_http.HTTPMethod` unwrapped), `poop/types/http.py:29-42` (the `_missing_` patch that makes POOP `Int`/`Str` arguments resolve to members — proof that member lookup is an intended user path, not an internal token)
-- **Leak:** the two enums are bound into the user namespace as the raw CPython
-  classes, so every value that comes out of them is a bare Python object: the
-  member itself (`HTTPStatus.OK`) answers no POOP message; `.value` is a raw
-  `int`, `.phrase` / `.description` raw `str`; member equality answers a raw
-  `bool`, so the one branching idiom POOP offers —
-  `(status == HTTPStatus.OK).if_true(...)` — crashes, making status dispatch
-  impossible. The module even patches `_missing_` so `HTTPStatus(Int(200))`
-  resolves — and then hands back the raw member, so the supported POOP-side
-  construction path leaks too. Distinct from entry 144 (POOP enum-family
-  *user classes* leak operator results — those members at least carry
-  `name_str`/`value_object`) and from entry 149's constants sweep (which
-  excluded `enum.STRICT`-style *argument tokens*; `HTTPStatus` members are
-  read as user-facing values, not passed back into wrapper calls).
-- **Evidence:** e2e (`uv run python main.py ...`), each line crashing
-  independently:
-
-  ```python
-  http.HTTPStatus.OK.print()
-  # poop: 'HTTPStatus' object has no attribute 'print'   (Python: HTTPStatus.OK)
-  http.HTTPStatus.OK.phrase.print()
-  # poop: 'str' object has no attribute 'print'          (Python: OK)
-  http.HTTPStatus(200).value.print()
-  # poop: 'int' object has no attribute 'print'          (Python: 200)
-  (http.HTTPStatus.OK == http.HTTPStatus.OK).if_true(lambda: "ok".print())
-  # poop: 'bool' object has no attribute 'if_true'       (Python: True branch)
-  http.HTTPMethod.GET.print()
-  # poop: 'HTTPMethod' object has no attribute 'print'   (Python: HTTPMethod.GET)
-  ```
-
-  Probes of the sibling namespaces show this is the only raw-enum door of its
-  kind on the surface: `signal`/`socket`/`re`/`ssl` expose their flag values
-  as POOP `Int` constants (`signal.Signals` / `ssl.TLSVersion` are simply
-  absent), so `http` is the lone namespace handing whole raw enum classes to
-  user code as values.
-- **Proposed fix:** rebuild both enums over the POOP enum-family bases from
-  `poop/types/enum.py` instead of re-exporting CPython's: at import time
-  construct a POOP `IntEnum` (`HTTPStatus`) and POOP `StrEnum`-shaped class
-  (`HTTPMethod`) from `[(m.name, m.value) for m in _http.HTTPStatus]` (the
-  *internal* functional call can pass raw names, dodging entry 124), attach
-  `phrase` / `description` properties answering `Str` (backed by a lookup
-  table built from the CPython members), and keep the `_missing_` unwrap so
-  `HTTPStatus(Int(200))` still resolves — now to a POOP member. Combined with
-  entry 144's operator bridging on `_PoopEnumMixin`, member equality then
-  answers a POOP `Boolean` and status dispatch works. `HTTPClient` call sites
-  that feed `_http` internals must unwrap via `member.value_object()._value`
-  (or accept both classes) at the boundary.
+### ~~129. `statistics` central-tendency functions leak raw `fractions.Fraction`~~ — DONE
+
+**Decision + implemented:** added a local `_wrap_number` helper in `poop/types/statistics.py` that re-wraps a raw `fractions.Fraction` as a POOP `Fraction` (falling back to `to_poop`), used in `mean`/`median`/`median_low`/`median_high`/`mode`/`multimode`. `statistics.mean` over POOP Fractions now answers a POOP `Fraction`. (Kept the fix local rather than touching the global `to_poop`.) Tests in `tests/test_types/test_statistics.py`. Proposal 130 extends `_wrap_number` to `Decimal`.
+
+### ~~130. `statistics` functions crash on `Decimal` data~~ — DONE
+
+**Decision + implemented:** added a `Decimal` branch to `_to_number` (`return value._impl`) so the stdlib receives raw decimals, and a `decimal.Decimal` branch to the local `_wrap_number` helper so `mean`/`median`/`mode` answer a POOP `Decimal`. The spread functions (`stdev`/`variance`/`pstdev`/`pvariance`) route through a new `_wrap_spread` helper that answers `Decimal` for Decimal input and `Float` otherwise — preserving POOP's established Float convention for int/float spread results (kept the fix local to `statistics.py` rather than touching the global `to_poop`, whose CPython-natural typing would have changed `pvariance` of ints from `Float` to `Int`). Tests in `tests/test_types/test_statistics.py`.
+
+### ~~131. `configparser` `fallback=None` answers corrupted wrappers — `getboolean` silently answers `false`~~ — DONE
+
+**Decision + implemented:** added an `_unwrap_fallback` helper in `poop/types/configparser.py` that converts a POOP `none` fallback to real Python `None` (and unwraps typed fallbacks); `get`/`getint`/`getfloat`/`getboolean` now check the impl result and `return none if result is None else <wrap>(result)`. A missing option with `fallback=none` answers POOP `none` (so `getboolean` no longer silently answers `false`), and the return annotations widened to `… | NoneClass`. Tests in `tests/test_types/test_configparser.py`.
+
+### ~~132. `Logger("app")` builds a corrupt logger that explodes on first use~~ — DONE
+
+**Decision + implemented:** `Logger.__init__` (`poop/types/logging.py`) now mirrors CPython — `def __init__(self, name: Str, level: Int | Str | None = None)` building `_logging.Logger(name._value, ...)` — so `Logger("app")` constructs a working logger (standalone, level `NOTSET`). Internal wrapping moved to `_ImplWrapperMixin._from_impl` and `Logging.getLogger` updated to call it. Tests in `tests/test_types/test_logging.py`.
+
+### ~~133. `SSLContext(ssl.PROTOCOL_TLS_CLIENT)` silently stores the protocol Int as the context~~ — DONE
+
+**Decision + implemented:** `SSLContext.__init__` (`poop/types/ssl.py`) now takes a `protocol: Int` (CPython's canonical ctor argument) — `ssl.SSLContext(protocol._value)` — keeping the no-arg `PROTOCOL_TLS_CLIENT` default. Raw-impl wrapping moved to the `_ImplWrapperMixin._from_impl` classmethod (used by `create_default_context`), so an arbitrary object can no longer be smuggled into `_impl`. Tests in `tests/test_types/test_ssl.py`.
+
+### ~~134. `MPQueue.put` of any POOP value poisons the queue — `get()` deadlocks~~ — DONE
+
+**Decision + implemented:** `MPQueue.put`/`get` (`poop/types/multiprocessing.py`) now bridge at the boundary like `pickle.py` — `put(to_python(item), ...)` and `get` returns `to_poop(...)`. A POOP value survives the round trip (it previously failed to pickle in the feeder thread and deadlocked `get()`). Tests in `tests/test_types/test_multiprocessing.py`.
+
+### ~~135. `dict(a=1, b=2)` rejects the keyword constructor form~~ — DONE
+
+**Decision + implemented:** `_DictRewriter.visit_Call` (`poop/transformers/dict.py`) now forwards named keywords to `_poop_dict_from`, and `_poop_dict_from(arg=None, **kwargs)` seeds from `arg` (as before) then sets `d._data[Str(k)] = v` for each keyword. `dict(a=1, b=2)` → `{'a': 1, 'b': 2}`, and `dict(mapping, a=1)` works too. A `**` splat (`kw.arg is None`) is left to the generic path (its own concern). Other collection rewriters keep the no-keyword guard. Tests in `tests/test_transformers/test_dict.py`.
+
+### ~~136. `Str.startswith`/`endswith` crash on a tuple of prefixes~~ — DONE
+
+**Decision + implemented:** widened `Str.startswith`/`endswith` (`poop/types/string.py`) to `prefix: Str | Tuple`, unwrapping a `Tuple` into a raw `tuple` of strings (`tuple(str(p) for p in prefix._items)`) before delegating. `"abc".startswith(tuple("a", "z"))` now answers `true` — the message-shaped substitute for the forbidden `startswith(...) or startswith(...)`. Tests in `tests/test_types/test_str.py`.
+
+### ~~137. CLI dumps a raw rich traceback when the source file does not exist~~ — DONE
+
+**Decision + implemented:** wrapped the `file.read_text` call in `poop/cli.py` in `try/except OSError`, emitting `poop: cannot read '<path>': <strerror>` and exiting 1 — keeping the established one-line `poop:` style for missing files, directories, and permission errors instead of leaking a rich traceback. Tests in `tests/test_cli.py`.
+
+### ~~138. Starred unpacking binds the rest-target to a raw Python `list`~~ — DONE
+
+**Decision + implemented:** added an `UnpackTransformer` (`poop/transformers/unpack.py`, registered in `DEFAULT_TRANSFORMERS`) whose `visit_Assign` detects `ast.Starred` anywhere in the target tree and appends `target = _poop_list_from(target)` per starred name after the assignment — handling nested (`a, (b, *inner) = …`) and attribute (`a, *self.rest = …`) targets. The starred rest-collection is now a POOP `List` instead of a raw `list`. Tests in `tests/test_transformers/test_unpack.py`; catalogued in INFECTIONS.md.
+
+### ~~139. `*args` / `**kwargs` parameters bind a raw `tuple` / raw `dict` (with raw `str` keys)~~ — DONE
+
+**Decision + implemented:** added a `VarargsTransformer` (`poop/transformers/varargs.py`, registered in `DEFAULT_TRANSFORMERS`). For every `FunctionDef`/`AsyncFunctionDef` with `args.vararg`/`args.kwarg` it injects a prologue (`args = _poop_tuple_from(args)`, `kw = _poop_dict_from_kwargs(kw)`); variadic lambdas wrap their body in a nested lambda receiving the converted values. `args` is now a POOP `Tuple`, `kw` a POOP `Dict` with `Str` keys. Added a `_poop_dict_from_kwargs` binding to the dict transformer (`_poop_tuple_from` already existed). Tests in `tests/test_transformers/test_varargs.py`; catalogued in INFECTIONS.md.
+
+### ~~140. User methods without an explicit `return` answer raw Python `None`, not POOP `none`~~ — DONE
+
+**Decision + implemented:** added a `ReturnTransformer` (`poop/transformers/return_.py`, registered in `DEFAULT_TRANSFORMERS`) that, for every `FunctionDef`/`AsyncFunctionDef` except `__init__`, rewrites a bare `return` to `return _poop_none` and appends `return _poop_none` when the body does not already end in a `return`/`raise`. Void methods now answer the `none` singleton, so `result.is_none()` / `.print()` / `.if_none(...)` work. `__init__` is skipped (CPython requires real `None`); the `_poop_none` binding comes from `NoneTransformer`. Tests in `tests/test_transformers/test_return_.py`; catalogued in INFECTIONS.md.
+
+### ~~141. `import` statements pass validation and bind raw Python modules — shadowing injected namespaces~~ — DONE
+
+**Decision + implemented:** added a `no_import` validator (`poop/validators/no_import.py`, via `make_node_validator`) rejecting `ast.Import` and `ast.ImportFrom` with a message naming the substitute ("POOP injects its stdlib namespaces … the names are already in scope"), registered in `DEFAULT_VALIDATORS`. `import os` / `from os import getcwd` / `import json as j` are now caught at validation time instead of leaking raw Python modules. Tests in `tests/test_validators/test_no_import.py`; catalogued in INFECTIONS.md.
+
+### ~~142. `{**a, ...}` dict-literal splat (and `f(**kw)`) crash — POOP `Dict` cannot be used as a `**`-unpacking mapping~~ — DONE
+
+**Decision + implemented:** `_DictRewriter.visit_Dict` (`poop/transformers/dict.py`) no longer bails on a `**` entry — it rewrites the display into `_poop_dict_merge(...)`, folding runs of plain pairs (`_poop_dict_from_pairs(...)`) and each `**x` entry left to right (later keys win). `{**a, "y": 2}` and `{**a, **b}` now build a real POOP `Dict`. Added `Dict.__getitem__` (`poop/types/dict.py`) so the mapping protocol's read side works (user subscript stays forbidden by `no_subscript`). The call-site `f(**kw)` splat with a POOP `Dict` remains unsupported — Python requires raw-`str` keys for `**`-into-a-call, which conflicts with POOP `Str` keys — but now fails with the clearer `keywords must be strings` rather than `not subscriptable`. Tests in `tests/test_transformers/test_dict.py`.
+
+### ~~143. Open-ended slice `obj.slice(start, None)` crashes on every sliceable type~~ — DONE
+
+**Decision + implemented:** routed the Int form of every `slice` method (`Str`, `List`, `Tuple`, `Bytes`, `ByteArray`, `Array`, `Range`) through the existing `Slice` helper — `Slice(start_or_slice, stop, step)._py_slice()` — whose `_coerce` already treats both Python `None` and POOP `none` as absent. `obj.slice(2, none)` now means open-ended (`obj[2:]`), and the `"stop is required"` guard was dropped (so `obj.slice(2)` is also open-ended). Widened the `stop`/`step` annotations to `Int | NoneClass | None`. Tests in the affected type test files.
+
+### ~~144. Enum-family members answer raw `bool`/`int` from every operator message — enum dispatch is impossible~~ — DONE
+
+**Decision + implemented:** bridged operator results in `_PoopEnumMixin` (`poop/types/enum.py`): `__eq__`/`__ne__` answer a POOP `Boolean` (delegating to `super()` and falling back to identity on `NotImplemented`), `__hash__` is preserved (alias resolution and member-keyed dict lookup keep working), and `__lt__`/`__le__`/`__gt__`/`__ge__` wrap the same way (the int families order, plain `Enum` raises `TypeError` like CPython). Added an `_IntEnumArithmeticMixin` (on `IntEnum`/`IntFlag`) routing arithmetic results through `to_poop` so `LOW + HIGH` answers a POOP `Int`; `IntFlag` bitwise `|`/`&`/`^`/`~` keep flag-combination semantics. `(state == State.IDLE).if_true(...)` now works — state dispatch is possible. Tests in `tests/test_types/test_enum.py`; catalogued in INFECTIONS.md.
+
+### ~~145. Rebinding (or passing) a forbidden builtin bypasses every call-name validator — raw `int`/`list`/class objects flow out~~ — DONE
+
+**Decision + implemented:** `make_call_name_validator` (`poop/validators/_call_name.py`) now visits `ast.Name` instead of `ast.Call`, rejecting any reference to a forbidden name regardless of context (assignment RHS/target, argument, decorator, default), so the ~39 forbidden builtins are fully reserved identifiers and the wrapper layer can't be reopened by `f = len` / `words.map(len)` / `len = 5`. Method substitutes (`xs.len()`, `n.hex()`) are `ast.Attribute` nodes and keyword-argument names aren't `Name` nodes, so both stay unaffected. The full suite passes unchanged. Tests in `tests/test_validators/test_no_len.py`.
+
+### ~~146. Binding a lowercase builtin name (`int = 5`, `def __init__(self, dict)`) silently rebinds the interpreter's mangled internals~~ — DONE
+
+**Decision + implemented:** added a `no_builtin_shadow` validator (`poop/validators/no_builtin_shadow.py`) that reuses the `no_namespace_shadow` `_Visitor` (generalized to take a message) over the fixed set of 16 rewritten builtin names (`bool`/`int`/`float`/…/`zip`), registered in `DEFAULT_VALIDATORS`. Rebinding one via assignment, class name, or `def`/`lambda` parameter now raises `'<name>' is a POOP builtin name; it cannot be rebound` at parse time instead of silently corrupting the interpreter internals; constructor calls (`int("5")`) are unaffected. Tests in `tests/test_validators/test_no_builtin_shadow.py`; catalogued in INFECTIONS.md (also corrected the stale "does not catch parameters" note there).
+
+### ~~147. sqlite3 named-placeholder parameters (`:name` + dict) are rejected — "parameters are of unsupported type"~~ — DONE
+
+**Decision + implemented:** added a `Dict` branch to `_unwrap_params` (`poop/types/sqlite3.py`) — `return to_python(params)` deep-converts to a raw mapping — so named placeholders (`:name` + Dict) work in `execute`/`executemany` for both `Connection` and `Cursor`. Widened the `params` annotations to `Tuple | List | Dict | NoneClass`. Tests in `tests/test_types/test_sqlite3.py`.
+
+### ~~148. `Decimal` is sealed off from `Int`/`Float`: mixed arithmetic and ordering crash, mixed equality answers `false`~~ — DONE
+
+**Decision + implemented:** added `_arith`/`_cmp` helpers to `Decimal` (mirroring `Fraction`). Arithmetic accepts `Decimal`/`Int` and returns `NotImplemented` for `Float` (so `Decimal + float` raises `TypeError`, matching CPython) and foreign types; reflected dunders (`__radd__`…`__rpow__`) were added so `1 + d` works (reachable via proposal 115). Comparisons and `__eq__`/`__ne__` accept `Int`/`Float` via the raw `_decimal.Decimal` mixed-type comparison, falling back to `false`/`true` for foreign types. Tests in `tests/test_types/test_decimal.py`.
+
+### ~~149. logging `Formatter.default_time_format` / `default_msec_format` answer bare Python `str` — and the msec knob is unusable in both directions~~ — DONE
+
+**Decision + implemented:** blessed both `formatTime` knobs as POOP values — `Formatter.default_time_format`/`default_msec_format` (`poop/types/logging.py`) are now `Str(...)` class attributes — and overrode `formatTime` to mirror CPython's body while unwrapping each knob (`v._value if isinstance(v, Str) else v`). Reads answer a `Str`, and assigning a POOP `Str` knob (`Formatter.default_msec_format = "%s.%03d"`) now `%`-formats correctly instead of dumping a "Logging error" traceback. (Skipped the optional metaclass propagation to raw `logging.Formatter` instances.) Tests in `tests/test_types/test_logging.py`; catalogued in INFECTIONS.md.
+
+### ~~150. `List` cannot be ordered — `<` crashes and `.sorted()` over nested lists fails~~ — DONE
+
+**Decision + implemented:** added `__lt__`/`__le__`/`__gt__`/`__ge__` to `List` (`poop/types/list.py`), mirroring `Tuple` — each delegates to the raw `list` comparison (`to_boolean(self._items < other._items)`), which dispatches elementwise to the POOP element dunders. `[1, 2] < [1, 3]` and `.sorted()` over nested lists now work. Tests in `tests/test_types/test_list.py`.
+
+### ~~151. The documented `Str.format` template form does not exist — the argument is parsed as a format spec~~ — DONE
+
+**Decision + implemented:** implemented `Str.format(*args, **kwargs)` (`poop/types/string.py`) as CPython's `str.format` template method, unwrapping POOP args via `to_python` and overriding the inherited `Object.format(spec)`. `"Hello, {}!".format("world")` → `"Hello, world!"`, named/indexed/spec placeholders all work. The "apply a spec to a string" case is now expressed via the template form (`"{:^10}".format(s)`); the stale `Str` case in `test_format_int_with_hex_spec` was updated accordingly, and INFECTIONS.md:1514 clarified. Tests in `tests/test_types/test_str.py`.
+
+### ~~152. `3 * "ab"` silently fabricates a corrupted `Int` wrapping a `str`~~ — DONE
+
+**Decision + implemented:** fixed together with proposal 115 — `Int.__mul__` now returns `NotImplemented` for non-`Int`/`Float` operands, so `3 * "ab"` falls back to `Str.__rmul__` and answers `Str("ababab")` (likewise `Bytes`/`ByteArray`). Test `test_mul_by_str_repeats_via_str_rmul` in `tests/test_types/test_int.py`.
+
+### ~~153. Lambda parameters bypass `no_namespace_shadow` — `def m(self, math)` is rejected, `lambda math: ...` is accepted~~ — DONE
+
+**Decision + implemented:** added `visit_Lambda` to `_Visitor` (`poop/validators/no_namespace_shadow.py`), calling the existing `_check_args`, so a lambda parameter named after a namespace binding (`lambda math: math.sqrt(2)`) is rejected at validation time like the `def` form. Lambdas are POOP's block form and carry most user code, so this was the more common unchecked path. Tests in `tests/test_validators/test_no_namespace_shadow.py`.
+
+### ~~154. `int(True)` / `float(True)` reject Boolean — and the diagnostic leaks the internal `_TrueClass` name~~ — DONE
+
+**Decision + implemented:** added a `Boolean` branch to `_poop_int_from` (`int(True)` → `1`) and `_poop_float_from` (`float(True)` → `1.0`) — the sanctioned explicit flag-to-number bridge — and switched both error messages from `__qualname__` to `__name__` so diagnostics show the masked public names (`bool`/`int`/`float`/`complex`) instead of internal class names. Tests in `tests/test_transformers/test_int.py` and `test_float.py`.
+
+### ~~155. `http.HTTPStatus` / `http.HTTPMethod` members are raw CPython enum objects — every read path leaks~~ — DONE
+
+**Decision + implemented:** rebuilt both enums over the POOP enum bases (`poop/types/http.py`) — at import time `_build_http_status`/`_build_http_method` construct a POOP `IntEnum`/`StrEnum` from `[(m.name, m.value) for m in _http.HTTPStatus]` (the internal functional call passes raw names, dodging proposal 124) and attach `phrase`/`description` as `Str` properties and the `is_*` predicates as `Boolean` properties, backed by lookup tables from the CPython members. The inherited `_PoopEnumMixin._missing_` keeps `http.HTTPStatus(Int(200))` resolving (now to a POOP member), and proposal 144's operator bridging makes `(status == HTTPStatus.OK).if_true(...)` work. The old raw `_missing_` patch was removed (`HTTPClient` never feeds these enums to `_http` internals). Updated the stale `test_http.py` identity/raw-type assertions; catalogued in INFECTIONS.md.

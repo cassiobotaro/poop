@@ -542,6 +542,13 @@ Out of v1 (filed if demand appears): `open(mode)` returning a POOP `File`, `stat
 |---|---|
 | `ast.Delete` | objects have no explicit destruction — simply do not delete |
 
+### No `import` — `poop/validators/no_import.py`
+
+| AST node | Reason |
+|---|---|
+| `ast.Import` | POOP injects its stdlib namespaces (`math`, `os`, `json`, …) — `import` would bind the raw CPython module over the wrapper layer |
+| `ast.ImportFrom` | same — the names are already in scope; `from os import getcwd` would leak raw Python values |
+
 ### No `_poop_*` prefix — `poop/validators/no_poop_prefix.py`
 
 | AST node | Reason |
@@ -560,10 +567,15 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | `ast.AugAssign` with target `ast.Name` in the protected set | augmented form (`math += 1`) — same problem |
 | `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
+| `def`/`async def`/`lambda` parameters in the protected set | a parameter named after a binding (`def m(self, math): …`, `lambda math: …`) shadows it inside the body and fails confusingly |
 
 The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Connection`, `Context`, `Cursor`, `Date`, `DateTime`, `Decimal`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Row`, `Shlex`, `Time`, `TimeDelta`, `TimeZone`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `datetime`, `decimal`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `sqlite3`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
 
-What the validator **does not** catch: function parameters (`def f(math): …`), lambda arguments (`lambda math: …`), and method names inside classes (`class Calc: def math(self): …`). Those bind in local scope and are typically intentional — the user knows what they're doing. The validator targets the top-level / shared-scope reassignment that surfaces as `AttributeError` much later.
+What the validator **does not** catch: method names inside classes (`class Calc: def math(self): …`), which bind as attributes, not in the namespace scope.
+
+### No builtin shadow — `poop/validators/no_builtin_shadow.py`
+
+Reuses the namespace-shadow `_Visitor` over a fixed set of the 16 lowercase builtin names the type transformers rewrite to mangled `_poop_*` globals: `bool`, `int`, `float`, `complex`, `str`, `bytes`, `bytearray`, `memoryview`, `list`, `tuple`, `dict`, `set`, `frozenset`, `range`, `enumerate`, `zip`. Rebinding one (assignment, class name, or `def`/`lambda` parameter) would silently retarget the interpreter's internals — `str = "x"` replaces the literal constructor, `def m(self, dict)` makes the body operate on the internal `Dict` class — so the validator rejects it with `'<name>' is a POOP builtin name; it cannot be rebound`. Using the names as constructors (`int("5")`) is unaffected.
 
 ### No `sum` — `poop/validators/no_sum.py`
 
@@ -700,6 +712,12 @@ Concrete root of all POOP types. The table below highlights the universal method
 | `if_not_none(block)` | executes passing `self` | does not execute |
 
 `__bool__` returns `False`. `__str__` returns `"None"`.
+
+`ReturnTransformer` (`poop/transformers/return_.py`) keeps the implicit-return path on the POOP side: a bare `return` becomes `return _poop_none`, and a function body that does not end in `return`/`raise` gets a trailing `return _poop_none` appended, so a void method answers the `none` singleton instead of raw `NoneType`. `__init__` is skipped (CPython requires it to return real `None`).
+
+`VarargsTransformer` (`poop/transformers/varargs.py`) keeps variadic parameters on the POOP side: a method with `*args` / `**kwargs` gets a prologue (`args = _poop_tuple_from(args)`, `kw = _poop_dict_from_kwargs(kw)`) so `args` is a POOP `Tuple` and `kw` a POOP `Dict` (with `Str` keys) instead of a raw `tuple`/`dict`. Variadic lambdas wrap their body in a nested lambda that receives the converted values.
+
+`UnpackTransformer` (`poop/transformers/unpack.py`) keeps starred unpacking on the POOP side: CPython's `UNPACK_EX` builds the rest-collection of `c, *rest = xs` as a raw `list`, so after each assignment containing a `*target` the transformer appends `target = _poop_list_from(target)` — one per starred name, handling nested (`a, (b, *inner) = …`) and attribute (`a, *self.rest = …`) targets.
 
 ### Boolean — `poop/types/boolean.py`
 
@@ -1376,8 +1394,9 @@ Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`
 | `decimal.BasicContext` / `ExtendedContext` / `DefaultContext` (class attrs) | `Context` | the stdlib context profiles (v0.56.0) |
 | `decimal.getcontext()` | `Context` | |
 | `decimal.setcontext(ctx)` | `none` | |
-| `decimal.localcontext(ctx=none)` | context manager | use with `With` |
+| `decimal.localcontext(ctx=none, prec=none, rounding=none)` | context manager | use with `With`; `prec`/`rounding` seed the scoped context (CPython 3.11+) |
 | `Context.prec` / `.rounding` (properties) | `Int` / `Str` | |
+| `Context.set_prec(Int)` / `.set_rounding(Str)` | `none` | mutate a scoped context inside a `localcontext` `do` block |
 | `Context.create_decimal(value)` | `Decimal` | builds a Decimal under this context |
 
 `decimal`, `Decimal`, and `Context` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/decimal.py` — namespace-only, no AST rewrite.
@@ -1511,7 +1530,7 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 | `Template.safe_substitute(mapping)` | `Str` | leaves missing `$name` in place |
 | `Template.template` (property) | `Str` | original source string |
 
-`string.Formatter` is deliberately out of scope — `Str.format` covers the common case.
+`string.Formatter` is deliberately out of scope — `Str.format(*args, **kwargs)` is CPython's `str.format` template method (overriding the inherited `Object.format(spec)`), which covers the common case.
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
 
@@ -1691,6 +1710,7 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 - `.value_object()` returning a wrapped POOP value (`Int`/`Str`/`Float`/`Boolean`) — `.value` returns whatever was assigned (raw Python primitives stay raw; POOP types pass through unchanged).
 - `_missing_` is wired so `Color(Int(1))` resolves to `Color.RED` exactly like `Color(1)`.
 - `Enum.iter()` returns a POOP `List` of members.
+- Operator results are POOP-typed: `==`/`!=` answer a POOP `Boolean` (so `(state == State.IDLE).if_true(...)` works), `<`/`<=`/`>`/`>=` answer a `Boolean` for the int-based families, and `IntEnum`/`IntFlag` arithmetic (`LOW + HIGH`) answers a POOP `Int`. `__hash__` is preserved, so alias resolution and member-keyed dict lookup keep working; `IntFlag` bitwise `|`/`&`/`^`/`~` keep CPython's flag-combination semantics (they answer flag members).
 
 | Operation | Returns | Notes |
 |---|---|---|
@@ -1700,6 +1720,7 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 | `Color.RED.value` | whatever was assigned | raw Python primitive or POOP type |
 | `Color.RED.value_object()` | `Int` / `Str` / `Float` / `Boolean` | wrapped POOP form |
 | `Color(value)` / `Color(Int(value))` | enum member | POOP wrappers are unwrapped before lookup |
+| `Enum("Color", names)` (functional API) | enum class | `names` may be a `List` of `Str`, a space/comma `Str`, or `List` of `(name, value)` `Tuple`s — unwrapped via a metaclass `__call__` before delegating |
 | `Color.iter()` | `List` | materialized member list |
 | `IntEnum` / `StrEnum` / `Flag` / `IntFlag` | enum classes | same POOP helpers, plus the data-type mixin from CPython |
 | `ReprEnum` | enum class (re-exported) | requires a data-type mixin (`class Color(int, ReprEnum): ...`); `.name`/`.value` stay raw Python types in this path |
@@ -2139,12 +2160,12 @@ POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for 
 
 `http` mirrors Python's `http` package — `http.client` (low-level HTTP), `http.server` (server framework), `http.cookies` (RFC 2109/6265 parsing), `http.cookiejar` (storage).
 
-`HTTPStatus` (IntEnum) and `HTTPMethod` (StrEnum) are re-exported directly from CPython. POOP patches their `_missing_` hook so calling them with POOP `Int` / `Str` wrappers resolves to the right member (e.g. `http.HTTPStatus(Int(200))` returns `HTTPStatus.OK`).
+`HTTPStatus` (IntEnum) and `HTTPMethod` (StrEnum) are rebuilt over the POOP enum bases (from CPython's members) rather than re-exported, so members answer POOP messages — `==` returns a `Boolean` (so `(status == HTTPStatus.OK).if_true(...)` works for status dispatch), `.phrase`/`.description` return `Str`, and the `is_*` predicates return `Boolean`. The inherited `_missing_` unwraps POOP `Int`/`Str`, so `http.HTTPStatus(Int(200))` returns `HTTPStatus.OK`.
 
 | Operation | Returns | Notes |
 |---|---|---|
-| `http.HTTPStatus` (class attr) | IntEnum | `.OK` / `.NOT_FOUND` / … members; `.value` / `.phrase` / `.description` properties; `.is_success` / `.is_client_error` / `.is_server_error` / `.is_redirection` / `.is_informational` predicates |
-| `http.HTTPMethod` (class attr) | StrEnum | `.GET` / `.POST` / `.PUT` / `.PATCH` / `.DELETE` / `.HEAD` / `.OPTIONS` / `.TRACE` / `.CONNECT` |
+| `http.HTTPStatus` (class attr) | POOP `IntEnum` | `.OK` / `.NOT_FOUND` / … members; `.value` (raw int) / `.value_object()` (`Int`); `.phrase` / `.description` → `Str`; `.is_success` / `.is_client_error` / `.is_server_error` / `.is_redirection` / `.is_informational` → `Boolean` |
+| `http.HTTPMethod` (class attr) | POOP `StrEnum` | `.GET` / `.POST` / `.PUT` / `.PATCH` / `.DELETE` / `.HEAD` / `.OPTIONS` / `.TRACE` / `.CONNECT`; `.description` → `Str` |
 | `http.client.HTTPConnection(host, port=none, timeout=none)` | `HTTPConnection` | |
 | `http.client.HTTPSConnection(host, port=none, timeout=none)` | `HTTPSConnection` | |
 | `HTTPConnection.request(method, url, body=none, headers=none)` | `none` | body is `Bytes` / `Str`; headers is `Dict[Str, Str]` |
@@ -2533,6 +2554,8 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `Logger.handlers()` | `List[Handler]` | |
 | `Handler.setLevel(l)` / `.setFormatter(f)` / `.addFilter(f)` / `.removeFilter(f)` | `none` | |
 | `Formatter(fmt=none, datefmt=none, style=none, validate=true, defaults=none)` | `Formatter` | |
+| `Formatter.default_time_format` / `default_msec_format` (class attrs) | `Str` | blessed as POOP `Str`; `formatTime` unwraps them, so assigning a POOP `Str` knob works |
+| `Logger(name, level=none)` | `Logger` | direct construction mirrors CPython (standalone, level `NOTSET`) |
 | `Filter(name=none)` | `Filter` | |
 | Subclass `Filter` / `Handler` / `Formatter` and override `filter(record)` / `emit(record)` / `format(record)` | — | overrides routed through `block.bridge`; override receives the raw `_logging.LogRecord`, wrap it in `LogRecord(record)` for POOP-typed fields |
 | `LogRecord(record)` exposes `.name` / `.msg` / `.args` / `.levelname` / `.levelno` / `.pathname` / `.filename` / `.module` / `.lineno` / `.funcName` / `.created` / `.thread` / `.threadName` / `.process` / `.processName` (properties) and `.getMessage()` | POOP types | wraps `_logging.LogRecord` for handler/formatter overrides |

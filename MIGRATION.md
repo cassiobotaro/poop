@@ -1036,10 +1036,12 @@ getcontext().prec = 50
 price = Decimal("19.99")
 total = price * Decimal("3") + Decimal("0.10")
 rounded = total.quantize(Decimal("0.01"), decimal.ROUND_HALF_UP)
-# precision setting: use a Context via decimal.localcontext()
+# precision setting: seed the scope or mutate the context
+With(lambda: decimal.localcontext(prec=5)).do(lambda ctx: ...)
+With(lambda: decimal.localcontext()).do(lambda ctx: ctx.set_prec(5))
 ```
 
-> `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.). Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Use `With(lambda: decimal.localcontext()).do(lambda ctx: …)` to scope precision/rounding changes.
+> `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.) and `Decimal` mixes with `Int`/`Float` in comparisons and `Int` in arithmetic. Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Scope precision/rounding with `decimal.localcontext(prec=…, rounding=…)`, or mutate the context inside the block via `ctx.set_prec(Int)` / `ctx.set_rounding(Str)`.
 
 ## SQLite (`sqlite3` module + `Connection` / `Cursor` / `Row` classes)
 

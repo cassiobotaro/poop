@@ -3,6 +3,7 @@ from __future__ import annotations
 import ssl as _ssl
 from typing import Any, ClassVar
 
+from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from, _opt_path_or_str, _path_or_str
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.bytes import Bytes
@@ -15,16 +16,20 @@ from poop.types.socket import Socket
 from poop.types.string import Str
 
 
-class SSLContext(Object):
+class SSLContext(_ImplWrapperMixin, Object):
     """Wraps Python's `ssl.SSLContext`."""
 
     __slots__ = ("_impl",)
 
-    def __init__(self, impl: Any = None) -> None:
-        if impl is None:
+    def __init__(self, protocol: Int | NoneClass | None = None) -> None:
+        # Mirror CPython: the constructor takes a protocol constant
+        # (PROTOCOL_TLS_CLIENT/PROTOCOL_TLS_SERVER), defaulting to the
+        # TLS client protocol. A raw ssl.SSLContext is wrapped via
+        # _from_impl (create_default_context), never the public ctor.
+        if protocol is None or isinstance(protocol, NoneClass):
             self._impl = _ssl.SSLContext(_ssl.PROTOCOL_TLS_CLIENT)
         else:
-            self._impl = impl
+            self._impl = _ssl.SSLContext(protocol._value)
 
     def load_cert_chain(
         self,
@@ -185,6 +190,6 @@ class SSL:
         cf = _opt_path_or_str(cafile)
         cp = _opt_path_or_str(capath)
         cd = None if cadata is None else cadata._value
-        return SSLContext(
-            impl=_ssl.create_default_context(purpose, cafile=cf, capath=cp, cadata=cd)
+        return SSLContext._from_impl(
+            _ssl.create_default_context(purpose, cafile=cf, capath=cp, cadata=cd)
         )

@@ -24,30 +24,52 @@ from poop.types.string import Str
 # --- HTTPStatus / HTTPMethod ---
 
 
-def test_http_status_is_intenum() -> None:
-    assert Http.HTTPStatus is _stdlib_http.HTTPStatus
+def test_http_status_is_poop_intenum() -> None:
+    # proposal 155: rebuilt over the POOP IntEnum base, not CPython's raw enum.
+    from poop.types.enum import IntEnum
+
+    assert Http.HTTPStatus is not _stdlib_http.HTTPStatus
+    assert issubclass(Http.HTTPStatus, IntEnum)
     assert Http.HTTPStatus.OK.value == 200
+    assert Http.HTTPStatus.OK.value_object() == Int(200)
 
 
 def test_http_status_member_metadata() -> None:
     s = Http.HTTPStatus.NOT_FOUND
     assert s.value == 404
-    assert s.phrase == "Not Found"
-    assert isinstance(s.description, str)
+    assert s.phrase == Str("Not Found")
+    assert isinstance(s.description, Str)
 
 
 def test_http_status_predicates() -> None:
-    assert Http.HTTPStatus.OK.is_success is True
-    assert Http.HTTPStatus.NOT_FOUND.is_client_error is True
-    assert Http.HTTPStatus.INTERNAL_SERVER_ERROR.is_server_error is True
-    assert Http.HTTPStatus.MOVED_PERMANENTLY.is_redirection is True
-    assert Http.HTTPStatus.CONTINUE.is_informational is True
+    from poop.types.boolean import true
+
+    assert Http.HTTPStatus.OK.is_success is true
+    assert Http.HTTPStatus.NOT_FOUND.is_client_error is true
+    assert Http.HTTPStatus.INTERNAL_SERVER_ERROR.is_server_error is true
+    assert Http.HTTPStatus.MOVED_PERMANENTLY.is_redirection is true
+    assert Http.HTTPStatus.CONTINUE.is_informational is true
 
 
 def test_http_status_lookup_by_poop_int() -> None:
-    # The _missing_ patch lets POOP Int round-trip to the right member.
+    # The inherited _missing_ lets POOP Int round-trip to the right member.
     assert Http.HTTPStatus(Int(200)) is Http.HTTPStatus.OK
     assert Http.HTTPStatus(Int(404)) is Http.HTTPStatus.NOT_FOUND
+
+
+def test_http_status_equality_returns_poop_boolean() -> None:
+    # proposal 155 + 144: status dispatch via == answering a POOP Boolean.
+    from poop.types.boolean import Boolean, false, true
+
+    assert isinstance(Http.HTTPStatus.OK == Http.HTTPStatus.OK, Boolean)
+    assert (Http.HTTPStatus.OK == Http.HTTPStatus.OK) is true
+    assert (Http.HTTPStatus.OK == Http.HTTPStatus.NOT_FOUND) is false
+
+
+def test_http_status_dispatch_via_interpreter() -> None:
+    Interpreter().run_source(
+        "(http.HTTPStatus(200) == http.HTTPStatus.OK).if_true(lambda: 'ok'.print())"
+    )
 
 
 def test_http_status_unknown_raises() -> None:
@@ -55,9 +77,13 @@ def test_http_status_unknown_raises() -> None:
         Http.HTTPStatus(Int(999))
 
 
-def test_http_method_is_strenum() -> None:
-    assert Http.HTTPMethod is _stdlib_http.HTTPMethod
+def test_http_method_is_poop_strenum() -> None:
+    from poop.types.enum import StrEnum
+
+    assert Http.HTTPMethod is not _stdlib_http.HTTPMethod
+    assert issubclass(Http.HTTPMethod, StrEnum)
     assert Http.HTTPMethod.GET.value == "GET"
+    assert Http.HTTPMethod.GET.value_object() == Str("GET")
 
 
 def test_http_method_lookup_by_poop_str() -> None:

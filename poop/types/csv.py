@@ -4,6 +4,7 @@ import csv as _csv
 import io as _io
 from typing import Any, ClassVar
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _kwargs_from, _opt_str
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.dict import Dict
@@ -50,7 +51,7 @@ def _wrap_fmtparams(kwargs: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-class Reader(Object):
+class Reader(_IterableMixin, Object):
     """Wraps Python's `csv.reader` — a row-by-row CSV iterator.
 
     The source can be a POOP `Str` (split on newlines) or a `List[Str]`
@@ -115,7 +116,7 @@ class Writer(Object):
         return Str(self._buf.getvalue())
 
 
-class DictReader(Object):
+class DictReader(_IterableMixin, Object):
     """Wraps Python's `csv.DictReader` — yields `Dict[Str, Str]` per row.
 
     `fieldnames` is auto-detected from the first row when omitted.

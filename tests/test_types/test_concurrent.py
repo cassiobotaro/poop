@@ -18,6 +18,10 @@ def _square(x: int) -> int:
     return x * x
 
 
+def _boom() -> int:
+    raise ValueError("kaput")
+
+
 # --- ThreadPoolExecutor ---
 
 
@@ -114,6 +118,17 @@ def test_future_exception_with_timeout() -> None:
         fut = ex.submit(_square, 5)
         fut.result()
         assert fut.exception(Float(1.0)) is none
+
+
+def test_future_exception_wraps_failure_as_error() -> None:
+    # proposal 128: a failed future answers an Error, not the raw exception.
+    from poop.types.error import Error
+
+    with ThreadPoolExecutor() as ex:
+        fut = ex.submit(_boom)
+        err = fut.exception()
+        assert isinstance(err, Error)
+        assert err.message() == Str("kaput")
 
 
 def test_future_cancel_after_done() -> None:

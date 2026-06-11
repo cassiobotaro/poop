@@ -236,6 +236,12 @@ def test_slice_with_step() -> None:
     assert result == List(Int(0), Int(2), Int(4))
 
 
+def test_slice_open_ended() -> None:
+    # proposal 143: open-ended slice with a POOP `none` stop. POOP's Range
+    # is inclusive, so range(0, 5) is [0, 1, 2, 3, 4, 5].
+    assert _range(0, 5).slice(Int(2), none) == List(Int(2), Int(3), Int(4), Int(5))
+
+
 def test_sum_returns_total() -> None:
     assert _range(1, 4).sum() == Int(10)
 

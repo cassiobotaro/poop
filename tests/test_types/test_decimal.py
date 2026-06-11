@@ -76,6 +76,50 @@ def test_decimal_comparisons() -> None:
     assert (a >= a) is true
 
 
+# Mixed-mode arithmetic, comparison, equality — proposal 148
+
+
+def test_decimal_plus_int() -> None:
+    assert Decimal(Str("2.5")) + Int(1) == Decimal(Str("3.5"))
+
+
+def test_decimal_times_int() -> None:
+    assert Decimal(Str("2.5")) * Int(3) == Decimal(Str("7.5"))
+
+
+def test_int_plus_decimal_reflected() -> None:
+    assert Int(1) + Decimal(Str("2.5")) == Decimal(Str("3.5"))
+
+
+def test_int_minus_decimal_reflected() -> None:
+    assert Int(10) - Decimal(Str("2.5")) == Decimal(Str("7.5"))
+
+
+def test_decimal_compared_to_int() -> None:
+    assert (Decimal(Str("2.5")) >= Int(1)) is true
+    assert (Decimal(Str("2.5")) <= Int(1)) is false
+
+
+def test_decimal_compared_to_float() -> None:
+    assert (Decimal(Str("2.5")) < Float(3.0)) is true
+
+
+def test_decimal_eq_int_and_float() -> None:
+    assert (Decimal(Str("2.5")) == Float(2.5)) is true
+    assert (Decimal(Str("3")) == Int(3)) is true
+    assert (Decimal(Str("3")) != Int(3)) is false
+
+
+def test_decimal_eq_foreign_is_false() -> None:
+    assert (Decimal(Str("3")) == Str("x")) is false
+    assert (Decimal(Str("3")) != Str("x")) is true
+
+
+def test_decimal_plus_float_raises() -> None:
+    with pytest.raises(TypeError):
+        Decimal(Str("2.5")) + Float(1.0)
+
+
 def test_decimal_quantize() -> None:
     d = Decimal(Str("3.14159"))
     assert d.quantize(Decimal(Str("0.01"))) == Decimal(Str("3.14"))
@@ -219,6 +263,33 @@ def test_decimal_setcontext_returns_none() -> None:
 def test_decimal_localcontext_as_with() -> None:
     with Decimal_.localcontext() as ctx:
         assert isinstance(ctx, Context)
+
+
+def test_localcontext_prec_kwarg_scopes_precision() -> None:
+    # proposal 120: localcontext(prec=...) seeds the scoped precision.
+    with Decimal_.localcontext(prec=Int(2)) as ctx:
+        assert ctx.prec == Int(2)
+        result = Decimal(Str("1")) / Decimal(Str("3"))
+    assert str(result) == "0.33"
+
+
+def test_context_set_prec_mutates_scoped_context() -> None:
+    with Decimal_.localcontext() as ctx:
+        assert ctx.set_prec(Int(3)) is none
+        assert ctx.prec == Int(3)
+        result = Decimal(Str("1")) / Decimal(Str("7"))
+    assert str(result) == "0.143"
+
+
+def test_context_set_rounding_mutates_scoped_context() -> None:
+    with Decimal_.localcontext() as ctx:
+        assert ctx.set_rounding(Decimal_.ROUND_UP) is none
+        assert ctx.rounding == Decimal_.ROUND_UP
+
+
+def test_localcontext_rounding_kwarg() -> None:
+    with Decimal_.localcontext(rounding=Decimal_.ROUND_DOWN) as ctx:
+        assert ctx.rounding == Decimal_.ROUND_DOWN
 
 
 def test_decimal_division_by_zero_raises() -> None:

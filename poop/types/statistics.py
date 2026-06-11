@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import decimal as _decimal
+import fractions as _fractions
 import statistics as _statistics
 from typing import Any, ClassVar
 
@@ -7,6 +9,7 @@ from poop.types._bridge import to_poop
 from poop.types._impl_wrapper import _ImplWrapperMixin
 from poop.types._unwrap import _kwargs_from
 from poop.types.boolean import Boolean, false, to_boolean, true
+from poop.types.decimal import Decimal
 from poop.types.float import Float
 from poop.types.fractions import Fraction
 from poop.types.int import Int
@@ -19,11 +22,30 @@ from poop.types.tuple import Tuple
 def _to_number(value: Object) -> Any:
     if isinstance(value, Int | Float | Str):
         return value._value
-    if isinstance(value, Fraction):
+    if isinstance(value, Fraction | Decimal):
         return value._impl
     if isinstance(value, Boolean):
         return bool(value)
     return value
+
+
+def _wrap_number(value: Any) -> Any:
+    """Re-wrap a stdlib result, including the exact-rational/decimal
+    types `to_poop` has no branch for (they would otherwise leak raw)."""
+    if isinstance(value, _fractions.Fraction):
+        return Fraction._from_impl(value)
+    if isinstance(value, _decimal.Decimal):
+        return Decimal._from_impl(value)
+    return to_poop(value)
+
+
+def _wrap_spread(value: Any) -> Any:
+    """Spread results answer Decimal for Decimal input and Float
+    otherwise (preserving POOP's established Float convention for the
+    int/float cases, where CPython's natural type varies)."""
+    if isinstance(value, _decimal.Decimal):
+        return Decimal._from_impl(value)
+    return Float(value)
 
 
 def _unwrap_data(data: List | Tuple) -> list[Any]:
@@ -162,7 +184,7 @@ class Statistics:
 
     @staticmethod
     def mean(data: List | Tuple) -> Any:
-        return to_poop(_statistics.mean(_unwrap_data(data)))
+        return _wrap_number(_statistics.mean(_unwrap_data(data)))
 
     @staticmethod
     def fmean(
@@ -190,15 +212,15 @@ class Statistics:
 
     @staticmethod
     def median(data: List | Tuple) -> Any:
-        return to_poop(_statistics.median(_unwrap_data(data)))
+        return _wrap_number(_statistics.median(_unwrap_data(data)))
 
     @staticmethod
     def median_low(data: List | Tuple) -> Any:
-        return to_poop(_statistics.median_low(_unwrap_data(data)))
+        return _wrap_number(_statistics.median_low(_unwrap_data(data)))
 
     @staticmethod
     def median_high(data: List | Tuple) -> Any:
-        return to_poop(_statistics.median_high(_unwrap_data(data)))
+        return _wrap_number(_statistics.median_high(_unwrap_data(data)))
 
     @staticmethod
     def median_grouped(
@@ -213,29 +235,34 @@ class Statistics:
 
     @staticmethod
     def mode(data: List | Tuple) -> Any:
-        return to_poop(_statistics.mode(_unwrap_data(data)))
+        return _wrap_number(_statistics.mode(_unwrap_data(data)))
 
     @staticmethod
     def multimode(data: List | Tuple) -> List:
-        return List(*(to_poop(v) for v in _statistics.multimode(_unwrap_data(data))))
+        return List(
+            *(_wrap_number(v) for v in _statistics.multimode(_unwrap_data(data)))
+        )
 
     # Spread -------------------------------------------------------------
+    #
+    # Decimal-in, Decimal-out; Float otherwise — hence _wrap_spread
+    # rather than a bare Float(...), which crashed on Decimal results.
 
     @staticmethod
-    def pstdev(data: List | Tuple, mu: Float | Int | None = None) -> Float:
-        return Float(_statistics.pstdev(_unwrap_data(data), _opt_unwrap(mu)))
+    def pstdev(data: List | Tuple, mu: Float | Int | None = None) -> Any:
+        return _wrap_spread(_statistics.pstdev(_unwrap_data(data), _opt_unwrap(mu)))
 
     @staticmethod
-    def pvariance(data: List | Tuple, mu: Float | Int | None = None) -> Float:
-        return Float(_statistics.pvariance(_unwrap_data(data), _opt_unwrap(mu)))
+    def pvariance(data: List | Tuple, mu: Float | Int | None = None) -> Any:
+        return _wrap_spread(_statistics.pvariance(_unwrap_data(data), _opt_unwrap(mu)))
 
     @staticmethod
-    def stdev(data: List | Tuple, xbar: Float | Int | None = None) -> Float:
-        return Float(_statistics.stdev(_unwrap_data(data), _opt_unwrap(xbar)))
+    def stdev(data: List | Tuple, xbar: Float | Int | None = None) -> Any:
+        return _wrap_spread(_statistics.stdev(_unwrap_data(data), _opt_unwrap(xbar)))
 
     @staticmethod
-    def variance(data: List | Tuple, xbar: Float | Int | None = None) -> Float:
-        return Float(_statistics.variance(_unwrap_data(data), _opt_unwrap(xbar)))
+    def variance(data: List | Tuple, xbar: Float | Int | None = None) -> Any:
+        return _wrap_spread(_statistics.variance(_unwrap_data(data), _opt_unwrap(xbar)))
 
     # Quantiles ----------------------------------------------------------
 

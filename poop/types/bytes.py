@@ -46,17 +46,16 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def slice(
         self,
         start_or_slice: Int | Slice,
-        stop: Int | None = None,
-        step: Int | None = None,
+        stop: Int | NoneClass | None = None,
+        step: Int | NoneClass | None = None,
     ) -> Bytes:
         from poop.types.slice import Slice
 
         if isinstance(start_or_slice, Slice):
-            return Bytes(self._value[start_or_slice._py_slice()])
-        if stop is None:
-            raise TypeError("stop is required when start is an Int")
-        s = step._value if step is not None else None
-        return Bytes(self._value[start_or_slice._value : stop._value : s])
+            py = start_or_slice._py_slice()
+        else:
+            py = Slice(start_or_slice, stop, step)._py_slice()
+        return Bytes(self._value[py])
 
     def includes(self, byte: Int) -> Boolean:
         return to_boolean(byte._value in self._value)

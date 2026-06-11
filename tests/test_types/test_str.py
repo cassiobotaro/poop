@@ -190,6 +190,44 @@ def test_endswith_false() -> None:
     assert Str("hello").endswith(Str("he")) is false
 
 
+# startswith/endswith with a tuple of prefixes — proposal 136
+
+
+def test_startswith_tuple_of_prefixes() -> None:
+    assert Str("abc").startswith(Tuple(Str("a"), Str("z"))) is true
+    assert Str("abc").startswith(Tuple(Str("x"), Str("z"))) is false
+
+
+def test_endswith_tuple_of_suffixes() -> None:
+    assert Str("abc").endswith(Tuple(Str("c"), Str("z"))) is true
+    assert Str("abc").endswith(Tuple(Str("x"), Str("z"))) is false
+
+
+# str.format template method — proposal 151
+
+
+def test_format_positional() -> None:
+    assert Str("Hello, {}!").format(Str("world")) == Str("Hello, world!")
+
+
+def test_format_multiple_positional() -> None:
+    assert Str("{} + {} = {}").format(Int(1), Int(2), Int(3)) == Str("1 + 2 = 3")
+
+
+def test_format_named() -> None:
+    assert Str("{name} is {age}").format(name=Str("Sam"), age=Int(30)) == Str(
+        "Sam is 30"
+    )
+
+
+def test_format_with_spec() -> None:
+    assert Str("{:^10}").format(Str("hi")) == Str("    hi    ")
+
+
+def test_format_index_reuse() -> None:
+    assert Str("{0} {0}").format(Str("x")) == Str("x x")
+
+
 def test_isalpha_true() -> None:
     assert Str("hello").isalpha() is true
 
@@ -423,6 +461,19 @@ def test_ord_returns_code_point() -> None:
 
 def test_slice_with_step() -> None:
     assert Str("abcdef").slice(Int(0), Int(6), Int(2)) == Str("ace")
+
+
+def test_slice_open_ended_with_none_stop() -> None:
+    # proposal 143: a POOP `none` stop means "to the end" (obj[2:]).
+    assert Str("hello").slice(Int(2), none) == Str("llo")
+
+
+def test_slice_open_ended_with_none_step() -> None:
+    assert Str("abcdef").slice(Int(1), Int(5), none) == Str("bcde")
+
+
+def test_slice_stop_omitted_means_open_ended() -> None:
+    assert Str("hello").slice(Int(2)) == Str("llo")
 
 
 def test_contains_non_str_returns_false() -> None:

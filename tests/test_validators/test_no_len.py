@@ -40,3 +40,23 @@ def test_len_carries_line_number() -> None:
 def test_method_named_len_is_not_blocked() -> None:
     tree = ast.parse("class Foo:\n    def m(self):\n        self.len()")
     NoLenValidator().validate(tree)
+
+
+def test_rebinding_len_is_blocked() -> None:
+    # proposal 145: a bare reference to a forbidden builtin in any
+    # position (here an assignment RHS) reopens the wrapper layer.
+    tree = ast.parse("f = len")
+    with pytest.raises(ValidationError, match="len"):
+        NoLenValidator().validate(tree)
+
+
+def test_len_as_argument_is_blocked() -> None:
+    tree = ast.parse("words.map(len)")
+    with pytest.raises(ValidationError, match="len"):
+        NoLenValidator().validate(tree)
+
+
+def test_len_as_reserved_assignment_target_is_blocked() -> None:
+    tree = ast.parse("len = 5")
+    with pytest.raises(ValidationError, match="len"):
+        NoLenValidator().validate(tree)

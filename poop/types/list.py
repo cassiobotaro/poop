@@ -2,7 +2,7 @@ from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -43,20 +43,39 @@ class List(_ValueEqMixin, _IterableMixin, Object):
     def slice(
         self,
         start_or_slice: Int | Slice,
-        stop: Int | None = None,
-        step: Int | None = None,
+        stop: Int | NoneClass | None = None,
+        step: Int | NoneClass | None = None,
     ) -> List:
         from poop.types.slice import Slice
 
         if isinstance(start_or_slice, Slice):
-            return List(*self._items[start_or_slice._py_slice()])
-        if stop is None:
-            raise TypeError("stop is required when start is an Int")
-        s = step._value if step is not None else None
-        return List(*self._items[start_or_slice._value : stop._value : s])
+            py = start_or_slice._py_slice()
+        else:
+            py = Slice(start_or_slice, stop, step)._py_slice()
+        return List(*self._items[py])
 
     def __add__(self, other: List) -> List:
         return List(*self._items + other._items)
+
+    def __lt__(self, other: List) -> Boolean:
+        a = cast("_list[Any]", self._items)
+        b = cast("_list[Any]", other._items)
+        return to_boolean(a < b)
+
+    def __le__(self, other: List) -> Boolean:
+        a = cast("_list[Any]", self._items)
+        b = cast("_list[Any]", other._items)
+        return to_boolean(a <= b)
+
+    def __gt__(self, other: List) -> Boolean:
+        a = cast("_list[Any]", self._items)
+        b = cast("_list[Any]", other._items)
+        return to_boolean(a > b)
+
+    def __ge__(self, other: List) -> Boolean:
+        a = cast("_list[Any]", self._items)
+        b = cast("_list[Any]", other._items)
+        return to_boolean(a >= b)
 
     def __mul__(self, other: Int) -> List:
         return List(*self._items * other._value)

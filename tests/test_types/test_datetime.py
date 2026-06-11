@@ -136,6 +136,34 @@ def test_time_replace() -> None:
     assert t.replace(hour=Int(13)) == Time(Int(13), Int(30), Int(45))
 
 
+# replace(tzinfo=none) strips the timezone — proposal 118
+
+
+def test_time_replace_tzinfo_none_strips() -> None:
+    aware = Time(Int(10), Int(0), tzinfo=TimeZone.utc)
+    assert aware.replace(tzinfo=none).tzinfo is none
+
+
+def test_time_replace_omitting_tzinfo_keeps_it() -> None:
+    aware = Time(Int(10), Int(0), tzinfo=TimeZone.utc)
+    assert aware.replace(hour=Int(11)).tzinfo == TimeZone.utc
+
+
+def test_datetime_replace_tzinfo_none_strips() -> None:
+    aware = DateTime(Int(2024), Int(1), Int(1), Int(12), tzinfo=TimeZone.utc)
+    assert aware.replace(tzinfo=none).tzinfo is none
+
+
+def test_datetime_replace_omitting_tzinfo_keeps_it() -> None:
+    aware = DateTime(Int(2024), Int(1), Int(1), Int(12), tzinfo=TimeZone.utc)
+    assert aware.replace(hour=Int(6)).tzinfo == TimeZone.utc
+
+
+def test_datetime_replace_tzinfo_wrapper_sets_it() -> None:
+    naive = DateTime(Int(2024), Int(1), Int(1), Int(12))
+    assert naive.replace(tzinfo=TimeZone.utc).tzinfo == TimeZone.utc
+
+
 def test_datetime_basic_construction() -> None:
     dt = DateTime(Int(2026), Int(5), Int(15), Int(12), Int(30), Int(45))
     assert dt.year == Int(2026)
@@ -364,3 +392,71 @@ def test_date_min_max_class_attributes() -> None:
 
 def test_date_min_max_via_interpreter() -> None:
     Interpreter().run_source("Date.max.year.print()")
+
+
+# str/repr — proposal 126
+
+
+def test_str_delegates_to_impl() -> None:
+    assert str(Date(Int(2024), Int(1), Int(1))) == "2024-01-01"
+    assert str(TimeDelta(days=Int(1), hours=Int(2))) == "1 day, 2:00:00"
+    assert str(DateTime(Int(2024), Int(1), Int(1))) == "2024-01-01 00:00:00"
+    assert str(Time(Int(10), Int(30))) == "10:30:00"
+    assert str(TimeZone.utc) == "UTC"
+
+
+def test_repr_delegates_to_str() -> None:
+    assert repr(Date(Int(2024), Int(1), Int(1))) == "2024-01-01"
+    assert repr(TimeDelta(days=Int(1))) == "1 day, 0:00:00"
+
+
+# reflected timedelta arithmetic — proposal 116
+
+
+def test_timedelta_plus_date_answers_date() -> None:
+    r = TimeDelta(days=Int(1)) + Date(Int(2024), Int(1), Int(1))
+    assert isinstance(r, Date)
+    assert r == Date(Int(2024), Int(1), Int(2))
+
+
+def test_timedelta_plus_datetime_answers_datetime() -> None:
+    r = TimeDelta(hours=Int(1)) + DateTime(Int(2024), Int(1), Int(1))
+    assert isinstance(r, DateTime)
+    assert r == DateTime(Int(2024), Int(1), Int(1), Int(1))
+
+
+def test_int_times_timedelta_via_rmul() -> None:
+    r = Int(2) * TimeDelta(days=Int(1))
+    assert isinstance(r, TimeDelta)
+    assert r.days == Int(2)
+
+
+def test_timedelta_add_foreign_is_notimplemented() -> None:
+    assert TimeDelta(days=Int(1)).__add__(Int(1)) is NotImplemented
+    assert TimeDelta(days=Int(1)).__sub__(Int(1)) is NotImplemented
+
+
+# ordering — proposal 117
+
+
+def test_date_ordering() -> None:
+    from poop.types.boolean import false, true
+
+    assert (Date(Int(2024), Int(1), Int(1)) < Date(Int(2024), Int(6), Int(1))) is true
+    assert (Date(Int(2024), Int(6), Int(1)) <= Date(Int(2024), Int(6), Int(1))) is true
+    assert (Date(Int(2024), Int(6), Int(1)) > Date(Int(2024), Int(1), Int(1))) is true
+    assert (Date(Int(2024), Int(1), Int(1)) >= Date(Int(2024), Int(6), Int(1))) is false
+
+
+def test_timedelta_ordering() -> None:
+    from poop.types.boolean import true
+
+    assert (TimeDelta(days=Int(1)) < TimeDelta(days=Int(2))) is true
+    assert (TimeDelta(days=Int(2)) > TimeDelta(days=Int(1))) is true
+
+
+def test_time_ordering() -> None:
+    from poop.types.boolean import true
+
+    assert (Time(Int(10), Int(0)) < Time(Int(11), Int(0))) is true
+    assert (Time(Int(11), Int(0)) >= Time(Int(10), Int(0))) is true

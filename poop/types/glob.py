@@ -2,6 +2,7 @@ import glob as _glob
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _b
 from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.int import Int
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     pass
 
 
-class GlobIter:
+class GlobIter(_IterableMixin):
     """POOP iterator over a glob result.
 
     Wraps Python's `glob.iglob` generator and yields POOP `Path`

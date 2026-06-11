@@ -70,30 +70,46 @@ class Float(_ValueEqMixin, Object):
     def abs(self) -> Float:
         return self.__abs__()
 
-    def __add__(self, other: Float | Complex) -> Float:
-        if isinstance(other, Complex):
-            return NotImplemented
+    def __add__(self, other: object) -> Float:
+        from poop.types.int import Int
+
+        if not isinstance(other, Int | Float):
+            return NotImplemented  # let other.__radd__ run
         return Float(self._value + other._value)
 
-    def __sub__(self, other: Float | Complex) -> Float:
-        if isinstance(other, Complex):
-            return NotImplemented
+    def __sub__(self, other: object) -> Float:
+        from poop.types.int import Int
+
+        if not isinstance(other, Int | Float):
+            return NotImplemented  # let other.__rsub__ run
         return Float(self._value - other._value)
 
-    def __mul__(self, other: Float | Complex) -> Float:
-        if isinstance(other, Complex):
-            return NotImplemented
+    def __mul__(self, other: object) -> Float:
+        from poop.types.int import Int
+
+        if not isinstance(other, Int | Float):
+            return NotImplemented  # let other.__rmul__ run
         return Float(self._value * other._value)
 
-    def __truediv__(self, other: Float | Complex) -> Float:
-        if isinstance(other, Complex):
-            return NotImplemented
+    def __truediv__(self, other: object) -> Float:
+        from poop.types.int import Int
+
+        if not isinstance(other, Int | Float):
+            return NotImplemented  # let other.__rtruediv__ run
         return Float(self._value / other._value)
 
-    def __floordiv__(self, other: Float) -> Float:
+    def __floordiv__(self, other: object) -> Float:
+        from poop.types.int import Int
+
+        if not isinstance(other, Int | Float):
+            return NotImplemented  # let other.__rfloordiv__ run
         return Float(self._value // other._value)
 
-    def __mod__(self, other: Float) -> Float:
+    def __mod__(self, other: object) -> Float:
+        from poop.types.int import Int
+
+        if not isinstance(other, Int | Float):
+            return NotImplemented  # let other.__rmod__ run
         return Float(self._value % other._value)
 
     def __pow__(self, other: Float | Complex) -> Float | Complex:

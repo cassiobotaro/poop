@@ -56,8 +56,6 @@ def _colorize_value(value: object) -> str:
         return repr(value)
     if isinstance(value, Boolean):
         return _color(repr(value), _BLUE)
-    if isinstance(value, NoneClass):
-        return _color(repr(value), _DIM)
     if isinstance(value, (Int, Float, Complex)):
         return _color(repr(value), _YELLOW)
     if isinstance(value, Str):
@@ -354,7 +352,11 @@ class Repl:
             print(err.args[0])  # noqa: T201
 
     def _displayhook(self, value: object) -> None:
-        if value is None:
+        # POOP's `none` (NoneClass) is the answer of every void message,
+        # including `.print()` — the most common REPL expression. Mirror
+        # CPython's REPL, which displays nothing for a None-valued
+        # expression and leaves `_` untouched.
+        if value is None or isinstance(value, NoneClass):
             return
         self._ns["_"] = value
         print(_colorize_value(value))  # noqa: T201
