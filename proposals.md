@@ -24,20 +24,9 @@
 
 **Decision + implemented:** added a private `_BridgedHTMLParser` (`poop/types/html.py`) — a `_html_parser.HTMLParser` subclass holding a back-reference to the owning POOP wrapper — whose `handle_*` overrides forward each raw SAX event to the wrapper's method of the same name with POOP-wrapped args (`Str(tag)`, attrs as a `List` of `Tuple(Str, Str|none)` via a new `_attrs_to_poop` helper, `Str(data)`). `HTMLParser` now composes the bridge and defines the full `handle_*` set as overridable no-op defaults; `handle_startendtag` delegates to `handle_starttag` + `handle_endtag` so a subclass overriding only `handle_starttag` still sees self-closing tags (CPython parity). The raw-object leak `_impl_ref()` was removed. Subclassing-and-overriding now works and every handler argument arrives as a POOP value. Tests in `tests/test_types/test_html.py`; INFECTIONS.md updated.
 
-### 162. `Enum` members created with `auto()` answer a raw Python `int` from `.value`
+### ~~162. `Enum` members created with `auto()` answer a raw Python `int` from `.value`~~ — DONE
 
-`auto()` (poop/types/enum.py:204-209) returns a bare `_enum.auto()`, so CPython's `_generate_next_value_` fabricates raw `int` member values and `.value` (the raw descriptor inherited from `enum.Enum`) hands them straight to user code. This is inconsistent with every other way of building a member: literals are rewritten by the transformer pipeline, so `RED = 1` stores a POOP `Int` and `Color.RED.value.print()` prints `1` — but the `auto()` spelling of the *same program* crashes. Repro (`uv run python main.py /tmp/poop_leak_2.py`):
-
-```python
-class Color(Enum):
-    RED = auto()
-
-Color.RED.value.print()
-```
-
-Actual: `poop: 'int' object has no attribute 'print' (line 4)`. Expected: `1`, identical to the `RED = 1` spelling (verified working). The docstring escape hatch "`.value` returns whatever the user assigned" (enum.py:160-171) does not cover this case — the user assigned `auto()`, never a raw `int`; the raw value is fabricated by the wrapper's own machinery.
-
-**Proposed fix:** add a `_generate_next_value_` classmethod to `_PoopEnumMixin` in `poop/types/enum.py` that mirrors CPython's logic but answers a POOP `Int` (unwrap any POOP values in `last_values` via `to_python`, compute `last + 1`, return `Int(...)`). `Int` is hashable and equality-stable, so alias resolution and `_value2member_map_` keep working; `StrEnum`'s own `_generate_next_value_` (lower-cased name) needs the same treatment returning `Str`. Keep `value_object()` as a no-op-compatible alias.
+**Decision + implemented:** added `_generate_next_value_` to the **plain `Enum`** base class body (`poop/types/enum.py`) — not `_PoopEnumMixin`, because CPython's enum machinery copies the generator onto each class from its raw enum *parent* (which an Enum-unaware mixin never participates in). It unwraps the prior values via `to_python`, runs CPython's incrementing generator, and re-wraps with `to_poop`, so `Color.RED.value` now answers a POOP `Int` exactly like the literal `RED = 1` spelling. The primitive-mixed families (`IntEnum`/`IntFlag`/`StrEnum`) and `Flag` deliberately keep the raw generator: their members *are* the mixed-in primitive so `.value` is raw by existing design (use `.value_object()`), a POOP `Str` is not a `str` subclass so a `StrEnum` member couldn't be built from one, and plain `Flag`'s mask/combination machinery needs raw `int`s — wrapping would regress `READ | EXEC`. (The proposal's `StrEnum`-returns-`Str` suggestion proved infeasible for that reason.) Tests in `tests/test_types/test_enum.py`; INFECTIONS.md updated.
 
 ### 163. `logging.getLogRecordFactory()` / `getLoggerClass()` answer raw CPython classes
 

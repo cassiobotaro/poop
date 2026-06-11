@@ -166,22 +166,57 @@ class Enum(_PoopEnumMixin, _enum.Enum, metaclass=_PoopEnumMeta):
     Python `str` (matching Python's Enum protocol); `.name_str()`
     returns a POOP `Str`. `.value` returns whatever the user assigned
     (POOP types pass through; raw Python primitives stay raw — wrap
-    with `.value_object()` for an Int/Str/Float/Boolean).
+    with `.value_object()` for an Int/Str/Float/Boolean); `auto()`
+    members answer a POOP `Int` like a literal member.
     """
+
+    @staticmethod
+    def _generate_next_value_(
+        name: str, start: int, count: int, last_values: list[Any]
+    ) -> Any:
+        # `auto()` would otherwise leave a raw `int` in `.value`, unlike a
+        # literal member (rewritten to a POOP `Int` by the transformer). Run
+        # CPython's incrementing generator over unwrapped prior values, then
+        # re-wrap so `Color.RED.value` answers a POOP `Int`. Defined here on
+        # the base rather than the mixin because the enum machinery copies
+        # `_generate_next_value_` from the raw enum parent, bypassing a mixin.
+        # The primitive-mixed kinds (IntEnum/IntFlag/StrEnum) and Flag keep the
+        # raw generator on purpose — see their class docstrings.
+        raw = _enum.Enum._generate_next_value_(
+            name, start, count, [to_python(v) for v in last_values]
+        )
+        return to_poop(raw)
 
 
 class IntEnum(
     _PoopEnumMixin, _IntEnumArithmeticMixin, _enum.IntEnum, metaclass=_PoopEnumMeta
 ):
-    """Mirror of Python's `enum.IntEnum` — members are also `int`s."""
+    """Mirror of Python's `enum.IntEnum` — members are also `int`s.
+
+    `auto()` is left to CPython's raw generator: an `IntEnum` member *is* an
+    `int`, so `.value` is a raw `int` like a literal member (use
+    `.value_object()` for a POOP `Int`). Wrapping would be both inconsistent
+    with literals and rejected by the `int`-mixed constructor.
+    """
 
 
 class StrEnum(_PoopEnumMixin, _enum.StrEnum, metaclass=_PoopEnumMeta):
-    """Mirror of Python's `enum.StrEnum` — members are also `str`s."""
+    """Mirror of Python's `enum.StrEnum` — members are also `str`s.
+
+    `auto()` (the lower-cased member name) is left raw: a `StrEnum` member *is*
+    a `str`, and a POOP `Str` is not a `str` subclass so the `str`-mixed
+    constructor would reject it. `.value` is a raw `str` like a literal member;
+    use `.value_object()` for a POOP `Str`.
+    """
 
 
 class Flag(_PoopEnumMixin, _enum.Flag, metaclass=_PoopEnumMeta):
-    """Mirror of Python's `enum.Flag` — bitwise-combinable members."""
+    """Mirror of Python's `enum.Flag` — bitwise-combinable members.
+
+    `auto()` is left to CPython's raw generator: Flag's mask/combination
+    machinery (`READ | EXEC`) operates on raw `int` values, so wrapping would
+    break it. Use `.value_object()` for a POOP `Int`.
+    """
 
 
 class IntFlag(
@@ -191,7 +226,8 @@ class IntFlag(
 
     Bitwise `|`/`&`/`^`/`~` keep CPython's flag-combination semantics
     (they answer flag members); only plain arithmetic (`+`/`-`/…) is
-    bridged to POOP `Int`.
+    bridged to POOP `Int`. As with `IntEnum`, `auto()` stays a raw `int`
+    (use `.value_object()` for a POOP `Int`).
     """
 
 

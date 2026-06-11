@@ -1724,7 +1724,7 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 | `Color.iter()` | `List` | materialized member list |
 | `IntEnum` / `StrEnum` / `Flag` / `IntFlag` | enum classes | same POOP helpers, plus the data-type mixin from CPython |
 | `ReprEnum` | enum class (re-exported) | requires a data-type mixin (`class Color(int, ReprEnum): ...`); `.name`/`.value` stay raw Python types in this path |
-| `auto()` | sentinel | for sequential value generation inside an enum body |
+| `auto()` | sentinel | sequential value generation inside an enum body; on a plain `Enum` the value answers a POOP `Int` (like a literal member), while the primitive-mixed families (`IntEnum`/`IntFlag`/`StrEnum`) and `Flag` keep a raw value reachable via `.value_object()` |
 | `enum.unique` / `verify` / `member` / `nonmember` (class attrs) | decorators | apply directly on enum classes |
 | `enum.global_enum` / `pickle_by_enum_name` / `pickle_by_global_name` (class attrs) | decorators | module-level repr / pickling policy, re-exported from CPython |
 | `enum.property` (class attr) | descriptor | enum-specific `@property` that coexists with member names |
