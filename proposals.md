@@ -20,23 +20,9 @@
 
 **Decision + implemented:** added the numeric dunders to `Boolean` (`poop/types/boolean.py`) rather than widening the whole numeric tower — keeping the change in one file and leaving `Int`/`Float` arithmetic guards untouched. Since POOP's tower defines no reflected dunders (each forward operator accepts the types it knows), `Boolean` carries both halves: forward ops (`__add__`, `__sub__`, `__mul__`, `__truediv__`, `__floordiv__`, `__mod__`, `__pow__`) fold `self` and a `Boolean` operand to `Int` and delegate to `Int`'s arithmetic; reflected ops (`__radd__`, …) compute `other <op> int(self)` so `3 - True` reuses `Int.__sub__`. Both operand orders, `bool op bool`, and `Float` mixing all answer the CPython result; `sum([True, True])` answers `2`; foreign operands still raise the faithful `'bool' and 'str'` `TypeError`. Comparison/bitwise operators stayed out of scope (`Boolean` already owns logical `&`/`|`). Also fixed a latent bug surfaced here: `Int.__pow__`/`Float.__pow__` assumed `other._value` and crashed on non-numeric operands (e.g. `2 ** "x"`); they now return `NotImplemented` like their sibling operators, which is what lets `2 ** True` dispatch to `Boolean.__rpow__`. Tests in `tests/test_types/test_boolean.py`.
 
-### 161. `html.parser` handler overrides never fire — the working SAX surface lives only on the raw inner parser, and `_impl_ref()` hands that raw object out
+### ~~161. `html.parser` handler overrides never fire — the working SAX surface lives only on the raw inner parser, and `_impl_ref()` hands that raw object out~~ — DONE
 
-POOP's `HTMLParser` (poop/types/html.py:45) composes a raw `html.parser.HTMLParser` in `__init__` (html.py:50-53) and `feed` (html.py:54-56) drives that inner instance. CPython's parser delivers events by calling `self.handle_starttag/handle_data/...` on **itself** — so when a POOP user subclasses the wrapper and overrides `handle_data`, the override sits on the POOP object while events fire on the raw `_impl`, whose handlers are the no-op defaults. The entire subclass-and-override surface (the only way CPython's SAX parser is ever used) is silently dead. The one way to get any events is to reach the raw parser — and `_impl_ref()` (html.py:74-75) is a public method that answers exactly that raw `html.parser.HTMLParser` object, a direct raw-stdlib-object leak callable from user code. Repro (`uv run python main.py /tmp/poop_leak_1.py`):
-
-```python
-class MyParser(html.parser):
-    def handle_data(self, data):
-        data.print()
-
-p = MyParser()
-p.feed("<b>hi</b>")
-"done".print()
-```
-
-Actual output: `done` (the override never runs). Expected: `hi` then `done`, with `data` arriving as a POOP `Str`.
-
-**Proposed fix:** in `poop/types/html.py`, make the inner impl a private `_html_parser.HTMLParser` subclass holding a back-reference to the POOP wrapper, whose `handle_starttag`/`handle_endtag`/`handle_startendtag`/`handle_data`/`handle_comment`/`handle_entityref`/`handle_charref`/`handle_decl`/`handle_pi` delegate to the wrapper's method of the same name with POOP-wrapped args (`Str(tag)`, attrs as `List` of `Tuple(Str, Str|none)`, `Str(data)`), following the `__init_subclass__` bridging precedent already used by `logging.Formatter.format` (poop/types/logging.py). Define the POOP-side defaults as no-ops so non-overriding subclasses keep working, and remove (or underscore-mangle away) `_impl_ref()` so the raw parser can no longer be handed to user code.
+**Decision + implemented:** added a private `_BridgedHTMLParser` (`poop/types/html.py`) — a `_html_parser.HTMLParser` subclass holding a back-reference to the owning POOP wrapper — whose `handle_*` overrides forward each raw SAX event to the wrapper's method of the same name with POOP-wrapped args (`Str(tag)`, attrs as a `List` of `Tuple(Str, Str|none)` via a new `_attrs_to_poop` helper, `Str(data)`). `HTMLParser` now composes the bridge and defines the full `handle_*` set as overridable no-op defaults; `handle_startendtag` delegates to `handle_starttag` + `handle_endtag` so a subclass overriding only `handle_starttag` still sees self-closing tags (CPython parity). The raw-object leak `_impl_ref()` was removed. Subclassing-and-overriding now works and every handler argument arrives as a POOP value. Tests in `tests/test_types/test_html.py`; INFECTIONS.md updated.
 
 ### 162. `Enum` members created with `auto()` answer a raw Python `int` from `.value`
 

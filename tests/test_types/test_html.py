@@ -3,7 +3,8 @@ from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.html import HTML, Entities, HTMLParser
 from poop.types.int import Int
-from poop.types.none import none
+from poop.types.list import List
+from poop.types.none import NoneClass, none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -119,3 +120,69 @@ def test_html_unescape_via_interpreter() -> None:
 
 def test_html_parser_via_interpreter() -> None:
     Interpreter().run_source('HTMLParser().feed("<p>")')
+
+
+# --- handler override bridging (proposal 161) ---
+
+
+class _RecordingParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.events: list[tuple[object, ...]] = []
+
+    def handle_starttag(self, tag: Str, attrs: List) -> NoneClass:
+        self.events.append(("start", tag, attrs))
+        return none
+
+    def handle_endtag(self, tag: Str) -> NoneClass:
+        self.events.append(("end", tag))
+        return none
+
+    def handle_data(self, data: Str) -> NoneClass:
+        self.events.append(("data", data))
+        return none
+
+
+def test_handle_data_override_fires_with_poop_str() -> None:
+    p = _RecordingParser()
+    p.feed(Str("<b>hi</b>"))
+    data_events = [e for e in p.events if e[0] == "data"]
+    assert len(data_events) == 1
+    assert isinstance(data_events[0][1], Str)
+    assert data_events[0][1] == Str("hi")
+
+
+def test_handle_starttag_override_gets_poop_attrs() -> None:
+    p = _RecordingParser()
+    p.feed(Str('<a href="x">'))
+    start = next(e for e in p.events if e[0] == "start")
+    tag, attrs = start[1], start[2]
+    assert isinstance(tag, Str)
+    assert tag == Str("a")
+    assert isinstance(attrs, List)
+    assert attrs == List(Tuple(Str("href"), Str("x")))
+
+
+def test_attr_without_value_is_none() -> None:
+    p = _RecordingParser()
+    p.feed(Str("<input disabled>"))
+    start = next(e for e in p.events if e[0] == "start")
+    assert start[2] == List(Tuple(Str("disabled"), none))
+
+
+def test_startendtag_routes_through_starttag_default() -> None:
+    # A subclass overriding only handle_starttag still sees self-closing tags,
+    # because the default handle_startendtag delegates to it (CPython parity).
+    p = _RecordingParser()
+    p.feed(Str("<br/>"))
+    assert any(e[0] == "start" and e[1] == Str("br") for e in p.events)
+
+
+def test_non_overriding_subclass_does_not_crash() -> None:
+    p = HTMLParser()
+    assert p.feed(Str("<p>hi</p><br/>")) is none
+
+
+def test_impl_ref_is_removed() -> None:
+    # The raw-parser leak (_impl_ref) must no longer be reachable.
+    assert not hasattr(HTMLParser(), "_impl_ref")

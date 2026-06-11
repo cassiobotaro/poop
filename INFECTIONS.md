@@ -2366,10 +2366,12 @@ Three internet-data / markup namespaces shipped together. `email` exposes the mo
 | `html.entities.name2codepoint()` | `Dict[Str, Int]` | |
 | `html.entities.codepoint2name()` | `Dict[Int, Str]` | |
 | `html.entities.entitydefs()` / `.html5()` | `Dict[Str, Str]` | |
-| `HTMLParser(convert_charrefs=true)` | `HTMLParser` | SAX-style |
+| `HTMLParser(convert_charrefs=true)` | `HTMLParser` | SAX-style; subclass and override `handle_*` |
 | `HTMLParser.feed(data)` / `.close()` / `.reset()` | `none` | |
 | `HTMLParser.getpos()` | `Tuple(Int, Int)` | `(line, offset)` |
 | `HTMLParser.get_starttag_text()` | `Str` / `none` | |
+| `HTMLParser.handle_starttag(tag, attrs)` / `handle_startendtag` | `none` | override; `attrs` is `List(Tuple(Str, Str\|none))` |
+| `HTMLParser.handle_endtag/data/comment/decl/pi/entityref/charref(...)` | `none` | override; args are `Str` |
 | `ET.fromstring(text)` / `.XML(text)` | `Element` | |
 | `ET.parse(path)` | `ElementTree` | |
 | `ET.tostring(element, encoding=none)` | `Str` / `Bytes` | `none`/`"unicode"` → `Str` |
