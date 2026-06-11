@@ -112,9 +112,13 @@ class Float(_ValueEqMixin, Object):
             return NotImplemented  # let other.__rmod__ run
         return Float(self._value % other._value)
 
-    def __pow__(self, other: Float | Complex) -> Float | Complex:
+    def __pow__(self, other: object) -> Float | Complex:
+        from poop.types.int import Int
+
         if isinstance(other, Complex):
             return NotImplemented
+        if not isinstance(other, Int | Float):
+            return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
         result = self._value**other._value
         if isinstance(result, complex):
             return Complex(result)

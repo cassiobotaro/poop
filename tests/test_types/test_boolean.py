@@ -220,3 +220,76 @@ def test_to_boolean_falsy_returns_false_singleton() -> None:
 def test_to_boolean_accepts_poop_boolean() -> None:
     assert to_boolean(true) is true
     assert to_boolean(false) is false
+
+
+# Arithmetic — bool behaves as int 1/0 (proposal 160)
+
+
+def test_add_with_int() -> None:
+    from poop.types.int import Int
+
+    assert true + Int(1) == Int(2)
+    assert Int(1) + true == Int(2)
+
+
+def test_add_two_booleans() -> None:
+    from poop.types.int import Int
+
+    assert true + true == Int(2)
+    assert true + false == Int(1)
+
+
+def test_mul_with_int() -> None:
+    from poop.types.int import Int
+
+    assert true * Int(3) == Int(3)
+    assert Int(3) * true == Int(3)
+    assert false * Int(3) == Int(0)
+
+
+def test_sub_with_int() -> None:
+    from poop.types.int import Int
+
+    assert true - Int(1) == Int(0)
+    assert Int(3) - true == Int(2)
+
+
+def test_truediv_with_int() -> None:
+    from poop.types.float import Float
+    from poop.types.int import Int
+
+    assert true / Int(2) == Float(0.5)
+
+
+def test_mod_with_int() -> None:
+    from poop.types.int import Int
+
+    assert Int(10) % true == Int(0)
+
+
+def test_pow_with_int() -> None:
+    from poop.types.int import Int
+
+    assert true ** Int(3) == Int(1)
+    assert Int(2) ** true == Int(2)
+
+
+def test_add_with_float() -> None:
+    from poop.types.float import Float
+
+    assert true + Float(1.5) == Float(2.5)
+    assert Float(1.0) + true == Float(2.0)
+
+
+def test_sum_of_booleans_counts_truthy() -> None:
+    from poop.types.int import Int
+    from poop.types.list import List
+
+    assert List(true, false, true, true).sum() == Int(3)
+
+
+def test_arithmetic_with_foreign_type_raises() -> None:
+    import pytest
+
+    with pytest.raises(TypeError):
+        _ = true + Str("x")

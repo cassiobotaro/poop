@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Any, final
 
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types.complex import Complex
+    from poop.types.float import Float
+    from poop.types.int import Int
     from poop.types.none import NoneClass
 
 
@@ -74,6 +77,69 @@ class Boolean(Object, ABC):
 
     def __ge__(self, other: Boolean) -> Boolean:
         return to_boolean(bool(self) >= bool(other))
+
+    # Arithmetic — `bool` is an `int` subclass in CPython, so a Boolean acts
+    # as 1/0 in numeric expressions (`True + 1 == 2`, `sum([True, True]) == 2`).
+    # POOP's numeric tower defines no reflected dunders (each forward operator
+    # accepts the types it knows), so Boolean carries both halves itself: the
+    # forward ops fold self — and a Boolean operand — to Int and delegate to
+    # Int's arithmetic; the reflected ops compute ``other <op> int(self)`` so
+    # ``3 - True`` reuses ``Int.__sub__``.
+    def _as_int(self) -> Int:
+        from poop.types.int import Int
+
+        return Int(1) if self else Int(0)
+
+    def _num(self, other: object) -> Any:
+        return other._as_int() if isinstance(other, Boolean) else other
+
+    def _rev(self, other: object, op: str) -> Any:
+        method = getattr(other, op, None)
+        if method is None:
+            return NotImplemented
+        return method(self._as_int())
+
+    def __add__(self, other: object) -> Int | Float:
+        return self._as_int().__add__(self._num(other))
+
+    def __radd__(self, other: object) -> Any:
+        return self._rev(other, "__add__")
+
+    def __sub__(self, other: object) -> Int | Float:
+        return self._as_int().__sub__(self._num(other))
+
+    def __rsub__(self, other: object) -> Any:
+        return self._rev(other, "__sub__")
+
+    def __mul__(self, other: object) -> Int | Float:
+        return self._as_int().__mul__(self._num(other))
+
+    def __rmul__(self, other: object) -> Any:
+        return self._rev(other, "__mul__")
+
+    def __truediv__(self, other: object) -> Float:
+        return self._as_int().__truediv__(self._num(other))
+
+    def __rtruediv__(self, other: object) -> Any:
+        return self._rev(other, "__truediv__")
+
+    def __floordiv__(self, other: object) -> Int | Float:
+        return self._as_int().__floordiv__(self._num(other))
+
+    def __rfloordiv__(self, other: object) -> Any:
+        return self._rev(other, "__floordiv__")
+
+    def __mod__(self, other: object) -> Int | Float:
+        return self._as_int().__mod__(self._num(other))
+
+    def __rmod__(self, other: object) -> Any:
+        return self._rev(other, "__mod__")
+
+    def __pow__(self, other: object, modulus: Any = None) -> Int | Float | Complex:
+        return self._as_int().__pow__(self._num(other), modulus)
+
+    def __rpow__(self, other: object) -> Any:
+        return self._rev(other, "__pow__")
 
 
 @final

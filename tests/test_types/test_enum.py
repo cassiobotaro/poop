@@ -4,6 +4,7 @@ from poop.interpreter import Interpreter
 from poop.types.enum import (
     Enum,
     EnumNamespace,
+    Flag,
     IntEnum,
     IntFlag,
     StrEnum,
@@ -263,3 +264,63 @@ def test_auto_reachable_via_interpreter() -> None:
         "Phase.END.value_object().print()\n"
     )
     Interpreter().run_source(src)
+
+
+# --- auto() value wrapping (proposal 162) ---
+
+
+class _AutoColor(Enum):
+    RED = auto()
+    GREEN = auto()
+    BLUE = auto()
+
+
+def test_enum_auto_value_is_poop_int() -> None:
+    # The leak: .value used to answer a raw int and crash on .print().
+    assert isinstance(_AutoColor.RED.value, Int)
+    assert _AutoColor.RED.value == Int(1)
+
+
+def test_enum_auto_increments() -> None:
+    assert _AutoColor.GREEN.value == Int(2)
+    assert _AutoColor.BLUE.value == Int(3)
+
+
+def test_enum_auto_lookup_by_poop_int() -> None:
+    assert _AutoColor(Int(1)) is _AutoColor.RED
+
+
+def test_enum_auto_via_interpreter_value_prints() -> None:
+    # End-to-end: a literal member and an auto() member behave the same.
+    Interpreter().run_source(
+        "class Color(Enum):\n    RED = 1\n    GREEN = auto()\nColor.GREEN.value.print()"
+    )
+
+
+class _AutoFlag(Flag):
+    READ = auto()
+    WRITE = auto()
+    EXEC = auto()
+
+
+def test_flag_auto_keeps_combination() -> None:
+    # Flag values stay raw so the mask/combination machinery keeps working.
+    assert (_AutoFlag.READ | _AutoFlag.EXEC).value_object() == Int(5)
+
+
+class _AutoSize(StrEnum):
+    SMALL = auto()
+    LARGE = auto()
+
+
+def test_str_enum_auto_lowercases_name() -> None:
+    assert _AutoSize.SMALL.value_object() == Str("small")
+
+
+class _AutoPrio(IntEnum):
+    LOW = auto()
+    HIGH = auto()
+
+
+def test_int_enum_auto_value_object() -> None:
+    assert _AutoPrio.HIGH.value_object() == Int(2)

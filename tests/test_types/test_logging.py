@@ -2,7 +2,10 @@ import logging as _stdlib_logging
 import tempfile
 from pathlib import Path as _PyPath
 
+import pytest
+
 from poop.interpreter import Interpreter
+from poop.types.block import Block
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -617,3 +620,53 @@ def test_logger_adapter_log_and_setlevel() -> None:
     assert adapter.log(Int(_stdlib_logging.INFO), Str("msg")) is none
     assert adapter.setLevel(Int(_stdlib_logging.WARNING)) is none
     assert adapter.setLevel(Str("DEBUG")) is none
+
+
+# --- factory / class accessors don't leak raw classes (proposal 163) ---
+
+
+def test_get_log_record_factory_answers_block() -> None:
+    factory = Logging.getLogRecordFactory()
+    assert isinstance(factory, Block)
+
+
+def test_log_record_factory_builds_poop_log_record() -> None:
+    factory = Logging.getLogRecordFactory()
+    record = factory(Str("app"), Int(20), Str("f.py"), Int(1), Str("hi"), none, none)
+    assert isinstance(record, LogRecord)
+    assert record.getMessage() == Str("hi")
+    assert record.name == Str("app")
+
+
+def test_get_logger_class_answers_poop_logger() -> None:
+    assert Logging.getLoggerClass() is Logger
+
+
+def test_get_logger_class_instantiates_poop_logger() -> None:
+    logger = Logging.getLoggerClass()(Str("built-from-class"))
+    assert isinstance(logger, Logger)
+
+
+def test_set_logger_class_round_trips() -> None:
+    # setLoggerClass(getLoggerClass()) must not raise (default Logger maps to
+    # the raw logging.Logger it manages).
+    Logging.setLoggerClass(Logging.getLoggerClass())
+
+
+def test_set_logger_class_rejects_non_logger() -> None:
+    with pytest.raises(TypeError):
+        Logging.setLoggerClass(int)
+
+
+def test_set_log_record_factory_round_trips() -> None:
+    original = _stdlib_logging.getLogRecordFactory()
+    try:
+        Logging.setLogRecordFactory(Logging.getLogRecordFactory())
+        raw = _stdlib_logging.getLogRecordFactory()(
+            "x", 30, "g.py", 2, "msg", None, None
+        )
+        # The stdlib side still receives a raw record, so logging keeps working.
+        assert isinstance(raw, _stdlib_logging.LogRecord)
+        assert raw.getMessage() == "msg"
+    finally:
+        _stdlib_logging.setLogRecordFactory(original)

@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._set_algebra import _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
@@ -16,9 +17,10 @@ if TYPE_CHECKING:
 _set = set  # alias to avoid shadowing by Set class name in annotations
 
 
-class Set(_ValueEqMixin, _IterableMixin, Object):
+class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_data",)
     _eq_attr: ClassVar[str] = "_data"
+    _eq_group: ClassVar[str] = "set"
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
@@ -100,26 +102,6 @@ class Set(_ValueEqMixin, _IterableMixin, Object):
 
     def __contains__(self, item: object) -> bool:
         return item in self._data
-
-    def __and__(self, other: Set) -> Set:
-        if not isinstance(other, Set):
-            return NotImplemented
-        return Set(*self._data & other._data)
-
-    def __or__(self, other: Set) -> Set:
-        if not isinstance(other, Set):
-            return NotImplemented
-        return Set(*self._data | other._data)
-
-    def __sub__(self, other: Set) -> Set:
-        if not isinstance(other, Set):
-            return NotImplemented
-        return Set(*self._data - other._data)
-
-    def __xor__(self, other: Set) -> Set:
-        if not isinstance(other, Set):
-            return NotImplemented
-        return Set(*self._data ^ other._data)
 
     def __str__(self) -> str:
         if not self._data:

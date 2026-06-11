@@ -5,8 +5,9 @@ import logging.config as _logging_config
 import time as _time
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from poop.types._bridge import to_python
+from poop.types._bridge import to_poop, to_python
 from poop.types._impl_wrapper import _ImplWrapperMixin
+from poop.types.block import Block
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -596,21 +597,61 @@ class Logging(metaclass=_LoggingMeta):
         return d
 
     @staticmethod
-    def getLogRecordFactory() -> Any:
-        return _logging.getLogRecordFactory()
+    def getLogRecordFactory() -> Block:
+        """Answer a POOP callable that builds a POOP `LogRecord`.
+
+        CPython's raw factory is wrapped in a `Block` so POOP user code can
+        both send it messages and call it with POOP arguments, getting a
+        `LogRecord` back instead of a raw `logging.LogRecord`.
+        """
+        raw_factory = _logging.getLogRecordFactory()
+
+        def make(*args: Any, **kwargs: Any) -> LogRecord:
+            record = raw_factory(
+                *(to_python(a) for a in args),
+                **{k: to_python(v) for k, v in kwargs.items()},
+            )
+            return LogRecord(record)
+
+        return Block(make)
 
     @staticmethod
     def setLogRecordFactory(factory: Any) -> NoneClass:
-        _logging.setLogRecordFactory(factory)
+        """Install a POOP block as the record factory.
+
+        The block receives POOP-wrapped construction arguments and is expected
+        to answer a POOP `LogRecord`; the stdlib side is handed the unwrapped
+        raw `logging.LogRecord` so the logging machinery keeps working.
+        """
+
+        def raw_factory(*args: Any, **kwargs: Any) -> _logging.LogRecord:
+            result = factory(
+                *(to_poop(a) for a in args),
+                **{k: to_poop(v) for k, v in kwargs.items()},
+            )
+            if isinstance(result, LogRecord):
+                return result._impl
+            return cast("_logging.LogRecord", to_python(result))
+
+        _logging.setLogRecordFactory(raw_factory)
         return none
 
     @staticmethod
-    def getLoggerClass() -> type:
-        return _logging.getLoggerClass()
+    def getLoggerClass() -> type[Logger]:
+        """Answer the POOP `Logger` class, not the raw `logging.Logger`.
+
+        Instantiating the result builds a proper POOP `Logger` (the raw class
+        would produce a logger outside POOP's wrapper discipline).
+        """
+        return Logger
 
     @staticmethod
-    def setLoggerClass(klass: type) -> NoneClass:
-        _logging.setLoggerClass(klass)  # ty: ignore[invalid-argument-type]
+    def setLoggerClass(klass: type[Logger]) -> NoneClass:
+        """Accept the POOP `Logger` class, mapping it to the raw class it
+        manages so `setLoggerClass(getLoggerClass())` round-trips."""
+        if not (isinstance(klass, type) and issubclass(klass, Logger)):
+            raise TypeError("logger class must be a POOP Logger subclass")
+        _logging.setLoggerClass(_logging.Logger)
         return none
 
     @staticmethod

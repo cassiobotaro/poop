@@ -150,6 +150,8 @@ class Int(_ValueEqMixin, Object):
 
         if isinstance(other, Complex):
             return NotImplemented
+        if not isinstance(other, Int | Float):
+            return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
         if _is_absent(modulus):
             result = self._value**other._value
             if isinstance(result, complex):

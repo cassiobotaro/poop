@@ -1724,7 +1724,7 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 | `Color.iter()` | `List` | materialized member list |
 | `IntEnum` / `StrEnum` / `Flag` / `IntFlag` | enum classes | same POOP helpers, plus the data-type mixin from CPython |
 | `ReprEnum` | enum class (re-exported) | requires a data-type mixin (`class Color(int, ReprEnum): ...`); `.name`/`.value` stay raw Python types in this path |
-| `auto()` | sentinel | for sequential value generation inside an enum body |
+| `auto()` | sentinel | sequential value generation inside an enum body; on a plain `Enum` the value answers a POOP `Int` (like a literal member), while the primitive-mixed families (`IntEnum`/`IntFlag`/`StrEnum`) and `Flag` keep a raw value reachable via `.value_object()` |
 | `enum.unique` / `verify` / `member` / `nonmember` (class attrs) | decorators | apply directly on enum classes |
 | `enum.global_enum` / `pickle_by_enum_name` / `pickle_by_global_name` (class attrs) | decorators | module-level repr / pickling policy, re-exported from CPython |
 | `enum.property` (class attr) | descriptor | enum-specific `@property` that coexists with member names |
@@ -2366,10 +2366,12 @@ Three internet-data / markup namespaces shipped together. `email` exposes the mo
 | `html.entities.name2codepoint()` | `Dict[Str, Int]` | |
 | `html.entities.codepoint2name()` | `Dict[Int, Str]` | |
 | `html.entities.entitydefs()` / `.html5()` | `Dict[Str, Str]` | |
-| `HTMLParser(convert_charrefs=true)` | `HTMLParser` | SAX-style |
+| `HTMLParser(convert_charrefs=true)` | `HTMLParser` | SAX-style; subclass and override `handle_*` |
 | `HTMLParser.feed(data)` / `.close()` / `.reset()` | `none` | |
 | `HTMLParser.getpos()` | `Tuple(Int, Int)` | `(line, offset)` |
 | `HTMLParser.get_starttag_text()` | `Str` / `none` | |
+| `HTMLParser.handle_starttag(tag, attrs)` / `handle_startendtag` | `none` | override; `attrs` is `List(Tuple(Str, Str\|none))` |
+| `HTMLParser.handle_endtag/data/comment/decl/pi/entityref/charref(...)` | `none` | override; args are `Str` |
 | `ET.fromstring(text)` / `.XML(text)` | `Element` | |
 | `ET.parse(path)` | `ElementTree` | |
 | `ET.tostring(element, encoding=none)` | `Str` / `Bytes` | `none`/`"unicode"` → `Str` |
@@ -2564,7 +2566,10 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `Logging.Filterer` / `PercentStyle` / `StrFormatStyle` / `StringTemplateStyle` (class attrs) | raw stdlib class refs | exposed for `isinstance` checks |
 | `logging.exception(msg)` / `.disable(level=none)` / `.captureWarnings(flag)` / `.makeLogRecord(d)` | `none` / `LogRecord` | module-level helpers |
 | `logging.getHandlerByName(name)` / `.getHandlerNames()` / `.getLevelNamesMapping()` | `Handler` or `none` / `List[Str]` / `Dict[Str, Int]` | introspection |
-| `logging.getLogRecordFactory()` / `.setLogRecordFactory(f)` / `.getLoggerClass()` / `.setLoggerClass(c)` | raw Python callable/type | factory/class hooks |
+| `logging.getLogRecordFactory()` | `Block` | a POOP callable; calling it answers a POOP `LogRecord` |
+| `logging.setLogRecordFactory(block)` | `none` | the block is handed POOP args and may answer a `LogRecord`; the stdlib side gets the raw record |
+| `logging.getLoggerClass()` | `Logger` (POOP class) | instantiate it for a POOP `Logger`, not the raw `logging.Logger` |
+| `logging.setLoggerClass(Logger)` | `none` | accepts the POOP `Logger` class, mapped to the raw class it manages |
 | `logging.dictConfig(d)` / `.fileConfig(path, defaults=none, disable_existing_loggers=true, encoding=none)` | `none` | mirror of `logging.config.dictConfig` / `fileConfig` |
 | `logging.raiseExceptions` / `logThreads` / `logProcesses` / `logMultiprocessing` / `logAsyncioTasks` (class properties) | `Boolean` | writable; updates the underlying `_logging` module attribute |
 | `platform.system()` / `.release()` / `.version()` / `.machine()` / `.processor()` / `.node()` / `.platform(...)` | `Str` | |

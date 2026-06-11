@@ -651,3 +651,14 @@ def test_replace_with_count() -> None:
     assert ba.replace(
         ByteArray(bytearray(b"a")), ByteArray(bytearray(b"b")), Int(1)
     ) == ByteArray(bytearray(b"baa"))
+
+
+def test_eq_bytes_and_bytearray_equal_by_value() -> None:
+    # CPython: b"ab" == bytearray(b"ab") is True (both directions).
+    assert ByteArray(bytearray(b"ab")) == Bytes(b"ab")
+    assert Bytes(b"ab") == ByteArray(bytearray(b"ab"))
+
+
+def test_eq_bytes_and_bytearray_different_values() -> None:
+    assert (ByteArray(bytearray(b"ab")) == Bytes(b"xy")) is false
+    assert (ByteArray(bytearray(b"ab")) != Bytes(b"xy")) is true

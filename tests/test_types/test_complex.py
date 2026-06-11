@@ -152,6 +152,33 @@ def test_ne_different() -> None:
     assert (Complex(1 + 2j) != Complex(3 + 4j)) is true
 
 
+def test_eq_with_int_equal() -> None:
+    # CPython: complex(1, 0) == 1 is True.
+    assert Complex(1 + 0j) == Int(1)
+    assert (Complex(1 + 0j) != Int(1)) is false
+
+
+def test_eq_with_int_unequal_when_imaginary() -> None:
+    assert (Complex(1 + 2j) == Int(1)) is false
+    assert (Complex(1 + 2j) != Int(1)) is true
+
+
+def test_eq_with_float() -> None:
+    assert Complex(1 + 0j) == Float(1.0)
+    assert (Complex(1 + 0j) == Float(2.0)) is false
+
+
+def test_eq_with_boolean() -> None:
+    assert Complex(1 + 0j) == true
+    assert Complex(0 + 0j) == false
+    assert (Complex(1 + 0j) == false) is false
+
+
+def test_eq_with_foreign_type_returns_false() -> None:
+    assert (Complex(1 + 0j) == Str("x")) is false
+    assert (Complex(1 + 0j) != Str("x")) is true
+
+
 def test_hashable() -> None:
     assert isinstance(hash(Complex(1 + 2j)), int)
 

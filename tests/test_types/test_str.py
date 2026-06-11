@@ -2,6 +2,7 @@ import pytest
 
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
+from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -745,3 +746,37 @@ def test_str_a85decode_with_kwargs() -> None:
     encoded = Bytes(b"hello").a85encode()._value.decode()
     spaced = Str(" " + encoded + " ")
     assert spaced.a85decode(ignorechars=Str(" ")) == Bytes(b"hello")
+
+
+def test_mod_scalar() -> None:
+    assert Str("v %s") % Int(5) == Str("v 5")
+
+
+def test_mod_single_element_tuple() -> None:
+    assert Str("v %s") % Tuple(Int(5)) == Str("v 5")
+
+
+def test_mod_multiple_tuple() -> None:
+    assert Str("%s/%s") % Tuple(Str("a"), Str("b")) == Str("a/b")
+
+
+def test_mod_numeric_format() -> None:
+    assert Str("%d items at $%.2f") % Tuple(Int(3), Float(1.5)) == Str(
+        "3 items at $1.50"
+    )
+
+
+def test_mod_mapping() -> None:
+    mapping = Dict()
+    mapping.at_put(Str("name"), Str("Ana"))
+    mapping.at_put(Str("age"), Int(30))
+    assert Str("%(name)s is %(age)d") % mapping == Str("Ana is 30")
+
+
+def test_mod_percent_literal() -> None:
+    assert Str("100%% done") % Tuple() == Str("100% done")
+
+
+def test_mod_type_mismatch_raises() -> None:
+    with pytest.raises(TypeError):
+        _ = Str("got %d") % Str("abc")

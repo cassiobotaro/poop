@@ -1,7 +1,7 @@
 from types import NotImplementedType
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from poop.types._value_eq import _ValueEqMixin
+from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -10,9 +10,8 @@ if TYPE_CHECKING:
 _complex = complex  # alias to avoid shadowing by Complex class name
 
 
-class Complex(_ValueEqMixin, Object):
+class Complex(Object):
     __slots__ = ("_value",)
-    _eq_attr: ClassVar[str] = "_value"
 
     def __init__(self, value: _complex | Complex) -> None:
         self._value = value._value if isinstance(value, Complex) else value
@@ -115,6 +114,22 @@ class Complex(_ValueEqMixin, Object):
 
     def __neg__(self) -> Complex:
         return self.negated()
+
+    # Equality bridges to the rest of the numeric tower, mirroring CPython,
+    # where ``complex(1, 0) == 1`` and ``complex(1, 0) == True`` are True.
+    # Boolean is folded in as 1/0 because ``bool`` is an ``int`` subclass.
+    def _eq_coerce(self, other: object) -> _complex | None:
+        if isinstance(other, Boolean):
+            return _complex(bool(other))
+        return self._coerce(other)
+
+    def __eq__(self, other: object) -> Boolean:
+        v = self._eq_coerce(other)
+        return false if v is None else to_boolean(self._value == v)
+
+    def __ne__(self, other: object) -> Boolean:
+        v = self._eq_coerce(other)
+        return true if v is None else to_boolean(self._value != v)
 
     def __hash__(self) -> int:
         return hash(self._value)
