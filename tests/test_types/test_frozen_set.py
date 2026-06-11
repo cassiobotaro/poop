@@ -8,6 +8,7 @@ from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.int import Int as _Int
 from poop.types.none import none
+from poop.types.set import Set
 from poop.types.string import Str
 
 
@@ -293,3 +294,14 @@ def test_dunder_ops_return_notimplemented_on_wrong_type() -> None:
         _ = f - "wrong"  # ty: ignore[unsupported-operator]
     with _pytest.raises(TypeError):
         _ = f ^ "wrong"  # ty: ignore[unsupported-operator]
+
+
+def test_eq_set_and_frozenset_equal_by_value() -> None:
+    # CPython: {1, 2} == frozenset({1, 2}) is True (both directions).
+    assert FrozenSet(Int(1), Int(2)) == Set(Int(1), Int(2))
+    assert Set(Int(1), Int(2)) == FrozenSet(Int(1), Int(2))
+
+
+def test_eq_set_and_frozenset_different_values() -> None:
+    assert (FrozenSet(Int(1), Int(2)) == Set(Int(1), Int(3))) is false
+    assert (FrozenSet(Int(1), Int(2)) != Set(Int(1), Int(3))) is true

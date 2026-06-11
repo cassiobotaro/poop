@@ -24,6 +24,7 @@ _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
+    _eq_group: ClassVar[str] = "bytes"
     __hash__ = None
 
     def __init__(

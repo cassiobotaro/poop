@@ -17,6 +17,7 @@ _frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name
 class FrozenSet(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_data",)
     _eq_attr: ClassVar[str] = "_data"
+    _eq_group: ClassVar[str] = "set"
 
     def __init__(self, *elements: Object) -> None:
         self._data: _frozenset[Object] = _frozenset(elements)

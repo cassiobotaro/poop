@@ -19,6 +19,7 @@ _set = set  # alias to avoid shadowing by Set class name in annotations
 class Set(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_data",)
     _eq_attr: ClassVar[str] = "_data"
+    _eq_group: ClassVar[str] = "set"
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:

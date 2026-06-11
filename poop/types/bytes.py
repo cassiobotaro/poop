@@ -26,6 +26,7 @@ _bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
 class Bytes(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
+    _eq_group: ClassVar[str] = "bytes"
 
     def __init__(self, value: _bytes | Bytes) -> None:
         self._value = value._value if isinstance(value, Bytes) else value
