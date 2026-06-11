@@ -2566,7 +2566,10 @@ Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module s
 | `Logging.Filterer` / `PercentStyle` / `StrFormatStyle` / `StringTemplateStyle` (class attrs) | raw stdlib class refs | exposed for `isinstance` checks |
 | `logging.exception(msg)` / `.disable(level=none)` / `.captureWarnings(flag)` / `.makeLogRecord(d)` | `none` / `LogRecord` | module-level helpers |
 | `logging.getHandlerByName(name)` / `.getHandlerNames()` / `.getLevelNamesMapping()` | `Handler` or `none` / `List[Str]` / `Dict[Str, Int]` | introspection |
-| `logging.getLogRecordFactory()` / `.setLogRecordFactory(f)` / `.getLoggerClass()` / `.setLoggerClass(c)` | raw Python callable/type | factory/class hooks |
+| `logging.getLogRecordFactory()` | `Block` | a POOP callable; calling it answers a POOP `LogRecord` |
+| `logging.setLogRecordFactory(block)` | `none` | the block is handed POOP args and may answer a `LogRecord`; the stdlib side gets the raw record |
+| `logging.getLoggerClass()` | `Logger` (POOP class) | instantiate it for a POOP `Logger`, not the raw `logging.Logger` |
+| `logging.setLoggerClass(Logger)` | `none` | accepts the POOP `Logger` class, mapped to the raw class it manages |
 | `logging.dictConfig(d)` / `.fileConfig(path, defaults=none, disable_existing_loggers=true, encoding=none)` | `none` | mirror of `logging.config.dictConfig` / `fileConfig` |
 | `logging.raiseExceptions` / `logThreads` / `logProcesses` / `logMultiprocessing` / `logAsyncioTasks` (class properties) | `Boolean` | writable; updates the underlying `_logging` module attribute |
 | `platform.system()` / `.release()` / `.version()` / `.machine()` / `.processor()` / `.node()` / `.platform(...)` | `Str` | |
