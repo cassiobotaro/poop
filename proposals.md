@@ -12,18 +12,9 @@
 
 **Decision + implemented:** dropped `_ValueEqMixin` from `Complex` and gave it its own `__eq__`/`__ne__` (`poop/types/complex.py`) that route through a `_eq_coerce` helper unwrapping `Complex | Int | Float | Boolean` (Boolean folds in as `1`/`0`, since `bool` is an `int` subclass) and comparing the raw `complex` values — the same always-answer-a-Boolean shape `Decimal` got in proposal 148. `complex(1, 0) == 1` / `== 1.0` / `== True` now answer `true`; foreign operands still answer `false`/`true`. Hash invariants hold (CPython guarantees `hash(1) == hash(1+0j)`). The reflected `1 == complex(1, 0)` stays an `Int`/`Float`-side concern and is out of scope here. Tests in `tests/test_types/test_complex.py`.
 
-### 159. printf-style `%` formatting crashes — `Str` lacks `__mod__`
+### ~~159. printf-style `%` formatting crashes — `Str` lacks `__mod__`~~ — DONE
 
-`Str` (`poop/types/string.py`) defines no `__mod__`, so the `%` operator — a core string operator in Python, same tier as the `+`/`*` operators the wrapper already supports — raises a `TypeError` for every form:
-
-```python
-("v %s" % 5).print()
-# poop: unsupported operand type(s) for %: 'str' and 'int' — expected "v 5"
-("v %s" % (5,)).print()
-# poop: unsupported operand type(s) for %: 'str' and 'tuple' — expected "v 5"
-```
-
-**Proposed fix:** add `Str.__mod__(self, other)` in `poop/types/string.py` that deep-unwraps the right operand (scalar, `Tuple` of wrappers, or `Dict` with `Str` keys for `%(name)s` mappings — reuse the recursive unwrapper used by `Str.format` from proposal 151), applies `self._value % raw`, and answers a `Str`; return `NotImplemented` for operand types CPython rejects so the error message stays faithful.
+**Decision + implemented:** added `Str.__mod__` (`poop/types/string.py`) that deep-unwraps the right operand with the same `to_python` bridge `Str.format` uses (scalar, `Tuple` → tuple, `Dict` → mapping) and applies CPython's `str.__mod__`. All three forms work — `"v %s" % 5`, `"%s/%s" % (a, b)`, `"%(name)s" % mapping` — and `%%` collapses correctly. No explicit `NotImplemented` was needed: CPython's `str.__mod__` raises its own faithful `TypeError` on mismatch (`"%d" % "abc"` → `%d format: a real number is required, not str`). Tests in `tests/test_types/test_str.py`.
 
 ### 160. `Boolean` cannot do arithmetic — `True + 1` crashes although POOP reports bool as an int subtype
 

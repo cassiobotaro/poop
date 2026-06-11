@@ -395,6 +395,15 @@ class Str(_ValueEqMixin, Object):
     def __rmul__(self, other: Int) -> Str:
         return Str(self._value * other._value)
 
+    def __mod__(self, other: object) -> Str:
+        # printf-style formatting: "v %s" % 5, "%s/%s" % (a, b), or
+        # "%(k)s" % mapping. to_python deep-unwraps the right operand
+        # (scalar, Tuple -> tuple, Dict -> dict), then CPython's str.__mod__
+        # applies the template and raises faithful TypeErrors on mismatch.
+        from poop.types._bridge import to_python
+
+        return Str(self._value % to_python(other))
+
     def __lt__(self, other: Str) -> Boolean:
         return to_boolean(self._value < other._value)
 
