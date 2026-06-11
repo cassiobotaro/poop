@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._set_algebra import _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.frozen_set_iterator import FrozenSetIterator
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 _frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name
 
 
-class FrozenSet(_ValueEqMixin, _IterableMixin, Object):
+class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_data",)
     _eq_attr: ClassVar[str] = "_data"
     _eq_group: ClassVar[str] = "set"
@@ -63,26 +64,6 @@ class FrozenSet(_ValueEqMixin, _IterableMixin, Object):
 
     def __contains__(self, item: object) -> bool:
         return item in self._data
-
-    def __and__(self, other: FrozenSet) -> FrozenSet:
-        if not isinstance(other, FrozenSet):
-            return NotImplemented
-        return FrozenSet(*self._data & other._data)
-
-    def __or__(self, other: FrozenSet) -> FrozenSet:
-        if not isinstance(other, FrozenSet):
-            return NotImplemented
-        return FrozenSet(*self._data | other._data)
-
-    def __sub__(self, other: FrozenSet) -> FrozenSet:
-        if not isinstance(other, FrozenSet):
-            return NotImplemented
-        return FrozenSet(*self._data - other._data)
-
-    def __xor__(self, other: FrozenSet) -> FrozenSet:
-        if not isinstance(other, FrozenSet):
-            return NotImplemented
-        return FrozenSet(*self._data ^ other._data)
 
     def __hash__(self) -> int:
         return hash(self._data)

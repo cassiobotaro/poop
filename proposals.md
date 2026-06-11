@@ -4,18 +4,9 @@
 
 **Decision + implemented:** added an optional `_eq_group: ClassVar[str | None]` to `_ValueEqMixin` (`poop/types/_value_eq.py`). Two wrappers are comparable when they share a class *or* a non-`None` `_eq_group`, so the raw values compare directly (`set == frozenset`, `bytes == bytearray` are equal-by-value in CPython). Declared `_eq_group = "set"` on `Set`/`FrozenSet` and `_eq_group = "bytes"` on `Bytes`/`ByteArray`. A string group avoids the import cycle that mutual class references would create. Both directions of `==`/`!=` now answer the CPython result; foreign operands still answer `false`/`true`. Tests in `tests/test_types/test_frozen_set.py` and `test_byte_array.py`.
 
-### 157. Set algebra rejects mixed `set`/`frozenset` operands — `{1, 2} | frozenset({3})` crashes
+### ~~157. Set algebra rejects mixed `set`/`frozenset` operands — `{1, 2} | frozenset({3})` crashes~~ — DONE
 
-`Set.__and__/__or__/__sub__/__xor__` (`poop/types/set.py:104-122`) return `NotImplemented` unless the operand `isinstance(other, Set)`, and `FrozenSet`'s counterparts (`poop/types/frozen_set.py:66-80`) likewise demand a `FrozenSet`. Since neither class accepts the other and neither defines reflected variants that bridge the pair, every mixed expression dies with a `TypeError`, while CPython happily evaluates them (result takes the left operand's type):
-
-```python
-({1, 2} | frozenset({3})).print()
-# poop: unsupported operand type(s) for |: 'set' and 'frozenset' — expected {1, 2, 3}
-(frozenset({1}) | {2}).print()
-# poop: unsupported operand type(s) for |: 'frozenset' and 'set' — expected frozenset({1, 2})
-```
-
-**Proposed fix:** widen the guards in both classes to `isinstance(other, Set | FrozenSet)` (importing lazily or via a shared module to avoid the import cycle) and build the result from `self._data <op> other._data`, keeping the receiver's class as the result type to match CPython's left-operand rule. Apply the same widening to the comparison/subset operators if they share the strict guard.
+**Decision + implemented:** extracted a shared `_SetAlgebraMixin` (`poop/types/_set_algebra.py`) implementing `__and__`/`__or__`/`__sub__`/`__xor__`, mixed into both `Set` and `FrozenSet` (their inline copies removed). Operands are recognised by a duck-typed `_set_like` marker (avoiding the Set <-> FrozenSet import cycle) and results are built with `type(self)`, so the receiver's class wins — matching CPython's left-operand rule (`{1, 2} | frozenset({3})` → `set`, `frozenset({1}) | {2}` → `frozenset`). Foreign operands still answer `NotImplemented` so the `TypeError` message stays faithful. The subset/comparison operators were already methods (`issubset`/`issuperset`), not dunders, so no widening was needed there. Tests in `tests/test_types/test_set.py`.
 
 ### 158. `complex(1, 0) == 1` answers `false` — `Complex` equality is sealed off from `Int`/`Float`
 

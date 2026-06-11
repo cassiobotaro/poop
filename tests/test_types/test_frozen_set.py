@@ -287,13 +287,13 @@ def test_dunder_ops_return_notimplemented_on_wrong_type() -> None:
     import pytest as _pytest
 
     with _pytest.raises(TypeError):
-        _ = f & "wrong"  # ty: ignore[unsupported-operator]
+        _ = f & "wrong"
     with _pytest.raises(TypeError):
-        _ = f | "wrong"  # ty: ignore[unsupported-operator]
+        _ = f | "wrong"
     with _pytest.raises(TypeError):
-        _ = f - "wrong"  # ty: ignore[unsupported-operator]
+        _ = f - "wrong"
     with _pytest.raises(TypeError):
-        _ = f ^ "wrong"  # ty: ignore[unsupported-operator]
+        _ = f ^ "wrong"
 
 
 def test_eq_set_and_frozenset_equal_by_value() -> None:

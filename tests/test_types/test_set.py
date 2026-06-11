@@ -4,6 +4,7 @@ from poop.parser import parse
 from poop.transformers.int import IntTransformer
 from poop.transformers.set import SetTransformer, _poop_set
 from poop.types.boolean import false, true
+from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.int import Int as _Int
 from poop.types.none import none
@@ -347,3 +348,29 @@ def test_dunder_sub_difference() -> None:
 
 def test_dunder_xor_symmetric_difference() -> None:
     assert Set(Int(1), Int(2)) ^ Set(Int(2), Int(3)) == Set(Int(1), Int(3))
+
+
+def test_dunder_or_with_frozenset_returns_set() -> None:
+    # CPython: result takes the left operand's type.
+    result = Set(Int(1), Int(2)) | FrozenSet(Int(3))
+    assert isinstance(result, Set)
+    assert result == Set(Int(1), Int(2), Int(3))
+
+
+def test_dunder_and_with_frozenset() -> None:
+    assert Set(Int(1), Int(2), Int(3)) & FrozenSet(Int(2), Int(3), Int(4)) == Set(
+        Int(2), Int(3)
+    )
+
+
+def test_dunder_sub_with_frozenset() -> None:
+    assert Set(Int(1), Int(2), Int(3)) - FrozenSet(Int(2)) == Set(Int(1), Int(3))
+
+
+def test_dunder_xor_with_frozenset() -> None:
+    assert Set(Int(1), Int(2)) ^ FrozenSet(Int(2), Int(3)) == Set(Int(1), Int(3))
+
+
+def test_dunder_or_with_non_set_raises() -> None:
+    with pytest.raises(TypeError):
+        Set(Int(1)) | Int(2)
