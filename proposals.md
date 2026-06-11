@@ -16,18 +16,9 @@
 
 **Decision + implemented:** added `Str.__mod__` (`poop/types/string.py`) that deep-unwraps the right operand with the same `to_python` bridge `Str.format` uses (scalar, `Tuple` → tuple, `Dict` → mapping) and applies CPython's `str.__mod__`. All three forms work — `"v %s" % 5`, `"%s/%s" % (a, b)`, `"%(name)s" % mapping` — and `%%` collapses correctly. No explicit `NotImplemented` was needed: CPython's `str.__mod__` raises its own faithful `TypeError` on mismatch (`"%d" % "abc"` → `%d format: a real number is required, not str`). Tests in `tests/test_types/test_str.py`.
 
-### 160. `Boolean` cannot do arithmetic — `True + 1` crashes although POOP reports bool as an int subtype
+### ~~160. `Boolean` cannot do arithmetic — `True + 1` crashes although POOP reports bool as an int subtype~~ — DONE
 
-In CPython `bool` is an `int` subclass, so `True + 1 == 2` and `True * 3 == 3` are ordinary expressions (and summing flags is the canonical counting idiom). In POOP `Boolean` (`poop/types/boolean.py:11`) defines no numeric dunders, and the `Int`/`Float` operator guards only accept `Int | Float` (e.g. `Int.__add__`, `poop/types/int.py:93`), so both operand orders die — and the diagnostic itself advertises the operand as `'bool'`, implying the numeric kinship the implementation denies. Proposal 154 already established the Boolean→number bridge for `int(True)`/`float(True)`; the operators were left behind:
-
-```python
-(True + 1).print()
-# poop: unsupported operand type(s) for +: 'bool' and 'int' — expected 2
-(True * 3).print()
-# poop: unsupported operand type(s) for *: 'bool' and 'int' — expected 3
-```
-
-**Proposed fix:** either widen the `isinstance(other, Int | Float)` guards in `Int`/`Float` arithmetic and ordering dunders (`poop/types/int.py`, `poop/types/float.py`) to also unwrap `Boolean` as `1`/`0`, or add the numeric dunders (`__add__`, `__radd__`, `__mul__`, ...) to `Boolean` answering `Int` results. If the team instead rules Boolean arithmetic un-Smalltalk-ish by design, the fix is a dedicated validator/error message that says so explicitly rather than the misleading `'bool' and 'int'` TypeError.
+**Decision + implemented:** added the numeric dunders to `Boolean` (`poop/types/boolean.py`) rather than widening the whole numeric tower — keeping the change in one file and leaving `Int`/`Float` arithmetic guards untouched. Since POOP's tower defines no reflected dunders (each forward operator accepts the types it knows), `Boolean` carries both halves: forward ops (`__add__`, `__sub__`, `__mul__`, `__truediv__`, `__floordiv__`, `__mod__`, `__pow__`) fold `self` and a `Boolean` operand to `Int` and delegate to `Int`'s arithmetic; reflected ops (`__radd__`, …) compute `other <op> int(self)` so `3 - True` reuses `Int.__sub__`. Both operand orders, `bool op bool`, and `Float` mixing all answer the CPython result; `sum([True, True])` answers `2`; foreign operands still raise the faithful `'bool' and 'str'` `TypeError`. Comparison/bitwise operators stayed out of scope (`Boolean` already owns logical `&`/`|`). Also fixed a latent bug surfaced here: `Int.__pow__`/`Float.__pow__` assumed `other._value` and crashed on non-numeric operands (e.g. `2 ** "x"`); they now return `NotImplemented` like their sibling operators, which is what lets `2 ** True` dispatch to `Boolean.__rpow__`. Tests in `tests/test_types/test_boolean.py`.
 
 ### 161. `html.parser` handler overrides never fire — the working SAX surface lives only on the raw inner parser, and `_impl_ref()` hands that raw object out
 
