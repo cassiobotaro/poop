@@ -8,16 +8,9 @@
 
 **Decision + implemented:** extracted a shared `_SetAlgebraMixin` (`poop/types/_set_algebra.py`) implementing `__and__`/`__or__`/`__sub__`/`__xor__`, mixed into both `Set` and `FrozenSet` (their inline copies removed). Operands are recognised by a duck-typed `_set_like` marker (avoiding the Set <-> FrozenSet import cycle) and results are built with `type(self)`, so the receiver's class wins — matching CPython's left-operand rule (`{1, 2} | frozenset({3})` → `set`, `frozenset({1}) | {2}` → `frozenset`). Foreign operands still answer `NotImplemented` so the `TypeError` message stays faithful. The subset/comparison operators were already methods (`issubset`/`issuperset`), not dunders, so no widening was needed there. Tests in `tests/test_types/test_set.py`.
 
-### 158. `complex(1, 0) == 1` answers `false` — `Complex` equality is sealed off from `Int`/`Float`
+### ~~158. `complex(1, 0) == 1` answers `false` — `Complex` equality is sealed off from `Int`/`Float`~~ — DONE
 
-`Complex` gets its equality from `_ValueEqMixin` with `_eq_attr = "_value"` (`poop/types/complex.py:13-15`), so comparing a `Complex` against an `Int` or `Float` short-circuits to `false` even when the values are mathematically equal. The asymmetry is jarring because mixed *arithmetic* already works — `(1 + 2j) + 1` correctly answers `(2+2j)` — yet the equality that CPython defines (`complex(1, 0) == 1` is `True`) answers `false`:
-
-```python
-(complex(1, 0) == 1).print()    # False — expected True
-((1 + 2j) + 1).print()          # (2+2j) — arithmetic bridging already works
-```
-
-**Proposed fix:** give `Complex` its own `__eq__`/`__ne__` (in `poop/types/complex.py`) that unwraps `Complex | Int | Float | Boolean` operands and compares the raw values (`self._value == other._value`), answering POOP `false`/`true`, mirroring the cross-numeric equality already granted to `Decimal` in proposal 148.
+**Decision + implemented:** dropped `_ValueEqMixin` from `Complex` and gave it its own `__eq__`/`__ne__` (`poop/types/complex.py`) that route through a `_eq_coerce` helper unwrapping `Complex | Int | Float | Boolean` (Boolean folds in as `1`/`0`, since `bool` is an `int` subclass) and comparing the raw `complex` values — the same always-answer-a-Boolean shape `Decimal` got in proposal 148. `complex(1, 0) == 1` / `== 1.0` / `== True` now answer `true`; foreign operands still answer `false`/`true`. Hash invariants hold (CPython guarantees `hash(1) == hash(1+0j)`). The reflected `1 == complex(1, 0)` stays an `Int`/`Float`-side concern and is out of scope here. Tests in `tests/test_types/test_complex.py`.
 
 ### 159. printf-style `%` formatting crashes — `Str` lacks `__mod__`
 
