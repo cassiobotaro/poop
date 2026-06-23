@@ -126,14 +126,17 @@ class Pool(Object):
         self._impl = _mp.Pool(p)
 
     def apply(self, func: Any, args: Any = None) -> Any:
+        # The worker result crosses the process boundary via pickle and comes
+        # back as a raw CPython object — re-wrap it so it stays a POOP value.
         if args is None:
-            return self._impl.apply(func)
-        return self._impl.apply(func, args)
+            return to_poop(self._impl.apply(func))
+        return to_poop(self._impl.apply(func, args))
 
     def map(self, func: Any, iterable: List) -> List:
         py_list = list(iterable) if isinstance(iterable, List) else iterable
         results = self._impl.map(func, py_list)
-        return List(*results)
+        # Each element is a pickled-back raw worker result; wrap per element.
+        return List(*(to_poop(r) for r in results))
 
     def close(self) -> NoneClass:
         self._impl.close()
