@@ -57,7 +57,7 @@ AI-specific guidance:
 Entry point is `poop/cli.py` (CLI via `typer`); `main.py` is a thin wrapper that calls `entry_point()` for the uninstalled `python main.py <file>` path. Pipeline: `parse → validate → transform → execute(namespace)`.
 
 - `poop/parser.py` — wraps `ast.parse`
-- `poop/validators/` — AST validators rejecting forbidden constructs (`if`, loops, `len`, `print`, ~60 in all); source of truth: `DEFAULT_VALIDATORS` in `poop/validators/__init__.py`
+- `poop/validators/` — AST validators rejecting forbidden constructs (`if`, loops, `len`, `print`, ~65 in all); source of truth: `DEFAULT_VALIDATORS` in `poop/validators/__init__.py`
 - `poop/transformers/` — AST transformers rewriting literals and builtins before execution, plus namespace-only transformers that inject names into the namespace without rewriting AST; source of truth: `DEFAULT_TRANSFORMERS` and `DEFAULT_NAMESPACE` in `poop/transformers/__init__.py`
 - `poop/types/` — Smalltalk-style type wrappers (`object.py` is the root): one module per wrapped builtin, stdlib namespace, and iterator; see the directory listing and the `INFECTIONS.md` catalog for the full inventory and the rules wrappers must follow
 - `poop/executor.py` — compiles and executes AST with an injectable namespace

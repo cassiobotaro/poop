@@ -60,7 +60,7 @@ Full Python → POOP recipe book: [`MIGRATION.md`](MIGRATION.md). Design rationa
 
 ## What's banned (and what to use instead)
 
-POOP runs ~60 validators on every program. Grouped by theme:
+POOP runs ~65 validators on every program. Grouped by theme:
 
 **Control flow** — messages on a Boolean, not statements.
 - `if` / `else` / ternary → `cond.if_true(lambda: …)` / `cond.if_true_if_false(lambda: …, lambda: …)`
