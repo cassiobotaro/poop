@@ -315,3 +315,12 @@ def test_rmul_returns_repeated_tuple() -> None:
     assert Tuple(Int(1), Int(2)).__rmul__(Int(3)) == Tuple(
         Int(1), Int(2), Int(1), Int(2), Int(1), Int(2)
     )
+
+
+def test_ordering_with_foreign_operand_raises_typeerror() -> None:
+    # Proposal 164: a foreign operand answers CPython's TypeError, not a
+    # leaking AttributeError from a missing `other._items`.
+    with pytest.raises(TypeError):
+        _ = Tuple(Int(1)) < Int(2)
+    with pytest.raises(TypeError):
+        _ = Tuple(Int(1)) >= List(Int(2))

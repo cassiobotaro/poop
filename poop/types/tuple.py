@@ -90,22 +90,30 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
 
         return Int(self._items.index(obj))
 
-    def __lt__(self, other: Tuple) -> Boolean:
+    def __lt__(self, other: object) -> Boolean:
+        if not isinstance(other, Tuple):
+            return NotImplemented  # foreign operand -> faithful TypeError
         a = cast("tuple[Any, ...]", self._items)
         b = cast("tuple[Any, ...]", other._items)
         return to_boolean(a < b)
 
-    def __le__(self, other: Tuple) -> Boolean:
+    def __le__(self, other: object) -> Boolean:
+        if not isinstance(other, Tuple):
+            return NotImplemented
         a = cast("tuple[Any, ...]", self._items)
         b = cast("tuple[Any, ...]", other._items)
         return to_boolean(a <= b)
 
-    def __gt__(self, other: Tuple) -> Boolean:
+    def __gt__(self, other: object) -> Boolean:
+        if not isinstance(other, Tuple):
+            return NotImplemented
         a = cast("tuple[Any, ...]", self._items)
         b = cast("tuple[Any, ...]", other._items)
         return to_boolean(a > b)
 
-    def __ge__(self, other: Tuple) -> Boolean:
+    def __ge__(self, other: object) -> Boolean:
+        if not isinstance(other, Tuple):
+            return NotImplemented
         a = cast("tuple[Any, ...]", self._items)
         b = cast("tuple[Any, ...]", other._items)
         return to_boolean(a >= b)

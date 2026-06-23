@@ -149,8 +149,10 @@ class Dict(_ValueEqMixin, Object):
         k, v = self._data.popitem()
         return Tuple(k, v)
 
-    def setdefault(self, key: Object, default: Object) -> Object:
-        return self._data.setdefault(key, default)
+    def setdefault(self, key: Object, default: Object | None = None) -> Object:
+        # CPython defaults the fill value to None — `d.setdefault(k)` returns
+        # `none` and stores `k: none`, matching `get`/`pop`'s optional default.
+        return self._data.setdefault(key, none if default is None else default)
 
     def update(self, other: Dict) -> NoneClass:
         self._data.update(other._data)

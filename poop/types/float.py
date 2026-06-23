@@ -1,6 +1,7 @@
 import math
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._numeric_compare import _NOT_NUMERIC, _num_value
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean, true
@@ -164,31 +165,42 @@ class Float(_ValueEqMixin, Object):
     def __int__(self) -> _int:
         return _int(self._value)
 
-    def __lt__(self, other: Float) -> Boolean:
-        return to_boolean(self._value < other._value)
+    def __lt__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented  # foreign operand -> faithful TypeError
+        return to_boolean(self._value < v)
 
-    def __le__(self, other: Float) -> Boolean:
-        return to_boolean(self._value <= other._value)
+    def __le__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented
+        return to_boolean(self._value <= v)
 
-    def __gt__(self, other: Float) -> Boolean:
-        return to_boolean(self._value > other._value)
+    def __gt__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented
+        return to_boolean(self._value > v)
 
-    def __ge__(self, other: Float) -> Boolean:
-        return to_boolean(self._value >= other._value)
+    def __ge__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented
+        return to_boolean(self._value >= v)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.int import Int
-
-        if isinstance(other, Float | Int):
-            return to_boolean(self._value == other._value)
-        return false
+        # Boolean folds in as 1/0 — bool is an int subclass in CPython.
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return false
+        return to_boolean(self._value == v)
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.int import Int
-
-        if isinstance(other, Float | Int):
-            return false if self._value == other._value else true
-        return true
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return true
+        return false if self._value == v else true
 
     def __hash__(self) -> _int:
         return hash(self._value)

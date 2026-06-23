@@ -57,22 +57,30 @@ class List(_ValueEqMixin, _IterableMixin, Object):
     def __add__(self, other: List) -> List:
         return List(*self._items + other._items)
 
-    def __lt__(self, other: List) -> Boolean:
+    def __lt__(self, other: object) -> Boolean:
+        if not isinstance(other, List):
+            return NotImplemented  # foreign operand -> faithful TypeError
         a = cast("_list[Any]", self._items)
         b = cast("_list[Any]", other._items)
         return to_boolean(a < b)
 
-    def __le__(self, other: List) -> Boolean:
+    def __le__(self, other: object) -> Boolean:
+        if not isinstance(other, List):
+            return NotImplemented
         a = cast("_list[Any]", self._items)
         b = cast("_list[Any]", other._items)
         return to_boolean(a <= b)
 
-    def __gt__(self, other: List) -> Boolean:
+    def __gt__(self, other: object) -> Boolean:
+        if not isinstance(other, List):
+            return NotImplemented
         a = cast("_list[Any]", self._items)
         b = cast("_list[Any]", other._items)
         return to_boolean(a > b)
 
-    def __ge__(self, other: List) -> Boolean:
+    def __ge__(self, other: object) -> Boolean:
+        if not isinstance(other, List):
+            return NotImplemented
         a = cast("_list[Any]", self._items)
         b = cast("_list[Any]", other._items)
         return to_boolean(a >= b)
