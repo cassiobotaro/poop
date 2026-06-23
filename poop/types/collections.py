@@ -141,7 +141,9 @@ class Deque(_ImplWrapperMixin, _ValueEqMixin, _IterableMixin, Object):
 
     def __init__(self, source: Any = None, maxlen: Int | None = None) -> None:
         items = () if source is None or isinstance(source, NoneClass) else iter(source)
-        self._impl = _collections.deque(items, _opt_int(maxlen))
+        self._impl: _collections.deque[Object] = _collections.deque(
+            items, _opt_int(maxlen)
+        )
 
     def append(self, item: Object) -> NoneClass:
         self._impl.append(item)
