@@ -176,3 +176,39 @@ def test_process_close_returns_none_after_construction() -> None:
     # close() on a never-started Process is a no-op that returns POOP `none`.
     p = Process(target=lambda: None)
     assert p.close() is none
+
+
+# --- Pool result wrapping (raw-object leak fixes) ---
+
+
+class _StubPoolImpl:
+    """Stand-in for `multiprocessing.pool.Pool` that returns raw Python
+    values, mimicking what comes back across the (pickled) process boundary —
+    without paying the forkserver cost of a real Pool."""
+
+    def apply(self, func: object, args: object = None) -> object:
+        return 25
+
+    def map(self, func: object, iterable: object) -> list[int]:
+        return [1, 4, 9]
+
+
+def test_pool_apply_wraps_raw_worker_result() -> None:
+    # Proposal 200: the worker result returns as a raw Python object; apply
+    # must re-wrap it so it stays a POOP value.
+    pool = Pool.__new__(Pool)
+    pool._impl = _StubPoolImpl()
+    result = pool.apply(lambda: None)
+    assert isinstance(result, Int)
+    assert result == Int(25)
+
+
+def test_pool_map_wraps_each_raw_element() -> None:
+    # Proposal 201: each element returns raw; map must wrap every element,
+    # not just the outer List.
+    pool = Pool.__new__(Pool)
+    pool._impl = _StubPoolImpl()
+    result = pool.map(lambda x: x, List(Int(1), Int(2), Int(3)))
+    assert isinstance(result, List)
+    assert all(isinstance(e, Int) for e in result)
+    assert result == List(Int(1), Int(4), Int(9))

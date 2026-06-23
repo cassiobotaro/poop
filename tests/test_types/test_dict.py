@@ -365,3 +365,17 @@ def test_or_with_non_dict_returns_notimplemented() -> None:
     d = _dict_with([(1, 10)])
     with pytest.raises(TypeError):
         _ = d | "not a dict"  # ty: ignore[unsupported-operator]
+
+
+def test_setdefault_without_default_uses_none() -> None:
+    # Proposal 166: CPython defaults the fill value to None — `d.setdefault(k)`
+    # returns `none` and stores `k: none`.
+    from poop.types.none import none
+    from poop.types.string import Str
+
+    d = Dict()
+    assert d.setdefault(Str("x")) is none
+    assert d.at(Str("x")) is none
+    # An explicit default still wins, and a present key is untouched.
+    assert d.setdefault(Str("x"), Int(9)) is none
+    assert d.setdefault(Str("y"), Int(9)) == Int(9)

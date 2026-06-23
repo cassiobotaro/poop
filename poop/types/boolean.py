@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, final
 
+from poop.types._numeric_compare import _NOT_NUMERIC, _num_value
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -66,17 +67,46 @@ class Boolean(Object, ABC):
     @abstractmethod
     def __str__(self) -> str: ...
 
-    def __lt__(self, other: Boolean) -> Boolean:
-        return to_boolean(bool(self) < bool(other))
+    # `bool` is an `int` subclass, so a Boolean orders/compares as 1/0 against
+    # the whole numeric tower — `true > Float(0.5)` is `true`, `true == Int(1)`
+    # is `true` — not just against other Booleans (which `bool(self) < bool(
+    # other)` collapsed every non-zero operand into). Foreign operands answer
+    # NotImplemented (ordering) / false-true (equality) for a faithful result.
+    def __lt__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented
+        return to_boolean(int(bool(self)) < v)
 
-    def __le__(self, other: Boolean) -> Boolean:
-        return to_boolean(bool(self) <= bool(other))
+    def __le__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented
+        return to_boolean(int(bool(self)) <= v)
 
-    def __gt__(self, other: Boolean) -> Boolean:
-        return to_boolean(bool(self) > bool(other))
+    def __gt__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented
+        return to_boolean(int(bool(self)) > v)
 
-    def __ge__(self, other: Boolean) -> Boolean:
-        return to_boolean(bool(self) >= bool(other))
+    def __ge__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented
+        return to_boolean(int(bool(self)) >= v)
+
+    def __eq__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return false
+        return to_boolean(int(bool(self)) == v)
+
+    def __ne__(self, other: object) -> Boolean:
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return true
+        return false if int(bool(self)) == v else true
 
     # Arithmetic — `bool` is an `int` subclass in CPython, so a Boolean acts
     # as 1/0 in numeric expressions (`True + 1 == 2`, `sum([True, True]) == 2`).

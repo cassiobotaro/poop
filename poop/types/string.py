@@ -404,16 +404,24 @@ class Str(_ValueEqMixin, Object):
 
         return Str(self._value % to_python(other))
 
-    def __lt__(self, other: Str) -> Boolean:
+    def __lt__(self, other: object) -> Boolean:
+        if not isinstance(other, Str):
+            return NotImplemented  # foreign operand -> faithful TypeError
         return to_boolean(self._value < other._value)
 
-    def __le__(self, other: Str) -> Boolean:
+    def __le__(self, other: object) -> Boolean:
+        if not isinstance(other, Str):
+            return NotImplemented
         return to_boolean(self._value <= other._value)
 
-    def __gt__(self, other: Str) -> Boolean:
+    def __gt__(self, other: object) -> Boolean:
+        if not isinstance(other, Str):
+            return NotImplemented
         return to_boolean(self._value > other._value)
 
-    def __ge__(self, other: Str) -> Boolean:
+    def __ge__(self, other: object) -> Boolean:
+        if not isinstance(other, Str):
+            return NotImplemented
         return to_boolean(self._value >= other._value)
 
     def __hash__(self) -> int:

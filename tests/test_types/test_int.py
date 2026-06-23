@@ -365,3 +365,26 @@ def test_pow_with_modulus() -> None:
     # 3-arg modular exponentiation (proposal 83).
     assert Int(5).pow(Int(3), Int(7)) == Int(6)
     assert Int(2).__pow__(Int(10), Int(1000)) == Int(24)
+
+
+def test_ordering_with_foreign_operand_raises_typeerror() -> None:
+    # Proposal 164: ordering a foreign operand must answer CPython's TypeError,
+    # not leak an AttributeError from a missing `other._value`.
+    with pytest.raises(TypeError):
+        _ = Int(2) < Str("x")
+    with pytest.raises(TypeError):
+        _ = Int(2) >= Tuple(Int(1))
+
+
+def test_equality_folds_boolean_as_int() -> None:
+    # Proposal 165: bool is an int subclass, so Int compares against Booleans.
+    assert Int(1) == true
+    assert Int(0) == false
+    assert (Int(1) != true) is false
+    assert Int(2) != true
+
+
+def test_ordering_with_boolean_operand() -> None:
+    # Proposal 165: `Int(0) < True` is True (0 < 1).
+    assert Int(0) < true
+    assert Int(2) > true

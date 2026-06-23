@@ -4,6 +4,7 @@ import asyncio as _asyncio
 import inspect as _inspect
 from typing import Any, ClassVar
 
+from poop.types._bridge import to_poop
 from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.error import Error
 from poop.types.float import Float
@@ -117,7 +118,11 @@ class AsyncIO:
             await AsyncIO.do(stream, lambda chunk: async_handle(chunk))
         """
         async for item in aiterable:
-            result = block(item)
+            # The async iterable is always an external/raw source (POOP bans
+            # authoring async generators), so its items arrive as raw Python
+            # objects — wrap each one so the user block sees POOP values, like
+            # the synchronous do/map/filter family.
+            result = block(to_poop(item))
             if hasattr(result, "__await__"):
                 await result
         return none

@@ -293,3 +293,28 @@ def test_arithmetic_with_foreign_type_raises() -> None:
 
     with pytest.raises(TypeError):
         _ = true + Str("x")
+
+
+def test_comparison_with_numeric_tower_folds_as_int() -> None:
+    # Proposal 165: bool is an int subclass — a Boolean orders/compares as 1/0
+    # against the whole numeric tower, not just against other Booleans.
+    from poop.types.float import Float
+    from poop.types.int import Int
+
+    assert true > Float(0.5)
+    assert (false > Float(0.5)) is false
+    assert true == Int(1)
+    assert false == Int(0)
+    assert (true == false) is false
+    assert true == true2
+    assert Int(1) == true  # reflected direction
+
+
+def test_comparison_with_foreign_type() -> None:
+    # Equality answers false/true for a foreign operand; ordering raises.
+    import pytest
+
+    assert (true == Str("x")) is false
+    assert true != Str("x")
+    with pytest.raises(TypeError):
+        _ = true < Str("x")

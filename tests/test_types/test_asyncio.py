@@ -191,13 +191,15 @@ def test_async_do_iterates_sync_block() -> None:
         for i in range(3):
             yield i
 
-    seen: list[int] = []
+    seen: list[object] = []
 
     async def caller() -> None:
         await AsyncIO.do(_gen(), lambda x: seen.append(x))
 
     AsyncIO.run(caller())
-    assert seen == [0, 1, 2]
+    # The block receives POOP-wrapped items, like the sync do/map/filter family.
+    assert all(isinstance(x, Int) for x in seen)
+    assert seen == [Int(0), Int(1), Int(2)]
 
 
 def test_async_do_awaits_block_returning_coroutine() -> None:
@@ -205,9 +207,9 @@ def test_async_do_awaits_block_returning_coroutine() -> None:
         for i in range(3):
             yield i
 
-    seen: list[int] = []
+    seen: list[object] = []
 
-    async def _record(x: int) -> None:
+    async def _record(x: object) -> None:
         await _stdlib_asyncio.sleep(0)
         seen.append(x)
 
@@ -215,7 +217,8 @@ def test_async_do_awaits_block_returning_coroutine() -> None:
         await AsyncIO.do(_gen(), _record)
 
     AsyncIO.run(caller())
-    assert seen == [0, 1, 2]
+    assert all(isinstance(x, Int) for x in seen)
+    assert seen == [Int(0), Int(1), Int(2)]
 
 
 def test_async_do_empty_iterable_returns_none() -> None:

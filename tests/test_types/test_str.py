@@ -780,3 +780,12 @@ def test_mod_percent_literal() -> None:
 def test_mod_type_mismatch_raises() -> None:
     with pytest.raises(TypeError):
         _ = Str("got %d") % Str("abc")
+
+
+def test_ordering_with_foreign_operand_raises_typeerror() -> None:
+    # Proposal 164: a foreign operand answers CPython's TypeError, not a
+    # leaking AttributeError from a missing `other._value`.
+    with pytest.raises(TypeError):
+        _ = Str("a") < Int(1)
+    with pytest.raises(TypeError):
+        _ = Str("a") >= List(Int(1))
