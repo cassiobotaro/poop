@@ -178,6 +178,58 @@ def test_fraction_rtruediv_via_dunder() -> None:
     assert Fraction(Int(1), Int(2)).__rtruediv__(Int(1)) == Fraction(Int(2), Int(1))
 
 
+def test_fraction_rfloordiv_int() -> None:
+    # `3 // Fraction(1, 2)` == 6, an Int (matches CPython).
+    result = Fraction(Int(1), Int(2)).__rfloordiv__(Int(3))
+    assert result == Int(6)
+    assert isinstance(result, Int)
+
+
+def test_fraction_rfloordiv_float() -> None:
+    result = Fraction(Int(1), Int(2)).__rfloordiv__(Float(3.0))
+    assert result == Float(6.0)
+    assert isinstance(result, Float)
+
+
+def test_fraction_rmod_int_returns_fraction() -> None:
+    # `7 % Fraction(2, 1)` == Fraction(1) in CPython.
+    result = Fraction(Int(2), Int(1)).__rmod__(Int(7))
+    assert result == Fraction(Int(1), Int(1))
+    assert isinstance(result, Fraction)
+
+
+def test_fraction_rmod_float() -> None:
+    result = Fraction(Int(2), Int(1)).__rmod__(Float(7.0))
+    assert result == Float(1.0)
+    assert isinstance(result, Float)
+
+
+def test_fraction_rpow_int_exact_returns_int() -> None:
+    # `4 ** Fraction(2, 1)` == 16, an Int (matches CPython).
+    result = Fraction(Int(2), Int(1)).__rpow__(Int(4))
+    assert result == Int(16)
+    assert isinstance(result, Int)
+
+
+def test_fraction_rpow_int_irrational_promotes_to_float() -> None:
+    result = Fraction(Int(1), Int(2)).__rpow__(Int(2))
+    assert isinstance(result, Float)
+
+
+def test_fraction_rpow_negative_base_returns_complex() -> None:
+    from poop.types.complex import Complex
+
+    result = Fraction(Int(1), Int(2)).__rpow__(Int(-1))
+    assert isinstance(result, Complex)
+
+
+def test_fraction_reflected_ops_reject_foreign() -> None:
+    f = Fraction(Int(1), Int(2))
+    assert f.__rfloordiv__("x") is NotImplemented
+    assert f.__rmod__("x") is NotImplemented
+    assert f.__rpow__("x") is NotImplemented
+
+
 def test_fraction_mod() -> None:
     a = Fraction(Int(7), Int(2))
     assert a % Fraction(Int(1), Int(1)) == Fraction(Int(1), Int(2))
