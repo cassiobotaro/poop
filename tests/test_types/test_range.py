@@ -1,6 +1,6 @@
 import pytest
 
-from poop.types.boolean import false, true
+from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
@@ -88,6 +88,38 @@ def test_is_none_inherited() -> None:
 
 def test_class_name() -> None:
     assert _range(1, 3).class_name() == Str("range")
+
+
+def test_equal_ranges_compare_equal() -> None:
+    # Two ranges with the same sequence must compare equal (mirroring
+    # Python's `range`), and the result must be a POOP Boolean — not a
+    # raw Python bool — so transparency holds.
+    result = _range(0, 5) == _range(0, 5)
+    assert isinstance(result, Boolean)
+    assert result is true
+
+
+def test_unequal_ranges_compare_unequal() -> None:
+    assert (_range(0, 5) == _range(0, 7)) is false
+    assert (_range(0, 5) != _range(0, 7)) is true
+
+
+def test_ranges_with_same_sequence_but_different_encoding_are_equal() -> None:
+    # Range(0, 4, 2) and Range(0, 5, 2) both yield [0, 2, 4]; POOP's
+    # inclusive upper bound is an internal detail and must not leak into
+    # equality.
+    a = Range(Int(0), Int(4), Int(2))
+    b = Range(Int(0), Int(5), Int(2))
+    assert (a == b) is true
+
+
+def test_range_not_equal_to_non_range() -> None:
+    assert (_range(0, 5) == Int(0)) is false
+
+
+def test_equal_ranges_hash_equal() -> None:
+    assert hash(_range(0, 5)) == hash(_range(0, 5))
+    assert {_range(0, 5): Int(1)}[_range(0, 5)] == Int(1)
 
 
 def test_all_returns_true_when_all_match() -> None:
