@@ -3,7 +3,7 @@ from __future__ import annotations
 import queue as _queue
 from typing import Any, ClassVar
 
-from poop.types._unwrap import _opt_timeout
+from poop.types._unwrap import _opt_int, _opt_timeout
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.float import Float
 from poop.types.int import Int
@@ -57,8 +57,8 @@ class _BaseQueue(Object):
 class Queue(_BaseQueue):
     """Wraps `queue.Queue` — FIFO queue with task tracking."""
 
-    def __init__(self, maxsize: Int | None = None) -> None:
-        m = 0 if maxsize is None else maxsize._value
+    def __init__(self, maxsize: Int | NoneClass | None = None) -> None:
+        m = _opt_int(maxsize, 0)
         super().__init__(_queue.Queue(m))
 
     def task_done(self) -> NoneClass:
@@ -73,8 +73,8 @@ class Queue(_BaseQueue):
 class LifoQueue(_BaseQueue):
     """Wraps `queue.LifoQueue` — LIFO (stack) queue."""
 
-    def __init__(self, maxsize: Int | None = None) -> None:
-        m = 0 if maxsize is None else maxsize._value
+    def __init__(self, maxsize: Int | NoneClass | None = None) -> None:
+        m = _opt_int(maxsize, 0)
         super().__init__(_queue.LifoQueue(m))
 
     def task_done(self) -> NoneClass:
@@ -89,8 +89,8 @@ class LifoQueue(_BaseQueue):
 class PriorityQueue(_BaseQueue):
     """Wraps `queue.PriorityQueue` — heap-based priority queue."""
 
-    def __init__(self, maxsize: Int | None = None) -> None:
-        m = 0 if maxsize is None else maxsize._value
+    def __init__(self, maxsize: Int | NoneClass | None = None) -> None:
+        m = _opt_int(maxsize, 0)
         super().__init__(_queue.PriorityQueue(m))
 
     def task_done(self) -> NoneClass:
