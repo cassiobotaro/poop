@@ -374,3 +374,48 @@ def test_dunder_xor_with_frozenset() -> None:
 def test_dunder_or_with_non_set_raises() -> None:
     with pytest.raises(TypeError):
         Set(Int(1)) | Int(2)
+
+
+def test_inplace_or_mutates_in_place() -> None:
+    # CPython: ``s |= other`` keeps ``s``'s identity, so aliases see the change.
+    s = Set(Int(1), Int(2))
+    alias = s
+    s |= Set(Int(3))
+    assert s is alias
+    assert alias == Set(Int(1), Int(2), Int(3))
+
+
+def test_inplace_and_mutates_in_place() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    alias = s
+    s &= Set(Int(2), Int(3), Int(4))
+    assert s is alias
+    assert alias == Set(Int(2), Int(3))
+
+
+def test_inplace_sub_mutates_in_place() -> None:
+    s = Set(Int(1), Int(2), Int(3))
+    alias = s
+    s -= Set(Int(2))
+    assert s is alias
+    assert alias == Set(Int(1), Int(3))
+
+
+def test_inplace_xor_mutates_in_place() -> None:
+    s = Set(Int(1), Int(2))
+    alias = s
+    s ^= Set(Int(2), Int(3))
+    assert s is alias
+    assert alias == Set(Int(1), Int(3))
+
+
+def test_inplace_or_with_frozenset() -> None:
+    s = Set(Int(1), Int(2))
+    s |= FrozenSet(Int(3))
+    assert s == Set(Int(1), Int(2), Int(3))
+
+
+def test_inplace_or_with_non_set_raises() -> None:
+    with pytest.raises(TypeError):
+        s = Set(Int(1))
+        s |= Int(2)
