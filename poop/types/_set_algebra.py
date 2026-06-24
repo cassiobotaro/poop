@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self
+
+if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
 
 
 def _other_set(other: object) -> Any:
@@ -50,3 +53,40 @@ class _SetAlgebraMixin:
         if raw is None:
             return NotImplemented
         return type(self)(*(self._data ^ raw))
+
+    # Comparison operators are subset/superset tests for sets in CPython
+    # (``<`` proper subset, ``<=`` subset, ``>`` proper superset, ``>=``
+    # superset), and ``set`` and ``frozenset`` mix freely. Without these,
+    # augmented comparison falls through to ``Object`` and raises ``TypeError``.
+    # Equality (``==``/``!=``) stays with ``_ValueEqMixin``.
+    def __le__(self, other: object) -> Boolean:
+        from poop.types.boolean import to_boolean
+
+        raw = _other_set(other)
+        if raw is None:
+            return NotImplemented
+        return to_boolean(self._data <= raw)
+
+    def __lt__(self, other: object) -> Boolean:
+        from poop.types.boolean import to_boolean
+
+        raw = _other_set(other)
+        if raw is None:
+            return NotImplemented
+        return to_boolean(self._data < raw)
+
+    def __ge__(self, other: object) -> Boolean:
+        from poop.types.boolean import to_boolean
+
+        raw = _other_set(other)
+        if raw is None:
+            return NotImplemented
+        return to_boolean(self._data >= raw)
+
+    def __gt__(self, other: object) -> Boolean:
+        from poop.types.boolean import to_boolean
+
+        raw = _other_set(other)
+        if raw is None:
+            return NotImplemented
+        return to_boolean(self._data > raw)
