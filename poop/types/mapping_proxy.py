@@ -97,6 +97,19 @@ class MappingProxy(_IterableMixin, Object):
         merged._data = {**self._dict._data, **other_data}
         return merged
 
+    def __ror__(self, other: Dict | MappingProxy) -> Dict:
+        # CPython: ``dict | mappingproxy`` yields a ``dict`` ({**left, **right}).
+        # ``Dict.__or__`` returns NotImplemented for a non-Dict right operand,
+        # so Python falls back to this reflected form with ``other`` on the left.
+        from poop.types.dict import Dict
+
+        other_data = (
+            other._dict._data if isinstance(other, MappingProxy) else other._data
+        )
+        merged = Dict()
+        merged._data = {**other_data, **self._dict._data}
+        return merged
+
     def __str__(self) -> str:
         return f"mappingproxy({self._dict})"
 

@@ -113,6 +113,21 @@ def test_or_returns_dict() -> None:
     assert merged.at(Str("c")) == Int(3)
 
 
+def test_ror_dict_returns_dict() -> None:
+    # CPython: ``dict | mappingproxy`` yields a dict ({**left, **right}).
+    # Dict.__or__ returns NotImplemented for a proxy, so __ror__ handles it.
+    left = Dict()
+    left.at_put(Str("a"), Int(99))
+    left.at_put(Str("z"), Int(0))
+    mp = MappingProxy(_make())  # {"a": 1, "b": 2}
+    merged = left | mp
+    assert isinstance(merged, Dict)
+    # Right operand (the proxy) wins on conflicting keys.
+    assert merged.at(Str("a")) == Int(1)
+    assert merged.at(Str("z")) == Int(0)
+    assert merged.at(Str("b")) == Int(2)
+
+
 def test_str_repr() -> None:
     d = Dict()
     d.at_put(Str("a"), Int(1))
