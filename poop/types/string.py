@@ -223,11 +223,13 @@ class Str(_ValueEqMixin, Object):
     ) -> Boolean:
         # CPython accepts a tuple of prefixes; in POOP this is the only
         # message-shaped substitute for the forbidden `s.startswith("a")
-        # or s.startswith("b")`.
-        needle: _str | tuple[_str, ...] = (
+        # or s.startswith("b")`. Unwrap each element to its underlying value
+        # (not str(p)) so a non-Str member reaches str.startswith and raises
+        # the faithful TypeError instead of being silently stringified.
+        needle: _str | tuple[Any, ...] = (
             prefix._value
             if isinstance(prefix, Str)
-            else tuple(str(p) for p in prefix._items)
+            else tuple(getattr(p, "_value", p) for p in prefix._items)
         )
         return to_boolean(
             self._value.startswith(needle, _unwrap(start, None), _unwrap(end, None))
@@ -239,10 +241,10 @@ class Str(_ValueEqMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        needle: _str | tuple[_str, ...] = (
+        needle: _str | tuple[Any, ...] = (
             suffix._value
             if isinstance(suffix, Str)
-            else tuple(str(p) for p in suffix._items)
+            else tuple(getattr(p, "_value", p) for p in suffix._items)
         )
         return to_boolean(
             self._value.endswith(needle, _unwrap(start, None), _unwrap(end, None))
