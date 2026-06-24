@@ -29,6 +29,22 @@ def test_compile_raises_validation_error() -> None:
         NoExecValidator().validate(tree)
 
 
+def test_dunder_import_raises_validation_error() -> None:
+    # __import__('os') is the builtin form of `import` (banned by
+    # NoImportValidator) and bypasses POOP's injected, infected stdlib
+    # namespaces by returning the raw uninfected module, so it must be
+    # rejected like the other dynamic-loading builtins.
+    tree = ast.parse("__import__('os')")
+    with pytest.raises(ValidationError, match="__import__()"):
+        NoExecValidator().validate(tree)
+
+
+def test_dunder_import_as_argument_raises_validation_error() -> None:
+    tree = ast.parse("xs.map(__import__)")
+    with pytest.raises(ValidationError, match="__import__"):
+        NoExecValidator().validate(tree)
+
+
 def test_exec_carries_line_number() -> None:
     tree = ast.parse("x = 1\nexec('x = 2')")
     with pytest.raises(ValidationError) as exc_info:
