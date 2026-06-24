@@ -1,18 +1,16 @@
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from poop.transformers._collection import CollectionRewriter
+from poop.transformers._collection import CollectionRewriter, make_iterable_from
 from poop.transformers.base import BaseTransformer
 from poop.types.frozen_set import FrozenSet
 
-if TYPE_CHECKING:
-    from poop.types.object import Object
-
-
-def _poop_frozenset_from(iterable: Iterable[Object] | None = None) -> FrozenSet:
-    if iterable is not None:
-        return FrozenSet(*iterable)
-    return FrozenSet()
+# Share the collection conversion machinery so frozenset(x) rejects a
+# non-iterable with the same clean "cannot convert Int to FrozenSet"
+# message as set/list/tuple, instead of leaking Python's raw type name
+# and the internal "argument after * must be an iterable" wording.
+# frozenset is immutable, so (like tuple) a FrozenSet argument is
+# returned unchanged rather than copied.
+_poop_frozenset_from = make_iterable_from(FrozenSet, "FrozenSet")
 
 
 class _FrozenSetRewriter(CollectionRewriter):
