@@ -53,7 +53,9 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
             py = Slice(start_or_slice, stop, step)._py_slice()
         return Tuple(*self._items[py])
 
-    def __add__(self, other: Tuple) -> Tuple:
+    def __add__(self, other: object) -> Tuple:
+        if not isinstance(other, Tuple):
+            return NotImplemented  # foreign operand -> faithful TypeError
         return Tuple(*self._items + other._items)
 
     def __mul__(self, other: Int) -> Tuple:
