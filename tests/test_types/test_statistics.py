@@ -32,6 +32,32 @@ def test_median_over_fractions_answers_fraction() -> None:
     assert isinstance(Statistics.median(data), Fraction)
 
 
+@pytest.mark.parametrize("spread", [Statistics.variance, Statistics.pvariance])
+def test_exact_spread_over_fractions_answers_fraction(spread) -> None:  # type: ignore[no-untyped-def]
+    # variance/pvariance stay exact for rational input. Previously they
+    # leaked a raw fractions.Fraction through a POOP Float (which left
+    # _value holding a Fraction, so e.g. str(result) answered "1/27").
+    from poop.types.fractions import Fraction
+
+    data = List(Fraction(Str("1/3")), Fraction(Str("1/3")), Fraction(Str("2/3")))
+    result = spread(data)
+    assert isinstance(result, Fraction)
+    assert not hasattr(result, "_value")
+
+
+@pytest.mark.parametrize("spread", [Statistics.stdev, Statistics.pstdev])
+def test_sqrt_spread_over_fractions_answers_float(spread) -> None:  # type: ignore[no-untyped-def]
+    # stdev/pstdev take a square root, so CPython answers a plain float
+    # for rational input — POOP wraps it as a real Float (genuine float
+    # in _value), never a Fraction-backed one.
+    from poop.types.fractions import Fraction
+
+    data = List(Fraction(Str("1/3")), Fraction(Str("1/3")), Fraction(Str("2/3")))
+    result = spread(data)
+    assert isinstance(result, Float)
+    assert isinstance(result._value, float)
+
+
 # Decimal data — proposal 130
 
 

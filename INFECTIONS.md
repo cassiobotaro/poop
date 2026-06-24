@@ -1768,8 +1768,8 @@ POOP `Int` / `Float` don't return `NotImplemented` for non-POOP operands, so ref
 | `statistics.median_low(data)` / `.median_high(data)` | element | |
 | `statistics.median_grouped(data, interval=none)` | `Float` | |
 | `statistics.mode(data)` / `.multimode(data)` | element / `List` | works on `Str` / `Boolean` / numeric data |
-| `statistics.pstdev(data, mu=none)` / `.pvariance(data, mu=none)` | `Float` | population spread |
-| `statistics.stdev(data, xbar=none)` / `.variance(data, xbar=none)` | `Float` | sample spread |
+| `statistics.pstdev(data, mu=none)` / `.pvariance(data, mu=none)` | `Float` / `Decimal` / `Fraction` | population spread; `pvariance` stays exact (`Decimal` / `Fraction`) for exact input, `pstdev` takes a root so it answers `Float` |
+| `statistics.stdev(data, xbar=none)` / `.variance(data, xbar=none)` | `Float` / `Decimal` / `Fraction` | sample spread; `variance` stays exact for exact input, `stdev` takes a root so it answers `Float` |
 | `statistics.quantiles(data, n=none, method=none)` | `List[Float]` | default `n=4`, `method="exclusive"` |
 | `statistics.correlation(x, y, method=none)` | `Float` | `method` is `"linear"` (default) or `"ranked"` |
 | `statistics.covariance(x, y)` | `Float` | |
