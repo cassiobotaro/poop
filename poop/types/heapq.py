@@ -19,7 +19,11 @@ class HeapMerge:
         self._gen = gen
 
     def __iter__(self) -> Iterator[Any]:
-        return self._gen
+        # Yield through a generator this class owns rather than handing
+        # back the raw stdlib `heapq.merge` iterator — returning `self._gen`
+        # leaks a non-POOP `builtins.generator` to user code. Mirrors
+        # `glob.GlobIter`, which wraps its raw generator the same way.
+        yield from self._gen
 
     def to_list(self) -> List:
         return List(*self._gen)

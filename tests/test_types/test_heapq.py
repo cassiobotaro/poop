@@ -108,5 +108,21 @@ def test_merge_reverse() -> None:
     assert result == List(Int(8), Int(7), Int(5), Int(4), Int(2), Int(1))
 
 
+def test_merge_iter_does_not_leak_raw_generator() -> None:
+    # __iter__ must not hand back the raw stdlib `heapq.merge` generator —
+    # iterating a POOP iterator should go through a generator the wrapper
+    # owns, never exposing a non-POOP builtins.generator object.
+    merged = Heapq.merge([Int(1), Int(4)], [Int(2)])
+    iterator = iter(merged)
+    assert iterator is not merged._gen
+
+
+def test_merge_iter_yields_wrapped_elements() -> None:
+    merged = Heapq.merge([Int(1), Int(4)], [Int(2)])
+    elements = list(iter(merged))
+    assert all(isinstance(e, Int) for e in elements)
+    assert elements == [Int(1), Int(2), Int(4)]
+
+
 def test_heapq_reachable_via_interpreter() -> None:
     Interpreter().run_source("heapq.nlargest(2, [3, 1, 4]).len().print()")
