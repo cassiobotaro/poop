@@ -117,6 +117,10 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
     # Arithmetic -----------------------------------------------------
 
     def _combine(self, other: Any, op: Any) -> Any:
+        # ``bool`` is an ``int`` subclass in CPython, so a Boolean folds in as
+        # 1/0 across the numeric tower (``Fraction(1, 2) + True`` → ``3/2``).
+        if isinstance(other, Boolean):
+            other = Int(1 if other else 0)
         if isinstance(other, Fraction):
             return Fraction._from_impl(op(self._impl, other._impl))
         if isinstance(other, Int):
@@ -150,6 +154,8 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
         return self._combine(other, lambda a, b: b / a)
 
     def __floordiv__(self, other: Any) -> Any:
+        if isinstance(other, Boolean):
+            other = Int(1 if other else 0)
         if isinstance(other, Fraction):
             return Int(self._impl // other._impl)
         if isinstance(other, Int):
@@ -174,6 +180,8 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
         return NotImplemented
 
     def __pow__(self, other: Any) -> Any:
+        if isinstance(other, Boolean):
+            other = Int(1 if other else 0)
         if isinstance(other, Int):
             result = self._impl**other._value
             if isinstance(result, _fractions.Fraction):
@@ -207,6 +215,11 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
     # Comparison -----------------------------------------------------
 
     def _cmp(self, other: Any, op: Any) -> Any:
+        # ``bool`` is an ``int`` subclass in CPython, so a Boolean compares as
+        # 1/0 (``Fraction(1, 2) < True`` is ``True``, ``Fraction(1) == True``
+        # is ``True``).
+        if isinstance(other, Boolean):
+            other = Int(1 if other else 0)
         if isinstance(other, Fraction):
             return to_boolean(op(self._impl, other._impl))
         if isinstance(other, Int):

@@ -304,6 +304,20 @@ def test_fraction_eq_foreign_is_false() -> None:
     assert (Fraction(Int(2)) != Str("x")) is true
 
 
+def test_fraction_bool_folds_as_one_or_zero() -> None:
+    # ``bool`` is an ``int`` subclass in CPython, so a Boolean folds in as 1/0
+    # across the numeric tower for comparison and arithmetic alike.
+    assert (Fraction(Int(1)) == true) is true
+    assert (Fraction(Int(1)) != true) is false
+    assert (Fraction(Int(1), Int(2)) < true) is true
+    assert (Fraction(Int(3), Int(2)) < true) is false
+    assert (Fraction(Int(1), Int(2)) + true) == Fraction(Int(3), Int(2))
+    assert (Fraction(Int(1)) * false) == Fraction(Int(0))
+    assert (Fraction(Int(3), Int(2)) // true) == Int(1)
+    assert (Fraction(Int(3), Int(2)) % true) == Fraction(Int(1), Int(2))
+    assert (Fraction(Int(2)) ** true) == Fraction(Int(2))
+
+
 # --- Namespace ---
 
 
