@@ -25,6 +25,28 @@ def _to_python_num(value: Any) -> Any:
     return value
 
 
+def _wrap_result(result: Any) -> Any:
+    """Re-wrap the raw Python result of a reflected operation.
+
+    Reflected ``int``/``float`` ⊘ ``Fraction`` operations can answer any
+    member of the numeric tower (``int``, ``float``, ``complex``, or
+    ``Fraction``) depending on the operands — e.g. ``int % Fraction`` →
+    ``Fraction``, ``2 ** Fraction(1, 2)`` → ``float``, ``(-1) **
+    Fraction(1, 2)`` → ``complex``. Map each back to its POOP wrapper.
+    """
+    from poop.types.complex import Complex
+
+    if isinstance(result, _fractions.Fraction):
+        return Fraction._from_impl(result)
+    if isinstance(result, bool):
+        return Int(int(result))
+    if isinstance(result, int):
+        return Int(result)
+    if isinstance(result, complex):
+        return Complex(result)
+    return Float(result)
+
+
 class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
     """Wraps Python's `fractions.Fraction` — exact rational arithmetic.
 
@@ -136,8 +158,20 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
             return Float(float(self._impl) // other._value)
         return NotImplemented
 
+    def __rfloordiv__(self, other: Any) -> Any:
+        # ``int // Fraction`` → int, ``float // Fraction`` → float.
+        if isinstance(other, Int | Float):
+            return _wrap_result(_to_python_num(other) // self._impl)
+        return NotImplemented
+
     def __mod__(self, other: Any) -> Any:
         return self._combine(other, lambda a, b: a % b)
+
+    def __rmod__(self, other: Any) -> Any:
+        # ``int % Fraction`` → Fraction, ``float % Fraction`` → float.
+        if isinstance(other, Int | Float):
+            return _wrap_result(_to_python_num(other) % self._impl)
+        return NotImplemented
 
     def __pow__(self, other: Any) -> Any:
         if isinstance(other, Int):
@@ -152,6 +186,13 @@ class Fraction(_ImplWrapperMixin, _ValueEqMixin, Object):
             if isinstance(result, _fractions.Fraction):
                 return Fraction._from_impl(result)
             return Float(result)
+        return NotImplemented
+
+    def __rpow__(self, other: Any) -> Any:
+        # ``int ** Fraction`` / ``float ** Fraction`` answers int, float,
+        # Fraction, or complex depending on the operands.
+        if isinstance(other, Int | Float):
+            return _wrap_result(_to_python_num(other) ** self._impl)
         return NotImplemented
 
     def __neg__(self) -> Fraction:

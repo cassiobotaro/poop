@@ -379,3 +379,20 @@ def test_setdefault_without_default_uses_none() -> None:
     # An explicit default still wins, and a present key is untouched.
     assert d.setdefault(Str("x"), Int(9)) is none
     assert d.setdefault(Str("y"), Int(9)) == Int(9)
+
+
+def test_eq_with_mapping_proxy_is_symmetric() -> None:
+    # CPython: ``dict == mappingproxy`` is True by value in both directions.
+    # Returning ``false`` from the value-eq mixin suppressed the proxy's
+    # reflected __eq__, leaving dict == proxy wrongly False.
+    from poop.types.mapping_proxy import MappingProxy
+
+    d = _dict_with([(1, 10), (2, 20)])
+    mp = MappingProxy(_dict_with([(1, 10), (2, 20)]))
+    assert (d == mp) is true
+    assert (mp == d) is true
+    assert (d != mp) is false
+
+    other = MappingProxy(_dict_with([(1, 99)]))
+    assert (d == other) is false
+    assert (d != other) is true

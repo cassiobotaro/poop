@@ -134,6 +134,12 @@ class Complex(Object):
     def __hash__(self) -> int:
         return hash(self._value)
 
+    def __bool__(self) -> bool:
+        # `bool(0j)` is False in CPython; without this, Complex would
+        # inherit Object's default (always-truthy) and answer True for
+        # zero, corrupting `not_()`, `assert_()`, and conditionals.
+        return self._value != 0
+
     def __str__(self) -> str:
         return repr(self._value)
 

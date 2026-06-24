@@ -365,6 +365,20 @@ def test_join() -> None:
     assert sep.join(parts) == ByteArray(bytearray(b"a-b"))
 
 
+def test_join_accepts_other_bytes_like() -> None:
+    sep = ByteArray(bytearray(b"-"))
+    parts = List(Bytes(b"a"), ByteArray(bytearray(b"b")))
+    assert sep.join(parts) == ByteArray(bytearray(b"a-b"))
+
+
+def test_join_non_bytes_like_raises() -> None:
+    # CPython raises TypeError rather than silently dropping the int element.
+    sep = ByteArray(bytearray(b"-"))
+    parts = List(ByteArray(bytearray(b"a")), Int(5))
+    with pytest.raises(TypeError, match="bytes-like object"):
+        sep.join(parts)
+
+
 def test_ljust() -> None:
     assert ByteArray(bytearray(b"hi")).ljust(Int(5)) == ByteArray(bytearray(b"hi   "))
 

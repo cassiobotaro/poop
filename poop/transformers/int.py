@@ -9,6 +9,11 @@ from poop.types.string import Str
 
 
 def _poop_int_from(value: object = None, base: object = None) -> Int:
+    if base is not None and not isinstance(value, Str):
+        # Mirror CPython: a base is meaningful only when parsing a string.
+        # int(10, 2) / int(3.5, 2) / int(True, 2) all raise TypeError there;
+        # silently dropping the base would diverge from the language.
+        raise TypeError("int() can't convert non-string with explicit base")
     if value is None:
         return Int(0)
     if isinstance(value, Int):

@@ -104,6 +104,20 @@ def test_eq_with_non_float_returns_false() -> None:
     assert Float(1.5).__eq__(1.5) is false
 
 
+def test_eq_with_complex_real_match() -> None:
+    # CPython: `2.0 == (2+0j)` is True — Float joins the numeric tower.
+    assert Float(2.0) == Complex(2 + 0j)
+
+
+def test_eq_with_complex_imaginary_part_differs() -> None:
+    assert (Float(2.0) == Complex(2 + 1j)) is false
+    assert (Float(2.0) != Complex(2 + 1j)) is true
+
+
+def test_ne_with_complex_real_match() -> None:
+    assert (Float(2.0) != Complex(2 + 0j)) is false
+
+
 def test_ne_returns_boolean() -> None:
     assert Float(1.5).__ne__(Float(2.5)) is true
     assert Float(1.5).__ne__(Float(1.5)) is false

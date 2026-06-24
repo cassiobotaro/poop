@@ -52,6 +52,24 @@ class Dict(_ValueEqMixin, Object):
     def includes(self, key: Object) -> Boolean:
         return to_boolean(key in self._data)
 
+    def __eq__(self, other: object) -> Boolean:
+        # CPython: ``dict == mappingproxy`` is True by value. A MappingProxy is
+        # not a Dict, so _ValueEqMixin would return ``false`` and (being a real
+        # value, not NotImplemented) suppress MappingProxy's reflected __eq__.
+        # Unwrap the proxy here so the comparison stays symmetric.
+        from poop.types.mapping_proxy import MappingProxy
+
+        if isinstance(other, MappingProxy):
+            return to_boolean(self._data == other._dict._data)
+        return super().__eq__(other)
+
+    def __ne__(self, other: object) -> Boolean:
+        from poop.types.mapping_proxy import MappingProxy
+
+        if isinstance(other, MappingProxy):
+            return to_boolean(self._data != other._dict._data)
+        return super().__ne__(other)
+
     @classmethod
     def fromkeys(
         cls, keys: Iterable[Object], value: Object | NoneClass | None = None

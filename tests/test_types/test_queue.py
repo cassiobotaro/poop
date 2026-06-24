@@ -1,7 +1,7 @@
 import pytest
 
 from poop.interpreter import Interpreter
-from poop.types.boolean import true
+from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.queue import (
@@ -21,6 +21,14 @@ def test_queue_constructs_default() -> None:
 
 def test_queue_constructs_with_maxsize() -> None:
     assert isinstance(Queue(Int(5)), Queue)
+
+
+def test_queue_treats_poop_none_maxsize_as_unbounded() -> None:
+    # POOP `none` for the optional maxsize must behave like a missing arg.
+    q = Queue(none)
+    assert q.full() is false
+    assert isinstance(LifoQueue(none), LifoQueue)
+    assert isinstance(PriorityQueue(none), PriorityQueue)
 
 
 def test_queue_put_get_round_trip() -> None:

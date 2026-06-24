@@ -195,8 +195,8 @@ class Deque(_ImplWrapperMixin, _ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return Deque._from_impl(self._impl * n._value)
 
-    def rotate(self, n: Int | None = None) -> NoneClass:
-        self._impl.rotate(1 if n is None else n._value)
+    def rotate(self, n: Int | NoneClass | None = None) -> NoneClass:
+        self._impl.rotate(_opt_int(n, 1))
         return none
 
     def clear(self) -> NoneClass:

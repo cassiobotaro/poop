@@ -14,9 +14,20 @@ _memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
 class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
+    # CPython compares memoryview equal by value to bytes/bytearray (and
+    # other memoryviews): `memoryview(b"abc") == b"abc"` is True. Share the
+    # "bytes" group so the same holds in POOP.
+    _eq_group: ClassVar[str] = "bytes"
 
     def __init__(self, value: _memoryview | MemoryView) -> None:
         self._value = value._value if isinstance(value, MemoryView) else value
+
+    def __hash__(self) -> int:
+        # Mirror CPython: a memoryview is hashable iff it is read-only and of
+        # byte format, and then hashes equal to the underlying bytes. Keeping
+        # this in sync with the "bytes" eq group preserves the eq/hash
+        # invariant against Bytes.
+        return hash(self._value)
 
     def len(self) -> Int:
         return Int(len(self._value))

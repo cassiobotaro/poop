@@ -136,6 +136,21 @@ def test_factory_from_unsupported_type_raises() -> None:
         _poop_memoryview_from(Int(5))
 
 
+def test_eq_with_bytes_compares_by_value() -> None:
+    # CPython: memoryview(b"abc") == b"abc" is True.
+    assert _mv(b"abc") == Bytes(b"abc")
+    assert (_mv(b"abc") == Bytes(b"xyz")) is false
+
+
+def test_eq_with_bytearray_compares_by_value() -> None:
+    assert _mv(b"abc") == ByteArray(bytearray(b"abc"))
+
+
+def test_hash_matches_equal_bytes() -> None:
+    # eq/hash invariant: equal-by-value across the "bytes" group must hash equal.
+    assert hash(_mv(b"abc")) == hash(Bytes(b"abc"))
+
+
 def test_eq_with_non_memory_view_returns_false() -> None:
     assert _mv(b"abc").__eq__(Int(1)) is false
 

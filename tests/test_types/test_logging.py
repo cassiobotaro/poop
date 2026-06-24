@@ -248,6 +248,23 @@ def test_logger_add_and_remove_handler() -> None:
     assert logger.removeHandler(h) is none
 
 
+def test_handlers_wraps_raw_stdlib_handler() -> None:
+    # A handler attached at the stdlib level (as basicConfig/dictConfig
+    # would) must surface through handlers() as a POOP Handler, never a
+    # raw _logging.Handler.
+    logger = Logging.getLogger(Str("poop.test.rawhandlers"))
+    raw = _stdlib_logging.StreamHandler()
+    try:
+        logger._impl.addHandler(raw)
+        handlers = logger.handlers()
+        assert isinstance(handlers, List)
+        assert all(isinstance(h, Handler) for h in handlers._items)
+        # Identity preserved: removeHandler still matches the adopted obj.
+        assert logger.removeHandler(raw) is none
+    finally:
+        logger._impl.handlers.clear()
+
+
 # --- Formatter ---
 
 
@@ -506,6 +523,26 @@ def test_get_level_names_mapping_includes_INFO() -> None:
 def test_get_handler_names_returns_list() -> None:
     out = Logging.getHandlerNames()
     assert isinstance(out, List)
+
+
+def test_get_handler_by_name_wraps_raw_handler() -> None:
+    # A handler registered by name at the stdlib level (e.g. via
+    # dictConfig) must come back as a POOP Handler, not a raw
+    # _logging.Handler.
+    raw = _stdlib_logging.StreamHandler()
+    raw.set_name("poop.test.namedhandler")
+    try:
+        result = Logging.getHandlerByName(Str("poop.test.namedhandler"))
+        assert isinstance(result, Handler)
+        assert isinstance(result, _stdlib_logging.Handler)
+    finally:
+        # `set_name` registered the handler in logging's private weak
+        # registry; drop the reference so the name is reusable.
+        getattr(_stdlib_logging, "_handlers").pop("poop.test.namedhandler", None)  # noqa: B009
+
+
+def test_get_handler_by_name_missing_returns_none() -> None:
+    assert Logging.getHandlerByName(Str("poop.test.no.such.handler")) is none
 
 
 # --- Style classes / Filterer ---

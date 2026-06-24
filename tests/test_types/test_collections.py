@@ -248,6 +248,12 @@ def test_deque_rotate_negative_rotates_left() -> None:
     assert d.at(Int(0)) == Int(2)
 
 
+def test_deque_rotate_treats_poop_none_as_default() -> None:
+    d = Deque(List(Int(1), Int(2), Int(3)))
+    assert d.rotate(none) is none
+    assert d.at(Int(0)) == Int(3)
+
+
 def test_deque_clear_empties() -> None:
     d = Deque(List(Int(1)))
     assert d.clear() is none

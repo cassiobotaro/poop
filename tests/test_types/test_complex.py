@@ -206,6 +206,29 @@ def test_repr_equals_str() -> None:
     assert repr(c) == str(c)
 
 
+def test_bool_zero_is_falsy() -> None:
+    # `bool(0j)` is False in CPython — Complex must not inherit Object's
+    # always-truthy default.
+    assert bool(Complex(0j)) is False
+    assert bool(Complex(complex(0, 0))) is False
+
+
+def test_bool_nonzero_is_truthy() -> None:
+    assert bool(Complex(1j)) is True
+    assert bool(Complex(3 + 0j)) is True
+    assert bool(Complex(0 + 4j)) is True
+
+
+def test_not_on_zero_complex_is_true() -> None:
+    assert Complex(0j).not_() is true
+    assert Complex(1j).not_() is false
+
+
+def test_assert_on_zero_complex_raises() -> None:
+    with pytest.raises(AssertionError):
+        Complex(0j).assert_()
+
+
 def test_transformer_j_literal() -> None:
     tree = parse("c = 2j")
     tree = ComplexTransformer().transform(tree)
