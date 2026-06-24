@@ -204,6 +204,18 @@ def test_endswith_tuple_of_suffixes() -> None:
     assert Str("abc").endswith(Tuple(Str("x"), Str("z"))) is false
 
 
+def test_startswith_tuple_with_non_str_raises() -> None:
+    # CPython raises "tuple for startswith must only contain str"; POOP must
+    # not silently stringify the Int member.
+    with pytest.raises(TypeError):
+        Str("abc").startswith(Tuple(Str("z"), Int(5)))
+
+
+def test_endswith_tuple_with_non_str_raises() -> None:
+    with pytest.raises(TypeError):
+        Str("abc").endswith(Tuple(Str("z"), Int(5)))
+
+
 # str.format template method — proposal 151
 
 
