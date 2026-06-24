@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _unwrap
@@ -239,7 +239,12 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return to_boolean(self._value.isupper())
 
     def join(self, parts: List) -> ByteArray:
-        pieces: list[_bytearray] = [p._value for p in parts if isinstance(p, ByteArray)]  # type: ignore[unresolved-attribute]
+        # Mirror CPython: unwrap each element to its underlying value and let
+        # bytearray.join validate. Bytes-like POOP wrappers (Bytes/ByteArray/
+        # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
+        # bytearray.join unwrapped and raises the faithful TypeError instead
+        # of being silently dropped.
+        pieces: list[Any] = [getattr(p, "_value", p) for p in parts]
         return ByteArray(self._value.join(pieces))
 
     def ljust(

@@ -1,3 +1,5 @@
+import pytest
+
 from poop.parser import parse
 from poop.transformers.bytes import BytesTransformer
 from poop.types.boolean import false, true
@@ -256,6 +258,21 @@ def test_isupper_false() -> None:
 def test_join() -> None:
     parts = List(Bytes(b"a"), Bytes(b"b"), Bytes(b"c"))
     assert Bytes(b"-").join(parts) == Bytes(b"a-b-c")
+
+
+def test_join_accepts_other_bytes_like() -> None:
+    from poop.types.byte_array import ByteArray
+    from poop.types.memory_view import MemoryView
+
+    parts = List(Bytes(b"a"), ByteArray(bytearray(b"b")), MemoryView(memoryview(b"c")))
+    assert Bytes(b"-").join(parts) == Bytes(b"a-b-c")
+
+
+def test_join_non_bytes_like_raises() -> None:
+    # CPython raises TypeError rather than silently dropping the str element.
+    parts = List(Bytes(b"a"), Str("x"), Bytes(b"b"))
+    with pytest.raises(TypeError, match="bytes-like object"):
+        Bytes(b"-").join(parts)
 
 
 def test_ljust_no_fill() -> None:

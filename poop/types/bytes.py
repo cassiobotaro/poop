@@ -1,7 +1,7 @@
 import base64 as _base64
 import hashlib as _hashlib
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _is_absent, _unwrap
@@ -210,7 +210,12 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return to_boolean(self._value.isupper())
 
     def join(self, parts: List) -> Bytes:
-        pieces: list[_bytes] = [p._value for p in parts if isinstance(p, Bytes)]  # type: ignore[unresolved-attribute]
+        # Mirror CPython: unwrap each element to its underlying value and let
+        # bytes.join validate. Bytes-like POOP wrappers (Bytes/ByteArray/
+        # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
+        # bytes.join unwrapped and raises the faithful TypeError instead of
+        # being silently dropped.
+        pieces: list[Any] = [getattr(p, "_value", p) for p in parts]
         return Bytes(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: Bytes | NoneClass | None = None) -> Bytes:
