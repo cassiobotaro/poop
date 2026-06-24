@@ -54,7 +54,9 @@ class List(_ValueEqMixin, _IterableMixin, Object):
             py = Slice(start_or_slice, stop, step)._py_slice()
         return List(*self._items[py])
 
-    def __add__(self, other: List) -> List:
+    def __add__(self, other: object) -> List:
+        if not isinstance(other, List):
+            return NotImplemented  # foreign operand -> faithful TypeError
         return List(*self._items + other._items)
 
     def __lt__(self, other: object) -> Boolean:

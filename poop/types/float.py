@@ -128,14 +128,23 @@ class Float(_ValueEqMixin, Object):
     def pow(self, other: Float) -> Float | Complex:
         return self.__pow__(other)
 
-    def __divmod__(self, other: Float) -> Tuple:
+    def __divmod__(self, other: object) -> Tuple:
         from poop.types.tuple import Tuple
 
-        q, r = divmod(self._value, other._value)
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
+        q, r = divmod(self._value, v)
         return Tuple(Float(q), Float(r))
 
-    def divmod(self, other: Float) -> Tuple:
-        return self.__divmod__(other)
+    def divmod(self, other: object) -> Tuple:
+        result = self.__divmod__(other)
+        if result is NotImplemented:
+            raise TypeError(
+                f"unsupported operand type(s) for divmod(): "
+                f"'float' and '{type(other).__name__}'"
+            )
+        return result
 
     def __ceil__(self) -> Int:
         from poop.types.int import Int

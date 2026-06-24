@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from poop.types._numeric_compare import _NOT_NUMERIC, _num_value
 from poop.types._unwrap import _unwrap
@@ -16,6 +16,26 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 _int = int  # alias to avoid shadowing by Int.int() method
+
+_NOT_INTEGRAL: Any = object()
+
+
+def _integral_value(other: object) -> Any:
+    """Raw int behind an Int/Boolean operand, else the ``_NOT_INTEGRAL`` sentinel.
+
+    Bitwise and shift operators accept only integral operands: ``Int`` and
+    ``Boolean`` (``bool`` is an ``int`` subclass, so ``5 & True == 1``). A
+    ``Float`` or a foreign operand yields the sentinel, so the caller returns
+    ``NotImplemented`` and CPython raises its faithful ``TypeError`` instead of
+    leaking an ``AttributeError`` from a missing ``other._value``.
+    """
+    from poop.types.boolean import Boolean
+
+    if isinstance(other, Int):
+        return other._value
+    if isinstance(other, Boolean):
+        return 1 if other else 0
+    return _NOT_INTEGRAL
 
 
 class Int(_ValueEqMixin, Object):
@@ -171,29 +191,56 @@ class Int(_ValueEqMixin, Object):
     ) -> Int | Float | Complex:
         return self.__pow__(other, modulus)
 
-    def __divmod__(self, other: Int) -> Tuple:
+    def __divmod__(self, other: object) -> Tuple:
+        from poop.types.float import Float
         from poop.types.tuple import Tuple
 
-        q, r = divmod(self._value, other._value)
+        v = _num_value(other)
+        if v is _NOT_NUMERIC:
+            return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
+        q, r = divmod(self._value, v)
+        if isinstance(other, Float):
+            return Tuple(Float(q), Float(r))
         return Tuple(Int(q), Int(r))
 
-    def divmod(self, other: Int) -> Tuple:
-        return self.__divmod__(other)
+    def divmod(self, other: object) -> Tuple:
+        result = self.__divmod__(other)
+        if result is NotImplemented:
+            raise TypeError(
+                f"unsupported operand type(s) for divmod(): "
+                f"'int' and '{type(other).__name__}'"
+            )
+        return result
 
-    def __lshift__(self, other: Int) -> Int:
-        return Int(self._value << other._value)
+    def __lshift__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(self._value << v)
 
-    def __rshift__(self, other: Int) -> Int:
-        return Int(self._value >> other._value)
+    def __rshift__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(self._value >> v)
 
-    def __and__(self, other: Int) -> Int:
-        return Int(self._value & other._value)
+    def __and__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(self._value & v)
 
-    def __or__(self, other: Int) -> Int:
-        return Int(self._value | other._value)
+    def __or__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(self._value | v)
 
-    def __xor__(self, other: Int) -> Int:
-        return Int(self._value ^ other._value)
+    def __xor__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(self._value ^ v)
 
     def __ceil__(self) -> Int:
         return self

@@ -5,6 +5,7 @@ from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def test_str() -> None:
@@ -275,3 +276,21 @@ def test_ceil_floor_trunc_protocol() -> None:
     assert math.ceil(Float(3.2)) == Int(4)
     assert math.floor(Float(3.7)) == Int(3)
     assert math.trunc(Float(3.7)) == Int(3)
+
+
+def test_divmod_with_int() -> None:
+    assert Float(7.5).divmod(Int(2)) == Tuple(Float(3.0), Float(1.5))
+
+
+def test_divmod_folds_boolean() -> None:
+    # bool is an int subclass: divmod(7.0, True) == (7.0, 0.0)
+    assert Float(7.0).divmod(true) == Tuple(Float(7.0), Float(0.0))
+
+
+def test_divmod_dunder_returns_notimplemented_for_foreign_operand() -> None:
+    assert Float(7.0).__divmod__("x") is NotImplemented
+
+
+def test_divmod_method_raises_typeerror_for_foreign_operand() -> None:
+    with pytest.raises(TypeError):
+        Float(7.0).divmod("x")
