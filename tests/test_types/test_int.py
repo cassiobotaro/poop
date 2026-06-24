@@ -209,6 +209,53 @@ def test_bitwise_xor() -> None:
     assert Int(0b1100) ^ Int(0b1010) == Int(0b0110)
 
 
+def test_bitwise_and_folds_boolean_as_one() -> None:
+    # bool is an int subclass: 5 & True == 1
+    assert Int(5) & true == Int(1)
+    assert Int(5) & false == Int(0)
+
+
+def test_bitwise_or_xor_fold_boolean() -> None:
+    assert Int(6) | true == Int(7)
+    assert Int(5) ^ true == Int(4)
+
+
+def test_shift_folds_boolean() -> None:
+    assert Int(1) << true == Int(2)
+    assert Int(5) >> true == Int(2)
+
+
+def test_bitwise_returns_notimplemented_for_foreign_operand() -> None:
+    # Foreign / float operands must yield NotImplemented so CPython raises a
+    # faithful TypeError instead of leaking an AttributeError on other._value.
+    assert Int(5).__and__("x") is NotImplemented
+    assert Int(5).__or__(Float(2.0)) is NotImplemented
+    assert Int(5).__xor__("x") is NotImplemented
+    assert Int(1).__lshift__(Float(2.0)) is NotImplemented
+    assert Int(8).__rshift__("x") is NotImplemented
+
+
+def test_divmod_with_int() -> None:
+    assert Int(7).divmod(Int(2)) == Tuple(Int(3), Int(1))
+
+
+def test_divmod_folds_boolean() -> None:
+    assert Int(7).divmod(true) == Tuple(Int(7), Int(0))
+
+
+def test_divmod_with_float_returns_floats() -> None:
+    assert Int(7).divmod(Float(2.0)) == Tuple(Float(3.0), Float(1.0))
+
+
+def test_divmod_dunder_returns_notimplemented_for_foreign_operand() -> None:
+    assert Int(7).__divmod__("x") is NotImplemented
+
+
+def test_divmod_method_raises_typeerror_for_foreign_operand() -> None:
+    with pytest.raises(TypeError):
+        Int(7).divmod("x")
+
+
 def test_round_returns_self() -> None:
     assert Int(5).round() == Int(5)
 
