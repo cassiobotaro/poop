@@ -378,6 +378,34 @@ class FileHandler(_logging.FileHandler, Handler):
         )
 
 
+_ADOPTED_HANDLER_CLASSES: dict[type, type] = {}
+
+
+def _adopt_handler(raw: _logging.Handler) -> Handler:
+    """Present a stdlib handler as a POOP `Handler` without copying it.
+
+    Handlers obtained from the stdlib (a logger's `handlers` list, the
+    `getHandlerByName` registry) may be plain `_logging.Handler`
+    instances created by `basicConfig` / `dictConfig` — not POOP
+    subclasses. Returning them raw leaks a non-POOP object to user code.
+
+    POOP `Handler` *is* a `_logging.Handler` (it subclasses it), so we
+    adopt the instance in place: reassign `__class__` to a cached POOP
+    subclass mixed over the handler's concrete stdlib type. Identity is
+    preserved (so `removeHandler` still matches) and the POOP override
+    surface (`setLevel`/`setFormatter`/… returning `none`) becomes live.
+    """
+    if isinstance(raw, Handler):
+        return raw
+    concrete = type(raw)
+    poop_cls = _ADOPTED_HANDLER_CLASSES.get(concrete)
+    if poop_cls is None:
+        poop_cls = type(f"_poop_adopted_{concrete.__name__}", (concrete, Handler), {})
+        _ADOPTED_HANDLER_CLASSES[concrete] = poop_cls
+    raw.__class__ = poop_cls
+    return cast(Handler, raw)
+
+
 class Logger(_ImplWrapperMixin, _LevelMethodsMixin, Object):
     """Wraps Python's `logging.Logger`."""
 
@@ -418,7 +446,7 @@ class Logger(_ImplWrapperMixin, _LevelMethodsMixin, Object):
         return none
 
     def handlers(self) -> List:
-        return List(*self._impl.handlers)
+        return List(*(cast(Object, _adopt_handler(h)) for h in self._impl.handlers))
 
     @property
     def propagate(self) -> Boolean:
@@ -583,7 +611,7 @@ class Logging(metaclass=_LoggingMeta):
     @staticmethod
     def getHandlerByName(name: Str) -> Handler | NoneClass:
         result = _logging.getHandlerByName(name._value)
-        return none if result is None else cast(Handler, result)
+        return none if result is None else _adopt_handler(result)
 
     @staticmethod
     def getHandlerNames() -> List:
