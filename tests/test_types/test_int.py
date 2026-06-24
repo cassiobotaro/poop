@@ -125,6 +125,21 @@ def test_eq_with_non_int_returns_false() -> None:
     assert Int(5).__eq__(42) is false
 
 
+def test_eq_with_complex_real_match() -> None:
+    # CPython: `1 == (1+0j)` is True — Int joins the numeric tower.
+    assert Int(1) == Complex(1 + 0j)
+    assert Int(0) == Complex(0j)
+
+
+def test_eq_with_complex_imaginary_part_differs() -> None:
+    assert (Int(1) == Complex(1 + 1j)) is false
+    assert (Int(1) != Complex(1 + 1j)) is true
+
+
+def test_ne_with_complex_real_match() -> None:
+    assert (Int(1) != Complex(1 + 0j)) is false
+
+
 def test_ne_returns_boolean() -> None:
     assert Int(5).__ne__(Int(6)) is true
     assert Int(5).__ne__(Int(5)) is false

@@ -200,12 +200,17 @@ class Float(_ValueEqMixin, Object):
 
     def __eq__(self, other: object) -> Boolean:
         # Boolean folds in as 1/0 — bool is an int subclass in CPython.
+        # Complex joins the tower too: `2.0 == (2+0j)` is True in CPython.
+        if isinstance(other, Complex):
+            return to_boolean(self._value == other._value)
         v = _num_value(other)
         if v is _NOT_NUMERIC:
             return false
         return to_boolean(self._value == v)
 
     def __ne__(self, other: object) -> Boolean:
+        if isinstance(other, Complex):
+            return false if self._value == other._value else true
         v = _num_value(other)
         if v is _NOT_NUMERIC:
             return true
