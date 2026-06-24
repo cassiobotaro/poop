@@ -45,3 +45,37 @@ def test_poop_prefixed_carries_line_number() -> None:
     with pytest.raises(ValidationError) as exc_info:
         NoPoopPrefixValidator().validate(tree)
     assert exc_info.value.lineno == 2
+
+
+def test_poop_prefixed_function_name_raises() -> None:
+    tree = ast.parse("class C:\n    def _poop_foo(self):\n        return 1")
+    with pytest.raises(ValidationError, match="_poop_foo is forbidden"):
+        NoPoopPrefixValidator().validate(tree)
+
+
+def test_poop_prefixed_async_function_name_raises() -> None:
+    tree = ast.parse("class C:\n    async def _poop_foo(self):\n        return 1")
+    with pytest.raises(ValidationError, match="_poop_foo is forbidden"):
+        NoPoopPrefixValidator().validate(tree)
+
+
+def test_poop_prefixed_def_parameter_raises() -> None:
+    tree = ast.parse("class C:\n    def m(self, _poop_x):\n        return 1")
+    with pytest.raises(ValidationError, match="_poop_x is forbidden"):
+        NoPoopPrefixValidator().validate(tree)
+
+
+def test_poop_prefixed_lambda_parameter_raises() -> None:
+    # The body never mentions the parameter, so visit_Name alone misses it.
+    tree = ast.parse("f = lambda _poop_a: 1")
+    with pytest.raises(ValidationError, match="_poop_a is forbidden"):
+        NoPoopPrefixValidator().validate(tree)
+
+
+def test_poop_prefixed_vararg_and_kwarg_raise() -> None:
+    star = ast.parse("class C:\n    def m(self, *_poop_args):\n        return 1")
+    with pytest.raises(ValidationError, match="_poop_args is forbidden"):
+        NoPoopPrefixValidator().validate(star)
+    dstar = ast.parse("class C:\n    def m(self, **_poop_kw):\n        return 1")
+    with pytest.raises(ValidationError, match="_poop_kw is forbidden"):
+        NoPoopPrefixValidator().validate(dstar)
