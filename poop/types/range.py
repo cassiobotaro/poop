@@ -110,6 +110,26 @@ class Range(_IterableMixin, Object):
     def len(self) -> Int:
         return Int(len(self._range()))
 
+    def __eq__(self, other: object) -> Boolean:
+        # Mirror Python's `range` value equality: two ranges are equal when
+        # they produce the same sequence. POOP's inclusive upper bound is an
+        # internal encoding, so compare the materialized native ranges rather
+        # than the raw `_start`/`_stop`/`_step` fields (e.g. Range(0, 4, 2)
+        # and Range(0, 5, 2) both yield [0, 2, 4] and must compare equal).
+        if isinstance(other, Range):
+            return to_boolean(self._range() == other._range())
+        return to_boolean(False)
+
+    def __ne__(self, other: object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return false if bool(self == other) else true
+
+    def __hash__(self) -> int:
+        # Equal ranges must hash equally; defer to the native range's hash,
+        # which is consistent with its value-equality semantics.
+        return hash(self._range())
+
     def __str__(self) -> str:
         start, stop = self._start._value, self._stop._value
         step = self._step._value
