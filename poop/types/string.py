@@ -157,7 +157,12 @@ class Str(_ValueEqMixin, Object):
         )
 
     def join(self, parts: List) -> Str:
-        return Str(self._value.join(str(p) for p in parts))
+        # Mirror CPython: unwrap each element to its underlying value and let
+        # str.join validate. Str parts join cleanly; anything else (Int,
+        # Bytes, ...) reaches str.join unwrapped and raises the faithful
+        # TypeError instead of being silently stringified via str(p).
+        pieces: list[Any] = [getattr(p, "_value", p) for p in parts]
+        return Str(self._value.join(pieces))
 
     def format(self, *args: Object, **kwargs: Object) -> Str:
         # CPython's str.format template substitution. Overrides the
