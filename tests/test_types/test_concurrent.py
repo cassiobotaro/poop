@@ -50,9 +50,29 @@ def test_threadpool_submit_returns_future() -> None:
 def test_threadpool_map_returns_list() -> None:
     with ThreadPoolExecutor() as ex:
         result = ex.map(_square, List(Int(1), Int(2), Int(3)))
-        # `_square` returns Python ints (no wrapping); the List wraps them.
         assert isinstance(result, List)
         assert result.len() == Int(3)
+
+
+class _StubExecutorImpl:
+    """Stand-in for an executor whose worker results come back as raw
+    Python values — mimicking what a `ProcessPoolExecutor` pickles back
+    across the process boundary, without spawning real workers."""
+
+    def map(self, fn: object, iterable: object) -> list[int]:
+        return [1, 4, 9]
+
+
+def test_executor_map_wraps_each_raw_element() -> None:
+    # A ProcessPoolExecutor pickles each worker result back as a raw
+    # CPython object; map must re-wrap every element, not just the outer
+    # List — the same discipline `Pool.map` applies.
+    ex = ThreadPoolExecutor.__new__(ThreadPoolExecutor)
+    ex._impl = _StubExecutorImpl()
+    result = ex.map(lambda x: x, List(Int(1), Int(2), Int(3)))
+    assert isinstance(result, List)
+    assert all(isinstance(e, Int) for e in result)
+    assert result == List(Int(1), Int(4), Int(9))
 
 
 def test_threadpool_shutdown_returns_none() -> None:

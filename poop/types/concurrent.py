@@ -57,8 +57,13 @@ class _BaseExecutor(Object):
         return CFFuture(self._impl.submit(fn, *args, **kwargs))
 
     def map(self, fn: Any, iterable: List) -> List:
+        from poop.types._bridge import to_poop
+
         py_list = list(iterable) if isinstance(iterable, List) else iterable
-        return List(*self._impl.map(fn, py_list))
+        # A ProcessPoolExecutor pickles each worker result back as a raw
+        # CPython object — wrap per element so it stays a POOP value, the
+        # same discipline `CFFuture.result` and `Pool.map` already apply.
+        return List(*(to_poop(r) for r in self._impl.map(fn, py_list)))
 
     def shutdown(
         self,
