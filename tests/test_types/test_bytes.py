@@ -96,6 +96,27 @@ def test_ne_different_bytes() -> None:
     assert (Bytes(b"abc") != Bytes(b"xyz")) is true
 
 
+def test_lt() -> None:
+    assert (Bytes(b"a") < Bytes(b"b")) is true
+
+
+def test_le_equal() -> None:
+    assert (Bytes(b"a") <= Bytes(b"a")) is true
+
+
+def test_gt() -> None:
+    assert (Bytes(b"b") > Bytes(b"a")) is true
+
+
+def test_ge_equal() -> None:
+    assert (Bytes(b"b") >= Bytes(b"b")) is true
+
+
+def test_lt_foreign_operand_raises() -> None:
+    with pytest.raises(TypeError):
+        Bytes(b"a") < Str("b")  # noqa: B015
+
+
 def test_hashable() -> None:
     assert isinstance(hash(Bytes(b"hello")), int)
 

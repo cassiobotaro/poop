@@ -111,6 +111,26 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def __hash__(self) -> int:
         return hash(self._value)
 
+    def __lt__(self, other: object) -> Boolean:
+        if not isinstance(other, Bytes):
+            return NotImplemented  # foreign operand -> faithful TypeError
+        return to_boolean(self._value < other._value)
+
+    def __le__(self, other: object) -> Boolean:
+        if not isinstance(other, Bytes):
+            return NotImplemented
+        return to_boolean(self._value <= other._value)
+
+    def __gt__(self, other: object) -> Boolean:
+        if not isinstance(other, Bytes):
+            return NotImplemented
+        return to_boolean(self._value > other._value)
+
+    def __ge__(self, other: object) -> Boolean:
+        if not isinstance(other, Bytes):
+            return NotImplemented
+        return to_boolean(self._value >= other._value)
+
     def __add__(self, other: Bytes) -> Bytes:
         return Bytes(self._value + other._value)
 
