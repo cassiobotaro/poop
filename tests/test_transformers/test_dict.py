@@ -135,6 +135,42 @@ def test_dict_splat_via_interpreter() -> None:
     Interpreter().run_source('{**{"x": 1}, "y": 2}.at("y").print()')
 
 
+def test_dict_call_double_splat_copies_mapping() -> None:
+    # `dict(**other)` must not reach the bare `_poop_dict` class — Python's
+    # `**` unpacking demands raw str keys but a POOP Dict carries Str keys,
+    # so the splat is folded into a `_poop_dict_merge` instead.
+    from poop.interpreter import Interpreter
+
+    Interpreter().run_source(
+        'other = {"a": 1, "b": 2}\n'
+        "d = dict(**other)\n"
+        "d.len().print()\n"  # 2
+        'd.at("a").print()\n'  # 1
+    )
+
+
+def test_dict_call_named_and_double_splat_merge() -> None:
+    from poop.interpreter import Interpreter
+
+    Interpreter().run_source(
+        'more = {"b": 9, "c": 3}\n'
+        "d = dict(a=1, **more)\n"
+        "d.len().print()\n"  # 3 (a, b, c)
+        'd.at("b").print()\n'  # 9
+    )
+
+
+def test_dict_call_positional_and_double_splat_merge() -> None:
+    from poop.interpreter import Interpreter
+
+    Interpreter().run_source(
+        'base = {"x": 0}\n'
+        'more = {"b": 9, "c": 3}\n'
+        "d = dict(base, y=5, **more)\n"
+        "d.len().print()\n"  # 4 (x, y, b, c)
+    )
+
+
 def test_dict_from_dict_returns_shallow_copy() -> None:
     d = Dict()
     d._data[Str("x")] = Int(1)

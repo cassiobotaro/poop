@@ -76,8 +76,7 @@ class _DictRewriter(CollectionRewriter):
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
         # Unlike the other collection builtins, dict(...) accepts keywords
-        # (dict(a=1, b=2)). Forward named keywords to _poop_dict_from; a
-        # ** splat (kw.arg is None) is left to the generic path.
+        # (dict(a=1, b=2)). Forward named keywords to _poop_dict_from.
         if (
             isinstance(node.func, ast.Name)
             and node.func.id == self.builtin
@@ -93,6 +92,58 @@ class _DictRewriter(CollectionRewriter):
                         ast.keyword(arg=kw.arg, value=self.visit(kw.value))
                         for kw in node.keywords
                     ],
+                ),
+                node,
+            )
+        # A `**x` splat (kw.arg is None) cannot reach the bare `_poop_dict`
+        # class: Python's `**` unpacking demands raw `str` keys, but a POOP
+        # Dict carries `Str` keys, so `_poop_dict(**other)` raises
+        # "keywords must be strings". Fold the call into a `_poop_dict_merge`
+        # instead — the same machinery a `{**a, 'k': v}` display uses — so
+        # `dict(other, x=1, **more)` merges left to right like CPython.
+        if (
+            isinstance(node.func, ast.Name)
+            and node.func.id == self.builtin
+            and len(node.args) <= 1
+            and any(kw.arg is None for kw in node.keywords)
+        ):
+            # A positional arg may be a mapping or an iterable of pairs;
+            # normalise it through `_poop_dict_from` so `_poop_dict_merge`
+            # always sees a Dict part.
+            parts: list[ast.expr] = [
+                ast.Call(
+                    func=ast.Name(id="_poop_dict_from", ctx=ast.Load()),
+                    args=[self.visit(arg)],
+                    keywords=[],
+                )
+                for arg in node.args
+            ]
+            pending: list[ast.expr] = []
+            for kw in node.keywords:
+                if kw.arg is None:
+                    if pending:
+                        parts.append(self._pairs_call(pending, node))
+                        pending = []
+                    parts.append(self.visit(kw.value))
+                else:
+                    # The StrTransformer has already run, so wrap the keyword
+                    # name in `_poop_str` ourselves to give the merged Dict a
+                    # `Str` key (matching `_poop_dict_from`'s kwargs handling).
+                    pending.append(
+                        ast.Call(
+                            func=ast.Name(id="_poop_str", ctx=ast.Load()),
+                            args=[ast.Constant(value=kw.arg)],
+                            keywords=[],
+                        )
+                    )
+                    pending.append(self.visit(kw.value))
+            if pending:
+                parts.append(self._pairs_call(pending, node))
+            return ast.copy_location(
+                ast.Call(
+                    func=ast.Name(id="_poop_dict_merge", ctx=ast.Load()),
+                    args=parts,
+                    keywords=[],
                 ),
                 node,
             )
