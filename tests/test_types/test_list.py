@@ -355,6 +355,13 @@ def test_add_concatenates() -> None:
     )
 
 
+def test_add_foreign_operand_raises_type_error() -> None:
+    # CPython raises TypeError, not AttributeError, when the right operand
+    # of `+` is not a list.
+    with pytest.raises(TypeError):
+        List(Int(1)) + Int(2)
+
+
 def test_mul_repeats() -> None:
     assert List(Int(1), Int(2)) * Int(2) == List(Int(1), Int(2), Int(1), Int(2))
 
