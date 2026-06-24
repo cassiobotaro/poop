@@ -419,3 +419,40 @@ def test_inplace_or_with_non_set_raises() -> None:
     with pytest.raises(TypeError):
         s = Set(Int(1))
         s |= Int(2)
+
+
+def test_lt_proper_subset_true() -> None:
+    assert (Set(Int(1), Int(2)) < Set(Int(1), Int(2), Int(3))) is true
+
+
+def test_lt_equal_sets_false() -> None:
+    # ``<`` is a *proper* subset: equal sets are not less-than.
+    assert (Set(Int(1), Int(2)) < Set(Int(1), Int(2))) is false
+
+
+def test_le_subset_true() -> None:
+    assert (Set(Int(1), Int(2)) <= Set(Int(1), Int(2))) is true
+
+
+def test_gt_proper_superset_true() -> None:
+    assert (Set(Int(1), Int(2), Int(3)) > Set(Int(1), Int(2))) is true
+
+
+def test_ge_superset_true() -> None:
+    assert (Set(Int(1), Int(2)) >= Set(Int(1), Int(2))) is true
+
+
+def test_lt_unrelated_sets_false() -> None:
+    # Disjoint/unrelated sets compare ``False`` (not an error) in CPython.
+    assert (Set(Int(1), Int(2)) < Set(Int(3), Int(4))) is false
+
+
+def test_comparison_mixes_with_frozenset() -> None:
+    # CPython lets ``set`` and ``frozenset`` mix under subset/superset tests.
+    assert (Set(Int(1), Int(2), Int(3)) > FrozenSet(Int(1), Int(2))) is true
+    assert (FrozenSet(Int(1), Int(2)) < Set(Int(1), Int(2), Int(3))) is true
+
+
+def test_comparison_with_non_set_raises() -> None:
+    with pytest.raises(TypeError):
+        Set(Int(1)) < Int(2)

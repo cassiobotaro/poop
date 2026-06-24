@@ -305,3 +305,19 @@ def test_eq_set_and_frozenset_equal_by_value() -> None:
 def test_eq_set_and_frozenset_different_values() -> None:
     assert (FrozenSet(Int(1), Int(2)) == Set(Int(1), Int(3))) is false
     assert (FrozenSet(Int(1), Int(2)) != Set(Int(1), Int(3))) is true
+
+
+def test_lt_proper_subset_true() -> None:
+    assert (FrozenSet(Int(1), Int(2)) < FrozenSet(Int(1), Int(2), Int(3))) is true
+
+
+def test_le_subset_true() -> None:
+    assert (FrozenSet(Int(1), Int(2)) <= FrozenSet(Int(1), Int(2))) is true
+
+
+def test_gt_proper_superset_true() -> None:
+    assert (FrozenSet(Int(1), Int(2), Int(3)) > FrozenSet(Int(1), Int(2))) is true
+
+
+def test_comparison_mixes_with_set() -> None:
+    assert (FrozenSet(Int(1), Int(2), Int(3)) > Set(Int(1), Int(2))) is true
