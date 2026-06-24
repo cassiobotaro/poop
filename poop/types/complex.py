@@ -47,6 +47,10 @@ class Complex(Object):
             return other._value
         if isinstance(other, (Int, Float)):
             return _complex(other._value)
+        # `bool` is an `int` subclass, so a Boolean folds in as 1/0 across the
+        # numeric tower — `True + (1+2j)`, `(1+2j) ** True`, etc. all coerce.
+        if isinstance(other, Boolean):
+            return _complex(bool(other))
         return None
 
     def __add__(self, other: object) -> Complex | NotImplementedType:
@@ -117,18 +121,12 @@ class Complex(Object):
 
     # Equality bridges to the rest of the numeric tower, mirroring CPython,
     # where ``complex(1, 0) == 1`` and ``complex(1, 0) == True`` are True.
-    # Boolean is folded in as 1/0 because ``bool`` is an ``int`` subclass.
-    def _eq_coerce(self, other: object) -> _complex | None:
-        if isinstance(other, Boolean):
-            return _complex(bool(other))
-        return self._coerce(other)
-
     def __eq__(self, other: object) -> Boolean:
-        v = self._eq_coerce(other)
+        v = self._coerce(other)
         return false if v is None else to_boolean(self._value == v)
 
     def __ne__(self, other: object) -> Boolean:
-        v = self._eq_coerce(other)
+        v = self._coerce(other)
         return true if v is None else to_boolean(self._value != v)
 
     def __hash__(self) -> int:

@@ -119,6 +119,28 @@ def test_float_pow_complex_yields_complex() -> None:
     assert result == Complex(2 + 0j)
 
 
+def test_complex_arithmetic_with_boolean() -> None:
+    # `bool` is an `int` subclass, so a Boolean folds in as 1/0 — every
+    # arithmetic operator coerces it like CPython does (`(1+2j) + True`, etc.).
+    c = Complex(1 + 2j)
+    assert c + true == Complex(2 + 2j)
+    assert c - true == Complex(0 + 2j)
+    assert c * true == Complex(1 + 2j)
+    assert c / true == Complex(1 + 2j)
+    assert c**true == Complex(1 + 2j)
+
+
+def test_boolean_arithmetic_with_complex() -> None:
+    # Reflected direction: `True + (1+2j)`, `True ** (1+2j)`, etc. — these used
+    # to raise TypeError because Complex._coerce ignored Boolean operands.
+    c = Complex(1 + 2j)
+    assert true + c == Complex(2 + 2j)
+    assert true - c == Complex(-2j)
+    assert true * c == Complex(1 + 2j)
+    assert true / c == Complex(1 / (1 + 2j))
+    assert true**c == Complex(1 ** (1 + 2j))
+
+
 def test_sub_complex() -> None:
     assert Complex(5 + 6j) - Complex(1 + 2j) == Complex(4 + 4j)
 
