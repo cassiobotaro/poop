@@ -40,11 +40,19 @@ def _wrap_number(value: Any) -> Any:
 
 
 def _wrap_spread(value: Any) -> Any:
-    """Spread results answer Decimal for Decimal input and Float
-    otherwise (preserving POOP's established Float convention for the
-    int/float cases, where CPython's natural type varies)."""
+    """Spread results answer Decimal for Decimal input, Fraction for
+    Fraction input, and Float otherwise (preserving POOP's established
+    Float convention for the int/float cases, where CPython's natural
+    type varies).
+
+    Fraction must be re-wrapped explicitly: `Float(Fraction(...))` would
+    stash a raw `fractions.Fraction` in `_value` instead of a real
+    `float`, leaking the stdlib type through the POOP `Float` wrapper
+    (e.g. `str(...)` answering "1/27")."""
     if isinstance(value, _decimal.Decimal):
         return Decimal._from_impl(value)
+    if isinstance(value, _fractions.Fraction):
+        return Fraction._from_impl(value)
     return Float(value)
 
 
