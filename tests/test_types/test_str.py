@@ -298,7 +298,16 @@ def test_split_sep() -> None:
 
 
 def test_join() -> None:
-    assert Str(", ").join(List(Str("a"), Str("b"), Str("c"))) == Str("a, b, c")
+    result = Str(", ").join(List(Str("a"), Str("b"), Str("c")))
+    assert isinstance(result, Str)
+    assert result == Str("a, b, c")
+
+
+def test_join_rejects_non_str_parts() -> None:
+    # CPython raises TypeError rather than silently stringifying non-str
+    # parts; POOP must not coerce Int/Bytes via str(p) into the result.
+    with pytest.raises(TypeError, match="expected str instance"):
+        Str("-").join(List(Int(1), Int(2)))
 
 
 def test_int_parses_integer_string() -> None:
