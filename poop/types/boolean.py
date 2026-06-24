@@ -56,10 +56,10 @@ class Boolean(Object, ABC):
     def eqv(self, other: Boolean) -> Boolean: ...
 
     @abstractmethod
-    def __and__(self, other: Boolean) -> Boolean: ...
+    def _bool_and(self, other: Boolean) -> Boolean: ...
 
     @abstractmethod
-    def __or__(self, other: Boolean) -> Boolean: ...
+    def _bool_or(self, other: Boolean) -> Boolean: ...
 
     @abstractmethod
     def __bool__(self) -> bool: ...
@@ -171,6 +171,35 @@ class Boolean(Object, ABC):
     def __rpow__(self, other: object) -> Any:
         return self._rev(other, "__pow__")
 
+    # Bitwise — `bool` is an `int` subclass, so `&`, `|` and `^` stay in
+    # boolean algebra only between two Booleans (`True & False is False`);
+    # against an `Int` they fold to 1/0 and yield an `Int` (`True & 5 == 1`,
+    # `True ^ 5 == 4`), exactly as CPython does. Int operands delegate to
+    # Int's bitwise dunders, so the result is a POOP wrapper, not a raw int.
+    def __and__(self, other: object) -> Boolean | Int:
+        if isinstance(other, Boolean):
+            return self._bool_and(other)
+        return self._as_int().__and__(other)
+
+    def __rand__(self, other: object) -> Any:
+        return self._rev(other, "__and__")
+
+    def __or__(self, other: object) -> Boolean | Int:
+        if isinstance(other, Boolean):
+            return self._bool_or(other)
+        return self._as_int().__or__(other)
+
+    def __ror__(self, other: object) -> Any:
+        return self._rev(other, "__or__")
+
+    def __xor__(self, other: object) -> Boolean | Int:
+        if isinstance(other, Boolean):
+            return self.xor(other)
+        return self._as_int().__xor__(other)
+
+    def __rxor__(self, other: object) -> Any:
+        return self._rev(other, "__xor__")
+
 
 @final
 class _TrueClass(Boolean):
@@ -213,10 +242,10 @@ class _TrueClass(Boolean):
     def eqv(self, other: Boolean) -> Boolean:
         return other
 
-    def __and__(self, other: Boolean) -> Boolean:
+    def _bool_and(self, other: Boolean) -> Boolean:
         return other
 
-    def __or__(self, other: Boolean) -> Boolean:
+    def _bool_or(self, other: Boolean) -> Boolean:
         return self
 
     def __bool__(self) -> bool:
@@ -270,10 +299,10 @@ class _FalseClass(Boolean):
     def eqv(self, other: Boolean) -> Boolean:
         return other.not_()
 
-    def __and__(self, other: Boolean) -> Boolean:
+    def _bool_and(self, other: Boolean) -> Boolean:
         return self
 
-    def __or__(self, other: Boolean) -> Boolean:
+    def _bool_or(self, other: Boolean) -> Boolean:
         return other
 
     def __bool__(self) -> bool:

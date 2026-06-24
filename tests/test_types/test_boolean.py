@@ -144,6 +144,34 @@ def test_eager_or_operator() -> None:
     assert (false | false) is false
 
 
+def test_bitwise_with_int_folds_to_int_wrapper() -> None:
+    # `bool` is an int subclass: `True & 5 == 1`, `True | 5 == 5`,
+    # `True ^ 5 == 4`, all yielding an int (POOP `Int`), never a raw int.
+    from poop.types.int import Int
+
+    for result, expected, label in [
+        (true & Int(5), 1, "and"),
+        (Int(5) & true, 1, "rand"),
+        (true | Int(5), 5, "or"),
+        (Int(5) | true, 5, "ror"),
+        (true ^ Int(5), 4, "xor"),
+        (Int(5) ^ true, 4, "rxor"),
+        (false & Int(7), 0, "and-false"),
+    ]:
+        assert isinstance(result, Int), label
+        assert result == Int(expected), label
+        assert type(result).__name__ == "int", label
+
+
+def test_bitwise_between_booleans_stays_boolean() -> None:
+    # Two Booleans keep boolean algebra and return the singletons,
+    # mirroring CPython's `True & False is False`.
+    assert (true ^ false) is true
+    assert (true ^ true) is false
+    assert (false ^ true) is true
+    assert (false ^ false) is false
+
+
 def test_bool_true() -> None:
     assert bool(true) is True
 
