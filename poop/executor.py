@@ -1,5 +1,4 @@
 import ast
-import traceback
 
 from poop.errors import ExecutionError
 
@@ -11,11 +10,17 @@ def _user_lineno(exc: BaseException, filename: str) -> int | None:
     compiled program. Internal POOP frames (executor.py, the type methods)
     are skipped, so a failure inside `Int.__truediv__` still reports the
     user line that triggered it. Returns None when no user frame is present.
+
+    The traceback is walked directly rather than via ``traceback.extract_tb``,
+    which would load each frame's source through ``linecache`` and retain it
+    in that module-global cache forever — here only line numbers are needed.
     """
     lineno: int | None = None
-    for frame in traceback.extract_tb(exc.__traceback__):
-        if frame.filename == filename:
-            lineno = frame.lineno
+    tb = exc.__traceback__
+    while tb is not None:
+        if tb.tb_frame.f_code.co_filename == filename:
+            lineno = tb.tb_lineno
+        tb = tb.tb_next
     return lineno
 
 
