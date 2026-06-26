@@ -25,6 +25,7 @@ _BUILTIN_NAMES = frozenset(
         "set",
         "frozenset",
         "range",
+        "slice",
         "enumerate",
         "zip",
     }

@@ -49,6 +49,14 @@ def test_class_named_int_raises() -> None:
         NoBuiltinShadowValidator().validate(tree)
 
 
+def test_assign_to_slice_raises() -> None:
+    # `slice` is rewritten to `_poop_slice` by SliceTransformer, so rebinding
+    # it would silently clobber the runtime's Slice class.
+    tree = ast.parse("slice = 3")
+    with pytest.raises(ValidationError, match="'slice'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
 def test_constructor_call_passes() -> None:
     # Using the builtins as constructors is fine — only rebinding is blocked.
     tree = ast.parse("x = int('5')\ny = list((1, 2))")
