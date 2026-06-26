@@ -26,13 +26,14 @@ class Zip(_IterableMixin, Object):
         self._strict: Boolean = to_boolean(_unwrap_bool(strict, False))
         self._iter: Iterator[Tuple] | None = None
 
-    def _gen(self) -> Iterator[Tuple]:
-        for items in _builtins.zip(*self._sources, strict=bool(self._strict)):
+    @staticmethod
+    def _gen(sources: tuple[Any, ...], strict: bool) -> Iterator[Tuple]:
+        for items in _builtins.zip(*sources, strict=strict):
             yield Tuple(*items)
 
     def __iter__(self) -> Iterator[Tuple]:
         if self._iter is None:
-            self._iter = self._gen()
+            self._iter = self._gen(self._sources, bool(self._strict))
         return self._iter
 
     def iter(self) -> Zip:
@@ -40,7 +41,7 @@ class Zip(_IterableMixin, Object):
 
     def next(self) -> Tuple:
         if self._iter is None:
-            self._iter = self._gen()
+            self._iter = self._gen(self._sources, bool(self._strict))
         return next(self._iter)
 
     def __eq__(self, other: object) -> Boolean:
