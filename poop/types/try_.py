@@ -20,7 +20,7 @@ class Try(Object):
     __slots__ = ("_block", "_executed", "_finally_block", "_handlers")
 
     def __init__(self, block: Callable[[], object]) -> None:
-        self._block = block
+        self._block: Callable[[], object] | None = block
         self._handlers: list[tuple[type[BaseException], Callable[[Error], object]]] = []
         self._finally_block: Callable[[], object] | None = None
         self._executed = False
@@ -46,8 +46,10 @@ class Try(Object):
                 "Try has already been executed; create a new Try instance to retry."
             )
         self._executed = True
+        block = self._block
         try:
-            self._block()
+            if block is not None:
+                block()
         except BaseException as e:
             for exc_type, handler in self._handlers:
                 if isinstance(e, exc_type):
@@ -58,6 +60,11 @@ class Try(Object):
         finally:
             if self._finally_block is not None:
                 self._finally_block()
+            # Single-use: drop the block/handler closures so the executed
+            # Try no longer pins whatever they captured (re-running raises).
+            self._block = None
+            self._handlers = []
+            self._finally_block = None
         return self
 
     def __str__(self) -> str:
