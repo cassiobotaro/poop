@@ -53,10 +53,12 @@ class _IterableMixin:
         return functools_reduce(block, self._iter_items(), init)
 
     def sum(self) -> Any:
-        items = list(self._iter_items())
-        if not items:
+        items = self._iter_items()
+        try:
+            first = next(items)
+        except StopIteration:
             return Int(0)
-        return functools_reduce(lambda a, b: a + b, items)
+        return functools_reduce(lambda a, b: a + b, items, first)
 
     def min(
         self,
