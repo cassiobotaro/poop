@@ -197,6 +197,27 @@ def test_popen_send_signal() -> None:
         p.wait()
 
 
+def test_popen_context_manager_closes_pipes() -> None:
+    import subprocess as _stdlib_sub
+
+    with Popen(
+        List(Str("cat")),
+        stdin=_stdlib_sub.PIPE,
+        stdout=_stdlib_sub.PIPE,
+    ) as p:
+        assert isinstance(p, Popen)
+        impl = p._impl
+        stdin = impl.stdin
+        stdout = impl.stdout
+    assert stdin is not None
+    assert stdout is not None
+    # CPython's Popen.__exit__ closes the PIPE streams and waits, so the
+    # file descriptors opened for stdin/stdout don't leak.
+    assert stdin.closed
+    assert stdout.closed
+    assert impl.returncode is not None
+
+
 def test_popen_communicate() -> None:
     import subprocess as _stdlib_sub
 
