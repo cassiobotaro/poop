@@ -115,6 +115,16 @@ class MPQueue(Object):
         self._impl.close()
         return none
 
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        # `multiprocessing.Queue` owns pipe fds plus a feeder thread but has no
+        # native context manager; POOP bans try/finally, so `With(...)` is the
+        # only deterministic cleanup path — close on exit so an error inside the
+        # block can't leak the queue's resources (Pool already does this).
+        self._impl.close()
+
 
 class Pool(Object):
     """Wraps Python's `multiprocessing.Pool`."""
