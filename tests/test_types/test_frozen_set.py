@@ -182,10 +182,12 @@ def test_transformer_frozenset_empty_call() -> None:
     assert result.len() == Int(0)
 
 
-def test_copy_returns_new_frozenset() -> None:
+def test_copy_returns_self() -> None:
+    # CPython returns the receiver itself: a frozenset is immutable, so
+    # ``fs.copy() is fs`` is True.
     fs = FrozenSet(Int(1), Int(2))
     c = fs.copy()
-    assert c is not fs
+    assert c is fs
     assert c == fs
 
 
