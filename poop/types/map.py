@@ -18,13 +18,14 @@ class Map(_IterableMixin, Object):
         self._block = block
         self._iter: Iterator[Any] | None = None
 
-    def _gen(self) -> Iterator[Any]:
-        for item in self._source:
-            yield self._block(item)
+    @staticmethod
+    def _gen(source: Any, block: Callable[[Any], Any]) -> Iterator[Any]:
+        for item in source:
+            yield block(item)
 
     def __iter__(self) -> Iterator[Any]:
         if self._iter is None:
-            self._iter = self._gen()
+            self._iter = self._gen(self._source, self._block)
         return self._iter
 
     def iter(self) -> Map:
@@ -32,7 +33,7 @@ class Map(_IterableMixin, Object):
 
     def next(self) -> Any:
         if self._iter is None:
-            self._iter = self._gen()
+            self._iter = self._gen(self._source, self._block)
         return next(self._iter)
 
     def __eq__(self, other: object) -> Boolean:

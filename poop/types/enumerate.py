@@ -22,13 +22,14 @@ class Enumerate(_IterableMixin, Object):
         self._start: Int = Int(_unwrap(start, 0))
         self._iter: Iterator[Tuple] | None = None
 
-    def _gen(self) -> Iterator[Tuple]:
-        for i, item in _builtins.enumerate(self._source, self._start._value):
+    @staticmethod
+    def _gen(source: Any, start: int) -> Iterator[Tuple]:
+        for i, item in _builtins.enumerate(source, start):
             yield Tuple(Int(i), item)
 
     def __iter__(self) -> Iterator[Tuple]:
         if self._iter is None:
-            self._iter = self._gen()
+            self._iter = self._gen(self._source, self._start._value)
         return self._iter
 
     def iter(self) -> Enumerate:
@@ -36,7 +37,7 @@ class Enumerate(_IterableMixin, Object):
 
     def next(self) -> Tuple:
         if self._iter is None:
-            self._iter = self._gen()
+            self._iter = self._gen(self._source, self._start._value)
         return next(self._iter)
 
     def __eq__(self, other: object) -> Boolean:
