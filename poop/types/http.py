@@ -176,6 +176,17 @@ class HTTPConnection(_ImplWrapperMixin, Object):
         self._impl.set_tunnel(host._value, **kwargs)
         return none
 
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self._impl.close()
+
 
 class HTTPSConnection(HTTPConnection):
     """Wraps Python's `http.client.HTTPSConnection`."""
