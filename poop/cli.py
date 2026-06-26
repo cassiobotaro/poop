@@ -69,6 +69,12 @@ def main(
         # of leaking a rich-formatted traceback through typer.
         typer.echo(f"poop: cannot read '{file}': {exc.strerror}", err=True)
         raise typer.Exit(1) from exc
+    except UnicodeDecodeError as exc:
+        # A non-UTF-8 source file is an ordinary user mistake too, but it is
+        # not an OSError; keep the clean `poop:` style instead of leaking a
+        # rich-formatted traceback through typer.
+        typer.echo(f"poop: cannot read '{file}': {exc.reason}", err=True)
+        raise typer.Exit(1) from exc
     filename = str(file)
 
     if validators_only:

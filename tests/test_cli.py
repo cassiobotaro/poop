@@ -43,6 +43,18 @@ def test_cli_directory_argument_shows_clean_diagnostic(tmp_path: Path) -> None:
     assert "Traceback" not in result.output
 
 
+def test_cli_non_utf8_file_shows_clean_diagnostic(tmp_path: Path) -> None:
+    # A non-UTF-8 source raises UnicodeDecodeError (a ValueError, not an
+    # OSError), which must still yield a clean `poop:` diagnostic rather than
+    # leaking a traceback.
+    f = tmp_path / "latin1.py"
+    f.write_bytes(b'x = "caf\xe9".print()\n')
+    result = runner.invoke(app, [str(f)])
+    assert result.exit_code == 1
+    assert "poop: cannot read" in result.output
+    assert "Traceback" not in result.output
+
+
 def test_cli_error_shows_source_line_with_caret(tmp_path: Path) -> None:
     f = tmp_path / "bad.py"
     f.write_text("x = 1\ny = len(x)\n", encoding="utf-8")
