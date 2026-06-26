@@ -2,7 +2,8 @@ from __future__ import annotations
 
 # ruff: noqa: S603, S605
 import subprocess as _subprocess
-from typing import Any, ClassVar
+from types import TracebackType
+from typing import Any, ClassVar, Self
 
 from poop.types._unwrap import _opt_path_or_str
 from poop.types.boolean import Boolean, false
@@ -127,6 +128,20 @@ class Popen(Object):
             else (Bytes(stderr) if isinstance(stderr, bytes) else Str(stderr))
         )
         return Tuple(out, err)
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        # Mirror CPython's `Popen.__exit__`: close any open stdin/stdout/
+        # stderr pipes and wait for the child, so the OS file descriptors
+        # opened for `PIPE` streams don't leak.
+        self._impl.__exit__(exc_type, exc_value, traceback)
 
 
 class Subprocess:
