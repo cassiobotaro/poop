@@ -45,10 +45,12 @@ class Object:
 
         return false if bool(self) else true
 
-    def assert_(self, message: Str | None = None) -> Object:
+    def assert_(self, message: Str | NoneClass | None = None) -> Object:
+        from poop.types._unwrap import _is_absent
+
         if bool(self):
             return self
-        if message is None:
+        if _is_absent(message):
             raise AssertionError
         raise AssertionError(message._value)
 
