@@ -106,6 +106,26 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     def iter(self) -> ByteArrayIterator:
         return ByteArrayIterator(self)
 
+    def __lt__(self, other: object) -> Boolean:
+        if not isinstance(other, ByteArray):
+            return NotImplemented  # foreign operand -> faithful TypeError
+        return to_boolean(self._value < other._value)
+
+    def __le__(self, other: object) -> Boolean:
+        if not isinstance(other, ByteArray):
+            return NotImplemented
+        return to_boolean(self._value <= other._value)
+
+    def __gt__(self, other: object) -> Boolean:
+        if not isinstance(other, ByteArray):
+            return NotImplemented
+        return to_boolean(self._value > other._value)
+
+    def __ge__(self, other: object) -> Boolean:
+        if not isinstance(other, ByteArray):
+            return NotImplemented
+        return to_boolean(self._value >= other._value)
+
     def __add__(self, other: ByteArray) -> ByteArray:
         return ByteArray(self._value + other._value)
 
