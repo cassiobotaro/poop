@@ -575,7 +575,7 @@ What the validator **does not** catch: method names inside classes (`class Calc:
 
 ### No builtin shadow — `poop/validators/no_builtin_shadow.py`
 
-Reuses the namespace-shadow `_Visitor` over a fixed set of the 16 lowercase builtin names the type transformers rewrite to mangled `_poop_*` globals: `bool`, `int`, `float`, `complex`, `str`, `bytes`, `bytearray`, `memoryview`, `list`, `tuple`, `dict`, `set`, `frozenset`, `range`, `enumerate`, `zip`. Rebinding one (assignment, class name, or `def`/`lambda` parameter) would silently retarget the interpreter's internals — `str = "x"` replaces the literal constructor, `def m(self, dict)` makes the body operate on the internal `Dict` class — so the validator rejects it with `'<name>' is a POOP builtin name; it cannot be rebound`. Using the names as constructors (`int("5")`) is unaffected.
+Reuses the namespace-shadow `_Visitor` over a fixed set of the 17 lowercase builtin names the type transformers rewrite to mangled `_poop_*` globals: `bool`, `int`, `float`, `complex`, `str`, `bytes`, `bytearray`, `memoryview`, `list`, `tuple`, `dict`, `set`, `frozenset`, `range`, `slice`, `enumerate`, `zip`. Rebinding one (assignment, class name, or `def`/`lambda` parameter) would silently retarget the interpreter's internals — `str = "x"` replaces the literal constructor, `def m(self, dict)` makes the body operate on the internal `Dict` class — so the validator rejects it with `'<name>' is a POOP builtin name; it cannot be rebound`. Using the names as constructors (`int("5")`) is unaffected.
 
 ### No `sum` — `poop/validators/no_sum.py`
 
@@ -636,8 +636,8 @@ Available on `Int` and `Float`.
 
 | AST node | Condition | Reason | Substitute |
 |---|---|---|---|
-| `ast.Subscript` | slice is not `ast.Slice` | `obj[key]` looks like an operator | `obj.at(key)` |
-| `ast.Subscript` | slice is `ast.Slice` | `obj[1:3]` looks like an operator | `obj.slice(start, stop)` |
+| `ast.Subscript` | no `ast.Slice` involved | `obj[key]` looks like an operator | `obj.at(key)` |
+| `ast.Subscript` | a bare `ast.Slice` or an `ast.Tuple` containing one (extended slices like `obj[i:j, k:l]`) | `obj[1:3]` looks like an operator | `obj.slice(start, stop)` |
 
 ### No comprehension — `poop/validators/no_comprehension.py`
 
@@ -1202,7 +1202,7 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `functools.cmp_to_key(block)` | `Block` | block receives two values and answers a negative/zero/positive `Int`; feed the result to the `key=` of the sorting messages |
 | `functools.reduce(block, iterable, init=none)` | value | `none` init means absent, like the stdlib two-arg form; `col.reduce(init, block)` is the idiomatic message |
 | `functools.cache(block)` | memoized `Block` | `quadrado = functools.cache(lambda n: n * n)`; arguments must be hashable (Int/Str/Tuple are; List/Dict are not — same rule as Python) |
-| `functools.lru_cache(block, maxsize=none)` | memoized `Block` | bounded memoization; `none` maxsize means unbounded |
+| `functools.lru_cache(block, maxsize=128)` | memoized `Block` | bounded memoization; defaults to 128 entries like CPython; an explicit `none` maxsize means unbounded |
 | `<memoized>.cache_info()` | `Dict` | `hits`/`misses`/`maxsize`/`currsize` as `Int` (`maxsize` is `none` when unbounded) |
 | `<memoized>.cache_clear()` | `none` | resets the cache |
 | `functools.partialmethod(method, *args, **kwargs)` | descriptor | assign in a class body (`deposit_100 = functools.partialmethod(deposit, 100)`); binds like the stdlib |
@@ -1341,7 +1341,7 @@ Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string
 | `Connection.executescript(script)` | `Cursor` | multi-statement script |
 | `Connection.iterdump()` | `List[Str]` | SQL dump as lines |
 | `Connection.backup(target, pages=none, name=none, sleep=none)` | `none` | online backup |
-| `Connection` as context manager (`with`) | `Connection` | commit on success, rollback on exception |
+| `Connection` as context manager (`with`) | `Connection` | commit on success, rollback on exception, then close on exit (POOP closes the connection to release the fd, unlike CPython which leaves it open) |
 | `Cursor.execute` / `.executemany` / `.executescript` | `Cursor` | self-returning for chaining |
 | `Cursor.fetchone()` | `Tuple \| NoneClass` | |
 | `Cursor.fetchmany(size=none)` | `List[Tuple]` | |
@@ -2639,6 +2639,7 @@ Five concurrent-execution namespaces shipped together. `threading` exposes `Thre
 | `Popen.wait(timeout=none)` / `.poll()` / `.terminate()` / `.kill()` / `.send_signal(sig)` | `Int` / `Int` or `none` / `none` | |
 | `Popen.communicate(input=none, timeout=none)` | `Tuple(Str/Bytes/none, Str/Bytes/none)` | |
 | `Popen.pid` / `.returncode` (properties) | `Int` / `Int` or `none` | |
+| `Popen` as context manager (`with`) | `Popen` | closes the `PIPE` streams and waits on exit, releasing the pipe fds |
 | `subprocess.PIPE` / `STDOUT` / `DEVNULL` (class attrs) | `Int` | |
 | `subprocess.SubprocessError` / `CalledProcessError` / `TimeoutExpired` (class attrs) | exception class | |
 | `Queue(maxsize=none)` / `LifoQueue(maxsize=none)` / `PriorityQueue(maxsize=none)` / `SimpleQueue()` | queue | |
