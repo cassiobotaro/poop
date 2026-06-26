@@ -242,6 +242,39 @@ class Int(_ValueEqMixin, Object):
             return NotImplemented
         return Int(self._value ^ v)
 
+    # Reflected bitwise/shift operators — CPython's int defines these too, so a
+    # `<integral> OP Int` expression (e.g. `True << 5`, where Boolean has no
+    # `__lshift__`) resolves here instead of leaking a TypeError.
+    def __rlshift__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(v << self._value)
+
+    def __rrshift__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(v >> self._value)
+
+    def __rand__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(v & self._value)
+
+    def __ror__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(v | self._value)
+
+    def __rxor__(self, other: object) -> Int:
+        v = _integral_value(other)
+        if v is _NOT_INTEGRAL:
+            return NotImplemented
+        return Int(v ^ self._value)
+
     def __ceil__(self) -> Int:
         return self
 
