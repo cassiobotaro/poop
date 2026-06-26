@@ -337,7 +337,16 @@ class Connection(Object):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> Any:
-        return self._impl.__exit__(exc_type, exc_value, traceback)
+        # CPython's sqlite3 connection context manager commits / rolls
+        # back the transaction but leaves the connection OPEN, so its
+        # database file descriptor lingers until garbage collection.
+        # Every other POOP resource wrapper releases its resource on
+        # `With` exit; mirror that here by closing the connection after
+        # the transaction is finalised, otherwise the fd leaks.
+        try:
+            return self._impl.__exit__(exc_type, exc_value, traceback)
+        finally:
+            self._impl.close()
 
 
 class Sqlite3:
