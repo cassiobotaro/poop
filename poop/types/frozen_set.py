@@ -33,7 +33,9 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         return len(self._data)
 
     def copy(self) -> FrozenSet:
-        return FrozenSet(*self._data)
+        # CPython returns the receiver itself — a frozenset is immutable, so
+        # copying it is pointless and ``fs.copy() is fs`` is True.
+        return self
 
     def union(self, *others: FrozenSet) -> FrozenSet:
         return FrozenSet(*self._data.union(*[o._data for o in others]))
