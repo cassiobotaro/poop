@@ -22,6 +22,11 @@ _BANNER = "POOP 💩  — Python infected by Smalltalk. Ctrl+D to exit."
 _HISTORY_FILE = Path.home() / ".poop_history"
 _HISTORY_MAX = 1000
 
+# atexit registrations are never removed, so guard against re-registering the
+# history saver every time a Repl is constructed — otherwise each instance
+# leaks another callback into the global atexit registry.
+_history_saver_registered = False
+
 _RESET = "\x1b[0m"
 _DIM = "\x1b[2m"
 _RED = "\x1b[31m"
@@ -141,7 +146,11 @@ def _setup_readline(namespace: dict[str, object]) -> None:
         pass
 
     readline.set_history_length(_HISTORY_MAX)
-    atexit.register(_save_history)
+
+    global _history_saver_registered
+    if not _history_saver_registered:
+        atexit.register(_save_history)
+        _history_saver_registered = True
 
 
 def _save_history() -> None:
