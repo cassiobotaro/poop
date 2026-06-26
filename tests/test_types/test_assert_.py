@@ -68,3 +68,11 @@ def test_assert_empty_list_raises() -> None:
 def test_assert_none_raises() -> None:
     with pytest.raises(AssertionError, match="not none"):
         none.assert_(Str("not none"))
+
+
+def test_assert_false_with_poop_none_message_raises_empty() -> None:
+    # POOP's NoneTransformer rewrites every `None` literal to the `none`
+    # singleton, so `x.assert_(None)` reaches here as a NoneClass. It must be
+    # treated as "no message" (bare AssertionError), not crash on `._value`.
+    with pytest.raises(AssertionError, match="^$"):
+        false.assert_(none)
