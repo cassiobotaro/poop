@@ -107,4 +107,10 @@ class FunctoolsNamespace:
 
     @staticmethod
     def lru_cache(block: Any, maxsize: Any = None) -> _CachedBlock:
-        return _CachedBlock(_functools.lru_cache(maxsize=_opt_int(maxsize))(block))
+        # CPython's lru_cache is bounded at 128 entries by default; only an
+        # explicit `none` maxsize requests an unbounded cache (that is what
+        # `cache` is for). An omitted argument arrives as the Python sentinel
+        # `None`, whereas a user-supplied `none` is a NoneClass that
+        # `_opt_int` maps to an unbounded cache.
+        size = 128 if maxsize is None else _opt_int(maxsize)
+        return _CachedBlock(_functools.lru_cache(maxsize=size)(block))
