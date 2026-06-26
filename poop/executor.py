@@ -26,12 +26,18 @@ def execute(
     *,
     interactive: bool = False,
 ) -> None:
-    if interactive:
-        interactive_tree = ast.Interactive(body=tree.body)
-        ast.copy_location(interactive_tree, tree)
-        code = compile(interactive_tree, filename=filename, mode="single")
-    else:
-        code = compile(tree, filename=filename, mode="exec")
+    try:
+        if interactive:
+            interactive_tree = ast.Interactive(body=tree.body)
+            ast.copy_location(interactive_tree, tree)
+            code = compile(interactive_tree, filename=filename, mode="single")
+        else:
+            code = compile(tree, filename=filename, mode="exec")
+    except SyntaxError as exc:
+        # ast.parse accepts some constructs that compile rejects (e.g. a
+        # module-level `return`); surface them as a PoopError instead of
+        # leaking a raw SyntaxError past the CLI's error handler.
+        raise ExecutionError(exc.msg, exc.lineno) from exc
     ns: dict[str, object] = namespace if namespace is not None else {}
     try:
         exec(code, ns)  # noqa: S102
