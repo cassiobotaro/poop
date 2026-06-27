@@ -25,10 +25,17 @@ class With(Object):
     __slots__ = ("_cm_block",)
 
     def __init__(self, cm_block: Callable[[], Any]) -> None:
-        self._cm_block = cm_block
+        self._cm_block: Callable[[], Any] | None = cm_block
 
     def do(self, body_block: Callable[[Any], object]) -> With:
+        if self._cm_block is None:
+            raise RuntimeError(
+                "With has already run; create a new With instance to run again."
+            )
         cm = self._cm_block()
+        # Single-use: drop the context-manager block so the executed With no
+        # longer pins whatever its closure captured (re-running raises).
+        self._cm_block = None
         value = cm.__enter__()
         try:
             body_block(value)
@@ -67,10 +74,18 @@ class AsyncWith(Object):
     __slots__ = ("_acm_block",)
 
     def __init__(self, acm_block: Callable[[], Any]) -> None:
-        self._acm_block = acm_block
+        self._acm_block: Callable[[], Any] | None = acm_block
 
     async def do(self, body_block: Callable[[Any], object]) -> AsyncWith:
+        if self._acm_block is None:
+            raise RuntimeError(
+                "AsyncWith has already run; create a new AsyncWith instance "
+                "to run again."
+            )
         acm = self._acm_block()
+        # Single-use: drop the context-manager block so the executed AsyncWith
+        # no longer pins whatever its closure captured (re-running raises).
+        self._acm_block = None
         value = await acm.__aenter__()
         try:
             result = body_block(value)
