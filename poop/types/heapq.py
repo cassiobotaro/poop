@@ -2,7 +2,7 @@ import heapq as _heapq
 from collections.abc import Callable, Iterable, Iterator
 from typing import Any, cast
 
-from poop.types.boolean import Boolean
+from poop.types.boolean import Boolean, false
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
@@ -81,7 +81,6 @@ class Heapq:
     def merge(
         *iterables: Iterable[Any],
         key: Callable[[Any], Any] | None = None,
-        reverse: Boolean | None = None,
+        reverse: Boolean = false,
     ) -> HeapMerge:
-        reverse_flag = False if reverse is None else bool(reverse)
-        return HeapMerge(iter(_heapq.merge(*iterables, key=key, reverse=reverse_flag)))
+        return HeapMerge(iter(_heapq.merge(*iterables, key=key, reverse=bool(reverse))))
