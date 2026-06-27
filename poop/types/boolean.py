@@ -97,12 +97,21 @@ class Boolean(Object, ABC):
         return to_boolean(int(bool(self)) >= v)
 
     def __eq__(self, other: object) -> Boolean:
+        from poop.types.complex import Complex
+
+        # Complex joins the tower too — `True == (1+0j)` is True in CPython.
+        if isinstance(other, Complex):
+            return to_boolean(int(bool(self)) == other._value)
         v = _num_value(other)
         if v is _NOT_NUMERIC:
             return false
         return to_boolean(int(bool(self)) == v)
 
     def __ne__(self, other: object) -> Boolean:
+        from poop.types.complex import Complex
+
+        if isinstance(other, Complex):
+            return false if int(bool(self)) == other._value else true
         v = _num_value(other)
         if v is _NOT_NUMERIC:
             return true
