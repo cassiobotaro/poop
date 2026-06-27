@@ -5,5 +5,5 @@ from poop.types.object import Object
 
 
 @final
-class FrozenSetIterator(_IteratorBase[Object], name="frozenset_iterator"):
+class FrozenSetIterator(_IteratorBase[Object], name="set_iterator"):
     __slots__ = ()
