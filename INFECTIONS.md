@@ -846,7 +846,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 ### With — `poop/types/with_.py`
 
-`With(Object)` implements the context manager protocol as a message-passing builder. The context manager block is executed lazily — only when `.do()` is called.
+`With(Object)` implements the context manager protocol as a message-passing builder. The context manager block is executed lazily — only when `.do()` is called. A `With` (and `AsyncWith`) is single-use: `.do()` releases its captured block once it runs, so re-invoking `.do()` raises `RuntimeError` rather than re-running — mirroring `Try`'s single-use semantics and avoiding retaining the closure (and anything it captured) past execution.
 
 | Message | Method | Behavior |
 |---|---|---|
@@ -2172,6 +2172,7 @@ POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for 
 | `HTTPConnection.getresponse()` | `HTTPResponse` | |
 | `HTTPConnection.set_tunnel(host, port=none, headers=none)` | `none` | proxy CONNECT |
 | `HTTPConnection.close()` | `none` | |
+| `HTTPConnection` / `HTTPSConnection` as context manager (`with`) | same connection | closes the underlying socket fd on exit |
 | `HTTPResponse.status` / `.version` (properties) | `Int` | |
 | `HTTPResponse.reason` (property) | `Str` | |
 | `HTTPResponse.headers` (property) | `Dict[Str, Str]` | |
@@ -2612,7 +2613,7 @@ Five concurrent-execution namespaces shipped together. `threading` exposes `Thre
 | `multiprocessing.Process(target=none, name=none, daemon=none)` | `Process` | same shape as `Thread` |
 | `Process.start()` / `.join` / `.is_alive` / `.terminate` / `.kill` / `.close` | `none` / `Boolean` / `none` | |
 | `Process.pid` / `.exitcode` / `.name` (properties) | `Int` or `none` / `Str` | |
-| `MPQueue(maxsize=none)` / `.put` / `.get` / `.qsize` / `.empty` / `.full` / `.close` | typed | mirror `queue.Queue` |
+| `MPQueue(maxsize=none)` / `.put` / `.get` / `.qsize` / `.empty` / `.full` / `.close` | typed | mirror `queue.Queue`; `With`-friendly (closes the queue's pipe fds and feeder thread on exit, like `Pool`) |
 | `Pool(processes=none)` / `.apply(fn, args=none)` / `.map(fn, iter)` / `.close` / `.terminate` / `.join` | typed | `With`-friendly |
 | `multiprocessing.cpu_count()` | `Int` | |
 | `multiprocessing.active_children()` | `List[Process]` | |
