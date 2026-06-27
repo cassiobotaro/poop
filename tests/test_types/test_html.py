@@ -25,14 +25,6 @@ def test_unescape() -> None:
     assert HTML.unescape(Str("&lt;a&gt;&amp;b")) == Str("<a>&b")
 
 
-def test_has_entity_known_returns_true() -> None:
-    assert HTML.has_entity(Str("amp")) is true
-
-
-def test_has_entity_unknown_returns_false() -> None:
-    assert HTML.has_entity(Str("not_a_real_entity_name")) is false
-
-
 def test_entities_name2codepoint_is_dict_attr() -> None:
     d = Entities.name2codepoint
     assert isinstance(d, Dict)

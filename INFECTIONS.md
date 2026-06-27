@@ -2360,7 +2360,6 @@ Three internet-data / markup namespaces shipped together. `email` exposes the mo
 | `email.utils.make_msgid(idstring=none, domain=none)` | `Str` | |
 | `email.policy.default` / `.SMTP` / `.SMTPUTF8` / `.HTTP` / `.strict` / `.compat32` | Python policy obj | |
 | `html.escape(s, quote=true)` / `.unescape(s)` | `Str` | |
-| `html.has_entity(name)` | `Boolean` | |
 | `html.entities.name2codepoint()` | `Dict[Str, Int]` | |
 | `html.entities.codepoint2name()` | `Dict[Int, Str]` | |
 | `html.entities.entitydefs()` / `.html5()` | `Dict[Str, Str]` | |

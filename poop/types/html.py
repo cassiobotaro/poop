@@ -6,7 +6,7 @@ import html.parser as _html_parser
 from typing import ClassVar
 
 from poop.types._bridge import _str_str_dict
-from poop.types.boolean import Boolean, to_boolean
+from poop.types.boolean import Boolean
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
@@ -182,7 +182,3 @@ class HTML:
     @staticmethod
     def unescape(s: Str) -> Str:
         return Str(_html.unescape(s._value))
-
-    @staticmethod
-    def has_entity(name: Str) -> Boolean:
-        return to_boolean(name._value in _html_entities.entitydefs)
