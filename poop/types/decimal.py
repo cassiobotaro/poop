@@ -196,7 +196,7 @@ class Decimal(_ImplWrapperMixin, _ValueEqMixin, Object):
         return Decimal._from_impl(self._impl.copy_abs())
 
     def copy_negate(self) -> Decimal:
-        return Decimal._from_impl(-self._impl)
+        return Decimal._from_impl(self._impl.copy_negate())
 
     def compare(self, other: Decimal) -> Decimal:
         return Decimal._from_impl(self._impl.compare(other._impl))
