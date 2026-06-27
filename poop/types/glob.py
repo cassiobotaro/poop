@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _b
 from poop.types.boolean import Boolean, false, to_boolean
-from poop.types.int import Int
 from poop.types.list import List
 from poop.types.path import Path
 from poop.types.string import Str
@@ -49,7 +48,6 @@ class Glob:
         pathname: Str,
         *,
         root_dir: Path | Str | None = None,
-        dir_fd: Int | None = None,
         recursive: Boolean = false,
         include_hidden: Boolean = false,
     ) -> List:
@@ -63,7 +61,6 @@ class Glob:
         results = _glob.glob(
             pathname._value,
             root_dir=rd,
-            dir_fd=None if dir_fd is None else dir_fd._value,
             recursive=bool(recursive),
             include_hidden=bool(include_hidden),
         )
@@ -74,7 +71,6 @@ class Glob:
         pathname: Str,
         *,
         root_dir: Path | Str | None = None,
-        dir_fd: Int | None = None,
         recursive: Boolean = false,
         include_hidden: Boolean = false,
     ) -> GlobIter:
@@ -88,7 +84,6 @@ class Glob:
         gen = _glob.iglob(
             pathname._value,
             root_dir=rd,
-            dir_fd=None if dir_fd is None else dir_fd._value,
             recursive=bool(recursive),
             include_hidden=bool(include_hidden),
         )
