@@ -29,6 +29,16 @@ def test_socket_constructs_with_family_and_type() -> None:
         s.close()
 
 
+def test_socket_constructs_with_poop_none_args() -> None:
+    # POOP's `none` (NoneClass) must be accepted like an omitted argument,
+    # not crash with AttributeError on `._value`.
+    s = Socket(none, none, none)
+    try:
+        assert isinstance(s, Socket)
+    finally:
+        s.close()
+
+
 def test_socket_fileno_returns_int() -> None:
     s = Socket()
     try:
@@ -246,6 +256,11 @@ def test_getfqdn_with_name() -> None:
     assert isinstance(SocketNamespace.getfqdn(Str("localhost")), Str)
 
 
+def test_getfqdn_with_poop_none() -> None:
+    # Passing POOP's `none` must behave like an omitted argument.
+    assert isinstance(SocketNamespace.getfqdn(none), Str)
+
+
 def test_has_dualstack_ipv6_returns_boolean() -> None:
     assert isinstance(SocketNamespace.has_dualstack_ipv6(), Boolean)
 
@@ -261,6 +276,15 @@ def test_getservbyname() -> None:
 def test_getservbyname_with_protocol() -> None:
     try:
         result = SocketNamespace.getservbyname(Str("http"), Str("tcp"))
+        assert isinstance(result, Int)
+    except OSError:
+        pytest.skip("http service not registered on this host")
+
+
+def test_getservbyname_with_poop_none_protocol() -> None:
+    # POOP's `none` for the optional protocol must not crash on `._value`.
+    try:
+        result = SocketNamespace.getservbyname(Str("http"), none)
         assert isinstance(result, Int)
     except OSError:
         pytest.skip("http service not registered on this host")

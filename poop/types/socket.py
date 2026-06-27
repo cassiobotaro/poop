@@ -49,25 +49,25 @@ class Socket(Object):
 
     def __init__(
         self,
-        family: Int | Any | None = None,
-        type: Int | None = None,
-        proto: Int | None = None,
+        family: Int | NoneClass | Any | None = None,
+        type: Int | NoneClass | None = None,
+        proto: Int | NoneClass | None = None,
         impl: Any = None,
     ) -> None:
         if impl is not None:
             self._impl = impl
             return
-        f = _socket.AF_INET if family is None else family._value
-        t = _socket.SOCK_STREAM if type is None else type._value
-        p = 0 if proto is None else proto._value
+        f = _socket.AF_INET if _is_absent(family) else family._value
+        t = _socket.SOCK_STREAM if _is_absent(type) else type._value
+        p = 0 if _is_absent(proto) else proto._value
         self._impl = _socket.socket(f, t, p)
 
     def bind(self, address: Tuple | Str) -> NoneClass:
         self._impl.bind(_unwrap_address(address))
         return none
 
-    def listen(self, backlog: Int | None = None) -> NoneClass:
-        if backlog is None:
+    def listen(self, backlog: Int | NoneClass | None = None) -> NoneClass:
+        if _is_absent(backlog):
             self._impl.listen()
         else:
             self._impl.listen(backlog._value)
@@ -84,20 +84,20 @@ class Socket(Object):
     def connect_ex(self, address: Tuple | Str) -> Int:
         return Int(self._impl.connect_ex(_unwrap_address(address)))
 
-    def send(self, data: Bytes, flags: Int | None = None) -> Int:
-        f = 0 if flags is None else flags._value
+    def send(self, data: Bytes, flags: Int | NoneClass | None = None) -> Int:
+        f = 0 if _is_absent(flags) else flags._value
         return Int(self._impl.send(data._value, f))
 
-    def sendall(self, data: Bytes, flags: Int | None = None) -> NoneClass:
-        f = 0 if flags is None else flags._value
+    def sendall(self, data: Bytes, flags: Int | NoneClass | None = None) -> NoneClass:
+        f = 0 if _is_absent(flags) else flags._value
         self._impl.sendall(data._value, f)
         return none
 
     def sendto(self, data: Bytes, address: Tuple | Str) -> Int:
         return Int(self._impl.sendto(data._value, _unwrap_address(address)))
 
-    def recv(self, bufsize: Int, flags: Int | None = None) -> Bytes:
-        f = 0 if flags is None else flags._value
+    def recv(self, bufsize: Int, flags: Int | NoneClass | None = None) -> Bytes:
+        f = 0 if _is_absent(flags) else flags._value
         return Bytes(self._impl.recv(bufsize._value, f))
 
     def recvfrom(self, bufsize: Int) -> Tuple:
@@ -121,7 +121,7 @@ class Socket(Object):
         return Int(self._impl.getsockopt(level._value, optname._value))
 
     def settimeout(self, value: Float | Int | NoneClass | None) -> NoneClass:
-        if value is None or isinstance(value, NoneClass):
+        if _is_absent(value):
             self._impl.settimeout(None)
         else:
             self._impl.settimeout(value._value)
@@ -241,8 +241,8 @@ class SocketNamespace:
         )
 
     @staticmethod
-    def getfqdn(name: Str | None = None) -> Str:
-        if name is None:
+    def getfqdn(name: Str | NoneClass | None = None) -> Str:
+        if _is_absent(name):
             return Str(_socket.getfqdn())
         return Str(_socket.getfqdn(name._value))
 
@@ -251,14 +251,16 @@ class SocketNamespace:
         return to_boolean(_socket.has_dualstack_ipv6())
 
     @staticmethod
-    def getservbyname(servicename: Str, protocolname: Str | None = None) -> Int:
-        if protocolname is None:
+    def getservbyname(
+        servicename: Str, protocolname: Str | NoneClass | None = None
+    ) -> Int:
+        if _is_absent(protocolname):
             return Int(_socket.getservbyname(servicename._value))
         return Int(_socket.getservbyname(servicename._value, protocolname._value))
 
     @staticmethod
-    def getservbyport(port: Int, protocolname: Str | None = None) -> Str:
-        if protocolname is None:
+    def getservbyport(port: Int, protocolname: Str | NoneClass | None = None) -> Str:
+        if _is_absent(protocolname):
             return Str(_socket.getservbyport(port._value))
         return Str(_socket.getservbyport(port._value, protocolname._value))
 
@@ -335,23 +337,23 @@ class SocketNamespace:
     def getaddrinfo(
         host: Str | NoneClass | None,
         port: Int | Str | NoneClass | None,
-        family: Int | None = None,
-        type: Int | None = None,
-        proto: Int | None = None,
-        flags: Int | None = None,
+        family: Int | NoneClass | None = None,
+        type: Int | NoneClass | None = None,
+        proto: Int | NoneClass | None = None,
+        flags: Int | NoneClass | None = None,
     ) -> List:
-        h = None if host is None or isinstance(host, NoneClass) else host._value
-        if port is None or isinstance(port, NoneClass):
+        h = None if _is_absent(host) else host._value
+        if _is_absent(port):
             p: Any = None
         else:
             p = port._value
         results = _socket.getaddrinfo(
             h,
             p,
-            0 if family is None else family._value,
-            0 if type is None else type._value,
-            0 if proto is None else proto._value,
-            0 if flags is None else flags._value,
+            0 if _is_absent(family) else family._value,
+            0 if _is_absent(type) else type._value,
+            0 if _is_absent(proto) else proto._value,
+            0 if _is_absent(flags) else flags._value,
         )
         out: list[Tuple] = []
         for fam, sock_type, prot, canonname, sockaddr in results:
