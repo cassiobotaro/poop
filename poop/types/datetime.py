@@ -457,7 +457,13 @@ class DateTime(
 
     @classmethod
     def utcnow(cls) -> DateTime:
-        return cls._from_impl(_datetime.datetime.now(_datetime.UTC))
+        # CPython's utcnow() answers a *naive* datetime (tzinfo=None) holding
+        # the current UTC wall time; strip the offset to match rather than
+        # leak an aware value. (Computed via now(UTC) to dodge the stdlib
+        # deprecation warning that the bare utcnow() call emits.)
+        return cls._from_impl(
+            _datetime.datetime.now(_datetime.UTC).replace(tzinfo=None)
+        )
 
     @classmethod
     def fromtimestamp(
