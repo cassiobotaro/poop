@@ -474,11 +474,16 @@ class DateTime(
         cls,
         date: Date,
         time: Time,
-        tzinfo: TimeZone | ZoneInfo | NoneClass | None = None,
+        tzinfo: TimeZone | ZoneInfo | NoneClass | _AbsentType = _ABSENT,
     ) -> DateTime:
-        from poop.types._unwrap import _is_absent
-
-        tz = time._impl.tzinfo if _is_absent(tzinfo) else _opt_tz(tzinfo)
+        # Omitted (_ABSENT) keeps the time's tzinfo, matching CPython's
+        # `tzinfo=self.tzinfo` default; an explicit POOP `none` strips it
+        # to a naive datetime. A bare `none` default could not tell those
+        # two cases apart.
+        if isinstance(tzinfo, _AbsentType):
+            tz = time._impl.tzinfo
+        else:
+            tz = _opt_tz(tzinfo)
         return cls._from_impl(_datetime.datetime.combine(date._impl, time._impl, tz))
 
     def date(self) -> Date:
