@@ -39,8 +39,8 @@ class PrettyPrinter:
         underscore_numbers: Boolean | None = None,
     ) -> None:
         self._impl = _pprint.PrettyPrinter(
-            indent=_i(indent, 1) or 1,
-            width=_i(width, 80) or 80,
+            indent=1 if indent is None else indent._value,
+            width=80 if width is None else width._value,
             depth=_i(depth, None),
             compact=_b(compact, False),
             sort_dicts=_b(sort_dicts, True),
