@@ -61,6 +61,14 @@ class Dict(_ValueEqMixin, Object):
 
         if isinstance(other, MappingProxy):
             return to_boolean(self._data == other._dict._data)
+        # Any Dict (incl. OrderedDict/DefaultDict subclasses) compares by its
+        # underlying data. _ValueEqMixin's ``isinstance(other, type(self))`` is
+        # asymmetric for subclasses — ``OrderedDict == dict`` would wrongly be
+        # ``false`` (and reflected dispatch makes both directions false). The
+        # ``_data`` comparison keeps CPython's semantics, including the
+        # order-sensitive ``OrderedDict == OrderedDict``.
+        if isinstance(other, Dict):
+            return to_boolean(self._data == other._data)
         return super().__eq__(other)
 
     def __ne__(self, other: object) -> Boolean:
@@ -68,6 +76,8 @@ class Dict(_ValueEqMixin, Object):
 
         if isinstance(other, MappingProxy):
             return to_boolean(self._data != other._dict._data)
+        if isinstance(other, Dict):
+            return to_boolean(self._data != other._data)
         return super().__ne__(other)
 
     @classmethod
