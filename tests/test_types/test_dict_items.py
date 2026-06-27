@@ -237,11 +237,18 @@ def test_other_items_set_of_non_tuples() -> None:
     assert result is true
 
 
-def test_other_items_skips_non_pair_tuple() -> None:
-    # Sets may contain tuples of arity != 2; the set-op helper must skip them
-    # rather than blindly indexing _items[0]/_items[1].
+def test_other_items_keeps_non_pair_tuple() -> None:
+    # Sets may contain elements of arity != 2 (or non-tuples). CPython treats
+    # dict_items as a set of opaque members, so union/symmetric-difference keep
+    # such elements verbatim rather than dropping them:
+    # ``{'a':1,'b':2}.items() | {('a',), ('a',1,99)}`` retains both extras.
     items = DictItems(_make())
     other = Set(Tuple(Str("a")), Tuple(Str("a"), Int(1), Int(99)))
     assert (items & other)._data == set()
-    assert (items | other)._data == {Tuple(Str("a"), Int(1)), Tuple(Str("b"), Int(2))}
+    assert (items | other)._data == {
+        Tuple(Str("a"), Int(1)),
+        Tuple(Str("b"), Int(2)),
+        Tuple(Str("a")),
+        Tuple(Str("a"), Int(1), Int(99)),
+    }
     assert items.isdisjoint(other) is true
