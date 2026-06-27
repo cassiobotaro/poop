@@ -38,4 +38,4 @@ def test_iter_is_self() -> None:
 
 
 def test_str_repr() -> None:
-    assert str(FrozenSet().iter()) == "<frozenset_iterator>"
+    assert str(FrozenSet().iter()) == "<set_iterator>"
