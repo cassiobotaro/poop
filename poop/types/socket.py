@@ -3,6 +3,7 @@ from __future__ import annotations
 import socket as _socket
 from typing import Any, ClassVar, Self
 
+from poop.types._unwrap import _is_absent
 from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.bytes import Bytes
 from poop.types.float import Float
@@ -296,16 +297,16 @@ class SocketNamespace:
     @staticmethod
     def create_connection(
         address: Tuple,
-        timeout: Float | Int | None = None,
-        source_address: Tuple | None = None,
+        timeout: Float | Int | NoneClass | None = None,
+        source_address: Tuple | NoneClass | None = None,
         *,
         all_errors: Boolean = false,
     ) -> Socket:
         addr = _unwrap_address(address)
         kwargs: dict[str, Any] = {"all_errors": bool(all_errors)}
-        if timeout is not None:
+        if not _is_absent(timeout):
             kwargs["timeout"] = timeout._value
-        if source_address is not None:
+        if not _is_absent(source_address):
             kwargs["source_address"] = _unwrap_address(source_address)
         sock = _socket.create_connection(addr, **kwargs)
         return Socket(impl=sock)
@@ -315,7 +316,7 @@ class SocketNamespace:
         address: Tuple,
         *,
         family: Int = Int(_socket.AF_INET),
-        backlog: Int | None = None,
+        backlog: Int | NoneClass | None = None,
         reuse_port: Boolean = false,
         dualstack_ipv6: Boolean = false,
     ) -> Socket:
@@ -325,7 +326,7 @@ class SocketNamespace:
             "reuse_port": bool(reuse_port),
             "dualstack_ipv6": bool(dualstack_ipv6),
         }
-        if backlog is not None:
+        if not _is_absent(backlog):
             kwargs["backlog"] = backlog._value
         sock = _socket.create_server(addr, **kwargs)
         return Socket(impl=sock)
