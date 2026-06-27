@@ -2172,7 +2172,6 @@ POOP's `Int` / `Str` / `Float` / … wrappers set `__module__` / `__name__` for 
 | `HTTPConnection.getresponse()` | `HTTPResponse` | |
 | `HTTPConnection.set_tunnel(host, port=none, headers=none)` | `none` | proxy CONNECT |
 | `HTTPConnection.close()` | `none` | |
-| `HTTPConnection` / `HTTPSConnection` as context manager (`with`) | same connection | closes the underlying socket fd on exit |
 | `HTTPResponse.status` / `.version` (properties) | `Int` | |
 | `HTTPResponse.reason` (property) | `Str` | |
 | `HTTPResponse.headers` (property) | `Dict[Str, Str]` | |
@@ -2613,7 +2612,7 @@ Five concurrent-execution namespaces shipped together. `threading` exposes `Thre
 | `multiprocessing.Process(target=none, name=none, daemon=none)` | `Process` | same shape as `Thread` |
 | `Process.start()` / `.join` / `.is_alive` / `.terminate` / `.kill` / `.close` | `none` / `Boolean` / `none` | |
 | `Process.pid` / `.exitcode` / `.name` (properties) | `Int` or `none` / `Str` | |
-| `MPQueue(maxsize=none)` / `.put` / `.get` / `.qsize` / `.empty` / `.full` / `.close` | typed | mirror `queue.Queue`; `With`-friendly (closes the queue's pipe fds and feeder thread on exit, like `Pool`) |
+| `MPQueue(maxsize=none)` / `.put` / `.get` / `.qsize` / `.empty` / `.full` / `.close` | typed | mirror `queue.Queue` |
 | `Pool(processes=none)` / `.apply(fn, args=none)` / `.map(fn, iter)` / `.close` / `.terminate` / `.join` | typed | `With`-friendly |
 | `multiprocessing.cpu_count()` | `Int` | |
 | `multiprocessing.active_children()` | `List[Process]` | |
