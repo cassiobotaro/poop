@@ -1242,7 +1242,7 @@ The lexer API is covered: `get_token`/`read_token`/`push_token`, `push_source`/`
 |---|---|---|
 | Representations | `.hex`, `.urn` (`Str`), `.int` (`Int`), `.bytes`, `.bytes_le` (`Bytes`), `.fields` (`Tuple[Int x 6]`) | per row |
 | Field accessors | `.time_low`, `.time_mid`, `.time_hi_version`, `.clock_seq_hi_variant`, `.clock_seq_low`, `.node`, `.time`, `.clock_seq` | `Int` |
-| Classification | `.version` (`Int`), `.variant` (`Str`), `.is_safe` (`Str` token: `"safe"`/`"unsafe"`/`"unknown"`) | per row |
+| Classification | `.version` (`Int \| NoneClass` — `none` for non-RFC-4122 variants, mirroring CPython), `.variant` (`Str`), `.is_safe` (`Str` token: `"safe"`/`"unsafe"`/`"unknown"`) | per row |
 | Generators | `uuid.uuid1`/`3`/`4`/`5`/`6`/`7`/`8` | `UUID` |
 | Helper | `uuid.getnode()` | `Int` |
 | Namespace constants (`UUID`) | `uuid.NAMESPACE_DNS`/`URL`/`OID`/`X500`, `uuid.NIL`, `uuid.MAX` | `UUID` |

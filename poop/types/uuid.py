@@ -8,6 +8,7 @@ from poop.types._unwrap import _kwargs_from
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.bytes import Bytes
 from poop.types.int import Int
+from poop.types.none import NoneClass, none
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -109,10 +110,11 @@ class UUID(_ImplWrapperMixin, _ValueEqMixin, Object):
     # Classification --------------------------------------------------
 
     @property
-    def version(self) -> Int:
-        # version can be None for unknown variants; CPython returns None.
+    def version(self) -> Int | NoneClass:
+        # version is None for non-RFC-4122 variants (NIL, MAX, NCS, …);
+        # mirror CPython and surface `none` rather than a bogus Int(0).
         v = self._impl.version
-        return Int(v if v is not None else 0)
+        return none if v is None else Int(v)
 
     @property
     def variant(self) -> Str:
