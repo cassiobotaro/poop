@@ -1,7 +1,7 @@
 from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._iterable_mixin import _IterableMixin
@@ -134,8 +134,8 @@ class List(_ValueEqMixin, _IterableMixin, Object):
 
         return Int(self._items.count(obj))
 
-    def extend(self, other: List) -> NoneClass:
-        self._items.extend(other._items)
+    def extend(self, other: Iterable[Object]) -> NoneClass:
+        self._items.extend(other)
         return none
 
     def index(self, obj: Object) -> Int:
