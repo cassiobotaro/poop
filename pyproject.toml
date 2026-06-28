@@ -7,7 +7,7 @@ requires-python = ">=3.14"
 authors = [
     { name = "Cassio Botaro", email = "cassiobotaro@gmail.com" },
 ]
-dependencies = ["typer>=0.26.7"]
+dependencies = ["typer>=0.26.8"]
 
 [project.scripts]
 poop = "poop.cli:entry_point"
