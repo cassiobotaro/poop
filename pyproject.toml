@@ -20,7 +20,7 @@ include = ["poop*"]
 
 [dependency-groups]
 dev = [
-    "prek>=0.4.5",
+    "prek>=0.4.8",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.18",
     "ty>=0.0.52",
