@@ -32,6 +32,28 @@ def test_constant_fstring_also_raises() -> None:
         NoFstringValidator().validate(tree)
 
 
+def test_interpolated_tstring_raises() -> None:
+    # t-strings (PEP 750, Python 3.14) use the same {...} interpolation and
+    # produce a raw Template, so they bypass POOP Str just like f-strings.
+    tree = ast.parse('x = t"hi {n}"')
+    with pytest.raises(ValidationError) as exc_info:
+        NoFstringValidator().validate(tree)
+    assert "t-string" in str(exc_info.value)
+
+
+def test_constant_tstring_also_raises() -> None:
+    tree = ast.parse('x = t"hello"')
+    with pytest.raises(ValidationError):
+        NoFstringValidator().validate(tree)
+
+
+def test_tstring_rejected_by_default_pipeline() -> None:
+    # Regression: a t-string used to pass validation and execute to a raw
+    # Python Template, fully bypassing the POOP type system.
+    with pytest.raises(ValidationError):
+        Interpreter().run_source('n = 5\nt"hi {n}"')
+
+
 def test_error_suggests_concatenation() -> None:
     tree = ast.parse('x = f"hi {n}"')
     with pytest.raises(ValidationError, match="concatenation"):
