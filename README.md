@@ -6,7 +6,7 @@
 
 **POOP** — **P**ython **O**bject **O**riented **P**rogramming. A Python 3.14 interpreter that enforces Smalltalk-style message passing by rejecting `if`/`for`/`print`/`isinstance` and rewriting Python literals (`1`, `"hi"`, `True`, `[…]`, `{…}`) into POOP types where every operation is a message to a receiver.
 
-POOP is for **educational exploration of message-passing semantics inside the Python ecosystem**, not for production. Status: **stable** — breaking changes ship in major releases (`1.x` → `2.0`). POOP is not distributed via PyPI by design; clone and run it locally.
+POOP is for **educational exploration of message-passing semantics inside the Python ecosystem**, not for production. POOP is not distributed via PyPI by design, and there are no tagged releases; clone and run it locally.
 
 ## Install
 
@@ -167,5 +167,5 @@ Annotations (`x: int`, `def f(x: int) -> str:`) are not evaluated at runtime in 
 - [`MIGRATION.md`](MIGRATION.md) — full Python → POOP recipe book
 - [`INFECTIONS.md`](INFECTIONS.md) — every validator / transformer / type, with rationale
 - [`proposals.md`](proposals.md) — open design backlog
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev setup, atomic-commit conventions, release flow
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev setup, atomic-commit conventions, versioning
 - [Issues](https://github.com/cassiobotaro/poop/issues) — bugs and feature requests
