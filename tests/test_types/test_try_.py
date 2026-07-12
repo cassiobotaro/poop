@@ -113,3 +113,44 @@ def test_try_finally_after_run_raises() -> None:
     with pytest.raises(RuntimeError, match="already been executed"):
         t.finally_(lambda: calls.append(False))
     assert calls == [True]
+
+
+class _Captured:
+    """A throwaway object used to probe whether a Try pins a closure."""
+
+
+def test_try_finally_after_run_does_not_retain_block() -> None:
+    # A post-execution finally_ is rejected; it must not pin the cleanup
+    # closure on the already-dead Try (single-use drop invariant).
+    import gc
+    import weakref
+
+    def register_post_run() -> tuple[Try, weakref.ref[_Captured]]:
+        t = Try(lambda: None).run()
+        captured = _Captured()
+        with pytest.raises(RuntimeError, match="already been executed"):
+            t.finally_(lambda: captured)
+        return t, weakref.ref(captured)
+
+    t, ref = register_post_run()
+    gc.collect()
+    assert ref() is None
+    assert t._finally_block is None
+
+
+def test_try_except_after_run_does_not_retain_handler() -> None:
+    # Registering a handler after execution is a no-op; it must not pin the
+    # handler closure on a Try that can never consume it.
+    import gc
+    import weakref
+
+    def register_post_run() -> tuple[Try, weakref.ref[_Captured]]:
+        t = Try(lambda: None).run()
+        captured = _Captured()
+        t.except_(ValueError, lambda e: captured)
+        return t, weakref.ref(captured)
+
+    t, ref = register_post_run()
+    gc.collect()
+    assert ref() is None
+    assert t._handlers == []
