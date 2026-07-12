@@ -23,6 +23,22 @@ if TYPE_CHECKING:
 _bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
 
 
+def _repeat_count(other: object) -> Any:
+    """Repeat count for sequence multiplication, folding ``Boolean`` to 1/0.
+
+    ``bool`` is an ``int`` subclass — ``b"ab" * True == b"ab"`` — but a POOP
+    ``Boolean`` has no ``_value`` slot, so fold it explicitly. Any other operand
+    is unwrapped to its underlying value (or passed through) so ``bytes.__mul__``
+    raises CPython's faithful ``can't multiply sequence by non-int`` ``TypeError``
+    for non-integers.
+    """
+    from poop.types.boolean import Boolean
+
+    if isinstance(other, Boolean):
+        return int(bool(other))
+    return getattr(other, "_value", other)
+
+
 class Bytes(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
@@ -134,11 +150,11 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def __add__(self, other: Bytes) -> Bytes:
         return Bytes(self._value + other._value)
 
-    def __mul__(self, other: Int) -> Bytes:
-        return Bytes(self._value * other._value)
+    def __mul__(self, other: object) -> Bytes:
+        return Bytes(self._value * _repeat_count(other))
 
-    def __rmul__(self, other: Int) -> Bytes:
-        return Bytes(self._value * other._value)
+    def __rmul__(self, other: object) -> Bytes:
+        return Bytes(self._value * _repeat_count(other))
 
     def capitalize(self) -> Bytes:
         return Bytes(self._value.capitalize())

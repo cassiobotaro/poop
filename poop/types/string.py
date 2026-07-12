@@ -24,6 +24,22 @@ if TYPE_CHECKING:
 _str = str  # alias to avoid shadowing in annotations
 
 
+def _repeat_count(other: object) -> Any:
+    """Repeat count for sequence multiplication, folding ``Boolean`` to 1/0.
+
+    ``bool`` is an ``int`` subclass — ``"ab" * True == "ab"`` — but a POOP
+    ``Boolean`` has no ``_value`` slot, so fold it explicitly. Any other operand
+    is unwrapped to its underlying value (or passed through) so ``str.__mul__``
+    raises CPython's faithful ``can't multiply sequence by non-int`` ``TypeError``
+    for non-integers.
+    """
+    from poop.types.boolean import Boolean
+
+    if isinstance(other, Boolean):
+        return int(bool(other))
+    return getattr(other, "_value", other)
+
+
 class Str(_ValueEqMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
@@ -396,11 +412,11 @@ class Str(_ValueEqMixin, Object):
     def __add__(self, other: Str) -> Str:
         return Str(self._value + other._value)
 
-    def __mul__(self, other: Int) -> Str:
-        return Str(self._value * other._value)
+    def __mul__(self, other: object) -> Str:
+        return Str(self._value * _repeat_count(other))
 
-    def __rmul__(self, other: Int) -> Str:
-        return Str(self._value * other._value)
+    def __rmul__(self, other: object) -> Str:
+        return Str(self._value * _repeat_count(other))
 
     def __mod__(self, other: object) -> Str:
         # printf-style formatting: "v %s" % 5, "%s/%s" % (a, b), or
