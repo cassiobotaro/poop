@@ -3,6 +3,7 @@ from __future__ import annotations
 import time as _time
 from typing import Any, ClassVar
 
+from poop.types._unwrap import _is_absent
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -158,34 +159,34 @@ class _TimeNamespace:
         _time.sleep(seconds._value)
         return none
 
-    def strftime(self, fmt: Str, t: StructTime | None = None) -> Str:
-        if t is None:
+    def strftime(self, fmt: Str, t: StructTime | NoneClass | None = None) -> Str:
+        if _is_absent(t):
             return Str(_time.strftime(fmt._value))
         return Str(_time.strftime(fmt._value, t._impl))
 
     def strptime(self, s: Str, fmt: Str) -> StructTime:
         return StructTime(_time.strptime(s._value, fmt._value))
 
-    def gmtime(self, secs: Float | Int | None = None) -> StructTime:
-        if secs is None:
+    def gmtime(self, secs: Float | Int | NoneClass | None = None) -> StructTime:
+        if _is_absent(secs):
             return StructTime(_time.gmtime())
         return StructTime(_time.gmtime(secs._value))
 
-    def localtime(self, secs: Float | Int | None = None) -> StructTime:
-        if secs is None:
+    def localtime(self, secs: Float | Int | NoneClass | None = None) -> StructTime:
+        if _is_absent(secs):
             return StructTime(_time.localtime())
         return StructTime(_time.localtime(secs._value))
 
     def mktime(self, t: StructTime) -> Float:
         return Float(_time.mktime(t._impl))
 
-    def asctime(self, t: StructTime | None = None) -> Str:
-        if t is None:
+    def asctime(self, t: StructTime | NoneClass | None = None) -> Str:
+        if _is_absent(t):
             return Str(_time.asctime())
         return Str(_time.asctime(t._impl))
 
-    def ctime(self, secs: Float | Int | None = None) -> Str:
-        if secs is None:
+    def ctime(self, secs: Float | Int | NoneClass | None = None) -> Str:
+        if _is_absent(secs):
             return Str(_time.ctime())
         return Str(_time.ctime(secs._value))
 
