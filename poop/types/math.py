@@ -238,8 +238,10 @@ class Math:
         return Float(_math.ulp(x._value))
 
     @staticmethod
-    def nextafter(x: Float, y: Float, *, steps: Int | None = None) -> Float:
-        if steps is None:
+    def nextafter(x: Float, y: Float, *, steps: Int | NoneClass | None = None) -> Float:
+        from poop.types._unwrap import _is_absent
+
+        if _is_absent(steps):
             return Float(_math.nextafter(x._value, y._value))
         return Float(_math.nextafter(x._value, y._value, steps=steps._value))
 

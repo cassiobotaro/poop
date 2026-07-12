@@ -7,6 +7,7 @@ from poop.types.boolean import false, true
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.math import Math
+from poop.types.none import none
 from poop.types.tuple import Tuple
 
 
@@ -235,6 +236,12 @@ def test_nextafter_with_steps() -> None:
     result = Math.nextafter(Float(1.0), Float(2.0), steps=Int(3))
     assert isinstance(result, Float)
     assert result._value > Math.nextafter(Float(1.0), Float(2.0))._value
+
+
+def test_nextafter_steps_poop_none_means_absent() -> None:
+    # A POOP ``none`` literal must behave like omitting steps, not crash.
+    result = Math.nextafter(Float(1.0), Float(2.0), steps=none)
+    assert result == Math.nextafter(Float(1.0), Float(2.0))
 
 
 # --- Predicates ---
