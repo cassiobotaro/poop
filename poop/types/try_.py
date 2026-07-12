@@ -30,11 +30,19 @@ class Try(Object):
         exc_type: type[BaseException],
         handler: Callable[[Error], object],
     ) -> Try:
-        self._handlers.append((exc_type, handler))
+        # Once executed the single-use drop has already run; re-populating
+        # _handlers would pin the handler closure (and whatever it captured)
+        # on a Try that can never consume it again.
+        if not self._executed:
+            self._handlers.append((exc_type, handler))
         return self
 
     def finally_(self, block: Callable[[], object] | None = None) -> Try:
-        self._finally_block = block
+        # Store the cleanup closure only while the Try can still run it; a
+        # post-execution call is rejected by _execute() below, so retaining
+        # `block` here would leak it on the already-dead Try.
+        if not self._executed:
+            self._finally_block = block
         return self._execute()
 
     def run(self) -> Try:
