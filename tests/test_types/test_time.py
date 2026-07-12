@@ -116,6 +116,30 @@ def test_ctime_with_secs() -> None:
     assert isinstance(Time.ctime(Float(0)), Str)
 
 
+# --- POOP `none` accepted for optional args (a `None` literal in POOP
+# source becomes `none`, which must behave like the missing-arg case) ---
+
+
+def test_gmtime_with_none() -> None:
+    assert isinstance(Time.gmtime(none), StructTime)
+
+
+def test_localtime_with_none() -> None:
+    assert isinstance(Time.localtime(none), StructTime)
+
+
+def test_ctime_with_none() -> None:
+    assert isinstance(Time.ctime(none), Str)
+
+
+def test_asctime_with_none() -> None:
+    assert isinstance(Time.asctime(none), Str)
+
+
+def test_strftime_with_none() -> None:
+    assert isinstance(Time.strftime(Str("%Y"), none), Str)
+
+
 # --- StructTime properties ---
 
 
