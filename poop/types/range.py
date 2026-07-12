@@ -59,12 +59,14 @@ class Range(_IterableMixin, Object):
     ) -> List:
         from poop.types.slice import Slice
 
-        items = list(self._iter())
         if isinstance(start_or_slice, Slice):
             py = start_or_slice._py_slice()
         else:
             py = Slice(start_or_slice, stop, step)._py_slice()
-        return List(*items[py])
+        # Slice the native range lazily (O(1)) and wrap only the selected
+        # elements — materializing the whole range as Int objects first would
+        # allocate every member just to discard all but the slice.
+        return List(*(Int(i) for i in self._range()[py]))
 
     def includes(self, item: Int) -> Boolean:
         return to_boolean(item._value in self._range())
