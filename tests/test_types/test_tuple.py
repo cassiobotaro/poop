@@ -295,6 +295,17 @@ def test_mul_repeats() -> None:
     assert Tuple(Int(1), Int(2)) * Int(2) == Tuple(Int(1), Int(2), Int(1), Int(2))
 
 
+def test_mul_by_boolean_folds_to_int() -> None:
+    # bool is an int subclass in CPython: (1, 2) * True == (1, 2).
+    assert Tuple(Int(1), Int(2)) * true == Tuple(Int(1), Int(2))
+    assert Tuple(Int(1), Int(2)) * false == Tuple()
+
+
+def test_rmul_by_boolean_folds_to_int() -> None:
+    assert true * Tuple(Int(1), Int(2)) == Tuple(Int(1), Int(2))
+    assert false * Tuple(Int(1), Int(2)) == Tuple()
+
+
 def test_ne_with_non_tuple_returns_true() -> None:
     assert Tuple(Int(1)).__ne__(List(Int(1))) is true
 

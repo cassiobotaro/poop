@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.none import none
@@ -58,11 +59,11 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented  # foreign operand -> faithful TypeError
         return Tuple(*self._items + other._items)
 
-    def __mul__(self, other: Int) -> Tuple:
-        return Tuple(*self._items * other._value)
+    def __mul__(self, other: object) -> Tuple:
+        return Tuple(*self._items * _repeat_count(other))
 
-    def __rmul__(self, other: Int) -> Tuple:
-        return Tuple(*self._items * other._value)
+    def __rmul__(self, other: object) -> Tuple:
+        return Tuple(*self._items * _repeat_count(other))
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)

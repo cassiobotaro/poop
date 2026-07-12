@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, to_boolean, true
@@ -21,22 +22,6 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 _bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
-
-
-def _repeat_count(other: object) -> Any:
-    """Repeat count for sequence multiplication, folding ``Boolean`` to 1/0.
-
-    ``bool`` is an ``int`` subclass — ``b"ab" * True == b"ab"`` — but a POOP
-    ``Boolean`` has no ``_value`` slot, so fold it explicitly. Any other operand
-    is unwrapped to its underlying value (or passed through) so ``bytes.__mul__``
-    raises CPython's faithful ``can't multiply sequence by non-int`` ``TypeError``
-    for non-integers.
-    """
-    from poop.types.boolean import Boolean
-
-    if isinstance(other, Boolean):
-        return int(bool(other))
-    return getattr(other, "_value", other)
 
 
 class Bytes(_ValueEqMixin, _IterableMixin, Object):

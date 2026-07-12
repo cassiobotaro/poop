@@ -366,6 +366,17 @@ def test_mul_repeats() -> None:
     assert List(Int(1), Int(2)) * Int(2) == List(Int(1), Int(2), Int(1), Int(2))
 
 
+def test_mul_by_boolean_folds_to_int() -> None:
+    # bool is an int subclass in CPython: [1, 2] * True == [1, 2].
+    assert List(Int(1), Int(2)) * true == List(Int(1), Int(2))
+    assert List(Int(1), Int(2)) * false == List()
+
+
+def test_rmul_by_boolean_folds_to_int() -> None:
+    assert true * List(Int(1), Int(2)) == List(Int(1), Int(2))
+    assert false * List(Int(1), Int(2)) == List()
+
+
 def test_eq_with_non_list_returns_false() -> None:
     assert List(Int(1)).__eq__(Int(1)) is false
 

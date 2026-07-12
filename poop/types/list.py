@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.list_iterator import ListIterator
@@ -87,11 +88,11 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         b = cast("_list[Any]", other._items)
         return to_boolean(a >= b)
 
-    def __mul__(self, other: Int) -> List:
-        return List(*self._items * other._value)
+    def __mul__(self, other: object) -> List:
+        return List(*self._items * _repeat_count(other))
 
-    def __rmul__(self, other: Int) -> List:
-        return List(*self._items * other._value)
+    def __rmul__(self, other: object) -> List:
+        return List(*self._items * _repeat_count(other))
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)

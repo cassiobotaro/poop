@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _MISSING
+from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -22,22 +23,6 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 _str = str  # alias to avoid shadowing in annotations
-
-
-def _repeat_count(other: object) -> Any:
-    """Repeat count for sequence multiplication, folding ``Boolean`` to 1/0.
-
-    ``bool`` is an ``int`` subclass — ``"ab" * True == "ab"`` — but a POOP
-    ``Boolean`` has no ``_value`` slot, so fold it explicitly. Any other operand
-    is unwrapped to its underlying value (or passed through) so ``str.__mul__``
-    raises CPython's faithful ``can't multiply sequence by non-int`` ``TypeError``
-    for non-integers.
-    """
-    from poop.types.boolean import Boolean
-
-    if isinstance(other, Boolean):
-        return int(bool(other))
-    return getattr(other, "_value", other)
 
 
 class Str(_ValueEqMixin, Object):
