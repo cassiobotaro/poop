@@ -3,6 +3,7 @@ from __future__ import annotations
 import html as _html
 import html.entities as _html_entities
 import html.parser as _html_parser
+import weakref
 from typing import ClassVar
 
 from poop.types._bridge import _str_str_dict
@@ -65,7 +66,18 @@ class _BridgedHTMLParser(_html_parser.HTMLParser):
 
     def __init__(self, owner: HTMLParser, *, convert_charrefs: bool) -> None:
         super().__init__(convert_charrefs=convert_charrefs)
-        self._owner = owner
+        # weakref back-reference: the owner holds this parser strongly via
+        # `_impl`, so a strong `_owner` would form an HTMLParser <-> parser
+        # cycle that only the cyclic GC could reclaim. Events fire only while
+        # the owner is alive on the call stack, so a weak ref is safe.
+        self._owner_ref = weakref.ref(owner)
+
+    @property
+    def _owner(self) -> HTMLParser:
+        owner = self._owner_ref()
+        if owner is None:  # pragma: no cover - owner outlives every parse event
+            raise ReferenceError("HTMLParser owner has been garbage collected")
+        return owner
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         self._owner.handle_starttag(Str(tag), _attrs_to_poop(attrs))
@@ -106,7 +118,9 @@ class HTMLParser(Object):
     `(Str, Str|none)` tuples for attributes).
     """
 
-    __slots__ = ("_impl",)
+    # `__weakref__` lets the inner parser hold a weak back-reference, avoiding
+    # a strong owner <-> parser reference cycle.
+    __slots__ = ("__weakref__", "_impl")
 
     def __init__(self, convert_charrefs: Boolean | None = None) -> None:
         flag = True if convert_charrefs is None else bool(convert_charrefs)
