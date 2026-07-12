@@ -19,22 +19,27 @@ class Map(_IterableMixin, Object):
         self._iter: Iterator[Any] | None = None
 
     @staticmethod
-    def _gen(source: Any, block: Callable[[Any], Any]) -> Iterator[Any]:
+    def _gen(source: Any, block: Any) -> Iterator[Any]:
         for item in source:
             yield block(item)
 
-    def __iter__(self) -> Iterator[Any]:
+    def _materialize(self) -> Iterator[Any]:
         if self._iter is None:
             self._iter = self._gen(self._source, self._block)
+            # The generator now owns the source and block; drop our copies so
+            # a consumed Map stops pinning its whole source and its closure.
+            self._source = None
+            self._block = None
         return self._iter
+
+    def __iter__(self) -> Iterator[Any]:
+        return self._materialize()
 
     def iter(self) -> Map:
         return self
 
     def next(self) -> Any:
-        if self._iter is None:
-            self._iter = self._gen(self._source, self._block)
-        return next(self._iter)
+        return next(self._materialize())
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import to_boolean
