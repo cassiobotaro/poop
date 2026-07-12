@@ -195,6 +195,14 @@ class Deque(_ImplWrapperMixin, _ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return Deque._from_impl(self._impl * n._value)
 
+    def __rmul__(self, n: object) -> Deque:
+        # CPython's deque supports ``n * d`` as well as ``d * n``. ``Int.__mul__``
+        # returns NotImplemented for a Deque operand so the reflected multiply
+        # dispatches here, matching List/Tuple/Str repetition.
+        if not isinstance(n, Int):
+            return NotImplemented
+        return Deque._from_impl(self._impl * n._value)
+
     def rotate(self, n: Int | NoneClass | None = None) -> NoneClass:
         self._impl.rotate(_opt_int(n, 1))
         return none
