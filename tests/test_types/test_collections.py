@@ -672,6 +672,14 @@ def test_deque_mul_repeats() -> None:
     assert tripled == Deque(List(Int(1), Int(1), Int(1)))
 
 
+def test_deque_rmul_repeats() -> None:
+    # CPython's deque supports ``n * d``; Int.__mul__ defers to the reflected
+    # multiply, so Deque must answer __rmul__ like List/Tuple/Str.
+    tripled = Int(3) * Deque(List(Int(1)))
+    assert isinstance(tripled, Deque)
+    assert tripled == Deque(List(Int(1), Int(1), Int(1)))
+
+
 # --- seeded constructors (pulled when a caller asked) ---
 
 

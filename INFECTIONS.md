@@ -1162,7 +1162,7 @@ Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
 | `deque.count(x)` / `.remove(x)` / `.reverse()` / `.clear()` | `Int` / `none` | |
 | `deque.insert(i, x)` / `.index(x, start=none, stop=none)` | `none` / `Int` | `index` raises `ValueError` when absent |
 | `deque.copy()` | `deque` | preserves `maxlen` |
-| `d1 + d2` / `d * n` | `deque` | concatenation / repetition; isinstance-guarded |
+| `d1 + d2` / `d * n` / `n * d` | `deque` | concatenation / repetition (both operand orders); isinstance-guarded |
 | `deque.at(i)` | element | negative indexing supported |
 | `deque.maxlen` (property) | `Int` or `none` | |
 | `deque.len()` / `.includes(x)` | `Int` / `Boolean` | |
