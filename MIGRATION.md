@@ -37,7 +37,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x or y` | `x.or_(lambda: y)` |
 | `random.choice(xs)` | `random.choice(xs)` |
 | `random.Random(seed)` | `Random(seed)` |
-| `secrets.token_hex(16)` | `secrets.token_hex(16)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
 | `binascii.crc32(b)` | `binascii.crc32(b)` |
@@ -402,26 +401,6 @@ r = Random(42)
 ```
 
 > POOP exposes both `random` (lowercase, module-level singleton — `random.random()`, `random.choice(xs)`, …) and `Random` (PascalCase, the class — `Random(seed)` returns a fresh independently-seeded instance). The split mirrors Python exactly; the only shortcut is that `Random` is in scope without a `random.` prefix (no `import` needed). Cryptographic draws live in `secrets`, never `random`.
-
-## Cryptographic randomness (`secrets` module)
-
-```python
-# Python
-import secrets
-
-token = secrets.token_hex(16)
-n = secrets.randbelow(100)
-ok = secrets.compare_digest(a, b)
-```
-
-```python
-# POOP
-token = secrets.token_hex(16)
-n = secrets.randbelow(100)
-ok = secrets.compare_digest(a, b)
-```
-
-> Anything cryptographic goes through `secrets`, not `random`. `secrets.token_bytes` returns `Bytes`; `token_hex`/`token_urlsafe` return `Str`. `secrets.compare_digest(a, b, /)` is constant-time and accepts either `Str` or `Bytes` — but both arguments must be the same type, exactly like CPython.
 
 ## Base64 (`base64` module)
 

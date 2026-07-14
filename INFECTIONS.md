@@ -897,21 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### secrets — `poop/types/secrets.py` + `poop/transformers/secrets.py`
-
-`secrets` is a cryptographic-secure-only namespace mirroring Python's `secrets` module. POOP deliberately separates secure (`secrets`) from non-secure (`random`) randomness to match Python's API split exactly.
-
-| Category | Operations | Returns |
-|---|---|---|
-| Token minting | `token_bytes(nbytes=none)`, `token_hex(nbytes=none)`, `token_urlsafe(nbytes=none)` | `Bytes` / `Str` / `Str` |
-| Secure draws | `choice(seq)`, `randbelow(exclusive_upper_bound)`, `randbits(k)` | element / `Int` / `Int` |
-| Constant-time comparison | `compare_digest(a, b, /)` (positional-only) | `Boolean` |
-| Constant | `DEFAULT_ENTROPY` | `Int` (32 in CPython) |
-
-`secrets.SystemRandom` is **not** surfaced — its instance API duplicates the module-level functions above. `nbytes=none` resolves to `DEFAULT_ENTROPY`, mirroring CPython's default.
-
-`secrets` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/secrets.py` — namespace-only, no AST rewrite.
-
 ### binascii — `poop/types/binascii.py` + `poop/transformers/binascii.py`
 
 `binascii` mirrors Python's `binascii` module — lower-level one-shot conversions between binary data and ASCII representations, plus CRC checksums. Pairs with `base64` (the methods on `Bytes`/`Str`).
