@@ -23,7 +23,6 @@ from poop.transformers.complex import ComplexTransformer
 from poop.transformers.compression import NAMESPACE as _compression_namespace
 from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
 from poop.transformers.configparser import NAMESPACE as _configparser_namespace
-from poop.transformers.copy import NAMESPACE as _copy_namespace
 from poop.transformers.csv import NAMESPACE as _csv_namespace
 from poop.transformers.datetime import NAMESPACE as _datetime_namespace
 from poop.transformers.decimal import NAMESPACE as _decimal_namespace
@@ -167,7 +166,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _copy_namespace,
     _pprint_namespace,
     _bisect_namespace,
     _heapq_namespace,

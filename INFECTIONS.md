@@ -897,20 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### copy — `poop/types/copy.py` + `poop/transformers/copy.py`
-
-`copy` mirrors Python's `copy` module — shallow and deep object copying. POOP types implement `__copy__` / `__deepcopy__` via the standard Python protocol; the namespace just routes calls.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `copy.copy(obj)` | same type as input | shallow |
-| `copy.deepcopy(obj)` | same type as input | recursive |
-| `copy.Error` | Python exception type | usable with `Try.except_` |
-
-`deepcopy`'s `memo` parameter (an `id(obj)`-keyed dict CPython uses to track recursive identities during traversal) is **not** surfaced — it has no clean type-discipline mapping because POOP `Dict` is keyed by POOP `Object`, not `int`. Callers wanting custom memoization should implement `__deepcopy__` on their POOP class. `copy.replace` (3.13+) is similarly out of scope for v1 — POOP classes don't use decorators and have no `dataclasses` story.
-
-`copy` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/copy.py` — namespace-only, no AST rewrite.
-
 ### pprint + PrettyPrinter — `poop/types/pprint.py` + `poop/transformers/pprint.py`
 
 `pprint` mirrors Python's `pprint` module — multi-line, indented printing of nested data structures. POOP types alias `__repr__` to `__str__`, so pretty-printed output reads naturally for POOP values.

@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `copy.deepcopy(x)` | `copy.deepcopy(x)` |
 | `pprint.pformat(x)` | `pprint.pformat(x)` |
 | `bisect.insort(xs, n)` | `bisect.insort(xs, n)` |
 | `heapq.heappush(h, x)` | `heapq.heappush(h, x)` |
@@ -418,24 +417,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Shallow / deep copy (`copy` module)
-
-```python
-# Python
-import copy
-
-shallow = copy.copy(obj)
-deep = copy.deepcopy(obj)
-```
-
-```python
-# POOP
-shallow = copy.copy(obj)
-deep = copy.deepcopy(obj)
-```
-
-> POOP types implement Python's `__copy__` / `__deepcopy__` protocol; the namespace routes calls. `copy.Error` is exposed as a Python exception class for use with `Try.except_(...)`. `deepcopy`'s `memo` parameter is not surfaced — implement `__deepcopy__` on your POOP class if you need custom memoization.
 
 ## Pretty-printing (`pprint` module + `PrettyPrinter` class)
 
