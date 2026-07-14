@@ -1,8 +1,9 @@
+import asyncio
 import contextlib
 
 import pytest
 
-from poop.types.with_ import With
+from poop.types.with_ import AsyncWith, With
 
 
 class _FakeContextManager:
@@ -147,44 +148,33 @@ class _SuppressingAsyncContextManager(_FakeAsyncContextManager):
 
 
 def test_async_with_runs_body_inside_acm() -> None:
-    from poop.types.asyncio import AsyncIO
-    from poop.types.with_ import AsyncWith
-
     acm = _FakeAsyncContextManager()
     seen: list[object] = []
 
     async def caller() -> None:
         await AsyncWith(lambda: acm).do(lambda v: seen.append(v))
 
-    AsyncIO.run(caller())
+    asyncio.run(caller())
     assert acm.entered and acm.exited
     assert seen == ["aresource"]
 
 
 def test_async_with_awaits_async_body() -> None:
-    import asyncio as _stdlib_asyncio
-
-    from poop.types.asyncio import AsyncIO
-    from poop.types.with_ import AsyncWith
-
     acm = _FakeAsyncContextManager()
     seen: list[object] = []
 
     async def _body(v: object) -> None:
-        await _stdlib_asyncio.sleep(0)
+        await asyncio.sleep(0)
         seen.append(v)
 
     async def caller() -> None:
         await AsyncWith(lambda: acm).do(_body)
 
-    AsyncIO.run(caller())
+    asyncio.run(caller())
     assert seen == ["aresource"]
 
 
 def test_async_with_propagates_exceptions() -> None:
-    from poop.types.asyncio import AsyncIO
-    from poop.types.with_ import AsyncWith
-
     acm = _FakeAsyncContextManager()
 
     def _boom(_: object) -> None:
@@ -194,14 +184,11 @@ def test_async_with_propagates_exceptions() -> None:
         await AsyncWith(lambda: acm).do(_boom)
 
     with pytest.raises(ValueError, match="nope"):
-        AsyncIO.run(caller())
+        asyncio.run(caller())
     assert acm.exited
 
 
 def test_async_with_can_suppress_exceptions() -> None:
-    from poop.types.asyncio import AsyncIO
-    from poop.types.with_ import AsyncWith
-
     acm = _SuppressingAsyncContextManager()
 
     def _boom(_: object) -> None:
@@ -211,7 +198,7 @@ def test_async_with_can_suppress_exceptions() -> None:
         await AsyncWith(lambda: acm).do(_boom)
 
     # No exception escapes because __aexit__ returned True.
-    AsyncIO.run(caller())
+    asyncio.run(caller())
     assert acm.exited
 
 
