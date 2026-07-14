@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `shlex.split(cmd)` | `shlex.split(cmd)` |
 | `uuid.uuid4()` | `uuid.uuid4()` |
 | `uuid.UUID(s)` | `UUID(s)` |
 | `json.dumps(obj)` | `json.dumps(obj)` |
@@ -414,33 +413,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Shell tokenization (`shlex` module + `Shlex` class)
-
-```python
-# Python
-import shlex
-
-args = shlex.split('echo "hello world"')
-cmd = shlex.join(args)
-safe = shlex.quote(user_input)
-
-lexer = shlex.shlex(text)
-for token in lexer:
-    handle(token)
-```
-
-```python
-# POOP
-args = shlex.split('echo "hello world"')
-cmd = shlex.join(args)
-safe = shlex.quote(user_input)
-
-lexer = Shlex(text)
-lexer.do(lambda token: handle(token))
-```
-
-> `shlex.split` returns `List[Str]`. The `Shlex` class is the streaming lexer (mirrors `shlex.shlex`): the iterative surface (`.get_token()`, iteration, `.lineno`, `.whitespace_split`), the character-class attributes (`wordchars`, `whitespace`, `quotes`, `punctuation_chars`, …), and `push_token` / `push_source` / `pop_source` are all covered. The remainder (`eof`, `sourcehook`, parser internals) is out by design, not deferred.
 
 ## UUIDs (`uuid` module + `UUID` class)
 

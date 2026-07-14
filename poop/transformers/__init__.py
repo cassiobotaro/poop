@@ -66,7 +66,6 @@ from poop.transformers.re import NAMESPACE as _re_namespace
 from poop.transformers.resource import NAMESPACE as _resource_namespace
 from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.set import SetTransformer
-from poop.transformers.shlex import NAMESPACE as _shlex_namespace
 from poop.transformers.shutil import NAMESPACE as _shutil_namespace
 from poop.transformers.signal import NAMESPACE as _signal_namespace
 from poop.transformers.slice import SliceTransformer
@@ -161,7 +160,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _shlex_namespace,
     _uuid_namespace,
     _json_namespace,
     _tomllib_namespace,

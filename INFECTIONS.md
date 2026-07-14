@@ -897,28 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### shlex + Shlex — `poop/types/shlex.py` + `poop/transformers/shlex.py`
-
-`shlex` mirrors Python's `shlex` module — POSIX-style shell tokenization, joining, and safe quoting. Two namespace entries follow the `random`/`Random` convention:
-
-- **`shlex`** (lowercase) — module-level `split`/`join`/`quote`.
-- **`Shlex`** (PascalCase) — the streaming lexer class, mirrors `shlex.shlex`.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `shlex.split(s, comments=false, posix=true)` | `List[Str]` | POSIX-style tokenization |
-| `shlex.join(split_command)` | `Str` | safely re-joins a list of args |
-| `shlex.quote(s)` | `Str` | shell-safe escape for one token |
-| `Shlex(instream=none, infile=none, posix=false, punctuation_chars=false)` | `Shlex` | streaming lexer |
-| `Shlex.get_token()` | `Str | none` | next token; `none` signals EOF |
-| iterating a `Shlex` | yields `Str` | wraps CPython's iter protocol |
-| `Shlex.lineno` (property) | `int` | source line counter |
-| `Shlex.whitespace_split` (property) | `bool` | configurable splitting mode |
-
-The lexer API is covered: `get_token`/`read_token`/`push_token`, `push_source`/`pop_source`, `error_leader`, `lineno`, and the character-class attributes (`commenters`, `wordchars`, `whitespace`, `escape`, `quotes`, `escapedquotes`, `whitespace_split`, `debug`, `token`, `infile`, `source`, `punctuation_chars`). The remainder is out by design, not deferred: `eof` (POOP answers `none` at end of input instead of a sentinel), `sourcehook` (returns an open file object — POOP has no file-object abstraction, same family as `ZoneInfo.from_file`), and `instream`/`state`/`pushback`/`filestack` (parser internals; exposing them breaks encapsulation).
-
-`shlex` and `Shlex` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/shlex.py` — namespace-only, no AST rewrite.
-
 ### uuid + UUID — `poop/types/uuid.py` + `poop/transformers/uuid.py`
 
 `UUID` is a full POOP value wrapping `uuid.UUID`. Construction mirrors CPython exactly — positional `UUID(Str("12345...-…"))` for a canonical string or keyword `UUID(hex=..., bytes=..., bytes_le=..., int=..., fields=...)` for the parse-from-foo variants. Like `random`/`Random` and `mimetypes`/`MimeTypes`, two namespace entries are bound:
