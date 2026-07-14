@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `glob.glob("*.py")` | `glob.glob("*.py")` |
 | `fnmatch.fnmatch(n, p)` | `fnmatch.fnmatch(n, p)` |
 | `copy.deepcopy(x)` | `copy.deepcopy(x)` |
 | `pprint.pformat(x)` | `pprint.pformat(x)` |
@@ -420,25 +419,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Shell-style wildcard expansion (`glob` module)
-
-```python
-# Python
-import glob
-
-files = glob.glob("src/**/*.py", recursive=True)
-for f in glob.iglob("*.txt"):
-    process(f)
-```
-
-```python
-# POOP
-files = glob.glob("src/**/*.py", recursive=true)
-glob.iglob("*.txt").do(lambda f: process(f))
-```
-
-> `glob.glob` returns `List[Path]`; `glob.iglob` returns `GlobIter` (iterable, with `.to_list()`). `Path.glob`/`Path.rglob` already cover most use; the namespace surfaces the module-level entry points for callers who want to glob from a string pattern without first constructing a `Path`.
 
 ## Pattern matching on filenames (`fnmatch` module)
 

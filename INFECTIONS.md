@@ -897,21 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### glob — `poop/types/glob.py` + `poop/transformers/glob.py`
-
-`glob` mirrors Python's `glob` module — shell-style wildcard expansion driven from a string pattern. `Path.glob`/`Path.rglob` cover most use; this namespace surfaces the module-level entry points for callers who want to glob without first constructing a `Path`.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `glob.glob(pathname, *, root_dir=none, recursive=false, include_hidden=false)` | `List[Path]` | eager |
-| `glob.iglob(pathname, *, root_dir=none, recursive=false, include_hidden=false)` | `GlobIter` | lazy; iterable, with `.to_list()` |
-| `glob.escape(pathname)` | `Str` | escapes glob metacharacters |
-| `glob.translate(pat, *, recursive=false, include_hidden=false, seps=none)` | `Str` | compiles the pattern to a regex source string (3.13+) |
-
-`GlobIter` wraps Python's `iglob` generator and yields POOP `Path` instances. The `dir_fd` parameter on CPython's `glob.glob` is not surfaced — POOP routes file-descriptor-based I/O nowhere yet.
-
-`glob` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/glob.py` — namespace-only, no AST rewrite.
-
 ### fnmatch — `poop/types/fnmatch.py` + `poop/transformers/fnmatch.py`
 
 `fnmatch` mirrors Python's `fnmatch` module — Unix shell-pattern matching against filenames.
