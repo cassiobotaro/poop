@@ -884,19 +884,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
 
-### getpass — `poop/types/getpass.py` + `poop/transformers/getpass.py`
-
-`getpass` is a tiny namespace mirroring Python's `getpass` module. Both reads return POOP `Str`:
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `getpass.getpass(prompt=Str("Password: "), stream=none)` | `Str` | Reads without echo |
-| `getpass.getuser()` | `Str` | Login name lookup |
-
-`getpass.GetPassWarning` is **not surfaced** in POOP. CPython emits it via `warnings` when echo can't be suppressed, but POOP has no warning concept (`warnings` itself is "out" — see proposals.md). The underlying CPython call still writes the warning to stderr; POOP user code just cannot catch or filter it. See proposals.md § Future work for a possible later exposure path.
-
-`getpass` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/getpass.py` — namespace-only, no AST rewrite.
-
 ### base64 — methods on `Bytes` and `Str`
 
 Python's `base64.*` is reachable as **methods on the value**, not a namespace. Both `Bytes` (encode + decode) and `Str` (decode only) carry the full surface:

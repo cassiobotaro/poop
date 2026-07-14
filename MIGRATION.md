@@ -37,7 +37,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x or y` | `x.or_(lambda: y)` |
 | `random.choice(xs)` | `random.choice(xs)` |
 | `random.Random(seed)` | `Random(seed)` |
-| `getpass.getuser()` | `getpass.getuser()` |
 | `secrets.token_hex(16)` | `secrets.token_hex(16)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
@@ -403,24 +402,6 @@ r = Random(42)
 ```
 
 > POOP exposes both `random` (lowercase, module-level singleton — `random.random()`, `random.choice(xs)`, …) and `Random` (PascalCase, the class — `Random(seed)` returns a fresh independently-seeded instance). The split mirrors Python exactly; the only shortcut is that `Random` is in scope without a `random.` prefix (no `import` needed). Cryptographic draws live in `secrets`, never `random`.
-
-## Password prompts (`getpass` module)
-
-```python
-# Python
-import getpass
-
-user = getpass.getuser()
-password = getpass.getpass("Password: ")
-```
-
-```python
-# POOP
-user = getpass.getuser()
-password = getpass.getpass("Password: ")
-```
-
-> Both `getpass.getuser()` and `getpass.getpass(prompt)` return POOP `Str`. `getpass.GetPassWarning` is not exposed in POOP — the underlying CPython call still emits it to stderr, but POOP has no warning model to catch it.
 
 ## Cryptographic randomness (`secrets` module)
 

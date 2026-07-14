@@ -40,7 +40,6 @@ from poop.transformers.fractions import NAMESPACE as _fractions_namespace
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.functools import NAMESPACE as _functools_namespace
 from poop.transformers.gc import NAMESPACE as _gc_namespace
-from poop.transformers.getpass import NAMESPACE as _getpass_namespace
 from poop.transformers.glob import NAMESPACE as _glob_namespace
 from poop.transformers.graphlib import NAMESPACE as _graphlib_namespace
 from poop.transformers.grp import NAMESPACE as _grp_namespace
@@ -174,7 +173,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _getpass_namespace,
     _secrets_namespace,
     _binascii_namespace,
     _mimetypes_namespace,
