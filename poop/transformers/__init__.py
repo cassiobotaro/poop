@@ -40,7 +40,6 @@ from poop.transformers.graphlib import NAMESPACE as _graphlib_namespace
 from poop.transformers.grp import NAMESPACE as _grp_namespace
 from poop.transformers.gzip import NAMESPACE as _gzip_namespace
 from poop.transformers.hashlib import NAMESPACE as _hashlib_namespace
-from poop.transformers.heapq import NAMESPACE as _heapq_namespace
 from poop.transformers.hmac import NAMESPACE as _hmac_namespace
 from poop.transformers.html import NAMESPACE as _html_namespace
 from poop.transformers.http import NAMESPACE as _http_namespace
@@ -164,7 +163,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _heapq_namespace,
     _collections_namespace,
     _functools_namespace,
     _shlex_namespace,

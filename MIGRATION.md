@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `heapq.heappush(h, x)` | `heapq.heappush(h, x)` |
 | `shlex.split(cmd)` | `shlex.split(cmd)` |
 | `uuid.uuid4()` | `uuid.uuid4()` |
 | `uuid.UUID(s)` | `UUID(s)` |
@@ -415,28 +414,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Heap queue (`heapq` module)
-
-```python
-# Python
-import heapq
-
-heapq.heappush(heap, item)
-smallest = heapq.heappop(heap)
-top3 = heapq.nlargest(3, data)
-sorted_merge = list(heapq.merge(*iterables))
-```
-
-```python
-# POOP
-heapq.heappush(heap, item)
-smallest = heapq.heappop(heap)
-top3 = heapq.nlargest(3, data)
-sorted_merge = heapq.merge(*iterables).to_list()
-```
-
-> `heapq` operates on POOP `List` in place — `heappush`/`heappop`/`heapify` are mutators that return `none` (`heappop` returns the popped element). `heapq.merge` returns a `HeapMerge` lazy iterator with `.to_list()` to materialize.
 
 ## Collections (`collections` module — `Counter`/`deque`/`defaultdict`/`OrderedDict`/`ChainMap`/`namedtuple`)
 

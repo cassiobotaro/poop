@@ -897,25 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### heapq — `poop/types/heapq.py` + `poop/transformers/heapq.py`
-
-`heapq` mirrors Python's `heapq` module — a binary min-heap on a regular POOP `List`. No new POOP type for the heap itself; operations mutate the underlying buffer.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `heapq.heappush(heap, item)` | `none` | in-place |
-| `heapq.heappop(heap)` | element | raises `IndexError` on empty |
-| `heapq.heappushpop(heap, item)` | element | one-step push+pop |
-| `heapq.heapreplace(heap, item)` | element | one-step pop+push |
-| `heapq.heapify(x)` | `none` | in-place rearrangement |
-| `heapq.nlargest(n, iterable, key=none)` | `List` | sorted descending |
-| `heapq.nsmallest(n, iterable, key=none)` | `List` | sorted ascending |
-| `heapq.merge(*iterables, key=none, reverse=false)` | `HeapMerge` | lazy iterator with `.to_list()` |
-
-Private max-heap variants (`_heapify_max`, etc.) are intentionally out of scope.
-
-`heapq` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/heapq.py` — namespace-only, no AST rewrite.
-
 ### collections + Counter + deque + defaultdict + OrderedDict + ChainMap + namedtuple — `poop/types/collections.py` + `poop/transformers/collections.py`
 
 `collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Seven namespace entries: `collections` (lowercase module mirror), plus the direct entry points `Counter`, `deque`, `defaultdict`, `OrderedDict`, `ChainMap`, and `namedtuple` — each keeping its Python casing (`deque`/`defaultdict`/`namedtuple` are lowercase in CPython, same precedent as enum's `auto`). Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as. `defaultdict` and `OrderedDict` subclass `Dict`, so the full `Dict` surface (`at_put`, `keys`, `do`, `pop`, views, `|` merge, …) applies.
