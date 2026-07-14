@@ -60,7 +60,6 @@ from poop.transformers.list import ListTransformer
 from poop.transformers.locale import NAMESPACE as _locale_namespace
 from poop.transformers.logging import NAMESPACE as _logging_namespace
 from poop.transformers.lzma import NAMESPACE as _lzma_namespace
-from poop.transformers.math import NAMESPACE as _math_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.mimetypes import NAMESPACE as _mimetypes_namespace
 from poop.transformers.multiprocessing import NAMESPACE as _multiprocessing_namespace
@@ -176,7 +175,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     SliceTransformer.BINDINGS,
     BlockTransformer.BINDINGS,
     _path_namespace,
-    _math_namespace,
     _cmath_namespace,
     _random_namespace,
     _errno_namespace,

@@ -857,31 +857,6 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `With` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/with_.py` — namespace-only, no AST rewrite.
 
-### math — `poop/types/math.py` + `poop/transformers/math.py`
-
-`math` is a namespace class wrapping Python's `math` module. Exposed as a namespace-only binding via the `NAMESPACE` dict in `poop/transformers/math.py` (no AST rewrite), in the same family as `Try` / `With` / `Path`. Every public callable in Python 3.14's `math` is reachable as `math.<same-name>(...)`, with parameter order, keyword-only markers, defaults, return types, **and the lowercase module name** mirroring Python exactly. The namespace binding is `math` (lowercase) because `math` is a Python module, not a class.
-
-The five module constants follow the source module's case verbatim — `math.pi`, `math.e`, `math.tau`, `math.inf`, `math.nan` (lowercase). Other POOP namespaces inherit their own case from their source modules: `uuid.NAMESPACE_DNS`, `secrets.DEFAULT_ENTROPY`, and so on stay uppercase because that is how `uuid` and `secrets` ship them.
-
-| Category | Operations | Returns |
-|---|---|---|
-| Number theory | `factorial`, `gcd(*ints)`, `lcm(*ints)`, `comb`, `perm(n, k=None)`, `isqrt` | `Int` |
-| Trigonometric | `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2(y, x)` | `Float` |
-| Hyperbolic | `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` | `Float` |
-| Exp / log / power | `exp`, `expm1`, `exp2`, `log(x, base=math.e)`, `log2`, `log10`, `log1p`, `sqrt`, `cbrt`, `pow` | `Float` |
-| Rounding | `floor`, `ceil`, `trunc` | `Int` |
-| Float decomposition | `modf` → `(Float, Float)`, `frexp` → `(Float, Int)`, `ldexp` | `Tuple` / `Float` |
-| Angular conversion | `degrees`, `radians` | `Float` |
-| Float utilities | `fabs`, `copysign`, `fmod`, `remainder`, `fma`, `ulp`, `nextafter(x, y, *, steps=None)` | `Float` |
-| Predicates | `isfinite`, `isinf`, `isnan`, `isclose(a, b, *, rel_tol=1e-9, abs_tol=0.0)` | `Boolean` |
-| Aggregates | `fsum`, `prod(iter, *, start=1)`, `sumprod`, `dist`, `hypot(*args)` | `Float` / `Int` |
-| Special functions | `erf`, `erfc`, `gamma`, `lgamma` | `Float` |
-| Constants | `pi`, `e`, `tau`, `inf`, `nan` | `Float` |
-
-POOP `Int` and `Float` keep methods that are native to Python's `int` and `float` (`bit_length`, `bit_count`, `is_integer`, `as_integer_ratio`) and the substitutes for banned builtins (`Int.abs()`, `Int.pow()`, `Int.divmod()` cover the `no_abs` / `no_pow` / `no_divmod` validators). `Int.ceil`/`floor`/`trunc` and `Float.ceil`/`floor`/`trunc` are entitled by the dunder-exposure principle — `int` and `float` carry `__ceil__`/`__floor__`/`__trunc__`, so the methods stand on their own receiver rather than on `math`.
-
-`math` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/math.py` — namespace-only, no AST rewrite.
-
 ### cmath — `poop/types/cmath.py` + `poop/transformers/cmath.py`
 
 `cmath` is a namespace class wrapping Python's `cmath` module — the complex-number counterpart to `math`. Same shape: namespace-only binding, lowercase `cmath`, every public name from `cmath.*` reachable as `cmath.<same-name>(...)` with matching parameter order, defaults, and return types.

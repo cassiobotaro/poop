@@ -97,7 +97,7 @@ The full catalog with one row per validator and the substitute recipe lives in [
 
 ## Learn by example
 
-[`examples/`](examples/) ships 45 programs across three subfolders, grouped by what they teach.
+[`examples/`](examples/) ships 44 programs across three subfolders, grouped by what they teach.
 
 **Language basics** ([`examples/basics/`](examples/basics/))
 - [`hello_world.py`](examples/basics/hello_world.py) — the smallest POOP program
@@ -106,7 +106,6 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`leap_year.py`](examples/basics/leap_year.py) — `and_` / `or_` / `not_`
 - [`collatz.py`](examples/basics/collatz.py) — while-style recursion
 - [`grades.py`](examples/basics/grades.py) — collection processing
-- [`geometry.py`](examples/basics/geometry.py) — classes with state
 - [`slicing.py`](examples/basics/slicing.py) — `Slice` as a reusable value object
 - [`bank_account.py`](examples/basics/bank_account.py) — encapsulation
 

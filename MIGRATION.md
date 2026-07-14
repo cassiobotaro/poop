@@ -35,7 +35,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x[a:b]` | `x.slice(a, b)` |
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
-| `math.sqrt(x)` | `math.sqrt(x)` |
 | `random.choice(xs)` | `random.choice(xs)` |
 | `random.Random(seed)` | `Random(seed)` |
 | `errno.EPERM` | `errno.EPERM` |
@@ -379,30 +378,6 @@ Path("out.txt").write_text(text.upper())
 ```
 
 > `open()` is a definitive ban. `Path` covers `read_text` / `write_text` / `read_bytes` / `write_bytes` plus the rest of `pathlib`. There is no `Path.open(mode)` yet — file handles aren't exposed.
-
-## Math (`math` module)
-
-```python
-# Python
-import math
-
-r = math.sqrt(x)
-a = math.pi * r * r
-ok = math.isclose(a, b)
-h = math.hypot(3, 4, 12)
-n = math.factorial(5)
-```
-
-```python
-# POOP
-r = math.sqrt(x)
-a = math.pi * r * r
-ok = math.isclose(a, b)
-h = math.hypot(3, 4, 12)
-n = math.factorial(5)
-```
-
-> `math` mirrors Python's `math` module exactly — same name (lowercase), same function names, parameter order, defaults, kw-only markers, return types. No `import math` needed in POOP — the namespace is injected globally.
 
 ## Complex math (`cmath` module)
 
