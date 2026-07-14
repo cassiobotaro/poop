@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `pprint.pformat(x)` | `pprint.pformat(x)` |
 | `bisect.insort(xs, n)` | `bisect.insort(xs, n)` |
 | `heapq.heappush(h, x)` | `heapq.heappush(h, x)` |
 | `shlex.split(cmd)` | `shlex.split(cmd)` |
@@ -417,26 +416,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Pretty-printing (`pprint` module + `PrettyPrinter` class)
-
-```python
-# Python
-import pprint
-
-pprint.pprint(data)
-text = pprint.pformat(data, width=40)
-printer = pprint.PrettyPrinter(indent=4)
-```
-
-```python
-# POOP
-pprint.pprint(data)
-text = pprint.pformat(data, width=40)
-printer = PrettyPrinter(indent=4)
-```
-
-> POOP types alias `__repr__` to `__str__`, so pretty-printed output reads exactly like POOP's regular `.print()`. `pprint.pp` differs from `pprint.pprint` only in defaulting `sort_dicts=false`. `PrettyPrinter` captures `sys.stdout` at construction time — to capture pretty-printed output, build the printer inside a stream redirect.
 
 ## Binary search and ordered insertion (`bisect` module)
 

@@ -60,7 +60,6 @@ from poop.transformers.os import NAMESPACE as _os_namespace
 from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.pickle import NAMESPACE as _pickle_namespace
 from poop.transformers.platform import NAMESPACE as _platform_namespace
-from poop.transformers.pprint import NAMESPACE as _pprint_namespace
 from poop.transformers.profile import NAMESPACE as _profile_namespace
 from poop.transformers.pwd import NAMESPACE as _pwd_namespace
 from poop.transformers.queue import NAMESPACE as _queue_namespace
@@ -166,7 +165,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _pprint_namespace,
     _bisect_namespace,
     _heapq_namespace,
     _collections_namespace,

@@ -897,29 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### pprint + PrettyPrinter — `poop/types/pprint.py` + `poop/transformers/pprint.py`
-
-`pprint` mirrors Python's `pprint` module — multi-line, indented printing of nested data structures. POOP types alias `__repr__` to `__str__`, so pretty-printed output reads naturally for POOP values.
-
-Two namespace entries follow the `random`/`Random` and `mimetypes`/`MimeTypes` convention:
-
-- **`pprint`** (lowercase) — module-level shortcuts.
-- **`PrettyPrinter`** (PascalCase) — reusable printer with knobs.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `pprint.pprint(obj, *, indent, width, depth, compact, sort_dicts, underscore_numbers)` | `none` | writes to stdout |
-| `pprint.pformat(obj, *, …)` | `Str` | returns the formatted string |
-| `pprint.pp(obj, *, …)` | `none` | like `pprint`, default `sort_dicts=false` |
-| `pprint.isreadable(obj)` | `Boolean` | output is eval-friendly? |
-| `pprint.isrecursive(obj)` | `Boolean` | object contains self-references? |
-| `pprint.saferepr(obj)` | `Str` | safe repr that doesn't recurse |
-| `PrettyPrinter(indent, width, depth, *, compact, sort_dicts, underscore_numbers)` | `PrettyPrinter` | reusable instance with `.pprint`/`.pformat`/`.isreadable`/`.isrecursive` |
-
-`PrettyPrinter` captures `sys.stdout` at construction time, matching CPython exactly — building one inside a stream redirect is the way to capture output.
-
-`pprint` and `PrettyPrinter` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/pprint.py` — namespace-only, no AST rewrite.
-
 ### bisect — `poop/types/bisect.py` + `poop/transformers/bisect.py`
 
 `bisect` mirrors Python's `bisect` module — binary search and ordered insertion on sorted POOP `List`s. No new POOP type; the operations all take a `List`.
