@@ -9,7 +9,6 @@ from poop.transformers.array import NAMESPACE as _array_namespace
 from poop.transformers.asyncio import NAMESPACE as _asyncio_namespace
 from poop.transformers.atexit import NAMESPACE as _atexit_namespace
 from poop.transformers.base import Transformer
-from poop.transformers.bisect import NAMESPACE as _bisect_namespace
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
@@ -165,7 +164,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _bisect_namespace,
     _heapq_namespace,
     _collections_namespace,
     _functools_namespace,

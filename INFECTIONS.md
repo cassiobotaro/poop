@@ -897,23 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### bisect — `poop/types/bisect.py` + `poop/transformers/bisect.py`
-
-`bisect` mirrors Python's `bisect` module — binary search and ordered insertion on sorted POOP `List`s. No new POOP type; the operations all take a `List`.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `bisect.bisect_left(a, x, lo=none, hi=none, *, key=none)` | `Int` | leftmost insertion point |
-| `bisect.bisect_right(a, x, lo=none, hi=none, *, key=none)` | `Int` | rightmost insertion point |
-| `bisect.bisect(a, x, …)` | `Int` | alias for `bisect_right` |
-| `bisect.insort_left(a, x, …)` | `none` | mutates `a` in place |
-| `bisect.insort_right(a, x, …)` | `none` | mutates `a` in place |
-| `bisect.insort(a, x, …)` | `none` | alias for `insort_right` |
-
-`key` is a Python callable applied to elements during comparison; insertion mutators follow POOP's mutator convention (return `none`).
-
-`bisect` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/bisect.py` — namespace-only, no AST rewrite.
-
 ### heapq — `poop/types/heapq.py` + `poop/transformers/heapq.py`
 
 `heapq` mirrors Python's `heapq` module — a binary min-heap on a regular POOP `List`. No new POOP type for the heap itself; operations mutate the underlying buffer.

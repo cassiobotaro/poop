@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `bisect.insort(xs, n)` | `bisect.insort(xs, n)` |
 | `heapq.heappush(h, x)` | `heapq.heappush(h, x)` |
 | `shlex.split(cmd)` | `shlex.split(cmd)` |
 | `uuid.uuid4()` | `uuid.uuid4()` |
@@ -416,24 +415,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Binary search and ordered insertion (`bisect` module)
-
-```python
-# Python
-import bisect
-
-idx = bisect.bisect_left(sorted_xs, target)
-bisect.insort(sorted_xs, new_value)
-```
-
-```python
-# POOP
-idx = bisect.bisect_left(sorted_xs, target)
-bisect.insort(sorted_xs, new_value)
-```
-
-> `bisect`/`insort` are aliases for `bisect_right`/`insort_right`, matching CPython. Index queries return POOP `Int`; insertion mutators return `none` and mutate the `List` in place. `key` is a Python callable.
 
 ## Heap queue (`heapq` module)
 
