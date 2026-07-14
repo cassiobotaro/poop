@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `fnmatch.fnmatch(n, p)` | `fnmatch.fnmatch(n, p)` |
 | `copy.deepcopy(x)` | `copy.deepcopy(x)` |
 | `pprint.pformat(x)` | `pprint.pformat(x)` |
 | `bisect.insort(xs, n)` | `bisect.insort(xs, n)` |
@@ -419,27 +418,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Pattern matching on filenames (`fnmatch` module)
-
-```python
-# Python
-import fnmatch
-
-if fnmatch.fnmatch(name, "*.py"):
-    handle_python(name)
-selected = fnmatch.filter(all_names, "test_*.py")
-regex_src = fnmatch.translate("*.py")
-```
-
-```python
-# POOP
-fnmatch.fnmatch(name, "*.py").if_true(lambda: handle_python(name))
-selected = fnmatch.filter(all_names, "test_*.py")
-regex_src = fnmatch.translate("*.py")
-```
-
-> `fnmatch.fnmatch` follows the OS's case-sensitivity rules; `fnmatch.fnmatchcase` is always case-sensitive. `filter` returns `List[Str]`; `translate` returns a regex source `Str` for downstream compilation.
 
 ## Shallow / deep copy (`copy` module)
 

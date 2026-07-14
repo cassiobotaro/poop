@@ -897,19 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### fnmatch — `poop/types/fnmatch.py` + `poop/transformers/fnmatch.py`
-
-`fnmatch` mirrors Python's `fnmatch` module — Unix shell-pattern matching against filenames.
-
-| Operation | Returns |
-|---|---|
-| `fnmatch.fnmatch(filename, pattern)` | `Boolean` (case rules follow the OS) |
-| `fnmatch.fnmatchcase(filename, pattern)` | `Boolean` (always case-sensitive) |
-| `fnmatch.filter(names, pattern)` | `List[Str]` |
-| `fnmatch.translate(pattern)` | `Str` (regex source) |
-
-`fnmatch` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/fnmatch.py` — namespace-only, no AST rewrite.
-
 ### copy — `poop/types/copy.py` + `poop/transformers/copy.py`
 
 `copy` mirrors Python's `copy` module — shallow and deep object copying. POOP types implement `__copy__` / `__deepcopy__` via the standard Python protocol; the namespace just routes calls.

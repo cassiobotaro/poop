@@ -34,7 +34,6 @@ from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.filecmp import NAMESPACE as _filecmp_namespace
 from poop.transformers.float import FloatTransformer
-from poop.transformers.fnmatch import NAMESPACE as _fnmatch_namespace
 from poop.transformers.fractions import NAMESPACE as _fractions_namespace
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.functools import NAMESPACE as _functools_namespace
@@ -168,7 +167,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _fnmatch_namespace,
     _copy_namespace,
     _pprint_namespace,
     _bisect_namespace,
