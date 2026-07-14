@@ -30,6 +30,6 @@ def test_import_as_alias_raises() -> None:
 
 
 def test_message_names_substitute() -> None:
-    tree = ast.parse("import math")
+    tree = ast.parse("import io")
     with pytest.raises(ValidationError, match="already in scope"):
         NoImportValidator().validate(tree)

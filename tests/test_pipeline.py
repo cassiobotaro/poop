@@ -4,10 +4,10 @@ Two angles:
 1. Every program in `examples/` runs cleanly through the full pipeline —
    real POOP code is the strongest regression net.
 2. Every transformer with non-empty BINDINGS — and every namespace-only
-   module (`math`, `random`, `path`, `try_`, `with_`) — contributes its
-   bindings to DEFAULT_NAMESPACE, so user code can reach `Path`, `Try`,
-   `With`, `Map`, `Filter`, etc. without needing to know which source
-   exposed them. Catches the "I forgot to wire the binding into
+   module (`path`, `io`, `try_`, `with_`) — contributes its bindings to
+   DEFAULT_NAMESPACE, so user code can reach `Path`, `Try`, `With`,
+   `Map`, `Filter`, etc. without needing to know which source exposed
+   them. Catches the "I forgot to wire the binding into
    `transformers/__init__.py`" class of bug.
 """
 
@@ -18,9 +18,8 @@ import pytest
 from poop import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.base import BaseTransformer
-from poop.transformers.math import NAMESPACE as MATH_NAMESPACE
+from poop.transformers.io import NAMESPACE as IO_NAMESPACE
 from poop.transformers.path import NAMESPACE as PATH_NAMESPACE
-from poop.transformers.random import NAMESPACE as RANDOM_NAMESPACE
 from poop.transformers.try_ import NAMESPACE as TRY_NAMESPACE
 from poop.transformers.with_ import NAMESPACE as WITH_NAMESPACE
 
@@ -33,9 +32,8 @@ TRANSFORMERS_WITH_BINDINGS = sorted(
 )
 
 NAMESPACE_ONLY_MODULES: list[tuple[str, dict[str, object]]] = [
-    ("math", MATH_NAMESPACE),
     ("path", PATH_NAMESPACE),
-    ("random", RANDOM_NAMESPACE),
+    ("io", IO_NAMESPACE),
     ("try_", TRY_NAMESPACE),
     ("with_", WITH_NAMESPACE),
 ]
@@ -104,8 +102,8 @@ def test_transformers_with_bindings_discovered() -> None:
 def test_no_duplicate_bindings_across_transformers() -> None:
     """Guard against two transformer modules silently binding the same name.
 
-    `DEFAULT_NAMESPACE` is built by spreading ~88 NAMESPACE dicts and
-    21 *Transformer.BINDINGS dicts. If a future PR redefines an
+    `DEFAULT_NAMESPACE` is built by spreading every NAMESPACE dict and
+    every *Transformer.BINDINGS dict. If a future PR redefines an
     existing key, the manual merge would silently let the second
     spread win. This test catches that at startup.
     """
