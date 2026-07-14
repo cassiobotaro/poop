@@ -171,6 +171,19 @@ def test_dunder_abs() -> None:
     assert abs(Float(-2.0))._value == pytest.approx(2.0)
 
 
+def test_ceil_returns_int() -> None:
+    assert Float(2.3).ceil() == Int(3)
+
+
+def test_floor_returns_int() -> None:
+    assert Float(2.7).floor() == Int(2)
+
+
+def test_trunc_returns_int() -> None:
+    assert Float(2.9).trunc() == Int(2)
+    assert Float(-2.9).trunc() == Int(-2)
+
+
 def test_round_no_digits_returns_int() -> None:
     assert Float(2.5).round() == Int(2)
     assert Float(3.5).round() == Int(4)

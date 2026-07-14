@@ -878,7 +878,7 @@ The five module constants follow the source module's case verbatim — `math.pi`
 | Special functions | `erf`, `erfc`, `gamma`, `lgamma` | `Float` |
 | Constants | `pi`, `e`, `tau`, `inf`, `nan` | `Float` |
 
-POOP `Int` and `Float` keep methods that are native to Python's `int` and `float` (`bit_length`, `bit_count`, `is_integer`, `as_integer_ratio`) and the substitutes for banned builtins (`Int.abs()`, `Int.pow()`, `Int.divmod()` cover the `no_abs` / `no_pow` / `no_divmod` validators). The math-specific public methods that previously lived on those types (`Int.ceil`/`floor`/`trunc`, `Float.ceil`/`floor`/`trunc`) are removed — `math.ceil(x)` and friends are the single source of truth.
+POOP `Int` and `Float` keep methods that are native to Python's `int` and `float` (`bit_length`, `bit_count`, `is_integer`, `as_integer_ratio`) and the substitutes for banned builtins (`Int.abs()`, `Int.pow()`, `Int.divmod()` cover the `no_abs` / `no_pow` / `no_divmod` validators). `Int.ceil`/`floor`/`trunc` and `Float.ceil`/`floor`/`trunc` are entitled by the dunder-exposure principle — `int` and `float` carry `__ceil__`/`__floor__`/`__trunc__`, so the methods stand on their own receiver rather than on `math`.
 
 `math` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/math.py` — namespace-only, no AST rewrite.
 

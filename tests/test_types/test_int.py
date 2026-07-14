@@ -271,6 +271,18 @@ def test_divmod_method_raises_typeerror_for_foreign_operand() -> None:
         Int(7).divmod("x")
 
 
+def test_ceil_returns_self() -> None:
+    assert Int(5).ceil() == Int(5)
+
+
+def test_floor_returns_self() -> None:
+    assert Int(5).floor() == Int(5)
+
+
+def test_trunc_returns_self() -> None:
+    assert Int(5).trunc() == Int(5)
+
+
 def test_round_returns_self() -> None:
     assert Int(5).round() == Int(5)
 

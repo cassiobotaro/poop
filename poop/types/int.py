@@ -278,11 +278,20 @@ class Int(_ValueEqMixin, Object):
     def __ceil__(self) -> Int:
         return self
 
+    def ceil(self) -> Int:
+        return self.__ceil__()
+
     def __floor__(self) -> Int:
         return self
 
+    def floor(self) -> Int:
+        return self.__floor__()
+
     def __trunc__(self) -> Int:
         return self
+
+    def trunc(self) -> Int:
+        return self.__trunc__()
 
     def __round__(self, ndigits: Int | NoneClass | None = None) -> Int:
 

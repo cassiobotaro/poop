@@ -151,15 +151,24 @@ class Float(_ValueEqMixin, Object):
 
         return Int(math.ceil(self._value))
 
+    def ceil(self) -> Int:
+        return self.__ceil__()
+
     def __floor__(self) -> Int:
         from poop.types.int import Int
 
         return Int(math.floor(self._value))
 
+    def floor(self) -> Int:
+        return self.__floor__()
+
     def __trunc__(self) -> Int:
         from poop.types.int import Int
 
         return Int(math.trunc(self._value))
+
+    def trunc(self) -> Int:
+        return self.__trunc__()
 
     def __round__(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
         from poop.types.int import Int
