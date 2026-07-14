@@ -415,62 +415,6 @@ from_str = "YWJj".b64decode()
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
 
-## Collections (`collections` module — `Counter`/`deque`/`defaultdict`/`OrderedDict`/`ChainMap`/`namedtuple`)
-
-```python
-# Python
-import collections
-
-votes = collections.Counter("aabbb")
-top = votes.most_common(1)
-count_a = votes["a"]
-
-jobs = collections.deque(maxlen=10)
-jobs.append(job)
-jobs.appendleft(urgent)
-nxt = jobs.popleft()
-
-groups = collections.defaultdict(list)
-groups["new"].append("ana")
-
-od = collections.OrderedDict()
-od.move_to_end("a")
-
-Point = collections.namedtuple("Point", "x y")
-p = Point(1, 2)
-print(p.x)
-
-config = collections.ChainMap(user, defaults)
-theme = config["theme"]
-```
-
-```python
-# POOP
-votes = Counter("aabbb")           # or collections.Counter(...)
-top = votes.most_common(1)
-count_a = votes.at("a")
-
-jobs = deque(maxlen=10)            # or collections.deque(...)
-jobs.append(job)
-jobs.appendleft(urgent)
-nxt = jobs.popleft()
-
-groups = defaultdict(lambda: list())
-groups.at("new").append("ana")
-
-od = OrderedDict()
-od.move_to_end("a")
-
-Point = namedtuple("Point", "x y")
-p = Point(1, 2)
-p.x.print()
-
-config = ChainMap(user, defaults)
-theme = config.at("theme")
-```
-
-> `Counter` is Smalltalk's `Bag`: `.at(key)` answers `Int(0)` for missing keys (subscripting is forbidden anyway), `.do(block)` hands the block `(element, count)` pairs like `Dict.do`, and `+`/`-`/`&`/`|` combine counters. `deque` is `OrderedCollection`: O(1) `append`/`appendleft`, `pop`/`popleft`, `rotate`, negative `.at` indexing, and the full `do`/`map`/`filter` iteration surface — lowercase like in Python. `defaultdict` takes its factory as a block (`lambda: list()`) and `.at` on a missing key calls it; `OrderedDict` adds `move_to_end`/directional `popitem` on top of the full `Dict` surface; `namedtuple` returns a `Tuple` subclass whose fields read as properties. `ChainMap` chains `Dict`s: reads search in order, writes land on the first map, `.new_child()`/`.parents` walk the chain.
-
 ## Partial application and caching (`functools` module + `partial` class)
 
 ```python

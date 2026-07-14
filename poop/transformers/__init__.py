@@ -17,7 +17,6 @@ from poop.transformers.bz2 import NAMESPACE as _bz2_namespace
 from poop.transformers.calendar import NAMESPACE as _calendar_namespace
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.codecs import NAMESPACE as _codecs_namespace
-from poop.transformers.collections import NAMESPACE as _collections_namespace
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.compression import NAMESPACE as _compression_namespace
 from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
@@ -163,7 +162,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _collections_namespace,
     _functools_namespace,
     _shlex_namespace,
     _uuid_namespace,

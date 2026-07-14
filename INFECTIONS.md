@@ -897,56 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### collections + Counter + deque + defaultdict + OrderedDict + ChainMap + namedtuple — `poop/types/collections.py` + `poop/transformers/collections.py`
-
-`collections` mirrors Python's `collections` module — the Smalltalk-flavoured data structures. Seven namespace entries: `collections` (lowercase module mirror), plus the direct entry points `Counter`, `deque`, `defaultdict`, `OrderedDict`, `ChainMap`, and `namedtuple` — each keeping its Python casing (`deque`/`defaultdict`/`namedtuple` are lowercase in CPython, same precedent as enum's `auto`). Elements live inside the impl containers as POOP objects — they hash and compare like the Python values they masquerade as. `defaultdict` and `OrderedDict` subclass `Dict`, so the full `Dict` surface (`at_put`, `keys`, `do`, `pop`, views, `|` merge, …) applies.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `Counter(source=none)` | `Counter` | from iterable, `Dict` of counts, or another `Counter`; Smalltalk's `Bag` |
-| `Counter.at(key)` | `Int` | missing keys answer `0`, never raise |
-| `Counter.at_put(key, count)` | `Counter` | sets the count, returns self |
-| `Counter.most_common(n=none)` | `List[Tuple]` | `(element, Int)` pairs, descending count |
-| `Counter.elements()` | `List` | each element repeated by its count |
-| `Counter.total()` | `Int` | sum of all counts |
-| `Counter.update(source)` / `.subtract(source)` | `none` | add / subtract counts; `none` is a no-op |
-| `Counter.len()` / `.includes(key)` | `Int` / `Boolean` | distinct elements / membership |
-| `Counter.do(block)` | `none` | block receives `(element, count)` `Tuple`s, mirroring `Dict.do` |
-| `c1 + c2` / `c1 - c2` / `c1 & c2` / `c1 \| c2` | `Counter` | merge / saturating subtract / min / max; isinstance-guarded |
-| `deque(source=none, maxlen=none)` | `deque` | Smalltalk's `OrderedCollection`; bounded when `maxlen` given |
-| `deque.append(x)` / `.appendleft(x)` | `none` | O(1) at both ends |
-| `deque.pop()` / `.popleft()` | element | raises `IndexError` on empty |
-| `deque.extend(iter)` / `.extendleft(iter)` | `none` | `extendleft` reverses, like the stdlib |
-| `deque.rotate(n=1)` | `none` | negative rotates left |
-| `deque.count(x)` / `.remove(x)` / `.reverse()` / `.clear()` | `Int` / `none` | |
-| `deque.insert(i, x)` / `.index(x, start=none, stop=none)` | `none` / `Int` | `index` raises `ValueError` when absent |
-| `deque.copy()` | `deque` | preserves `maxlen` |
-| `d1 + d2` / `d * n` / `n * d` | `deque` | concatenation / repetition (both operand orders); isinstance-guarded |
-| `deque.at(i)` | element | negative indexing supported |
-| `deque.maxlen` (property) | `Int` or `none` | |
-| `deque.len()` / `.includes(x)` | `Int` / `Boolean` | |
-| `deque.do/map/filter/...` | typed | full `_IterableMixin` surface |
-| `defaultdict(default_factory=none, source=none)` | `defaultdict` | factory is a block (`lambda: list()`); `at` on a missing key calls it, stores, and answers — no `KeyError`; optional `Dict` source seeds the contents |
-| `defaultdict.default_factory` (property) | block or `none` | |
-| `defaultdict.<Dict surface>` | typed | inherits everything from `Dict` |
-| `OrderedDict(source=none)` | `OrderedDict` | order-aware `Dict`; optional `Dict` source seeds the contents |
-| `OrderedDict.move_to_end(key, last=true)` | `none` | `last=false` moves to front |
-| `OrderedDict.popitem(last=true)` | `Tuple` | directional pop |
-| `OrderedDict.<Dict surface>` | typed | inherits everything from `Dict` |
-| `ChainMap(*maps)` | `ChainMap` | lookup chain over `Dict`s (subclasses welcome); empty call seeds one empty `Dict`; live over the underlying maps |
-| `ChainMap.at(key)` / `.get(key, default=none)` | value | searches each map in order |
-| `ChainMap.at_put(key, val)` | `ChainMap` | writes land on the first map; returns self |
-| `ChainMap.includes(key)` / `.len()` | `Boolean` / `Int` | deduplicated across maps |
-| `ChainMap.do(block)` | `none` | `(key, value)` pairs, mirroring `Dict.do` |
-| `ChainMap.maps` (property) | `List[Dict]` | the chain, first map first |
-| `ChainMap.new_child(m=none)` / `.parents` (property) | `ChainMap` | prepend a map / drop the first |
-| `namedtuple(typename, field_names)` | class | class factory: fields as a `Str` (`"x y"` / `"x, y"`) or iterable of `Str` |
-| `Point(...)` (generated class) | instance | a `Tuple` subclass — fields read as properties (`p.x`), arity-checked constructor, `Point(x=1, y=2)`-style repr |
-| `Point._fields` (class attr) | `Tuple[Str]` | field names, Python's underscore convention kept verbatim |
-| `Point._make(iterable)` | instance | classmethod, builds from an iterable |
-| `p._asdict()` | `Dict` | `Str` field names → values |
-| `p._replace(**changes)` | instance | new value with named fields swapped; unknown names raise `ValueError` |
-
 ### functools + partial — `poop/types/functools.py` + `poop/transformers/functools.py`
 
 `functools` mirrors Python's `functools` module. Two namespace entries: `functools` (lowercase module mirror) and `partial` (direct entry point — lowercase, matching CPython's casing like collections' `deque`). `reduce` already lives on every iterable as `col.reduce(init, block)` — the module mirror exists for parity. Caching arrives as **explicit wrapper calls on blocks**, not decorators, so no decorator story is required.
