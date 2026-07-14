@@ -8,6 +8,14 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
+class _ForeignNumber:
+    """A type Float knows nothing about.
+
+    Stands in for any third-party number: Float must answer
+    NotImplemented rather than reach into a `_value` this type lacks.
+    """
+
+
 def test_str() -> None:
     assert str(Float(3.14)) == "3.14"
 
@@ -69,9 +77,7 @@ def test_mod() -> None:
 def test_arithmetic_returns_notimplemented_for_foreign_operand() -> None:
     # A non-Int/Float operand must yield NotImplemented so Python can try the
     # right operand's reflected dunder (proposal 115).
-    from poop.types.fractions import Fraction
-
-    f = Fraction(Int(1), Int(2))
+    f = _ForeignNumber()
     assert Float(2.5).__add__(f) is NotImplemented
     assert Float(2.5).__sub__(f) is NotImplemented
     assert Float(2.5).__mul__(f) is NotImplemented

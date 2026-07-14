@@ -9,6 +9,17 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
+class _ForeignNumber:
+    """A type Int knows nothing about, with a reflected dunder to reach.
+
+    Stands in for any third-party number: Int must answer NotImplemented
+    rather than reach into a `_value` this type does not have.
+    """
+
+    def __radd__(self, other: object) -> tuple[str, object]:
+        return ("radd", other)
+
+
 def test_str() -> None:
     assert str(Int(42)) == "42"
 
@@ -75,9 +86,7 @@ def test_mod() -> None:
 def test_arithmetic_returns_notimplemented_for_foreign_operand() -> None:
     # A non-Int/Float operand must yield NotImplemented so Python can try the
     # right operand's reflected dunder (proposal 115).
-    from poop.types.fractions import Fraction
-
-    f = Fraction(Int(1), Int(2))
+    f = _ForeignNumber()
     assert Int(2).__add__(f) is NotImplemented
     assert Int(2).__sub__(f) is NotImplemented
     assert Int(2).__mul__(f) is NotImplemented
@@ -86,10 +95,10 @@ def test_arithmetic_returns_notimplemented_for_foreign_operand() -> None:
     assert Int(2).__mod__(f) is NotImplemented
 
 
-def test_reflected_add_reaches_fraction_radd() -> None:
-    from poop.types.fractions import Fraction
-
-    assert Int(2) + Fraction(Int(1), Int(2)) == Fraction(Int(5), Int(2))
+def test_reflected_add_reaches_foreign_radd() -> None:
+    # NotImplemented is only half the contract: CPython must then reach the
+    # foreign operand's __radd__, handing it the Int untouched.
+    assert Int(2) + _ForeignNumber() == ("radd", Int(2))
 
 
 def test_mul_by_str_repeats_via_str_rmul() -> None:
