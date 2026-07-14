@@ -897,23 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### binascii — `poop/types/binascii.py` + `poop/transformers/binascii.py`
-
-`binascii` mirrors Python's `binascii` module — lower-level one-shot conversions between binary data and ASCII representations, plus CRC checksums. Pairs with `base64` (the methods on `Bytes`/`Str`).
-
-| Category | Operations | Returns |
-|---|---|---|
-| Hex | `b2a_hex(data, sep=none, bytes_per_sep=Int(1))`, `hexlify(...)` (alias), `a2b_hex(hexstr)`, `unhexlify(hexstr)` (alias) | `Bytes` |
-| Base64 / qp / uu (one-shot) | `b2a_base64(data)`, `a2b_base64(data)`, `b2a_qp(data)`, `a2b_qp(data)`, `b2a_uu(data)`, `a2b_uu(data)` | `Bytes` |
-| CRC | `crc_hqx(data, value)`, `crc32(data, value=Int(0))` | `Int` |
-| Exception classes | `binascii.Error`, `binascii.Incomplete` | Python exception types |
-
-The two exception classes are exposed as raw Python types so user code can pass them to `Try.except_(...)`. Exception classes are the documented exception to POOP's type-discipline rule — `Try` already accepts a Python exception type for its handler, so exposing these mirrors that existing convention.
-
-`b2a_hqx`/`a2b_hqx` (Mac BinHex 4) are not exposed because Python removed them in 3.13.
-
-`binascii` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/binascii.py` — namespace-only, no AST rewrite.
-
 ### mimetypes + MimeTypes — `poop/types/mimetypes.py` + `poop/transformers/mimetypes.py`
 
 `mimetypes` mirrors Python's `mimetypes` module — extension/MIME-type lookups. Like `random`/`Random`, POOP exposes **two namespace entries** because the source module ships both a module-level API and a reusable class:

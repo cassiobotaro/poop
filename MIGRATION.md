@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `binascii.crc32(b)` | `binascii.crc32(b)` |
 | `mimetypes.guess_type(url)` | `mimetypes.guess_type(url)` |
 | `webbrowser.open(url)` | `webbrowser.open(url)` |
 | `glob.glob("*.py")` | `glob.glob("*.py")` |
@@ -423,35 +422,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Binary↔ASCII conversions and CRC (`binascii` module)
-
-```python
-# Python
-import binascii
-
-hex_bytes = binascii.b2a_hex(b"\xde\xad\xbe\xef")
-raw = binascii.a2b_hex(hex_bytes)
-checksum = binascii.crc32(b"hello")
-
-try:
-    binascii.a2b_hex(b"zz")
-except binascii.Error as e:
-    handle(e)
-```
-
-```python
-# POOP
-hex_bytes = binascii.b2a_hex(b"\xde\xad\xbe\xef")
-raw = binascii.a2b_hex(hex_bytes)
-checksum = binascii.crc32(b"hello")
-
-Try(lambda: binascii.a2b_hex(b"zz")).except_(
-    binascii.Error, lambda e: handle(e)
-).run()
-```
-
-> `binascii.Error` and `binascii.Incomplete` are exposed as raw Python exception classes so user code can pass them to `Try.except_(...)`. The hex pair `b2a_hex`/`hexlify` are aliases, as are `a2b_hex`/`unhexlify`.
 
 ## MIME type lookups (`mimetypes` module + `MimeTypes` class)
 
