@@ -18,7 +18,6 @@ from poop.transformers.bytes import BytesTransformer
 from poop.transformers.bz2 import NAMESPACE as _bz2_namespace
 from poop.transformers.calendar import NAMESPACE as _calendar_namespace
 from poop.transformers.class_ import ClassTransformer
-from poop.transformers.cmath import NAMESPACE as _cmath_namespace
 from poop.transformers.codecs import NAMESPACE as _codecs_namespace
 from poop.transformers.collections import NAMESPACE as _collections_namespace
 from poop.transformers.complex import ComplexTransformer
@@ -175,7 +174,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     SliceTransformer.BINDINGS,
     BlockTransformer.BINDINGS,
     _path_namespace,
-    _cmath_namespace,
     _random_namespace,
     _errno_namespace,
     _getpass_namespace,
