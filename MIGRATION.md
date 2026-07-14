@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `webbrowser.open(url)` | `webbrowser.open(url)` |
 | `glob.glob("*.py")` | `glob.glob("*.py")` |
 | `fnmatch.fnmatch(n, p)` | `fnmatch.fnmatch(n, p)` |
 | `copy.deepcopy(x)` | `copy.deepcopy(x)` |
@@ -421,28 +420,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Opening URLs (`webbrowser` module + `Browser` class)
-
-```python
-# Python
-import webbrowser
-
-webbrowser.open("https://example.com")
-webbrowser.open_new_tab("https://example.com")
-firefox = webbrowser.get("firefox")
-firefox.open_new("https://example.com")
-```
-
-```python
-# POOP
-webbrowser.open("https://example.com")
-webbrowser.open_new_tab("https://example.com")
-firefox = webbrowser.get("firefox")
-firefox.open_new("https://example.com")
-```
-
-> POOP exposes both `webbrowser` (lowercase, module-level API) and `Browser` (the controller wrapper, returned by `webbrowser.get(using=none)` or by the named factories `webbrowser.Chrome(...)`, `webbrowser.Mozilla(...)`, …). `webbrowser.Error` is a raw Python exception class for use with `Try.except_(...)`. `webbrowser.register(name, constructor=none, instance=none, *, preferred=false)` accepts a POOP lambda as `constructor` — it must return a `Browser`.
 
 ## Shell-style wildcard expansion (`glob` module)
 

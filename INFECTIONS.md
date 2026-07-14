@@ -897,29 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### webbrowser + Browser — `poop/types/webbrowser.py` + `poop/transformers/webbrowser.py`
-
-`webbrowser` mirrors Python's `webbrowser` module — open URLs in the user's default (or a chosen) browser. Like `random`/`Random` and `mimetypes`/`MimeTypes`, two namespace entries are bound:
-
-- **`webbrowser`** (lowercase) — module-level shortcuts and the `get(using=none)` factory.
-- **`Browser`** (PascalCase) — wraps the underlying `webbrowser.BaseBrowser` controller returned by `get()`, exposing the same `open`/`open_new`/`open_new_tab` methods.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `webbrowser.open(url, new=Int(0), autoraise=true)` | `Boolean` | True iff a browser launched successfully |
-| `webbrowser.open_new(url)` | `Boolean` | new window |
-| `webbrowser.open_new_tab(url)` | `Boolean` | new tab |
-| `webbrowser.get(using=none)` | `Browser` | controller; raises `webbrowser.Error` if `using` unknown |
-| `webbrowser.Error` | Python type | usable with `Try.except_` |
-| `Browser.open` / `.open_new` / `.open_new_tab` | `Boolean` | per-instance dispatch |
-| `Browser.name` | `Str` | controller name (e.g. `"chrome"`) |
-
-POOP collapses Python's concrete browser classes (Chrome, Edge, Mozilla, …) into a single `Browser` POOP type because every concrete class carries the same public surface. Class identity is preserved internally for dispatch. Each named controller is reachable as a `Browser`-returning factory on the namespace — `webbrowser.GenericBrowser(name)`, `BackgroundBrowser(name)`, and the executable-path constructors `UnixBrowser` / `Mozilla` / `Chrome` / `Chromium` / `Edge` / `Opera` / `Epiphany` / `Elinks` (all `name=""`) plus `Konqueror()`.
-
-`webbrowser.register(name, constructor=none, instance=none, *, preferred=false)` accepts a POOP `Block` for `constructor`. The block runs through `block.bridge` and must return a `Browser` (or a raw `BaseBrowser`) — the registry layer unwraps to `BaseBrowser` for CPython.
-
-`webbrowser` and `Browser` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/webbrowser.py` — namespace-only, no AST rewrite.
-
 ### glob — `poop/types/glob.py` + `poop/transformers/glob.py`
 
 `glob` mirrors Python's `glob` module — shell-style wildcard expansion driven from a string pattern. `Path.glob`/`Path.rglob` cover most use; this namespace surfaces the module-level entry points for callers who want to glob without first constructing a `Path`.

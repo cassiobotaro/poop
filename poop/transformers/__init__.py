@@ -104,7 +104,6 @@ from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.uuid import NAMESPACE as _uuid_namespace
 from poop.transformers.varargs import VarargsTransformer
 from poop.transformers.weakref import NAMESPACE as _weakref_namespace
-from poop.transformers.webbrowser import NAMESPACE as _webbrowser_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.xml import NAMESPACE as _xml_namespace
 from poop.transformers.zip import ZipTransformer
@@ -170,7 +169,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _webbrowser_namespace,
     _glob_namespace,
     _fnmatch_namespace,
     _copy_namespace,
