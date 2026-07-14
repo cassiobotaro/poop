@@ -897,25 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### functools + partial — `poop/types/functools.py` + `poop/transformers/functools.py`
-
-`functools` mirrors Python's `functools` module. Two namespace entries: `functools` (lowercase module mirror) and `partial` (direct entry point — lowercase, matching CPython's casing like collections' `deque`). `reduce` already lives on every iterable as `col.reduce(init, block)` — the module mirror exists for parity. Caching arrives as **explicit wrapper calls on blocks**, not decorators, so no decorator story is required.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `partial(block, *args, **kwargs)` | `partial` | freezes arguments of **any** callable — a block, a bound method (`account.deposit`), a constructor, another `partial`; frozen values stay POOP objects |
-| `partial(...)(*more)` | value | call-transparent; call-site kwargs override frozen ones |
-| `partial.func` / `.args` / `.keywords` (properties) | callable / `Tuple` / `Dict` | mirror the stdlib triple |
-| `functools.cmp_to_key(block)` | `Block` | block receives two values and answers a negative/zero/positive `Int`; feed the result to the `key=` of the sorting messages |
-| `functools.reduce(block, iterable, init=none)` | value | `none` init means absent, like the stdlib two-arg form; `col.reduce(init, block)` is the idiomatic message |
-| `functools.cache(block)` | memoized `Block` | `quadrado = functools.cache(lambda n: n * n)`; arguments must be hashable (Int/Str/Tuple are; List/Dict are not — same rule as Python) |
-| `functools.lru_cache(block, maxsize=128)` | memoized `Block` | bounded memoization; defaults to 128 entries like CPython; an explicit `none` maxsize means unbounded |
-| `<memoized>.cache_info()` | `Dict` | `hits`/`misses`/`maxsize`/`currsize` as `Int` (`maxsize` is `none` when unbounded) |
-| `<memoized>.cache_clear()` | `none` | resets the cache |
-| `functools.partialmethod(method, *args, **kwargs)` | descriptor | assign in a class body (`deposit_100 = functools.partialmethod(deposit, 100)`); binds like the stdlib |
-
-`wraps`, `singledispatch`, and `total_ordering` stay out: the first two are machinery for writing decorators (POOP has no user decorators) and `singledispatch` is type dispatch — polymorphism's job.
-
 ### shlex + Shlex — `poop/types/shlex.py` + `poop/transformers/shlex.py`
 
 `shlex` mirrors Python's `shlex` module — POSIX-style shell tokenization, joining, and safe quoting. Two namespace entries follow the `random`/`Random` convention:

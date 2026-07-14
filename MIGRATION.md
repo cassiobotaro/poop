@@ -415,36 +415,6 @@ from_str = "YWJj".b64decode()
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
 
-## Partial application and caching (`functools` module + `partial` class)
-
-```python
-# Python
-import functools
-
-greet = functools.partial(say, "Hello, ")
-deposit_100 = functools.partial(account.deposit, 100)
-
-@functools.cache
-def square(n):
-    return n * n
-
-total = functools.reduce(lambda acc, x: acc + x, nums, 0)
-ordered = sorted(items, key=functools.cmp_to_key(compare))
-```
-
-```python
-# POOP
-greet = partial(lambda s, n: s + n, "Hello, ")
-deposit_100 = partial(account.deposit, 100)     # bound methods work too
-
-square = functools.cache(lambda n: n * n)       # explicit call, no decorator
-
-total = functools.reduce(lambda acc, x: acc + x, nums, 0)
-ordered = items.sorted(key=functools.cmp_to_key(compare))
-```
-
-> `partial` freezes arguments of **any** callable — blocks, bound methods, constructors, other `partial`s — and the entry point is lowercase like in CPython. Caching is an explicit wrapper call on a block (decorator syntax has no POOP story): the memoized callable is a `Block`; arguments must be hashable, same rule as Python. For folding, prefer the message form `nums.reduce(0, block)` — the `functools.reduce` mirror exists for parity.
-
 ## Shell tokenization (`shlex` module + `Shlex` class)
 
 ```python
