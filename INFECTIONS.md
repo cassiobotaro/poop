@@ -897,23 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### mimetypes + MimeTypes — `poop/types/mimetypes.py` + `poop/transformers/mimetypes.py`
-
-`mimetypes` mirrors Python's `mimetypes` module — extension/MIME-type lookups. Like `random`/`Random`, POOP exposes **two namespace entries** because the source module ships both a module-level API and a reusable class:
-
-- **`mimetypes`** (lowercase) — module-level shortcuts plus the standard registry constants. Operates on CPython's process-global registry.
-- **`MimeTypes`** (PascalCase) — the reusable registry class. `MimeTypes(filenames=List, strict=Boolean)` builds an isolated instance with its own state.
-
-| Category | Operations | Returns |
-|---|---|---|
-| Lookups | `guess_type(url, strict=true)`, `guess_extension(type, strict=true)`, `guess_all_extensions(type, strict=true)` | `Tuple[Str/none, Str/none]` / `Str | none` / `List[Str]` |
-| Mutation | `add_type(type, ext, strict=true)`, `init(files=none)`, `read_mime_types(filename)` (module-only) | `none` / `none` / `Dict | none` |
-| Constants (module-only) | `suffix_map`, `encodings_map`, `types_map`, `common_types` (all `Dict[Str, Str]`), `knownfiles` (`List[Str]`) | snapshot at import time |
-
-The constant dicts are **snapshotted** from CPython's globals at import time. Subsequent `add_type` calls update CPython's mutable globals but not the POOP snapshots — this preserves POOP's "no introspection" stance: constants are immutable values from POOP's perspective. Use `MimeTypes` if you need a registry that reflects later mutations.
-
-`mimetypes` and `MimeTypes` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/mimetypes.py` — namespace-only, no AST rewrite.
-
 ### webbrowser + Browser — `poop/types/webbrowser.py` + `poop/transformers/webbrowser.py`
 
 `webbrowser` mirrors Python's `webbrowser` module — open URLs in the user's default (or a chosen) browser. Like `random`/`Random` and `mimetypes`/`MimeTypes`, two namespace entries are bound:

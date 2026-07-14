@@ -57,7 +57,6 @@ from poop.transformers.locale import NAMESPACE as _locale_namespace
 from poop.transformers.logging import NAMESPACE as _logging_namespace
 from poop.transformers.lzma import NAMESPACE as _lzma_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
-from poop.transformers.mimetypes import NAMESPACE as _mimetypes_namespace
 from poop.transformers.multiprocessing import NAMESPACE as _multiprocessing_namespace
 from poop.transformers.none import NoneTransformer
 from poop.transformers.os import NAMESPACE as _os_namespace
@@ -171,7 +170,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _mimetypes_namespace,
     _webbrowser_namespace,
     _glob_namespace,
     _fnmatch_namespace,

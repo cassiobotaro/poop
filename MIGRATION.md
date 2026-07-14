@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `mimetypes.guess_type(url)` | `mimetypes.guess_type(url)` |
 | `webbrowser.open(url)` | `webbrowser.open(url)` |
 | `glob.glob("*.py")` | `glob.glob("*.py")` |
 | `fnmatch.fnmatch(n, p)` | `fnmatch.fnmatch(n, p)` |
@@ -422,32 +421,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## MIME type lookups (`mimetypes` module + `MimeTypes` class)
-
-```python
-# Python
-import mimetypes
-
-mime, encoding = mimetypes.guess_type("page.html")
-ext = mimetypes.guess_extension("text/html")
-mimetypes.add_type("application/x-custom", ".custom")
-
-# Isolated registry
-registry = mimetypes.MimeTypes(filenames=["/etc/mime.types"])
-```
-
-```python
-# POOP
-mime, encoding = mimetypes.guess_type("page.html")
-ext = mimetypes.guess_extension("text/html")
-mimetypes.add_type("application/x-custom", ".custom")
-
-# Isolated registry — Python: random.Random(seed) → POOP: Random(seed). Same idea here.
-registry = MimeTypes(filenames=["/etc/mime.types"])
-```
-
-> POOP exposes both `mimetypes` (lowercase, module-level API + constant maps) and `MimeTypes` (the class — `MimeTypes(filenames=List, strict=Boolean)`). The split mirrors Python exactly. `mimetypes.suffix_map`/`encodings_map`/`types_map`/`common_types`/`knownfiles` are snapshotted from CPython's globals at import time and don't reflect later `add_type` mutations.
 
 ## Opening URLs (`webbrowser` module + `Browser` class)
 
