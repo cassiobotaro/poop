@@ -884,19 +884,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
 
-### errno — `poop/types/errno.py` + `poop/transformers/errno.py`
-
-`errno` is a constant-only namespace mirroring Python's `errno` module. Every integer error code Python exposes (`EPERM`, `ENOENT`, `EAGAIN`, `EWOULDBLOCK`, …) is bound on the `Errno` class as a POOP `Int` class attribute under the same uppercase name. The reverse map `errno.errorcode` is a POOP `Dict[Int, Str]` keyed by canonical code, mirroring CPython exactly (so aliases like `EAGAIN`/`EWOULDBLOCK` collapse to a single entry).
-
-| Member | Type | Notes |
-|---|---|---|
-| `errno.EPERM`, `errno.ENOENT`, … (all 134 codes Python exposes) | `Int` | Same name as `errno.<NAME>` in CPython |
-| `errno.errorcode` | `Dict[Int, Str]` | 131 entries — canonical names only |
-
-The set of constants is built at import time by enumerating `dir(errno)` rather than maintained by hand, so POOP automatically tracks whichever subset CPython exposes on the host (Linux / macOS / Windows). Lowercase `errno` keeps the lowercase module-name convention; constants are uppercase because that is how CPython ships them.
-
-`errno` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/errno.py` — namespace-only, no AST rewrite.
-
 ### getpass — `poop/types/getpass.py` + `poop/transformers/getpass.py`
 
 `getpass` is a tiny namespace mirroring Python's `getpass` module. Both reads return POOP `Str`:

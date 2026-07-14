@@ -33,7 +33,6 @@ from poop.transformers.difflib import NAMESPACE as _difflib_namespace
 from poop.transformers.email import NAMESPACE as _email_namespace
 from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
-from poop.transformers.errno import NAMESPACE as _errno_namespace
 from poop.transformers.filecmp import NAMESPACE as _filecmp_namespace
 from poop.transformers.float import FloatTransformer
 from poop.transformers.fnmatch import NAMESPACE as _fnmatch_namespace
@@ -175,7 +174,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _errno_namespace,
     _getpass_namespace,
     _secrets_namespace,
     _binascii_namespace,
