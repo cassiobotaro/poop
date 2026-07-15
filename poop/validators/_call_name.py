@@ -38,6 +38,11 @@ def make_call_name_validator(
             self.generic_visit(node)
 
     class _Validator:
+        # Exposed so the REPL's `:explain` can derive its topic list from the
+        # validators themselves. A name banned here but missing there gets
+        # answered with "it may simply be allowed" — the opposite of the truth.
+        forbidden = names
+
         def validate(self, tree: ast.Module) -> None:
             _Visitor().visit(tree)
 

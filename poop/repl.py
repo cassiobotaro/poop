@@ -14,6 +14,7 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass
 from poop.types.string import Str
+from poop.validators import DEFAULT_VALIDATORS
 
 if TYPE_CHECKING:
     from poop.interpreter import Interpreter
@@ -192,59 +193,14 @@ def _readline_input(prompt: str, indent: str) -> str:
 
 # Forbidden builtins explained by running `<name>(x)` through the
 # validators — the explanation is the validator's own message, so the
-# two can never drift apart.
+# two can never drift apart. The topic list is derived from the same
+# validators for the same reason: hand-maintained, it fell two names
+# behind (`delattr`, `__import__`), and a missing topic does not fail
+# quietly — it answers "it may simply be allowed" about a banned name.
 _EXPLAIN_CALLS = frozenset(
-    {
-        "abs",
-        "aiter",
-        "all",
-        "anext",
-        "any",
-        "ascii",
-        "bin",
-        "breakpoint",
-        "callable",
-        "chr",
-        "compile",
-        "dir",
-        "divmod",
-        "eval",
-        "exec",
-        "exit",
-        "filter",
-        "format",
-        "getattr",
-        "globals",
-        "hasattr",
-        "hash",
-        "help",
-        "hex",
-        "id",
-        "input",
-        "isinstance",
-        "issubclass",
-        "iter",
-        "len",
-        "locals",
-        "map",
-        "max",
-        "min",
-        "next",
-        "oct",
-        "open",
-        "ord",
-        "pow",
-        "print",
-        "quit",
-        "repr",
-        "reversed",
-        "round",
-        "setattr",
-        "sorted",
-        "sum",
-        "type",
-        "vars",
-    }
+    name
+    for validator in DEFAULT_VALIDATORS
+    for name in getattr(validator, "forbidden", ())
 )
 
 # Forbidden statements and operators need a minimal valid snippet.
@@ -275,6 +231,12 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "match": "match x:\n    case _:\n        pass",
     "fstring": 'f"{x}"',
     "subscript": "x[0]",
+    "import": "import os",
+    "invert": "~x",
+    # `-x` on a Name, not on a literal: no_unary_minus allows `-1`.
+    "unary_minus": "-x",
+    "unary_plus": "+x",
+    "type_alias": "type X = int",
 }
 
 _META_HELP = """\
@@ -351,9 +313,10 @@ class Repl:
         snippet = _explain_snippet(arg)
         if snippet is None:
             known = sorted(_EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS))
+            # Not "it may simply be allowed": nothing here checked that, and
+            # for a banned construct with no topic the guess is a flat lie.
             print(  # noqa: T201
-                f"poop: nothing to explain about {arg!r} — it may simply be "
-                "allowed.\nKnown constructs:"
+                f"poop: no :explain topic for {arg!r}.\nKnown constructs:"
             )
             print(textwrap.fill("  ".join(known), width=80))  # noqa: T201
             return

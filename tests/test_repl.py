@@ -1,13 +1,18 @@
+import ast
 import sys
 
 import pytest
 
+import poop.validators as validators
 from poop.errors import ExecutionError, ParseError, ValidationError
 from poop.interpreter import Interpreter
 from poop.repl import (
+    _EXPLAIN_CALLS,
+    _EXPLAIN_SNIPPETS,
     Repl,
     _color,
     _colorize_value,
+    _explain_snippet,
     _indent_for,
     _PoopCompleter,
     _save_history,
@@ -16,6 +21,7 @@ from poop.repl import (
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.int import Int
 from poop.types.string import Str
+from poop.validators import DEFAULT_VALIDATORS
 
 
 def _repl() -> tuple[Repl, dict[str, object]]:
@@ -449,6 +455,71 @@ def test_meta_explain_unknown_lists_known_constructs(
     assert "if" in out
 
 
+def test_meta_explain_unknown_does_not_claim_the_construct_is_allowed(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repl, _ = _repl()
+    repl._meta(":explain banana")
+    assert "may simply be allowed" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("topic", "expected"),
+    [
+        ("import", "not the library"),
+        ("invert", "bit_invert"),
+        ("unary_minus", "negated"),
+        ("unary_plus", "write the value directly"),
+        ("type_alias", "type aliases are forbidden"),
+        ("delattr", "del_attr"),
+        ("__import__", "forbidden"),
+    ],
+)
+def test_meta_explain_covers_banned_constructs(
+    topic: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repl, _ = _repl()
+    repl._meta(f":explain {topic}")
+    assert expected in capsys.readouterr().out
+
+
+# These three answer name *choices* rather than constructs — there is no word a
+# learner could type at `:explain` to reach them, so they are topicless by
+# design.
+_EXPLAIN_EXEMPT = {
+    "NoBuiltinShadowValidator",
+    "NoNamespaceShadowValidator",
+    "NoPoopPrefixValidator",
+}
+
+
+def test_every_validator_is_reachable_from_explain() -> None:
+    # `:explain` answers with the validator's own message, reached by running a
+    # snippet through it — so a validator that no topic trips can never be
+    # explained, and the fallback says nothing is known about it. The
+    # call-name topics are derived and cannot drift; the syntax snippets are
+    # hand-written, which is how `import`, `invert`, the unary operators and
+    # `type_alias` went missing in the first place.
+    names = {id(o): n for n, o in vars(validators).items() if isinstance(o, type)}
+    snippets = [_explain_snippet(t) for t in _EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)]
+
+    def trips(validator: object, source: str | None) -> bool:
+        if source is None:
+            return False
+        try:
+            validator.validate(ast.parse(source))  # ty: ignore[unresolved-attribute]
+        except ValidationError:
+            return True
+        return False
+
+    unreachable = {
+        names.get(id(type(v)), repr(v))
+        for v in DEFAULT_VALIDATORS
+        if not any(trips(v, s) for s in snippets)
+    }
+    assert sorted(unreachable - _EXPLAIN_EXEMPT) == []
+
+
 def test_meta_explain_without_arg_shows_usage(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -460,13 +531,15 @@ def test_meta_explain_without_arg_shows_usage(
 def test_meta_explain_every_known_construct_produces_output(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from poop.repl import _EXPLAIN_CALLS, _EXPLAIN_SNIPPETS
-
     repl, _ = _repl()
     for construct in sorted(_EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)):
         repl._meta(f":explain {construct}")
         out = capsys.readouterr().out
-        assert "forbidden" in out, f"no validator message for {construct!r}"
+        # Asserting `"forbidden" in out` only proxied for "a validator spoke",
+        # and held by luck of wording: no_unary_minus says "allowed only on
+        # numeric literals" instead. Assert the two non-explanations directly.
+        assert f"{construct} is allowed in POOP." not in out, construct
+        assert "no :explain topic" not in out, construct
 
 
 def test_meta_help_lists_commands(capsys: pytest.CaptureFixture[str]) -> None:
