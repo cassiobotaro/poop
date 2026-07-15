@@ -45,11 +45,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `lzma.compress(b)` | `lzma.compress(b)` |
 | `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
 | `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
-| `ipaddress.ip_address("::1")` | `ipaddress.ip_address("::1")` |
-| `urllib.parse.urlparse(u)` | `urllib.parse.urlparse(u)` |
-| `urllib.request.urlopen(u)` | `urllib.request.urlopen(u)` |
-| `http.HTTPStatus.OK` | `http.HTTPStatus.OK` |
-| `smtplib.SMTP(host, port)` | `SMTP(host, port)` |
 | `csv.reader(f)` | `csv.reader(text)` |
 | `configparser.ConfigParser()` | `ConfigParser()` |
 | `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
@@ -415,47 +410,6 @@ With.do(TarFile.open(Path("a.tar.gz"), "w:gz"),
 ```
 
 > All compression entry points are `Bytes` in / `Bytes` out. File-handle classes (`GzipFile` / `BZ2File` / `LZMAFile`) and archive classes (`ZipFile` / `TarFile`) are `With`-friendly and path-based — POOP has no file-object abstraction. The `compression` umbrella (Python 3.14) re-exports the per-format namespaces under `compression.zlib` / `.gzip` / `.bz2` / `.lzma`. Streaming compressor/decompressor pairs (`Compress` / `Decompress`, `BZ2Compressor` / `BZ2Decompressor`, `LZMACompressor` / `LZMADecompressor`) cover the chunked use cases. `TarFile.extractall` defaults to the safe `filter="data"` (3.14+); callers who want the historical unsafe behavior pass `filter="fully_trusted"` explicitly. `compression.zstd` is out of scope until Python 3.14's API stabilises.
-
-## Internet protocols (`ipaddress`, `urllib`, `http`, `smtplib`)
-
-```python
-# Python
-import ipaddress
-import urllib.parse
-import urllib.request
-import http
-import smtplib
-
-addr = ipaddress.ip_address("192.0.2.1")
-net = ipaddress.ip_network("192.0.2.0/24")
-
-parts = urllib.parse.urlparse("https://example.com/p?k=v")
-query = urllib.parse.urlencode({"a": 1, "b": 2})
-with urllib.request.urlopen("file:///tmp/x") as r:
-    body = r.read()
-
-status = http.HTTPStatus.OK
-conn = http.client.HTTPConnection("example.com")
-
-smtp = smtplib.SMTP("smtp.example.com", 587)
-```
-
-```python
-# POOP
-addr = ipaddress.ip_address("192.0.2.1")
-net = ipaddress.ip_network("192.0.2.0/24")
-
-parts = urllib.parse.urlparse("https://example.com/p?k=v")
-query = urllib.parse.urlencode({"a": 1, "b": 2})
-With.do(urllib.request.urlopen("file:///tmp/x"), Block(lambda r: r.read()))
-
-status = http.HTTPStatus(200)              # POOP Int round-trips into the IntEnum
-conn = HTTPConnection("example.com")
-
-smtp = SMTP("smtp.example.com", 587)
-```
-
-> `ipaddress` exposes both factory functions (`ip_address` / `ip_network` / `ip_interface`) and the explicit `IPv4Address` / `IPv6Address` / `IPv4Network` / `IPv6Network` / `IPv4Interface` / `IPv6Interface` classes. Address arithmetic with `Int` is supported (`addr + Int(1)`). `urllib.parse` is pure-text URL transformations; `urllib.request.urlopen` returns a `With`-friendly `Response` (`.read` / `.headers` / `.status`). `urllib.request.Request` is the bare request-builder; the handler hierarchy (`OpenerDirector` / `HTTPHandler` / …) is exposed as class refs for advanced callers. `http.HTTPStatus` and `http.HTTPMethod` are re-exports of CPython's enums with a `_missing_` patch so POOP `Int` / `Str` lookups work. `http.client.HTTPConnection` / `HTTPSConnection` wrap the upstream connection types; `HTTPResponse` exposes `.status` / `.read` / `.headers`. `http.server` / `http.cookies` / `http.cookiejar` are exposed under their submodule names. `smtplib.SMTP` / `SMTP_SSL` / `LMTP` cover the SMTP client surface (`helo` / `ehlo` / `starttls` / `login` / `sendmail` / `send_message` / `quit` / `close`); the full error hierarchy (`SMTPException` / `SMTPServerDisconnected` / `SMTPResponseException` / `SMTPSenderRefused` / `SMTPRecipientsRefused` / `SMTPDataError` / `SMTPConnectError` / `SMTPHeloError` / `SMTPNotSupportedError` / `SMTPAuthenticationError`) is exposed for `Try.except_`. `urllib.robotparser` is out of scope for v1.
 
 ## File formats (`csv` module + readers/writers, `configparser` module + parser)
 

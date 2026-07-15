@@ -23,10 +23,8 @@ from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.gzip import NAMESPACE as _gzip_namespace
-from poop.transformers.http import NAMESPACE as _http_namespace
 from poop.transformers.int import IntTransformer
 from poop.transformers.io import NAMESPACE as _io_namespace
-from poop.transformers.ipaddress import NAMESPACE as _ipaddress_namespace
 from poop.transformers.list import ListTransformer
 from poop.transformers.logging import NAMESPACE as _logging_namespace
 from poop.transformers.lzma import NAMESPACE as _lzma_namespace
@@ -42,7 +40,6 @@ from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
-from poop.transformers.smtplib import NAMESPACE as _smtplib_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
@@ -52,7 +49,6 @@ from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.unpack import UnpackTransformer
-from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.varargs import VarargsTransformer
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.zip import ZipTransformer
@@ -125,10 +121,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _zipfile_namespace,
     _tarfile_namespace,
     _compression_namespace,
-    _ipaddress_namespace,
-    _urllib_namespace,
-    _http_namespace,
-    _smtplib_namespace,
     _csv_namespace,
     _configparser_namespace,
     _os_namespace,
