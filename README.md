@@ -89,10 +89,14 @@ POOP runs ~66 validators on every program. Grouped by theme:
 - comprehensions (`[x for x in …]`, `{…}`, generator exprs) → explicit `.map` / `.filter` / `.do`
 - top-level `def` (free functions) → define as a method inside a class
 - `yield` / walrus `:=` / `del` / `global` → out of scope
-- `async def` / `await` → out of scope: POOP has no way to drive a coroutine
 
 **Side-channels.**
 - `exec` / `breakpoint` / `exit` — interpreter escape hatches forbidden
+
+**No library.** POOP is the language, not the library — it mirrors no stdlib module.
+- `import` — if Python needs an import to reach something, POOP does not offer it. There is no `math`, no `json`, no `os`.
+- The only names injected are `Try`, `With`, `Path` and `io` (⊃ `StringIO` / `BytesIO`) — entry points the language itself needs, not stdlib parity. `Path` is what the `open` ban points at.
+- `async def` / `await` follow from this: `asyncio` was the only way to drive a coroutine, so async has no substitute and is banned outright.
 
 The full catalog with one row per validator and the substitute recipe lives in [`INFECTIONS.md`](INFECTIONS.md).
 
