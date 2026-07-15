@@ -339,23 +339,29 @@ masking plus `_user_lineno`'s frame-walk mean no `_poop_*` name, transformer
 frame, or Python traceback ever reaches the user, and the reported line is the
 deepest *user* frame. The gaps are in what is thrown away on the way out.
 
-### 7. `ExecutionError` destroys the exception class name
+### ~~7. `ExecutionError` destroys the exception class name~~ — DONE
 
-`poop/executor.py:50` does `raise ExecutionError(str(exc), ...)`. `str(exc)`
-drops the type:
+**Decision: prefix the class name.** `_describe()` in `poop/executor.py` answers
+`f"{type(exc).__name__}: {exc}"`, so a missing key reads
+`poop: KeyError: 'zzz' (line 1)` where it used to read a bare `poop: 'zzz'` —
+a quoted string with nothing to say a lookup had failed.
 
-| POOP shows | Real type |
-|---|---|
-| `poop: 'zzz' (line 2)` | `KeyError` |
-| `poop: bad input (line 1)` | `ValueError` |
-| `poop: x must be big (line 2)` | `AssertionError` |
+The proposal's safety argument needed correcting, though its conclusion held. It
+claimed "type names are already masked to builtins, so this leaks no internals".
+The masking is real (`Int.__name__ = "int"`) but sits on POOP's *value* wrappers
+and never applies here: exceptions are never wrapped, so `type(exc).__name__` is
+CPython's own name, or a user's. Nothing on this path is a `_poop_*` name to
+begin with — that, not the masking, is why it is safe.
 
-`d.at("zzz")` on a missing key renders as literally `poop: 'zzz'` — a bare quoted
-string with no hint that a key was missing. Worse, a learner writing
-`Try(...).except_(ValueError, ...)` cannot see which class escaped.
+Found while implementing: the formula mishandles an empty message.
+`ValueError.raise_()` reaches the executor with `str(exc) == ""` and rendered
+`poop:  (line 1)` — worse than this item described — and
+`f"{type(exc).__name__}: {exc}"` would answer `poop: ValueError:  (line 1)`,
+colon dangling. `_describe()` degrades to the bare name instead.
 
-**Proposal**: `f"{type(exc).__name__}: {exc}"`. Type names are already masked to
-builtins, so this leaks no internals.
+The `SyntaxError` branch above it is deliberately untouched: it already converts
+Python's message into a POOP-level one, and prefixing `SyntaxError:` would
+restore the vocabulary that branch exists to hide.
 
 ### 8. The REPL renders errors worse than the file runner
 
