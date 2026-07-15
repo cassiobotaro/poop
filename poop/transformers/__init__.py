@@ -82,7 +82,6 @@ from poop.transformers.unittest import NAMESPACE as _unittest_namespace
 from poop.transformers.unpack import UnpackTransformer
 from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.varargs import VarargsTransformer
-from poop.transformers.weakref import NAMESPACE as _weakref_namespace
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.xml import NAMESPACE as _xml_namespace
 from poop.transformers.zip import ZipTransformer
@@ -153,7 +152,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _string_namespace,
     _zoneinfo_namespace,
     _calendar_namespace,
-    _weakref_namespace,
     _enum_namespace,
     _fractions_namespace,
     _statistics_namespace,

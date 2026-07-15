@@ -43,7 +43,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `calendar.isleap(year)` | `calendar.isleap(year)` |
-| `weakref.ref(obj)` | `WeakRef(obj)` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
 | `fractions.Fraction(1, 2)` | `Fraction(1, 2)` |
 | `statistics.mean(xs)` | `statistics.mean(xs)` |
@@ -484,34 +483,6 @@ weeks = cal.monthdatescalendar(2026, 5)
 ```
 
 > Module-level shortcuts (`isleap`, `leapdays`, `weekday`, `monthrange`, `monthcalendar`, `month`, `calendar`, `timegm`) plus the weekday/month constants (`MONDAY` … `SUNDAY`, `JANUARY` … `DECEMBER`) live on the namespace. The reusable `Calendar` class is bare (PascalCase); its `iter*` methods return materialized POOP `List`s — POOP collections are not lazy. The rendering classes are bare too: `TextCalendar` (`formatmonth`/`formatyear`), `HTMLCalendar` (`formatmonth`/`formatyear`/`formatyearpage`), and the locale-aware `LocaleTextCalendar` / `LocaleHTMLCalendar`.
-
-## Weak references (`weakref` module + `WeakRef` / `WeakSet` / `WeakKeyDictionary` / `WeakValueDictionary`)
-
-```python
-# Python
-import weakref
-
-class Cache:
-    pass
-
-cache = Cache()
-r = weakref.ref(cache)
-alive = r()  # cache or None
-seen = weakref.WeakSet([cache])
-```
-
-```python
-# POOP
-class Cache:
-    pass
-
-cache = Cache()
-r = WeakRef(cache)
-alive = r()  # cache or none
-seen = WeakSet([cache])
-```
-
-> `WeakRef`, `WeakSet`, `WeakKeyDictionary`, `WeakValueDictionary` are all bare (PascalCase). `WeakRef(obj, callback=none)` — `r()` or `r.get()` returns the live object or `none`; `.is_alive()` is a quick check. `weakref.proxy(obj, callback=none)` returns a transparent forwarder (not a POOP wrapper). Only POOP user-class instances support weak references — built-in primitives like `Int` / `Str` define `__slots__` without `__weakref__`, matching Python's `int` / `str` restriction. `finalize` and `WeakMethod` are out of scope.
 
 ## Enumerations (`enum` module + `Enum` / `IntEnum` / `StrEnum` / `Flag` / `IntFlag` / `ReprEnum`)
 

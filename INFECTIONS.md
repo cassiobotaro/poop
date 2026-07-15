@@ -1046,26 +1046,6 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 
 `calendar`, `Calendar`, `TextCalendar`, `HTMLCalendar`, `LocaleTextCalendar`, and `LocaleHTMLCalendar` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/calendar.py` — namespace-only, no AST rewrite (the four rendering classes are also reachable as `calendar.<Class>`, mirroring CPython).
 
-### weakref + WeakRef + WeakSet + WeakKeyDictionary + WeakValueDictionary — `poop/types/weakref.py` + `poop/transformers/weakref.py`
-
-`weakref` mirrors Python's `weakref` module — references that don't prevent garbage collection. Useful for caches and breaking cycles. POOP user-class instances support weak references (they have `__weakref__` automatically); POOP built-in primitives like `Int`/`Str`/`Bytes` define `__slots__` without `__weakref__`, matching Python's `int`/`str` restriction.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `weakref.ref(obj, callback=none)` | `WeakRef` | |
-| `weakref.proxy(obj, callback=none)` | transparent proxy | forwards attribute access while live |
-| `weakref.getweakrefcount(obj)` | `Int` | |
-| `weakref.getweakrefs(obj)` | `List[WeakRef]` | |
-| `WeakRef(obj, callback=none)` | `WeakRef` | calling the ref (`r()`) or `.get()` returns the live object or `none` |
-| `WeakRef.is_alive()` | `Boolean` | |
-| `WeakSet(items=none)` | `WeakSet` | `.add` / `.discard` / `.remove` / `.includes` / `.len()` / iteration / `.clear()` / `.copy()` |
-| `WeakKeyDictionary()` | `WeakKeyDictionary` | `.at_put(k, v)` / `.at(k)` / `.get(k, default=none)` / `.includes(k)` / `.keys()` / `.values()` / `.clear()` |
-| `WeakValueDictionary()` | `WeakValueDictionary` | same surface as `WeakKeyDictionary` |
-
-`finalize` and `WeakMethod` are out of scope for v1.
-
-`weakref`, `WeakRef`, `WeakSet`, `WeakKeyDictionary`, and `WeakValueDictionary` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/weakref.py` — namespace-only, no AST rewrite.
-
 ### enum + Enum + IntEnum + StrEnum + Flag + IntFlag + ReprEnum — `poop/types/enum.py` + `poop/transformers/enum.py`
 
 `enum` mirrors Python's `enum` module — typed enumeration classes (`class Color(Enum): RED = 1`). The standard CPython machinery is preserved (members, lookups, `@unique`, `auto()`, etc.) and POOP adds:
