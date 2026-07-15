@@ -12,7 +12,6 @@ from poop.transformers.byte_array import ByteArrayTransformer
 from poop.transformers.bytes import BytesTransformer
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
-from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
 from poop.transformers.dict import DictTransformer
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
@@ -22,12 +21,10 @@ from poop.transformers.io import NAMESPACE as _io_namespace
 from poop.transformers.list import ListTransformer
 from poop.transformers.logging import NAMESPACE as _logging_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
-from poop.transformers.multiprocessing import NAMESPACE as _multiprocessing_namespace
 from poop.transformers.none import NoneTransformer
 from poop.transformers.os import NAMESPACE as _os_namespace
 from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.platform import NAMESPACE as _platform_namespace
-from poop.transformers.queue import NAMESPACE as _queue_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
@@ -35,8 +32,6 @@ from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
-from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
-from poop.transformers.threading import NAMESPACE as _threading_namespace
 from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
@@ -108,11 +103,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _time_namespace,
     _logging_namespace,
     _platform_namespace,
-    _threading_namespace,
-    _multiprocessing_namespace,
-    _concurrent_namespace,
-    _subprocess_namespace,
-    _queue_namespace,
 ]
 
 DEFAULT_NAMESPACE: _dict[str, object] = {}

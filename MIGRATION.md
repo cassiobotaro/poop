@@ -51,11 +51,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `time.time()` | `time.time()` |
 | `logging.getLogger(...)` | `logging.getLogger(...)` |
 | `platform.system()` | `platform.system()` |
-| `threading.Thread(target=f)` | `Thread(target=f)` |
-| `multiprocessing.cpu_count()` | `multiprocessing.cpu_count()` |
-| `concurrent.futures.ThreadPoolExecutor()` | `ThreadPoolExecutor()` |
-| `subprocess.run(["ls"])` | `subprocess.run(["ls"])` |
-| `queue.Queue()` | `Queue()` |
 
 ## Control flow
 
@@ -372,38 +367,3 @@ platform.system().print()                  # Str
 
 > POOP mirrors Python's `os` module shape directly: `os.getpid()`/`getppid()`/`getuid()`/`getgid()`/`geteuid()`/`getegid()` for process IDs, `os.umask`/`chdir`/`getcwd`/`kill` for current-process state, plus the low-level helpers (`urandom`, `cpu_count`, `process_cpu_count`, `getloadavg`) and the standard flag/separator constants (`F_OK`/`R_OK`/`W_OK`/`X_OK`, `O_RDONLY` etc, `sep`/`linesep`/`pathsep`/`devnull`). Environment access lives on the `os.environ` sub-namespace — since POOP forbids subscript syntax, Python's `os.environ["X"] = "y"` becomes `os.environ.set("X", "y")` (the `get`/`unset`/`has`/`keys`/`values`/`as_dict` methods round out the API). `os.path` is **intentionally absent**: every operation is reachable through POOP's `Path` mirror. `io` exposes the in-memory buffers `StringIO` / `BytesIO` (both work as `With` context managers) plus the seek constants — disk I/O continues to go through `Path.read_text`/`write_text`/`read_bytes`/`write_bytes`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API in both seconds (`Float`) and nanoseconds (`Int`), plus parse/format helpers and `StructTime`. `logging` is the canonical Python `Logger`/`Handler`/`Formatter` triad — `set*` accessors return `none`, mutable booleans use `set_propagate`. `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment metadata; `Uname` exposes the standard six-field record.
 
-## Concurrent execution (`threading`, `multiprocessing`, `concurrent`, `subprocess`, `queue`)
-
-```python
-# Python
-import threading, multiprocessing, concurrent.futures, subprocess, queue
-
-t = threading.Thread(target=do_work)
-t.start(); t.join()
-
-with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
-    results = list(ex.map(square, range(10)))
-
-result = subprocess.run(["ls", "-la"], capture_output=True, text=True)
-
-q = queue.Queue()
-q.put(item); item = q.get()
-```
-
-```python
-# POOP
-t = Thread(target=do_work)
-t.start(); t.join()
-
-With(lambda: ThreadPoolExecutor(4)).do(
-    lambda ex: ex.map(square, list(range(10))).do(lambda r: r.print())
-)
-
-result = subprocess.run(["ls", "-la"], capture_output=true, text=true)
-result.stdout.print()
-
-q = Queue()
-q.put(item); item = q.get()
-```
-
-> POOP exposes `threading.Thread` plus the standard primitives `Lock` / `RLock` / `Event` / `Semaphore` / `BoundedSemaphore` / `Condition` / `Barrier`, all `With`-friendly, and `Local` for per-thread storage (`at`/`at_put`/`includes`). Module helpers like `current_thread`/`active_count`/`get_ident`/`stack_size` are on the `threading` namespace; `threading.Timer` lives there too (a bare `Timer` would collide with `timeit.Timer`). `multiprocessing` mirrors the shape — `multiprocessing.Process` lives only on the namespace (not bound as a top-level name) to match Python's idiomatic usage; `Pool`/`MPQueue` are top-level. Targets passed to `Process`/`Pool` workers must be **module-level Python functions** — POOP's `Block`-wrapped lambdas don't pickle across the `forkserver` boundary that's now the Linux default. `concurrent.futures` exposes `ThreadPoolExecutor` and `ProcessPoolExecutor` (both `With`-friendly) plus `CFFuture` (renamed from `Future` to disambiguate from `asyncio.Future`). `concurrent.wait`/`.as_completed` work the same as in CPython. `subprocess.run` returns a `CompletedProcess` whose `.stdout`/`.stderr` are POOP `Str` (when `text=true`) or `Bytes`. `Popen` exposes the full lifecycle. `queue` has the same four classes as CPython — `Queue` (FIFO), `LifoQueue`, `PriorityQueue`, and `SimpleQueue` — with `Empty`/`Full` exception classes for `Try.except_`.
