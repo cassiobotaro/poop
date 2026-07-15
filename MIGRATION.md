@@ -39,8 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `uuid.uuid4()` | `uuid.uuid4()` |
-| `uuid.UUID(s)` | `UUID(s)` |
 | `json.dumps(obj)` | `json.dumps(obj)` |
 | `json.loads(s)` | `json.loads(s)` |
 | `tomllib.loads(s)` | `tomllib.loads(s)` |
@@ -413,28 +411,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## UUIDs (`uuid` module + `UUID` class)
-
-```python
-# Python
-import uuid
-
-new_id = uuid.uuid4()
-parsed = uuid.UUID("12345678-1234-5678-1234-567812345678")
-name_id = uuid.uuid5(uuid.NAMESPACE_URL, "https://example.com")
-hex_form = new_id.hex
-```
-
-```python
-# POOP
-new_id = uuid.uuid4()
-parsed = UUID("12345678-1234-5678-1234-567812345678")
-name_id = uuid.uuid5(uuid.NAMESPACE_URL, "https://example.com")
-hex_form = new_id.hex
-```
-
-> `UUID` is in scope without a `uuid.` prefix (same pattern as `Random`). All seven generators (`uuid1`/`3`/`4`/`5`/`6`/`7`/`8`) plus `uuid.getnode()` and the standard constants (`NAMESPACE_DNS`/`URL`/`OID`/`X500`, `NIL`, `MAX`, four `RESERVED_*`/`RFC_4122` variant tokens) are surfaced. `is_safe` flattens CPython's `SafeUUID` enum to a lowercase `Str` token (sanctioned divergence).
 
 ## JSON (`json` module)
 

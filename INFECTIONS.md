@@ -897,29 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### uuid + UUID — `poop/types/uuid.py` + `poop/transformers/uuid.py`
-
-`UUID` is a full POOP value wrapping `uuid.UUID`. Construction mirrors CPython exactly — positional `UUID(Str("12345...-…"))` for a canonical string or keyword `UUID(hex=..., bytes=..., bytes_le=..., int=..., fields=...)` for the parse-from-foo variants. Like `random`/`Random` and `mimetypes`/`MimeTypes`, two namespace entries are bound:
-
-- **`uuid`** (lowercase) — module-level generators, helpers, and constants.
-- **`UUID`** (PascalCase) — the class.
-
-| Category | Members | Returns |
-|---|---|---|
-| Representations | `.hex`, `.urn` (`Str`), `.int` (`Int`), `.bytes`, `.bytes_le` (`Bytes`), `.fields` (`Tuple[Int x 6]`) | per row |
-| Field accessors | `.time_low`, `.time_mid`, `.time_hi_version`, `.clock_seq_hi_variant`, `.clock_seq_low`, `.node`, `.time`, `.clock_seq` | `Int` |
-| Classification | `.version` (`Int \| NoneClass` — `none` for non-RFC-4122 variants, mirroring CPython), `.variant` (`Str`), `.is_safe` (`Str` token: `"safe"`/`"unsafe"`/`"unknown"`) | per row |
-| Generators | `uuid.uuid1`/`3`/`4`/`5`/`6`/`7`/`8` | `UUID` |
-| Helper | `uuid.getnode()` | `Int` |
-| Namespace constants (`UUID`) | `uuid.NAMESPACE_DNS`/`URL`/`OID`/`X500`, `uuid.NIL`, `uuid.MAX` | `UUID` |
-| Variant constants (`Str`) | `uuid.RESERVED_NCS`, `uuid.RFC_4122`, `uuid.RESERVED_MICROSOFT`, `uuid.RESERVED_FUTURE` | `Str` |
-
-**`is_safe` divergence.** CPython returns a `SafeUUID` enum. POOP flattens to a lowercase `Str` token (`"safe"` / `"unsafe"` / `"unknown"`) to avoid introducing a one-off enum type — sanctioned divergence, called out in the proposal.
-
-`uuid.SafeUUID` is not exposed as a dedicated POOP enum (see above). `uuid.uuid6`/`7`/`8` are new in Python 3.14 and surfaced unchanged.
-
-`uuid` and `UUID` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/uuid.py` — namespace-only, no AST rewrite.
-
 ### json — `poop/types/json.py` + `poop/transformers/json.py`
 
 `json` mirrors Python's `json` module — (de)serialisation between JSON text and POOP value graphs.
