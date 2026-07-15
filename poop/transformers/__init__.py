@@ -23,7 +23,6 @@ from poop.transformers.dict import DictTransformer
 from poop.transformers.email import NAMESPACE as _email_namespace
 from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
-from poop.transformers.filecmp import NAMESPACE as _filecmp_namespace
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.gc import NAMESPACE as _gc_namespace
@@ -141,7 +140,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _random_namespace,
     _string_namespace,
     _enum_namespace,
-    _filecmp_namespace,
     _tempfile_namespace,
     _shutil_namespace,
     _pickle_namespace,

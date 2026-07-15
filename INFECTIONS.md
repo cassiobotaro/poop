@@ -936,25 +936,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
 
-### filecmp + Dircmp — `poop/types/filecmp.py` + `poop/transformers/filecmp.py`
-
-`filecmp` mirrors Python's `filecmp` module — shallow/metadata or full-content file and directory comparison. `Dircmp` is exposed bare alongside the lowercase namespace.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `filecmp.cmp(f1, f2, shallow=none)` | `Boolean` | default `shallow=true` |
-| `filecmp.cmpfiles(dir1, dir2, common, shallow=none)` | `Tuple(List[Str], List[Str], List[Str])` | `(match, mismatch, errors)` |
-| `filecmp.clear_cache()` | `none` | drops the metadata-based fast-path cache |
-| `filecmp.DEFAULT_IGNORES` (class attr) | `List[Str]` | snapshot of CPython's default-skip list |
-| `Dircmp(a, b, ignore=none, hide=none)` | `Dircmp` | recursive comparison root |
-| `Dircmp.left` / `.right` (properties) | `Str` | the original paths |
-| `Dircmp.left_only` / `.right_only` / `.common` / `.common_dirs` / `.common_files` / `.common_funny` / `.same_files` / `.diff_files` / `.funny_files` (properties) | `List[Str]` | name groupings |
-| `Dircmp.subdirs` (property) | `Dict[Str, Dircmp]` | per-subdir comparison nodes |
-| `Dircmp.report()` / `.report_partial_closure()` / `.report_full_closure()` | `none` | writes the summary to stdout |
-| `Dircmp.report_str()` | `Str` | captures `report()` output instead of printing |
-
-`filecmp` and `Dircmp` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/filecmp.py` — namespace-only, no AST rewrite.
-
 ### tempfile + TemporaryFile / NamedTemporaryFile / SpooledTemporaryFile / TemporaryDirectory — `poop/types/tempfile.py` + `poop/transformers/tempfile.py`
 
 `tempfile` mirrors Python's `tempfile` module — secure temp files and directories. Module-level factories return `Path` (or `Tuple(Int, Path)` for `mkstemp` exposing the raw file descriptor); the four temp classes are `With`-friendly and expose minimal binary `.read` / `.write` / `.seek` / `.tell` / `.flush` / `.close` so callers can populate or drain a file without a separate POOP I/O abstraction.

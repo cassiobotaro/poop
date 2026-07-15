@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
-| `filecmp.cmp(a, b)` | `filecmp.cmp(a, b)` |
 | `tempfile.mkdtemp()` | `tempfile.mkdtemp()` |
 | `shutil.copy(a, b)` | `shutil.copy(a, b)` |
 | `pickle.dumps(obj)` | `pickle.dumps(obj)` |
@@ -416,28 +415,6 @@ Color(Int(2))             # Color.GREEN
 ```
 
 > The bases (`Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`) are bare alongside the `enum` namespace; `auto()` is also bare. `.name` stays a Python `str` (CPython's enum protocol and decorators like `@unique` depend on that). Use `.name_str()` for a POOP `Str`. `.value` returns whatever was assigned — raw Python primitives stay raw; use `.value_object()` to wrap them. POOP value lookup works via `_missing_`: `Color(Int(1))` finds the same member as `Color(1)`. `enum.unique` / `verify` / `member` / `nonmember` apply directly. `ReprEnum` is re-exported as-is (it can't be subclassed without a data-type mixin). `EnumType` metaclass access is out of scope.
-
-## File and directory comparison (`filecmp` module + `Dircmp` class)
-
-```python
-# Python
-import filecmp
-
-filecmp.cmp("a.txt", "b.txt")
-match, mismatch, errors = filecmp.cmpfiles("dir1", "dir2", ["a", "b"])
-dc = filecmp.dircmp("dir1", "dir2")
-dc.report()
-```
-
-```python
-# POOP
-filecmp.cmp(Path("a.txt"), Path("b.txt"))
-result = filecmp.cmpfiles(Path("dir1"), Path("dir2"), ["a", "b"])
-dc = Dircmp(Path("dir1"), Path("dir2"))
-dc.report()
-```
-
-> `Path` and `Str` are interchangeable as filesystem inputs. `cmpfiles` returns a single `Tuple(List[Str], List[Str], List[Str])` for `(match, mismatch, errors)`. `Dircmp` exposes the categorized name groups (`left_only`, `right_only`, `common`, `diff_files`, `same_files`, `funny_files`, etc.) as properties; `.subdirs` returns `Dict[Str, Dircmp]` for recursive walks. Use `.report_str()` to capture the textual summary as a `Str` instead of writing to stdout.
 
 ## Temporary files and directories (`tempfile` module + temp classes)
 
