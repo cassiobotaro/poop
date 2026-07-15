@@ -65,19 +65,37 @@ and return raw primitives, but they pass the "does it look like an object
 receiving a message?" test. A judgment call for the maintainer, not an obvious
 bug.
 
-### 3. `...` is the only untransformed literal
+### ~~3. `...` is the only untransformed literal~~ — DONE
 
-```
-x = ...
-x.class_name()   →  poop: 'ellipsis' object has no attribute 'class_name'
-```
+**Decision: transform, do not ban.** `...` now answers `EllipsisClass`'s
+`ellipsis` singleton. Implemented in `poop/types/ellipsis.py` +
+`poop/transformers/ellipsis.py`; catalogued in `INFECTIONS.md`.
 
-No validator or transformer mentions `Ellipsis` anywhere in `poop/`, against
-"**Every literal is transformed** … no naked Python primitive ever reaches
-runtime". Narrow, but it is the last hole in that rule.
+The hole was real — `x = ...; x.class_name()` used to answer `poop: 'ellipsis'
+object has no attribute 'class_name'`, making "**Every literal is transformed** …
+no naked Python primitive ever reaches runtime" false as written.
 
-**Proposal**: decide between banning `...` as a value or transforming it. `pass`
-already covers stub bodies, so a ban costs nothing.
+A ban was considered and rejected. It would have taught nothing about message
+passing — `...` is not procedural, so rejecting it is hygiene, not doctrine —
+and it would have left the invariant closed by exception rather than by rule.
+Transforming keeps the invariant literally true, and `NoneClass` is the exact
+precedent: a singleton wrapping a placeholder, with no behaviour of its own
+beyond the `Object` protocol. The surface criterion ("a message earns its place
+only when it substitutes a forbidden construct") does not bar this: it governs
+*messages* and stdlib parity, whereas `...` is a **literal**, and the doctrine
+already commits to transforming every literal and giving every basic type a POOP
+equivalent. `EllipsisClass` adds no messages at all.
+
+Implementation note worth keeping: the transformer rewrites **both** spellings —
+`ast.Constant(value=Ellipsis)` and `ast.Name(id="Ellipsis")`. Verified that
+`x = Ellipsis` reached runtime as the raw primitive too, so rewriting only the
+literal would have moved the hole rather than closed it. Same shape as item 2's
+`vars()` / `obj.__dict__` asymmetry.
+
+Also verified, and recorded in `INFECTIONS.md`: POOP's examples declare no
+abstract methods at all — the base class omits the message and lets polymorphism
+supply it — so `...` has no idiomatic role in POOP. All 8 occurrences of `...` in
+`examples/` sit inside docstrings, quoting the Python that POOP forbids.
 
 ---
 
