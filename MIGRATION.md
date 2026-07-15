@@ -21,8 +21,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x[a:b]` | `x.slice(a, b)` |
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
-| `open("f").read()` | `Path("f").read_text()` |
-| `io.StringIO(...)` | `StringIO(...)` |
 
 ## Control flow
 
@@ -256,45 +254,14 @@ With(lambda: lock).do(lambda _: critical_section())
 
 > `With` takes a *factory lambda*, not the cm directly — entry is deferred until `do()` runs.
 
-## File I/O (`open`)
+## What has no recipe
 
-```python
-# Python
-with open("data.txt") as f:
-    text = f.read()
-open("out.txt", "w").write(text.upper())
-```
+Some Python has no POOP translation at all, and looking for one is the wrong move — these are bans by design, not gaps waiting to be filled.
 
-```python
-# POOP
-text = Path("data.txt").read_text()
-Path("out.txt").write_text(text.upper())
-```
-
-> `open()` is a definitive ban. `Path` covers `read_text` / `write_text` / `read_bytes` / `write_bytes` plus the rest of `pathlib`. There is no `Path.open(mode)` yet — file handles aren't exposed.
-
-## In-memory buffers (`io` module + `StringIO` / `BytesIO`)
-
-```python
-# Python
-import io
-
-buf = io.StringIO()
-buf.write("hello")
-print(buf.getvalue())
-
-with io.BytesIO(b"abc") as b:
-    head = b.read(1)
-```
-
-```python
-# POOP
-buf = StringIO()
-buf.write("hello")                         # Int — characters written
-buf.getvalue().print()                     # Str
-
-With(lambda: BytesIO(b"abc")).do(lambda b: b.read(1).print())
-```
-
-> `io` and `Path` are the two library-shaped names POOP keeps, on the same grounds: they are entry points the language itself needs rather than stdlib parity. `Path` is what the `open` ban points at, and `io` is its in-memory counterpart. Both buffers are `With` context managers, and both expose `read` / `readline` / `write` / `getvalue` / `seek` / `tell` / `truncate` / `close`, with `io.SEEK_SET` / `SEEK_CUR` / `SEEK_END` for `seek`. Disk I/O still goes through `Path` — POOP has no file-object abstraction.
+| Python | Why there is no POOP form |
+|---|---|
+| `open(...)`, `pathlib`, `io` | POOP has no file I/O. A program's only channels are `"prompt".input()` and `obj.print()`. |
+| `import anything` | POOP is the language, not the library — it mirrors no stdlib module. The only injected names are `Try` and `With`. |
+| `async def` / `await` | Nothing can drive a coroutine. |
+| `exec` / `eval` / `compile`, `globals` / `locals` / `vars`, `breakpoint`, `exit` | Interpreter escape hatches. |
 

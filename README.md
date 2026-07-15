@@ -71,7 +71,7 @@ POOP runs ~66 validators on every program. Grouped by theme:
 - `print` / `len` / `abs` / `hash` / `round` / `pow` / `divmod` / `min` / `max` / `sum` / `sorted` / `reversed` → `x.print()`, `x.len()`, `x.abs()`, `x.hash()`, …
 - `map` / `filter` → `col.map(lambda x: …)` / `col.filter(lambda x: …)`
 - `ascii` / `bin` / `chr` / `repr` / `format` → corresponding methods on `Int` / `Str`
-- `input` / `open` → `"prompt".input()` / `Path("file").read_text()`
+- `input` → `"prompt".input()` (`open` is banned outright — POOP has no file I/O)
 - `iter(col)` → `col.iter()` returns an iterator; `it.next()` advances it
 
 **Introspection** — call the method on the receiver, or use polymorphism.
@@ -95,8 +95,8 @@ POOP runs ~66 validators on every program. Grouped by theme:
 
 **No library.** POOP is the language, not the library — it mirrors no stdlib module.
 - `import` — if Python needs an import to reach something, POOP does not offer it. There is no `math`, no `json`, no `os`.
-- The only names injected are `Try`, `With`, `Path` and `io` (⊃ `StringIO` / `BytesIO`) — entry points the language itself needs, not stdlib parity. `Path` is what the `open` ban points at.
-- `async def` / `await` follow from this: `asyncio` was the only way to drive a coroutine, so async has no substitute and is banned outright.
+- The only names injected are `Try` and `With` — the two constructs replacing `try`/`except` and `with`, which are Python keywords rather than modules.
+- `async def` / `await` follow from this: `asyncio` was the only way to drive a coroutine, so async has no substitute and is banned outright. So is `open` — there is no file I/O; a program talks through `"prompt".input()` and `obj.print()`.
 
 The full catalog with one row per validator and the substitute recipe lives in [`INFECTIONS.md`](INFECTIONS.md).
 

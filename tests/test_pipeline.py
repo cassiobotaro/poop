@@ -4,10 +4,10 @@ Two angles:
 1. Every program in `examples/` runs cleanly through the full pipeline —
    real POOP code is the strongest regression net.
 2. Every transformer with non-empty BINDINGS — and every namespace-only
-   module (`path`, `io`, `try_`, `with_`) — contributes its bindings to
-   DEFAULT_NAMESPACE, so user code can reach `Path`, `Try`, `With`,
-   `Map`, `Filter`, etc. without needing to know which source exposed
-   them. Catches the "I forgot to wire the binding into
+   module (`try_`, `with_`) — contributes its bindings to
+   DEFAULT_NAMESPACE, so user code can reach `Try`, `With`, `Map`,
+   `Filter`, etc. without needing to know which source exposed them.
+   Catches the "I forgot to wire the binding into
    `transformers/__init__.py`" class of bug.
 """
 
@@ -18,8 +18,6 @@ import pytest
 from poop import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.base import BaseTransformer
-from poop.transformers.io import NAMESPACE as IO_NAMESPACE
-from poop.transformers.path import NAMESPACE as PATH_NAMESPACE
 from poop.transformers.try_ import NAMESPACE as TRY_NAMESPACE
 from poop.transformers.with_ import NAMESPACE as WITH_NAMESPACE
 
@@ -32,8 +30,6 @@ TRANSFORMERS_WITH_BINDINGS = sorted(
 )
 
 NAMESPACE_ONLY_MODULES: list[tuple[str, dict[str, object]]] = [
-    ("path", PATH_NAMESPACE),
-    ("io", IO_NAMESPACE),
     ("try_", TRY_NAMESPACE),
     ("with_", WITH_NAMESPACE),
 ]

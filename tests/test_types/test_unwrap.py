@@ -1,4 +1,4 @@
-from poop.types._unwrap import _is_absent, _kwargs_from, _unwrap, _unwrap_bool
+from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -49,19 +49,3 @@ def test_unwrap_accepts_nested_none_class_instance() -> None:
     custom_none = NoneClass()
     assert _is_absent(custom_none) is True
     assert _unwrap(custom_none, 42) == 42
-
-
-def test_kwargs_from_drops_python_none() -> None:
-    assert _kwargs_from(x=None, y=Int(1)) == {"y": 1}
-
-
-def test_kwargs_from_drops_poop_none() -> None:
-    assert _kwargs_from(x=none, y=Int(1)) == {"y": 1}
-
-
-def test_kwargs_from_empty_when_all_absent() -> None:
-    assert _kwargs_from(x=None, y=none) == {}
-
-
-def test_kwargs_from_unwraps_present_values() -> None:
-    assert _kwargs_from(a=Int(7), b=Str("hi")) == {"a": 7, "b": "hi"}

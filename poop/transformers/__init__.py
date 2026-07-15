@@ -17,11 +17,9 @@ from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
-from poop.transformers.io import NAMESPACE as _io_namespace
 from poop.transformers.list import ListTransformer
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
-from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
@@ -91,8 +89,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _with_namespace,
     SliceTransformer.BINDINGS,
     BlockTransformer.BINDINGS,
-    _path_namespace,
-    _io_namespace,
 ]
 
 DEFAULT_NAMESPACE: _dict[str, object] = {}

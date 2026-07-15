@@ -23,31 +23,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - **`True`, `False`, and `None` are singletons**: `true`, `false`, and `none` are unique objects — there is exactly one instance of each. All comparisons and identity checks rely on this guarantee.
 - **Constructor builtins are intercepted, not banned**: `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` etc. are class constructors — they ARE object instantiation and fit the OO model. Each transformer intercepts the bare call and rewrites it to return the POOP type via a `_poop_X_from(...)` factory.
 - **Dunders exposed as regular methods**: every relevant dunder on a POOP type gets an alias with the Python name without underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__hash__` → `hash()`, etc. Do not translate to Smalltalk names.
-- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. True entry points without an AST rewrite or method equivalent are few — `Try`, `With`, `Path`, `io` ⊃ `StringIO` / `BytesIO` — and each copies the casing of the Python name it stands for: a class keeps PascalCase, a module keeps lowercase. `io` binds both, the lowercase name for module-level entry (`io.SEEK_SET`) and the PascalCase names for the constructors.
-
-## Project conventions
-
-Rules the namespace entry points in `poop/types/` (`Path`, `io`) must follow. Recorded here so reviewers and future PRs apply the same yardstick.
-
-### Mirror Python's attribute vs method shape
-
-If CPython exposes a name as an **attribute** (`io.SEEK_SET`, `Path.name`, `Path.suffix`), POOP exposes it as an attribute too — `ClassVar` for constants, `@property` for computed-on-read values. If CPython exposes it as a **method** (`buf.getvalue()`, `path.read_text()`), POOP exposes it as a method.
-
-Forcing attribute-shaped surfaces into zero-arg methods breaks Python intuition and gains nothing for message-passing — `obj.attr` is already a message in Python's data model.
-
-### Default kwarg policy
-
-POOP method defaults mirror CPython exactly. Defaulting to `none` silently merges "user passed `false`" with "user did not pass" — for bool flags this is harmless, for tri-state semantics it breaks. Mirror CPython and let the underlying call distinguish. The only sanctioned `none`-default is when CPython itself uses `None` as the sentinel (e.g. `StringIO(initial_value=None)`).
-
-Parameter names also mirror CPython, with one standing divergence: file I/O entry points take `Path` instead of a file object or file descriptor, because POOP has no file-object abstraction.
-
-### Error class exposure
-
-Every exception class that CPython raises through the wrapped surface and that a POOP user might reasonably pass to `Try.except_(...)` is exposed on the wrapping namespace — `io.UnsupportedOperation`, `io.BlockingIOError`. Internal-only error aliases stay hidden.
-
-### Pull deferred surface only when a caller asks
-
-These namespaces cover the daily-use surface; long-tail items (rare-call helpers, debug-only flags) stay out until a real caller surfaces. Surfacing them upfront just inflates the API and creates churn — wait for a concrete use case, then wrap with the same POOP-type-discipline contract as the rest of the namespace.
+- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. True entry points without an AST rewrite or method equivalent are down to two — `Try` and `With` — and both keep PascalCase, being classes. No lowercase name is injected any more: those were module entry points, and POOP mirrors no modules.
 
 ## Active infections
 
@@ -453,33 +429,13 @@ All three views are unhashable (`__hash__ = None`), expose `len()`/`includes()`/
 
 Symmetric to `Object.print()` — the receiver is what gets shown. Scoped to `Str` (not `Object`) since non-string receivers as prompts are meaningless. `EOFError` propagates raw, catchable via `Try(lambda: prompt.input()).except_(EOFError, handler).run()`.
 
-### No `open` → `Path` — `poop/validators/no_open.py`, `poop/transformers/path.py`
+### No `open` — `poop/validators/no_open.py`
 
-| Call | Reason | Substitute |
-|---|---|---|
-| `open(path, ...)` | free function with procedural look | `Path('foo').read_text()` / `write_text(content)` (`poop/types/path.py`) |
+| Call | Reason |
+|---|---|
+| `open(path, ...)` | POOP has no file I/O |
 
-`Path` (`poop/types/path.py`) wraps `pathlib.Path` and exposes filesystem I/O as message passing. Exposed as a namespace-only binding via the `NAMESPACE` dict in `poop/transformers/path.py` (no AST rewrite), in the same family as `Try` / `With`. `Path` accepts `Str | Path` in the constructor (idempotent), supports `__truediv__` for joining (`Path('dir') / 'file.txt'`), and orders by the underlying `pathlib.Path`.
-
-| Method | Returns | Notes |
-|---|---|---|
-| `read_text()` / `write_text(content)` | `Str` / `Int` (bytes written) | UTF-8 only |
-| `read_bytes()` / `write_bytes(data)` | `Bytes` / `Int` (bytes written) | |
-| `exists()` / `is_file()` / `is_dir()` / `is_symlink()` / `is_absolute()` | `Boolean` | direct delegation |
-| `mkdir(mode, parents, exist_ok)` / `rmdir()` / `unlink(missing_ok)` / `touch(mode, exist_ok)` | `NoneClass` | mutate, return `none` |
-| `resolve()` / `absolute()` / `rename(target)` / `replace(target)` | `Path` | navigation |
-| `joinpath(*others)` / `with_name(n)` / `with_suffix(s)` / `with_stem(s)` / `relative_to(other)` | `Path` | navigation |
-| `as_posix()` / `as_uri()` | `Str` | |
-| `iterdir()` | `PathIterator` | lazy, one-shot — `pathlib.iterdir` returns a generator |
-| `glob(pattern)` / `rglob(pattern)` | `Map` | `pathlib.glob`/`rglob` already return a `map`; POOP `Map` wraps it with `Path._from_pathlib` |
-| `Path.cwd()` / `Path.home()` | `Path` | classmethods |
-| Properties: `name` / `stem` / `suffix` | `Str` | mirror `pathlib` |
-| Properties: `parts` / `parents` | `Tuple[Str]` / `Tuple[Path]` | |
-| Property: `parent` | `Path` | |
-
-`PathIterator` (`poop/types/path_iterator.py`) inherits `_IteratorBase` and `_IterableMixin` — it exposes `next()` / `do(block)` and gains `map` / `filter` / `find` / `all` / `any` / `reduce` / `sum` / `min` / `max` / `enumerate` / `zip` from the mixin. It is one-shot (the underlying `pathlib` generator is consumed lazily).
-
-Out of v1 (filed if demand appears): `open(mode)` returning a POOP `File`, `stat()` / `lstat()`, `owner()` / `group()`, datetime-typed `mtime`, full `PurePath` hierarchy, non-UTF-8 encodings.
+A **definitive ban**, and now a substitute-less one. It was always listed as definitive on the grounds that POOP has no file-object abstraction, but it used to point at `Path.read_text()` / `write_text()` for the common cases. Dropping the `pathlib` mirror took that recipe with it: POOP no longer touches the filesystem at all. A program's only channels are `"prompt".input()` and `Object.print()`.
 
 ### No `del` — `poop/validators/no_del.py`
 
@@ -494,7 +450,7 @@ Out of v1 (filed if demand appears): `open(mode)` returning a POOP `File`, `stat
 | `ast.Import` | POOP is the language, not the library — there is no stdlib surface to import, and an import would bind raw CPython values that answer to no POOP message |
 | `ast.ImportFrom` | same — `from os import getcwd` would leak a raw Python callable returning a raw `str` |
 
-The names POOP does inject (`Path`, `io`, `Try`, `With`, `StringIO`, `BytesIO`) are already in scope and need no import.
+The only names POOP injects (`Try`, `With`) are already in scope and need no import.
 
 ### No `_poop_*` prefix — `poop/validators/no_poop_prefix.py`
 
@@ -509,16 +465,16 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 
 | AST node | Reason |
 |---|---|
-| `ast.Assign` with target `ast.Name` in the protected set | reassigning a namespace name (`io = 42`) breaks every later call to `io.StringIO(…)` |
-| `ast.AnnAssign` with target `ast.Name` in the protected set | annotated form (`io: int = 42`) — same problem |
-| `ast.AugAssign` with target `ast.Name` in the protected set | augmented form (`io += 1`) — same problem |
-| `ast.ClassDef` whose `name` is in the protected set | `class io: …` binds `io` at module level, shadows the namespace |
-| Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`io, x = 1, 2`) still rebinds the name |
-| `def`/`async def`/`lambda` parameters in the protected set | a parameter named after a binding (`def m(self, io): …`, `lambda io: …`) shadows it inside the body and fails confusingly |
+| `ast.Assign` with target `ast.Name` in the protected set | reassigning a namespace name (`Try = 42`) breaks every later call to `Try(…)` |
+| `ast.AnnAssign` with target `ast.Name` in the protected set | annotated form (`Try: int = 42`) — same problem |
+| `ast.AugAssign` with target `ast.Name` in the protected set | augmented form (`Try += 1`) — same problem |
+| `ast.ClassDef` whose `name` is in the protected set | `class Try: …` binds `Try` at module level, shadows the namespace |
+| Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`Try, x = 1, 2`) still rebinds the name |
+| `def`/`async def`/`lambda` parameters in the protected set | a parameter named after a binding (`def m(self, Try): …`, `lambda Try: …`) shadows it inside the body and fails confusingly |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today that is exactly six names: `BytesIO`, `Path`, `StringIO`, `Try`, `With`, `io`. Any future entry point protects itself automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today that is exactly two names: `Try` and `With`. Any future entry point protects itself automatically — no changes to this validator.
 
-What the validator **does not** catch: method names inside classes (`class Calc: def io(self): …`), which bind as attributes, not in the namespace scope.
+What the validator **does not** catch: method names inside classes (`class Calc: def Try(self): …`), which bind as attributes, not in the namespace scope.
 
 ### No builtin shadow — `poop/validators/no_builtin_shadow.py`
 
@@ -802,26 +758,6 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 > **Tradeoff**: context managers must implement Python's native protocol (`__enter__`/`__exit__`). POOP cannot redefine resource acquisition semantics without reimplementing every standard context manager (files, locks, etc.), which is impractical.
 
 `With` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/with_.py` — namespace-only, no AST rewrite.
-
-### io + StringIO + BytesIO — `poop/types/io.py` + `poop/transformers/io.py`
-
-`io` exposes the in-memory buffers `StringIO` / `BytesIO` plus the seek constants. It survives the removal of the stdlib mirrors for the same reason `Path` does: both are POOP-specific entry points rather than library surface — `Path` is the substitute the `no_open` ban points at, and `io` is the in-memory half of the same story. Disk I/O still goes through `Path.read_*` / `write_*`; POOP has no file-object abstraction and does not mirror Python's file protocol.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `StringIO(initial_value=none, newline=none)` | `StringIO` | in-memory text buffer |
-| `BytesIO(initial_bytes=none)` | `BytesIO` | in-memory binary buffer |
-| `.read(size=none)` / `.readline(size=none)` | `Str` / `Bytes` | per buffer type |
-| `.write(s)` | `Int` | characters/bytes written |
-| `.getvalue()` | `Str` / `Bytes` | |
-| `.seek(pos, whence=none)` / `.tell()` | `Int` | `whence` defaults to `SEEK_SET` |
-| `.truncate(size=none)` | `Int` | new size |
-| `.close()` | `none` | both buffers are context managers — `With(lambda: StringIO()).do(…)` |
-| `io.SEEK_SET` / `SEEK_CUR` / `SEEK_END` / `DEFAULT_BUFFER_SIZE` (class attrs) | `Int` | |
-| `io.IOBase` / `RawIOBase` / `BufferedIOBase` / `TextIOBase` (class attrs) | raw type | for `is_instance` against raw Python streams |
-| `io.UnsupportedOperation` / `BlockingIOError` (class attrs) | error class | for `Try.except_(…)` |
-
-`io`, `StringIO` and `BytesIO` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/io.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
