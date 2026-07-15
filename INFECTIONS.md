@@ -49,7 +49,6 @@ Parameter names also mirror CPython where there is no banned-builtin or POOP-spe
 
 - POOP renames params that shadow banned builtins (e.g., `grp.getgrgid` takes `gid` instead of CPython's `id`).
 - File I/O entry points take `Path` instead of file-object / file-descriptor (POOP has no file-object abstraction).
-- Callback kwargs route through `poop.types._bridge.bridge`. All originally pending per-namespace consumers are shipped; new namespaces should plug in via the same helper.
 - CPython entry points that take `*args, **kwargs` (e.g., `textwrap.wrap`, `logging.basicConfig`, `pprint.pp`) expose their kwargs explicitly in POOP to preserve type information.
 
 ### Platform-specific constants
@@ -59,10 +58,6 @@ Constants that CPython exposes only on some platforms (`socket.AF_UNIX`, `signal
 ### Error class exposure
 
 Every exception class that CPython raises through the wrapped surface and that a POOP user might reasonably pass to `Try.except_(...)` is exposed on the wrapping namespace. `json.JSONDecodeError`, `subprocess.CalledProcessError`, `ssl.SSLError`, `urllib.URLError` — all surface. Internal-only error classes (CPython's `_ssl.SSLError` aliases, `_socket.error` aliases) stay hidden.
-
-### Callback kwargs route through `block.bridge`
-
-When a wrapped namespace exposes a callback kwarg (`default=` on `json.dumps`, `object_hook=` on `json.loads`, `predicate=` on `textwrap.indent`, etc.), the user-supplied `Block` runs through `poop.types._bridge.bridge(...)`. The bridge wraps stdlib-supplied arguments into POOP types via `to_poop` before invoking the block, then unwraps the block's return value via `to_python` so the stdlib caller sees the type it asked for. Do not re-implement wrap/unwrap per module — every namespace shares one helper. Use `wrap_args=False` when the stdlib already hands a meaningful POOP-side value; use `unwrap_return=False` when the block's return flows back into POOP-side code that re-wraps at an outer boundary anyway (`json.object_hook` and friends).
 
 ### Pull deferred surface only when a caller asks
 

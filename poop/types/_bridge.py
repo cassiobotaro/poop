@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.byte_array import ByteArray
@@ -14,18 +14,6 @@ from poop.types.none import NoneClass, none
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-
-
-def _str_str_dict(pairs: Iterable[tuple[str, str]]) -> Dict:
-    """Build a POOP Dict of Str -> Str from any (str, str) pair iterable,
-    e.g. an HTTP header list from `getheaders()` or `headers.items()`."""
-    result = Dict()
-    for k, v in pairs:
-        result.at_put(Str(k), Str(v))
-    return result
 
 
 def to_python(obj: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
@@ -82,43 +70,3 @@ def to_poop(value: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one br
     if isinstance(value, frozenset):
         return FrozenSet(*(to_poop(v) for v in value))
     return value
-
-
-def bridge(
-    block: Callable[..., Any],
-    *,
-    wrap_args: bool = True,
-    unwrap_return: bool = True,
-) -> Callable[..., Any]:
-    """Adapt a POOP `Block` (or any callable) to a stdlib callback contract.
-
-    Stdlib hooks expect plain Python callables that receive native
-    Python arguments and return native Python values. POOP user code
-    speaks POOP types. The bridge wraps each incoming arg into the
-    matching POOP type via `to_poop`, invokes the block, then unwraps
-    the return via `to_python` so the stdlib caller sees the type it
-    asked for.
-
-    Set `wrap_args=False` when the stdlib already hands a meaningful
-    POOP-side value (or an opaque object `to_poop` would not improve).
-    Set `unwrap_return=False` when the block's return value flows
-    back into POOP-side code (e.g., `json.object_hook`, whose result
-    becomes part of the loaded structure re-wrapped at the outer
-    boundary anyway).
-
-    Exceptions raised inside the block — whether through POOP's
-    `Cls.raise_(...)` or naked CPython `raise` — propagate to the
-    stdlib caller unchanged. `Try.except_` therefore keeps working
-    around a bridged call.
-    """
-
-    def adapter(*args: Any, **kwargs: Any) -> Any:
-        if wrap_args:
-            args = tuple(to_poop(a) for a in args)
-            kwargs = {k: to_poop(v) for k, v in kwargs.items()}
-        result = block(*args, **kwargs)
-        if unwrap_return:
-            result = to_python(result)
-        return result
-
-    return adapter
