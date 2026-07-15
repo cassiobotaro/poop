@@ -884,60 +884,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
 
-### datetime + Date + Time + DateTime + TimeDelta + TimeZone — `poop/types/datetime.py` + `poop/transformers/datetime.py`
-
-`datetime` mirrors Python's `datetime` module — the canonical date, time, datetime, duration, and fixed-offset timezone types. All five wrapper classes are bound at module scope (`Date`, `Time`, …) and also accessible as `datetime.date`, `datetime.time`, etc. (the latter mirroring CPython's module attributes).
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `Date(year, month, day)` | `Date` | |
-| `Date.today()` / `.fromisoformat(s)` / `.fromtimestamp(t)` / `.fromordinal(n)` | `Date` | constructors |
-| `Date.year` / `.month` / `.day` (properties) | `Int` | |
-| `Date.weekday()` / `.isoweekday()` / `.toordinal()` | `Int` | |
-| `Date.isoformat()` / `.strftime(fmt)` | `Str` | |
-| `Date.replace(year=none, month=none, day=none)` | `Date` | |
-| `Date + TimeDelta` | `Date` | |
-| `Date - TimeDelta` | `Date` | |
-| `Date - Date` | `TimeDelta` | |
-| `Time(hour=none, minute=none, second=none, microsecond=none, tzinfo=none)` | `Time` | |
-| `Time.fromisoformat(s)` | `Time` | |
-| `Time.hour` / `.minute` / `.second` / `.microsecond` (properties) | `Int` | |
-| `Time.tzinfo` (property) | `TimeZone \| NoneClass` | |
-| `Time.isoformat()` / `.strftime(fmt)` | `Str` | |
-| `Time.replace(...)` | `Time` | |
-| `DateTime(year, month, day, hour=none, ..., tzinfo=none)` | `DateTime` | |
-| `DateTime.now(tz=none)` / `.utcnow()` / `.fromtimestamp(t, tz=none)` / `.fromisoformat(s)` / `.combine(date, time, tzinfo=none)` | `DateTime` | constructors |
-| `DateTime.date()` / `.time()` | `Date` / `Time` | |
-| `DateTime.timestamp()` | `Float` | |
-| `DateTime.astimezone(tz=none)` | `DateTime` | |
-| `DateTime.weekday()` / `.isoweekday()` | `Int` | |
-| `DateTime.isoformat(sep=none)` / `.strftime(fmt)` | `Str` | |
-| `DateTime.replace(...)` | `DateTime` | |
-| `DateTime + TimeDelta` | `DateTime` | |
-| `DateTime - TimeDelta` | `DateTime` | |
-| `DateTime - DateTime` | `TimeDelta` | |
-| `DateTime < / <= / > / >= DateTime` | `Boolean` | |
-| `TimeDelta(days=none, seconds=none, microseconds=none, milliseconds=none, minutes=none, hours=none, weeks=none)` | `TimeDelta` | |
-| `TimeDelta.days` / `.seconds` / `.microseconds` (properties) | `Int` | |
-| `TimeDelta.total_seconds()` | `Float` | |
-| `TimeDelta + / - TimeDelta` | `TimeDelta` | |
-| `TimeDelta * Int` | `TimeDelta` | |
-| `TimeDelta / Int` | `TimeDelta` | |
-| `TimeDelta / TimeDelta` | `Float` | ratio |
-| `TimeDelta // TimeDelta` | `Int` | floor division |
-| `TimeDelta // Int` | `TimeDelta` | |
-| `TimeDelta % TimeDelta` | `TimeDelta` | |
-| `-TimeDelta` | `TimeDelta` | |
-| `TimeZone(offset, name=none)` | `TimeZone` | |
-| `Date.min` / `Date.max` (class attrs) | `Date` | years 1 and 9999, mirroring the stdlib |
-| `TimeZone.utc` (class attr) | `TimeZone` | UTC constant |
-| `TimeZone.utcoffset(dt=none)` | `TimeDelta` | |
-| `TimeZone.tzname(dt=none)` | `Str` | |
-
-The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetime.tzinfo`) is out of scope; users get `TimeZone` for fixed offsets. `Date.min`/`Date.max` are exposed as class attributes (`Date` instances for years 1 and 9999); the bare `datetime.MINYEAR`/`MAXYEAR` integer constants stay out — see the [permanent divergence](#no-datetimemaxyear--datetimeminyear) (the values are implicit in `Date.min`/`Date.max` and in the constructor's range check).
-
-`datetime`, `Date`, `Time`, `DateTime`, `TimeDelta`, and `TimeZone` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/datetime.py` — namespace-only, no AST rewrite.
-
 ### string + Template — `poop/types/string.py` + `poop/transformers/string.py`
 
 `string` mirrors Python's `string` module — ASCII character-class constants plus the `Template` class for `$variable` substitution. The constants live on the namespace; `Template` is exposed alongside it (PascalCase), matching the `hmac`/`HMAC` and `uuid`/`UUID` convention.
@@ -956,25 +902,6 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 `string.Formatter` is deliberately out of scope — `Str.format(*args, **kwargs)` is CPython's `str.format` template method (overriding the inherited `Object.format(spec)`), which covers the common case.
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
-
-### zoneinfo + ZoneInfo — `poop/types/zoneinfo.py` + `poop/transformers/zoneinfo.py`
-
-`zoneinfo` mirrors Python's `zoneinfo` module — IANA timezone database access. `ZoneInfo` is a `datetime.tzinfo` wrapper that pairs directly with the `datetime` namespace's `DateTime.now(tz=…)` / `.astimezone(tz)` / `DateTime(..., tzinfo=…)` entry points (all widened to accept either `TimeZone` or `ZoneInfo`).
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `ZoneInfo(key)` | `ZoneInfo` | cached lookup by IANA name |
-| `ZoneInfo.no_cache(key)` (classmethod) | `ZoneInfo` | bypass the cache |
-| `ZoneInfo.clear_cache(only_keys=none)` (classmethod) | `none` | `only_keys` is an optional `Set[Str]` |
-| `ZoneInfo.key` (property) | `Str` | the IANA name |
-| `zoneinfo.available_timezones()` | `Set[Str]` | roster from the local tzdata |
-| `zoneinfo.reset_tzpath(to=none)` | `none` | `to` is an optional `Tuple[Str]` of search paths |
-| `zoneinfo.TZPATH` | `Tuple[Str]` | current search path (property; `reset_tzpath` mutates it) |
-| `zoneinfo.ZoneInfoNotFoundError` (class attr) | exception class | use with `Try.except_(...)` |
-
-`ZoneInfo.from_file` is deferred — POOP has no file-object abstraction. `InvalidTZPathWarning` is out of scope (POOP has no warning system).
-
-`zoneinfo` and `ZoneInfo` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/zoneinfo.py` — namespace-only, no AST rewrite.
 
 ### enum + Enum + IntEnum + StrEnum + Flag + IntFlag + ReprEnum — `poop/types/enum.py` + `poop/transformers/enum.py`
 

@@ -37,7 +37,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x or y` | `x.or_(lambda: y)` |
 | `random.choice(xs)` | `random.choice(xs)` |
 | `random.Random(seed)` | `Random(seed)` |
-| `datetime.date.today()` | `Date.today()` |
 | `string.ascii_letters` | `string.ascii_letters` |
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
@@ -370,32 +369,6 @@ r = Random(42)
 
 > POOP exposes both `random` (lowercase, module-level singleton — `random.random()`, `random.choice(xs)`, …) and `Random` (PascalCase, the class — `Random(seed)` returns a fresh independently-seeded instance). The split mirrors Python exactly; the only shortcut is that `Random` is in scope without a `random.` prefix (no `import` needed). Cryptographic draws live in `secrets`, never `random`.
 
-## Dates and times (`datetime` module + `Date` / `Time` / `DateTime` / `TimeDelta` / `TimeZone`)
-
-```python
-# Python
-from datetime import date, datetime, timedelta, timezone
-
-today = date.today()
-dt = datetime(2026, 5, 15, 12, 30, tzinfo=timezone.utc)
-future = dt + timedelta(days=7)
-diff = future - dt          # timedelta(days=7)
-iso = dt.isoformat()
-parsed = datetime.fromisoformat("2026-05-15T12:30:00+00:00")
-```
-
-```python
-# POOP
-today = Date.today()
-dt = DateTime(2026, 5, 15, 12, 30, tzinfo=TimeZone.utc)
-future = dt + TimeDelta(days=7)
-diff = future - dt          # TimeDelta(days=7)
-iso = dt.isoformat()
-parsed = DateTime.fromisoformat("2026-05-15T12:30:00+00:00")
-```
-
-> The five canonical types are bound at module scope (`Date`, `Time`, `DateTime`, `TimeDelta`, `TimeZone`) and also reachable through the `datetime` namespace (`datetime.date`, `datetime.time`, …) for users used to Python's module attributes. Arithmetic is closed under the type pairs: `Date + TimeDelta` → `Date`, `DateTime - DateTime` → `TimeDelta`, `TimeDelta / TimeDelta` → `Float` (ratio), `TimeDelta // TimeDelta` → `Int`. `TimeZone.utc` is the UTC constant; custom `tzinfo` subclasses are out of scope (use `TimeZone(TimeDelta(hours=h))` for fixed offsets).
-
 ## ASCII character classes and string templates (`string` module + `Template` class)
 
 ```python
@@ -415,23 +388,6 @@ greeting = template.substitute({"name": "world"})
 ```
 
 > Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
-
-## IANA timezones (`zoneinfo` module + `ZoneInfo` class)
-
-```python
-# Python
-from zoneinfo import ZoneInfo
-import datetime
-
-dt = datetime.datetime.now(tz=ZoneInfo("America/Sao_Paulo"))
-```
-
-```python
-# POOP
-dt = DateTime.now(ZoneInfo("America/Sao_Paulo"))
-```
-
-> `ZoneInfo` is bare (PascalCase). The lowercase `zoneinfo` namespace exposes `available_timezones()` (`Set[Str]`), `reset_tzpath(to=none)`, and `TZPATH` (attribute, not a method — `reset_tzpath` mutates it). `ZoneInfoNotFoundError` is a Python exception class for `Try.except_(...)`. `ZoneInfo.from_file` is deferred (POOP has no file-object abstraction). All `DateTime` constructors / `.now(tz=...)` / `.astimezone(tz)` entry points were widened to accept either `TimeZone` or `ZoneInfo`.
 
 ## Enumerations (`enum` module + `Enum` / `IntEnum` / `StrEnum` / `Flag` / `IntFlag` / `ReprEnum`)
 
