@@ -22,7 +22,6 @@ from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
 from poop.transformers.configparser import NAMESPACE as _configparser_namespace
 from poop.transformers.csv import NAMESPACE as _csv_namespace
 from poop.transformers.datetime import NAMESPACE as _datetime_namespace
-from poop.transformers.decimal import NAMESPACE as _decimal_namespace
 from poop.transformers.dict import DictTransformer
 from poop.transformers.email import NAMESPACE as _email_namespace
 from poop.transformers.enum import NAMESPACE as _enum_namespace
@@ -146,7 +145,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _path_namespace,
     _random_namespace,
     _datetime_namespace,
-    _decimal_namespace,
     _string_namespace,
     _zoneinfo_namespace,
     _calendar_namespace,

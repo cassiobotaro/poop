@@ -38,7 +38,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.choice(xs)` | `random.choice(xs)` |
 | `random.Random(seed)` | `Random(seed)` |
 | `datetime.date.today()` | `Date.today()` |
-| `decimal.Decimal("3.14")` | `Decimal("3.14")` |
 | `string.ascii_letters` | `string.ascii_letters` |
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
@@ -397,30 +396,6 @@ parsed = DateTime.fromisoformat("2026-05-15T12:30:00+00:00")
 ```
 
 > The five canonical types are bound at module scope (`Date`, `Time`, `DateTime`, `TimeDelta`, `TimeZone`) and also reachable through the `datetime` namespace (`datetime.date`, `datetime.time`, …) for users used to Python's module attributes. Arithmetic is closed under the type pairs: `Date + TimeDelta` → `Date`, `DateTime - DateTime` → `TimeDelta`, `TimeDelta / TimeDelta` → `Float` (ratio), `TimeDelta // TimeDelta` → `Int`. `TimeZone.utc` is the UTC constant; custom `tzinfo` subclasses are out of scope (use `TimeZone(TimeDelta(hours=h))` for fixed offsets).
-
-## Arbitrary-precision decimals (`decimal` module + `Decimal` / `Context` classes)
-
-```python
-# Python
-from decimal import Decimal, getcontext, ROUND_HALF_UP
-
-price = Decimal("19.99")
-total = price * Decimal("3") + Decimal("0.10")
-rounded = total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-getcontext().prec = 50
-```
-
-```python
-# POOP
-price = Decimal("19.99")
-total = price * Decimal("3") + Decimal("0.10")
-rounded = total.quantize(Decimal("0.01"), decimal.ROUND_HALF_UP)
-# precision setting: seed the scope or mutate the context
-With(lambda: decimal.localcontext(prec=5)).do(lambda ctx: ...)
-With(lambda: decimal.localcontext()).do(lambda ctx: ctx.set_prec(5))
-```
-
-> `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.) and `Decimal` mixes with `Int`/`Float` in comparisons and `Int` in arithmetic. Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Scope precision/rounding with `decimal.localcontext(prec=…, rounding=…)`, or mutate the context inside the block via `ctx.set_prec(Int)` / `ctx.set_rounding(Str)`.
 
 ## ASCII character classes and string templates (`string` module + `Template` class)
 
