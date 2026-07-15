@@ -45,8 +45,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `calendar.isleap(year)` | `calendar.isleap(year)` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
 | `fractions.Fraction(1, 2)` | `Fraction(1, 2)` |
-| `statistics.mean(xs)` | `statistics.mean(xs)` |
-| `statistics.NormalDist(0, 1).cdf(0)` | `NormalDist(0, 1).cdf(0)` |
 | `struct.pack(">I", 42)` | `struct.pack(">I", 42)` |
 | `codecs.encode(s, "rot_13")` | `codecs.encode(s, "rot_13")` |
 | `filecmp.cmp(a, b)` | `filecmp.cmp(a, b)` |
@@ -533,30 +531,6 @@ total = half + sixth          # Fraction(2, 3)
 ```
 
 > `Fraction` is bare (PascalCase) alongside the lowercase `fractions` namespace. One-arg form accepts `Int` / `Float` / `Str("3/4")` / `Str("0.25")` / `Fraction`; the two-arg form `Fraction(num, den)` takes `Int`s. `Fraction.from_float(f)` and `Fraction.from_decimal(d)` are classmethods. Arithmetic between `Fraction`s stays exact; mixing with `Int` keeps `Fraction`; mixing with `Float` promotes to `Float`. `Int / Float` don't return `NotImplemented` for non-POOP operands yet, so reflected forms like `Int + Fraction` are reachable only via direct dunder calls.
-
-## Statistics (`statistics` module + `NormalDist` class)
-
-```python
-# Python
-import statistics
-
-data = [1.0, 2.5, 3.0, 4.5, 5.0]
-statistics.mean(data)
-statistics.stdev(data)
-nd = statistics.NormalDist.from_samples(data)
-nd.cdf(3.0)
-```
-
-```python
-# POOP
-data = [1.0, 2.5, 3.0, 4.5, 5.0]
-statistics.mean(data)
-statistics.stdev(data)
-nd = NormalDist.from_samples(data)
-nd.cdf(3.0)
-```
-
-> Module-level helpers cover central tendency (`mean` / `fmean` / `geometric_mean` / `harmonic_mean` / `median*` / `mode` / `multimode`), spread (`pstdev` / `pvariance` / `stdev` / `variance`), `quantiles`, and correlation primitives (`correlation` / `covariance` / `linear_regression`). `NormalDist` is bare (PascalCase). `+` / `-` between two `NormalDist`s sums means and combines variances; `*` / `/` against a `Float` / `Int` scales. `statistics.StatisticsError` is the Python exception class for `Try.except_`. The private `_sum` helper is out of scope; Decimal-aware variants work through the existing `Decimal` integration.
 
 ## Binary packing (`struct` module + `Struct` class)
 

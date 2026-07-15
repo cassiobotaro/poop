@@ -65,7 +65,6 @@ from poop.transformers.slice import SliceTransformer
 from poop.transformers.smtplib import NAMESPACE as _smtplib_namespace
 from poop.transformers.socket import NAMESPACE as _socket_namespace
 from poop.transformers.ssl import NAMESPACE as _ssl_namespace
-from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.struct import NAMESPACE as _struct_namespace
@@ -154,7 +153,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _calendar_namespace,
     _enum_namespace,
     _fractions_namespace,
-    _statistics_namespace,
     _struct_namespace,
     _codecs_namespace,
     _filecmp_namespace,

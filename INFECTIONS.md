@@ -1098,41 +1098,6 @@ POOP `Int` / `Float` don't return `NotImplemented` for non-POOP operands, so ref
 
 `fractions` and `Fraction` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/fractions.py` — namespace-only, no AST rewrite.
 
-### statistics + NormalDist — `poop/types/statistics.py` + `poop/transformers/statistics.py`
-
-`statistics` mirrors Python's `statistics` module — central tendency, spread, quantiles, correlation primitives, and the `NormalDist` distribution class.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `statistics.mean(data)` | element | typically `Float` / `Int` / `Fraction` depending on input |
-| `statistics.fmean(data, weights=none)` | `Float` | always `Float` |
-| `statistics.geometric_mean(data)` | `Float` | |
-| `statistics.harmonic_mean(data, weights=none)` | `Float` | |
-| `statistics.median(data)` | `Float` / `Int` | even-count averages two middle elements |
-| `statistics.median_low(data)` / `.median_high(data)` | element | |
-| `statistics.median_grouped(data, interval=none)` | `Float` | |
-| `statistics.mode(data)` / `.multimode(data)` | element / `List` | works on `Str` / `Boolean` / numeric data |
-| `statistics.pstdev(data, mu=none)` / `.pvariance(data, mu=none)` | `Float` / `Decimal` / `Fraction` | population spread; `pvariance` stays exact (`Decimal` / `Fraction`) for exact input, `pstdev` takes a root so it answers `Float` |
-| `statistics.stdev(data, xbar=none)` / `.variance(data, xbar=none)` | `Float` / `Decimal` / `Fraction` | sample spread; `variance` stays exact for exact input, `stdev` takes a root so it answers `Float` |
-| `statistics.quantiles(data, n=none, method=none)` | `List[Float]` | default `n=4`, `method="exclusive"` |
-| `statistics.correlation(x, y, method=none)` | `Float` | `method` is `"linear"` (default) or `"ranked"` |
-| `statistics.covariance(x, y)` | `Float` | |
-| `statistics.linear_regression(x, y, proportional=none)` | `Tuple(Float, Float)` | `(slope, intercept)` |
-| `statistics.StatisticsError` (class attr) | exception class | for `Try.except_` on empty/invalid data |
-| `NormalDist(mu=none, sigma=none)` | `NormalDist` | |
-| `NormalDist.from_samples(data)` (classmethod) | `NormalDist` | |
-| `NormalDist.mean` / `.stdev` / `.variance` / `.median` / `.mode` (properties) | `Float` | |
-| `NormalDist.cdf(x)` / `.pdf(x)` / `.inv_cdf(p)` / `.zscore(x)` | `Float` | |
-| `NormalDist.samples(n, seed=none)` | `List[Float]` | |
-| `NormalDist.overlap(other)` | `Float` | |
-| `NormalDist.quantiles(n=none)` | `List[Float]` | default `n=4` |
-| `NormalDist + - NormalDist` / `NormalDist + - * / Float` | `NormalDist` | affine transformations; `+` / `-` between two `NormalDist`s sums means and combines variances |
-| `NormalDist == != hash` | as Python | |
-
-The `_sum` private helper is out of scope. Decimal-aware variants surface naturally through the existing `Decimal` integration.
-
-`statistics` and `NormalDist` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/statistics.py` — namespace-only, no AST rewrite.
-
 ### struct + Struct — `poop/types/struct.py` + `poop/transformers/struct.py`
 
 `struct` mirrors Python's `struct` module — packing and unpacking binary data via format strings (`>I`, `<2sH`, `?fd`, …). Format-char wrapping back into POOP types is handled at the boundary: `int` → `Int`, `float` → `Float`, `bool` → `Boolean`, `bytes` → `Bytes`. Buffers accept `Bytes` / `ByteArray` / `MemoryView` for reads; writes require a mutable buffer (`ByteArray` or `MemoryView`).
