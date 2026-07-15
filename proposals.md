@@ -34,8 +34,10 @@ Python-obvious spelling to close a gap that admits only range checks.
 Note what this allowance rests on: **Python ergonomics, not the absence of a
 substitute**. `(1 < x).and_(lambda: x < 10)` exists and works. Every other entry
 in *Explicitly allowed* turns on "no principled substitute exists"; this is the
-first that does not, and that is deliberate. Item 2's open question (raw dunder
-calls) is the next place the same trade-off surfaces.
+first that does not, and that is deliberate. Item 2 has since faced the same
+trade-off over raw dunder calls and settled it the other way: unlike a chain,
+`xs.__len__()` both leaks a raw primitive and has a substitute, so ergonomics
+had nothing to weigh against.
 
 ### 2. Dunder attribute access reproduces banned builtins verbatim
 
@@ -54,16 +56,50 @@ bans for "returning a raw class object that is not a POOP value".
 
 Root cause: `_call_name.py` visits `ast.Name`, never `ast.Attribute`.
 
-**Proposal**: a `no_dunder_attribute` validator rejecting `__dict__`,
-`__class__`, `__mro__`, `__bases__` in `ast.Attribute` position.
-**Substitute**: `x.class_name()` or polymorphism; for `__dict__`, none — the
-ban is the decision, exactly as `no_introspection` already argues for `vars`.
+**Proposal**: a `no_dunder_attribute` validator rejecting **any** `__dunder__`
+in `ast.Attribute` position, with `__init__` carved out, plus a runtime guard on
+`Object.get_attr` / `has_attr` / `set_attr` / `del_attr`. Close by rule, not by
+list. Not yet implemented; the four grounds below are each verified.
 
-Open question: whether to extend it to raw dunder *calls* (`x.__len__()`,
-`(5).__abs__()`, `col.__contains__(x)`). These defeat `no_len`/`no_abs`/`no_in`
-and return raw primitives, but they pass the "does it look like an object
-receiving a message?" test. A judgment call for the maintainer, not an obvious
-bug.
+**Why a rule, not the four obvious names.** The list `__dict__`, `__class__`,
+`__mro__`, `__bases__` is already incomplete: `x.__class__.__name__` answers a
+raw `str`. Enumeration invites the next omission, and item 3 settled this same
+argument — an invariant closed by exception is not closed.
+
+**Why a runtime guard too.** `no_getattr` bans `getattr` and offers
+`obj.get_attr(name)` as the substitute — and `A().get_attr("__dict__")` reopens
+the exact hole the validator would close. Worse, `name = "__dict" + "__"` then
+`A().get_attr(name)` leaks the same `dict`, so **no static validator can see this
+spelling**; the guard has to live in `Object`. Same shape as the
+`vars()`/`obj.__dict__` asymmetry that opens this item, and as item 3's
+`...`/`Ellipsis` double spelling.
+
+**Verified constraint: `__init__` must be carved out.** `super().__init__(name)`
+is an `ast.Attribute` with a dunder attr, and it runs today. `INFECTIONS.md`
+allows `super` explicitly — "without it, subclasses cannot extend parent
+behaviour — inheritance breaks entirely. There is no message-passing substitute."
+A blanket rule would contradict a standing allowance.
+
+**Raw dunder calls: in, and not on taste.** `x.__len__()`, `(5).__abs__()` and
+`col.__contains__(x)` are not one case. CPython *forces* `__len__` to answer a
+real `int` and coerces `__contains__` to a real `bool`; the signatures record the
+surrender — `def __len__(self) -> int` and `def __contains__(...) -> bool`,
+against `def __abs__(self) -> Int`. Verified: `(5).__abs__().class_name()`
+answers `int`, while `xs.__len__().class_name()` fails on a raw `int`. So
+`__len__`/`__contains__` are structurally incapable of honouring the doctrine,
+while `__abs__` already honours it. The rule bans both regardless: losing
+`(5).__abs__()` costs nothing — `.abs()` exists and nobody writes the dunder —
+and sparing it would restore the exception list the rule exists to avoid.
+
+**Substitutes**: all present, so "activate a validator only when the substitute
+exists" is satisfied — `.len()`, `.includes()`, `.abs()`, `.hash()`, and
+`x.class_name()` or polymorphism. For `__dict__`, none: the ban is the decision,
+exactly as `no_introspection` already argues for `vars`.
+
+**Interaction with item 4**: `x.__class__` leaks a class object, not a raw
+primitive. If `PoopMeta` lands it answers a real POOP class and stops being a
+doctrine hole, becoming merely a non-Smalltalk spelling of `x.class_()`. The ban
+stands either way, on that second ground.
 
 ### ~~3. `...` is the only untransformed literal~~ — DONE
 
