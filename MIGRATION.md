@@ -45,8 +45,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `lzma.compress(b)` | `lzma.compress(b)` |
 | `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
 | `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
-| `csv.reader(f)` | `csv.reader(text)` |
-| `configparser.ConfigParser()` | `ConfigParser()` |
 | `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
 | `ET.fromstring(text)` | `ET.fromstring(text)` |
 | `ET.tostring(elem)` | `ET.tostring(elem)` |
@@ -380,33 +378,6 @@ With.do(TarFile.open(Path("a.tar.gz"), "w:gz"),
 ```
 
 > All compression entry points are `Bytes` in / `Bytes` out. File-handle classes (`GzipFile` / `BZ2File` / `LZMAFile`) and archive classes (`ZipFile` / `TarFile`) are `With`-friendly and path-based — POOP has no file-object abstraction. The `compression` umbrella (Python 3.14) re-exports the per-format namespaces under `compression.zlib` / `.gzip` / `.bz2` / `.lzma`. Streaming compressor/decompressor pairs (`Compress` / `Decompress`, `BZ2Compressor` / `BZ2Decompressor`, `LZMACompressor` / `LZMADecompressor`) cover the chunked use cases. `TarFile.extractall` defaults to the safe `filter="data"` (3.14+); callers who want the historical unsafe behavior pass `filter="fully_trusted"` explicitly. `compression.zstd` is out of scope until Python 3.14's API stabilises.
-
-## File formats (`csv` module + readers/writers, `configparser` module + parser)
-
-```python
-# Python
-import csv, configparser
-
-with open("data.csv") as f:
-    for row in csv.reader(f):
-        print(row)
-
-cp = configparser.ConfigParser()
-cp.read("app.ini")
-host = cp.get("server", "host", fallback="localhost")
-```
-
-```python
-# POOP
-text = Path("data.csv").read_text()
-csv.reader(text).do(Block(lambda row: row.print()))
-
-cp = ConfigParser()
-cp.read(Path("app.ini"))
-host = cp.get("server", "host", fallback="localhost")
-```
-
-> POOP has no file-object abstraction, so `Reader` / `DictReader` take a `Str` (split on newlines) or `List[Str]` of lines; `Writer` / `DictWriter` accumulate into an internal buffer exposed via `.getvalue()`. `Sniffer` autodetects dialect from a sample. Dialect registration (`csv.register_dialect` / `unregister_dialect` / `get_dialect` / `list_dialects`) works as in CPython. `ConfigParser` has `read` (from `Path` / `Str` / `List[Path]`), `read_string` / `read_dict` / `read_file`, plus `write_str` and `write_to(path)` for serialization. Typed accessors (`getint` / `getfloat` / `getboolean`) return POOP wrappers. The full error hierarchy and both interpolation classes (`BasicInterpolation` / `ExtendedInterpolation`) are on the namespace.
 
 ## Generic OS (`os`, `io`, `time`, `logging`, `platform`)
 

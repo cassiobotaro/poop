@@ -15,8 +15,6 @@ from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.compression import NAMESPACE as _compression_namespace
 from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
-from poop.transformers.configparser import NAMESPACE as _configparser_namespace
-from poop.transformers.csv import NAMESPACE as _csv_namespace
 from poop.transformers.dict import DictTransformer
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
@@ -119,8 +117,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _zipfile_namespace,
     _tarfile_namespace,
     _compression_namespace,
-    _csv_namespace,
-    _configparser_namespace,
     _os_namespace,
     _io_namespace,
     _time_namespace,

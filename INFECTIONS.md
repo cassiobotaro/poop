@@ -1012,58 +1012,6 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `compression` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/compression.py` — namespace-only, no AST rewrite.
 
-### csv + Reader + Writer + DictReader + DictWriter + Sniffer — `poop/types/csv.py` + `poop/transformers/csv.py`
-
-`csv` mirrors Python's `csv` module — RFC 4180 reading/writing. Readers iterate from POOP `Str` (split on newlines) or `List[Str]` of lines; writers accumulate into an internal `StringIO` exposed via `.getvalue()`.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `Reader(source, dialect=none, **fmtparams)` | `Reader` | source is `Str` / `List[Str]` |
-| `Reader.__iter__` | yields `List[Str]` | rows |
-| `Reader.line_num` / `.dialect` (properties) | `Int` / `Str` | |
-| `Writer(dialect=none, **fmtparams)` | `Writer` | accumulator |
-| `Writer.writerow(row)` / `.writerows(rows)` / `.getvalue()` | `Int` / `none` / `Str` | |
-| `DictReader(source, fieldnames=none, restkey=none, restval=none, dialect=none, **fmtparams)` | `DictReader` | yields `Dict[Str, Str]` |
-| `DictReader.fieldnames` / `.line_num` | `List[Str]` / `none` / `Int` | |
-| `DictWriter(fieldnames, restval=none, extrasaction=none, dialect=none, **fmtparams)` | `DictWriter` | |
-| `DictWriter.writeheader()` / `.writerow(dict)` / `.writerows(rows)` / `.getvalue()` | `Int` / `Int` / `none` / `Str` | |
-| `Sniffer().sniff(sample, delimiters=none)` / `.has_header(sample)` | dialect / `Boolean` | |
-| `csv.reader(...)` / `.writer(...)` | factories | aliases for the classes |
-| `csv.list_dialects()` / `.get_dialect(name)` / `.register_dialect(name, dialect=none, **fmtparams)` / `.unregister_dialect(name)` | `List[Str]` / dialect / `none` / `none` | |
-| `csv.field_size_limit(new_limit=none)` | `Int` | returns previous |
-| `csv.Dialect` / `excel` / `excel_tab` / `unix_dialect` (class attrs) | Python class refs | |
-| `csv.QUOTE_ALL` / `QUOTE_MINIMAL` / `QUOTE_NONNUMERIC` / `QUOTE_NONE` / `QUOTE_STRINGS` / `QUOTE_NOTNULL` (class attrs) | `Int` | quoting constants |
-| `csv.Error` (class attr) | exception class | |
-
-`csv`, `Reader`, `Writer`, `DictReader`, `DictWriter`, and `Sniffer` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/csv.py` — namespace-only, no AST rewrite.
-
-### configparser + ConfigParser + RawConfigParser — `poop/types/configparser.py` + `poop/transformers/configparser.py`
-
-`configparser` mirrors Python's `configparser` module — INI-style config files. `ConfigParser` performs string interpolation by default; `RawConfigParser` is the no-interpolation variant.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `ConfigParser(defaults=none, allow_no_value=none, delimiters=none, comment_prefixes=none, inline_comment_prefixes=none, strict=none, empty_lines_in_values=none, default_section=none, interpolation=none)` | `ConfigParser` | |
-| `.read(filenames, encoding=none)` | `List[Str]` | `filenames` is `Path` / `Str` / `List`; returns successfully-read paths |
-| `.read_string(string, source=none)` / `.read_dict(dict, source=none)` / `.read_file(source, source_name=none)` | `none` | |
-| `.sections()` / `.options(section)` | `List[Str]` | |
-| `.has_section(section)` / `.has_option(section, option)` | `Boolean` | |
-| `.items(section=none)` | `List[Tuple]` | with section → `List[Tuple(Str, Str)]`; without → `List[Tuple(Str, Dict)]` |
-| `.get(section, option, raw=none, fallback=...)` | `Str` | |
-| `.getint(section, option, raw=none, fallback=...)` | `Int` | |
-| `.getfloat(section, option, raw=none, fallback=...)` | `Float` | |
-| `.getboolean(section, option, raw=none, fallback=...)` | `Boolean` | |
-| `.defaults()` | `Dict[Str, Str]` | |
-| `.add_section(section)` / `.set(section, option, value)` | `none` | |
-| `.remove_section(section)` / `.remove_option(section, option)` | `Boolean` | `true` if removed |
-| `.clear()` | `none` | |
-| `.write_to(path, space_around_delimiters=none)` | `none` | path-based writer |
-| `.write_str(space_around_delimiters=none)` | `Str` | string capture |
-| `configparser.BasicInterpolation` / `ExtendedInterpolation` (class attrs) | Python class refs | |
-| `configparser.{Error,NoSectionError,DuplicateSectionError,NoOptionError,DuplicateOptionError,InterpolationError,InterpolationDepthError,InterpolationMissingOptionError,InterpolationSyntaxError,ParsingError,MissingSectionHeaderError}` (class attrs) | exception classes | |
-
-`configparser`, `ConfigParser`, and `RawConfigParser` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/configparser.py` — namespace-only, no AST rewrite.
-
 ### os + Environ, io + StringIO + BytesIO, time + StructTime, logging + Logger + Handler + Formatter, platform + Uname — `poop/types/{os,io,time,logging,platform}.py`
 
 Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module shape directly: process-state queries (`getpid`/`getppid`/`getuid`/`getgid`/`geteuid`/`getegid`/`umask`/`chdir`/`getcwd`/`kill`), random bytes (`urandom`), CPU counts (`cpu_count`/`process_cpu_count`/`getloadavg`), and the low-level flag/separator constants. The `os.environ` sub-namespace handles environment variables — since POOP forbids subscript syntax, Python's `os.environ["X"] = "y"` becomes the explicit `os.environ.set("X", "y")`. `os.path` is **intentionally absent** — every operation is reachable via `Path`. `io` exposes the in-memory buffers `StringIO` / `BytesIO` plus the seek constants — disk I/O still goes through `Path.read_*` / `write_*`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API plus parse/format helpers; `StructTime` wraps `time.struct_time`. `logging` exposes the canonical xUnit-style framework (Logger + Handler + Formatter) — `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment info and exposes `Uname` as a POOP record.
