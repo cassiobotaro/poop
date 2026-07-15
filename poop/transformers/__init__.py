@@ -84,7 +84,6 @@ from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
 from poop.transformers.threading import NAMESPACE as _threading_namespace
 from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.timeit import NAMESPACE as _timeit_namespace
-from poop.transformers.tomllib import NAMESPACE as _tomllib_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.unicodedata import NAMESPACE as _unicodedata_namespace
@@ -158,7 +157,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _tomllib_namespace,
     _hmac_namespace,
     _graphlib_namespace,
     _re_namespace,

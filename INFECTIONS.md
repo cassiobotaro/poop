@@ -897,20 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### tomllib — `poop/types/tomllib.py` + `poop/transformers/tomllib.py`
-
-`tomllib` mirrors Python's `tomllib` (3.11+) — read-only TOML parsing for `pyproject.toml`, ruff/ty configs, and other modern Python config formats.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `tomllib.loads(s, /, *, parse_float=float)` | `Dict[Str, …]` | from `Str`; `parse_float` accepts a POOP `Block` routed through `block.bridge` |
-| `tomllib.load(path, /, *, parse_float=float)` | `Dict[Str, …]` | from POOP `Path` — receiver-type divergence: CPython takes a binary file, POOP has no file-object abstraction |
-| `tomllib.TOMLDecodeError` | Python exception type | usable with `Try.except_` |
-
-TOML date / time / datetime values land as POOP `Date` / `Time` / `DateTime`. Write support stays out of scope (`tomllib` is read-only upstream).
-
-`tomllib` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/tomllib.py` — namespace-only, no AST rewrite.
-
 ### hmac + HMAC — `poop/types/hmac.py` + `poop/transformers/hmac.py`
 
 `hmac` mirrors Python's `hmac` module — RFC 2104 keyed-hash MAC. Pairs with `hashlib` (still proposed).

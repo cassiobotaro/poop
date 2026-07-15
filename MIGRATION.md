@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `tomllib.loads(s)` | `tomllib.loads(s)` |
 | `hmac.new(k, m).hexdigest()` | `hmac.new(k, m).hexdigest()` |
 | `graphlib.TopologicalSorter()` | `TopologicalSorter()` |
 | `re.match(p, s).group()` | `re.match(p, s).group()` |
@@ -409,25 +408,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## TOML (`tomllib` module)
-
-```python
-# Python
-import tomllib
-
-cfg = tomllib.loads(text)
-with open("pyproject.toml", "rb") as f:
-    pyproject = tomllib.load(f)
-```
-
-```python
-# POOP
-cfg = tomllib.loads(text)
-pyproject = tomllib.load(Path("pyproject.toml"))
-```
-
-> POOP's `tomllib.load` accepts a `Path` (POOP has no file-object abstraction). Round-trip returns POOP types — TOML date / time / datetime values currently flatten to ISO-8601 `Str` until the `datetime` proposal lands. `tomllib.TOMLDecodeError` is a Python exception class for use with `Try.except_(...)`. Write support stays out of scope (`tomllib` is read-only upstream).
 
 ## HMAC (`hmac` module + `HMAC` class)
 
