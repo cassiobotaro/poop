@@ -936,25 +936,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
 
-### codecs + CodecInfo — `poop/types/codecs.py` + `poop/transformers/codecs.py`
-
-`codecs` mirrors Python's `codecs` module — the codec registry behind `Str.encode` / `Bytes.decode`. The common encode/decode shortcuts on `Str` and `Bytes` already cover most needs; this namespace surfaces the codecs that don't fit the standard text/bytes split (`rot_13`, `hex_codec`, `base64_codec`, …) plus the BOM constants and registry lookups.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `codecs.encode(obj, encoding=none, errors=none)` | `Bytes` / `Str` | text codecs return `Str`; binary codecs return `Bytes` |
-| `codecs.decode(obj, encoding=none, errors=none)` | `Bytes` / `Str` | same polymorphic shape as `encode` |
-| `codecs.lookup(encoding)` | `CodecInfo` | raises `LookupError` on unknown names |
-| `codecs.BOM_UTF8` / `BOM_UTF16` / `BOM_UTF16_LE` / `BOM_UTF16_BE` / `BOM_UTF32` / `BOM_UTF32_LE` / `BOM_UTF32_BE` / `BOM` / `BOM_LE` / `BOM_BE` (class attrs) | `Bytes` | standard byte-order marks |
-| `codecs.CodecInfo` (class attr) | `type[CodecInfo]` | wrapper class |
-| `CodecInfo.name` (property) | `Str` | canonical codec name |
-| `CodecInfo.encode(obj, errors=none)` / `.decode(obj, errors=none)` | `Tuple(result, length)` | `(Bytes`/`Str, Int)` |
-| `CodecInfo.incrementalencoder` / `.incrementaldecoder` (properties) | Python class | raw refs for callers that need streaming |
-
-Incremental encoder/decoder construction, `StreamReader` / `StreamWriter`, and the `register` / `register_error` extension hooks are out of scope for v1 — they pair with future streaming I/O.
-
-`codecs` and `CodecInfo` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/codecs.py` — namespace-only, no AST rewrite.
-
 ### filecmp + Dircmp — `poop/types/filecmp.py` + `poop/transformers/filecmp.py`
 
 `filecmp` mirrors Python's `filecmp` module — shallow/metadata or full-content file and directory comparison. `Dircmp` is exposed bare alongside the lowercase namespace.
