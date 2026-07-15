@@ -24,6 +24,20 @@ def _user_lineno(exc: BaseException, filename: str) -> int | None:
     return lineno
 
 
+def _describe(exc: BaseException) -> str:
+    """Exception text for the error message, class name included.
+
+    ``str(exc)`` alone drops the type: a missing key renders as the bare
+    ``'zzz'``, with nothing to say a lookup failed, and a learner cannot tell
+    which class escaped a ``Try``. Class names are safe to surface here —
+    exceptions are never wrapped, so no ``_poop_*`` name can reach this path.
+    An empty message degrades to the bare name rather than a dangling colon.
+    """
+    name = type(exc).__name__
+    message = str(exc)
+    return f"{name}: {message}" if message else name
+
+
 def execute(
     tree: ast.Module,
     filename: str = "<unknown>",
@@ -47,4 +61,4 @@ def execute(
     try:
         exec(code, ns)  # noqa: S102
     except Exception as exc:
-        raise ExecutionError(str(exc), _user_lineno(exc, filename)) from exc
+        raise ExecutionError(_describe(exc), _user_lineno(exc, filename)) from exc

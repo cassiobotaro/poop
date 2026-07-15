@@ -25,6 +25,24 @@ def test_execution_error_with_lineno_appends_line() -> None:
     assert str(ExecutionError("boom", 5)) == "boom (line 5)"
 
 
+def test_execution_error_keeps_exception_class_name() -> None:
+    # Without the class name a missing key renders as the bare `'zzz'`, with
+    # nothing to say a lookup failed.
+    tree = ast.parse("{'a': 1}['zzz']")
+    with pytest.raises(ExecutionError) as exc_info:
+        execute(tree, filename="prog.py")
+    assert str(exc_info.value) == "KeyError: 'zzz' (line 1)"
+
+
+def test_execution_error_without_message_is_bare_class_name() -> None:
+    # `ValueError.raise_()` arrives with an empty str(exc): the name must not
+    # trail a dangling colon.
+    tree = ast.parse("raise ValueError()")
+    with pytest.raises(ExecutionError) as exc_info:
+        execute(tree, filename="prog.py")
+    assert str(exc_info.value) == "ValueError (line 1)"
+
+
 def test_execution_error_reports_user_line() -> None:
     tree = ast.parse("x = 1\ny = 2\nraise ValueError('boom')")
     with pytest.raises(ExecutionError) as exc_info:
