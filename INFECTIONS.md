@@ -1224,63 +1224,6 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `configparser`, `ConfigParser`, and `RawConfigParser` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/configparser.py` — namespace-only, no AST rewrite.
 
-### email + EmailMessage + EmailUtils + EmailPolicy, html + HTMLParser + Entities, xml + ET + Element + ElementTree — `poop/types/{email,html,xml}.py`
-
-Three internet-data / markup namespaces shipped together. `email` exposes the modern `EmailMessage` API (set/get content, multipart, headers as dict-like, attachments, MIME serialization) plus `email.utils` and the preset `email.policy` constants. `html` is small: `escape` / `unescape`, the SAX-style `HTMLParser`, and the named/numeric entity maps via `Entities`. `xml` scopes v1 to `ElementTree` — `Element` / `ElementTree` / `ET.fromstring` / `tostring` / `parse` / `SubElement` / `indent`. SAX (`xml.sax`) and full minidom (`xml.dom.minidom`) are intentionally out of scope.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `email.message_from_string(s, policy=none)` | `EmailMessage` | |
-| `email.message_from_bytes(b, policy=none)` | `EmailMessage` | |
-| `EmailMessage()` | `EmailMessage` | empty, `email.policy.default` |
-| `EmailMessage.set_content(content, subtype='plain')` | `none` | accepts `Str` or `Bytes` |
-| `EmailMessage.get_content()` | `Str` / `Bytes` | matches stored content type |
-| `EmailMessage.add_alternative(content, subtype)` | `none` | switches to multipart |
-| `EmailMessage.add_attachment(content, maintype, subtype, filename=none)` | `none` | |
-| `EmailMessage.is_multipart()` | `Boolean` | |
-| `EmailMessage.at(key)` / `.at_put(key, val)` | `Str` / `none` | header access |
-| `EmailMessage.keys()` / `.values()` / `.items()` | `List` | |
-| `EmailMessage.as_string()` / `.as_bytes()` | `Str` / `Bytes` | |
-| `EmailMessage.iter_parts()` / `.iter_attachments()` | `List[EmailMessage]` | |
-| `EmailMessage.get_body(preferencelist=none)` | `EmailMessage` / `none` | |
-| `email.utils.parseaddr(s)` | `Tuple(Str, Str)` | `(name, addr)` |
-| `email.utils.formataddr(Tuple(name, addr), charset='utf-8')` | `Str` | |
-| `email.utils.getaddresses(List[Str])` | `List[Tuple(Str, Str)]` | |
-| `email.utils.parsedate(s)` | `Tuple` / `none` | `none` on parse failure |
-| `email.utils.formatdate(timeval=none, localtime=false, usegmt=false)` | `Str` | |
-| `email.utils.make_msgid(idstring=none, domain=none)` | `Str` | |
-| `email.policy.default` / `.SMTP` / `.SMTPUTF8` / `.HTTP` / `.strict` / `.compat32` | Python policy obj | |
-| `html.escape(s, quote=true)` / `.unescape(s)` | `Str` | |
-| `html.entities.name2codepoint()` | `Dict[Str, Int]` | |
-| `html.entities.codepoint2name()` | `Dict[Int, Str]` | |
-| `html.entities.entitydefs()` / `.html5()` | `Dict[Str, Str]` | |
-| `HTMLParser(convert_charrefs=true)` | `HTMLParser` | SAX-style; subclass and override `handle_*` |
-| `HTMLParser.feed(data)` / `.close()` / `.reset()` | `none` | |
-| `HTMLParser.getpos()` | `Tuple(Int, Int)` | `(line, offset)` |
-| `HTMLParser.get_starttag_text()` | `Str` / `none` | |
-| `HTMLParser.handle_starttag(tag, attrs)` / `handle_startendtag` | `none` | override; `attrs` is `List(Tuple(Str, Str\|none))` |
-| `HTMLParser.handle_endtag/data/comment/decl/pi/entityref/charref(...)` | `none` | override; args are `Str` |
-| `ET.fromstring(text)` / `.XML(text)` | `Element` | |
-| `ET.parse(path)` | `ElementTree` | |
-| `ET.tostring(element, encoding=none)` | `Str` / `Bytes` | `none`/`"unicode"` → `Str` |
-| `ET.SubElement(parent, tag, attrib=none)` | `Element` | |
-| `ET.indent(tree, space="  ")` | `none` | |
-| `ET.ParseError` (class attr) | exception class | |
-| `Element(tag, attrib=none)` | `Element` | |
-| `Element.tag` / `.text` / `.tail` / `.attrib` (properties) | `Str` / `Dict` | text/tail may be `none`; `.text` / `.tail` writable via assignment |
-| `Element.get(key, default=none)` / `.set(key, val)` | `Str` / `none` / `none` | |
-| `Element.keys()` / `.items()` | `List` | |
-| `Element.append(child)` / `.extend(children)` / `.insert(i, child)` / `.remove(child)` / `.clear()` | `none` | |
-| `Element.find(path)` / `.findall(path)` / `.iterfind(path)` | `Element` / `none` / `List` | |
-| `Element.findtext(path, default=none)` | `Str` / `none` | |
-| `Element.iter(tag=none)` / `.itertext()` | `List[Element]` / `List[Str]` | |
-| `Element.len()` | `Int` | child count |
-| `ElementTree(element=none)` / `.getroot()` | `ElementTree` / `Element` or `none` | |
-| `ElementTree.write(path, encoding=none)` | `none` | |
-| `ElementTree.find/findall/findtext/iter` | (same as `Element`) | |
-
-`email`/`EmailMessage`/`html`/`HTMLParser`/`xml`/`ET`/`Element`/`ElementTree` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{email,html,xml}.py` — namespace-only, no AST rewrite. `xml.etree` uses `xml.etree.ElementTree` directly (suppressed `S314` ruff hints) — users with XXE concerns can swap to `defusedxml` themselves; POOP's transformers do not load external DTDs by default but does not actively block them either.
-
 ### unittest + TestCase + TestSuite + TestRunner + TestResult, cProfile + Profile + pstats + Stats + SortKey, timeit + Timer — `poop/types/{unittest,profile,timeit}.py`
 
 Three dev / debug / profile namespaces shipped together. `unittest` is a POOP-flavoured re-implementation of the canonical xUnit surface (the full `unittest.TestCase` would drag in subprocess-style runner internals — POOP keeps the assertions + lightweight runner). `cProfile.Profile` and `pstats.Stats` wrap their Python counterparts directly; the namespaces expose `cProfile.run`, the `Profile` class (works as a context manager via `With`), and the `Stats` aggregator. `timeit` is straightforward — module-level `timeit`/`repeat`/`default_timer` plus a `Timer` class.

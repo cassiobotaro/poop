@@ -53,8 +53,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `csv.reader(f)` | `csv.reader(text)` |
 | `configparser.ConfigParser()` | `ConfigParser()` |
 | `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
-| `email.utils.parseaddr(s)` | `email.utils.parseaddr(s)` |
-| `html.escape(s)` | `html.escape(s)` |
 | `ET.fromstring(text)` | `ET.fromstring(text)` |
 | `ET.tostring(elem)` | `ET.tostring(elem)` |
 | `class T(unittest.TestCase):` | `class T(TestCase):` |
@@ -490,36 +488,6 @@ host = cp.get("server", "host", fallback="localhost")
 ```
 
 > POOP has no file-object abstraction, so `Reader` / `DictReader` take a `Str` (split on newlines) or `List[Str]` of lines; `Writer` / `DictWriter` accumulate into an internal buffer exposed via `.getvalue()`. `Sniffer` autodetects dialect from a sample. Dialect registration (`csv.register_dialect` / `unregister_dialect` / `get_dialect` / `list_dialects`) works as in CPython. `ConfigParser` has `read` (from `Path` / `Str` / `List[Path]`), `read_string` / `read_dict` / `read_file`, plus `write_str` and `write_to(path)` for serialization. Typed accessors (`getint` / `getfloat` / `getboolean`) return POOP wrappers. The full error hierarchy and both interpolation classes (`BasicInterpolation` / `ExtendedInterpolation`) are on the namespace.
-
-## Internet data / markup (`email`, `html`, `xml`)
-
-```python
-# Python
-import email, html
-from email.message import EmailMessage
-import xml.etree.ElementTree as ET
-
-m = EmailMessage()
-m["Subject"] = "hi"
-m.set_content("body")
-
-safe = html.escape("<a>")
-root = ET.fromstring("<r><a>x</a></r>")
-ET.tostring(root, encoding="unicode")
-```
-
-```python
-# POOP
-m = EmailMessage()
-m.at_put("Subject", "hi")
-m.set_content("body")
-
-safe = html.escape("<a>")              # Str
-root = ET.fromstring("<r><a>x</a></r>")  # Element
-ET.tostring(root).print()                # Str (use encoding="utf-8" for Bytes)
-```
-
-> `email` exposes the modern `EmailMessage` API plus `email.utils` (`parseaddr`/`formataddr`/`getaddresses`/`parsedate`/`formatdate`/`make_msgid`) and the preset `email.policy` constants (`default`, `SMTP`, `SMTPUTF8`, `HTTP`, `strict`, `compat32`). Headers are accessed via the POOP `at`/`at_put` pair (Python's `msg["X"]` is subscript-shaped — banned by `no_subscript`). `html` is small: `html.escape`/`html.unescape` for the safe text helpers, `HTMLParser` for SAX-style parsing, and `html.entities` for the codepoint maps (`name2codepoint`/`codepoint2name`/`html5`/`entitydefs`). `xml` ships **ElementTree only** — `ET.fromstring`/`ET.XML`/`ET.parse`/`ET.tostring`/`ET.SubElement`/`ET.indent`, plus the `Element` / `ElementTree` records. Use `ET.ParseError` in `Try.except_` to catch bad XML. The full `xml.dom.minidom` / `xml.sax` surface is out of scope — ElementTree covers the vast majority of XML use cases in modern Python. As in CPython, the default parser does not load external DTDs, but POOP does **not** swap in `defusedxml` automatically — wrap untrusted XML accordingly.
 
 ## Dev / debug / profile (`unittest`, `cProfile`, `pstats`, `timeit`)
 

@@ -19,13 +19,11 @@ from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
 from poop.transformers.configparser import NAMESPACE as _configparser_namespace
 from poop.transformers.csv import NAMESPACE as _csv_namespace
 from poop.transformers.dict import DictTransformer
-from poop.transformers.email import NAMESPACE as _email_namespace
 from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.gzip import NAMESPACE as _gzip_namespace
-from poop.transformers.html import NAMESPACE as _html_namespace
 from poop.transformers.http import NAMESPACE as _http_namespace
 from poop.transformers.int import IntTransformer
 from poop.transformers.io import NAMESPACE as _io_namespace
@@ -64,7 +62,6 @@ from poop.transformers.unpack import UnpackTransformer
 from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.varargs import VarargsTransformer
 from poop.transformers.with_ import NAMESPACE as _with_namespace
-from poop.transformers.xml import NAMESPACE as _xml_namespace
 from poop.transformers.zip import ZipTransformer
 from poop.transformers.zipfile import NAMESPACE as _zipfile_namespace
 from poop.transformers.zlib import NAMESPACE as _zlib_namespace
@@ -141,9 +138,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _smtplib_namespace,
     _csv_namespace,
     _configparser_namespace,
-    _email_namespace,
-    _html_namespace,
-    _xml_namespace,
     _unittest_namespace,
     _profile_namespace,
     _timeit_namespace,
