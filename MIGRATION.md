@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.ascii_letters` | `string.ascii_letters` |
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
-| `calendar.isleap(year)` | `calendar.isleap(year)` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
 | `struct.pack(">I", 42)` | `struct.pack(">I", 42)` |
 | `codecs.encode(s, "rot_13")` | `codecs.encode(s, "rot_13")` |
@@ -433,28 +432,6 @@ dt = DateTime.now(ZoneInfo("America/Sao_Paulo"))
 ```
 
 > `ZoneInfo` is bare (PascalCase). The lowercase `zoneinfo` namespace exposes `available_timezones()` (`Set[Str]`), `reset_tzpath(to=none)`, and `TZPATH` (attribute, not a method — `reset_tzpath` mutates it). `ZoneInfoNotFoundError` is a Python exception class for `Try.except_(...)`. `ZoneInfo.from_file` is deferred (POOP has no file-object abstraction). All `DateTime` constructors / `.now(tz=...)` / `.astimezone(tz)` entry points were widened to accept either `TimeZone` or `ZoneInfo`.
-
-## Calendars (`calendar` module + `Calendar` class)
-
-```python
-# Python
-import calendar
-
-calendar.isleap(2024)                          # True
-calendar.monthrange(2026, 5)                   # (4, 31)
-cal = calendar.Calendar()
-weeks = cal.monthdatescalendar(2026, 5)
-```
-
-```python
-# POOP
-calendar.isleap(2024)                          # true
-calendar.monthrange(2026, 5)                   # (4, 31)
-cal = Calendar()
-weeks = cal.monthdatescalendar(2026, 5)
-```
-
-> Module-level shortcuts (`isleap`, `leapdays`, `weekday`, `monthrange`, `monthcalendar`, `month`, `calendar`, `timegm`) plus the weekday/month constants (`MONDAY` … `SUNDAY`, `JANUARY` … `DECEMBER`) live on the namespace. The reusable `Calendar` class is bare (PascalCase); its `iter*` methods return materialized POOP `List`s — POOP collections are not lazy. The rendering classes are bare too: `TextCalendar` (`formatmonth`/`formatyear`), `HTMLCalendar` (`formatmonth`/`formatyear`/`formatyearpage`), and the locale-aware `LocaleTextCalendar` / `LocaleHTMLCalendar`.
 
 ## Enumerations (`enum` module + `Enum` / `IntEnum` / `StrEnum` / `Flag` / `IntFlag` / `ReprEnum`)
 

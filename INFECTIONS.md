@@ -976,45 +976,6 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 
 `zoneinfo` and `ZoneInfo` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/zoneinfo.py` — namespace-only, no AST rewrite.
 
-### calendar + Calendar + TextCalendar + HTMLCalendar + LocaleTextCalendar + LocaleHTMLCalendar — `poop/types/calendar.py` + `poop/transformers/calendar.py`
-
-`calendar` mirrors Python's `calendar` module — formatting month/year calendars, leap-year queries, weekday math. The reusable `Calendar` class iterates dates with a configurable first-weekday; `TextCalendar` / `HTMLCalendar` render formatted output, and the `Locale*` variants honour a locale for day/month names.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `calendar.isleap(year)` | `Boolean` | |
-| `calendar.leapdays(y1, y2)` | `Int` | |
-| `calendar.weekday(year, month, day)` | `Int` | `0`=Monday |
-| `calendar.monthrange(year, month)` | `Tuple(Int, Int)` | `(first_weekday, ndays)` |
-| `calendar.monthcalendar(year, month)` | `List[List[Int]]` | rows of week × day; `0` for days outside the month |
-| `calendar.month(year, month, w=none, l=none)` | `Str` | text rendering |
-| `calendar.calendar(year, w=none, l=none, c=none, m=none)` | `Str` | full-year text rendering |
-| `calendar.timegm(time_tuple)` | `Int` | inverse of `time.gmtime` |
-| `calendar.MONDAY` … `SUNDAY` (class attrs) | `Int` | weekday constants (`0` … `6`) |
-| `calendar.JANUARY` … `DECEMBER` (class attrs) | `Int` | month constants (`1` … `12`) |
-| `calendar.IllegalMonthError` / `IllegalWeekdayError` (class attrs) | exception class | use with `Try.except_(...)` |
-| `Calendar(firstweekday=none)` | `Calendar` | reusable iterator |
-| `Calendar.iterweekdays()` | `List[Int]` | weekday order |
-| `Calendar.itermonthdates(year, month)` | `List[Date]` | full weeks including padding days |
-| `Calendar.itermonthdays(year, month)` | `List[Int]` | `0` for padding |
-| `Calendar.itermonthdays2(year, month)` | `List[Tuple(Int, Int)]` | `(day, weekday)` |
-| `Calendar.itermonthdays3(year, month)` | `List[Tuple(Int, Int, Int)]` | `(year, month, day)` — no padding |
-| `Calendar.monthdatescalendar(year, month)` | `List[List[Date]]` | weeks of full `Date`s |
-| `Calendar.monthdayscalendar(year, month)` | `List[List[Int]]` | weeks of day numbers |
-| `Calendar.yeardatescalendar(year, width=none)` | nested `List` | row × month × week × day |
-| `TextCalendar(firstweekday=none)` | `TextCalendar` | plain-text rendering |
-| `TextCalendar.formatmonth(year, month, w=none, l=none)` | `Str` | |
-| `TextCalendar.formatyear(year, w=none, l=none, c=none, m=none)` | `Str` | |
-| `HTMLCalendar(firstweekday=none)` | `HTMLCalendar` | HTML rendering |
-| `HTMLCalendar.formatmonth(year, month, withyear=true)` | `Str` | |
-| `HTMLCalendar.formatyear(year, width=none)` | `Str` | |
-| `HTMLCalendar.formatyearpage(year, width=none, css="calendar.css", encoding="ascii")` | `Bytes` | full HTML page |
-| `LocaleTextCalendar(firstweekday=none, locale=none)` / `LocaleHTMLCalendar(firstweekday=none, locale=none)` | locale-aware variants | `locale` is a `Str` like `"pt_BR.UTF-8"` |
-
-POOP collections are materialized eagerly — the `iter*` methods return `List` instead of Python's generators.
-
-`calendar`, `Calendar`, `TextCalendar`, `HTMLCalendar`, `LocaleTextCalendar`, and `LocaleHTMLCalendar` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/calendar.py` — namespace-only, no AST rewrite (the four rendering classes are also reachable as `calendar.<Class>`, mirroring CPython).
-
 ### enum + Enum + IntEnum + StrEnum + Flag + IntFlag + ReprEnum — `poop/types/enum.py` + `poop/transformers/enum.py`
 
 `enum` mirrors Python's `enum` module — typed enumeration classes (`class Color(Enum): RED = 1`). The standard CPython machinery is preserved (members, lookups, `@unique`, `auto()`, etc.) and POOP adds:
