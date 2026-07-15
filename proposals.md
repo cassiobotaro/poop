@@ -363,23 +363,36 @@ The `SyntaxError` branch above it is deliberately untouched: it already converts
 Python's message into a POOP-level one, and prefixing `SyntaxError:` would
 restore the vocabulary that branch exists to hide.
 
-### 8. The REPL renders errors worse than the file runner
+### ~~8. The REPL renders errors worse than the file runner~~ — DONE
 
-`_format_error` (`poop/cli.py:16-30`) draws a gutter and caret; it is private to
-`cli.py`. `poop/repl.py` prints `f"poop: {exc}"`. Same program, two surfaces:
+**Decision: hoist into `poop/errors.py`, and state the position once.**
+`format_error()` is shared by `cli.py` and `repl.py`, so one program reports the
+same way on both surfaces. The REPL now draws the gutter and caret it always had
+the source for:
 
 ```
-file:  poop: print is forbidden — use obj.print() instead (line 4, col 8)
-         4 |         print(x)
-           |         ^
-REPL:  poop: print is forbidden — use obj.print() instead (line 4, col 8)
+poop: print is forbidden — use obj.print() instead
+  1 | print(x)
+    | ^
 ```
 
-The REPL — the primary learning surface — prints a line/col pointing into a
-buffer that has already scrolled away, while holding the source in hand.
+It went to `errors.py` rather than a new module: `PoopError` lives there and both
+surfaces already imported from it, so the hoist added no module and no import.
 
-**Proposal**: hoist `_format_error` into a shared module and use it in both.
-Also drop the useless `(line 1, col 0)` on single-line REPL input.
+**Narrower than "use it in both" suggests.** Of the REPL's three error sites only
+one is a `PoopError` holding the source — the other two are a `:methods`
+evaluation failure and a `codeop` `SyntaxError`, neither carrying a POOP
+position. The REPL also colours errors red where the CLI does not, so the
+formatter answers plain text and the REPL wraps it.
+
+**On dropping `(line 1, col 0)`:** this item asked for it on single-line REPL
+input, but that is a special case of a general rule. Where the source line is in
+view the gutter states the line and the caret the column, so the suffix merely
+repeats them. It is now dropped whenever the gutter is drawn — on both surfaces,
+which is a change to the file runner this item did not ask for — and kept
+whenever it is not: no source, or a line number out of range, where it is the
+only clue left. `TransformError`'s `(transformer X)` is not a position and
+survives untouched.
 
 ### ~~9. `:explain` denies the project's central doctrine~~ — DONE
 
