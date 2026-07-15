@@ -46,7 +46,6 @@ from poop.transformers.profile import NAMESPACE as _profile_namespace
 from poop.transformers.pwd import NAMESPACE as _pwd_namespace
 from poop.transformers.queue import NAMESPACE as _queue_namespace
 from poop.transformers.raise_ import RaiseTransformer
-from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
 from poop.transformers.resource import NAMESPACE as _resource_namespace
 from poop.transformers.return_ import ReturnTransformer
@@ -133,7 +132,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     SliceTransformer.BINDINGS,
     BlockTransformer.BINDINGS,
     _path_namespace,
-    _random_namespace,
     _string_namespace,
     _enum_namespace,
     _zlib_namespace,

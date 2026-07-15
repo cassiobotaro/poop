@@ -97,7 +97,7 @@ The full catalog with one row per validator and the substitute recipe lives in [
 
 ## Learn by example
 
-[`examples/`](examples/) ships 43 programs across three subfolders, grouped by what they teach.
+[`examples/`](examples/) ships 42 programs across three subfolders, grouped by what they teach.
 
 **Language basics** ([`examples/basics/`](examples/basics/))
 - [`hello_world.py`](examples/basics/hello_world.py) — the smallest POOP program
@@ -154,7 +154,6 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`specification.py`](examples/patterns/specification.py) — Specification (composable rules replacing `and`/`or`/`not`)
 - [`money.py`](examples/patterns/money.py) — Money value object
 - [`execute_around.py`](examples/patterns/execute_around.py) — Execute Around Method
-- [`house_jack_built.py`](examples/patterns/house_jack_built.py) — recursive composition refactor
 
 ## Type annotations
 

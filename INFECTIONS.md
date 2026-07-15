@@ -857,33 +857,6 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `With` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/with_.py` — namespace-only, no AST rewrite.
 
-### random + Random — `poop/types/random.py` + `poop/transformers/random.py`
-
-Python's `random` module exposes two distinct names: the lowercase `random` module (with module-level functions like `random.random()` and `random.choice(xs)`) and the PascalCase `Random` class (instantiated for seeded, independent generators: `random.Random(seed)`). POOP mirrors that split with **two namespace entries**:
-
-- **`random`** (lowercase) — a singleton instance (`_DEFAULT = Random()`) acting as the module. Module-level entry points are calls on this singleton: `random.random()`, `random.choice(xs)`, `random.shuffle(xs)`, etc. — matching Python's `random.<func>` exactly.
-- **`Random`** (PascalCase) — the class itself, callable in POOP source: `r = Random(seed); r.random()`. Equivalent to Python's `random.Random(seed)`, but shorter (POOP user code already has `Random` in scope, no `random.` prefix needed for the constructor).
-
-This is the first POOP namespace where two names point to related but distinct objects: a module-like singleton AND its underlying class. Other module mirrors (`math`, `secrets`, `tomllib`) have only the lowercase module name because they expose no public class.
-
-| Category | Operations | Returns |
-|---|---|---|
-| Bookkeeping | `seed(a=None, version=Int(2))` | `none` |
-| Core draws | `random()`, `uniform(a, b)`, `randint(a, b)`, `randrange(start, stop=None, step=None)`, `getrandbits(k)`, `randbytes(n)` | `Float`/`Int`/`Bytes` |
-| Collection draws | `choice(seq)`, `shuffle(x)` mutates list, returns `none`, `choices(population, weights=None, *, cum_weights=None, k=Int(1))`, `sample(population, k, *, counts=None)` | element / `none` / `List` |
-| Distributions | `gauss`, `normalvariate`, `lognormvariate`, `expovariate`, `gammavariate`, `betavariate`, `paretovariate`, `weibullvariate`, `vonmisesvariate`, `triangular`, `binomialvariate` (Python 3.12+) | `Float` (10) / `Int` (binomialvariate) |
-
-The same method set is available on both `random` (module API, uses singleton state) and on `Random(seed)` instances (independent state per instance). Anything cryptographic goes through `secrets`, not `random`.
-
-`getstate()` answers a `RandomState` — an **opaque checkpoint token**. The CPython state tuple (version, the 625 Mersenne Twister words, the cached spare `gauss` value) stays sealed inside; the token answers equality and `setstate(state)` accepts it back, resuming the sequence mid-stream (including the `gauss()` pair cache). This mirrors the stdlib contract — "can be passed to setstate() later" — without pretending the 625 words are meaningful data. For plain reproducibility from the start, `seed(a)` remains the simpler story.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `rng.getstate()` / `random.getstate()` | `RandomState` | opaque checkpoint |
-| `rng.setstate(state)` / `random.setstate(state)` | `none` | resumes exactly at the checkpoint; the token transfers between generators |
-
-`random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
-
 ### string + Template — `poop/types/string.py` + `poop/transformers/string.py`
 
 `string` mirrors Python's `string` module — ASCII character-class constants plus the `Template` class for `$variable` substitution. The constants live on the namespace; `Template` is exposed alongside it (PascalCase), matching the `hmac`/`HMAC` and `uuid`/`UUID` convention.

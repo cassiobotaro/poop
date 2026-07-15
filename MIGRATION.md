@@ -35,8 +35,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x[a:b]` | `x.slice(a, b)` |
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
-| `random.choice(xs)` | `random.choice(xs)` |
-| `random.Random(seed)` | `Random(seed)` |
 | `string.ascii_letters` | `string.ascii_letters` |
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
@@ -335,32 +333,6 @@ Path("out.txt").write_text(text.upper())
 ```
 
 > `open()` is a definitive ban. `Path` covers `read_text` / `write_text` / `read_bytes` / `write_bytes` plus the rest of `pathlib`. There is no `Path.open(mode)` yet — file handles aren't exposed.
-
-## Random (`random` module + `Random` class)
-
-```python
-# Python
-import random
-
-x = random.random()
-n = random.randint(1, 10)
-pick = random.choice(xs)
-random.shuffle(xs)
-sample = random.sample(xs, 3)
-r = random.Random(42)
-```
-
-```python
-# POOP
-x = random.random()
-n = random.randint(1, 10)
-pick = random.choice(xs)
-random.shuffle(xs)
-sample = random.sample(xs, 3)
-r = Random(42)
-```
-
-> POOP exposes both `random` (lowercase, module-level singleton — `random.random()`, `random.choice(xs)`, …) and `Random` (PascalCase, the class — `Random(seed)` returns a fresh independently-seeded instance). The split mirrors Python exactly; the only shortcut is that `Random` is in scope without a `random.` prefix (no `import` needed). Cryptographic draws live in `secrets`, never `random`.
 
 ## ASCII character classes and string templates (`string` module + `Template` class)
 
