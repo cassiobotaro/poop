@@ -936,25 +936,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
 
-### struct + Struct — `poop/types/struct.py` + `poop/transformers/struct.py`
-
-`struct` mirrors Python's `struct` module — packing and unpacking binary data via format strings (`>I`, `<2sH`, `?fd`, …). Format-char wrapping back into POOP types is handled at the boundary: `int` → `Int`, `float` → `Float`, `bool` → `Boolean`, `bytes` → `Bytes`. Buffers accept `Bytes` / `ByteArray` / `MemoryView` for reads; writes require a mutable buffer (`ByteArray` or `MemoryView`).
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `struct.pack(format, *values)` | `Bytes` | each value is `Int` / `Float` / `Boolean` / `Bytes` / `Str` |
-| `struct.unpack(format, buffer)` | `Tuple` | elements wrapped to POOP types per format char |
-| `struct.pack_into(format, buffer, offset, *values)` | `none` | `buffer` must be `ByteArray` / `MemoryView` |
-| `struct.unpack_from(format, buffer, offset=none)` | `Tuple` | default offset is `0` |
-| `struct.iter_unpack(format, buffer)` | `List[Tuple]` | materialized — POOP collections are not lazy |
-| `struct.calcsize(format)` | `Int` | |
-| `struct.error` (class attr) | exception class | for `Try.except_` on format mismatches |
-| `Struct(format)` | `Struct` | pre-compiled format for reuse |
-| `Struct.format` / `.size` (properties) | `Str` / `Int` | |
-| `Struct.pack` / `.unpack` / `.pack_into` / `.unpack_from` / `.iter_unpack` | same as module-level | reuses the compiled format |
-
-`struct` and `Struct` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/struct.py` — namespace-only, no AST rewrite.
-
 ### codecs + CodecInfo — `poop/types/codecs.py` + `poop/transformers/codecs.py`
 
 `codecs` mirrors Python's `codecs` module — the codec registry behind `Str.encode` / `Bytes.decode`. The common encode/decode shortcuts on `Str` and `Bytes` already cover most needs; this namespace surfaces the codecs that don't fit the standard text/bytes split (`rot_13`, `hex_codec`, `base64_codec`, …) plus the BOM constants and registry lookups.

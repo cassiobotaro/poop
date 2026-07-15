@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
-| `struct.pack(">I", 42)` | `struct.pack(">I", 42)` |
 | `codecs.encode(s, "rot_13")` | `codecs.encode(s, "rot_13")` |
 | `filecmp.cmp(a, b)` | `filecmp.cmp(a, b)` |
 | `tempfile.mkdtemp()` | `tempfile.mkdtemp()` |
@@ -418,32 +417,6 @@ Color(Int(2))             # Color.GREEN
 ```
 
 > The bases (`Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`) are bare alongside the `enum` namespace; `auto()` is also bare. `.name` stays a Python `str` (CPython's enum protocol and decorators like `@unique` depend on that). Use `.name_str()` for a POOP `Str`. `.value` returns whatever was assigned — raw Python primitives stay raw; use `.value_object()` to wrap them. POOP value lookup works via `_missing_`: `Color(Int(1))` finds the same member as `Color(1)`. `enum.unique` / `verify` / `member` / `nonmember` apply directly. `ReprEnum` is re-exported as-is (it can't be subclassed without a data-type mixin). `EnumType` metaclass access is out of scope.
-
-## Binary packing (`struct` module + `Struct` class)
-
-```python
-# Python
-import struct
-
-raw = struct.pack(">If", 42, 1.5)
-n, x = struct.unpack(">If", raw)
-size = struct.calcsize(">If")
-
-s = struct.Struct(">If")
-raw = s.pack(7, 2.5)
-```
-
-```python
-# POOP
-raw = struct.pack(">If", 42, 1.5)
-result = struct.unpack(">If", raw)  # Tuple(Int(42), Float(1.5))
-size = struct.calcsize(">If")
-
-s = Struct(">If")
-raw = s.pack(7, 2.5)
-```
-
-> Format-char wrapping back into POOP types is handled at the boundary: `int` → `Int`, `float` → `Float`, `bool` → `Boolean`, `bytes` → `Bytes`. `unpack` always returns a `Tuple`. Buffers accept `Bytes` / `ByteArray` / `MemoryView` for reads; writes (`pack_into`) require a writable buffer (`ByteArray` or `MemoryView`). `iter_unpack` is materialized to `List[Tuple]` — POOP collections are not lazy. `struct.error` is the Python exception class for `Try.except_`.
 
 ## Codecs (`codecs` module + `CodecInfo` class)
 

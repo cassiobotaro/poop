@@ -63,7 +63,6 @@ from poop.transformers.socket import NAMESPACE as _socket_namespace
 from poop.transformers.ssl import NAMESPACE as _ssl_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
-from poop.transformers.struct import NAMESPACE as _struct_namespace
 from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
 from poop.transformers.sys import NAMESPACE as _sys_namespace
 from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
@@ -143,7 +142,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _random_namespace,
     _string_namespace,
     _enum_namespace,
-    _struct_namespace,
     _codecs_namespace,
     _filecmp_namespace,
     _tempfile_namespace,
