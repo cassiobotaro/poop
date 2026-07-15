@@ -39,8 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `json.dumps(obj)` | `json.dumps(obj)` |
-| `json.loads(s)` | `json.loads(s)` |
 | `tomllib.loads(s)` | `tomllib.loads(s)` |
 | `hmac.new(k, m).hexdigest()` | `hmac.new(k, m).hexdigest()` |
 | `graphlib.TopologicalSorter()` | `TopologicalSorter()` |
@@ -411,28 +409,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## JSON (`json` module)
-
-```python
-# Python
-import json
-
-text = json.dumps({"name": "alice", "ages": [10, 20]})
-obj = json.loads(text)
-json.dump(obj, open("data.json", "w"))
-loaded = json.load(open("data.json"))
-```
-
-```python
-# POOP
-text = json.dumps({"name": "alice", "ages": [10, 20]})
-obj = json.loads(text)
-json.dump(obj, Path("data.json"))
-loaded = json.load(Path("data.json"))
-```
-
-> POOP's `json` is path-based — `dump`/`load` accept a `Path` instead of a file object (no `open` in POOP). The round-trip preserves POOP types: `json.loads(s)` returns a POOP value graph (`Dict`/`List`/`Str`/`Int`/`Float`/`Boolean`/`none`), and `json.dumps` accepts the same graph back. `json.JSONDecodeError` is exposed as a Python exception class for use with `Try.except_(...)`. Custom encoders/decoders are covered: subclass `json.JSONEncoder` overriding `default`, or pass the callback kwargs (`object_hook`, `default`, `parse_int` / `parse_float` / `parse_constant`, `object_pairs_hook`, …) as POOP lambdas — they route through the block bridge.
 
 ## TOML (`tomllib` module)
 

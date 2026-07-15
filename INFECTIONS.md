@@ -897,24 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### json — `poop/types/json.py` + `poop/transformers/json.py`
-
-`json` mirrors Python's `json` module — (de)serialisation between JSON text and POOP value graphs.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `json.dumps(obj, *, skipkeys, ensure_ascii, check_circular, allow_nan, indent, sort_keys)` | `Str` | full POOP value tree → JSON |
-| `json.loads(s)` | POOP value | JSON → full POOP value tree |
-| `json.dump(obj, path, …)` | `none` | path-based serialise (POOP I/O convention) |
-| `json.load(path)` | POOP value | path-based deserialise |
-| `json.JSONDecodeError` | Python exception type | usable with `Try.except_` |
-
-**Round-trip type discipline.** The native `json` library walks Python types; this namespace wraps every entry/exit with `_unwrap`/`_wrap` so callers never see a raw `dict`/`list`/`str`/`int`/`float`/`bool`/`None`. `Json.loads('{"a":1, "b":true}')` returns a `Dict[Str, Int | Boolean]` — every value is a POOP type. `Json.dumps(d)` accepts a POOP value graph and returns POOP `Str`.
-
-The full surface is covered: subclassing (`JSONEncoder` with a bridged `default` override via `__init_subclass__`; `JSONDecoder` taking the hook kwargs as blocks) and the callback kwargs on `dumps`/`loads`/`dump`/`load` (`cls`, `default`, `object_hook`, `parse_int`/`parse_float`/`parse_constant`, `object_pairs_hook`, `separators`) — all blocks route through `block.bridge`, so they receive and return POOP values. Only `json.tool` (CLI) stays out of scope.
-
-`json` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/json.py` — namespace-only, no AST rewrite.
-
 ### tomllib — `poop/types/tomllib.py` + `poop/transformers/tomllib.py`
 
 `tomllib` mirrors Python's `tomllib` (3.11+) — read-only TOML parsing for `pyproject.toml`, ruff/ty configs, and other modern Python config formats.

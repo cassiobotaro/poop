@@ -44,7 +44,6 @@ from poop.transformers.http import NAMESPACE as _http_namespace
 from poop.transformers.int import IntTransformer
 from poop.transformers.io import NAMESPACE as _io_namespace
 from poop.transformers.ipaddress import NAMESPACE as _ipaddress_namespace
-from poop.transformers.json import NAMESPACE as _json_namespace
 from poop.transformers.list import ListTransformer
 from poop.transformers.locale import NAMESPACE as _locale_namespace
 from poop.transformers.logging import NAMESPACE as _logging_namespace
@@ -159,7 +158,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _json_namespace,
     _tomllib_namespace,
     _hmac_namespace,
     _graphlib_namespace,
