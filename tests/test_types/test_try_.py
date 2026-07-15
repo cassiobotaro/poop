@@ -1,6 +1,7 @@
 import pytest
 
 from poop.types.error import Error
+from poop.types.none import none
 from poop.types.string import Str
 from poop.types.try_ import Try
 
@@ -100,7 +101,8 @@ def test_try_repr_delegates_to_str() -> None:
 
 def test_try_run_twice_raises() -> None:
     calls: list[bool] = []
-    t = Try(lambda: calls.append(True)).run()
+    t = Try(lambda: calls.append(True))
+    t.run()
     assert calls == [True]
     with pytest.raises(RuntimeError, match="already been executed"):
         t.run()
@@ -109,7 +111,8 @@ def test_try_run_twice_raises() -> None:
 
 def test_try_finally_after_run_raises() -> None:
     calls: list[bool] = []
-    t = Try(lambda: calls.append(True)).run()
+    t = Try(lambda: calls.append(True))
+    t.run()
     with pytest.raises(RuntimeError, match="already been executed"):
         t.finally_(lambda: calls.append(False))
     assert calls == [True]
@@ -126,7 +129,8 @@ def test_try_finally_after_run_does_not_retain_block() -> None:
     import weakref
 
     def register_post_run() -> tuple[Try, weakref.ref[_Captured]]:
-        t = Try(lambda: None).run()
+        t = Try(lambda: None)
+        t.run()
         captured = _Captured()
         with pytest.raises(RuntimeError, match="already been executed"):
             t.finally_(lambda: captured)
@@ -145,7 +149,8 @@ def test_try_except_after_run_does_not_retain_handler() -> None:
     import weakref
 
     def register_post_run() -> tuple[Try, weakref.ref[_Captured]]:
-        t = Try(lambda: None).run()
+        t = Try(lambda: None)
+        t.run()
         captured = _Captured()
         t.except_(ValueError, lambda e: captured)
         return t, weakref.ref(captured)
@@ -154,3 +159,42 @@ def test_try_except_after_run_does_not_retain_handler() -> None:
     gc.collect()
     assert ref() is None
     assert t._handlers == []
+
+
+def test_try_answers_the_protected_block_value() -> None:
+    # The whole point of proposal 5: `try: return f()` needs a substitute.
+    assert Try(lambda: 42).run() == 42
+
+
+def test_try_answers_the_handler_value_when_one_fires() -> None:
+    # ... and so does `except: return default`.
+    result = (
+        Try(lambda: _raise(ValueError("bad"))).except_(ValueError, lambda e: -1).run()
+    )
+    assert result == -1
+
+
+def test_try_answers_the_block_value_even_when_it_is_none() -> None:
+    # POOP's `none` is a value like any other and passes straight through.
+    assert Try(lambda: none).run() is none
+
+
+def test_try_finally_answers_the_block_value_not_the_cleanup_value() -> None:
+    # Mirrors Smalltalk's `ensure:`, which answers the protected block.
+    assert Try(lambda: 42).finally_(lambda: 99) == 42
+
+
+def test_try_finally_answers_the_handler_value() -> None:
+    calls: list[str] = []
+    result = (
+        Try(lambda: _raise(ValueError("bad")))
+        .except_(ValueError, lambda e: -1)
+        .finally_(lambda: calls.append("cleanup"))
+    )
+    assert result == -1
+    assert calls == ["cleanup"]
+
+
+def test_try_with_no_matching_handler_still_raises() -> None:
+    with pytest.raises(KeyError):
+        Try(lambda: _raise(KeyError("missing"))).except_(ValueError, lambda e: -1).run()

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from poop.types.error import Error
+from poop.types.none import none
 from poop.types.object import Object
 
 
@@ -12,9 +13,14 @@ class Try(Object):
     Execution is deferred: the block runs only when .run() or .finally_() is called.
     Unhandled exceptions are always re-raised.
 
+    `.run()` and `.finally_()` answer the protected block's value, or the
+    matching handler's when one fires — like every other POOP block, and like
+    Smalltalk's `on:do:`. Both are terminal; `.except_()` is what chains.
+
     Usage:
         Try(lambda: risky()).except_(ValueError, lambda e: e.message().print()).run()
         Try(lambda: risky()).except_(ValueError, handler).finally_(lambda: cleanup())
+        value = Try(lambda: int(text)).except_(ValueError, lambda e: -1).run()
     """
 
     __slots__ = ("_block", "_executed", "_finally_block", "_handlers")
@@ -37,7 +43,7 @@ class Try(Object):
             self._handlers.append((exc_type, handler))
         return self
 
-    def finally_(self, block: Callable[[], object] | None = None) -> Try:
+    def finally_(self, block: Callable[[], object] | None = None) -> object:
         # Store the cleanup closure only while the Try can still run it; a
         # post-execution call is rejected by _execute() below, so retaining
         # `block` here would leak it on the already-dead Try.
@@ -45,27 +51,30 @@ class Try(Object):
             self._finally_block = block
         return self._execute()
 
-    def run(self) -> Try:
+    def run(self) -> object:
         return self._execute()
 
-    def _execute(self) -> Try:
+    def _execute(self) -> object:
         if self._executed:
             raise RuntimeError(
                 "Try has already been executed; create a new Try instance to retry."
             )
         self._executed = True
         block = self._block
+        result: object = none
         try:
             if block is not None:
-                block()
+                result = block()
         except BaseException as e:
             for exc_type, handler in self._handlers:
                 if isinstance(e, exc_type):
-                    handler(Error(e))
+                    result = handler(Error(e))
                     break
             else:
                 raise
         finally:
+            # The cleanup block's own value is discarded, mirroring
+            # Smalltalk's `ensure:` — it answers the protected block's value.
             if self._finally_block is not None:
                 self._finally_block()
             # Single-use: drop the block/handler closures so the executed
@@ -73,7 +82,7 @@ class Try(Object):
             self._block = None
             self._handlers = []
             self._finally_block = None
-        return self
+        return result
 
     def __str__(self) -> str:
         return "Try"

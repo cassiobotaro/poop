@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from poop.types.none import none
 from poop.types.object import Object
 
 
@@ -27,7 +28,7 @@ class With(Object):
     def __init__(self, cm_block: Callable[[], Any]) -> None:
         self._cm_block: Callable[[], Any] | None = cm_block
 
-    def do(self, body_block: Callable[[Any], object]) -> With:
+    def do(self, body_block: Callable[[Any], object]) -> object:
         if self._cm_block is None:
             raise RuntimeError(
                 "With has already run; create a new With instance to run again."
@@ -38,13 +39,17 @@ class With(Object):
         self._cm_block = None
         value = cm.__enter__()
         try:
-            body_block(value)
+            result = body_block(value)
         except BaseException as e:
             if not cm.__exit__(type(e), e, e.__traceback__):
                 raise
+            # __exit__ swallowed the exception, so the body never produced a
+            # value to answer. Python's `with` just carries on past the block
+            # here; `none` is that "carried on with nothing to show".
+            return none
         else:
             cm.__exit__(None, None, None)
-        return self
+        return result
 
     def __str__(self) -> str:
         return "With"

@@ -2,6 +2,7 @@ import contextlib
 
 import pytest
 
+from poop.types.none import none
 from poop.types.with_ import With
 
 
@@ -90,11 +91,27 @@ def test_with_cm_block_is_lazy() -> None:
     assert created == [True]
 
 
-def test_with_returns_self_for_chaining() -> None:
+def test_with_answers_the_body_value() -> None:
+    # `do` used to answer the With itself "for chaining", but `do` is the only
+    # message With has — there was never anything to chain onto.
     cm = _FakeContextManager()
-    w = With(lambda: cm)
-    result = w.do(lambda _: None)
-    assert result is w
+    assert With(lambda: cm).do(lambda _: 42) == 42
+
+
+def test_with_answers_none_when_exit_suppresses_the_exception() -> None:
+    # __exit__ swallowed the error, so the body never produced a value to
+    # answer; Python's `with` just carries on past the block here.
+    class _Suppressing:
+        def __enter__(self) -> str:
+            return "resource"
+
+        def __exit__(self, *_: object) -> bool:
+            return True
+
+    def _boom(_: object) -> object:
+        raise ValueError("boom")
+
+    assert With(lambda: _Suppressing()).do(_boom) is none
 
 
 def test_with_str() -> None:

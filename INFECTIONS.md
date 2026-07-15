@@ -752,8 +752,10 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 | Message | Method | Behavior |
 |---|---|---|
 | `[block] on: ExcType do: handler` | `Try(block).except_(ExcType, handler)` | registers a handler; chainable |
-| `[block] ensure: finallyBlock` | `Try(block).finally_(block)` | sets finally block **and** executes |
-| *(terminal)* | `.run()` | executes without finally block |
+| `[block] ensure: finallyBlock` | `Try(block).finally_(block)` | sets finally block **and** executes; answers the protected block's value |
+| *(terminal)* | `.run()` | executes without finally block; answers the protected block's value |
+
+`.run()` and `.finally_()` answer the protected block's value, or the matching handler's value when one fires — like every other POOP block, and like Smalltalk's `on:do:`. This is what makes `try: return f() except: return default` expressible; without it `no_try` would ban a construct with no substitute. Both are terminal, so builder chaining is unaffected: `.except_()` is the chainable message. The cleanup block's own value is discarded, mirroring Smalltalk's `ensure:`.
 
 `exc_type` is a native Python class (`ValueError`, `KeyError`, …) — the only deliberate primitive leak. Unhandled exceptions are always re-raised. Multiple `.except_()` calls are matched in order.
 
@@ -767,7 +769,9 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 | Message | Method | Behavior |
 |---|---|---|
-| `[block] value: aResource` | `With(lambda: cm).do(lambda resource: body)` | acquires resource via `__enter__`, runs body, calls `__exit__` |
+| `[block] value: aResource` | `With(lambda: cm).do(lambda resource: body)` | acquires resource via `__enter__`, runs body, calls `__exit__`; answers the body's value |
+
+`.do()` answers the body's value, for the same reason `Try.run()` does. When `__exit__` suppresses an exception the body never produced a value, and `.do()` answers `none` — Python's `with` simply carries on past the block in that case.
 
 The context manager object must implement Python's `__enter__`/`__exit__` protocol — a deliberate primitive leak, consistent with `Try` using native exception types. Exceptions propagate via the standard `__exit__` return value: if `__exit__` returns falsy, the exception is re-raised; truthy suppresses it.
 
