@@ -5,7 +5,6 @@ from builtins import (
     list as _list,  # preserve builtin before poop.transformers.list shadows it
 )
 
-from poop.transformers.asyncio import NAMESPACE as _asyncio_namespace
 from poop.transformers.base import Transformer
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
@@ -42,11 +41,8 @@ from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.set import SetTransformer
-from poop.transformers.signal import NAMESPACE as _signal_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.smtplib import NAMESPACE as _smtplib_namespace
-from poop.transformers.socket import NAMESPACE as _socket_namespace
-from poop.transformers.ssl import NAMESPACE as _ssl_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
@@ -135,10 +131,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _smtplib_namespace,
     _csv_namespace,
     _configparser_namespace,
-    _signal_namespace,
-    _socket_namespace,
-    _ssl_namespace,
-    _asyncio_namespace,
     _os_namespace,
     _io_namespace,
     _time_namespace,

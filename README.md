@@ -97,7 +97,7 @@ The full catalog with one row per validator and the substitute recipe lives in [
 
 ## Learn by example
 
-[`examples/`](examples/) ships 42 programs across three subfolders, grouped by what they teach.
+[`examples/`](examples/) ships 41 programs across three subfolders, grouped by what they teach.
 
 **Language basics** ([`examples/basics/`](examples/basics/))
 - [`hello_world.py`](examples/basics/hello_world.py) — the smallest POOP program
@@ -116,7 +116,6 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`statistics.py`](examples/idiomatic/statistics.py) — number aggregation
 - [`rpn_calculator.py`](examples/idiomatic/rpn_calculator.py) — stack as a POOP `List`
 - [`roman_numerals.py`](examples/idiomatic/roman_numerals.py) — string mapping
-- [`async_greeter.py`](examples/idiomatic/async_greeter.py) — `async def` + `await asyncio.sleep` (since v0.52.0)
 
 **Classic OO patterns** (Sandi Metz / GoF) ([`examples/patterns/`](examples/patterns/))
 
