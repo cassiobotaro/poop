@@ -897,23 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### graphlib + TopologicalSorter — `poop/types/graphlib.py` + `poop/transformers/graphlib.py`
-
-`graphlib` mirrors Python's `graphlib` (3.9+) — topological sorting of node graphs for dependency resolution.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `TopologicalSorter(graph=none)` | `TopologicalSorter` | `graph` is `Dict[node, Iterable[predecessors]]` |
-| `.add(node, *predecessors)` | `none` | incremental build |
-| `.prepare()` | `none` | finalize, lock structure |
-| `.is_active()` | `Boolean` | any nodes left to consume? |
-| `.get_ready()` | `Tuple[node]` | nodes whose predecessors are done |
-| `.done(*nodes)` | `none` | mark nodes consumed |
-| `.static_order()` | `Tuple[node]` | one-shot full sort |
-| `graphlib.CycleError` | Python exception type | usable with `Try.except_` |
-
-`graphlib` and `TopologicalSorter` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/graphlib.py` — namespace-only, no AST rewrite.
-
 ### sqlite3 + Connection + Cursor + Row — `poop/types/sqlite3.py` + `poop/transformers/sqlite3.py`
 
 `sqlite3` mirrors Python's `sqlite3` module — the stdlib's zero-config relational store. Three wrapper classes (`Connection`, `Cursor`, `Row`) cover the cursor-iteration model.

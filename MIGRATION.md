@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `graphlib.TopologicalSorter()` | `TopologicalSorter()` |
 | `re.match(p, s).group()` | `re.match(p, s).group()` |
 | `hashlib.sha256(b).hexdigest()` | `b.sha256().hexdigest()` |
 | `datetime.date.today()` | `Date.today()` |
@@ -407,24 +406,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Topological sort (`graphlib` module + `TopologicalSorter` class)
-
-```python
-# Python
-from graphlib import TopologicalSorter
-
-sorter = TopologicalSorter({"b": ["a"], "c": ["b"]})
-order = list(sorter.static_order())
-```
-
-```python
-# POOP
-sorter = TopologicalSorter({"b": ["a"], "c": ["b"]})
-order = sorter.static_order()
-```
-
-> `TopologicalSorter` is in scope without a `graphlib.` prefix (same pattern as `Random`, `UUID`). `static_order()` returns a `Tuple`; the incremental `.add` / `.prepare` / `.get_ready` / `.done` surface is also exposed for streaming consumption. `graphlib.CycleError` is a Python exception class for use with `Try.except_(...)`.
 
 ## Regular expressions (`re` module + `Pattern` / `Match` classes)
 
