@@ -26,7 +26,6 @@ from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.gc import NAMESPACE as _gc_namespace
-from poop.transformers.grp import NAMESPACE as _grp_namespace
 from poop.transformers.gzip import NAMESPACE as _gzip_namespace
 from poop.transformers.html import NAMESPACE as _html_namespace
 from poop.transformers.http import NAMESPACE as _http_namespace
@@ -43,11 +42,9 @@ from poop.transformers.os import NAMESPACE as _os_namespace
 from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.platform import NAMESPACE as _platform_namespace
 from poop.transformers.profile import NAMESPACE as _profile_namespace
-from poop.transformers.pwd import NAMESPACE as _pwd_namespace
 from poop.transformers.queue import NAMESPACE as _queue_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
-from poop.transformers.resource import NAMESPACE as _resource_namespace
 from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.signal import NAMESPACE as _signal_namespace
@@ -147,9 +144,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _smtplib_namespace,
     _csv_namespace,
     _configparser_namespace,
-    _pwd_namespace,
-    _grp_namespace,
-    _resource_namespace,
     _sys_namespace,
     _atexit_namespace,
     _gc_namespace,

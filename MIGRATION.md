@@ -52,9 +52,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `smtplib.SMTP(host, port)` | `SMTP(host, port)` |
 | `csv.reader(f)` | `csv.reader(text)` |
 | `configparser.ConfigParser()` | `ConfigParser()` |
-| `pwd.getpwuid(uid)` | `pwd.getpwuid(uid)` |
-| `grp.getgrnam(name)` | `grp.getgrnam(name)` |
-| `resource.getrusage(who)` | `resource.getrusage(who)` |
 | `sys.platform` | `sys.platform` |
 | `sys.argv[0]` | `sys.argv.at(0)` |
 | `sys.stdout.write(s)` | `sys.stdout.write(s)` |
@@ -498,28 +495,6 @@ host = cp.get("server", "host", fallback="localhost")
 ```
 
 > POOP has no file-object abstraction, so `Reader` / `DictReader` take a `Str` (split on newlines) or `List[Str]` of lines; `Writer` / `DictWriter` accumulate into an internal buffer exposed via `.getvalue()`. `Sniffer` autodetects dialect from a sample. Dialect registration (`csv.register_dialect` / `unregister_dialect` / `get_dialect` / `list_dialects`) works as in CPython. `ConfigParser` has `read` (from `Path` / `Str` / `List[Path]`), `read_string` / `read_dict` / `read_file`, plus `write_str` and `write_to(path)` for serialization. Typed accessors (`getint` / `getfloat` / `getboolean`) return POOP wrappers. The full error hierarchy and both interpolation classes (`BasicInterpolation` / `ExtendedInterpolation`) are on the namespace.
-
-## Unix-specific lookups (`pwd`, `grp`, `resource`)
-
-```python
-# Python
-import pwd, grp, resource
-
-entry = pwd.getpwuid(os.getuid())
-group = grp.getgrnam("staff")
-soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-usage = resource.getrusage(resource.RUSAGE_SELF)
-```
-
-```python
-# POOP
-entry = pwd.getpwuid(os_getuid_value)         # Passwd
-group = grp.getgrnam("staff")                  # Group
-limits = resource.getrlimit(resource.RLIMIT_NOFILE)  # Tuple(Int, Int)
-usage = resource.getrusage(resource.RUSAGE_SELF)     # RUsage
-```
-
-> `pwd` and `grp` are tiny — `getpwuid` / `getpwnam` / `getpwall` and `getgrgid` / `getgrnam` / `getgrall` return `Passwd` / `Group` POOP records with the standard `.pw_*` / `.gr_*` accessors. `resource` queries process limits (`getrlimit` returns `Tuple(soft, hard)`; `setrlimit` accepts the same shape) and per-process rusage (`getrusage` returns `RUsage` with `.ru_utime` / `.ru_stime` as `Float` and the per-counter `.ru_maxrss` / `.ru_minflt` / etc. as `Int`). All standard `RLIMIT_*` and `RUSAGE_*` constants are class attributes — platform-specific ones bind to `none` rather than raising on import. `resource.prlimit` is Linux-only.
 
 ## Runtime services (`sys`, `atexit`, `gc`)
 
