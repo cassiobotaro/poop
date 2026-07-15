@@ -574,6 +574,16 @@ These are class-definition decorators, not runtime operations on values. They de
 
 The rationale mirrors Smalltalk: binary messages (`+`, `-`, `*`, …) are the idiomatic way to express arithmetic and comparison. Blocking them would force `a.add(b)`, `a.lt(b)` etc., which is more verbose without being more expressive or principled. The key asymmetry is with *unary* operators: `-a` (USub), `~a` (Invert) have named message equivalents (`a.negated()`, `a.bit_invert()`) and carry no ergonomic benefit in infix form, so they are blocked. Binary forms have no principled substitute.
 
+#### Chained comparison (`a < b < c`)
+
+Chained comparisons fall under this allowance **deliberately**, and they are the one case here that needs its own argument.
+
+Unlike every other construct in *Explicitly allowed*, this one **does** have a substitute: `(1 < x).and_(lambda: x < 10)`. It also delivers exactly the short-circuit semantics `no_and_or` exists to route through a block — with no `and` token, so `no_and_or` (which visits `ast.BoolOp` only) never sees it. Smalltalk cannot express the form at all: `1 < x < 10` parses as `(1 < x) < 10` — binary messages are strictly left-to-right, with no precedence — sending `#<` to a Boolean, which answers `doesNotUnderstand:`.
+
+It is allowed anyway, on ergonomics. `a < b < c` expands to `(a < b) and (b < c)`, whose conjuncts must share the middle operand, so no arbitrary `P and Q` is reachable this way. The construct is a range check, not a general `and` escape hatch — banning it would cost every range check its Python-obvious spelling to close a gap that admits only range checks.
+
+This is therefore the sole allowance resting on Python ergonomics rather than on the absence of a substitute. Full argument: `proposals.md` item 1.
+
 ### Numeric comparisons follow CPython's numeric tower
 
 `Int(1) == Float(1.0)` → `true`. `Int(1) == Complex(1+0j)` → `true`. `True == 1` → `true`. POOP's numeric types (`Int`, `Float`, `Complex`, `Boolean`) compare by value across the tower exactly like CPython, in both directions — `Boolean` is part of it because `bool` is an `int` subclass in Python.

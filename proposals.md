@@ -11,29 +11,31 @@ Every claim below was verified by running the interpreter; the quoted output is 
 Constructs that survive today but that POOP's own stated rules reject. Each has
 a substitute that already exists, so each is a validator away from closed.
 
-### 1. Chained comparison smuggles the lazy `and` that `no_and_or` forbids
+### ~~1. Chained comparison smuggles the lazy `and` that `no_and_or` forbids~~ — DONE
 
-`a < b < c` is not blocked, and it delivers exactly the short-circuit semantics
-`no_and_or` exists to route through a block:
+**Decision: allow.** `a < b < c` stays legal; no validator is added. Recorded in
+`INFECTIONS.md` under *Explicitly allowed* → *Binary infix operators*, whose
+entry already named `ast.Compare` without qualifying the single-`op` case.
 
-```
-(1 < x) and (x < 10)   →  poop: and operator is forbidden — use .and_(lambda: ...) instead
-1 < x < 10             →  True
-```
+The case for banning was real, and is kept here so it is not re-derived from
+scratch. The construct delivers `no_and_or`'s short-circuit semantics with no
+`and` token — verified: `(1 < x) and (x < 10)` is rejected while `1 < x < 10`
+answers `True`, and a `Probe` evaluated as `p < p < p` printed once, confirming
+CPython short-circuits the chain. `no_and_or` never sees it because it visits
+`ast.BoolOp` only. Smalltalk cannot express the form at all: `1 < x < 10` parses
+as `(1 < x) < 10`, sending `#<` to a Boolean, which answers `doesNotUnderstand:`.
 
-A `Probe` whose `__lt__` prints on each call, evaluated as `p < p < p`, printed
-once — CPython short-circuits the chain.
+It loses on blast radius. `a < b < c` expands to `(a < b) and (b < c)`, whose two
+conjuncts are forced to share the middle operand — no arbitrary `P and Q` is
+reachable through a chain. The construct is a range check, not a general `and`
+escape hatch, and banning it would cost every range check in the language its
+Python-obvious spelling to close a gap that admits only range checks.
 
-Root cause: `no_and_or` visits `ast.BoolOp` only. A chained comparison is a
-single `ast.Compare` with multiple `ops` and never reaches it.
-
-This is not covered by the *Binary infix operators* allowance in
-`INFECTIONS.md`. That entry permits `<` as a **binary** message (`a < b`, one
-comparison, both operands evaluated). A chain is lazy control flow wearing an
-operator's clothes — the one thing `and_`/`or_` were given blocks to express.
-
-**Proposal**: reject `ast.Compare` with more than one `op`.
-**Substitute** (already works): `(1 < x).and_(lambda: x < 10)`.
+Note what this allowance rests on: **Python ergonomics, not the absence of a
+substitute**. `(1 < x).and_(lambda: x < 10)` exists and works. Every other entry
+in *Explicitly allowed* turns on "no principled substitute exists"; this is the
+first that does not, and that is deliberate. Item 2's open question (raw dunder
+calls) is the next place the same trade-off surfaces.
 
 ### 2. Dunder attribute access reproduces banned builtins verbatim
 
