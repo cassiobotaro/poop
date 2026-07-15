@@ -381,21 +381,41 @@ buffer that has already scrolled away, while holding the source in hand.
 **Proposal**: hoist `_format_error` into a shared module and use it in both.
 Also drop the useless `(line 1, col 0)` on single-line REPL input.
 
-### 9. `:explain` denies the project's central doctrine
+### ~~9. `:explain` denies the project's central doctrine~~ — DONE
 
-```
->>> :explain import
-poop: nothing to explain about 'import' — it may simply be allowed.
-```
+**Decision: derive what can be derived, assert the rest.** `:explain import` now
+answers "POOP is the language, not the library". `_EXPLAIN_CALLS` is computed
+from `DEFAULT_VALIDATORS`, the five missing syntax snippets are added, the
+fallback no longer guesses, and a test fails when a validator has no topic.
 
-`import` is banned, and with one of the best messages in the codebase ("POOP is
-the language, not the library"). `_EXPLAIN_SNIPPETS` simply has no entry for
-`import`, `invert` (`~x`), unary minus/plus, or `type_alias` — all banned — and
-the fallback then asserts they may be allowed.
+**The gap was seven, not five.** This item read only the syntax side. Comparing
+the 51 names declared by the call-name validators against the 49 hand-written in
+`_EXPLAIN_CALLS` also caught `delattr` and `__import__` — both banned, both
+answered with "it may simply be allowed".
 
-**Proposal**: add the missing entries, and reword the fallback so it stops
-claiming an allowance it has not verified. Better still, derive `:explain` from
-`DEFAULT_VALIDATORS` so the two cannot drift again.
+**"Derive from `DEFAULT_VALIDATORS`" splits, and only half is reachable.** The
+call half is real: `make_call_name_validator` closes over its `forbidden` set,
+now exposed as a class attribute, so `_EXPLAIN_CALLS` is derived and that class
+of drift is gone for good. The syntax half is not: `make_node_validator` knows
+AST node *types*, and there is no mechanical path from `ast.If` to
+`"if x:\n    pass"` — synthesising nodes for `ast.unparse` means inventing
+operands (`ast.Compare` + `ast.In`), which is more fragile than the dict it would
+replace. That half is guarded by a test instead: every validator must be tripped
+by some topic. Where derivation is impossible, assert.
+
+Three validators are exempt, deliberately. `NoPoopPrefix`, `NoNamespaceShadow`
+and `NoBuiltinShadow` answer name *choices* rather than constructs — there is no
+word a learner could type at `:explain` to reach them.
+
+Worth keeping, because this item undersold it: `:explain` stores no explanations.
+It stores a snippet per topic, runs it through `validate_all()`, and prints the
+validator's own message. Only the topic list could ever drift — never the
+wording.
+
+Found while implementing: `test_meta_explain_every_known_construct_produces_output`
+asserted `"forbidden" in out` as a proxy for "a validator spoke", and held only
+by luck of wording — `no_unary_minus` answers "allowed only on numeric literals"
+and broke it. It now asserts the two non-explanation branches directly.
 
 ### 10. One error per validator, in registration order
 
