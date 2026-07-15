@@ -39,12 +39,7 @@ class _VarargsRewriter(ast.NodeTransformer):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         return self._rewrite_function(node)
 
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:
-        return self._rewrite_function(node)
-
-    def _rewrite_function(
-        self, node: ast.FunctionDef | ast.AsyncFunctionDef
-    ) -> ast.AST:
+    def _rewrite_function(self, node: ast.FunctionDef) -> ast.AST:
         self.generic_visit(node)
         prologue = _prologue(node.args)
         if prologue:

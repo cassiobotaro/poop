@@ -267,6 +267,10 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "del": "del x",
     "global": "class C:\n    def m(self):\n        global x",
     "yield": "class C:\n    def m(self):\n        yield x",
+    "async": "class C:\n    async def m(self):\n        pass",
+    # Bare `await x` parses (only compile() rejects it), so this reaches
+    # no_async's Await row instead of being shadowed by the async def one.
+    "await": "await x",
     "walrus": "(x := 1)",
     "match": "match x:\n    case _:\n        pass",
     "fstring": 'f"{x}"',

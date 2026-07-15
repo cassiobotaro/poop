@@ -5,6 +5,7 @@ from poop.validators.no_and_or import NoAndOrValidator
 from poop.validators.no_any import NoAnyValidator
 from poop.validators.no_ascii import NoAsciiValidator
 from poop.validators.no_assert import NoAssertValidator
+from poop.validators.no_async import NoAsyncValidator
 from poop.validators.no_bin import NoBinValidator
 from poop.validators.no_breakpoint import NoBreakpointValidator
 from poop.validators.no_builtin_shadow import NoBuiltinShadowValidator
@@ -67,6 +68,11 @@ from poop.validators.no_yield import NoYieldValidator
 
 DEFAULT_VALIDATORS: list[Validator] = [
     NoIfValidator(),
+    # Ahead of the async-flavoured symptom checks (no_loops' AsyncFor,
+    # no_with's AsyncWith, no_free_functions' async branch) so the root
+    # cause wins: fixing an `async for` inside a method that is itself
+    # about to be rejected is wasted effort.
+    NoAsyncValidator(),
     NoLoopsValidator(),
     NoComprehensionValidator(),
     NoFreeFunctionsValidator(),

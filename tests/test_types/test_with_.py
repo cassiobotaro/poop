@@ -1,9 +1,8 @@
-import asyncio
 import contextlib
 
 import pytest
 
-from poop.types.with_ import AsyncWith, With
+from poop.types.with_ import With
 
 
 class _FakeContextManager:
@@ -115,95 +114,3 @@ def test_with_contextlib_closing() -> None:
 
     With(lambda: contextlib.closing(Resource())).do(lambda _: log.append("used"))
     assert log == ["used", "closed"]
-
-
-# --- D6: AsyncWith ---
-
-
-class _FakeAsyncContextManager:
-    def __init__(self, value: object = "aresource") -> None:
-        self.value = value
-        self.entered = False
-        self.exited = False
-        self.exit_args: tuple[object, object, object] = (None, None, None)
-
-    async def __aenter__(self) -> object:
-        self.entered = True
-        return self.value
-
-    async def __aexit__(
-        self, exc_type: object, exc_val: object, exc_tb: object
-    ) -> bool:
-        self.exited = True
-        self.exit_args = (exc_type, exc_val, exc_tb)
-        return False
-
-
-class _SuppressingAsyncContextManager(_FakeAsyncContextManager):
-    async def __aexit__(
-        self, exc_type: object, exc_val: object, exc_tb: object
-    ) -> bool:
-        await super().__aexit__(exc_type, exc_val, exc_tb)
-        return True
-
-
-def test_async_with_runs_body_inside_acm() -> None:
-    acm = _FakeAsyncContextManager()
-    seen: list[object] = []
-
-    async def caller() -> None:
-        await AsyncWith(lambda: acm).do(lambda v: seen.append(v))
-
-    asyncio.run(caller())
-    assert acm.entered and acm.exited
-    assert seen == ["aresource"]
-
-
-def test_async_with_awaits_async_body() -> None:
-    acm = _FakeAsyncContextManager()
-    seen: list[object] = []
-
-    async def _body(v: object) -> None:
-        await asyncio.sleep(0)
-        seen.append(v)
-
-    async def caller() -> None:
-        await AsyncWith(lambda: acm).do(_body)
-
-    asyncio.run(caller())
-    assert seen == ["aresource"]
-
-
-def test_async_with_propagates_exceptions() -> None:
-    acm = _FakeAsyncContextManager()
-
-    def _boom(_: object) -> None:
-        raise ValueError("nope")
-
-    async def caller() -> None:
-        await AsyncWith(lambda: acm).do(_boom)
-
-    with pytest.raises(ValueError, match="nope"):
-        asyncio.run(caller())
-    assert acm.exited
-
-
-def test_async_with_can_suppress_exceptions() -> None:
-    acm = _SuppressingAsyncContextManager()
-
-    def _boom(_: object) -> None:
-        raise ValueError("nope")
-
-    async def caller() -> None:
-        await AsyncWith(lambda: acm).do(_boom)
-
-    # No exception escapes because __aexit__ returned True.
-    asyncio.run(caller())
-    assert acm.exited
-
-
-def test_async_with_in_default_namespace() -> None:
-    from poop.transformers import DEFAULT_NAMESPACE
-    from poop.types.with_ import AsyncWith
-
-    assert DEFAULT_NAMESPACE["AsyncWith"] is AsyncWith

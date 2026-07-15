@@ -57,13 +57,13 @@ AI-specific guidance:
 Entry point is `poop/cli.py` (CLI via `typer`); `main.py` is a thin wrapper that calls `entry_point()` for the uninstalled `python main.py <file>` path. Pipeline: `parse → validate → transform → execute(namespace)`.
 
 - `poop/parser.py` — wraps `ast.parse`
-- `poop/validators/` — AST validators rejecting forbidden constructs (`if`, loops, `len`, `print`, ~65 in all); source of truth: `DEFAULT_VALIDATORS` in `poop/validators/__init__.py`
+- `poop/validators/` — AST validators rejecting forbidden constructs (`if`, loops, `len`, `print`, ~66 in all); source of truth: `DEFAULT_VALIDATORS` in `poop/validators/__init__.py`
 - `poop/transformers/` — AST transformers rewriting literals and builtins before execution, plus namespace-only transformers that inject names into the namespace without rewriting AST (`try_`, `with_`, `path`, `io`); source of truth: `DEFAULT_TRANSFORMERS` and `DEFAULT_NAMESPACE` in `poop/transformers/__init__.py`
 - `poop/types/` — Smalltalk-style type wrappers (`object.py` is the root): one module per wrapped builtin and iterator, plus the two namespace entry points (`path.py`, `io.py`); see the directory listing and the `INFECTIONS.md` catalog for the full inventory and the rules wrappers must follow
 - `poop/executor.py` — compiles and executes AST with an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
 
-POOP is the language, not the library: it mirrors no stdlib module. If Python needs an `import` to reach something, POOP does not offer it — `DEFAULT_NAMESPACE` is exactly seven names (`Try`, `With`, `AsyncWith`, `Path`, `io`, `StringIO`, `BytesIO`). `Path` and `io` stay because the language needs them (`Path` is the substitute the `open` ban points at), not for stdlib parity. Do not add a module mirror back without revisiting that decision.
+POOP is the language, not the library: it mirrors no stdlib module. If Python needs an `import` to reach something, POOP does not offer it — `DEFAULT_NAMESPACE` is exactly six names (`Try`, `With`, `Path`, `io`, `StringIO`, `BytesIO`). `Path` and `io` stay because the language needs them (`Path` is the substitute the `open` ban points at), not for stdlib parity. Do not add a module mirror back without revisiting that decision.
 
 Naming rules: injected names copy Python's exact casing — a class keeps PascalCase (`Try`, `Path`, `StringIO`), a module keeps lowercase (`io`), and a module that also exposes classes (`io` ⊃ `StringIO`/`BytesIO`) binds both. Every other type wrapper (`Int`, `List`, `Object`, ...) is bound under a mangled `_poop_*` name unreachable from user code; lowercase Python builtins (`int`, `list`, `object`, ...) get rewritten to those mangled names.
 

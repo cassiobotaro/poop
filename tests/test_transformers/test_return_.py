@@ -52,13 +52,6 @@ def test_init_is_skipped() -> None:
     assert not isinstance(_last_stmt(init), ast.Return)
 
 
-def test_async_function_gets_trailing_none() -> None:
-    tree = _transform("async def f():\n    x = 1")
-    func = tree.body[0]
-    assert isinstance(func, ast.AsyncFunctionDef)
-    assert isinstance(_last_stmt(func), ast.Return)
-
-
 def test_void_method_answers_none_via_interpreter() -> None:
     Interpreter().run_source(
         "class Greeter:\n"

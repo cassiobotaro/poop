@@ -45,12 +45,6 @@ def test_assign_to_With_raises() -> None:
         NoNamespaceShadowValidator().validate(tree)
 
 
-def test_assign_to_AsyncWith_raises() -> None:
-    tree = ast.parse("AsyncWith = 42")
-    with pytest.raises(ValidationError, match="POOP namespace"):
-        NoNamespaceShadowValidator().validate(tree)
-
-
 def test_annotated_assignment_raises() -> None:
     tree = ast.parse("io: int = 42")
     with pytest.raises(ValidationError, match="POOP namespace"):

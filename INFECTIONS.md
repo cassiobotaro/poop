@@ -23,7 +23,7 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - **`True`, `False`, and `None` are singletons**: `true`, `false`, and `none` are unique objects — there is exactly one instance of each. All comparisons and identity checks rely on this guarantee.
 - **Constructor builtins are intercepted, not banned**: `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` etc. are class constructors — they ARE object instantiation and fit the OO model. Each transformer intercepts the bare call and rewrites it to return the POOP type via a `_poop_X_from(...)` factory.
 - **Dunders exposed as regular methods**: every relevant dunder on a POOP type gets an alias with the Python name without underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__hash__` → `hash()`, etc. Do not translate to Smalltalk names.
-- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. True entry points without an AST rewrite or method equivalent are few — `Try`, `With`, `AsyncWith`, `Path`, `io` ⊃ `StringIO` / `BytesIO` — and each copies the casing of the Python name it stands for: a class keeps PascalCase, a module keeps lowercase. `io` binds both, the lowercase name for module-level entry (`io.SEEK_SET`) and the PascalCase names for the constructors.
+- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. True entry points without an AST rewrite or method equivalent are few — `Try`, `With`, `Path`, `io` ⊃ `StringIO` / `BytesIO` — and each copies the casing of the Python name it stands for: a class keeps PascalCase, a module keeps lowercase. `io` binds both, the lowercase name for module-level entry (`io.SEEK_SET`) and the PascalCase names for the constructors.
 
 ## Project conventions
 
@@ -64,7 +64,7 @@ These namespaces cover the daily-use surface; long-tail items (rare-call helpers
 |---|---|
 | `ast.For` | Loop looks procedural; use `col.do(block)`, `col.map(block)`, recursion |
 | `ast.While` | Same; use `(lambda: cond).while_true(lambda: body)` |
-| `ast.AsyncFor` | Async variant of `for`; use `await AsyncIO.do(aiter, block)` |
+| `ast.AsyncFor` | Async variant; async has no substitute in POOP (see `no_async`) |
 
 ### No free functions — `poop/validators/no_free_functions.py`
 
@@ -105,7 +105,7 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 | AST node | Reason | Substitute |
 |---|---|---|
 | `ast.With` | Control structure — procedural look | `With(lambda: cm()).do(lambda resource: body)` |
-| `ast.AsyncWith` | `async with` variant | `await AsyncWith(lambda: acm()).do(lambda resource: body)` |
+| `ast.AsyncWith` | Async variant; async has no substitute in POOP (see `no_async`) | — |
 
 ### No `and`/`or` — `poop/validators/no_and_or.py`
 
@@ -116,28 +116,36 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 
 `and_` and `or_` receive a block so evaluation is lazy — the right-hand side is only evaluated if needed, preserving the short-circuit semantics of Python's `and`/`or`.
 
-### `async def` / `await` — allowed inside class methods
+### No `async` — `poop/validators/no_async.py`
 
-POOP source can define `async def` methods and use `await` directly.
-The validator pipeline forwards `ast.AsyncFunctionDef` and `ast.Await`
-to compilation untouched.
+| AST node | Reason |
+|---|---|
+| `ast.AsyncFunctionDef` | POOP has no way to drive a coroutine |
+| `ast.Await` | Same |
 
-> **Inert since the stdlib mirrors were dropped**: nothing can start a
-> coroutine. `asyncio.run` was the only driver, and `asyncio` was a
-> stdlib mirror — reachable in Python only via `import`, so it went with
-> the rest. The syntax stays valid and `AsyncWith` still works when
-> something else drives the loop, but POOP no longer offers that
-> something. This is a consequence of the language/library split, not an
-> oversight; re-banning the syntax would be a separate decision.
+A **definitive ban**: async has no substitute inside POOP's model, so it
+is activated without one, like `exec` / `breakpoint` / `open`.
 
-The async-flavoured *control structures* remain banned by their
-non-async validators: `ast.AsyncFor` by `no_loops` (use
-`await AsyncIO.do(aiter, block)`), `ast.AsyncWith` by `no_with`
-(use `await AsyncWith(lambda: acm()).do(block)`), and `async def`
-*outside* a class by `no_free_functions`. Async generators are
-forbidden indirectly — `yield` inside any function (sync or async)
-is rejected by `no_yield`; consume external async iterables via
-`AsyncIO.do` instead of authoring them in POOP.
+Dropping the stdlib mirrors took `asyncio` with them, and `asyncio.run`
+was the only thing that could ever start a coroutine. That left `async
+def` as valid syntax nothing could execute — a promise the language
+could not keep. The ban makes the refusal explicit and immediate rather
+than letting a program define coroutines that silently never run.
+
+Two rows are enough for the whole surface, but not for the reason one
+might guess. `await` needs its own row because `ast.parse` **accepts** a
+module-level `await` — only `compile()` rejects it — so without the row
+the node would reach compilation and surface as a raw CPython
+`SyntaxError` instead of a POOP error. `async with` and `async for` are
+equally parseable at module level, but they already belong to `no_with`
+and `no_loops`; rows here would only double the message.
+
+`no_async` runs ahead of those validators in `DEFAULT_VALIDATORS` so the
+root cause wins: telling someone to rewrite an `async for` inside a
+method that is itself about to be rejected sends them down a dead end.
+Both messages still surface under `--validators-only`, which collects
+every error rather than the first. Async generators are covered twice
+over — `yield` in any function is already rejected by `no_yield`.
 
 ### No `not` — `poop/validators/no_not.py`
 
@@ -486,7 +494,7 @@ Out of v1 (filed if demand appears): `open(mode)` returning a POOP `File`, `stat
 | `ast.Import` | POOP is the language, not the library — there is no stdlib surface to import, and an import would bind raw CPython values that answer to no POOP message |
 | `ast.ImportFrom` | same — `from os import getcwd` would leak a raw Python callable returning a raw `str` |
 
-The names POOP does inject (`Path`, `io`, `Try`, `With`, `AsyncWith`, `StringIO`, `BytesIO`) are already in scope and need no import.
+The names POOP does inject (`Path`, `io`, `Try`, `With`, `StringIO`, `BytesIO`) are already in scope and need no import.
 
 ### No `_poop_*` prefix — `poop/validators/no_poop_prefix.py`
 
@@ -508,7 +516,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 | Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`io, x = 1, 2`) still rebinds the name |
 | `def`/`async def`/`lambda` parameters in the protected set | a parameter named after a binding (`def m(self, io): …`, `lambda io: …`) shadows it inside the body and fails confusingly |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today that is exactly seven names: `AsyncWith`, `BytesIO`, `Path`, `StringIO`, `Try`, `With`, `io`. Any future entry point protects itself automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today that is exactly six names: `BytesIO`, `Path`, `StringIO`, `Try`, `With`, `io`. Any future entry point protects itself automatically — no changes to this validator.
 
 What the validator **does not** catch: method names inside classes (`class Calc: def io(self): …`), which bind as attributes, not in the namespace scope.
 
@@ -783,7 +791,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 ### With — `poop/types/with_.py`
 
-`With(Object)` implements the context manager protocol as a message-passing builder. The context manager block is executed lazily — only when `.do()` is called. A `With` (and `AsyncWith`) is single-use: `.do()` releases its captured block once it runs, so re-invoking `.do()` raises `RuntimeError` rather than re-running — mirroring `Try`'s single-use semantics and avoiding retaining the closure (and anything it captured) past execution.
+`With(Object)` implements the context manager protocol as a message-passing builder. The context manager block is executed lazily — only when `.do()` is called. A `With` is single-use: `.do()` releases its captured block once it runs, so re-invoking `.do()` raises `RuntimeError` rather than re-running — mirroring `Try`'s single-use semantics and avoiding retaining the closure (and anything it captured) past execution.
 
 | Message | Method | Behavior |
 |---|---|---|
