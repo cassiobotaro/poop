@@ -11,8 +11,45 @@ if TYPE_CHECKING:
     from poop.types.string import Str
 
 
+class MessageNotUnderstood(AttributeError):
+    """Smalltalk's answer to an unknown selector.
+
+    Inherits `AttributeError` on purpose, ironic as that is for the error that
+    exists to stop speaking Python: `hasattr` and three-argument `getattr`
+    swallow that and nothing else. A plainer base would break `Object.has_attr`
+    and `get_attr(name, default)` — POOP's own sanctioned substitute for the
+    banned `getattr` — turning a question into a crash.
+    """
+
+
 class Object:
     __slots__ = ()
+
+    if not TYPE_CHECKING:
+        # Hidden from the type checker deliberately. A visible __getattr__
+        # answers Any for every name, so `xs.frobnicate()` would type-check on
+        # every POOP object and `ty` would stop catching typos across the whole
+        # codebase. Statically an unknown message is still an error; this hook
+        # changes what happens when one is sent, not what is knowable before.
+        def __getattr__(self, name: str) -> Any:
+            # Dunders never reach the hook. Python probes objects for
+            # `__copy__`, `__getstate__`, `__deepcopy__` and friends, and a
+            # proxy overriding does_not_understand would answer those probes
+            # as if a user had sent them — the classic proxy bug.
+            if name.startswith("__") and name.endswith("__"):
+                raise AttributeError(name)
+            return self.does_not_understand(name)
+
+    def does_not_understand(self, name: str) -> Any:
+        """Smalltalk's `doesNotUnderstand:` — the hook for an unknown message.
+
+        Override to answer the message rather than refuse it. A proxy answers a
+        callable, which is also the only way to reach the arguments: attribute
+        lookup runs before the call, so nothing here has seen them yet.
+        """
+        from poop.types._selectors import explain
+
+        raise MessageNotUnderstood(explain(self, name), name=name, obj=self)
 
     def if_none(self, block: Callable[[], Any]) -> Object:
         return self

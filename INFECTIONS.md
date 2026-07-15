@@ -590,7 +590,19 @@ Comparison across *non-numeric* types stays `false` (an `Int` is never equal to 
 
 ### Object — `poop/types/object.py`
 
-Concrete root of all POOP types. The table below highlights the universal methods that map directly onto Smalltalk messages — it is **not exhaustive**. The full API also includes `if_none`, `if_not_none`, `hash`, `id`, `callable`, `is_subclass`, `repr`, `ascii`, `format`, `has_attr`, `set_attr`, `del_attr`, and `print` (see `poop/types/object.py` for signatures).
+Concrete root of all POOP types. The table below highlights the universal methods that map directly onto Smalltalk messages — it is **not exhaustive**. The full API also includes `if_none`, `if_not_none`, `hash`, `id`, `callable`, `is_subclass`, `repr`, `ascii`, `format`, `has_attr`, `set_attr`, `del_attr`, `does_not_understand`, and `print` (see `poop/types/object.py` for signatures).
+
+#### `does_not_understand` — Smalltalk's `doesNotUnderstand:`
+
+An unknown message answers `MessageNotUnderstood`, not Python's `'int' object has no attribute 'frobnicate'`. The message names the receiver's class and the selector, and adds the best hint it has: the POOP name of a Smalltalk selector (`Smalltalk's #size is #len here`), a close match for a typo (`did you mean #upper?`), or a pointer at `:methods`. The Smalltalk selectors live in a written-down table (`poop/types/_selectors.py`) because string similarity cannot map `size` to `len` — the two share no letters.
+
+Override `does_not_understand(name)` to answer an unknown message instead of refusing it; this is the metaobject hook that makes real proxies possible. The override answers a callable, which is also the only way to reach the arguments — attribute lookup runs before the call.
+
+Three implementation constraints, each load-bearing:
+
+- `MessageNotUnderstood` inherits `AttributeError`. `hasattr` and three-argument `getattr` swallow that and nothing else, so a plainer base would break `Object.has_attr` and `get_attr(name, default)` — POOP's own substitute for the banned `getattr`.
+- Dunder names never reach the hook. Python probes any object for `__copy__`, `__getstate__` and friends, and a proxy would otherwise answer those probes as if a user had sent them.
+- `__getattr__` is hidden behind `if not TYPE_CHECKING`. A visible one answers `Any` for every name, which would make `xs.frobnicate()` type-check on every POOP object and stop `ty` from catching typos anywhere in the codebase. Statically an unknown message is still an error; the hook changes what happens when one is sent, not what is knowable before.
 
 | Smalltalk message | Method | Behavior |
 |---|---|---|
