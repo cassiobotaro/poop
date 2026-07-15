@@ -46,7 +46,7 @@ source → parse → validate → transform → execute(namespace)
 ## Adding a Transformer
 
 1. Create `poop/transformers/<thing>.py` with a `<Thing>Transformer(BaseTransformer)` class and a private `_<Thing>Rewriter(ast.NodeTransformer)` assigned to its `rewriter` attribute — `BaseTransformer.transform` runs the rewriter and calls `ast.fix_missing_locations` for you.
-2. Define `BINDINGS: ClassVar[dict[str, object]]` on the transformer — these are injected into the runtime namespace so the rewritten AST can resolve the replacement names. Namespace-only modules (stdlib mirrors) export a `NAMESPACE` dict instead and skip the rewriter.
+2. Define `BINDINGS: ClassVar[dict[str, object]]` on the transformer — these are injected into the runtime namespace so the rewritten AST can resolve the replacement names. Namespace-only modules (`try_`, `with_`, `path`, `io`) export a `NAMESPACE` dict instead and skip the rewriter.
 3. Register the transformer in `DEFAULT_TRANSFORMERS` and add its `BINDINGS` (or `NAMESPACE`) to `_BINDING_SOURCES` in `poop/transformers/__init__.py` so it lands in `DEFAULT_NAMESPACE`.
 
 ## Adding a Type
