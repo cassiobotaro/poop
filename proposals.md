@@ -232,7 +232,7 @@ answer — this proposal said "answers the body's value" and did not define the
 case. It answers `none`, mirroring Python, where a suppressed exception simply
 carries on past the block.
 
-### 6. No `doesNotUnderstand:`
+### ~~6. No `doesNotUnderstand:`~~ — DONE
 
 An unknown message is phrased in Python's vocabulary, for a language whose thesis
 is that everything is a message:
@@ -251,11 +251,54 @@ currently hits a dead end.
 Beyond the message, the hook is the metaobject-protocol feature that makes real
 proxies possible (cf. `examples/patterns/proxy.py`).
 
-**Proposal**: `Object.__getattr__` routing unknown messages to a
-`does_not_understand(name, args)` hook, default raising
-`poop: Int does not understand #frobnicate` plus `did you mean:` and a
-`try :methods x` pointer. Verified compatible with `__slots__`; normal message
-lookup is untouched (`__getattr__` fires only on miss).
+**Decision: the hook, plus a written-down selector table.** `Object.__getattr__`
+routes unknown messages to `does_not_understand(name)`, which answers
+`MessageNotUnderstood: int does not understand #frobnicate — try :methods to
+list its messages`. Overriding it is the metaobject hook proxies need.
+
+**The Smalltalker argument in this item was luck, not evidence.** It cited
+`ifTrue → ['if_true']` as proof `difflib` performs well. Measured against ten
+real selectors it scores **3/10** — `printNl`, `do:`, `ifTrue:`, exactly the
+three where both languages chose the same word — and answers confidently wrong
+on the rest: `size` → `slice`, `inject:into:` → `insert`, `notNil` → `not_`.
+`difflib` measures *string* similarity; Smalltalk → POOP is a *vocabulary*
+mapping, and no cutoff bridges `size` to `len`, which share no letters. Hence
+`poop/types/_selectors.py`, a table of the selectors POOP spells differently. A
+test asserts every entry maps to a message some POOP type actually answers — a
+table teaching a name that fails on the next line would be worse than none.
+
+**The cutoff is 0.7, not difflib's 0.6.** With the table carrying the
+vocabulary, `difflib`'s only remaining job is typos. Measured over six real
+typos and four nonsense names: 0.6 caught 6/6 but invented `frobnicate` →
+`from_bytes` and `blerg` → `clear`; 0.7 caught 5/6 and invented nothing. Losing
+`lenght` → `len` costs less than confidently naming a message nobody meant.
+
+**Three implementation constraints this item did not raise**, each verified:
+
+- *`MessageNotUnderstood` must inherit `AttributeError`* — ironic for the error
+  that exists to stop speaking Python, but `hasattr` and three-argument
+  `getattr` swallow that and nothing else. A plainer base breaks
+  `Object.has_attr` and `get_attr(name, default)`, POOP's own substitute for the
+  banned `getattr`. Verified: all three crash without it.
+- *Dunders must never reach the hook* — Python probes every object for
+  `__copy__` / `__getstate__`, and a proxy would answer those probes as if a
+  user had sent them.
+- *`__getattr__` must be hidden behind `if not TYPE_CHECKING`* — a visible one
+  answers `Any` for every name, so `xs.frobnicate()` would type-check on every
+  POOP object and `ty` would stop catching typos codebase-wide. The two
+  `ty: ignore[unresolved-attribute]` comments in `test_list.py` going *unused*
+  is what surfaced it. Statically an unknown message is still an error; the hook
+  changes what happens when one is sent, not what is knowable before.
+
+The signature is `does_not_understand(name)`, not `(name, args)` as proposed:
+attribute lookup runs before the call, so nothing there has seen the arguments.
+An override reaches them by answering a callable, which is what a proxy does
+anyway.
+
+Worth recording: item 7 made this item *sharper*. Adding the exception class
+name means the message now reads `poop: AttributeError: 'int' object has no
+attribute 'frobnicate'` — literally naming a Python class in a language whose
+thesis is that everything is a message.
 
 ### 12. Exception types are the last raw primitive in the `Try` surface
 
