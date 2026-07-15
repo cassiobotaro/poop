@@ -542,8 +542,10 @@ Out of v1 (filed if demand appears): `open(mode)` returning a POOP `File`, `stat
 
 | AST node | Reason |
 |---|---|
-| `ast.Import` | POOP injects its stdlib namespaces (`math`, `os`, `json`, …) — `import` would bind the raw CPython module over the wrapper layer |
-| `ast.ImportFrom` | same — the names are already in scope; `from os import getcwd` would leak raw Python values |
+| `ast.Import` | POOP is the language, not the library — there is no stdlib surface to import, and an import would bind raw CPython values that answer to no POOP message |
+| `ast.ImportFrom` | same — `from os import getcwd` would leak a raw Python callable returning a raw `str` |
+
+The names POOP does inject (`Path`, `io`, `Try`, `With`, `AsyncWith`, `StringIO`, `BytesIO`) are already in scope and need no import.
 
 ### No `_poop_*` prefix — `poop/validators/no_poop_prefix.py`
 

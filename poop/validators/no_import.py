@@ -3,8 +3,8 @@ import ast
 from poop.validators._node import make_node_validator
 
 _MESSAGE = (
-    "import is forbidden — POOP injects its stdlib namespaces "
-    "(math, os, json, …); the names are already in scope"
+    "import is forbidden — POOP is the language, not the library; "
+    "the names it does inject (Path, io, Try, With) are already in scope"
 )
 
 NoImportValidator = make_node_validator(
