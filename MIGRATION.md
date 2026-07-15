@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
-| `pickle.dumps(obj)` | `pickle.dumps(obj)` |
 | `zlib.compress(b)` | `zlib.compress(b)` |
 | `gzip.compress(b)` | `gzip.compress(b)` |
 | `bz2.compress(b)` | `bz2.compress(b)` |
@@ -413,33 +412,6 @@ Color(Int(2))             # Color.GREEN
 ```
 
 > The bases (`Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`) are bare alongside the `enum` namespace; `auto()` is also bare. `.name` stays a Python `str` (CPython's enum protocol and decorators like `@unique` depend on that). Use `.name_str()` for a POOP `Str`. `.value` returns whatever was assigned — raw Python primitives stay raw; use `.value_object()` to wrap them. POOP value lookup works via `_missing_`: `Color(Int(1))` finds the same member as `Color(1)`. `enum.unique` / `verify` / `member` / `nonmember` apply directly. `ReprEnum` is re-exported as-is (it can't be subclassed without a data-type mixin). `EnumType` metaclass access is out of scope.
-
-## Pickle (`pickle` module + `Pickler` / `Unpickler` classes)
-
-```python
-# Python
-import pickle
-
-raw = pickle.dumps({"a": [1, 2, 3]})
-data = pickle.loads(raw)
-
-with open("snapshot.pkl", "wb") as f:
-    pickle.dump(my_object, f)
-
-with open("snapshot.pkl", "rb") as f:
-    my_object = pickle.load(f)
-```
-
-```python
-# POOP
-raw = pickle.dumps({"a": [1, 2, 3]})       # Bytes
-data = pickle.loads(raw)                    # Dict[Str, List[Int]]
-
-pickle.dump(my_object, Path("snapshot.pkl"))
-my_object = pickle.load(Path("snapshot.pkl"))
-```
-
-> `dump` / `load` are path-based — POOP has no file-object abstraction. POOP types round-trip cleanly: `Int` / `Str` / `Float` / `Bytes` / `Boolean` / `NoneClass` and the POOP collections (`List` / `Tuple` / `Dict` / `Set` / `FrozenSet`) are unwrapped to native Python on dump and re-wrapped to POOP on load — callers never see a raw `int` / `str` / `list` / etc. POOP user-class instances pass through unchanged. `Pickler(protocol=none)` is a `Bytes` buffer Pickler with `.dump(obj)`/`.getvalue()`/`.clear_memo()`/`.fast`; `Unpickler(data)` reads from a `Bytes` buffer with `.load()`. Constants `pickle.HIGHEST_PROTOCOL` / `DEFAULT_PROTOCOL` are `Int`. `PickleError` / `PicklingError` / `UnpicklingError` are exposed for `Try.except_`. **Security:** never `loads` pickle data from untrusted sources — it executes arbitrary code on deserialization.
 
 ## Compression (`zlib` / `gzip` / `bz2` / `lzma` / `zipfile` / `tarfile` + `compression` umbrella)
 

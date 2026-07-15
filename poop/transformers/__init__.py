@@ -42,7 +42,6 @@ from poop.transformers.multiprocessing import NAMESPACE as _multiprocessing_name
 from poop.transformers.none import NoneTransformer
 from poop.transformers.os import NAMESPACE as _os_namespace
 from poop.transformers.path import NAMESPACE as _path_namespace
-from poop.transformers.pickle import NAMESPACE as _pickle_namespace
 from poop.transformers.platform import NAMESPACE as _platform_namespace
 from poop.transformers.profile import NAMESPACE as _profile_namespace
 from poop.transformers.pwd import NAMESPACE as _pwd_namespace
@@ -138,7 +137,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _random_namespace,
     _string_namespace,
     _enum_namespace,
-    _pickle_namespace,
     _zlib_namespace,
     _gzip_namespace,
     _bz2_namespace,
