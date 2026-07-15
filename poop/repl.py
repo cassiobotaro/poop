@@ -6,7 +6,7 @@ import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from poop.errors import PoopError
+from poop.errors import PoopError, format_error
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
@@ -385,6 +385,8 @@ class Repl:
                 try:
                     self._interpreter.run_source_repl(source, self._ns)
                 except PoopError as exc:
-                    print(_color(f"poop: {exc}", _RED), file=sys.stderr)  # noqa: T201
+                    print(  # noqa: T201
+                        _color(format_error(exc, source), _RED), file=sys.stderr
+                    )
         finally:
             sys.displayhook = original_hook

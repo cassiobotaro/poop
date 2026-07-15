@@ -242,6 +242,35 @@ def test_run_poop_error_printed_to_stderr(
     assert "poop:" in capsys.readouterr().err
 
 
+def test_run_poop_error_shows_the_source_line_and_caret(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The REPL holds the source; it used to cite a line that had scrolled away.
+    monkeypatch.setattr("builtins.input", _fake_input("print(x)", EOFError()))
+    Repl(Interpreter()).run()
+    err = capsys.readouterr().err
+    assert "  1 | print(x)" in err
+    assert "    | ^" in err
+
+
+def test_run_poop_error_does_not_repeat_the_position(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("builtins.input", _fake_input("print(x)", EOFError()))
+    Repl(Interpreter()).run()
+    assert "(line 1, col 0)" not in capsys.readouterr().err
+
+
+def test_run_runtime_error_shows_the_source_line(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("builtins.input", _fake_input("1 / 0", EOFError()))
+    Repl(Interpreter()).run()
+    err = capsys.readouterr().err
+    assert "ZeroDivisionError" in err
+    assert "  1 | 1 / 0" in err
+
+
 # --- _PoopCompleter ---
 
 

@@ -6,28 +6,11 @@ from typing import Annotated
 
 import typer
 
-from poop.errors import PoopError
+from poop.errors import PoopError, format_error
 from poop.interpreter import Interpreter
 from poop.repl import Repl
 
 app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
-
-
-def _format_error(exc: PoopError, source: str | None) -> str:
-    message = f"poop: {exc}"
-    lineno = getattr(exc, "lineno", None)
-    if source is None or lineno is None:
-        return message
-    lines = source.splitlines()
-    if not 1 <= lineno <= len(lines):
-        return message
-    gutter = f"  {lineno} | "
-    parts = [message, f"{gutter}{lines[lineno - 1]}"]
-    col = getattr(exc, "col_offset", None)
-    if col is not None:
-        caret_gutter = "  " + " " * len(str(lineno)) + " | "
-        parts.append(f"{caret_gutter}{' ' * col}^")
-    return "\n".join(parts)
 
 
 @contextmanager
@@ -35,7 +18,7 @@ def _poop_errors(source: str | None = None) -> Iterator[None]:
     try:
         yield
     except PoopError as exc:
-        typer.echo(_format_error(exc, source), err=True)
+        typer.echo(format_error(exc, source), err=True)
         raise typer.Exit(1) from exc
 
 
@@ -84,7 +67,7 @@ def main(
             typer.echo("No validation errors.")
             return
         for err in errors:
-            typer.echo(_format_error(err, source), err=True)
+            typer.echo(format_error(err, source), err=True)
         raise typer.Exit(1)
 
     if transformers_only:
