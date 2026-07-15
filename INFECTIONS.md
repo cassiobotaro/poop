@@ -23,97 +23,31 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - **`True`, `False`, and `None` are singletons**: `true`, `false`, and `none` are unique objects — there is exactly one instance of each. All comparisons and identity checks rely on this guarantee.
 - **Constructor builtins are intercepted, not banned**: `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` etc. are class constructors — they ARE object instantiation and fit the OO model. Each transformer intercepts the bare call and rewrites it to return the POOP type via a `_poop_X_from(...)` factory.
 - **Dunders exposed as regular methods**: every relevant dunder on a POOP type gets an alias with the Python name without underscores — `__len__` → `len()`, `__abs__` → `abs()`, `__hash__` → `hash()`, etc. Do not translate to Smalltalk names.
-- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. True entry points without an AST rewrite or method equivalent fall in two camps: **POOP-specific constructs** (`Try`, `With`, `Path`) keep PascalCase, and **Python stdlib module mirrors** (`math`, `random`, …) keep lowercase to match the source module names. A module that also exposes a class (e.g., `random` ⊃ `Random`) binds both — the lowercase name for module-level entry, the PascalCase name for the class constructor.
+- **Namespace hygiene — POOP types pass as Python builtins**: every wrapper class (`Int`, `List`, `Object`, …) is bound under a mangled `_poop_*` name and unreachable from user code (enforced by `no_poop_prefix`). The bare Python builtin (`int`, `list`, `object`, …) is rewritten at parse time to the corresponding mangled name. Each wrapper additionally patches `__module__ = "builtins"` and `__name__ = "<lowercase>"`, so `repr(Int)` reads `<class 'int'>` and `Int(5).class_name()` returns `Str("int")` — POOP builtins answer to the same names Python builtins do. True entry points without an AST rewrite or method equivalent are few — `Try`, `With`, `AsyncWith`, `Path`, `io` ⊃ `StringIO` / `BytesIO` — and each copies the casing of the Python name it stands for: a class keeps PascalCase, a module keeps lowercase. `io` binds both, the lowercase name for module-level entry (`io.SEEK_SET`) and the PascalCase names for the constructors.
 
 ## Project conventions
 
-Rules every namespace wrapper in `poop/types/` must follow. Recorded here so reviewers and future PRs apply the same yardstick.
+Rules the namespace entry points in `poop/types/` (`Path`, `io`) must follow. Recorded here so reviewers and future PRs apply the same yardstick.
 
 ### Mirror Python's attribute vs method shape
 
-If CPython exposes a name as an **attribute** (`sys.argv`, `time.tzname`, `Element.tag`, `ctx.verify_mode`), POOP exposes it as an attribute too — `ClassVar` for constants, `@property` for computed-on-read values. If CPython exposes it as a **method** (`logger.info(msg)`, `subprocess.run(args)`), POOP exposes it as a method. User code reads `sys.argv`, not `sys.argv`.
+If CPython exposes a name as an **attribute** (`io.SEEK_SET`, `Path.name`, `Path.suffix`), POOP exposes it as an attribute too — `ClassVar` for constants, `@property` for computed-on-read values. If CPython exposes it as a **method** (`buf.getvalue()`, `path.read_text()`), POOP exposes it as a method.
 
-Forcing attribute-shaped surfaces into zero-arg methods (`sys.argv`, `time.tzname`) breaks Python intuition and gains nothing for message-passing — `obj.attr` is already a message in Python's data model.
-
-### Assignment, not setter methods
-
-When a Python attribute can be mutated (`logger.propagate = True`, `ctx.verify_mode = ssl.CERT_REQUIRED`), POOP uses normal Python assignment — implemented via `@X.setter`. No `.set_X(value)` method convention. The Python idiom is `obj.attr = value`; POOP follows it.
+Forcing attribute-shaped surfaces into zero-arg methods breaks Python intuition and gains nothing for message-passing — `obj.attr` is already a message in Python's data model.
 
 ### Default kwarg policy
 
-POOP method defaults mirror CPython exactly. If CPython writes `subprocess.run(args, *, check=False, capture_output=False)`, POOP writes `check=false`, not `check=none`. Defaulting to `none` silently merges "user passed `false`" with "user did not pass" — for bool flags this is harmless, for tri-state semantics it breaks. Mirror CPython and let the underlying call distinguish.
+POOP method defaults mirror CPython exactly. Defaulting to `none` silently merges "user passed `false`" with "user did not pass" — for bool flags this is harmless, for tri-state semantics it breaks. Mirror CPython and let the underlying call distinguish. The only sanctioned `none`-default is when CPython itself uses `None` as the sentinel (e.g. `StringIO(initial_value=None)`).
 
-The only sanctioned `none`-default is when CPython itself uses `None` as the sentinel (e.g., `socket.gethostbyname(name, default=None)`).
-
-Parameter names also mirror CPython where there is no banned-builtin or POOP-specific clarification at stake. Documented divergences:
-
-- POOP renames params that shadow banned builtins (e.g., `grp.getgrgid` takes `gid` instead of CPython's `id`).
-- File I/O entry points take `Path` instead of file-object / file-descriptor (POOP has no file-object abstraction).
-- CPython entry points that take `*args, **kwargs` (e.g., `textwrap.wrap`, `logging.basicConfig`, `pprint.pp`) expose their kwargs explicitly in POOP to preserve type information.
-
-### Platform-specific constants
-
-Constants that CPython exposes only on some platforms (`socket.AF_UNIX`, `signal.SIGUSR1`, `resource.RLIMIT_NPROC`) bind to POOP `none` on platforms that lack them — never raise on attribute access, never omit the name entirely. This way user code is portable and falsy-checks (`signal.SIGUSR1.is_none()`) work uniformly.
+Parameter names also mirror CPython, with one standing divergence: file I/O entry points take `Path` instead of a file object or file descriptor, because POOP has no file-object abstraction.
 
 ### Error class exposure
 
-Every exception class that CPython raises through the wrapped surface and that a POOP user might reasonably pass to `Try.except_(...)` is exposed on the wrapping namespace. `json.JSONDecodeError`, `subprocess.CalledProcessError`, `ssl.SSLError`, `urllib.URLError` — all surface. Internal-only error classes (CPython's `_ssl.SSLError` aliases, `_socket.error` aliases) stay hidden.
+Every exception class that CPython raises through the wrapped surface and that a POOP user might reasonably pass to `Try.except_(...)` is exposed on the wrapping namespace — `io.UnsupportedOperation`, `io.BlockingIOError`. Internal-only error aliases stay hidden.
 
 ### Pull deferred surface only when a caller asks
 
-POOP's stdlib mirrors cover the daily-use surface of each wrapped module; long-tail items (rare-call helpers, debug-only flags, niche per-platform constants) stay out until a real caller surfaces. Surfacing them upfront just inflates the API and creates churn — wait for a concrete use case, then wrap with the same POOP-type-discipline contract as the rest of the namespace. New requests open issues against the project; they should not gate the 1.0 release.
-
-## Permanent divergences from CPython
-
-Surfaces POOP intentionally does not mirror — not deferred, not a backlog item, decided out. User code that wants any of these calls into raw CPython (POOP doesn't sandbox you out of `import`-on-the-Python-side; it just doesn't bless these via the POOP namespace).
-
-### No file-descriptor I/O
-
-POOP file I/O routes through `Path`. The CPython fd-integer ABI (`os.open` / `os.close` / `os.read` / `os.write` / `os.dup` / `os.dup2` / `os.pipe` / `os.fdopen` / `os.closerange` / `os.lseek` / `os.fsync` / `os.fdatasync` / `os.ftruncate` / `os.fchmod` / `os.fchown` / `os.fstat` / `os.openpty` / `os.eventfd*` / `os.memfd_create` / `os.pidfd_open` / `signal.set_wakeup_fd`, etc.) stays out. Same for the `*at`-suffixed dir-fd variants (`os.openat`, `os.linkat`, `os.unlinkat`, `os.symlinkat`, `os.fchmodat`, `os.fchownat`, `os.fstatat`, …). Use `Path` (`read_text` / `write_text` / `read_bytes` / `write_bytes`).
-
-### No process replacement / forking
-
-`Subprocess` and `Multiprocessing` cover the daily-use surface. The lower-level `os.exec*` family (`execv` / `execve` / `execvp` / `execvpe` / `execl` / `execle` / `execlp` / `execlpe`), `os.fork` / `os.forkpty`, `os.posix_spawn` / `os.posix_spawnp`, `os.wait*` (`waitpid` / `wait3` / `wait4` / `waitstatus_to_exitcode`), `os.spawn*` (`spawnv*` / `spawnl*` / `spawnvp*` / `spawnlp*`), and `os.startfile` stay out. Same for scheduling (`os.sched_*`) and resource-priority knobs (`os.nice`, `os.getpriority`, `os.setpriority`).
-
-### No frame-model / refcount / audit introspection
-
-POOP intentionally hides CPython's frame model. `sys.getframe` / `sys._getframe` / `sys._current_frames`, `sys.getrefcount`, `sys.gettrace` / `sys.settrace` / `sys.setprofile`, `sys.audit` / `sys.addaudithook`, `sys.monitoring`, `sys.set_coroutine_origin_tracking_depth`, `sys.set_asyncgen_hooks`, `gc.get_referents` / `gc.get_referrers` / `gc.get_stats` / `gc.set_debug` all stay out. POOP debuggers/profilers are a non-goal — use CPython tools directly on the Python side if you need them.
-
-### No `GetPassWarning`
-
-`getpass.getpass` emits a `UserWarning` (CPython's `GetPassWarning`) to stderr when echo-suppression fails on the underlying TTY. POOP has no `warnings` model, so the warning is unobservable through the POOP namespace; user code cannot catch or filter it. Upgrading the warning to a raised POOP `Error` would diverge from CPython's actual behaviour — not worth the divergence.
-
-### No `random.SystemRandom`
-
-`random.SystemRandom` (cryptographic-quality randomness via `os.urandom`) stays out of the `random` namespace by design — POOP routes cryptographic draws through the `secrets` namespace, which already wraps the same underlying source. Splitting "use-as-stand-in-for-Random" vs. "I want crypto" by namespace makes the security intent visible at the call site.
-
-### No `uuid.SafeUUID`
-
-`uuid.UUID.is_safe` returns a `uuid.SafeUUID` enum value (`safe` / `unsafe` / `unknown`). POOP flattens this to a `Str` token on the wrapped `UUID`, sidestepping a one-shot enum exposure that nothing else in the namespace uses.
-
-### No `datetime.MAXYEAR` / `datetime.MINYEAR`
-
-CPython exposes `datetime.MAXYEAR` (`9999`) and `datetime.MINYEAR` (`1`) as module-level constants. POOP hides them behind `Date(year, month, day)`'s range-check semantics — passing an out-of-range year raises `ValueError` through the `Date` constructor, which is the same enforcement at a more natural call site. Surfacing the constants separately would just duplicate values already implicit in the type.
-
-### No `os.chroot`
-
-`os.chroot(path)` is a privileged-process operation that changes the calling process's root directory. POOP omits it: it has no clean reversible POOP idiom (a `Path` argument suggests symmetry with regular path ops, but `chroot` reshapes the *process's* filesystem view irrevocably), and the use case (jail/sandbox setup) is system-administration territory that POOP doesn't try to mirror.
-
-### No `time.pthread_getcpuclockid`
-
-Linux-only helper that maps a `pthread` thread ID to a per-thread CPU clock ID for `time.clock_gettime`. POOP exposes `CLOCK_THREAD_CPUTIME_ID` for the current thread's CPU clock, which covers the common case; cross-thread clock inspection via `pthread` IDs requires platform-conditional plumbing for a niche use case.
-
-### No archive-format CPython internals
-
-`zipfile.PyZipFile` (a CPython-bytecode-only ZIP variant), `zipfile.ZipExtFile` (the internal stream returned by `ZipFile.open()`), the `zipfile.struct*` format constants (`structCentralDir`, `structFileHeader`, etc.), the `tarfile` private error subclasses (`InvalidHeaderError`, `SubsequentHeaderError`, `TruncatedHeaderError`, `EOFHeaderError`, `EmptyHeaderError`, `LinkFallbackError`), and the `tarfile` encoding helpers (`itn`, `nti`, `stn`, `nts`, `calc_chksums`) stay out. They are CPython-internal — neither documented in the public API nor stable across releases — and would invite users to bind against private surface. The public `ZipFile` / `TarFile` / `GzipFile` wrappers cover the daily use case.
-
-### No `codecs` registry / incremental protocol
-
-The `codecs` namespace mirrors the daily-use encode/decode functions and the high-level `CodecInfo` lookup. The registry surface (`codecs.register`, `codecs.lookup`, `codecs.lookup_error`, `codecs.register_error`, `codecs.unregister`) and the incremental encoder/decoder protocol (`IncrementalEncoder`, `IncrementalDecoder`, `BufferedIncrementalEncoder`, `BufferedIncrementalDecoder`, `StreamReader`, `StreamWriter`, `StreamReaderWriter`, `StreamRecoder`, `EncodedFile`) plus the base `Codec` class stay out. They exist for writing new codec implementations, which is a process-wide Python-level customisation point with no clean POOP-type mapping — and the existing encoders cover everything POOP user code typically needs.
-
-### No `logging.Manager` / `RootLogger` / `PlaceHolder`
-
-`logging.Manager` and `logging.PlaceHolder` are internal classes the stdlib uses to construct the logger hierarchy; `RootLogger` is the singleton at the root of that hierarchy reachable as `logging.getLogger()`. POOP users access loggers through `Logging.getLogger(name)`, which already returns the root for the no-arg call. Surfacing these internal classes would invite users to bind against private structure that CPython doesn't promise to keep stable.
+These namespaces cover the daily-use surface; long-tail items (rare-call helpers, debug-only flags) stay out until a real caller surfaces. Surfacing them upfront just inflates the API and creates churn — wait for a concrete use case, then wrap with the same POOP-type-discipline contract as the rest of the namespace.
 
 ## Active infections
 
@@ -186,8 +120,15 @@ Functions inside classes (`class_depth > 0`) are allowed as methods.
 
 POOP source can define `async def` methods and use `await` directly.
 The validator pipeline forwards `ast.AsyncFunctionDef` and `ast.Await`
-to compilation untouched; the coroutines are driven by `AsyncIO.run`
-from the `asyncio` namespace.
+to compilation untouched.
+
+> **Inert since the stdlib mirrors were dropped**: nothing can start a
+> coroutine. `asyncio.run` was the only driver, and `asyncio` was a
+> stdlib mirror — reachable in Python only via `import`, so it went with
+> the rest. The syntax stays valid and `AsyncWith` still works when
+> something else drives the loop, but POOP no longer offers that
+> something. This is a consequence of the language/library split, not an
+> oversight; re-banning the syntax would be a separate decision.
 
 The async-flavoured *control structures* remain banned by their
 non-async validators: `ast.AsyncFor` by `no_loops` (use
@@ -560,16 +501,16 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 
 | AST node | Reason |
 |---|---|
-| `ast.Assign` with target `ast.Name` in the protected set | reassigning a namespace name (`math = 42`) breaks every later call to `math.sqrt(…)` |
-| `ast.AnnAssign` with target `ast.Name` in the protected set | annotated form (`math: int = 42`) — same problem |
-| `ast.AugAssign` with target `ast.Name` in the protected set | augmented form (`math += 1`) — same problem |
-| `ast.ClassDef` whose `name` is in the protected set | `class math: …` binds `math` at module level, shadows the namespace |
-| Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`math, x = 1, 2`) still rebinds the name |
-| `def`/`async def`/`lambda` parameters in the protected set | a parameter named after a binding (`def m(self, math): …`, `lambda math: …`) shadows it inside the body and fails confusingly |
+| `ast.Assign` with target `ast.Name` in the protected set | reassigning a namespace name (`io = 42`) breaks every later call to `io.StringIO(…)` |
+| `ast.AnnAssign` with target `ast.Name` in the protected set | annotated form (`io: int = 42`) — same problem |
+| `ast.AugAssign` with target `ast.Name` in the protected set | augmented form (`io += 1`) — same problem |
+| `ast.ClassDef` whose `name` is in the protected set | `class io: …` binds `io` at module level, shadows the namespace |
+| Unpacking targets (`ast.Tuple` / `ast.List` / `ast.Starred`) holding a protected name | tuple unpacking (`io, x = 1, 2`) still rebinds the name |
+| `def`/`async def`/`lambda` parameters in the protected set | a parameter named after a binding (`def m(self, io): …`, `lambda io: …`) shadows it inside the body and fails confusingly |
 
-The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today: `Browser`, `Connection`, `Context`, `Cursor`, `Date`, `DateTime`, `Decimal`, `HMAC`, `Hash`, `Match`, `MimeTypes`, `Path`, `Pattern`, `PrettyPrinter`, `Random`, `Row`, `Shlex`, `Time`, `TimeDelta`, `TimeZone`, `TopologicalSorter`, `Try`, `UUID`, `With`, `binascii`, `bisect`, `copy`, `datetime`, `decimal`, `errno`, `fnmatch`, `getpass`, `glob`, `graphlib`, `hashlib`, `heapq`, `hmac`, `json`, `math`, `mimetypes`, `pprint`, `random`, `re`, `secrets`, `shlex`, `sqlite3`, `tomllib`, `uuid`, `webbrowser`. As new namespace mirrors land (`uuid`, …), they protect themselves automatically — no changes to this validator.
+The **protected set** is computed dynamically from `DEFAULT_NAMESPACE` (filtered to non-`_poop_*` entries) at validator instantiation time. Today that is exactly seven names: `AsyncWith`, `BytesIO`, `Path`, `StringIO`, `Try`, `With`, `io`. Any future entry point protects itself automatically — no changes to this validator.
 
-What the validator **does not** catch: method names inside classes (`class Calc: def math(self): …`), which bind as attributes, not in the namespace scope.
+What the validator **does not** catch: method names inside classes (`class Calc: def io(self): …`), which bind as attributes, not in the namespace scope.
 
 ### No builtin shadow — `poop/validators/no_builtin_shadow.py`
 
