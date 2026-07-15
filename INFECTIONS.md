@@ -988,31 +988,6 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
 
-### unicodedata — `poop/types/unicodedata.py` + `poop/transformers/unicodedata.py`
-
-`unicodedata` mirrors Python's `unicodedata` module — access to the Unicode Character Database: normalization, character properties, name lookup, and numeric values. No new POOP type; every method takes/returns plain `Str` / `Int` / `Float` / `Boolean`.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `unicodedata.normalize(form, unistr)` | `Str` | `form` is `"NFC"` / `"NFKC"` / `"NFD"` / `"NFKD"` |
-| `unicodedata.is_normalized(form, unistr)` | `Boolean` | |
-| `unicodedata.category(chr)` | `Str` | e.g. `"Lu"`, `"Nd"`, `"Po"` |
-| `unicodedata.bidirectional(chr)` | `Str` | empty for unassigned |
-| `unicodedata.combining(chr)` | `Int` | canonical combining class |
-| `unicodedata.east_asian_width(chr)` | `Str` | `"Na"`, `"W"`, `"F"`, `"H"`, `"A"`, `"N"` |
-| `unicodedata.mirrored(chr)` | `Int` | `0` or `1` |
-| `unicodedata.decomposition(chr)` | `Str` | empty when no decomposition exists |
-| `unicodedata.name(chr, default=none)` | `Str` | raises `ValueError` when no name and no default |
-| `unicodedata.lookup(name)` | `Str` | raises `KeyError` on unknown name |
-| `unicodedata.decimal(chr, default=none)` | `Int` | raises `ValueError` when not a decimal digit and no default |
-| `unicodedata.digit(chr, default=none)` | `Int` | same shape as `decimal` |
-| `unicodedata.numeric(chr, default=none)` | `Float` | covers fractions like `"½"` (0.5) |
-| `unicodedata.unidata_version` (class attr) | `Str` | the Unicode version Python was built against |
-
-The private `ucd_3_2_0` legacy UCD object is out of scope for v1.
-
-`unicodedata` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/unicodedata.py` — namespace-only, no AST rewrite.
-
 ### zoneinfo + ZoneInfo — `poop/types/zoneinfo.py` + `poop/transformers/zoneinfo.py`
 
 `zoneinfo` mirrors Python's `zoneinfo` module — IANA timezone database access. `ZoneInfo` is a `datetime.tzinfo` wrapper that pairs directly with the `datetime` namespace's `DateTime.now(tz=…)` / `.astimezone(tz)` / `DateTime(..., tzinfo=…)` entry points (all widened to accept either `TimeZone` or `ZoneInfo`).

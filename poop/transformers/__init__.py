@@ -79,7 +79,6 @@ from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.timeit import NAMESPACE as _timeit_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
-from poop.transformers.unicodedata import NAMESPACE as _unicodedata_namespace
 from poop.transformers.unittest import NAMESPACE as _unittest_namespace
 from poop.transformers.unpack import UnpackTransformer
 from poop.transformers.urllib import NAMESPACE as _urllib_namespace
@@ -153,7 +152,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _datetime_namespace,
     _decimal_namespace,
     _string_namespace,
-    _unicodedata_namespace,
     _zoneinfo_namespace,
     _calendar_namespace,
     _array_namespace,

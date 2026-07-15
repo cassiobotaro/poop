@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `decimal.Decimal("3.14")` | `Decimal("3.14")` |
 | `string.ascii_letters` | `string.ascii_letters` |
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
-| `unicodedata.name("A")` | `unicodedata.name("A")` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `calendar.isleap(year)` | `calendar.isleap(year)` |
 | `array.array("i", xs)` | `Array("i", xs)` |
@@ -447,30 +446,6 @@ greeting = template.substitute({"name": "world"})
 ```
 
 > Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
-
-## Unicode Character Database (`unicodedata` module)
-
-```python
-# Python
-import unicodedata
-
-unicodedata.normalize("NFC", "café")
-unicodedata.category("A")           # "Lu"
-unicodedata.name("A")               # "LATIN CAPITAL LETTER A"
-unicodedata.lookup("LATIN CAPITAL LETTER A")  # "A"
-unicodedata.numeric("½")            # 0.5
-```
-
-```python
-# POOP
-unicodedata.normalize("NFC", "café")
-unicodedata.category("A")           # "Lu"
-unicodedata.name("A")               # "LATIN CAPITAL LETTER A"
-unicodedata.lookup("LATIN CAPITAL LETTER A")  # "A"
-unicodedata.numeric("½")            # 0.5
-```
-
-> No new POOP type: every method takes/returns `Str` / `Int` / `Float` / `Boolean`. `name` / `decimal` / `digit` / `numeric` accept an optional `default=` to suppress the `ValueError` / `KeyError` for chars without the requested property. `unicodedata.unidata_version` is a `Str` class attribute. The private `ucd_3_2_0` legacy UCD object is out of scope.
 
 ## IANA timezones (`zoneinfo` module + `ZoneInfo` class)
 
