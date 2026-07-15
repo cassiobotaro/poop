@@ -884,19 +884,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
 
-### base64 — methods on `Bytes` and `Str`
-
-Python's `base64.*` is reachable as **methods on the value**, not a namespace. Both `Bytes` (encode + decode) and `Str` (decode only) carry the full surface:
-
-| Direction | Receivers | Methods |
-|---|---|---|
-| Encode | `Bytes` | `b16encode`, `b32encode`, `b32hexencode`, `b64encode`, `standard_b64encode`, `urlsafe_b64encode`, `a85encode`, `b85encode`, `z85encode` |
-| Decode | `Bytes`, `Str` | `b16decode`, `b32decode`, `b32hexdecode`, `b64decode`, `standard_b64decode`, `urlsafe_b64decode`, `a85decode`, `b85decode`, `z85decode` |
-
-The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` / `b64decode(altchars, validate)`, `b16decode(casefold)`, `b32decode(casefold, map01)`, `b32hexdecode(casefold)`, `a85encode(foldspaces, wrapcol, pad, adobe)` / `a85decode(foldspaces, adobe, ignorechars)`, `b85encode(pad)` — on `Str` receivers the `Str`-typed kwargs (`altchars`, `map01`, `ignorechars`) are accepted as `Str` and coerced. Encoders return `Bytes` (ASCII-bearing), mirroring `base64.<name>(b)` in Python — callers wanting a textual `Str` must explicitly `.decode(Str("ascii"))` afterward, exactly as in Python. Decoders also return `Bytes`.
-
-No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
-
 ### sqlite3 + Connection + Cursor + Row — `poop/types/sqlite3.py` + `poop/transformers/sqlite3.py`
 
 `sqlite3` mirrors Python's `sqlite3` module — the stdlib's zero-config relational store. Three wrapper classes (`Connection`, `Cursor`, `Row`) cover the cursor-iteration model.

@@ -1,4 +1,3 @@
-import base64 as _base64
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -87,7 +86,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         sep: Str | Bytes | NoneClass | None = None,
         bytes_per_sep: Int | NoneClass | None = None,
     ) -> Str:
-        from poop.types._unwrap import _is_absent, _opt_int
+        from poop.types._unwrap import _opt_int
         from poop.types.string import Str
 
         if _is_absent(sep):
@@ -370,128 +369,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
     def zfill(self, width: Int) -> Bytes:
         return Bytes(self._value.zfill(width._value))
-
-    # base64 — encoders. Each returns Bytes (ASCII-bearing), mirroring
-    # Python's base64.<name>(b) which always returns bytes.
-
-    def b16encode(self) -> Bytes:
-        return Bytes(_base64.b16encode(self._value))
-
-    def b32encode(self) -> Bytes:
-        return Bytes(_base64.b32encode(self._value))
-
-    def b32hexencode(self) -> Bytes:
-        return Bytes(_base64.b32hexencode(self._value))
-
-    def b64encode(self, altchars: Bytes | NoneClass | None = None) -> Bytes:
-        kwargs: dict[str, _bytes] = {}
-        if not _is_absent(altchars):
-            kwargs["altchars"] = altchars._value
-        return Bytes(_base64.b64encode(self._value, **kwargs))
-
-    def standard_b64encode(self) -> Bytes:
-        return Bytes(_base64.standard_b64encode(self._value))
-
-    def urlsafe_b64encode(self) -> Bytes:
-        return Bytes(_base64.urlsafe_b64encode(self._value))
-
-    def a85encode(
-        self,
-        *,
-        foldspaces: Boolean | NoneClass | None = None,
-        wrapcol: Int | None = None,
-        pad: Boolean | NoneClass | None = None,
-        adobe: Boolean | NoneClass | None = None,
-    ) -> Bytes:
-        from typing import Any as _Any
-
-        kwargs: dict[str, _Any] = {}
-        if not _is_absent(foldspaces):
-            kwargs["foldspaces"] = bool(foldspaces)
-        if not _is_absent(wrapcol):
-            kwargs["wrapcol"] = wrapcol._value
-        if not _is_absent(pad):
-            kwargs["pad"] = bool(pad)
-        if not _is_absent(adobe):
-            kwargs["adobe"] = bool(adobe)
-        return Bytes(_base64.a85encode(self._value, **kwargs))
-
-    def b85encode(self, pad: Boolean | NoneClass | None = None) -> Bytes:
-        if _is_absent(pad):
-            return Bytes(_base64.b85encode(self._value))
-        return Bytes(_base64.b85encode(self._value, pad=bool(pad)))
-
-    def z85encode(self) -> Bytes:
-        return Bytes(_base64.z85encode(self._value))
-
-    # base64 — decoders on Bytes. Each returns Bytes.
-
-    def b16decode(self, casefold: Boolean | NoneClass | None = None) -> Bytes:
-        if _is_absent(casefold):
-            return Bytes(_base64.b16decode(self._value))
-        return Bytes(_base64.b16decode(self._value, casefold=bool(casefold)))
-
-    def b32decode(
-        self,
-        casefold: Boolean | NoneClass | None = None,
-        map01: Bytes | NoneClass | None = None,
-    ) -> Bytes:
-        from typing import Any as _Any
-
-        kwargs: dict[str, _Any] = {}
-        if not _is_absent(casefold):
-            kwargs["casefold"] = bool(casefold)
-        if not _is_absent(map01):
-            kwargs["map01"] = map01._value
-        return Bytes(_base64.b32decode(self._value, **kwargs))
-
-    def b32hexdecode(self, casefold: Boolean | NoneClass | None = None) -> Bytes:
-        if _is_absent(casefold):
-            return Bytes(_base64.b32hexdecode(self._value))
-        return Bytes(_base64.b32hexdecode(self._value, casefold=bool(casefold)))
-
-    def b64decode(
-        self,
-        altchars: Bytes | NoneClass | None = None,
-        validate: Boolean | NoneClass | None = None,
-    ) -> Bytes:
-        from typing import Any as _Any
-
-        kwargs: dict[str, _Any] = {}
-        if not _is_absent(altchars):
-            kwargs["altchars"] = altchars._value
-        if not _is_absent(validate):
-            kwargs["validate"] = bool(validate)
-        return Bytes(_base64.b64decode(self._value, **kwargs))
-
-    def standard_b64decode(self) -> Bytes:
-        return Bytes(_base64.standard_b64decode(self._value))
-
-    def urlsafe_b64decode(self) -> Bytes:
-        return Bytes(_base64.urlsafe_b64decode(self._value))
-
-    def a85decode(
-        self,
-        foldspaces: Boolean | NoneClass | None = None,
-        adobe: Boolean | NoneClass | None = None,
-        ignorechars: Bytes | NoneClass | None = None,
-    ) -> Bytes:
-        from typing import Any as _Any
-
-        kwargs: dict[str, _Any] = {}
-        if not _is_absent(foldspaces):
-            kwargs["foldspaces"] = bool(foldspaces)
-        if not _is_absent(adobe):
-            kwargs["adobe"] = bool(adobe)
-        if not _is_absent(ignorechars):
-            kwargs["ignorechars"] = ignorechars._value
-        return Bytes(_base64.a85decode(self._value, **kwargs))
-
-    def b85decode(self) -> Bytes:
-        return Bytes(_base64.b85decode(self._value))
-
-    def z85decode(self) -> Bytes:
-        return Bytes(_base64.z85decode(self._value))
 
     def __str__(self) -> str:
         return repr(self._value)

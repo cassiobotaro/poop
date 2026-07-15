@@ -37,8 +37,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x or y` | `x.or_(lambda: y)` |
 | `random.choice(xs)` | `random.choice(xs)` |
 | `random.Random(seed)` | `Random(seed)` |
-| `base64.b64encode(b)` | `b.b64encode()` |
-| `base64.b64decode(s)` | `s.b64decode()` |
 | `datetime.date.today()` | `Date.today()` |
 | `decimal.Decimal("3.14")` | `Decimal("3.14")` |
 | `sqlite3.connect(p)` | `sqlite3.connect(p)` |
@@ -382,28 +380,6 @@ r = Random(42)
 ```
 
 > POOP exposes both `random` (lowercase, module-level singleton — `random.random()`, `random.choice(xs)`, …) and `Random` (PascalCase, the class — `Random(seed)` returns a fresh independently-seeded instance). The split mirrors Python exactly; the only shortcut is that `Random` is in scope without a `random.` prefix (no `import` needed). Cryptographic draws live in `secrets`, never `random`.
-
-## Base64 (`base64` module)
-
-```python
-# Python
-import base64
-
-encoded = base64.b64encode(b"hello world")
-decoded = base64.b64decode(encoded)
-url_safe = base64.urlsafe_b64encode(b"\xfb\xff")
-from_str = base64.b64decode("YWJj")
-```
-
-```python
-# POOP
-encoded = b"hello world".b64encode()
-decoded = encoded.b64decode()
-url_safe = b"\xfb\xff".urlsafe_b64encode()
-from_str = "YWJj".b64decode()
-```
-
-> All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
 
 ## Dates and times (`datetime` module + `Date` / `Time` / `DateTime` / `TimeDelta` / `TimeZone`)
 

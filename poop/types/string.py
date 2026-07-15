@@ -1,4 +1,3 @@
-import base64 as _base64
 import builtins
 import string as _string
 from collections.abc import Callable, Iterator
@@ -6,7 +5,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _MISSING
 from poop.types._repeat import _repeat_count
-from poop.types._unwrap import _is_absent, _unwrap
+from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.object import Object
@@ -434,90 +433,6 @@ class Str(_ValueEqMixin, Object):
 
     def __hash__(self) -> int:
         return hash(self._value)
-
-    # base64 — decoders on Str. Each returns Bytes (mirrors base64.<name>(s)
-    # in Python, which accepts str input and always returns bytes).
-
-    def b16decode(self, casefold: Boolean | NoneClass | None = None) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        if _is_absent(casefold):
-            return _Bytes(_base64.b16decode(self._value))
-        return _Bytes(_base64.b16decode(self._value, casefold=bool(casefold)))
-
-    def b32decode(
-        self,
-        casefold: Boolean | NoneClass | None = None,
-        map01: Str | NoneClass | None = None,
-    ) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        kwargs: dict[_str, Any] = {}
-        if not _is_absent(casefold):
-            kwargs["casefold"] = bool(casefold)
-        if not _is_absent(map01):
-            kwargs["map01"] = map01._value
-        return _Bytes(_base64.b32decode(self._value, **kwargs))
-
-    def b32hexdecode(self, casefold: Boolean | NoneClass | None = None) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        if _is_absent(casefold):
-            return _Bytes(_base64.b32hexdecode(self._value))
-        return _Bytes(_base64.b32hexdecode(self._value, casefold=bool(casefold)))
-
-    def b64decode(
-        self,
-        altchars: Str | NoneClass | None = None,
-        validate: Boolean | NoneClass | None = None,
-    ) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        kwargs: dict[_str, Any] = {}
-        if not _is_absent(altchars):
-            kwargs["altchars"] = altchars._value
-        if not _is_absent(validate):
-            kwargs["validate"] = bool(validate)
-        return _Bytes(_base64.b64decode(self._value, **kwargs))
-
-    def standard_b64decode(self) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        return _Bytes(_base64.standard_b64decode(self._value))
-
-    def urlsafe_b64decode(self) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        return _Bytes(_base64.urlsafe_b64decode(self._value))
-
-    def a85decode(
-        self,
-        foldspaces: Boolean | NoneClass | None = None,
-        adobe: Boolean | NoneClass | None = None,
-        ignorechars: Str | NoneClass | None = None,
-    ) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        kwargs: dict[_str, Any] = {}
-        if not _is_absent(foldspaces):
-            kwargs["foldspaces"] = bool(foldspaces)
-        if not _is_absent(adobe):
-            kwargs["adobe"] = bool(adobe)
-        if not _is_absent(ignorechars):
-            # The stdlib walks ignorechars as raw byte values even for
-            # str input — encode the POOP Str accordingly.
-            kwargs["ignorechars"] = ignorechars._value.encode("ascii")
-        return _Bytes(_base64.a85decode(self._value, **kwargs))
-
-    def b85decode(self) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        return _Bytes(_base64.b85decode(self._value))
-
-    def z85decode(self) -> Bytes:
-        from poop.types.bytes import Bytes as _Bytes
-
-        return _Bytes(_base64.z85decode(self._value))
 
     def __str__(self) -> _str:
         return self._value
