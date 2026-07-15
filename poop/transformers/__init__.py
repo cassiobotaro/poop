@@ -74,7 +74,6 @@ from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
 from poop.transformers.sys import NAMESPACE as _sys_namespace
 from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.tempfile import NAMESPACE as _tempfile_namespace
-from poop.transformers.textwrap import NAMESPACE as _textwrap_namespace
 from poop.transformers.threading import NAMESPACE as _threading_namespace
 from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.timeit import NAMESPACE as _timeit_namespace
@@ -154,7 +153,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _datetime_namespace,
     _decimal_namespace,
     _string_namespace,
-    _textwrap_namespace,
     _unicodedata_namespace,
     _zoneinfo_namespace,
     _calendar_namespace,

@@ -988,22 +988,6 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
 
-### textwrap + TextWrapper — `poop/types/textwrap.py` + `poop/transformers/textwrap.py`
-
-`textwrap` mirrors Python's `textwrap` module — reflowing multi-line strings. Module-level shortcuts cover the common cases; the reusable `TextWrapper` class captures the full set of wrapping knobs.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `textwrap.wrap(text, width=none, …)` | `List[Str]` | defaults: `width=70`, etc. |
-| `textwrap.fill(text, width=none, …)` | `Str` | same arg shape as `wrap` |
-| `textwrap.shorten(text, width, placeholder=none)` | `Str` | truncates with `" [...]"` by default |
-| `textwrap.indent(text, prefix, predicate=none)` | `Str` | `predicate` is a `Block` / Python callable that takes `Str`, returns truthy |
-| `textwrap.dedent(text)` | `Str` | removes common leading indent |
-| `TextWrapper(width=none, initial_indent=none, subsequent_indent=none, expand_tabs=none, replace_whitespace=none, drop_whitespace=none, fix_sentence_endings=none, break_long_words=none, break_on_hyphens=none, tabsize=none, max_lines=none, placeholder=none)` | `TextWrapper` | reusable instance |
-| `TextWrapper.wrap(text)` / `.fill(text)` | `List[Str]` / `Str` | reuses configured knobs |
-
-`textwrap` and `TextWrapper` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/textwrap.py` — namespace-only, no AST rewrite.
-
 ### unicodedata — `poop/types/unicodedata.py` + `poop/transformers/unicodedata.py`
 
 `unicodedata` mirrors Python's `unicodedata` module — access to the Unicode Character Database: normalization, character properties, name lookup, and numeric values. No new POOP type; every method takes/returns plain `Str` / `Int` / `Float` / `Boolean`.

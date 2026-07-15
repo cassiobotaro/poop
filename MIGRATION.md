@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `decimal.Decimal("3.14")` | `Decimal("3.14")` |
 | `string.ascii_letters` | `string.ascii_letters` |
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
-| `textwrap.fill(t, width=40)` | `textwrap.fill(t, 40)` |
 | `unicodedata.name("A")` | `unicodedata.name("A")` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `calendar.isleap(year)` | `calendar.isleap(year)` |
@@ -448,34 +447,6 @@ greeting = template.substitute({"name": "world"})
 ```
 
 > Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
-
-## Reflowing text (`textwrap` module + `TextWrapper` class)
-
-```python
-# Python
-import textwrap
-
-paragraph = textwrap.fill(blob, width=40)
-short = textwrap.shorten(blob, width=40, placeholder="…")
-quoted = textwrap.indent(blob, "> ")
-stripped = textwrap.dedent("""
-    one
-    two
-""")
-```
-
-```python
-# POOP
-paragraph = textwrap.fill(blob, 40)
-short = textwrap.shorten(blob, 40, "…")
-quoted = textwrap.indent(blob, "> ")
-stripped = textwrap.dedent("""
-    one
-    two
-""")
-```
-
-> Module-level shortcuts (`wrap`, `fill`, `shorten`, `indent`, `dedent`) take a `Str` and the same knobs CPython does. `TextWrapper(width=..., initial_indent=..., subsequent_indent=..., …)` is exposed bare for reusable configuration — its `.wrap(text)` returns `List[Str]`, `.fill(text)` returns `Str`. `textwrap.indent`'s `predicate=` accepts a `Block` / Python callable receiving each `Str` line.
 
 ## Unicode Character Database (`unicodedata` module)
 
