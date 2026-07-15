@@ -897,26 +897,6 @@ The optional kwargs mirror the stdlib on both receivers: `b64encode(altchars)` /
 
 No new POOP type, no transformer, no AST rewrite — the methods live directly on the existing `Bytes` and `Str` classes.
 
-### hmac + HMAC — `poop/types/hmac.py` + `poop/transformers/hmac.py`
-
-`hmac` mirrors Python's `hmac` module — RFC 2104 keyed-hash MAC. Pairs with `hashlib` (still proposed).
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `hmac.new(key, msg=none, digestmod=Str("sha256"))` | `HMAC` | digestmod accepts CPython's string form |
-| `hmac.digest(key, msg, digest)` | `Bytes` | one-shot, constant-time-friendly |
-| `hmac.compare_digest(a, b, /)` | `Boolean` | delegates to CPython |
-| `HMAC.update(msg)` | `none` | mutates in place |
-| `HMAC.digest()` | `Bytes` | |
-| `HMAC.hexdigest()` | `Str` | |
-| `HMAC.copy()` | `HMAC` | independent clone |
-| `HMAC.digest_size` / `.block_size` (property) | `Int` | |
-| `HMAC.name` (property) | `Str` | e.g. `"hmac-sha256"` |
-
-Until `hashlib` ships, `digestmod` is typed as `Str` (mirroring CPython's string-name form). When `hashlib` lands, the type widens to also accept hash constructors.
-
-`hmac` and `HMAC` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/hmac.py` — namespace-only, no AST rewrite.
-
 ### graphlib + TopologicalSorter — `poop/types/graphlib.py` + `poop/transformers/graphlib.py`
 
 `graphlib` mirrors Python's `graphlib` (3.9+) — topological sorting of node graphs for dependency resolution.

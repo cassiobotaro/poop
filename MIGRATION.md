@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `hmac.new(k, m).hexdigest()` | `hmac.new(k, m).hexdigest()` |
 | `graphlib.TopologicalSorter()` | `TopologicalSorter()` |
 | `re.match(p, s).group()` | `re.match(p, s).group()` |
 | `hashlib.sha256(b).hexdigest()` | `b.sha256().hexdigest()` |
@@ -408,28 +407,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## HMAC (`hmac` module + `HMAC` class)
-
-```python
-# Python
-import hmac
-
-mac = hmac.new(key, msg, digestmod="sha256")
-hex_signature = mac.hexdigest()
-ok = hmac.compare_digest(received, expected)
-one_shot = hmac.digest(key, msg, "sha256")
-```
-
-```python
-# POOP
-mac = hmac.new(key, msg, "sha256")
-hex_signature = mac.hexdigest()
-ok = hmac.compare_digest(received, expected)
-one_shot = hmac.digest(key, msg, "sha256")
-```
-
-> `digestmod` accepts a `Str` hash name (`"sha256"`, `"sha512"`, …) since `hashlib` is still proposed — CPython's `hmac.new` already supports the string form. When `hashlib` ships, the type widens.
 
 ## Topological sort (`graphlib` module + `TopologicalSorter` class)
 
