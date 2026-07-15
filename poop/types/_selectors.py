@@ -44,7 +44,8 @@ def explain(obj: object, name: str) -> str:
     Three shapes, most specific first: the Smalltalk selector this receiver
     spells differently, a close match for a typo, or a pointer at `:methods`.
     """
-    label = type(obj).__name__
+    # A class answers its own name; `type(cls)` would say "PoopMeta".
+    label = obj.__name__ if isinstance(obj, type) else type(obj).__name__
     poop_name = SMALLTALK_SELECTORS.get(name)
     if poop_name is not None and hasattr(obj, poop_name):
         return (

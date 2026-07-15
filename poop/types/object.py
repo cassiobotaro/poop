@@ -3,6 +3,8 @@ from builtins import print as _builtins_print
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from poop.types.meta import PoopMeta
+
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.int import Int
@@ -22,8 +24,12 @@ class MessageNotUnderstood(AttributeError):
     """
 
 
-class Object:
+class Object(metaclass=PoopMeta):
     __slots__ = ()
+
+    def class_(self) -> Any:
+        """Smalltalk's `x class` — the class object itself, not its name."""
+        return type(self)
 
     if not TYPE_CHECKING:
         # Hidden from the type checker deliberately. A visible __getattr__
@@ -92,9 +98,9 @@ class Object:
         raise AssertionError(message._value)
 
     def class_name(self) -> Str:
-        from poop.types.string import Str
-
-        return Str(type(self).__name__)
+        # `x class name` in Smalltalk: the name is the class's to answer, not
+        # a fact the instance knows about itself.
+        return self.class_().name()
 
     def hash(self) -> Int:
         from poop.types.int import Int

@@ -588,6 +588,29 @@ Comparison across *non-numeric* types stays `false` (an `Int` is never equal to 
 
 ## Active types
 
+### PoopMeta — `poop/types/meta.py`
+
+Classes are objects and answer messages, as in Smalltalk. `Foo.print()` used to answer `Object.print() missing 1 required positional argument: 'self'` — Python failing to bind a method, not POOP refusing a message.
+
+| Smalltalk message | Method | Behavior |
+|---|---|---|
+| `Foo name` | `Foo.name()` | the class's name as `Str` |
+| `Foo superclass` | `Foo.superclass()` | the superclass **object**, or `none` at the root |
+| `Foo respondsTo: #m` | `Foo.has_attr(name)` | `Boolean`; spelled as the instance side, per `CONTRIBUTING`'s naming rule |
+| `Foo printNl` | `Foo.print()` | prints the class's name |
+| `Foo doesNotUnderstand: #m` | `Foo.does_not_understand(name)` | same hook as `Object`'s |
+| `x class` | `x.class_()` | the class object itself; `class_name()` is now `x.class_().name()` |
+
+`Foo new` is **not** provided: `Foo()` already builds an instance and is not forbidden, so a `new` message would be Smalltalk parity rather than a substitute for anything — the bar cascades and `yourself` failed to clear.
+
+Three constraints, each load-bearing:
+
+- `PoopMeta` derives from `ABCMeta`, not `type`. `Boolean(Object, ABC)` otherwise fails with `metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases`.
+- Every class-side message is a **data descriptor** (`class_side`), not a plain method. Attribute lookup on a class searches the class's own MRO *before* the metaclass, so a plain `PoopMeta.print` would never be reached — `Object.print` would win and answer the unbound function this exists to remove. Only a data descriptor is consulted first. Instances are unaffected: instance lookup never consults the metaclass, so `Foo().print()` still finds `Object.print`.
+- Nothing declares the metaclass. `ClassTransformer` already routes every user class through `Object`, and a metaclass is inherited.
+
+`Object superclass` answers `none`, mirroring Smalltalk's `nil` — which is also what keeps the raw Python `object` at the root out of reach.
+
 ### Object — `poop/types/object.py`
 
 Concrete root of all POOP types. The table below highlights the universal methods that map directly onto Smalltalk messages — it is **not exhaustive**. The full API also includes `if_none`, `if_not_none`, `hash`, `id`, `callable`, `is_subclass`, `repr`, `ascii`, `format`, `has_attr`, `set_attr`, `del_attr`, `does_not_understand`, and `print` (see `poop/types/object.py` for signatures).
