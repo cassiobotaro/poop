@@ -28,7 +28,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--cov=poop"
+addopts = "--cov=poop --cov-fail-under=95"
 testpaths = "tests/"
 strict_parametrization_ids = true
 
@@ -43,7 +43,6 @@ exclude_lines = [
   "raise NotImplementedError",
   '\.\.\.',
 ]
-fail_under = 95
 show_missing = true
 
 [tool.ty.rules]

@@ -208,12 +208,15 @@ GitHub Releases page.
   bounds, `__radd__` requirements for `builtins.sum`).
 - `examples/` is excluded from `ty` and from ruff `F821` because example files
   rely on names injected at runtime (`True` → POOP boolean, etc.).
+- `uv run pytest` enforces a 95% coverage floor (`--cov-fail-under=95` in
+  `addopts`) — a run whose tests all pass still exits non-zero below it.
 - To measure coverage of a single module in isolation, override the project-wide
-  `--cov=poop` from `addopts`:
-  `uv run pytest tests/test_types/test_X.py --cov-config=/dev/null --cov=poop.types.X`.
+  `--cov=poop` from `addopts` and waive the floor for that run:
+  `uv run pytest tests/test_types/test_X.py --cov-config=/dev/null --cov=poop.types.X --cov-fail-under=0`.
   The default `addopts` reports a TOTAL percentage averaged across every module
   in `poop`, so a single-file run shows ~48% TOTAL even when the module itself
-  is 99% covered.
+  is 99% covered — which would trip the floor. `--cov-config=/dev/null` does not
+  waive it on its own: the floor lives in pytest's config, not coverage's.
 
 ## License
 
