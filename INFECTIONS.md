@@ -1224,45 +1224,6 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `configparser`, `ConfigParser`, and `RawConfigParser` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/configparser.py` — namespace-only, no AST rewrite.
 
-### sys + Stdout + Stdin, atexit, gc — `poop/types/{sys,atexit,gc}.py`
-
-Three runtime-services namespaces shipped together. `sys` exposes a curated subset of CPython's `sys` module — introspection-heavy bits (`settrace`, `_getframe`, `monitoring`, audit hooks) are deliberately out of scope. Python attributes like `sys.argv` / `sys.platform` are POOP `@property` attributes returning POOP types — POOP code reads `sys.argv.at(0)` instead of `sys.argv[0]`. `sys.stdout` / `sys.stderr` / `sys.stdin` are properties returning `Stdout` / `Stdin` wrappers that speak POOP types. Python callables (`sys.exit`, `sys.getrecursionlimit`, `sys.setrecursionlimit`) stay as methods. `atexit` registers / unregisters shutdown callbacks (POOP `Block`s). `gc` exposes the garbage-collector control surface only — `get_objects` / `get_referrers` / `is_tracked` etc. are excluded for clashing with POOP's no-introspection rule.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `sys.executable` | `Path` | |
-| `sys.platform` / `sys.version` / `sys.byteorder` | `Str` | |
-| `sys.version_info` | `Tuple(Int, Int, Int, Str, Int)` | `(major, minor, micro, releaselevel, serial)` |
-| `sys.maxsize` (property) / `sys.getrecursionlimit()` (method) | `Int` | |
-| `sys.setrecursionlimit(limit)` | `none` | |
-| `sys.implementation` / `sys.flags` / `sys.float_info` / `sys.int_info` / `sys.hash_info` / `sys.thread_info` | Python object | opaque named tuples |
-| `sys.modules` | `Dict[Str, module]` | snapshot at call time |
-| `sys.path` | `List[Str]` | snapshot at call time |
-| `sys.exit(code=none)` | raises `SystemExit` | accepts `Int` or `Str` |
-| `sys.argv` | `List[Str]` | mirrors Python's `sys.argv` |
-| `sys.stdout` / `sys.stderr` | `Stdout` | wraps real streams |
-| `sys.stdin` | `Stdin` | wraps real stream |
-| `Stdout.write(s)` | `Int` | bytes written |
-| `Stdout.writeln(s=none)` / `.flush()` | `none` | |
-| `Stdout.isatty()` | `Boolean` | |
-| `Stdin.read(size=none)` / `.readline(size=none)` | `Str` | |
-| `Stdin.readlines()` | `List[Str]` | |
-| `Stdin.isatty()` | `Boolean` | iterable over lines |
-| `atexit.register(func, *args, **kwargs)` | the registered callable | matches CPython contract |
-| `atexit.unregister(func)` / `._run_exitfuncs()` / `._clear()` | `none` | |
-| `gc.enable()` / `.disable()` / `.collect(generation=2)` | `none` / `none` / `Int` | unreachable count |
-| `gc.isenabled()` | `Boolean` | |
-| `gc.get_threshold()` / `.get_count()` | `Tuple(Int, Int, Int)` | |
-| `gc.set_threshold(t0, t1=none, t2=none)` | `none` | |
-| `gc.get_stats()` | `List[Dict]` | |
-| `gc.get_debug()` / `.set_debug(flags)` | `Int` / `none` | |
-| `gc.DEBUG_STATS` / `DEBUG_COLLECTABLE` / `DEBUG_UNCOLLECTABLE` / `DEBUG_SAVEALL` / `DEBUG_LEAK` (class attrs) | `Int` | |
-| `gc.freeze()` / `.unfreeze()` | `none` | |
-| `gc.get_freeze_count()` | `Int` | |
-| `gc.callbacks` | Python `list` | mutable, shared with CPython's |
-
-`sys`, `Stdout`, `Stdin`, `atexit`, and `gc` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{sys,atexit,gc}.py` — namespace-only, no AST rewrite. POOP lambdas auto-wrap as `Block`s, so `atexit.register(lambda: ...)` works directly.
-
 ### email + EmailMessage + EmailUtils + EmailPolicy, html + HTMLParser + Entities, xml + ET + Element + ElementTree — `poop/types/{email,html,xml}.py`
 
 Three internet-data / markup namespaces shipped together. `email` exposes the modern `EmailMessage` API (set/get content, multipart, headers as dict-like, attachments, MIME serialization) plus `email.utils` and the preset `email.policy` constants. `html` is small: `escape` / `unescape`, the SAX-style `HTMLParser`, and the named/numeric entity maps via `Entities`. `xml` scopes v1 to `ElementTree` — `Element` / `ElementTree` / `ET.fromstring` / `tostring` / `parse` / `SubElement` / `indent`. SAX (`xml.sax`) and full minidom (`xml.dom.minidom`) are intentionally out of scope.

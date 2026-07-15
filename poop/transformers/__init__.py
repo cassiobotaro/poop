@@ -6,7 +6,6 @@ from builtins import (
 )
 
 from poop.transformers.asyncio import NAMESPACE as _asyncio_namespace
-from poop.transformers.atexit import NAMESPACE as _atexit_namespace
 from poop.transformers.base import Transformer
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
@@ -25,7 +24,6 @@ from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
-from poop.transformers.gc import NAMESPACE as _gc_namespace
 from poop.transformers.gzip import NAMESPACE as _gzip_namespace
 from poop.transformers.html import NAMESPACE as _html_namespace
 from poop.transformers.http import NAMESPACE as _http_namespace
@@ -55,7 +53,6 @@ from poop.transformers.ssl import NAMESPACE as _ssl_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
-from poop.transformers.sys import NAMESPACE as _sys_namespace
 from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.threading import NAMESPACE as _threading_namespace
 from poop.transformers.time import NAMESPACE as _time_namespace
@@ -144,9 +141,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _smtplib_namespace,
     _csv_namespace,
     _configparser_namespace,
-    _sys_namespace,
-    _atexit_namespace,
-    _gc_namespace,
     _email_namespace,
     _html_namespace,
     _xml_namespace,

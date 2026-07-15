@@ -52,11 +52,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `smtplib.SMTP(host, port)` | `SMTP(host, port)` |
 | `csv.reader(f)` | `csv.reader(text)` |
 | `configparser.ConfigParser()` | `ConfigParser()` |
-| `sys.platform` | `sys.platform` |
-| `sys.argv[0]` | `sys.argv.at(0)` |
-| `sys.stdout.write(s)` | `sys.stdout.write(s)` |
-| `atexit.register(f)` | `atexit.register(f)` |
-| `gc.collect()` | `gc.collect()` |
 | `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
 | `email.utils.parseaddr(s)` | `email.utils.parseaddr(s)` |
 | `html.escape(s)` | `html.escape(s)` |
@@ -495,31 +490,6 @@ host = cp.get("server", "host", fallback="localhost")
 ```
 
 > POOP has no file-object abstraction, so `Reader` / `DictReader` take a `Str` (split on newlines) or `List[Str]` of lines; `Writer` / `DictWriter` accumulate into an internal buffer exposed via `.getvalue()`. `Sniffer` autodetects dialect from a sample. Dialect registration (`csv.register_dialect` / `unregister_dialect` / `get_dialect` / `list_dialects`) works as in CPython. `ConfigParser` has `read` (from `Path` / `Str` / `List[Path]`), `read_string` / `read_dict` / `read_file`, plus `write_str` and `write_to(path)` for serialization. Typed accessors (`getint` / `getfloat` / `getboolean`) return POOP wrappers. The full error hierarchy and both interpolation classes (`BasicInterpolation` / `ExtendedInterpolation`) are on the namespace.
-
-## Runtime services (`sys`, `atexit`, `gc`)
-
-```python
-# Python
-import sys, atexit, gc
-
-print(sys.platform, sys.version_info)
-sys.stdout.write("hi\n")
-script = sys.argv[0]
-atexit.register(lambda: print("bye"))
-gc.collect()
-```
-
-```python
-# POOP
-sys.platform.print()
-sys.version_info.print()
-sys.stdout.write("hi\n")
-script = sys.argv.at(0)                  # Str (sys.argv mirrors Python; subscript → .at)
-atexit.register(lambda: "bye".print())   # Block (lambda auto-wraps)
-gc.collect().print()                     # Int
-```
-
-> POOP mirrors Python's `sys` module shape directly — Python attributes (`sys.argv`, `sys.platform`, `sys.version_info`, `sys.modules`, `sys.path`, `sys.maxsize`, …) are exposed as POOP `@property` attributes returning POOP types. So `sys.argv[0]` (subscript, banned in POOP) becomes `sys.argv.at(0)`. `sys.stdout` / `sys.stderr` / `sys.stdin` are properties returning `Stdout` / `Stdin` wrappers. Python callables (`sys.exit(code)`, `sys.getrecursionlimit()`, `sys.setrecursionlimit(n)`) stay as methods. The introspection-heavy `settrace` / `_getframe` / `monitoring` / `audit*` surface is intentionally absent. `atexit` mirrors CPython directly — `register` accepts a POOP `Block` (lambdas auto-wrap), `unregister` / `_run_exitfuncs` / `_clear` work as expected. `gc` exposes the **control surface only**: `enable`/`disable`/`isenabled`/`collect`/`get_threshold`/`set_threshold`/`get_count`/`get_stats`/`get_debug`/`set_debug`/`freeze`/`unfreeze`/`get_freeze_count` as methods plus `callbacks` as `@property` and the `DEBUG_*` constants — `get_objects` / `get_referrers` / `is_tracked` are excluded as introspection.
 
 ## Internet data / markup (`email`, `html`, `xml`)
 
