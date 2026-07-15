@@ -239,6 +239,97 @@ proxies possible (cf. `examples/patterns/proxy.py`).
 `try :methods x` pointer. Verified compatible with `__slots__`; normal message
 lookup is untouched (`__getattr__` fires only on miss).
 
+### 12. Exception types are the last raw primitive in the `Try` surface
+
+Numbered out of document order deliberately: items are stable identifiers —
+`CONTRIBUTING.md` closes them as `docs: close proposal N` — so 7–11 were not
+renumbered to make room.
+
+`Try.except_(ValueError, handler)` and `ValueError.raise_("msg")` both take a
+native CPython class. `INFECTIONS.md` calls it "the only deliberate primitive
+leak" and justifies keeping it: "Mirroring Python's full hierarchy (~100+
+classes) into POOP types is impractical." That justification does not survive
+measurement, on two counts.
+
+**The number is wrong.** Python 3.14 has **71** builtin exceptions, not 100+.
+Eighteen are the `OSError` subtree and five are `Unicode*` — unreachable in a
+language with no I/O and no codecs. Probing real failures through the
+interpreter reaches eight (`IndexError`, `KeyError`, `ValueError`,
+`ZeroDivisionError`, `AttributeError`, `TypeError`, `NameError`,
+`StopIteration`); `poop/types/` raises three more (`RuntimeError`,
+`AssertionError`, `NotImplementedError`). Call it ~11, plus the abstract
+groupers worth naming (`Exception`, `LookupError`, `ArithmeticError`).
+
+**And mirroring needs no translation layer at all** — the load-bearing find.
+`Try._execute()` catches `except BaseException` and then matches with
+`isinstance(e, exc_type)`: **POOP's own code, not Python's `except` clause**. So
+POOP decides what each class matches, via `__instancecheck__`. The obvious
+objection — "a POOP `ValueError` subclassing CPython's would not catch the
+parent, since `except Subclass` does not catch a superclass" — never applies,
+because no Python `except` clause ever sees a user-supplied type.
+
+**Proposal**: mirror the reachable exceptions as POOP classes subclassing their
+native twin — staying raisable, which is what `raise_` depends on — with the
+metaclass deciding the match:
+
+```python
+class PoopExcMeta(PoopMeta):        # item 4's metaclass, already ABCMeta-derived
+    def __instancecheck__(cls, obj):
+        native = cls.__dict__.get("_native")   # not inherited — see the trap
+        if native is None:
+            return super().__instancecheck__(obj)
+        return isinstance(obj, native)
+```
+
+**Verified end-to-end** in the interpreter, mirrors injected into the namespace,
+catching raw CPython exceptions raised from inside POOP's own wrappers:
+
+| program | result |
+|---|---|
+| `Try(lambda: int("abc")).except_(ValueError, …)` | caught the raw `ValueError` |
+| `Try(lambda: {"a": 1}.at("zzz")).except_(LookupError, …)` | caught the raw `KeyError` |
+| `Try(lambda: [1, 2].at(99)).except_(LookupError, …)` | caught the raw `IndexError` |
+| `Try(lambda: {"a": 1}.at("zzz")).except_(ValueError, …)` | no match, re-raised |
+| `Try(lambda: ValueError.raise_("boom")).except_(ValueError, …)` | `boom` |
+
+**Verified trap: `_native` must not be inherited.** A user's
+`class MyError(Error)` inheriting `_native = Exception` makes
+`except_(MyError, …)` catch *every* exception in the program — silent and total.
+Reading `_native` from `cls.__dict__` only, and falling back to normal
+behaviour, fixes it: mirrors match their native twin, user subclasses match
+themselves. The obvious alternative — `__init_subclass__` setting
+`_native = cls` — recurses infinitely, since `__instancecheck__` then calls
+itself. Twelve cases verified, including a user class inheriting from a mirror.
+
+**Depends on item 4**, and strengthens it. The metaclass derives from `PoopMeta`,
+so exception classes become POOP class objects for free, answering `name()`. And
+`ValueError.raise_("boom")` stops being AST theatre: the `raise_` transformer
+today rewrites it to `_poop_raise(ValueError, "msg")`, matching any uppercase
+`Name` followed by `.raise_(...)`, precisely *because* classes cannot receive
+messages. That is a fourth workaround for item 4 beyond the three it lists; the
+fifth is `Error.kind()` answering a `Str` of the type's name — the same
+substitution `class_name()` makes, a name standing in for the class.
+
+**Not a stdlib mirror.** The *Considered and rejected* entry bars mirroring
+*modules*. Builtin exceptions are builtins, like `int` and `list`, which POOP
+already wraps. And both substitutes POOP mandates for forbidden constructs —
+`Try.except_(T, …)` for `try`, `T.raise_(…)` for `raise` — take an exception
+class as an argument, so these classes are load-bearing surface, not parity.
+
+**Open questions**:
+
+- How the names reach user code. `CLAUDE.md` states `DEFAULT_NAMESPACE` is
+  "exactly two names — `Try` and `With`". A transformer rewriting
+  `ast.Name(id="ValueError")` → `_poop_ValueError` keeps that true and fits the
+  architecture better — the shape item 3 used for `Ellipsis`.
+- `Error.kind()` answers the native name (`"ValueError"`); it should probably
+  answer the POOP class once one exists.
+- Whether the root should also inherit `Object`, giving user-defined exceptions
+  `print()` / `class_name()`. Today `class MyError(Exception)` sits outside the
+  `Object` tree entirely — verified: `MyError("x").class_name()` fails, because
+  `ClassTransformer` only injects `Object` when a class declares no base.
+  Untested.
+
 ---
 
 ## Error reporting and the REPL
