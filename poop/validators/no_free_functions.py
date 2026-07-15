@@ -1,15 +1,19 @@
 import ast
 
 from poop.errors import ValidationError
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 
-class NoFreeFunctionsValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoFreeFunctionsVisitor().visit(tree)
+class NoFreeFunctionsValidator(CollectingValidator):
+    def collect(self, tree: ast.Module) -> list[ValidationError]:
+        visitor = _NoFreeFunctionsVisitor()
+        visitor.visit(tree)
+        return visitor.errors
 
 
-class _NoFreeFunctionsVisitor(ast.NodeVisitor):
+class _NoFreeFunctionsVisitor(ErrorCollector):
     def __init__(self) -> None:
+        super().__init__()
         self._class_depth: int = 0
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
@@ -19,18 +23,16 @@ class _NoFreeFunctionsVisitor(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         if self._class_depth == 0:
-            raise ValidationError(
+            self.report(
                 "free functions are forbidden — define methods inside a class",
-                lineno=node.lineno,
-                col_offset=node.col_offset,
+                node,
             )
         self.generic_visit(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         if self._class_depth == 0:
-            raise ValidationError(
+            self.report(
                 "free async functions are forbidden — define methods inside a class",
-                lineno=node.lineno,
-                col_offset=node.col_offset,
+                node,
             )
         self.generic_visit(node)

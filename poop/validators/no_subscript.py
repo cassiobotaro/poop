@@ -1,11 +1,14 @@
 import ast
 
 from poop.errors import ValidationError
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 
-class NoSubscriptValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _NoSubscriptVisitor().visit(tree)
+class NoSubscriptValidator(CollectingValidator):
+    def collect(self, tree: ast.Module) -> list[ValidationError]:
+        visitor = _NoSubscriptVisitor()
+        visitor.visit(tree)
+        return visitor.errors
 
 
 def _is_slice(node: ast.expr) -> bool:
@@ -19,16 +22,16 @@ def _is_slice(node: ast.expr) -> bool:
     )
 
 
-class _NoSubscriptVisitor(ast.NodeVisitor):
+class _NoSubscriptVisitor(ErrorCollector):
     def visit_Subscript(self, node: ast.Subscript) -> None:
         if _is_slice(node.slice):
-            raise ValidationError(
+            self.report(
                 "slice obj[start:stop:step] is forbidden — use obj.slice(start, stop) or obj.slice(start, stop, step) instead",
-                lineno=node.lineno,
-                col_offset=node.col_offset,
+                node,
             )
-        raise ValidationError(
-            "subscript obj[key] is forbidden — use obj.at(key) instead",
-            lineno=node.lineno,
-            col_offset=node.col_offset,
-        )
+        else:
+            self.report(
+                "subscript obj[key] is forbidden — use obj.at(key) instead",
+                node,
+            )
+        self.generic_visit(node)

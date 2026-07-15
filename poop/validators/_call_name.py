@@ -2,6 +2,7 @@ import ast
 from collections.abc import Iterable
 
 from poop.errors import ValidationError
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 
 def make_call_name_validator(
@@ -27,23 +28,21 @@ def make_call_name_validator(
     """
     names = frozenset(forbidden)
 
-    class _Visitor(ast.NodeVisitor):
+    class _Visitor(ErrorCollector):
         def visit_Name(self, node: ast.Name) -> None:
             if node.id in names:
-                raise ValidationError(
-                    message.format(name=node.id),
-                    lineno=node.lineno,
-                    col_offset=node.col_offset,
-                )
+                self.report(message.format(name=node.id), node)
             self.generic_visit(node)
 
-    class _Validator:
+    class _Validator(CollectingValidator):
         # Exposed so the REPL's `:explain` can derive its topic list from the
         # validators themselves. A name banned here but missing there gets
         # answered with "it may simply be allowed" — the opposite of the truth.
         forbidden = names
 
-        def validate(self, tree: ast.Module) -> None:
-            _Visitor().visit(tree)
+        def collect(self, tree: ast.Module) -> list[ValidationError]:
+            visitor = _Visitor()
+            visitor.visit(tree)
+            return visitor.errors
 
     return _Validator

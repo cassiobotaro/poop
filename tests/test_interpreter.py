@@ -176,3 +176,70 @@ def test_validators_only_still_reports_the_specific_async_construct() -> None:
     messages = [str(e) for e in errors]
     assert any("async def is forbidden" in m for m in messages)
     assert any("async for" in m for m in messages)
+
+
+def test_validate_all_reports_every_occurrence_not_just_the_first() -> None:
+    # Three `if`s used to answer exactly one, making a migration a
+    # fix-one/rerun/repeat loop.
+    errors = Interpreter().validate_all(
+        "class C:\n"
+        "    def m(self):\n"
+        "        if a:\n"
+        "            pass\n"
+        "        if b:\n"
+        "            pass\n"
+        "        if c:\n"
+        "            pass\n"
+    )
+    assert [e.lineno for e in errors] == [3, 5, 7]
+
+
+def test_validate_all_reports_in_source_order() -> None:
+    # Emitted in DEFAULT_VALIDATORS order before: lines 3, 4, 5, 6 came back
+    # as 5, 6, 4, 3.
+    errors = Interpreter().validate_all(
+        "class C:\n"
+        "    def m(self):\n"
+        "        x = len(a)\n"
+        "        y = a and b\n"
+        "        z = print(c)\n"
+        "        w = not d\n"
+    )
+    assert [e.lineno for e in errors] == [3, 4, 5, 6]
+
+
+def test_validate_all_sorts_by_column_within_a_line() -> None:
+    errors = Interpreter().validate_all(
+        "class C:\n    def m(self):\n        len(print(a))\n"
+    )
+    assert [e.col_offset for e in errors] == sorted(e.col_offset for e in errors)
+    assert len(errors) == 2
+
+
+def test_validate_all_descends_into_a_rejected_node() -> None:
+    # An `if` inside an `if` is two rewrites; reporting only the outer one
+    # would restore the fix-one/rerun loop.
+    errors = Interpreter().validate_all(
+        "class C:\n"
+        "    def m(self):\n"
+        "        if a:\n"
+        "            if b:\n"
+        "                pass\n"
+    )
+    assert [e.lineno for e in errors] == [3, 4]
+
+
+def test_validate_all_reports_a_chained_comparison_once() -> None:
+    # `in` twice in one Compare is one node and one rewrite.
+    errors = Interpreter().validate_all(
+        "class C:\n    def m(self):\n        a in b in c\n"
+    )
+    assert len(errors) == 1
+
+
+def test_run_source_still_stops_at_the_first_error() -> None:
+    # Collecting is for --validators-only; running a program still fails fast.
+    with pytest.raises(ValidationError):
+        Interpreter().run_source(
+            "class C:\n    def m(self):\n        if a:\n            pass\n"
+        )

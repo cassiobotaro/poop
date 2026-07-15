@@ -2,6 +2,7 @@ import ast
 from collections.abc import Callable, Mapping
 
 from poop.errors import ValidationError
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 
 def make_node_validator(messages: Mapping[type[ast.AST], str]) -> type:
@@ -12,16 +13,16 @@ def make_node_validator(messages: Mapping[type[ast.AST], str]) -> type:
             visit_<NodeType> method is generated per entry.
 
     Returns:
-        A Validator class that raises ValidationError on any banned node.
+        A Validator class that reports every banned node.
     """
 
-    def _make_visit(msg: str) -> Callable[[ast.NodeVisitor, ast.AST], None]:
-        def visit(self: ast.NodeVisitor, node: ast.AST) -> None:
-            raise ValidationError(
-                msg,
-                lineno=getattr(node, "lineno", 0),
-                col_offset=getattr(node, "col_offset", 0),
-            )
+    def _make_visit(msg: str) -> Callable[[ErrorCollector, ast.AST], None]:
+        def visit(self: ErrorCollector, node: ast.AST) -> None:
+            self.report(msg, node)
+            # Descend into the rejected node rather than stopping there: an
+            # `if` nested in an `if` is two rewrites, and reporting only the
+            # outer one restores the fix-one/rerun loop this exists to end.
+            self.generic_visit(node)
 
         return visit
 
@@ -29,10 +30,12 @@ def make_node_validator(messages: Mapping[type[ast.AST], str]) -> type:
         f"visit_{node_type.__name__}": _make_visit(msg)
         for node_type, msg in messages.items()
     }
-    visitor_cls = type("_Visitor", (ast.NodeVisitor,), visitor_methods)
+    visitor_cls = type("_Visitor", (ErrorCollector,), visitor_methods)
 
-    class _Validator:
-        def validate(self, tree: ast.Module) -> None:
-            visitor_cls().visit(tree)
+    class _Validator(CollectingValidator):
+        def collect(self, tree: ast.Module) -> list[ValidationError]:
+            visitor = visitor_cls()
+            visitor.visit(tree)
+            return visitor.errors
 
     return _Validator

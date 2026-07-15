@@ -3,6 +3,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from poop.errors import ValidationError
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 
 def make_op_validator(
@@ -30,34 +31,32 @@ def make_op_validator(
     op_messages = dict(messages)
     is_compare = node_type is ast.Compare
 
-    def _raise(node: ast.AST, message: str) -> None:
-        raise ValidationError(
-            message,
-            lineno=getattr(node, "lineno", 0),
-            col_offset=getattr(node, "col_offset", 0),
-        )
-
-    def _visit(self: ast.NodeVisitor, node: Any) -> None:
+    def _visit(self: ErrorCollector, node: Any) -> None:
         if allow is None or not allow(node):
             if is_compare:
                 for op in node.ops:
                     message = op_messages.get(type(op))
                     if message is not None:
-                        _raise(node, message)
+                        # One error per node, not per banned op: a chain
+                        # reports once, as the docstring above promises.
+                        self.report(message, node)
+                        break
             else:
                 message = op_messages.get(type(node.op))
                 if message is not None:
-                    _raise(node, message)
+                    self.report(message, node)
         self.generic_visit(node)
 
     visitor_cls = type(
         "_Visitor",
-        (ast.NodeVisitor,),
+        (ErrorCollector,),
         {f"visit_{node_type.__name__}": _visit},
     )
 
-    class _Validator:
-        def validate(self, tree: ast.Module) -> None:
-            visitor_cls().visit(tree)
+    class _Validator(CollectingValidator):
+        def collect(self, tree: ast.Module) -> list[ValidationError]:
+            visitor = visitor_cls()
+            visitor.visit(tree)
+            return visitor.errors
 
     return _Validator

@@ -1,18 +1,18 @@
 import ast
 
 from poop.errors import ValidationError
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 _PREFIX = "_poop_"
 
 
-class _Visitor(ast.NodeVisitor):
+class _Visitor(ErrorCollector):
     def _reject(self, name: str, node: ast.AST, *, dotted: bool = False) -> None:
         if name.startswith(_PREFIX):
             label = f".{name}" if dotted else name
-            raise ValidationError(
+            self.report(
                 f"{label} is forbidden — names starting with _poop_ are reserved for the runtime",
-                lineno=getattr(node, "lineno", 0),
-                col_offset=getattr(node, "col_offset", 0),
+                node,
             )
 
     def _check_args(self, args: ast.arguments) -> None:
@@ -57,6 +57,8 @@ class _Visitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-class NoPoopPrefixValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _Visitor().visit(tree)
+class NoPoopPrefixValidator(CollectingValidator):
+    def collect(self, tree: ast.Module) -> list[ValidationError]:
+        visitor = _Visitor()
+        visitor.visit(tree)
+        return visitor.errors

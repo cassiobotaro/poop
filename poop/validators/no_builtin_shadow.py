@@ -1,5 +1,7 @@
 import ast
 
+from poop.errors import ValidationError
+from poop.validators.base import CollectingValidator
 from poop.validators.no_namespace_shadow import _Visitor
 
 # The lowercase builtin names the type transformers rewrite to mangled
@@ -34,6 +36,8 @@ _BUILTIN_NAMES = frozenset(
 _MESSAGE = "{name!r} is a POOP builtin name; it cannot be rebound"
 
 
-class NoBuiltinShadowValidator:
-    def validate(self, tree: ast.Module) -> None:
-        _Visitor(_BUILTIN_NAMES, _MESSAGE).visit(tree)
+class NoBuiltinShadowValidator(CollectingValidator):
+    def collect(self, tree: ast.Module) -> list[ValidationError]:
+        visitor = _Visitor(_BUILTIN_NAMES, _MESSAGE)
+        visitor.visit(tree)
+        return visitor.errors

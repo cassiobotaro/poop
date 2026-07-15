@@ -41,13 +41,18 @@ class Interpreter:
     def validate_all(
         self, source: str, filename: str = "<string>"
     ) -> list[ValidationError]:
+        """Every rejection in the file, in source order.
+
+        `validate` stops at the first error per validator, which reported one
+        `if` out of three and emitted in DEFAULT_VALIDATORS order — so errors
+        on lines 2, 3, 4, 5 came back as 3, 5, 2, 4. Collecting reports every
+        occurrence; sorting puts them in the order they are read in.
+        """
         tree: ast.Module = parse(source, filename=filename)
-        errors: list[ValidationError] = []
-        for validator in self._validators:
-            try:
-                validator.validate(tree)
-            except ValidationError as exc:
-                errors.append(exc)
+        errors: list[ValidationError] = [
+            error for validator in self._validators for error in validator.collect(tree)
+        ]
+        errors.sort(key=lambda error: (error.lineno, error.col_offset))
         return errors
 
     def transform_source(self, source: str, filename: str = "<string>") -> ast.Module:

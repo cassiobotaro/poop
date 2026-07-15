@@ -1,6 +1,7 @@
 import ast
 
 from poop.errors import ValidationError
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 _NAMESPACE_MESSAGE = (
     "{name!r} is a POOP namespace binding; reassigning it shadows the "
@@ -8,18 +9,15 @@ _NAMESPACE_MESSAGE = (
 )
 
 
-class _Visitor(ast.NodeVisitor):
+class _Visitor(ErrorCollector):
     def __init__(self, protected: frozenset[str], message: str) -> None:
+        super().__init__()
         self._protected = protected
         self._message = message
 
     def _check(self, name: str, node: ast.AST) -> None:
         if name in self._protected:
-            raise ValidationError(
-                self._message.format(name=name),
-                lineno=getattr(node, "lineno", 0),
-                col_offset=getattr(node, "col_offset", 0),
-            )
+            self.report(self._message.format(name=name), node)
 
     def _visit_target(self, target: ast.AST) -> None:
         # Handles `x = ...`, `x: T = ...`, `x += ...`, and unpacking
@@ -78,7 +76,7 @@ class _Visitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-class NoNamespaceShadowValidator:
+class NoNamespaceShadowValidator(CollectingValidator):
     def __init__(self) -> None:
         # Pull the set of user-facing entry points from
         # DEFAULT_NAMESPACE so the protected list stays in sync with
@@ -92,5 +90,7 @@ class NoNamespaceShadowValidator:
             n for n in DEFAULT_NAMESPACE if not n.startswith("_poop_")
         )
 
-    def validate(self, tree: ast.Module) -> None:
-        _Visitor(self._protected, _NAMESPACE_MESSAGE).visit(tree)
+    def collect(self, tree: ast.Module) -> list[ValidationError]:
+        visitor = _Visitor(self._protected, _NAMESPACE_MESSAGE)
+        visitor.visit(tree)
+        return visitor.errors
