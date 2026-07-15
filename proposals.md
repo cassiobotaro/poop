@@ -175,7 +175,7 @@ Scope note: this touches `no_type`'s substitute column, `is_instance`, `Try`, an
 `INFECTIONS.md`'s primitive-leak tradeoffs. Worth agreeing on the class-side
 protocol before any code.
 
-### 5. `Try` and `With` are the only blocks that swallow their value
+### ~~5. `Try` and `With` are the only blocks that swallow their value~~ — DONE
 
 Verified — this prints `Try`, not `42`:
 
@@ -207,12 +207,30 @@ That is the imperative, side-effecting style POOP exists to eliminate — and it
 puts `no_try` in violation of "**Activate validator only when the substitute
 exists**".
 
-**Proposal**: `.run()` / `.finally_()` answer the protected block's value, or the
-matching handler's value when one fires; `With.do()` answers the body's value.
-Builder chaining is unaffected — both are terminal. `finally_`'s cleanup value is
-discarded, mirroring Smalltalk's `ensure:`.
+**Decision: answer the value.** `.run()` / `.finally_()` answer the protected
+block's value, or the matching handler's when one fires; `With.do()` answers the
+body's. `no_try` now has the substitute it always advertised:
 
-**Breaking**: `feat!`. Code relying on the returned `Try`/`With` changes meaning.
+```python
+return Try(lambda: int(text)).except_(ValueError, lambda e: -1).run()
+```
+
+**The breaking change cost one line of production code and five tests.** Nothing
+in `examples/` chains off `.run()` / `.do()` / `.finally_()`, and no test asserts
+the returned value for its own sake — the five that broke all used
+`t = Try(...).run()` merely to get the `Try` back and probe the single-use
+invariant. Binding the `Try` first tests the same thing and depends on nothing.
+`feat!` still stands for anyone outside this repo.
+
+The one test that did lock the old contract was `test_with_returns_self_for_chaining`
+— and `With`'s entire public API is `__init__` and `do()`. There was never
+anything to chain onto; the test enshrined a rationale that never existed.
+
+**Found while implementing: `With.do()` has a path with no body value.** When the
+body raises and `__exit__` suppresses it, the body never produced anything to
+answer — this proposal said "answers the body's value" and did not define the
+case. It answers `none`, mirroring Python, where a suppressed exception simply
+carries on past the block.
 
 ### 6. No `doesNotUnderstand:`
 
