@@ -5,7 +5,6 @@ from builtins import (
     list as _list,  # preserve builtin before poop.transformers.list shadows it
 )
 
-from poop.transformers.array import NAMESPACE as _array_namespace
 from poop.transformers.asyncio import NAMESPACE as _asyncio_namespace
 from poop.transformers.atexit import NAMESPACE as _atexit_namespace
 from poop.transformers.base import Transformer
@@ -154,7 +153,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _string_namespace,
     _zoneinfo_namespace,
     _calendar_namespace,
-    _array_namespace,
     _weakref_namespace,
     _enum_namespace,
     _fractions_namespace,

@@ -43,7 +43,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `calendar.isleap(year)` | `calendar.isleap(year)` |
-| `array.array("i", xs)` | `Array("i", xs)` |
 | `weakref.ref(obj)` | `WeakRef(obj)` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
 | `fractions.Fraction(1, 2)` | `Fraction(1, 2)` |
@@ -485,26 +484,6 @@ weeks = cal.monthdatescalendar(2026, 5)
 ```
 
 > Module-level shortcuts (`isleap`, `leapdays`, `weekday`, `monthrange`, `monthcalendar`, `month`, `calendar`, `timegm`) plus the weekday/month constants (`MONDAY` … `SUNDAY`, `JANUARY` … `DECEMBER`) live on the namespace. The reusable `Calendar` class is bare (PascalCase); its `iter*` methods return materialized POOP `List`s — POOP collections are not lazy. The rendering classes are bare too: `TextCalendar` (`formatmonth`/`formatyear`), `HTMLCalendar` (`formatmonth`/`formatyear`/`formatyearpage`), and the locale-aware `LocaleTextCalendar` / `LocaleHTMLCalendar`.
-
-## Typed arrays (`array` module + `Array` class)
-
-```python
-# Python
-import array
-
-a = array.array("i", [1, 2, 3])
-a.append(4)
-buf = a.tobytes()
-```
-
-```python
-# POOP
-a = Array("i", [1, 2, 3])
-a.append(4)
-buf = a.tobytes()
-```
-
-> `Array(typecode, initializer=none)` — typecode is `Str`, initializer is `List` or `Bytes`. Integer typecodes (`b`/`B`/`h`/`H`/`i`/`I`/`l`/`L`/`q`/`Q`) take `Int`; float typecodes (`f`/`d`) take `Float`. Typecode `u` is deprecated upstream and intentionally omitted — use `List[Str]` for character data. The full sequence surface is exposed (`append`/`extend`/`insert`/`pop`/`remove`/`count`/`index`/`reverse`/`at`/`slice`/`tobytes`/`tolist`/`frombytes`/`fromlist`/`do`/`includes`); `array.typecodes` is on the namespace. `fromfile`/`tofile` are deferred.
 
 ## Weak references (`weakref` module + `WeakRef` / `WeakSet` / `WeakKeyDictionary` / `WeakValueDictionary`)
 
