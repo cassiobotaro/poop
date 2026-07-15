@@ -47,7 +47,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `lzma.compress(b)` | `lzma.compress(b)` |
 | `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
 | `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
-| `locale.getpreferredencoding()` | `locale.getpreferredencoding()` |
 | `ipaddress.ip_address("::1")` | `ipaddress.ip_address("::1")` |
 | `urllib.parse.urlparse(u)` | `urllib.parse.urlparse(u)` |
 | `urllib.request.urlopen(u)` | `urllib.request.urlopen(u)` |
@@ -459,28 +458,6 @@ With.do(TarFile.open(Path("a.tar.gz"), "w:gz"),
 ```
 
 > All compression entry points are `Bytes` in / `Bytes` out. File-handle classes (`GzipFile` / `BZ2File` / `LZMAFile`) and archive classes (`ZipFile` / `TarFile`) are `With`-friendly and path-based — POOP has no file-object abstraction. The `compression` umbrella (Python 3.14) re-exports the per-format namespaces under `compression.zlib` / `.gzip` / `.bz2` / `.lzma`. Streaming compressor/decompressor pairs (`Compress` / `Decompress`, `BZ2Compressor` / `BZ2Decompressor`, `LZMACompressor` / `LZMADecompressor`) cover the chunked use cases. `TarFile.extractall` defaults to the safe `filter="data"` (3.14+); callers who want the historical unsafe behavior pass `filter="fully_trusted"` explicitly. `compression.zstd` is out of scope until Python 3.14's API stabilises.
-
-## Locale (`locale` module)
-
-```python
-# Python
-import locale
-
-locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
-locale.atof("1,234.56")              # 1234.56
-locale.format_string("%d", 1000000, grouping=True)
-encoding = locale.getpreferredencoding()
-```
-
-```python
-# POOP
-locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
-locale.atof("1,234.56")              # Float(1234.56)
-locale.format_string("%d", 1000000, grouping=true)
-encoding = locale.getpreferredencoding()  # Str
-```
-
-> Categories (`LC_ALL` / `LC_CTYPE` / `LC_COLLATE` / `LC_TIME` / `LC_MONETARY` / `LC_NUMERIC` / `LC_MESSAGES`) and `CHAR_MAX` are class attributes on the namespace. `getlocale` / `getdefaultlocale` return a `Tuple(Str \| NoneClass, Str \| NoneClass)`. `localeconv` returns a `Dict[Str, Object]` covering the full LC_NUMERIC / LC_MONETARY convention. `locale.Error` is the Python exception class for `Try.except_` on unknown locale names. `LC_MESSAGES` falls back to `LC_ALL` on platforms missing the POSIX category (e.g. Windows). `currency` raises `ValueError` in the C locale (which has no monetary symbol).
 
 ## Internet protocols (`ipaddress`, `urllib`, `http`, `smtplib`)
 

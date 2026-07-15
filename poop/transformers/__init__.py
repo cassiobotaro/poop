@@ -34,7 +34,6 @@ from poop.transformers.int import IntTransformer
 from poop.transformers.io import NAMESPACE as _io_namespace
 from poop.transformers.ipaddress import NAMESPACE as _ipaddress_namespace
 from poop.transformers.list import ListTransformer
-from poop.transformers.locale import NAMESPACE as _locale_namespace
 from poop.transformers.logging import NAMESPACE as _logging_namespace
 from poop.transformers.lzma import NAMESPACE as _lzma_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
@@ -144,7 +143,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _zipfile_namespace,
     _tarfile_namespace,
     _compression_namespace,
-    _locale_namespace,
     _ipaddress_namespace,
     _urllib_namespace,
     _http_namespace,
