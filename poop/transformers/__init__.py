@@ -10,21 +10,17 @@ from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
 from poop.transformers.bytes import BytesTransformer
-from poop.transformers.bz2 import NAMESPACE as _bz2_namespace
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
-from poop.transformers.compression import NAMESPACE as _compression_namespace
 from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
 from poop.transformers.dict import DictTransformer
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
-from poop.transformers.gzip import NAMESPACE as _gzip_namespace
 from poop.transformers.int import IntTransformer
 from poop.transformers.io import NAMESPACE as _io_namespace
 from poop.transformers.list import ListTransformer
 from poop.transformers.logging import NAMESPACE as _logging_namespace
-from poop.transformers.lzma import NAMESPACE as _lzma_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.multiprocessing import NAMESPACE as _multiprocessing_namespace
 from poop.transformers.none import NoneTransformer
@@ -40,7 +36,6 @@ from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
-from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.threading import NAMESPACE as _threading_namespace
 from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
@@ -49,8 +44,6 @@ from poop.transformers.unpack import UnpackTransformer
 from poop.transformers.varargs import VarargsTransformer
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.zip import ZipTransformer
-from poop.transformers.zipfile import NAMESPACE as _zipfile_namespace
-from poop.transformers.zlib import NAMESPACE as _zlib_namespace
 
 DEFAULT_TRANSFORMERS: _list[Transformer] = [
     BooleanTransformer(),
@@ -110,13 +103,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _string_namespace,
-    _zlib_namespace,
-    _gzip_namespace,
-    _bz2_namespace,
-    _lzma_namespace,
-    _zipfile_namespace,
-    _tarfile_namespace,
-    _compression_namespace,
     _os_namespace,
     _io_namespace,
     _time_namespace,

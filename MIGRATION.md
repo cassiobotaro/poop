@@ -39,12 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
-| `zlib.compress(b)` | `zlib.compress(b)` |
-| `gzip.compress(b)` | `gzip.compress(b)` |
-| `bz2.compress(b)` | `bz2.compress(b)` |
-| `lzma.compress(b)` | `lzma.compress(b)` |
-| `zipfile.ZipFile(p, "w")` | `ZipFile(p, "w")` |
-| `tarfile.open(p, "w:gz")` | `TarFile.open(p, "w:gz")` |
 | `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
 | `ET.fromstring(text)` | `ET.fromstring(text)` |
 | `ET.tostring(elem)` | `ET.tostring(elem)` |
@@ -331,53 +325,6 @@ greeting = template.substitute({"name": "world"})
 ```
 
 > Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
-
-## Compression (`zlib` / `gzip` / `bz2` / `lzma` / `zipfile` / `tarfile` + `compression` umbrella)
-
-```python
-# Python
-import zlib, gzip, bz2, lzma, zipfile, tarfile
-
-raw = zlib.compress(b"hello world")
-zlib.decompress(raw)
-zlib.crc32(b"abc")
-
-with gzip.open("out.gz", "wb") as f:
-    f.write(b"payload")
-
-bz2.compress(b"payload")
-lzma.decompress(lzma.compress(b"payload"))
-
-with zipfile.ZipFile("a.zip", "w") as z:
-    z.writestr("file.txt", b"data")
-    z.extractall("/tmp/out")
-
-with tarfile.open("a.tar.gz", "w:gz") as t:
-    t.add("source", arcname="source")
-```
-
-```python
-# POOP
-raw = zlib.compress(b"hello world")        # Bytes
-zlib.decompress(raw)
-zlib.crc32(b"abc")                          # Int
-
-With.do(gzip.open(Path("out.gz"), "wb"),
-        Block(lambda f: f.write(b"payload")))
-
-bz2.compress(b"payload")
-lzma.decompress(lzma.compress(b"payload"))
-
-With.do(ZipFile(Path("a.zip"), "w"), Block(lambda z: (
-    z.writestr("file.txt", b"data"),
-    z.extractall(Path("/tmp/out")),
-)))
-
-With.do(TarFile.open(Path("a.tar.gz"), "w:gz"),
-        Block(lambda t: t.add(Path("source"), "source")))
-```
-
-> All compression entry points are `Bytes` in / `Bytes` out. File-handle classes (`GzipFile` / `BZ2File` / `LZMAFile`) and archive classes (`ZipFile` / `TarFile`) are `With`-friendly and path-based — POOP has no file-object abstraction. The `compression` umbrella (Python 3.14) re-exports the per-format namespaces under `compression.zlib` / `.gzip` / `.bz2` / `.lzma`. Streaming compressor/decompressor pairs (`Compress` / `Decompress`, `BZ2Compressor` / `BZ2Decompressor`, `LZMACompressor` / `LZMADecompressor`) cover the chunked use cases. `TarFile.extractall` defaults to the safe `filter="data"` (3.14+); callers who want the historical unsafe behavior pass `filter="fully_trusted"` explicitly. `compression.zstd` is out of scope until Python 3.14's API stabilises.
 
 ## Generic OS (`os`, `io`, `time`, `logging`, `platform`)
 
