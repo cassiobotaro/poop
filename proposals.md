@@ -430,19 +430,38 @@ asserted `"forbidden" in out` as a proxy for "a validator spoke", and held only
 by luck of wording — `no_unary_minus` answers "allowed only on numeric literals"
 and broke it. It now asserts the two non-explanation branches directly.
 
-### 10. One error per validator, in registration order
+### ~~10. One error per validator, in registration order~~ — DONE
 
-`make_node_validator` raises on first hit, aborting the visitor, and
-`validate_all` catches one per validator. Verified: a file with three `if`s
-reports exactly one — even under `--validators-only`, whose help text promises
-"report all errors". The flag reports every *validator*, not every *occurrence*.
-Migrating a real Python file becomes fix-one/rerun/repeat.
+**Decision: collect, then sort.** `collect()` is now the validator primitive and
+`validate()` is derived — "raise the first error `collect` found" — so
+`--validators-only` reports every occurrence in source order while running a
+program still fails fast. Three `if`s answer three errors; errors on lines 3, 4,
+5, 6 came back as 5, 6, 4, 3 and now come back in order.
 
-`--validators-only` also emits in `DEFAULT_VALIDATORS` order, not source order.
-Verified on a file whose errors sit on lines 2, 3, 4, 5 — reported as 3, 5, 2, 4.
+Collecting had to be the primitive rather than the derived one: a raise has
+already thrown away the rest of the walk, so all-errors cannot be rebuilt from
+first-error. Keeping `validate()` in the protocol carried its weight — 409 tests
+call it, and its contract is unchanged.
 
-**Proposal**: sort `--validators-only` output by `(lineno, col_offset)` — trivial
-— and let validators accumulate occurrences rather than raise on the first.
+Eight visitors needed the change, not the three factories alone:
+`no_free_functions`, `no_subscript`, `no_poop_prefix` and the visitor shared by
+`no_namespace_shadow` / `no_builtin_shadow` are hand-written.
+
+**Two traversal decisions this item did not raise:**
+
+- *Descend into a rejected node.* `make_node_validator` stopped at the first
+  banned node and never recursed. An `if` nested in an `if` is two rewrites, and
+  reporting only the outer one restores the fix-one/rerun loop this item exists
+  to end — so the walk now continues into it.
+- *One error per `Compare`, not per banned op.* `a in b in c` is one node and one
+  rewrite. `_op.py` already promised "rejects the first banned op"; a `break`
+  keeps that true now that the loop no longer exits by raising.
+
+Still true, and out of scope: running a program reports the first *validator*
+that fires, not the earliest error in the file — `poop f.py` cites line 5 where
+`--validators-only` starts at line 3. This item scoped itself to
+`--validators-only`. Closing that one means running all 66 validators before
+reporting, which is cheap on an error path but is its own decision.
 
 ---
 
