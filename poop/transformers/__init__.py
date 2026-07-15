@@ -25,7 +25,6 @@ from poop.transformers.csv import NAMESPACE as _csv_namespace
 from poop.transformers.datetime import NAMESPACE as _datetime_namespace
 from poop.transformers.decimal import NAMESPACE as _decimal_namespace
 from poop.transformers.dict import DictTransformer
-from poop.transformers.difflib import NAMESPACE as _difflib_namespace
 from poop.transformers.email import NAMESPACE as _email_namespace
 from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
@@ -155,7 +154,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _datetime_namespace,
     _decimal_namespace,
     _string_namespace,
-    _difflib_namespace,
     _textwrap_namespace,
     _unicodedata_namespace,
     _zoneinfo_namespace,

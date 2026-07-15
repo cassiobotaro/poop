@@ -988,30 +988,6 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
 
-### difflib + SequenceMatcher — `poop/types/difflib.py` + `poop/transformers/difflib.py`
-
-`difflib` mirrors Python's `difflib` module — text-line diffs (`unified_diff`, `context_diff`, `ndiff`, `restore`), fuzzy matching (`get_close_matches`), and the element-wise `SequenceMatcher` class for detailed diff queries.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `difflib.unified_diff(a, b, fromfile=none, tofile=none, fromfiledate=none, tofiledate=none, n=none, lineterm=none)` | `List[Str]` | `a` / `b` are `List[Str]` of lines |
-| `difflib.context_diff(a, b, …)` | `List[Str]` | same arg shape as `unified_diff` |
-| `difflib.ndiff(a, b, linejunk=none, charjunk=none)` | `List[Str]` | `?`/`-`/`+`/` ` marker per line; `linejunk` / `charjunk` are `Block`s routed through `block.bridge` (`charjunk=none` uses CPython's default `IS_CHARACTER_JUNK`) |
-| `difflib.restore(seq, which)` | `List[Str]` | `which` is `Int(1)` or `Int(2)` |
-| `difflib.get_close_matches(word, possibilities, n=none, cutoff=none)` | `List[Str]` | defaults match CPython (`n=3`, `cutoff=0.6`) |
-| `SequenceMatcher(a, b, isjunk=none, autojunk=none)` | `SequenceMatcher` | `a` / `b` are `Str` (per-char) or `List[Str]` (per-line); `isjunk` is a `Block` routed through `block.bridge` |
-| `SequenceMatcher.ratio()` / `.quick_ratio()` / `.real_quick_ratio()` | `Float` | |
-| `SequenceMatcher.get_matching_blocks()` | `List[Tuple(Int, Int, Int)]` | `(a, b, size)` per block |
-| `SequenceMatcher.get_opcodes()` | `List[Tuple(Str, Int, Int, Int, Int)]` | `(tag, i1, i2, j1, j2)` |
-| `SequenceMatcher.find_longest_match(alo=none, ahi=none, blo=none, bhi=none)` | `Tuple(Int, Int, Int)` | |
-| `Differ(linejunk=none, charjunk=none)` | `Differ` | constructor accepts `Block` predicates |
-| `Differ.compare(a, b)` | `List[Str]` | marker-prefixed line diff |
-| `HtmlDiff(tabsize=none, wrapcolumn=none, linejunk=none, charjunk=none)` | `HtmlDiff` | HTML diff renderer |
-| `HtmlDiff.make_file(fromlines, tolines, fromdesc=none, todesc=none, context=false, numlines=none)` / `.make_table(...)` | `Str` | full HTML document / inner `<table>` only |
-| `difflib.IS_CHARACTER_JUNK(ch, ws=none)` / `.IS_LINE_JUNK(line)` | `Boolean` | default predicates exposed for reuse |
-
-`difflib`, `SequenceMatcher`, `Differ`, and `HtmlDiff` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/difflib.py` — namespace-only, no AST rewrite.
-
 ### textwrap + TextWrapper — `poop/types/textwrap.py` + `poop/transformers/textwrap.py`
 
 `textwrap` mirrors Python's `textwrap` module — reflowing multi-line strings. Module-level shortcuts cover the common cases; the reusable `TextWrapper` class captures the full set of wrapping knobs.

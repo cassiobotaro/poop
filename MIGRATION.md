@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `decimal.Decimal("3.14")` | `Decimal("3.14")` |
 | `string.ascii_letters` | `string.ascii_letters` |
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
-| `difflib.get_close_matches(w, xs)` | `difflib.get_close_matches(w, xs)` |
 | `textwrap.fill(t, width=40)` | `textwrap.fill(t, 40)` |
 | `unicodedata.name("A")` | `unicodedata.name("A")` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
@@ -449,28 +448,6 @@ greeting = template.substitute({"name": "world"})
 ```
 
 > Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
-
-## Diffs and fuzzy matching (`difflib` module + `SequenceMatcher` class)
-
-```python
-# Python
-import difflib
-
-diff = list(difflib.unified_diff(a_lines, b_lines, fromfile="a", tofile="b"))
-matches = difflib.get_close_matches("appel", ["apple", "ape", "peach"])
-sm = difflib.SequenceMatcher(None, "abcd", "abef")
-ratio = sm.ratio()
-```
-
-```python
-# POOP
-diff = difflib.unified_diff(a_lines, b_lines, "a", "b")
-matches = difflib.get_close_matches("appel", ["apple", "ape", "peach"])
-sm = SequenceMatcher("abcd", "abef")
-ratio = sm.ratio()
-```
-
-> Diff producers (`unified_diff`, `context_diff`, `ndiff`, `restore`) return `List[Str]` — POOP collections are not lazy. `get_close_matches` defaults match CPython (`n=3`, `cutoff=0.6`). `SequenceMatcher` is in scope without the `difflib.` prefix; the `isjunk` / `linejunk` / `charjunk` predicates take POOP lambdas (routed through the block bridge) and `autojunk` is exposed. `Differ` and `HtmlDiff` are bare too; the default junk predicates are reachable as `difflib.IS_CHARACTER_JUNK` / `difflib.IS_LINE_JUNK`.
 
 ## Reflowing text (`textwrap` module + `TextWrapper` class)
 
