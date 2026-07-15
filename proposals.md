@@ -137,7 +137,7 @@ supply it — so `...` has no idiomatic role in POOP. All 8 occurrences of `...`
 
 ## Language features
 
-### 4. Classes are not objects
+### ~~4. Classes are not objects~~ — DONE
 
 The deepest remaining gap, and the one most central to Smalltalk. Classes do not
 answer messages:
@@ -160,20 +160,56 @@ missing piece:
 A metaclass closes all three at once. `ClassTransformer` already reroutes every
 user class through `Object`, so the metaclass propagates for free.
 
-**Proposal**: `PoopMeta` providing the class-side protocol — `name()`,
-`superclass()`, `new(...)`, `responds_to(...)`, `print()` — and `x.class_()` on
-`Object` answering the class object itself (Smalltalk's `x class`), with
-`class_name()` becoming `x.class_().name()`.
+**Decision: `PoopMeta`, with the protocol the surface criterion admits.**
+`Foo.print()` answers `Foo`. The class side is `name()`, `superclass()`,
+`has_attr()`, `print()` and `does_not_understand()`; `x.class_()` answers the
+class object, and `class_name()` is now `x.class_().name()`.
 
-**Verified constraint**: `PoopMeta` **must** derive from `ABCMeta`, not `type`.
-`Boolean(Object, ABC)` otherwise fails with `metaclass conflict: the metaclass of
-a derived class must be a (non-strict) subclass of the metaclasses of all its
-bases`. With `ABCMeta` as the base, a prototype worked and subclasses inherited
-the metaclass automatically.
+**Two of the five proposed messages did not survive the criterion.** `new(...)`
+is out: `Foo()` already builds an instance and is not forbidden, so `Foo new`
+would be parity, not substitution — the bar *Considered and rejected* set for
+cascades and `yourself`. And `responds_to` is spelled `has_attr`, per
+`CONTRIBUTING`'s naming rule ("`filter`, not `select`") and the instance side.
+The three that stay each substitute a ban: `name()` for `type()`, `print()` for
+`print`, `superclass()` for the `__bases__`/`__mro__` that item 2 will ban — and
+it has to exist first, by "activate a validator only when the substitute exists".
 
-Scope note: this touches `no_type`'s substitute column, `is_instance`, `Try`, and
-`INFECTIONS.md`'s primitive-leak tradeoffs. Worth agreeing on the class-side
-protocol before any code.
+**The prototype in this item tested only `name()`, and that hid the real
+problem.** Attribute lookup on a class searches the class's own MRO *before* the
+metaclass, so a plain `PoopMeta.print` is never reached: `Object.print` wins and
+answers `Object.print() missing 1 required positional argument: 'self'` — the
+exact symptom this item exists to remove. `name()` worked only because `Object`
+happens not to define it. Every class-side message is therefore a **data
+descriptor** (`class_side`), which lookup does consult first. Instances are
+untouched: instance lookup never consults the metaclass, so `Foo().print()`
+still finds `Object.print`. Verified both ways, including a user class declaring
+its own `name` method — the class side still answers.
+
+The `ABCMeta` constraint held exactly as recorded, and the metaclass propagates
+with nothing declaring it.
+
+**`Object superclass` answers `none`**, mirroring Smalltalk's `nil`. That is also
+what keeps the raw Python `object` at the root out of reach.
+
+**Classes now answer `doesNotUnderstand:` too.** Item 6 gave the hook to
+instances only, since `Object.__getattr__` is instance-level — leaving
+`(5).frobnicate()` answering "int does not understand #frobnicate" while
+`Foo.frobnicate()` still answered "type object 'Foo' has no attribute". The
+metaclass is where that hook was missing.
+
+**Found while implementing, and still open**: a bare `object` in POOP source is
+never rewritten and reaches runtime as the raw CPython class —
+`object.class_name()` answers `type object 'object' has no attribute
+'class_name'`. Every other lowercase builtin gets a `Name`-position rewrite
+(`int.name()` answers `int`); `object` is rewritten only in class-base position,
+by `ClassTransformer`. `CLAUDE.md`'s "lowercase Python builtins (`int`, `list`,
+`object`, …) get rewritten" is inaccurate for exactly one name. Pre-existing, and
+its own item.
+
+Scope note, now settled: `no_type`'s substitute column and `is_instance` are
+closed by this. `Try.except_` is **not** — `ValueError` is a raw CPython class
+that never passes through `Object`, so `PoopMeta` cannot reach it. That third
+leak needs item 12.
 
 ### ~~5. `Try` and `With` are the only blocks that swallow their value~~ — DONE
 
