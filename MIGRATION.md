@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
-| `tempfile.mkdtemp()` | `tempfile.mkdtemp()` |
 | `shutil.copy(a, b)` | `shutil.copy(a, b)` |
 | `pickle.dumps(obj)` | `pickle.dumps(obj)` |
 | `zlib.compress(b)` | `zlib.compress(b)` |
@@ -415,36 +414,6 @@ Color(Int(2))             # Color.GREEN
 ```
 
 > The bases (`Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`) are bare alongside the `enum` namespace; `auto()` is also bare. `.name` stays a Python `str` (CPython's enum protocol and decorators like `@unique` depend on that). Use `.name_str()` for a POOP `Str`. `.value` returns whatever was assigned — raw Python primitives stay raw; use `.value_object()` to wrap them. POOP value lookup works via `_missing_`: `Color(Int(1))` finds the same member as `Color(1)`. `enum.unique` / `verify` / `member` / `nonmember` apply directly. `ReprEnum` is re-exported as-is (it can't be subclassed without a data-type mixin). `EnumType` metaclass access is out of scope.
-
-## Temporary files and directories (`tempfile` module + temp classes)
-
-```python
-# Python
-import tempfile
-
-with tempfile.TemporaryDirectory() as d:
-    ...
-
-with tempfile.NamedTemporaryFile() as f:
-    f.write(b"data")
-    name = f.name
-
-fd, path = tempfile.mkstemp()
-```
-
-```python
-# POOP
-With.do(TemporaryDirectory(), Block(lambda d: ...))
-
-ntf = NamedTemporaryFile()
-ntf.write(b"data")
-name = ntf.name
-ntf.close()
-
-result = tempfile.mkstemp()  # Tuple(Int(fd), Path)
-```
-
-> `TemporaryDirectory` / `TemporaryFile` / `NamedTemporaryFile` / `SpooledTemporaryFile` are bare alongside the `tempfile` namespace. Each is a context manager and exposes the minimal binary surface (`.read` / `.write` / `.seek` / `.tell` / `.flush` / `.close`) so callers can populate or drain the file without a separate POOP I/O abstraction. `NamedTemporaryFile.name` and `TemporaryDirectory.name` return `Path`. `tempfile.tempdir` reads the current search-path override; assign to it (`tempfile.tempdir = Path("/tmp")` or `tempfile.tempdir = none` to clear) to mutate it.
 
 ## High-level file operations (`shutil` module)
 

@@ -936,30 +936,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
 
-### tempfile + TemporaryFile / NamedTemporaryFile / SpooledTemporaryFile / TemporaryDirectory — `poop/types/tempfile.py` + `poop/transformers/tempfile.py`
-
-`tempfile` mirrors Python's `tempfile` module — secure temp files and directories. Module-level factories return `Path` (or `Tuple(Int, Path)` for `mkstemp` exposing the raw file descriptor); the four temp classes are `With`-friendly and expose minimal binary `.read` / `.write` / `.seek` / `.tell` / `.flush` / `.close` so callers can populate or drain a file without a separate POOP I/O abstraction.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `tempfile.mkstemp(suffix=none, prefix=none, dir=none, text=none)` | `Tuple(Int, Path)` | `(fd, path)` — close `fd` with `os.close` after use |
-| `tempfile.mkdtemp(suffix=none, prefix=none, dir=none)` | `Path` | |
-| `tempfile.gettempdir()` | `Path` | |
-| `tempfile.gettempprefix()` | `Str` | |
-| `tempfile.gettempdirb()` | `Bytes` | |
-| `tempfile.gettempprefixb()` | `Bytes` | |
-| `tempfile.tempdir` | `Path` / `none` | current search-path override (read property) |
-| `tempfile.tempdir = path` | `none` | setter — assign a `Path`/`Str` or `none` to clear |
-| `TemporaryDirectory(suffix=none, prefix=none, dir=none, ignore_cleanup_errors=none)` | `TemporaryDirectory` | `.name` returns `Path`; `.cleanup()` removes; `With` yields the `Path` |
-| `TemporaryFile(mode=none, suffix=none, prefix=none, dir=none)` | `TemporaryFile` | anonymous file; `With` yields the wrapper |
-| `NamedTemporaryFile(mode=none, …, delete=none)` | `NamedTemporaryFile` | `.name` returns `Path`; default `delete=true` |
-| `SpooledTemporaryFile(max_size=none, mode=none, …)` | `SpooledTemporaryFile` | `.rollover()` forces flush to disk |
-| `_TempFileBase.write(data)` / `.read(size=none)` / `.seek(offset, whence=none)` / `.tell()` / `.flush()` / `.close()` | varies | binary by default; pass `mode=Str("w+")` for text |
-
-The private `_RandomNameSequence` class is out of scope for v1.
-
-`tempfile`, `TemporaryFile`, `NamedTemporaryFile`, `SpooledTemporaryFile`, and `TemporaryDirectory` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/tempfile.py` — namespace-only, no AST rewrite.
-
 ### shutil — `poop/types/shutil.py` + `poop/transformers/shutil.py`
 
 `shutil` mirrors Python's `shutil` module — high-level file operations: copy/move/remove trees, archive create/extract, disk and terminal info. Paths accept either `Path` or `Str` everywhere; return values are `Path` when CPython returns a path-like.
