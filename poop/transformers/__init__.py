@@ -13,6 +13,7 @@ from poop.transformers.bytes import BytesTransformer
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.complex import ComplexTransformer
 from poop.transformers.dict import DictTransformer
+from poop.transformers.ellipsis import EllipsisTransformer
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
@@ -36,6 +37,7 @@ from poop.transformers.zip import ZipTransformer
 DEFAULT_TRANSFORMERS: _list[Transformer] = [
     BooleanTransformer(),
     NoneTransformer(),
+    EllipsisTransformer(),
     ComplexTransformer(),
     BytesTransformer(),
     ByteArrayTransformer(),
@@ -68,6 +70,7 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
 _BINDING_SOURCES: _list[_dict[str, object]] = [
     BooleanTransformer.BINDINGS,
     NoneTransformer.BINDINGS,
+    EllipsisTransformer.BINDINGS,
     ComplexTransformer.BINDINGS,
     BytesTransformer.BINDINGS,
     ByteArrayTransformer.BINDINGS,

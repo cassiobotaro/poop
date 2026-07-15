@@ -16,8 +16,8 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 - **Activate validator only when the substitute exists**: blocking without offering an alternative only breaks code without teaching anything. Validators without an implemented substitute live in `proposals.md` until the alternative is ready. *Exception*: **definitive bans** — constructs with no possible substitute inside POOP's model (`exec`/`eval`/`compile`, `exit`/`quit`, `breakpoint`, `globals`/`locals`/`vars`, `open`, `async def`/`await`) are activated without a substitute. Each is documented under its own validator below; the ban is the design decision, not a deferred item.
 - **Representation**: all POOP types implement `__str__` (and `__repr__` delegates to it). `Object.print` calls `str(obj)` internally — every printed message goes through the type's own representation.
 - **`__slots__` on all POOP types**: instance variables are declared in the class definition and fixed — never added dynamically to instances. Runtime *method* extension continues to work normally. Subclasses that need new instance variables can declare their own `__slots__` or omit them.
-- **Every literal is transformed**: every literal in Python source (`1`, `3.14`, `"hello"`, `True`, `False`, `None`, `[1, 2]`, `(1, 2)`, `{1, 2}`, `{k: v}`, `b"..."`, `1+2j`) is rewritten by a Transformer into its POOP equivalent before execution — no naked Python primitive ever reaches runtime.
-- **Every basic type has a POOP equivalent**: `int` → `Int`, `float` → `Float`, `str` → `Str`, `bool` → `Boolean`, `NoneType` → `NoneClass`, `list` → `List`, `tuple` → `Tuple`, `set` → `Set`, `frozenset` → `FrozenSet`, `dict` → `Dict`, `bytes` → `Bytes`, `bytearray` → `ByteArray`, `memoryview` → `MemoryView`, `complex` → `Complex`. Python native types must not leak into POOP code.
+- **Every literal is transformed**: every literal in Python source (`1`, `3.14`, `"hello"`, `True`, `False`, `None`, `...`, `[1, 2]`, `(1, 2)`, `{1, 2}`, `{k: v}`, `b"..."`, `1+2j`) is rewritten by a Transformer into its POOP equivalent before execution — no naked Python primitive ever reaches runtime.
+- **Every basic type has a POOP equivalent**: `int` → `Int`, `float` → `Float`, `str` → `Str`, `bool` → `Boolean`, `NoneType` → `NoneClass`, `ellipsis` → `EllipsisClass`, `list` → `List`, `tuple` → `Tuple`, `set` → `Set`, `frozenset` → `FrozenSet`, `dict` → `Dict`, `bytes` → `Bytes`, `bytearray` → `ByteArray`, `memoryview` → `MemoryView`, `complex` → `Complex`. Python native types must not leak into POOP code.
 - **All POOP methods return POOP types**: every method on every POOP type must return a POOP object — never a raw Python `int`, `bool`, `str`, `list`, etc. Returning a native type is a bug. *Exception*: Python protocol dunders (`__bool__`, `__hash__`, `__len__`, `__str__`, `__int__`, `__float__`, `__contains__`, `__repr__`) must return native types because Python itself requires it for `if`, `dict`, `len()`, `str()`, etc. to work. The rule applies to all explicitly named POOP methods (`len()`, `hash()`, `not_()`, `includes()`, `tobytes()`, etc.).
 - **Mutators named after Python void-returning methods return `none`**: methods that mirror Python counterparts returning `None` (e.g., `list.append`, `set.add`, `dict.update`, `bytearray.reverse`) must return POOP `none`, not `self`. This preserves the Python mirror contract — `result = lst.append(x)` leaves `result` as `none`, matching what a Python programmer expects. POOP-specific methods with no Python equivalent (e.g., `List.add`, `Dict.at_put`, `ByteArray.at_put`) may still return `self` for chaining.
 - **`True`, `False`, and `None` are singletons**: `true`, `false`, and `none` are unique objects — there is exactly one instance of each. All comparisons and identity checks rely on this guarantee.
@@ -630,6 +630,16 @@ Concrete root of all POOP types. The table below highlights the universal method
 
 `UnpackTransformer` (`poop/transformers/unpack.py`) keeps starred unpacking on the POOP side: CPython's `UNPACK_EX` builds the rest-collection of `c, *rest = xs` as a raw `list`, so after each assignment containing a `*target` the transformer appends `target = _poop_list_from(target)` — one per starred name, handling nested (`a, (b, *inner) = …`) and attribute (`a, *self.rest = …`) targets.
 
+### EllipsisClass — `poop/types/ellipsis.py`
+
+`EllipsisClass(Object)` with singleton `ellipsis`. Transformer rewrites `ast.Constant(value=Ellipsis)` → `_poop_ellipsis`.
+
+`...` is a placeholder, not a value with messages, so `EllipsisClass` carries no behaviour of its own beyond the universal `Object` protocol — the same shape as `NoneClass`, and for the same reason: it exists so `...` is not the one literal that reaches runtime as a naked Python primitive.
+
+`__str__` returns `"Ellipsis"` and `class_name()` answers `"ellipsis"`, matching CPython's `str(...)` and `type(...).__name__`.
+
+No validator bans `...`: with the literal transformed, `pass` and `...` are both valid stub bodies and neither leaks a primitive. Note that POOP's own examples declare no abstract methods at all — the base class simply omits the message and lets polymorphism supply it — so `...` has no idiomatic role in POOP beyond Python muscle memory.
+
 ### Boolean — `poop/types/boolean.py`
 
 `Boolean(Object, ABC)` with private subclasses `_TrueClass` and `_FalseClass`. Singletons `true`/`false` replace `True`/`False` via transformer.
@@ -816,6 +826,15 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 | `ast.Constant(value=float)` | `_poop_float(n)` |
 | `ast.UnaryOp(USub, Constant(float))` | `_poop_float(-n)` — collapsed negative literal |
 | `ast.Call` with `float(x)` | `_poop_float_from(x)` |
+
+### Ellipsis — `poop/transformers/ellipsis.py`
+
+| AST node | Replacement |
+|---|---|
+| `ast.Constant(value=Ellipsis)` | `_poop_ellipsis` |
+| `ast.Name(id="Ellipsis")` | `_poop_ellipsis` |
+
+The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the same value, and rewriting only the literal would leave the name handing out the raw primitive — the same asymmetry `vars()` / `obj.__dict__` shows for validators.
 
 ### Boolean — `poop/transformers/boolean.py`
 
