@@ -18,7 +18,6 @@ from poop.transformers.concurrent import NAMESPACE as _concurrent_namespace
 from poop.transformers.configparser import NAMESPACE as _configparser_namespace
 from poop.transformers.csv import NAMESPACE as _csv_namespace
 from poop.transformers.dict import DictTransformer
-from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
@@ -113,7 +112,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _string_namespace,
-    _enum_namespace,
     _zlib_namespace,
     _gzip_namespace,
     _bz2_namespace,

@@ -876,39 +876,6 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
 
-### enum + Enum + IntEnum + StrEnum + Flag + IntFlag + ReprEnum — `poop/types/enum.py` + `poop/transformers/enum.py`
-
-`enum` mirrors Python's `enum` module — typed enumeration classes (`class Color(Enum): RED = 1`). The standard CPython machinery is preserved (members, lookups, `@unique`, `auto()`, etc.) and POOP adds:
-
-- `.name_str()` returning POOP `Str` — `.name` itself stays a Python `str` because CPython's enum machinery (and decorators like `@unique`) compare it for identity.
-- `.value_object()` returning a wrapped POOP value (`Int`/`Str`/`Float`/`Boolean`) — `.value` returns whatever was assigned (raw Python primitives stay raw; POOP types pass through unchanged).
-- `_missing_` is wired so `Color(Int(1))` resolves to `Color.RED` exactly like `Color(1)`.
-- `Enum.iter()` returns a POOP `List` of members.
-- Operator results are POOP-typed: `==`/`!=` answer a POOP `Boolean` (so `(state == State.IDLE).if_true(...)` works), `<`/`<=`/`>`/`>=` answer a `Boolean` for the int-based families, and `IntEnum`/`IntFlag` arithmetic (`LOW + HIGH`) answers a POOP `Int`. `__hash__` is preserved, so alias resolution and member-keyed dict lookup keep working; `IntFlag` bitwise `|`/`&`/`^`/`~` keep CPython's flag-combination semantics (they answer flag members).
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `class Color(Enum): RED = 1` | enum class | members are class-side singletons |
-| `Color.RED.name` | Python `str` | matches Python's enum protocol |
-| `Color.RED.name_str()` | `Str` | POOP-shaped name |
-| `Color.RED.value` | whatever was assigned | raw Python primitive or POOP type |
-| `Color.RED.value_object()` | `Int` / `Str` / `Float` / `Boolean` | wrapped POOP form |
-| `Color(value)` / `Color(Int(value))` | enum member | POOP wrappers are unwrapped before lookup |
-| `Enum("Color", names)` (functional API) | enum class | `names` may be a `List` of `Str`, a space/comma `Str`, or `List` of `(name, value)` `Tuple`s — unwrapped via a metaclass `__call__` before delegating |
-| `Color.iter()` | `List` | materialized member list |
-| `IntEnum` / `StrEnum` / `Flag` / `IntFlag` | enum classes | same POOP helpers, plus the data-type mixin from CPython |
-| `ReprEnum` | enum class (re-exported) | requires a data-type mixin (`class Color(int, ReprEnum): ...`); `.name`/`.value` stay raw Python types in this path |
-| `auto()` | sentinel | sequential value generation inside an enum body; on a plain `Enum` the value answers a POOP `Int` (like a literal member), while the primitive-mixed families (`IntEnum`/`IntFlag`/`StrEnum`) and `Flag` keep a raw value reachable via `.value_object()` |
-| `enum.unique` / `verify` / `member` / `nonmember` (class attrs) | decorators | apply directly on enum classes |
-| `enum.global_enum` / `pickle_by_enum_name` / `pickle_by_global_name` (class attrs) | decorators | module-level repr / pickling policy, re-exported from CPython |
-| `enum.property` (class attr) | descriptor | enum-specific `@property` that coexists with member names |
-| `enum.CONTINUOUS` / `NAMED_FLAGS` / `UNIQUE` (class attrs) | constants | for `@verify` |
-| `enum.STRICT` / `CONFORM` / `EJECT` / `KEEP` (class attrs) | constants | `Flag` boundary policies (`boundary=` kwarg) |
-
-`EnumType` metaclass access is out of scope (POOP forbids introspection).
-
-`enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
-
 ### zlib + Compress + Decompress — `poop/types/zlib.py` + `poop/transformers/zlib.py`
 
 `zlib` mirrors Python's `zlib` module — DEFLATE compression plus CRC32 / Adler32 checksums. `Compress` and `Decompress` are POOP wrappers around `zlib.compressobj`/`decompressobj` for streaming.

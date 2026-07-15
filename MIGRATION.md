@@ -334,36 +334,6 @@ greeting = template.substitute({"name": "world"})
 
 > Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
 
-## Enumerations (`enum` module + `Enum` / `IntEnum` / `StrEnum` / `Flag` / `IntFlag` / `ReprEnum`)
-
-```python
-# Python
-from enum import Enum, auto
-
-class Color(Enum):
-    RED = 1
-    GREEN = 2
-    BLUE = auto()
-
-Color.RED.name        # "RED"
-Color.RED.value       # 1
-Color(2)              # Color.GREEN
-```
-
-```python
-# POOP
-class Color(Enum):
-    RED = 1
-    GREEN = 2
-    BLUE = auto()
-
-Color.RED.name_str()      # Str("RED")
-Color.RED.value_object()  # Int(1)
-Color(Int(2))             # Color.GREEN
-```
-
-> The bases (`Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`) are bare alongside the `enum` namespace; `auto()` is also bare. `.name` stays a Python `str` (CPython's enum protocol and decorators like `@unique` depend on that). Use `.name_str()` for a POOP `Str`. `.value` returns whatever was assigned — raw Python primitives stay raw; use `.value_object()` to wrap them. POOP value lookup works via `_missing_`: `Color(Int(1))` finds the same member as `Color(1)`. `enum.unique` / `verify` / `member` / `nonmember` apply directly. `ReprEnum` is re-exported as-is (it can't be subclassed without a data-type mixin). `EnumType` metaclass access is out of scope.
-
 ## Compression (`zlib` / `gzip` / `bz2` / `lzma` / `zipfile` / `tarfile` + `compression` umbrella)
 
 ```python
