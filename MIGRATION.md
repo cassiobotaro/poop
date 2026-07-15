@@ -45,12 +45,7 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `class T(unittest.TestCase):` | `class T(TestCase):` |
 | `cProfile.Profile()` | `Profile()` |
 | `pstats.Stats(p)` | `Stats(p)` |
-| `os.getpid()` | `os.getpid()` |
-| `os.environ["HOME"]` | `os.environ.get("HOME")` |
 | `io.StringIO(...)` | `StringIO(...)` |
-| `time.time()` | `time.time()` |
-| `logging.getLogger(...)` | `logging.getLogger(...)` |
-| `platform.system()` | `platform.system()` |
 
 ## Control flow
 
@@ -301,6 +296,31 @@ Path("out.txt").write_text(text.upper())
 
 > `open()` is a definitive ban. `Path` covers `read_text` / `write_text` / `read_bytes` / `write_bytes` plus the rest of `pathlib`. There is no `Path.open(mode)` yet — file handles aren't exposed.
 
+## In-memory buffers (`io` module + `StringIO` / `BytesIO`)
+
+```python
+# Python
+import io
+
+buf = io.StringIO()
+buf.write("hello")
+print(buf.getvalue())
+
+with io.BytesIO(b"abc") as b:
+    head = b.read(1)
+```
+
+```python
+# POOP
+buf = StringIO()
+buf.write("hello")                         # Int — characters written
+buf.getvalue().print()                     # Str
+
+With(lambda: BytesIO(b"abc")).do(lambda b: b.read(1).print())
+```
+
+> `io` and `Path` are the two library-shaped names POOP keeps, on the same grounds: they are entry points the language itself needs rather than stdlib parity. `Path` is what the `open` ban points at, and `io` is its in-memory counterpart. Both buffers are `With` context managers, and both expose `read` / `readline` / `write` / `getvalue` / `seek` / `tell` / `truncate` / `close`, with `io.SEEK_SET` / `SEEK_CUR` / `SEEK_END` for `seek`. Disk I/O still goes through `Path` — POOP has no file-object abstraction.
+
 ## ASCII character classes and string templates (`string` module + `Template` class)
 
 ```python
@@ -320,50 +340,4 @@ greeting = template.substitute({"name": "world"})
 ```
 
 > Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
-
-## Generic OS (`os`, `io`, `time`, `logging`, `platform`)
-
-```python
-# Python
-import os, io, time, logging, platform
-
-random_bytes = os.urandom(16)
-pid = os.getpid()
-cwd = os.getcwd()
-home = os.environ.get("HOME")
-
-buf = io.StringIO()
-buf.write("hello")
-buf.getvalue()
-
-t = time.time()
-time.sleep(0.1)
-
-logger = logging.getLogger("app")
-logger.info("hi")
-
-system = platform.system()
-```
-
-```python
-# POOP
-random_bytes = os.urandom(16)             # Bytes
-pid = os.getpid()                          # Int
-cwd = os.getcwd()                          # Path
-home = os.environ.get("HOME")              # Str | none
-
-buf = StringIO()
-buf.write("hello")
-buf.getvalue().print()                     # Str
-
-t = time.time()                            # Float
-time.sleep(0.1)
-
-logger = logging.getLogger("app")
-logger.info("hi")
-
-platform.system().print()                  # Str
-```
-
-> POOP mirrors Python's `os` module shape directly: `os.getpid()`/`getppid()`/`getuid()`/`getgid()`/`geteuid()`/`getegid()` for process IDs, `os.umask`/`chdir`/`getcwd`/`kill` for current-process state, plus the low-level helpers (`urandom`, `cpu_count`, `process_cpu_count`, `getloadavg`) and the standard flag/separator constants (`F_OK`/`R_OK`/`W_OK`/`X_OK`, `O_RDONLY` etc, `sep`/`linesep`/`pathsep`/`devnull`). Environment access lives on the `os.environ` sub-namespace — since POOP forbids subscript syntax, Python's `os.environ["X"] = "y"` becomes `os.environ.set("X", "y")` (the `get`/`unset`/`has`/`keys`/`values`/`as_dict` methods round out the API). `os.path` is **intentionally absent**: every operation is reachable through POOP's `Path` mirror. `io` exposes the in-memory buffers `StringIO` / `BytesIO` (both work as `With` context managers) plus the seek constants — disk I/O continues to go through `Path.read_text`/`write_text`/`read_bytes`/`write_bytes`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API in both seconds (`Float`) and nanoseconds (`Int`), plus parse/format helpers and `StructTime`. `logging` is the canonical Python `Logger`/`Handler`/`Formatter` triad — `set*` accessors return `none`, mutable booleans use `set_propagate`. `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment metadata; `Uname` exposes the standard six-field record.
 

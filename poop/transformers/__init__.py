@@ -19,12 +19,9 @@ from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
 from poop.transformers.io import NAMESPACE as _io_namespace
 from poop.transformers.list import ListTransformer
-from poop.transformers.logging import NAMESPACE as _logging_namespace
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
-from poop.transformers.os import NAMESPACE as _os_namespace
 from poop.transformers.path import NAMESPACE as _path_namespace
-from poop.transformers.platform import NAMESPACE as _platform_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
@@ -32,7 +29,6 @@ from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
-from poop.transformers.time import NAMESPACE as _time_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.unpack import UnpackTransformer
@@ -98,11 +94,7 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _string_namespace,
-    _os_namespace,
     _io_namespace,
-    _time_namespace,
-    _logging_namespace,
-    _platform_namespace,
 ]
 
 DEFAULT_NAMESPACE: _dict[str, object] = {}

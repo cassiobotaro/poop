@@ -876,89 +876,25 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
 
-### os + Environ, io + StringIO + BytesIO, time + StructTime, logging + Logger + Handler + Formatter, platform + Uname — `poop/types/{os,io,time,logging,platform}.py`
+### io + StringIO + BytesIO — `poop/types/io.py` + `poop/transformers/io.py`
 
-Five generic-OS namespaces shipped together. `os` mirrors Python's `os` module shape directly: process-state queries (`getpid`/`getppid`/`getuid`/`getgid`/`geteuid`/`getegid`/`umask`/`chdir`/`getcwd`/`kill`), random bytes (`urandom`), CPU counts (`cpu_count`/`process_cpu_count`/`getloadavg`), and the low-level flag/separator constants. The `os.environ` sub-namespace handles environment variables — since POOP forbids subscript syntax, Python's `os.environ["X"] = "y"` becomes the explicit `os.environ.set("X", "y")`. `os.path` is **intentionally absent** — every operation is reachable via `Path`. `io` exposes the in-memory buffers `StringIO` / `BytesIO` plus the seek constants — disk I/O still goes through `Path.read_*` / `write_*`. `time` mirrors the wall-clock / monotonic / perf-counter / process-time / thread-time API plus parse/format helpers; `StructTime` wraps `time.struct_time`. `logging` exposes the canonical xUnit-style framework (Logger + Handler + Formatter) — `logging.config` and `logging.handlers` are out of scope for v1. `platform` returns runtime environment info and exposes `Uname` as a POOP record.
+`io` exposes the in-memory buffers `StringIO` / `BytesIO` plus the seek constants. It survives the removal of the stdlib mirrors for the same reason `Path` does: both are POOP-specific entry points rather than library surface — `Path` is the substitute the `no_open` ban points at, and `io` is the in-memory half of the same story. Disk I/O still goes through `Path.read_*` / `write_*`; POOP has no file-object abstraction and does not mirror Python's file protocol.
 
 | Operation | Returns | Notes |
 |---|---|---|
-| `os.urandom(n)` | `Bytes` | |
-| `os.cpu_count()` / `.process_cpu_count()` | `Int` / `none` | |
-| `os.getloadavg()` | `Tuple(Float, Float, Float)` | Unix only |
-| `os.F_OK` / `R_OK` / `W_OK` / `X_OK` / `O_RDONLY` / `O_WRONLY` / `O_RDWR` / `O_APPEND` / `O_CREAT` / `O_TRUNC` / `O_EXCL` (class attrs) | `Int` | |
-| `os.sep` / `linesep` / `pathsep` / `devnull` (class attrs) | `Str` | |
-| `os.getpid()` / `.getppid()` / `.getuid()` / `.getgid()` / `.geteuid()` / `.getegid()` | `Int` | |
-| `os.umask(m)` | `Int` | previous mask |
-| `os.chmod(path, mode, follow_symlinks=true)` | `none` | path-mode permission bits |
-| `os.chown(path, uid, gid, follow_symlinks=true)` | `none` | path ownership |
-| `os.chdir(p)` / `.kill(pid, sig)` | `none` | |
-| `os.getcwd()` | `Path` | |
-| `os.walk(top, topdown=true, onerror=none, followlinks=false)` | `List[Tuple(Path, List[Str], List[Str])]` | eager; `onerror` accepts a `Block` routed through `block.bridge` |
-| `os.environ.get(key, default=none)` | `Str` / `none` | |
-| `os.environ.set(key, value)` / `.unset(key)` | `none` | mutators (replace Python's `environ[k]=v` / `del environ[k]`) |
-| `os.environ.has(key)` | `Boolean` | |
-| `os.environ.keys()` | `Set[Str]` | |
-| `os.environ.values()` | `List[Str]` | |
-| `os.environ.as_dict()` | `Dict[Str, Str]` | snapshot |
-| `StringIO(initial='', newline=none)` / `BytesIO(initial=b'')` | buffer | works as `With` ctx mgr |
-| `StringIO.read(size=none)` / `.readline(size=none)` / `.getvalue()` | `Str` | |
-| `BytesIO.read(size=none)` / `.readline(size=none)` / `.getvalue()` | `Bytes` | |
-| `StringIO/BytesIO.write(x)` / `.seek(p, w=none)` / `.tell()` / `.truncate(s=none)` | `Int` | |
-| `StringIO/BytesIO.close()` | `none` | |
+| `StringIO(initial_value=none, newline=none)` | `StringIO` | in-memory text buffer |
+| `BytesIO(initial_bytes=none)` | `BytesIO` | in-memory binary buffer |
+| `.read(size=none)` / `.readline(size=none)` | `Str` / `Bytes` | per buffer type |
+| `.write(s)` | `Int` | characters/bytes written |
+| `.getvalue()` | `Str` / `Bytes` | |
+| `.seek(pos, whence=none)` / `.tell()` | `Int` | `whence` defaults to `SEEK_SET` |
+| `.truncate(size=none)` | `Int` | new size |
+| `.close()` | `none` | both buffers are context managers — `With(lambda: StringIO()).do(…)` |
 | `io.SEEK_SET` / `SEEK_CUR` / `SEEK_END` / `DEFAULT_BUFFER_SIZE` (class attrs) | `Int` | |
-| `io.UnsupportedOperation` / `BlockingIOError` (class attrs) | exception class | |
-| `time.time()` / `.monotonic()` / `.perf_counter()` / `.process_time()` / `.thread_time()` | `Float` | seconds |
-| `time.time_ns()` / `.monotonic_ns()` / `.perf_counter_ns()` / `.process_time_ns()` / `.thread_time_ns()` | `Int` | nanoseconds |
-| `time.sleep(seconds)` | `none` | |
-| `time.strftime(fmt, t=none)` / `.asctime(t=none)` / `.ctime(secs=none)` | `Str` | |
-| `time.strptime(s, fmt)` / `.gmtime(secs=none)` / `.localtime(secs=none)` | `StructTime` | |
-| `time.mktime(t)` | `Float` | |
-| `time.tzname` | `Tuple(Str, Str)` | |
-| `time.timezone` / `time.altzone` / `time.daylight` | `Int` | |
-| `time.CLOCK_REALTIME` / `CLOCK_MONOTONIC` / `CLOCK_MONOTONIC_RAW` / `CLOCK_PROCESS_CPUTIME_ID` / `CLOCK_THREAD_CPUTIME_ID` / `CLOCK_BOOTTIME` (class attrs) | `Int` or `none` | POSIX clock IDs; `none` on platforms without the helper |
-| `time.clock_gettime(id)` / `.clock_getres(id)` | `Float` | POSIX clock read |
-| `time.clock_gettime_ns(id)` | `Int` | nanosecond precision read |
-| `time.clock_settime(id, t)` / `.clock_settime_ns(id, t)` | `none` | privileged write (typically `CLOCK_REALTIME` only) |
-| `StructTime.tm_year` / `tm_mon` / `tm_mday` / `tm_hour` / `tm_min` / `tm_sec` / `tm_wday` / `tm_yday` / `tm_isdst` (properties) | `Int` | |
-| `StructTime.tm_zone` / `tm_gmtoff` (properties) | `Str` or `none` / `Int` or `none` | |
-| `logging.getLogger(name=none)` | `Logger` | |
-| `logging.basicConfig(*, filename=none, filemode=none, format=none, datefmt=none, style=none, level=none, handlers=none, force=false, encoding=none, errors=none)` | `none` | `filename` is a POOP `Path`; `stream` omitted (no file-object abstraction) |
-| `logging.debug/info/warning/error/critical(msg)` / `.log(level, msg)` | `none` | root logger shortcuts |
-| `logging.getLevelName(level)` / `.addLevelName(level, name)` | `Str` / `none` | |
-| `logging.StreamHandler()` / `.NullHandler()` / `.FileHandler(path)` | `Handler` | |
-| `logging.CRITICAL` / `ERROR` / `WARNING` / `INFO` / `DEBUG` / `NOTSET` (class attrs) | `Int` | |
-| `Logger.setLevel(l)` / `.addHandler(h)` / `.removeHandler(h)` | `none` | |
-| `Logger.getEffectiveLevel()` | `Int` | |
-| `Logger.isEnabledFor(level)` / `.propagate` (property) | `Boolean` | `.propagate` writable via assignment |
-| `Logger.debug/info/warning/error/critical/exception(msg)` / `.log(level, msg)` | `none` | |
-| `Logger.handlers()` | `List[Handler]` | |
-| `Handler.setLevel(l)` / `.setFormatter(f)` / `.addFilter(f)` / `.removeFilter(f)` | `none` | |
-| `Formatter(fmt=none, datefmt=none, style=none, validate=true, defaults=none)` | `Formatter` | |
-| `Formatter.default_time_format` / `default_msec_format` (class attrs) | `Str` | blessed as POOP `Str`; `formatTime` unwraps them, so assigning a POOP `Str` knob works |
-| `Logger(name, level=none)` | `Logger` | direct construction mirrors CPython (standalone, level `NOTSET`) |
-| `Filter(name=none)` | `Filter` | |
-| Subclass `Filter` / `Handler` / `Formatter` and override `filter(record)` / `emit(record)` / `format(record)` | — | overrides routed through `block.bridge`; override receives the raw `_logging.LogRecord`, wrap it in `LogRecord(record)` for POOP-typed fields |
-| `LogRecord(record)` exposes `.name` / `.msg` / `.args` / `.levelname` / `.levelno` / `.pathname` / `.filename` / `.module` / `.lineno` / `.funcName` / `.created` / `.thread` / `.threadName` / `.process` / `.processName` (properties) and `.getMessage()` | POOP types | wraps `_logging.LogRecord` for handler/formatter overrides |
-| `LoggerAdapter(logger, extra=none)` plus `.debug` / `.info` / `.warning` / `.error` / `.critical` / `.log` / `.setLevel` | `LoggerAdapter` / `none` | passes `extra` through every log call |
-| `BufferingFormatter(linefmt=none)` | `BufferingFormatter` | header/footer-aware batch formatter |
-| `Logging.Filterer` / `PercentStyle` / `StrFormatStyle` / `StringTemplateStyle` (class attrs) | raw stdlib class refs | exposed for `isinstance` checks |
-| `logging.exception(msg)` / `.disable(level=none)` / `.captureWarnings(flag)` / `.makeLogRecord(d)` | `none` / `LogRecord` | module-level helpers |
-| `logging.getHandlerByName(name)` / `.getHandlerNames()` / `.getLevelNamesMapping()` | `Handler` or `none` / `List[Str]` / `Dict[Str, Int]` | introspection |
-| `logging.getLogRecordFactory()` | `Block` | a POOP callable; calling it answers a POOP `LogRecord` |
-| `logging.setLogRecordFactory(block)` | `none` | the block is handed POOP args and may answer a `LogRecord`; the stdlib side gets the raw record |
-| `logging.getLoggerClass()` | `Logger` (POOP class) | instantiate it for a POOP `Logger`, not the raw `logging.Logger` |
-| `logging.setLoggerClass(Logger)` | `none` | accepts the POOP `Logger` class, mapped to the raw class it manages |
-| `logging.dictConfig(d)` / `.fileConfig(path, defaults=none, disable_existing_loggers=true, encoding=none)` | `none` | mirror of `logging.config.dictConfig` / `fileConfig` |
-| `logging.raiseExceptions` / `logThreads` / `logProcesses` / `logMultiprocessing` / `logAsyncioTasks` (class properties) | `Boolean` | writable; updates the underlying `_logging` module attribute |
-| `platform.system()` / `.release()` / `.version()` / `.machine()` / `.processor()` / `.node()` / `.platform(...)` | `Str` | |
-| `platform.uname()` | `Uname` | |
-| `platform.architecture()` | `Tuple(Str, Str)` | `(bits, linkage)` |
-| `platform.python_version()` / `.python_branch()` / `.python_compiler()` / `.python_implementation()` / `.python_revision()` | `Str` | |
-| `platform.python_version_tuple()` / `.python_build()` / `.libc_ver()` | `Tuple[Str, ...]` | |
-| `platform.mac_ver()` / `.win32_ver()` | `Tuple` | per-OS specifics |
-| `Uname.system` / `.node` / `.release` / `.version` / `.machine` / `.processor` (properties) | `Str` | |
+| `io.IOBase` / `RawIOBase` / `BufferedIOBase` / `TextIOBase` (class attrs) | raw type | for `is_instance` against raw Python streams |
+| `io.UnsupportedOperation` / `BlockingIOError` (class attrs) | error class | for `Try.except_(…)` |
 
-`os`/`io`/`StringIO`/`BytesIO`/`time`/`StructTime`/`logging`/`Logger`/`Handler`/`Formatter`/`platform`/`Uname` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dicts in `poop/transformers/{os,io,time,logging,platform}.py` — namespace-only, no AST rewrite. The `Environ` sub-namespace is reachable via `os.environ` rather than the top-level (mirroring Python's `os.environ` attribute). The pure-Python `os.path` family is **intentionally absent** — every operation is reachable via `Path` (POOP's `pathlib.Path` mirror). Likewise, `io.open` is replaced by `Path.read_text` / `write_text` / `read_bytes` / `write_bytes`. `logging.config` (file/dict configuration) and `logging.handlers` (rotating, SMTP, syslog) are out of scope for v1.
+`io`, `StringIO` and `BytesIO` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/io.py` — namespace-only, no AST rewrite.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
