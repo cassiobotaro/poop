@@ -59,7 +59,6 @@ from poop.transformers.queue import NAMESPACE as _queue_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.random import NAMESPACE as _random_namespace
 from poop.transformers.range import RangeTransformer
-from poop.transformers.re import NAMESPACE as _re_namespace
 from poop.transformers.resource import NAMESPACE as _resource_namespace
 from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.set import SetTransformer
@@ -155,7 +154,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _re_namespace,
     _hashlib_namespace,
     _datetime_namespace,
     _decimal_namespace,

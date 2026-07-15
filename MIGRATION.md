@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `re.match(p, s).group()` | `re.match(p, s).group()` |
 | `hashlib.sha256(b).hexdigest()` | `b.sha256().hexdigest()` |
 | `datetime.date.today()` | `Date.today()` |
 | `decimal.Decimal("3.14")` | `Decimal("3.14")` |
@@ -406,31 +405,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Regular expressions (`re` module + `Pattern` / `Match` classes)
-
-```python
-# Python
-import re
-
-m = re.match(r"(\w+)=(\d+)", "x=42")
-name, value = m.group(1), m.group(2)
-clean = re.sub(r"\s+", " ", text)
-parts = re.split(r",\s*", csv_line)
-pat = re.compile(r"\d+", re.IGNORECASE)
-```
-
-```python
-# POOP
-m = re.match(r"(\w+)=(\d+)", "x=42")
-name = m.group(1)
-value = m.group(2)
-clean = re.sub(r"\s+", " ", text)
-parts = re.split(r",\s*", csv_line)
-pat = re.compile(r"\d+", re.IGNORECASE)
-```
-
-> Same surface as Python with POOP types: `Match` and `Pattern` are exposed as bare globals (same convention as `UUID`, `Random`). `re.findall` returns a `List` (eager) and `re.finditer` returns a `Tuple[Match]` since POOP collections are not lazy. `Match.group(i)` returns `none` for unmatched optional groups. Flag constants (`re.IGNORECASE`, `re.MULTILINE`, …) are `Int`.
 
 ## Hashing (`hashlib` module + `Hash` class)
 
