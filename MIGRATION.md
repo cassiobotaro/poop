@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `datetime.date.today()` | `Date.today()` |
 | `decimal.Decimal("3.14")` | `Decimal("3.14")` |
-| `sqlite3.connect(p)` | `sqlite3.connect(p)` |
 | `string.ascii_letters` | `string.ascii_letters` |
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `difflib.get_close_matches(w, xs)` | `difflib.get_close_matches(w, xs)` |
@@ -430,36 +429,6 @@ With(lambda: decimal.localcontext()).do(lambda ctx: ctx.set_prec(5))
 ```
 
 > `Decimal` is in scope without a `decimal.` prefix (same pattern as `Random`, `UUID`). All arithmetic is closed (`Decimal + Decimal → Decimal`, etc.) and `Decimal` mixes with `Int`/`Float` in comparisons and `Int` in arithmetic. Rounding constants live on the `decimal` namespace as `Str` (`decimal.ROUND_HALF_UP`, …). Signal classes (`decimal.InvalidOperation`, `decimal.DivisionByZero`, …) are Python exception classes — pass them to `Try.except_(...)`. Scope precision/rounding with `decimal.localcontext(prec=…, rounding=…)`, or mutate the context inside the block via `ctx.set_prec(Int)` / `ctx.set_rounding(Str)`.
-
-## SQLite (`sqlite3` module + `Connection` / `Cursor` / `Row` classes)
-
-```python
-# Python
-import sqlite3
-
-con = sqlite3.connect(":memory:")
-con.execute("CREATE TABLE users(id INTEGER, name TEXT)")
-con.executemany(
-    "INSERT INTO users VALUES (?, ?)",
-    [(1, "Alice"), (2, "Bob")],
-)
-con.commit()
-rows = con.execute("SELECT * FROM users").fetchall()
-```
-
-```python
-# POOP
-con = sqlite3.connect(":memory:")
-con.execute("CREATE TABLE users(id INTEGER, name TEXT)")
-con.executemany(
-    "INSERT INTO users VALUES (?, ?)",
-    [(1, "Alice"), (2, "Bob")],
-)
-con.commit()
-rows = con.execute("SELECT * FROM users").fetchall()
-```
-
-> Bound parameters are POOP `Tuple` or `List`; rows come back as POOP `Tuple` of POOP values (`Int`/`Float`/`Str`/`Bytes`/`none`). `Connection` is a context manager (`With(lambda: sqlite3.connect(...)).do(lambda con: …)` — commits on clean exit, rolls back on exception). `Connection.execute` returns a `Cursor` directly; chain `.fetchall()` / `.fetchone()` / iterate. Error classes (`sqlite3.OperationalError`, `IntegrityError`, …) are Python exception classes — pass them to `Try.except_(...)`. Callback-based methods are covered via the block bridge: `create_function` / `create_collation` take POOP lambdas, `create_aggregate` takes a POOP class with `step`/`finalize` methods, and `sqlite3.register_adapter` takes a lambda adapter.
 
 ## ASCII character classes and string templates (`string` module + `Template` class)
 

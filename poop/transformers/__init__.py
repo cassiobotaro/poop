@@ -66,7 +66,6 @@ from poop.transformers.signal import NAMESPACE as _signal_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.smtplib import NAMESPACE as _smtplib_namespace
 from poop.transformers.socket import NAMESPACE as _socket_namespace
-from poop.transformers.sqlite3 import NAMESPACE as _sqlite3_namespace
 from poop.transformers.ssl import NAMESPACE as _ssl_namespace
 from poop.transformers.statistics import NAMESPACE as _statistics_namespace
 from poop.transformers.string import NAMESPACE as _string_namespace
@@ -155,7 +154,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _random_namespace,
     _datetime_namespace,
     _decimal_namespace,
-    _sqlite3_namespace,
     _string_namespace,
     _difflib_namespace,
     _textwrap_namespace,

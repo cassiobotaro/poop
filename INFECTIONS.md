@@ -884,53 +884,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `random` and `Random` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/random.py` — namespace-only, no AST rewrite.
 
-### sqlite3 + Connection + Cursor + Row — `poop/types/sqlite3.py` + `poop/transformers/sqlite3.py`
-
-`sqlite3` mirrors Python's `sqlite3` module — the stdlib's zero-config relational store. Three wrapper classes (`Connection`, `Cursor`, `Row`) cover the cursor-iteration model.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `sqlite3.connect(database, timeout=none, detect_types=none, isolation_level=none, check_same_thread=none, cached_statements=none, uri=none)` | `Connection` | `database` is a `Str` or POOP `Path` |
-| `sqlite3.sqlite_version` (class attr) | `Str` | SQLite library version |
-| `sqlite3.PARSE_DECLTYPES` / `PARSE_COLNAMES` (class attrs) | `Int` | type-detection flags |
-| `sqlite3.Warning` / `Error` / `InterfaceError` / `DatabaseError` / `DataError` / `OperationalError` / `IntegrityError` / `InternalError` / `ProgrammingError` / `NotSupportedError` | Python exception types | usable with `Try.except_` |
-| `sqlite3.Connection` / `Cursor` / `Row` / `Blob` (class attrs) | `type[…]` | wrapper classes |
-| `Connection.cursor()` | `Cursor` | |
-| `Connection.commit()` / `.rollback()` / `.close()` / `.interrupt()` | `none` | |
-| `Connection.execute(sql, params=none)` | `Cursor` | shortcut: open cursor + execute |
-| `Connection.executemany(sql, seq)` | `Cursor` | `seq` is a POOP `List` / `Tuple` of param tuples |
-| `Connection.executescript(script)` | `Cursor` | multi-statement script |
-| `Connection.iterdump()` | `List[Str]` | SQL dump as lines |
-| `Connection.backup(target, pages=none, name=none, sleep=none)` | `none` | online backup |
-| `Connection` as context manager (`with`) | `Connection` | commit on success, rollback on exception, then close on exit (POOP closes the connection to release the fd, unlike CPython which leaves it open) |
-| `Cursor.execute` / `.executemany` / `.executescript` | `Cursor` | self-returning for chaining |
-| `Cursor.fetchone()` | `Tuple \| NoneClass` | |
-| `Cursor.fetchmany(size=none)` | `List[Tuple]` | |
-| `Cursor.fetchall()` | `List[Tuple]` | |
-| `Cursor.close()` | `none` | |
-| `Cursor.rowcount` / `.lastrowid` / `.arraysize` (properties) | `Int` (`lastrowid` may be `NoneClass`) | |
-| `Cursor.description` (property) | `Tuple \| NoneClass` | tuple of column descriptions |
-| `Cursor` is iterable | yields `Tuple` per row | streaming consumption |
-| `Row(columns, values)` | `Row` | dict-like row access |
-| `Row.at(index_or_name)` | wrapped value | `Int` index or `Str` column name |
-| `Row.keys()` / `.values()` | `Tuple` | |
-| `Row.len()` | `Int` | |
-| `Connection.create_function(name, narg, func, *, deterministic=false)` | `none` | `func` is a `Block` routed through `block.bridge` |
-| `Connection.create_collation(name, callable_)` | `none` | `callable_` is a `Block` routed through the bridge; pass `None` to deregister |
-| `Connection.create_aggregate(name, n_arg, aggregate_class)` | `none` | `aggregate_class` is a regular POOP class with `step(*args)` / `finalize()` methods. `step` receives POOP-wrapped column values; `finalize` returns a POOP value that POOP unwraps to a SQL-storable primitive |
-| `sqlite3.register_adapter(type_, adapter)` | `none` | `adapter` is a `Block` that converts the registered type to a SQL-storable value |
-| `sqlite3.register_converter(typename, converter)` | `none` | `converter` is a `Block` that decodes the raw `Bytes` payload for column type `typename` |
-| `sqlite3.complete_statement(sql)` | `Boolean` | true when `sql` is a complete SQLite statement |
-| `sqlite3.enable_callback_tracebacks(flag)` | `none` | toggle tracebacks for errors in user-defined SQL callbacks |
-| `Connection.blobopen(table, column, row, *, readonly=false, name=none)` | `Blob` | open a Blob for random-access I/O |
-| `Blob.read(length=none)` / `.write(data)` / `.tell()` / `.seek(offset, origin=none)` / `.length()` / `.close()` | `Bytes` / `none` / `Int` / `none` / `Int` / `none` | random-access blob I/O; supports `with` |
-
-Value wrapping: SQLite values are wrapped back to POOP on the way out (`int`→`Int`, `float`→`Float`, `str`→`Str`, `bytes`→`Bytes`, `None`→`none`). Bound parameters are unwrapped on the way in (POOP `Tuple`/`List` of POOP values → Python tuple of raw values).
-
-`sqlite3.complete_statement` and `sqlite3.enable_callback_tracebacks` are out of scope (debug/shell helpers).
-
-`sqlite3`, `Connection`, `Cursor`, and `Row` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/sqlite3.py` — namespace-only, no AST rewrite.
-
 ### decimal + Decimal + Context — `poop/types/decimal.py` + `poop/transformers/decimal.py`
 
 `decimal` mirrors Python's `decimal` module — arbitrary-precision decimal arithmetic (money, accounting, anything where binary-float rounding error is unacceptable). `Decimal` is the number; `Context` carries precision, rounding mode, traps and flags.
