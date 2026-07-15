@@ -1079,25 +1079,6 @@ POOP collections are materialized eagerly — the `iter*` methods return `List` 
 
 `enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
 
-### fractions + Fraction — `poop/types/fractions.py` + `poop/transformers/fractions.py`
-
-`fractions` mirrors Python's `fractions` module — exact rational arithmetic. `Fraction` is bare alongside the lowercase namespace (matching the `uuid` / `UUID` convention).
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `Fraction(numerator=none, denominator=none)` | `Fraction` | two-arg form takes `Int`s; one-arg form accepts `Int` / `Float` / `Str("3/4")` / `Str("0.25")` / `Fraction` |
-| `Fraction.from_float(f)` (classmethod) | `Fraction` | exact bit-pattern from `Float` |
-| `Fraction.from_decimal(d)` (classmethod) | `Fraction` | exact from `Decimal` |
-| `Fraction.numerator` / `.denominator` (properties) | `Int` | always reduced to lowest terms |
-| `Fraction.limit_denominator(max_denominator=none)` | `Fraction` | best rational with denominator ≤ max |
-| `Fraction.as_integer_ratio()` | `Tuple(Int, Int)` | `(numerator, denominator)` |
-| `Fraction + - * / // % **` | `Fraction` / `Int` / `Float` | mixing with `Int` keeps `Fraction`; `Float` promotes to `Float`; `Fraction // Fraction` → `Int` |
-| `Fraction == != < <= > >= abs +x -x` | as Python | standard comparisons |
-
-POOP `Int` / `Float` don't return `NotImplemented` for non-POOP operands, so reflected dunders (`__radd__`, `__rsub__`, `__rmul__`, `__rtruediv__`) are only reachable when invoked directly — `Int + Fraction` won't dispatch through them yet.
-
-`fractions` and `Fraction` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/fractions.py` — namespace-only, no AST rewrite.
-
 ### struct + Struct — `poop/types/struct.py` + `poop/transformers/struct.py`
 
 `struct` mirrors Python's `struct` module — packing and unpacking binary data via format strings (`>I`, `<2sH`, `?fd`, …). Format-char wrapping back into POOP types is handled at the boundary: `int` → `Int`, `float` → `Float`, `bool` → `Boolean`, `bytes` → `Bytes`. Buffers accept `Bytes` / `ByteArray` / `MemoryView` for reads; writes require a mutable buffer (`ByteArray` or `MemoryView`).

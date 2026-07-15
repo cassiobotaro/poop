@@ -44,7 +44,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `calendar.isleap(year)` | `calendar.isleap(year)` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
-| `fractions.Fraction(1, 2)` | `Fraction(1, 2)` |
 | `struct.pack(">I", 42)` | `struct.pack(">I", 42)` |
 | `codecs.encode(s, "rot_13")` | `codecs.encode(s, "rot_13")` |
 | `filecmp.cmp(a, b)` | `filecmp.cmp(a, b)` |
@@ -511,26 +510,6 @@ Color(Int(2))             # Color.GREEN
 ```
 
 > The bases (`Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`) are bare alongside the `enum` namespace; `auto()` is also bare. `.name` stays a Python `str` (CPython's enum protocol and decorators like `@unique` depend on that). Use `.name_str()` for a POOP `Str`. `.value` returns whatever was assigned — raw Python primitives stay raw; use `.value_object()` to wrap them. POOP value lookup works via `_missing_`: `Color(Int(1))` finds the same member as `Color(1)`. `enum.unique` / `verify` / `member` / `nonmember` apply directly. `ReprEnum` is re-exported as-is (it can't be subclassed without a data-type mixin). `EnumType` metaclass access is out of scope.
-
-## Exact rational arithmetic (`fractions` module + `Fraction` class)
-
-```python
-# Python
-from fractions import Fraction
-
-half = Fraction(1, 2)
-sixth = Fraction("1/6")
-total = half + sixth          # Fraction(2, 3)
-```
-
-```python
-# POOP
-half = Fraction(1, 2)
-sixth = Fraction("1/6")
-total = half + sixth          # Fraction(2, 3)
-```
-
-> `Fraction` is bare (PascalCase) alongside the lowercase `fractions` namespace. One-arg form accepts `Int` / `Float` / `Str("3/4")` / `Str("0.25")` / `Fraction`; the two-arg form `Fraction(num, den)` takes `Int`s. `Fraction.from_float(f)` and `Fraction.from_decimal(d)` are classmethods. Arithmetic between `Fraction`s stays exact; mixing with `Int` keeps `Fraction`; mixing with `Float` promotes to `Float`. `Int / Float` don't return `NotImplemented` for non-POOP operands yet, so reflected forms like `Int + Fraction` are reachable only via direct dunder calls.
 
 ## Binary packing (`struct` module + `Struct` class)
 

@@ -29,7 +29,6 @@ from poop.transformers.enum import NAMESPACE as _enum_namespace
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.filecmp import NAMESPACE as _filecmp_namespace
 from poop.transformers.float import FloatTransformer
-from poop.transformers.fractions import NAMESPACE as _fractions_namespace
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.gc import NAMESPACE as _gc_namespace
 from poop.transformers.grp import NAMESPACE as _grp_namespace
@@ -152,7 +151,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _zoneinfo_namespace,
     _calendar_namespace,
     _enum_namespace,
-    _fractions_namespace,
     _struct_namespace,
     _codecs_namespace,
     _filecmp_namespace,
