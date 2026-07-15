@@ -41,7 +41,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
-| `shutil.copy(a, b)` | `shutil.copy(a, b)` |
 | `pickle.dumps(obj)` | `pickle.dumps(obj)` |
 | `zlib.compress(b)` | `zlib.compress(b)` |
 | `gzip.compress(b)` | `gzip.compress(b)` |
@@ -414,34 +413,6 @@ Color(Int(2))             # Color.GREEN
 ```
 
 > The bases (`Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`) are bare alongside the `enum` namespace; `auto()` is also bare. `.name` stays a Python `str` (CPython's enum protocol and decorators like `@unique` depend on that). Use `.name_str()` for a POOP `Str`. `.value` returns whatever was assigned — raw Python primitives stay raw; use `.value_object()` to wrap them. POOP value lookup works via `_missing_`: `Color(Int(1))` finds the same member as `Color(1)`. `enum.unique` / `verify` / `member` / `nonmember` apply directly. `ReprEnum` is re-exported as-is (it can't be subclassed without a data-type mixin). `EnumType` metaclass access is out of scope.
-
-## High-level file operations (`shutil` module)
-
-```python
-# Python
-import shutil
-
-shutil.copy("src.txt", "dst.txt")
-shutil.copytree("src_dir", "dst_dir")
-shutil.move("a", "b")
-shutil.rmtree("doomed_dir")
-where = shutil.which("git")
-total, used, free = shutil.disk_usage(".")
-shutil.make_archive("bundle", "zip", root_dir=".", base_dir="src")
-```
-
-```python
-# POOP
-shutil.copy(Path("src.txt"), Path("dst.txt"))
-shutil.copytree(Path("src_dir"), Path("dst_dir"))
-shutil.move(Path("a"), Path("b"))
-shutil.rmtree(Path("doomed_dir"))
-where = shutil.which("git")
-usage = shutil.disk_usage(".")  # Tuple(Int, Int, Int)
-shutil.make_archive(Path("bundle"), "zip", root_dir=Path("."), base_dir="src")
-```
-
-> `Path` and `Str` are interchangeable everywhere `shutil` takes a filesystem location. Return values are `Path` when CPython returns a path-like. `shutil.which` returns `Path` or `none`. `shutil.disk_usage` returns `Tuple(total, used, free)` of `Int`; `shutil.get_terminal_size` returns `Tuple(columns, lines)`. Archive helpers (`make_archive`, `unpack_archive`, `get_archive_formats`, `get_unpack_formats`) all wrap the CPython surface. `shutil.Error` and `shutil.SameFileError` are exposed as class attributes for use with `Try.except_`. `shutil.ignore_patterns(*patterns)` returns a block that drops into `copytree(ignore=...)`; `copytree` / `move` also accept a POOP lambda as `copy_function` via the block bridge.
 
 ## Pickle (`pickle` module + `Pickler` / `Unpickler` classes)
 

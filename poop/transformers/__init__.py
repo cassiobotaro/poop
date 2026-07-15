@@ -53,7 +53,6 @@ from poop.transformers.range import RangeTransformer
 from poop.transformers.resource import NAMESPACE as _resource_namespace
 from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.set import SetTransformer
-from poop.transformers.shutil import NAMESPACE as _shutil_namespace
 from poop.transformers.signal import NAMESPACE as _signal_namespace
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.smtplib import NAMESPACE as _smtplib_namespace
@@ -139,7 +138,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _random_namespace,
     _string_namespace,
     _enum_namespace,
-    _shutil_namespace,
     _pickle_namespace,
     _zlib_namespace,
     _gzip_namespace,

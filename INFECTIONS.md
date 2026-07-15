@@ -936,32 +936,6 @@ The same method set is available on both `random` (module API, uses singleton st
 
 `enum`, `Enum`, `IntEnum`, `StrEnum`, `Flag`, `IntFlag`, `ReprEnum`, and `auto` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/enum.py` — namespace-only, no AST rewrite.
 
-### shutil — `poop/types/shutil.py` + `poop/transformers/shutil.py`
-
-`shutil` mirrors Python's `shutil` module — high-level file operations: copy/move/remove trees, archive create/extract, disk and terminal info. Paths accept either `Path` or `Str` everywhere; return values are `Path` when CPython returns a path-like.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `shutil.copy(src, dst, follow_symlinks=none)` / `.copy2(...)` / `.copyfile(...)` | `Path` | metadata-aware variants follow CPython |
-| `shutil.copytree(src, dst, symlinks=none, ignore=none, copy_function=none, ignore_dangling_symlinks=none, dirs_exist_ok=none)` | `Path` | recursive; `ignore` / `copy_function` accept `Block`s |
-| `shutil.ignore_patterns(*patterns)` | `Block` | factory for `copytree(ignore=...)` |
-| `shutil.copymode(src, dst, follow_symlinks=none)` / `.copystat(...)` | `none` | metadata-only copies |
-| `shutil.move(src, dst, copy_function=none)` | `Path` | `copy_function` accepts a `Block` |
-| `shutil.rmtree(path, ignore_errors=none)` | `none` | recursive remove |
-| `shutil.which(cmd, mode=none, path=none)` | `Path` / `none` | locate executable on `PATH` |
-| `shutil.make_archive(base_name, format, root_dir=none, base_dir=none)` | `Path` | `format` is `"zip"`, `"tar"`, `"gztar"`, …  |
-| `shutil.unpack_archive(filename, extract_dir=none, format=none)` | `none` | |
-| `shutil.get_archive_formats()` | `List[Tuple(Str, Str)]` | `(name, description)` |
-| `shutil.get_unpack_formats()` | `List[Tuple(Str, List[Str], Str)]` | `(name, extensions, description)` |
-| `shutil.disk_usage(path)` | `Tuple(Int, Int, Int)` | `(total, used, free)` in bytes |
-| `shutil.get_terminal_size(fallback=none)` | `Tuple(Int, Int)` | `(columns, lines)` |
-| `shutil.chown(path, user=none, group=none)` | `none` | |
-| `shutil.Error` / `.SameFileError` (class attrs) | exception class | for `Try.except_` |
-
-`copytree(ignore=, copy_function=)` and `move(copy_function=)` accept POOP `Block`s routed through `block.bridge`. `shutil.ignore_patterns(*patterns)` returns a POOP `Block` that drops in directly to `copytree(ignore=...)`.
-
-`shutil` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/shutil.py` — namespace-only, no AST rewrite.
-
 ### pickle + Pickler + Unpickler — `poop/types/pickle.py` + `poop/transformers/pickle.py`
 
 `pickle` mirrors Python's `pickle` module — object serialization to `Bytes`. The namespace adopts the same round-trip discipline as `json`: POOP primitive wrappers (`Int` / `Str` / `Float` / `Bytes` / `Boolean` / `NoneClass`) and POOP collections (`List` / `Tuple` / `Dict` / `Set` / `FrozenSet`) are unwrapped to their Python equivalents on dump and re-wrapped on load, so callers never see a raw Python primitive on the way out. POOP user-class instances pass through unchanged. `dump` / `load` are path-based per POOP's file-I/O convention (no `open` in POOP).
