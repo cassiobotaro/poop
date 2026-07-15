@@ -35,8 +35,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x[a:b]` | `x.slice(a, b)` |
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
-| `string.ascii_letters` | `string.ascii_letters` |
-| `string.Template(s).substitute(d)` | `Template(s).substitute(d)` |
 | `ZoneInfo("America/Sao_Paulo")` | `ZoneInfo("America/Sao_Paulo")` |
 | `class Color(Enum): RED = 1` | `class Color(Enum): RED = 1` |
 | `EmailMessage().set_content(b)` | `EmailMessage().set_content(b)` |
@@ -320,24 +318,4 @@ With(lambda: BytesIO(b"abc")).do(lambda b: b.read(1).print())
 ```
 
 > `io` and `Path` are the two library-shaped names POOP keeps, on the same grounds: they are entry points the language itself needs rather than stdlib parity. `Path` is what the `open` ban points at, and `io` is its in-memory counterpart. Both buffers are `With` context managers, and both expose `read` / `readline` / `write` / `getvalue` / `seek` / `tell` / `truncate` / `close`, with `io.SEEK_SET` / `SEEK_CUR` / `SEEK_END` for `seek`. Disk I/O still goes through `Path` — POOP has no file-object abstraction.
-
-## ASCII character classes and string templates (`string` module + `Template` class)
-
-```python
-# Python
-import string
-
-alpha = string.ascii_lowercase
-template = string.Template("Hello, $name!")
-greeting = template.substitute({"name": "world"})
-```
-
-```python
-# POOP
-alpha = string.ascii_lowercase
-template = Template("Hello, $name!")
-greeting = template.substitute({"name": "world"})
-```
-
-> Constants on `string` (`ascii_letters`, `ascii_lowercase`, `ascii_uppercase`, `digits`, `hexdigits`, `octdigits`, `punctuation`, `printable`, `whitespace`) are `Str` values. `Template` is exposed bare (PascalCase, matching the `UUID` / `HMAC` convention). `.substitute(mapping)` raises `KeyError` on missing keys; `.safe_substitute(mapping)` leaves them in place. `string.Formatter` and `string.capwords` are out of scope — `Str.format` and `Str.title` cover them.
 

@@ -27,7 +27,6 @@ from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
-from poop.transformers.string import NAMESPACE as _string_namespace
 from poop.transformers.string import StrTransformer
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
@@ -93,7 +92,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     SliceTransformer.BINDINGS,
     BlockTransformer.BINDINGS,
     _path_namespace,
-    _string_namespace,
     _io_namespace,
 ]
 

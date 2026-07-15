@@ -857,25 +857,6 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `With` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/with_.py` — namespace-only, no AST rewrite.
 
-### string + Template — `poop/types/string.py` + `poop/transformers/string.py`
-
-`string` mirrors Python's `string` module — ASCII character-class constants plus the `Template` class for `$variable` substitution. The constants live on the namespace; `Template` is exposed alongside it (PascalCase), matching the `hmac`/`HMAC` and `uuid`/`UUID` convention.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `string.ascii_letters` / `ascii_lowercase` / `ascii_uppercase` (class attrs) | `Str` | |
-| `string.digits` / `hexdigits` / `octdigits` (class attrs) | `Str` | |
-| `string.punctuation` / `printable` / `whitespace` (class attrs) | `Str` | |
-| `string.capwords(s, sep=none)` | `Str` | title-cases each word separated by `sep` (whitespace by default) |
-| `Template(template_str)` | `Template` | source kept on `.template` |
-| `Template.substitute(mapping)` | `Str` | raises `KeyError` on missing key |
-| `Template.safe_substitute(mapping)` | `Str` | leaves missing `$name` in place |
-| `Template.template` (property) | `Str` | original source string |
-
-`string.Formatter` is deliberately out of scope — `Str.format(*args, **kwargs)` is CPython's `str.format` template method (overriding the inherited `Object.format(spec)`), which covers the common case.
-
-`string` and `Template` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/string.py` — namespace-only, no AST rewrite.
-
 ### io + StringIO + BytesIO — `poop/types/io.py` + `poop/transformers/io.py`
 
 `io` exposes the in-memory buffers `StringIO` / `BytesIO` plus the seek constants. It survives the removal of the stdlib mirrors for the same reason `Path` does: both are POOP-specific entry points rather than library surface — `Path` is the substitute the `no_open` ban points at, and `io` is the in-memory half of the same story. Disk I/O still goes through `Path.read_*` / `write_*`; POOP has no file-object abstraction and does not mirror Python's file protocol.
