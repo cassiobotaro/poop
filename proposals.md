@@ -409,12 +409,26 @@ Verified on a file whose errors sit on lines 2, 3, 4, 5 — reported as 3, 5, 2,
 
 ## Documentation
 
-### 11. `INFECTIONS.md` contradicts itself on `help`
+### ~~11. `INFECTIONS.md` contradicts itself on `help`~~ — DONE
 
-`help` is listed under **Active infections** ("No `help`", line 418) *and* under
-**Explicitly allowed** ("Allowed.", line 567). Reality: `NoHelpValidator` is in
-`DEFAULT_VALIDATORS` and `help(5)` is rejected. The *Explicitly allowed* entry is
-stale and should be removed.
+**Decision: the ban is real; the allowance was stale.** The *Explicitly allowed*
+entry for `help` is removed; the *Active infections* entry stands unchanged.
+
+`help` was listed under **Active infections** ("No `help`") *and* under
+**Explicitly allowed** ("Allowed."). Reality settled it: `NoHelpValidator` is in
+`DEFAULT_VALIDATORS`, and `help(5)` answers `poop: help() is forbidden — no POOP
+equivalent`.
+
+The two entries disagreed on more than status, which is why the stale one went
+rather than the ban. *Explicitly allowed* argued `help()` "carries no program
+logic and has no message-passing equivalent that would be more expressive" —
+harmless dev tool, allow. *Active infections* argues it is an "interactive escape
+hatch (opens the Python pager) exposing wrapper internals". The second is the
+better reading and matches the code: the pager renders raw `_poop_*` internals,
+which is the same leak `no_introspection` and item 2 exist to close.
+
+Verified alongside: `dir`, the sibling case, appears only under *Active
+infections* — no twin entry. `help` was the lone leftover, not a pattern.
 
 ---
 
