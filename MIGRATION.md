@@ -58,7 +58,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `class T(unittest.TestCase):` | `class T(TestCase):` |
 | `cProfile.Profile()` | `Profile()` |
 | `pstats.Stats(p)` | `Stats(p)` |
-| `timeit.timeit("pass")` | `timeit.timeit("pass")` |
 | `signal.SIGINT` | `signal.SIGINT` |
 | `socket.socket(...)` | `Socket(...)` |
 | `ssl.create_default_context()` | `ssl.create_default_context()` |
@@ -488,40 +487,6 @@ host = cp.get("server", "host", fallback="localhost")
 ```
 
 > POOP has no file-object abstraction, so `Reader` / `DictReader` take a `Str` (split on newlines) or `List[Str]` of lines; `Writer` / `DictWriter` accumulate into an internal buffer exposed via `.getvalue()`. `Sniffer` autodetects dialect from a sample. Dialect registration (`csv.register_dialect` / `unregister_dialect` / `get_dialect` / `list_dialects`) works as in CPython. `ConfigParser` has `read` (from `Path` / `Str` / `List[Path]`), `read_string` / `read_dict` / `read_file`, plus `write_str` and `write_to(path)` for serialization. Typed accessors (`getint` / `getfloat` / `getboolean`) return POOP wrappers. The full error hierarchy and both interpolation classes (`BasicInterpolation` / `ExtendedInterpolation`) are on the namespace.
-
-## Dev / debug / profile (`unittest`, `cProfile`, `pstats`, `timeit`)
-
-```python
-# Python
-import unittest, cProfile, pstats, timeit
-
-class MyTests(unittest.TestCase):
-    def test_x(self):
-        self.assertEqual(1, 1)
-
-with cProfile.Profile() as p:
-    do_work()
-pstats.Stats(p).sort_stats("cumulative").print_stats()
-
-t = timeit.timeit("pass", number=10000)
-```
-
-```python
-# POOP
-class MyTests(TestCase):
-    def test_x(self):
-        self.assertEqual(1, 1)
-
-result = MyTests().run_method("test_x")
-result.wasSuccessful().print()
-
-With(Profile()).do(Block(lambda p: do_work()))
-Stats(p).sort_stats(SortKey.CUMULATIVE).print_stats().print()
-
-t = timeit.timeit("pass", "pass", 10000)   # Float
-```
-
-> `unittest` is a POOP-flavoured re-implementation of the xUnit surface. `TestCase` subclasses define `test_*` methods and `setUp`/`tearDown` hooks; the standard assertion family is available (`assertEqual`, `assertTrue`, `assertGreater`, `assertIsInstance`, `assertAlmostEqual`, `assertRaises`, …) and all raise POOP's `AssertionError` on failure with optional `Str` messages. Run a single test via `case.run_method(Str("name"))`, or batch via `TestSuite` + `TestRunner`. The full `unittest.mock` surface (`MagicMock`, `patch`, `sentinel`) is out of scope for v1. `cProfile.Profile` mirrors CPython directly — `enable`/`disable`/`runcall`, plus context-manager support via POOP's `With`. `Stats` wraps `pstats.Stats` with chainable `sort_stats`/`reverse_order`/`strip_dirs`; `print_*` methods return the captured output as `Str` instead of writing to stdout. Sort keys live on the `SortKey` class as POOP `Str`s. `timeit` is straightforward — `timeit.timeit(stmt, setup, number)` returns `Float`, `timeit.repeat` returns `List[Float]`, `Timer.autorange()` returns `Tuple(Int, Float)`.
 
 ## Networking (`signal`, `socket`, `ssl`, `asyncio`)
 

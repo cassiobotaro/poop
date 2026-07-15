@@ -37,7 +37,6 @@ from poop.transformers.none import NoneTransformer
 from poop.transformers.os import NAMESPACE as _os_namespace
 from poop.transformers.path import NAMESPACE as _path_namespace
 from poop.transformers.platform import NAMESPACE as _platform_namespace
-from poop.transformers.profile import NAMESPACE as _profile_namespace
 from poop.transformers.queue import NAMESPACE as _queue_namespace
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
@@ -54,10 +53,8 @@ from poop.transformers.subprocess import NAMESPACE as _subprocess_namespace
 from poop.transformers.tarfile import NAMESPACE as _tarfile_namespace
 from poop.transformers.threading import NAMESPACE as _threading_namespace
 from poop.transformers.time import NAMESPACE as _time_namespace
-from poop.transformers.timeit import NAMESPACE as _timeit_namespace
 from poop.transformers.try_ import NAMESPACE as _try_namespace
 from poop.transformers.tuple import TupleTransformer
-from poop.transformers.unittest import NAMESPACE as _unittest_namespace
 from poop.transformers.unpack import UnpackTransformer
 from poop.transformers.urllib import NAMESPACE as _urllib_namespace
 from poop.transformers.varargs import VarargsTransformer
@@ -138,9 +135,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     _smtplib_namespace,
     _csv_namespace,
     _configparser_namespace,
-    _unittest_namespace,
-    _profile_namespace,
-    _timeit_namespace,
     _signal_namespace,
     _socket_namespace,
     _ssl_namespace,
