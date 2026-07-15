@@ -1,5 +1,4 @@
 import base64 as _base64
-import hashlib as _hashlib
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -13,7 +12,6 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean, to_boolean
-    from poop.types.hash import Hash
     from poop.types.int import Int
     from poop.types.list import List
     from poop.types.none import NoneClass
@@ -494,125 +492,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
     def z85decode(self) -> Bytes:
         return Bytes(_base64.z85decode(self._value))
-
-    # hashlib — shortcut messages. Each returns a POOP `Hash` wrapping
-    # the corresponding Python hashlib hash object. Mirrors
-    # `hashlib.<algo>(b)` exactly.
-
-    def md5(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.md5(self._value))  # noqa: S324
-
-    def sha1(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha1(self._value))  # noqa: S324
-
-    def sha224(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha224(self._value))
-
-    def sha256(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha256(self._value))
-
-    def sha384(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha384(self._value))
-
-    def sha512(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha512(self._value))
-
-    def blake2b(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.blake2b(self._value))
-
-    def blake2s(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.blake2s(self._value))
-
-    def sha3_224(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha3_224(self._value))
-
-    def sha3_256(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha3_256(self._value))
-
-    def sha3_384(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha3_384(self._value))
-
-    def sha3_512(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.sha3_512(self._value))
-
-    def shake_128(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.shake_128(self._value))
-
-    def shake_256(self) -> Hash:
-        from poop.types.hash import Hash
-
-        return Hash(_hashlib.shake_256(self._value))
-
-    # hashlib — key-derivation functions. Receiver is the password
-    # (substituting Python's first positional argument).
-
-    def pbkdf2_hmac(
-        self,
-        hash_name: Str,
-        salt: Bytes,
-        iterations: Int,
-        dklen: Int | NoneClass | None = None,
-    ) -> Bytes:
-
-        length = _unwrap(dklen, None)
-        return Bytes(
-            _hashlib.pbkdf2_hmac(
-                hash_name._value,
-                self._value,
-                salt._value,
-                iterations._value,
-                length,
-            )
-        )
-
-    def scrypt(
-        self,
-        *,
-        salt: Bytes,
-        n: Int,
-        r: Int,
-        p: Int,
-        maxmem: Int | NoneClass | None = None,
-        dklen: Int | NoneClass | None = None,
-    ) -> Bytes:
-
-        return Bytes(
-            _hashlib.scrypt(
-                self._value,
-                salt=salt._value,
-                n=n._value,
-                r=r._value,
-                p=p._value,
-                maxmem=_unwrap(maxmem, 0),
-                dklen=_unwrap(dklen, 64),
-            )
-        )
 
     def __str__(self) -> str:
         return repr(self._value)

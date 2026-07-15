@@ -1029,34 +1029,6 @@ The `tzinfo` extension protocol (custom subclasses of Python's abstract `datetim
 
 `datetime`, `Date`, `Time`, `DateTime`, `TimeDelta`, and `TimeZone` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/datetime.py` — namespace-only, no AST rewrite.
 
-### hashlib + Hash — `poop/types/hash.py` + `poop/transformers/hashlib.py`
-
-`hashlib` mirrors Python's `hashlib` module — message digests (MD5, SHA-1/2/3, BLAKE2, SHAKE) and key-derivation functions (PBKDF2, scrypt). The shortcut messages live directly on `Bytes` so common code reads `b"abc".sha256().hexdigest()` — the receiver carries the data, the message names the algorithm.
-
-| Operation | Returns | Notes |
-|---|---|---|
-| `hashlib.new(name, data=none)` | `Hash` | generic constructor |
-| `hashlib.file_digest(path, digest, /)` | `Hash` | `path` is a `Path` — receiver-type divergence from CPython's `fileobj` |
-| `hashlib.algorithms_available` (class attr) | `FrozenSet[Str]` | every algorithm OpenSSL exposes locally |
-| `hashlib.algorithms_guaranteed` (class attr) | `FrozenSet[Str]` | algorithms guaranteed on every platform |
-| `hashlib.Hash` (class attr) | `type[Hash]` | the wrapper class itself |
-| `b.md5()` / `.sha1()` / `.sha224()` / `.sha256()` / `.sha384()` / `.sha512()` | `Hash` | shortcut on `Bytes` |
-| `b.blake2b()` / `.blake2s()` | `Hash` | BLAKE2 family |
-| `b.sha3_224()` / `.sha3_256()` / `.sha3_384()` / `.sha3_512()` | `Hash` | SHA-3 family |
-| `b.shake_128()` / `.shake_256()` | `Hash` | length is passed to `.digest(length)` / `.hexdigest(length)` |
-| `b.pbkdf2_hmac(hash_name, salt, iterations, dklen=none)` | `Bytes` | receiver = password |
-| `b.scrypt(*, salt, n, r, p, maxmem=none, dklen=none)` | `Bytes` | receiver = password; defaults `maxmem=0`, `dklen=64` |
-| `Hash.update(data)` | `none` | mutates in place |
-| `Hash.digest(length=none)` | `Bytes` | `length` is required for shake hashes, ignored by the rest |
-| `Hash.hexdigest(length=none)` | `Str` | same shape as `.digest` |
-| `Hash.copy()` | `Hash` | independent clone |
-| `Hash.digest_size` / `.block_size` (property) | `Int` | |
-| `Hash.name` (property) | `Str` | |
-
-`Str` does not carry the shortcut messages — encoding must be explicit (`"abc".encode("utf-8").sha256()`). This mirrors Python's bytes/str split and keeps the encoding step visible.
-
-`hashlib` and `Hash` are exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/hashlib.py` — namespace-only, no AST rewrite.
-
 ### string + Template — `poop/types/string.py` + `poop/transformers/string.py`
 
 `string` mirrors Python's `string` module — ASCII character-class constants plus the `Template` class for `$variable` substitution. The constants live on the namespace; `Template` is exposed alongside it (PascalCase), matching the `hmac`/`HMAC` and `uuid`/`UUID` convention.

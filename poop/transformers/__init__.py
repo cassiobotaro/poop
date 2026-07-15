@@ -36,7 +36,6 @@ from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.gc import NAMESPACE as _gc_namespace
 from poop.transformers.grp import NAMESPACE as _grp_namespace
 from poop.transformers.gzip import NAMESPACE as _gzip_namespace
-from poop.transformers.hashlib import NAMESPACE as _hashlib_namespace
 from poop.transformers.html import NAMESPACE as _html_namespace
 from poop.transformers.http import NAMESPACE as _http_namespace
 from poop.transformers.int import IntTransformer
@@ -154,7 +153,6 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     BlockTransformer.BINDINGS,
     _path_namespace,
     _random_namespace,
-    _hashlib_namespace,
     _datetime_namespace,
     _decimal_namespace,
     _sqlite3_namespace,

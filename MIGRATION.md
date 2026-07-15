@@ -39,7 +39,6 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `random.Random(seed)` | `Random(seed)` |
 | `base64.b64encode(b)` | `b.b64encode()` |
 | `base64.b64decode(s)` | `s.b64decode()` |
-| `hashlib.sha256(b).hexdigest()` | `b.sha256().hexdigest()` |
 | `datetime.date.today()` | `Date.today()` |
 | `decimal.Decimal("3.14")` | `Decimal("3.14")` |
 | `sqlite3.connect(p)` | `sqlite3.connect(p)` |
@@ -405,28 +404,6 @@ from_str = "YWJj".b64decode()
 ```
 
 > All `base64.*` functions are methods on the value. `Bytes` carries both encode and decode (9 variants each: b16/b32/b32hex/b64/standard_b64/urlsafe_b64/a85/b85/z85). `Str` carries decoders only (the encoders never accept `str` input in CPython either). Encoders return `Bytes` — call `.decode(Str("ascii"))` if you want a textual `Str`.
-
-## Hashing (`hashlib` module + `Hash` class)
-
-```python
-# Python
-import hashlib
-
-digest = hashlib.sha256(b"abc").hexdigest()
-mac = hashlib.new("sha512", b"abc").digest()
-key = hashlib.pbkdf2_hmac("sha256", b"pw", b"salt", 200_000)
-file_hash = hashlib.file_digest(open("blob.bin", "rb"), "sha256").hexdigest()
-```
-
-```python
-# POOP
-digest = b"abc".sha256().hexdigest()
-mac = hashlib.new("sha512", b"abc").digest()
-key = b"pw".pbkdf2_hmac("sha256", b"salt", 200_000)
-file_hash = hashlib.file_digest(Path("blob.bin"), "sha256").hexdigest()
-```
-
-> Shortcut messages on `Bytes` carry the data; the message names the algorithm — `b.sha256()`, `b.blake2b()`, `b.sha3_512()`, etc. Key derivation flips the convention: the receiver is the password (`b"pw".pbkdf2_hmac(...)`, `b"pw".scrypt(...)`), mirroring Smalltalk Cryptography's `password deriveKey: ...`. `hashlib.file_digest` takes a POOP `Path` instead of a file object — POOP routes file I/O through `Path`. `Str` does not carry the shortcut messages: encode first (`"abc".encode("utf-8").sha256()`) to keep the encoding step explicit.
 
 ## Dates and times (`datetime` module + `Date` / `Time` / `DateTime` / `TimeDelta` / `TimeZone`)
 
