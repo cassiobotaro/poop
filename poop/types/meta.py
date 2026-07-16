@@ -84,6 +84,20 @@ def _reject_dunder(name: str) -> None:
         raise AttributeError(message.lstrip("."))
 
 
+def _reject_private(name: str) -> None:
+    """The class-side half of `Object._reject_private` — refuse `_`-privates.
+
+    A class is an object too, so `Foo.get_attr("_data")` must be refused for the
+    same reason the instance side refuses it: it reaches internals the mangling
+    scheme exists to hide.
+    """
+    is_dunder = name.startswith("__") and name.endswith("__")
+    if name.startswith("_") and not is_dunder:
+        raise AttributeError(
+            f"{name} is private — POOP objects do not expose their internals"
+        )
+
+
 def _refuse(cls: type, name: str) -> None:
     """Refuse an instance-only message, naming the class-side one instead.
 
@@ -136,6 +150,8 @@ class PoopMeta(ABCMeta):
     def has_attr(cls, name: Str) -> Boolean:
         from poop.types.boolean import to_boolean
 
+        _reject_dunder(name._value)
+        _reject_private(name._value)
         return to_boolean(hasattr(cls, name._value))
 
     # `Object`'s protocol, answered class-side. Each needs its own descriptor:
@@ -279,6 +295,7 @@ class PoopMeta(ABCMeta):
     @class_side
     def get_attr(cls, name: Str, *default: Any) -> Any:
         _reject_dunder(name._value)
+        _reject_private(name._value)
         return builtins.getattr(cls, name._value, *default)
 
     @class_side
@@ -286,6 +303,7 @@ class PoopMeta(ABCMeta):
         from poop.types.none import none
 
         _reject_dunder(name._value)
+        _reject_private(name._value)
         builtins.setattr(cls, name._value, value)
         return none
 
@@ -294,6 +312,7 @@ class PoopMeta(ABCMeta):
         from poop.types.none import none
 
         _reject_dunder(name._value)
+        _reject_private(name._value)
         builtins.delattr(cls, name._value)
         return none
 

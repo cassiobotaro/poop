@@ -159,6 +159,27 @@ def test_get_attr_missing_with_default_returns_default() -> None:
     assert result is sentinel
 
 
+def test_get_attr_rejects_a_private_name() -> None:
+    # `_value` would hand back the raw Python primitive a POOP object wraps.
+    with pytest.raises(AttributeError, match="private"):
+        Int(42).get_attr(Str("_value"))
+
+
+def test_get_attr_private_default_does_not_soften_the_ban() -> None:
+    with pytest.raises(AttributeError, match="private"):
+        Int(42).get_attr(Str("_value"), "fallback")
+
+
+def test_has_attr_rejects_a_private_name() -> None:
+    with pytest.raises(AttributeError, match="private"):
+        List(Int(1)).has_attr(Str("_items"))
+
+
+def test_set_attr_rejects_a_private_name() -> None:
+    with pytest.raises(AttributeError, match="private"):
+        Int(42).set_attr(Str("_value"), Int(99))
+
+
 def test_set_attr_writes_to_declared_slot() -> None:
     from poop.types.none import none
 

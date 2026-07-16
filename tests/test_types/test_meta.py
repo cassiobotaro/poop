@@ -53,6 +53,19 @@ def test_a_class_answers_has_attr() -> None:
     assert _Dog.has_attr(Str("fly")) is false
 
 
+def test_a_class_has_attr_rejects_private_and_dunder() -> None:
+    # The class side must guard like the instance side, not answer freely.
+    with pytest.raises(AttributeError, match="private"):
+        _Dog.has_attr(Str("_data"))
+    with pytest.raises(AttributeError):
+        _Dog.has_attr(Str("__dict__"))
+
+
+def test_a_class_get_attr_rejects_a_private_name() -> None:
+    with pytest.raises(AttributeError, match="private"):
+        _Dog.get_attr(Str("_data"))
+
+
 def test_instances_still_get_the_instance_side() -> None:
     # The metaclass must not shadow instance messages: lookup on an instance
     # never consults the metaclass.

@@ -172,22 +172,42 @@ class Object(metaclass=PoopMeta):
         if message is not None:
             raise AttributeError(message.lstrip("."))
 
+    def _reject_private(self, name: str) -> None:
+        """POOP encapsulation: refuse `_`-prefixed private names.
+
+        `get_attr("_value")` would hand back the raw Python primitive a POOP
+        object wraps — a naked native in user code — and `_items`/`_data`/`_fn`
+        expose the same internals; the mangled `_poop_*` bindings hide here too.
+        A computed name — `"_val" + "ue"` — is invisible to any static
+        validator, so the guard lives at runtime. Dunders are handled by
+        `_reject_dunder`; this covers the single-underscore convention Python
+        honours only by etiquette.
+        """
+        is_dunder = name.startswith("__") and name.endswith("__")
+        if name.startswith("_") and not is_dunder:
+            raise AttributeError(
+                f"{name} is private — POOP objects do not expose their internals"
+            )
+
     def get_attr(self, name: Str, *default: Any) -> Any:
         # Guarded before the default is consulted: a forbidden name is refused,
         # not quietly answered with a fallback.
         self._reject_dunder(name._value)
+        self._reject_private(name._value)
         return builtins.getattr(self, name._value, *default)
 
     def has_attr(self, symbol: Str) -> Boolean:
         from poop.types.boolean import to_boolean
 
         self._reject_dunder(symbol._value)
+        self._reject_private(symbol._value)
         return to_boolean(hasattr(self, symbol._value))
 
     def set_attr(self, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
 
         self._reject_dunder(name._value)
+        self._reject_private(name._value)
         builtins.setattr(self, name._value, value)
         return none
 
@@ -195,6 +215,7 @@ class Object(metaclass=PoopMeta):
         from poop.types.none import none
 
         self._reject_dunder(name._value)
+        self._reject_private(name._value)
         builtins.delattr(self, name._value)
         return none
 
