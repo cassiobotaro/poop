@@ -470,11 +470,27 @@ def test_print_error_keeps_the_caret_aligned_and_plain_off_a_terminal(
 ) -> None:
     buf = io.StringIO()
     monkeypatch.setattr("poop.repl._ERR", _console(buf, terminal=False))
-    _print_error("  1 | print(x)\n    | ^")
+    _print_error(ValidationError("if is forbidden", 1, 0), "if x:")
     out = buf.getvalue()
     assert "\x1b[" not in out
-    assert "  1 | print(x)" in out
+    assert "  1 | if x:" in out
     assert "    | ^" in out
+
+
+def test_print_error_syntax_highlights_the_line_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    buf = io.StringIO()
+    monkeypatch.setattr("poop.repl._ERR", _console(buf, terminal=True))
+    _print_error(ValidationError("if is forbidden", 1, 0), "if x:")
+    out = buf.getvalue()
+    assert "\x1b[" in out  # coloured
+    assert "poop: if is forbidden" in out  # the message survives intact
+    # the offending line is quoted, but the highlighter splits its tokens with
+    # ANSI codes, so assert on the tokens rather than the contiguous line.
+    assert "if" in out
+    assert "x:" in out
+    assert "^" in out  # caret preserved
 
 
 def test_rl_color_plain_when_not_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:

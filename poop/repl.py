@@ -6,10 +6,11 @@ import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from rich.columns import Columns
 from rich.console import Console
 from rich.text import Text
 
-from poop.errors import PoopError, format_error
+from poop.errors import PoopError, format_error, render_error
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
@@ -22,7 +23,6 @@ from poop.validators import DEFAULT_VALIDATORS
 if TYPE_CHECKING:
     from poop.interpreter import Interpreter
 
-_BANNER = "POOP 💩  — Python infected by Smalltalk. Ctrl+D to exit."
 _HISTORY_FILE = Path.home() / ".poop_history"
 _HISTORY_MAX = 1000
 
@@ -76,9 +76,19 @@ def _error(message: str) -> None:
     _ERR.print(Text(f"poop: {message}", style="red"), soft_wrap=True, highlight=False)
 
 
-def _print_error(text: str) -> None:
-    """Print a pre-formatted error (source gutter + caret) red on stderr."""
-    _ERR.print(Text(text, style="red"), soft_wrap=True, highlight=False)
+def _print_error(exc: PoopError, source: str | None) -> None:
+    """Print a formatted error on stderr: message, source gutter, caret.
+
+    On a colour terminal the offending line is Python-highlighted via
+    `render_error`; off a terminal (a pipe, `NO_COLOR`) the plain `format_error`
+    text is printed instead, so redirected error output stays clean.
+    """
+    if _ERR.is_terminal and not _ERR.no_color:
+        _ERR.print(render_error(exc, source), soft_wrap=True)
+    else:
+        _ERR.print(
+            format_error(exc, source), soft_wrap=True, highlight=False, markup=False
+        )
 
 
 _SAFE_AST_NODES: tuple[type[ast.AST], ...] = (
@@ -308,7 +318,10 @@ class Repl:
         names = sorted(n for n in dir(obj) if not n.startswith("_"))
         header = f"{type(obj).__name__} understands {len(names)} messages:"
         _OUT.print(Text(header, style="dim"), soft_wrap=True, highlight=False)
-        print(textwrap.fill("  ".join(names), width=80))  # noqa: T201
+        # rich lays the messages out in as many columns as the terminal is wide
+        # (a single column when the width is unknown, e.g. a pipe), replacing a
+        # hand-rolled textwrap.fill that always assumed 80.
+        _OUT.print(Columns(names, padding=(0, 2), column_first=True))
 
     def _meta_explain(self, arg: str) -> None:
         if not arg:
@@ -326,7 +339,7 @@ class Repl:
             return
         errors = self._interpreter.validate_all(snippet, "<explain>")
         if not errors:
-            print(f"{arg} is allowed in POOP.")  # noqa: T201
+            _OUT.print(Text(f"{arg} is allowed in POOP.", style="green"))
             return
         for err in errors:
             print(err.args[0])  # noqa: T201
@@ -342,7 +355,13 @@ class Repl:
         _print_value(value)
 
     def run(self) -> None:
-        print(_BANNER)  # noqa: T201
+        _OUT.print(
+            Text.assemble(
+                ("POOP 💩", "bold magenta"),
+                "  — Python infected by Smalltalk. ",
+                ("Ctrl+D to exit.", "dim"),
+            )
+        )
         buffer: list[str] = []
         original_hook = sys.displayhook
         sys.displayhook = self._displayhook
@@ -393,8 +412,8 @@ class Repl:
                     )
                 except PoopError as exc:
                     # The one diagnostic that does not go through _error():
-                    # format_error owns the `poop:` prefix and adds the source
-                    # gutter and caret, which the plain sink cannot.
-                    _print_error(format_error(exc, source))
+                    # it carries the source gutter and caret the plain sink
+                    # cannot, and syntax-highlights the offending line on a tty.
+                    _print_error(exc, source)
         finally:
             sys.displayhook = original_hook
