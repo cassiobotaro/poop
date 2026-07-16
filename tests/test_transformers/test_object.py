@@ -23,10 +23,18 @@ def test_object_is_rewritten_wherever_it_is_named() -> None:
     assert "_poop_object" in _names("f = object")
 
 
+def test_capital_object_is_a_real_name_now() -> None:
+    # `Object` was accepted only as a class-base string and was a NameError
+    # everywhere else; it now resolves like `object`, in every position.
+    assert _names("Object") == ["_poop_object"]
+    assert "_poop_object" in _names("Object.print()")
+    assert "_poop_object" in _names("x.is_instance(Object)")
+
+
 def test_other_names_are_untouched() -> None:
-    assert _names("Object") == ["Object"]
     assert _names("objects") == ["objects"]
     assert _names("my_object") == ["my_object"]
+    assert _names("Objection") == ["Objection"]
 
 
 def test_declares_no_bindings_because_class_transformer_owns_the_name() -> None:

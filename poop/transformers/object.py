@@ -2,23 +2,30 @@ import ast
 
 from poop.transformers.base import BaseTransformer
 
+# Both spellings name POOP's root. `object` is Python's builtin, rewritten
+# like every other lowercase one; `Object` is POOP's own name for the same
+# class, and is a real name in every position rather than a string the
+# `ClassTransformer` recognises only in a base list.
+_OBJECT_NAMES = frozenset({"object", "Object"})
+
 
 class _ObjectRewriter(ast.NodeTransformer):
     def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "object":
+        if node.id in _OBJECT_NAMES:
             return ast.copy_location(ast.Name(id="_poop_object", ctx=node.ctx), node)
         return node
 
 
 class ObjectTransformer(BaseTransformer):
-    """Rewrites `object` to POOP's root class.
+    """Rewrites `object` and `Object` to POOP's root class.
 
-    `ClassTransformer` already rewrites `object` in a base list, so
+    `ClassTransformer` already rewrites both in a base list, so
     `class Foo(object)` worked while a bare `object` resolved to CPython's
-    class — `object.class_name()` answered `type object 'object' has no
-    attribute 'class_name'`, making "no naked Python primitive ever reaches
-    runtime" false about the root class itself. Every other lowercase builtin
-    has had a `Name`-position rewrite all along.
+    class and a bare `Object` was a `NameError` — the capital name was
+    accepted in exactly one syntactic position, for a name bound nowhere.
+    Every other lowercase builtin has had a `Name`-position rewrite all along;
+    `object` joined them in proposal 13, and `Object` joins here so the POOP
+    spelling resolves everywhere the Python one does.
 
     Declares no BINDINGS: `ClassTransformer` already binds `_poop_object` for
     the implicit base, and the namespace build rejects a duplicate key rather
