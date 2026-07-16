@@ -118,36 +118,63 @@ class _DictRewriter(CollectionRewriter):
                 )
                 for arg in node.args
             ]
-            pending: list[ast.expr] = []
-            for kw in node.keywords:
-                if kw.arg is None:
-                    if pending:
-                        parts.append(self._pairs_call(pending, node))
-                        pending = []
-                    parts.append(self.visit(kw.value))
-                else:
-                    # The StrTransformer has already run, so wrap the keyword
-                    # name in `_poop_str` ourselves to give the merged Dict a
-                    # `Str` key (matching `_poop_dict_from`'s kwargs handling).
-                    pending.append(
-                        ast.Call(
-                            func=ast.Name(id="_poop_str", ctx=ast.Load()),
-                            args=[ast.Constant(value=kw.arg)],
-                            keywords=[],
-                        )
-                    )
-                    pending.append(self.visit(kw.value))
-            if pending:
-                parts.append(self._pairs_call(pending, node))
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_dict_merge", ctx=ast.Load()),
-                    args=parts,
-                    keywords=[],
-                ),
-                node,
-            )
+            # A named keyword is a plain pair; `**x` (kw.arg is None) is a
+            # splat. The StrTransformer has already run, so wrap the keyword
+            # name in `_poop_str` ourselves to give the merged Dict a `Str`
+            # key (matching `_poop_dict_from`'s kwargs handling).
+            entries: list[tuple[ast.expr | None, ast.expr]] = [
+                (None, self.visit(kw.value))
+                if kw.arg is None
+                else (
+                    ast.Call(
+                        func=ast.Name(id="_poop_str", ctx=ast.Load()),
+                        args=[ast.Constant(value=kw.arg)],
+                        keywords=[],
+                    ),
+                    self.visit(kw.value),
+                )
+                for kw in node.keywords
+            ]
+            return self._merge_call(self._fold_parts(entries, node, parts), node)
         return super().visit_Call(node)
+
+    def _fold_parts(
+        self,
+        entries: Iterable[tuple[ast.expr | None, ast.expr]],
+        ref: ast.AST,
+        parts: list[ast.expr],
+    ) -> list[ast.expr]:
+        """Fold (key, value) entries into `_poop_dict_merge` arguments.
+
+        A `None` key marks a `**x` splat: it flushes the pending run of
+        plain pairs into a `_poop_dict_from_pairs(...)` part, then appends
+        `x` whole. Shared by the `dict(a, **b)` call path and the
+        `{**a, 'k': v}` display path so both fold identically.
+        """
+        pending: list[ast.expr] = []
+        for key, value in entries:
+            if key is None:
+                if pending:
+                    parts.append(self._pairs_call(pending, ref))
+                    pending = []
+                parts.append(value)
+            else:
+                pending.append(key)
+                pending.append(value)
+        if pending:
+            parts.append(self._pairs_call(pending, ref))
+        return parts
+
+    @staticmethod
+    def _merge_call(parts: list[ast.expr], ref: ast.AST) -> ast.expr:
+        return ast.copy_location(
+            ast.Call(
+                func=ast.Name(id="_poop_dict_merge", ctx=ast.Load()),
+                args=parts,
+                keywords=[],
+            ),
+            ref,
+        )
 
     @staticmethod
     def _pairs_call(flat: list[ast.expr], ref: ast.AST) -> ast.expr:
@@ -171,26 +198,8 @@ class _DictRewriter(CollectionRewriter):
         # A `**x` entry (key is None) makes this a merge: each run of plain
         # pairs becomes a _poop_dict_from_pairs(...), each **x stays as x,
         # and _poop_dict_merge folds them left to right.
-        parts: list[ast.expr] = []
-        pending: list[ast.expr] = []
-        for k, v in zip(node.keys, node.values):
-            if k is None:
-                if pending:
-                    parts.append(self._pairs_call(pending, node))
-                    pending = []
-                parts.append(v)
-            else:
-                pending.append(k)
-                pending.append(v)
-        if pending:
-            parts.append(self._pairs_call(pending, node))
-        return ast.copy_location(
-            ast.Call(
-                func=ast.Name(id="_poop_dict_merge", ctx=ast.Load()),
-                args=parts,
-                keywords=[],
-            ),
-            node,
+        return self._merge_call(
+            self._fold_parts(zip(node.keys, node.values), node, []), node
         )
 
 
