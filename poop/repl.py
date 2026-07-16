@@ -4,7 +4,10 @@ import codeop
 import sys
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO
+from typing import TYPE_CHECKING
+
+from rich.console import Console
+from rich.text import Text
 
 from poop.errors import PoopError, format_error
 from poop.transformers import DEFAULT_NAMESPACE
@@ -28,34 +31,38 @@ _HISTORY_MAX = 1000
 # leaks another callback into the global atexit registry.
 _history_saver_registered = False
 
+# One console per stream, so colorization is decided per destination: value
+# echoes and prompts write to stdout, diagnostics to stderr. rich detects each
+# stream's tty independently and honors NO_COLOR, so `poop 2>err.log` never
+# leaks ANSI into the file while the interactive stdout stays colored.
+_OUT = Console()
+_ERR = Console(stderr=True)
+
+# readline needs \001/\002 non-printing markers to measure prompt width, which
+# rich does not emit — so the prompt keeps manual ANSI, gated on rich's own
+# stdout detection so it still respects a non-tty stdout and NO_COLOR.
 _RESET = "\x1b[0m"
 _DIM = "\x1b[2m"
-_RED = "\x1b[31m"
-_GREEN = "\x1b[32m"
-_YELLOW = "\x1b[33m"
-_BLUE = "\x1b[34m"
 _CYAN = "\x1b[36m"
 
 
-def _can_colorize(stream: TextIO) -> bool:
-    try:
-        return stream.isatty()
-    except Exception:  # noqa: BLE001
-        return False
+def _value_text(value: object) -> Text:
+    if isinstance(value, Boolean):
+        return Text(repr(value), style="blue")
+    if isinstance(value, (Int, Float, Complex)):
+        return Text(repr(value), style="yellow")
+    if isinstance(value, Str):
+        return Text(repr(value._value), style="green")
+    return Text(repr(value))
 
 
-def _color(text: str, *codes: str, stream: TextIO | None = None) -> str:
-    # Colorize based on the stream the text is bound for, not a global guess:
-    # diagnostics go to stderr, value echoes to stdout, and the two can point
-    # at different places (`poop 2>log` leaves stdout a tty but stderr a file).
-    if not _can_colorize(sys.stdout if stream is None else stream):
-        return text
-    return f"{''.join(codes)}{text}{_RESET}"
+def _print_value(value: object) -> None:
+    _OUT.print(_value_text(value), soft_wrap=True, highlight=False)
 
 
 def _rl_color(text: str, *codes: str) -> str:
-    """Wrap non-printing ANSI bytes for readline prompts (stdout-bound)."""
-    if not _can_colorize(sys.stdout):
+    """Color a readline prompt (stdout-bound), keeping readline width markers."""
+    if not _OUT.is_terminal or _OUT.no_color:
         return text
     return f"\001{''.join(codes)}\002{text}\001{_RESET}\002"
 
@@ -66,19 +73,12 @@ def _error(message: str) -> None:
     Every diagnostic the REPL emits shares that contract, so it lives in
     one place — a new call site cannot forget the prefix or the stream.
     """
-    print(_color(f"poop: {message}", _RED, stream=sys.stderr), file=sys.stderr)  # noqa: T201
+    _ERR.print(Text(f"poop: {message}", style="red"), soft_wrap=True, highlight=False)
 
 
-def _colorize_value(value: object) -> str:
-    if not _can_colorize(sys.stdout):
-        return repr(value)
-    if isinstance(value, Boolean):
-        return _color(repr(value), _BLUE)
-    if isinstance(value, (Int, Float, Complex)):
-        return _color(repr(value), _YELLOW)
-    if isinstance(value, Str):
-        return _color(repr(value._value), _GREEN)
-    return repr(value)
+def _print_error(text: str) -> None:
+    """Print a pre-formatted error (source gutter + caret) red on stderr."""
+    _ERR.print(Text(text, style="red"), soft_wrap=True, highlight=False)
 
 
 _SAFE_AST_NODES: tuple[type[ast.AST], ...] = (
@@ -306,7 +306,7 @@ class Repl:
             return
         names = sorted(n for n in dir(obj) if not n.startswith("_"))
         header = f"{type(obj).__name__} understands {len(names)} messages:"
-        print(_color(header, _DIM))  # noqa: T201
+        _OUT.print(Text(header, style="dim"), soft_wrap=True, highlight=False)
         print(textwrap.fill("  ".join(names), width=80))  # noqa: T201
 
     def _meta_explain(self, arg: str) -> None:
@@ -338,7 +338,7 @@ class Repl:
         if value is None or isinstance(value, NoneClass):
             return
         self._ns["_"] = value
-        print(_colorize_value(value))  # noqa: T201
+        _print_value(value)
 
     def run(self) -> None:
         print(_BANNER)  # noqa: T201
@@ -391,9 +391,6 @@ class Repl:
                     # The one diagnostic that does not go through _error():
                     # format_error owns the `poop:` prefix and adds the source
                     # gutter and caret, which the plain sink cannot.
-                    print(  # noqa: T201
-                        _color(format_error(exc, source), _RED, stream=sys.stderr),
-                        file=sys.stderr,
-                    )
+                    _print_error(format_error(exc, source))
         finally:
             sys.displayhook = original_hook

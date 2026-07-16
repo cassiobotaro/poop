@@ -1,23 +1,28 @@
 import ast
+import io
 import sys
 
 import pytest
+from rich.console import Console
 
 import poop.validators as validators
 from poop.errors import ExecutionError, ParseError, ValidationError
 from poop.interpreter import Interpreter
 from poop.repl import (
+    _CYAN,
     _EXPLAIN_CALLS,
     _EXPLAIN_SNIPPETS,
     Repl,
-    _color,
-    _colorize_value,
     _error,
     _explain_snippet,
     _indent_for,
     _PoopCompleter,
+    _print_error,
+    _print_value,
+    _rl_color,
     _save_history,
     _setup_readline,
+    _value_text,
 )
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.int import Int
@@ -352,71 +357,111 @@ def test_poop_completer_attr_allows_literal() -> None:
     assert c.complete("'hi'.upp", 0) == "'hi'.upper("
 
 
-# --- _colorize_value ---
+# --- colorized output (rich, one console per stream) ---
 
 
-def test_colorize_value_no_color_when_not_tty(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("sys.stdout.isatty", lambda: False)
-    assert _colorize_value(Int(1)) == "1"
+def _console(buf: io.StringIO, *, terminal: bool) -> Console:
+    return Console(
+        file=buf,
+        force_terminal=terminal,
+        color_system="standard",
+        no_color=not terminal,
+    )
 
 
-def test_colorize_value_int_contains_ansi_when_tty(
+def test_value_text_int_is_yellow() -> None:
+    text = _value_text(Int(1))
+    assert text.plain == "1"
+    assert text.style == "yellow"
+
+
+def test_value_text_str_uses_quoted_repr() -> None:
+    text = _value_text(Str("hello"))
+    assert text.plain == "'hello'"
+    assert text.style == "green"
+
+
+def test_value_text_bool_is_blue() -> None:
+    from poop.types.boolean import true
+
+    assert _value_text(true).style == "blue"
+
+
+def test_value_text_other_is_unstyled() -> None:
+    assert _value_text(object()).style == ""
+
+
+def test_print_value_emits_ansi_on_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+    buf = io.StringIO()
+    monkeypatch.setattr("poop.repl._OUT", _console(buf, terminal=True))
+    _print_value(Int(1))
+    out = buf.getvalue()
+    assert "\x1b[" in out
+    assert "1" in out
+
+
+def test_print_value_plain_when_not_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
-    result = _colorize_value(Int(1))
-    assert "\x1b[" in result
-    assert "1" in result
+    buf = io.StringIO()
+    monkeypatch.setattr("poop.repl._OUT", _console(buf, terminal=False))
+    _print_value(Int(1))
+    assert buf.getvalue() == "1\n"
 
 
-def test_colorize_value_str_uses_quoted_repr(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
-    result = _colorize_value(Str("hello"))
-    assert "'hello'" in result
-
-
-def test_color_no_ansi_when_not_tty(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("sys.stdout.isatty", lambda: False)
-    assert _color("text", "\x1b[31m") == "text"
-
-
-def test_color_wraps_ansi_when_tty(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
-    result = _color("text", "\x1b[31m")
-    assert result.startswith("\x1b[31m")
-    assert "text" in result
-
-
-def test_color_for_stderr_follows_stderr_not_stdout(
+def test_diagnostics_and_values_colorize_per_stream(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # stdout is not a tty (e.g. `poop 2>err.log` keeps stderr a tty): a
-    # stderr-bound message must still colorize off stderr, not stdout.
-    monkeypatch.setattr("sys.stdout.isatty", lambda: False)
-    monkeypatch.setattr("sys.stderr.isatty", lambda: True)
-    result = _color("text", "\x1b[31m", stream=sys.stderr)
-    assert result.startswith("\x1b[31m")
-
-
-def test_color_for_stderr_stays_plain_when_stderr_redirected(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # The reverse (`poop 2>err.log`, stdout a tty): a stderr-bound message
-    # must NOT leak raw ANSI into the redirected file.
-    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
-    monkeypatch.setattr("sys.stderr.isatty", lambda: False)
-    assert _color("text", "\x1b[31m", stream=sys.stderr) == "text"
-
-
-def test_error_colorizes_off_stderr(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    monkeypatch.setattr("sys.stdout.isatty", lambda: False)
-    monkeypatch.setattr("sys.stderr.isatty", lambda: True)
+    # `poop 2>err.log`: stdout a tty, stderr a file. The value echo colorizes
+    # off stdout while the diagnostic must not leak ANSI into redirected stderr.
+    out_buf, err_buf = io.StringIO(), io.StringIO()
+    monkeypatch.setattr("poop.repl._OUT", _console(out_buf, terminal=True))
+    monkeypatch.setattr("poop.repl._ERR", _console(err_buf, terminal=False))
+    _print_value(Int(1))
     _error("boom")
-    err = capsys.readouterr().err
-    assert "\x1b[" in err
-    assert "poop: boom" in err
+    assert "\x1b[" in out_buf.getvalue()
+    assert err_buf.getvalue() == "poop: boom\n"
+
+
+def test_diagnostic_colorizes_when_only_stderr_is_a_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The reverse (`poop >out.txt`): stderr a tty, stdout a file. The
+    # diagnostic must still colorize off stderr.
+    err_buf = io.StringIO()
+    monkeypatch.setattr("poop.repl._OUT", _console(io.StringIO(), terminal=False))
+    monkeypatch.setattr("poop.repl._ERR", _console(err_buf, terminal=True))
+    _error("boom")
+    out = err_buf.getvalue()
+    assert "\x1b[" in out
+    assert "poop: boom" in out
+
+
+def test_print_error_keeps_the_caret_aligned_and_plain_off_a_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    buf = io.StringIO()
+    monkeypatch.setattr("poop.repl._ERR", _console(buf, terminal=False))
+    _print_error("  1 | print(x)\n    | ^")
+    out = buf.getvalue()
+    assert "\x1b[" not in out
+    assert "  1 | print(x)" in out
+    assert "    | ^" in out
+
+
+def test_rl_color_plain_when_not_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("poop.repl._OUT", _console(io.StringIO(), terminal=False))
+    assert _rl_color(">>>", _CYAN) == ">>>"
+
+
+def test_rl_color_wraps_with_readline_markers_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("poop.repl._OUT", _console(io.StringIO(), terminal=True))
+    result = _rl_color(">>>", _CYAN)
+    assert result.startswith("\001")
+    assert _CYAN in result
+    assert ">>>" in result
 
 
 # --- meta-commands ---
