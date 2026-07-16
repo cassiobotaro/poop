@@ -2,6 +2,7 @@ from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean, true
@@ -129,11 +130,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     def __add__(self, other: ByteArray) -> ByteArray:
         return ByteArray(self._value + other._value)
 
-    def __mul__(self, other: Int) -> ByteArray:
-        return ByteArray(self._value * other._value)
+    def __mul__(self, other: object) -> ByteArray:
+        return ByteArray(self._value * _repeat_count(other))
 
-    def __rmul__(self, other: Int) -> ByteArray:
-        return ByteArray(self._value * other._value)
+    def __rmul__(self, other: object) -> ByteArray:
+        return ByteArray(self._value * _repeat_count(other))
 
     def append(self, byte: Int) -> NoneClass:
         self._value.append(byte._value)
