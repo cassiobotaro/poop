@@ -177,7 +177,7 @@ the five `class_side` descriptors escape this today.
 
 ## Language features
 
-### 14. Classes answer 6 of `Object`'s 18 messages
+### ~~14. Classes answer 6 of `Object`'s 18 messages~~ — DONE
 
 Item 4 made classes objects, and stopped short. A class answers `name()`,
 `superclass()`, `has_attr()`, `print()` and `does_not_understand()` — the five
@@ -199,30 +199,29 @@ answered unbound. `PoopMeta.__getattr__` never fires — nothing missed. Item 4
 solved this with `class_side` data descriptors, which win the lookup, and
 applied it to five messages.
 
-**Smalltalk answers most of these on the class side**, which is what makes this
-a gap rather than a boundary. `Foo hash`, `Foo isNil`, `Foo printString` are all
-ordinary sends to an ordinary object — a class is one. So the twelve are not a
-single case:
+**Decision: answer the ten, refuse the two.** Every message `Object` offers is
+now a `class_side` descriptor on `PoopMeta`. `Foo.hash()`, `Foo.id()`,
+`Foo.is_none()`, `Foo.not_none()`, `Foo.not_()`, `Foo.callable()`, `Foo.repr()`,
+`Foo.ascii()`, `Foo.dir()` and `Foo.format()` answer, as they do in Smalltalk,
+where a class is an ordinary object.
 
-- *Meaningful on a class, and cheap*: `hash`, `id`, `is_none`, `not_none`,
-  `not_`, `repr`, `ascii`, `dir`, `callable`, `format`. Each wants a
-  `class_side` twin, most of them one line.
-- *Meaningful but awkward*: `class_` and `class_name`. In Smalltalk `Foo class`
-  answers the metaclass, `Foo class`. POOP has no metaclass-of-metaclass
-  surface, and answering `PoopMeta` would leak the implementation. Candidates:
-  answer `none`, refuse via `does_not_understand`, or give POOP a real metaclass
-  object. This is the item's actual question; the other ten are mechanical.
+**`class_` and `class_name` are refused**, naming `#name` instead. The deciding
+fact, verified: `PoopMeta` is not itself a POOP class — `type(PoopMeta)` is
+`type`, and `isinstance(PoopMeta, PoopMeta)` is `False`. So `Foo.class_()` had
+nothing POOP to answer with, and handing back `PoopMeta` would leak exactly the
+raw class object item 4 exists to remove. Answering `Foo` was the tempting
+alternative and is worse: it would make `class_name` mean "my class's name" on
+an instance and "my own name" on a class, silently.
 
-**Do not fix it by widening `Object`.** A metaclass cannot inherit `Object`'s
-methods into the class-side lookup — that is what the MRO ordering forbids, and
-it is why `class_side` exists. Each message needs its own descriptor, which is
-also the argument for deciding the shape before writing twelve of them.
+**The refusal does not route through `does_not_understand`.** Its `difflib` hint
+answers `#class_` with "did you mean #class_name?" — which is refused here too,
+sending the reader from one refusal to another. `_refuse` names `#name` directly.
 
-**Cost of leaving it**: the surface criterion says a message earns its place by
-substituting a forbidden construct. `hash`, `id`, `repr`, `ascii`, `dir` and
-`format` all substitute banned builtins — for instances. On a class the ban still
-applies and the substitute does not exist, which is the same "activate a
-validator only when the substitute exists" violation item 5 was closed for.
+**`repr` and `ascii` answer the class's name**, matching `print`, rather than
+`builtins.repr(cls)`, which answers `<class 'builtins.Foo'>` — Python's
+vocabulary inside a POOP message's answer. `ascii` escapes non-ASCII, since a
+class name is an identifier and Python 3 lets those hold it: `Ação.ascii()`
+answers `A\xe7\xe3o`.
 
 ### ~~4. Classes are not objects~~ — DONE
 
