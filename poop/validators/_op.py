@@ -3,7 +3,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector
+from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
 
 def make_op_validator(
@@ -11,7 +11,7 @@ def make_op_validator(
     messages: Mapping[type[ast.AST], str],
     *,
     allow: Callable[[Any], bool] | None = None,
-) -> type:
+) -> type[CollectingValidator]:
     """Factory for validators that forbid specific operators.
 
     Args:
@@ -55,8 +55,6 @@ def make_op_validator(
 
     class _Validator(CollectingValidator):
         def collect(self, tree: ast.Module) -> list[ValidationError]:
-            visitor = visitor_cls()
-            visitor.visit(tree)
-            return visitor.errors
+            return collect_errors(visitor_cls(), tree)
 
     return _Validator

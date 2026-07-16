@@ -2,10 +2,12 @@ import ast
 from collections.abc import Callable, Mapping
 
 from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector
+from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
 
-def make_node_validator(messages: Mapping[type[ast.AST], str]) -> type:
+def make_node_validator(
+    messages: Mapping[type[ast.AST], str],
+) -> type[CollectingValidator]:
     """Factory for validators that forbid specific AST node types.
 
     Args:
@@ -34,8 +36,6 @@ def make_node_validator(messages: Mapping[type[ast.AST], str]) -> type:
 
     class _Validator(CollectingValidator):
         def collect(self, tree: ast.Module) -> list[ValidationError]:
-            visitor = visitor_cls()
-            visitor.visit(tree)
-            return visitor.errors
+            return collect_errors(visitor_cls(), tree)
 
     return _Validator
