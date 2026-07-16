@@ -2,6 +2,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from poop.cli import app
@@ -124,6 +125,27 @@ def test_cli_transformers_only_dumps_ast(tmp_path: Path) -> None:
     result = runner.invoke(app, [str(f), "--transformers-only"])
     assert result.exit_code == 0
     assert "_poop_str" in result.output
+
+
+def test_cli_runs_source_from_a_pipe_only_read_once() -> None:
+    # Regression: the CLI read the file once for error formatting and then a
+    # second time to execute it. A pipe yields its bytes only once, so the
+    # executing read came back empty and the program ran as if blank —
+    # printing nothing and exiting 0 instead of running the piped program.
+    stdin_path = Path("/dev/stdin")
+    if not stdin_path.exists():  # pragma: no cover - platform without /dev/stdin
+        pytest.skip("no /dev/stdin on this platform")
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, str(REPO_ROOT / "main.py"), "/dev/stdin"],
+        input='"hello from pipe".print()\n',
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert "hello from pipe" in result.stdout
 
 
 def test_main_module_runs_file_via_argv(tmp_path: Path) -> None:
