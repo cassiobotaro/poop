@@ -287,6 +287,13 @@ def test_dir_contains_known_method() -> None:
     assert Str("class_name") in result._items
 
 
+def test_dir_hides_private_and_dunder_names() -> None:
+    # The introspection substitute must not surface `_`-prefixed internals —
+    # dunders or privates (including the mangled `_poop_*` bindings).
+    result = Object().dir()
+    assert all(not str(name).startswith("_") for name in result._items)
+
+
 def test_str_default() -> None:
     assert str(Object()) == "<object>"
 

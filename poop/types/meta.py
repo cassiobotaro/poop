@@ -206,7 +206,11 @@ class PoopMeta(ABCMeta):
         from poop.types.list import List
         from poop.types.string import Str
 
-        return List(*(Str(name) for name in builtins_dir(cls)))
+        # Mirror `Object.dir`: hide every `_`-prefixed name so the class side
+        # never leaks dunders or the mangled `_poop_*` internals.
+        return List(
+            *(Str(name) for name in builtins_dir(cls) if not name.startswith("_"))
+        )
 
     @class_side
     def format(cls, spec: Str | NoneClass | None = None) -> Str:

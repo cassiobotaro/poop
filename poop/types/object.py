@@ -142,7 +142,13 @@ class Object(metaclass=PoopMeta):
         from poop.types.list import List
         from poop.types.string import Str
 
-        return List(*(Str(name) for name in builtins.dir(self)))
+        # Filter every `_`-prefixed name — dunders (banned by
+        # no_dunder_attribute) and privates, including the mangled `_poop_*`
+        # bindings — so the introspection substitute never surfaces what the
+        # encapsulation rules hide. Same predicate as the REPL's `:methods`.
+        return List(
+            *(Str(name) for name in builtins.dir(self) if not name.startswith("_"))
+        )
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
         from poop.types._unwrap import _unwrap

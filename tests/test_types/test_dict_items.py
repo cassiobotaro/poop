@@ -252,3 +252,10 @@ def test_other_items_keeps_non_pair_tuple() -> None:
         Tuple(Str("a"), Int(1), Int(99)),
     }
     assert items.isdisjoint(other) is true
+
+
+def test_dir_hides_the_poop_own_set_internal() -> None:
+    # `_poop_own_set` is a `_poop_*`-named method; dir() must not surface it.
+    names = [str(n) for n in _make().items().dir()._items]
+    assert "_poop_own_set" not in names
+    assert all(not name.startswith("_") for name in names)
