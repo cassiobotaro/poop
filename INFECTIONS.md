@@ -604,7 +604,9 @@ Unlike every other construct in *Explicitly allowed*, this one **does** have a s
 
 It is allowed anyway, on ergonomics. `a < b < c` expands to `(a < b) and (b < c)`, whose conjuncts must share the middle operand, so no arbitrary `P and Q` is reachable this way. The construct is a range check, not a general `and` escape hatch — banning it would cost every range check its Python-obvious spelling to close a gap that admits only range checks.
 
-This is therefore the sole allowance resting on Python ergonomics rather than on the absence of a substitute. Full argument: `proposals.md` item 1.
+Both halves of that asymmetry are real, and verified by running them: `1 < x < 10` answers `True` while `(1 < x) and (x < 10)` answers `and operator is forbidden — use .and_(lambda: ...) instead`. So is the short-circuit — a `Probe` whose `__lt__` prints, evaluated as `p < p < p`, prints once.
+
+This is therefore the sole allowance resting on Python ergonomics rather than on the absence of a substitute. The opposite call was made for raw dunder access (`no_dunder_attribute`, above): `xs.__len__()` also has a substitute, but unlike a chain it leaks a raw Python primitive as well, so ergonomics had nothing to weigh against.
 
 ### Numeric comparisons follow CPython's numeric tower
 
