@@ -129,6 +129,7 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`abstract_factory.py`](examples/patterns/abstract_factory.py) — Abstract Factory
 - [`builder.py`](examples/patterns/builder.py) — Builder
 - [`factory_method.py`](examples/patterns/factory_method.py) — Factory Method
+- [`prototype.py`](examples/patterns/prototype.py) — Prototype (cloning a configured example)
 - [`singleton.py`](examples/patterns/singleton.py) — Singleton (class-side cached instance)
 
 *Structural*
