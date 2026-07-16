@@ -177,6 +177,53 @@ the five `class_side` descriptors escape this today.
 
 ## Language features
 
+### 14. Classes answer 6 of `Object`'s 18 messages
+
+Item 4 made classes objects, and stopped short. A class answers `name()`,
+`superclass()`, `has_attr()`, `print()` and `does_not_understand()` — the five
+`class_side` descriptors on `PoopMeta` — plus `is_subclass()`, which works only
+because it happened to be a `@classmethod` already. The other twelve answer
+item 4's original symptom, verbatim:
+
+```
+Foo.class_name()   →  poop: TypeError: Object.class_name() missing 1 required positional argument: 'self'
+```
+
+Verified identical for `Foo`, `int` and `object`, and for all twelve:
+`ascii`, `callable`, `class_`, `class_name`, `dir`, `format`, `hash`, `id`,
+`is_none`, `not_`, `not_none`, `repr`.
+
+Root cause is the one item 4 documented: attribute lookup on a class searches
+the class's own MRO before the metaclass, so `Object.class_name` is found and
+answered unbound. `PoopMeta.__getattr__` never fires — nothing missed. Item 4
+solved this with `class_side` data descriptors, which win the lookup, and
+applied it to five messages.
+
+**Smalltalk answers most of these on the class side**, which is what makes this
+a gap rather than a boundary. `Foo hash`, `Foo isNil`, `Foo printString` are all
+ordinary sends to an ordinary object — a class is one. So the twelve are not a
+single case:
+
+- *Meaningful on a class, and cheap*: `hash`, `id`, `is_none`, `not_none`,
+  `not_`, `repr`, `ascii`, `dir`, `callable`, `format`. Each wants a
+  `class_side` twin, most of them one line.
+- *Meaningful but awkward*: `class_` and `class_name`. In Smalltalk `Foo class`
+  answers the metaclass, `Foo class`. POOP has no metaclass-of-metaclass
+  surface, and answering `PoopMeta` would leak the implementation. Candidates:
+  answer `none`, refuse via `does_not_understand`, or give POOP a real metaclass
+  object. This is the item's actual question; the other ten are mechanical.
+
+**Do not fix it by widening `Object`.** A metaclass cannot inherit `Object`'s
+methods into the class-side lookup — that is what the MRO ordering forbids, and
+it is why `class_side` exists. Each message needs its own descriptor, which is
+also the argument for deciding the shape before writing twelve of them.
+
+**Cost of leaving it**: the surface criterion says a message earns its place by
+substituting a forbidden construct. `hash`, `id`, `repr`, `ascii`, `dir` and
+`format` all substitute banned builtins — for instances. On a class the ban still
+applies and the substitute does not exist, which is the same "activate a
+validator only when the substitute exists" violation item 5 was closed for.
+
 ### ~~4. Classes are not objects~~ — DONE
 
 The deepest remaining gap, and the one most central to Smalltalk. Classes do not
