@@ -125,8 +125,12 @@ class List(_ValueEqMixin, _IterableMixin, Object):
     def __contains__(self, item: object) -> bool:
         return item in self._items
 
-    def sorted(self, key: Callable[[Object], Any] | None = None) -> List:
-        return List(*builtins_sorted(self._items, key=key))
+    def sorted(
+        self,
+        key: Callable[[Object], Any] | None = None,
+        reverse: Boolean = false,
+    ) -> List:
+        return List(*builtins_sorted(self._items, key=key, reverse=bool(reverse)))
 
     def reversed(self) -> List:
         return List(*builtins_reversed(self._items))

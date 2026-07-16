@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import to_boolean
+from poop.types.boolean import false, to_boolean
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.tuple_iterator import TupleIterator
@@ -77,8 +77,12 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
     def __contains__(self, item: object) -> bool:
         return item in self._items
 
-    def sorted(self, key: Callable[[Object], Any] | None = None) -> Tuple:
-        return Tuple(*builtins_sorted(self._items, key=key))
+    def sorted(
+        self,
+        key: Callable[[Object], Any] | None = None,
+        reverse: Boolean = false,
+    ) -> Tuple:
+        return Tuple(*builtins_sorted(self._items, key=key, reverse=bool(reverse)))
 
     def reversed(self) -> Tuple:
         return Tuple(*builtins_reversed(self._items))

@@ -233,6 +233,17 @@ def test_sorted_with_key() -> None:
     assert result == List(Int(1), Int(-2), Int(-3))
 
 
+def test_sorted_reverse() -> None:
+    lst = List(Int(1), Int(3), Int(2))
+    assert lst.sorted(reverse=true) == List(Int(3), Int(2), Int(1))
+
+
+def test_sorted_reverse_with_key() -> None:
+    lst = List(Int(-3), Int(1), Int(-2))
+    result = lst.sorted(key=lambda x: x.abs(), reverse=true)  # ty: ignore[unresolved-attribute]
+    assert result == List(Int(-3), Int(-2), Int(1))
+
+
 def test_reversed_returns_new_list() -> None:
     lst = List(Int(1), Int(2), Int(3))
     result = lst.reversed()

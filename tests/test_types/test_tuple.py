@@ -239,6 +239,11 @@ def test_sorted_with_key() -> None:
     assert result == Tuple(Int(1), Int(-2), Int(-3))
 
 
+def test_sorted_reverse() -> None:
+    t = Tuple(Int(1), Int(3), Int(2))
+    assert t.sorted(reverse=true) == Tuple(Int(3), Int(2), Int(1))
+
+
 def test_reversed_returns_new_tuple() -> None:
     t = Tuple(Int(1), Int(2), Int(3))
     result = t.reversed()

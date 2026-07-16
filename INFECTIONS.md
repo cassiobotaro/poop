@@ -553,7 +553,10 @@ Available on `Int` and `Float`.
 | Call | Reason | Substitute |
 |---|---|---|
 | `sorted(col)` | free function with procedural look | `col.sorted()` |
+| `sorted(col, key=fn, reverse=True)` | free function with procedural look | `col.sorted(key=fn, reverse=True)` |
 | `reversed(col)` | free function with procedural look | `col.reversed()` |
+
+`sorted` lives on `List` and `Tuple`; both accept `key` and `reverse`, matching Python's `sorted` and `List.sort`.
 
 ### No `in` / `not in` — `poop/validators/no_in.py`
 
