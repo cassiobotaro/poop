@@ -24,6 +24,13 @@ def test_kind_answers_the_poop_class_not_the_native_one() -> None:
     assert e.kind() is not TypeError
 
 
+def test_class_name_answers_wrapped_exception_not_error() -> None:
+    # Transparent identity: class_name() must not leak the internal `Error`.
+    e = Error(IndexError("pop from empty list"))
+    assert e.class_name() == Str("IndexError")
+    assert e.class_() is MIRRORS["IndexError"]
+
+
 def test_str_includes_exception_info() -> None:
     e = Error(RuntimeError("boom"))
     assert "boom" in str(e)

@@ -27,5 +27,16 @@ class Error(Object):
 
         return poop_class_of(self._exception)
 
+    def class_(self) -> Any:
+        """Transparent identity: answer the wrapped exception's class.
+
+        An `Error` stands in for the exception it caught, so `e.class_()` and
+        the `class_name()` built on it answer that exception's class — mirroring
+        Python's `except IndexError as e`, where `type(e)` is `IndexError`, not
+        some wrapper. Without this, `class_name()` leaked the internal `Error`.
+        `kind()` is the explicit spelling of the same answer.
+        """
+        return self.kind()
+
     def __str__(self) -> str:
         return f"Error({self._exception})"
