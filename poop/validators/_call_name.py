@@ -2,14 +2,14 @@ import ast
 from collections.abc import Iterable
 
 from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector
+from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
 
 def make_call_name_validator(
     *,
     forbidden: Iterable[str],
     message: str,
-) -> type:
+) -> type[CollectingValidator]:
     """Factory for validators that forbid referencing a builtin by name.
 
     Rejects any reference to a forbidden name regardless of context —
@@ -41,8 +41,6 @@ def make_call_name_validator(
         forbidden = names
 
         def collect(self, tree: ast.Module) -> list[ValidationError]:
-            visitor = _Visitor()
-            visitor.visit(tree)
-            return visitor.errors
+            return collect_errors(_Visitor(), tree)
 
     return _Validator

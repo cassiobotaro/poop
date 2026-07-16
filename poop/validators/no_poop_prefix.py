@@ -1,7 +1,7 @@
 import ast
 
 from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector
+from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
 _PREFIX = "_poop_"
 
@@ -59,6 +59,4 @@ class _Visitor(ErrorCollector):
 
 class NoPoopPrefixValidator(CollectingValidator):
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        visitor = _Visitor()
-        visitor.visit(tree)
-        return visitor.errors
+        return collect_errors(_Visitor(), tree)

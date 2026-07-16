@@ -46,3 +46,14 @@ class CollectingValidator:
         errors = self.collect(tree)
         if errors:
             raise errors[0]
+
+
+def collect_errors(visitor: ErrorCollector, tree: ast.Module) -> list[ValidationError]:
+    """Run `visitor` over `tree` and hand back what it recorded.
+
+    Every `collect` implementation is the same three-step dance — build the
+    visitor, walk the tree, read `errors` back off it. Naming it once keeps the
+    visitor contract (rejections land in `.errors`) in a single place.
+    """
+    visitor.visit(tree)
+    return visitor.errors

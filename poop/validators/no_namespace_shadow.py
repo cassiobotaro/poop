@@ -1,7 +1,7 @@
 import ast
 
 from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector
+from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
 _NAMESPACE_MESSAGE = (
     "{name!r} is a POOP namespace binding; reassigning it shadows the "
@@ -108,6 +108,4 @@ class NoNamespaceShadowValidator(CollectingValidator):
         )
 
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        visitor = _Visitor(self._protected, _NAMESPACE_MESSAGE)
-        visitor.visit(tree)
-        return visitor.errors
+        return collect_errors(_Visitor(self._protected, _NAMESPACE_MESSAGE), tree)

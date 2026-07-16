@@ -1,14 +1,12 @@
 import ast
 
 from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector
+from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
 
 class NoSubscriptValidator(CollectingValidator):
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        visitor = _NoSubscriptVisitor()
-        visitor.visit(tree)
-        return visitor.errors
+        return collect_errors(_NoSubscriptVisitor(), tree)
 
 
 def _is_slice(node: ast.expr) -> bool:
