@@ -4,6 +4,9 @@ from builtins import (
 from builtins import (
     list as _list,  # preserve builtin before poop.transformers.list shadows it
 )
+from builtins import (
+    object as _object,  # preserve builtin before poop.transformers.object shadows it
+)
 
 from poop.transformers.base import BaseTransformer, Transformer
 from poop.transformers.block import BlockTransformer
@@ -22,6 +25,7 @@ from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
+from poop.transformers.object import ObjectTransformer
 from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
@@ -64,6 +68,7 @@ _TRANSFORMER_CLASSES: _list[type[BaseTransformer]] = [
     # `.raise_(...)`, which `_poop_ValueError` is not.
     ExceptionTransformer,
     ClassTransformer,
+    ObjectTransformer,
     ReturnTransformer,
     BlockTransformer,
     VarargsTransformer,
@@ -79,13 +84,13 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [cls() for cls in _TRANSFORMER_CLASSE
 # AST rewrite). The build below walks both kinds in declaration
 # order and refuses duplicate keys so a new transformer can't
 # silently overwrite a binding from an earlier one.
-_BINDING_SOURCES: _list[_dict[str, object]] = [
+_BINDING_SOURCES: _list[_dict[str, _object]] = [
     *(cls.BINDINGS for cls in _TRANSFORMER_CLASSES),
     _try_namespace,
     _with_namespace,
 ]
 
-DEFAULT_NAMESPACE: _dict[str, object] = {}
+DEFAULT_NAMESPACE: _dict[str, _object] = {}
 for _src in _BINDING_SOURCES:
     _dup = DEFAULT_NAMESPACE.keys() & _src.keys()
     if _dup:
