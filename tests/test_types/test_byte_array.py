@@ -523,6 +523,12 @@ def test_mul_repeats() -> None:
     assert ByteArray(bytearray(b"ab")) * Int(3) == ByteArray(bytearray(b"ababab"))
 
 
+def test_mul_by_boolean_folds_to_int() -> None:
+    # bool is an int subclass in CPython: bytearray(b"ab") * True == b"ab".
+    assert ByteArray(bytearray(b"ab")) * true == ByteArray(bytearray(b"ab"))
+    assert ByteArray(bytearray(b"ab")) * false == ByteArray(bytearray())
+
+
 def test_center_with_fillchar() -> None:
     ba = ByteArray(bytearray(b"hi"))
     fill = ByteArray(bytearray(b"*"))
@@ -591,6 +597,10 @@ def test_rmul_returns_repeated_bytearray() -> None:
     assert ByteArray(bytearray(b"ab")).__rmul__(Int(3)) == ByteArray(
         bytearray(b"ababab")
     )
+
+
+def test_rmul_by_boolean_folds_to_int() -> None:
+    assert true * ByteArray(bytearray(b"ab")) == ByteArray(bytearray(b"ab"))
 
 
 # --- New: optional parameters (proposals 41-44, v1.1.2) ---
