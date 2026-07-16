@@ -31,11 +31,19 @@ class Float(_NumericCompareMixin, Object):
     def negated(self) -> Float:
         return Float(-self._value)
 
-    def max(self, other: Float) -> Float:
-        return self if self._value >= other._value else other
+    def max(self, *others: Float) -> Float:
+        result = self
+        for other in others:
+            if other._value > result._value:
+                result = other
+        return result
 
-    def min(self, other: Float) -> Float:
-        return self if self._value <= other._value else other
+    def min(self, *others: Float) -> Float:
+        result = self
+        for other in others:
+            if other._value < result._value:
+                result = other
+        return result
 
     def is_integer(self) -> Boolean:
         return to_boolean(self._value.is_integer())

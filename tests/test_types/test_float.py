@@ -54,6 +54,16 @@ def test_min_returns_smaller() -> None:
     assert Float(2.5).min(Float(1.5))._value == pytest.approx(1.5)
 
 
+def test_max_is_variadic() -> None:
+    assert Float(1.5).max(Float(2.5), Float(0.5))._value == pytest.approx(2.5)
+    assert Float(3.5).max()._value == pytest.approx(3.5)
+
+
+def test_min_is_variadic() -> None:
+    assert Float(1.5).min(Float(2.5), Float(0.5))._value == pytest.approx(0.5)
+    assert Float(3.5).min()._value == pytest.approx(3.5)
+
+
 def test_add() -> None:
     assert (Float(1.5) + Float(2.5))._value == pytest.approx(4.0)
 

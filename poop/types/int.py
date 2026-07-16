@@ -53,11 +53,19 @@ class Int(_NumericCompareMixin, Object):
     def bit_invert(self) -> Int:
         return Int(~self._value)
 
-    def max(self, other: Int) -> Int:
-        return self if self._value >= other._value else other
+    def max(self, *others: Int) -> Int:
+        result = self
+        for other in others:
+            if other._value > result._value:
+                result = other
+        return result
 
-    def min(self, other: Int) -> Int:
-        return self if self._value <= other._value else other
+    def min(self, *others: Int) -> Int:
+        result = self
+        for other in others:
+            if other._value < result._value:
+                result = other
+        return result
 
     def bit_count(self) -> Int:
         return Int(self._value.bit_count())

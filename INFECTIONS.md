@@ -265,11 +265,11 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `min(a, b)` | free function with procedural look | `a.min(b)` (binary, on `Int`/`Float`) |
+| `min(a, b)` | free function with procedural look | `a.min(b)` (on `Int`/`Float`) |
+| `min(a, b, c, ...)` | free function with procedural look | `a.min(b, c, ...)` (variadic, on `Int`/`Float`) |
 | `min(iterable)` | free function with procedural look | `iterable.min()` |
 | `min(iterable, key=fn)` | free function with procedural look | `iterable.min(key=fn)` |
 | `min(iterable, default=x)` | free function with procedural look | `iterable.min(default=x)` |
-| `min(a, b, c, ...)` | free function with procedural look | `[a, b, c].min()` or chain `a.min(b).min(c)` |
 
 `max` mirrors `min` exactly. The iterable form lives on
 `_IterableMixin` (covers `List`, `Tuple`, `Set`, `FrozenSet`,

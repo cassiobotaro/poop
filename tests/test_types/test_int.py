@@ -63,6 +63,28 @@ def test_min_returns_smaller() -> None:
     assert Int(7).min(Int(3)) == Int(3)
 
 
+def test_max_is_variadic() -> None:
+    assert Int(3).max(Int(7), Int(5)) == Int(7)
+    assert Int(9).max(Int(1), Int(4)) == Int(9)
+    assert Int(5).max() == Int(5)
+
+
+def test_min_is_variadic() -> None:
+    assert Int(3).min(Int(7), Int(1)) == Int(1)
+    assert Int(2).min(Int(8), Int(6)) == Int(2)
+    assert Int(5).min() == Int(5)
+
+
+def test_max_returns_first_on_tie() -> None:
+    first = Int(5)
+    assert first.max(Int(5)) is first
+
+
+def test_min_returns_first_on_tie() -> None:
+    first = Int(5)
+    assert first.min(Int(5)) is first
+
+
 def test_add() -> None:
     assert Int(2) + Int(3) == Int(5)
 
