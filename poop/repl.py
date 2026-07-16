@@ -56,6 +56,15 @@ def _rl_color(text: str, *codes: str) -> str:
     return f"\001{''.join(codes)}\002{text}\001{_RESET}\002"
 
 
+def _error(message: str) -> None:
+    """Report a REPL diagnostic: `poop:`-prefixed, red, on stderr.
+
+    Every diagnostic the REPL emits shares that contract, so it lives in
+    one place — a new call site cannot forget the prefix or the stream.
+    """
+    print(_color(f"poop: {message}", _RED), file=sys.stderr)  # noqa: T201
+
+
 def _colorize_value(value: object) -> str:
     if not _can_colorize():
         return repr(value)
@@ -308,24 +317,14 @@ class Repl:
         elif cmd == "help":
             print(_META_HELP)  # noqa: T201
         else:
-            print(  # noqa: T201
-                _color(f"poop: unknown meta-command :{cmd} — try :help", _RED),
-                file=sys.stderr,
-            )
+            _error(f"unknown meta-command :{cmd} — try :help")
 
     def _meta_methods(self, arg: str) -> None:
         if not arg:
             print("usage: :methods <expr>")  # noqa: T201
             return
         if not _is_safe_expr(arg):
-            print(  # noqa: T201
-                _color(
-                    "poop: :methods takes a variable or literal — calls are "
-                    "not evaluated",
-                    _RED,
-                ),
-                file=sys.stderr,
-            )
+            _error(":methods takes a variable or literal — calls are not evaluated")
             return
         try:
             # Run the expression through the pipeline so literals become
@@ -337,7 +336,7 @@ class Repl:
             code = compile(ast.Expression(stmt.value), "<methods>", "eval")
             obj = eval(code, self._ns)  # noqa: S307
         except Exception as exc:  # noqa: BLE001
-            print(_color(f"poop: {exc}", _RED), file=sys.stderr)  # noqa: T201
+            _error(str(exc))
             return
         names = sorted(n for n in dir(obj) if not n.startswith("_"))
         header = f"{type(obj).__name__} understands {len(names)} messages:"
@@ -408,7 +407,7 @@ class Repl:
                 try:
                     result = codeop.compile_command(source)
                 except SyntaxError as exc:
-                    print(_color(f"poop: {exc}", _RED), file=sys.stderr)  # noqa: T201
+                    _error(str(exc))
                     buffer = []
                     continue
 
@@ -422,6 +421,6 @@ class Repl:
                 try:
                     self._interpreter.run_source_repl(source, self._ns)
                 except PoopError as exc:
-                    print(_color(f"poop: {exc}", _RED), file=sys.stderr)  # noqa: T201
+                    _error(str(exc))
         finally:
             sys.displayhook = original_hook
