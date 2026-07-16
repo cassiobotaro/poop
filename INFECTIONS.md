@@ -509,6 +509,7 @@ Reuses the namespace-shadow `_Visitor` over a fixed set of the 17 lowercase buil
 | Call | Reason | Substitute |
 |---|---|---|
 | `sum(col)` | free function with procedural look | `col.sum()` |
+| `sum(col, start)` | free function with procedural look | `col.sum(start)` |
 
 Available on every `_IterableMixin` type — `List`, `Tuple`, `Set`,
 `FrozenSet`, `Range`, `Bytes`, `ByteArray`, `MemoryView`, `Enumerate`,
@@ -765,7 +766,7 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 | `reject:` | `filter_false(block)` | returns `Filter` (lazy) with the predicate inverted |
 | `detect:` | `find(block)` | first element satisfying block, or POOP `none` |
 | `inject:into:` | `reduce(init, block)` | fold with required initial value; returns accumulated result |
-| — | `sum()` | sum of elements; returns `Int(0)` for empty collection |
+| — | `sum(start=...)` | sum of elements; `Int(0)` for empty; optional `start` mirrors Python `sum(it, start)` |
 | — | `min(key=None, default=...)` | smallest element; mirrors Python `min` |
 | — | `max(key=None, default=...)` | largest element; mirrors Python `max` |
 | — | `all(block)` | `true` if block holds for every element |

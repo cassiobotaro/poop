@@ -52,8 +52,10 @@ class _IterableMixin:
     def reduce(self, init: Any, block: Callable[[Any, Any], Any]) -> Any:
         return functools_reduce(block, self._iter_items(), init)
 
-    def sum(self) -> Any:
+    def sum(self, start: Any = _MISSING) -> Any:
         items = self._iter_items()
+        if start is not _MISSING:
+            return functools_reduce(lambda a, b: a + b, items, start)
         try:
             first = next(items)
         except StopIteration:

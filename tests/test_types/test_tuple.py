@@ -105,6 +105,14 @@ def test_sum_empty_returns_zero() -> None:
     assert Tuple().sum() == Int(0)
 
 
+def test_sum_with_start() -> None:
+    assert Tuple(Int(1), Int(2), Int(3)).sum(Int(10)) == Int(16)
+
+
+def test_sum_empty_with_start_returns_start() -> None:
+    assert Tuple().sum(Int(5)) == Int(5)
+
+
 def test_all_true() -> None:
     assert Tuple(Int(2), Int(4), Int(6)).all(lambda x: x % Int(2) == Int(0)) is true
 
