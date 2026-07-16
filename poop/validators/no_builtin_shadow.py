@@ -13,6 +13,14 @@ from poop.validators.no_namespace_shadow import _Visitor
 # mirroring how `no_namespace_shadow` protects namespace bindings.
 _BUILTIN_NAMES = frozenset(
     {
+        # `object` and `Object` are the two spellings ObjectTransformer
+        # rewrites to `_poop_object` in every position, Store included. So
+        # `object = 5` becomes `_poop_object = 5` and clobbers the root class
+        # itself — the next `class Foo` then implicitly inherits an Int. A
+        # method parameter named `object` is the same hazard as one named
+        # `dict`: the body's references rewrite to the class, not the argument.
+        "object",
+        "Object",
         "bool",
         "int",
         "float",

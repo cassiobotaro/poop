@@ -83,3 +83,35 @@ def test_method_named_dict_is_fine() -> None:
     # Methods bind as class attributes, not in the enclosing scope.
     tree = ast.parse("class Demo:\n    def dict(self):\n        pass")
     NoBuiltinShadowValidator().validate(tree)
+
+
+def test_assign_to_object_raises() -> None:
+    # ObjectTransformer rewrites `object`/`Object` to `_poop_object` in every
+    # position, Store included, so `object = 5` silently clobbers the root
+    # class — the exact corruption this validator exists to stop.
+    tree = ast.parse("object = 5")
+    with pytest.raises(ValidationError, match="'object'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_assign_to_capital_object_raises() -> None:
+    tree = ast.parse("Object = 5")
+    with pytest.raises(ValidationError, match="'Object'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_parameter_named_object_raises() -> None:
+    # Same hazard as a parameter named `dict`: body references rewrite to the
+    # root class, not the argument.
+    tree = ast.parse(
+        "class Tag:\n    def __init__(self, object):\n        return object"
+    )
+    with pytest.raises(ValidationError, match="'object'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_object_as_base_class_is_fine() -> None:
+    # Naming `Object`/`object` as a base is the sanctioned spelling; only
+    # rebinding is blocked.
+    tree = ast.parse("class Foo(Object):\n    pass\nclass Bar(object):\n    pass")
+    NoBuiltinShadowValidator().validate(tree)
