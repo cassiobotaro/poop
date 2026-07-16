@@ -1,3 +1,6 @@
+import re
+
+
 class PoopError(Exception):
     """Base for all interpreter errors."""
 
@@ -42,6 +45,14 @@ class ExecutionError(PoopError):
         return f"{super().__str__()} (line {self.lineno})"
 
 
+# Python's tokenizer ends a line only on \n, \r\n or \r, so those are the
+# breaks the reported lineno counts. str.splitlines() also breaks on \v, \f,
+# \x1c-\x1e, \x85, \u2028 and \u2029 — all legal inside a source file —
+# which would number the lines differently from the parser and point at the
+# wrong one.
+_LINE_BREAK = re.compile(r"\r\n|\r|\n")
+
+
 def format_error(exc: PoopError, source: str | None) -> str:
     """Render an error, with the offending source line and a caret under it.
 
@@ -56,13 +67,18 @@ def format_error(exc: PoopError, source: str | None) -> str:
     point at, that suffix is the only clue and stays.
     """
     lineno = getattr(exc, "lineno", None)
-    lines = source.splitlines() if source is not None else []
+    lines = _LINE_BREAK.split(source) if source is not None else []
     if lineno is None or not 1 <= lineno <= len(lines):
         return f"poop: {exc}"
     message = exc.args[0] if exc.args else str(exc)
-    parts = [f"poop: {message}", f"  {lineno} | {lines[lineno - 1]}"]
+    line = lines[lineno - 1]
+    parts = [f"poop: {message}", f"  {lineno} | {line}"]
     col = getattr(exc, "col_offset", None)
     if col is not None:
+        # ast reports col_offset as a UTF-8 *byte* offset while the gutter
+        # prints characters, so a non-ASCII character earlier on the line
+        # pushed the caret one column right per extra byte.
+        caret_col = len(line.encode("utf-8")[:col].decode("utf-8", errors="replace"))
         caret_gutter = "  " + " " * len(str(lineno)) + " | "
-        parts.append(f"{caret_gutter}{' ' * col}^")
+        parts.append(f"{caret_gutter}{' ' * caret_col}^")
     return "\n".join(parts)

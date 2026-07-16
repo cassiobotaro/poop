@@ -54,3 +54,22 @@ def test_format_error_multiline_source_points_at_the_reported_line() -> None:
     out = format_error(ValidationError("print is forbidden", 3, 0), source)
     assert "  3 | print(x)" in out
     assert "x = 1" not in out
+
+
+def test_format_error_caret_lands_under_a_column_after_non_ascii() -> None:
+    # ast reports col_offset as a UTF-8 byte offset; treating it as a character
+    # index pushed the caret one column right per extra byte.
+    source = 'y = ("ção", x)'
+    out = format_error(
+        ValidationError("nope", 1, source.encode("utf-8").index(b"x")), source
+    )
+    caret_line = out.splitlines()[-1]
+    assert caret_line.index("^") == out.splitlines()[1].index("x")
+
+
+def test_format_error_counts_lines_the_way_the_tokenizer_does() -> None:
+    # str.splitlines() breaks on \f, which the tokenizer does not — every line
+    # after a form feed would be numbered out of step with the parser.
+    source = "x = 1\n\fy = 2\nz = 3"
+    out = format_error(ValidationError("nope", 2, 0), source)
+    assert "\fy = 2" in out
