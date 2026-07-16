@@ -174,7 +174,7 @@ class Int(_NumericCompareMixin, Object):
         return Int(self._value % other._value)
 
     def __pow__(
-        self, other: Int | Float | Complex, modulus: Int | NoneClass | None = None
+        self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
         from poop.types._unwrap import _is_absent
         from poop.types.float import Float
@@ -197,9 +197,15 @@ class Int(_NumericCompareMixin, Object):
         return Int(pow(self._value, other._value, modulus._value))
 
     def pow(
-        self, other: Int, modulus: Int | NoneClass | None = None
+        self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
-        return self.__pow__(other, modulus)
+        result = self.__pow__(other, modulus)
+        if result is NotImplemented:
+            raise TypeError(
+                f"unsupported operand type(s) for ** or pow(): "
+                f"'int' and '{type(other).__name__}'"
+            )
+        return result
 
     def __divmod__(self, other: object) -> Tuple:
         from poop.types.float import Float

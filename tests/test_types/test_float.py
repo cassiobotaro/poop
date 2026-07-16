@@ -337,3 +337,9 @@ def test_divmod_dunder_returns_notimplemented_for_foreign_operand() -> None:
 def test_divmod_method_raises_typeerror_for_foreign_operand() -> None:
     with pytest.raises(TypeError):
         Float(7.0).divmod("x")
+
+
+def test_pow_method_raises_typeerror_for_foreign_operand() -> None:
+    # pow() must not leak the raw NotImplemented singleton to user code.
+    with pytest.raises(TypeError):
+        Float(2.0).pow("x")

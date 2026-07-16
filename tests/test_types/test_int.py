@@ -302,6 +302,12 @@ def test_divmod_method_raises_typeerror_for_foreign_operand() -> None:
         Int(7).divmod("x")
 
 
+def test_pow_method_raises_typeerror_for_foreign_operand() -> None:
+    # pow() must not leak the raw NotImplemented singleton to user code.
+    with pytest.raises(TypeError):
+        Int(2).pow("x")
+
+
 def test_ceil_returns_self() -> None:
     assert Int(5).ceil() == Int(5)
 

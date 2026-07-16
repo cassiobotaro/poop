@@ -135,8 +135,14 @@ class Float(_NumericCompareMixin, Object):
             return Complex(result)
         return Float(result)
 
-    def pow(self, other: Float) -> Float | Complex:
-        return self.__pow__(other)
+    def pow(self, other: object) -> Float | Complex:
+        result = self.__pow__(other)
+        if result is NotImplemented:
+            raise TypeError(
+                f"unsupported operand type(s) for ** or pow(): "
+                f"'float' and '{type(other).__name__}'"
+            )
+        return result
 
     def __divmod__(self, other: object) -> Tuple:
         from poop.types.tuple import Tuple
