@@ -31,3 +31,11 @@ class Block(Object):
         return "<block>"
 
     __repr__ = __str__
+
+
+# A POOP block is a wrapped lambda, and CPython's class for a lambda is
+# `function` (`type(lambda: 0).__name__`). Answer that name so `class_()` and
+# `class_name()` mirror Python instead of leaking the `poop.types.block.Block`
+# path — the same cloak every other wrapper applies.
+Block.__module__ = "builtins"
+Block.__name__ = "function"

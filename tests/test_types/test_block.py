@@ -71,3 +71,12 @@ def test_block_str_hides_class_name() -> None:
     assert str(b) == "<block>"
     assert "Block" not in str(b)
     assert "lambda" not in str(b)
+
+
+def test_block_class_answers_function() -> None:
+    # A block is a wrapped lambda; CPython's class for a lambda is `function`,
+    # so class_name() must answer that, not the internal wrapper name `Block`.
+    b = Block(lambda: None)
+    assert str(b.class_name()) == "function"
+    assert Block.__module__ == "builtins"
+    assert repr(Block) == repr(type(lambda: 0))

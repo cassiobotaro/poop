@@ -56,3 +56,8 @@ class With(Object):
 
     def __repr__(self) -> str:
         return str(self)
+
+
+# Like `Try`: keep the user-facing name but drop the module, so `class_()`
+# stops leaking `<class 'poop.types.with_.With'>`.
+With.__module__ = "builtins"

@@ -198,3 +198,9 @@ def test_try_finally_answers_the_handler_value() -> None:
 def test_try_with_no_matching_handler_still_raises() -> None:
     with pytest.raises(KeyError):
         Try(lambda: _raise(KeyError("missing"))).except_(ValueError, lambda e: -1).run()
+
+
+def test_try_class_does_not_leak_module_path() -> None:
+    # `Try` keeps its user-facing name but must not expose the internal path.
+    assert Try.__module__ == "builtins"
+    assert repr(Try) == "<class 'Try'>"

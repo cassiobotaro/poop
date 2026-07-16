@@ -131,3 +131,9 @@ def test_with_contextlib_closing() -> None:
 
     With(lambda: contextlib.closing(Resource())).do(lambda _: log.append("used"))
     assert log == ["used", "closed"]
+
+
+def test_with_class_does_not_leak_module_path() -> None:
+    # `With` keeps its user-facing name but must not expose the internal path.
+    assert With.__module__ == "builtins"
+    assert repr(With) == "<class 'With'>"

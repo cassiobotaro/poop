@@ -89,3 +89,9 @@ class Try(Object):
 
     def __repr__(self) -> str:
         return str(self)
+
+
+# `Try` is a legitimate user-facing name, but without this cloak `class_()`
+# answers `<class 'poop.types.try_.Try'>`, leaking the internal path. Keep the
+# name, drop the module, matching every other wrapper.
+Try.__module__ = "builtins"
