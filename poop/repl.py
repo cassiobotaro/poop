@@ -270,6 +270,7 @@ class Repl:
     def __init__(self, interpreter: Interpreter) -> None:
         self._interpreter = interpreter
         self._ns: dict[str, object] = dict(DEFAULT_NAMESPACE)
+        self._input_no = 0
         _setup_readline(self._ns)
 
     def _meta(self, line: str) -> None:
@@ -385,8 +386,11 @@ class Repl:
                 if not source.strip():
                     continue
 
+                self._input_no += 1
                 try:
-                    self._interpreter.run_source_repl(source, self._ns)
+                    self._interpreter.run_source_repl(
+                        source, self._ns, filename=f"<repl-{self._input_no}>"
+                    )
                 except PoopError as exc:
                     # The one diagnostic that does not go through _error():
                     # format_error owns the `poop:` prefix and adds the source

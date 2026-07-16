@@ -277,6 +277,34 @@ def test_run_runtime_error_shows_the_source_line(
     assert "  1 | 1 / 0" in err
 
 
+def test_run_error_line_refers_to_the_current_input_not_an_earlier_one(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # A method defined in one input raises when called from a later, multi-line
+    # input. The deepest traceback frame is the method's `raise`, whose line
+    # counts against the *earlier* buffer — citing it against the current one
+    # pointed the gutter at an unrelated line. The cited line must be the call
+    # site in the current buffer (line 3), never the stale line 2.
+    monkeypatch.setattr(
+        "builtins.input",
+        _fake_input(
+            "class Foo:",
+            "    def bar(self): ValueError.raise_('boom')",
+            "",
+            "x = (",
+            "    99",
+            "    + Foo().bar()",
+            ")",
+            EOFError(),
+        ),
+    )
+    Repl(Interpreter()).run()
+    err = capsys.readouterr().err
+    assert "ValueError: boom" in err
+    assert "  3 |     + Foo().bar()" in err
+    assert "  2 |     99" not in err
+
+
 # --- _PoopCompleter ---
 
 

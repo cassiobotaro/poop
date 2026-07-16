@@ -58,9 +58,16 @@ class Interpreter:
     def transform_source(self, source: str, filename: str = "<string>") -> ast.Module:
         return self._validate_and_transform(source, filename)
 
-    def run_source_repl(self, source: str, namespace: dict[str, object]) -> None:
-        tree = self._validate_and_transform(source, filename="<repl>")
-        execute(tree, filename="<repl>", namespace=namespace, interactive=True)
+    def run_source_repl(
+        self, source: str, namespace: dict[str, object], filename: str = "<repl>"
+    ) -> None:
+        # Each REPL input needs its own filename: a traceback carries frames
+        # from functions defined in *earlier* inputs too, and their line
+        # numbers count against that earlier buffer. A per-input filename lets
+        # the executor keep only frames from the input being run, so a reported
+        # line always exists in the source shown alongside it.
+        tree = self._validate_and_transform(source, filename=filename)
+        execute(tree, filename=filename, namespace=namespace, interactive=True)
 
     def _validate_and_transform(self, source: str, filename: str) -> ast.Module:
         tree: ast.Module = parse(source, filename=filename)
