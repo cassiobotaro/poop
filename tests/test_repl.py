@@ -12,6 +12,7 @@ from poop.repl import (
     Repl,
     _color,
     _colorize_value,
+    _error,
     _explain_snippet,
     _indent_for,
     _PoopCompleter,
@@ -384,6 +385,38 @@ def test_color_wraps_ansi_when_tty(monkeypatch: pytest.MonkeyPatch) -> None:
     result = _color("text", "\x1b[31m")
     assert result.startswith("\x1b[31m")
     assert "text" in result
+
+
+def test_color_for_stderr_follows_stderr_not_stdout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # stdout is not a tty (e.g. `poop 2>err.log` keeps stderr a tty): a
+    # stderr-bound message must still colorize off stderr, not stdout.
+    monkeypatch.setattr("sys.stdout.isatty", lambda: False)
+    monkeypatch.setattr("sys.stderr.isatty", lambda: True)
+    result = _color("text", "\x1b[31m", stream=sys.stderr)
+    assert result.startswith("\x1b[31m")
+
+
+def test_color_for_stderr_stays_plain_when_stderr_redirected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The reverse (`poop 2>err.log`, stdout a tty): a stderr-bound message
+    # must NOT leak raw ANSI into the redirected file.
+    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+    monkeypatch.setattr("sys.stderr.isatty", lambda: False)
+    assert _color("text", "\x1b[31m", stream=sys.stderr) == "text"
+
+
+def test_error_colorizes_off_stderr(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("sys.stdout.isatty", lambda: False)
+    monkeypatch.setattr("sys.stderr.isatty", lambda: True)
+    _error("boom")
+    err = capsys.readouterr().err
+    assert "\x1b[" in err
+    assert "poop: boom" in err
 
 
 # --- meta-commands ---

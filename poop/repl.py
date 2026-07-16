@@ -4,7 +4,7 @@ import codeop
 import sys
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TextIO
 
 from poop.errors import PoopError, format_error
 from poop.transformers import DEFAULT_NAMESPACE
@@ -37,22 +37,25 @@ _BLUE = "\x1b[34m"
 _CYAN = "\x1b[36m"
 
 
-def _can_colorize() -> bool:
+def _can_colorize(stream: TextIO) -> bool:
     try:
-        return sys.stdout.isatty()
+        return stream.isatty()
     except Exception:  # noqa: BLE001
         return False
 
 
-def _color(text: str, *codes: str) -> str:
-    if not _can_colorize():
+def _color(text: str, *codes: str, stream: TextIO | None = None) -> str:
+    # Colorize based on the stream the text is bound for, not a global guess:
+    # diagnostics go to stderr, value echoes to stdout, and the two can point
+    # at different places (`poop 2>log` leaves stdout a tty but stderr a file).
+    if not _can_colorize(sys.stdout if stream is None else stream):
         return text
     return f"{''.join(codes)}{text}{_RESET}"
 
 
 def _rl_color(text: str, *codes: str) -> str:
-    """Wrap non-printing ANSI bytes for readline prompts."""
-    if not _can_colorize():
+    """Wrap non-printing ANSI bytes for readline prompts (stdout-bound)."""
+    if not _can_colorize(sys.stdout):
         return text
     return f"\001{''.join(codes)}\002{text}\001{_RESET}\002"
 
@@ -63,11 +66,11 @@ def _error(message: str) -> None:
     Every diagnostic the REPL emits shares that contract, so it lives in
     one place — a new call site cannot forget the prefix or the stream.
     """
-    print(_color(f"poop: {message}", _RED), file=sys.stderr)  # noqa: T201
+    print(_color(f"poop: {message}", _RED, stream=sys.stderr), file=sys.stderr)  # noqa: T201
 
 
 def _colorize_value(value: object) -> str:
-    if not _can_colorize():
+    if not _can_colorize(sys.stdout):
         return repr(value)
     if isinstance(value, Boolean):
         return _color(repr(value), _BLUE)
@@ -389,7 +392,8 @@ class Repl:
                     # format_error owns the `poop:` prefix and adds the source
                     # gutter and caret, which the plain sink cannot.
                     print(  # noqa: T201
-                        _color(format_error(exc, source), _RED), file=sys.stderr
+                        _color(format_error(exc, source), _RED, stream=sys.stderr),
+                        file=sys.stderr,
                     )
         finally:
             sys.displayhook = original_hook
