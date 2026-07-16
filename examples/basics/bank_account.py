@@ -47,7 +47,7 @@ account.deposit(100)
 
 Try(lambda: account.withdraw(150)).except_(
     ValueError,
-    lambda e: ("Error [" + e.kind() + "]: " + e.message()).print(),
+    lambda e: ("Error [" + e.kind().name() + "]: " + e.message()).print(),
 ).run()
 
 account.balance().print()

@@ -15,6 +15,7 @@ from poop.transformers.complex import ComplexTransformer
 from poop.transformers.dict import DictTransformer
 from poop.transformers.ellipsis import EllipsisTransformer
 from poop.transformers.enumerate import EnumerateTransformer
+from poop.transformers.exception import ExceptionTransformer
 from poop.transformers.float import FloatTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
@@ -54,6 +55,9 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
     SetTransformer(),
     FrozenSetTransformer(),
     RaiseTransformer(),
+    # After RaiseTransformer: it matches an uppercase Name followed by
+    # `.raise_(...)`, which `_poop_ValueError` is not.
+    ExceptionTransformer(),
     ClassTransformer(),
     ReturnTransformer(),
     BlockTransformer(),
@@ -87,6 +91,7 @@ _BINDING_SOURCES: _list[_dict[str, object]] = [
     SetTransformer.BINDINGS,
     FrozenSetTransformer.BINDINGS,
     RaiseTransformer.BINDINGS,
+    ExceptionTransformer.BINDINGS,
     ClassTransformer.BINDINGS,
     _try_namespace,
     _with_namespace,

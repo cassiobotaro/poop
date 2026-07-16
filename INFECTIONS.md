@@ -588,6 +588,22 @@ Comparison across *non-numeric* types stays `false` (an `Int` is never equal to 
 
 ## Active types
 
+### PoopExcMeta — `poop/types/exceptions.py`
+
+POOP mirrors the exceptions it can actually reach: `Exception`, `ArithmeticError`, `LookupError`, `ZeroDivisionError`, `OverflowError`, `IndexError`, `KeyError`, `AttributeError`, `NameError`, `TypeError`, `ValueError`, `RuntimeError`, `NotImplementedError`, `RecursionError`, `AssertionError`, `StopIteration`. `Try.except_(ValueError, h)` and `ValueError.raise_("msg")` now take a POOP class, closing the last raw primitive in POOP's substitutes for `try` and `raise`.
+
+Sixteen, not "~100+": Python 3.14 has 71 builtin exceptions, and a language with no I/O and no codecs can never raise the `OSError` subtree or the `Unicode*` family. `RecursionError` is in the list because recursion is POOP's substitute for every loop, which makes it the most reachable of the lot.
+
+**No translation layer is needed**, and that is what makes this affordable: `Try._execute()` catches `except BaseException` and then matches with `isinstance()` — POOP's own code, never a Python `except` clause. So a metaclass `__instancecheck__` is enough for a POOP class to match its native twin, and the mirrors subclass that twin so they stay raisable.
+
+Three constraints:
+
+- `_native` is read from the class's own `__dict__`, never inherited. A user's `class MyError(Exception)` would otherwise inherit the root's `_native = Exception` and catch **every** exception in the program — silent and total. The obvious alternative, an `__init_subclass__` setting `_native = cls`, recurses forever.
+- The root also inherits `Object`, so a user exception lands inside the Object tree and answers `print()` / `class_name()`. Before this, `class MyError(Exception)` sat outside it entirely.
+- `ExceptionTransformer` **must run after `RaiseTransformer`**. That one matches an uppercase `ast.Name` followed by `.raise_(...)`; rewriting `ValueError` to `_poop_ValueError` first leaves a name starting with an underscore and silently stops `raise_` from being recognised.
+
+`Error.kind()` answers the POOP class, not a `Str` — `e.kind().name()` for the name. An unmirrored native answers with the nearest mirrored ancestor rather than leaking the raw class back out.
+
 ### PoopMeta — `poop/types/meta.py`
 
 Classes are objects and answer messages, as in Smalltalk. `Foo.print()` used to answer `Object.print() missing 1 required positional argument: 'self'` — Python failing to bind a method, not POOP refusing a message.
@@ -792,9 +808,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 `.run()` and `.finally_()` answer the protected block's value, or the matching handler's value when one fires — like every other POOP block, and like Smalltalk's `on:do:`. This is what makes `try: return f() except: return default` expressible; without it `no_try` would ban a construct with no substitute. Both are terminal, so builder chaining is unaffected: `.except_()` is the chainable message. The cleanup block's own value is discarded, mirroring Smalltalk's `ensure:`.
 
-`exc_type` is a native Python class (`ValueError`, `KeyError`, …) — the only deliberate primitive leak. Unhandled exceptions are always re-raised. Multiple `.except_()` calls are matched in order.
-
-> **Tradeoff**: `exc_type` must be a native Python exception class. Mirroring Python's full hierarchy (~100+ classes) into POOP types is impractical. The handler always receives an `Error` wrapper regardless.
+`exc_type` is a POOP exception class (see *PoopExcMeta* below). Unhandled exceptions are always re-raised. Multiple `.except_()` calls are matched in order.
 
 `Try` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/try_.py` — namespace-only, no AST rewrite.
 
