@@ -27,18 +27,22 @@ class Enumerate(_IterableMixin, Object):
         for i, item in _builtins.enumerate(source, start):
             yield Tuple(Int(i), item)
 
-    def __iter__(self) -> Iterator[Tuple]:
+    def _materialize(self) -> Iterator[Tuple]:
         if self._iter is None:
             self._iter = self._gen(self._source, self._start._value)
+            # The generator now owns the source; drop our copy so a consumed
+            # Enumerate stops pinning its whole source.
+            self._source = None
         return self._iter
+
+    def __iter__(self) -> Iterator[Tuple]:
+        return self._materialize()
 
     def iter(self) -> Enumerate:
         return self
 
     def next(self) -> Tuple:
-        if self._iter is None:
-            self._iter = self._gen(self._source, self._start._value)
-        return next(self._iter)
+        return next(self._materialize())
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import to_boolean

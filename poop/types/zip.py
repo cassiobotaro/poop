@@ -31,18 +31,22 @@ class Zip(_IterableMixin, Object):
         for items in _builtins.zip(*sources, strict=strict):
             yield Tuple(*items)
 
-    def __iter__(self) -> Iterator[Tuple]:
+    def _materialize(self) -> Iterator[Tuple]:
         if self._iter is None:
             self._iter = self._gen(self._sources, bool(self._strict))
+            # The generator now owns the sources; drop our copy so a consumed
+            # Zip stops pinning all of its source iterables.
+            self._sources = ()
         return self._iter
+
+    def __iter__(self) -> Iterator[Tuple]:
+        return self._materialize()
 
     def iter(self) -> Zip:
         return self
 
     def next(self) -> Tuple:
-        if self._iter is None:
-            self._iter = self._gen(self._sources, bool(self._strict))
-        return next(self._iter)
+        return next(self._materialize())
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import to_boolean
