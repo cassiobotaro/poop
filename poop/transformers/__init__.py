@@ -5,7 +5,7 @@ from builtins import (
     list as _list,  # preserve builtin before poop.transformers.list shadows it
 )
 
-from poop.transformers.base import Transformer
+from poop.transformers.base import BaseTransformer, Transformer
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
@@ -33,32 +33,40 @@ from poop.transformers.varargs import VarargsTransformer
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.zip import ZipTransformer
 
-DEFAULT_TRANSFORMERS: _list[Transformer] = [
-    BooleanTransformer(),
-    NoneTransformer(),
-    ComplexTransformer(),
-    BytesTransformer(),
-    ByteArrayTransformer(),
-    MemoryViewTransformer(),
-    IntTransformer(),
-    FloatTransformer(),
-    StrTransformer(),
-    EnumerateTransformer(),
-    ZipTransformer(),
-    RangeTransformer(),
-    ListTransformer(),
-    TupleTransformer(),
-    DictTransformer(),
-    SetTransformer(),
-    FrozenSetTransformer(),
-    RaiseTransformer(),
-    ClassTransformer(),
-    ReturnTransformer(),
-    BlockTransformer(),
-    VarargsTransformer(),
-    UnpackTransformer(),
-    SliceTransformer(),
+# Declaration order is load-bearing: every transformer runs on the tree
+# the previous ones already rewrote (e.g. SliceTransformer relies on
+# NoneTransformer having run). This single list drives both the pipeline
+# order and the binding merge below, so a new transformer can never be
+# wired into one and forgotten in the other.
+_TRANSFORMER_CLASSES: _list[type[BaseTransformer]] = [
+    BooleanTransformer,
+    NoneTransformer,
+    ComplexTransformer,
+    BytesTransformer,
+    ByteArrayTransformer,
+    MemoryViewTransformer,
+    IntTransformer,
+    FloatTransformer,
+    StrTransformer,
+    EnumerateTransformer,
+    ZipTransformer,
+    RangeTransformer,
+    ListTransformer,
+    TupleTransformer,
+    DictTransformer,
+    SetTransformer,
+    FrozenSetTransformer,
+    RaiseTransformer,
+    ClassTransformer,
+    ReturnTransformer,
+    BlockTransformer,
+    VarargsTransformer,
+    UnpackTransformer,
+    SliceTransformer,
 ]
+
+DEFAULT_TRANSFORMERS: _list[Transformer] = [cls() for cls in _TRANSFORMER_CLASSES]
+
 # Bindings sourced from class-based transformers (PascalCase types
 # rewritten into POOP equivalents at parse time) and from
 # namespace-only modules (lowercase stdlib mirrors injected with no
@@ -66,29 +74,9 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [
 # order and refuses duplicate keys so a new transformer can't
 # silently overwrite a binding from an earlier one.
 _BINDING_SOURCES: _list[_dict[str, object]] = [
-    BooleanTransformer.BINDINGS,
-    NoneTransformer.BINDINGS,
-    ComplexTransformer.BINDINGS,
-    BytesTransformer.BINDINGS,
-    ByteArrayTransformer.BINDINGS,
-    MemoryViewTransformer.BINDINGS,
-    IntTransformer.BINDINGS,
-    FloatTransformer.BINDINGS,
-    StrTransformer.BINDINGS,
-    EnumerateTransformer.BINDINGS,
-    ZipTransformer.BINDINGS,
-    RangeTransformer.BINDINGS,
-    ListTransformer.BINDINGS,
-    TupleTransformer.BINDINGS,
-    DictTransformer.BINDINGS,
-    SetTransformer.BINDINGS,
-    FrozenSetTransformer.BINDINGS,
-    RaiseTransformer.BINDINGS,
-    ClassTransformer.BINDINGS,
+    *(cls.BINDINGS for cls in _TRANSFORMER_CLASSES),
     _try_namespace,
     _with_namespace,
-    SliceTransformer.BINDINGS,
-    BlockTransformer.BINDINGS,
 ]
 
 DEFAULT_NAMESPACE: _dict[str, object] = {}
