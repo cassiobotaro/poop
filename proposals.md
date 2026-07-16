@@ -336,7 +336,7 @@ name means the message now reads `poop: AttributeError: 'int' object has no
 attribute 'frobnicate'` — literally naming a Python class in a language whose
 thesis is that everything is a message.
 
-### 12. Exception types are the last raw primitive in the `Try` surface
+### ~~12. Exception types are the last raw primitive in the `Try` surface~~ — DONE
 
 Numbered out of document order deliberately: items are stable identifiers —
 `CONTRIBUTING.md` closes them as `docs: close proposal N` — so 7–11 were not
@@ -413,19 +413,37 @@ already wraps. And both substitutes POOP mandates for forbidden constructs —
 `Try.except_(T, …)` for `try`, `T.raise_(…)` for `raise` — take an exception
 class as an argument, so these classes are load-bearing surface, not parity.
 
-**Open questions**:
+**Closed as proposed, with the three open questions settled and one addition.**
+Sixteen mirrors; `Try.except_(ValueError, h)` catches the raw `ValueError` that
+`int("abc")` raises from inside the `Int` wrapper, and `Error.kind()` answers the
+POOP class.
 
-- How the names reach user code. `CLAUDE.md` states `DEFAULT_NAMESPACE` is
-  "exactly two names — `Try` and `With`". A transformer rewriting
-  `ast.Name(id="ValueError")` → `_poop_ValueError` keeps that true and fits the
-  architecture better — the shape item 3 used for `Ellipsis`.
-- `Error.kind()` answers the native name (`"ValueError"`); it should probably
-  answer the POOP class once one exists.
-- Whether the root should also inherit `Object`, giving user-defined exceptions
-  `print()` / `class_name()`. Today `class MyError(Exception)` sits outside the
-  `Object` tree entirely — verified: `MyError("x").class_name()` fails, because
-  `ClassTransformer` only injects `Object` when a class declares no base.
-  Untested.
+- *Names reach user code by transformer*, as suggested — `DEFAULT_NAMESPACE`
+  stays exactly `Try` and `With`. **It must run after `RaiseTransformer`**: that
+  one matches an uppercase `ast.Name` followed by `.raise_(...)`, and
+  `_poop_ValueError` is not uppercase, so the wrong order silently stops
+  `raise_` from being recognised at all.
+- *`Error.kind()` answers the POOP class.* It was the same substitution
+  `class_name()` made — a name standing in for a class — and survived only
+  because POOP had no class objects to answer with. Item 4 fixed that.
+- *The root does inherit `Object`* — verified, no layout conflict. A user's
+  `class MyError(Exception)` now lands inside the Object tree and answers
+  `class_name()`, closing a hole this item only noted in passing.
+
+**`RecursionError` was missing from the measured set**, and it is the most
+reachable of all: recursion is POOP's substitute for every loop. Verified —
+`(n > 0).if_true_if_false(lambda: self.down(n - 1), ...)` at depth 100000
+answers `poop: RecursionError: maximum recursion depth exceeded`.
+
+**The breaking change bit an example.** `bank_account.py` wrote
+`"Error [" + e.kind() + "]"`, which a class cannot be concatenated into; it is
+now `e.kind().name()`. Nothing else in the repo depended on `kind()` answering a
+`Str`.
+
+**Depends on item 4, as recorded** — `PoopExcMeta` derives from `PoopMeta`, so
+the mirrors answer `name()`, `print()` and `superclass()` for free:
+`KeyError.superclass().name()` answers `LookupError`. And item 4's third leak,
+which `PoopMeta` alone could not close, is closed here.
 
 ---
 
