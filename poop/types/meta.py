@@ -8,6 +8,7 @@ failure — `Object.print() missing 1 required positional argument: 'self'`.
 
 from __future__ import annotations
 
+import builtins
 from abc import ABCMeta
 from builtins import (
     dir as builtins_dir,
@@ -68,6 +69,19 @@ class class_side:  # noqa: N801
 
     def __set__(self, cls: type, value: object) -> None:
         raise AttributeError(self._name)
+
+
+def _reject_dunder(name: str) -> None:
+    """The class-side half of `no_dunder_attribute`, mirroring `Object`'s.
+
+    Both read the same `dunder_message`, so the ban says one thing whether the
+    receiver is an instance or a class.
+    """
+    from poop.validators.no_dunder_attribute import dunder_message
+
+    message = dunder_message(name)
+    if message is not None:
+        raise AttributeError(message.lstrip("."))
 
 
 def _refuse(cls: type, name: str) -> None:
@@ -214,6 +228,70 @@ class PoopMeta(ABCMeta):
     @class_side
     def class_name(cls) -> Any:
         _refuse(cls, "class_name")
+
+    # The rest of `Object`'s protocol, each the substitute for a construct
+    # banned on a class too: `Foo is Bar` (no_is), `isinstance(Foo, T)`
+    # (no_isinstance), `getattr`/`setattr`/`delattr` (no_getattr/…),
+    # `assert Foo` (no_assert). Without them the ban named a substitute that
+    # did not exist on the receiver — item 14's original contradiction, which
+    # its first pass measured short by nine.
+
+    @class_side
+    def is_identical(cls, other: Any) -> Boolean:
+        from poop.types.boolean import to_boolean
+
+        return to_boolean(cls is other)
+
+    @class_side
+    def not_identical(cls, other: Any) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return false if cls is other else true
+
+    @class_side
+    def is_instance(cls, type_: type) -> Boolean:
+        from poop.types.boolean import to_boolean
+
+        # A class is an instance of its metaclass, not of its own bases, so
+        # `Foo.is_instance(Object)` is `false` — `Foo.is_subclass(Object)` is
+        # the "descends from" question.
+        return to_boolean(isinstance(cls, type_))
+
+    @class_side
+    def if_none(cls, block: Callable[[], Any]) -> Any:
+        # A class is never none, so this answers the class unchanged.
+        return cls
+
+    @class_side
+    def if_not_none(cls, block: Callable[[Any], Any]) -> Any:
+        return block(cls)
+
+    @class_side
+    def assert_(cls, message: Str | NoneClass | None = None) -> Any:
+        # A class is always truthy, so the assertion always holds and answers
+        # the class; the failing branch `Object.assert_` has is unreachable.
+        return cls
+
+    @class_side
+    def get_attr(cls, name: Str, *default: Any) -> Any:
+        _reject_dunder(name._value)
+        return builtins.getattr(cls, name._value, *default)
+
+    @class_side
+    def set_attr(cls, name: Str, value: Any) -> NoneClass:
+        from poop.types.none import none
+
+        _reject_dunder(name._value)
+        builtins.setattr(cls, name._value, value)
+        return none
+
+    @class_side
+    def del_attr(cls, name: Str) -> NoneClass:
+        from poop.types.none import none
+
+        _reject_dunder(name._value)
+        builtins.delattr(cls, name._value)
+        return none
 
     @class_side
     def print(

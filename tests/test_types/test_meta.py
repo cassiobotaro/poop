@@ -2,6 +2,8 @@ from abc import ABC
 
 import pytest
 
+from poop.errors import ValidationError
+from poop.interpreter import Interpreter
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -187,3 +189,57 @@ def test_instances_keep_the_instance_side_for_all_of_them() -> None:
     assert dog.class_name() == Str("_Dog")
     assert dog.is_none() is false
     assert isinstance(dog.hash(), Int)
+
+
+def test_a_class_answers_identity() -> None:
+    # `Foo is Bar` is banned (no_is); `Foo.is_identical(Bar)` is the substitute
+    # and answered a binding error until now.
+    assert _Dog.is_identical(_Dog) is true
+    assert _Dog.is_identical(_Animal) is false
+    assert _Dog.not_identical(_Animal) is true
+
+
+def test_a_class_answers_is_instance() -> None:
+    # A class is an instance of its metaclass, not of its bases — so a class is
+    # not an instance of Object, though it is a subclass of it.
+    assert _Dog.is_instance(PoopMeta) is true
+    assert _Dog.is_instance(Object) is false
+    assert _Dog.is_subclass(Object) is true
+
+
+def test_a_class_answers_the_none_protocol_as_never_none() -> None:
+    assert _Dog.if_none(lambda: 0) is _Dog
+    assert _Dog.if_not_none(lambda c: c.name()) == Str("_Dog")
+
+
+def test_a_class_assert_always_holds() -> None:
+    # A class is always truthy, so assert_ answers the class.
+    assert _Dog.assert_() is _Dog
+
+
+def test_a_class_answers_attribute_access() -> None:
+    class _Box(Object):
+        __slots__ = ()
+
+    _Box.set_attr(Str("tag"), Int(7))
+    assert _Box.get_attr(Str("tag")) == Int(7)
+    assert _Box.has_attr(Str("tag")) is true
+    _Box.del_attr(Str("tag"))
+    assert _Box.has_attr(Str("tag")) is false
+
+
+def test_class_side_attr_access_keeps_the_dunder_guard() -> None:
+    # no_dunder_attribute's runtime half must hold on the class side too.
+    for name in ("__dict__", "__class__"):
+        with pytest.raises(AttributeError, match="forbidden"):
+            _Dog.get_attr(Str(name))
+
+
+def test_the_isinstance_ban_now_names_a_message_that_exists() -> None:
+    # item 14's contradiction, for the last of the messages it missed:
+    # `isinstance(Foo, T)` is banned and points at `Foo.is_instance(T)`.
+    with pytest.raises(ValidationError, match="obj.is_instance"):
+        Interpreter().run_source(
+            "class Foo:\n    def m(self):\n        isinstance(Foo, Foo)\n"
+        )
+    assert _Dog.is_instance(Object) is false
