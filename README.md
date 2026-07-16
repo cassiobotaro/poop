@@ -60,7 +60,7 @@ Full Python → POOP recipe book: [`MIGRATION.md`](MIGRATION.md). Design rationa
 
 ## What's banned (and what to use instead)
 
-POOP runs ~66 validators on every program. Grouped by theme:
+POOP runs ~67 validators on every program. Grouped by theme:
 
 **Control flow** — messages on a Boolean, not statements.
 - `if` / `else` / ternary → `cond.if_true(lambda: …)` / `cond.if_true_if_false(lambda: …, lambda: …)`
@@ -78,6 +78,7 @@ POOP runs ~66 validators on every program. Grouped by theme:
 - `isinstance(x, T)` / `issubclass(C, P)` → `x.is_instance(T)` / `C.is_subclass(P)`
 - `callable(x)` / `id(x)` / `dir(x)` → `x.callable()` / `x.id()` / `x.dir()`
 - `hasattr(x, n)` / `getattr(x, n)` / `setattr(x, n, v)` → `x.has_attr(n)` / `x.get_attr(n)` / `x.set_attr(n, v)`
+- `type(x)` / `x.__class__` / `xs.__len__()` → `x.class_()` / `x.class_name()` / `xs.len()` — dunder attribute access is banned outright
 
 **Operator sugar** — methods on the receiver.
 - `x[i]` / `x[a:b]` → `x.at(i)` / `x.slice(a, b)`
