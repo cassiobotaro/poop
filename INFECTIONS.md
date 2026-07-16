@@ -641,7 +641,17 @@ Classes are objects and answer messages, as in Smalltalk. `Foo.print()` used to 
 | `Foo respondsTo: #m` | `Foo.has_attr(name)` | `Boolean`; spelled as the instance side, per `CONTRIBUTING`'s naming rule |
 | `Foo printNl` | `Foo.print()` | prints the class's name |
 | `Foo doesNotUnderstand: #m` | `Foo.does_not_understand(name)` | same hook as `Object`'s |
+| `Foo hash` / `Foo identityHash` | `Foo.hash()` / `Foo.id()` | `Int` |
+| `Foo isNil` / `Foo notNil` | `Foo.is_none()` / `Foo.not_none()` | always `false` / `true` |
+| `Foo not` | `Foo.not_()` | always `false` — a class is truthy |
+| `Foo printString` | `Foo.repr()` / `Foo.ascii()` | the class's name, matching `print` |
+| — | `Foo.callable()` | always `true` |
+| — | `Foo.dir()` / `Foo.format(spec)` | `List` of `Str` / `Str` |
 | `x class` | `x.class_()` | the class object itself; `class_name()` is now `x.class_().name()` |
+
+`Object`'s protocol is answered class-side too, each by its own `class_side` descriptor — a metaclass cannot inherit them into class-side lookup, which is why `class_side` exists at all. Without them the bans contradicted themselves: `hash(Foo)` answers "use `obj.hash()` instead" while `Foo.hash()` answered a binding error, naming a substitute that did not exist on that receiver.
+
+`Foo.class_()` and `Foo.class_name()` are **refused**, and name `#name` instead. Smalltalk answers the metaclass — `Foo class` is `Foo class` — and POOP has none to answer with: `PoopMeta` is not itself a POOP class (`type(PoopMeta)` is `type`), so handing it back would leak the raw class object the class side exists to remove. Answering `Foo` would quietly make `class_name` mean one thing on an instance and another on a class.
 
 `Foo new` is **not** provided: `Foo()` already builds an instance and is not forbidden, so a `new` message would be Smalltalk parity rather than a substitute for anything — the bar cascades and `yourself` failed to clear.
 

@@ -9,7 +9,21 @@ failure — `Object.print() missing 1 required positional argument: 'self'`.
 from __future__ import annotations
 
 from abc import ABCMeta
-from builtins import print as builtins_print
+from builtins import (
+    dir as builtins_dir,
+)
+from builtins import (
+    format as builtins_format,
+)
+from builtins import (
+    hash as builtins_hash,
+)
+from builtins import (
+    id as builtins_id,
+)
+from builtins import (
+    print as builtins_print,
+)
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -17,6 +31,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from poop.types.boolean import Boolean
+    from poop.types.int import Int
+    from poop.types.list import List
     from poop.types.none import NoneClass
     from poop.types.string import Str
 
@@ -52,6 +68,23 @@ class class_side:  # noqa: N801
 
     def __set__(self, cls: type, value: object) -> None:
         raise AttributeError(self._name)
+
+
+def _refuse(cls: type, name: str) -> None:
+    """Refuse an instance-only message, naming the class-side one instead.
+
+    Not routed through `does_not_understand`: its difflib hint would answer
+    `#class_` with "did you mean #class_name?", which is refused here too —
+    sending the reader from one refusal to another.
+    """
+    from poop.types.object import MessageNotUnderstood
+
+    raise MessageNotUnderstood(
+        f"{cls.__name__} does not understand #{name} — "
+        f"#{name} asks an instance about its class; a class answers #name",
+        name=name,
+        obj=cls,
+    )
 
 
 class PoopMeta(ABCMeta):
@@ -90,6 +123,97 @@ class PoopMeta(ABCMeta):
         from poop.types.boolean import to_boolean
 
         return to_boolean(hasattr(cls, name._value))
+
+    # `Object`'s protocol, answered class-side. Each needs its own descriptor:
+    # a metaclass cannot inherit these into class-side lookup, which is the
+    # whole reason `class_side` exists. Without them the bans contradict
+    # themselves — `hash(Foo)` answers "use obj.hash() instead" while
+    # `Foo.hash()` answered a binding error.
+
+    @class_side
+    def hash(cls) -> Int:
+        from poop.types.int import Int
+
+        return Int(builtins_hash(cls))
+
+    @class_side
+    def id(cls) -> Int:
+        from poop.types.int import Int
+
+        return Int(builtins_id(cls))
+
+    @class_side
+    def is_none(cls) -> Boolean:
+        from poop.types.boolean import false
+
+        return false
+
+    @class_side
+    def not_none(cls) -> Boolean:
+        from poop.types.boolean import true
+
+        return true
+
+    @class_side
+    def not_(cls) -> Boolean:
+        from poop.types.boolean import false
+
+        # A class is always truthy, so this is constant — but it has to exist:
+        # `not x` is banned and `x.not_()` is the substitute.
+        return false
+
+    @class_side
+    def callable(cls) -> Boolean:
+        from poop.types.boolean import true
+
+        # Always true: calling a class is how you build an instance.
+        return true
+
+    @class_side
+    def repr(cls) -> Str:
+        from poop.types.string import Str
+
+        # The class's name, matching `print` and Smalltalk's `Foo printString`.
+        # `builtins.repr(cls)` would answer `<class 'builtins.Foo'>`, putting
+        # Python's vocabulary inside a POOP message's answer.
+        return Str(cls.__name__)
+
+    @class_side
+    def ascii(cls) -> Str:
+        from poop.types.string import Str
+
+        # Same text as `repr`, with any non-ASCII escaped — a class name is an
+        # identifier, and Python 3 lets those hold non-ASCII.
+        escaped = cls.__name__.encode("ascii", "backslashreplace")
+        return Str(escaped.decode("ascii"))
+
+    @class_side
+    def dir(cls) -> List:
+        from poop.types.list import List
+        from poop.types.string import Str
+
+        return List(*(Str(name) for name in builtins_dir(cls)))
+
+    @class_side
+    def format(cls, spec: Str | NoneClass | None = None) -> Str:
+        from poop.types._unwrap import _unwrap
+        from poop.types.string import Str
+
+        return Str(builtins_format(cls.__name__, _unwrap(spec, "")))
+
+    @class_side
+    def class_(cls) -> Any:
+        # Smalltalk answers the metaclass here — `Foo class` is `Foo class`.
+        # POOP has none to answer with: `PoopMeta` is not itself a POOP class
+        # (`type(PoopMeta)` is `type`), so handing it back would leak exactly
+        # the raw class object the class side exists to remove. Refusing and
+        # naming `name` teaches; answering `Foo` would quietly make
+        # `class_name` mean one thing on an instance and another on a class.
+        _refuse(cls, "class_")
+
+    @class_side
+    def class_name(cls) -> Any:
+        _refuse(cls, "class_name")
 
     @class_side
     def print(

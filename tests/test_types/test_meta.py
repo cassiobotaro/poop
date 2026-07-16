@@ -4,6 +4,7 @@ import pytest
 
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.meta import PoopMeta
 from poop.types.none import none
 from poop.types.object import MessageNotUnderstood, Object
@@ -116,3 +117,73 @@ def test_the_metaclass_propagates_without_being_declared() -> None:
     # to name PoopMeta for a class to answer.
     assert isinstance(_Dog, PoopMeta)
     assert isinstance(Int, PoopMeta)
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("is_none", false),
+        ("not_none", true),
+        ("not_", false),
+        ("callable", true),
+    ],
+)
+def test_a_class_answers_the_boolean_protocol(message: str, expected: Boolean) -> None:
+    assert getattr(_Dog, message)() is expected
+
+
+def test_a_class_answers_hash_and_id_as_ints() -> None:
+    # `hash(Foo)` answers "hash() is forbidden — use obj.hash() instead" while
+    # `Foo.hash()` answered a binding error: the ban named a substitute that
+    # did not exist on that receiver.
+    assert _Dog.hash() == Int(hash(_Dog))
+    assert _Dog.id() == Int(id(_Dog))
+
+
+def test_a_class_reprs_as_its_name_like_print_does() -> None:
+    # Not builtins.repr(cls), which answers `<class 'builtins._Dog'>` — Python's
+    # vocabulary inside a POOP message's answer.
+    assert _Dog.repr() == Str("_Dog")
+    assert _Dog.ascii() == Str("_Dog")
+
+
+def test_a_class_ascii_escapes_a_non_ascii_name() -> None:
+    class Ação(Object):  # noqa: N801
+        __slots__ = ()
+
+    assert Ação.repr() == Str("Ação")
+    assert Ação.ascii() == Str("A\\xe7\\xe3o")
+
+
+def test_a_class_answers_dir_as_poop_strings() -> None:
+    names = _Dog.dir()
+    assert isinstance(names, List)
+    assert all(isinstance(n, Str) for n in names._items)
+
+
+def test_a_class_answers_format() -> None:
+    assert _Dog.format() == Str("_Dog")
+    assert _Dog.format(Str(">6")) == Str("  _Dog")
+
+
+def test_a_class_refuses_class_and_class_name_naming_the_right_message() -> None:
+    # Smalltalk answers the metaclass here; POOP has none to answer with, since
+    # PoopMeta is not itself a POOP class. Answering `_Dog` would make
+    # class_name mean one thing on an instance and another on a class.
+    for message in ("class_", "class_name"):
+        with pytest.raises(MessageNotUnderstood, match="a class answers #name"):
+            getattr(_Dog, message)()
+
+
+def test_poop_meta_is_not_itself_a_poop_class() -> None:
+    # Which is why class_() cannot answer it: it would leak the raw class
+    # object the class side exists to remove.
+    assert not isinstance(PoopMeta, PoopMeta)
+
+
+def test_instances_keep_the_instance_side_for_all_of_them() -> None:
+    dog = _Dog()
+    assert dog.class_() is _Dog
+    assert dog.class_name() == Str("_Dog")
+    assert dog.is_none() is false
+    assert isinstance(dog.hash(), Int)
