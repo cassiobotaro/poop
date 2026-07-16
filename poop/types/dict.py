@@ -157,7 +157,18 @@ class Dict(_ValueEqMixin, Object):
         merged._data.update(other._data)
         return merged
 
-    def __ior__(self, other: Dict) -> Self:
+    def __ior__(self, other: object) -> Self:
+        # CPython's ``d |= proxy`` updates in place — ``dict.__ior__`` is
+        # ``dict.update``, which takes any mapping. A MappingProxy is not a
+        # Dict, so returning NotImplemented would hand the operation to
+        # MappingProxy's reflected ``__ror__``, rebind the name to a fresh
+        # Dict, and silently leave any alias pointing at the unchanged
+        # original. Unwrap the proxy here, as ``__eq__`` already does.
+        from poop.types.mapping_proxy import MappingProxy
+
+        if isinstance(other, MappingProxy):
+            self._data.update(other._dict._data)
+            return self
         if not isinstance(other, Dict):
             return NotImplemented
         self._data.update(other._data)
