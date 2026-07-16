@@ -4,6 +4,7 @@ from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
+from poop.types.slice import Slice
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -29,6 +30,16 @@ def test_at() -> None:
 def test_at_returns_element() -> None:
     lst = List(Int(10), Int(20))
     assert lst.at(Int(1)) == Int(20)
+
+
+def test_at_with_slice_returns_sublist() -> None:
+    lst = List(Int(10), Int(20), Int(30), Int(40))
+    assert lst.at(Slice(Int(1), Int(3))) == List(Int(20), Int(30))
+
+
+def test_at_with_slice_matches_slice_method() -> None:
+    lst = List(Int(0), Int(1), Int(2), Int(3), Int(4))
+    assert lst.at(Slice(Int(0), Int(5), Int(2))) == lst.slice(Int(0), Int(5), Int(2))
 
 
 def test_includes_true() -> None:

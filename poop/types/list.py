@@ -38,7 +38,11 @@ class List(_ValueEqMixin, _IterableMixin, Object):
     def __len__(self) -> int:
         return len(self._items)
 
-    def at(self, index: Int) -> Object:
+    def at(self, index: Int | Slice) -> Object:
+        from poop.types.slice import Slice
+
+        if isinstance(index, Slice):
+            return List(*self._items[index._py_slice()])
         return self._items[index._value]
 
     def slice(
