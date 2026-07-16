@@ -388,6 +388,30 @@ All three views are unhashable (`__hash__ = None`), expose `len()`/`includes()`/
 |---|---|---|
 | `dir(obj)` | free function with procedural look | `obj.dir()` |
 
+### No dunder attributes — `poop/validators/no_dunder_attribute.py`
+
+Any `__dunder__` in `ast.Attribute` position is rejected, `__init__` excepted. `vars(obj)` is banned but `obj.__dict__` *is* `vars(obj)`, and the attribute spelling reached a raw CPython `dict` at runtime; `x.__class__`, `A.__mro__` and `A.__bases__` reconstruct the `type(x)` that `no_type` bans; `x.__class__.__name__` answers a raw `str`.
+
+| Attribute | Substitute |
+|---|---|
+| `.__dict__` | none — the ban is the decision, as `no_introspection` already argues for `vars` |
+| `.__class__` | `obj.class_()` |
+| `.__name__` | `Klass.name()` |
+| `.__mro__` / `.__bases__` | `Klass.superclass()` |
+| `.__len__()` | `obj.len()` |
+| `.__contains__(x)` | `col.includes(x)` |
+| `.__abs__()` | `n.abs()` |
+| `.__hash__()` | `obj.hash()` |
+| anything else dunder-shaped | none — it is Python's protocol, not POOP's message surface |
+
+**A rule, not a list.** The obvious four (`__dict__`, `__class__`, `__mro__`, `__bases__`) were already incomplete before the ban was written: nobody had listed `__name__`. Enumerating invites the next omission.
+
+**Raw dunder calls are in, and not on taste.** CPython *forces* `__len__` to answer a real `int` and coerces `__contains__` to a real `bool`, so those two can never honour "no naked Python primitive ever reaches runtime". `__abs__` already answers a POOP `Int` and is banned anyway: sparing it would restore the exception list the rule exists to avoid, and `.abs()` costs nothing.
+
+**`__init__` is carved out.** `super().__init__(...)` is an `ast.Attribute` with a dunder attr, and `super` is explicitly allowed — without it inheritance breaks entirely and there is no message-passing substitute.
+
+**Half the ban is a runtime guard**, in `Object._reject_dunder`. `no_getattr` bans `getattr` and offers `get_attr` / `has_attr` / `set_attr` / `del_attr` as the substitute, so `get_attr("__dict__")` reopened exactly what the validator closes — and `get_attr("__dict" + "__")` puts that spelling beyond any static validator's reach. Both halves read the same `dunder_message`, so they cannot drift. `get_attr(name, default)` is guarded before the default is consulted: a forbidden name is refused, not quietly answered with a fallback.
+
 ### No `type` — `poop/validators/no_type.py`
 
 | Call | Reason | Substitute |

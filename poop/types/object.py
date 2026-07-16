@@ -152,23 +152,43 @@ class Object(metaclass=PoopMeta):
         target = builtins.getattr(self, "_value", self)
         return Str(builtins.format(target, spec_value))
 
+    def _reject_dunder(self, name: str) -> None:
+        """The runtime half of `no_dunder_attribute`.
+
+        `no_getattr` bans `getattr` and offers these four as the substitute, so
+        without this `get_attr("__dict__")` reopens exactly what the validator
+        closes. A computed name — `"__dict" + "__"` — puts that spelling beyond
+        any static validator's reach, which is why the guard has to live here.
+        """
+        from poop.validators.no_dunder_attribute import dunder_message
+
+        message = dunder_message(name)
+        if message is not None:
+            raise AttributeError(message.lstrip("."))
+
     def get_attr(self, name: Str, *default: Any) -> Any:
+        # Guarded before the default is consulted: a forbidden name is refused,
+        # not quietly answered with a fallback.
+        self._reject_dunder(name._value)
         return builtins.getattr(self, name._value, *default)
 
     def has_attr(self, symbol: Str) -> Boolean:
         from poop.types.boolean import to_boolean
 
+        self._reject_dunder(symbol._value)
         return to_boolean(hasattr(self, symbol._value))
 
     def set_attr(self, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
 
+        self._reject_dunder(name._value)
         builtins.setattr(self, name._value, value)
         return none
 
     def del_attr(self, name: Str) -> NoneClass:
         from poop.types.none import none
 
+        self._reject_dunder(name._value)
         builtins.delattr(self, name._value)
         return none
 

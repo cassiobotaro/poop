@@ -237,6 +237,7 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "unary_minus": "-x",
     "unary_plus": "+x",
     "type_alias": "type X = int",
+    "dunder": "x.__dict__",
 }
 
 _META_HELP = """\
