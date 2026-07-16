@@ -54,17 +54,19 @@ AI-specific guidance:
 
 ## Architecture
 
-Entry point is `poop/cli.py` (CLI via `typer`); `main.py` is a thin wrapper that calls `entry_point()` for the uninstalled `python main.py <file>` path. Pipeline: `parse → validate → transform → execute(namespace)`.
+Entry point is `poop/cli.py` (CLI via `typer`); `main.py` is a thin wrapper that calls `entry_point()` for the uninstalled `python main.py <file>` path. `poop` with no file argument starts the REPL. Pipeline: `parse → validate → transform → execute(namespace)`.
 
 - `poop/parser.py` — wraps `ast.parse`
-- `poop/validators/` — AST validators rejecting forbidden constructs (`if`, loops, `len`, `print`, ~66 in all); source of truth: `DEFAULT_VALIDATORS` in `poop/validators/__init__.py`
-- `poop/transformers/` — AST transformers rewriting literals and builtins before execution, plus namespace-only transformers that inject names into the namespace without rewriting AST (`try_`, `with_`); source of truth: `DEFAULT_TRANSFORMERS` and `DEFAULT_NAMESPACE` in `poop/transformers/__init__.py`
-- `poop/types/` — Smalltalk-style type wrappers (`object.py` is the root): one module per wrapped builtin and iterator; see the directory listing and the `INFECTIONS.md` catalog for the full inventory and the rules wrappers must follow
+- `poop/validators/` — AST validators rejecting forbidden constructs (`if`, loops, `len`, `print`, 67 in all); source of truth: `DEFAULT_VALIDATORS` in `poop/validators/__init__.py`. `collect()` is the primitive: validators subclass `CollectingValidator` (`poop/validators/base.py`) and implement `collect()`; `validate()` derives from it by raising the first error. Collecting cannot be built from raising, and `--validators-only` needs every error.
+- `poop/transformers/` — AST transformers rewriting literals and builtins before execution, plus namespace-only transformers that inject names into the namespace without rewriting AST (`try_`, `with_`); source of truth: `DEFAULT_TRANSFORMERS` and `DEFAULT_NAMESPACE` in `poop/transformers/__init__.py`. Order is load-bearing and commented where it matters (e.g. `ExceptionTransformer` must run after `RaiseTransformer`).
+- `poop/types/` — Smalltalk-style type wrappers (`object.py` is the root, `meta.py` the class side): one module per wrapped builtin and iterator; see the directory listing and the `INFECTIONS.md` catalog for the full inventory and the rules wrappers must follow
 - `poop/executor.py` — compiles and executes AST with an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
+- `poop/errors.py` — `PoopError` hierarchy and `format_error`, shared by the CLI and the REPL
+- `poop/repl.py` — the interactive REPL
 
-POOP is the language, not the library: it mirrors no stdlib module. If Python needs an `import` to reach something, POOP does not offer it — `DEFAULT_NAMESPACE` is exactly two names — `Try` and `With` — the constructs replacing the `try`/`except` and `with` keywords. There is no file I/O and no async. Do not add a module mirror back without revisiting that decision.
+POOP is the language, not the library: it mirrors no stdlib module. If Python needs an `import` to reach something, POOP does not offer it — `DEFAULT_NAMESPACE` exposes exactly two names user code can name: `Try` and `With`, the constructs replacing the `try`/`except` and `with` keywords. (The dict itself is larger — every other key is a mangled `_poop_*` binding, including the exception classes, which reach user code by transformer rewrite rather than by being named directly.) There is no file I/O and no async. Do not add a module mirror back without revisiting that decision.
 
-Naming rules: injected names copy Python's exact casing — `Try` and `With` are classes, so PascalCase. Every other type wrapper (`Int`, `List`, `Object`, ...) is bound under a mangled `_poop_*` name unreachable from user code; lowercase Python builtins (`int`, `list`, `object`, ...) get rewritten to those mangled names.
+Naming rules: injected names copy Python's exact casing — `Try` and `With` are classes, so PascalCase. Every other type wrapper (`Int`, `List`, `Object`, ...) is bound under a mangled `_poop_*` name unreachable from user code; lowercase Python builtins (`int`, `list`, ...) get rewritten to those mangled names. `object` is the exception: it is rewritten only in class-base position, by `ClassTransformer`. A bare `object` elsewhere reaches runtime as the raw CPython class, so `int.name()` answers `int` but `object.class_name()` fails with `type object 'object' has no attribute 'class_name'`.
 
 `examples/` contains valid POOP programs, organized into three subfolders: `basics/` (language fundamentals), `idiomatic/` (idiomatic POOP usage), and `patterns/` (Sandi Metz / GoF OO patterns). Files there use names injected at runtime (`True`→POOP boolean, etc.) so they are excluded from `ty` and ruff `F821` (pattern `examples/**/*.py` in `pyproject.toml`).

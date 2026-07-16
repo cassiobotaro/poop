@@ -118,7 +118,11 @@ Every infection follows the same pattern.
 ### A new validator (e.g. `no_foo`)
 
 1. Create `poop/validators/no_foo.py`. Reuse `_call_name.make_call_name_validator`
-   when forbidding builtin calls; otherwise subclass the base validator.
+   when forbidding builtin calls; otherwise subclass `CollectingValidator`
+   (`poop/validators/base.py`) and implement `collect()` — never `validate()`,
+   which the base derives by raising the first collected error. Collecting is
+   the primitive because `--validators-only` reports every error, and a raise
+   has already thrown away the rest of the walk.
 2. Register it in `DEFAULT_VALIDATORS` (`poop/validators/__init__.py`).
 3. Add tests under `tests/test_validators/test_no_foo.py`.
 4. Add an entry to `INFECTIONS.md` with a `Substitute` column pointing to the
@@ -128,8 +132,12 @@ Every infection follows the same pattern.
 ### A new transformer (e.g. `foo`)
 
 1. Create `poop/transformers/foo.py`.
-2. Register it in `DEFAULT_TRANSFORMERS` (`poop/transformers/__init__.py`) and
-   inject any helper into `DEFAULT_NAMESPACE`.
+2. Register it in `_TRANSFORMER_CLASSES` (`poop/transformers/__init__.py`), which
+   builds `DEFAULT_TRANSFORMERS`. Declare any helper in a `BINDINGS` ClassVar —
+   `DEFAULT_NAMESPACE` is assembled from those and refuses duplicate keys; do not
+   write into it directly. Registration order is the transform order and is
+   sometimes load-bearing (`ExceptionTransformer` after `RaiseTransformer`) —
+   comment the reason when it is.
 3. Add tests under `tests/test_transformers/test_foo.py`.
 4. Add an entry to `INFECTIONS.md`.
 
