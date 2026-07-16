@@ -4,6 +4,8 @@ from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
+from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def test_empty_list() -> None:
@@ -437,3 +439,43 @@ def test_ordering_with_foreign_operand_raises_typeerror() -> None:
         _ = List(Int(1)) < Int(2)
     with pytest.raises(TypeError):
         _ = List(Int(1)) >= Int(2)
+
+
+def test_inplace_add_mutates_in_place() -> None:
+    # CPython: ``xs += ys`` keeps ``xs``'s identity, so aliases see the change.
+    xs = List(Int(1), Int(2))
+    alias = xs
+    xs += List(Int(3))
+    assert xs is alias
+    assert alias == List(Int(1), Int(2), Int(3))
+
+
+def test_inplace_add_accepts_any_iterable() -> None:
+    # CPython's ``list.__iadd__`` is ``list.extend`` — it takes any iterable,
+    # unlike ``+``, which stays list-only.
+    xs = List(Int(1))
+    xs += Tuple(Int(2), Int(3))
+    assert xs == List(Int(1), Int(2), Int(3))
+
+
+def test_inplace_mul_mutates_in_place() -> None:
+    # CPython: ``xs *= n`` repeats in place and keeps ``xs``'s identity.
+    xs = List(Int(1), Int(2))
+    alias = xs
+    xs *= Int(2)
+    assert xs is alias
+    assert alias == List(Int(1), Int(2), Int(1), Int(2))
+
+
+def test_inplace_mul_by_zero_clears_in_place() -> None:
+    xs = List(Int(1), Int(2))
+    alias = xs
+    xs *= Int(0)
+    assert xs is alias
+    assert alias == List()
+
+
+def test_inplace_mul_by_non_int_raises_typeerror() -> None:
+    with pytest.raises(TypeError):
+        xs = List(Int(1))
+        xs *= Str("2")

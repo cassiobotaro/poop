@@ -396,3 +396,23 @@ def test_eq_with_mapping_proxy_is_symmetric() -> None:
     other = MappingProxy(_dict_with([(1, 99)]))
     assert (d == other) is false
     assert (d != other) is true
+
+
+def test_inplace_or_with_mapping_proxy_mutates_in_place() -> None:
+    # CPython: ``d |= mappingproxy`` updates in place (``dict.__ior__`` takes
+    # any mapping), so aliases see the change. Returning NotImplemented handed
+    # the operation to the proxy's reflected __ror__, which built a fresh Dict
+    # and left the alias pointing at the unchanged original.
+    from poop.types.mapping_proxy import MappingProxy
+
+    d = _dict_with([(1, 10)])
+    alias = d
+    d |= MappingProxy(_dict_with([(2, 20)]))
+    assert d is alias
+    assert alias == _dict_with([(1, 10), (2, 20)])
+
+
+def test_inplace_or_with_foreign_operand_raises_typeerror() -> None:
+    with pytest.raises(TypeError):
+        d = _dict_with([(1, 10)])
+        d |= Int(2)

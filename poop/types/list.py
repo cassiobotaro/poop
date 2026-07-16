@@ -2,7 +2,7 @@ from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
@@ -93,6 +93,21 @@ class List(_ValueEqMixin, _IterableMixin, Object):
 
     def __rmul__(self, other: object) -> List:
         return List(*self._items * _repeat_count(other))
+
+    # In-place sequence operators mutate the receiver (CPython ``xs += ys`` is
+    # ``list.extend`` and ``xs *= n`` repeats in place, so ``xs`` keeps its
+    # identity and aliases observe the change). Without these, augmented
+    # assignment would fall back to the binary ``__add__``/``__mul__``, rebind
+    # the name to a fresh List, and silently leave any alias pointing at the
+    # unchanged original. ``+=`` takes any iterable, like ``extend`` and unlike
+    # ``__add__``, which stays List-only.
+    def __iadd__(self, other: Iterable[Object]) -> Self:
+        self._items.extend(other)
+        return self
+
+    def __imul__(self, other: object) -> Self:
+        self._items *= _repeat_count(other)
+        return self
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)
