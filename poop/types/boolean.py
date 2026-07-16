@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, final
 
-from poop.types._numeric_compare import _NOT_NUMERIC, _num_value
+from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -12,10 +12,16 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class Boolean(Object, ABC):
+class Boolean(_NumericCompareMixin, Object, ABC):
     """Abstract base for Smalltalk-style boolean objects."""
 
     __slots__ = ()
+
+    # `bool` is an `int` subclass, so a Boolean folds to 1/0 for the numeric
+    # tower's comparison protocol (ordering + equality) shared via
+    # _NumericCompareMixin — `true > Float(0.5)` and `true == Int(1)` are true.
+    def _order_value(self) -> int:
+        return int(bool(self))
 
     def __repr__(self) -> str:
         return str(self)
@@ -67,55 +73,9 @@ class Boolean(Object, ABC):
     @abstractmethod
     def __str__(self) -> str: ...
 
-    # `bool` is an `int` subclass, so a Boolean orders/compares as 1/0 against
-    # the whole numeric tower — `true > Float(0.5)` is `true`, `true == Int(1)`
-    # is `true` — not just against other Booleans (which `bool(self) < bool(
-    # other)` collapsed every non-zero operand into). Foreign operands answer
-    # NotImplemented (ordering) / false-true (equality) for a faithful result.
-    def __lt__(self, other: object) -> Boolean:
-        v = _num_value(other)
-        if v is _NOT_NUMERIC:
-            return NotImplemented
-        return to_boolean(int(bool(self)) < v)
-
-    def __le__(self, other: object) -> Boolean:
-        v = _num_value(other)
-        if v is _NOT_NUMERIC:
-            return NotImplemented
-        return to_boolean(int(bool(self)) <= v)
-
-    def __gt__(self, other: object) -> Boolean:
-        v = _num_value(other)
-        if v is _NOT_NUMERIC:
-            return NotImplemented
-        return to_boolean(int(bool(self)) > v)
-
-    def __ge__(self, other: object) -> Boolean:
-        v = _num_value(other)
-        if v is _NOT_NUMERIC:
-            return NotImplemented
-        return to_boolean(int(bool(self)) >= v)
-
-    def __eq__(self, other: object) -> Boolean:
-        from poop.types.complex import Complex
-
-        # Complex joins the tower too — `True == (1+0j)` is True in CPython.
-        if isinstance(other, Complex):
-            return to_boolean(int(bool(self)) == other._value)
-        v = _num_value(other)
-        if v is _NOT_NUMERIC:
-            return false
-        return to_boolean(int(bool(self)) == v)
-
-    def __ne__(self, other: object) -> Boolean:
-        from poop.types.complex import Complex
-
-        if isinstance(other, Complex):
-            return false if int(bool(self)) == other._value else true
-        v = _num_value(other)
-        if v is _NOT_NUMERIC:
-            return true
-        return false if int(bool(self)) == v else true
+    # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
+    # against the numeric tower live in _NumericCompareMixin; _order_value()
+    # above folds a Boolean to 1/0 so it compares as `bool`'s int subclass does.
 
     # Arithmetic — `bool` is an `int` subclass in CPython, so a Boolean acts
     # as 1/0 in numeric expressions (`True + 1 == 2`, `sum([True, True]) == 2`).
