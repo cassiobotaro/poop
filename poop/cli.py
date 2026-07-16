@@ -77,7 +77,11 @@ def main(
         return
 
     with _poop_errors(source):
-        interpreter.run_file(file)
+        # Execute the source already read above — do not re-read `file`.
+        # A second read of a pipe (`poop /dev/stdin`) yields nothing, silently
+        # running an empty program; it also lets the executed source drift from
+        # the one the error gutter points at if the file changes between reads.
+        interpreter.run_source(source, filename)
 
 
 def entry_point() -> None:
