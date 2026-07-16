@@ -9,7 +9,7 @@ Every claim below was verified by running the interpreter; the quoted output is 
 ## Doctrine holes
 
 Constructs that survive today but that POOP's own stated rules reject. The
-substitute always already exists, so each is one validator — or one transformer,
+substitute always already exists, so each was one validator — or one transformer,
 in item 13's case — away from closed.
 
 ### ~~1. Chained comparison smuggles the lazy `and` that `no_and_or` forbids~~ — DONE
@@ -116,7 +116,7 @@ abstract methods at all — the base class omits the message and lets polymorphi
 supply it — so `...` has no idiomatic role in POOP. All 8 occurrences of `...` in
 `examples/` sit inside docstrings, quoting the Python that POOP forbids.
 
-### 13. `object` is the one builtin with no `Name`-position rewrite
+### ~~13. `object` is the one builtin with no `Name`-position rewrite~~ — DONE
 
 Every lowercase builtin is rewritten to its mangled `_poop_*` name, so
 `int.name()` answers `int`. `object` is the exception, and it reaches runtime as
@@ -135,36 +135,43 @@ rewrites it, but only inside `node.bases` — which is why `class Foo(object)`
 works and `Foo.superclass().name()` answers `object`, while a bare `object`
 resolves to CPython's.
 
-**Proposal**: a transformer rewriting `ast.Name(id="object")` → `_poop_object`.
-Exactly the shape item 3 used for `Ellipsis`, which had the same asymmetry: the
-literal was transformed and the name was not.
+**Decision: transform it, like every other builtin.** `ObjectTransformer`
+rewrites `ast.Name(id="object")` → `_poop_object`, the shape item 3 used for
+`Ellipsis`. `object.name()` answers `object` and `object.superclass()` answers
+`none` — Smalltalk's `Object superclass` — where both used to fail on the raw
+CPython class.
 
-**Verified, and each worth keeping:**
+**The module name reintroduced a hazard the codebase had already solved.**
+Importing `poop.transformers.object` makes the submodule an attribute of the
+package, so `object` inside `poop/transformers/__init__.py` stops meaning the
+builtin — `_dict[str, object]` then annotates against a module. `ty` caught it.
+The fix was already there to copy: `_list` and `_dict` are aliased at the top of
+that file with the comment "preserve builtin before poop.transformers.list
+shadows it", for exactly this reason. `_object` now joins them.
 
-- *Item 4 is what makes this worth closing.* Before the class side existed there
-  was nothing to say to `object` anyway. Now `object.name()` should answer
-  `object` and `object.superclass()` should answer `none` — Smalltalk's
-  `Object superclass` — and both work already through the chain:
-  `Foo.superclass().superclass().is_none()` answers `True`. Only the *name* is
-  unreachable.
-- *`(5).is_instance(object)` answers `True` today — for the wrong reason.* The
-  argument is CPython's `object`, so the check is the trivial "is this a Python
-  object?". POOP's `Object` would answer `True` too, so the bug is invisible:
-  right answer, wrong question.
-- *`class Foo(Object)` works, but `Object` is not a name.* `ClassTransformer`
-  matches the *string* `"Object"` in a base and never resolves it — a bare
-  `Object` answers `NameError: name 'Object' is not defined`. So the capital
-  spelling is accepted in exactly one position, for a name that does not exist.
-  Whether the rewrite should cover `Object` too, or whether `ClassTransformer`
-  should stop accepting a name nothing binds, is part of this item.
-- *Ordering against `ClassTransformer` looks free either way* — it matches
-  `"object"`/`"Object"` by string, and a base already rewritten to
-  `_poop_object` falls through its check unchanged. Cheap to get wrong silently,
-  though, exactly as item 12's `RaiseTransformer` ordering was: worth a test that
-  fails when the order flips, not a comment.
+**Order against `ClassTransformer` is genuinely free**, unlike item 12's, and
+the test asserts it rather than the docstring claiming it: whichever runs first
+leaves `_poop_object` behind, which the other no longer matches. It declares no
+`BINDINGS` — `ClassTransformer` already binds `_poop_object` for the implicit
+base, and the namespace build raises on a duplicate key.
 
-`CLAUDE.md` claimed all lowercase builtins get rewritten; that sentence now
-documents the exception, so the docs are honest while the code is not.
+**`Object` (capital) is left alone, deliberately.** `class Foo(Object)` works
+while a bare `Object` answers `NameError`, which contradicts the naming rule
+("unreachable from user code"). But `test_class_with_explicit_Object_base_gets_rewritten`
+shows the spelling is supported on purpose, not by accident, so removing it is a
+decision about a documented feature rather than the closing of this leak. No POOP
+source uses it — the `(Object)` hits are Python test files importing the class
+directly.
+
+**Residue, and it is item 4's, not this one's**: `object.class_name()` still
+fails — now with `TypeError: Object.class_name() missing 1 required positional
+argument: 'self'` rather than a raw-class `AttributeError`. `class_name` is an
+instance message, so class-side lookup finds it in the MRO, answers the unbound
+function, and `PoopMeta.__getattr__` never fires because nothing missed.
+Verified identical for `Foo.class_name()` and `int.class_name()`: every POOP
+class has it. `object` is no longer special — it simply joined the club. Sending
+an instance-only message to a class should answer `doesNotUnderstand`, and only
+the five `class_side` descriptors escape this today.
 
 ---
 
