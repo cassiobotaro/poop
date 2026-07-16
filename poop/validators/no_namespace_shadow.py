@@ -12,6 +12,7 @@ class _Visitor(ast.NodeVisitor):
     def __init__(self, protected: frozenset[str], message: str) -> None:
         self._protected = protected
         self._message = message
+        self._in_class_body = False
 
     def _check(self, name: str, node: ast.AST) -> None:
         if name in self._protected:
@@ -47,7 +48,10 @@ class _Visitor(ast.NodeVisitor):
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self._check(node.name, node)
+        outer = self._in_class_body
+        self._in_class_body = True
         self.generic_visit(node)
+        self._in_class_body = outer
 
     def _check_args(self, args: ast.arguments) -> None:
         # A parameter named after a namespace binding shadows it inside the
@@ -62,13 +66,26 @@ class _Visitor(ast.NodeVisitor):
         for param in params:
             self._check(param.arg, param)
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+    def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        # A def directly in a class body is a method: it binds as a class
+        # attribute, not in the namespace scope, so `class Calc: def Try(self)`
+        # stays allowed. A def anywhere else binds a real local name and
+        # shadows the binding exactly like `Try = ...` does — nested defs are
+        # legal POOP (no_free_functions allows them inside a method), so
+        # `def Try(block): ...` there silently hijacks the entry point.
+        if not self._in_class_body:
+            self._check(node.name, node)
         self._check_args(node.args)
+        outer = self._in_class_body
+        self._in_class_body = False
         self.generic_visit(node)
+        self._in_class_body = outer
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._visit_function(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self._check_args(node.args)
-        self.generic_visit(node)
+        self._visit_function(node)
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
         # Lambdas are POOP's block form and carry most user code, so the
