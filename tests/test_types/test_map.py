@@ -33,6 +33,12 @@ def test_map_next_raises_stop_iteration_when_exhausted() -> None:
         m.next()
 
 
+def test_map_next_default_on_exhaustion() -> None:
+    m = Map(List(Int(1)), lambda x: x)
+    m.next()
+    assert m.next(Int(-1)) == Int(-1)
+
+
 def test_map_is_one_shot() -> None:
     # Matches Python's map: once exhausted, further iteration is empty.
     src = List(Int(1), Int(2))

@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._iterator_base import _MISSING
 from poop.types._unwrap import _unwrap
 from poop.types.int import Int
 from poop.types.object import Object
@@ -41,8 +42,13 @@ class Enumerate(_IterableMixin, Object):
     def iter(self) -> Enumerate:
         return self
 
-    def next(self) -> Tuple:
-        return next(self._materialize())
+    def next(self, default: Any = _MISSING) -> Tuple:
+        try:
+            return next(self._materialize())
+        except StopIteration:
+            if default is not _MISSING:
+                return default
+            raise
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import to_boolean

@@ -35,6 +35,11 @@ def test_filter_next_raises_stop_iteration_when_exhausted() -> None:
         f.next()
 
 
+def test_filter_next_default_on_exhaustion() -> None:
+    f = Filter(List(Int(1), Int(2)), lambda x: x._value > 100)
+    assert f.next(Int(-1)) == Int(-1)
+
+
 def test_filter_is_one_shot() -> None:
     # Matches Python's filter: once exhausted, further iteration is empty.
     src = List(Int(1), Int(2), Int(3))

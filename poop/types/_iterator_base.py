@@ -10,6 +10,11 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
+# Sentinel distinguishing "no default given" from an explicit default, so
+# `it.next()` still raises StopIteration while `it.next(default)` swallows it —
+# mirroring Python's two-arg `next(iterator, default)`.
+_MISSING: Any = object()
+
 
 class _IteratorBase[T](Object):
     """Base for one-shot POOP iterators.
@@ -47,8 +52,13 @@ class _IteratorBase[T](Object):
     def __next__(self) -> T:
         return next(self._iter)
 
-    def next(self) -> T:
-        return next(self._iter)
+    def next(self, default: Any = _MISSING) -> T:
+        try:
+            return next(self._iter)
+        except StopIteration:
+            if default is not _MISSING:
+                return default
+            raise
 
     def do(self, block: Callable[[T], Any]) -> NoneClass:
         deque(map(block, self._iter), maxlen=0)

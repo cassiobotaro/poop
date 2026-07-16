@@ -199,6 +199,13 @@ def test_exhaustion_raises_stop_iteration() -> None:
         e.next()
 
 
+def test_next_default_on_exhaustion() -> None:
+    e = List(Int(1)).enumerate()
+    e.next()
+    fallback = Tuple(Int(-1), Int(-1))
+    assert e.next(fallback) is fallback
+
+
 def test_do_consumes_one_shot() -> None:
     # `.do()` iterates the Enumerate, consuming it; a second call yields nothing.
     e = List(Int(1), Int(2)).enumerate()

@@ -20,6 +20,13 @@ def test_exhaustion_raises_stop_iteration() -> None:
         it.next()
 
 
+def test_next_default_on_exhaustion() -> None:
+    it = DictItemIterator([(Str("a"), Int(1))])
+    it.next()
+    fallback = Tuple(Str("end"), Int(0))
+    assert it.next(fallback) is fallback
+
+
 def test_iter_returns_self() -> None:
     it = DictItemIterator([])
     assert iter(it) is it

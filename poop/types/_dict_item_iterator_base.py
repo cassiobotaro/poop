@@ -2,7 +2,7 @@ from collections import deque
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from poop.types._iterator_base import _IteratorBase
+from poop.types._iterator_base import _MISSING, _IteratorBase
 from poop.types.none import none
 from poop.types.tuple import Tuple
 
@@ -22,8 +22,13 @@ class _DictItemIteratorBase(_IteratorBase[Tuple]):
 
     __slots__ = ()
 
-    def next(self) -> Tuple:
-        k, v = next(self._iter)
+    def next(self, default: Any = _MISSING) -> Tuple:
+        try:
+            k, v = next(self._iter)
+        except StopIteration:
+            if default is not _MISSING:
+                return default
+            raise
         return Tuple(k, v)
 
     def __next__(self) -> Tuple:

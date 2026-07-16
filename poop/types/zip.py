@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._iterator_base import _MISSING
 from poop.types.boolean import false, to_boolean, true
 from poop.types.object import Object
 from poop.types.tuple import Tuple
@@ -45,8 +46,13 @@ class Zip(_IterableMixin, Object):
     def iter(self) -> Zip:
         return self
 
-    def next(self) -> Tuple:
-        return next(self._materialize())
+    def next(self, default: Any = _MISSING) -> Tuple:
+        try:
+            return next(self._materialize())
+        except StopIteration:
+            if default is not _MISSING:
+                return default
+            raise
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import to_boolean

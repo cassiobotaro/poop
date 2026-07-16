@@ -4,6 +4,7 @@ from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._iterator_base import _MISSING
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -38,8 +39,13 @@ class Map(_IterableMixin, Object):
     def iter(self) -> Map:
         return self
 
-    def next(self) -> Any:
-        return next(self._materialize())
+    def next(self, default: Any = _MISSING) -> Any:
+        try:
+            return next(self._materialize())
+        except StopIteration:
+            if default is not _MISSING:
+                return default
+            raise
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import to_boolean

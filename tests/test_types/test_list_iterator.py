@@ -28,6 +28,20 @@ def test_exhaustion_raises_stop_iteration() -> None:
         it.next()
 
 
+def test_next_default_on_exhaustion() -> None:
+    it = List(Int(1)).iter()
+    assert it.next() == Int(1)
+    sentinel = Str("done")
+    assert it.next(sentinel) is sentinel
+    # default is sticky: keeps answering it, never raises
+    assert it.next(sentinel) is sentinel
+
+
+def test_next_default_ignored_while_items_remain() -> None:
+    it = List(Int(1), Int(2)).iter()
+    assert it.next(Str("unused")) == Int(1)
+
+
 def test_one_shot_after_do() -> None:
     it = List(Int(1), Int(2)).iter()
     it.do(lambda x: None)
