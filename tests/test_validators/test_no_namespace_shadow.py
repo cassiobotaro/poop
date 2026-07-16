@@ -136,3 +136,39 @@ def test_error_carries_line_number() -> None:
     with pytest.raises(ValidationError) as exc_info:
         NoNamespaceShadowValidator().validate(tree)
     assert exc_info.value.lineno == 2
+
+
+def test_nested_def_named_Try_raises() -> None:
+    # A def nested in a method binds a real local name, so a later `Try(...)`
+    # in that body resolves to it instead of the runtime entry point. The
+    # assignment form is rejected; this one must be too.
+    source = (
+        "class Demo:\n    def run(self):\n        def Try(block):\n            return 1"
+    )
+    tree = ast.parse(source)
+    with pytest.raises(ValidationError, match="'Try'"):
+        NoNamespaceShadowValidator().validate(tree)
+
+
+def test_nested_async_def_named_Try_raises() -> None:
+    source = "class Demo:\n    def run(self):\n        async def Try(block):\n            return 1"
+    tree = ast.parse(source)
+    with pytest.raises(ValidationError, match="'Try'"):
+        NoNamespaceShadowValidator().validate(tree)
+
+
+def test_nested_def_named_Try_carries_line_number() -> None:
+    source = (
+        "class Demo:\n    def run(self):\n        def Try(block):\n            return 1"
+    )
+    tree = ast.parse(source)
+    with pytest.raises(ValidationError) as exc_info:
+        NoNamespaceShadowValidator().validate(tree)
+    assert exc_info.value.lineno == 3
+
+
+def test_method_named_Try_in_nested_class_is_fine() -> None:
+    # The class-body carve-out still applies one level down.
+    source = "class Outer:\n    class Inner:\n        def Try(self):\n            pass"
+    tree = ast.parse(source)
+    NoNamespaceShadowValidator().validate(tree)

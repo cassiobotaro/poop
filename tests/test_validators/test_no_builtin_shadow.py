@@ -66,3 +66,20 @@ def test_constructor_call_passes() -> None:
 def test_ordinary_name_passes() -> None:
     tree = ast.parse("integer = 5\nmy_list = (1, 2)")
     NoBuiltinShadowValidator().validate(tree)
+
+
+def test_nested_def_named_dict_raises() -> None:
+    # Nested defs bind a local name, so `def dict(): ...` inside a method
+    # shadows the builtin the transformers rely on.
+    source = (
+        "class Demo:\n    def run(self):\n        def dict():\n            return 1"
+    )
+    tree = ast.parse(source)
+    with pytest.raises(ValidationError, match="'dict'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_method_named_dict_is_fine() -> None:
+    # Methods bind as class attributes, not in the enclosing scope.
+    tree = ast.parse("class Demo:\n    def dict(self):\n        pass")
+    NoBuiltinShadowValidator().validate(tree)
