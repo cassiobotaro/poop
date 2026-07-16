@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
+from poop.types.boolean import to_boolean
+
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
@@ -60,32 +62,24 @@ class _SetAlgebraMixin:
     # augmented comparison falls through to ``Object`` and raises ``TypeError``.
     # Equality (``==``/``!=``) stays with ``_ValueEqMixin``.
     def __le__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         raw = _other_set(other)
         if raw is None:
             return NotImplemented
         return to_boolean(self._data <= raw)
 
     def __lt__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         raw = _other_set(other)
         if raw is None:
             return NotImplemented
         return to_boolean(self._data < raw)
 
     def __ge__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         raw = _other_set(other)
         if raw is None:
             return NotImplemented
         return to_boolean(self._data >= raw)
 
     def __gt__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         raw = _other_set(other)
         if raw is None:
             return NotImplemented

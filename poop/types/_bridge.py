@@ -30,10 +30,7 @@ def to_python(obj: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one br
     if isinstance(obj, Tuple):
         return tuple(to_python(item) for item in obj._items)
     if isinstance(obj, Dict):
-        out: dict[Any, Any] = {}
-        for k, v in obj._data.items():
-            out[to_python(k)] = to_python(v)
-        return out
+        return {to_python(k): to_python(v) for k, v in obj._data.items()}
     if isinstance(obj, Set):
         return {to_python(item) for item in obj._data}
     if isinstance(obj, FrozenSet):

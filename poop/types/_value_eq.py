@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, ClassVar
 from poop.types.boolean import false, to_boolean, true
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
 
 
 class _ValueEqMixin:
