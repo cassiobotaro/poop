@@ -46,10 +46,10 @@ Pipeline: `parse → validate → transform → execute(namespace)`
 
 | AST node | Context | Reason |
 |---|---|---|
-| `ast.FunctionDef` | outside class | Free function is not a message to any object |
-| `ast.AsyncFunctionDef` | outside class | Async variant |
+| `ast.FunctionDef` | direct parent is not a `ClassDef` | Free function is not a message to any object |
+| `ast.AsyncFunctionDef` | direct parent is not a `ClassDef` | Async variant |
 
-Functions inside classes (`class_depth > 0`) are allowed as methods.
+A function is a method only when it is a **direct** statement of a class body. Counting class *nesting* was not enough: a `def` nested inside a method sits at `class_depth > 0` yet its parent is the method, not the class, so it slipped through as a receiver-less named local function. Smalltalk has blocks, not named local functions — so the validator registers each `ClassDef`'s direct-body `def`s as methods and rejects every other `FunctionDef`/`AsyncFunctionDef`, module level and method-nested alike. Use a **lambda** for a local block: it is the sanctioned receiver-less callable, invoked as `block()`.
 
 ### No `print` — `poop/validators/no_print.py`
 

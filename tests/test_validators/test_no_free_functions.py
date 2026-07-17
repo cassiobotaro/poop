@@ -56,7 +56,46 @@ def test_async_method_inside_class_passes() -> None:
     NoFreeFunctionsValidator().validate(tree)
 
 
-def test_nested_function_inside_method_passes() -> None:
+def test_nested_function_inside_method_raises() -> None:
+    # proposals.md item 7: a `def` nested inside a method is not a message to
+    # any object — its direct parent is the method, not a class. Smalltalk has
+    # blocks (lambdas), not named local functions, so it is rejected.
     source = "class Foo:\n    def bar(self) -> None:\n        def helper() -> None:\n            pass"
     tree = ast.parse(source)
-    NoFreeFunctionsValidator().validate(tree)
+    with pytest.raises(ValidationError) as exc_info:
+        NoFreeFunctionsValidator().validate(tree)
+    assert "free functions" in str(exc_info.value)
+
+
+def test_nested_async_function_inside_method_raises() -> None:
+    source = (
+        "class Foo:\n"
+        "    def bar(self) -> None:\n"
+        "        async def helper() -> None:\n"
+        "            pass"
+    )
+    tree = ast.parse(source)
+    with pytest.raises(ValidationError) as exc_info:
+        NoFreeFunctionsValidator().validate(tree)
+    assert "free async functions" in str(exc_info.value)
+
+
+def test_doubly_nested_function_raises() -> None:
+    source = (
+        "class Foo:\n"
+        "    def bar(self) -> None:\n"
+        "        def outer() -> None:\n"
+        "            def inner() -> None:\n"
+        "                pass"
+    )
+    tree = ast.parse(source)
+    errors = NoFreeFunctionsValidator().collect(tree)
+    # both `outer` and `inner` are named local functions — neither is a method
+    assert len(errors) == 2
+
+
+def test_function_nested_in_module_level_function_raises() -> None:
+    source = "def outer() -> None:\n    def inner() -> None:\n        pass"
+    tree = ast.parse(source)
+    errors = NoFreeFunctionsValidator().collect(tree)
+    assert len(errors) == 2
