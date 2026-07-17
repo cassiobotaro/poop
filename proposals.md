@@ -79,38 +79,18 @@ view over the remainder. Recorded in `INFECTIONS.md` under *No `iter`*; covered 
 
 ## Hidden boolean semantics
 
-### 6. Chained comparisons smuggle the forbidden implicit `and` — OPEN
+### ~~6. Chained comparisons smuggle the forbidden implicit `and`~~ — DONE
 
-**Symptom.** POOP bans every operator that hides control flow or non-obvious
-semantics, routing users to explicit messages: `and`/`or` (`no_and_or`), `in`
-(`no_in`), `is` (`no_is`), unary `not` (`no_not`). But a **chained comparison** is
-accepted:
-
-```
->>> (True and False).print()
-poop: and operator is forbidden — use .and_(lambda: ...) instead
->>> (1 < 2 < 3).print()
-True
-```
-
-`no_and_or` only inspects `ast.BoolOp`. A chain like `1 < 2 < 3` is a single
-`ast.Compare` node with multiple comparators, which Python evaluates as
-`(1 < 2) and (2 < 3)` with short-circuit — i.e. exactly the implicit `and` POOP
-set out to eliminate, just without an `and` token. A single comparison
-(`1 < 2`) is fine — operators are kept, like `+` — so only the *chain* is the leak.
-No example relies on chained comparisons.
-
-**Decision needed (author's call — adds a validator, may reject existing code):**
-
-- **(a) Forbid chains.** New `no_comparison_chain` validator rejecting any
-  `ast.Compare` with `len(node.ops) > 1`, message pointing at
-  `a.less_than(b).and_(lambda: b.less_than(c))` (or the operator form
-  `(a < b).and_(lambda: b < c)`). Closes the leak, consistent with `no_and_or`.
-- **(b) Accept chains.** Treat `<`/`>`/`==` chaining as plain operator sugar that
-  POOP tolerates, and document in `INFECTIONS.md` that chained comparisons are the
-  one place implicit `and` survives, so the divergence is intentional.
-
-All output above was produced by running the interpreter at this commit.
+**Decision: accept chains (option b).** A chained comparison (`1 < 2 < 3`) is a
+single `ast.Compare` node with multiple comparators that Python evaluates as
+`(1 < 2) and (2 < 3)` with short-circuit — an implicit `and` with no `and`
+token, which `no_and_or` (inspecting only `ast.BoolOp`) does not catch. Rather
+than add a `no_comparison_chain` validator that would reject code no example
+relies on, POOP treats `<`/`>`/`==` chaining as plain operator sugar — a single
+comparison already keeps its operator (like `+`), and a chain reads as more of
+the same. Recorded in `INFECTIONS.md` under *No `and`/`or`* as the one
+deliberate place an implicit `and` survives; the explicit spelling remains
+`(a < b).and_(lambda: b < c)`.
 
 ---
 
