@@ -57,7 +57,12 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Bytes(self._value[py])
 
     def includes(self, byte: Int) -> Boolean:
-        return to_boolean(byte._value in self._value)
+        # getattr-unwrap (as in join): a non-`_value` argument (List, Set, …)
+        # reaches bytes.__contains__ raw and raises the faithful TypeError,
+        # rather than leaking the internal `_value` name through dispatch. A
+        # Bytes/ByteArray argument keeps its subsequence-membership semantics.
+        operand: Any = getattr(byte, "_value", byte)
+        return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
         from poop.types.int import Int

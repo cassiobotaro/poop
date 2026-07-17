@@ -48,10 +48,10 @@ class DictItems(_DictView, name="dict_items"):
         return DictReverseItemIterator(reversed(self._dict._data.items()))
 
     def includes(self, pair: Tuple) -> Boolean:
-        if len(pair._items) != 2:
-            return false
-        k, v = pair._items
-        return to_boolean(k in self._dict._data and self._dict._data[k] == v)
+        # Delegate to __contains__ so a non-Tuple argument answers false the way
+        # Python's `1 in d.items()` does, instead of reaching `pair._items` on a
+        # non-Tuple and leaking the internal `_items` name through dispatch.
+        return to_boolean(pair in self)
 
     def __contains__(self, item: object) -> bool:
         if not isinstance(item, Tuple) or len(item._items) != 2:

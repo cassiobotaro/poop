@@ -44,6 +44,14 @@ def test_includes_not_found() -> None:
     assert Str("hello").includes(Str("z")) is false
 
 
+def test_includes_non_value_argument_raises_faithful_typeerror() -> None:
+    # A non-`_value` argument (List) must reach str.__contains__ raw and raise
+    # the faithful TypeError, not leak the internal `_value` name through
+    # dispatch. Mirrors CPython's `[1] in "hello"`.
+    with pytest.raises(TypeError, match="requires string as left operand"):
+        Str("hello").includes(List(Int(1)))  # ty: ignore[invalid-argument-type]
+
+
 def test_reversed() -> None:
     from poop.types.list import List
 

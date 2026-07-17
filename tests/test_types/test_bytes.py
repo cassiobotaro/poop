@@ -40,6 +40,14 @@ def test_includes_false() -> None:
     assert Bytes(b"hello").includes(Int(0)) is false
 
 
+def test_includes_non_value_argument_raises_faithful_typeerror() -> None:
+    # A non-`_value` argument (List) must reach bytes.__contains__ raw and raise
+    # the faithful TypeError, not leak the internal `_value` name through
+    # dispatch. Mirrors CPython's `[1] in b"hello"`.
+    with pytest.raises(TypeError, match="bytes-like object"):
+        Bytes(b"hello").includes(List(Int(1)))  # ty: ignore[invalid-argument-type]
+
+
 def test_contains_dunder() -> None:
     b = Bytes(b"abc")
     assert Int(97) in b  # ord('a')

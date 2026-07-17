@@ -69,7 +69,10 @@ class Range(_IterableMixin, Object):
         return List(*(Int(i) for i in self._range()[py]))
 
     def includes(self, item: Int) -> Boolean:
-        return to_boolean(item._value in self._range())
+        # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
+        # range.__contains__ raw, which answers False by equality scan (as in
+        # Python), instead of leaking the internal `_value` name through dispatch.
+        return to_boolean(getattr(item, "_value", item) in self._range())
 
     def count(self, value: Int) -> Int:
         return Int(self._range().count(value._value))

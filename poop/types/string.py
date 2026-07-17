@@ -96,7 +96,11 @@ class Str(_ValueEqMixin, Object):
         return builtins.max(self, **kwargs)
 
     def includes(self, char: Str) -> Boolean:
-        return to_boolean(char._value in self._value)
+        # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
+        # str.__contains__ raw and raises the faithful TypeError ("requires
+        # string as left operand"), instead of leaking `_value` through dispatch.
+        operand: Any = getattr(char, "_value", char)
+        return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
         if isinstance(item, Str):

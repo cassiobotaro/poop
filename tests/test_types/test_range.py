@@ -146,6 +146,13 @@ def test_includes_returns_false_for_element_outside_range() -> None:
     assert _range(1, 5).includes(Int(6)) is false
 
 
+def test_includes_non_value_argument_answers_false() -> None:
+    # A non-`_value` argument (List) must reach range.__contains__ raw and
+    # answer false by equality scan (as in Python's `[1] in range(1, 5)`),
+    # not leak the internal `_value` name through dispatch.
+    assert _range(1, 5).includes(List(Int(1))) is false  # ty: ignore[invalid-argument-type]
+
+
 def test_at_returns_element() -> None:
     assert _range(3, 7).at(Int(0)) == Int(3)
 

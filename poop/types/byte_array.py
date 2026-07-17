@@ -67,7 +67,10 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return self
 
     def includes(self, byte: Int) -> Boolean:
-        return to_boolean(byte._value in self._value)
+        # getattr-unwrap: a non-`_value` argument reaches bytearray.__contains__
+        # raw and raises the faithful TypeError instead of leaking `_value`.
+        operand: Any = getattr(byte, "_value", byte)
+        return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
         if isinstance(item, Int):

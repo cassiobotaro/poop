@@ -211,6 +211,15 @@ def test_includes_non_pair() -> None:
     assert items.includes(Tuple(Str("a"))) is false
 
 
+def test_includes_non_tuple_argument_answers_false() -> None:
+    # `1 in {1: 2}.items()` is False in Python, not an error. A non-Tuple
+    # argument must not reach `arg._items` and leak the internal name through
+    # dispatch — it answers false like __contains__ does.
+    items = DictItems(_make())
+    assert items.includes(Int(0)) is false  # ty: ignore[invalid-argument-type]
+    assert items.includes(Str("a")) is false  # ty: ignore[invalid-argument-type]
+
+
 def test_eq_with_other_type() -> None:
     items = DictItems(_make())
     assert (items == Int(0)) is false
