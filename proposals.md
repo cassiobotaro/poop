@@ -199,37 +199,32 @@ Python `in` on the raw data). Covered by new `test_includes_*` regression tests 
 `test_dict_items.py`, `test_bytes.py`, `test_byte_array.py`, `test_str.py`,
 `test_range.py`.
 
-### 9. Same `_value` leak across the wider `Str`/`Bytes`/`Range`/numeric method surface — OPEN
+### ~~9. Same `_value` leak across the wider `Str`/`Bytes`/`Range`/numeric method surface~~ — DONE
 
-**Scope, not a decision.** Item 8 fixed the `includes` family, but the same
-root cause — unwrapping a mandatory argument with `arg._value` *before* any type
-check — recurs in many more methods. Any method that takes a str/bytes/int
-argument and does `arg._value` inline leaks the internal `_value` name when
-handed a POOP value that has no `_value` (a `List`/`Set`/`Dict`/`Tuple`).
-Confirmed live at this commit:
+**Decision: mirror Python — faithful unwrap everywhere.** Item 8's fix was
+generalised into a named idiom, `_faithful(arg)` in `poop/types/_unwrap.py`
+(a thin `getattr(arg, "_value", arg)` returning `Any`), and `_unwrap`'s
+optional-argument path was made faithful the same way. Every method that
+unwrapped a *mandatory* argument inline as `arg._value` now routes through
+`_faithful`, so a foreign argument (a `List`/`Set`/`Dict`/`Tuple` with no
+`_value`) reaches the underlying Python call raw and raises the faithful
+`TypeError` — `count() argument 1 must be str, not list` — instead of leaking
+`list does not understand #_value`.
 
-```
->>> "abc".count([1,2])    poop: MessageNotUnderstood: list does not understand #_value ...
->>> "abc".find([1,2])     poop: MessageNotUnderstood: list does not understand #_value ...
->>> "abc".index([1,2])    poop: MessageNotUnderstood: list does not understand #_value ...
->>> b"abc".count([1,2])   poop: MessageNotUnderstood: list does not understand #_value ...
->>> range(5).count([1,2]) poop: MessageNotUnderstood: list does not understand #_value ...
-```
+Swept: `count`, `find`, `index`, `rfind`, `rindex`, `replace`, `removeprefix`,
+`removesuffix`, `partition`/`rpartition`, `center`/`ljust`/`rjust`, `zfill`,
+`startswith`/`endswith`, `hex`, `fromhex`, and the `_unwrap`-mediated
+`strip`/`lstrip`/`rstrip`, `split`/`rsplit`, `start`/`end` bounds across `Str`,
+`Bytes`, `ByteArray`; the `ByteArray` container mutators too (`append`,
+`extend`, `insert`, `remove`, `pop`, `at`, `at_put`, and indexing); `count` /
+`index` / `at` on `Range`; and `Int.to_bytes`/`from_bytes`, three-argument
+`Int.pow` (modulus), `Int`/`Float.round`, `Float.fromhex`. Audited and left
+untouched: `Int`/`Float`/`Complex` arithmetic and comparison already route a
+foreign operand to `NotImplemented` (via `_num_value`/`_integral_value`/
+`_coerce`), so CPython raises the faithful `TypeError` and no `_value` leaks.
 
-Likely affected (not exhaustive): `count`, `find`, `index`, `rfind`, `rindex`,
-`startswith`, `endswith`, `replace`, `removeprefix`, `removesuffix`, `split`,
-`partition`, `strip`/`lstrip`/`rstrip`, `center`/`ljust`/`rjust` across `Str`,
-`Bytes`, `ByteArray`; `count` on `Range`; and the arithmetic/compare argument
-unwraps in `Int`/`Float`/`Complex` (which mostly reach faithful `TypeError`
-through operators, but should be audited for the same inline `arg._value`).
-
-**Fix recipe (already settled — same as item 8, so this is a mechanical sweep,
-not a design decision):** replace mandatory `arg._value` with
-`getattr(arg, "_value", arg)` (annotating the result `Any` where `ty` needs it,
-as `bytes.join` does). Python then raises the faithful `TypeError` (str/bytes) or
-answers gracefully (range), and no internal name leaks. Each touched method needs
-a wrong-type regression test. Deferred from item 8 because it is a broad,
-cross-cutting change to the most-used types and deserves its own reviewed,
-atomic-commit pass rather than a rushed tail-end edit.
-
-All output above was produced by running the interpreter at this commit.
+Covered by new `*_wrong_type_arg_is_faithful_not_value_leak` regression tests in
+`test_str.py`, `test_bytes.py`, `test_byte_array.py`, `test_int.py`,
+`test_float.py`, and `test_range_wrong_type_args_are_faithful_not_value_leaks`.
+Recorded in `INFECTIONS.md` under *No dunder attributes* (the faithful-unwrap
+idiom).
