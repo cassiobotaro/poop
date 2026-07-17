@@ -96,43 +96,20 @@ deliberate place an implicit `and` survives; the explicit spelling remains
 
 ## Free functions
 
-### 7. Nested `def` inside a method escapes the free-function ban — OPEN
+### ~~7. Nested `def` inside a method escapes the free-function ban~~ — DONE
 
-**Symptom.** `no_free_functions` reports a `FunctionDef` only when its
-`_class_depth == 0`, so a `def` nested inside a method (its direct parent is a
-`FunctionDef`, not a `ClassDef`) is accepted and called receiver-less:
-
-```
->>> def helper(x):        # module level → rejected
-...     return x
-poop: free functions are forbidden — define methods inside a class
->>> class C(Object):      # nested inside a method → accepted
-...     def run(self):
-...         def a(x):
-...             def b(y):
-...                 return y
-...             return b(x)
-...         return a(42)
->>> C().run().print()
-42
-```
-
-**Why it may be intended (weaker than #5/#6).** Lambdas — receiver-less callables
-invoked as `block()` — are POOP's sanctioned block mechanism and are freely
-called, so a nested `def` is essentially a *named, multi-statement lambda*. The
-validators still recurse into a nested `def`'s body, so `if`/`for`/subscript/etc.
-remain rejected there; the only thing gained over a lambda is a name and multiple
-statements. So this is a purity gap, not an escape from message-passing rules.
-
-**Decision needed:**
-
-- **(a) Tighten.** Report a `FunctionDef`/`AsyncFunctionDef` whose *direct* parent
-  is not a `ClassDef` (Smalltalk has blocks, not named local functions). Forces
-  helpers to be lambdas.
-- **(b) Accept.** Keep the depth check and document nested `def` as the allowed
-  multi-statement analog of a lambda.
-
-All output above was produced by running the interpreter at this commit.
+**Decision: tighten (option a).** `no_free_functions` counted class *nesting*
+(`_class_depth`), so a `def` nested inside a method sat at `_class_depth > 0`
+and was accepted as if it were a method — a receiver-less named local function,
+which POOP has no place for. The validator now registers each `ClassDef`'s
+**direct-body** `def`s as the only methods and reports every other
+`FunctionDef`/`AsyncFunctionDef` — module level and method-nested alike (a
+doubly-nested `def` reports twice). Smalltalk has blocks, not named local
+functions: the sanctioned local callable is a **lambda**, invoked as `block()`,
+and the error message now points there. No example relied on a nested `def`
+(none is indented deeply enough to be one). Recorded in `INFECTIONS.md` under
+*No free functions*; the old "passes" test flipped to assert rejection, joined
+by nested-async and doubly-nested regression tests.
 
 ---
 
