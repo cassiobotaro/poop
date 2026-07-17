@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from collections import deque
-from collections.abc import Callable, Iterable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from collections.abc import Iterable, Iterator
+from typing import Any, ClassVar
 
-from poop.types.none import none
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
-
-if TYPE_CHECKING:
-    from poop.types.none import NoneClass
 
 # Sentinel distinguishing "no default given" from an explicit default, so
 # `it.next()` still raises StopIteration while `it.next(default)` swallows it —
@@ -16,7 +12,7 @@ if TYPE_CHECKING:
 _MISSING: Any = object()
 
 
-class _IteratorBase[T](Object):
+class _IteratorBase[T](_IterableMixin, Object):
     """Base for one-shot POOP iterators.
 
     Wraps a Python iterator. `next()` raises `StopIteration` on exhaustion —
@@ -59,10 +55,6 @@ class _IteratorBase[T](Object):
             if default is not _MISSING:
                 return default
             raise
-
-    def do(self, block: Callable[[T], Any]) -> NoneClass:
-        deque(map(block, self._iter), maxlen=0)
-        return none
 
     def __str__(self) -> str:
         return f"<{self._repr_name}>"

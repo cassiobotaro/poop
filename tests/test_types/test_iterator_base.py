@@ -54,3 +54,45 @@ def test_one_shot_invariant() -> None:
     it.do(lambda x: None)
     with pytest.raises(StopIteration):
         it.next()
+
+
+# An iterator is an iterable, so — like any POOP iterable — it answers the full
+# `_IterableMixin` protocol, not just `next`/`do`. This mirrors Python, where an
+# iterator is a valid argument to `filter`/`map`/`enumerate`/`reduce`/...
+
+
+def test_map_is_understood() -> None:
+    it = _IteratorBase([Int(1), Int(2), Int(3)])
+    assert list(it.map(lambda x: Int(x._value * 10))) == [Int(10), Int(20), Int(30)]
+
+
+def test_filter_is_understood() -> None:
+    it = _IteratorBase([Int(1), Int(2), Int(3), Int(4)])
+    assert list(it.filter(lambda x: x._value % 2 == 0)) == [Int(2), Int(4)]
+
+
+def test_find_is_understood() -> None:
+    it = _IteratorBase([Int(1), Int(2), Int(3)])
+    assert it.find(lambda x: x._value == 2) == Int(2)
+
+
+def test_reduce_is_understood() -> None:
+    it = _IteratorBase([Int(1), Int(2), Int(3)])
+    assert it.reduce(Int(0), lambda a, b: Int(a._value + b._value)) == Int(6)
+
+
+def test_enumerate_is_understood() -> None:
+    from poop.types.tuple import Tuple
+
+    it = _IteratorBase([Int(5), Int(6)])
+    assert list(it.enumerate()) == [
+        Tuple(Int(0), Int(5)),
+        Tuple(Int(1), Int(6)),
+    ]
+
+
+def test_protocol_message_consumes_iterator() -> None:
+    # A consuming message drains the one-shot iterator, matching Python.
+    it = _IteratorBase([Int(1), Int(2), Int(3)])
+    it.find(lambda x: x._value == 2)
+    assert it.next() == Int(3)
