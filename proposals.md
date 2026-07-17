@@ -52,3 +52,184 @@ new `_reject_private`, the single-underscore twin of the closed dunder guard —
 so `get_attr("_value")` no longer hands back the raw primitive a wrapper holds.
 The class-side `has_attr`, which had skipped the guard entirely, now calls it.
 Recorded in `INFECTIONS.md` under *No dunder attributes*.
+
+---
+
+## Iterator protocol
+
+### ~~5. Iterators understand only `next` and `do`, not the rest of the iterable protocol~~ — DONE
+
+**Decision: match Python — full protocol (option a).** An iterator *is* an
+iterable, so it now answers the same messages as collections and views. Before,
+the lazy views (`Map`, `Filter`, `Enumerate`, `Zip`, `Range`) and the eager
+collections mixed in `_IterableMixin` while the one-shot iterators from `.iter()`
+(`_IteratorBase` subclasses) answered only `next` and `do` — so `"42".iter().map(…)`
+and `[1,2,3].iter().filter(…)` were rejected even though Python accepts an
+iterator as a `map`/`filter` argument. The tell it was a wiring gap: `_IteratorBase`
+hand-duplicated `do()` from the mixin.
+
+Fixed by making `_IteratorBase` inherit `_IterableMixin` and deleting the
+duplicated `do`. Every iterator now answers `do`, `map`, `filter`, `filter_false`,
+`find`, `reduce`, `sum`, `min`, `max`, `all`, `any`, `enumerate`, `zip`. Consuming
+messages drain the one-shot iterator (matching Python); lazy ones return a fresh
+view over the remainder. Recorded in `INFECTIONS.md` under *No `iter`*; covered by
+`tests/test_types/test_iterator_base.py`.
+
+---
+
+## Hidden boolean semantics
+
+### 6. Chained comparisons smuggle the forbidden implicit `and` — OPEN
+
+**Symptom.** POOP bans every operator that hides control flow or non-obvious
+semantics, routing users to explicit messages: `and`/`or` (`no_and_or`), `in`
+(`no_in`), `is` (`no_is`), unary `not` (`no_not`). But a **chained comparison** is
+accepted:
+
+```
+>>> (True and False).print()
+poop: and operator is forbidden — use .and_(lambda: ...) instead
+>>> (1 < 2 < 3).print()
+True
+```
+
+`no_and_or` only inspects `ast.BoolOp`. A chain like `1 < 2 < 3` is a single
+`ast.Compare` node with multiple comparators, which Python evaluates as
+`(1 < 2) and (2 < 3)` with short-circuit — i.e. exactly the implicit `and` POOP
+set out to eliminate, just without an `and` token. A single comparison
+(`1 < 2`) is fine — operators are kept, like `+` — so only the *chain* is the leak.
+No example relies on chained comparisons.
+
+**Decision needed (author's call — adds a validator, may reject existing code):**
+
+- **(a) Forbid chains.** New `no_comparison_chain` validator rejecting any
+  `ast.Compare` with `len(node.ops) > 1`, message pointing at
+  `a.less_than(b).and_(lambda: b.less_than(c))` (or the operator form
+  `(a < b).and_(lambda: b < c)`). Closes the leak, consistent with `no_and_or`.
+- **(b) Accept chains.** Treat `<`/`>`/`==` chaining as plain operator sugar that
+  POOP tolerates, and document in `INFECTIONS.md` that chained comparisons are the
+  one place implicit `and` survives, so the divergence is intentional.
+
+All output above was produced by running the interpreter at this commit.
+
+---
+
+## Free functions
+
+### 7. Nested `def` inside a method escapes the free-function ban — OPEN
+
+**Symptom.** `no_free_functions` reports a `FunctionDef` only when its
+`_class_depth == 0`, so a `def` nested inside a method (its direct parent is a
+`FunctionDef`, not a `ClassDef`) is accepted and called receiver-less:
+
+```
+>>> def helper(x):        # module level → rejected
+...     return x
+poop: free functions are forbidden — define methods inside a class
+>>> class C(Object):      # nested inside a method → accepted
+...     def run(self):
+...         def a(x):
+...             def b(y):
+...                 return y
+...             return b(x)
+...         return a(42)
+>>> C().run().print()
+42
+```
+
+**Why it may be intended (weaker than #5/#6).** Lambdas — receiver-less callables
+invoked as `block()` — are POOP's sanctioned block mechanism and are freely
+called, so a nested `def` is essentially a *named, multi-statement lambda*. The
+validators still recurse into a nested `def`'s body, so `if`/`for`/subscript/etc.
+remain rejected there; the only thing gained over a lambda is a name and multiple
+statements. So this is a purity gap, not an escape from message-passing rules.
+
+**Decision needed:**
+
+- **(a) Tighten.** Report a `FunctionDef`/`AsyncFunctionDef` whose *direct* parent
+  is not a `ClassDef` (Smalltalk has blocks, not named local functions). Forces
+  helpers to be lambdas.
+- **(b) Accept.** Keep the depth check and document nested `def` as the allowed
+  multi-statement analog of a lambda.
+
+All output above was produced by running the interpreter at this commit.
+
+---
+
+## More object leaks
+
+### ~~8. `includes` leaks an internal attribute name on a wrong-type argument~~ — DONE
+
+**Decision: mirror Python.** Several `includes` methods unwrapped their argument
+(`arg._value` / `arg._items`) *before* any type check, so a POOP argument lacking
+that attribute (a `List`/`Set`/`Dict`/`Tuple` has no `_value`; a non-`Tuple` has
+no meaningful `_items`) routed through dispatch and leaked the internal name —
+e.g. `list does not understand #_value`. Found by testing membership with a
+mismatched argument type:
+
+```
+>>> {1:2}.items().includes(1)     # int has no _items
+poop: MessageNotUnderstood: int does not understand #_items ...
+>>> range(5).includes([1,2])      # list has no _value
+poop: MessageNotUnderstood: list does not understand #_value ...
+>>> b"abc".includes([1,2])        # list has no _value
+poop: MessageNotUnderstood: list does not understand #_value ...
+>>> "abc".includes([1,2])         # list has no _value
+poop: MessageNotUnderstood: list does not understand #_value ...
+```
+
+Fixes, each restoring faithful Python semantics with no leak:
+
+- **`DictItems.includes`** — delegate to `__contains__` (already guarded with
+  `isinstance(item, Tuple)`): `return to_boolean(pair in self)`. A non-pair
+  answers false, like `1 in {1: 2}.items()`. Also removes duplicated arity logic.
+- **`Bytes`/`ByteArray`/`Str.includes`** — use the codebase's faithful-unwrap
+  idiom (as in `bytes.join`): `getattr(arg, "_value", arg)`. A `_value`-bearing
+  argument keeps its subsequence/substring semantics
+  (`b"abc".includes(b"ab")` → true); a non-`_value` argument reaches
+  `bytes`/`str`'s `__contains__` raw and raises the faithful `TypeError`
+  (`a bytes-like object is required, not 'list'` /
+  `requires string as left operand, not list`).
+- **`Range.includes`** — same `getattr` unwrap; a non-`_value` argument reaches
+  `range.__contains__` raw and answers false by equality scan, like
+  `[1,2] in range(5)`.
+
+`DictKeys.includes`/`DictValues.includes` were already correct (they delegate to
+Python `in` on the raw data). Covered by new `test_includes_*` regression tests in
+`test_dict_items.py`, `test_bytes.py`, `test_byte_array.py`, `test_str.py`,
+`test_range.py`.
+
+### 9. Same `_value` leak across the wider `Str`/`Bytes`/`Range`/numeric method surface — OPEN
+
+**Scope, not a decision.** Item 8 fixed the `includes` family, but the same
+root cause — unwrapping a mandatory argument with `arg._value` *before* any type
+check — recurs in many more methods. Any method that takes a str/bytes/int
+argument and does `arg._value` inline leaks the internal `_value` name when
+handed a POOP value that has no `_value` (a `List`/`Set`/`Dict`/`Tuple`).
+Confirmed live at this commit:
+
+```
+>>> "abc".count([1,2])    poop: MessageNotUnderstood: list does not understand #_value ...
+>>> "abc".find([1,2])     poop: MessageNotUnderstood: list does not understand #_value ...
+>>> "abc".index([1,2])    poop: MessageNotUnderstood: list does not understand #_value ...
+>>> b"abc".count([1,2])   poop: MessageNotUnderstood: list does not understand #_value ...
+>>> range(5).count([1,2]) poop: MessageNotUnderstood: list does not understand #_value ...
+```
+
+Likely affected (not exhaustive): `count`, `find`, `index`, `rfind`, `rindex`,
+`startswith`, `endswith`, `replace`, `removeprefix`, `removesuffix`, `split`,
+`partition`, `strip`/`lstrip`/`rstrip`, `center`/`ljust`/`rjust` across `Str`,
+`Bytes`, `ByteArray`; `count` on `Range`; and the arithmetic/compare argument
+unwraps in `Int`/`Float`/`Complex` (which mostly reach faithful `TypeError`
+through operators, but should be audited for the same inline `arg._value`).
+
+**Fix recipe (already settled — same as item 8, so this is a mechanical sweep,
+not a design decision):** replace mandatory `arg._value` with
+`getattr(arg, "_value", arg)` (annotating the result `Any` where `ty` needs it,
+as `bytes.join` does). Python then raises the faithful `TypeError` (str/bytes) or
+answers gracefully (range), and no internal name leaks. Each touched method needs
+a wrong-type regression test. Deferred from item 8 because it is a broad,
+cross-cutting change to the most-used types and deserves its own reviewed,
+atomic-commit pass rather than a rushed tail-end edit.
+
+All output above was produced by running the interpreter at this commit.
