@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from poop.types.boolean import false, true
@@ -5,6 +7,7 @@ from poop.types.bytes import Bytes
 from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -499,3 +502,38 @@ def test_ordering_with_boolean_operand() -> None:
     # Proposal 165: `Int(0) < True` is True (0 < 1).
     assert Int(0) < true
     assert Int(2) > true
+
+
+_BAD: Any = List(Int(1), Int(2))
+
+
+@pytest.mark.parametrize(
+    "call, exc",
+    [
+        pytest.param(
+            lambda: Int(5).to_bytes(_BAD, Str("big")), TypeError, id="to_bytes_length"
+        ),
+        pytest.param(
+            lambda: Int(5).to_bytes(Int(2), _BAD), TypeError, id="to_bytes_byteorder"
+        ),
+        pytest.param(
+            lambda: Int.from_bytes(_BAD, Str("big")), TypeError, id="from_bytes_source"
+        ),
+        pytest.param(
+            lambda: Int.from_bytes(Bytes(b"\x01"), _BAD),
+            TypeError,
+            id="from_bytes_byteorder",
+        ),
+        pytest.param(lambda: Int(5).pow(Int(2), _BAD), TypeError, id="pow_modulus"),
+        pytest.param(lambda: Int(5).round(_BAD), TypeError, id="round"),
+    ],
+)
+def test_int_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
+    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # List) must reach the underlying Python method raw and raise the faithful
+    # exception, never leak the internal `#_value` name through dispatch.
+    with pytest.raises(exc) as info:
+        call()
+    message = str(info.value)
+    assert "_value" not in message
+    assert "does not understand" not in message

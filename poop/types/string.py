@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _MISSING
 from poop.types._repeat import _repeat_count
-from poop.types._unwrap import _unwrap
+from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.object import Object
@@ -99,7 +99,7 @@ class Str(_ValueEqMixin, Object):
         # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
         # str.__contains__ raw and raises the faithful TypeError ("requires
         # string as left operand"), instead of leaking `_value` through dispatch.
-        operand: Any = getattr(char, "_value", char)
+        operand: Any = _faithful(char)
         return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
@@ -142,7 +142,13 @@ class Str(_ValueEqMixin, Object):
         new: Str,
         count: Int | NoneClass | None = None,
     ) -> Str:
-        return Str(self._value.replace(old._value, new._value, _unwrap(count, -1)))
+        return Str(
+            self._value.replace(
+                _faithful(old),
+                _faithful(new),
+                _unwrap(count, -1),
+            )
+        )
 
     def split(
         self,
@@ -163,7 +169,7 @@ class Str(_ValueEqMixin, Object):
         # str.join validate. Str parts join cleanly; anything else (Int,
         # Bytes, ...) reaches str.join unwrapped and raises the faithful
         # TypeError instead of being silently stringified via str(p).
-        pieces: list[Any] = [getattr(p, "_value", p) for p in parts]
+        pieces: list[Any] = [_faithful(p) for p in parts]
         return Str(self._value.join(pieces))
 
     def format(self, *args: Object, **kwargs: Object) -> Str:
@@ -190,7 +196,7 @@ class Str(_ValueEqMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.find(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.find(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def index(
@@ -202,7 +208,7 @@ class Str(_ValueEqMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.index(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.index(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def count(
@@ -214,7 +220,7 @@ class Str(_ValueEqMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.count(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.count(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def startswith(
@@ -231,7 +237,7 @@ class Str(_ValueEqMixin, Object):
         needle: _str | tuple[Any, ...] = (
             prefix._value
             if isinstance(prefix, Str)
-            else tuple(getattr(p, "_value", p) for p in prefix._items)
+            else tuple(_faithful(p) for p in prefix._items)
         )
         return to_boolean(
             self._value.startswith(needle, _unwrap(start, None), _unwrap(end, None))
@@ -246,7 +252,7 @@ class Str(_ValueEqMixin, Object):
         needle: _str | tuple[Any, ...] = (
             suffix._value
             if isinstance(suffix, Str)
-            else tuple(getattr(p, "_value", p) for p in suffix._items)
+            else tuple(_faithful(p) for p in suffix._items)
         )
         return to_boolean(
             self._value.endswith(needle, _unwrap(start, None), _unwrap(end, None))
@@ -276,8 +282,8 @@ class Str(_ValueEqMixin, Object):
     def center(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Str(self._value.center(width._value))
-        return Str(self._value.center(width._value, fill))
+            return Str(self._value.center(_faithful(width)))
+        return Str(self._value.center(_faithful(width), fill))
 
     def encode(
         self,
@@ -321,33 +327,33 @@ class Str(_ValueEqMixin, Object):
     def ljust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Str(self._value.ljust(width._value))
-        return Str(self._value.ljust(width._value, fill))
+            return Str(self._value.ljust(_faithful(width)))
+        return Str(self._value.ljust(_faithful(width), fill))
 
     def rjust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Str(self._value.rjust(width._value))
-        return Str(self._value.rjust(width._value, fill))
+            return Str(self._value.rjust(_faithful(width)))
+        return Str(self._value.rjust(_faithful(width), fill))
 
     def zfill(self, width: Int) -> Str:
-        return Str(self._value.zfill(width._value))
+        return Str(self._value.zfill(_faithful(width)))
 
     def partition(self, sep: Str) -> Tuple:
         from poop.types.tuple import Tuple
 
-        return Tuple(*[Str(s) for s in self._value.partition(sep._value)])
+        return Tuple(*[Str(s) for s in self._value.partition(_faithful(sep))])
 
     def rpartition(self, sep: Str) -> Tuple:
         from poop.types.tuple import Tuple
 
-        return Tuple(*[Str(s) for s in self._value.rpartition(sep._value)])
+        return Tuple(*[Str(s) for s in self._value.rpartition(_faithful(sep))])
 
     def removeprefix(self, prefix: Str) -> Str:
-        return Str(self._value.removeprefix(prefix._value))
+        return Str(self._value.removeprefix(_faithful(prefix)))
 
     def removesuffix(self, suffix: Str) -> Str:
-        return Str(self._value.removesuffix(suffix._value))
+        return Str(self._value.removesuffix(_faithful(suffix)))
 
     def rfind(
         self,
@@ -358,7 +364,7 @@ class Str(_ValueEqMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.rfind(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.rfind(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def rindex(
@@ -370,7 +376,7 @@ class Str(_ValueEqMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.rindex(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.rindex(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def rsplit(

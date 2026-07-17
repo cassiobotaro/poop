@@ -1,9 +1,12 @@
+from typing import Any
+
 import pytest
 
 from poop.types.boolean import false, true
 from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -343,3 +346,24 @@ def test_pow_method_raises_typeerror_for_foreign_operand() -> None:
     # pow() must not leak the raw NotImplemented singleton to user code.
     with pytest.raises(TypeError):
         Float(2.0).pow("x")
+
+
+_BAD: Any = List(Int(1), Int(2))
+
+
+@pytest.mark.parametrize(
+    "call, exc",
+    [
+        pytest.param(lambda: Float.fromhex(_BAD), TypeError, id="fromhex"),
+        pytest.param(lambda: Float(5.0).round(_BAD), TypeError, id="round"),
+    ],
+)
+def test_float_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
+    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # List) must reach the underlying Python method raw and raise the faithful
+    # exception, never leak the internal `#_value` name through dispatch.
+    with pytest.raises(exc) as info:
+        call()
+    message = str(info.value)
+    assert "_value" not in message
+    assert "does not understand" not in message

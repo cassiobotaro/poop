@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._unwrap import _faithful
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
 from poop.types.list import List
@@ -72,13 +73,13 @@ class Range(_IterableMixin, Object):
         # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
         # range.__contains__ raw, which answers False by equality scan (as in
         # Python), instead of leaking the internal `_value` name through dispatch.
-        return to_boolean(getattr(item, "_value", item) in self._range())
+        return to_boolean(_faithful(item) in self._range())
 
     def count(self, value: Int) -> Int:
-        return Int(self._range().count(value._value))
+        return Int(self._range().count(_faithful(value)))
 
     def index(self, value: Int) -> Int:
-        return Int(self._range().index(value._value))
+        return Int(self._range().index(_faithful(value)))
 
     @property
     def start(self) -> Int:
@@ -93,7 +94,7 @@ class Range(_IterableMixin, Object):
         return self._step
 
     def at(self, index: Int) -> Int:
-        return Int(self._range()[index._value])
+        return Int(self._range()[_faithful(index)])
 
     def reversed(self) -> Range:
         # Reverse the materialized forward sequence and re-encode it as a

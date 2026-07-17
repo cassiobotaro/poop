@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from poop.parser import parse
@@ -694,3 +696,127 @@ def test_eq_bytes_and_bytearray_equal_by_value() -> None:
 def test_eq_bytes_and_bytearray_different_values() -> None:
     assert (ByteArray(bytearray(b"ab")) == Bytes(b"xy")) is false
     assert (ByteArray(bytearray(b"ab")) != Bytes(b"xy")) is true
+
+
+_BAD: Any = List(Int(1), Int(2))
+
+
+@pytest.mark.parametrize(
+    "call, exc",
+    [
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).count(_BAD), TypeError, id="count"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).find(_BAD), TypeError, id="find"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).index(_BAD), TypeError, id="index"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).rfind(_BAD), TypeError, id="rfind"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).rindex(_BAD), TypeError, id="rindex"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).replace(
+                _BAD, ByteArray(bytearray(b"x"))
+            ),
+            TypeError,
+            id="replace_old",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).replace(
+                ByteArray(bytearray(b"a")), _BAD
+            ),
+            TypeError,
+            id="replace_new",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).center(_BAD),
+            TypeError,
+            id="center_width",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).ljust(_BAD), TypeError, id="ljust"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).rjust(_BAD), TypeError, id="rjust"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).zfill(_BAD), TypeError, id="zfill"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).partition(_BAD),
+            TypeError,
+            id="partition",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).rpartition(_BAD),
+            TypeError,
+            id="rpartition",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).removeprefix(_BAD),
+            TypeError,
+            id="removeprefix",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).removesuffix(_BAD),
+            TypeError,
+            id="removesuffix",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).startswith(_BAD),
+            TypeError,
+            id="startswith",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).endswith(_BAD),
+            TypeError,
+            id="endswith",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).strip(_BAD), TypeError, id="strip"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).split(_BAD), TypeError, id="split"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).hex(_BAD), TypeError, id="hex_sep"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).append(_BAD), TypeError, id="append"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).extend(_BAD), TypeError, id="extend"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).insert(_BAD, Int(5)),
+            TypeError,
+            id="insert",
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).remove(_BAD), TypeError, id="remove"
+        ),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).pop(_BAD), TypeError, id="pop"
+        ),
+        pytest.param(lambda: ByteArray(bytearray(b"abc")).at(_BAD), TypeError, id="at"),
+        pytest.param(
+            lambda: ByteArray(bytearray(b"abc")).at_put(_BAD, Int(5)),
+            TypeError,
+            id="at_put",
+        ),
+    ],
+)
+def test_byte_array_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
+    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # List) must reach the underlying Python method raw and raise the faithful
+    # exception, never leak the internal `#_value` name through dispatch.
+    with pytest.raises(exc) as info:
+        call()
+    message = str(info.value)
+    assert "_value" not in message
+    assert "does not understand" not in message

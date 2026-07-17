@@ -6,7 +6,7 @@ from poop.types._numeric_compare import (
     _num_value,
     _NumericCompareMixin,
 )
-from poop.types._unwrap import _unwrap
+from poop.types._unwrap import _faithful, _unwrap
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
 from poop.types.object import Object
@@ -65,7 +65,7 @@ class Float(_NumericCompareMixin, Object):
 
     @classmethod
     def fromhex(cls, s: Str) -> Float:
-        return cls(_float.fromhex(s._value))
+        return cls(_float.fromhex(_faithful(s)))
 
     @property
     def real(self) -> Float:

@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from poop.types.boolean import false, true
@@ -712,3 +714,56 @@ def test_ordering_with_foreign_operand_raises_typeerror() -> None:
         _ = Str("a") < Int(1)
     with pytest.raises(TypeError):
         _ = Str("a") >= List(Int(1))
+
+
+_BAD: Any = List(Int(1), Int(2))
+
+
+@pytest.mark.parametrize(
+    "call, exc",
+    [
+        pytest.param(lambda: Str("abc").count(_BAD), TypeError, id="count"),
+        pytest.param(lambda: Str("abc").find(_BAD), TypeError, id="find"),
+        pytest.param(lambda: Str("abc").index(_BAD), TypeError, id="index"),
+        pytest.param(lambda: Str("abc").rfind(_BAD), TypeError, id="rfind"),
+        pytest.param(lambda: Str("abc").rindex(_BAD), TypeError, id="rindex"),
+        pytest.param(
+            lambda: Str("abc").replace(_BAD, Str("x")), TypeError, id="replace_old"
+        ),
+        pytest.param(
+            lambda: Str("abc").replace(Str("a"), _BAD), TypeError, id="replace_new"
+        ),
+        pytest.param(lambda: Str("abc").center(_BAD), TypeError, id="center_width"),
+        pytest.param(
+            lambda: Str("abc").center(Int(5), _BAD), TypeError, id="center_fill"
+        ),
+        pytest.param(lambda: Str("abc").ljust(_BAD), TypeError, id="ljust"),
+        pytest.param(lambda: Str("abc").rjust(_BAD), TypeError, id="rjust"),
+        pytest.param(lambda: Str("abc").zfill(_BAD), TypeError, id="zfill"),
+        pytest.param(lambda: Str("abc").partition(_BAD), TypeError, id="partition"),
+        pytest.param(lambda: Str("abc").rpartition(_BAD), TypeError, id="rpartition"),
+        pytest.param(
+            lambda: Str("abc").removeprefix(_BAD), TypeError, id="removeprefix"
+        ),
+        pytest.param(
+            lambda: Str("abc").removesuffix(_BAD), TypeError, id="removesuffix"
+        ),
+        pytest.param(lambda: Str("abc").strip(_BAD), TypeError, id="strip"),
+        pytest.param(lambda: Str("abc").lstrip(_BAD), TypeError, id="lstrip"),
+        pytest.param(lambda: Str("abc").rstrip(_BAD), TypeError, id="rstrip"),
+        pytest.param(lambda: Str("abc").split(_BAD), TypeError, id="split"),
+        pytest.param(lambda: Str("abc").rsplit(_BAD), TypeError, id="rsplit"),
+        pytest.param(
+            lambda: Str("abc").find(Str("a"), _BAD), TypeError, id="find_start"
+        ),
+    ],
+)
+def test_str_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
+    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # List) must reach the underlying Python method raw and raise the faithful
+    # exception, never leak the internal `#_value` name through dispatch.
+    with pytest.raises(exc) as info:
+        call()
+    message = str(info.value)
+    assert "_value" not in message
+    assert "does not understand" not in message

@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from poop.parser import parse
@@ -556,3 +558,62 @@ def test_endswith_with_start_and_end() -> None:
 
 def test_replace_with_count() -> None:
     assert Bytes(b"aaa").replace(Bytes(b"a"), Bytes(b"b"), Int(1)) == Bytes(b"baa")
+
+
+_BAD: Any = List(Int(1), Int(2))
+
+
+@pytest.mark.parametrize(
+    "call, exc",
+    [
+        pytest.param(lambda: Bytes(b"abc").count(_BAD), TypeError, id="count"),
+        pytest.param(lambda: Bytes(b"abc").find(_BAD), TypeError, id="find"),
+        pytest.param(lambda: Bytes(b"abc").index(_BAD), TypeError, id="index"),
+        pytest.param(lambda: Bytes(b"abc").rfind(_BAD), TypeError, id="rfind"),
+        pytest.param(lambda: Bytes(b"abc").rindex(_BAD), TypeError, id="rindex"),
+        pytest.param(
+            lambda: Bytes(b"abc").replace(_BAD, Bytes(b"x")),
+            TypeError,
+            id="replace_old",
+        ),
+        pytest.param(
+            lambda: Bytes(b"abc").replace(Bytes(b"a"), _BAD),
+            TypeError,
+            id="replace_new",
+        ),
+        pytest.param(lambda: Bytes(b"abc").center(_BAD), TypeError, id="center_width"),
+        pytest.param(
+            lambda: Bytes(b"abc").center(Int(5), _BAD), TypeError, id="center_fill"
+        ),
+        pytest.param(lambda: Bytes(b"abc").ljust(_BAD), TypeError, id="ljust"),
+        pytest.param(lambda: Bytes(b"abc").rjust(_BAD), TypeError, id="rjust"),
+        pytest.param(lambda: Bytes(b"abc").zfill(_BAD), TypeError, id="zfill"),
+        pytest.param(lambda: Bytes(b"abc").partition(_BAD), TypeError, id="partition"),
+        pytest.param(
+            lambda: Bytes(b"abc").rpartition(_BAD), TypeError, id="rpartition"
+        ),
+        pytest.param(
+            lambda: Bytes(b"abc").removeprefix(_BAD), TypeError, id="removeprefix"
+        ),
+        pytest.param(
+            lambda: Bytes(b"abc").removesuffix(_BAD), TypeError, id="removesuffix"
+        ),
+        pytest.param(
+            lambda: Bytes(b"abc").startswith(_BAD), TypeError, id="startswith"
+        ),
+        pytest.param(lambda: Bytes(b"abc").endswith(_BAD), TypeError, id="endswith"),
+        pytest.param(lambda: Bytes(b"abc").strip(_BAD), TypeError, id="strip"),
+        pytest.param(lambda: Bytes(b"abc").split(_BAD), TypeError, id="split"),
+        pytest.param(lambda: Bytes(b"abc").hex(_BAD), ValueError, id="hex_sep"),
+        pytest.param(lambda: Bytes.fromhex(_BAD), TypeError, id="fromhex"),
+    ],
+)
+def test_bytes_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
+    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # List) must reach the underlying Python method raw and raise the faithful
+    # exception, never leak the internal `#_value` name through dispatch.
+    with pytest.raises(exc) as info:
+        call()
+    message = str(info.value)
+    assert "_value" not in message
+    assert "does not understand" not in message

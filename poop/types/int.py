@@ -5,7 +5,7 @@ from poop.types._numeric_compare import (
     _num_value,
     _NumericCompareMixin,
 )
-from poop.types._unwrap import _unwrap
+from poop.types._unwrap import _faithful, _unwrap
 from poop.types.boolean import true
 from poop.types.complex import Complex
 from poop.types.object import Object
@@ -105,14 +105,18 @@ class Int(_NumericCompareMixin, Object):
 
         return Bytes(
             self._value.to_bytes(
-                length._value, cast(Literal["little", "big"], byteorder._value)
+                _faithful(length),
+                cast(Literal["little", "big"], _faithful(byteorder)),
             )
         )
 
     @classmethod
     def from_bytes(cls, b: Bytes, byteorder: Str) -> Int:
         return cls(
-            _int.from_bytes(b._value, cast(Literal["little", "big"], byteorder._value))
+            _int.from_bytes(
+                _faithful(b),
+                cast(Literal["little", "big"], _faithful(byteorder)),
+            )
         )
 
     def __abs__(self) -> Int:
@@ -194,7 +198,7 @@ class Int(_NumericCompareMixin, Object):
             raise TypeError(
                 "pow() 3rd argument not allowed unless all arguments are integers"
             )
-        return Int(pow(self._value, other._value, modulus._value))
+        return Int(pow(self._value, other._value, _faithful(modulus)))
 
     def pow(
         self, other: object, modulus: Int | NoneClass | None = None

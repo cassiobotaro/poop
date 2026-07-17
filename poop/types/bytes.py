@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
-from poop.types._unwrap import _is_absent, _unwrap
+from poop.types._unwrap import _faithful, _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.bytes_iterator import BytesIterator
@@ -61,7 +61,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         # reaches bytes.__contains__ raw and raises the faithful TypeError,
         # rather than leaking the internal `_value` name through dispatch. A
         # Bytes/ByteArray argument keeps its subsequence-membership semantics.
-        operand: Any = getattr(byte, "_value", byte)
+        operand: Any = _faithful(byte)
         return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
@@ -96,12 +96,12 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
         if _is_absent(sep):
             return Str(self._value.hex())
-        sep_value = sep._value
+        sep_value = _faithful(sep)
         return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
 
     @classmethod
     def fromhex(cls, s: Str) -> Bytes:
-        return cls(bytes.fromhex(s._value))
+        return cls(bytes.fromhex(_faithful(s)))
 
     def __iter__(self) -> Iterator[Int]:
         from poop.types.int import Int
@@ -149,8 +149,8 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def center(self, width: Int, fillchar: Bytes | NoneClass | None = None) -> Bytes:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Bytes(self._value.center(width._value))
-        return Bytes(self._value.center(width._value, fill))
+            return Bytes(self._value.center(_faithful(width)))
+        return Bytes(self._value.center(_faithful(width), fill))
 
     def count(
         self,
@@ -161,7 +161,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.count(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.count(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def endswith(
@@ -173,7 +173,9 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return (
             true
             if self._value.endswith(
-                suffix._value, _unwrap(start, None), _unwrap(end, None)
+                _faithful(suffix),
+                _unwrap(start, None),
+                _unwrap(end, None),
             )
             else false
         )
@@ -193,7 +195,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.find(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.find(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def index(
@@ -205,7 +207,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.index(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.index(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def isalnum(self) -> Boolean:
@@ -238,14 +240,14 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
         # bytes.join unwrapped and raises the faithful TypeError instead of
         # being silently dropped.
-        pieces: list[Any] = [getattr(p, "_value", p) for p in parts]
+        pieces: list[Any] = [_faithful(p) for p in parts]
         return Bytes(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: Bytes | NoneClass | None = None) -> Bytes:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Bytes(self._value.ljust(width._value))
-        return Bytes(self._value.ljust(width._value, fill))
+            return Bytes(self._value.ljust(_faithful(width)))
+        return Bytes(self._value.ljust(_faithful(width), fill))
 
     def lower(self) -> Bytes:
         return Bytes(self._value.lower())
@@ -256,13 +258,13 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def partition(self, sep: Bytes) -> Tuple:
         from poop.types.tuple import Tuple
 
-        return Tuple(*[Bytes(p) for p in self._value.partition(sep._value)])
+        return Tuple(*[Bytes(p) for p in self._value.partition(_faithful(sep))])
 
     def removeprefix(self, prefix: Bytes) -> Bytes:
-        return Bytes(self._value.removeprefix(prefix._value))
+        return Bytes(self._value.removeprefix(_faithful(prefix)))
 
     def removesuffix(self, suffix: Bytes) -> Bytes:
-        return Bytes(self._value.removesuffix(suffix._value))
+        return Bytes(self._value.removesuffix(_faithful(suffix)))
 
     def replace(
         self,
@@ -270,7 +272,13 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         new: Bytes,
         count: Int | NoneClass | None = None,
     ) -> Bytes:
-        return Bytes(self._value.replace(old._value, new._value, _unwrap(count, -1)))
+        return Bytes(
+            self._value.replace(
+                _faithful(old),
+                _faithful(new),
+                _unwrap(count, -1),
+            )
+        )
 
     def rfind(
         self,
@@ -281,7 +289,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.rfind(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.rfind(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def rindex(
@@ -293,19 +301,19 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.rindex(sub._value, _unwrap(start, None), _unwrap(end, None))
+            self._value.rindex(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
         )
 
     def rjust(self, width: Int, fillchar: Bytes | NoneClass | None = None) -> Bytes:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Bytes(self._value.rjust(width._value))
-        return Bytes(self._value.rjust(width._value, fill))
+            return Bytes(self._value.rjust(_faithful(width)))
+        return Bytes(self._value.rjust(_faithful(width), fill))
 
     def rpartition(self, sep: Bytes) -> Tuple:
         from poop.types.tuple import Tuple
 
-        return Tuple(*[Bytes(p) for p in self._value.rpartition(sep._value)])
+        return Tuple(*[Bytes(p) for p in self._value.rpartition(_faithful(sep))])
 
     def rsplit(
         self,
@@ -355,7 +363,9 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return (
             true
             if self._value.startswith(
-                prefix._value, _unwrap(start, None), _unwrap(end, None)
+                _faithful(prefix),
+                _unwrap(start, None),
+                _unwrap(end, None),
             )
             else false
         )
@@ -373,7 +383,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Bytes(self._value.upper())
 
     def zfill(self, width: Int) -> Bytes:
-        return Bytes(self._value.zfill(width._value))
+        return Bytes(self._value.zfill(_faithful(width)))
 
     def __str__(self) -> str:
         return repr(self._value)

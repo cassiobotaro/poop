@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from poop.types.boolean import Boolean, false, true
@@ -292,3 +294,19 @@ def test_sum_single_element() -> None:
 def test_step_zero_raises_at_construction() -> None:
     with pytest.raises(ValueError, match="step must not be zero"):
         Range(Int(0), Int(5), Int(0))
+
+
+def test_range_wrong_type_args_are_faithful_not_value_leaks() -> None:
+    # proposals.md item 9: a non-`_value` argument (a List) must reach the
+    # underlying range method raw. `count` answers 0 by equality scan (as in
+    # Python), `index` raises ValueError, `at` raises TypeError — none leak the
+    # internal `#_value` name.
+    bad: Any = List(Int(1), Int(2))
+    assert Range(Int(0), Int(5)).count(bad)._value == 0
+    with pytest.raises(ValueError) as vexc:
+        Range(Int(0), Int(5)).index(bad)
+    assert "_value" not in str(vexc.value)
+    with pytest.raises(TypeError) as texc:
+        Range(Int(0), Int(5)).at(bad)
+    assert "_value" not in str(texc.value)
+    assert "does not understand" not in str(texc.value)
