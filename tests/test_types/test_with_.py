@@ -137,3 +137,21 @@ def test_with_class_does_not_leak_module_path() -> None:
     # `With` keeps its user-facing name but must not expose the internal path.
     assert With.__module__ == "builtins"
     assert repr(With) == "<class 'With'>"
+
+
+def test_with_cannot_run_twice() -> None:
+    import pytest
+
+    from poop.types.with_ import With
+
+    class _Ctx:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    w = With(lambda: _Ctx())
+    w.do(lambda _: None)
+    with pytest.raises(RuntimeError, match="already run"):
+        w.do(lambda _: None)

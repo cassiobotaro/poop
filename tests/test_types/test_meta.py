@@ -256,3 +256,24 @@ def test_the_isinstance_ban_now_names_a_message_that_exists() -> None:
             "class Foo:\n    def m(self):\n        isinstance(Foo, Foo)\n"
         )
     assert _Dog.is_instance(Object) is false
+
+
+def test_class_side_accessed_on_metaclass_returns_the_descriptor() -> None:
+    # Reached via the metaclass itself (instance is None): the descriptor
+    # answers itself rather than a bound partial.
+    from poop.types.meta import PoopMeta, class_side
+
+    assert isinstance(PoopMeta.__dict__["name"], class_side)
+    assert PoopMeta.name is PoopMeta.__dict__["name"]
+
+
+def test_class_side_message_cannot_be_reassigned() -> None:
+    # A class-side name is a data descriptor; assigning over it on a class is
+    # rejected rather than silently shadowing the message.
+    from poop.types.object import Object
+
+    class _Thing(Object):
+        __slots__ = ()
+
+    with pytest.raises(AttributeError):
+        _Thing.name = 5

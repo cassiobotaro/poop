@@ -145,3 +145,12 @@ def test_raise_still_works_after_the_name_is_rewritten() -> None:
         "        ).run()\n"
         "P().run()\n"
     )
+
+
+def test_poop_class_of_falls_back_to_exception_for_unmirrored_base() -> None:
+    # A BaseException subtree with no mirror (KeyboardInterrupt is not under
+    # Exception) answers with the root Exception mirror rather than leaking the
+    # raw native class back to user code.
+    from poop.types.exceptions import MIRRORS, poop_class_of
+
+    assert poop_class_of(KeyboardInterrupt()) is MIRRORS["Exception"]

@@ -416,3 +416,41 @@ def test_inplace_or_with_foreign_operand_raises_typeerror() -> None:
     with pytest.raises(TypeError):
         d = _dict_with([(1, 10)])
         d |= Int(2)
+
+
+def test_dict_getitem_read_by_mapping_merge() -> None:
+    # `{**d}` reads d via the mapping protocol (keys() + __getitem__), the only
+    # place subscript is reachable (user subscript stays forbidden).
+    from poop.types.dict import Dict
+    from poop.types.int import Int
+    from poop.types.string import Str
+
+    d = Dict()
+    d._data[Str("a")] = Int(1)
+    assert d.__getitem__(Str("a")) == Int(1)
+    merged = {**d}
+    assert merged[Str("a")] == Int(1)
+
+
+def test_dict_max_with_key_and_default() -> None:
+    from poop.types.dict import Dict
+    from poop.types.int import Int
+
+    d = Dict()
+    d._data[Int(1)] = Int(10)
+    d._data[Int(2)] = Int(20)
+    assert d.max(key=lambda k: -k._value) == Int(1)
+    assert Dict().max(default=Int(99)) == Int(99)
+
+
+def test_dict_zip_pairs_keys_with_others() -> None:
+    from poop.types.dict import Dict
+    from poop.types.int import Int
+    from poop.types.list import List
+    from poop.types.zip import Zip
+
+    d = Dict()
+    d._data[Int(1)] = Int(10)
+    d._data[Int(2)] = Int(20)
+    result = d.zip(List(Int(100), Int(200)))
+    assert isinstance(result, Zip)

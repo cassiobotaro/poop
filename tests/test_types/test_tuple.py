@@ -355,3 +355,13 @@ def test_ordering_with_foreign_operand_raises_typeerror() -> None:
         _ = Tuple(Int(1)) < Int(2)
     with pytest.raises(TypeError):
         _ = Tuple(Int(1)) >= List(Int(2))
+
+
+def test_tuple_gt_against_foreign_raises() -> None:
+    import pytest
+
+    from poop.types.int import Int
+    from poop.types.tuple import Tuple
+
+    with pytest.raises(TypeError):
+        _ = Tuple(Int(1)) > Int(1)

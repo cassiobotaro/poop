@@ -617,3 +617,18 @@ def test_bytes_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
     message = str(info.value)
     assert "_value" not in message
     assert "does not understand" not in message
+
+
+def test_bytes_ordering_against_foreign_raises() -> None:
+    import pytest
+
+    from poop.types.bytes import Bytes
+    from poop.types.int import Int
+
+    for op in (
+        lambda: Bytes(b"a") <= Int(1),
+        lambda: Bytes(b"a") > Int(1),
+        lambda: Bytes(b"a") >= Int(1),
+    ):
+        with pytest.raises(TypeError):
+            op()

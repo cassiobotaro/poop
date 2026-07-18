@@ -230,3 +230,13 @@ def test_poop_zip_accepts_boolean_strict() -> None:
 def test_poop_zip_rejects_non_boolean_strict() -> None:
     with pytest.raises(TypeError, match="strict must be Boolean, got Int"):
         _poop_zip(List(Int(1)), List(Int(2)), strict=Int(1))
+
+
+def test_bare_zip_name_is_rewritten() -> None:
+    import ast
+
+    tree = ZipTransformer().transform(ast.parse("f = zip"))
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.Name)
+    assert assign.value.id == "_poop_zip_cls"

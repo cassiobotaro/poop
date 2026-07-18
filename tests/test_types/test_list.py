@@ -509,3 +509,13 @@ def test_inplace_mul_by_non_int_raises_typeerror() -> None:
     with pytest.raises(TypeError):
         xs = List(Int(1))
         xs *= Str("2")
+
+
+def test_list_gt_against_foreign_raises() -> None:
+    import pytest
+
+    from poop.types.int import Int
+    from poop.types.list import List
+
+    with pytest.raises(TypeError):
+        _ = List(Int(1)) > Int(1)

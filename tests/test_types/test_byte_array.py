@@ -820,3 +820,30 @@ def test_byte_array_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None
     message = str(info.value)
     assert "_value" not in message
     assert "does not understand" not in message
+
+
+def test_bytearray_ordering_between_bytearrays() -> None:
+    from poop.types.boolean import false, true
+    from poop.types.byte_array import ByteArray
+
+    assert (ByteArray(b"abc") < ByteArray(b"abd")) is true
+    assert (ByteArray(b"abc") <= ByteArray(b"abc")) is true
+    assert (ByteArray(b"abd") > ByteArray(b"abc")) is true
+    assert (ByteArray(b"abc") >= ByteArray(b"abc")) is true
+    assert (ByteArray(b"abd") < ByteArray(b"abc")) is false
+
+
+def test_bytearray_ordering_against_foreign_raises() -> None:
+    import pytest
+
+    from poop.types.byte_array import ByteArray
+    from poop.types.int import Int
+
+    for op in (
+        lambda: ByteArray(b"a") < Int(1),
+        lambda: ByteArray(b"a") <= Int(1),
+        lambda: ByteArray(b"a") > Int(1),
+        lambda: ByteArray(b"a") >= Int(1),
+    ):
+        with pytest.raises(TypeError):
+            op()

@@ -537,3 +537,37 @@ def test_int_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
     message = str(info.value)
     assert "_value" not in message
     assert "does not understand" not in message
+
+
+def test_reflected_shift_folds_boolean_on_the_left() -> None:
+    # Boolean defines no __lshift__/__rshift__, so `<bool> << Int` resolves to
+    # Int's reflected shift, folding the bool to 1/0 (bool is an int subclass).
+    assert true << Int(5) == Int(32)
+    assert true >> Int(1) == Int(0)
+    assert false << Int(4) == Int(0)
+
+
+def test_reflected_shift_notimplemented_for_foreign_operand() -> None:
+    assert Int(5).__rlshift__("x") is NotImplemented
+    assert Int(5).__rrshift__(Float(2.0)) is NotImplemented
+
+
+def test_reflected_bitwise_folds_integral_on_the_left() -> None:
+    # CPython's int defines __rand__/__ror__/__rxor__ for symmetry; POOP mirrors
+    # them so a reflected `<integral> OP Int` folds the operand to its raw int.
+    assert Int(0b0110).__rand__(true) == Int(0b0000)
+    assert Int(0b0110).__ror__(true) == Int(0b0111)
+    assert Int(0b0110).__rxor__(true) == Int(0b0111)
+
+
+def test_reflected_bitwise_notimplemented_for_foreign_operand() -> None:
+    assert Int(5).__rand__("x") is NotImplemented
+    assert Int(5).__ror__(Float(2.0)) is NotImplemented
+    assert Int(5).__rxor__("x") is NotImplemented
+
+
+def test_pow_negative_exponent_returns_float() -> None:
+    # 2 ** -1 == 0.5: an int base with a negative exponent yields a Float.
+    result = Int(2) ** Int(-1)
+    assert isinstance(result, Float)
+    assert result._value == pytest.approx(0.5)

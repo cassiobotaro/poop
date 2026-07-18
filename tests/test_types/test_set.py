@@ -456,3 +456,28 @@ def test_comparison_mixes_with_frozenset() -> None:
 def test_comparison_with_non_set_raises() -> None:
     with pytest.raises(TypeError):
         Set(Int(1)) < Int(2)
+
+
+def test_set_inplace_ops_against_foreign_are_notimplemented() -> None:
+    # `&=`, `-=`, `^=` against a non-set operand answer NotImplemented so
+    # CPython falls back and raises its faithful TypeError.
+    from poop.types.int import Int
+    from poop.types.set import Set
+
+    for op in ("__iand__", "__isub__", "__ixor__"):
+        assert getattr(Set(Int(1)), op)(Int(3)) is NotImplemented
+
+
+def test_set_subset_superset_against_foreign_raise() -> None:
+    import pytest
+
+    from poop.types.int import Int
+    from poop.types.set import Set
+
+    for op in (
+        lambda: Set(Int(1)) <= Int(3),
+        lambda: Set(Int(1)) >= Int(3),
+        lambda: Set(Int(1)) > Int(3),
+    ):
+        with pytest.raises(TypeError):
+            op()

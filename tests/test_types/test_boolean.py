@@ -346,3 +346,42 @@ def test_comparison_with_foreign_type() -> None:
     assert true != Str("x")
     with pytest.raises(TypeError):
         _ = true < Str("x")
+
+
+def test_floordiv_with_int() -> None:
+    from poop.types.int import Int
+
+    assert true // Int(2) == Int(0)
+    assert true // Int(1) == Int(1)
+
+
+def test_forward_mod_with_int() -> None:
+    from poop.types.int import Int
+
+    assert true % Int(2) == Int(1)
+    assert false % Int(3) == Int(0)
+
+
+def test_reflected_ops_fold_to_one_and_redispatch() -> None:
+    # A left operand that delegates to Boolean's reflected op finds the bool
+    # folded to 1 and re-dispatched through Int (bool is an int subclass).
+    from poop.types.float import Float
+    from poop.types.int import Int
+
+    assert true.__rtruediv__(Int(4)) == Float(4.0)
+    assert true.__rfloordiv__(Int(7)) == Int(7)
+    assert true.__rand__(Int(0b0110)) == Int(0)
+    assert true.__ror__(Int(0b0110)) == Int(0b0111)
+    assert true.__rxor__(Int(0b0110)) == Int(0b0111)
+
+
+def test_reflected_op_with_operand_lacking_the_method_is_notimplemented() -> None:
+    # `none` answers no arithmetic dunder, so Boolean's reflected fallback
+    # yields NotImplemented and CPython raises its faithful TypeError.
+    import pytest
+
+    from poop.types.none import none
+
+    assert true.__radd__(none) is NotImplemented
+    with pytest.raises(TypeError):
+        _ = none + true

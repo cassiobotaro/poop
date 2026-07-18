@@ -204,3 +204,13 @@ def test_try_class_does_not_leak_module_path() -> None:
     # `Try` keeps its user-facing name but must not expose the internal path.
     assert Try.__module__ == "builtins"
     assert repr(Try) == "<class 'Try'>"
+
+
+def test_try_with_null_block_answers_none_and_runs_finally() -> None:
+    from poop.types.none import none
+    from poop.types.try_ import Try
+
+    ran: list[str] = []
+    result = Try(None).finally_(lambda: ran.append("cleanup"))  # ty: ignore[invalid-argument-type]
+    assert result is none
+    assert ran == ["cleanup"]

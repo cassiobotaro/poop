@@ -215,3 +215,13 @@ def test_do_consumes_one_shot() -> None:
     e.do(lambda t: seen_b.append(t))
     assert seen_a == [Tuple(Int(0), Int(1)), Tuple(Int(1), Int(2))]
     assert seen_b == []
+
+
+def test_bare_enumerate_name_is_rewritten() -> None:
+    import ast
+
+    tree = EnumerateTransformer().transform(ast.parse("f = enumerate"))
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.Name)
+    assert assign.value.id == "_poop_enumerate_cls"

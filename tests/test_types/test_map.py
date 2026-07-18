@@ -77,3 +77,13 @@ def test_map_eq_is_identity() -> None:
     b = Map(src, lambda x: x)
     assert a == a
     assert not (a == b)
+
+
+def test_map_ne_is_identity_based() -> None:
+    from poop.types.boolean import false, true
+    from poop.types.list import List
+    from poop.types.map import Map
+
+    m = Map(List(), lambda x: x)
+    assert (m != m) is false
+    assert (m != Map(List(), lambda x: x)) is true

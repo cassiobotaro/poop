@@ -157,3 +157,13 @@ def test_eq_with_non_memory_view_returns_false() -> None:
 
 def test_ne_with_non_memory_view_returns_true() -> None:
     assert _mv(b"abc").__ne__(Int(1)) is true
+
+
+def test_bare_memoryview_name_is_rewritten() -> None:
+    import ast
+
+    tree = MemoryViewTransformer().transform(ast.parse("f = memoryview"))
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.Name)
+    assert assign.value.id == "_poop_memoryview"

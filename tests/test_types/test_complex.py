@@ -434,3 +434,13 @@ def test_complex_from_unsupported_first_of_two_args_raises() -> None:
 def test_complex_from_unsupported_second_of_two_args_raises() -> None:
     with pytest.raises(TypeError, match="Dict"):
         _poop_complex_from(Int(1), Dict())
+
+
+def test_bare_complex_name_is_rewritten() -> None:
+    import ast
+
+    tree = ComplexTransformer().transform(ast.parse("f = complex"))
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.Name)
+    assert assign.value.id == "_poop_complex"

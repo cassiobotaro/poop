@@ -767,3 +767,21 @@ def test_str_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
     message = str(info.value)
     assert "_value" not in message
     assert "does not understand" not in message
+
+
+def test_str_max_with_key_and_default() -> None:
+    from poop.types.string import Str
+
+    # key selects the char by a transform; default is returned for empty input.
+    assert Str("abc").max(key=lambda c: -ord(c._value)) == Str("a")
+    assert Str("").max(default=Str("z")) == Str("z")
+
+
+def test_str_le_against_foreign_raises() -> None:
+    import pytest
+
+    from poop.types.int import Int
+    from poop.types.string import Str
+
+    with pytest.raises(TypeError):
+        _ = Str("a") <= Int(1)
