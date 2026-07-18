@@ -86,6 +86,16 @@ def _message(exc: PoopError) -> str:
     return exc.args[0] if exc.args else str(exc)
 
 
+def _line_gutter(lineno: int) -> str:
+    """The `  N | ` prefix that precedes the quoted source line."""
+    return f"  {lineno} | "
+
+
+def _caret_gutter(lineno: int) -> str:
+    """The blank-numbered gutter aligning the caret under the source line."""
+    return "  " + " " * len(str(lineno)) + " | "
+
+
 def format_error(exc: PoopError, source: str | None) -> str:
     """Render an error, with the offending source line and a caret under it.
 
@@ -104,11 +114,10 @@ def format_error(exc: PoopError, source: str | None) -> str:
     if location is None:
         return f"poop: {exc}"
     lineno, line = location
-    parts = [f"poop: {_message(exc)}", f"  {lineno} | {line}"]
+    parts = [f"poop: {_message(exc)}", f"{_line_gutter(lineno)}{line}"]
     col = getattr(exc, "col_offset", None)
     if col is not None:
-        caret_gutter = "  " + " " * len(str(lineno)) + " | "
-        parts.append(f"{caret_gutter}{' ' * _caret_column(line, col)}^")
+        parts.append(f"{_caret_gutter(lineno)}{' ' * _caret_column(line, col)}^")
     return "\n".join(parts)
 
 
@@ -128,12 +137,11 @@ def render_error(exc: PoopError, source: str | None) -> Text:
     highlighted.rstrip()  # the highlighter appends a trailing newline
     rendered = Text.assemble(
         (f"poop: {_message(exc)}\n", "red"),
-        (f"  {lineno} | ", "dim"),
+        (_line_gutter(lineno), "dim"),
         highlighted,
     )
     col = getattr(exc, "col_offset", None)
     if col is not None:
-        caret_gutter = "  " + " " * len(str(lineno)) + " | "
-        rendered.append(f"\n{caret_gutter}", style="dim")
+        rendered.append(f"\n{_caret_gutter(lineno)}", style="dim")
         rendered.append(f"{' ' * _caret_column(line, col)}^", style="red")
     return rendered
