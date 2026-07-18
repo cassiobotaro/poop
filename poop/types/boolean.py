@@ -89,7 +89,7 @@ class Boolean(_NumericCompareMixin, Object, ABC):
 
         return Int(1) if self else Int(0)
 
-    def _num(self, other: object) -> Any:
+    def _num(self, other: object) -> object:
         return other._as_int() if isinstance(other, Boolean) else other
 
     def _rev(self, other: object, op: str) -> Any:
@@ -134,7 +134,9 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     def __rmod__(self, other: object) -> Any:
         return self._rev(other, "__mod__")
 
-    def __pow__(self, other: object, modulus: Any = None) -> Int | Float | Complex:
+    def __pow__(
+        self, other: object, modulus: Int | NoneClass | None = None
+    ) -> Int | Float | Complex:
         return self._as_int().__pow__(self._num(other), modulus)
 
     def __rpow__(self, other: object) -> Any:
