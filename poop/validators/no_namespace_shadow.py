@@ -1,7 +1,12 @@
 import ast
 
 from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+from poop.validators.base import (
+    CollectingValidator,
+    ErrorCollector,
+    collect_errors,
+    iter_params,
+)
 
 _NAMESPACE_MESSAGE = (
     "{name!r} is a POOP namespace binding; reassigning it shadows the "
@@ -56,12 +61,7 @@ class _Visitor(ErrorCollector):
         # body exactly like a local assignment does, so `def m(self, math):`
         # makes `math.sqrt(...)` fail in confusing ways — the same hazard the
         # assignment check guards against.
-        params = [*args.posonlyargs, *args.args, *args.kwonlyargs]
-        if args.vararg is not None:
-            params.append(args.vararg)
-        if args.kwarg is not None:
-            params.append(args.kwarg)
-        for param in params:
+        for param in iter_params(args):
             self._check(param.arg, param)
 
     def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:

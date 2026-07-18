@@ -27,20 +27,17 @@ class _NoFreeFunctionsVisitor(ErrorCollector):
                 self._method_nodes.add(stmt)
         self.generic_visit(node)
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+    def _reject_if_free(self, node: ast.AST, kind: str) -> None:
         if node not in self._method_nodes:
             self.report(
-                "free functions are forbidden — define methods inside a class "
+                f"free {kind} are forbidden — define methods inside a class "
                 "(use a lambda for a local block)",
                 node,
             )
         self.generic_visit(node)
 
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._reject_if_free(node, "functions")
+
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        if node not in self._method_nodes:
-            self.report(
-                "free async functions are forbidden — define methods inside a "
-                "class (use a lambda for a local block)",
-                node,
-            )
-        self.generic_visit(node)
+        self._reject_if_free(node, "async functions")

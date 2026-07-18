@@ -48,6 +48,22 @@ class CollectingValidator:
             raise errors[0]
 
 
+def iter_params(args: ast.arguments) -> list[ast.arg]:
+    """Every parameter an `ast.arguments` binds, `*args`/`**kwargs` included.
+
+    Positional, positional-only and keyword-only parameters plus the vararg
+    and kwarg, in a single flat list. A parameter binds a name inside the body
+    exactly like an assignment does, so validators guarding names (reserved
+    prefixes, namespace shadows) need to inspect all of them.
+    """
+    params = [*args.posonlyargs, *args.args, *args.kwonlyargs]
+    if args.vararg is not None:
+        params.append(args.vararg)
+    if args.kwarg is not None:
+        params.append(args.kwarg)
+    return params
+
+
 def collect_errors(visitor: ErrorCollector, tree: ast.Module) -> list[ValidationError]:
     """Run `visitor` over `tree` and hand back what it recorded.
 

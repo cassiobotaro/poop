@@ -1,7 +1,12 @@
 import ast
 
 from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+from poop.validators.base import (
+    CollectingValidator,
+    ErrorCollector,
+    collect_errors,
+    iter_params,
+)
 
 _PREFIX = "_poop_"
 
@@ -20,12 +25,7 @@ class _Visitor(ErrorCollector):
         # parameter (def or lambda) reopens a reserved identifier exactly
         # like a reference does. A bare `lambda _poop_x: 1` never mentions
         # the name in its body, so visit_Name alone would miss it.
-        params = [*args.posonlyargs, *args.args, *args.kwonlyargs]
-        if args.vararg is not None:
-            params.append(args.vararg)
-        if args.kwarg is not None:
-            params.append(args.kwarg)
-        for param in params:
+        for param in iter_params(args):
             self._reject(param.arg, param)
 
     def visit_Name(self, node: ast.Name) -> None:
@@ -47,10 +47,8 @@ class _Visitor(ErrorCollector):
         self._check_args(node.args)
         self.generic_visit(node)
 
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self._reject(node.name, node)
-        self._check_args(node.args)
-        self.generic_visit(node)
+    # An async def binds the same name and args as a def; share the handler.
+    visit_AsyncFunctionDef = visit_FunctionDef
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
         self._check_args(node.args)
