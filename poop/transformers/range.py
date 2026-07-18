@@ -1,6 +1,6 @@
-import ast
 from typing import ClassVar
 
+from poop.transformers._forwarding import make_forwarding_rewriter
 from poop.transformers.base import BaseTransformer
 from poop.types.int import Int
 from poop.types.range import Range
@@ -18,31 +18,8 @@ def _poop_range(
     return Range(Int(int(stop_or_start)), Int(int(stop) - sign), Int(step_value))
 
 
-class _RangeRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "range":
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_range", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "range":
-            return ast.copy_location(ast.Name(id="_poop_range_cls", ctx=node.ctx), node)
-        return node
-
-
 class RangeTransformer(BaseTransformer):
-    rewriter = _RangeRewriter
+    rewriter = make_forwarding_rewriter("range", "_poop_range", "_poop_range_cls")
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_range": _poop_range,
         "_poop_range_cls": Range,
