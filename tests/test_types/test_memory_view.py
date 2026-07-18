@@ -11,6 +11,7 @@ from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.memory_view import MemoryView
+from poop.types.string import Str
 
 
 def _mv(data: bytes) -> MemoryView:
@@ -65,6 +66,10 @@ def test_iter_yields_int_values() -> None:
 
 def test_tobytes() -> None:
     assert _mv(b"hi").tobytes() == Bytes(b"hi")
+
+
+def test_tobytes_with_order() -> None:
+    assert _mv(b"hi").tobytes(Str("C")) == Bytes(b"hi")
 
 
 def test_eq_equal() -> None:

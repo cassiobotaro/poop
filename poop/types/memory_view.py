@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -7,6 +7,10 @@ from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.memory_view_iterator import MemoryViewIterator
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from poop.types.none import NoneClass
+    from poop.types.string import Str
 
 _memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
 
@@ -44,8 +48,12 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     def iter(self) -> MemoryViewIterator:
         return MemoryViewIterator(self)
 
-    def tobytes(self) -> Bytes:
-        return Bytes(self._value.tobytes())
+    def tobytes(self, order: Str | NoneClass | None = None) -> Bytes:
+        from poop.types._unwrap import _unwrap
+
+        return Bytes(
+            self._value.tobytes(cast(Literal["C", "F", "A"], _unwrap(order, "C")))
+        )
 
     def __str__(self) -> str:
         return repr(self._value)
