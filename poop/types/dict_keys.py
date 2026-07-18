@@ -14,8 +14,6 @@ from poop.types.set import Set
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean, to_boolean
 
-_KeySetLike = "DictKeys | Set | FrozenSet"
-
 
 def _other_keys(other: DictKeys | Set | FrozenSet) -> set[Object] | frozenset[Object]:
     """Extract the underlying Python set-like from another set-like POOP view."""
