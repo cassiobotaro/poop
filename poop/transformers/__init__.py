@@ -90,13 +90,25 @@ _BINDING_SOURCES: _list[_dict[str, _object]] = [
     _with_namespace,
 ]
 
-DEFAULT_NAMESPACE: _dict[str, _object] = {}
-for _src in _BINDING_SOURCES:
-    _dup = DEFAULT_NAMESPACE.keys() & _src.keys()
-    if _dup:
-        raise RuntimeError(
-            f"poop.transformers: duplicate bindings across sources: {sorted(_dup)}"
-        )
-    DEFAULT_NAMESPACE.update(_src)
+
+def _merge_bindings(sources: _list[_dict[str, _object]]) -> _dict[str, _object]:
+    """Fold binding sources into one namespace, refusing duplicate keys.
+
+    A later source silently overwriting an earlier binding is the failure this
+    guards: it surfaces the collision at import time instead of letting a new
+    transformer shadow an existing name.
+    """
+    namespace: _dict[str, _object] = {}
+    for src in sources:
+        dup = namespace.keys() & src.keys()
+        if dup:
+            raise RuntimeError(
+                f"poop.transformers: duplicate bindings across sources: {sorted(dup)}"
+            )
+        namespace.update(src)
+    return namespace
+
+
+DEFAULT_NAMESPACE: _dict[str, _object] = _merge_bindings(_BINDING_SOURCES)
 
 __all__ = ["DEFAULT_NAMESPACE", "DEFAULT_TRANSFORMERS", "Transformer"]
