@@ -1,8 +1,10 @@
+import io
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+from rich.console import Console
 from typer.testing import CliRunner
 
 from poop.cli import app
@@ -165,3 +167,61 @@ def test_main_module_runs_file_via_argv(tmp_path: Path) -> None:
     )
     assert result.returncode == 0
     assert "hi" in result.stdout
+
+
+def _term_console(buf: io.StringIO) -> Console:
+    return Console(
+        file=buf, force_terminal=True, color_system="standard", no_color=False
+    )
+
+
+def test_emit_error_syntax_highlights_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # On a colour stderr, a PoopError is rendered via render_error (coloured,
+    # highlighted) rather than the plain format_error string.
+    from poop import cli
+    from poop.errors import ValidationError
+
+    buf = io.StringIO()
+    monkeypatch.setattr(cli, "_ERR", _term_console(buf))
+    cli._emit_error(ValidationError("if is forbidden", 1, 0), "if x:")
+    out = buf.getvalue()
+    assert "\x1b[" in out
+    assert "poop: if is forbidden" in out
+
+
+def test_cli_no_file_starts_the_repl(monkeypatch: pytest.MonkeyPatch) -> None:
+    # `poop` with no argument drops into the REPL; an immediate EOF exits it 0.
+    def _eof(_prompt: str = "") -> str:
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", _eof)
+    result = runner.invoke(app, [])
+    assert result.exit_code == 0
+    assert "POOP" in result.output
+
+
+def test_cli_transformers_only_colorizes_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from poop import cli
+
+    buf = io.StringIO()
+    monkeypatch.setattr(cli, "_OUT", _term_console(buf))
+    f = tmp_path / "ok.py"
+    f.write_text('"hi".print()\n', encoding="utf-8")
+    result = runner.invoke(app, [str(f), "--transformers-only"])
+    assert result.exit_code == 0
+    out = buf.getvalue()
+    assert "\x1b[" in out  # syntax-highlighted AST dump
+    assert "_poop_str" in out
+
+
+def test_entry_point_invokes_the_typer_app(monkeypatch: pytest.MonkeyPatch) -> None:
+    from poop import cli
+
+    called: list[bool] = []
+    monkeypatch.setattr(cli, "app", lambda: called.append(True))
+    cli.entry_point()
+    assert called == [True]

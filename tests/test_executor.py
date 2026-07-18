@@ -77,3 +77,11 @@ def test_execute_separate_namespaces_are_isolated() -> None:
 def test_execute_namespace_is_available_in_code() -> None:
     tree = ast.parse("assert _sentinel == 99")
     execute(tree, namespace={"_sentinel": 99})
+
+
+def test_execute_compile_error_becomes_execution_error() -> None:
+    # ast.parse accepts a module-level `return`, but compile() rejects it; the
+    # SyntaxError must surface as a PoopError, not leak past the CLI handler.
+    tree = ast.parse("return")
+    with pytest.raises(ExecutionError, match="'return'"):
+        execute(tree)

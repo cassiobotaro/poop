@@ -727,3 +727,117 @@ def test_run_meta_command_does_not_touch_buffer(
     )
     repl.run()
     assert repl._ns.get("x") == Int(2)
+
+
+# --- _is_safe_expr ---
+
+
+def test_is_safe_expr_rejects_syntax_error() -> None:
+    from poop.repl import _is_safe_expr
+
+    assert _is_safe_expr("1 +") is False
+    assert _is_safe_expr("x") is True
+
+
+# --- readline unavailable / history fallbacks ---
+
+
+def test_setup_readline_without_readline_module_is_a_noop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A build without readline (`import readline` raising) must degrade quietly.
+    monkeypatch.setitem(sys.modules, "readline", None)
+    _setup_readline({})
+
+
+def test_setup_readline_missing_history_file_is_ignored(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: object
+) -> None:
+    from pathlib import Path
+
+    import poop.repl as repl
+
+    monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "does_not_exist")
+    _setup_readline({})
+
+
+def test_save_history_swallows_write_errors(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: object
+) -> None:
+    from pathlib import Path
+
+    import poop.repl as repl
+
+    # A history path under a missing directory makes write_history_file raise;
+    # the saver must swallow it so a crash at exit is impossible.
+    monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "nope" / "hist")
+    _save_history()
+
+
+def test_readline_input_without_readline_falls_back_to_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from poop.repl import _readline_input
+
+    monkeypatch.setitem(sys.modules, "readline", None)
+    monkeypatch.setattr("builtins.input", lambda prompt="": "typed")
+    assert _readline_input(">>> ", "    ") == "typed"
+
+
+def test_readline_input_pre_hook_inserts_indent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import readline
+
+    from poop.repl import _readline_input
+
+    calls: dict[str, object] = {}
+    monkeypatch.setattr(
+        readline, "insert_text", lambda s: calls.__setitem__("insert", s)
+    )
+    monkeypatch.setattr(
+        readline, "redisplay", lambda: calls.__setitem__("redisplay", True)
+    )
+    # Fire the registered pre-input hook synchronously so its body runs.
+    monkeypatch.setattr(
+        readline,
+        "set_pre_input_hook",
+        lambda hook: hook() if hook is not None else None,
+    )
+    monkeypatch.setattr("builtins.input", lambda prompt="": "line")
+    assert _readline_input(">>> ", "    ") == "line"
+    assert calls["insert"] == "    "
+    assert calls["redisplay"] is True
+
+
+# --- run(): syntax error in a completed buffer ---
+
+
+def test_run_syntax_error_clears_buffer_and_continues(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # A definitive syntax error (not an incomplete line) is reported and the
+    # buffer reset, so the next line starts fresh rather than re-parsing junk.
+    monkeypatch.setattr(
+        "builtins.input", _fake_input(")", "x = 1 + 1", "x", EOFError())
+    )
+    repl = Repl(Interpreter())
+    repl.run()
+    assert "poop:" in capsys.readouterr().err
+    assert repl._ns.get("x") == Int(2)
+
+
+# --- :explain when the construct turns out to be allowed ---
+
+
+def test_meta_explain_reports_an_allowed_construct(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # If a topic's snippet trips no validator, `:explain` says so plainly rather
+    # than pretending it is forbidden.
+    import poop.repl as repl
+
+    monkeypatch.setitem(repl._EXPLAIN_SNIPPETS, "noop", "x")
+    r, _ = _repl()
+    r._meta(":explain noop")
+    assert "noop is allowed in POOP." in capsys.readouterr().out

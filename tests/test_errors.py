@@ -73,3 +73,23 @@ def test_format_error_counts_lines_the_way_the_tokenizer_does() -> None:
     source = "x = 1\n\fy = 2\nz = 3"
     out = format_error(ValidationError("nope", 2, 0), source)
     assert "\fy = 2" in out
+
+
+def test_render_error_without_source_is_a_plain_red_message() -> None:
+    # No source to point at: render_error falls back to the bare `poop:` line,
+    # coloured red, with neither gutter nor caret.
+    from poop.errors import render_error
+
+    text = render_error(ValidationError("nope", 4, 8), None)
+    assert text.plain == "poop: nope (line 4, col 8)"
+    assert text.style == "red"
+
+
+def test_render_error_with_line_but_no_column_draws_no_caret() -> None:
+    # ExecutionError carries a line but no col_offset: the highlighted gutter is
+    # drawn, but there is nothing to point a caret at.
+    from poop.errors import render_error
+
+    text = render_error(ExecutionError("KeyError: 'zzz'", 1), "d.at('zzz')")
+    assert "^" not in text.plain
+    assert "d.at('zzz')" in text.plain
