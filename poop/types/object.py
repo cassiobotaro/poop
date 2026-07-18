@@ -1,7 +1,7 @@
 import builtins
 from builtins import print as _builtins_print
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 from poop.types.meta import PoopMeta
 
@@ -88,7 +88,7 @@ class Object(metaclass=PoopMeta):
 
         return false if bool(self) else true
 
-    def assert_(self, message: Str | NoneClass | None = None) -> Object:
+    def assert_(self, message: Str | NoneClass | None = None) -> Self:
         from poop.types._unwrap import _is_absent
 
         if bool(self):

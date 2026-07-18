@@ -16,7 +16,7 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
-def to_python(obj: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
+def to_python(obj: object) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
     if obj is none or isinstance(obj, NoneClass):
         return None
     if isinstance(obj, Boolean):
@@ -38,7 +38,7 @@ def to_python(obj: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one br
     return obj
 
 
-def to_poop(value: Any) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
+def to_poop(value: object) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
     if value is None:
         return none
     if isinstance(value, bool):
