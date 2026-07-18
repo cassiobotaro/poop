@@ -8,7 +8,13 @@ from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
+    from poop.types.enumerate import Enumerate
+    from poop.types.filter import Filter
+    from poop.types.map import Map
     from poop.types.none import NoneClass
+    from poop.types.object import Object
+    from poop.types.zip import Zip
 
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
@@ -28,17 +34,17 @@ class _IterableMixin:
         deque(map(block, self._iter_items()), maxlen=0)
         return none
 
-    def map(self, block: Callable[[Any], Any]) -> Any:
+    def map(self, block: Callable[[Any], Any]) -> Map:
         from poop.types.map import Map
 
         return Map(self, block)
 
-    def filter(self, block: Callable[[Any], Any]) -> Any:
+    def filter(self, block: Callable[[Any], Any]) -> Filter:
         from poop.types.filter import Filter
 
         return Filter(self, block)
 
-    def filter_false(self, block: Callable[[Any], Any]) -> Any:
+    def filter_false(self, block: Callable[[Any], Any]) -> Filter:
         from poop.types.filter import Filter
 
         return Filter(self, lambda x: not bool(block(x)))
@@ -86,18 +92,18 @@ class _IterableMixin:
             kwargs["default"] = default
         return _builtins.max(self._iter_items(), **kwargs)
 
-    def all(self, block: Callable[[Any], Any]) -> Any:
+    def all(self, block: Callable[[Any], Any]) -> Boolean:
         return to_boolean(_builtins.all(bool(block(x)) for x in self._iter_items()))
 
-    def any(self, block: Callable[[Any], Any]) -> Any:
+    def any(self, block: Callable[[Any], Any]) -> Boolean:
         return to_boolean(_builtins.any(bool(block(x)) for x in self._iter_items()))
 
-    def enumerate(self, start: Any = None) -> Any:
+    def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:
         from poop.types.enumerate import Enumerate
 
         return Enumerate(self, start)
 
-    def zip(self, *others: Any, strict: Any = None) -> Any:
+    def zip(self, *others: Object, strict: Boolean | NoneClass | None = None) -> Zip:
         from poop.types.zip import Zip
 
         return Zip(self, *others, strict=strict)
