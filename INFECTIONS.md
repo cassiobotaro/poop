@@ -790,6 +790,24 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 
 `Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements. `Bytes` and `ByteArray` override `find` for substring search (different semantics from the mixin's element-finding `find`).
 
+### Builtin-mirroring method signatures
+
+Every builtin-substitute method mirrors the **full** Python signature of the method it replaces — the same optional and variadic arguments, so `n.to_bytes()` and `xs.index(x, start, stop)` work exactly as in CPython. Optional arguments accept the POOP wrapper *or* `none` (both fall back to the builtin's default), following the same convention as the collection methods above (`zip(*others, strict=false)`, `enumerate(start=Int(0))`).
+
+| Type | Method | Signature | Notes |
+|---|---|---|---|
+| `Int` | `to_bytes` | `to_bytes(length=Int(1), byteorder=Str("big"), signed=false)` | `signed` is keyword-only, like `int.to_bytes` |
+| `Int` | `from_bytes` | `from_bytes(bytes, byteorder=Str("big"), signed=false)` | classmethod; `signed` keyword-only |
+| `List`, `Tuple` | `index` | `index(obj, start=none, stop=none)` | optional search bounds; `stop` is only meaningful with `start`, as in Python |
+| `MemoryView` | `tobytes` | `tobytes(order=Str("C"))` | `order` ∈ `{"C", "F", "A"}` |
+| `Set`, `FrozenSet` | `union`, `intersection`, `difference` | `(*others)` | each operand may be **any iterable** (`List`/`Tuple`/…), not only another set |
+| `Set`, `FrozenSet` | `symmetric_difference`, `isdisjoint`, `issubset`, `issuperset` | `(other)` | operand may be any iterable |
+| `Set` | `update`, `intersection_update`, `difference_update` | `(*others)` | in-place; operands may be any iterable |
+| `Set` | `symmetric_difference_update` | `(other)` | in-place; operand may be any iterable |
+| `Dict` | `update` | `update(other)` | `other` is a `Dict`, a `MappingProxy`, or an iterable of 2-element `(key, value)` pairs — a wrong-length element raises the faithful `ValueError` |
+
+The distinction between set **methods** and set **operators** follows CPython exactly: the *methods* above accept any iterable, but the *operators* (`|`, `&`, `-`, `^`, `<`, `<=`, `>`, `>=`) still require two set-likes (`{1} | [2]` is a `TypeError`) — see *Explicitly allowed → Binary infix operators*. A non-iterable operand passed to a method raises the same `TypeError` CPython would.
+
 ### Map / Filter — `poop/types/map.py`, `poop/types/filter.py`
 
 `Map` and `Filter` are lazy iterator types in the same family as `Enumerate` and `Zip`. They wrap a source iterable and a block, and apply the block on demand:
