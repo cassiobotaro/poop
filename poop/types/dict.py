@@ -3,7 +3,7 @@ from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
-from poop.types._iterable_mixin import _MISSING
+from poop.types._iterable_mixin import _MISSING, _minmax
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.dict_items import DictItems
@@ -107,24 +107,14 @@ class Dict(_ValueEqMixin, Object):
         key: Callable[[Any], Any] | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        kwargs: dict[str, Any] = {}
-        if key is not None:
-            kwargs["key"] = key
-        if default is not _MISSING:
-            kwargs["default"] = default
-        return builtins.min(self._data, **kwargs)
+        return _minmax(builtins.min, self._data, key, default)
 
     def max(
         self,
         key: Callable[[Any], Any] | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        kwargs: dict[str, Any] = {}
-        if key is not None:
-            kwargs["key"] = key
-        if default is not _MISSING:
-            kwargs["default"] = default
-        return builtins.max(self._data, **kwargs)
+        return _minmax(builtins.max, self._data, key, default)
 
     def len(self) -> Int:
         return Int(len(self._data))

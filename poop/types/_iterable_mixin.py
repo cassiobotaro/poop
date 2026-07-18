@@ -23,6 +23,28 @@ from poop.types.none import none
 _MISSING: Any = object()
 
 
+def _minmax(
+    func: Callable[..., Any],
+    iterable: Any,
+    key: Callable[[Any], Any] | None,
+    default: Any,
+) -> Any:
+    """Assemble the optional `key`/`default` kwargs and call `min`/`max`.
+
+    A single home for the `min`/`max` message body shared by the iterable
+    mixin, Dict and Str — each passing only its own iterable, since Dict and
+    Str deliberately do not inherit the mixin. Both callers import `_MISSING`
+    from here, so the sentinel identity that drives the `default` branch is the
+    same object across all three sites.
+    """
+    kwargs: dict[str, Any] = {}
+    if key is not None:
+        kwargs["key"] = key
+    if default is not _MISSING:
+        kwargs["default"] = default
+    return func(iterable, **kwargs)
+
+
 class _IterableMixin:
     @abstractmethod
     def __iter__(self) -> Iterator[Any]: ...
@@ -73,24 +95,14 @@ class _IterableMixin:
         key: Callable[[Any], Any] | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        kwargs: dict[str, Any] = {}
-        if key is not None:
-            kwargs["key"] = key
-        if default is not _MISSING:
-            kwargs["default"] = default
-        return _builtins.min(self._iter_items(), **kwargs)
+        return _minmax(_builtins.min, self._iter_items(), key, default)
 
     def max(
         self,
         key: Callable[[Any], Any] | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        kwargs: dict[str, Any] = {}
-        if key is not None:
-            kwargs["key"] = key
-        if default is not _MISSING:
-            kwargs["default"] = default
-        return _builtins.max(self._iter_items(), **kwargs)
+        return _minmax(_builtins.max, self._iter_items(), key, default)
 
     def all(self, block: Callable[[Any], Any]) -> Boolean:
         return to_boolean(_builtins.all(bool(block(x)) for x in self._iter_items()))

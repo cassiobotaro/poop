@@ -2,7 +2,7 @@ import builtins
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from poop.types._iterable_mixin import _MISSING
+from poop.types._iterable_mixin import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
@@ -76,24 +76,14 @@ class Str(_ValueEqMixin, Object):
         key: Callable[[Str], Any] | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        kwargs: dict[str, Any] = {}
-        if key is not None:
-            kwargs["key"] = key
-        if default is not _MISSING:
-            kwargs["default"] = default
-        return builtins.min(self, **kwargs)
+        return _minmax(builtins.min, self, key, default)
 
     def max(
         self,
         key: Callable[[Str], Any] | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        kwargs: dict[str, Any] = {}
-        if key is not None:
-            kwargs["key"] = key
-        if default is not _MISSING:
-            kwargs["default"] = default
-        return builtins.max(self, **kwargs)
+        return _minmax(builtins.max, self, key, default)
 
     def includes(self, char: Str) -> Boolean:
         # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
