@@ -309,6 +309,15 @@ def test_index_found() -> None:
     assert List(Int(10), Int(20), Int(30)).index(Int(20)) == Int(1)
 
 
+def test_index_with_start() -> None:
+    assert List(Int(10), Int(20), Int(10)).index(Int(10), Int(1)) == Int(2)
+
+
+def test_index_with_start_and_stop() -> None:
+    xs = List(Int(5), Int(10), Int(5), Int(10))
+    assert xs.index(Int(10), Int(2), Int(4)) == Int(3)
+
+
 def test_index_not_found_raises() -> None:
     with pytest.raises(ValueError):
         List(Int(1), Int(2)).index(Int(9))

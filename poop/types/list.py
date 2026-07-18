@@ -162,10 +162,20 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         self._items.extend(other)
         return none
 
-    def index(self, obj: Object) -> Int:
+    def index(
+        self,
+        obj: Object,
+        start: Int | NoneClass | None = None,
+        stop: Int | NoneClass | None = None,
+    ) -> Int:
+        from poop.types._unwrap import _is_absent, _opt_int
         from poop.types.int import Int
 
-        return Int(self._items.index(obj))
+        if _is_absent(start):
+            return Int(self._items.index(obj))
+        if _is_absent(stop):
+            return Int(self._items.index(obj, _opt_int(start, 0)))
+        return Int(self._items.index(obj, _opt_int(start, 0), _opt_int(stop, 0)))
 
     def insert(self, i: Int, obj: Object) -> NoneClass:
         self._items.insert(i._value, obj)

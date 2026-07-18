@@ -286,6 +286,15 @@ def test_index_not_found_raises() -> None:
         Tuple(Int(1), Int(2)).index(Int(9))
 
 
+def test_index_with_start() -> None:
+    assert Tuple(Int(10), Int(20), Int(10)).index(Int(10), Int(1)) == Int(2)
+
+
+def test_index_with_start_and_stop() -> None:
+    ts = Tuple(Int(5), Int(10), Int(5), Int(10))
+    assert ts.index(Int(10), Int(2), Int(4)) == Int(3)
+
+
 def test_slice_with_step() -> None:
     t = Tuple(Int(0), Int(1), Int(2), Int(3), Int(4))
     assert t.slice(Int(0), Int(5), Int(2)) == Tuple(Int(0), Int(2), Int(4))

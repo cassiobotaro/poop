@@ -92,10 +92,20 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
 
         return Int(self._items.count(obj))
 
-    def index(self, obj: Object) -> Int:
+    def index(
+        self,
+        obj: Object,
+        start: Int | NoneClass | None = None,
+        stop: Int | NoneClass | None = None,
+    ) -> Int:
+        from poop.types._unwrap import _is_absent, _opt_int
         from poop.types.int import Int
 
-        return Int(self._items.index(obj))
+        if _is_absent(start):
+            return Int(self._items.index(obj))
+        if _is_absent(stop):
+            return Int(self._items.index(obj, _opt_int(start, 0)))
+        return Int(self._items.index(obj, _opt_int(start, 0), _opt_int(stop, 0)))
 
     def __lt__(self, other: object) -> Boolean:
         if not isinstance(other, Tuple):
