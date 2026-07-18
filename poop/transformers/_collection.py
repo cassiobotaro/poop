@@ -52,7 +52,7 @@ class CollectionRewriter(ast.NodeTransformer):
         return node
 
 
-def wrap_elts(node: ast.List | ast.Tuple | ast.Set, target: str) -> ast.AST:
+def wrap_elts(node: ast.List | ast.Tuple | ast.Set, target: str) -> ast.Call:
     return ast.copy_location(
         ast.Call(
             func=ast.Name(id=target, ctx=ast.Load()),

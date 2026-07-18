@@ -28,7 +28,7 @@ def make_node_validator(
 
         return visit
 
-    visitor_methods: dict[str, object] = {
+    visitor_methods: dict[str, Callable[[ErrorCollector, ast.AST], None]] = {
         f"visit_{node_type.__name__}": _make_visit(msg)
         for node_type, msg in messages.items()
     }
