@@ -48,12 +48,9 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         stop: Int | NoneClass | None = None,
         step: Int | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types.slice import Slice
+        from poop.types.slice import _resolve_py_slice
 
-        if isinstance(start_or_slice, Slice):
-            py = start_or_slice._py_slice()
-        else:
-            py = Slice(start_or_slice, stop, step)._py_slice()
+        py = _resolve_py_slice(start_or_slice, stop, step)
         return Bytes(self._value[py])
 
     def includes(self, byte: Int) -> Boolean:

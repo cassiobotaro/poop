@@ -58,12 +58,9 @@ class Range(_IterableMixin, Object):
         stop: Int | NoneClass | None = None,
         step: Int | NoneClass | None = None,
     ) -> List:
-        from poop.types.slice import Slice
+        from poop.types.slice import _resolve_py_slice
 
-        if isinstance(start_or_slice, Slice):
-            py = start_or_slice._py_slice()
-        else:
-            py = Slice(start_or_slice, stop, step)._py_slice()
+        py = _resolve_py_slice(start_or_slice, stop, step)
         # Slice the native range lazily (O(1)) and wrap only the selected
         # elements — materializing the whole range as Int objects first would
         # allocate every member just to discard all but the slice.

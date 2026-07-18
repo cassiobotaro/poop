@@ -86,6 +86,23 @@ class Slice(Object):
     __repr__ = __str__
 
 
+def _resolve_py_slice(
+    start_or_slice: Int | Slice,
+    stop: Int | NoneClass | None,
+    step: Int | NoneClass | None,
+) -> slice:
+    """The native slice a sequence `slice(...)` message resolves to.
+
+    A Slice argument is used directly; the Int form is routed through Slice so
+    a POOP `none` stop/step (from a `None` literal) means open-ended, like
+    Python's obj[2:]. Shared by List, Tuple, Str, Bytes, ByteArray and Range,
+    whose `slice` methods otherwise repeated this branch verbatim.
+    """
+    if isinstance(start_or_slice, Slice):
+        return start_or_slice._py_slice()
+    return Slice(start_or_slice, stop, step)._py_slice()
+
+
 def _coerce(value: Int | NoneClass | None) -> Int | None:
     from poop.types.none import NoneClass
 

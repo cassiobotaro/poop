@@ -54,14 +54,9 @@ class Str(_ValueEqMixin, Object):
         stop: Int | NoneClass | None = None,
         step: Int | NoneClass | None = None,
     ) -> Str:
-        from poop.types.slice import Slice
+        from poop.types.slice import _resolve_py_slice
 
-        # Route the Int form through Slice so a POOP `none` stop/step
-        # (from a `None` literal) means open-ended, like Python's obj[2:].
-        if isinstance(start_or_slice, Slice):
-            py = start_or_slice._py_slice()
-        else:
-            py = Slice(start_or_slice, stop, step)._py_slice()
+        py = _resolve_py_slice(start_or_slice, stop, step)
         return Str(self._value[py])
 
     def __iter__(self) -> Iterator[Str]:
