@@ -1,7 +1,7 @@
 import builtins
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types._iterable_mixin import _MISSING
 from poop.types._value_eq import _ValueEqMixin
@@ -193,8 +193,21 @@ class Dict(_ValueEqMixin, Object):
         # `none` and stores `k: none`, matching `get`/`pop`'s optional default.
         return self._data.setdefault(key, none if default is None else default)
 
-    def update(self, other: Dict) -> NoneClass:
-        self._data.update(other._data)
+    def update(self, other: Object) -> NoneClass:
+        # CPython's dict.update accepts a mapping (Dict / read-only
+        # MappingProxy) or an iterable of key/value pairs, e.g.
+        # ``d.update([(k1, v1), (k2, v2)])`` — not just another dict.
+        from poop.types.mapping_proxy import MappingProxy
+
+        if isinstance(other, Dict):
+            self._data.update(other._data)
+        elif isinstance(other, MappingProxy):
+            self._data.update(other._dict._data)
+        else:
+            # Each pair is a POOP Tuple — itself a 2-element iterable, so
+            # dict.update unpacks it and raises the faithful ValueError on a
+            # wrong-length element.
+            self._data.update(cast("Iterable[tuple[Object, Object]]", other))
         return none
 
     def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:

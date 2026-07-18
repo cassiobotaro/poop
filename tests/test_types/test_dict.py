@@ -297,6 +297,27 @@ def test_update_returns_none() -> None:
     assert d1.update(d2) is none
 
 
+def test_update_from_iterable_of_pairs() -> None:
+    d = _dict_with([(1, 10)])
+    d.update(List(Tuple(Int(2), Int(20)), Tuple(Int(3), Int(30))))
+    assert d.len() == Int(3)
+    assert d.at(Int(2)) == Int(20)
+    assert d.at(Int(3)) == Int(30)
+
+
+def test_update_from_mapping_proxy() -> None:
+    from poop.types.mapping_proxy import MappingProxy
+
+    d = _dict_with([(1, 10)])
+    d.update(MappingProxy(_dict_with([(2, 20)])))
+    assert d.at(Int(2)) == Int(20)
+
+
+def test_update_from_wrong_length_pair_raises() -> None:
+    with pytest.raises(ValueError, match="length 3; 2 is required"):
+        _dict_with([(1, 10)]).update(List(Tuple(Int(2), Int(20), Int(30))))
+
+
 def test_eq_with_non_dict_returns_false() -> None:
     assert Dict().__eq__(Int(1)) is false
 
