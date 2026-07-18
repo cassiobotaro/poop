@@ -62,3 +62,15 @@ def test_other_names_not_rewritten() -> None:
 def test_bindings_contains_mangled_slice() -> None:
     assert "_poop_slice" in SliceTransformer.BINDINGS
     assert SliceTransformer.BINDINGS["_poop_slice"] is Slice
+
+
+def test_bare_slice_name_is_rewritten_to_the_mangled_binding() -> None:
+    import ast
+
+    from poop.transformers.slice import SliceTransformer
+
+    tree = SliceTransformer().transform(ast.parse("f = slice"))
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.Name)
+    assert assign.value.id == "_poop_slice"

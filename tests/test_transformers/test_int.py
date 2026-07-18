@@ -163,3 +163,10 @@ def test_negative_variable_not_collapsed() -> None:
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
     assert isinstance(assign.value, ast.UnaryOp)
+
+
+def test_negative_non_int_literal_is_not_wrapped_as_an_int() -> None:
+    # `-3.14` is USub on a Constant, but the value is a float, not an int, so
+    # the int rewriter leaves it for the float transformer instead of wrapping.
+    tree = _transform("y = -3.14")
+    assert "_poop_int" not in ast.unparse(tree)

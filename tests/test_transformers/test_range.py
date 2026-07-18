@@ -66,3 +66,15 @@ def test_poop_range_negative_step() -> None:
 def test_poop_range_negative_step_with_stride() -> None:
     iv = _poop_range(Int(10), Int(0), Int(-2))
     assert list(iv._iter()) == [Int(i) for i in range(10, 0, -2)]
+
+
+def test_bare_range_name_is_rewritten_to_the_mangled_binding() -> None:
+    import ast
+
+    from poop.transformers.range import RangeTransformer
+
+    tree = RangeTransformer().transform(ast.parse("f = range"))
+    assign = tree.body[0]
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.Name)
+    assert assign.value.id == "_poop_range_cls"

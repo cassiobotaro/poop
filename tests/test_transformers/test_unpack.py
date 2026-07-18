@@ -56,3 +56,15 @@ def test_rest_from_tuple_via_interpreter() -> None:
 
 def test_rest_from_str_via_interpreter() -> None:
     Interpreter().run_source("first, *others = 'xyz'\nothers.len().print()")
+
+
+def test_rebind_tolerates_a_target_without_ctx() -> None:
+    import ast
+
+    from poop.transformers.unpack import _rebind
+
+    # A rest-target is always a ctx-carrying assignable in practice; the guard
+    # still degrades gracefully if handed a node type that carries no ctx.
+    assign = _rebind(ast.Constant(value=1))
+    assert isinstance(assign, ast.Assign)
+    assert isinstance(assign.value, ast.Call)

@@ -57,3 +57,10 @@ def test_kwarg_is_poop_dict_via_interpreter() -> None:
 
 def test_lambda_vararg_is_poop_tuple_via_interpreter() -> None:
     Interpreter().run_source("f = lambda *xs: xs.len()\nf(1, 2, 3).print()")
+
+
+def test_lambda_kwarg_gets_dict_conversion() -> None:
+    # `lambda **kw: ...` wraps kw so the body sees a POOP Dict, mirroring how a
+    # `def`'s **kwargs are converted.
+    tree = _transform("f = lambda **kw: kw")
+    assert "_poop_dict_from_kwargs" in ast.unparse(tree)
