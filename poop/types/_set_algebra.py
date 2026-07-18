@@ -1,11 +1,28 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from poop.types.boolean import Boolean
+    from poop.types.object import Object
+
+
+def _elements(other: object) -> Iterable[Object]:
+    """A set *method* operand as a raw iterable of its elements.
+
+    Unlike the set operators (``|``/``&``/``-``/``^``, which require two
+    set-likes), CPython's set *methods* — ``union``/``intersection``/
+    ``difference``/``isdisjoint``/... — accept any iterable, so
+    ``{1}.union([2, 3])`` is valid. Every POOP collection is itself
+    Python-iterable, so the cast states what the runtime already guarantees;
+    a non-iterable operand raises the faithful ``TypeError`` from the set call
+    (mirroring ``{1}.union(5)``).
+    """
+    return cast("Iterable[Object]", other)
 
 
 def _other_set(other: object) -> Any:

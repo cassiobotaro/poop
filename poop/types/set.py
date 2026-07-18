@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar, Self
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._set_algebra import _other_set, _SetAlgebraMixin
+from poop.types._set_algebra import _elements, _other_set, _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
@@ -48,42 +48,42 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     def pop(self) -> Object:
         return self._data.pop()
 
-    def union(self, *others: Set) -> Set:
-        return Set(*self._data.union(*[o._data for o in others]))
+    def union(self, *others: Object) -> Set:
+        return Set(*self._data.union(*(_elements(o) for o in others)))
 
-    def intersection(self, *others: Set) -> Set:
-        return Set(*self._data.intersection(*[o._data for o in others]))
+    def intersection(self, *others: Object) -> Set:
+        return Set(*self._data.intersection(*(_elements(o) for o in others)))
 
-    def difference(self, *others: Set) -> Set:
-        return Set(*self._data.difference(*[o._data for o in others]))
+    def difference(self, *others: Object) -> Set:
+        return Set(*self._data.difference(*(_elements(o) for o in others)))
 
-    def symmetric_difference(self, other: Set) -> Set:
-        return Set(*self._data.symmetric_difference(other._data))
+    def symmetric_difference(self, other: Object) -> Set:
+        return Set(*self._data.symmetric_difference(_elements(other)))
 
-    def update(self, *others: Set) -> NoneClass:
-        self._data.update(*[o._data for o in others])
+    def update(self, *others: Object) -> NoneClass:
+        self._data.update(*(_elements(o) for o in others))
         return none
 
-    def intersection_update(self, *others: Set) -> NoneClass:
-        self._data.intersection_update(*[o._data for o in others])
+    def intersection_update(self, *others: Object) -> NoneClass:
+        self._data.intersection_update(*(_elements(o) for o in others))
         return none
 
-    def difference_update(self, *others: Set) -> NoneClass:
-        self._data.difference_update(*[o._data for o in others])
+    def difference_update(self, *others: Object) -> NoneClass:
+        self._data.difference_update(*(_elements(o) for o in others))
         return none
 
-    def symmetric_difference_update(self, other: Set) -> NoneClass:
-        self._data.symmetric_difference_update(other._data)
+    def symmetric_difference_update(self, other: Object) -> NoneClass:
+        self._data.symmetric_difference_update(_elements(other))
         return none
 
-    def isdisjoint(self, other: Set) -> Boolean:
-        return to_boolean(self._data.isdisjoint(other._data))
+    def isdisjoint(self, other: Object) -> Boolean:
+        return to_boolean(self._data.isdisjoint(_elements(other)))
 
-    def issubset(self, other: Set) -> Boolean:
-        return to_boolean(self._data.issubset(other._data))
+    def issubset(self, other: Object) -> Boolean:
+        return to_boolean(self._data.issubset(_elements(other)))
 
-    def issuperset(self, other: Set) -> Boolean:
-        return to_boolean(self._data.issuperset(other._data))
+    def issuperset(self, other: Object) -> Boolean:
+        return to_boolean(self._data.issuperset(_elements(other)))
 
     def includes(self, obj: Object) -> Boolean:
         return to_boolean(obj in self._data)

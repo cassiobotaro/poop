@@ -203,6 +203,48 @@ def test_union_multiple_others() -> None:
     )
 
 
+def test_union_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert FrozenSet(Int(1), Int(2)).union(List(Int(3))) == FrozenSet(
+        Int(1), Int(2), Int(3)
+    )
+
+
+def test_difference_accepts_non_set_iterable() -> None:
+    from poop.types.tuple import Tuple
+
+    assert FrozenSet(Int(1), Int(2), Int(3)).difference(Tuple(Int(2))) == FrozenSet(
+        Int(1), Int(3)
+    )
+
+
+def test_symmetric_difference_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert FrozenSet(Int(1), Int(2)).symmetric_difference(
+        List(Int(2), Int(3))
+    ) == FrozenSet(Int(1), Int(3))
+
+
+def test_isdisjoint_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert FrozenSet(Int(1)).isdisjoint(List(Int(2))) is true
+
+
+def test_issubset_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert FrozenSet(Int(1), Int(2)).issubset(List(Int(1), Int(2), Int(3))) is true
+
+
+def test_issuperset_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert FrozenSet(Int(1), Int(2), Int(3)).issuperset(List(Int(1))) is true
+
+
 def test_intersection() -> None:
     assert FrozenSet(Int(1), Int(2), Int(3)).intersection(
         FrozenSet(Int(2), Int(3), Int(4))

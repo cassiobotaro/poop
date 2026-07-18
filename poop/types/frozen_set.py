@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._set_algebra import _SetAlgebraMixin
+from poop.types._set_algebra import _elements, _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.frozen_set_iterator import FrozenSetIterator
@@ -37,26 +37,26 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         # copying it is pointless and ``fs.copy() is fs`` is True.
         return self
 
-    def union(self, *others: FrozenSet) -> FrozenSet:
-        return FrozenSet(*self._data.union(*[o._data for o in others]))
+    def union(self, *others: Object) -> FrozenSet:
+        return FrozenSet(*self._data.union(*(_elements(o) for o in others)))
 
-    def intersection(self, *others: FrozenSet) -> FrozenSet:
-        return FrozenSet(*self._data.intersection(*[o._data for o in others]))
+    def intersection(self, *others: Object) -> FrozenSet:
+        return FrozenSet(*self._data.intersection(*(_elements(o) for o in others)))
 
-    def difference(self, *others: FrozenSet) -> FrozenSet:
-        return FrozenSet(*self._data.difference(*[o._data for o in others]))
+    def difference(self, *others: Object) -> FrozenSet:
+        return FrozenSet(*self._data.difference(*(_elements(o) for o in others)))
 
-    def symmetric_difference(self, other: FrozenSet) -> FrozenSet:
-        return FrozenSet(*self._data.symmetric_difference(other._data))
+    def symmetric_difference(self, other: Object) -> FrozenSet:
+        return FrozenSet(*self._data.symmetric_difference(_elements(other)))
 
-    def isdisjoint(self, other: FrozenSet) -> Boolean:
-        return to_boolean(self._data.isdisjoint(other._data))
+    def isdisjoint(self, other: Object) -> Boolean:
+        return to_boolean(self._data.isdisjoint(_elements(other)))
 
-    def issubset(self, other: FrozenSet) -> Boolean:
-        return to_boolean(self._data.issubset(other._data))
+    def issubset(self, other: Object) -> Boolean:
+        return to_boolean(self._data.issubset(_elements(other)))
 
-    def issuperset(self, other: FrozenSet) -> Boolean:
-        return to_boolean(self._data.issuperset(other._data))
+    def issuperset(self, other: Object) -> Boolean:
+        return to_boolean(self._data.issuperset(_elements(other)))
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._data)

@@ -255,6 +255,86 @@ def test_union_multiple_others() -> None:
     assert Set(Int(1)).union(Set(Int(2)), Set(Int(3))) == Set(Int(1), Int(2), Int(3))
 
 
+def test_union_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert Set(Int(1), Int(2)).union(List(Int(2), Int(3))) == Set(
+        Int(1), Int(2), Int(3)
+    )
+
+
+def test_intersection_accepts_non_set_iterable() -> None:
+    from poop.types.tuple import Tuple
+
+    assert Set(Int(1), Int(2), Int(3)).intersection(Tuple(Int(2), Int(3))) == Set(
+        Int(2), Int(3)
+    )
+
+
+def test_difference_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert Set(Int(1), Int(2), Int(3)).difference(List(Int(2))) == Set(Int(1), Int(3))
+
+
+def test_symmetric_difference_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert Set(Int(1), Int(2)).symmetric_difference(List(Int(2), Int(3))) == Set(
+        Int(1), Int(3)
+    )
+
+
+def test_update_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    s = Set(Int(1))
+    s.update(List(Int(2), Int(3)))
+    assert s == Set(Int(1), Int(2), Int(3))
+
+
+def test_intersection_update_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    s = Set(Int(1), Int(2), Int(3))
+    s.intersection_update(List(Int(2), Int(3)))
+    assert s == Set(Int(2), Int(3))
+
+
+def test_difference_update_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    s = Set(Int(1), Int(2), Int(3))
+    s.difference_update(List(Int(1)))
+    assert s == Set(Int(2), Int(3))
+
+
+def test_symmetric_difference_update_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    s = Set(Int(1), Int(2))
+    s.symmetric_difference_update(List(Int(2), Int(3)))
+    assert s == Set(Int(1), Int(3))
+
+
+def test_isdisjoint_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert Set(Int(1), Int(2)).isdisjoint(List(Int(3))) is true
+
+
+def test_issubset_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert Set(Int(1), Int(2)).issubset(List(Int(1), Int(2), Int(3))) is true
+
+
+def test_issuperset_accepts_non_set_iterable() -> None:
+    from poop.types.list import List
+
+    assert Set(Int(1), Int(2), Int(3)).issuperset(List(Int(1), Int(2))) is true
+
+
 def test_intersection() -> None:
     assert Set(Int(1), Int(2), Int(3)).intersection(Set(Int(2), Int(3), Int(4))) == Set(
         Int(2), Int(3)
