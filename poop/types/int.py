@@ -100,22 +100,39 @@ class Int(_NumericCompareMixin, Object):
 
         return Tuple(self, Int(1))
 
-    def to_bytes(self, length: Int, byteorder: Str) -> Bytes:
+    def to_bytes(
+        self,
+        length: Int | NoneClass | None = None,
+        byteorder: Str | NoneClass | None = None,
+        *,
+        signed: Boolean | NoneClass | None = None,
+    ) -> Bytes:
+        from poop.types._unwrap import _opt_int, _unwrap_bool
         from poop.types.bytes import Bytes
 
         return Bytes(
             self._value.to_bytes(
-                _faithful(length),
-                cast(Literal["little", "big"], _faithful(byteorder)),
+                _opt_int(length, 1),
+                cast(Literal["little", "big"], _unwrap(byteorder, "big")),
+                signed=_unwrap_bool(signed, False),
             )
         )
 
     @classmethod
-    def from_bytes(cls, b: Bytes, byteorder: Str) -> Int:
+    def from_bytes(
+        cls,
+        b: Bytes,
+        byteorder: Str | NoneClass | None = None,
+        *,
+        signed: Boolean | NoneClass | None = None,
+    ) -> Int:
+        from poop.types._unwrap import _unwrap_bool
+
         return cls(
             _int.from_bytes(
                 _faithful(b),
-                cast(Literal["little", "big"], _faithful(byteorder)),
+                cast(Literal["little", "big"], _unwrap(byteorder, "big")),
+                signed=_unwrap_bool(signed, False),
             )
         )
 

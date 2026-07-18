@@ -406,6 +406,14 @@ def test_to_bytes_little_endian() -> None:
     assert Int(255).to_bytes(Int(2), Str("little")) == Bytes(b"\xff\x00")
 
 
+def test_to_bytes_defaults_to_length_one_big_endian() -> None:
+    assert Int(255).to_bytes() == Bytes(b"\xff")
+
+
+def test_to_bytes_signed() -> None:
+    assert Int(-2).to_bytes(Int(2), Str("big"), signed=true) == Bytes(b"\xff\xfe")
+
+
 def test_bin_returns_binary_string() -> None:
     assert Int(10).bin() == Str("0b1010")
 
@@ -432,6 +440,14 @@ def test_from_bytes_big_endian() -> None:
 
 def test_from_bytes_little_endian() -> None:
     assert Int.from_bytes(Bytes(b"\xff\x00"), Str("little")) == Int(255)
+
+
+def test_from_bytes_defaults_to_big_endian() -> None:
+    assert Int.from_bytes(Bytes(b"\x00\xff")) == Int(255)
+
+
+def test_from_bytes_signed() -> None:
+    assert Int.from_bytes(Bytes(b"\xff\xfe"), Str("big"), signed=true) == Int(-2)
 
 
 def test_from_bytes_roundtrips_with_to_bytes() -> None:
