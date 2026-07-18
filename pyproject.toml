@@ -43,6 +43,7 @@ source = ["poop"]
 exclude_lines = [
   "pragma: no cover",
   "if TYPE_CHECKING:",
+  "if not TYPE_CHECKING:",
   "raise NotImplementedError",
   '\.\.\.',
 ]

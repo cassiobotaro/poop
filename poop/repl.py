@@ -308,7 +308,10 @@ class Repl:
             # POOP values ("abc" must answer Str's messages, not str's).
             tree = self._interpreter.transform_source(arg, "<methods>")
             stmt = tree.body[0]
-            if not isinstance(stmt, ast.Expr):
+            if not isinstance(stmt, ast.Expr):  # pragma: no cover - defensive
+                # `_is_safe_expr` already guaranteed an eval-mode expression, so
+                # the transformed body is always an `Expr`; this guards a future
+                # transformer that could inject a statement ahead of it.
                 raise SyntaxError("not an expression")  # noqa: TRY301
             code = compile(ast.Expression(stmt.value), "<methods>", "eval")
             obj = eval(code, self._ns)  # noqa: S307
