@@ -8,12 +8,21 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.14"]
+        experimental: [false]
+        include:
+          - python-version: "3.15"
+            experimental: true
     steps:
       - uses: actions/checkout@v7
 
       - uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.14"
+          python-version: ${{ matrix.python-version }}
           enable-cache: true
 
       - run: uv sync --dev
