@@ -213,3 +213,24 @@ def test_keys_mapping_map_chain() -> None:
     # MappingProxy did not inherit _IterableMixin, unlike the dict views.
     result = _make().keys().mapping().map(lambda k: k)
     assert [str(k) for k in result] == ["a", "b"]
+
+
+def test_or_with_a_dict_operand() -> None:
+    # A Dict is a valid operand in both directions, like CPython's
+    # mappingproxy | dict.
+    mp = MappingProxy(_make())  # {"a": 1, "b": 2}
+    other = Dict()
+    other.at_put(Str("c"), Int(3))
+    assert (mp | other).at(Str("c")) == Int(3)
+
+
+@pytest.mark.parametrize("reflected", [False, True])
+def test_or_with_a_foreign_operand_is_faithful_not_a_data_leak(
+    reflected: bool,
+) -> None:
+    # The `else` branch used to reach `other._data` and answer `int does not
+    # understand #_data`, naming a POOP internal.
+    mp = MappingProxy(_make())
+    with pytest.raises(TypeError) as info:
+        _ = Int(5) | mp if reflected else mp | Int(5)
+    assert "_data" not in str(info.value)

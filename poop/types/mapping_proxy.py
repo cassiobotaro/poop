@@ -87,25 +87,40 @@ class MappingProxy(_IterableMixin, Object):
         eq = self.__eq__(other)
         return false if bool(eq) else true
 
-    def __or__(self, other: Dict | MappingProxy) -> Dict:
+    def _merge_data(self, other: object) -> dict[Object, Object] | None:
+        """The operand's mapping, or None when it is not one.
+
+        Without the None case the `else` branch reached `other._data` on any
+        operand, so `proxy | 5` answered `int does not understand #_data` — a
+        POOP internal — where CPython answers `unsupported operand type(s)`.
+        """
         from poop.types.dict import Dict
 
-        other_data = (
-            other._dict._data if isinstance(other, MappingProxy) else other._data
-        )
+        if isinstance(other, MappingProxy):
+            return other._dict._data
+        if isinstance(other, Dict):
+            return other._data
+        return None
+
+    def __or__(self, other: object) -> Dict:
+        from poop.types.dict import Dict
+
+        other_data = self._merge_data(other)
+        if other_data is None:
+            return NotImplemented  # foreign operand -> faithful TypeError
         merged = Dict()
         merged._data = {**self._dict._data, **other_data}
         return merged
 
-    def __ror__(self, other: Dict | MappingProxy) -> Dict:
+    def __ror__(self, other: object) -> Dict:
         # CPython: ``dict | mappingproxy`` yields a ``dict`` ({**left, **right}).
         # ``Dict.__or__`` returns NotImplemented for a non-Dict right operand,
         # so Python falls back to this reflected form with ``other`` on the left.
         from poop.types.dict import Dict
 
-        other_data = (
-            other._dict._data if isinstance(other, MappingProxy) else other._data
-        )
+        other_data = self._merge_data(other)
+        if other_data is None:
+            return NotImplemented  # foreign operand -> faithful TypeError
         merged = Dict()
         merged._data = {**other_data, **self._dict._data}
         return merged
