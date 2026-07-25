@@ -1,3 +1,6 @@
+import operator
+from collections.abc import Callable
+
 import pytest
 
 from poop.types.boolean import false, true
@@ -206,3 +209,61 @@ def test_isdisjoint_with_empty_set() -> None:
 def test_reversed_dunder() -> None:
     keys = DictKeys(_make())
     assert list(reversed(keys))[0] == Str("b")
+
+
+# --- proposal 3: any iterable for the algebraic operators, set-like only for
+# the comparisons — and neither may leak `#_data` ---
+
+
+def test_set_operators_accept_a_plain_iterable() -> None:
+    # CPython: {"a": 1, "b": 2}.keys() | ["a", "c"] == {"a", "b", "c"}.
+    keys = DictKeys(_make())
+    assert (keys | List(Str("a"), Str("c")))._data == {Str("a"), Str("b"), Str("c")}
+    assert (keys & List(Str("a")))._data == {Str("a")}
+    assert (keys - List(Str("a")))._data == {Str("b")}
+    assert (keys ^ List(Str("a"), Str("c")))._data == {Str("b"), Str("c")}
+
+
+def test_reflected_set_operators_accept_a_plain_iterable() -> None:
+    keys = DictKeys(_make())
+    assert (List(Str("c")) | keys)._data == {Str("a"), Str("b"), Str("c")}
+    assert (List(Str("a")) & keys)._data == {Str("a")}
+    assert (List(Str("a"), Str("c")) - keys)._data == {Str("c")}
+    assert (List(Str("a"), Str("c")) ^ keys)._data == {Str("b"), Str("c")}
+
+
+def test_isdisjoint_accepts_a_plain_iterable() -> None:
+    keys = DictKeys(_make())
+    assert keys.isdisjoint(List(Str("z"))) is true
+    assert keys.isdisjoint(List(Str("a"))) is false
+
+
+def test_a_non_iterable_operand_is_faithful_not_a_data_leak() -> None:
+    # `set(other)` raises CPython's own message; reading `other._data` used to
+    # answer `int does not understand #_data`.
+    keys = DictKeys(_make())
+    with pytest.raises(TypeError) as info:
+        _ = keys | Int(5)
+    assert "_data" not in str(info.value)
+    with pytest.raises(TypeError) as info:
+        keys.isdisjoint(Int(5))
+    assert "_data" not in str(info.value)
+
+
+@pytest.mark.parametrize("op", [operator.le, operator.lt, operator.ge, operator.gt])
+def test_comparison_with_a_non_set_is_a_faithful_typeerror(
+    op: Callable[[object, object], object],
+) -> None:
+    # The asymmetry CPython keeps: `dict_keys <= list` is a TypeError even
+    # though `dict_keys | list` is fine.
+    keys = DictKeys(_make())
+    with pytest.raises(TypeError) as info:
+        op(keys, List(Str("a")))
+    assert "_data" not in str(info.value)
+
+
+def test_comparison_accepts_the_other_set_like_view() -> None:
+    # dict_items is set-like too, so it is a valid right operand — the keys
+    # are Strs and the items are Tuples, so no key is a member.
+    keys = DictKeys(_make())
+    assert (keys <= _make().items()) is false

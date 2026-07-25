@@ -1,3 +1,6 @@
+import operator
+from collections.abc import Callable
+
 import pytest
 
 from poop.types.boolean import false, true
@@ -238,15 +241,15 @@ def test_reversed_dunder() -> None:
     assert rev[0] == Tuple(Str("b"), Int(2))
 
 
-def test_other_items_set_of_non_tuples() -> None:
-    # _other_items handles Sets of non-Tuple elements gracefully (returns empty pairs)
+def test_operand_set_of_non_tuples() -> None:
+    # An operand's elements are opaque members: a Set of non-Tuples is fine.
     items = DictItems(_make())
     other = Set(Int(99))  # not a Tuple
     result = items.isdisjoint(other)
     assert result is true
 
 
-def test_other_items_keeps_non_pair_tuple() -> None:
+def test_operand_keeps_non_pair_tuple() -> None:
     # Sets may contain elements of arity != 2 (or non-tuples). CPython treats
     # dict_items as a set of opaque members, so union/symmetric-difference keep
     # such elements verbatim rather than dropping them:
@@ -268,3 +271,73 @@ def test_dir_hides_the_poop_own_set_internal() -> None:
     names = [str(n) for n in _make().items().dir()._items]
     assert "_poop_own_set" not in names
     assert all(not name.startswith("_") for name in names)
+
+
+# --- proposal 3: any iterable for the algebraic operators, set-like only for
+# the comparisons — and neither may leak `#_data` ---
+
+
+def _pair(key: str, value: int) -> Tuple:
+    return Tuple(Str(key), Int(value))
+
+
+def test_set_operators_accept_a_plain_iterable() -> None:
+    # CPython: {"a": 1}.items() | [("b", 2)] == {("a", 1), ("b", 2)}.
+    items = DictItems(_make())  # {("a", 1), ("b", 2)}
+    assert (items | List(_pair("c", 3)))._data == {
+        _pair("a", 1),
+        _pair("b", 2),
+        _pair("c", 3),
+    }
+    assert (items & List(_pair("a", 1)))._data == {_pair("a", 1)}
+    assert (items - List(_pair("a", 1)))._data == {_pair("b", 2)}
+    assert (items ^ List(_pair("a", 1), _pair("c", 3)))._data == {
+        _pair("b", 2),
+        _pair("c", 3),
+    }
+
+
+def test_reflected_set_operators_accept_a_plain_iterable() -> None:
+    items = DictItems(_make())
+    assert (List(_pair("c", 3)) | items)._data == {
+        _pair("a", 1),
+        _pair("b", 2),
+        _pair("c", 3),
+    }
+    assert (List(_pair("a", 1)) & items)._data == {_pair("a", 1)}
+    assert (List(_pair("a", 1), _pair("c", 3)) - items)._data == {_pair("c", 3)}
+    assert (List(_pair("a", 1), _pair("c", 3)) ^ items)._data == {
+        _pair("b", 2),
+        _pair("c", 3),
+    }
+
+
+def test_isdisjoint_accepts_a_plain_iterable() -> None:
+    items = DictItems(_make())
+    assert items.isdisjoint(List(_pair("z", 9))) is true
+    assert items.isdisjoint(List(_pair("a", 1))) is false
+
+
+def test_a_non_iterable_operand_is_faithful_not_a_data_leak() -> None:
+    items = DictItems(_make())
+    with pytest.raises(TypeError) as info:
+        _ = items | Int(5)
+    assert "_data" not in str(info.value)
+    with pytest.raises(TypeError) as info:
+        items.isdisjoint(Int(5))
+    assert "_data" not in str(info.value)
+
+
+@pytest.mark.parametrize("op", [operator.le, operator.lt, operator.ge, operator.gt])
+def test_comparison_with_a_non_set_is_a_faithful_typeerror(
+    op: Callable[[object, object], object],
+) -> None:
+    items = DictItems(_make())
+    with pytest.raises(TypeError) as info:
+        op(items, List(_pair("a", 1)))
+    assert "_data" not in str(info.value)
+
+
+def test_comparison_accepts_the_other_set_like_view() -> None:
+    items = DictItems(_make())
+    assert (items <= _make().keys()) is false
