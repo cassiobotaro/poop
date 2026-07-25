@@ -1,5 +1,6 @@
+import builtins as _builtins
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from poop.types._numeric_compare import (
     _NOT_NUMERIC,
@@ -31,19 +32,16 @@ class Float(_NumericCompareMixin, Object):
     def negated(self) -> Float:
         return Float(-self._value)
 
-    def max(self, *others: Float) -> Float:
-        result = self
-        for other in others:
-            if other._value > result._value:
-                result = other
-        return result
+    # Same reasoning as `Int.max` / `Int.min`: comparing the operands routes
+    # a Boolean through the numeric mixin and a foreign operand to CPython's
+    # faithful TypeError, instead of reading `other._value` and leaking it.
+    # The cast mirrors typeshed, which types the answer by the receiver even
+    # when the winning operand belongs to another rung of the tower.
+    def max(self, *others: Float | Int | Boolean) -> Float:
+        return cast("Float", _builtins.max((self, *others)))
 
-    def min(self, *others: Float) -> Float:
-        result = self
-        for other in others:
-            if other._value < result._value:
-                result = other
-        return result
+    def min(self, *others: Float | Int | Boolean) -> Float:
+        return cast("Float", _builtins.min((self, *others)))
 
     def is_integer(self) -> Boolean:
         return to_boolean(self._value.is_integer())

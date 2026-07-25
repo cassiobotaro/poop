@@ -88,6 +88,22 @@ def test_min_returns_first_on_tie() -> None:
     assert first.min(Int(5)) is first
 
 
+def test_min_max_accept_a_boolean() -> None:
+    # bool is an int subclass in CPython: min(1, True) == 1, max(0, True) is
+    # True. Reading `other._value` used to answer "bool does not understand
+    # #_value" instead.
+    assert Int(1).min(true) == Int(1)
+    assert Int(0).max(true) is true
+    assert Int(1).min(false) is false
+
+
+@pytest.mark.parametrize("message", ["max", "min"])
+def test_min_max_foreign_operand_is_faithful_not_a_value_leak(message: str) -> None:
+    with pytest.raises(TypeError) as info:
+        getattr(Int(1), message)(List(Int(2)))
+    assert "_value" not in str(info.value)
+
+
 def test_add() -> None:
     assert Int(2) + Int(3) == Int(5)
 

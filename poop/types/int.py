@@ -1,3 +1,4 @@
+import builtins as _builtins
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from poop.types._numeric_compare import (
@@ -53,19 +54,19 @@ class Int(_NumericCompareMixin, Object):
     def bit_invert(self) -> Int:
         return Int(~self._value)
 
-    def max(self, *others: Int) -> Int:
-        result = self
-        for other in others:
-            if other._value > result._value:
-                result = other
-        return result
+    # Compare the operands themselves rather than reading `other._value`:
+    # the numeric mixin folds a Boolean to 1/0 (`(1).min(True)` works, as
+    # `bool` is an `int` subclass in CPython) and answers NotImplemented for a
+    # foreign operand, so CPython raises the faithful comparison TypeError
+    # instead of leaking #_value through does_not_understand. Wrapping in a
+    # tuple keeps the no-`others` case answering self, unlike `max(x)`.
+    # The cast mirrors typeshed, where `bool` is a subtype of `int` and
+    # `max(0, True)` is typed `int` though it answers `True`.
+    def max(self, *others: Int | Boolean) -> Int:
+        return cast("Int", _builtins.max((self, *others)))
 
-    def min(self, *others: Int) -> Int:
-        result = self
-        for other in others:
-            if other._value < result._value:
-                result = other
-        return result
+    def min(self, *others: Int | Boolean) -> Int:
+        return cast("Int", _builtins.min((self, *others)))
 
     def bit_count(self) -> Int:
         return Int(self._value.bit_count())

@@ -67,6 +67,20 @@ def test_min_is_variadic() -> None:
     assert Float(3.5).min()._value == pytest.approx(3.5)
 
 
+def test_min_max_accept_the_rest_of_the_numeric_tower() -> None:
+    # An Int or a Boolean orders against a Float in CPython; reading
+    # `other._value` was fine for Int and leaked for a foreign operand.
+    assert Float(1.5).max(Int(2)) == Int(2)
+    assert Float(0.5).min(true) == Float(0.5)
+
+
+@pytest.mark.parametrize("message", ["max", "min"])
+def test_min_max_foreign_operand_is_faithful_not_a_value_leak(message: str) -> None:
+    with pytest.raises(TypeError) as info:
+        getattr(Float(1.0), message)(List(Int(2)))
+    assert "_value" not in str(info.value)
+
+
 def test_add() -> None:
     assert (Float(1.5) + Float(2.5))._value == pytest.approx(4.0)
 
