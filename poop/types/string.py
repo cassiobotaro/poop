@@ -1,5 +1,6 @@
 import builtins
 from collections.abc import Callable, Iterator
+from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._iterable_mixin import _MISSING, _minmax
@@ -20,6 +21,32 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 _str = str  # alias to avoid shadowing in annotations
+
+
+def _reject_field_access(template: _str) -> None:
+    """Refuse `{0.attr}` / `{0[key]}` — a format field is not an escape hatch.
+
+    `str.format` reads attributes and items at *runtime*, from inside a string
+    literal no validator can read, so `"{0.__class__}".format(5)` printed
+    `<class 'int'>` — reopening exactly what `no_dunder_attribute` closes, and
+    `{0[0]}` what `no_subscript` closes. This is the third half of the same
+    ban, alongside `Object._reject_dunder`: both guard a spelling that reaches
+    the runtime as data.
+
+    Only the field *name* is inspected — a format spec may legitimately carry a
+    dot (`{:.2f}`), and `Formatter.parse` already splits the two. The recursion
+    covers a nested spec, which is parsed again at format time and would
+    otherwise smuggle the same access through (`"{0:{1.__class__}}"`).
+    """
+    for _, field, spec, _ in _Formatter().parse(template):
+        if field and ("." in field or "[" in field):
+            raise ValueError(
+                f"{{{field}}} is forbidden — a format field reaching an "
+                "attribute or an item bypasses obj.get_attr(...) / obj.at(...); "
+                "send the message and format the answer"
+            )
+        if spec:
+            _reject_field_access(spec)
 
 
 def _affix_needle(affix: object) -> Any:
@@ -188,6 +215,7 @@ class Str(_ValueEqMixin, Object):
         # "{:^10}".format(s).
         from poop.types._bridge import to_python
 
+        _reject_field_access(self._value)
         return Str(
             self._value.format(
                 *(to_python(a) for a in args),

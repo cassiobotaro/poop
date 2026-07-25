@@ -197,6 +197,8 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 | `ast.JoinedStr` | `{...}` interpolation hides message sends and bypasses POOP `Str` | concatenation: `("Hello, " + name)`, `("count: " + str(n))` |
 | `ast.TemplateStr` | Python 3.14 t-strings share the `{...}` interpolation and yield a raw `Template`, bypassing POOP `Str` | concatenation: `("Hello, " + name)`, `("count: " + str(n))` |
 
+`"{}".format(...)` stays as POOP's template surface — but a format *field* may not reach an attribute or an item. `str.format` resolves `{0.__class__}` and `{0[0]}` at runtime, from inside a string literal no validator can read, so `"{0.__class__}".format(5)` printed `<class 'int'>` — reopening what `no_dunder_attribute` closes, and `{0[0]}` what `no_subscript` closes, against the *raw* Python value at that (`Str.format` deep-unwraps its arguments through `to_python`). `Str._reject_field_access` refuses both spellings, recursing into nested specs (`"{0:{1.__class__}}"` resolves its spec by formatting too). Only the field name is inspected, so `{:.2f}`, `{!r}`, `{name}` and `{:{width}}` are untouched. It is the third half of the dunder ban, next to `Object._reject_dunder`: both guard a spelling that reaches the runtime as data.
+
 ### No `len` — `poop/validators/no_len.py`
 
 | Call | Reason | Substitute |

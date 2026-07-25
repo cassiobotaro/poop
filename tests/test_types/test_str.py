@@ -797,3 +797,42 @@ def test_str_le_against_foreign_raises() -> None:
 
     with pytest.raises(TypeError):
         _ = Str("a") <= Int(1)
+
+
+# --- a format field must not reach attributes or items ---
+
+
+@pytest.mark.parametrize(
+    ("template", "args"),
+    [
+        pytest.param("{0.__class__}", (Int(5),), id="dunder_attribute"),
+        pytest.param("{0.real}", (Int(5),), id="plain_attribute"),
+        pytest.param("{0[0]}", (List(Int(1), Int(2)),), id="item"),
+        pytest.param("{0[a]}", (Dict(),), id="mapping_item"),
+        # A nested spec is parsed again at format time, so the same access
+        # smuggles through unless the check recurses.
+        pytest.param("{0:{1.__class__}}", (Int(1), Int(2)), id="nested_spec"),
+    ],
+)
+def test_format_field_access_is_forbidden(template: str, args: tuple) -> None:
+    # `str.format` reads attributes at runtime, from inside a string literal
+    # no validator can see: "{0.__class__}".format(5) printed <class 'int'>.
+    with pytest.raises(ValueError, match="is forbidden"):
+        Str(template).format(*args)
+
+
+@pytest.mark.parametrize(
+    ("template", "args", "kwargs", "expected"),
+    [
+        pytest.param("{} {}", (Int(1), Int(2)), {}, "1 2", id="auto"),
+        pytest.param("{0} {0}", (Str("x"),), {}, "x x", id="index_reuse"),
+        pytest.param("{n}", (), {"n": Str("Sam")}, "Sam", id="named"),
+        pytest.param("{:.2f}", (Float(1.5),), {}, "1.50", id="spec_with_a_dot"),
+        pytest.param("{!r}", (Str("hi"),), {}, "'hi'", id="conversion"),
+        pytest.param("{:{w}}", (Int(7),), {"w": Int(5)}, "    7", id="nested_spec"),
+    ],
+)
+def test_format_leaves_ordinary_fields_alone(
+    template: str, args: tuple, kwargs: dict, expected: str
+) -> None:
+    assert Str(template).format(*args, **kwargs) == Str(expected)
