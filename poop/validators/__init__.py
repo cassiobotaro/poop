@@ -16,6 +16,7 @@ from poop.validators.no_del import NoDelValidator
 from poop.validators.no_dir import NoDirValidator
 from poop.validators.no_divmod import NoDivmodValidator
 from poop.validators.no_dunder_attribute import NoDunderAttributeValidator
+from poop.validators.no_dunder_name import NoDunderNameValidator
 from poop.validators.no_exec import NoExecValidator
 from poop.validators.no_exit import NoExitValidator
 from poop.validators.no_filter import NoFilterValidator
@@ -116,6 +117,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoChrValidator(),
     NoDivmodValidator(),
     NoDunderAttributeValidator(),
+    NoDunderNameValidator(),
     NoExecValidator(),
     NoExitValidator(),
     NoFormatValidator(),

@@ -24,31 +24,35 @@ _SUBSTITUTES = {
     "__name__": "Klass.name()",
 }
 
-_DICT_MESSAGE = (
-    ".__dict__ is forbidden — it is vars(obj) by another spelling, exposing raw "
-    "Python-native slot values; state lives in instances, reached by messages"
+_DICT_REASON = (
+    "it is vars(obj) by another spelling, exposing raw Python-native slot "
+    "values; state lives in instances, reached by messages"
 )
 
 
-def dunder_message(attr: str) -> str | None:
-    """The rejection for `attr`, or None when it is not a forbidden dunder.
+def dunder_message(name: str, *, dotted: bool = True) -> str | None:
+    """The rejection for `name`, or None when it is not a forbidden dunder.
 
     Shared with `Object`'s runtime guard: `get_attr("__dict__")` reopens
     exactly what this validator closes, and a computed name puts that spelling
     beyond any validator's reach — so the two halves of one ban must say one
-    thing.
+    thing. `no_dunder_name` reads it too, with `dotted=False`: a dunder
+    *global* (`__builtins__`) is the same ban one node type over.
     """
-    if not (attr.startswith("__") and attr.endswith("__")) or attr in _ALLOWED:
+    if not (name.startswith("__") and name.endswith("__")):
         return None
-    if attr == "__dict__":
-        return _DICT_MESSAGE
-    substitute = _SUBSTITUTES.get(attr)
+    # `__init__` is carved out for `super().__init__(...)`, an attribute — a
+    # bare `__init__` Name has no such use, so the carve-out is dotted-only.
+    if dotted and name in _ALLOWED:
+        return None
+    label = f".{name}" if dotted else name
+    if name == "__dict__":
+        return f"{label} is forbidden — {_DICT_REASON}"
+    substitute = _SUBSTITUTES.get(name)
     if substitute is not None:
-        return f".{attr} is forbidden — use {substitute} instead"
-    return (
-        f".{attr} is forbidden — dunders are Python's protocol, "
-        "not POOP's message surface"
-    )
+        return f"{label} is forbidden — use {substitute} instead"
+    kind = "dunders are Python's protocol" if dotted else "dunder globals are Python's"
+    return f"{label} is forbidden — {kind}, not POOP's message surface"
 
 
 class _Visitor(ErrorCollector):

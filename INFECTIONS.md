@@ -421,6 +421,21 @@ A sibling guard, `Object._reject_private`, refuses every `_`-prefixed non-dunder
 
 **The same `_value` name must not leak the other way, through a method's own body.** A method that unwraps a *mandatory* argument inline as `arg._value` blows up when handed a POOP value that carries no `_value` — a `List` / `Set` / `Dict` / `Tuple` passed where a `Str` / `Bytes` / `Int` was expected. `arg._value` then routes through `does_not_understand` and answers `list does not understand #_value`, exposing the internal slot name. The fix is the **faithful-unwrap idiom**, `_faithful(arg)` in `poop/types/_unwrap.py` (a thin `getattr(arg, "_value", arg)` returning `Any`): a `_value`-bearing argument unwraps as before; a foreign one reaches the underlying Python call raw, so Python raises its own `TypeError` (`count() argument 1 must be str, not list`) instead. Its optional-argument twin `_unwrap(arg, default)` does the same after the absent-check. Both are used across `Str` / `Bytes` / `ByteArray` / `Range` / `Int` / `Float`; `Int` / `Float` / `Complex` arithmetic already routed foreign operands to `NotImplemented` (via `_num_value` / `_integral_value` / `_coerce`), so they never leaked. `MessageNotUnderstood` subclassing `AttributeError` is what makes the three-argument `getattr` fall back cleanly here.
 
+### No dunder names — `poop/validators/no_dunder_name.py`
+
+The `ast.Name` half of the same ban: any `__dunder__` spelled as a bare name, load or store.
+
+| Name | Reason |
+|---|---|
+| `__builtins__` | the raw Python builtins **dict**, live and mutable — `__builtins__.clear()` used to run clean through every validator and corrupt the interpreter |
+| `__loader__` / `__spec__` | `BuiltinImporter` / `ModuleSpec` — naked Python natives, and an import surface `no_import` bans |
+| `__name__` / `__package__` / `__debug__` | raw Python `str` / `None` / `bool`, not POOP objects |
+| anything else dunder-shaped | none — it is Python's protocol, not POOP's message surface |
+
+**Why a validator and not a namespace strip.** `exec` re-injects `__builtins__` into the namespace regardless of what the dict handed to it holds, so there is nothing to remove at execution time — the guard has to be static.
+
+**One message, two node types.** Both halves read `dunder_message`, which takes `dotted=False` here so a bare name is not reported as `.__builtins__` — an attribute the program never wrote. Named substitutes carry over (`__name__` → `Klass.name()`); the `__init__` carve-out does not, because `super().__init__(...)` is an attribute and a bare `__init__` Name has no such use.
+
 ### No `type` — `poop/validators/no_type.py`
 
 | Call | Reason | Substitute |
