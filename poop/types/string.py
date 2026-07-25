@@ -386,7 +386,9 @@ class Str(_ValueEqMixin, Object):
             *[Str(s) for s in self._value.splitlines(_unwrap_bool(keepends, False))]
         )
 
-    def __add__(self, other: Str) -> Str:
+    def __add__(self, other: object) -> Str:
+        if not isinstance(other, Str):
+            return NotImplemented  # foreign operand -> faithful TypeError
         return Str(self._value + other._value)
 
     def __mul__(self, other: object) -> Str:

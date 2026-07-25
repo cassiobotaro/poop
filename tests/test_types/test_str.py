@@ -722,6 +722,7 @@ _BAD: Any = List(Int(1), Int(2))
 @pytest.mark.parametrize(
     "call, exc",
     [
+        pytest.param(lambda: Str("abc") + _BAD, TypeError, id="add"),
         pytest.param(lambda: Str("abc").count(_BAD), TypeError, id="count"),
         pytest.param(lambda: Str("abc").find(_BAD), TypeError, id="find"),
         pytest.param(lambda: Str("abc").index(_BAD), TypeError, id="index"),
