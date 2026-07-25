@@ -1,9 +1,15 @@
 import ast
+import builtins
 
 import pytest
 
 from poop.errors import ExecutionError
 from poop.executor import execute
+
+# User code sees only the builtins allow-list, so a test naming a Python
+# builtin has to hand it over itself — as a POOP program would reach one, by
+# transformer rewrite into the namespace.
+_RAISABLE: dict[str, object] = {"ValueError": ValueError}
 
 
 def test_execute_valid_tree_runs_without_error() -> None:
@@ -14,7 +20,7 @@ def test_execute_valid_tree_runs_without_error() -> None:
 def test_execute_raises_execution_error_on_runtime_exception() -> None:
     tree = ast.parse("raise ValueError('boom')")
     with pytest.raises(ExecutionError, match="boom"):
-        execute(tree)
+        execute(tree, namespace=dict(_RAISABLE))
 
 
 def test_execution_error_without_lineno_is_bare_message() -> None:
@@ -39,14 +45,14 @@ def test_execution_error_without_message_is_bare_class_name() -> None:
     # trail a dangling colon.
     tree = ast.parse("raise ValueError()")
     with pytest.raises(ExecutionError) as exc_info:
-        execute(tree, filename="prog.py")
+        execute(tree, filename="prog.py", namespace=dict(_RAISABLE))
     assert str(exc_info.value) == "ValueError (line 1)"
 
 
 def test_execution_error_reports_user_line() -> None:
     tree = ast.parse("x = 1\ny = 2\nraise ValueError('boom')")
     with pytest.raises(ExecutionError) as exc_info:
-        execute(tree, filename="prog.py")
+        execute(tree, filename="prog.py", namespace=dict(_RAISABLE))
     assert exc_info.value.lineno == 3
     assert "(line 3)" in str(exc_info.value)
 
@@ -68,10 +74,12 @@ def test_execute_mutates_provided_namespace() -> None:
 
 
 def test_execute_separate_namespaces_are_isolated() -> None:
-    tree1 = ast.parse("x = 42")
-    tree2 = ast.parse("assert 'x' not in dir()")
-    execute(tree1, namespace={})
-    execute(tree2, namespace={})
+    first: dict[str, object] = {}
+    second: dict[str, object] = {}
+    execute(ast.parse("x = 42"), namespace=first)
+    execute(ast.parse("y = 1"), namespace=second)
+    assert first["x"] == 42
+    assert "x" not in second
 
 
 def test_execute_namespace_is_available_in_code() -> None:
@@ -85,3 +93,42 @@ def test_execute_compile_error_becomes_execution_error() -> None:
     tree = ast.parse("return")
     with pytest.raises(ExecutionError, match="'return'"):
         execute(tree)
+
+
+# --- the builtins allow-list: user code reaches POOP's names, not Python's ---
+
+
+@pytest.mark.parametrize(
+    "name", ["OSError", "BaseException", "KeyboardInterrupt", "copyright", "open"]
+)
+def test_a_builtin_poop_does_not_own_is_out_of_reach(name: str) -> None:
+    # `exec` hands a program CPython's whole builtins namespace unless the
+    # globals dict carries one: `OSError.print()` used to answer a raw
+    # AttributeError from a live Python class.
+    with pytest.raises(ExecutionError, match=f"name '{name}' is not defined"):
+        execute(ast.parse(f"x = {name}"), namespace={})
+
+
+def test_the_class_statement_still_works() -> None:
+    # `__build_class__` and `__name__` are what the statement itself calls.
+    ns: dict[str, object] = {}
+    execute(ast.parse("class C:\n    def m(self):\n        return 1\n"), namespace=ns)
+    built = ns["C"]
+    assert isinstance(built, type)
+    assert built.__name__ == "C"
+
+
+@pytest.mark.parametrize("name", ["super", "classmethod", "staticmethod", "property"])
+def test_class_machinery_stays_reachable(name: str) -> None:
+    # Class-definition machinery with no message-passing substitute — the
+    # argument INFECTIONS.md already makes for `super`.
+    ns: dict[str, object] = {}
+    execute(ast.parse(f"x = {name}"), namespace=ns)
+    assert ns["x"] is getattr(builtins, name)
+
+
+def test_a_supplied_builtins_is_left_alone() -> None:
+    # setdefault, not assignment: the REPL reuses one namespace across inputs.
+    ns: dict[str, object] = {"__builtins__": {"marker": 1}}
+    execute(ast.parse("x = 1"), namespace=ns)
+    assert ns["__builtins__"] == {"marker": 1}

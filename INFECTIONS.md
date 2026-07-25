@@ -442,9 +442,24 @@ The `ast.Name` half of the same ban: any `__dunder__` spelled as a bare name, lo
 | `__name__` / `__package__` / `__debug__` | raw Python `str` / `None` / `bool`, not POOP objects |
 | anything else dunder-shaped | none — it is Python's protocol, not POOP's message surface |
 
-**Why a validator and not a namespace strip.** `exec` re-injects `__builtins__` into the namespace regardless of what the dict handed to it holds, so there is nothing to remove at execution time — the guard has to be static.
+**Why a validator on top of the allow-list.** `exec` injects `__builtins__` only when the globals dict lacks one, so the executor supplies its own (below) and `__builtins__` no longer names CPython's whole namespace. The validator stays because it is the half that *teaches*: the program is refused before it runs, naming the ban, rather than answering `dict does not understand #clear` at runtime.
 
 **One message, two node types.** Both halves read `dunder_message`, which takes `dotted=False` here so a bare name is not reported as `.__builtins__` — an attribute the program never wrote. Named substitutes carry over (`__name__` → `Klass.name()`); the `__init__` carve-out does not, because `super().__init__(...)` is an attribute and a bare `__init__` Name has no such use.
+
+### Builtins allow-list — `poop/executor.py`
+
+Validators and transformers cover the names someone thought to enumerate; `exec` hands a program *everything else* in CPython's builtins namespace. `OSError`, `BaseException`, `KeyboardInterrupt`, `copyright`, `NotImplemented`, `open` — 55 of Python's 71 builtin exceptions among them — were naked natives one identifier away, answering `type object 'OSError' has no attribute 'print'` instead of `does not understand #print`. That contradicted `poop/types/exceptions.py`, which mirrors 16 exceptions *on purpose*: "a language with no I/O and no codecs cannot reach the `OSError` subtree".
+
+`exec` only injects `__builtins__` when the globals dict lacks one, so `execute` supplies an allow-list and everything outside it answers `NameError: name 'OSError' is not defined` — which is what "if Python needs an import to reach it, POOP does not offer it" means.
+
+| Allowed | Why |
+|---|---|
+| `__build_class__` | what the `class` statement itself calls |
+| `__name__` | read while creating a class |
+| `super` | already the documented allowance — without it inheritance breaks entirely |
+| `classmethod` / `staticmethod` / `property` | class-definition machinery with no message-passing substitute, by the same argument as `super`; `examples/patterns/` uses the first two |
+
+It is `setdefault`, not assignment: the REPL reuses one namespace across inputs. This is a rule where the validators are a list — it closes the whole class of escapes, including the names nobody enumerated — so `no_dunder_name` and the builtin-call bans remain as the teaching half, refusing a program before it runs.
 
 ### No `type` — `poop/validators/no_type.py`
 

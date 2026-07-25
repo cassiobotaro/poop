@@ -1,6 +1,30 @@
 import ast
+import builtins
 
 from poop.errors import ExecutionError
+
+# The only Python builtins user code may reach. `exec` hands a program
+# CPython's entire builtins namespace unless the globals dict already carries
+# one, and POOP covered only the names it bans or rewrites — so `OSError`,
+# `copyright`, `NotImplemented` and 55 of Python's 71 builtin exceptions were
+# naked natives one identifier away, answering `type object 'OSError' has no
+# attribute 'print'` instead of POOP's `does not understand #print`. That
+# contradicted `poop/types/exceptions.py`, which mirrors 16 exceptions *on
+# purpose*: "a language with no I/O and no codecs cannot reach the OSError
+# subtree". An allow-list closes the whole class of escapes at once, where a
+# validator can only close the names someone thought to enumerate.
+#
+# Everything here is language machinery with no message-passing substitute —
+# the argument `INFECTIONS.md` already makes for `super`. `__build_class__` is
+# what the `class` statement calls; `__name__` is read while creating one.
+_ALLOWED_BUILTINS: dict[str, object] = {
+    "__build_class__": builtins.__build_class__,
+    "__name__": "__poop__",
+    "super": builtins.super,
+    "classmethod": builtins.classmethod,
+    "staticmethod": builtins.staticmethod,
+    "property": builtins.property,
+}
 
 
 def _user_lineno(exc: BaseException, filename: str) -> int | None:
@@ -58,6 +82,9 @@ def execute(
         # leaking a raw SyntaxError past the CLI's error handler.
         raise ExecutionError(exc.msg, exc.lineno) from exc
     ns: dict[str, object] = namespace if namespace is not None else {}
+    # setdefault, not assignment: the REPL reuses one namespace across inputs,
+    # and a program is free to have been handed its own (tests do).
+    ns.setdefault("__builtins__", dict(_ALLOWED_BUILTINS))
     try:
         exec(code, ns)  # noqa: S102
     except Exception as exc:

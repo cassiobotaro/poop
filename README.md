@@ -98,6 +98,7 @@ POOP runs ~68 validators on every program. Grouped by theme:
 **No library.** POOP is the language, not the library — it mirrors no stdlib module.
 - `import` — if Python needs an import to reach something, POOP does not offer it. There is no `math`, no `json`, no `os`.
 - The only names injected are `Try` and `With` — the two constructs replacing `try`/`except` and `with`, which are Python keywords rather than modules.
+- Python's builtins are not there either: user code runs against an allow-list (`super`, `classmethod`, `staticmethod`, `property`, plus what the `class` statement needs), so `OSError`, `copyright` and the rest answer `NameError` rather than handing back a live Python object.
 - `async def` / `await` follow from this: `asyncio` was the only way to drive a coroutine, so async has no substitute and is banned outright. So is `open` — there is no file I/O; a program talks through `"prompt".input()` and `obj.print()`.
 
 The full catalog with one row per validator and the substitute recipe lives in [`INFECTIONS.md`](INFECTIONS.md).
