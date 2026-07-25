@@ -717,12 +717,23 @@ def test_ordering_with_foreign_operand_raises_typeerror() -> None:
 
 
 _BAD: Any = List(Int(1), Int(2))
+# The affix case the proposal named: `"a".startswith(1)` used to answer
+# `int does not understand #_items`.
+_BAD_INT: Any = Int(1)
 
 
 @pytest.mark.parametrize(
     "call, exc",
     [
         pytest.param(lambda: Str("abc") + _BAD, TypeError, id="add"),
+        pytest.param(lambda: Str("abc").startswith(_BAD), TypeError, id="startswith"),
+        pytest.param(lambda: Str("abc").endswith(_BAD), TypeError, id="endswith"),
+        pytest.param(
+            lambda: Str("abc").startswith(_BAD_INT), TypeError, id="startswith_int"
+        ),
+        pytest.param(
+            lambda: Str("abc").endswith(_BAD_INT), TypeError, id="endswith_int"
+        ),
         pytest.param(lambda: Str("abc").count(_BAD), TypeError, id="count"),
         pytest.param(lambda: Str("abc").find(_BAD), TypeError, id="find"),
         pytest.param(lambda: Str("abc").index(_BAD), TypeError, id="index"),

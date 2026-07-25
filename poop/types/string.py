@@ -22,6 +22,29 @@ if TYPE_CHECKING:
 _str = str  # alias to avoid shadowing in annotations
 
 
+def _affix_needle(affix: object) -> Any:
+    """The `str.startswith` / `str.endswith` argument behind a POOP affix.
+
+    A `Str` unwraps to its value; a `Tuple` to a tuple of faithfully unwrapped
+    members — CPython accepts a tuple of prefixes, and in POOP that is the only
+    message-shaped substitute for the forbidden `s.startswith("a") or
+    s.startswith("b")`. Members unwrap through `_faithful` (not `str(p)`) so a
+    non-`Str` member reaches `str.startswith` and raises the faithful
+    `TypeError` instead of being silently stringified.
+
+    Anything that is neither — an `Int`, a `List` — reaches CPython raw for the
+    same reason: reading `._items` off it would answer `int does not
+    understand #_items`, naming a POOP internal.
+    """
+    from poop.types.tuple import Tuple  # circular: tuple imports string
+
+    if isinstance(affix, Str):
+        return affix._value
+    if isinstance(affix, Tuple):
+        return tuple(_faithful(p) for p in affix._items)
+    return _faithful(affix)
+
+
 class Str(_ValueEqMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
@@ -214,18 +237,10 @@ class Str(_ValueEqMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        # CPython accepts a tuple of prefixes; in POOP this is the only
-        # message-shaped substitute for the forbidden `s.startswith("a")
-        # or s.startswith("b")`. Unwrap each element to its underlying value
-        # (not str(p)) so a non-Str member reaches str.startswith and raises
-        # the faithful TypeError instead of being silently stringified.
-        needle: _str | tuple[Any, ...] = (
-            prefix._value
-            if isinstance(prefix, Str)
-            else tuple(_faithful(p) for p in prefix._items)
-        )
         return to_boolean(
-            self._value.startswith(needle, _unwrap(start, None), _unwrap(end, None))
+            self._value.startswith(
+                _affix_needle(prefix), _unwrap(start, None), _unwrap(end, None)
+            )
         )
 
     def endswith(
@@ -234,13 +249,10 @@ class Str(_ValueEqMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        needle: _str | tuple[Any, ...] = (
-            suffix._value
-            if isinstance(suffix, Str)
-            else tuple(_faithful(p) for p in suffix._items)
-        )
         return to_boolean(
-            self._value.endswith(needle, _unwrap(start, None), _unwrap(end, None))
+            self._value.endswith(
+                _affix_needle(suffix), _unwrap(start, None), _unwrap(end, None)
+            )
         )
 
     def isalpha(self) -> Boolean:
