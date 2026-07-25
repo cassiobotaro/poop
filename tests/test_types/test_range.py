@@ -310,3 +310,7 @@ def test_range_wrong_type_args_are_faithful_not_value_leaks() -> None:
         Range(Int(0), Int(5)).at(bad)
     assert "_value" not in str(texc.value)
     assert "does not understand" not in str(texc.value)
+
+
+def test_at_accepts_a_boolean_index() -> None:
+    assert Range(Int(10), Int(20)).at(true) == Int(11)

@@ -12,6 +12,7 @@ from poop.types.object import Object
 from poop.types.str_iterator import StrIterator
 
 if TYPE_CHECKING:
+    from poop.types._index import Index
     from poop.types.boolean import Boolean, to_boolean
     from poop.types.bytes import Bytes
     from poop.types.int import Int
@@ -95,14 +96,14 @@ class Str(_ValueEqMixin, Object):
     def input(self) -> Str:
         return Str(builtins.input(self._value))
 
-    def at(self, index: Int) -> Str:
-        return Str(self._value[index._value])
+    def at(self, index: Index) -> Str:
+        return Str(self._value[index])
 
     def slice(
         self,
-        start_or_slice: Int | Slice,
-        stop: Int | NoneClass | None = None,
-        step: Int | NoneClass | None = None,
+        start_or_slice: Index | Slice,
+        stop: Index | NoneClass | None = None,
+        step: Index | NoneClass | None = None,
     ) -> Str:
         from poop.types.slice import _resolve_py_slice
 

@@ -795,13 +795,14 @@ _BAD: Any = List(Int(1), Int(2))
             lambda: ByteArray(bytearray(b"abc")).split(_BAD), TypeError, id="split"
         ),
         pytest.param(
-            lambda: ByteArray(bytearray(b"abc")).hex(_BAD), TypeError, id="hex_sep"
+            # CPython answers ValueError here, not TypeError:
+            # `bytearray(b"abc").hex([1, 2])` is "sep must be length 1.".
+            lambda: ByteArray(bytearray(b"abc")).hex(_BAD),
+            ValueError,
+            id="hex_sep",
         ),
         pytest.param(
             lambda: ByteArray(bytearray(b"abc")).append(_BAD), TypeError, id="append"
-        ),
-        pytest.param(
-            lambda: ByteArray(bytearray(b"abc")).extend(_BAD), TypeError, id="extend"
         ),
         pytest.param(
             lambda: ByteArray(bytearray(b"abc")).insert(_BAD, Int(5)),
@@ -858,3 +859,20 @@ def test_bytearray_ordering_against_foreign_raises() -> None:
     ):
         with pytest.raises(TypeError):
             op()
+
+
+def test_extend_takes_an_iterable_of_ints() -> None:
+    # CPython's `bytearray.extend([1, 2])` appends those bytes, and an `Int`
+    # answers `__index__`, so a List of them is a valid argument — it used to
+    # raise only because nothing could turn an Int into an index.
+    ba = ByteArray(bytearray(b"ab"))
+    ints: Any = List(Int(1), Int(2))  # CPython takes any iterable of ints
+    ba.extend(ints)
+    assert ba == ByteArray(bytearray(b"ab\x01\x02"))
+
+
+def test_at_and_at_put_accept_a_boolean_index() -> None:
+    ba = ByteArray(bytearray(b"ab"))
+    assert ba.at(true) == Int(98)
+    ba.at_put(true, Int(99))
+    assert ba.at(Int(1)) == Int(99)

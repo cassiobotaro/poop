@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
@@ -15,6 +15,7 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    from poop.types._index import Index
     from poop.types.boolean import Boolean, to_boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
@@ -45,22 +46,22 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     def __len__(self) -> int:
         return len(self._value)
 
-    def at(self, index: Int) -> Int:
-        return Int(self._value[_faithful(index)])
+    def at(self, index: Index) -> Int:
+        return Int(self._value[index])
 
     def slice(
         self,
-        start_or_slice: Int | Slice,
-        stop: Int | NoneClass | None = None,
-        step: Int | NoneClass | None = None,
+        start_or_slice: Index | Slice,
+        stop: Index | NoneClass | None = None,
+        step: Index | NoneClass | None = None,
     ) -> ByteArray:
         from poop.types.slice import _resolve_py_slice
 
         py = _resolve_py_slice(start_or_slice, stop, step)
         return ByteArray(bytearray(self._value[py]))
 
-    def at_put(self, index: Int, byte: Int) -> ByteArray:
-        self._value[_faithful(index)] = _faithful(byte)
+    def at_put(self, index: Index, byte: Int) -> ByteArray:
+        self._value[index] = _faithful(byte)
         return self
 
     def includes(self, byte: Int) -> Boolean:
@@ -98,7 +99,10 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         if _is_absent(sep):
             return Str(self._value.hex())
         raw = _faithful(sep)
-        sep_value: str | bytes = raw if isinstance(raw, str) else bytes(raw)
+        # CPython's hex() takes str or bytes, not bytearray, so a ByteArray
+        # separator is converted — but nothing else is, or a List of Ints
+        # would be silently coerced where CPython raises.
+        sep_value = bytes(raw) if isinstance(raw, _bytearray) else raw
         return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
 
     def __iter__(self) -> Iterator[Int]:
@@ -157,16 +161,18 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         self._value.extend(_faithful(iterable))
         return none
 
-    def insert(self, i: Int, byte: Int) -> NoneClass:
-        self._value.insert(_faithful(i), _faithful(byte))
+    def insert(self, i: Index, byte: Int) -> NoneClass:
+        self._value.insert(i, _faithful(byte))
         return none
 
-    def pop(self, index: Int | NoneClass | None = None) -> Int:
+    def pop(self, index: Index | NoneClass | None = None) -> Int:
         from poop.types._unwrap import _is_absent
 
         if _is_absent(index):
             return Int(self._value.pop())
-        return Int(self._value.pop(_faithful(index)))
+        # typeshed types bytearray.pop's index as `int`, though CPython
+        # takes any __index__ object here, as `list.pop` does.
+        return Int(self._value.pop(cast("int", index)))
 
     def remove(self, byte: Int) -> NoneClass:
         self._value.remove(_faithful(byte))
@@ -188,7 +194,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         fill = _unwrap(fillchar, None)
         if fill is None:
             return ByteArray(self._value.center(_faithful(width)))
-        return ByteArray(self._value.center(_faithful(width), bytes(fill)))
+        return ByteArray(self._value.center(_faithful(width), fill))
 
     def count(
         self,
@@ -209,7 +215,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return (
             true
             if self._value.endswith(
-                bytes(_faithful(suffix)),
+                _faithful(suffix),
                 _unwrap(start, None),
                 _unwrap(end, None),
             )
@@ -285,7 +291,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         fill = _unwrap(fillchar, None)
         if fill is None:
             return ByteArray(self._value.ljust(_faithful(width)))
-        return ByteArray(self._value.ljust(_faithful(width), bytes(fill)))
+        return ByteArray(self._value.ljust(_faithful(width), fill))
 
     def lower(self) -> ByteArray:
         return ByteArray(self._value.lower())
@@ -298,10 +304,10 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return Tuple(*[ByteArray(p) for p in self._value.partition(_faithful(sep))])
 
     def removeprefix(self, prefix: ByteArray) -> ByteArray:
-        return ByteArray(self._value.removeprefix(bytes(_faithful(prefix))))
+        return ByteArray(self._value.removeprefix(_faithful(prefix)))
 
     def removesuffix(self, suffix: ByteArray) -> ByteArray:
-        return ByteArray(self._value.removesuffix(bytes(_faithful(suffix))))
+        return ByteArray(self._value.removesuffix(_faithful(suffix)))
 
     def replace(
         self,
@@ -346,7 +352,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         fill = _unwrap(fillchar, None)
         if fill is None:
             return ByteArray(self._value.rjust(_faithful(width)))
-        return ByteArray(self._value.rjust(_faithful(width), bytes(fill)))
+        return ByteArray(self._value.rjust(_faithful(width), fill))
 
     def rpartition(self, sep: ByteArray) -> Tuple:
         return Tuple(*[ByteArray(p) for p in self._value.rpartition(_faithful(sep))])
@@ -398,7 +404,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return (
             true
             if self._value.startswith(
-                bytes(_faithful(prefix)),
+                _faithful(prefix),
                 _unwrap(start, None),
                 _unwrap(end, None),
             )

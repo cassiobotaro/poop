@@ -374,3 +374,13 @@ def test_tuple_gt_against_foreign_raises() -> None:
 
     with pytest.raises(TypeError):
         _ = Tuple(Int(1)) > Int(1)
+
+
+def test_at_accepts_a_boolean_index() -> None:
+    assert Tuple(Int(10), Int(20)).at(true) == Int(20)
+
+
+def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
+    with pytest.raises(TypeError) as info:
+        Tuple(Int(1)).at(List(Int(0)))  # ty: ignore[invalid-argument-type]
+    assert "_value" not in str(info.value)

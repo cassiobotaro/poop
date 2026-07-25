@@ -528,3 +528,22 @@ def test_list_gt_against_foreign_raises() -> None:
 
     with pytest.raises(TypeError):
         _ = List(Int(1)) > Int(1)
+
+
+def test_at_accepts_a_boolean_index() -> None:
+    # CPython: [10, 20][True] is 20, bool being an int subclass.
+    assert List(Int(10), Int(20)).at(true) == Int(20)
+    assert List(Int(10), Int(20)).at(false) == Int(10)
+
+
+def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
+    with pytest.raises(TypeError) as info:
+        List(Int(1)).at(List(Int(0)))  # ty: ignore[invalid-argument-type]
+    assert "_value" not in str(info.value)
+
+
+def test_insert_and_pop_accept_a_boolean_index() -> None:
+    xs = List(Int(1), Int(3))
+    xs.insert(true, Int(2))
+    assert xs == List(Int(1), Int(2), Int(3))
+    assert xs.pop(true) == Int(2)

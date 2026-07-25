@@ -238,3 +238,15 @@ def test_slice_with_none_step_negative_reverses() -> None:
 def test_slice_eq_with_none_fields() -> None:
     assert Slice(None, Int(3)) == Slice(None, Int(3))
     assert Slice(None, Int(3)) != Slice(Int(0), Int(3))
+
+
+def test_a_boolean_component_indexes_like_one() -> None:
+    # slice(True, ...) is valid in CPython; the components are resolved
+    # through __index__ by the sequence being sliced.
+    assert List(Int(1), Int(2), Int(3)).slice(Slice(true, Int(3))) == List(
+        Int(2), Int(3)
+    )
+
+
+def test_indices_accepts_a_boolean_length() -> None:
+    assert Slice(Int(0), Int(2)).indices(true) == Tuple(Int(0), Int(1), Int(1))

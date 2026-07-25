@@ -645,3 +645,13 @@ def test_bytes_ordering_against_foreign_raises() -> None:
     ):
         with pytest.raises(TypeError):
             op()
+
+
+def test_at_accepts_a_boolean_index() -> None:
+    assert Bytes(b"ab").at(true) == Int(98)
+
+
+def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
+    with pytest.raises(TypeError) as info:
+        Bytes(b"ab").at(_BAD)
+    assert "_value" not in str(info.value)

@@ -385,3 +385,11 @@ def test_reflected_op_with_operand_lacking_the_method_is_notimplemented() -> Non
     assert true.__radd__(none) is NotImplemented
     with pytest.raises(TypeError):
         _ = none + true
+
+
+def test_boolean_answers_the_index_protocol() -> None:
+    # bool is an int subclass in CPython: [10, 20][True] is 20.
+    assert [10, 20][true] == 20
+    assert [10, 20][false] == 10
+    assert true.__index__() == 1
+    assert false.__index__() == 0

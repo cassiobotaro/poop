@@ -11,6 +11,7 @@ from poop.types.bytes_iterator import BytesIterator
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types._index import Index
     from poop.types.boolean import Boolean, to_boolean
     from poop.types.int import Int
     from poop.types.list import List
@@ -38,16 +39,16 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def __len__(self) -> int:
         return len(self._value)
 
-    def at(self, index: Int) -> Int:
+    def at(self, index: Index) -> Int:
         from poop.types.int import Int
 
-        return Int(self._value[index._value])
+        return Int(self._value[index])
 
     def slice(
         self,
-        start_or_slice: Int | Slice,
-        stop: Int | NoneClass | None = None,
-        step: Int | NoneClass | None = None,
+        start_or_slice: Index | Slice,
+        stop: Index | NoneClass | None = None,
+        step: Index | NoneClass | None = None,
     ) -> Bytes:
         from poop.types.slice import _resolve_py_slice
 

@@ -13,6 +13,7 @@ from poop.types.object import Object
 from poop.types.tuple_iterator import TupleIterator
 
 if TYPE_CHECKING:
+    from poop.types._index import Index
     from poop.types.boolean import Boolean, to_boolean
     from poop.types.int import Int
     from poop.types.none import NoneClass
@@ -37,14 +38,14 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
     def __len__(self) -> int:
         return len(self._items)
 
-    def at(self, index: Int) -> Object:
-        return self._items[index._value]
+    def at(self, index: Index) -> Object:
+        return self._items[index]
 
     def slice(
         self,
-        start_or_slice: Int | Slice,
-        stop: Int | NoneClass | None = None,
-        step: Int | NoneClass | None = None,
+        start_or_slice: Index | Slice,
+        stop: Index | NoneClass | None = None,
+        step: Index | NoneClass | None = None,
     ) -> Tuple:
         from poop.types.slice import _resolve_py_slice
 
@@ -93,7 +94,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         self,
         obj: Object,
         start: Int | NoneClass | None = None,
-        stop: Int | NoneClass | None = None,
+        stop: Index | NoneClass | None = None,
     ) -> Int:
         from poop.types._unwrap import _is_absent, _opt_int
         from poop.types.int import Int

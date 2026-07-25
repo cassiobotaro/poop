@@ -13,6 +13,7 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types._index import Index
     from poop.types.boolean import Boolean, to_boolean
     from poop.types.int import Int
     from poop.types.none import NoneClass
@@ -38,18 +39,18 @@ class List(_ValueEqMixin, _IterableMixin, Object):
     def __len__(self) -> int:
         return len(self._items)
 
-    def at(self, index: Int | Slice) -> Object:
+    def at(self, index: Index | Slice) -> Object:
         from poop.types.slice import Slice
 
         if isinstance(index, Slice):
             return List(*self._items[index._py_slice()])
-        return self._items[index._value]
+        return self._items[index]
 
     def slice(
         self,
-        start_or_slice: Int | Slice,
-        stop: Int | NoneClass | None = None,
-        step: Int | NoneClass | None = None,
+        start_or_slice: Index | Slice,
+        stop: Index | NoneClass | None = None,
+        step: Index | NoneClass | None = None,
     ) -> List:
         from poop.types.slice import _resolve_py_slice
 
@@ -136,12 +137,12 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         self._items.append(obj)
         return none
 
-    def pop(self, index: Int | NoneClass | None = None) -> Object:
+    def pop(self, index: Index | NoneClass | None = None) -> Object:
         from poop.types._unwrap import _is_absent
 
         if _is_absent(index):
             return self._items.pop()
-        return self._items.pop(index._value)
+        return self._items.pop(index)
 
     def clear(self) -> NoneClass:
         self._items.clear()
@@ -163,7 +164,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         self,
         obj: Object,
         start: Int | NoneClass | None = None,
-        stop: Int | NoneClass | None = None,
+        stop: Index | NoneClass | None = None,
     ) -> Int:
         from poop.types._unwrap import _is_absent, _opt_int
         from poop.types.int import Int
@@ -174,8 +175,8 @@ class List(_ValueEqMixin, _IterableMixin, Object):
             return Int(self._items.index(obj, _opt_int(start, 0)))
         return Int(self._items.index(obj, _opt_int(start, 0), _opt_int(stop, 0)))
 
-    def insert(self, i: Int, obj: Object) -> NoneClass:
-        self._items.insert(i._value, obj)
+    def insert(self, i: Index, obj: Object) -> NoneClass:
+        self._items.insert(i, obj)
         return none
 
     def remove(self, obj: Object) -> NoneClass:

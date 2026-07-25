@@ -836,3 +836,15 @@ def test_format_leaves_ordinary_fields_alone(
     template: str, args: tuple, kwargs: dict, expected: str
 ) -> None:
     assert Str(template).format(*args, **kwargs) == Str(expected)
+
+
+def test_at_accepts_a_boolean_index() -> None:
+    # CPython: "ab"[True] is "b".
+    assert Str("ab").at(true) == Str("b")
+    assert Str("ab").at(false) == Str("a")
+
+
+def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
+    with pytest.raises(TypeError) as info:
+        Str("ab").at(_BAD)
+    assert "_value" not in str(info.value)

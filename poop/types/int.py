@@ -369,6 +369,14 @@ class Int(_NumericCompareMixin, Object):
     def __int__(self) -> _int:
         return self._value
 
+    def __index__(self) -> _int:
+        # Python's index protocol, so an `Int` *is* an index: `xs.at(i)` hands
+        # the wrapper straight to CPython instead of unwrapping `i._value` by
+        # hand, which leaked `#_value` for a foreign index and refused a
+        # Boolean one. Answering a native is required — CPython demands an
+        # `int` here, like `__len__` and `__bool__`.
+        return self._value
+
     def __bool__(self) -> bool:
         return self._value != 0
 

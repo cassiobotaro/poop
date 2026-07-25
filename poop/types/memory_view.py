@@ -9,6 +9,7 @@ from poop.types.memory_view_iterator import MemoryViewIterator
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types._index import Index
     from poop.types.none import NoneClass
     from poop.types.string import Str
 
@@ -39,8 +40,8 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     def __len__(self) -> int:
         return len(self._value)
 
-    def at(self, index: Int) -> Int:
-        return Int(self._value[index._value])
+    def at(self, index: Index) -> Int:
+        return Int(self._value[index])
 
     def __iter__(self) -> Iterator[Int]:
         return (Int(b) for b in self._value)

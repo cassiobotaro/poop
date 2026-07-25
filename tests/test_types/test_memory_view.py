@@ -172,3 +172,7 @@ def test_bare_memoryview_name_is_rewritten() -> None:
     assert isinstance(assign, ast.Assign)
     assert isinstance(assign.value, ast.Name)
     assert assign.value.id == "_poop_memoryview"
+
+
+def test_at_accepts_a_boolean_index() -> None:
+    assert MemoryView(memoryview(b"ab")).at(true) == Int(98)

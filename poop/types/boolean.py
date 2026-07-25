@@ -73,6 +73,12 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     @abstractmethod
     def __str__(self) -> str: ...
 
+    def __index__(self) -> int:
+        # Same reason `_order_value` folds to 1/0: `bool` is an `int` subclass,
+        # so CPython indexes with it — `[1, 2][True]` is 2, `"ab"[True]` is
+        # "b". Without this the whole Boolean rung was unusable as an index.
+        return 1 if self else 0
+
     # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
     # against the numeric tower live in _NumericCompareMixin; _order_value()
     # above folds a Boolean to 1/0 so it compares as `bool`'s int subclass does.

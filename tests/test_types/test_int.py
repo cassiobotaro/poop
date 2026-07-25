@@ -549,9 +549,6 @@ _BAD: Any = List(Int(1), Int(2))
             lambda: Int(5).to_bytes(Int(2), _BAD), TypeError, id="to_bytes_byteorder"
         ),
         pytest.param(
-            lambda: Int.from_bytes(_BAD, Str("big")), TypeError, id="from_bytes_source"
-        ),
-        pytest.param(
             lambda: Int.from_bytes(Bytes(b"\x01"), _BAD),
             TypeError,
             id="from_bytes_byteorder",
@@ -603,3 +600,17 @@ def test_pow_negative_exponent_returns_float() -> None:
     result = Int(2) ** Int(-1)
     assert isinstance(result, Float)
     assert result._value == pytest.approx(0.5)
+
+
+def test_from_bytes_takes_an_iterable_of_ints() -> None:
+    # `int.from_bytes([1, 2])` is 258 in CPython — the source may be any
+    # iterable of ints, which a List of `Int` now is, `Int` answering
+    # `__index__`.
+    source: Any = List(Int(1), Int(2))  # CPython takes any iterable of ints
+    assert Int.from_bytes(source, Str("big")) == Int(258)
+
+
+def test_int_answers_the_index_protocol() -> None:
+    # An Int *is* an index, so no call site has to unwrap `i._value` by hand.
+    assert [10, 20, 30][Int(1)] == 20
+    assert Int(2).__index__() == 2

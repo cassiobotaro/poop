@@ -6,8 +6,8 @@ from poop.types.boolean import false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types._index import Index
     from poop.types.boolean import Boolean
-    from poop.types.int import Int
     from poop.types.none import NoneClass
     from poop.types.tuple import Tuple
 
@@ -19,41 +19,41 @@ class Slice(Object):
 
     def __init__(
         self,
-        start: Int | NoneClass | None = None,
-        stop: Int | NoneClass | None = None,
-        step: Int | NoneClass | None = None,
+        start: Index | NoneClass | None = None,
+        stop: Index | NoneClass | None = None,
+        step: Index | NoneClass | None = None,
     ) -> None:
-        self._start: Int | None = _coerce(start)
-        self._stop: Int | None = _coerce(stop)
-        self._step: Int | None = _coerce(step)
+        self._start: Index | None = _coerce(start)
+        self._stop: Index | None = _coerce(stop)
+        self._step: Index | None = _coerce(step)
 
-    def start(self) -> Int | NoneClass:
+    def start(self) -> Index | NoneClass:
         from poop.types.none import none
 
         return self._start if self._start is not None else none
 
-    def stop(self) -> Int | NoneClass:
+    def stop(self) -> Index | NoneClass:
         from poop.types.none import none
 
         return self._stop if self._stop is not None else none
 
-    def step(self) -> Int | NoneClass:
+    def step(self) -> Index | NoneClass:
         from poop.types.none import none
 
         return self._step if self._step is not None else none
 
     def _py_slice(self) -> slice:
-        return _slice(
-            self._start._value if self._start is not None else None,
-            self._stop._value if self._stop is not None else None,
-            self._step._value if self._step is not None else None,
-        )
+        # The components go in as they are: `slice` takes any object, and the
+        # sequence being sliced resolves each through `__index__`, which Int
+        # answers. Reading `._value` here refused a Boolean component and
+        # leaked `#_value` for anything else.
+        return _slice(self._start, self._stop, self._step)
 
-    def indices(self, length: Int) -> Tuple:
+    def indices(self, length: Index) -> Tuple:
         from poop.types.int import Int
         from poop.types.tuple import Tuple
 
-        start, stop, step = self._py_slice().indices(length._value)
+        start, stop, step = self._py_slice().indices(length)
         return Tuple(Int(start), Int(stop), Int(step))
 
     def __eq__(self, other: object) -> Boolean:
@@ -87,9 +87,9 @@ class Slice(Object):
 
 
 def _resolve_py_slice(
-    start_or_slice: Int | Slice,
-    stop: Int | NoneClass | None,
-    step: Int | NoneClass | None,
+    start_or_slice: Index | Slice,
+    stop: Index | NoneClass | None,
+    step: Index | NoneClass | None,
 ) -> slice:
     """The native slice a sequence `slice(...)` message resolves to.
 
@@ -103,7 +103,7 @@ def _resolve_py_slice(
     return Slice(start_or_slice, stop, step)._py_slice()
 
 
-def _coerce(value: Int | NoneClass | None) -> Int | None:
+def _coerce(value: Index | NoneClass | None) -> Index | None:
     from poop.types.none import NoneClass
 
     if value is None or isinstance(value, NoneClass):
@@ -111,7 +111,7 @@ def _coerce(value: Int | NoneClass | None) -> Int | None:
     return value
 
 
-def _field_eq(a: Int | None, b: Int | None) -> bool:
+def _field_eq(a: Index | None, b: Index | None) -> bool:
     if a is None and b is None:
         return True
     if a is None or b is None:
@@ -119,7 +119,7 @@ def _field_eq(a: Int | None, b: Int | None) -> bool:
     return bool(a == b)
 
 
-def _field_str(value: Int | None) -> str:
+def _field_str(value: Index | None) -> str:
     return "None" if value is None else str(value)
 
 

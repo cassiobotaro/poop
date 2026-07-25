@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from operator import index as _index
 from typing import TYPE_CHECKING
 
 from poop.types._iterable_mixin import _IterableMixin
@@ -10,6 +11,7 @@ from poop.types.object import Object
 from poop.types.range_iterator import RangeIterator
 
 if TYPE_CHECKING:
+    from poop.types._index import Index
     from poop.types.boolean import Boolean, to_boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
@@ -20,22 +22,28 @@ class Range(_IterableMixin, Object):
 
     def __init__(
         self,
-        start: Int,
-        stop: Int,
-        step: Int | NoneClass | None = None,
+        start: Index,
+        stop: Index,
+        step: Index | NoneClass | None = None,
     ) -> None:
         from poop.types._unwrap import _is_absent
 
-        resolved: Int
+        # `_index` rather than `._value`: it takes the whole index rung of the
+        # tower (`range(True, 5)` is `range(1, 5)` in CPython) and answers
+        # CPython's own TypeError for anything else, where reading the slot
+        # leaked `#_value`.
+        resolved: Index
         if _is_absent(step):
-            resolved = Int(1 if start._value <= stop._value else -1)
+            resolved = Int(1 if _index(start) <= _index(stop) else -1)
         else:
             resolved = step
-        if resolved._value == 0:
+        if _index(resolved) == 0:
             raise ValueError("step must not be zero")
-        self._start = start
-        self._stop = stop
-        self._step: Int = resolved
+        # Normalized to Int, as CPython does: `range(True, 5).start` is `1`,
+        # not `True`. (A `slice`, by contrast, keeps what it was given.)
+        self._start = Int(_index(start))
+        self._stop = Int(_index(stop))
+        self._step: Int = Int(_index(resolved))
 
     def _range(self) -> range:
         start, stop, step = self._start._value, self._stop._value, self._step._value
@@ -54,9 +62,9 @@ class Range(_IterableMixin, Object):
 
     def slice(
         self,
-        start_or_slice: Int | Slice,
-        stop: Int | NoneClass | None = None,
-        step: Int | NoneClass | None = None,
+        start_or_slice: Index | Slice,
+        stop: Index | NoneClass | None = None,
+        step: Index | NoneClass | None = None,
     ) -> List:
         from poop.types.slice import _resolve_py_slice
 
@@ -90,8 +98,8 @@ class Range(_IterableMixin, Object):
     def step(self) -> Int:
         return self._step
 
-    def at(self, index: Int) -> Int:
-        return Int(self._range()[_faithful(index)])
+    def at(self, index: Index) -> Int:
+        return Int(self._range()[index])
 
     def reversed(self) -> Range:
         # Reverse the materialized forward sequence and re-encode it as a
