@@ -98,6 +98,22 @@ def _reject_private(name: str) -> None:
         )
 
 
+def _checked_name(name: Str) -> str:
+    """The raw name behind `name`, both class-side bans applied.
+
+    The class-side twin of `Object._checked_name`, down to `_attr_name`
+    keeping a non-`Str` name from leaking `#_value`: `Foo.get_attr([1])` used
+    to answer `list does not understand #_value` exactly as the instance side
+    did.
+    """
+    from poop.types._unwrap import _attr_name
+
+    raw = _attr_name(name)
+    _reject_dunder(raw)
+    _reject_private(raw)
+    return raw
+
+
 def _refuse(cls: type, name: str) -> None:
     """Refuse an instance-only message, naming the class-side one instead.
 
@@ -150,9 +166,7 @@ class PoopMeta(ABCMeta):
     def has_attr(cls, name: Str) -> Boolean:
         from poop.types.boolean import to_boolean
 
-        _reject_dunder(name._value)
-        _reject_private(name._value)
-        return to_boolean(hasattr(cls, name._value))
+        return to_boolean(hasattr(cls, _checked_name(name)))
 
     # `Object`'s protocol, answered class-side. Each needs its own descriptor:
     # a metaclass cannot inherit these into class-side lookup, which is the
@@ -294,26 +308,20 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def get_attr(cls, name: Str, *default: Any) -> Any:
-        _reject_dunder(name._value)
-        _reject_private(name._value)
-        return builtins.getattr(cls, name._value, *default)
+        return builtins.getattr(cls, _checked_name(name), *default)
 
     @class_side
     def set_attr(cls, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
 
-        _reject_dunder(name._value)
-        _reject_private(name._value)
-        builtins.setattr(cls, name._value, value)
+        builtins.setattr(cls, _checked_name(name), value)
         return none
 
     @class_side
     def del_attr(cls, name: Str) -> NoneClass:
         from poop.types.none import none
 
-        _reject_dunder(name._value)
-        _reject_private(name._value)
-        builtins.delattr(cls, name._value)
+        builtins.delattr(cls, _checked_name(name))
         return none
 
     @class_side

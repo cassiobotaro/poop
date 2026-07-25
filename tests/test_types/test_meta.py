@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Any
 
 import pytest
 
@@ -277,3 +278,20 @@ def test_class_side_message_cannot_be_reassigned() -> None:
 
     with pytest.raises(AttributeError):
         _Thing.name = 5
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        pytest.param(lambda bad: _Dog.get_attr(bad), id="get_attr"),
+        pytest.param(lambda bad: _Dog.has_attr(bad), id="has_attr"),
+        pytest.param(lambda bad: _Dog.set_attr(bad, Int(1)), id="set_attr"),
+        pytest.param(lambda bad: _Dog.del_attr(bad), id="del_attr"),
+    ],
+)
+def test_the_class_side_rejects_a_non_str_name_faithfully(call: Any) -> None:
+    # One ban, one message: the class side leaked `#_value` for a non-Str name
+    # exactly as the instance side did.
+    bad: Any = List(Int(1))
+    with pytest.raises(TypeError, match="attribute name must be string, not 'list'"):
+        call(bad)

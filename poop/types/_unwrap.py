@@ -23,6 +23,23 @@ def _faithful(value: object) -> Any:
     return getattr(value, "_value", value)
 
 
+def _attr_name(name: object) -> str:
+    """The raw attribute name behind a `Str`, else CPython's own `TypeError`.
+
+    The `get_attr` / `has_attr` / `set_attr` / `del_attr` family is what
+    `no_getattr` offers in place of `getattr`, and it lives on `Object`, so
+    every value in the language carries it. Reading `name._value` answered
+    `list does not understand #_value` for a non-`Str` name — a POOP internal,
+    from the substitute for the very builtin whose leak it was meant to close.
+    `getattr(obj, 5)` says `attribute name must be string, not 'int'`; so does
+    this, POOP's class names making it read the same way.
+    """
+    raw = _faithful(name)
+    if not isinstance(raw, str):
+        raise TypeError(f"attribute name must be string, not {type(name).__name__!r}")
+    return raw
+
+
 def _unwrap[T](value: object, default: T) -> T:
     if _is_absent(value):
         return default

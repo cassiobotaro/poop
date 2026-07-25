@@ -89,13 +89,15 @@ class Object(metaclass=PoopMeta):
         return false if bool(self) else true
 
     def assert_(self, message: Str | NoneClass | None = None) -> Self:
-        from poop.types._unwrap import _is_absent
+        from poop.types._unwrap import _faithful, _is_absent
 
         if bool(self):
             return self
         if _is_absent(message):
             raise AssertionError
-        raise AssertionError(message._value)
+        # `assert x, msg` takes any object as the message in CPython, so an
+        # unwrappable one goes through raw rather than leaking #_value.
+        raise AssertionError(_faithful(message))
 
     def class_name(self) -> Str:
         # `x class name` in Smalltalk: the name is the class's to answer, not
@@ -189,34 +191,40 @@ class Object(metaclass=PoopMeta):
                 f"{name} is private — POOP objects do not expose their internals"
             )
 
+    def _checked_name(self, name: Str) -> str:
+        """The raw name behind `name`, both bans applied.
+
+        Every accessor needs the same three steps, and `_attr_name` is what
+        keeps a non-`Str` name from leaking `#_value` out of the substitute
+        `no_getattr` points at.
+        """
+        from poop.types._unwrap import _attr_name
+
+        raw = _attr_name(name)
+        self._reject_dunder(raw)
+        self._reject_private(raw)
+        return raw
+
     def get_attr(self, name: Str, *default: Any) -> Any:
         # Guarded before the default is consulted: a forbidden name is refused,
         # not quietly answered with a fallback.
-        self._reject_dunder(name._value)
-        self._reject_private(name._value)
-        return builtins.getattr(self, name._value, *default)
+        return builtins.getattr(self, self._checked_name(name), *default)
 
     def has_attr(self, symbol: Str) -> Boolean:
         from poop.types.boolean import to_boolean
 
-        self._reject_dunder(symbol._value)
-        self._reject_private(symbol._value)
-        return to_boolean(hasattr(self, symbol._value))
+        return to_boolean(hasattr(self, self._checked_name(symbol)))
 
     def set_attr(self, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
 
-        self._reject_dunder(name._value)
-        self._reject_private(name._value)
-        builtins.setattr(self, name._value, value)
+        builtins.setattr(self, self._checked_name(name), value)
         return none
 
     def del_attr(self, name: Str) -> NoneClass:
         from poop.types.none import none
 
-        self._reject_dunder(name._value)
-        self._reject_private(name._value)
-        builtins.delattr(self, name._value)
+        builtins.delattr(self, self._checked_name(name))
         return none
 
     def print(

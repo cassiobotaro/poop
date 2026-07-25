@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from poop.types.boolean import false, true
@@ -347,3 +349,38 @@ def test_ne_different_objects_returns_true() -> None:
     a, b = Object(), Object()
     result = a.__ne__(b)
     assert result is true
+
+
+# --- a non-Str name answers CPython's TypeError, never #_value ---
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        pytest.param(lambda bad: Int(42).get_attr(bad), id="get_attr"),
+        pytest.param(lambda bad: Int(42).has_attr(bad), id="has_attr"),
+        pytest.param(lambda bad: Int(42).set_attr(bad, Int(1)), id="set_attr"),
+        pytest.param(lambda bad: Int(42).del_attr(bad), id="del_attr"),
+    ],
+)
+def test_attr_accessors_reject_a_non_str_name_faithfully(call: Any) -> None:
+    # Reading `name._value` answered `list does not understand #_value` — a
+    # POOP internal, out of the substitute `no_getattr` points at.
+    bad: Any = List(Int(1))
+    with pytest.raises(TypeError, match="attribute name must be string, not 'list'"):
+        call(bad)
+
+
+def test_get_attr_default_does_not_soften_a_non_str_name() -> None:
+    bad: Any = List(Int(1))
+    with pytest.raises(TypeError, match="attribute name must be string"):
+        Int(42).get_attr(bad, "fallback")
+
+
+def test_assert_takes_any_object_as_the_message() -> None:
+    # CPython's `assert x, msg` accepts any object; reading `message._value`
+    # leaked instead.
+    bad: Any = List(Int(1))
+    with pytest.raises(AssertionError) as info:
+        false.assert_(bad)
+    assert "_value" not in str(info.value)
