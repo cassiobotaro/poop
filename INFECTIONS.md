@@ -92,7 +92,7 @@ A function is a method only when it is a **direct** statement of a class body. C
 
 `and_` and `or_` receive a block so evaluation is lazy — the right-hand side is only evaluated if needed, preserving the short-circuit semantics of Python's `and`/`or`.
 
-**Chained comparisons are the one deliberate exception.** `no_and_or` inspects only `ast.BoolOp`, so a chain like `1 < 2 < 3` — a single `ast.Compare` node with multiple comparators that Python evaluates as `(1 < 2) and (2 < 3)` with short-circuit — slips through with no `and` token. This is tolerated, not overlooked: a single comparison keeps its operator (like `+`), and a chain is read as plain operator sugar rather than a hidden `BoolOp`. So chained comparison is the single place an implicit `and` survives in POOP. To spell one out explicitly instead, decompose it: `(a < b).and_(lambda: b < c)`.
+**Chained comparisons are the one deliberate exception.** `no_and_or` inspects only `ast.BoolOp`, so a chain like `1 < 2 < 3` — a single `ast.Compare` node with multiple comparators that Python evaluates as `(1 < 2) and (2 < 3)` with short-circuit — slips through with no `and` token. This is tolerated, not overlooked: a single comparison keeps its operator (like `+`), and a chain is read as plain operator sugar rather than a hidden `BoolOp`. So chained comparison is the single place an implicit `and` survives in POOP. To spell one out explicitly instead, decompose it: `(a < b).and_(lambda: b < c)`. The question has now been raised twice and settled the same way both times — the ban would reject code no example relies on, to remove sugar POOP keeps everywhere else it spells an operator.
 
 ### No `async` — `poop/validators/no_async.py`
 
