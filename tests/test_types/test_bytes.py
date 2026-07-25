@@ -468,6 +468,19 @@ def test_add_concatenates() -> None:
     assert Bytes(b"ab") + Bytes(b"cd") == Bytes(b"abcd")
 
 
+def test_add_accepts_a_byte_array() -> None:
+    # CPython concatenates `bytes + bytearray` and answers bytes.
+    from poop.types.byte_array import ByteArray
+
+    assert Bytes(b"ab") + ByteArray(bytearray(b"cd")) == Bytes(b"abcd")
+
+
+def test_add_foreign_operand_is_faithful_not_a_value_leak() -> None:
+    with pytest.raises(TypeError) as info:
+        _ = Bytes(b"ab") + List(Int(1))
+    assert "_value" not in str(info.value)
+
+
 def test_mul_repeats() -> None:
     assert Bytes(b"ab") * Int(3) == Bytes(b"ababab")
 

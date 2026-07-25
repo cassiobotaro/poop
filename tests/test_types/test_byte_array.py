@@ -529,6 +529,17 @@ def test_add_concatenates() -> None:
     assert a + b == ByteArray(bytearray(b"abcd"))
 
 
+def test_add_accepts_bytes() -> None:
+    # CPython concatenates `bytearray + bytes` and answers bytearray.
+    assert ByteArray(bytearray(b"ab")) + Bytes(b"cd") == ByteArray(bytearray(b"abcd"))
+
+
+def test_add_foreign_operand_is_faithful_not_a_value_leak() -> None:
+    with pytest.raises(TypeError) as info:
+        _ = ByteArray(bytearray(b"ab")) + List(Int(1))
+    assert "_value" not in str(info.value)
+
+
 def test_mul_repeats() -> None:
     assert ByteArray(bytearray(b"ab")) * Int(3) == ByteArray(bytearray(b"ababab"))
 

@@ -6,6 +6,7 @@ from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, to_boolean, true
+from poop.types.byte_array import ByteArray
 from poop.types.bytes_iterator import BytesIterator
 from poop.types.object import Object
 
@@ -131,7 +132,11 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return to_boolean(self._value >= other._value)
 
-    def __add__(self, other: Bytes) -> Bytes:
+    def __add__(self, other: object) -> Bytes:
+        # Both byte-likes pass: CPython concatenates `bytes + bytearray` and
+        # answers bytes. Anything else -> faithful TypeError, not #_value.
+        if not isinstance(other, Bytes | ByteArray):
+            return NotImplemented
         return Bytes(self._value + other._value)
 
     def __mul__(self, other: object) -> Bytes:

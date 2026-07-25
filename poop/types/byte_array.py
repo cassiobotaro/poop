@@ -127,7 +127,13 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return to_boolean(self._value >= other._value)
 
-    def __add__(self, other: ByteArray) -> ByteArray:
+    def __add__(self, other: object) -> ByteArray:
+        # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
+        # answers bytearray. Anything else -> faithful TypeError, not #_value.
+        from poop.types.bytes import Bytes  # circular: bytes imports ByteArray
+
+        if not isinstance(other, ByteArray | Bytes):
+            return NotImplemented
         return ByteArray(self._value + other._value)
 
     def __mul__(self, other: object) -> ByteArray:
