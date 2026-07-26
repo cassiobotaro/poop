@@ -206,9 +206,11 @@ class Object(metaclass=PoopMeta):
         return raw
 
     def get_attr(self, name: Str, *default: Any) -> Any:
+        from poop.types.block import _as_block  # circular: block imports Object
+
         # Guarded before the default is consulted: a forbidden name is refused,
         # not quietly answered with a fallback.
-        return builtins.getattr(self, self._checked_name(name), *default)
+        return _as_block(builtins.getattr(self, self._checked_name(name), *default))
 
     def has_attr(self, symbol: Str) -> Boolean:
         from poop.types.boolean import to_boolean

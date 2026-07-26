@@ -804,6 +804,8 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 | `[block] value` | `(lambda: expr)()` |
 | `[block] value: arg` | `(lambda x: expr)(arg)` |
 
+**A method fetched by name is a block too.** `get_attr` guards *which* names may be read, but what came back was CPython's bound method — callable, yet understanding no message: `"abc".get_attr("upper").print()` raised Python's own `AttributeError`, the last member of the `getattr`-substitute family still handing back a native. `_as_block` (in `block.py`, used by both `Object.get_attr` and the class side) wraps a raw callable answer, so a method reads back as the same kind of object a lambda does — it still calls, prints as `<block>`, and answers `class_name()` → `function`. State, a `default` fallback, and a POOP class (callable, but already an object with its own protocol) pass through untouched.
+
 > **Why lambda, not `[...]`?** Python has no block literal syntax. `lambda` is the closest equivalent — a deferred expression. The transformer intercepts every `ast.Lambda` and wraps it in `Block(...)` transparently, so the programmer writes plain lambdas and gets first-class POOP block objects without ever naming `Block` explicitly.
 
 ### Collection iterable methods — `poop/types/_iterable_mixin.py`

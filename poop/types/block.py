@@ -8,6 +8,25 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
+def _as_block(value: Any) -> Any:
+    """A raw Python callable answered by `get_attr`, wrapped as a `Block`.
+
+    An attribute holding state already answers a POOP object; one holding a
+    *method* answered CPython's bound method, which understands no message —
+    `"abc".get_attr("upper").print()` raised Python's own `AttributeError`
+    instead of `does not understand #print`, the last member of the
+    `getattr`-substitute family still handing back a native. `Block` is what
+    every lambda is already wrapped in, so a method fetched by name reads back
+    as the same kind of object a block literal does, callable included.
+
+    A POOP class is left alone: it is callable, but it is already an object
+    with its own protocol.
+    """
+    if callable(value) and not isinstance(value, (Object, type)):
+        return Block(value)
+    return value
+
+
 class Block(Object):
     __slots__ = ("_fn",)
 

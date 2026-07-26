@@ -295,3 +295,18 @@ def test_the_class_side_rejects_a_non_str_name_faithfully(call: Any) -> None:
     bad: Any = List(Int(1))
     with pytest.raises(TypeError, match="attribute name must be string, not 'list'"):
         call(bad)
+
+
+def test_the_class_side_answers_a_block_for_a_method() -> None:
+    # Same wrap as the instance side; the unbound function takes its receiver
+    # explicitly, as it does in Python.
+    from poop.types.block import Block
+
+    speak = _Dog.get_attr(Str("speak"))
+    assert isinstance(speak, Block)
+    assert speak(_Dog()) == Str("woof")
+
+
+def test_the_class_side_leaves_a_poop_class_alone() -> None:
+    # A class is callable but is already an object with its own protocol.
+    assert _Dog.get_attr(Str("superclass"))() is _Animal

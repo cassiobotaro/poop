@@ -384,3 +384,38 @@ def test_assert_takes_any_object_as_the_message() -> None:
     with pytest.raises(AssertionError) as info:
         false.assert_(bad)
     assert "_value" not in str(info.value)
+
+
+# --- a method fetched by name reads back as a Block ---
+
+
+def test_get_attr_answers_a_block_for_a_method() -> None:
+    # The bound method CPython answers understands no message: `m.print()`
+    # raised Python's own AttributeError. Block is what a lambda is already
+    # wrapped in, so a method reads back as the same kind of object.
+    from poop.types.block import Block
+
+    method = Str("abc").get_attr(Str("upper"))
+    assert isinstance(method, Block)
+    assert method() == Str("ABC")
+    assert method.class_name() == Str("function")
+
+
+def test_get_attr_leaves_state_alone() -> None:
+    class Container(Object):
+        __slots__ = ("data",)
+        data: Int
+
+    obj = Container()
+    obj.set_attr(Str("data"), Int(42))
+    assert obj.get_attr(Str("data")) == Int(42)
+
+
+def test_get_attr_leaves_a_non_callable_answer_alone() -> None:
+    # A property answers a POOP object already — wrapping it would be wrong.
+    assert Int(5).get_attr(Str("real")) == Int(5)
+
+
+def test_get_attr_does_not_wrap_the_default() -> None:
+    sentinel = object()
+    assert Int(5).get_attr(Str("nonexistent"), sentinel) is sentinel

@@ -308,7 +308,11 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def get_attr(cls, name: Str, *default: Any) -> Any:
-        return builtins.getattr(cls, _checked_name(name), *default)
+        from poop.types.block import _as_block
+
+        # Same wrap as the instance side: a class-side method answered a raw
+        # Python function, which understands no message.
+        return _as_block(builtins.getattr(cls, _checked_name(name), *default))
 
     @class_side
     def set_attr(cls, name: Str, value: Any) -> NoneClass:
