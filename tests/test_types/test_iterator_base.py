@@ -1,7 +1,9 @@
 import pytest
 
 from poop.types._iterator_base import _IteratorBase
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.none import none
 
 
@@ -96,3 +98,27 @@ def test_protocol_message_consumes_iterator() -> None:
     it = _IteratorBase([Int(1), Int(2), Int(3)])
     it.find(lambda x: x._value == 2)
     assert it.next() == Int(3)
+
+
+def test_exhaustion_carries_a_sentence_naming_the_iterator() -> None:
+    # The native StopIteration carries no message at all, so `_describe`
+    # degraded to the bare class name: a word naming the CPython protocol
+    # that drives `for`, with nothing to say what went wrong.
+    it = List(Int(1)).iter()
+    it.next()
+    with pytest.raises(
+        StopIteration,
+        match=r"^list_iterator is exhausted — send #next with a default",
+    ):
+        it.next()
+
+
+def test_exhaustion_is_still_catchable_as_stop_iteration() -> None:
+    # It stays in _HIERARCHY precisely so a Try can catch it.
+    it = List().iter()
+    with pytest.raises(MIRRORS["StopIteration"]):
+        it.next()
+
+
+def test_a_default_still_answers_instead_of_raising() -> None:
+    assert List().iter().next(Int(0)) == Int(0)
