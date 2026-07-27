@@ -76,7 +76,7 @@ POOP runs ~69 validators on every program. Grouped by theme:
 
 **Introspection** — call the method on the receiver, or use polymorphism.
 - `isinstance(x, T)` / `issubclass(C, P)` → `x.is_instance(T)` / `C.is_subclass(P)`
-- `callable(x)` / `id(x)` / `dir(x)` → `x.callable()` / `x.id()` / `x.dir()`
+- `callable(x)` / `dir(x)` → `x.callable()` / `x.dir()`; `id(x)` → `a.is_identical(b)` (POOP answers the identity *question*, never an address)
 - `hasattr(x, n)` / `getattr(x, n)` / `setattr(x, n, v)` → `x.has_attr(n)` / `x.get_attr(n)` / `x.set_attr(n, v)`
 - `type(x)` / `x.__class__` / `xs.__len__()` → `x.class_()` / `x.class_name()` / `xs.len()` — dunder attribute access is banned outright
 

@@ -20,9 +20,6 @@ from builtins import (
     hash as builtins_hash,
 )
 from builtins import (
-    id as builtins_id,
-)
-from builtins import (
     print as builtins_print,
 )
 from functools import partial
@@ -186,12 +183,6 @@ class PoopMeta(ABCMeta):
         from poop.types.int import Int
 
         return Int(builtins_hash(cls))
-
-    @class_side
-    def id(cls) -> Int:
-        from poop.types.int import Int
-
-        return Int(builtins_id(cls))
 
     @class_side
     def is_none(cls) -> Boolean:

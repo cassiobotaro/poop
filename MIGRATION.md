@@ -148,7 +148,7 @@ total = xs.sum()
 biggest = xs.max()
 ```
 
-> Same pattern for `getattr`/`setattr`/`hasattr`/`dir`/`format`/`hash`/`id`/`callable`/`ascii` → `x.get_attr(name)`, `x.set_attr(name, val)`, `x.has_attr(name)`, `x.dir()`, `x.format(spec)`, `x.hash()`, `x.id()`, `x.callable()`, `x.ascii()`. For `type(x)` use `x.class_name()` — or better, polymorphism instead of type dispatch.
+> Same pattern for `getattr`/`setattr`/`hasattr`/`dir`/`format`/`hash`/`callable`/`ascii` → `x.get_attr(name)`, `x.set_attr(name, val)`, `x.has_attr(name)`, `x.dir()`, `x.format(spec)`, `x.hash()`, `x.callable()`, `x.ascii()`. `id(x)` has no method form: it answered CPython's address, which POOP has no business handing out — use `a.is_identical(b)`, the identity *question* it existed to enable. For `type(x)` use `x.class_name()` — or better, polymorphism instead of type dispatch.
 
 ## Operators that look procedural
 

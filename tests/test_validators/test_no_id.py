@@ -20,7 +20,7 @@ def test_id_call_raises_validation_error() -> None:
 
 def test_error_message_suggests_method() -> None:
     tree = ast.parse("id(x)")
-    with pytest.raises(ValidationError, match="obj.id()"):
+    with pytest.raises(ValidationError, match=r"a\.is_identical\(b\)"):
         NoIdValidator().validate(tree)
 
 

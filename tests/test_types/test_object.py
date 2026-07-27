@@ -5,7 +5,7 @@ import pytest
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
-from poop.types.object import Object
+from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
 
@@ -131,11 +131,30 @@ def test_callable_returns_true_for_callable_object() -> None:
     assert CallableObj().callable() is true
 
 
-def test_id_returns_int() -> None:
+def test_id_is_not_a_message_any_more() -> None:
+    # It answered CPython's address — recycled under a live object, so two
+    # distinct objects could claim the same identity. `is_identical` answers
+    # the comparison it existed to enable, without materialising a number.
+    # Reached through the runtime hook, not the attribute: `ty` is right that
+    # the message is gone, which is the point of the test.
+    obj: Any = Object()
+    with pytest.raises(MessageNotUnderstood, match="does not understand #id"):
+        obj.id()
+
+
+def test_is_identical_answers_the_comparison_id_existed_for() -> None:
     obj = Object()
-    result = obj.id()
-    assert isinstance(result, Int)
-    assert result == Int(id(obj))
+    assert obj.is_identical(obj) is true
+    assert obj.is_identical(Object()) is false
+
+
+def test_hash_no_longer_answers_the_raw_address() -> None:
+    # `__hash__` returned `id(self)` exactly, so `x.hash()` printed the
+    # pointer POOP otherwise never admits exists — and was indistinguishable
+    # from the `id` message that used to sit beside it.
+    obj = Object()
+    assert obj.hash() == Int(hash(obj))
+    assert obj.hash() != Int(id(obj))
 
 
 def test_hash_returns_int() -> None:

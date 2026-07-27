@@ -119,11 +119,6 @@ class Object(metaclass=PoopMeta):
 
         return Int(hash(self))
 
-    def id(self) -> Int:
-        from poop.types.int import Int
-
-        return Int(id(self))
-
     def callable(self) -> Boolean:
         from poop.types.boolean import to_boolean
 
@@ -272,7 +267,12 @@ class Object(metaclass=PoopMeta):
         return false if self is other else true
 
     def __hash__(self) -> int:
-        return id(self)
+        # Python's own identity hash, not `id(self)`. Defining __eq__ clears
+        # __hash__, so this has to exist for Dict and Set to key on a plain
+        # object at all — but answering the address exactly made `x.hash()`
+        # print the raw pointer POOP otherwise never admits exists, and made
+        # it indistinguishable from the `id` message that used to sit here.
+        return object.__hash__(self)
 
 
 cloak(Object, "object")

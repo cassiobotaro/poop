@@ -148,12 +148,11 @@ def test_a_class_answers_the_boolean_protocol(message: str, expected: Boolean) -
     assert getattr(_Dog, message)() is expected
 
 
-def test_a_class_answers_hash_and_id_as_ints() -> None:
+def test_a_class_answers_hash_as_an_int() -> None:
     # `hash(Foo)` answers "hash() is forbidden — use obj.hash() instead" while
     # `Foo.hash()` answered a binding error: the ban named a substitute that
     # did not exist on that receiver.
     assert _Dog.hash() == Int(hash(_Dog))
-    assert _Dog.id() == Int(id(_Dog))
 
 
 def test_a_class_reprs_as_its_name_like_print_does() -> None:

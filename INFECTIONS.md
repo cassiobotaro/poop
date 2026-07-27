@@ -261,7 +261,7 @@ The three allowed decorators are argued for under *Explicitly allowed*; this val
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `id(x)` | free function with procedural look | `x.id()` |
+| `id(x)` | free function with procedural look, and an address POOP has no business handing out | `a.is_identical(b)` |
 
 ### No `all` — `poop/validators/no_all.py`
 
@@ -716,7 +716,7 @@ Classes are objects and answer messages, as in Smalltalk. `Foo.print()` used to 
 | `Foo respondsTo: #m` | `Foo.has_attr(name)` | `Boolean`; spelled as the instance side, per `CONTRIBUTING`'s naming rule |
 | `Foo printNl` | `Foo.print()` | prints the class's name |
 | `Foo doesNotUnderstand: #m` | `Foo.does_not_understand(name)` | same hook as `Object`'s |
-| `Foo hash` / `Foo identityHash` | `Foo.hash()` / `Foo.id()` | `Int` |
+| `Foo hash` | `Foo.hash()` | `Int` |
 | `Foo isNil` / `Foo notNil` | `Foo.is_none()` / `Foo.not_none()` | always `false` / `true` |
 | `Foo not` | `Foo.not_()` | always `false` — a class is truthy |
 | `Foo printString` | `Foo.repr()` / `Foo.ascii()` | the class's name, matching `print` |
@@ -740,7 +740,9 @@ Three constraints, each load-bearing:
 
 ### Object — `poop/types/object.py`
 
-Concrete root of all POOP types. The table below highlights the universal methods that map directly onto Smalltalk messages — it is **not exhaustive**. The full API also includes `if_none`, `if_not_none`, `hash`, `id`, `callable`, `is_subclass`, `repr`, `ascii`, `format`, `has_attr`, `set_attr`, `del_attr`, `does_not_understand`, and `print` (see `poop/types/object.py` for signatures).
+Concrete root of all POOP types. The table below highlights the universal methods that map directly onto Smalltalk messages — it is **not exhaustive**. The full API also includes `if_none`, `if_not_none`, `hash`, `callable`, `is_subclass`, `repr`, `ascii`, `format`, `has_attr`, `set_attr`, `del_attr`, `does_not_understand`, and `print` (see `poop/types/object.py` for signatures).
+
+**There is no `id`.** It answered `id(self)` — CPython's address, the raw pointer POOP otherwise never admits exists — and that answer was not merely leaky but *wrong*: CPython recycles addresses, so an object created after another was collected claims the same identity, which is not a behaviour Smalltalk's `identityHash` has. It also collapsed onto `hash` for anything that does not hash by value, since `__hash__` returned the same number: two distinct messages, one answer, and that answer an address. Answering a POOP-owned identity instead would need an `_identity` slot on `Object` — a pointer on every object in a language where every integer is one — to buy a message whose only power over `is_identical` is keying a `Dict` by identity, which no example asks for. So `is_identical` is the substitute `no_id` names, and it answers the identity *question* without materialising a number. `hash` stays exactly as it was, because `Dict` and `Set` key on `__hash__` and value types must hash by value for them to work at all — but `Object.__hash__` now answers Python's own identity hash rather than the address verbatim.
 
 #### `does_not_understand` — Smalltalk's `doesNotUnderstand:`
 
