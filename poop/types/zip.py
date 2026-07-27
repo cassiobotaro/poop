@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._iterator_base import _MISSING
+from poop.types._peek import _UNPEEKED, _PeekMixin
 from poop.types.boolean import false, to_boolean, true
 from poop.types.object import Object
 from poop.types.tuple import Tuple
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class Zip(_IterableMixin, Object):
+class Zip(_PeekMixin, _IterableMixin, Object):
     __slots__ = ("_iter", "_sources", "_strict")
 
     def __init__(
@@ -27,6 +27,7 @@ class Zip(_IterableMixin, Object):
         self._sources = sources
         self._strict: Boolean = to_boolean(_unwrap_bool(strict, False))
         self._iter: Iterator[Tuple] | None = None
+        self._peeked: Any = _UNPEEKED
 
     @staticmethod
     def _gen(sources: tuple[Any, ...], strict: bool) -> Iterator[Tuple]:
@@ -42,18 +43,12 @@ class Zip(_IterableMixin, Object):
         return self._iter
 
     def __iter__(self) -> Iterator[Tuple]:
-        return self._materialize()
+        # `self`, not the raw generator: an element parked by `has_next` would
+        # otherwise be skipped by whatever iterated next.
+        return self
 
     def iter(self) -> Zip:
         return self
-
-    def next(self, default: Any = _MISSING) -> Tuple:
-        try:
-            return next(self._materialize())
-        except StopIteration:
-            if default is not _MISSING:
-                return default
-            raise
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import to_boolean

@@ -5,16 +5,11 @@ from typing import Any, ClassVar
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.exceptions import MIRRORS
+from poop.types._peek import _UNPEEKED, _PeekMixin
 from poop.types.object import Object
 
-# Sentinel distinguishing "no default given" from an explicit default, so
-# `it.next()` still raises StopIteration while `it.next(default)` swallows it —
-# mirroring Python's two-arg `next(iterator, default)`.
-_MISSING: Any = object()
 
-
-class _IteratorBase[T](_IterableMixin, Object):
+class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):
     """Base for one-shot POOP iterators.
 
     Wraps a Python iterator. `next()` raises `StopIteration` on exhaustion —
@@ -42,28 +37,13 @@ class _IteratorBase[T](_IterableMixin, Object):
 
     def __init__(self, iterable: Iterable[Any]) -> None:
         self._iter: Iterator[Any] = iter(iterable)
+        self._peeked: Any = _UNPEEKED
+
+    def _materialize(self) -> Iterator[Any]:
+        return self._iter
 
     def __iter__(self) -> Iterator[T]:
         return self
-
-    def __next__(self) -> T:
-        return next(self._iter)
-
-    def next(self, default: Any = _MISSING) -> T:
-        try:
-            return next(self._iter)
-        except StopIteration:
-            if default is not _MISSING:
-                return default
-            # Still a StopIteration — it is in `_HIERARCHY` precisely so a Try
-            # can catch it — but with a sentence attached. The native carries
-            # no message at all, so `_describe` degraded to the bare class
-            # name: a word naming the CPython protocol that drives `for`, the
-            # loop POOP forbids, with nothing to say what went wrong.
-            raise MIRRORS["StopIteration"](
-                f"{type(self).__name__} is exhausted — "
-                "send #next with a default to answer it instead"
-            ) from None
 
     def __str__(self) -> str:
         return f"<{self._repr_name}>"

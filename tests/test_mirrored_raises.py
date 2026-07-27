@@ -24,9 +24,6 @@ _EXEMPT: dict[str, str] = {
     # and friends — never read by a program, and reached while `exceptions` is
     # still importing, so the table it would consult may not hold the name yet.
     "__getattr__": "attribute protocol, not a diagnostic",
-    # A subclass contract: `_dict_view` declares the hook, the view implements
-    # it. No program can reach an unimplemented one.
-    "_repr_items": "abstract stub",
     # Import-time wiring check — it fires before any program runs.
     "_merge_bindings": "import-time duplicate-binding guard",
 }
@@ -69,6 +66,17 @@ def _raises() -> list[tuple[Path, ast.Raise, str]]:
     return collected
 
 
+def _is_abstract_stub(node: ast.Raise) -> bool:
+    """`raise NotImplementedError` with no message — a subclass contract.
+
+    Exempt by rule rather than by name: the argument-less spelling is Python's
+    idiom for "a subclass must override this", not a diagnostic any program can
+    reach. Naming the methods instead meant the exemption had to be extended
+    every time one was added, which is how `_peek._materialize` tripped it.
+    """
+    return isinstance(node.exc, ast.Name) and node.exc.id == "NotImplementedError"
+
+
 def _raised_name(node: ast.Raise) -> str | None:
     """The bare class name raised, if the raise names one directly."""
     exc = node.exc
@@ -97,7 +105,9 @@ def test_no_native_exception_class_is_raised() -> None:
     offenders = [
         f"{path.relative_to(_ROOT)}:{node.lineno} raises {_raised_name(node)}"
         for path, node, func in _raises()
-        if _raised_name(node) in MIRRORS and func not in _EXEMPT
+        if _raised_name(node) in MIRRORS
+        and func not in _EXEMPT
+        and not _is_abstract_stub(node)
     ]
     assert offenders == [], (
         "raise MIRRORS[...] instead — a POOP diagnostic on a native class "

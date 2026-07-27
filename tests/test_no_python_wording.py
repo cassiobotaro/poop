@@ -30,6 +30,7 @@ _FORBIDDEN = {
     "a block as a function": re.compile(r"<lambda>|positional argument"),
     "a message as a call": re.compile(r"\b\w+\(\)|\b\w+\.\w+\("),
     "a banned dunder": re.compile(r"__\w+__"),
+    "a generator": re.compile(r"\bgenerator\b|\byield\b"),
 }
 
 # Programs whose failure a reader is meant to understand. Kept as source, not
@@ -66,6 +67,11 @@ _FAILING = [
     '(2 ** "a")',
     '(5).divmod("a")',
     "b = lambda x: x\nb(1, 2)",
+    # PEP 479 turned this into `generator raised StopIteration` — a report
+    # about a construct POOP does not have and no_yield bans.
+    "i = [1].iter()\nlist([1, 2, 3].map(lambda v: i.next()))",
+    "i = [1].iter()\nlist([1, 2, 3].filter(lambda v: i.next()))",
+    "i = [1].iter()\ni.next()\ni.next()",
     "b = lambda: 1\nb(9)",
 ]
 

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._iterator_base import _MISSING
+from poop.types._peek import _UNPEEKED, _PeekMixin
 from poop.types._unwrap import _unwrap
 from poop.types.int import Int
 from poop.types.object import Object
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class Enumerate(_IterableMixin, Object):
+class Enumerate(_PeekMixin, _IterableMixin, Object):
     __slots__ = ("_iter", "_source", "_start")
 
     def __init__(self, source: Any, start: Int | NoneClass | None = None) -> None:
@@ -23,6 +23,7 @@ class Enumerate(_IterableMixin, Object):
         self._source = source
         self._start: Int = Int(_unwrap(start, 0))
         self._iter: Iterator[Tuple] | None = None
+        self._peeked: Any = _UNPEEKED
 
     @staticmethod
     def _gen(source: Any, start: int) -> Iterator[Tuple]:
@@ -38,18 +39,12 @@ class Enumerate(_IterableMixin, Object):
         return self._iter
 
     def __iter__(self) -> Iterator[Tuple]:
-        return self._materialize()
+        # `self`, not the raw generator: an element parked by `has_next` would
+        # otherwise be skipped by whatever iterated next.
+        return self
 
     def iter(self) -> Enumerate:
         return self
-
-    def next(self, default: Any = _MISSING) -> Tuple:
-        try:
-            return next(self._materialize())
-        except StopIteration:
-            if default is not _MISSING:
-                return default
-            raise
 
     def __eq__(self, other: object) -> Boolean:
         from poop.types.boolean import to_boolean

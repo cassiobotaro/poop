@@ -26,6 +26,16 @@ Smalltalk:
         position := position + 1. ^song
 
     [iterator hasNext] whileTrue: [Transcript showCr: iterator next]
+
+The pattern is about a *custom* cursor over storage a caller must not
+see. POOP's own iterators answer the same two messages, so the same
+loop drives `["a", "b"].iter()` directly:
+
+    it = ["Imagine", "Hey Jude"].iter()
+    (lambda: it.has_next()).while_true(lambda: it.next().print())
+
+Write `PlaylistIterator` when the traversal is yours to define — a
+tree walk, a filtered view, a paged fetch — not to re-implement `iter`.
 """
 
 
@@ -55,3 +65,9 @@ playlist = Playlist(["Imagine", "Hey Jude", "Yesterday"])
 cursor = playlist.iterator()
 
 (lambda: cursor.has_next()).while_true(lambda: cursor.next().print())
+
+# The same loop, driven by a built-in iterator: `iter()` answers the very
+# protocol `PlaylistIterator` implements by hand.
+"---".print()
+songs = ["Come Together", "Something"].iter()
+(lambda: songs.has_next()).while_true(lambda: songs.next().print())

@@ -72,7 +72,7 @@ POOP runs ~69 validators on every program. Grouped by theme:
 - `map` / `filter` → `col.map(lambda x: …)` / `col.filter(lambda x: …)`
 - `ascii` / `bin` / `chr` / `repr` / `format` → corresponding methods on `Int` / `Str`
 - `input` → `"prompt".input()` (`open` is banned outright — POOP has no file I/O)
-- `iter(col)` → `col.iter()` returns an iterator; `it.next()` advances it
+- `iter(col)` → `col.iter()` returns an iterator; `it.next()` advances it and `it.has_next()` asks whether it can, so `(lambda: it.has_next()).while_true(…)` walks it without running off the end
 
 **Introspection** — call the method on the receiver, or use polymorphism.
 - `isinstance(x, T)` / `issubclass(C, P)` → `x.is_instance(T)` / `C.is_subclass(P)`
