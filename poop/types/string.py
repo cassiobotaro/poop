@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterator
 from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
@@ -99,7 +100,7 @@ class Str(_ValueEqMixin, Object):
         return Str(builtins.input(self._value))
 
     def at(self, index: Index) -> Str:
-        return Str(self._value[index])
+        return Str(at_index(self._value, index, self))
 
     def slice(
         self,

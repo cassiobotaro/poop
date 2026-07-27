@@ -4,6 +4,7 @@ from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
@@ -40,7 +41,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         return len(self._items)
 
     def at(self, index: Index) -> Object:
-        return self._items[index]
+        return at_index(self._items, index, self)
 
     def slice(
         self,

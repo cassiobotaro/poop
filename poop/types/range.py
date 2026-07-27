@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from operator import index as _index
 from typing import TYPE_CHECKING
 
+from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _faithful
@@ -101,7 +102,7 @@ class Range(_IterableMixin, Object):
         return self._step
 
     def at(self, index: Index) -> Int:
-        return Int(self._range()[index])
+        return Int(at_index(self._range(), index, self))
 
     def reversed(self) -> Range:
         # Reverse the materialized forward sequence and re-encode it as a

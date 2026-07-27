@@ -92,7 +92,17 @@ def _build(native: type[BaseException], parent: str | None) -> None:
         PoopExcMeta(
             native.__name__,
             bases,
-            {"_native": native, "__module__": "builtins", "__slots__": ()},
+            {
+                "_native": native,
+                "__module__": "builtins",
+                "__slots__": (),
+                # A no-op for every mirror but `KeyError`, whose `__str__`
+                # answers `repr(args[0])` — so a POOP sentence handed to it
+                # came back wrapped in Python's quotes: `"dict has no key
+                # 'b'"`. The missing key's own repr is the message's to
+                # compose, not the exception class's to add.
+                "__str__": Exception.__str__,
+            },
         ),
     )
     MIRRORS[native.__name__] = mirror

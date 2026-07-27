@@ -3,6 +3,7 @@ from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
+from poop.types._at import at_key
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _MISSING, _minmax
 from poop.types._value_eq import _ValueEqMixin
@@ -34,7 +35,7 @@ class Dict(_ValueEqMixin, Object):
         self._data: _dict[Object, Object] = {}
 
     def at(self, key: Object) -> Object:
-        return self._data[key]
+        return at_key(self._data, key, self)
 
     def __getitem__(self, key: Object) -> Object:
         # Satisfies the mapping protocol (`{**d}` merge / `**d` unpacking

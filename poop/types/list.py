@@ -4,6 +4,7 @@ from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
+from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
@@ -45,7 +46,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
 
         if isinstance(index, Slice):
             return List(*self._items[index._py_slice()])
-        return self._items[index]
+        return at_index(self._items, index, self)
 
     def slice(
         self,

@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
+from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -42,7 +43,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         return len(self._value)
 
     def at(self, index: Index) -> Int:
-        return Int(self._value[index])
+        return Int(at_index(self._value, index, self))
 
     def __iter__(self) -> Iterator[Int]:
         return (Int(b) for b in self._value)

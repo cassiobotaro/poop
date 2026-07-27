@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
+from poop.types._at import at_key
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, to_boolean, true
@@ -32,7 +33,9 @@ class MappingProxy(_IterableMixin, Object):
         self._dict = dict_
 
     def at(self, key: Object) -> Object:
-        return self._dict.at(key)
+        # Not `self._dict.at(key)`: the message must name the receiver the
+        # user sent it to, not the Dict behind the proxy.
+        return at_key(self._dict._data, key, self)
 
     def get(
         self, key: Object, default: Object | NoneClass = none

@@ -1,6 +1,7 @@
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
@@ -48,7 +49,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return len(self._value)
 
     def at(self, index: Index) -> Int:
-        return Int(self._value[index])
+        return Int(at_index(self._value, index, self))
 
     def slice(
         self,

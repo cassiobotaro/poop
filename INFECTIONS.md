@@ -621,6 +621,8 @@ Available on `Int` and `Float`.
 | `ast.Subscript` | no `ast.Slice` involved | `obj[key]` looks like an operator | `obj.at(key)` |
 | `ast.Subscript` | a bare `ast.Slice` or an `ast.Tuple` containing one (extended slices like `obj[i:j, k:l]`) | `obj[1:3]` looks like an operator | `obj.slice(start, stop)` |
 
+**`at`'s own failures had to stop describing a subscript.** Every wrapper handed the index straight to CPython, so the message named the construct this validator bans: `string index out of range`, `list indices must be integers or slices, not str`, and — for a missing key — the bare `'b'`, a repr with nothing to say a lookup failed. `poop/types/_at.py` owns the wording for all nine wrappers that answer `at`, since writing it out nine times is how the next one gets forgotten: `str has no element at 10 — it has 3 elements`, `list.at expects an int index, got a str`, `dict has no key 'b'`. A `MappingProxy` names itself rather than the `Dict` behind it. An unhashable key is left to CPython on purpose — that failure is about the key, not the lookup, and `cannot use 'list' as a dict key` is already in POOP's vocabulary. Composing a sentence for `KeyError` also meant giving the mirrors `Exception.__str__`: `KeyError.__str__` answers `repr(args[0])`, so a POOP sentence came back wrapped in Python's quotes.
+
 ### No comprehension — `poop/validators/no_comprehension.py`
 
 | AST node | Reason | Substitute |
