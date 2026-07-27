@@ -4,6 +4,7 @@ from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
@@ -163,5 +164,4 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
-Tuple.__module__ = "builtins"
-Tuple.__name__ = "tuple"
+cloak(Tuple, "tuple")

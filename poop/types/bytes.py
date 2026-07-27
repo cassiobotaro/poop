@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _is_absent, _unwrap
@@ -394,5 +395,4 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
-Bytes.__module__ = "builtins"
-Bytes.__name__ = "bytes"
+cloak(Bytes, "bytes")

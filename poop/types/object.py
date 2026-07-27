@@ -3,6 +3,7 @@ from builtins import print as _builtins_print
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Self
 
+from poop.types._cloak import cloak
 from poop.types.meta import PoopMeta
 
 if TYPE_CHECKING:
@@ -274,5 +275,4 @@ class Object(metaclass=PoopMeta):
         return id(self)
 
 
-Object.__module__ = "builtins"
-Object.__name__ = "object"
+cloak(Object, "object")

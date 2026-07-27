@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterator
 from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
@@ -478,5 +479,4 @@ class Str(_ValueEqMixin, Object):
         return repr(self._value)
 
 
-Str.__module__ = "builtins"
-Str.__name__ = "str"
+cloak(Str, "str")

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from poop.types._cloak import cloak
 from poop.types.boolean import false, true
 from poop.types.object import Object
 
@@ -123,5 +124,4 @@ def _field_str(value: Index | None) -> str:
     return "None" if value is None else str(value)
 
 
-Slice.__module__ = "builtins"
-Slice.__name__ = "slice"
+cloak(Slice, "slice")

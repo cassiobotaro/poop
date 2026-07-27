@@ -2,6 +2,7 @@ import builtins as _builtins
 import math
 from typing import TYPE_CHECKING, cast
 
+from poop.types._cloak import cloak
 from poop.types._numeric_compare import (
     _NOT_NUMERIC,
     _num_value,
@@ -217,5 +218,4 @@ class Float(_NumericCompareMixin, Object):
     __repr__ = __str__
 
 
-Float.__module__ = "builtins"
-Float.__name__ = "float"
+cloak(Float, "float")

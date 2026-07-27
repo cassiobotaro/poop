@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from poop.types._cloak import cloak
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
 from poop.types.none import none
@@ -95,4 +96,4 @@ class Try(Object):
 # `Try` is a legitimate user-facing name, but without this cloak `class_()`
 # answers `<class 'poop.types.try_.Try'>`, leaking the internal path. Keep the
 # name, drop the module, matching every other wrapper.
-Try.__module__ = "builtins"
+cloak(Try)

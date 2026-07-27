@@ -1,6 +1,7 @@
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
@@ -433,5 +434,4 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
-ByteArray.__module__ = "builtins"
-ByteArray.__name__ = "bytearray"
+cloak(ByteArray, "bytearray")

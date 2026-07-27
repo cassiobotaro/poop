@@ -65,7 +65,7 @@ def _poop_dict_from(arg: object = None, **kwargs: Object) -> Dict:
                     f"cannot use {type(item).__qualname__} as dict entry"
                 )
     else:
-        raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to Dict")
+        raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to dict")
     # dict(a=1, b=2) / dict(mapping, a=1): keyword names become Str keys.
     for k, v in kwargs.items():
         d._data[Str(k)] = v

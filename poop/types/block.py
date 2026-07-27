@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from poop.types._cloak import cloak
 from poop.types.none import none
 from poop.types.object import Object
 
@@ -56,5 +57,4 @@ class Block(Object):
 # `function` (`type(lambda: 0).__name__`). Answer that name so `class_()` and
 # `class_name()` mirror Python instead of leaking the `poop.types.block.Block`
 # path — the same cloak every other wrapper applies.
-Block.__module__ = "builtins"
-Block.__name__ = "function"
+cloak(Block, "function")

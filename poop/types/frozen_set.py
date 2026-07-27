@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._set_algebra import _elements, _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -78,5 +79,4 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
-FrozenSet.__module__ = "builtins"
-FrozenSet.__name__ = "frozenset"
+cloak(FrozenSet, "frozenset")

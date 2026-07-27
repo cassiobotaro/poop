@@ -3,6 +3,7 @@ from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _MISSING, _minmax
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -217,5 +218,4 @@ class Dict(_ValueEqMixin, Object):
     __repr__ = __str__
 
 
-Dict.__module__ = "builtins"
-Dict.__name__ = "dict"
+cloak(Dict, "dict")

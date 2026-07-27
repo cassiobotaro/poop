@@ -19,7 +19,7 @@ def _poop_bytearray_from(arg: object = None) -> ByteArray:
     if isinstance(arg, Iterable):
         ints = cast("Iterable[Int]", arg)
         return ByteArray(item._value for item in ints)
-    raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to ByteArray")
+    raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to bytearray")
 
 
 class _ByteArrayRewriter(ast.NodeTransformer):

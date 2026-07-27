@@ -24,16 +24,16 @@ def _poop_complex_from(real: object = None, imag: object = None) -> Complex:
         if isinstance(real, Str):
             return Complex(complex(real._value))
         raise MIRRORS["TypeError"](
-            f"complex() argument must be Int, Float, Str or Complex, "
+            f"complex() argument must be int, float, str or complex, "
             f"not {type(real).__qualname__}"
         )
     if not isinstance(real, (Int, Float)):
         raise MIRRORS["TypeError"](
-            f"complex() first argument must be Int or Float, not {type(real).__qualname__}"
+            f"complex() first argument must be int or float, not {type(real).__qualname__}"
         )
     if not isinstance(imag, (Int, Float)):
         raise MIRRORS["TypeError"](
-            f"complex() second argument must be Int or Float, not {type(imag).__qualname__}"
+            f"complex() second argument must be int or float, not {type(imag).__qualname__}"
         )
     return Complex(complex(real._value, imag._value))
 

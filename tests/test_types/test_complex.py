@@ -422,17 +422,17 @@ def test_str_various(c: Complex, expected: str) -> None:
 
 
 def test_complex_from_unsupported_real_type_raises() -> None:
-    with pytest.raises(TypeError, match="Dict"):
+    with pytest.raises(TypeError, match="not dict"):
         _poop_complex_from(Dict())
 
 
 def test_complex_from_unsupported_first_of_two_args_raises() -> None:
-    with pytest.raises(TypeError, match="Dict"):
+    with pytest.raises(TypeError, match="not dict"):
         _poop_complex_from(Dict(), Int(1))
 
 
 def test_complex_from_unsupported_second_of_two_args_raises() -> None:
-    with pytest.raises(TypeError, match="Dict"):
+    with pytest.raises(TypeError, match="not dict"):
         _poop_complex_from(Int(1), Dict())
 
 

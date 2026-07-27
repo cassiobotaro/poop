@@ -122,7 +122,7 @@ def test_int_from_str_with_base() -> None:
 
 
 def test_int_from_str_with_non_int_base_raises() -> None:
-    with pytest.raises(TypeError, match="base must be Int"):
+    with pytest.raises(TypeError, match="base must be int"):
         _poop_int_from(Str("10"), "invalid_base")
 
 
@@ -154,7 +154,7 @@ def test_int_from_unsupported_type_raises() -> None:
 
 def test_int_from_error_uses_masked_name() -> None:
     # The diagnostic must show the public name, not internal class names.
-    with pytest.raises(TypeError, match="cannot convert complex to Int"):
+    with pytest.raises(TypeError, match="cannot convert complex to int"):
         _poop_int_from(Complex(complex(1, 2)))
 
 

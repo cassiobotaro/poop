@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, final
 
+from poop.types._cloak import cloak
 from poop.types.boolean import false, true
 from poop.types.object import Object
 
@@ -35,5 +36,4 @@ class NoneClass(Object):
 
 none: NoneClass = NoneClass()
 
-NoneClass.__module__ = "builtins"
-NoneClass.__name__ = "NoneType"
+cloak(NoneClass, "NoneType")

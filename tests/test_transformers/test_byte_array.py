@@ -14,7 +14,7 @@ def test_bytearray_from_list_of_ints() -> None:
 
 
 def test_bytearray_from_unsupported_type_raises() -> None:
-    with pytest.raises(TypeError, match="cannot convert Float to ByteArray"):
+    with pytest.raises(TypeError, match="cannot convert float to bytearray"):
         _poop_bytearray_from(Float(3.14))
 
 

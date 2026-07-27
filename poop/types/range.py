@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from operator import index as _index
 from typing import TYPE_CHECKING
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _faithful
 from poop.types.boolean import to_boolean
@@ -152,5 +153,4 @@ class Range(_IterableMixin, Object):
     __repr__ = __str__
 
 
-Range.__module__ = "builtins"
-Range.__name__ = "range"
+cloak(Range, "range")

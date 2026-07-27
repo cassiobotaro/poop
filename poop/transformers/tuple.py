@@ -11,7 +11,7 @@ from poop.transformers.base import BaseTransformer
 from poop.types.tuple import Tuple
 
 _poop_tuple = make_constructor(Tuple)
-_poop_tuple_from = make_iterable_from(Tuple, "Tuple")
+_poop_tuple_from = make_iterable_from(Tuple)
 
 
 class _TupleRewriter(CollectionRewriter):

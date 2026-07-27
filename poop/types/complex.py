@@ -1,6 +1,7 @@
 from types import NotImplementedType
 from typing import TYPE_CHECKING
 
+from poop.types._cloak import cloak
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.object import Object
 
@@ -144,5 +145,4 @@ class Complex(Object):
     __repr__ = __str__
 
 
-Complex.__module__ = "builtins"
-Complex.__name__ = "complex"
+cloak(Complex, "complex")

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_key_iterator import DictKeyIterator
@@ -131,5 +132,4 @@ class MappingProxy(_IterableMixin, Object):
     __repr__ = __str__
 
 
-MappingProxy.__module__ = "builtins"
-MappingProxy.__name__ = "mappingproxy"
+cloak(MappingProxy, "mappingproxy")

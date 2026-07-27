@@ -4,6 +4,7 @@ from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
@@ -220,5 +221,4 @@ class List(_ValueEqMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
-List.__module__ = "builtins"
-List.__name__ = "list"
+cloak(List, "list")

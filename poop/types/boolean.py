@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, final
 
+from poop.types._cloak import cloak
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
 
@@ -301,12 +302,9 @@ def to_boolean(value: object) -> Boolean:
     return true if value else false
 
 
-Boolean.__module__ = "builtins"
-Boolean.__name__ = "bool"
+cloak(Boolean, "bool")
 
 # The singleton classes answer "bool" too — class_name() and error
 # messages read type(true).__name__, not the abstract base's.
-_TrueClass.__module__ = "builtins"
-_TrueClass.__name__ = "bool"
-_FalseClass.__module__ = "builtins"
-_FalseClass.__name__ = "bool"
+cloak(_TrueClass, "bool")
+cloak(_FalseClass, "bool")

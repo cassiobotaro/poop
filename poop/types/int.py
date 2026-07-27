@@ -1,6 +1,7 @@
 import builtins as _builtins
 from typing import TYPE_CHECKING, Any, Literal, cast
 
+from poop.types._cloak import cloak
 from poop.types._numeric_compare import (
     _NOT_NUMERIC,
     _num_value,
@@ -387,5 +388,4 @@ class Int(_NumericCompareMixin, Object):
     __repr__ = __str__
 
 
-Int.__module__ = "builtins"
-Int.__name__ = "int"
+cloak(Int, "int")

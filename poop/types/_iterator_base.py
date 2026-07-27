@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from typing import Any, ClassVar
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.object import Object
 
@@ -36,8 +37,7 @@ class _IteratorBase[T](_IterableMixin, Object):
         if name is not None:
             cls._repr_name = name
             # class_name() reads type(x).__name__ — answer the CPython name.
-            cls.__name__ = name
-            cls.__module__ = "builtins"
+            cloak(cls, name)
 
     def __init__(self, iterable: Iterable[Any]) -> None:
         self._iter: Iterator[Any] = iter(iterable)

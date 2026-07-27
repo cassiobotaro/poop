@@ -30,11 +30,11 @@ def _poop_int_from(value: object = None, base: object = None) -> Int:
         if base is not None:
             if not isinstance(base, Int):
                 raise MIRRORS["TypeError"](
-                    f"base must be Int, got {type(base).__name__}"
+                    f"base must be int, got {type(base).__name__}"
                 )
             return Int(int(value._value, base._value))
         return Int(int(value._value))
-    raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to Int")
+    raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to int")
 
 
 class _IntRewriter(ast.NodeTransformer):

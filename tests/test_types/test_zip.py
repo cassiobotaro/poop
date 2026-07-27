@@ -228,7 +228,7 @@ def test_poop_zip_accepts_boolean_strict() -> None:
 
 
 def test_poop_zip_rejects_non_boolean_strict() -> None:
-    with pytest.raises(TypeError, match="strict must be Boolean, got Int"):
+    with pytest.raises(TypeError, match="strict must be bool, got int"):
         _poop_zip(List(Int(1)), List(Int(2)), strict=Int(1))
 
 

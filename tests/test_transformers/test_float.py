@@ -113,7 +113,7 @@ def test_float_from_boolean() -> None:
 
 
 def test_float_from_unsupported_type_raises() -> None:
-    with pytest.raises(TypeError, match="cannot convert complex to Float"):
+    with pytest.raises(TypeError, match="cannot convert complex to float"):
         _poop_float_from(Complex(complex(1, 2)))
 
 

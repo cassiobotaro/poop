@@ -1,5 +1,6 @@
 from typing import final
 
+from poop.types._cloak import cloak
 from poop.types.object import Object
 
 
@@ -23,5 +24,4 @@ class EllipsisClass(Object):
 
 ellipsis: EllipsisClass = EllipsisClass()
 
-EllipsisClass.__module__ = "builtins"
-EllipsisClass.__name__ = "ellipsis"
+cloak(EllipsisClass, "ellipsis")

@@ -83,6 +83,6 @@ def test_frozenset_from_tuple() -> None:
 def test_frozenset_from_unsupported_type_raises_clean_message() -> None:
     # Regression: a non-iterable used to leak Python's raw type name and the
     # internal "argument after * must be an iterable" wording; it must now
-    # match set/list/tuple's "cannot convert Int to FrozenSet".
-    with pytest.raises(TypeError, match="cannot convert Int to FrozenSet"):
+    # match set/list/tuple's "cannot convert int to frozenset".
+    with pytest.raises(TypeError, match="cannot convert int to frozenset"):
         _poop_frozenset_from(Int(5))

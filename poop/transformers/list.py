@@ -11,7 +11,7 @@ from poop.transformers.base import BaseTransformer
 from poop.types.list import List
 
 _poop_list = make_constructor(List)
-_poop_list_from = make_iterable_from(List, "List", copy=True)
+_poop_list_from = make_iterable_from(List, copy=True)
 
 
 class _ListRewriter(CollectionRewriter):

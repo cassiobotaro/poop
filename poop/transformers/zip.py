@@ -14,9 +14,7 @@ def _poop_zip(*sources: object, strict: object = None) -> Zip:
         return Zip(*sources, strict=None)
     if isinstance(strict, Boolean):
         return Zip(*sources, strict=strict)
-    raise MIRRORS["TypeError"](
-        f"strict must be Boolean, got {type(strict).__qualname__}"
-    )
+    raise MIRRORS["TypeError"](f"strict must be bool, got {type(strict).__qualname__}")
 
 
 class ZipTransformer(BaseTransformer):

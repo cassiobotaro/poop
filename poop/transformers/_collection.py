@@ -72,7 +72,7 @@ def make_constructor[T](poop_type: type[T]) -> Callable[..., T]:
 
 
 def make_iterable_from[T](
-    poop_type: type[T], display_name: str, *, copy: bool = False
+    poop_type: type[T], *, copy: bool = False
 ) -> Callable[..., T]:
     def _from(arg: object = None) -> T:
         if arg is None:
@@ -87,8 +87,11 @@ def make_iterable_from[T](
             return poop_type(*arg._iter())
         if isinstance(arg, Iterable):
             return poop_type(*cast("Iterable[Object]", arg))
+        # Both names come off the cloak, never a literal: a hand-written
+        # "List" would say `cannot convert int to List`, half the sentence
+        # in POOP's vocabulary and half in the wrapper's.
         raise MIRRORS["TypeError"](
-            f"cannot convert {type(arg).__qualname__} to {display_name}"
+            f"cannot convert {type(arg).__qualname__} to {poop_type.__name__}"
         )
 
     return _from

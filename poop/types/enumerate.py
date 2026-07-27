@@ -2,6 +2,7 @@ import builtins as _builtins
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._iterator_base import _MISSING
 from poop.types._unwrap import _unwrap
@@ -66,5 +67,4 @@ class Enumerate(_IterableMixin, Object):
     __repr__ = __str__
 
 
-Enumerate.__module__ = "builtins"
-Enumerate.__name__ = "enumerate"
+cloak(Enumerate, "enumerate")

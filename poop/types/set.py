@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar, Self
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._set_algebra import _elements, _other_set, _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -144,5 +145,4 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
-Set.__module__ = "builtins"
-Set.__name__ = "set"
+cloak(Set, "set")

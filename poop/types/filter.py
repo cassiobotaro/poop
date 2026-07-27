@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._iterator_base import _MISSING
 from poop.types.object import Object
@@ -64,5 +65,4 @@ class Filter(_IterableMixin, Object):
     __repr__ = __str__
 
 
-Filter.__module__ = "builtins"
-Filter.__name__ = "filter"
+cloak(Filter, "filter")

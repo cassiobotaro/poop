@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.bytes import Bytes
@@ -62,5 +63,4 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
-MemoryView.__module__ = "builtins"
-MemoryView.__name__ = "memoryview"
+cloak(MemoryView, "memoryview")

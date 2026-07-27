@@ -22,7 +22,7 @@ def _poop_bytes_from(arg: object = None, encoding: object = None) -> Bytes:
     if isinstance(arg, Iterable):
         ints = cast("Iterable[Int]", arg)
         return Bytes(bytes(item._value for item in ints))
-    raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to Bytes")
+    raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to bytes")
 
 
 class _BytesRewriter(ast.NodeTransformer):

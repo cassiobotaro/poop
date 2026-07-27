@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.int import Int
 from poop.types.mapping_proxy import MappingProxy
@@ -72,8 +73,7 @@ class _DictView(_IterableMixin, Object):
         if name is not None:
             cls._repr_name = name
             # class_name() reads type(x).__name__ — answer the CPython name.
-            cls.__name__ = name
-            cls.__module__ = "builtins"
+            cloak(cls, name)
 
     def __init__(self, dict_: Dict) -> None:
         self._dict: Dict = dict_

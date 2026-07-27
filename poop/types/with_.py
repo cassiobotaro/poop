@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from poop.types._cloak import cloak
 from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
@@ -61,4 +62,4 @@ class With(Object):
 
 # Like `Try`: keep the user-facing name but drop the module, so `class_()`
 # stops leaking `<class 'poop.types.with_.With'>`.
-With.__module__ = "builtins"
+cloak(With)
