@@ -673,40 +673,6 @@ def test_replace_with_poop_none_count() -> None:
     assert Str("aaa").replace(Str("a"), Str("b"), count=none) == Str("bbb")
 
 
-def test_mod_scalar() -> None:
-    assert Str("v %s") % Int(5) == Str("v 5")
-
-
-def test_mod_single_element_tuple() -> None:
-    assert Str("v %s") % Tuple(Int(5)) == Str("v 5")
-
-
-def test_mod_multiple_tuple() -> None:
-    assert Str("%s/%s") % Tuple(Str("a"), Str("b")) == Str("a/b")
-
-
-def test_mod_numeric_format() -> None:
-    assert Str("%d items at $%.2f") % Tuple(Int(3), Float(1.5)) == Str(
-        "3 items at $1.50"
-    )
-
-
-def test_mod_mapping() -> None:
-    mapping = Dict()
-    mapping.at_put(Str("name"), Str("Ana"))
-    mapping.at_put(Str("age"), Int(30))
-    assert Str("%(name)s is %(age)d") % mapping == Str("Ana is 30")
-
-
-def test_mod_percent_literal() -> None:
-    assert Str("100%% done") % Tuple() == Str("100% done")
-
-
-def test_mod_type_mismatch_raises() -> None:
-    with pytest.raises(TypeError):
-        _ = Str("got %d") % Str("abc")
-
-
 def test_ordering_with_foreign_operand_raises_typeerror() -> None:
     # Proposal 164: a foreign operand answers CPython's TypeError, not a
     # leaking AttributeError from a missing `other._value`.

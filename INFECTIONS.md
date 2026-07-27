@@ -207,6 +207,8 @@ The three allowed decorators are argued for under *Explicitly allowed*; this val
 
 `"{}".format(...)` stays as POOP's template surface — but a format *field* may not reach an attribute or an item. `str.format` resolves `{0.__class__}` and `{0[0]}` at runtime, from inside a string literal no validator can read, so `"{0.__class__}".format(5)` printed `<class 'int'>` — reopening what `no_dunder_attribute` closes, and `{0[0]}` what `no_subscript` closes, against the *raw* Python value at that (`Str.format` deep-unwraps its arguments through `to_python`). `Str._reject_field_access` refuses both spellings, recursing into nested specs (`"{0:{1.__class__}}"` resolves its spec by formatting too). Only the field name is inspected, so `{:.2f}`, `{!r}`, `{name}` and `{:{width}}` are untouched. It is the third half of the dunder ban, next to `Object._reject_dunder`: both guard a spelling that reaches the runtime as data.
 
+**`format` is the only template surface, and printf `%` is gone.** `Str.__mod__` implemented printf-style formatting in full, which broke the same rule twice. It duplicated `format` with a second template language whose directives (`%d`, `%r`, `%-5.2f`) are Python conventions a POOP program has no other reason to learn — and no forbidden construct to substitute, which is what a method needs to earn its place. Worse, `"%(k)s" % mapping` is a **key lookup written as syntax**, exactly what `no_subscript` bans and what `_reject_field_access` rejects two paragraphs up: the same operation was refused through `format` and granted through `%`. `"%s" % (a,)` now answers `str does not understand #% with a tuple`, which is the honest reply.
+
 ### No `len` — `poop/validators/no_len.py`
 
 | Call | Reason | Substitute |
