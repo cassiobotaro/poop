@@ -1,5 +1,8 @@
+import pytest
+
 from poop.types.block import Block
 from poop.types.boolean import false, true
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.none import none
 
@@ -80,3 +83,60 @@ def test_block_class_answers_function() -> None:
     assert str(b.class_name()) == "function"
     assert Block.__module__ == "builtins"
     assert repr(Block) == repr(type(lambda: 0))
+
+
+def test_block_arity_mismatch_speaks_block_vocabulary() -> None:
+    # CPython reported this against the raw lambda: `<lambda>() takes 1
+    # positional argument but 2 were given` — the Python name of an object
+    # POOP cloaks as `function`, and a calling convention a block has not.
+    with pytest.raises(TypeError, match=r"^block expects 1 argument, got 2$"):
+        Block(lambda x: x)(Int(1), Int(2))
+
+
+def test_block_arity_message_pluralises_the_expected_count() -> None:
+    with pytest.raises(TypeError, match=r"^block expects 0 arguments, got 1$"):
+        Block(lambda: none)(Int(1))
+
+
+def test_block_arity_message_states_a_range_for_optional_arguments() -> None:
+    with pytest.raises(TypeError, match=r"^block expects 1 to 2 arguments, got 3$"):
+        Block(lambda a, b=none: a)(Int(1), Int(2), Int(3))
+
+
+def test_block_arity_message_states_a_floor_for_a_variadic_block() -> None:
+    with pytest.raises(TypeError, match=r"^block expects at least 1 argument, got 0$"):
+        Block(lambda a, *rest: a)()
+
+
+def test_block_arity_message_counts_keyword_arguments_too() -> None:
+    with pytest.raises(TypeError, match=r"^block expects 1 argument, got 2$"):
+        Block(lambda x: x)(Int(1), y=Int(2))
+
+
+def test_block_arity_message_without_a_signature_states_no_count() -> None:
+    # A few CPython builtins carry no signature at all, and `get_attr` wraps
+    # whatever it is handed; the message must still be a block's.
+    with pytest.raises(TypeError, match=r"^block does not accept 3 arguments$"):
+        Block({}.update)(Int(1), Int(2), Int(3))
+
+
+def test_block_does_not_reword_a_type_error_from_its_body() -> None:
+    # The body's failure belongs to whatever the body was doing. Distinguished
+    # by the traceback: a signature mismatch never enters the block.
+    with pytest.raises(TypeError, match="unsupported operand"):
+        Block(lambda x: x + "a")(Int(1))
+
+
+def test_block_error_is_a_poop_exception_class() -> None:
+    with pytest.raises(MIRRORS["TypeError"]):
+        Block(lambda x: x)()
+
+
+def test_while_true_rewords_a_wrong_arity_condition() -> None:
+    with pytest.raises(TypeError, match=r"^block expects 1 argument, got 0$"):
+        Block(lambda x: x).while_true(Block(lambda: none))
+
+
+def test_while_false_rewords_a_wrong_arity_condition() -> None:
+    with pytest.raises(TypeError, match=r"^block expects 1 argument, got 0$"):
+        Block(lambda x: x).while_false(Block(lambda: none))

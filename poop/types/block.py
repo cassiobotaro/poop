@@ -1,12 +1,18 @@
 from collections.abc import Callable
+from inspect import Parameter, signature
 from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
+from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types.none import NoneClass
+
+
+def _count(n: int) -> str:
+    return f"{n} argument" if n == 1 else f"{n} arguments"
 
 
 def _as_block(value: Any) -> Any:
@@ -35,15 +41,68 @@ class Block(Object):
         self._fn = fn
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        return self._fn(*args, **kwargs)
+        try:
+            return self._fn(*args, **kwargs)
+        except TypeError as exc:
+            # Which TypeError is this? A signature mismatch is raised by the
+            # call machinery *before* the block runs, so its traceback stops
+            # at this frame; one raised by the body has the block's own frame
+            # below. Only the first is the block's to reword — the second
+            # belongs to whatever the body was doing.
+            traceback = exc.__traceback__
+            if traceback is None or traceback.tb_next is not None:
+                raise
+            # `from None` on purpose: CPython's wording is the leak. It says
+            # `<lambda>()` — the Python name of an object POOP cloaks as
+            # `function` and prints as `<block>` — and `positional argument`,
+            # a calling convention a block does not have.
+            raise MIRRORS["TypeError"](
+                self._arity_message(len(args) + len(kwargs))
+            ) from None
+
+    def _accepted(self) -> tuple[int, int | None] | None:
+        """How many arguments the block takes: (fewest, most), `None` unbounded.
+
+        Answers `None` when CPython cannot introspect the callable — a handful
+        of its own builtins carry no signature, and `get_attr` can hand one to
+        `_as_block`.
+        """
+        try:
+            params = list(signature(self._fn).parameters.values())
+        except TypeError, ValueError:
+            return None
+        positional = [
+            param
+            for param in params
+            if param.kind
+            in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
+        ]
+        required = sum(1 for param in positional if param.default is Parameter.empty)
+        variadic = any(param.kind is Parameter.VAR_POSITIONAL for param in params)
+        return required, None if variadic else len(positional)
+
+    def _arity_message(self, given: int) -> str:
+        accepted = self._accepted()
+        if accepted is None:
+            return f"block does not accept {_count(given)}"
+        fewest, most = accepted
+        if most is None:
+            expected = f"at least {_count(fewest)}"
+        elif fewest == most:
+            expected = _count(fewest)
+        else:
+            expected = f"{fewest} to {_count(most)}"
+        return f"block expects {expected}, got {given}"
 
     def while_true(self, body: Block) -> NoneClass:
-        while bool(self._fn()):
+        # Through `self()`, not `self._fn()`: a condition block of the wrong
+        # arity would otherwise answer CPython's wording from here.
+        while bool(self()):
             body()
         return none
 
     def while_false(self, body: Block) -> NoneClass:
-        while not bool(self._fn()):
+        while not bool(self()):
             body()
         return none
 
