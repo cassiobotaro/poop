@@ -2,6 +2,7 @@ import builtins as _builtins
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from poop.types._cloak import cloak
+from poop.types._message import article, binary_refusal
 from poop.types._numeric_compare import (
     _NOT_NUMERIC,
     _num_value,
@@ -216,7 +217,14 @@ class Int(_NumericCompareMixin, Object):
             return Int(result)
         if isinstance(other, Float):
             raise MIRRORS["TypeError"](
-                "pow() 3rd argument not allowed unless all arguments are integers"
+                "pow's modulus is only defined when both operands are ints"
+            )
+        # Guarded here because CPython's three-operand form names all three —
+        # `unsupported operand type(s) for ** or pow(): 'int', 'int', 'str'` —
+        # a shape no rewording of the binary message would reach.
+        if not isinstance(modulus, Int):
+            raise MIRRORS["TypeError"](
+                f"pow's modulus must be an int, got {article(type(modulus).__name__)}"
             )
         return Int(pow(self._value, other._value, _faithful(modulus)))
 
@@ -226,8 +234,7 @@ class Int(_NumericCompareMixin, Object):
         result = self.__pow__(other, modulus)
         if result is NotImplemented:
             raise MIRRORS["TypeError"](
-                f"unsupported operand type(s) for ** or pow(): "
-                f"'int' and '{type(other).__name__}'"
+                binary_refusal("int", "**", type(other).__name__)
             )
         return result
 
@@ -247,8 +254,7 @@ class Int(_NumericCompareMixin, Object):
         result = self.__divmod__(other)
         if result is NotImplemented:
             raise MIRRORS["TypeError"](
-                f"unsupported operand type(s) for divmod(): "
-                f"'int' and '{type(other).__name__}'"
+                binary_refusal("int", "divmod", type(other).__name__)
             )
         return result
 

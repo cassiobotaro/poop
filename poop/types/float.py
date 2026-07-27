@@ -3,6 +3,7 @@ import math
 from typing import TYPE_CHECKING, cast
 
 from poop.types._cloak import cloak
+from poop.types._message import binary_refusal
 from poop.types._numeric_compare import (
     _NOT_NUMERIC,
     _num_value,
@@ -139,8 +140,7 @@ class Float(_NumericCompareMixin, Object):
         result = self.__pow__(other)
         if result is NotImplemented:
             raise MIRRORS["TypeError"](
-                f"unsupported operand type(s) for ** or pow(): "
-                f"'float' and '{type(other).__name__}'"
+                binary_refusal("float", "**", type(other).__name__)
             )
         return result
 
@@ -157,8 +157,7 @@ class Float(_NumericCompareMixin, Object):
         result = self.__divmod__(other)
         if result is NotImplemented:
             raise MIRRORS["TypeError"](
-                f"unsupported operand type(s) for divmod(): "
-                f"'float' and '{type(other).__name__}'"
+                binary_refusal("float", "divmod", type(other).__name__)
             )
         return result
 

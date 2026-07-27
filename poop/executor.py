@@ -2,6 +2,7 @@ import ast
 import builtins
 
 from poop.errors import ExecutionError
+from poop.types._message import poop_message
 
 # The only Python builtins user code may reach. `exec` hands a program
 # CPython's entire builtins namespace unless the globals dict already carries
@@ -58,7 +59,7 @@ def _describe(exc: BaseException) -> str:
     An empty message degrades to the bare name rather than a dangling colon.
     """
     name = type(exc).__name__
-    message = str(exc)
+    message = poop_message(exc)
     return f"{name}: {message}" if message else name
 
 

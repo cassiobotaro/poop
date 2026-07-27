@@ -1,5 +1,6 @@
 from typing import Any, final
 
+from poop.types._message import poop_message
 from poop.types.object import Object
 from poop.types.string import Str
 
@@ -14,7 +15,10 @@ class Error(Object):
         self._exception = exception
 
     def message(self) -> Str:
-        return Str(str(self._exception))
+        # Through `poop_message`, like the uncaught path: a handler reading
+        # `e.message()` must not be the one place Python's operator wording
+        # still shows through.
+        return Str(poop_message(self._exception))
 
     def kind(self) -> Any:
         """The exception's class — the class itself, not its name.

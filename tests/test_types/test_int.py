@@ -162,7 +162,7 @@ def test_pow_negative_base_fractional_exponent_returns_complex() -> None:
 
 
 def test_pow_with_modulus_rejects_float_exponent() -> None:
-    with pytest.raises(TypeError, match="all arguments are integers"):
+    with pytest.raises(TypeError, match="modulus is only defined when both operands"):
         Int(2).__pow__(Float(0.5), Int(3))
 
 
@@ -614,3 +614,14 @@ def test_int_answers_the_index_protocol() -> None:
     # An Int *is* an index, so no call site has to unwrap `i._value` by hand.
     assert [10, 20, 30][Int(1)] == 20
     assert Int(2).__index__() == 2
+
+
+def test_pow_with_a_non_int_modulus_names_the_modulus() -> None:
+    # CPython's three-operand form names all three — `unsupported operand
+    # type(s) for ** or pow(): 'int', 'int', 'str'` — a shape no rewording of
+    # the binary message reaches.
+    # Deliberately ill-typed: the point is what a program is told when it
+    # writes this, and `ty` is right that it should not.
+    modulus: Any = Str("a")
+    with pytest.raises(TypeError, match=r"^pow's modulus must be an int, got a str$"):
+        Int(2).pow(Int(3), modulus)
