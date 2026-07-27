@@ -170,3 +170,20 @@ def test_negative_non_int_literal_is_not_wrapped_as_an_int() -> None:
     # the int rewriter leaves it for the float transformer instead of wrapping.
     tree = _transform("y = -3.14")
     assert "_poop_int" not in ast.unparse(tree)
+
+
+def test_int_from_an_unparsable_string_does_not_name_the_call() -> None:
+    # `invalid literal for int() with base 10: 'abc'` describes a Python call
+    # and an argument the reader did not pass.
+    with pytest.raises(ValueError, match=r"^'abc' is not a valid int$"):
+        _poop_int_from(Str("abc"))
+
+
+def test_int_from_an_out_of_range_base_does_not_name_the_call() -> None:
+    with pytest.raises(ValueError, match=r"^int base must be 0, or between 2 and 36$"):
+        _poop_int_from(Str("ff"), Int(99))
+
+
+def test_int_from_an_unparsable_string_states_the_base_when_given() -> None:
+    with pytest.raises(ValueError, match=r"^'zz' is not a valid int in base 16$"):
+        _poop_int_from(Str("zz"), Int(16))

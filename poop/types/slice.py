@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
 from poop.types.boolean import false, true
+from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -100,8 +101,19 @@ def _resolve_py_slice(
     whose `slice` methods otherwise repeated this branch verbatim.
     """
     if isinstance(start_or_slice, Slice):
-        return start_or_slice._py_slice()
-    return Slice(start_or_slice, stop, step)._py_slice()
+        resolved = start_or_slice._py_slice()
+    else:
+        resolved = Slice(start_or_slice, stop, step)._py_slice()
+    # Checked here rather than left to the sequence, which answers `slice
+    # indices must be integers or None or have an __index__ method` — naming
+    # subscripting and a dunder POOP bans in the same breath, one step after
+    # the receiver that would have said which message was sent.
+    for bound in (resolved.start, resolved.stop, resolved.step):
+        if bound is not None and not hasattr(bound, "__index__"):
+            raise MIRRORS["TypeError"](
+                f"slice bounds must be int, got a {type(bound).__name__}"
+            )
+    return resolved
 
 
 def _coerce(value: Index | NoneClass | None) -> Index | None:

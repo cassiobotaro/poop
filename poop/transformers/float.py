@@ -20,7 +20,14 @@ def _poop_float_from(value: object = None) -> Float:
     if isinstance(value, Int):
         return Float(float(value._value))
     if isinstance(value, Str):
-        return Float(float(value._value))
+        try:
+            return Float(float(value._value))
+        except ValueError:
+            # `could not convert string to float: 'abc'` names Python's type,
+            # not the message the reader sent.
+            raise MIRRORS["ValueError"](
+                f"{value._value!r} is not a valid float"
+            ) from None
     raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to float")
 
 

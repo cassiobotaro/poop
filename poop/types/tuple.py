@@ -4,7 +4,7 @@ from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from poop.types._at import at_index
+from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
@@ -101,11 +101,14 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         from poop.types._unwrap import _is_absent, _opt_int
         from poop.types.int import Int
 
-        if _is_absent(start):
-            return Int(self._items.index(obj))
-        if _is_absent(stop):
-            return Int(self._items.index(obj, _opt_int(start, 0)))
-        return Int(self._items.index(obj, _opt_int(start, 0), _opt_int(stop, 0)))
+        try:
+            if _is_absent(start):
+                return Int(self._items.index(obj))
+            if _is_absent(stop):
+                return Int(self._items.index(obj, _opt_int(start, 0)))
+            return Int(self._items.index(obj, _opt_int(start, 0), _opt_int(stop, 0)))
+        except ValueError:
+            raise no_element_equal_to(self, obj) from None
 
     def __lt__(self, other: object) -> Boolean:
         if not isinstance(other, Tuple):

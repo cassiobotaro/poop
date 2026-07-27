@@ -129,3 +129,10 @@ def test_negative_non_float_literal_is_not_wrapped_as_a_float() -> None:
     # float rewriter leaves it for the int transformer instead of wrapping it.
     tree = _transform("y = -5")
     assert "_poop_float" not in ast.unparse(tree)
+
+
+def test_float_from_an_unparsable_string_names_the_value() -> None:
+    # `could not convert string to float: 'abc'` names Python's type, not the
+    # message the reader sent.
+    with pytest.raises(ValueError, match=r"^'abc' is not a valid float$"):
+        _poop_float_from(Str("abc"))

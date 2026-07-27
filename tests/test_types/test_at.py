@@ -84,3 +84,51 @@ def test_dict_at_leaves_an_unhashable_key_to_cpython() -> None:
     # already POOP's — a Dict has keys.
     with pytest.raises(TypeError, match="as a dict key"):
         Dict().at(List(Int(1)))
+
+
+def test_list_pop_out_of_range_reuses_at_s_wording() -> None:
+    # `pop index out of range`: the method named as a Python call, and no
+    # receiver in the sentence.
+    with pytest.raises(IndexError, match=r"^list has no element at 9 — it has 2"):
+        List(Int(1), Int(2)).pop(Int(9))
+
+
+def test_list_pop_on_an_empty_list_names_the_receiver() -> None:
+    with pytest.raises(
+        IndexError, match=r"^list has no element to remove — it is empty$"
+    ):
+        List().pop()
+
+
+def test_list_index_of_a_missing_value_states_the_value() -> None:
+    # `list.index(x): x not in list` spelt the message as a Python call and
+    # used a placeholder where the value the reader passed belongs.
+    with pytest.raises(ValueError, match=r"^list has no element equal to 9$"):
+        List(Int(1)).index(Int(9))
+
+
+def test_list_index_with_bounds_states_the_value_too() -> None:
+    with pytest.raises(ValueError, match=r"^list has no element equal to 1$"):
+        List(Int(1), Int(2)).index(Int(1), Int(1), Int(2))
+
+
+def test_tuple_index_of_a_missing_value_names_the_tuple() -> None:
+    with pytest.raises(ValueError, match=r"^tuple has no element equal to 9$"):
+        Tuple(Int(1)).index(Int(9))
+
+
+def test_list_remove_of_a_missing_value_states_the_value() -> None:
+    with pytest.raises(ValueError, match=r"^list has no element equal to 9$"):
+        List(Int(1)).remove(Int(9))
+
+
+def test_slice_with_a_non_index_bound_names_the_bound() -> None:
+    # `slice indices must be integers or None or have an __index__ method`
+    # named subscripting and a banned dunder in one breath.
+    from poop.types.slice import Slice
+
+    # Deliberately ill-typed: the point is what a program is told when it
+    # writes this, and `ty` is right that it should not.
+    bound: Any = Str("a")
+    with pytest.raises(TypeError, match=r"^slice bounds must be int, got a str$"):
+        Str("abc").slice(Slice(bound, Int(2)))

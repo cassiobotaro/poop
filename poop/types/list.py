@@ -4,12 +4,13 @@ from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
-from poop.types._at import at_index
+from poop.types._at import at_index, no_element_at, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
+from poop.types.exceptions import MIRRORS
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
 from poop.types.object import Object
@@ -142,9 +143,18 @@ class List(_ValueEqMixin, _IterableMixin, Object):
     def pop(self, index: Index | NoneClass | None = None) -> Object:
         from poop.types._unwrap import _is_absent
 
-        if _is_absent(index):
-            return self._items.pop()
-        return self._items.pop(index)
+        try:
+            if _is_absent(index):
+                return self._items.pop()
+            return self._items.pop(index)
+        except IndexError:
+            # `pop index out of range` / `pop from empty list` — the method
+            # named as a Python call, and no receiver in either sentence.
+            if _is_absent(index):
+                raise MIRRORS["IndexError"](
+                    "list has no element to remove — it is empty"
+                ) from None
+            raise no_element_at(self, self._items, index) from None
 
     def clear(self) -> NoneClass:
         self._items.clear()
@@ -171,18 +181,24 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         from poop.types._unwrap import _is_absent, _opt_int
         from poop.types.int import Int
 
-        if _is_absent(start):
-            return Int(self._items.index(obj))
-        if _is_absent(stop):
-            return Int(self._items.index(obj, _opt_int(start, 0)))
-        return Int(self._items.index(obj, _opt_int(start, 0), _opt_int(stop, 0)))
+        try:
+            if _is_absent(start):
+                return Int(self._items.index(obj))
+            if _is_absent(stop):
+                return Int(self._items.index(obj, _opt_int(start, 0)))
+            return Int(self._items.index(obj, _opt_int(start, 0), _opt_int(stop, 0)))
+        except ValueError:
+            raise no_element_equal_to(self, obj) from None
 
     def insert(self, i: Index, obj: Object) -> NoneClass:
         self._items.insert(i, obj)
         return none
 
     def remove(self, obj: Object) -> NoneClass:
-        self._items.remove(obj)
+        try:
+            self._items.remove(obj)
+        except ValueError:
+            raise no_element_equal_to(self, obj) from None
         return none
 
     def reverse(self) -> NoneClass:

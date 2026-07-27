@@ -9,6 +9,28 @@ from poop.types.int import Int
 from poop.types.string import Str
 
 
+def _parsed(value: Str, base: int | None) -> Int:
+    """`int(text)` / `int(text, base)`, reworded.
+
+    CPython answers `invalid literal for int() with base 10: 'abc'` — a Python
+    call, plus a base the reader never passed — and `int() base must be >= 2
+    and <= 36, or 0`, naming the same call again.
+
+    The base is checked here rather than read back out of CPython's message:
+    that message says `base` too, so telling the two failures apart by their
+    text would have made `int("abc")` answer the base's error.
+    """
+    if base is not None and base != 0 and not 2 <= base <= 36:
+        raise MIRRORS["ValueError"]("int base must be 0, or between 2 and 36")
+    try:
+        return Int(int(value._value, 10 if base is None else base))
+    except ValueError:
+        in_base = "" if base is None else f" in base {base}"
+        raise MIRRORS["ValueError"](
+            f"{value._value!r} is not a valid int{in_base}"
+        ) from None
+
+
 def _poop_int_from(value: object = None, base: object = None) -> Int:
     if base is not None and not isinstance(value, Str):
         # Mirror CPython: a base is meaningful only when parsing a string.
@@ -32,8 +54,8 @@ def _poop_int_from(value: object = None, base: object = None) -> Int:
                 raise MIRRORS["TypeError"](
                     f"base must be int, got {type(base).__name__}"
                 )
-            return Int(int(value._value, base._value))
-        return Int(int(value._value))
+            return _parsed(value, base._value)
+        return _parsed(value, None)
     raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to int")
 
 

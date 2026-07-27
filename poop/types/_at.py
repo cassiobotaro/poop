@@ -27,6 +27,30 @@ def _size(count: int) -> str:
     return f"it has {count} element" if count == 1 else f"it has {count} elements"
 
 
+def no_element_at(receiver: object, items: Any, index: Any) -> Exception:
+    """The mirrored `IndexError` for an index the receiver has no element at.
+
+    Answers the exception rather than raising it, so a call site reads
+    `raise no_element_at(...) from None` — the `from None` is the point, and it
+    has to be written where the original is caught.
+    """
+    return MIRRORS["IndexError"](
+        f"{type(receiver).__name__} has no element at {index} — {_size(len(items))}"
+    )
+
+
+def no_element_equal_to(receiver: object, value: Any) -> Exception:
+    """The mirrored `ValueError` for a value the receiver does not hold.
+
+    CPython spelled this as `list.index(x): x not in list` — the method written
+    as a Python call rather than sent as a message, and the placeholder `x`
+    where the value the reader passed belongs.
+    """
+    return MIRRORS["ValueError"](
+        f"{type(receiver).__name__} has no element equal to {value!r}"
+    )
+
+
 def at_index(items: Any, index: Any, receiver: object) -> Any:
     """`items[index]`, with POOP's wording for the two ways it can fail.
 
@@ -38,9 +62,7 @@ def at_index(items: Any, index: Any, receiver: object) -> Any:
     try:
         return items[index]
     except IndexError:
-        raise MIRRORS["IndexError"](
-            f"{type(receiver).__name__} has no element at {index} — {_size(len(items))}"
-        ) from None
+        raise no_element_at(receiver, items, index) from None
     except TypeError:
         # The only TypeError a sequence lookup raises: the index is not one.
         raise MIRRORS["TypeError"](
