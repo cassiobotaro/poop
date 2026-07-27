@@ -1,12 +1,11 @@
 from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
-from builtins import sorted as builtins_sorted
 from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
-from poop.types._iterable_mixin import _IterableMixin
+from poop.types._iterable_mixin import _IterableMixin, _sorted
 from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
@@ -82,7 +81,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         key: Callable[[Object], Any] | None = None,
         reverse: Boolean = false,
     ) -> Tuple:
-        return Tuple(*builtins_sorted(self._items, key=key, reverse=bool(reverse)))
+        return Tuple(*_sorted(self._items, key, reverse))
 
     def reversed(self) -> Tuple:
         return Tuple(*builtins_reversed(self._items))

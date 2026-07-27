@@ -45,6 +45,20 @@ def _minmax(
     return func(iterable, **kwargs)
 
 
+def _sorted(iterable: Any, key: Callable[[Any], Any] | None, reverse: Any) -> Any:
+    """Assemble the optional `key` kwarg and call `sorted`.
+
+    Shared by List (`sorted` and the in-place `sort`) and Tuple, which each
+    answer their own type and so cannot inherit a single message. Passing
+    `key=None` explicitly would work at runtime but matches no `sorted`
+    overload, so the kwarg is omitted when there is no key.
+    """
+    kwargs: dict[str, Any] = {"reverse": bool(reverse)}
+    if key is not None:
+        kwargs["key"] = key
+    return _builtins.sorted(iterable, **kwargs)
+
+
 class _IterableMixin:
     @abstractmethod
     def __iter__(self) -> Iterator[Any]: ...
