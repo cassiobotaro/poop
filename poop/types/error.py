@@ -39,4 +39,12 @@ class Error(Object):
         return self.kind()
 
     def __str__(self) -> str:
-        return f"Error({self._exception})"
+        # Built on the identity `class_()` already answers, not on the wrapper:
+        # `Error` is a `poop.types` detail user code can neither name nor
+        # construct, so it had no business printing itself — the same argument
+        # that closed the `class_name()` leak above. An empty message degrades
+        # to the bare class name rather than a dangling colon, as `_describe`
+        # does for the same reason.
+        name = self.kind().name()
+        message = self.message()
+        return f"{name}: {message}" if str(message) else str(name)

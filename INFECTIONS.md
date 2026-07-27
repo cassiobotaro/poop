@@ -911,7 +911,7 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 | `message()` | returns exception message as `Str` |
 | `kind()` | returns the POOP exception class; `kind().name()` for the name as `Str` |
 
-`__str__` returns `"Error(<exception>)"`.
+`__str__` is built on the identity `class_()` already answers — `"ZeroDivisionError: division by zero"` — not on the wrapper. It used to print `Error(division by zero)`, naming a `poop.types` detail user code can neither name nor construct, so the same object identified itself two different ways: `e.class_name()` answered `ZeroDivisionError` while `e.print()` answered `Error(...)`. A message-less exception degrades to the bare class name rather than a dangling colon, as `executor._describe` does for the same reason.
 
 ### Try — `poop/types/try_.py`
 

@@ -45,3 +45,23 @@ def test_error_wraps_different_exception_types() -> None:
     assert Error(ValueError("v")).kind() is MIRRORS["ValueError"]
     assert Error(KeyError("k")).kind() is MIRRORS["KeyError"]
     assert Error(TypeError("t")).kind() is MIRRORS["TypeError"]
+
+
+def test_str_names_the_wrapped_class_not_the_wrapper() -> None:
+    # `Error` is a poop.types detail user code can neither name nor construct,
+    # so it had no business printing itself as `Error(division by zero)`.
+    assert str(Error(ZeroDivisionError("division by zero"))) == (
+        "ZeroDivisionError: division by zero"
+    )
+
+
+def test_str_of_a_key_error_carries_no_python_quoting() -> None:
+    # `KeyError.__str__` answers repr(args[0]), which used to print
+    # `Error('z')` — Python's quotes around a POOP string.
+    assert str(Error(MIRRORS["KeyError"]("dict has no key 'z'"))) == (
+        "KeyError: dict has no key 'z'"
+    )
+
+
+def test_str_of_a_message_less_error_degrades_to_the_bare_name() -> None:
+    assert str(Error(AssertionError())) == "AssertionError"
