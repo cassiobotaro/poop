@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._at import at_index
 from poop.types._cloak import cloak
+from poop.types._codec import encoding_name, handler_name
 from poop.types._iterable_mixin import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
@@ -324,8 +325,8 @@ class Str(_ValueEqMixin, Object):
 
         return Bytes(
             self._value.encode(
-                _opt_str(encoding, "utf-8"),
-                _opt_str(errors, "strict"),
+                encoding_name(_opt_str(encoding, "utf-8")),
+                handler_name(_opt_str(errors, "strict")),
             )
         )
 
