@@ -120,7 +120,7 @@ for a, b in zip(xs, ys):
 
 ```python
 # POOP
-names.enumerate().do(lambda pair: ...)   # pair.at(0) is index, pair.at(1) is value
+names.enumerate().do(lambda pair: ...)  # pair.at(0) is index, pair.at(1) is value
 xs.zip(ys).do(lambda pair: ...)
 ```
 

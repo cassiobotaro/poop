@@ -589,10 +589,10 @@ Available on every `_IterableMixin` type — `List`, `Tuple`, `Set`,
 Materialization is via the target type's constructor:
 
 ```python
-list(items.map(lambda x: x + 1))           # -> List
-tuple(items.filter(lambda x: x > 0))       # -> Tuple
-set(items.map(lambda x: x.lower()))        # -> Set
-bytes(items.map(lambda x: x.code()))       # -> Bytes
+list(items.map(lambda x: x + 1))  # -> List
+tuple(items.filter(lambda x: x > 0))  # -> Tuple
+set(items.map(lambda x: x.lower()))  # -> Set
+bytes(items.map(lambda x: x.code()))  # -> Bytes
 ```
 
 In Python tests (where the transformer doesn't run), construct via
