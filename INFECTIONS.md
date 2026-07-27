@@ -178,6 +178,14 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 |---|---|
 | `ast.NamedExpr` | `:=` combines assignment and expression — use separate assignment |
 
+### No decorator — `poop/validators/no_decorator.py`
+
+| AST node | Condition | Reason | Substitute |
+|---|---|---|---|
+| a `decorator_list` entry on `ast.FunctionDef` / `ast.AsyncFunctionDef` / `ast.ClassDef` | not a bare `ast.Name` among `staticmethod`, `classmethod`, `property` | `@f` is a function call written as syntax rather than sent as a message | send the message |
+
+The three allowed decorators are argued for under *Explicitly allowed*; this validator is what makes that boundary real rather than merely documented. `@twice` on a method silently replaced it with an unrelated block and nothing objected. `@property(...)`, `@a.b` and `@twice` are all refused; `@property` is not.
+
 ### No `type` alias — `poop/validators/no_type_alias.py`
 
 | Construct | Reason |
@@ -649,7 +657,7 @@ Constructs considered for blocking but decided to allow by design.
 
 ### `property` / `classmethod` / `staticmethod`
 
-These are class-definition decorators, not runtime operations on values. They define how a method is bound, not what it does. Blocking them would prevent idiomatic class definitions without a principled POOP substitute. Allowed.
+These are class-definition decorators, not runtime operations on values. They define how a method is bound, not what it does. Blocking them would prevent idiomatic class definitions without a principled POOP substitute. Allowed — and, since `no_decorator`, **only** these three. `@` otherwise applies an arbitrary expression, which is a function call written as syntax rather than sent as a message, exactly the shape `no_subscript`, `no_fstring` and `no_if` exist to remove; nothing checked the boundary, so a plain block silently replaced a method (`@twice` on `def bar(): return 1` made `Foo.bar()` answer `2`). Only a bare `ast.Name` among the three is accepted: `@property(...)` is refused even though `@property` is not, because a called decorator is a runtime operation, which is the distinction the allowance rests on.
 
 ### Binary infix operators (`+`, `-`, `*`, `/`, `<<`, `>>`, `&`, `|`, `^`, `==`, `!=`, `<`, `<=`, `>`, `>=`)
 

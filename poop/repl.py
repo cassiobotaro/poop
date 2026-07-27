@@ -250,6 +250,9 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     # no_async's Await row instead of being shadowed by the async def one.
     "await": "await x",
     "walrus": "(x := 1)",
+    # A decorator no_decorator refuses — `@staticmethod` and its two siblings
+    # are allowed, so a snippet using one would explain nothing.
+    "decorator": "class C:\n    @twice\n    def m():\n        pass",
     "match": "match x:\n    case _:\n        pass",
     "fstring": 'f"{x}"',
     "subscript": "x[0]",

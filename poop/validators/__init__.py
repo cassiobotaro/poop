@@ -12,6 +12,7 @@ from poop.validators.no_builtin_shadow import NoBuiltinShadowValidator
 from poop.validators.no_callable import NoCallableValidator
 from poop.validators.no_chr import NoChrValidator
 from poop.validators.no_comprehension import NoComprehensionValidator
+from poop.validators.no_decorator import NoDecoratorValidator
 from poop.validators.no_del import NoDelValidator
 from poop.validators.no_dir import NoDirValidator
 from poop.validators.no_divmod import NoDivmodValidator
@@ -94,6 +95,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoGlobalValidator(),
     NoYieldValidator(),
     NoWalrusValidator(),
+    NoDecoratorValidator(),
     NoMatchValidator(),
     NoFstringValidator(),
     NoLenValidator(),

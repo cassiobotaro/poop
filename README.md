@@ -60,7 +60,7 @@ Full Python → POOP recipe book: [`MIGRATION.md`](MIGRATION.md). Design rationa
 
 ## What's banned (and what to use instead)
 
-POOP runs ~68 validators on every program. Grouped by theme:
+POOP runs ~69 validators on every program. Grouped by theme:
 
 **Control flow** — messages on a Boolean, not statements.
 - `if` / `else` / ternary → `cond.if_true(lambda: …)` / `cond.if_true_if_false(lambda: …, lambda: …)`
@@ -90,6 +90,7 @@ POOP runs ~68 validators on every program. Grouped by theme:
 - comprehensions (`[x for x in …]`, `{…}`, generator exprs) → explicit `.map` / `.filter` / `.do`
 - top-level `def` (free functions) → define as a method inside a class
 - `yield` / walrus `:=` / `del` / `global` → out of scope
+- `@decorator` → send the message; only `@staticmethod` / `@classmethod` / `@property` are allowed, being class-definition machinery rather than runtime operations
 
 **Side-channels.**
 - `exec` / `breakpoint` / `exit` — interpreter escape hatches forbidden
