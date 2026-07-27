@@ -3,6 +3,7 @@ from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
 from poop.types.boolean import Boolean
+from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -20,7 +21,7 @@ def _poop_float_from(value: object = None) -> Float:
         return Float(float(value._value))
     if isinstance(value, Str):
         return Float(float(value._value))
-    raise TypeError(f"cannot convert {type(value).__name__} to Float")
+    raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to Float")
 
 
 class _FloatRewriter(ast.NodeTransformer):

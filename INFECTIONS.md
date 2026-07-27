@@ -685,6 +685,8 @@ Three constraints:
 
 `Error.kind()` answers the POOP class, not a `Str` — `e.kind().name()` for the name. An unmirrored native answers with the nearest mirrored ancestor rather than leaking the raw class back out.
 
+**The table is also how POOP raises its own diagnostics.** A wrapper composing a POOP message used to carry it on a native class — POOP's advice labelled with Python's vocabulary, and nothing stopping the next wrapper from doing the same. The rule inside `poop/types/` and `poop/transformers/` is now one line: a failure a program can reach is raised as `MIRRORS["TypeError"](...)`, never as the bare builtin. Because the mirrors subclass their twin the change is invisible at runtime — anything that caught the native still catches it — which is the point: it is a guardrail for the wording work, not a behaviour change. `tests/test_mirrored_raises.py` sweeps both packages, since per-site tests cannot stop the next wrapper from reintroducing a native. Two spellings stay native, both exempt by rule rather than by site: `__getattr__`'s dunder refusal (Python's attribute protocol answering Python's own probe, and reached while `exceptions` is still importing — the mirrors are built on `Object`) and the abstract-stub / import-time guards no program can reach.
+
 ### PoopMeta — `poop/types/meta.py`
 
 Classes are objects and answer messages, as in Smalltalk. `Foo.print()` used to answer `Object.print() missing 1 required positional argument: 'self'` — Python failing to bind a method, not POOP refusing a message.

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from poop.types.error import Error
+from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
 
@@ -56,7 +57,7 @@ class Try(Object):
 
     def _execute(self) -> object:
         if self._executed:
-            raise RuntimeError(
+            raise MIRRORS["RuntimeError"](
                 "Try has already been executed; create a new Try instance to retry."
             )
         self._executed = True

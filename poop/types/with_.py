@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
 
@@ -30,7 +31,7 @@ class With(Object):
 
     def do(self, body_block: Callable[[Any], object]) -> object:
         if self._cm_block is None:
-            raise RuntimeError(
+            raise MIRRORS["RuntimeError"](
                 "With has already run; create a new With instance to run again."
             )
         cm = self._cm_block()

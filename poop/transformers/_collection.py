@@ -11,6 +11,7 @@ import ast
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, ClassVar, cast
 
+from poop.types.exceptions import MIRRORS
 from poop.types.range import Range
 
 if TYPE_CHECKING:
@@ -86,6 +87,8 @@ def make_iterable_from[T](
             return poop_type(*arg._iter())
         if isinstance(arg, Iterable):
             return poop_type(*cast("Iterable[Object]", arg))
-        raise TypeError(f"cannot convert {type(arg).__qualname__} to {display_name}")
+        raise MIRRORS["TypeError"](
+            f"cannot convert {type(arg).__qualname__} to {display_name}"
+        )
 
     return _from

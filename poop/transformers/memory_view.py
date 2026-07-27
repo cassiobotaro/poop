@@ -4,6 +4,7 @@ from typing import ClassVar
 from poop.transformers.base import BaseTransformer
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
+from poop.types.exceptions import MIRRORS
 from poop.types.memory_view import MemoryView
 
 
@@ -12,7 +13,7 @@ def _poop_memoryview_from(arg: object = None) -> MemoryView:
         return MemoryView(memoryview(arg._value))
     if isinstance(arg, ByteArray):
         return MemoryView(memoryview(arg._value))
-    raise TypeError(
+    raise MIRRORS["TypeError"](
         f"memoryview: a bytes-like object is required, not {type(arg).__qualname__}"
     )
 

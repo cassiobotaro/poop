@@ -3,6 +3,7 @@ from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
 from poop.types.boolean import Boolean
+from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -13,7 +14,7 @@ def _poop_int_from(value: object = None, base: object = None) -> Int:
         # Mirror CPython: a base is meaningful only when parsing a string.
         # int(10, 2) / int(3.5, 2) / int(True, 2) all raise TypeError there;
         # silently dropping the base would diverge from the language.
-        raise TypeError("int() can't convert non-string with explicit base")
+        raise MIRRORS["TypeError"]("int() can't convert non-string with explicit base")
     if value is None:
         return Int(0)
     if isinstance(value, Int):
@@ -28,10 +29,12 @@ def _poop_int_from(value: object = None, base: object = None) -> Int:
     if isinstance(value, Str):
         if base is not None:
             if not isinstance(base, Int):
-                raise TypeError(f"base must be Int, got {type(base).__name__}")
+                raise MIRRORS["TypeError"](
+                    f"base must be Int, got {type(base).__name__}"
+                )
             return Int(int(value._value, base._value))
         return Int(int(value._value))
-    raise TypeError(f"cannot convert {type(value).__name__} to Int")
+    raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to Int")
 
 
 class _IntRewriter(ast.NodeTransformer):

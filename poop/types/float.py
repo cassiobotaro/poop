@@ -10,6 +10,7 @@ from poop.types._numeric_compare import (
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
+from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -136,7 +137,7 @@ class Float(_NumericCompareMixin, Object):
     def pow(self, other: object) -> Float | Complex:
         result = self.__pow__(other)
         if result is NotImplemented:
-            raise TypeError(
+            raise MIRRORS["TypeError"](
                 f"unsupported operand type(s) for ** or pow(): "
                 f"'float' and '{type(other).__name__}'"
             )
@@ -154,7 +155,7 @@ class Float(_NumericCompareMixin, Object):
     def divmod(self, other: object) -> Tuple:
         result = self.__divmod__(other)
         if result is NotImplemented:
-            raise TypeError(
+            raise MIRRORS["TypeError"](
                 f"unsupported operand type(s) for divmod(): "
                 f"'float' and '{type(other).__name__}'"
             )

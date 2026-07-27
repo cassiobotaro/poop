@@ -5,6 +5,7 @@ from typing import ClassVar, cast
 from poop.transformers.base import BaseTransformer
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 
 
@@ -18,7 +19,7 @@ def _poop_bytearray_from(arg: object = None) -> ByteArray:
     if isinstance(arg, Iterable):
         ints = cast("Iterable[Int]", arg)
         return ByteArray(item._value for item in ints)
-    raise TypeError(f"cannot convert {type(arg).__qualname__} to ByteArray")
+    raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to ByteArray")
 
 
 class _ByteArrayRewriter(ast.NodeTransformer):

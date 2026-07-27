@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from poop.transformers._forwarding import make_forwarding_rewriter
 from poop.transformers.base import BaseTransformer
+from poop.types.exceptions import MIRRORS
 from poop.types.zip import Zip
 
 
@@ -13,7 +14,9 @@ def _poop_zip(*sources: object, strict: object = None) -> Zip:
         return Zip(*sources, strict=None)
     if isinstance(strict, Boolean):
         return Zip(*sources, strict=strict)
-    raise TypeError(f"strict must be Boolean, got {type(strict).__qualname__}")
+    raise MIRRORS["TypeError"](
+        f"strict must be Boolean, got {type(strict).__qualname__}"
+    )
 
 
 class ZipTransformer(BaseTransformer):

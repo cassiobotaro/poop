@@ -4,6 +4,7 @@ from typing import ClassVar, cast
 
 from poop.transformers.base import BaseTransformer
 from poop.types.bytes import Bytes
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.string import Str
 
@@ -21,7 +22,7 @@ def _poop_bytes_from(arg: object = None, encoding: object = None) -> Bytes:
     if isinstance(arg, Iterable):
         ints = cast("Iterable[Int]", arg)
         return Bytes(bytes(item._value for item in ints))
-    raise TypeError(f"cannot convert {type(arg).__qualname__} to Bytes")
+    raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to Bytes")
 
 
 class _BytesRewriter(ast.NodeTransformer):

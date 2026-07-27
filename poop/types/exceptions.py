@@ -12,11 +12,19 @@ catches `except BaseException` and then matches with `isinstance()` — POOP's o
 code, never a Python `except` clause — so a metaclass `__instancecheck__` is
 enough for a POOP class to match its native twin. The mirrors subclass that twin
 so they stay raisable, which is what `raise_` depends on.
+
+`MIRRORS` is also how POOP raises its *own* diagnostics. A wrapper composing a
+POOP message used to carry it on a native class — POOP's advice labelled with
+Python's vocabulary — and nothing stopped the next one from doing the same. The
+rule is now one line: inside `poop/types/` and `poop/transformers/`, a failure a
+program can reach is raised as `MIRRORS[...]`, never as the bare builtin.
+Subclassing keeps it catchable by anything that caught the native, so the rule
+costs nothing; `tests/test_mirrored_raises.py` sweeps both packages for it.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from poop.types.meta import PoopMeta
 from poop.types.object import Object
@@ -62,7 +70,10 @@ _HIERARCHY: tuple[tuple[type[BaseException], str | None], ...] = (
     (StopIteration, "Exception"),
 )
 
-MIRRORS: dict[str, type] = {}
+# Annotated as exception classes, not bare `type`: every POOP diagnostic is
+# raised through this table (`raise MIRRORS["TypeError"](...)`), so the values
+# have to be raisable to the type checker as well as at runtime.
+MIRRORS: dict[str, type[Exception]] = {}
 NATIVE_TO_POOP: dict[type[BaseException], type] = {}
 
 
@@ -73,10 +84,16 @@ def _build(native: type[BaseException], parent: str | None) -> None:
     bases: tuple[type, ...] = (
         (MIRRORS[parent], native) if parent is not None else (Exception, Object)
     )
-    mirror = PoopExcMeta(
-        native.__name__,
-        bases,
-        {"_native": native, "__module__": "builtins", "__slots__": ()},
+    # Cast, not a wider annotation: a metaclass call answers `PoopExcMeta`, and
+    # only the bases say the result is an exception class. Every branch above
+    # puts a native exception in `bases`, so the claim holds.
+    mirror = cast(
+        "type[Exception]",
+        PoopExcMeta(
+            native.__name__,
+            bases,
+            {"_native": native, "__module__": "builtins", "__slots__": ()},
+        ),
     )
     MIRRORS[native.__name__] = mirror
     NATIVE_TO_POOP[native] = mirror

@@ -42,6 +42,12 @@ class Object(metaclass=PoopMeta):
             # `__copy__`, `__getstate__`, `__deepcopy__` and friends, and a
             # proxy overriding does_not_understand would answer those probes
             # as if a user had sent them — the classic proxy bug.
+            #
+            # The native class stays here, against the MIRRORS rule: this is
+            # Python's attribute protocol answering Python's own probe, never
+            # a diagnostic a program reads. It also runs while `exceptions` is
+            # still importing — the mirrors are built on `Object` — so the
+            # table it would consult may not hold this name yet.
             if name.startswith("__") and name.endswith("__"):
                 raise AttributeError(name)
             return self.does_not_understand(name)
@@ -89,15 +95,18 @@ class Object(metaclass=PoopMeta):
         return false if bool(self) else true
 
     def assert_(self, message: Str | NoneClass | None = None) -> Self:
+        # Imported here, not at module scope: `exceptions` is built on top of
+        # `Object`, so the dependency only runs one way at import time.
         from poop.types._unwrap import _faithful, _is_absent
+        from poop.types.exceptions import MIRRORS
 
         if bool(self):
             return self
         if _is_absent(message):
-            raise AssertionError
+            raise MIRRORS["AssertionError"]
         # `assert x, msg` takes any object as the message in CPython, so an
         # unwrappable one goes through raw rather than leaking #_value.
-        raise AssertionError(_faithful(message))
+        raise MIRRORS["AssertionError"](_faithful(message))
 
     def class_name(self) -> Str:
         # `x class name` in Smalltalk: the name is the class's to answer, not
@@ -168,11 +177,12 @@ class Object(metaclass=PoopMeta):
         closes. A computed name — `"__dict" + "__"` — puts that spelling beyond
         any static validator's reach, which is why the guard has to live here.
         """
+        from poop.types.exceptions import MIRRORS
         from poop.validators.no_dunder_attribute import dunder_message
 
         message = dunder_message(name)
         if message is not None:
-            raise AttributeError(message.lstrip("."))
+            raise MIRRORS["AttributeError"](message.lstrip("."))
 
     def _reject_private(self, name: str) -> None:
         """POOP encapsulation: refuse `_`-prefixed private names.
@@ -185,9 +195,11 @@ class Object(metaclass=PoopMeta):
         `_reject_dunder`; this covers the single-underscore convention Python
         honours only by etiquette.
         """
+        from poop.types.exceptions import MIRRORS
+
         is_dunder = name.startswith("__") and name.endswith("__")
         if name.startswith("_") and not is_dunder:
-            raise AttributeError(
+            raise MIRRORS["AttributeError"](
                 f"{name} is private — POOP objects do not expose their internals"
             )
 

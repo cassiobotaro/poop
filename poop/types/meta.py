@@ -68,7 +68,11 @@ class class_side:  # noqa: N801
         return partial(self._fn, cls)
 
     def __set__(self, cls: type, value: object) -> None:
-        raise AttributeError(self._name)
+        # Imported here, not at module scope: `exceptions` builds its classes
+        # through `PoopMeta`, so the dependency only runs one way at import.
+        from poop.types.exceptions import MIRRORS
+
+        raise MIRRORS["AttributeError"](self._name)
 
 
 def _reject_dunder(name: str) -> None:
@@ -77,11 +81,12 @@ def _reject_dunder(name: str) -> None:
     Both read the same `dunder_message`, so the ban says one thing whether the
     receiver is an instance or a class.
     """
+    from poop.types.exceptions import MIRRORS
     from poop.validators.no_dunder_attribute import dunder_message
 
     message = dunder_message(name)
     if message is not None:
-        raise AttributeError(message.lstrip("."))
+        raise MIRRORS["AttributeError"](message.lstrip("."))
 
 
 def _reject_private(name: str) -> None:
@@ -91,9 +96,11 @@ def _reject_private(name: str) -> None:
     same reason the instance side refuses it: it reaches internals the mangling
     scheme exists to hide.
     """
+    from poop.types.exceptions import MIRRORS
+
     is_dunder = name.startswith("__") and name.endswith("__")
     if name.startswith("_") and not is_dunder:
-        raise AttributeError(
+        raise MIRRORS["AttributeError"](
             f"{name} is private — POOP objects do not expose their internals"
         )
 
@@ -355,6 +362,9 @@ class PoopMeta(ABCMeta):
         # Same reasoning as Object.__getattr__: a visible one answers Any for
         # every name and blinds `ty` to typos on every POOP class.
         def __getattr__(cls, name: str) -> Any:
+            # Native on purpose, like `Object.__getattr__`: Python's own
+            # attribute probe, answered before `exceptions` has finished
+            # building the table a mirror would come from.
             if name.startswith("__") and name.endswith("__"):
                 raise AttributeError(name)
             return cls.does_not_understand(name)

@@ -8,6 +8,7 @@ from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
+from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 from poop.types.str_iterator import StrIterator
 
@@ -41,7 +42,7 @@ def _reject_field_access(template: _str) -> None:
     """
     for _, field, spec, _ in _Formatter().parse(template):
         if field and ("." in field or "[" in field):
-            raise ValueError(
+            raise MIRRORS["ValueError"](
                 f"{{{field}}} is forbidden — a format field reaching an "
                 "attribute or an item bypasses obj.get_attr(...) / obj.at(...); "
                 "send the message and format the answer"

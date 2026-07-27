@@ -9,6 +9,7 @@ from poop.types._numeric_compare import (
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types.boolean import true
 from poop.types.complex import Complex
+from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -213,7 +214,7 @@ class Int(_NumericCompareMixin, Object):
                 return Float(result)
             return Int(result)
         if isinstance(other, Float):
-            raise TypeError(
+            raise MIRRORS["TypeError"](
                 "pow() 3rd argument not allowed unless all arguments are integers"
             )
         return Int(pow(self._value, other._value, _faithful(modulus)))
@@ -223,7 +224,7 @@ class Int(_NumericCompareMixin, Object):
     ) -> Int | Float | Complex:
         result = self.__pow__(other, modulus)
         if result is NotImplemented:
-            raise TypeError(
+            raise MIRRORS["TypeError"](
                 f"unsupported operand type(s) for ** or pow(): "
                 f"'int' and '{type(other).__name__}'"
             )
@@ -244,7 +245,7 @@ class Int(_NumericCompareMixin, Object):
     def divmod(self, other: object) -> Tuple:
         result = self.__divmod__(other)
         if result is NotImplemented:
-            raise TypeError(
+            raise MIRRORS["TypeError"](
                 f"unsupported operand type(s) for divmod(): "
                 f"'int' and '{type(other).__name__}'"
             )

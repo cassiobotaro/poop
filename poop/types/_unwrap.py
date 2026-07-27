@@ -1,5 +1,6 @@
 from typing import Any, TypeIs, overload
 
+from poop.types.exceptions import MIRRORS
 from poop.types.none import NoneClass
 
 
@@ -36,7 +37,9 @@ def _attr_name(name: object) -> str:
     """
     raw = _faithful(name)
     if not isinstance(raw, str):
-        raise TypeError(f"attribute name must be string, not {type(name).__name__!r}")
+        raise MIRRORS["TypeError"](
+            f"attribute name must be string, not {type(name).__name__!r}"
+        )
     return raw
 
 

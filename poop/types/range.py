@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _faithful
 from poop.types.boolean import to_boolean
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
@@ -38,7 +39,7 @@ class Range(_IterableMixin, Object):
         else:
             resolved = step
         if _index(resolved) == 0:
-            raise ValueError("step must not be zero")
+            raise MIRRORS["ValueError"]("step must not be zero")
         # Normalized to Int, as CPython does: `range(True, 5).start` is `1`,
         # not `True`. (A `slice`, by contrast, keeps what it was given.)
         self._start = Int(_index(start))

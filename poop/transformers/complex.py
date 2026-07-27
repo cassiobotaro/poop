@@ -3,6 +3,7 @@ from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
 from poop.types.complex import Complex
+from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -22,16 +23,16 @@ def _poop_complex_from(real: object = None, imag: object = None) -> Complex:
             return Complex(complex(real._value, 0))
         if isinstance(real, Str):
             return Complex(complex(real._value))
-        raise TypeError(
+        raise MIRRORS["TypeError"](
             f"complex() argument must be Int, Float, Str or Complex, "
             f"not {type(real).__qualname__}"
         )
     if not isinstance(real, (Int, Float)):
-        raise TypeError(
+        raise MIRRORS["TypeError"](
             f"complex() first argument must be Int or Float, not {type(real).__qualname__}"
         )
     if not isinstance(imag, (Int, Float)):
-        raise TypeError(
+        raise MIRRORS["TypeError"](
             f"complex() second argument must be Int or Float, not {type(imag).__qualname__}"
         )
     return Complex(complex(real._value, imag._value))

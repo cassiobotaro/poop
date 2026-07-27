@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 from poop.transformers._collection import CollectionRewriter
 from poop.transformers.base import BaseTransformer
 from poop.types.dict import Dict
+from poop.types.exceptions import MIRRORS
 from poop.types.list import List
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -38,7 +39,7 @@ def _poop_dict_merge(*parts: Dict) -> Dict:
     d = Dict()
     for part in parts:
         if not isinstance(part, Dict):
-            raise TypeError(
+            raise MIRRORS["TypeError"](
                 f"cannot ** -unpack {type(part).__qualname__} into a dict display"
             )
         d._data.update(part._data)
@@ -55,14 +56,16 @@ def _poop_dict_from(arg: object = None, **kwargs: Object) -> Dict:
         for item in cast("Iterable[Object]", arg):
             if isinstance(item, (Tuple, List)):
                 if len(item._items) != 2:
-                    raise TypeError(
+                    raise MIRRORS["TypeError"](
                         f"dict entry must have exactly 2 elements, got {len(item._items)}"
                     )
                 d._data[item._items[0]] = item._items[1]
             else:
-                raise TypeError(f"cannot use {type(item).__qualname__} as dict entry")
+                raise MIRRORS["TypeError"](
+                    f"cannot use {type(item).__qualname__} as dict entry"
+                )
     else:
-        raise TypeError(f"cannot convert {type(arg).__qualname__} to Dict")
+        raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to Dict")
     # dict(a=1, b=2) / dict(mapping, a=1): keyword names become Str keys.
     for k, v in kwargs.items():
         d._data[Str(k)] = v
