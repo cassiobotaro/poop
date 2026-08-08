@@ -2,6 +2,8 @@ import ast
 
 import pytest
 
+from poop.errors import ExecutionError
+from poop.interpreter import Interpreter
 from poop.transformers.float import FloatTransformer, _poop_float_from
 from poop.types.complex import Complex
 from poop.types.float import Float
@@ -136,3 +138,12 @@ def test_float_from_an_unparsable_string_names_the_value() -> None:
     # message the reader sent.
     with pytest.raises(ValueError, match=r"^'abc' is not a valid float$"):
         _poop_float_from(Str("abc"))
+
+
+def test_float_refuses_a_keyword_argument() -> None:
+    # Twin of the `bool(x=1)` guard: unconditionally rewritten, this answered
+    # `0.0` off the helper's default instead of a TypeError. Matched on the
+    # behaviour, not on the callee's spelling — that is the cloak's to pin, and
+    # `tests/test_cloak.py` does.
+    with pytest.raises(ExecutionError, match="unexpected keyword argument"):
+        Interpreter().run_source("float(x=1).print()")

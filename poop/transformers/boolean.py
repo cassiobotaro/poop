@@ -13,7 +13,17 @@ def _poop_bool_from(value: object = None) -> Boolean:
 
 class _BooleanRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "bool":
+        # `not node.keywords`, as every other constructor rewriter guards:
+        # the helper's argument is optional, so a rewritten `bool(x=1)` fell
+        # through to the default and answered `False` where CPython raises
+        # `bool() takes no keyword arguments`. Declining to rewrite leaves
+        # `visit_Name` to resolve the callee to the class, which refuses the
+        # keyword the way `str(x=1)` and `list(x=1)` already do.
+        if (
+            isinstance(node.func, ast.Name)
+            and node.func.id == "bool"
+            and not node.keywords
+        ):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_bool_from", ctx=ast.Load()),

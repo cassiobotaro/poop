@@ -1,5 +1,9 @@
 import ast
 
+import pytest
+
+from poop.errors import ExecutionError
+from poop.interpreter import Interpreter
 from poop.transformers.boolean import BooleanTransformer, _poop_bool_from
 from poop.types.boolean import false, true
 from poop.types.int import Int
@@ -107,3 +111,12 @@ def test_bool_from_nonempty_str_returns_true() -> None:
 
 def test_bool_from_empty_str_returns_false() -> None:
     assert _poop_bool_from(Str("")) is false
+
+
+def test_bool_refuses_a_keyword_argument() -> None:
+    # The helper's argument is optional, so a rewritten `bool(x=1)` fell
+    # through to the default and answered `False` where CPython raises. The
+    # guard declines to rewrite, leaving the callee to refuse the keyword the
+    # way `str(x=1)` and `list(x=1)` already do.
+    with pytest.raises(ExecutionError, match="bool"):
+        Interpreter().run_source("bool(x=1).print()")

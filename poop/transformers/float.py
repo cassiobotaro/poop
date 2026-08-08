@@ -49,7 +49,14 @@ class _FloatRewriter(ast.NodeTransformer):
         return self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "float":
+        # `not node.keywords`: see the twin guard in `boolean.py`. Rewritten
+        # unconditionally, `float(x=1)` answered `0.0` off the helper's
+        # default instead of CPython's `float() takes no keyword arguments`.
+        if (
+            isinstance(node.func, ast.Name)
+            and node.func.id == "float"
+            and not node.keywords
+        ):
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_float_from", ctx=ast.Load()),
