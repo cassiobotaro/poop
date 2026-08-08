@@ -94,3 +94,10 @@ class _DictView(_IterableMixin, Object):
         return f"{self._repr_name}([{self._repr_items()}])"
 
     __repr__ = __str__
+
+
+# Cloaked as `object`, the root's own spelling: these methods are inherited by
+# many wrappers, so no single builtin name is true for all of them — and left
+# alone CPython blamed `_DictView` in every wrong-arity message, a private name
+# `_reject_private` exists to keep out of user code.
+cloak(_DictView, "object")

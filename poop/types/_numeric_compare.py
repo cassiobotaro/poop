@@ -14,6 +14,8 @@ import operator
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from poop.types._cloak import cloak
+
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
@@ -92,3 +94,10 @@ class _NumericCompareMixin:
         if v is _NOT_NUMERIC:
             return true
         return false if self._order_value() == v else true
+
+
+# Cloaked as `object`, the root's own spelling: these methods are inherited by
+# many wrappers, so no single builtin name is true for all of them — and left
+# alone CPython blamed `_NumericCompareMixin` in every wrong-arity message, a private name
+# `_reject_private` exists to keep out of user code.
+cloak(_NumericCompareMixin, "object")

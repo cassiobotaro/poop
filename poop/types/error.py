@@ -1,5 +1,6 @@
 from typing import Any, final
 
+from poop.types._cloak import cloak
 from poop.types._message import poop_message
 from poop.types.object import Object
 from poop.types.string import Str
@@ -52,3 +53,12 @@ class Error(Object):
         name = self.kind().name()
         message = self.message()
         return f"{name}: {message}" if str(message) else str(name)
+
+
+# The third spelling of the same leak `class_()` and `__str__` above already
+# closed: CPython builds a wrong-arity message from the *function's* qualname,
+# so `e.message(1)` blamed `Error.message()` — the `poop.types` detail those
+# two docstrings call "a name user code can neither name nor construct".
+# `object` because an `Error` stands in for whatever it caught, so no single
+# exception name is true for the class.
+cloak(Error, "object")

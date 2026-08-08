@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types._cloak import cloak
 from poop.types.boolean import false, to_boolean, true
 
 if TYPE_CHECKING:
@@ -30,3 +31,10 @@ class _ValueEqMixin:
             attr = self._eq_attr
             return false if getattr(self, attr) == getattr(other, attr) else true
         return true
+
+
+# Cloaked as `object`, the root's own spelling: these methods are inherited by
+# many wrappers, so no single builtin name is true for all of them — and left
+# alone CPython blamed `_ValueEqMixin` in every wrong-arity message, a private name
+# `_reject_private` exists to keep out of user code.
+cloak(_ValueEqMixin, "object")

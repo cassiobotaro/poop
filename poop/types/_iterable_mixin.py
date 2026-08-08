@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from poop.types.object import Object
     from poop.types.zip import Zip
 
+from poop.types._cloak import cloak
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
 from poop.types.none import none
@@ -133,3 +134,10 @@ class _IterableMixin:
         from poop.types.zip import Zip
 
         return Zip(self, *others, strict=strict)
+
+
+# Cloaked as `object`, the root's own spelling: these methods are inherited by
+# many wrappers, so no single builtin name is true for all of them — and left
+# alone CPython blamed `_IterableMixin` in every wrong-arity message, a private name
+# `_reject_private` exists to keep out of user code.
+cloak(_IterableMixin, "object")
