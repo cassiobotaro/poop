@@ -1,5 +1,6 @@
 import ast
 import re
+from collections.abc import Callable
 
 import pytest
 
@@ -7,7 +8,10 @@ from poop.errors import ValidationError
 from poop.interpreter import Interpreter
 from poop.types.int import Int
 from poop.types.string import Str
-from poop.validators.no_dunder_attribute import NoDunderAttributeValidator
+from poop.validators.no_dunder_attribute import (
+    NoDunderAttributeValidator,
+    dunder_message,
+)
 
 
 def _validate(source: str) -> None:
@@ -113,9 +117,32 @@ def test_del_attr_rejects_a_dunder() -> None:
         Int(5).del_attr(Str("__class__"))
 
 
-def test_the_guard_still_allows_init() -> None:
-    # Carved out in the validator, so the guard must agree — one ban, one rule.
-    assert Int(5).has_attr(Str("__init__"))
+@pytest.mark.parametrize(
+    "send",
+    [
+        lambda: Int(5).get_attr(Str("__init__")),
+        lambda: Int(5).has_attr(Str("__init__")),
+        lambda: Int(5).set_attr(Str("__init__"), 1),
+        lambda: Int(5).del_attr(Str("__init__")),
+    ],
+    ids=["get_attr", "has_attr", "set_attr", "del_attr"],
+)
+def test_the_guard_refuses_init(send: Callable[[], object]) -> None:
+    # The validator's carve-out is for `super().__init__(...)`, a *syntax* —
+    # these four are not it, and inheriting the exemption made every immutable
+    # wrapper mutable: `s.get_attr("__init__")("ZAP")` re-ran the constructor
+    # on a live Str, and a Dict keyed on one lost the entry.
+    with pytest.raises(AttributeError, match="__init__ is forbidden"):
+        send()
+
+
+def test_the_validator_still_allows_init() -> None:
+    # The other half of the same ban: `super().__init__(...)` must still parse,
+    # or inheritance breaks entirely.
+    assert dunder_message("__init__") is None
+    NoDunderAttributeValidator().validate(
+        ast.parse("class C:\n    def m(self):\n        super().__init__()")
+    )
 
 
 def test_the_guard_leaves_ordinary_names_alone() -> None:

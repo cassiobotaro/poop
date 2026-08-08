@@ -19,6 +19,8 @@ _SUBSTITUTES = {
     "__class__": "obj.class_()",
     "__contains__": "col.includes(x)",
     "__hash__": "obj.hash()",
+    # Only ever reached with the carve-out off — see `allow_init` below.
+    "__init__": "Klass(...)",
     "__len__": "obj.len()",
     "__mro__": "Klass.superclass()",
     "__name__": "Klass.name()",
@@ -30,7 +32,9 @@ _DICT_REASON = (
 )
 
 
-def dunder_message(name: str, *, dotted: bool = True) -> str | None:
+def dunder_message(
+    name: str, *, dotted: bool = True, allow_init: bool | None = None
+) -> str | None:
     """The rejection for `name`, or None when it is not a forbidden dunder.
 
     Shared with `Object`'s runtime guard: `get_attr("__dict__")` reopens
@@ -38,12 +42,20 @@ def dunder_message(name: str, *, dotted: bool = True) -> str | None:
     beyond any validator's reach — so the two halves of one ban must say one
     thing. `no_dunder_name` reads it too, with `dotted=False`: a dunder
     *global* (`__builtins__`) is the same ban one node type over.
+
+    `allow_init` controls the `__init__` carve-out, which used to ride on
+    `dotted` — one flag standing for two unrelated questions ("how do I spell
+    the label?" and "is this the `super().__init__(...)` syntax?"). `get_attr`
+    is dotted-shaped but is not that syntax, and it inherited the exemption:
+    `s.get_attr("__init__")("ZAP")` re-ran the constructor on a live `Str`, so
+    every immutable wrapper was mutable and a `Dict` keyed on one lost the
+    entry. It defaults to `dotted`, keeping both AST validators unchanged.
     """
     if not (name.startswith("__") and name.endswith("__")):
         return None
     # `__init__` is carved out for `super().__init__(...)`, an attribute — a
-    # bare `__init__` Name has no such use, so the carve-out is dotted-only.
-    if dotted and name in _ALLOWED:
+    # bare `__init__` Name has no such use, and neither has `get_attr`.
+    if (dotted if allow_init is None else allow_init) and name in _ALLOWED:
         return None
     label = f".{name}" if dotted else name
     if name == "__dict__":

@@ -172,11 +172,18 @@ class Object(metaclass=PoopMeta):
         without this `get_attr("__dict__")` reopens exactly what the validator
         closes. A computed name — `"__dict" + "__"` — puts that spelling beyond
         any static validator's reach, which is why the guard has to live here.
+
+        `allow_init=False`: the validator's `__init__` carve-out exists for
+        `super().__init__(...)`, a *syntax*, and these four messages are not
+        it. With the exemption inherited, `get_attr("__init__")` answered a
+        callable that re-initialized the receiver in place — `Str`, `Int` and
+        `Tuple` all mutable, and a `Dict` keyed on one left holding an entry
+        reachable under neither the old spelling nor the new.
         """
         from poop.types.exceptions import MIRRORS
         from poop.validators.no_dunder_attribute import dunder_message
 
-        message = dunder_message(name)
+        message = dunder_message(name, allow_init=False)
         if message is not None:
             raise MIRRORS["AttributeError"](message.lstrip("."))
 
