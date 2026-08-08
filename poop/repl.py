@@ -263,6 +263,9 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "unary_plus": "+x",
     "type_alias": "type X = int",
     "dunder": "x.__dict__",
+    # A bare mention, not `@property`: the decorator is the one position
+    # no_class_machinery leaves open, so a snippet using it explains nothing.
+    "property": "p = property",
 }
 
 _META_HELP = """\

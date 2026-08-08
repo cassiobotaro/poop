@@ -186,6 +186,24 @@ Negative literals (`-1`, `-3.14`) are allowed — only `-variable` and `-express
 
 The three allowed decorators are argued for under *Explicitly allowed*; this validator is what makes that boundary real rather than merely documented. `@twice` on a method silently replaced it with an unrelated block and nothing objected. `@property(...)`, `@a.b` and `@twice` are all refused; `@property` is not.
 
+This validator owns the `@` position only. `no_class_machinery`, immediately below, owns every other one — the three were still reachable as plain names, where they answered Python.
+
+### No class machinery outside its position — `poop/validators/no_class_machinery.py`
+
+| AST node | Condition | Reason | Substitute |
+|---|---|---|---|
+| `ast.Name` `staticmethod` / `classmethod` / `property` | not a `decorator_list` entry | class-definition machinery is not an object | use it as a decorator |
+| `ast.Name` `super` | not the callee of an `ast.Call` | the allowance is the call, not the name | `super().method(...)` |
+
+`_ALLOWED_BUILTINS` admits six names. Two are dunders — `__build_class__` and `__name__` — and `no_dunder_name` already refuses them as a bare `ast.Name`. The other four had no guard outside the positions they were argued for, and answered Python rather than POOP:
+
+    property.print()   ->  AttributeError: type object 'property' has no attribute 'print'
+    super.print()      ->  AttributeError: type object 'super' has no attribute 'print'
+
+which is the naked-native symptom the allow-list was introduced to end, reproduced word for word — see *Builtins allow-list* below, whose own argument this completes. The scope is not new: *Explicitly allowed* already reads "Only a bare `ast.Name` among the three is accepted: `@property(...)` is refused even though `@property` is not, because a called decorator is a runtime operation, which is the distinction the allowance rests on." `no_decorator` made that real for `@`; nothing made it real anywhere else, so `p = property` and `property(getter)` both passed.
+
+`property(getter)` is refused here for the reason `@property(...)` is refused there — one distinction, applied in both positions. `super` keeps the call position instead, because a call is exactly what its allowance is for.
+
 ### No `type` alias — `poop/validators/no_type_alias.py`
 
 | Construct | Reason |
@@ -460,7 +478,7 @@ The `ast.Name` half of the same ban: any `__dunder__` spelled as a bare name, lo
 
 ### Builtins allow-list — `poop/executor.py`
 
-Validators and transformers cover the names someone thought to enumerate; `exec` hands a program *everything else* in CPython's builtins namespace. `OSError`, `BaseException`, `KeyboardInterrupt`, `copyright`, `NotImplemented`, `open` — 55 of Python's 71 builtin exceptions among them — were naked natives one identifier away, answering `type object 'OSError' has no attribute 'print'` instead of `does not understand #print`. That contradicted `poop/types/exceptions.py`, which mirrors 16 exceptions *on purpose*: "a language with no I/O and no codecs cannot reach the `OSError` subtree".
+Validators and transformers cover the names someone thought to enumerate; `exec` hands a program *everything else* in CPython's builtins namespace. `OSError`, `BaseException`, `KeyboardInterrupt`, `copyright`, `NotImplemented`, `open` — 55 of Python's 71 builtin exceptions among them — were naked natives one identifier away, answering `type object 'OSError' has no attribute 'print'` instead of `does not understand #print`. The allow-list left four of its own six admissions in exactly that state — see `no_class_machinery` above, which scopes each to the position it was argued for. That contradicted `poop/types/exceptions.py`, which mirrors 16 exceptions *on purpose*: "a language with no I/O and no codecs cannot reach the `OSError` subtree".
 
 `exec` only injects `__builtins__` when the globals dict lacks one, so `execute` supplies an allow-list and everything outside it answers `NameError: name 'OSError' is not defined` — which is what "if Python needs an import to reach it, POOP does not offer it" means.
 

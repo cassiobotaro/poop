@@ -11,6 +11,7 @@ from poop.validators.no_breakpoint import NoBreakpointValidator
 from poop.validators.no_builtin_shadow import NoBuiltinShadowValidator
 from poop.validators.no_callable import NoCallableValidator
 from poop.validators.no_chr import NoChrValidator
+from poop.validators.no_class_machinery import NoClassMachineryValidator
 from poop.validators.no_comprehension import NoComprehensionValidator
 from poop.validators.no_decorator import NoDecoratorValidator
 from poop.validators.no_del import NoDelValidator
@@ -96,6 +97,9 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoYieldValidator(),
     NoWalrusValidator(),
     NoDecoratorValidator(),
+    # After NoDecoratorValidator, whose allowance it scopes: the three
+    # decorators stay legal on a `@`, and nowhere else.
+    NoClassMachineryValidator(),
     NoMatchValidator(),
     NoFstringValidator(),
     NoLenValidator(),
