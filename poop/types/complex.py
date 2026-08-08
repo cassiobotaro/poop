@@ -17,13 +17,11 @@ class Complex(Object):
     def __init__(self, value: _complex | Complex) -> None:
         self._value = value._value if isinstance(value, Complex) else value
 
-    @property
     def real(self) -> Float:
         from poop.types.float import Float
 
         return Float(self._value.real)
 
-    @property
     def imag(self) -> Float:
         from poop.types.float import Float
 

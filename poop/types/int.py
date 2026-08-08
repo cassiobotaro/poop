@@ -80,19 +80,15 @@ class Int(_NumericCompareMixin, Object):
     def is_integer(self) -> Boolean:
         return true
 
-    @property
     def real(self) -> Int:
         return self
 
-    @property
     def imag(self) -> Int:
         return Int(0)
 
-    @property
     def numerator(self) -> Int:
         return self
 
-    @property
     def denominator(self) -> Int:
         return Int(1)
 

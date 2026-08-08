@@ -68,11 +68,9 @@ class Float(_NumericCompareMixin, Object):
     def fromhex(cls, s: Str) -> Float:
         return cls(_float.fromhex(_faithful(s)))
 
-    @property
     def real(self) -> Float:
         return self
 
-    @property
     def imag(self) -> Float:
         return Float(0.0)
 

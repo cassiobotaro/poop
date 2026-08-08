@@ -89,15 +89,12 @@ class Range(_IterableMixin, Object):
     def index(self, value: Int) -> Int:
         return Int(self._range().index(_faithful(value)))
 
-    @property
     def start(self) -> Int:
         return self._start
 
-    @property
     def stop(self) -> Int:
         return self._stop
 
-    @property
     def step(self) -> Int:
         return self._step
 

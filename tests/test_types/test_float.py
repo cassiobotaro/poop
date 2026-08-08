@@ -280,11 +280,11 @@ def test_hex_returns_str() -> None:
 
 def test_real_returns_self() -> None:
     f = Float(2.5)
-    assert f.real is f
+    assert f.real() is f
 
 
 def test_imag_returns_zero() -> None:
-    assert Float(2.5).imag._value == pytest.approx(0.0)
+    assert Float(2.5).imag()._value == pytest.approx(0.0)
 
 
 def test_as_integer_ratio() -> None:

@@ -228,23 +228,23 @@ def test_reversed_empty_stays_empty() -> None:
 
 
 def test_start() -> None:
-    assert _range(3, 7).start == Int(3)
+    assert _range(3, 7).start() == Int(3)
 
 
 def test_stop() -> None:
-    assert _range(3, 7).stop == Int(7)
+    assert _range(3, 7).stop() == Int(7)
 
 
 def test_step_default_ascending() -> None:
-    assert _range(1, 5).step == Int(1)
+    assert _range(1, 5).step() == Int(1)
 
 
 def test_step_default_descending() -> None:
-    assert _range(5, 1).step == Int(-1)
+    assert _range(5, 1).step() == Int(-1)
 
 
 def test_step_explicit() -> None:
-    assert Range(Int(1), Int(9), Int(2)).step == Int(2)
+    assert Range(Int(1), Int(9), Int(2)).step() == Int(2)
 
 
 def test_count_present() -> None:

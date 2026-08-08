@@ -133,3 +133,25 @@ def test_namespace_helpers_carry_no_reserved_prefix() -> None:
         if inspect.isfunction(value):
             assert not value.__qualname__.startswith("_poop_"), key
             assert "<locals>" not in value.__qualname__, key
+
+
+# --- and the shape one step further out: an operation that is not a message ---
+
+
+@pytest.mark.parametrize(
+    ("index", "cls"),
+    list(enumerate(_classes())),
+    ids=lambda arg: arg.__name__ if isinstance(arg, type) else str(arg),
+)
+def test_no_public_member_is_a_property(index: int, cls: type) -> None:
+    """A `@property` makes an operation an attribute access, not a message.
+
+    `Int.numerator`, `Float.real`, `Complex.imag` and `Range.start` were
+    getters, so `(5).numerator()` — the spelling every neighbour in the same
+    file uses, `Int.conjugate()`, `Slice.start()` — answered `'int' object is
+    not callable`. The class-side data descriptors in `poop/types/meta.py`
+    live on the metaclass and are out of this sweep by construction.
+    """
+    for name, attr in vars(cls).items():
+        if not name.startswith("_"):
+            assert not isinstance(attr, property), f"{cls.__qualname__}.{name}"

@@ -431,8 +431,17 @@ def test_get_attr_leaves_state_alone() -> None:
 
 
 def test_get_attr_leaves_a_non_callable_answer_alone() -> None:
-    # A property answers a POOP object already — wrapping it would be wrong.
-    assert Int(5).get_attr(Str("real")) == Int(5)
+    # State answers a POOP object already — wrapping it would be wrong. This
+    # used to read `Int(5).get_attr(Str("real"))`, back when `real` was a
+    # `@property` and so answered an `Int` rather than the block every other
+    # message answers; it is a plain method now.
+    class Container(Object):
+        __slots__ = ("data",)
+        data: Int
+
+    obj = Container()
+    obj.set_attr(Str("data"), Int(5))
+    assert obj.get_attr(Str("data")) == Int(5)
 
 
 def test_get_attr_does_not_wrap_the_default() -> None:

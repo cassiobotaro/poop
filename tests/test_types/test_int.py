@@ -389,20 +389,20 @@ def test_complex_constructor() -> None:
 
 def test_real_returns_self() -> None:
     n = Int(5)
-    assert n.real is n
+    assert n.real() is n
 
 
 def test_imag_returns_zero() -> None:
-    assert Int(5).imag == Int(0)
+    assert Int(5).imag() == Int(0)
 
 
 def test_numerator_returns_self() -> None:
     n = Int(7)
-    assert n.numerator is n
+    assert n.numerator() is n
 
 
 def test_denominator_returns_one() -> None:
-    assert Int(5).denominator == Int(1)
+    assert Int(5).denominator() == Int(1)
 
 
 def test_conjugate_returns_self() -> None:

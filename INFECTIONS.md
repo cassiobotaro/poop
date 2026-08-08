@@ -892,6 +892,8 @@ Every builtin-substitute method mirrors the **full** Python signature of the met
 | `Set` | `symmetric_difference_update` | `(other)` | in-place; operand may be any iterable |
 | `Dict` | `update` | `update(other)` | `other` is a `Dict`, a `MappingProxy`, or an iterable of 2-element `(key, value)` pairs — a wrong-length element raises the faithful `ValueError` |
 
+**Python's numeric accessors are messages too.** `real`, `imag`, `numerator`, `denominator` (on `Int` / `Float` / `Complex`) and `start` / `stop` / `step` (on `Range`) are `Int`- or `Float`-answering **methods**, sent as `(5).numerator()` and `range(1, 5).start()`. They were `@property` getters, which made the operation an attribute access — the shape the language exists to remove — and made the message spelling fail with `'int' object is not callable`, naming a native for a value POOP presents as an `int`. Their neighbours in the same files were already methods (`Int.conjugate()`, `Int.as_integer_ratio()`, `Complex.abs()`, `Float.is_integer()`, and `Slice.start()` / `stop()` / `step()`), so the split was inconsistent within a single file rather than a policy. `@property` remains allowed *in user code* as a class-definition decorator; what it may not do is define what an operation is. `tests/test_cloak.py` sweeps every wrapper for a public `property` so the next one cannot slip in — the class-side data descriptors in `poop/types/meta.py` live on the metaclass and are outside that sweep by construction.
+
 The distinction between set **methods** and set **operators** follows CPython exactly: the *methods* above accept any iterable, but the *operators* (`|`, `&`, `-`, `^`, `<`, `<=`, `>`, `>=`) still require two set-likes (`{1} | [2]` is a `TypeError`) — see *Explicitly allowed → Binary infix operators*. A non-iterable operand passed to a method raises the same `TypeError` CPython would.
 
 ### Map / Filter — `poop/types/map.py`, `poop/types/filter.py`
@@ -925,7 +927,7 @@ Both inherit `_IterableMixin` so chains like `col.map(f).filter(g).sum()` keep i
 | `includes(value)` | `true` if `value` is in the range |
 | `count(value)` | number of occurrences (always `0` or `1`) |
 | `index(value)` | position of `value`, or raises `ValueError` |
-| `start` / `stop` / `step` | properties exposing the underlying `Int` bounds |
+| `start()` / `stop()` / `step()` | the underlying `Int` bounds |
 
 ### Object.print — `poop/types/object.py`
 
