@@ -26,7 +26,7 @@ def _prologue(args: ast.arguments) -> list[ast.stmt]:
 
 
 class _VarargsRewriter(ast.NodeTransformer):
-    """Bind `*args` / `**kwargs` parameters to POOP `Tuple` / `Dict`.
+    """Carry the variadic calling convention across both ends of a call.
 
     CPython packs variadic parameters natively: inside `def m(self, *args,
     **kw)`, `args` is a raw `tuple` and `kw` a raw `dict` with raw `str`
@@ -34,7 +34,41 @@ class _VarargsRewriter(ast.NodeTransformer):
     (`args = _poop_tuple_from(args)`, `kw = _poop_dict_from_kwargs(kw)`) as
     the first body statements; for lambdas (no statement body), wrap the
     expression in a nested lambda that receives the converted values.
+
+    The **call site** is the other end of that round trip, and it needed the
+    conversion run the other way — see `visit_Call`.
     """
+
+    def visit_Call(self, node: ast.Call) -> ast.AST:
+        """Unwrap a `**d` splat's keys so CPython's `**` accepts them.
+
+        Three of the four splat positions already worked: `f(*xs)` because a
+        POOP `Tuple` is iterable, `def m(**kw)` by the prologue above, and
+        `{**a, **b}` through `_poop_dict_merge`. The call site was the one
+        left, and it failed in Python's own words about a POOP object —
+
+            d = {"a": 1}
+            A().m(**d)      # TypeError: keywords must be strings
+
+        — because `**` demands raw `str` keys and a POOP `Dict` carries `Str`.
+        `DictTransformer` had already met the constraint for `dict(**other)`
+        and worked around it there; this generalises the same fix to every
+        call. It has to run after that transformer (and after
+        `RaiseTransformer`, whose `_poop_raise(Exc, **kw)` this then covers),
+        which the declaration order in `__init__.py` guarantees.
+        """
+        self.generic_visit(node)
+        for kw in node.keywords:
+            if kw.arg is None:
+                kw.value = ast.copy_location(
+                    ast.Call(
+                        func=ast.Name(id="_poop_kwargs_from", ctx=ast.Load()),
+                        args=[kw.value],
+                        keywords=[],
+                    ),
+                    kw.value,
+                )
+        return node
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         return self._rewrite_function(node)

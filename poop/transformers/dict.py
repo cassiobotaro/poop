@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 from poop.transformers._collection import CollectionRewriter
 from poop.transformers.base import BaseTransformer
+from poop.types._unwrap import _faithful
 from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
 from poop.types.list import List
@@ -29,6 +30,32 @@ def _poop_dict_from_kwargs(raw: dict[str, Object]) -> Dict:
     for k, v in raw.items():
         d._data[Str(k)] = v
     return d
+
+
+def _poop_kwargs_from(mapping: object) -> object:
+    """The inverse of `_poop_dict_from_kwargs`, for a `f(**d)` call site.
+
+    CPython's `**` demands raw `str` keys, and a POOP `Dict` carries `Str`
+    ones — the constraint the `dict(**other)` branch below already works
+    around. Every other splat position was covered (`f(*xs)` by `Tuple` being
+    iterable, `def m(**kw)` by the varargs prologue, `{**a, **b}` by the merge
+    helper); this was the one left, and it failed in Python's words about a
+    POOP object: `TypeError: keywords must be strings`.
+
+    Keys unwrap through the faithful idiom: a non-`Str` key reaches CPython
+    raw, so `f(**{1: 2})` still answers `keywords must be strings` — true, and
+    now about a key the program actually wrote. A non-mapping argument is
+    returned untouched for the same reason, so `f(**5)` answers CPython's own
+    `argument after ** must be a mapping, not int`. Values stay POOP objects;
+    a `**kw` parameter on the other side re-wraps them into a `Dict`.
+    """
+    from poop.types.mapping_proxy import MappingProxy
+
+    if isinstance(mapping, MappingProxy):
+        mapping = mapping._dict
+    if not isinstance(mapping, Dict):
+        return mapping
+    return {_faithful(key): value for key, value in mapping._data.items()}
 
 
 def _poop_dict_merge(*parts: Dict) -> Dict:
@@ -214,4 +241,5 @@ class DictTransformer(BaseTransformer):
         "_poop_dict_from": _poop_dict_from,
         "_poop_dict_merge": _poop_dict_merge,
         "_poop_dict_from_kwargs": _poop_dict_from_kwargs,
+        "_poop_kwargs_from": _poop_kwargs_from,
     }
