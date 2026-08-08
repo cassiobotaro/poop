@@ -4,8 +4,8 @@ from typing import ClassVar
 from poop.transformers.base import BaseTransformer
 
 
-def _poop_raise(exc_type: type[BaseException], *args: object) -> None:
-    raise exc_type(*args)
+def _poop_raise(exc_type: type[BaseException], *args: object, **kwargs: object) -> None:
+    raise exc_type(*args, **kwargs)
 
 
 class _RaiseRewriter(ast.NodeTransformer):
@@ -24,7 +24,15 @@ class _RaiseRewriter(ast.NodeTransformer):
                         ast.Name(id=node.func.value.id, ctx=ast.Load()),
                         *node.args,
                     ],
-                    keywords=[],
+                    # Forwarded, not dropped. `raise` is a statement, so
+                    # `raise_` is the only way to signal an error — and an
+                    # exception whose fields arrive by keyword could not be
+                    # raised at all. The failure named the argument the
+                    # program *did* pass: `MyError.raise_("boom", code=42)`
+                    # answered `missing 1 required positional argument:
+                    # 'code'`. A `**kwargs` entry (`kw.arg is None`) rides
+                    # along, since `_poop_raise` takes `**kwargs`.
+                    keywords=node.keywords,
                 ),
                 node,
             )

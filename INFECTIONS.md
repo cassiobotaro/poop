@@ -1119,10 +1119,13 @@ Intercepts `UppercaseName.raise_(args)` (where `UppercaseName` starts with a cap
 | Pattern | Replacement |
 |---|---|
 | `ExcType.raise_('msg')` | `_poop_raise(ExcType, 'msg')` |
+| `ExcType.raise_('msg', code=42)` | `_poop_raise(ExcType, 'msg', code=42)` |
 
 > **Why not `ast.Raise`?** The transformer generates a function call (`_poop_raise(...)`) instead of an `ast.Raise` statement. Statements are illegal inside `lambda` expressions — POOP's primary block mechanism. This design allows `Try(lambda: KeyError.raise_("msg")).except_(...)` to work correctly.
 
 > **Tradeoff**: `ExcType` must be a Python exception class (not a POOP object). Only uppercase-named receivers are intercepted; lowercase `obj.raise_()` is passed through to the object's own method at runtime.
+
+> **Keywords are forwarded**, and `_poop_raise` takes `**kwargs` for it. They used to be dropped on the floor — and `raise` is a statement, so `raise_` is the *only* way to signal an error: an exception whose fields arrive by keyword could not be raised at all. The failure named the argument the program *did* pass, `MyError.raise_("boom", code=42)` answering `missing 1 required positional argument: 'code'`. A `**kwargs` splat rides along on the same `**kwargs`.
 
 ### Class — `poop/transformers/class_.py`
 

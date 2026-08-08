@@ -2,6 +2,7 @@ import ast
 
 import pytest
 
+from poop.interpreter import Interpreter
 from poop.transformers.raise_ import RaiseTransformer, _poop_raise
 
 
@@ -70,3 +71,26 @@ def test_poop_raise_raises_given_exception_type() -> None:
 def test_poop_raise_with_no_message() -> None:
     with pytest.raises(RuntimeError):
         _poop_raise(RuntimeError)
+
+
+def test_raise_forwards_keyword_arguments() -> None:
+    # `raise` is a statement, so `raise_` is the only way to signal an error —
+    # and the rewriter dropped keywords, so an exception whose fields arrive by
+    # keyword could not be raised at all. The failure named the argument the
+    # program *did* pass: `missing 1 required positional argument: 'code'`.
+    source = (
+        "class MyError(Exception):\n"
+        "    def __init__(self, msg, code):\n"
+        "        super().__init__(msg)\n"
+        "        self.code = code\n"
+        "Try(lambda: MyError.raise_('boom', code=42))"
+        ".except_(MyError, lambda e: e.kind().name().print()).run()\n"
+    )
+    Interpreter().run_source(source)
+
+
+def test_raise_forwards_a_kwargs_splat() -> None:
+    # `kw.arg is None` rides along, since `_poop_raise` takes `**kwargs`.
+    tree = RaiseTransformer().transform(ast.parse("ValueError.raise_(**kw)"))
+    call = tree.body[0].value  # ty: ignore[unresolved-attribute]
+    assert [kw.arg for kw in call.keywords] == [None]
