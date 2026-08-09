@@ -309,7 +309,14 @@ which is the naked-native symptom the allow-list was introduced to end, reproduc
 `Range`, `Bytes`, `ByteArray`, `MemoryView`, `Enumerate`, `Zip`)
 plus direct implementations on `Str` (smallest/largest character)
 and `Dict` (smallest/largest key). Empty iterable without `default`
-raises `ValueError`, mirroring Python.
+raises `ValueError`, mirroring Python — worded as `#min of an empty
+collection is undefined — send it a default instead`, where CPython
+said `min() iterable argument is empty`: the free function this
+message substitutes, spelled as a call the program never wrote. The
+refusal is driven by passing `_MISSING` *as* the default and testing
+the answer's identity, not by catching CPython's `ValueError` — the
+same `except` would have caught a `ValueError` out of the user's own
+`key` block and reported it as an emptiness it says nothing about.
 
 **`key` is keyword-only on the scalar rungs, and that is not a style choice.**
 The variadic form took operands only, so `(5).max(3, block)` compared the block
@@ -374,6 +381,8 @@ there.
 `zip(a, b, ...)` and `zip(a, b, strict=True)` are rewritten by `ZipTransformer` to `_poop_zip(...)`, which returns a `Zip` object.
 
 `Zip` (`poop/types/zip.py`) is a lazy iterable POOP type mirroring Python's `zip` exactly: accepts any number of iterables, stops at the shortest, raises `ValueError` when `strict=true` and lengths differ, and raises `TypeError` eagerly on construction if any source is not iterable (matches Python's `'X' object is not iterable`). It inherits `do`, `map`, `filter`, `filter_false`, `find`, `sum`, `all`, `any` from `_IterableMixin`. Every `_IterableMixin` type and `Dict` expose `.zip(*others, strict=false) -> Zip` as a convenience method.
+
+**The strict mismatch is worded by POOP, which is why `Zip` drives the sources itself when `strict` is asked for.** CPython answers `zip() argument 2 is shorter than argument 1`: the builtin spelled as the call `a.zip(b)` substitutes, with arguments numbered from that call's perspective — argument 2 is the *first* one the program passed, since the receiver is argument 1. `Zip._gen` pairs the sources by hand in the strict case and answers `zip is strict: collection 2 ran out while collection 1 still had elements` (and, the other way round, `collection 2 still had elements when collection 1 ran out`). The position counts collections rather than call arguments, so the same number is true of both spellings, `a.zip(b)` and `zip(a, b)`. The non-strict path still runs CPython's `zip`, which cannot fail.
 
 ### `enumerate` → `Enumerate` — `poop/transformers/enumerate.py`
 

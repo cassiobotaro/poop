@@ -23,6 +23,7 @@ _MISSING: Any = object()
 
 def _minmax(
     func: Callable[..., Any],
+    name: str,
     iterable: Any,
     key: Callable[[Any], Any] | NoneClass | None,
     default: Any,
@@ -39,14 +40,29 @@ def _minmax(
     not `is None`: POOP's `None` is a `NoneClass` instance, so the raw identity
     test read the language's own null as a comparison block and answered
     `'NoneType' object is not callable`.
+
+    `name` is the message — `#min` or `#max` — for the empty-collection
+    refusal. Read off `func.__name__` it would spell `min`, the free function
+    `no_min` forbids two lines earlier in the same program.
     """
     # Imported here, not at the top: this module is imported by `int.py`, and
     # `_unwrap` reaches `none.py` -> `object.py`, which sits above it.
     from poop.types._unwrap import _is_absent
+    from poop.types.exceptions import MIRRORS
 
     kwargs: dict[str, Any] = {}
     if not _is_absent(key):
         kwargs["key"] = key
     if default is not _MISSING:
         kwargs["default"] = default
-    return func(iterable, **kwargs)
+        return func(iterable, **kwargs)
+    # The sentinel *as* the default, rather than catching the `ValueError`
+    # CPython raises: its sentence is `min() iterable argument is empty`, and
+    # a `ValueError` out of the user's own `key` block would be caught by the
+    # same `except` and reported as an empty collection it says nothing about.
+    result = func(iterable, default=_MISSING, **kwargs)
+    if result is _MISSING:
+        raise MIRRORS["ValueError"](
+            f"{name} of an empty collection is undefined — send it a default instead"
+        )
+    return result

@@ -110,14 +110,14 @@ class Dict(_ValueEqMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        return _minmax(builtins.min, self._data, key, default)
+        return _minmax(builtins.min, "#min", self._data, key, default)
 
     def max(
         self,
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        return _minmax(builtins.max, self._data, key, default)
+        return _minmax(builtins.max, "#max", self._data, key, default)
 
     def len(self) -> Int:
         return Int(len(self._data))

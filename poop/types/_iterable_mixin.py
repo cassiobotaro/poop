@@ -95,14 +95,14 @@ class _IterableMixin:
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        return _minmax(_builtins.min, self._iter_items(), key, default)
+        return _minmax(_builtins.min, "#min", self._iter_items(), key, default)
 
     def max(
         self,
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        return _minmax(_builtins.max, self._iter_items(), key, default)
+        return _minmax(_builtins.max, "#max", self._iter_items(), key, default)
 
     def all(self, block: Callable[[Any], Any]) -> Boolean:
         return to_boolean(_builtins.all(bool(block(x)) for x in self._iter_items()))

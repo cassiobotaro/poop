@@ -49,14 +49,18 @@ class Float(_NumericCompareMixin, Object):
         *others: Float | Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Float:
-        return cast("Float", _minmax(_builtins.max, (self, *others), key, _MISSING))
+        return cast(
+            "Float", _minmax(_builtins.max, "#max", (self, *others), key, _MISSING)
+        )
 
     def min(
         self,
         *others: Float | Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Float:
-        return cast("Float", _minmax(_builtins.min, (self, *others), key, _MISSING))
+        return cast(
+            "Float", _minmax(_builtins.min, "#min", (self, *others), key, _MISSING)
+        )
 
     def is_integer(self) -> Boolean:
         return to_boolean(self._value.is_integer())

@@ -77,6 +77,34 @@ def test_min_max_on_empty_without_default_raises_value_error() -> None:
         List().max()
 
 
+@pytest.mark.parametrize(
+    "factory",
+    [lambda: List(), lambda: Str(""), lambda: Dict()],
+    ids=["list", "str", "dict"],
+)
+def test_empty_min_max_name_the_message_not_the_builtin(
+    factory: Callable[[], Any],
+) -> None:
+    """CPython answers `min() iterable argument is empty` — the free function
+    `no_min` forbids, spelled as the call the program did not write."""
+    for message, send in (("#min", factory().min), ("#max", factory().max)):
+        with pytest.raises(ValueError) as info:
+            send()
+        assert str(info.value) == (
+            f"{message} of an empty collection is undefined — send it a default instead"
+        )
+
+
+def test_a_key_block_raising_value_error_is_not_read_as_emptiness() -> None:
+    """The refusal is driven by the sentinel, not by catching `ValueError`."""
+
+    def explode(_: Any) -> Any:
+        raise ValueError("the block's own complaint")
+
+    with pytest.raises(ValueError, match="the block's own complaint"):
+        List(Int(1)).min(key=explode)
+
+
 def test_min_returns_first_element_on_tie() -> None:
     a = Tuple(Int(0), Str("a"))
     b = Tuple(Int(0), Str("b"))

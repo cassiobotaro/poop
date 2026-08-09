@@ -48,6 +48,39 @@ def test_zip_strict_unequal_raises() -> None:
         list(z)
 
 
+def test_zip_strict_shorter_names_the_collection_that_ran_out() -> None:
+    # CPython: `zip() argument 2 is shorter than argument 1` — the builtin as
+    # a call, and arguments numbered from the call, where the receiver is 1.
+    z = List(Int(1), Int(2)).zip(List(Int(3)), strict=true)
+    with pytest.raises(ValueError) as info:
+        list(z)
+    assert str(info.value) == (
+        "zip is strict: collection 2 ran out while collection 1 still had elements"
+    )
+
+
+def test_zip_strict_longer_names_the_collection_that_outlasted() -> None:
+    z = List(Int(1)).zip(List(Int(2), Int(3)), strict=true)
+    with pytest.raises(ValueError) as info:
+        list(z)
+    assert str(info.value) == (
+        "zip is strict: collection 2 still had elements when collection 1 ran out"
+    )
+
+
+def test_zip_strict_numbers_a_third_collection() -> None:
+    z = List(Int(1)).zip(List(Int(2)), List(), strict=true)
+    with pytest.raises(ValueError) as info:
+        list(z)
+    assert str(info.value) == (
+        "zip is strict: collection 3 ran out while collection 1 still had elements"
+    )
+
+
+def test_zip_strict_over_no_collections_pairs_nothing() -> None:
+    assert list(Zip(strict=true)) == []
+
+
 def test_zip_returns_zip_instance() -> None:
     assert isinstance(List(Int(1)).zip(List(Int(2))), Zip)
 

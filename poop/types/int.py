@@ -77,14 +77,18 @@ class Int(_NumericCompareMixin, Object):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int:
-        return cast("Int", _minmax(_builtins.max, (self, *others), key, _MISSING))
+        return cast(
+            "Int", _minmax(_builtins.max, "#max", (self, *others), key, _MISSING)
+        )
 
     def min(
         self,
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int:
-        return cast("Int", _minmax(_builtins.min, (self, *others), key, _MISSING))
+        return cast(
+            "Int", _minmax(_builtins.min, "#min", (self, *others), key, _MISSING)
+        )
 
     def bit_count(self) -> Int:
         return Int(self._value.bit_count())

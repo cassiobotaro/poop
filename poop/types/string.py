@@ -126,14 +126,14 @@ class Str(_ValueEqMixin, Object):
         key: Callable[[Str], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        return _minmax(builtins.min, self, key, default)
+        return _minmax(builtins.min, "#min", self, key, default)
 
     def max(
         self,
         key: Callable[[Str], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
-        return _minmax(builtins.max, self, key, default)
+        return _minmax(builtins.max, "#max", self, key, default)
 
     def includes(self, char: Str) -> Boolean:
         # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
