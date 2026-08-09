@@ -155,3 +155,54 @@ def test_with_cannot_run_twice() -> None:
     w.do(lambda _: None)
     with pytest.raises(RuntimeError, match="already run"):
         w.do(lambda _: None)
+
+
+def test_with_checks_exit_before_entering() -> None:
+    # CPython resolves both slots before entering. Entering first and reaching
+    # for the exit half only afterwards ran the acquisition of a manager that
+    # could never release it: the side effect happened, and nothing was ever
+    # going to undo it.
+    import pytest
+
+    from poop.types.with_ import With
+
+    log: list[str] = []
+
+    class _EnterOnly:
+        def __enter__(self):
+            log.append("entered")
+            return self
+
+    with pytest.raises(TypeError, match="it cannot be exited"):
+        With(lambda: _EnterOnly()).do(lambda _: log.append("used"))
+    assert log == []
+
+
+def test_with_names_the_protocol_for_a_plain_object() -> None:
+    # `AttributeError: __enter__` named a dunder POOP bans everywhere else and
+    # said nothing about what the program did wrong.
+    import pytest
+
+    from poop.types.int import Int
+    from poop.types.with_ import With
+
+    with pytest.raises(TypeError, match="int does not support the context manager"):
+        With(lambda: Int(5)).do(lambda _: None)
+
+
+def test_with_reads_the_protocol_off_the_type_not_the_instance() -> None:
+    # A `does_not_understand` hook answering a callable must not be able to
+    # forge a context manager: Python's `with` reads both slots off the type.
+    import pytest
+
+    from poop.types.object import Object
+    from poop.types.with_ import With
+
+    class _Forger(Object):
+        __slots__ = ()
+
+        def does_not_understand(self, name: str):
+            return lambda *args: None
+
+    with pytest.raises(TypeError, match="it cannot be entered"):
+        With(lambda: _Forger()).do(lambda _: None)

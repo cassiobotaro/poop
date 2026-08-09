@@ -985,6 +985,8 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 The context manager object must implement Python's `__enter__`/`__exit__` protocol — a deliberate primitive leak, consistent with `Try` using native exception types. Exceptions propagate via the standard `__exit__` return value: if `__exit__` returns falsy, the exception is re-raised; truthy suppresses it.
 
+**Both slots are resolved before either is called**, as Python's `with` does. `With` used to enter first and reach for the exit half only after the body had run, so a manager that could be entered but never exited ran its acquisition and then failed — the side effect happened with nothing left to undo it. The lookup is on the *type*, where Python's protocol reads it from, so a `does_not_understand` hook answering a callable cannot forge a context manager. The refusal names the missing half of the protocol (`it cannot be entered` / `it cannot be exited`) rather than the dunder CPython names: a diagnostic spelling `__exit__` names the construct `no_dunder_attribute` bans, which is why the two failing programs are in the `test_no_python_wording` sweep.
+
 > **Tradeoff**: context managers must implement Python's native protocol (`__enter__`/`__exit__`). POOP cannot redefine resource acquisition semantics without reimplementing every standard context manager (files, locks, etc.), which is impractical.
 
 `With` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/with_.py` — namespace-only, no AST rewrite.

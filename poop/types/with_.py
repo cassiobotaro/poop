@@ -9,6 +9,29 @@ from poop.types.none import none
 from poop.types.object import Object
 
 
+def _protocol(cm: Any) -> tuple[Any, Any]:
+    """`cm`'s `__enter__` / `__exit__`, or CPython's own refusal.
+
+    Both slots are resolved before either is called, as Python's `with` does.
+    Entering first and reaching for `__exit__` only afterwards ran the
+    acquisition of a manager that can never release it — the entry side effect
+    happened, and nothing was ever going to undo it.
+
+    Looked up on the type, not the instance: that is where Python's protocol
+    reads them from, so a `does_not_understand` hook cannot forge a context
+    manager. CPython names the missing dunder here; POOP says which half of
+    the protocol is missing instead, since a diagnostic that spells
+    `__exit__` names the very construct `no_dunder_attribute` bans.
+    """
+    for slot, verb in (("__enter__", "entered"), ("__exit__", "exited")):
+        if not hasattr(type(cm), slot):
+            raise MIRRORS["TypeError"](
+                f"{type(cm).__name__} does not support the context manager "
+                f"protocol — it cannot be {verb}"
+            )
+    return type(cm).__enter__, type(cm).__exit__
+
+
 class With(Object):
     """Smalltalk-style with/as as a message-passing builder.
 
@@ -39,18 +62,19 @@ class With(Object):
         # Single-use: drop the context-manager block so the executed With no
         # longer pins whatever its closure captured (re-running raises).
         self._cm_block = None
-        value = cm.__enter__()
+        enter, exit_ = _protocol(cm)
+        value = enter(cm)
         try:
             result = body_block(value)
         except BaseException as e:
-            if not cm.__exit__(type(e), e, e.__traceback__):
+            if not exit_(cm, type(e), e, e.__traceback__):
                 raise
             # __exit__ swallowed the exception, so the body never produced a
             # value to answer. Python's `with` just carries on past the block
             # here; `none` is that "carried on with nothing to show".
             return none
         else:
-            cm.__exit__(None, None, None)
+            exit_(cm, None, None, None)
         return result
 
     def __str__(self) -> str:

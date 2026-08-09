@@ -73,6 +73,11 @@ _FAILING = [
     "i = [1].iter()\nlist([1, 2, 3].filter(lambda v: i.next()))",
     "i = [1].iter()\ni.next()\ni.next()",
     "b = lambda: 1\nb(9)",
+    # A receiver that cannot be entered, and one that can be entered but never
+    # exited: CPython names the missing dunder in both.
+    "With(lambda: 5).do(lambda x: x)",
+    "class C(Object):\n    def __enter__(self):\n        return 1\n"
+    "With(lambda: C()).do(lambda x: x)",
 ]
 
 
