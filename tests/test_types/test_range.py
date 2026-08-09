@@ -294,14 +294,18 @@ def test_index_not_found_raises() -> None:
 
 
 def test_slice_with_step() -> None:
+    # A Range answers a Range, as `range(0, 11)[0:5:2]` does in CPython.
     result = _range(0, 10).slice(Int(0), Int(5), Int(2))
-    assert result == List(Int(0), Int(2), Int(4))
+    assert result == Range(Int(0), Int(4), Int(2))
+    assert list(result) == [Int(0), Int(2), Int(4)]
 
 
 def test_slice_open_ended() -> None:
     # proposal 143: open-ended slice with a POOP `none` stop. POOP's Range
     # is inclusive, so range(0, 5) is [0, 1, 2, 3, 4, 5].
-    assert _range(0, 5).slice(Int(2), none) == List(Int(2), Int(3), Int(4), Int(5))
+    result = _range(0, 5).slice(Int(2), none)
+    assert result == Range(Int(2), Int(5))
+    assert list(result) == [Int(2), Int(3), Int(4), Int(5)]
 
 
 def test_sum_returns_total() -> None:
@@ -335,3 +339,24 @@ def test_range_wrong_type_args_are_faithful_not_value_leaks() -> None:
 
 def test_at_accepts_a_boolean_index() -> None:
     assert Range(Int(10), Int(20)).at(true) == Int(11)
+
+
+def test_slice_answers_a_range_not_a_materialized_list() -> None:
+    # `range(10)[1:3]` is `range(1, 3)` in CPython, and `reversed()` already
+    # answered a Range. A List allocated one Int per member of the result, so
+    # slicing a huge range materialized it.
+    assert Range(Int(0), Int(999999999999)).slice(Int(0), Int(3)) == Range(
+        Int(0), Int(2)
+    )
+
+
+def test_slice_with_a_negative_step_answers_a_range() -> None:
+    result = Range(Int(0), Int(4)).slice(none, none, Int(-1))
+    assert result == Range(Int(4), Int(0), Int(-1))
+    assert list(result) == [Int(4), Int(3), Int(2), Int(1), Int(0)]
+
+
+def test_an_empty_slice_answers_an_empty_range() -> None:
+    result = Range(Int(0), Int(4)).slice(Int(3), Int(1))
+    assert result.len() == Int(0)
+    assert str(result) == "range(3, 1)"

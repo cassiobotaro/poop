@@ -172,7 +172,11 @@ def test_byte_array_slice_with_slice_object() -> None:
 
 def test_range_slice_with_slice_object() -> None:
     s = Slice(Int(1), Int(4))
-    assert Range(Int(0), Int(9)).slice(s) == List(Int(1), Int(2), Int(3))
+    # A sliced Range stays a Range — the same Slice applied to a List answers
+    # a List, and each collection answers its own type.
+    result = Range(Int(0), Int(9)).slice(s)
+    assert result == Range(Int(1), Int(3))
+    assert list(result) == [Int(1), Int(2), Int(3)]
 
 
 # --- reuse across collections ---

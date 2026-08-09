@@ -9,7 +9,6 @@ from poop.types._unwrap import _faithful
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
-from poop.types.list import List
 from poop.types.object import Object
 from poop.types.range_iterator import RangeIterator
 
@@ -65,17 +64,23 @@ class Range(_IterableMixin, Object):
 
     def slice(
         self,
-        start_or_slice: Index | Slice,
+        start_or_slice: Index | Slice | NoneClass | None,
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
-    ) -> List:
+    ) -> Range:
         from poop.types.slice import _resolve_py_slice
 
         py = _resolve_py_slice(start_or_slice, stop, step)
-        # Slice the native range lazily (O(1)) and wrap only the selected
-        # elements — materializing the whole range as Int objects first would
-        # allocate every member just to discard all but the slice.
-        return List(*(Int(i) for i in self._range()[py]))
+        # A Range answers a Range, as `range(10)[1:3]` answers `range(1, 3)`
+        # and as `reversed()` right below already does. Wrapping the selected
+        # elements in a List instead allocated one Int per member of the
+        # result: `range(1000000000000).slice(0, 3)` is three elements in
+        # CPython and was a materialized trillion here.
+        sliced = self._range()[py]
+        # Round-trip the exclusive stop back through __init__'s inclusive
+        # convention, exactly as `reversed()` does.
+        sign = 1 if sliced.step > 0 else -1
+        return Range(Int(sliced.start), Int(sliced.stop - sign), Int(sliced.step))
 
     def includes(self, item: Int) -> Boolean:
         # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
