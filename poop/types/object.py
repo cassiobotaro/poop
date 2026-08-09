@@ -146,16 +146,16 @@ class Object(metaclass=PoopMeta):
         return Str(builtins.ascii(self))
 
     def dir(self) -> List:
+        from poop.types._selectors import is_message
         from poop.types.list import List
         from poop.types.string import Str
 
         # Filter every `_`-prefixed name — dunders (banned by
         # no_dunder_attribute) and privates, including the mangled `_poop_*`
         # bindings — so the introspection substitute never surfaces what the
-        # encapsulation rules hide. Same predicate as the REPL's `:methods`.
-        return List(
-            *(Str(name) for name in builtins.dir(self) if not name.startswith("_"))
-        )
+        # encapsulation rules hide. `is_message` is the one copy of that rule,
+        # shared with `:methods`, the near-miss hint and the REPL's completer.
+        return List(*(Str(name) for name in builtins.dir(self) if is_message(name)))
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
         from poop.types._unwrap import _unwrap

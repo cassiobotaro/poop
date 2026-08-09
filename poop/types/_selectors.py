@@ -38,6 +38,21 @@ SMALLTALK_SELECTORS: dict[str, str] = {
 }
 
 
+def is_message(name: str) -> bool:
+    """A name user code may send — the predicate `Object.dir()` uses.
+
+    Every `_`-prefixed name is hidden: dunders (`no_dunder_attribute` bans
+    them), the mangled `_poop_*` bindings, and the single-underscore internals
+    `Object._reject_private` refuses at runtime. Four surfaces answer the same
+    question — `dir()`, `:methods`, the near-miss hint below, and the REPL's
+    tab-completion — and three of them had their own copy of the rule. The
+    fourth, the completer, spelt it `not name.startswith("__")` and so offered
+    `x._value`, the raw Python value behind the wrapper, as a completion: the
+    encapsulation leak taught by the tool meant to teach the language.
+    """
+    return not name.startswith("_")
+
+
 def explain(obj: object, name: str, label: str | None = None) -> str:
     """The `does not understand` message, with the best hint available.
 
@@ -60,7 +75,7 @@ def explain(obj: object, name: str, label: str | None = None) -> str:
             f"{label} does not understand #{name} — "
             f"Smalltalk's #{name} is #{poop_name} here"
         )
-    known = [n for n in dir(obj) if not n.startswith("_")]
+    known = [n for n in dir(obj) if is_message(n)]
     # 0.7, not difflib's default 0.6. With the table above carrying the
     # Smalltalk vocabulary, all that is left here is typos, and those score
     # high: measured over six real ones and four nonsense names, 0.6 caught

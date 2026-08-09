@@ -347,6 +347,39 @@ def test_poop_completer_attr_hides_dunder() -> None:
     assert c.complete("n.__", 0) is None
 
 
+def test_poop_completer_attr_hides_every_private_name() -> None:
+    # The completer filtered `__`-prefixed names only, so Tab offered
+    # `x._value` — the raw Python value `_reject_private` exists to keep out of
+    # user code — plus `_abc_impl` and `_eq_group`, POOP internals with no
+    # meaning in the language. `dir()` and `:methods` never showed them.
+    c = _PoopCompleter({"x": Str("abc")})
+    assert c._attr_matches("x._") == []
+    assert c.complete("x._val", 0) is None
+
+
+def test_poop_completer_name_hides_every_private_binding() -> None:
+    # `_poop_`-prefixed was the old filter; any other `_` key is machinery too.
+    c = _PoopCompleter({"_poop_true": True, "_secret": 1, "x": 1})
+    assert c._name_matches("_") == []
+
+
+def test_poop_completer_does_not_run_a_property() -> None:
+    # Deciding whether to append `(` used to read the attribute off the
+    # *instance*, which runs a `property` getter: pressing Tab executed
+    # program code.
+    calls: list[str] = []
+
+    class WithProperty:
+        @property
+        def trap(self) -> str:
+            calls.append("ran")
+            return "value"
+
+    c = _PoopCompleter({"obj": WithProperty()})
+    assert c._attr_matches("obj.tra") == ["obj.trap"]
+    assert calls == []
+
+
 def test_poop_completer_attr_bad_expr_returns_none() -> None:
     ns: dict[str, object] = {}
     c = _PoopCompleter(ns)

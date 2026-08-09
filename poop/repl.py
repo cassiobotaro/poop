@@ -12,6 +12,7 @@ from rich.text import Text
 
 from poop.errors import PoopError, format_error, render_error
 from poop.transformers import DEFAULT_NAMESPACE
+from poop.types._selectors import is_message
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
 from poop.types.float import Float
@@ -128,9 +129,11 @@ class _PoopCompleter:
             return None
 
     def _name_matches(self, text: str) -> list[str]:
+        # `is_message`, not a `_poop_`-only filter: any other `_`-prefixed key
+        # is machinery too, and offering it teaches a name `get_attr` refuses.
         results = []
         for name, val in self._ns.items():
-            if name.startswith(text) and not name.startswith("_poop_"):
+            if name.startswith(text) and is_message(name):
                 suffix = "(" if callable(val) else ""
                 results.append(name + suffix)
         return sorted(results)
@@ -144,8 +147,10 @@ class _PoopCompleter:
             obj = eval(expr, self._ns)  # noqa: S307
             results = []
             for name in dir(obj):
-                if name.startswith(attr) and not name.startswith("__"):
-                    val = getattr(obj, name, None)
+                if name.startswith(attr) and is_message(name):
+                    # Off the *type*: `getattr(obj, name)` runs a `property`
+                    # getter, so pressing Tab executed program code.
+                    val = getattr(type(obj), name, None)
                     suffix = "(" if callable(val) else ""
                     results.append(f"{expr}.{name}{suffix}")
             return sorted(results)
@@ -324,7 +329,7 @@ class Repl:
         except Exception as exc:  # noqa: BLE001
             _error(str(exc))
             return
-        names = sorted(n for n in dir(obj) if not n.startswith("_"))
+        names = sorted(n for n in dir(obj) if is_message(n))
         header = f"{type(obj).__name__} understands {len(names)} messages:"
         _OUT.print(Text(header, style="dim"), soft_wrap=True, highlight=False)
         # rich lays the messages out in as many columns as the terminal is wide
