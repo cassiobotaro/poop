@@ -669,6 +669,8 @@ Available on `Int` and `Float`.
 
 `sorted` lives on `List` and `Tuple`; both accept `key` and `reverse`, matching Python's `sorted` and `List.sort`.
 
+**Every receiver answers `reversed` with its own kind.** `List` → `List`, `Tuple` → `Tuple`, `Range` → `Range`, the dict views → their reverse iterators — and `Str` → `Str`, which it did not: it answered a `List` of one-character `Str`s, making `reversed` the single message on a string that changes the type, so `s.reversed().upper()` failed where every other chain composes. `"abc".slice(...)` and `"abc".at(0)` both answer a `Str`, and `list(s.reversed())` is the spelling for anyone who wanted the characters.
+
 **`key` and `reverse` are keyword-only, on `sorted` and on the in-place `sort`.** CPython spells them `sorted(iterable, /, *, key, reverse)` and `list.sort(*, key, reverse)`, and the reason is the one `min`/`max` already settled: positionally a block is indistinguishable from any other value, so `xs.sorted(f)` and `xs.sorted(reverse_flag)` read the same to the receiver. An absent `key` is `_is_absent`, the test every other optional argument in the language uses — `xs.sorted(key=None)` used to reach CPython as a comparison block and answer `'NoneType' object is not callable`, because POOP's `None` is a `NoneClass` instance and not Python's. The same fix reaches `min`/`max` through `poop/types/_minmax.py`, so `(5).max(3, key=None)` and `col.min(None)` answer rather than refuse.
 
 ### No `in` / `not in` — `poop/validators/no_in.py`

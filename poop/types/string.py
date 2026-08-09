@@ -149,10 +149,13 @@ class Str(_ValueEqMixin, Object):
             return item._value in self._value
         return False
 
-    def reversed(self) -> List:
-        from poop.types.list import List
-
-        return List(*[Str(c) for c in reversed(self._value)])
+    def reversed(self) -> Str:
+        # A `Str`, as `slice` and `at` on this receiver already answer one:
+        # every other collection answers its own kind from `reversed`, so a
+        # `List` of one-character `Str`s made this the single message on a
+        # string that changes the type, and broke `s.reversed().upper()`.
+        # The list spelling stays reachable as `list(s.reversed())`.
+        return Str(self._value[::-1])
 
     def upper(self) -> Str:
         return Str(self._value.upper())

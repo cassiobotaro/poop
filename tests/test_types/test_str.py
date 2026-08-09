@@ -54,18 +54,19 @@ def test_includes_non_value_argument_raises_faithful_typeerror() -> None:
         Str("hello").includes(List(Int(1)))  # ty: ignore[invalid-argument-type]
 
 
-def test_reversed() -> None:
-    from poop.types.list import List
+def test_reversed_answers_a_str() -> None:
+    # Every other receiver answers its own kind, and `slice`/`at` on a Str
+    # already answer a Str — a List of characters made `reversed` the one
+    # message on this receiver that changed the type.
+    assert Str("hello").reversed() == Str("olleh")
 
-    assert Str("hello").reversed() == List(
-        Str("o"), Str("l"), Str("l"), Str("e"), Str("h")
-    )
+
+def test_reversed_composes_with_the_rest_of_the_string_protocol() -> None:
+    assert Str("abc").reversed().upper() == Str("CBA")
 
 
 def test_reversed_empty() -> None:
-    from poop.types.list import List
-
-    assert Str("").reversed() == List()
+    assert Str("").reversed() == Str("")
 
 
 def test_add_concatenates() -> None:
