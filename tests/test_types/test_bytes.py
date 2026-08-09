@@ -665,3 +665,39 @@ def test_reversed_answers_bytes() -> None:
 
 def test_reversed_of_empty_bytes() -> None:
     assert Bytes(b"").reversed() == Bytes(b"")
+
+
+# startswith/endswith with a tuple of prefixes — proposal 22
+
+
+def test_startswith_tuple_of_prefixes() -> None:
+    # With `or` banned, a tuple is the only way to ask the question — and the
+    # refusal was self-contradicting: the reader *did* pass a tuple, and
+    # CPython said a tuple is not a tuple (it meant its own).
+    from poop.types.tuple import Tuple
+
+    assert Bytes(b"ab").startswith(Tuple(Bytes(b"a"), Bytes(b"z"))) is true
+    assert Bytes(b"ab").startswith(Tuple(Bytes(b"x"), Bytes(b"z"))) is false
+
+
+def test_endswith_tuple_of_suffixes() -> None:
+    from poop.types.tuple import Tuple
+
+    assert Bytes(b"ab").endswith(Tuple(Bytes(b"b"), Bytes(b"z"))) is true
+    assert Bytes(b"ab").endswith(Tuple(Bytes(b"x"), Bytes(b"z"))) is false
+
+
+def test_startswith_empty_tuple_is_false() -> None:
+    from poop.types.tuple import Tuple
+
+    assert Bytes(b"ab").startswith(Tuple()) is false
+
+
+def test_startswith_tuple_with_a_wrong_typed_member_raises() -> None:
+    # The members unwrap through `_faithful`, so a `Str` reaches CPython and
+    # raises the faithful error instead of being silently coerced.
+    from poop.types.string import Str
+    from poop.types.tuple import Tuple
+
+    with pytest.raises(TypeError):
+        Bytes(b"ab").startswith(Tuple(Str("a")))

@@ -1,6 +1,7 @@
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+from poop.types._affix import affix_needle
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -240,14 +241,14 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def endswith(
         self,
-        suffix: ByteArray,
+        suffix: ByteArray | Tuple,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
         return (
             true
             if self._value.endswith(
-                _faithful(suffix),
+                affix_needle(suffix),
                 _unwrap(start, None),
                 _unwrap(end, None),
             )
@@ -429,14 +430,14 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def startswith(
         self,
-        prefix: ByteArray,
+        prefix: ByteArray | Tuple,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
         return (
             true
             if self._value.startswith(
-                _faithful(prefix),
+                affix_needle(prefix),
                 _unwrap(start, None),
                 _unwrap(end, None),
             )

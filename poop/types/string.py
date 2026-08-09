@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterator
 from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._affix import affix_needle
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoding_name, handler_name
@@ -52,29 +53,6 @@ def _reject_field_access(template: _str) -> None:
             )
         if spec:
             _reject_field_access(spec)
-
-
-def _affix_needle(affix: object) -> Any:
-    """The `str.startswith` / `str.endswith` argument behind a POOP affix.
-
-    A `Str` unwraps to its value; a `Tuple` to a tuple of faithfully unwrapped
-    members — CPython accepts a tuple of prefixes, and in POOP that is the only
-    message-shaped substitute for the forbidden `s.startswith("a") or
-    s.startswith("b")`. Members unwrap through `_faithful` (not `str(p)`) so a
-    non-`Str` member reaches `str.startswith` and raises the faithful
-    `TypeError` instead of being silently stringified.
-
-    Anything that is neither — an `Int`, a `List` — reaches CPython raw for the
-    same reason: reading `._items` off it would answer `int does not
-    understand #_items`, naming a POOP internal.
-    """
-    from poop.types.tuple import Tuple  # circular: tuple imports string
-
-    if isinstance(affix, Str):
-        return affix._value
-    if isinstance(affix, Tuple):
-        return tuple(_faithful(p) for p in affix._items)
-    return _faithful(affix)
 
 
 class Str(_ValueEqMixin, Object):
@@ -277,7 +255,7 @@ class Str(_ValueEqMixin, Object):
     ) -> Boolean:
         return to_boolean(
             self._value.startswith(
-                _affix_needle(prefix), _unwrap(start, None), _unwrap(end, None)
+                affix_needle(prefix), _unwrap(start, None), _unwrap(end, None)
             )
         )
 
@@ -289,7 +267,7 @@ class Str(_ValueEqMixin, Object):
     ) -> Boolean:
         return to_boolean(
             self._value.endswith(
-                _affix_needle(suffix), _unwrap(start, None), _unwrap(end, None)
+                affix_needle(suffix), _unwrap(start, None), _unwrap(end, None)
             )
         )
 

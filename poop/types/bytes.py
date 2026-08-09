@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from poop.types._affix import affix_needle
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoding_name, handler_name
@@ -178,14 +179,14 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
     def endswith(
         self,
-        suffix: Bytes,
+        suffix: Bytes | Tuple,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
         return (
             true
             if self._value.endswith(
-                _faithful(suffix),
+                affix_needle(suffix),
                 _unwrap(start, None),
                 _unwrap(end, None),
             )
@@ -368,14 +369,14 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
     def startswith(
         self,
-        prefix: Bytes,
+        prefix: Bytes | Tuple,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
         return (
             true
             if self._value.startswith(
-                _faithful(prefix),
+                affix_needle(prefix),
                 _unwrap(start, None),
                 _unwrap(end, None),
             )

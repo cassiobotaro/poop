@@ -901,3 +901,37 @@ def test_at_and_at_put_accept_a_boolean_index() -> None:
     assert ba.at(true) == Int(98)
     ba.at_put(true, Int(99))
     assert ba.at(Int(1)) == Int(99)
+
+
+# startswith/endswith with a tuple of prefixes — proposal 22
+
+
+def _ba(data: bytes) -> ByteArray:
+    return ByteArray(bytearray(data))
+
+
+def test_startswith_tuple_of_prefixes() -> None:
+    from poop.types.tuple import Tuple
+
+    assert _ba(b"ab").startswith(Tuple(_ba(b"a"), _ba(b"z"))) is true
+    assert _ba(b"ab").startswith(Tuple(_ba(b"x"), _ba(b"z"))) is false
+
+
+def test_endswith_tuple_of_suffixes() -> None:
+    from poop.types.tuple import Tuple
+
+    assert _ba(b"ab").endswith(Tuple(_ba(b"b"), _ba(b"z"))) is true
+    assert _ba(b"ab").endswith(Tuple(_ba(b"x"), _ba(b"z"))) is false
+
+
+def test_startswith_empty_tuple_is_false() -> None:
+    from poop.types.tuple import Tuple
+
+    assert _ba(b"ab").startswith(Tuple()) is false
+
+
+def test_startswith_tuple_with_a_wrong_typed_member_raises() -> None:
+    from poop.types.tuple import Tuple
+
+    with pytest.raises(TypeError):
+        _ba(b"ab").startswith(Tuple(Str("a")))
