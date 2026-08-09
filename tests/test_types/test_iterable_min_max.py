@@ -95,6 +95,23 @@ def test_empty_min_max_name_the_message_not_the_builtin(
         )
 
 
+@pytest.mark.parametrize(
+    "factory",
+    [lambda: List(Int(1)), lambda: Str("ab"), lambda: Dict()],
+    ids=["list", "str", "dict"],
+)
+def test_min_max_take_key_and_default_only_by_keyword(
+    factory: Callable[[], Any],
+) -> None:
+    # `xs.min(0)` reads as "the smallest, or 0 if empty" — the shape `get` and
+    # `pop` take positionally — and handed `0` to the key slot instead.
+    # CPython spells it `min(iterable, *, key, default)`.
+    with pytest.raises(TypeError):
+        factory().min(Int(0))
+    with pytest.raises(TypeError):
+        factory().max(Int(0))
+
+
 def test_a_key_block_raising_value_error_is_not_read_as_emptiness() -> None:
     """The refusal is driven by the sentinel, not by catching `ValueError`."""
 

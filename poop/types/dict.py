@@ -107,6 +107,7 @@ class Dict(_ValueEqMixin, Object):
 
     def min(
         self,
+        *,
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
@@ -114,6 +115,7 @@ class Dict(_ValueEqMixin, Object):
 
     def max(
         self,
+        *,
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:

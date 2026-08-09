@@ -318,14 +318,20 @@ the answer's identity, not by catching CPython's `ValueError` — the
 same `except` would have caught a `ValueError` out of the user's own
 `key` block and reported it as an emptiness it says nothing about.
 
-**`key` is keyword-only on the scalar rungs, and that is not a style choice.**
+**`key` and `default` are keyword-only everywhere, and that is not a style choice.**
 The variadic form took operands only, so `(5).max(3, block)` compared the block
 *as a value* instead of applying it — a block is not comparable, so this
 happened to fail, but any comparable third argument would have answered a
 plausible wrong number in silence. CPython spells it `max(a, b, key=fn)`, and
 keyword-only is the only spelling that cannot be confused with one more operand.
 `default` stays refused on the scalar form, as CPython refuses it too ("Cannot
-specify a default for max() with multiple positional arguments"). The shared
+specify a default for max() with multiple positional arguments"). The collection
+rungs spell both `key` and `default` keyword-only for the same reason — CPython's
+own signature is `min(iterable, *, key, default)`, and `xs.min(0)`, the plain
+reading of "the smallest, or 0 if empty" (and the shape `get`/`pop` do take
+positionally), handed `0` to the key slot: `[1, 2].min(0)` answered `'int' object
+is not callable` and `[[3], [1]].min([9])` answered a plausible wrong list without
+raising at all. The shared
 body now lives in `poop/types/_minmax.py` rather than `_iterable_mixin`: the
 mixin imports `Int`, so the scalar rungs could not have reached the helper
 there.

@@ -92,13 +92,19 @@ class _IterableMixin:
 
     def min(
         self,
+        *,
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
+        # Keyword-only, as CPython spells `min(iterable, *, key, default)` and
+        # for the reason the scalar rungs settled: positionally a block is
+        # indistinguishable from a value, and `xs.min(0)` — the plain reading
+        # of "the smallest, or 0 if empty" — handed `0` to the key slot.
         return _minmax(_builtins.min, "#min", self._iter_items(), key, default)
 
     def max(
         self,
+        *,
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:

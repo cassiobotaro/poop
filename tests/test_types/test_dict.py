@@ -495,5 +495,15 @@ def test_min_and_max_read_a_none_key_as_absent() -> None:
     d = Dict()
     d._data[Str("b")] = Int(1)
     d._data[Str("a")] = Int(2)
-    assert d.min(none) == Str("a")
-    assert d.max(none) == Str("b")
+    assert d.min(key=none) == Str("a")
+    assert d.max(key=none) == Str("b")
+
+
+def test_min_and_max_take_key_only_by_keyword() -> None:
+    # `d.min(0)` reads as "the smallest, or 0 if empty" and handed `0` to the
+    # key slot. CPython spells `min(iterable, *, key, default)` for that reason.
+    d = Dict()
+    with pytest.raises(TypeError):
+        d.min(Int(0))  # ty: ignore[too-many-positional-arguments]
+    with pytest.raises(TypeError):
+        d.max(Int(0))  # ty: ignore[too-many-positional-arguments]
