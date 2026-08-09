@@ -422,18 +422,26 @@ def test_str_various(c: Complex, expected: str) -> None:
 
 
 def test_complex_from_unsupported_real_type_raises() -> None:
-    with pytest.raises(TypeError, match="not dict"):
+    # CPython names the builtin as a call in all three: `complex() argument
+    # must be int, float, str or complex, not dict`.
+    with pytest.raises(TypeError, match="cannot convert dict to complex"):
         _poop_complex_from(Dict())
 
 
 def test_complex_from_unsupported_first_of_two_args_raises() -> None:
-    with pytest.raises(TypeError, match="not dict"):
+    with pytest.raises(TypeError, match="real part must be int or float"):
         _poop_complex_from(Dict(), Int(1))
 
 
 def test_complex_from_unsupported_second_of_two_args_raises() -> None:
-    with pytest.raises(TypeError, match="not dict"):
+    with pytest.raises(TypeError, match="imaginary part must be int or float"):
         _poop_complex_from(Int(1), Dict())
+
+
+def test_complex_from_a_malformed_string_is_worded_like_int_and_float() -> None:
+    # CPython: `complex() arg is a malformed string`.
+    with pytest.raises(ValueError, match="'abc' is not a valid complex"):
+        _poop_complex_from(Str("abc"))
 
 
 def test_bare_complex_name_is_rewritten() -> None:

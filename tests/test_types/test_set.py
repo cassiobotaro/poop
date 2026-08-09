@@ -583,3 +583,11 @@ def test_sorted_takes_key_and_reverse() -> None:
     s = Set(Int(1), Int(2), Int(3))
     assert s.sorted(reverse=true) == List(Int(3), Int(2), Int(1))
     assert s.sorted(key=lambda n: n.negated()) == List(Int(3), Int(2), Int(1))
+
+
+def test_mutating_while_iterating_is_worded_as_poop() -> None:
+    # The mixin's `do` is the one place every collection's iteration is driven
+    # to exhaustion, so the guard lives there and reaches every receiver.
+    s = Set(Int(1))
+    with pytest.raises(RuntimeError, match="set changed while it was being iterated"):
+        s.do(lambda x: s.add(Int(9)))

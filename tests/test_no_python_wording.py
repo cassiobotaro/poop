@@ -10,6 +10,8 @@ A per-site assertion cannot do this — the next wrapper is free to reintroduce
 any of them, which is how the ten proposals accumulated in the first place.
 """
 
+import ast
+import pathlib
 import re
 
 import pytest
@@ -68,6 +70,10 @@ _FAILING = [
     # A constructor call the converter could not take used to fall through to
     # the wrapper class, whose `__init__` CPython then named.
     "list(1, 2)",
+    'complex("abc")',
+    "complex([1], 2)",
+    "(-1).chr()",
+    'd = {"a": 1}\nd.do(lambda p: d.at_put("b", 2))',
     'str(b"ab", "utf-8", "strict", 1)',
     "memoryview(b'ab', 1)",
     'int("abc")',
@@ -135,3 +141,87 @@ def test_the_sweep_would_catch_a_regression() -> None:
     assert _FORBIDDEN["operator-as-protocol"].search(leaked)
     assert _FORBIDDEN["subscripting"].search("IndexError: list index out of range")
     assert _FORBIDDEN["a message as a call"].search("list.index(x): x not in list")
+
+
+# --- the static half: every message POOP *writes* itself ---
+#
+# The list above is opt-in by program, so a leak survives simply by not being
+# on it — which is how three of these accumulated. The POOP-authored half is
+# statically checkable: walk the packages for the string literals handed to a
+# `MIRRORS[...]` call and run the same patterns over them. That catches a new
+# `complex()` the day it is written, without anyone remembering to add a
+# program. The same argument `tests/test_mirrored_raises.py` makes for the
+# *class* half of the rule.
+
+_ROOT = pathlib.Path(__file__).resolve().parents[1]
+_PACKAGES = ("poop/types", "poop/transformers")
+
+# A message may legitimately quote the POOP spelling the reader should write,
+# and a POOP message shown with its arguments looks like a Python call to the
+# patterns above. Listed as fragments, so an exemption says which *phrase* is
+# sanctioned rather than blessing a whole message forever.
+_EXEMPT: tuple[str, ...] = ("obj.get_attr(...) / obj.at(...)",)
+
+
+def _mirror_messages() -> list[tuple[pathlib.Path, int, str]]:
+    """Every string literal handed to a `MIRRORS[...]` call, with its site."""
+    found: list[tuple[pathlib.Path, int, str]] = []
+    for package in _PACKAGES:
+        for path in sorted((_ROOT / package).rglob("*.py")):
+            if "__pycache__" in path.parts:
+                continue
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call) or not _is_mirror(node.func):
+                    continue
+                for arg in node.args:
+                    text = _literal_text(arg)
+                    if text:
+                        found.append((path, node.lineno, text))
+    return found
+
+
+def _is_mirror(func: ast.expr) -> bool:
+    return (
+        isinstance(func, ast.Subscript)
+        and isinstance(func.value, ast.Name)
+        and func.value.id == "MIRRORS"
+    )
+
+
+def _literal_text(node: ast.expr) -> str:
+    """The literal parts of `node` — an f-string's placeholders are unknown."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr):
+        return "".join(
+            part.value
+            for part in node.values
+            if isinstance(part, ast.Constant) and isinstance(part.value, str)
+        )
+    return ""
+
+
+def test_the_static_sweep_finds_the_messages() -> None:
+    """A walker that stopped matching would report a clean run."""
+    assert len(_mirror_messages()) > 30
+
+
+@pytest.mark.parametrize(
+    ("path", "lineno", "message"),
+    _mirror_messages(),
+    ids=lambda arg: f"{arg.name}" if isinstance(arg, pathlib.Path) else str(arg)[:40],
+)
+def test_no_poop_authored_message_names_a_forbidden_construct(
+    path: pathlib.Path, lineno: int, message: str
+) -> None:
+    if any(fragment in message for fragment in _EXEMPT):
+        return
+    named = [
+        construct
+        for construct, pattern in _FORBIDDEN.items()
+        if pattern.search(message)
+    ]
+    assert named == [], (
+        f"{path.relative_to(_ROOT)}:{lineno} composes {message!r}, naming {named}"
+    )

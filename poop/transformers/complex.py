@@ -3,6 +3,7 @@ from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
+from poop.types._message import article
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
@@ -33,18 +34,27 @@ def _poop_complex_from(*args: object, **kwargs: object) -> Complex:
         if isinstance(real, (Int, Float)):
             return Complex(complex(real._value, 0))
         if isinstance(real, Str):
-            return Complex(complex(real._value))
+            # `complex() arg is a malformed string` names the builtin as a
+            # call; `int` and `float` were reworded to `'zz' is not a valid
+            # int` and this was left on CPython's phrasing, in POOP's voice.
+            try:
+                return Complex(complex(real._value))
+            except ValueError:
+                raise MIRRORS["ValueError"](
+                    f"{real._value!r} is not a valid complex"
+                ) from None
         raise MIRRORS["TypeError"](
-            f"complex() argument must be int, float, str or complex, "
-            f"not {type(real).__qualname__}"
+            f"cannot convert {type(real).__qualname__} to complex"
         )
     if not isinstance(real, (Int, Float)):
         raise MIRRORS["TypeError"](
-            f"complex() first argument must be int or float, not {type(real).__qualname__}"
+            f"complex's real part must be int or float, "
+            f"got {article(type(real).__qualname__)}"
         )
     if not isinstance(imag, (Int, Float)):
         raise MIRRORS["TypeError"](
-            f"complex() second argument must be int or float, not {type(imag).__qualname__}"
+            f"complex's imaginary part must be int or float, "
+            f"got {article(type(imag).__qualname__)}"
         )
     return Complex(complex(real._value, imag._value))
 

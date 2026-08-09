@@ -673,3 +673,12 @@ def test_pow_with_a_modulus_does_not_reflect() -> None:
 def test_pow_refusal_names_the_message_not_the_operator() -> None:
     with pytest.raises(TypeError, match=r"int does not understand #pow with a str"):
         Int(2).pow("x")
+
+
+def test_chr_out_of_range_names_no_call_and_no_hex_bound() -> None:
+    # CPython answers `chr() arg not in range(0x110000)` — the builtin
+    # `no_chr` forbids, spelled as a call, with the bound in hex.
+    with pytest.raises(ValueError, match="is not a character code"):
+        Int(-1).chr()
+    with pytest.raises(ValueError, match="codes run from 0 to 1114111"):
+        Int(1114112).chr()

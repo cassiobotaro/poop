@@ -127,15 +127,14 @@ def test_int_from_str_with_non_int_base_raises() -> None:
 
 
 def test_int_from_non_string_with_base_raises() -> None:
-    # CPython: int(10, 2) / int(3.5, 2) / int(True, 2) raise
-    # "int() can't convert non-string with explicit base". The base must
-    # not be silently dropped for Int/Float/Boolean values.
+    # CPython: int(10, 2) / int(3.5, 2) / int(True, 2) raise `int() can't
+    # convert non-string with explicit base` — the builtin as a call, in a
+    # message POOP composes itself. The base must not be silently dropped for
+    # Int/Float/Boolean values.
     from poop.types.boolean import true
 
     for value in (Int(10), Float(3.5), true):
-        with pytest.raises(
-            TypeError, match="can't convert non-string with explicit base"
-        ):
+        with pytest.raises(TypeError, match="a base applies only to text"):
             _poop_int_from(value, Int(2))
 
 

@@ -28,6 +28,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
+from poop.types._mutated import reword_if_native
 from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
@@ -90,6 +91,11 @@ class _PeekMixin:
             return self._buffered()
         try:
             value = next(self._materialize())
+        except RuntimeError as exc:
+            # `dictionary changed size during iteration` — a word POOP does not
+            # use for a `dict`, describing a `for` loop the program did not
+            # write. POOP's own RuntimeErrors pass through untouched.
+            raise reword_if_native(exc, "the collection") from None
         except StopIteration:
             if default is not _MISSING:
                 return default
@@ -106,7 +112,10 @@ class _PeekMixin:
         # would be skipped by the `do`/`map`/`filter` that came after the ask.
         if self._peeked is not _UNPEEKED:
             return self._buffered()
-        return self._wrap(next(self._materialize()))
+        try:
+            return self._wrap(next(self._materialize()))
+        except RuntimeError as exc:
+            raise reword_if_native(exc, "the collection") from None
 
 
 # Cloaked as `object`, the root's own spelling: these methods are inherited by

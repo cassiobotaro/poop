@@ -8,6 +8,7 @@ from poop.types._at import at_key, no_key, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _MISSING, _minmax
+from poop.types._mutated import iterating, reword_if_native
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.dict_items import DictItems
@@ -110,7 +111,13 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         return DictValues(self)
 
     def do(self, block: Callable[[Tuple], Any]) -> NoneClass:
-        deque((block(Tuple(k, v)) for k, v in self._data.items()), maxlen=0)
+        # Overrides the mixin's to yield pairs, and so needs the same guard:
+        # `d.do(lambda p: d.at_put("b", 2))` answered CPython's `dictionary
+        # changed size during iteration`.
+        try:
+            deque((block(Tuple(k, v)) for k, v in self._data.items()), maxlen=0)
+        except RuntimeError as exc:
+            raise reword_if_native(exc, iterating(self)) from None
         return none
 
     def min(

@@ -550,3 +550,20 @@ def test_do_still_yields_pairs() -> None:
     seen: list[Tuple] = []
     d.do(lambda pair: seen.append(pair))
     assert seen == [Tuple(Str("a"), Int(1))]
+
+
+def test_mutating_while_iterating_is_worded_as_poop() -> None:
+    # CPython answers `dictionary changed size during iteration`: `dictionary`
+    # is not a word POOP uses — the receiver prints as a `dict` — and "during
+    # iteration" describes a `for` loop the program did not write.
+    d = _dict_with([("a", 1)])
+    with pytest.raises(RuntimeError, match="dict changed while it was being iterated"):
+        d.do(lambda pair: d.at_put(Str("b"), Int(2)))
+
+
+def test_mutating_while_a_cursor_is_open_is_worded_as_poop() -> None:
+    d = _dict_with([("a", 1)])
+    cursor = d.iter()
+    d.at_put(Str("b"), Int(2))
+    with pytest.raises(RuntimeError, match="changed while it was being iterated"):
+        cursor.next()

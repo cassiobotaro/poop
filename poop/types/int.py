@@ -397,7 +397,14 @@ class Int(_NumericCompareMixin, Object):
     def chr(self) -> Str:
         from poop.types.string import Str
 
-        return Str(chr(self._value))
+        try:
+            return Str(chr(self._value))
+        except ValueError:
+            # CPython answers `chr() arg not in range(0x110000)` — the builtin
+            # `no_chr` forbids, spelled as a call, with the bound in hex.
+            raise MIRRORS["ValueError"](
+                f"{self._value} is not a character code — codes run from 0 to 1114111"
+            ) from None
 
     def __int__(self) -> _int:
         return self._value

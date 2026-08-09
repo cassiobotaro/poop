@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 from poop.types._cloak import cloak
 from poop.types._minmax import _MISSING, _minmax
+from poop.types._mutated import iterating, reword_if_native
 from poop.types._unwrap import _is_absent
 from poop.types.boolean import false, to_boolean
 from poop.types.int import Int
@@ -61,7 +62,14 @@ class _IterableMixin:
         return iter(self)
 
     def do(self, block: Callable[[Any], Any]) -> NoneClass:
-        deque(map(block, self._iter_items()), maxlen=0)
+        # The one place every collection's iteration is driven to exhaustion,
+        # so it is where a mutation mid-iteration surfaces: CPython's
+        # `dictionary changed size during iteration` names a `for` loop the
+        # program did not write, and a word POOP does not use for a `dict`.
+        try:
+            deque(map(block, self._iter_items()), maxlen=0)
+        except RuntimeError as exc:
+            raise reword_if_native(exc, iterating(self)) from None
         return none
 
     def map(self, block: Callable[[Any], Any]) -> Map:
