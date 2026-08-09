@@ -507,3 +507,15 @@ def test_min_and_max_take_key_only_by_keyword() -> None:
         d.min(Int(0))  # ty: ignore[too-many-positional-arguments]
     with pytest.raises(TypeError):
         d.max(Int(0))  # ty: ignore[too-many-positional-arguments]
+
+
+def test_reversed_answers_the_keys_in_reverse() -> None:
+    # `reversed(d)` yields the keys in reverse in CPython, and `no_reversed`
+    # named a substitute the `Dict` itself did not answer.
+    from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
+
+    d = _dict_with([(1, 10), (2, 20)])
+    rev = d.reversed()
+    assert isinstance(rev, DictReverseKeyIterator)
+    assert rev.next() == Int(2)
+    assert rev.next() == Int(1)

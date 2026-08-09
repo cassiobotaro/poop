@@ -51,6 +51,13 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     def iter(self) -> MemoryViewIterator:
         return MemoryViewIterator(self)
 
+    def reversed(self) -> MemoryView:
+        # `reversed(memoryview(b"ab"))` works in CPython, so `no_reversed`
+        # bans a construct this receiver had no substitute for. A `MemoryView`
+        # rather than an iterator of `Int`s: every receiver answers its own
+        # kind, and the reversed native view is O(1) — it copies nothing.
+        return MemoryView(self._value[::-1])
+
     def tobytes(self, order: Str | NoneClass | None = None) -> Bytes:
         from poop.types._unwrap import _unwrap
 

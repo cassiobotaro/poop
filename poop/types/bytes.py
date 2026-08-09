@@ -113,6 +113,12 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def iter(self) -> BytesIterator:
         return BytesIterator(self)
 
+    def reversed(self) -> Bytes:
+        # `bytes` is a sequence, so `reversed(b"abc")` works in CPython and
+        # `no_reversed` bans it — this is the substitute it points at. A
+        # `Bytes`, like every other receiver's own kind.
+        return Bytes(self._value[::-1])
+
     def __hash__(self) -> int:
         return hash(self._value)
 

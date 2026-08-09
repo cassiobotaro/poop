@@ -20,6 +20,7 @@ from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean, to_boolean
+    from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
     from poop.types.enumerate import Enumerate
     from poop.types.none import NoneClass
     from poop.types.zip import Zip
@@ -132,6 +133,12 @@ class Dict(_ValueEqMixin, Object):
 
     def iter(self) -> DictKeyIterator:
         return DictKeyIterator(self._data)
+
+    def reversed(self) -> DictReverseKeyIterator:
+        # `reversed(d)` yields the keys in reverse in CPython, which is what
+        # `d.keys().reversed()` already answered — the receiver `no_reversed`
+        # names had no substitute of its own.
+        return self.keys().reversed()
 
     def __contains__(self, item: object) -> bool:
         return item in self._data

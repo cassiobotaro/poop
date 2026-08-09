@@ -314,6 +314,14 @@ def test_reverse_returns_none() -> None:
     assert ba.reverse() is none
 
 
+def test_reversed_answers_a_new_byte_array_and_leaves_the_receiver_alone() -> None:
+    # The hint on the missing message pointed at `reverse`, the in-place
+    # mutation — the pair `List.reverse` / `List.reversed` already are.
+    ba = ByteArray(bytearray(b"abc"))
+    assert ba.reversed() == ByteArray(bytearray(b"cba"))
+    assert ba == ByteArray(bytearray(b"abc"))
+
+
 def test_capitalize() -> None:
     assert ByteArray(bytearray(b"hello world")).capitalize() == ByteArray(
         bytearray(b"Hello world")

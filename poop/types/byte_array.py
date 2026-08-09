@@ -198,8 +198,21 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return none
 
     def reverse(self) -> NoneClass:
+        """Reverse this byte array in place, answering `none`.
+
+        The twin of `reversed`, which leaves the receiver alone and answers a
+        new `ByteArray` — the same pair `List.reverse` / `List.reversed` are.
+        """
         self._value.reverse()
         return none
+
+    def reversed(self) -> ByteArray:
+        """A new `ByteArray` with the bytes in reverse order.
+
+        The substitute `no_reversed` points at; `reverse`, above, is the
+        in-place mutation.
+        """
+        return ByteArray(self._value[::-1])
 
     def capitalize(self) -> ByteArray:
         return ByteArray(self._value.capitalize())

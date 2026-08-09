@@ -176,3 +176,10 @@ def test_bare_memoryview_name_is_rewritten() -> None:
 
 def test_at_accepts_a_boolean_index() -> None:
     assert MemoryView(memoryview(b"ab")).at(true) == Int(98)
+
+
+def test_reversed_answers_a_memory_view() -> None:
+    # CPython reverses a memoryview too; every receiver answers its own kind.
+    reversed_view = MemoryView(memoryview(b"abc")).reversed()
+    assert isinstance(reversed_view, MemoryView)
+    assert reversed_view.tobytes() == Bytes(b"cba")

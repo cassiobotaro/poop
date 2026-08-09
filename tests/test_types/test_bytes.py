@@ -655,3 +655,13 @@ def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
     with pytest.raises(TypeError) as info:
         Bytes(b"ab").at(_BAD)
     assert "_value" not in str(info.value)
+
+
+def test_reversed_answers_bytes() -> None:
+    # `reversed(b"abc")` works in CPython, so `no_reversed` banned a construct
+    # this receiver had no substitute for.
+    assert Bytes(b"abc").reversed() == Bytes(b"cba")
+
+
+def test_reversed_of_empty_bytes() -> None:
+    assert Bytes(b"").reversed() == Bytes(b"")
