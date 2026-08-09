@@ -747,6 +747,8 @@ This is therefore the sole allowance resting on Python ergonomics rather than on
 
 Comparison across *non-numeric* types stays `false` (an `Int` is never equal to a `Str`), mirroring CPython. Each `__eq__` returns `NotImplemented` for operands outside its numeric tower so Python's reflected-comparison fallback applies, keeping the relation symmetric.
 
+**A `Boolean` answers the int-side messages too, not only the operators.** POOP keeps `Boolean` out of `Int`'s subtree deliberately (`_index.py`: "the two rungs of the tower are separate classes"), and everything that makes `bool` an `int` in CPython was re-supplied by hand — arithmetic, reflected arithmetic, comparison, `__index__`. The *messages* were not, so `True.abs()`, `True.divmod(2)`, `True.pow(2)`, `True.round()`, `True.bin()` and the rest answered `bool does not understand #…` while `no_abs`, `no_divmod`, `no_pow`, `no_round` and `no_bin` each named exactly those as the substitute. All of them delegate through `_as_int()`, the same fold the arithmetic uses, and each answers an `Int` as CPython does (`abs(True)` is `1`, not `True`) — answering a `Boolean` would be a quiet type error. `min`/`max` are the exception: they answer one of their *operands*, and `min(True, 5)` is `True` in CPython, so they route through `_minmax` over `(self, *others)` exactly as `Int` does.
+
 ## Active types
 
 ### PoopExcMeta — `poop/types/exceptions.py`

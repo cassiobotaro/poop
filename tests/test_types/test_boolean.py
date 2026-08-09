@@ -393,3 +393,69 @@ def test_boolean_answers_the_index_protocol() -> None:
     assert [10, 20][false] == 10
     assert true.__index__() == 1
     assert false.__index__() == 0
+
+
+# the int-side messages — proposal 25
+
+
+def test_the_int_side_messages_answer_what_cpython_answers() -> None:
+    # `bool` computes like an `int` in CPython, and every validator naming a
+    # numeric substitute (`no_abs` → `x.abs()`, `no_bin` → `x.bin()`, …) left
+    # a Boolean receiver with nowhere to go.
+    from poop.types.bytes import Bytes
+    from poop.types.int import Int
+    from poop.types.tuple import Tuple
+
+    assert true.abs() == Int(1)
+    assert true.bit_length() == Int(1)
+    assert false.bit_count() == Int(0)
+    assert true.bit_invert() == Int(-2)
+    assert true.negated() == Int(-1)
+    assert true.divmod(Int(2)) == Tuple(Int(0), Int(1))
+    assert true.pow(Int(2)) == Int(1)
+    assert true.round() == Int(1)
+    assert true.ceil() == Int(1)
+    assert true.floor() == Int(1)
+    assert true.trunc() == Int(1)
+    assert true.bin() == Str("0b1")
+    assert true.hex() == Str("0x1")
+    assert true.oct() == Str("0o1")
+    assert true.chr() == Str("\x01")
+    assert true.to_bytes() == Bytes(b"\x01")
+    assert true.as_integer_ratio() == Tuple(Int(1), Int(1))
+    assert true.is_integer() is true
+    assert true.real() == Int(1)
+    assert true.imag() == Int(0)
+    assert true.numerator() == Int(1)
+    assert true.denominator() == Int(1)
+    assert true.conjugate() == Int(1)
+
+
+def test_the_int_side_messages_answer_an_int_not_a_boolean() -> None:
+    # `abs(True)` is `1`, not `True`; answering a Boolean would be a quiet
+    # type error one message down the chain.
+    from poop.types.int import Int
+
+    assert isinstance(true.abs(), Int)
+    assert isinstance(true.real(), Int)
+    assert true.abs().class_name() == Str("int")
+
+
+def test_min_and_max_answer_the_operand_cpython_answers() -> None:
+    # These two are not folded through `_as_int`: they answer one of their
+    # *operands*, and CPython's `min(True, 5)` is `True`.
+    from poop.types.int import Int
+
+    assert true.min(Int(5)) is true
+    assert true.max(Int(5)) == Int(5)
+    assert false.max(true) is true
+    assert true.min(Int(5), Int(0)) == Int(0)
+
+
+def test_min_takes_key_only_by_keyword() -> None:
+    import pytest
+
+    from poop.types.int import Int
+
+    with pytest.raises(TypeError):
+        true.min(Int(5), lambda n: n)  # ty: ignore[invalid-argument-type]

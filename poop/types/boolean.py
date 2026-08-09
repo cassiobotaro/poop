@@ -1,16 +1,20 @@
+import builtins as _builtins
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, cast, final
 
 from poop.types._cloak import cloak
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types.bytes import Bytes
     from poop.types.complex import Complex
     from poop.types.float import Float
     from poop.types.int import Int
     from poop.types.none import NoneClass
+    from poop.types.string import Str
+    from poop.types.tuple import Tuple
 
 
 class Boolean(_NumericCompareMixin, Object, ABC):
@@ -95,6 +99,120 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         from poop.types.int import Int
 
         return Int(1) if self else Int(0)
+
+    # The int-side *messages*, delegated through the same fold the operators
+    # use. Everything that makes `bool` an `int` in CPython was re-supplied by
+    # hand — arithmetic, reflected arithmetic, comparison across the tower,
+    # `__index__` — and the messages were not, so a program told to stop
+    # writing `abs(flag)` had nowhere to go: `no_abs` names `x.abs()`,
+    # `no_divmod` names `a.divmod(b)`, `no_bin` names `x.bin()`, and none of
+    # them existed here. Each answers what CPython answers, which is an `Int`
+    # (`abs(True)` is `1`, not `True`) — answering a `Boolean` would be a quiet
+    # type error. Written out rather than generated: a loop over a name list
+    # would be shorter but would defeat `ty`, `dir()` and `:methods`.
+    def abs(self) -> Int:
+        return self._as_int().abs()
+
+    def bit_length(self) -> Int:
+        return self._as_int().bit_length()
+
+    def bit_count(self) -> Int:
+        return self._as_int().bit_count()
+
+    def bit_invert(self) -> Int:
+        return self._as_int().bit_invert()
+
+    def negated(self) -> Int:
+        return self._as_int().negated()
+
+    def divmod(self, other: object) -> Tuple:
+        return self._as_int().divmod(self._num(other))
+
+    def pow(
+        self, other: object, modulus: Int | NoneClass | None = None
+    ) -> Int | Float | Complex:
+        return self._as_int().pow(self._num(other), modulus)
+
+    def round(self, ndigits: Int | NoneClass | None = None) -> Int:
+        return self._as_int().round(ndigits)
+
+    def ceil(self) -> Int:
+        return self._as_int().ceil()
+
+    def floor(self) -> Int:
+        return self._as_int().floor()
+
+    def trunc(self) -> Int:
+        return self._as_int().trunc()
+
+    def bin(self) -> Str:
+        return self._as_int().bin()
+
+    def hex(self) -> Str:
+        return self._as_int().hex()
+
+    def oct(self) -> Str:
+        return self._as_int().oct()
+
+    def chr(self) -> Str:
+        return self._as_int().chr()
+
+    def to_bytes(
+        self,
+        length: Int | NoneClass | None = None,
+        byteorder: Str | NoneClass | None = None,
+        *,
+        signed: Boolean | NoneClass | None = None,
+    ) -> Bytes:
+        return self._as_int().to_bytes(length, byteorder, signed=signed)
+
+    def as_integer_ratio(self) -> Tuple:
+        return self._as_int().as_integer_ratio()
+
+    def is_integer(self) -> Boolean:
+        return self._as_int().is_integer()
+
+    def real(self) -> Int:
+        return self._as_int().real()
+
+    def imag(self) -> Int:
+        return self._as_int().imag()
+
+    def numerator(self) -> Int:
+        return self._as_int().numerator()
+
+    def denominator(self) -> Int:
+        return self._as_int().denominator()
+
+    def conjugate(self) -> Int:
+        return self._as_int().conjugate()
+
+    # Not through `_as_int`, unlike every message above: `min`/`max` answer one
+    # of their *operands*, and CPython's `min(True, 5)` is `True`. Folding
+    # first would answer `1` for a receiver the program still holds as a flag.
+    def max(
+        self,
+        *others: Int | Boolean,
+        key: Callable[[Any], Any] | NoneClass | None = None,
+    ) -> Int | Boolean:
+        from poop.types._minmax import _MISSING, _minmax
+
+        return cast(
+            "Int | Boolean",
+            _minmax(_builtins.max, "#max", (self, *others), key, _MISSING),
+        )
+
+    def min(
+        self,
+        *others: Int | Boolean,
+        key: Callable[[Any], Any] | NoneClass | None = None,
+    ) -> Int | Boolean:
+        from poop.types._minmax import _MISSING, _minmax
+
+        return cast(
+            "Int | Boolean",
+            _minmax(_builtins.min, "#min", (self, *others), key, _MISSING),
+        )
 
     def _num(self, other: object) -> object:
         return other._as_int() if isinstance(other, Boolean) else other
