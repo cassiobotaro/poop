@@ -69,7 +69,13 @@ class class_side:  # noqa: N801
         # through `PoopMeta`, so the dependency only runs one way at import.
         from poop.types.exceptions import MIRRORS
 
-        raise MIRRORS["AttributeError"](self._name)
+        # A sentence, not the bare name: `AttributeError: name` read as if the
+        # *word* `name` were the problem, and both spellings of the mistake —
+        # `Foo.name = 5` and the sanctioned `Foo.set_attr("name", 5)` — landed
+        # on it. `_reject_private`, ten lines down, is the model.
+        raise MIRRORS["AttributeError"](
+            f"#{self._name} is answered by every class — it cannot be rebound"
+        )
 
 
 def _reject_dunder(name: str) -> None:

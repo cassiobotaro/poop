@@ -279,8 +279,24 @@ def test_class_side_message_cannot_be_reassigned() -> None:
     class _Thing(Object):
         __slots__ = ()
 
-    with pytest.raises(AttributeError):
+    # And it says so: `AttributeError: name` read as if the *word* `name` were
+    # the problem, and said neither what was refused nor why.
+    with pytest.raises(AttributeError) as info:
         _Thing.name = 5
+    assert str(info.value) == "#name is answered by every class — it cannot be rebound"
+
+
+def test_the_set_attr_spelling_lands_on_the_same_sentence() -> None:
+    # Both spellings of the mistake — the assignment and the sanctioned
+    # substitute — reach `class_side.__set__`.
+    from poop.types.object import Object
+    from poop.types.string import Str
+
+    class _Thing(Object):
+        __slots__ = ()
+
+    with pytest.raises(AttributeError, match="it cannot be rebound"):
+        _Thing.set_attr(Str("name"), Int(5))
 
 
 @pytest.mark.parametrize(
