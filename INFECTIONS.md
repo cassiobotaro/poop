@@ -902,7 +902,7 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 
 ### Collection iterable methods — `poop/types/_iterable_mixin.py`
 
-`List`, `Tuple`, `Set`, `FrozenSet`, `Range`, `Bytes`, `ByteArray`, `MemoryView`, `Enumerate`, `Zip`, `DictKeys`, `DictValues`, and `DictItems` all inherit the following methods from `_IterableMixin`:
+`Str`, `Dict`, `List`, `Tuple`, `Set`, `FrozenSet`, `Range`, `Bytes`, `ByteArray`, `MemoryView`, `Enumerate`, `Zip`, `DictKeys`, `DictValues`, and `DictItems` all inherit the following methods from `_IterableMixin`:
 
 | Smalltalk message | POOP method | Behavior |
 |---|---|---|
@@ -923,6 +923,11 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 `map`/`filter`/`filter_false` are **lazy** — they return `Map`/`Filter` iterators (same family as `Enumerate`/`Zip`) regardless of the receiver's type, mirroring Python's `map`/`filter` builtins. The block runs only as the result is consumed. To materialize, pass the lazy result to a constructor: `list(col.map(f))`, `tuple(col.filter(g))`, `set(col.map(f))`, `bytes(col.map(g))`. Methods that consume the iterator (`do`, `sum`, `min`, `max`, `find`, `reduce`, `all`, `any`) work on `Map`/`Filter` directly without materialization.
 
 `Dict.do` is not from the mixin — it passes `Tuple(key, value)` pairs to the block instead of plain elements. `Bytes` and `ByteArray` override `find` for substring search (different semantics from the mixin's element-finding `find`).
+
+**`Str` and `Dict` were the two receivers the mixin did not reach**, and `no_map`, `no_filter`, `no_all`, `no_any`, `no_sum` and `no_loops` all name a message on the collection as the substitute. A string is the most-written receiver in the language, and iterating one meant driving the cursor by hand (`(lambda: it.has_next()).while_true(...)`) because `for` is banned — the exact situation "activate a validator only when the substitute exists" forbids. Both inherit the mixin now and override the collisions, which is what `Dict` already did for `do`:
+
+- `Str` keeps `find`, `count` and `index` with their **string** meaning (search for a substring, not for a match). Handed a block — the spelling a reader arrives with from `[1, 2].find(block)` — all three answer `str's #find searches for a substring — it takes the text to look for, not a block`, where CPython said `find() argument 1 must be str, not function`. `sum` is refused outright: `sum("ab")` is a `TypeError` in CPython, and adding the characters up would answer the string back, which is `join`'s job.
+- `Dict`'s mixin messages iterate what CPython iterates — the **keys** — so `d.map(block)` matches `map(f, d)`, and `d.items().map(...)` is the pair-shaped spelling. `do` stays overridden and yields pairs, which is how POOP already teaches dict iteration. `Dict`'s own `enumerate`/`zip` copies were dropped in favour of the mixin's identical ones.
 
 ### Builtin-mirroring method signatures
 

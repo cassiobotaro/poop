@@ -519,3 +519,34 @@ def test_reversed_answers_the_keys_in_reverse() -> None:
     assert isinstance(rev, DictReverseKeyIterator)
     assert rev.next() == Int(2)
     assert rev.next() == Int(1)
+
+
+# the iteration protocol over the keys — proposal 24
+
+
+def test_map_and_filter_run_over_the_keys() -> None:
+    # CPython's `map(f, d)` iterates the keys, and `d.items().map(...)` is the
+    # pair-shaped spelling. `do`, below, keeps its pairs.
+    d = _dict_with([("a", 1), ("b", 2)])
+    assert List(*d.map(lambda k: k.upper())) == List(Str("A"), Str("B"))
+    assert List(*d.filter(lambda k: k == Str("a"))) == List(Str("a"))
+
+
+def test_all_any_find_and_reduce_run_over_the_keys() -> None:
+    d = _dict_with([("a", 1), ("b", 2)])
+    assert d.all(lambda k: k.isalpha()) is true
+    assert d.any(lambda k: k == Str("b")) is true
+    assert d.find(lambda k: k == Str("b")) == Str("b")
+    assert d.reduce(Str(""), lambda acc, k: acc + k) == Str("ab")
+
+
+def test_sum_adds_the_keys() -> None:
+    d = _dict_with([(1, 10), (2, 20)])
+    assert d.sum() == Int(3)
+
+
+def test_do_still_yields_pairs() -> None:
+    d = _dict_with([("a", 1)])
+    seen: list[Tuple] = []
+    d.do(lambda pair: seen.append(pair))
+    assert seen == [Tuple(Str("a"), Int(1))]

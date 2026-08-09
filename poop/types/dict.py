@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types._at import at_key, no_key, nothing_to_remove
 from poop.types._cloak import cloak
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -21,14 +22,20 @@ from poop.types.tuple import Tuple
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean, to_boolean
     from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
-    from poop.types.enumerate import Enumerate
     from poop.types.none import NoneClass
-    from poop.types.zip import Zip
 
 _dict = dict  # alias to avoid shadowing by Dict class name in annotations
 
 
-class Dict(_ValueEqMixin, Object):
+class Dict(_ValueEqMixin, _IterableMixin, Object):
+    """A mapping, and — since proposal 24 — a collection like any other.
+
+    The mixin's messages iterate what CPython iterates, the keys, so
+    `d.map(block)` matches `map(f, d)` and `d.items().map(...)` is the
+    pair-shaped spelling. `do` stays overridden and yields `Tuple(k, v)`
+    pairs, which is how POOP already teaches dict iteration.
+    """
+
     __slots__ = ("_data",)
     _eq_attr: ClassVar[str] = "_data"
     __hash__ = None
@@ -219,16 +226,6 @@ class Dict(_ValueEqMixin, Object):
             # wrong-length element.
             self._data.update(cast("Iterable[tuple[Object, Object]]", other))
         return none
-
-    def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:
-        from poop.types.enumerate import Enumerate
-
-        return Enumerate(self, start)
-
-    def zip(self, *others: Object, strict: Boolean | NoneClass | None = None) -> Zip:
-        from poop.types.zip import Zip
-
-        return Zip(self, *others, strict=strict)
 
     # A dict can hold itself as a value — the same cycle `List` guards against,
     # and the same ellipsis CPython prints for it. See the note on `List`.

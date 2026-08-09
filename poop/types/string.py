@@ -7,6 +7,7 @@ from poop.types._affix import affix_needle
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoding_name, handler_name
+from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
@@ -55,7 +56,34 @@ def _reject_field_access(template: _str) -> None:
             _reject_field_access(spec)
 
 
-class Str(_ValueEqMixin, Object):
+def _needle(sub: object, selector: str) -> Any:
+    """The substring `find` / `index` / `count` look for.
+
+    These three keep their string meaning where `_IterableMixin.find` takes a
+    block, so a reader arriving from `[1, 2].find(block)` writes a block here.
+    CPython answers `find() argument 1 must be str, not function` — the method
+    as a call, and `function`, which POOP prints as `<block>`.
+    """
+    if not isinstance(sub, Str) and callable(sub):
+        raise MIRRORS["TypeError"](
+            f"str's #{selector} searches for a substring — "
+            "it takes the text to look for, not a block"
+        )
+    return _faithful(sub)
+
+
+class Str(_ValueEqMixin, _IterableMixin, Object):
+    """A string, and — since proposal 24 — a collection like any other.
+
+    `no_map`, `no_filter`, `no_all`, `no_any` and `no_loops` each name a
+    message on the collection as the substitute, `_IterableMixin` supplies
+    them, and a `Str` did not inherit it: the most-written receiver in the
+    language answered `str does not understand #do`, leaving iteration to be
+    driven by hand through the cursor. The three string-specific messages
+    (`find`, `count`, `index`, which search for a substring rather than for a
+    match) override the mixin's below, and `sum` refuses.
+    """
+
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
 
@@ -98,6 +126,16 @@ class Str(_ValueEqMixin, Object):
 
     def iter(self) -> StrIterator:
         return StrIterator(self)
+
+    def sum(self, start: Any = None) -> Any:
+        # The one mixin message a string must not answer: `sum("ab")` is a
+        # TypeError in CPython, and adding the characters up would answer the
+        # string back, which is `join`'s job.
+        from poop.types.exceptions import MIRRORS
+
+        raise MIRRORS["TypeError"](
+            "str cannot be summed — send #join to a list of pieces instead"
+        )
 
     def min(
         self,
@@ -220,7 +258,9 @@ class Str(_ValueEqMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.find(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.find(
+                _needle(sub, "find"), _unwrap(start, None), _unwrap(end, None)
+            )
         )
 
     def index(
@@ -232,7 +272,9 @@ class Str(_ValueEqMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.index(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.index(
+                _needle(sub, "index"), _unwrap(start, None), _unwrap(end, None)
+            )
         )
 
     def count(
@@ -244,7 +286,9 @@ class Str(_ValueEqMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.count(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.count(
+                _needle(sub, "count"), _unwrap(start, None), _unwrap(end, None)
+            )
         )
 
     def startswith(

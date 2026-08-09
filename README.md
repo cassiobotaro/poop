@@ -115,6 +115,7 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`leap_year.py`](examples/basics/leap_year.py) — `and_` / `or_` / `not_`
 - [`collatz.py`](examples/basics/collatz.py) — while-style recursion
 - [`grades.py`](examples/basics/grades.py) — collection processing
+- [`string_iteration.py`](examples/basics/string_iteration.py) — a string is a collection too
 - [`slicing.py`](examples/basics/slicing.py) — `Slice` as a reusable value object
 - [`bank_account.py`](examples/basics/bank_account.py) — encapsulation
 

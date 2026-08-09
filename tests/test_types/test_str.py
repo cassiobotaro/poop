@@ -815,3 +815,59 @@ def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
     with pytest.raises(TypeError) as info:
         Str("ab").at(_BAD)
     assert "_value" not in str(info.value)
+
+
+# the iteration protocol — proposal 24
+
+
+def test_do_visits_each_character() -> None:
+    # `no_loops` names `col.do(block)` as the substitute for `for`, and a
+    # string — the most-written receiver in the language — did not answer it.
+    seen: list[Str] = []
+    assert Str("abc").do(lambda c: seen.append(c)) is none
+    assert seen == [Str("a"), Str("b"), Str("c")]
+
+
+def test_map_and_filter_yield_characters() -> None:
+    assert List(*Str("abc").map(lambda c: c.upper())) == List(
+        Str("A"), Str("B"), Str("C")
+    )
+    assert List(*Str("abc").filter(lambda c: c != Str("b"))) == List(Str("a"), Str("c"))
+
+
+def test_all_any_and_reduce() -> None:
+    assert Str("abc").all(lambda c: c.isalpha()) is true
+    assert Str("abc").any(lambda c: c == Str("b")) is true
+    assert Str("abc").reduce(Str(""), lambda acc, c: acc + c) == Str("abc")
+
+
+def test_enumerate_and_zip() -> None:
+    from poop.types.tuple import Tuple
+
+    assert List(*Str("ab").enumerate()) == List(
+        Tuple(Int(0), Str("a")), Tuple(Int(1), Str("b"))
+    )
+    assert List(*Str("ab").zip(Str("cd"))) == List(
+        Tuple(Str("a"), Str("c")), Tuple(Str("b"), Str("d"))
+    )
+
+
+def test_sum_is_refused() -> None:
+    # `sum("ab")` is a TypeError in CPython, and adding the characters up
+    # would answer the string back — which is `join`'s job.
+    with pytest.raises(TypeError, match="str cannot be summed"):
+        Str("ab").sum()
+
+
+def test_find_count_and_index_keep_their_string_meaning() -> None:
+    assert Str("abc").find(Str("b")) == Int(1)
+    assert Str("abcb").count(Str("b")) == Int(2)
+    assert Str("abc").index(Str("c")) == Int(2)
+
+
+@pytest.mark.parametrize("selector", ["find", "count", "index"])
+def test_the_three_string_searches_refuse_a_block(selector: str) -> None:
+    # Arriving from `[1, 2].find(block)`, a reader writes a block here.
+    # CPython answered `find() argument 1 must be str, not function`.
+    with pytest.raises(TypeError, match="searches for a substring"):
+        getattr(Str("abc"), selector)(lambda c: c == Str("b"))
