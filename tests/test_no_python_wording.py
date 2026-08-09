@@ -52,6 +52,14 @@ _FAILING = [
     "[1, 2].index(9)",
     "(1, 2).index(9)",
     "[1, 2].remove(9)",
+    # The six removals: `popitem()`, `pop from …` and `bytearray` are exactly
+    # what this sweep is for, and three answered a bare repr with no sentence.
+    '{"a": 1}.pop("b")',
+    "{}.popitem()",
+    "{1}.remove(2)",
+    "set().pop()",
+    "bytearray().pop()",
+    'bytearray(b"a").remove(98)',
     '"abc".slice(slice("a", 2))',
     '[1, 2].slice(slice("a", 2))',
     'int("abc")',

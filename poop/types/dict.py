@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
-from poop.types._at import at_key
+from poop.types._at import at_key, no_key, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._value_eq import _ValueEqMixin
@@ -174,11 +174,19 @@ class Dict(_ValueEqMixin, Object):
         self, key: Object, default: Object | NoneClass | Any = _MISSING
     ) -> Object | NoneClass:
         if default is _MISSING:
-            return self._data.pop(key)
+            # Only the asserting form can fail: `pop(key, default)` answers the
+            # default instead, which is why it is left to CPython.
+            try:
+                return self._data.pop(key)
+            except KeyError:
+                raise no_key(self, key) from None
         return self._data.pop(key, default)
 
     def popitem(self) -> Tuple:
-        k, v = self._data.popitem()
+        try:
+            k, v = self._data.popitem()
+        except KeyError:
+            raise nothing_to_remove(self) from None
         return Tuple(k, v)
 
     def setdefault(self, key: Object, default: Object | None = None) -> Object:

@@ -273,6 +273,23 @@ def test_pop_at_index() -> None:
     assert ba.len() == Int(2)
 
 
+def test_pop_from_empty_byte_array_says_it_is_empty() -> None:
+    with pytest.raises(
+        IndexError, match="bytearray has no element to remove — it is empty"
+    ):
+        ByteArray(bytearray()).pop()
+
+
+def test_pop_out_of_range_names_the_index() -> None:
+    with pytest.raises(IndexError, match="bytearray has no element at 9"):
+        ByteArray(bytearray(b"ab")).pop(Int(9))
+
+
+def test_remove_missing_byte_names_the_value() -> None:
+    with pytest.raises(ValueError, match="bytearray has no element equal to 98"):
+        ByteArray(bytearray(b"a")).remove(Int(98))
+
+
 def test_remove_first_occurrence() -> None:
     ba = ByteArray(bytearray(b"abab"))
     ba.remove(Int(97))  # ord('a')

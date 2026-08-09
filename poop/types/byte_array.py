@@ -1,7 +1,12 @@
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from poop.types._at import at_index
+from poop.types._at import (
+    at_index,
+    no_element_at,
+    no_element_equal_to,
+    nothing_to_remove,
+)
 from poop.types._cloak import cloak
 from poop.types._codec import encoding_name, handler_name
 from poop.types._iterable_mixin import _IterableMixin
@@ -171,14 +176,25 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     def pop(self, index: Index | NoneClass | None = None) -> Int:
         from poop.types._unwrap import _is_absent
 
-        if _is_absent(index):
-            return Int(self._value.pop())
-        # typeshed types bytearray.pop's index as `int`, though CPython
-        # takes any __index__ object here, as `list.pop` does.
-        return Int(self._value.pop(cast("int", index)))
+        try:
+            if _is_absent(index):
+                return Int(self._value.pop())
+            # typeshed types bytearray.pop's index as `int`, though CPython
+            # takes any __index__ object here, as `list.pop` does.
+            return Int(self._value.pop(cast("int", index)))
+        except IndexError:
+            # The same two sentences `List.pop` answers — `pop from empty
+            # bytearray` and `pop index out of range` name the method as a
+            # call and leave the receiver out of both.
+            if _is_absent(index):
+                raise nothing_to_remove(self, "IndexError") from None
+            raise no_element_at(self, self._value, index) from None
 
     def remove(self, byte: Int) -> NoneClass:
-        self._value.remove(_faithful(byte))
+        try:
+            self._value.remove(_faithful(byte))
+        except ValueError:
+            raise no_element_equal_to(self, byte) from None
         return none
 
     def reverse(self) -> NoneClass:

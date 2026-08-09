@@ -4,13 +4,17 @@ from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
-from poop.types._at import at_index, no_element_at, no_element_equal_to
+from poop.types._at import (
+    at_index,
+    no_element_at,
+    no_element_equal_to,
+    nothing_to_remove,
+)
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
 from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
 from poop.types.object import Object
@@ -156,9 +160,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
             # `pop index out of range` / `pop from empty list` — the method
             # named as a Python call, and no receiver in either sentence.
             if _is_absent(index):
-                raise MIRRORS["IndexError"](
-                    "list has no element to remove — it is empty"
-                ) from None
+                raise nothing_to_remove(self, "IndexError") from None
             raise no_element_at(self, self._items, index) from None
 
     def clear(self) -> NoneClass:

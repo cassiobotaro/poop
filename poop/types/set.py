@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar, Self
 
+from poop.types._at import no_element_equal_to, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._set_algebra import _elements, _other_set, _SetAlgebraMixin
@@ -32,7 +33,12 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         return none
 
     def remove(self, obj: Object) -> NoneClass:
-        self._data.remove(obj)
+        # `discard` is the spelling that asks; `remove` asserts, so only this
+        # one can fail. CPython answers the element's bare repr.
+        try:
+            self._data.remove(obj)
+        except KeyError:
+            raise no_element_equal_to(self, obj, "KeyError") from None
         return none
 
     def discard(self, obj: Object) -> NoneClass:
@@ -47,7 +53,10 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         return Set(*self._data)
 
     def pop(self) -> Object:
-        return self._data.pop()
+        try:
+            return self._data.pop()
+        except KeyError:
+            raise nothing_to_remove(self) from None
 
     def union(self, *others: Object) -> Set:
         return Set(*self._data.union(*(_elements(o) for o in others)))

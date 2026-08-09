@@ -39,15 +39,40 @@ def no_element_at(receiver: object, items: Any, index: Any) -> Exception:
     )
 
 
-def no_element_equal_to(receiver: object, value: Any) -> Exception:
+def no_element_equal_to(
+    receiver: object, value: Any, mirror: str = "ValueError"
+) -> Exception:
     """The mirrored `ValueError` for a value the receiver does not hold.
 
     CPython spelled this as `list.index(x): x not in list` — the method written
     as a Python call rather than sent as a message, and the placeholder `x`
     where the value the reader passed belongs.
+
+    `mirror` because the sentence is the same one on every receiver but the
+    class is not: `set.remove` answers a `KeyError` where `list.remove` answers
+    a `ValueError`, and a handler naming the one CPython names must keep
+    matching.
     """
-    return MIRRORS["ValueError"](
+    return MIRRORS[mirror](
         f"{type(receiver).__name__} has no element equal to {value!r}"
+    )
+
+
+def no_key(receiver: object, key: Any) -> Exception:
+    """The mirrored `KeyError` for a key the receiver does not hold."""
+    return MIRRORS["KeyError"](f"{type(receiver).__name__} has no key {key!r}")
+
+
+def nothing_to_remove(receiver: object, mirror: str = "KeyError") -> Exception:
+    """The mirrored refusal for a removal from an empty receiver.
+
+    CPython spells it four ways — `popitem(): dictionary is empty`, `pop from
+    an empty set`, `pop from empty bytearray`, `pop from empty list` — three of
+    them naming the method as a call and one naming a type by a word POOP does
+    not use. `mirror` for the same reason `no_element_equal_to` takes one.
+    """
+    return MIRRORS[mirror](
+        f"{type(receiver).__name__} has no element to remove — it is empty"
     )
 
 
@@ -81,6 +106,4 @@ def at_key(data: Any, key: Any, receiver: object) -> Any:
     try:
         return data[key]
     except KeyError:
-        raise MIRRORS["KeyError"](
-            f"{type(receiver).__name__} has no key {key!r}"
-        ) from None
+        raise no_key(receiver, key) from None

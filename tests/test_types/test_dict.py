@@ -249,9 +249,10 @@ def test_pop_removes_and_returns_value() -> None:
 
 
 def test_pop_missing_key_raises_keyerror() -> None:
-    # Matches Python: dict.pop(key) without default raises KeyError.
+    # Matches Python: dict.pop(key) without default raises KeyError — with
+    # `at`'s sentence rather than the missing key's bare repr.
     d = _dict_with([(1, 10)])
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match="dict has no key 99"):
         d.pop(Int(99))
 
 
@@ -268,6 +269,11 @@ def test_popitem_returns_last_pair() -> None:
     result = d.popitem()
     assert result == Tuple(Int(2), Int(20))
     assert d.len() == Int(1)
+
+
+def test_popitem_on_empty_dict_says_it_is_empty() -> None:
+    with pytest.raises(KeyError, match="dict has no element to remove — it is empty"):
+        Dict().popitem()
 
 
 def test_setdefault_existing_key() -> None:

@@ -57,8 +57,13 @@ def test_remove_decreases_len() -> None:
 
 def test_remove_missing_raises() -> None:
     s = Set()
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match="set has no element equal to 99"):
         s.remove(Int(99))
+
+
+def test_pop_from_empty_set_says_it_is_empty() -> None:
+    with pytest.raises(KeyError, match="set has no element to remove — it is empty"):
+        Set().pop()
 
 
 def test_includes_true() -> None:
