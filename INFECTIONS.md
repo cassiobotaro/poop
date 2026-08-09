@@ -1118,7 +1118,9 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 | AST node | Replacement |
 |---|---|
 | `ast.Constant(value=str)` | `_poop_str(s)` |
-| `ast.Call` with `str(x)` | `_poop_str_from(x)` |
+| `ast.Call` with `str(...)` | `_poop_str_from(...)`, whatever the arity |
+
+**A constructor call never resolves to the wrapper class.** Every rewriter used to guard its `visit_Call` on the arity its converter could handle (`not node.keywords and len(node.args) <= 1`) and let anything else fall through to `visit_Name`, which renames the bare builtin to the *class* binding — and a class constructor is variadic, `List(*elements)`. So one name meant "convert" at one arity and "build from these elements" at another, and only the first matched Python: `list(1, 2)` answered `[1, 2]` where CPython raises `list expected at most 1 argument, got 2`, and `set(1, 2)` answered `{1, 2}`. `list(a, b)` is a plausible slip for `[a, b]`, and being *accepted* is the failure mode POOP's diagnostics work hardest to avoid. The scalar wrappers fell through the same way, and there the answer was right but the report named `__init__` — a dunder `no_dunder_attribute` bans outright — from a construct spelled without a dunder anywhere (`str(b"ab", "utf-8")` answered `str.__init__() takes 2 positional arguments but 3 were given`, for a call CPython answers `"ab"` to). Every `<builtin>(...)` now reaches its converter, which refuses over-supply through the shared `refuse_extra_arguments` (`poop/transformers/_arity.py`): `list is built from at most one collection, got 2 arguments — write a literal for elements`. `_poop_str_from` also grew the decoding form CPython has, delegating to `Bytes.decode` so the codec table above governs it. The `visit_Name` rename stays — a bare `list` used as a value still answers POOP's class — but it is no longer reachable by a *call*.
 
 **`encode`/`decode` name their surface instead of inheriting CPython's codec table.** Handing the codec name straight through meant `"a".encode("rot13")` answered `'rot13' is not a text encoding; use codecs.encode() to handle arbitrary codecs` — advice no POOP program can follow, since `import` is forbidden and `_ALLOWED_BUILTINS` has no route to a module. `poop/types/_codec.py` accepts four text encodings (`utf-8`, `utf-16`, `latin-1`, `ascii`, plus the spellings a reader would reasonably type: `utf8`, `latin1`, `iso-8859-1`, `us-ascii`, case-insensitively) and the three codec-independent error handlers (`strict`, `ignore`, `replace`), refusing anything else with `unknown encoding 'rot13' — POOP encodes utf-8, utf-16, latin-1 and ascii`. The `errors=` argument is checked for the same reason the encoding is: `namereplace` and `backslashreplace` are the same codec machinery reached under another name. This is the argument `poop/types/exceptions.py` already makes — "a language with no I/O and no codecs cannot reach the `OSError` subtree or the `Unicode*` family" — applied to the one door that was still open.
 
@@ -1134,28 +1136,28 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 | AST node | Replacement |
 |---|---|
 | `ast.List` (Load context) | `_poop_list(*elts)` |
-| `ast.Call` with `list(x)` | `_poop_list_from(x)` |
+| `ast.Call` with `list(...)` | `_poop_list_from(x)` |
 
 ### Tuple — `poop/transformers/tuple.py`
 
 | AST node | Replacement |
 |---|---|
 | `ast.Tuple` (Load context) | `_poop_tuple(*elts)` |
-| `ast.Call` with `tuple(x)` | `_poop_tuple_from(x)` |
+| `ast.Call` with `tuple(...)` | `_poop_tuple_from(x)` |
 
 ### Set — `poop/transformers/set.py`
 
 | AST node | Replacement |
 |---|---|
 | `ast.Set` | `_poop_set(*elts)` |
-| `ast.Call` with `set(x)` | `_poop_set_from(x)` |
+| `ast.Call` with `set(...)` | `_poop_set_from(x)` |
 
 ### Dict — `poop/transformers/dict.py`
 
 | AST node | Replacement |
 |---|---|
 | `ast.Dict` (no unpacking) | `_poop_dict_from_pairs(k1, v1, k2, v2, …)` |
-| `ast.Call` with `dict(x)` | `_poop_dict_from(x)` — `x` must be `Dict` or iterable of 2-element `Tuple`/`List` pairs |
+| `ast.Call` with `dict(...)` | `_poop_dict_from(x)` — `x` must be `Dict` or iterable of 2-element `Tuple`/`List` pairs |
 
 ### Complex — `poop/transformers/complex.py`
 
@@ -1169,13 +1171,13 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 
 | AST node | Replacement |
 |---|---|
-| `ast.Call` with `bytearray(x)` | `_poop_bytearray_from(x)` |
+| `ast.Call` with `bytearray(...)` | `_poop_bytearray_from(x)` |
 
 ### MemoryView — `poop/transformers/memory_view.py`
 
 | AST node | Replacement |
 |---|---|
-| `ast.Call` with `memoryview(x)` | `_poop_memoryview_from(x)` |
+| `ast.Call` with `memoryview(...)` | `_poop_memoryview_from(x)` |
 
 **A `MemoryView` prints what it is, not where it lives.** `__str__` was `repr(self._value)`, so `memoryview(b"ab").print()` answered `<memory at 0x70cb7ab59240>` — the raw pointer `Object.__hash__` refuses to answer for the reason its own comment gives, under the class name `memory`, which is neither the POOP name nor the cloak, and unstable across runs so that no test could pin it and no example could show it. It answers `<memoryview of 2 bytes>` instead. Printing the bytes themselves would re-materialize an arbitrarily large buffer just to print it — the cost a `Range` refuses when sliced — so the contents are shown on request by `hex()`, and `slice(...)` and `includes(x)` complete the set of messages the `no_subscript` and `no_in` bans point at: `mv[0:2]` is a `memoryview` in CPython and `98 in memoryview(b"ab")` is `True`, and a view you cannot look into is one gap with four spellings.
 
@@ -1183,7 +1185,7 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 
 | AST node | Replacement |
 |---|---|
-| `ast.Call` with `frozenset(x)` | `_poop_frozenset_from(x)` |
+| `ast.Call` with `frozenset(...)` | `_poop_frozenset_from(x)` |
 
 ### Range — `poop/transformers/range.py`
 

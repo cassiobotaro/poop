@@ -2,6 +2,7 @@ import ast
 from collections.abc import Iterable
 from typing import ClassVar, cast
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -9,7 +10,16 @@ from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 
 
-def _poop_bytearray_from(arg: object = None) -> ByteArray:
+def _poop_bytearray_from(*args: object, **kwargs: object) -> ByteArray:
+    refuse_extra_arguments(
+        "bytearray",
+        args,
+        kwargs,
+        most=1,
+        built_from="at most one source",
+        hint='write bytearray(b"…") to copy bytes',
+    )
+    arg = args[0] if args else None
     if arg is None:
         return ByteArray()
     if isinstance(arg, Bytes):
@@ -24,17 +34,15 @@ def _poop_bytearray_from(arg: object = None) -> ByteArray:
 
 class _ByteArrayRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == "bytearray"
-            and not node.keywords
-            and len(node.args) <= 1
-        ):
+        if isinstance(node.func, ast.Name) and node.func.id == "bytearray":
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_bytearray_from", ctx=ast.Load()),
                     args=[self.visit(arg) for arg in node.args],
-                    keywords=[],
+                    keywords=[
+                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                        for kw in node.keywords
+                    ],
                 ),
                 node,
             )

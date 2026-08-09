@@ -102,7 +102,10 @@ def test_own_functions_answer_the_cloaked_class_name(index: int, cls: type) -> N
         ('{"a": 1}.at()', "dict.at()"),
         ("{1}.add()", "set.add()"),
         ("(1).round(1, 2)", "int.round()"),
-        ("dict(1, 2, 3)", "dict.__init__()"),
+        # `dict(1, 2, 3)` used to sit here, blaming `dict.__init__()`: a
+        # constructor call fell through to the class binding when the converter
+        # could not take its arity. It reaches the converter now and is refused
+        # in POOP's words — see `test_transformers/test_constructor_arity.py`.
         # Inherited from a mixin, which owns no builtin name of its own: cloaked
         # as `object`, the root's spelling, rather than as a private one.
         ("[1, 2].map()", "object.map()"),

@@ -1,5 +1,7 @@
 import ast
 
+import pytest
+
 from poop.transformers.string import StrTransformer, _poop_str_from
 from poop.types.boolean import false, true
 from poop.types.float import Float
@@ -49,28 +51,26 @@ def test_str_call_is_rewritten() -> None:
     assert expr.value.func.id == "_poop_str_from"
 
 
-# Regression: str(b"x", encoding=...) must not be rewritten to the single-arg
-# _poop_str_from factory, which would silently drop the keyword and stringify
-# the bytes repr (returning "b'x'" instead of decoding). With the keyword/arity
-# guard it falls through to the _poop_str class rename, so the unsupported
-# keyword reaches Str and raises a clean error.
-def test_str_call_with_keyword_falls_through_to_class() -> None:
+# `str(b"x", encoding=...)` is a valid CPython call answering `"x"`. It used to
+# fall through to the class rename, which answered `str.__init__() takes 2
+# positional arguments but 3 were given` — a dunder the program never wrote.
+def test_str_call_with_keyword_reaches_the_converter() -> None:
     tree = _transform('str(b"x", encoding="utf-8")')
     expr = tree.body[0]
     assert isinstance(expr, ast.Expr)
     assert isinstance(expr.value, ast.Call)
     assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_str"
+    assert expr.value.func.id == "_poop_str_from"
     assert expr.value.keywords  # the encoding keyword is preserved, not dropped
 
 
-def test_str_call_with_two_positional_args_falls_through_to_class() -> None:
+def test_str_call_with_two_positional_args_reaches_the_converter() -> None:
     tree = _transform('str(b"x", "utf-8")')
     expr = tree.body[0]
     assert isinstance(expr, ast.Expr)
     assert isinstance(expr.value, ast.Call)
     assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_str"
+    assert expr.value.func.id == "_poop_str_from"
 
 
 def test_method_named_str_is_not_rewritten() -> None:
@@ -111,3 +111,37 @@ def test_str_from_float_converts() -> None:
 def test_str_from_bool_converts() -> None:
     assert _poop_str_from(true)._value == "True"
     assert _poop_str_from(false)._value == "False"
+
+
+# the decoding form, and the refusals around it — proposal 23
+
+
+def test_str_from_bytes_and_encoding_decodes() -> None:
+    from poop.types.byte_array import ByteArray
+    from poop.types.bytes import Bytes
+
+    assert _poop_str_from(Bytes(b"ab"), Str("utf-8")) == Str("ab")
+    assert _poop_str_from(Bytes(b"ab"), encoding=Str("utf-8")) == Str("ab")
+    assert _poop_str_from(ByteArray(bytearray(b"ab")), Str("utf-8"), Str("strict")) == (
+        Str("ab")
+    )
+
+
+def test_str_decoding_form_needs_bytes() -> None:
+    with pytest.raises(TypeError, match="decoding needs bytes, got int"):
+        _poop_str_from(Int(5), Str("utf-8"))
+
+
+def test_str_refuses_a_fourth_argument() -> None:
+    with pytest.raises(TypeError, match="str is built from one value"):
+        _poop_str_from(Int(1), Int(2), Int(3), Int(4))
+
+
+def test_str_refuses_an_unknown_keyword() -> None:
+    with pytest.raises(TypeError, match="no keyword argument 'zap'"):
+        _poop_str_from(Int(1), zap=Int(2))
+
+
+def test_str_refuses_a_slot_given_twice() -> None:
+    with pytest.raises(TypeError, match="given 'object' twice"):
+        _poop_str_from(Int(1), object=Int(2))

@@ -1,6 +1,7 @@
 import ast
 from typing import ClassVar
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -8,7 +9,16 @@ from poop.types.exceptions import MIRRORS
 from poop.types.memory_view import MemoryView
 
 
-def _poop_memoryview_from(arg: object = None) -> MemoryView:
+def _poop_memoryview_from(*args: object, **kwargs: object) -> MemoryView:
+    refuse_extra_arguments(
+        "memoryview",
+        args,
+        kwargs,
+        most=1,
+        built_from="exactly one bytes-like object",
+        hint="write memoryview(b) over the buffer you mean",
+    )
+    arg = args[0] if args else None
     if isinstance(arg, Bytes):
         return MemoryView(memoryview(arg._value))
     if isinstance(arg, ByteArray):
@@ -20,17 +30,15 @@ def _poop_memoryview_from(arg: object = None) -> MemoryView:
 
 class _MemoryViewRewriter(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == "memoryview"
-            and not node.keywords
-            and len(node.args) == 1
-        ):
+        if isinstance(node.func, ast.Name) and node.func.id == "memoryview":
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_memoryview_from", ctx=ast.Load()),
                     args=[self.visit(arg) for arg in node.args],
-                    keywords=[],
+                    keywords=[
+                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                        for kw in node.keywords
+                    ],
                 ),
                 node,
             )

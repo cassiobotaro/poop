@@ -2,6 +2,7 @@ import ast
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar, cast
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers._collection import CollectionRewriter
 from poop.transformers.base import BaseTransformer
 from poop.types._unwrap import _faithful
@@ -73,7 +74,18 @@ def _poop_dict_merge(*parts: Dict) -> Dict:
     return d
 
 
-def _poop_dict_from(arg: object = None, **kwargs: Object) -> Dict:
+def _poop_dict_from(*args: object, **kwargs: Object) -> Dict:
+    refuse_extra_arguments(
+        "dict",
+        args,
+        kwargs,
+        most=1,
+        built_from="at most one mapping or sequence of pairs",
+        hint="write a literal for entries",
+        # The one constructor that takes them: `dict(a=1)`.
+        keywords=True,
+    )
+    arg = args[0] if args else None
     if arg is None:
         d = Dict()
     elif isinstance(arg, Dict):

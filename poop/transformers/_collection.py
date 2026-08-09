@@ -11,6 +11,7 @@ import ast
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, ClassVar, cast
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.types.exceptions import MIRRORS
 from poop.types.range import Range
 
@@ -30,17 +31,19 @@ class CollectionRewriter(ast.NodeTransformer):
     name_target: ClassVar[str]
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == self.builtin
-            and not node.keywords
-            and len(node.args) <= 1
-        ):
+        # Whatever the arity: guarding on the shape the converter can handle
+        # let everything else fall through to `visit_Name`, which resolves the
+        # callee to the *class* — and the class constructor is variadic, so
+        # `list(1, 2)` quietly answered `[1, 2]` where CPython refuses.
+        if isinstance(node.func, ast.Name) and node.func.id == self.builtin:
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id=self.call_target, ctx=ast.Load()),
                     args=[self.visit(arg) for arg in node.args],
-                    keywords=[],
+                    keywords=[
+                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                        for kw in node.keywords
+                    ],
                 ),
                 node,
             )
@@ -74,7 +77,16 @@ def make_constructor[T](poop_type: type[T]) -> Callable[..., T]:
 def make_iterable_from[T](
     poop_type: type[T], *, copy: bool = False
 ) -> Callable[..., T]:
-    def _from(arg: object = None) -> T:
+    def _from(*args: object, **kwargs: object) -> T:
+        refuse_extra_arguments(
+            poop_type.__name__,
+            args,
+            kwargs,
+            most=1,
+            built_from="at most one collection",
+            hint="write a literal for elements",
+        )
+        arg = args[0] if args else None
         if arg is None:
             return poop_type()
         if isinstance(arg, poop_type):

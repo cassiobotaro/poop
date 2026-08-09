@@ -63,6 +63,11 @@ _FAILING = [
     'bytearray(b"a").remove(98)',
     '"abc".slice(slice("a", 2))',
     '[1, 2].slice(slice("a", 2))',
+    # A constructor call the converter could not take used to fall through to
+    # the wrapper class, whose `__init__` CPython then named.
+    "list(1, 2)",
+    'str(b"ab", "utf-8", "strict", 1)',
+    "memoryview(b'ab', 1)",
     'int("abc")',
     'float("abc")',
     'int("ff", 99)',

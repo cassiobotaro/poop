@@ -1,6 +1,7 @@
 import ast
 from typing import ClassVar
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
@@ -13,7 +14,17 @@ def _poop_complex_literal(value: complex) -> Complex:
     return Complex(value)
 
 
-def _poop_complex_from(real: object = None, imag: object = None) -> Complex:
+def _poop_complex_from(*args: object, **kwargs: object) -> Complex:
+    refuse_extra_arguments(
+        "complex",
+        args,
+        kwargs,
+        most=2,
+        built_from="at most a real and an imaginary part",
+        hint="write complex(real, imag)",
+    )
+    real = args[0] if args else None
+    imag = args[1] if len(args) > 1 else None
     if real is None:
         return Complex(complex(0, 0))
     if imag is None:
@@ -77,17 +88,15 @@ class _ComplexRewriter(ast.NodeTransformer):
         return node
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == "complex"
-            and not node.keywords
-            and len(node.args) <= 2
-        ):
+        if isinstance(node.func, ast.Name) and node.func.id == "complex":
             return ast.copy_location(
                 ast.Call(
                     func=ast.Name(id="_poop_complex_from", ctx=ast.Load()),
                     args=[self.visit(arg) for arg in node.args],
-                    keywords=[],
+                    keywords=[
+                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                        for kw in node.keywords
+                    ],
                 ),
                 node,
             )
