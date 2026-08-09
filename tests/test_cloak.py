@@ -128,6 +128,30 @@ def test_arity_errors_name_no_internal_spelling(source: str, expected: str) -> N
     assert "_poop_" not in message
 
 
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("Foo.name(5)", "name()"),
+        ("Foo.print(1, 2, 3)", "print()"),
+        ("Foo.has_attr()", "has_attr()"),
+    ],
+)
+def test_class_side_arity_errors_name_no_internal_spelling(
+    source: str, expected: str
+) -> None:
+    # `cloak` renames the functions in `vars(cls)`, but a `class_side`
+    # descriptor keeps its function in `_fn` and `PoopMeta` is never cloaked at
+    # all — so the class side, a documented user-facing surface, answered
+    # `PoopMeta.name() takes 1 positional argument but 2 were given`. `PoopMeta`
+    # is a name a program cannot write and cannot reach.
+    with pytest.raises(ExecutionError) as caught:
+        Interpreter().run_source(f"class Foo(Object):\n    pass\n{source}\n")
+    message = str(caught.value)
+    assert expected in message
+    assert "PoopMeta" not in message
+    assert "_poop_" not in message
+
+
 def test_namespace_helpers_carry_no_reserved_prefix() -> None:
     """The sweep behind the table above: every binding, not the sampled ones."""
     from poop.transformers import DEFAULT_NAMESPACE

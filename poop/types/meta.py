@@ -23,7 +23,10 @@ from builtins import (
     print as builtins_print,
 )
 from functools import partial
+from types import FunctionType
 from typing import TYPE_CHECKING, Any, Never
+
+from poop.types._cloak import cloak_callable
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -50,7 +53,7 @@ class class_side:  # noqa: N801
 
     __slots__ = ("_fn", "_name")
 
-    def __init__(self, fn: Callable[..., Any]) -> None:
+    def __init__(self, fn: FunctionType) -> None:
         self._fn = fn
         # Filled by __set_name__, which Python calls for every descriptor in a
         # class body — the only place this decorator is ever used.
@@ -58,6 +61,17 @@ class class_side:  # noqa: N801
 
     def __set_name__(self, owner: type, name: str) -> None:
         self._name = name
+        # The one moment the function knows the message it answers. `cloak`
+        # renames the functions in `vars(cls)` and unwraps `classmethod` /
+        # `staticmethod` through `__func__`, but a `class_side` descriptor
+        # keeps its function in `_fn` and `PoopMeta` is never cloaked at all —
+        # so the class side, a documented user-facing surface, still composed
+        # its wrong-arity errors from POOP's internal vocabulary:
+        # `PoopMeta.name() takes 1 positional argument but 2 were given`, a
+        # name a program cannot write and cannot reach. Answering `Foo.print()`
+        # instead is not available here: one function is shared by every class,
+        # and `__qualname__` is fixed when the class body runs.
+        cloak_callable(self._fn, name)
 
     def __get__(self, cls: type | None, metacls: type) -> Any:
         if cls is None:
