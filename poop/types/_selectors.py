@@ -38,14 +38,22 @@ SMALLTALK_SELECTORS: dict[str, str] = {
 }
 
 
-def explain(obj: object, name: str) -> str:
+def explain(obj: object, name: str, label: str | None = None) -> str:
     """The `does not understand` message, with the best hint available.
 
     Three shapes, most specific first: the Smalltalk selector this receiver
     spells differently, a close match for a typo, or a pointer at `:methods`.
+
+    `label` overrides how the receiver names itself. Only `Error` passes it:
+    the wrapper is cloaked as `object` because no exception name is true for
+    the *class*, while an instance stands for exactly one and already answers
+    its name through `class_()`, `class_name()` and `__str__`. Deriving it
+    here instead would mean asking every receiver for its class, which is a
+    message a proxy is free to answer with anything.
     """
     # A class answers its own name; `type(cls)` would say "PoopMeta".
-    label = obj.__name__ if isinstance(obj, type) else type(obj).__name__
+    if label is None:
+        label = obj.__name__ if isinstance(obj, type) else type(obj).__name__
     poop_name = SMALLTALK_SELECTORS.get(name)
     if poop_name is not None and hasattr(obj, poop_name):
         return (

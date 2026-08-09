@@ -65,3 +65,38 @@ def test_str_of_a_key_error_carries_no_python_quoting() -> None:
 
 def test_str_of_a_message_less_error_degrades_to_the_bare_name() -> None:
     assert str(Error(AssertionError())) == "AssertionError"
+
+
+def test_refusal_names_the_wrapped_class_not_the_wrapper() -> None:
+    # The fourth spelling of the leak class_(), class_name() and __str__ close.
+    # `Error` is cloaked as `object` — right for the class, since no exception
+    # name is true for it, and wrong for an instance that stands for exactly
+    # one. Python reports `'ZeroDivisionError' object has no attribute 'zzz'`.
+    import pytest
+
+    from poop.types.object import MessageNotUnderstood
+
+    with pytest.raises(MessageNotUnderstood, match="ZeroDivisionError does not"):
+        Error(ZeroDivisionError("division by zero")).zzz()  # ty: ignore[unresolved-attribute]
+
+
+def test_refusal_keeps_every_hint_shape() -> None:
+    # The label is the only thing overridden: the typo hint and the Smalltalk
+    # selector table must still answer for an Error receiver.
+    import pytest
+
+    from poop.types.object import MessageNotUnderstood
+
+    error = Error(ValueError("boom"))
+    with pytest.raises(MessageNotUnderstood, match="did you mean #message"):
+        error.mesage()  # ty: ignore[unresolved-attribute]
+    with pytest.raises(MessageNotUnderstood, match="#printNl is #print here"):
+        Error(ValueError("boom")).printNl()  # ty: ignore[unresolved-attribute]
+
+
+def test_explain_derives_the_label_when_none_is_given() -> None:
+    # Only Error passes one; every other receiver keeps naming its own type.
+    from poop.types._selectors import explain
+    from poop.types.int import Int
+
+    assert explain(Int(1), "zzz").startswith("int does not understand")

@@ -43,6 +43,22 @@ class Error(Object):
         """
         return self.kind()
 
+    def does_not_understand(self, name: str) -> Any:
+        """Refuse under the caught exception's name, not the wrapper's.
+
+        The fourth spelling of the leak `class_()`, `class_name()` and
+        `__str__` already close. `explain` labels a receiver with
+        `type(obj).__name__`, and the cloak below answers `object` — right for
+        the class, wrong for an instance that stands for exactly one exception
+        and names it everywhere else. Python agrees: `except ZeroDivisionError
+        as e` reports `'ZeroDivisionError' object has no attribute 'zzz'`.
+        """
+        from poop.types._selectors import explain
+        from poop.types.object import MessageNotUnderstood
+
+        label = str(self.kind().name())
+        raise MessageNotUnderstood(explain(self, name, label), name=name, obj=self)
+
     def __str__(self) -> str:
         # Built on the identity `class_()` already answers, not on the wrapper:
         # `Error` is a `poop.types` detail user code can neither name nor
