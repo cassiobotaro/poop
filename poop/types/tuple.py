@@ -45,7 +45,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
 
     def slice(
         self,
-        start_or_slice: Index | Slice,
+        start_or_slice: Index | Slice | NoneClass | None,
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> Tuple:
@@ -79,9 +79,12 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
 
     def sorted(
         self,
-        key: Callable[[Object], Any] | None = None,
+        *,
+        key: Callable[[Object], Any] | NoneClass | None = None,
         reverse: Boolean = false,
     ) -> Tuple:
+        # Keyword-only, as on `List.sorted` — CPython's `sorted` takes only the
+        # iterable positionally.
         return Tuple(*_sorted(self._items, key, reverse))
 
     def reversed(self) -> Tuple:

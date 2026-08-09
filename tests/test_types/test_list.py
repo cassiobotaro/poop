@@ -563,3 +563,21 @@ def test_repr_of_a_mutually_referential_pair_answers_the_ellipsis() -> None:
     inner = List(outer)
     outer.append(inner)
     assert str(outer) == "[[[...]]]"
+
+
+def test_sorted_and_sort_take_key_only_by_keyword() -> None:
+    # CPython: `sorted(iterable, /, *, key, reverse)`. Positionally a block is
+    # indistinguishable from any other value.
+    with pytest.raises(TypeError):
+        List(Int(2), Int(1)).sorted(lambda x: x)  # ty: ignore[too-many-positional-arguments]
+    with pytest.raises(TypeError):
+        List(Int(2), Int(1)).sort(lambda x: x)  # ty: ignore[too-many-positional-arguments]
+
+
+def test_sorted_and_sort_read_a_none_key_as_absent() -> None:
+    # POOP's `None` is a NoneClass instance, so `is None` read it as a
+    # comparison block and answered `'NoneType' object is not callable`.
+    assert List(Int(2), Int(1)).sorted(key=none) == List(Int(1), Int(2))
+    xs = List(Int(2), Int(1))
+    xs.sort(key=none)
+    assert xs == List(Int(1), Int(2))

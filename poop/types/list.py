@@ -51,7 +51,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
 
     def slice(
         self,
-        start_or_slice: Index | Slice,
+        start_or_slice: Index | Slice | NoneClass | None,
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> List:
@@ -128,9 +128,14 @@ class List(_ValueEqMixin, _IterableMixin, Object):
 
     def sorted(
         self,
-        key: Callable[[Object], Any] | None = None,
+        *,
+        key: Callable[[Object], Any] | NoneClass | None = None,
         reverse: Boolean = false,
     ) -> List:
+        # Keyword-only, as CPython spells `sorted(iterable, /, *, key, reverse)`
+        # and for the reason `min`/`max` settled: positionally a block is
+        # indistinguishable from any other value, so `xs.sorted(f)` and
+        # `xs.sorted(reverse_flag)` read the same to the receiver.
         return List(*_sorted(self._items, key, reverse))
 
     def reversed(self) -> List:
@@ -207,9 +212,11 @@ class List(_ValueEqMixin, _IterableMixin, Object):
 
     def sort(
         self,
-        key: Callable[[Object], Any] | None = None,
+        *,
+        key: Callable[[Object], Any] | NoneClass | None = None,
         reverse: Boolean = false,
     ) -> NoneClass:
+        # Keyword-only, mirroring `list.sort(*, key, reverse)`. See `sorted`.
         self._items[:] = _sorted(self._items, key, reverse)
         return none
 

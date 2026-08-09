@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types._at import at_key
 from poop.types._cloak import cloak
-from poop.types._iterable_mixin import _MISSING, _minmax
+from poop.types._minmax import _MISSING, _minmax
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.dict_items import DictItems
@@ -107,14 +107,14 @@ class Dict(_ValueEqMixin, Object):
 
     def min(
         self,
-        key: Callable[[Any], Any] | None = None,
+        key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
         return _minmax(builtins.min, self._data, key, default)
 
     def max(
         self,
-        key: Callable[[Any], Any] | None = None,
+        key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
         return _minmax(builtins.max, self._data, key, default)

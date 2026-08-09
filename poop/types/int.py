@@ -1,8 +1,10 @@
 import builtins as _builtins
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from poop.types._cloak import cloak
 from poop.types._message import article, binary_refusal
+from poop.types._minmax import _MISSING, _minmax
 from poop.types._numeric_compare import (
     _NOT_NUMERIC,
     _num_value,
@@ -65,11 +67,24 @@ class Int(_NumericCompareMixin, Object):
     # tuple keeps the no-`others` case answering self, unlike `max(x)`.
     # The cast mirrors typeshed, where `bool` is a subtype of `int` and
     # `max(0, True)` is typed `int` though it answers `True`.
-    def max(self, *others: Int | Boolean) -> Int:
-        return cast("Int", _builtins.max((self, *others)))
+    # `key` is keyword-only, as CPython spells it: a positional block would be
+    # indistinguishable from one more operand, and that was the bug — the block
+    # was compared as a value, so a *comparable* extra argument would have
+    # answered a plausible wrong number in silence. `default` stays out; CPython
+    # refuses it alongside multiple positional arguments too.
+    def max(
+        self,
+        *others: Int | Boolean,
+        key: Callable[[Any], Any] | NoneClass | None = None,
+    ) -> Int:
+        return cast("Int", _minmax(_builtins.max, (self, *others), key, _MISSING))
 
-    def min(self, *others: Int | Boolean) -> Int:
-        return cast("Int", _builtins.min((self, *others)))
+    def min(
+        self,
+        *others: Int | Boolean,
+        key: Callable[[Any], Any] | NoneClass | None = None,
+    ) -> Int:
+        return cast("Int", _minmax(_builtins.min, (self, *others), key, _MISSING))
 
     def bit_count(self) -> Int:
         return Int(self._value.bit_count())

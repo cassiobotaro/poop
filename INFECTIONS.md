@@ -299,6 +299,7 @@ which is the naked-native symptom the allow-list was introduced to end, reproduc
 |---|---|---|
 | `min(a, b)` | free function with procedural look | `a.min(b)` (on `Int`/`Float`) |
 | `min(a, b, c, ...)` | free function with procedural look | `a.min(b, c, ...)` (variadic, on `Int`/`Float`) |
+| `min(a, b, key=fn)` | free function with procedural look | `a.min(b, key=fn)` (keyword-only, on `Int`/`Float`) |
 | `min(iterable)` | free function with procedural look | `iterable.min()` |
 | `min(iterable, key=fn)` | free function with procedural look | `iterable.min(key=fn)` |
 | `min(iterable, default=x)` | free function with procedural look | `iterable.min(default=x)` |
@@ -309,6 +310,18 @@ which is the naked-native symptom the allow-list was introduced to end, reproduc
 plus direct implementations on `Str` (smallest/largest character)
 and `Dict` (smallest/largest key). Empty iterable without `default`
 raises `ValueError`, mirroring Python.
+
+**`key` is keyword-only on the scalar rungs, and that is not a style choice.**
+The variadic form took operands only, so `(5).max(3, block)` compared the block
+*as a value* instead of applying it — a block is not comparable, so this
+happened to fail, but any comparable third argument would have answered a
+plausible wrong number in silence. CPython spells it `max(a, b, key=fn)`, and
+keyword-only is the only spelling that cannot be confused with one more operand.
+`default` stays refused on the scalar form, as CPython refuses it too ("Cannot
+specify a default for max() with multiple positional arguments"). The shared
+body now lives in `poop/types/_minmax.py` rather than `_iterable_mixin`: the
+mixin imports `Int`, so the scalar rungs could not have reached the helper
+there.
 
 ### No `bin`/`hex`/`oct` — `poop/validators/no_bin.py`
 
@@ -640,6 +653,8 @@ Available on `Int` and `Float`.
 | `reversed(col)` | free function with procedural look | `col.reversed()` |
 
 `sorted` lives on `List` and `Tuple`; both accept `key` and `reverse`, matching Python's `sorted` and `List.sort`.
+
+**`key` and `reverse` are keyword-only, on `sorted` and on the in-place `sort`.** CPython spells them `sorted(iterable, /, *, key, reverse)` and `list.sort(*, key, reverse)`, and the reason is the one `min`/`max` already settled: positionally a block is indistinguishable from any other value, so `xs.sorted(f)` and `xs.sorted(reverse_flag)` read the same to the receiver. An absent `key` is `_is_absent`, the test every other optional argument in the language uses — `xs.sorted(key=None)` used to reach CPython as a comparison block and answer `'NoneType' object is not callable`, because POOP's `None` is a `NoneClass` instance and not Python's. The same fix reaches `min`/`max` through `poop/types/_minmax.py`, so `(5).max(3, key=None)` and `col.min(None)` answer rather than refuse.
 
 ### No `in` / `not in` — `poop/validators/no_in.py`
 

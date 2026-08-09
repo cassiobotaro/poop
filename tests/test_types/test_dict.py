@@ -483,3 +483,11 @@ def test_repr_of_a_self_referential_dict_answers_the_ellipsis() -> None:
     d._data[Str("a")] = d
     assert str(d) == "{'a': {...}}"
     assert repr(d) == "{'a': {...}}"
+
+
+def test_min_and_max_read_a_none_key_as_absent() -> None:
+    d = Dict()
+    d._data[Str("b")] = Int(1)
+    d._data[Str("a")] = Int(2)
+    assert d.min(none) == Str("a")
+    assert d.max(none) == Str("b")

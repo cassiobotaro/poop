@@ -17,45 +17,30 @@ if TYPE_CHECKING:
     from poop.types.zip import Zip
 
 from poop.types._cloak import cloak
+from poop.types._minmax import _MISSING, _minmax
+from poop.types._unwrap import _is_absent
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
 from poop.types.none import none
 
-_MISSING: Any = object()
 
-
-def _minmax(
-    func: Callable[..., Any],
-    iterable: Any,
-    key: Callable[[Any], Any] | None,
-    default: Any,
+def _sorted(
+    iterable: Any, key: Callable[[Any], Any] | NoneClass | None, reverse: Any
 ) -> Any:
-    """Assemble the optional `key`/`default` kwargs and call `min`/`max`.
-
-    A single home for the `min`/`max` message body shared by the iterable
-    mixin, Dict and Str — each passing only its own iterable, since Dict and
-    Str deliberately do not inherit the mixin. Both callers import `_MISSING`
-    from here, so the sentinel identity that drives the `default` branch is the
-    same object across all three sites.
-    """
-    kwargs: dict[str, Any] = {}
-    if key is not None:
-        kwargs["key"] = key
-    if default is not _MISSING:
-        kwargs["default"] = default
-    return func(iterable, **kwargs)
-
-
-def _sorted(iterable: Any, key: Callable[[Any], Any] | None, reverse: Any) -> Any:
     """Assemble the optional `key` kwarg and call `sorted`.
 
     Shared by List (`sorted` and the in-place `sort`) and Tuple, which each
     answer their own type and so cannot inherit a single message. Passing
     `key=None` explicitly would work at runtime but matches no `sorted`
     overload, so the kwarg is omitted when there is no key.
+
+    Absent is `_is_absent`, the same test every other optional argument in the
+    language uses: POOP's `None` is a `NoneClass` instance, so `is None` let it
+    through as a comparison block and `xs.sorted(key=None)` answered
+    `'NoneType' object is not callable`.
     """
     kwargs: dict[str, Any] = {"reverse": bool(reverse)}
-    if key is not None:
+    if not _is_absent(key):
         kwargs["key"] = key
     return _builtins.sorted(iterable, **kwargs)
 
@@ -107,14 +92,14 @@ class _IterableMixin:
 
     def min(
         self,
-        key: Callable[[Any], Any] | None = None,
+        key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
         return _minmax(_builtins.min, self._iter_items(), key, default)
 
     def max(
         self,
-        key: Callable[[Any], Any] | None = None,
+        key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
         return _minmax(_builtins.max, self._iter_items(), key, default)

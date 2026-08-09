@@ -381,3 +381,10 @@ def test_float_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
     message = str(info.value)
     assert "_value" not in message
     assert "does not understand" not in message
+
+
+def test_min_max_take_a_key_like_the_builtin() -> None:
+    # Same gap the Int rung had: without `key` the block was compared as a
+    # value rather than applied to the operands.
+    assert Float(5.5).max(Float(3.0), key=lambda n: n.negated()) == Float(3.0)
+    assert Float(5.5).min(Float(3.0), key=lambda n: n.negated()) == Float(5.5)

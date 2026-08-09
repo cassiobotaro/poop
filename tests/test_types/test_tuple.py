@@ -392,3 +392,12 @@ def test_repr_of_a_tuple_holding_a_list_that_holds_it_answers_the_ellipsis() -> 
     t = Tuple(xs)
     xs.append(t)
     assert str(t) == "([(...)],)"
+
+
+def test_sorted_takes_key_only_by_keyword() -> None:
+    with pytest.raises(TypeError):
+        Tuple(Int(2), Int(1)).sorted(lambda x: x)  # ty: ignore[too-many-positional-arguments]
+
+
+def test_sorted_reads_a_none_key_as_absent() -> None:
+    assert Tuple(Int(2), Int(1)).sorted(key=none) == Tuple(Int(1), Int(2))

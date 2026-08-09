@@ -8,6 +8,7 @@ from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -95,6 +96,28 @@ def test_min_max_accept_a_boolean() -> None:
     assert Int(1).min(true) == Int(1)
     assert Int(0).max(true) is true
     assert Int(1).min(false) is false
+
+
+def test_min_max_take_a_key_like_the_builtin() -> None:
+    # `max(5, 3, key=lambda x: -x)` is 3 in CPython. Without `key` the block
+    # was swallowed as one more operand, so a *comparable* extra argument
+    # would have answered a plausible wrong number in silence.
+    assert Int(5).max(Int(3), key=lambda n: n.negated()) == Int(3)
+    assert Int(5).min(Int(3), key=lambda n: n.negated()) == Int(5)
+
+
+def test_min_max_key_is_keyword_only() -> None:
+    # Positionally it is indistinguishable from a third operand, and reading it
+    # as one is the bug: a block compared as a value answers nonsense.
+    with pytest.raises(TypeError):
+        Int(5).max(Int(3), lambda n: n.negated())  # ty: ignore[invalid-argument-type]
+
+
+def test_min_max_refuse_a_default_as_cpython_does() -> None:
+    # "Cannot specify a default for max() with multiple positional arguments" —
+    # the scalar form has operands, so there is nothing to default to.
+    with pytest.raises(TypeError):
+        Int(5).max(Int(3), default=Int(0))  # ty: ignore[unknown-argument]
 
 
 @pytest.mark.parametrize("message", ["max", "min"])
@@ -625,3 +648,10 @@ def test_pow_with_a_non_int_modulus_names_the_modulus() -> None:
     modulus: Any = Str("a")
     with pytest.raises(TypeError, match=r"^pow's modulus must be an int, got a str$"):
         Int(2).pow(Int(3), modulus)
+
+
+def test_max_and_min_read_a_none_key_as_absent() -> None:
+    # `key=None` is CPython's own default spelling; POOP's `None` is a
+    # NoneClass instance, which `is None` read as a comparison block.
+    assert Int(5).max(Int(3), key=none) == Int(5)
+    assert Int(5).min(Int(3), key=none) == Int(3)

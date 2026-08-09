@@ -1,0 +1,52 @@
+"""The shared body behind every `min` / `max` message.
+
+Lived in `_iterable_mixin` while only the mixin, `Dict` and `Str` sent it. The
+scalar rungs need it too — `Int.max` and `Float.max` take the same `key` their
+builtin does — and `_iterable_mixin` imports `Int`, so the helper cannot stay in
+a module its own callers sit underneath. Its own home has no POOP imports at
+all, which is what lets all five reach it from the top of the file.
+"""
+
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    # Name only — importing `none` at runtime would put this module back under
+    # the callers it has to stay above.
+    from poop.types.none import NoneClass
+
+# The "argument not given" sentinel. Identity is what drives the `default`
+# branch below, so every caller must import *this* object rather than build a
+# lookalike.
+_MISSING: Any = object()
+
+
+def _minmax(
+    func: Callable[..., Any],
+    iterable: Any,
+    key: Callable[[Any], Any] | NoneClass | None,
+    default: Any,
+) -> Any:
+    """Assemble the optional `key`/`default` kwargs and call `min`/`max`.
+
+    Each caller passes only its own iterable — `Dict`, `Str` and the numeric
+    rungs deliberately do not inherit the iterable mixin, and the scalars pass
+    the tuple of their operands, which is the single-iterable form CPython's
+    `max((a, b), key=f)` already means.
+
+    `key=None` would work at runtime but matches no `min`/`max` overload, so an
+    absent one is omitted rather than passed through. "Absent" is `_is_absent`,
+    not `is None`: POOP's `None` is a `NoneClass` instance, so the raw identity
+    test read the language's own null as a comparison block and answered
+    `'NoneType' object is not callable`.
+    """
+    # Imported here, not at the top: this module is imported by `int.py`, and
+    # `_unwrap` reaches `none.py` -> `object.py`, which sits above it.
+    from poop.types._unwrap import _is_absent
+
+    kwargs: dict[str, Any] = {}
+    if not _is_absent(key):
+        kwargs["key"] = key
+    if default is not _MISSING:
+        kwargs["default"] = default
+    return func(iterable, **kwargs)

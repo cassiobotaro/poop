@@ -54,7 +54,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def slice(
         self,
-        start_or_slice: Index | Slice,
+        start_or_slice: Index | Slice | NoneClass | None,
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> ByteArray:

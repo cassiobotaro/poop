@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoding_name, handler_name
-from poop.types._iterable_mixin import _MISSING, _minmax
+from poop.types._minmax import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
@@ -105,7 +105,7 @@ class Str(_ValueEqMixin, Object):
 
     def slice(
         self,
-        start_or_slice: Index | Slice,
+        start_or_slice: Index | Slice | NoneClass | None,
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> Str:
@@ -123,14 +123,14 @@ class Str(_ValueEqMixin, Object):
 
     def min(
         self,
-        key: Callable[[Str], Any] | None = None,
+        key: Callable[[Str], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
         return _minmax(builtins.min, self, key, default)
 
     def max(
         self,
-        key: Callable[[Str], Any] | None = None,
+        key: Callable[[Str], Any] | NoneClass | None = None,
         default: Any = _MISSING,
     ) -> Any:
         return _minmax(builtins.max, self, key, default)
