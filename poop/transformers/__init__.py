@@ -28,7 +28,6 @@ from poop.transformers.list import ListTransformer
 from poop.transformers.memory_view import MemoryViewTransformer
 from poop.transformers.none import NoneTransformer
 from poop.transformers.object import ObjectTransformer
-from poop.transformers.raise_ import RaiseTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
 from poop.transformers.set import SetTransformer
@@ -66,9 +65,6 @@ _TRANSFORMER_CLASSES: _list[type[BaseTransformer]] = [
     DictTransformer,
     SetTransformer,
     FrozenSetTransformer,
-    RaiseTransformer,
-    # After RaiseTransformer: it matches an uppercase Name followed by
-    # `.raise_(...)`, which `_poop_ValueError` is not.
     ExceptionTransformer,
     ClassTransformer,
     ObjectTransformer,

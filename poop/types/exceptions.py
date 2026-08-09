@@ -24,14 +24,35 @@ costs nothing; `tests/test_mirrored_raises.py` sweeps both packages for it.
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any, Never, cast
 
-from poop.types.meta import PoopMeta
+from poop.types.meta import PoopMeta, class_side
 from poop.types.object import Object
 
 
 class PoopExcMeta(PoopMeta):
     """Matches a POOP exception class against the native one it mirrors."""
+
+    @class_side
+    def raise_(cls, *args: Any, **kwargs: Any) -> Never:
+        """Signal this error — POOP's substitute for the `raise` statement.
+
+        A real class-side message, not a parse-time rewrite. `RaiseTransformer`
+        matched a literal uppercase `ast.Name` followed by `.raise_(...)`, so
+        every other way of naming the same class failed — and failed by saying
+        something untrue about the object: a class bound to a lowercase name,
+        one read out of a collection, and `e.kind()` inside a handler all
+        answered `ValueError does not understand #raise_`. The last made a
+        *re-raise* inexpressible, since `Try` swallows a matched exception and
+        `raise` is banned. Nothing defined `raise_` anywhere either, so `dir()`
+        did not list it and `:methods` could not show the substitute
+        `no_raise` names.
+
+        Everything the rewrite bought is kept: this is an expression, so it
+        still works inside a `lambda`, and `**kwargs` still ride along to an
+        exception whose fields arrive by keyword.
+        """
+        raise cls(*args, **kwargs)
 
     def __instancecheck__(cls, obj: object) -> bool:
         # `_native` is read from the class's own __dict__, never inherited: a

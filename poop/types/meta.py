@@ -23,7 +23,7 @@ from builtins import (
     print as builtins_print,
 )
 from functools import partial
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Never
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -219,6 +219,26 @@ class PoopMeta(ABCMeta):
         the answer into a side table no reader of the class can see.
         """
         _refuse_native(cls, "register", "is_subclass")
+
+    @class_side
+    def raise_(cls, *args: Any, **kwargs: Any) -> Never:
+        """Refuse `raise_` on a class that is not an error.
+
+        The message itself lives on `PoopExcMeta`, so every mirror and every
+        user class descending from one answers it — and nothing else does.
+        Without this twin the non-exception case reported the *constructor* of
+        a class the program never asked to build: `A.raise_("x")` answered
+        `A() takes no arguments`, which the parse-time rewrite produced for any
+        capitalized receiver it saw.
+        """
+        from poop.types.object import MessageNotUnderstood
+
+        raise MessageNotUnderstood(
+            f"{cls.__name__} cannot be raised — "
+            "only a class descending from Exception can",
+            name="raise_",
+            obj=cls,
+        )
 
     @class_side
     def has_attr(cls, name: Str) -> Boolean:

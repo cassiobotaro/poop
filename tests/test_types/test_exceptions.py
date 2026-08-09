@@ -135,8 +135,9 @@ def test_unmatched_exception_is_still_reraised() -> None:
 
 
 def test_raise_still_works_after_the_name_is_rewritten() -> None:
-    # ExceptionTransformer must run after RaiseTransformer: `raise_` matches an
-    # uppercase Name, which `_poop_ValueError` is not.
+    # `raise_` is a class-side message on `PoopExcMeta`, so the mirror this
+    # rewrites to answers it — no ordering constraint between the two
+    # transformers any more.
     Interpreter().run_source(
         "class P:\n"
         "    def run(self):\n"
@@ -154,3 +155,80 @@ def test_poop_class_of_falls_back_to_exception_for_unmirrored_base() -> None:
     from poop.types.exceptions import MIRRORS, poop_class_of
 
     assert poop_class_of(KeyboardInterrupt()) is MIRRORS["Exception"]
+
+
+# `raise_` as a real message — proposal 27
+
+
+def test_raise_from_a_computed_class() -> None:
+    """`RaiseTransformer` matched a literal uppercase Name, so every other way
+    of naming the same class answered `does not understand #raise_`."""
+    Interpreter().run_source(
+        "err = ValueError\n"
+        'Try(lambda: err.raise_("boom")).except_(\n'
+        "    ValueError, lambda e: e.message()\n"
+        ").run()\n"
+    )
+
+
+def test_raise_from_a_class_read_out_of_a_collection() -> None:
+    Interpreter().run_source(
+        'errors = {"e": ValueError}\n'
+        'Try(lambda: errors.at("e").raise_("boom")).except_(\n'
+        "    ValueError, lambda e: e.message()\n"
+        ").run()\n"
+    )
+
+
+def test_a_handler_can_re_raise_what_it_caught(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The one that matters: `Try` swallows an exception as soon as a handler
+    # matches and `raise` is banned, so before this there was no way to
+    # re-raise at all.
+    Interpreter().run_source(
+        "Try(lambda:\n"
+        '    Try(lambda: ValueError.raise_("original")).except_(\n'
+        "        ValueError, lambda e: e.kind().raise_(e.message())\n"
+        "    ).run()\n"
+        ').except_(ValueError, lambda e: ("re-raised: " + e.message()).print()).run()\n'
+    )
+    assert capsys.readouterr().out == "re-raised: original\n"
+
+
+def test_a_user_error_class_answers_raise() -> None:
+    Interpreter().run_source(
+        "class MyError(Exception):\n"
+        "    pass\n"
+        'Try(lambda: MyError.raise_("mine")).except_(\n'
+        "    MyError, lambda e: e.message()\n"
+        ").run()\n"
+    )
+
+
+def test_a_class_that_is_not_an_error_cannot_be_raised(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The rewrite assumed any capitalized receiver was raisable, so this
+    # answered `A() takes no arguments` — the constructor of a class the
+    # program never asked to build.
+    Interpreter().run_source(
+        "class A(Object):\n"
+        "    pass\n"
+        'Try(lambda: A.raise_("x")).except_(Exception, lambda e: e.message().print())'
+        ".run()\n"
+    )
+    assert "A cannot be raised" in capsys.readouterr().out
+
+
+def test_raise_carries_keyword_arguments() -> None:
+    """An exception whose fields arrive by keyword must still be raisable."""
+    Interpreter().run_source(
+        "class MyError(Exception):\n"
+        "    def __init__(self, message, code):\n"
+        "        super().__init__(message)\n"
+        "        self.code = code\n"
+        'Try(lambda: MyError.raise_("boom", code=42)).except_(\n'
+        "    MyError, lambda e: e.message()\n"
+        ").run()\n"
+    )

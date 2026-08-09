@@ -763,7 +763,7 @@ Three constraints:
 
 - `_native` is read from the class's own `__dict__`, never inherited. A user's `class MyError(Exception)` would otherwise inherit the root's `_native = Exception` and catch **every** exception in the program — silent and total. The obvious alternative, an `__init_subclass__` setting `_native = cls`, recurses forever.
 - The root also inherits `Object`, so a user exception lands inside the Object tree and answers `print()` / `class_name()`. Before this, `class MyError(Exception)` sat outside it entirely.
-- `ExceptionTransformer` **must run after `RaiseTransformer`**. That one matches an uppercase `ast.Name` followed by `.raise_(...)`; rewriting `ValueError` to `_poop_ValueError` first leaves a name starting with an underscore and silently stops `raise_` from being recognised.
+- `raise_` is a `class_side` message on `PoopExcMeta`, not a parse-time rewrite. `ExceptionTransformer` used to be constrained to run *after* `RaiseTransformer` — that one matched an uppercase `ast.Name` followed by `.raise_(...)`, and rewriting `ValueError` to `_poop_ValueError` first left a name starting with an underscore, silently stopping `raise_` from being recognised. With the message on the metaclass the mirror answers it whatever it is called, and the constraint is gone.
 
 `Error.kind()` answers the POOP class, not a `Str` — `e.kind().name()` for the name. An unmirrored native answers with the nearest mirrored ancestor rather than leaking the raw class back out.
 
@@ -854,7 +854,7 @@ Three implementation constraints, each load-bearing:
 
 `VarargsTransformer` (`poop/transformers/varargs.py`) keeps variadic parameters on the POOP side: a method with `*args` / `**kwargs` gets a prologue (`args = _poop_tuple_from(args)`, `kw = _poop_dict_from_kwargs(kw)`) so `args` is a POOP `Tuple` and `kw` a POOP `Dict` (with `Str` keys) instead of a raw `tuple`/`dict`. Variadic lambdas wrap their body in a nested lambda that receives the converted values.
 
-It carries the **call site** too, which is the other end of the same round trip. Python's `**` demands raw `str` keys and a POOP `Dict` holds `Str`, so a splat answered CPython's own words about a POOP object — `A().m(**{"a": 1})` raised `TypeError: keywords must be strings`. Three of the four splat positions already worked (`f(*xs)` because a `Tuple` is iterable, `def m(**kw)` by the prologue above, `{**a, **b}` through `_poop_dict_merge`), and `DictTransformer` had already met the same constraint for `dict(**other)` and worked around it there; only the general call was left. Each `**d` is now wrapped as `**_poop_kwargs_from(d)`, the inverse of `_poop_dict_from_kwargs`: keys unwrap, values stay POOP objects, so a `**kw` parameter on the far side re-wraps them into a `Dict` unchanged. A `MappingProxy` splats too. Both failure modes reach CPython raw through the faithful-unwrap idiom, so `f(**{1: 2})` still answers `keywords must be strings` — now about a key the program actually wrote — and `f(**5)` answers `argument after ** must be a mapping, not int`. The rewrite must run after `DictTransformer` and `RaiseTransformer`, which the declaration order guarantees; it covers `_poop_raise(Exc, **kw)` for free.
+It carries the **call site** too, which is the other end of the same round trip. Python's `**` demands raw `str` keys and a POOP `Dict` holds `Str`, so a splat answered CPython's own words about a POOP object — `A().m(**{"a": 1})` raised `TypeError: keywords must be strings`. Three of the four splat positions already worked (`f(*xs)` because a `Tuple` is iterable, `def m(**kw)` by the prologue above, `{**a, **b}` through `_poop_dict_merge`), and `DictTransformer` had already met the same constraint for `dict(**other)` and worked around it there; only the general call was left. Each `**d` is now wrapped as `**_poop_kwargs_from(d)`, the inverse of `_poop_dict_from_kwargs`: keys unwrap, values stay POOP objects, so a `**kw` parameter on the far side re-wraps them into a `Dict` unchanged. A `MappingProxy` splats too. Both failure modes reach CPython raw through the faithful-unwrap idiom, so `f(**{1: 2})` still answers `keywords must be strings` — now about a key the program actually wrote — and `f(**5)` answers `argument after ** must be a mapping, not int`. The rewrite must run after `DictTransformer`, which the declaration order guarantees; it covers `MyError.raise_(**kw)` for free.
 
 `UnpackTransformer` (`poop/transformers/unpack.py`) keeps starred unpacking on the POOP side: CPython's `UNPACK_EX` builds the rest-collection of `c, *rest = xs` as a raw `list`, so after each assignment containing a `*target` the transformer appends `target = _poop_list_from(target)` — one per starred name, handling nested (`a, (b, *inner) = …`) and attribute (`a, *self.rest = …`) targets.
 
@@ -1200,20 +1200,15 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 |---|---|
 | `ast.Call` with `range(stop)` / `range(start, stop)` / `range(start, stop, step)` | `_poop_range(...)` → `Range` |
 
-### Raise — `poop/transformers/raise_.py`
+### Raise — the class-side `raise_` (`poop/types/exceptions.py`)
 
-Intercepts `UppercaseName.raise_(args)` (where `UppercaseName` starts with a capital letter) and rewrites it to a function call that works inside lambdas.
+`raise_` is a **message**, answered by `PoopExcMeta` — so every mirror, and every user class descending from one, carries it, and nothing else does. `no_raise` forbids the `raise` statement and names `ExcType.raise_('msg')`; that spelling used to be a parse-time rewrite (`RaiseTransformer` matched a literal uppercase `ast.Name` followed by `.raise_(...)` and produced `_poop_raise(ExcType, ...)`), which meant three things:
 
-| Pattern | Replacement |
-|---|---|
-| `ExcType.raise_('msg')` | `_poop_raise(ExcType, 'msg')` |
-| `ExcType.raise_('msg', code=42)` | `_poop_raise(ExcType, 'msg', code=42)` |
+- **Only that spelling worked.** `err = ValueError; err.raise_("boom")`, `d.at("e").raise_("boom")` and `e.kind().raise_(e.message())` all answered `ValueError does not understand #raise_` — untrue of the object, since nothing defined `raise_` anywhere. The third is the one that mattered: `Try` swallows an exception as soon as a handler matches and `raise` is banned, so **there was no way to re-raise**, or to raise a class a program computed.
+- **The substitute was invisible.** `dir()` on an exception class did not list `raise_`, so `:methods` could not show what `no_raise` points at.
+- **Any capitalized receiver was assumed raisable.** `class A(Object)` then `A.raise_("x")` answered `A() takes no arguments` — the constructor of a class the program never asked to build. `PoopMeta` now carries the refusing twin: `A cannot be raised — only a class descending from Exception can`.
 
-> **Why not `ast.Raise`?** The transformer generates a function call (`_poop_raise(...)`) instead of an `ast.Raise` statement. Statements are illegal inside `lambda` expressions — POOP's primary block mechanism. This design allows `Try(lambda: KeyError.raise_("msg")).except_(...)` to work correctly.
-
-> **Tradeoff**: `ExcType` must be a Python exception class (not a POOP object). Only uppercase-named receivers are intercepted; lowercase `obj.raise_()` is passed through to the object's own method at runtime.
-
-> **Keywords are forwarded**, and `_poop_raise` takes `**kwargs` for it. They used to be dropped on the floor — and `raise` is a statement, so `raise_` is the *only* way to signal an error: an exception whose fields arrive by keyword could not be raised at all. The failure named the argument the program *did* pass, `MyError.raise_("boom", code=42)` answering `missing 1 required positional argument: 'code'`. A `**kwargs` splat rides along on the same `**kwargs`.
+Everything the rewrite bought is kept: `raise_` is an expression, so it still works inside a `lambda` (which was the whole reason for `_poop_raise`), and `**kwargs` still ride along — `raise` being a statement, `raise_` is the only way to signal an error, and an exception whose fields arrive by keyword must be raisable. Removing the rewrite also retired the ordering constraint that `ExceptionTransformer` must run after `RaiseTransformer`, which existed only because the rewrite matched on the name's *spelling*.
 
 ### Class — `poop/transformers/class_.py`
 

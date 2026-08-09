@@ -23,7 +23,7 @@ class ExceptionTransformer(BaseTransformer):
 
     Rewrites:
         Try(...).except_(ValueError, h)  → ...except_(_poop_ValueError, h)
-        ValueError.raise_("boom")        → _poop_raise(_poop_ValueError, "boom")
+        ValueError.raise_("boom")        → _poop_ValueError.raise_("boom")
         class MyError(Exception):        → class MyError(_poop_Exception):
 
     A transformer rather than a `DEFAULT_NAMESPACE` entry: the namespace is
@@ -31,10 +31,10 @@ class ExceptionTransformer(BaseTransformer):
     being rewritten to a mangled name. Same shape the Ellipsis transformer
     uses.
 
-    **Must run after `RaiseTransformer`.** That one matches an uppercase
-    `ast.Name` followed by `.raise_(...)`; rewriting `ValueError` to
-    `_poop_ValueError` first would leave a name starting with an underscore
-    and silently stop `raise_` from being recognised at all.
+    `raise_` needs no ordering constraint any more: it is a class-side message
+    on `PoopExcMeta`, so the mirror this rewrites to answers it. The rule that
+    `ExceptionTransformer` must run after `RaiseTransformer` existed only
+    because that rewrite matched on the name's *spelling*.
     """
 
     rewriter = _ExceptionRewriter
