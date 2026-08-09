@@ -928,8 +928,9 @@ Every builtin-substitute method mirrors the **full** Python signature of the met
 |---|---|---|---|
 | `Int` | `to_bytes` | `to_bytes(length=Int(1), byteorder=Str("big"), signed=false)` | `signed` is keyword-only, like `int.to_bytes` |
 | `Int` | `from_bytes` | `from_bytes(bytes, byteorder=Str("big"), signed=false)` | classmethod; `signed` keyword-only |
-| `List`, `Tuple` | `index` | `index(obj, start=none, stop=none)` | optional search bounds; `stop` is only meaningful with `start`, as in Python |
+| `List`, `Tuple` | `index` | `index(obj, start=none, stop=none)` | optional search bounds; either may be given alone, as in Python |
 | `MemoryView` | `tobytes` | `tobytes(order=Str("C"))` | `order` ∈ `{"C", "F", "A"}` |
+| `MemoryView` | `hex` | `hex(sep=none, bytes_per_sep=Int(1))` | mirrors `Bytes.hex`; the one message that shows the contents |
 | `Set`, `FrozenSet` | `union`, `intersection`, `difference` | `(*others)` | each operand may be **any iterable** (`List`/`Tuple`/…), not only another set |
 | `Set`, `FrozenSet` | `symmetric_difference`, `isdisjoint`, `issubset`, `issuperset` | `(other)` | operand may be any iterable |
 | `Set` | `update`, `intersection_update`, `difference_update` | `(*others)` | in-place; operands may be any iterable |
@@ -1169,6 +1170,8 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 | AST node | Replacement |
 |---|---|
 | `ast.Call` with `memoryview(x)` | `_poop_memoryview_from(x)` |
+
+**A `MemoryView` prints what it is, not where it lives.** `__str__` was `repr(self._value)`, so `memoryview(b"ab").print()` answered `<memory at 0x70cb7ab59240>` — the raw pointer `Object.__hash__` refuses to answer for the reason its own comment gives, under the class name `memory`, which is neither the POOP name nor the cloak, and unstable across runs so that no test could pin it and no example could show it. It answers `<memoryview of 2 bytes>` instead. Printing the bytes themselves would re-materialize an arbitrarily large buffer just to print it — the cost a `Range` refuses when sliced — so the contents are shown on request by `hex()`, and `slice(...)` and `includes(x)` complete the set of messages the `no_subscript` and `no_in` bans point at: `mv[0:2]` is a `memoryview` in CPython and `98 in memoryview(b"ab")` is `True`, and a view you cannot look into is one gap with four spellings.
 
 ### FrozenSet — `poop/transformers/frozen_set.py`
 

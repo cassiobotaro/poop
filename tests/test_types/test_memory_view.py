@@ -84,9 +84,12 @@ def test_ne_different() -> None:
     assert (_mv(b"abc") != _mv(b"xyz")) is true
 
 
-def test_str_representation() -> None:
-    result = str(_mv(b"hi"))
-    assert result.startswith("<memory at")
+def test_str_summarizes_instead_of_printing_the_address() -> None:
+    # CPython prints `<memory at 0x7f...>` — the raw pointer `Object.__hash__`
+    # refuses to answer, under a class name POOP does not use, and unstable
+    # enough that no test could pin it.
+    assert str(_mv(b"hi")) == "<memoryview of 2 bytes>"
+    assert str(_mv(b"")) == "<memoryview of 0 bytes>"
 
 
 def test_repr_equals_str() -> None:
@@ -183,3 +186,45 @@ def test_reversed_answers_a_memory_view() -> None:
     reversed_view = MemoryView(memoryview(b"abc")).reversed()
     assert isinstance(reversed_view, MemoryView)
     assert reversed_view.tobytes() == Bytes(b"cba")
+
+
+def test_hex_shows_the_contents() -> None:
+    # With `__str__` summarizing, this is the message that shows the bytes.
+    assert _mv(b"abc").hex() == Str("616263")
+
+
+def test_hex_with_separator_and_bytes_per_sep() -> None:
+    assert _mv(b"abcd").hex(Str("-")) == Str("61-62-63-64")
+    assert _mv(b"abcd").hex(Str("-"), Int(2)) == Str("6162-6364")
+
+
+def test_slice_answers_a_memory_view() -> None:
+    # `mv[0:2]` is a memoryview in CPython, and `no_subscript` names `.slice`.
+    sliced = _mv(b"abcd").slice(Int(0), Int(2))
+    assert isinstance(sliced, MemoryView)
+    assert sliced.tobytes() == Bytes(b"ab")
+
+
+def test_slice_accepts_a_slice_value_object() -> None:
+    from poop.types.slice import Slice
+
+    assert _mv(b"abcd").slice(Slice(Int(1), Int(3))).tobytes() == Bytes(b"bc")
+
+
+def test_includes_a_byte() -> None:
+    # `98 in memoryview(b"ab")` is True in CPython, and `no_in` names
+    # `col.includes(x)`.
+    assert _mv(b"ab").includes(Int(98)) is true
+    assert _mv(b"ab").includes(Int(120)) is false
+
+
+def test_contains_dunder() -> None:
+    assert Int(98) in _mv(b"ab")
+    assert Str("b") not in _mv(b"ab")
+
+
+def test_includes_with_a_foreign_argument_is_faithful() -> None:
+    # CPython compares element by element, so `[1] in memoryview(b"ab")` is
+    # False rather than a TypeError — and the unwrap must not turn a `List`
+    # into its `_items` on the way in.
+    assert _mv(b"ab").includes(List(Int(1))) is false  # ty: ignore[invalid-argument-type]
