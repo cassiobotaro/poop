@@ -67,9 +67,26 @@ def dunder_message(
     return f"{label} is forbidden — {kind}, not POOP's message surface"
 
 
+def _is_super_call(node: ast.expr) -> bool:
+    """Is `node` the `super()` in `super().__init__(...)`?
+
+    The carve-out was written for that syntax and applied to the *name*, so it
+    covered any receiver: `s.__init__("zap")` re-ran the constructor on a live
+    value, leaving `Str`, `Int` and `Tuple` all mutable and a `Dict` keyed on
+    one holding an entry reachable under neither the old spelling nor the new.
+    That is the hazard `Object._reject_dunder` already describes word for word
+    — it closed the `get_attr` path and left this, the shorter one, open.
+    """
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "super"
+    )
+
+
 class _Visitor(ErrorCollector):
     def visit_Attribute(self, node: ast.Attribute) -> None:
-        message = dunder_message(node.attr)
+        message = dunder_message(node.attr, allow_init=_is_super_call(node.value))
         if message is not None:
             self.report(message, node)
         self.generic_visit(node)

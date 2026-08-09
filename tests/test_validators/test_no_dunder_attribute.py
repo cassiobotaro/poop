@@ -50,6 +50,26 @@ def test_init_is_carved_out_for_super() -> None:
     _validate("class C:\n    def __init__(self):\n        super().__init__()\n")
 
 
+@pytest.mark.parametrize(
+    "source",
+    [
+        's = "abc"\ns.__init__("zap")',
+        "n = 5\nn.__init__(99)",
+        "t = (1, 2)\nt.__init__(9)",
+        "obj.__init__()",
+        "self.__init__()",
+        "super.__init__()",
+    ],
+)
+def test_init_is_refused_on_any_other_receiver(source: str) -> None:
+    # The carve-out is for the `super().__init__(...)` *syntax*, not for the
+    # name: applied to the name it re-ran the constructor on a live value, so
+    # `Str`, `Int` and `Tuple` were all mutable and a `Dict` keyed on one held
+    # an entry reachable under neither the old spelling nor the new.
+    with pytest.raises(ValidationError, match="__init__ is forbidden"):
+        _validate(source)
+
+
 def test_a_plain_message_is_untouched() -> None:
     _validate("x.len()")
     _validate("x.class_()")
