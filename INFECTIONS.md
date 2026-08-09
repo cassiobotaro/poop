@@ -671,7 +671,7 @@ Available on `Int` and `Float`.
 | `sorted(col, key=fn, reverse=True)` | free function with procedural look | `col.sorted(key=fn, reverse=True)` |
 | `reversed(col)` | free function with procedural look | `col.reversed()` |
 
-`sorted` lives on `List` and `Tuple`; both accept `key` and `reverse`, matching Python's `sorted` and `List.sort`.
+`sorted` lives on `_IterableMixin`, so every collection answers it — it used to exist on `List` and `Tuple` only, while CPython's `sorted` takes *any* iterable, so `{2, 1}.sorted()`, `"ba".sorted()`, `range(3).sorted()`, `b"ba".sorted()`, `{"b": 1}.sorted()` and `d.keys().sorted()` were all banned with nowhere to go. A `Set` is where the need is sharpest: it is the one receiver whose own iteration order a program must not rely on. The mixin's answers a `List`, as CPython's `sorted` always answers a `list` whatever it was handed; `List` and `Tuple` keep their overrides, the second of which answers a `Tuple` on purpose — a tuple can hold an order, the same call proposal 10 made for a sliced `Range`. All accept `key` and `reverse`, matching Python's `sorted` and `List.sort`.
 
 **Every receiver answers `reversed` with its own kind.** `List` → `List`, `Tuple` → `Tuple`, `Range` → `Range`, the dict views → their reverse iterators — and `Str` → `Str`, which it did not: it answered a `List` of one-character `Str`s, making `reversed` the single message on a string that changes the type, so `s.reversed().upper()` failed where every other chain composes. `"abc".slice(...)` and `"abc".at(0)` both answer a `Str`, and `list(s.reversed())` is the spelling for anyone who wanted the characters.
 

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 from poop.types._cloak import cloak
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._unwrap import _is_absent
-from poop.types.boolean import to_boolean
+from poop.types.boolean import false, to_boolean
 from poop.types.int import Int
 from poop.types.none import none
 
@@ -117,6 +117,22 @@ class _IterableMixin:
         default: Any = _MISSING,
     ) -> Any:
         return _minmax(_builtins.max, "#max", self._iter_items(), key, default)
+
+    def sorted(
+        self,
+        *,
+        key: Callable[[Any], Any] | NoneClass | None = None,
+        reverse: Boolean = false,
+    ) -> Any:
+        # `no_sorted` forbids `sorted(col)` and names `col.sorted()`, and the
+        # message existed on `List` and `Tuple` only — so `{2, 1}.sorted()`,
+        # the ordinary way to look at an unordered collection in order, was
+        # banned with nowhere to go. A `List`, as CPython's `sorted` always
+        # answers a `list` whatever it was handed; `Tuple` overrides to keep
+        # its own type, which can hold an order.
+        from poop.types.list import List
+
+        return List(*_sorted(self._iter_items(), key, reverse))
 
     def all(self, block: Callable[[Any], Any]) -> Boolean:
         return to_boolean(_builtins.all(bool(block(x)) for x in self._iter_items()))

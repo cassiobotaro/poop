@@ -701,3 +701,10 @@ def test_startswith_tuple_with_a_wrong_typed_member_raises() -> None:
 
     with pytest.raises(TypeError):
         Bytes(b"ab").startswith(Tuple(Str("a")))
+
+
+def test_sorted_answers_a_list_of_ints() -> None:
+    from poop.types.int import Int
+    from poop.types.list import List
+
+    assert Bytes(b"ba").sorted() == List(Int(97), Int(98))

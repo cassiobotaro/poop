@@ -566,3 +566,20 @@ def test_set_subset_superset_against_foreign_raise() -> None:
     ):
         with pytest.raises(TypeError):
             op()
+
+
+def test_sorted_answers_a_list_in_order() -> None:
+    # A `Set` is the receiver where the need is sharpest: it is the one whose
+    # own iteration order a program must not rely on, and `no_sorted` named a
+    # substitute that existed on `List` and `Tuple` only.
+    from poop.types.list import List
+
+    assert Set(Int(3), Int(1), Int(2)).sorted() == List(Int(1), Int(2), Int(3))
+
+
+def test_sorted_takes_key_and_reverse() -> None:
+    from poop.types.list import List
+
+    s = Set(Int(1), Int(2), Int(3))
+    assert s.sorted(reverse=true) == List(Int(3), Int(2), Int(1))
+    assert s.sorted(key=lambda n: n.negated()) == List(Int(3), Int(2), Int(1))

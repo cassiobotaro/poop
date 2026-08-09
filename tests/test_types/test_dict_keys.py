@@ -267,3 +267,9 @@ def test_comparison_accepts_the_other_set_like_view() -> None:
     # are Strs and the items are Tuples, so no key is a member.
     keys = DictKeys(_make())
     assert (keys <= _make().items()) is false
+
+
+def test_sorted_answers_a_list_of_keys() -> None:
+    from poop.types.list import List
+
+    assert DictKeys(_make()).sorted() == List(Str("a"), Str("b"))

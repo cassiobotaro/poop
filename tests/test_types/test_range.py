@@ -363,3 +363,9 @@ def test_an_empty_slice_answers_an_empty_range() -> None:
     result = Range(Int(0), Int(4)).slice(Int(3), Int(1))
     assert result.len() == Int(0)
     assert str(result) == "range(3, 1)"
+
+
+def test_sorted_answers_a_list() -> None:
+    from poop.types.list import List
+
+    assert _range(1, 3).sorted() == List(Int(1), Int(2), Int(3))
