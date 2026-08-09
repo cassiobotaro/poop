@@ -1,6 +1,7 @@
 import builtins
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
+from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types._at import at_key
@@ -212,6 +213,9 @@ class Dict(_ValueEqMixin, Object):
 
         return Zip(self, *others, strict=strict)
 
+    # A dict can hold itself as a value — the same cycle `List` guards against,
+    # and the same ellipsis CPython prints for it. See the note on `List`.
+    @recursive_repr(fillvalue="{...}")
     def __str__(self) -> str:
         pairs = ", ".join(f"{repr(k)}: {repr(v)}" for k, v in self._data.items())
         return "{" + pairs + "}"

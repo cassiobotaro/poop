@@ -547,3 +547,19 @@ def test_insert_and_pop_accept_a_boolean_index() -> None:
     xs.insert(true, Int(2))
     assert xs == List(Int(1), Int(2), Int(3))
     assert xs.pop(true) == Int(2)
+
+
+def test_repr_of_a_self_referential_list_answers_the_ellipsis() -> None:
+    # CPython prints `[1, [...]]`; recursing until the stack gave out reported
+    # a RecursionError about POOP's internals to a program that only printed.
+    xs = List(Int(1))
+    xs.append(xs)
+    assert str(xs) == "[1, [...]]"
+    assert repr(xs) == "[1, [...]]"
+
+
+def test_repr_of_a_mutually_referential_pair_answers_the_ellipsis() -> None:
+    outer = List()
+    inner = List(outer)
+    outer.append(inner)
+    assert str(outer) == "[[[...]]]"

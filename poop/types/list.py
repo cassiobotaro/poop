@@ -1,6 +1,7 @@
 from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from collections.abc import Callable, Iterable, Iterator
+from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types._at import at_index, no_element_at, no_element_equal_to
@@ -231,6 +232,12 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         )  # noqa: T201
         return none
 
+    # A list can hold itself, and printing one used to recurse until the stack
+    # gave out — a `RecursionError` about POOP's own internals, raised by a
+    # program that only asked to see its data. CPython prints the ellipsis
+    # every container prints for a cycle; `recursive_repr` is how it is spelled
+    # for a Python-level `__repr__`, and the fill value is the one `list` uses.
+    @recursive_repr(fillvalue="[...]")
     def __str__(self) -> str:
         return f"[{', '.join(repr(item) for item in self._items)}]"
 

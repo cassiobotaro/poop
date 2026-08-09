@@ -952,6 +952,8 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 `"".print()` prints a blank line.
 
+**A container that holds itself prints the ellipsis, it does not exhaust the stack.** `List`, `Tuple` and `Dict` build their displayed form from `repr` of each element, so `xs.append(xs)` made `xs.print()` recurse until CPython gave up — a `RecursionError` about POOP's internals, raised by a program that only asked to see its data. All three carry `reprlib.recursive_repr` with the fill value CPython uses for that container (`[...]`, `(...)`, `{...}`), so `[1, [...]]`, `([(...)],)` and `{'a': {...}}` come back exactly as Python prints them. `Set` and `FrozenSet` need no guard: reaching a cycle through one would mean holding something unhashable.
+
 ### Error — `poop/types/error.py`
 
 `Error(Object)` wraps a caught Python exception. Handlers in `Try.except_` always receive an `Error` object.

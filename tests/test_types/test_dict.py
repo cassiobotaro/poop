@@ -475,3 +475,11 @@ def test_dict_zip_pairs_keys_with_others() -> None:
     d._data[Int(2)] = Int(20)
     result = d.zip(List(Int(100), Int(200)))
     assert isinstance(result, Zip)
+
+
+def test_repr_of_a_self_referential_dict_answers_the_ellipsis() -> None:
+    # CPython prints `{'a': {...}}` — the cycle guard every container has.
+    d = Dict()
+    d._data[Str("a")] = d
+    assert str(d) == "{'a': {...}}"
+    assert repr(d) == "{'a': {...}}"

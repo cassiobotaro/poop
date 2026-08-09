@@ -1,6 +1,7 @@
 from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from collections.abc import Callable, Iterator
+from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._at import at_index, no_element_equal_to
@@ -159,6 +160,9 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         )  # noqa: T201
         return none
 
+    # A tuple is immutable but not acyclic — it can hold a list that holds the
+    # tuple — so it needs the same cycle guard as `List`. See the note there.
+    @recursive_repr(fillvalue="(...)")
     def __str__(self) -> str:
         if len(self._items) == 1:
             return f"({repr(self._items[0])},)"

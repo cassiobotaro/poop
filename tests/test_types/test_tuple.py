@@ -384,3 +384,11 @@ def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
     with pytest.raises(TypeError) as info:
         Tuple(Int(1)).at(List(Int(0)))  # ty: ignore[invalid-argument-type]
     assert "_value" not in str(info.value)
+
+
+def test_repr_of_a_tuple_holding_a_list_that_holds_it_answers_the_ellipsis() -> None:
+    # A tuple is immutable but not acyclic. CPython prints `([(...)],)`.
+    xs = List()
+    t = Tuple(xs)
+    xs.append(t)
+    assert str(t) == "([(...)],)"
