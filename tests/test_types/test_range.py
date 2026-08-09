@@ -14,16 +14,27 @@ def _range(start: int, stop: int) -> Range:
     return Range(Int(start), Int(stop))
 
 
+# The displayed form is the sequence's *exclusive* spelling, the one CPython
+# prints and the one that reads back as the same range. `_range(1, 3)` is built
+# with the inclusive bound the constructor takes internally and yields 1, 2, 3
+# — so it prints as `range(1, 4)`, not as the slots it happens to hold.
 def test_str() -> None:
-    assert str(_range(1, 3)) == "range(1, 3)"
+    assert str(_range(1, 3)) == "range(1, 4)"
 
 
 def test_str_with_step() -> None:
-    assert str(Range(Int(1), Int(9), Int(2))) == "range(1, 9, 2)"
+    assert str(Range(Int(1), Int(9), Int(2))) == "range(1, 10, 2)"
 
 
 def test_str_descending() -> None:
-    assert str(_range(5, 3)) == "range(5, 3, -1)"
+    assert str(_range(5, 3)) == "range(5, 2, -1)"
+
+
+def test_str_round_trips_through_the_python_spelling() -> None:
+    # Printing the raw slots showed `range(0, 2)` for a range yielding 0, 1, 2:
+    # a spelling that, read back, is a different sequence.
+    assert str(_range(0, 2)) == str(range(0, 3))
+    assert str(Range(Int(0), Int(4), Int(2))) == str(range(0, 5, 2))
 
 
 def test_repr_delegates_to_str() -> None:
@@ -231,8 +242,18 @@ def test_start() -> None:
     assert _range(3, 7).start() == Int(3)
 
 
-def test_stop() -> None:
-    assert _range(3, 7).stop() == Int(7)
+def test_stop_answers_the_exclusive_bound_like_cpython() -> None:
+    # `range(3).stop` is 3 in Python. The inclusive `_stop` slot is how a Range
+    # stores a sequence, not what it answers — `Slice.stop()`, handed its bound
+    # rather than encoding one, already answered the exclusive form.
+    assert _range(3, 7).stop() == Int(8)
+    assert Range(Int(0), Int(4), Int(2)).stop() == Int(5)
+
+
+def test_start_and_step_are_answered_from_the_slots() -> None:
+    # Neither is re-encoded, so neither needs the materialized range.
+    assert _range(3, 7).start() == Int(3)
+    assert Range(Int(0), Int(4), Int(2)).step() == Int(2)
 
 
 def test_step_default_ascending() -> None:

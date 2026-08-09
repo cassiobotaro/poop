@@ -93,7 +93,16 @@ class Range(_IterableMixin, Object):
         return self._start
 
     def stop(self) -> Int:
-        return self._stop
+        """The exclusive bound CPython answers — `range(3).stop` is `3`.
+
+        Not the `_stop` slot. The inclusive upper bound is how a `Range` stores
+        a sequence (`__eq__` calls it "an internal encoding" for the same
+        reason), and `_range()` is the one place that encoding is undone.
+        Answering the slot published it: `range(3).stop()` said `2`, while
+        `Slice.stop()` — handed its bound rather than encoding one — said what
+        Python says. One selector, two meanings, decided by the receiver.
+        """
+        return Int(self._range().stop)
 
     def step(self) -> Int:
         return self._step
@@ -142,11 +151,14 @@ class Range(_IterableMixin, Object):
         return hash(self._range())
 
     def __str__(self) -> str:
-        start, stop = self._start._value, self._stop._value
-        step = self._step._value
-        if step == 1:
-            return f"range({start}, {stop})"
-        return f"range({start}, {stop}, {step})"
+        # Through the materialized range, like `stop()`: printing the raw slots
+        # showed `range(0, 2)` for `range(3)` — a spelling that, read back as
+        # POOP source, is a *different* sequence. A displayed range has to be
+        # the range it describes, and that is the exclusive form.
+        native = self._range()
+        if native.step == 1:
+            return f"range({native.start}, {native.stop})"
+        return f"range({native.start}, {native.stop}, {native.step})"
 
     __repr__ = __str__
 
