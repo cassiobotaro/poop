@@ -388,3 +388,16 @@ def test_min_max_take_a_key_like_the_builtin() -> None:
     # value rather than applied to the operands.
     assert Float(5.5).max(Float(3.0), key=lambda n: n.negated()) == Float(3.0)
     assert Float(5.5).min(Float(3.0), key=lambda n: n.negated()) == Float(5.5)
+
+
+def test_pow_completes_the_reflected_protocol_for_a_complex() -> None:
+    from poop.types.complex import Complex
+
+    assert Float(2.0).pow(Complex(complex(1, 1))) == Float(2.0) ** Complex(
+        complex(1, 1)
+    )
+
+
+def test_pow_refusal_names_the_message_not_the_operator() -> None:
+    with pytest.raises(TypeError, match=r"float does not understand #pow with a str"):
+        Float(2.0).pow("x")

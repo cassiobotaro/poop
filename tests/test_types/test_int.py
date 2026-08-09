@@ -655,3 +655,21 @@ def test_max_and_min_read_a_none_key_as_absent() -> None:
     # NoneClass instance, which `is None` read as a comparison block.
     assert Int(5).max(Int(3), key=none) == Int(5)
     assert Int(5).min(Int(3), key=none) == Int(3)
+
+
+def test_pow_completes_the_reflected_protocol_for_a_complex() -> None:
+    # `__pow__` answers NotImplemented for a Complex *on purpose*, so `**`
+    # falls through to `Complex.__rpow__`. The message refused where the
+    # operator computed — narrower than `**` and than the builtin it replaces.
+    assert Int(2).pow(Complex(complex(1, 1))) == Int(2) ** Complex(complex(1, 1))
+
+
+def test_pow_with_a_modulus_does_not_reflect() -> None:
+    # The three-argument form has no reflected counterpart in CPython either.
+    with pytest.raises(TypeError, match="does not understand #pow"):
+        Int(2).pow(Complex(complex(1, 1)), Int(5))
+
+
+def test_pow_refusal_names_the_message_not_the_operator() -> None:
+    with pytest.raises(TypeError, match=r"int does not understand #pow with a str"):
+        Int(2).pow("x")

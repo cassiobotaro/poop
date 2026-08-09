@@ -2,7 +2,9 @@ from types import NotImplementedType
 from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
+from poop.types._message import binary_refusal
 from poop.types.boolean import Boolean, false, to_boolean, true
+from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -111,6 +113,18 @@ class Complex(Object):
         if v is None:
             return NotImplemented
         return Complex(v**self._value)
+
+    def pow(self, other: object) -> Complex:
+        # `no_pow` names `a.pow(b)` as the substitute for the builtin, and
+        # `Complex` wrapped `__abs__` and `__neg__` as `abs()` and `negated()`
+        # but never this one — so `complex(1, 1) ** 2` computed and
+        # `complex(1, 1).pow(2)` answered `complex does not understand #pow`.
+        result = self.__pow__(other)
+        if result is NotImplemented:
+            raise MIRRORS["TypeError"](
+                binary_refusal("complex", "pow", type(other).__name__)
+            )
+        return result
 
     def negated(self) -> Complex:
         return Complex(-self._value)

@@ -444,3 +444,14 @@ def test_bare_complex_name_is_rewritten() -> None:
     assert isinstance(assign, ast.Assign)
     assert isinstance(assign.value, ast.Name)
     assert assign.value.id == "_poop_complex"
+
+
+def test_pow_answers_what_the_operator_answers() -> None:
+    # `Complex` wraps `__abs__` and `__neg__` as `abs()` and `negated()`; the
+    # `pow` message `Int` and `Float` both carry was never added here.
+    assert Complex(complex(1, 1)).pow(Int(2)) == Complex(complex(1, 1)) ** Int(2)
+
+
+def test_pow_refuses_a_foreign_operand() -> None:
+    with pytest.raises(TypeError, match=r"complex does not understand #pow with a str"):
+        Complex(complex(1, 1)).pow("x")

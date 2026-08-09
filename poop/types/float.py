@@ -11,6 +11,7 @@ from poop.types._numeric_compare import (
     _num_value,
     _NumericCompareMixin,
 )
+from poop.types._pow import reflected_pow
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
@@ -151,10 +152,15 @@ class Float(_NumericCompareMixin, Object):
         return Float(result)
 
     def pow(self, other: object) -> Float | Complex:
+        # See `Int.pow`: `__pow__` answers `NotImplemented` for a `Complex` so
+        # the operator can fall through to `Complex.__rpow__`, and the message
+        # has to complete the same protocol or it refuses what `**` computes.
         result = self.__pow__(other)
         if result is NotImplemented:
+            result = reflected_pow(self, other, None)
+        if result is NotImplemented:
             raise MIRRORS["TypeError"](
-                binary_refusal("float", "**", type(other).__name__)
+                binary_refusal("float", "pow", type(other).__name__)
             )
         return result
 

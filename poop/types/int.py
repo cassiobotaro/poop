@@ -10,6 +10,7 @@ from poop.types._numeric_compare import (
     _num_value,
     _NumericCompareMixin,
 )
+from poop.types._pow import reflected_pow
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types.boolean import true
 from poop.types.complex import Complex
@@ -246,10 +247,19 @@ class Int(_NumericCompareMixin, Object):
     def pow(
         self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
+        # The reflected half is part of the operation, not an extra: `__pow__`
+        # answers `NotImplemented` for a `Complex` *on purpose*, so CPython's
+        # operator protocol falls through to `Complex.__rpow__`. `2 ** 1+1j`
+        # did exactly that while `(2).pow(complex(1, 1))` refused — the
+        # substitute narrower than both the operator POOP still allows and the
+        # builtin it replaces. `modulus` is guarded because the three-argument
+        # form has no reflected counterpart in CPython either.
         result = self.__pow__(other, modulus)
         if result is NotImplemented:
+            result = reflected_pow(self, other, modulus)
+        if result is NotImplemented:
             raise MIRRORS["TypeError"](
-                binary_refusal("int", "**", type(other).__name__)
+                binary_refusal("int", "pow", type(other).__name__)
             )
         return result
 

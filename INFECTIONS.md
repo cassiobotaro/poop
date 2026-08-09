@@ -365,6 +365,8 @@ there.
 |---|---|---|
 | `pow(a, b)` | free function with procedural look | `a.pow(b)` |
 
+**The message completes the operator's protocol, or it is narrower than what it replaces.** `Int.pow` and `Float.pow` called their own `__pow__` and turned a `NotImplemented` into a refusal — but `__pow__` answers `NotImplemented` for a `Complex` *on purpose*, so CPython's operator protocol falls through to `Complex.__rpow__`. `2 ** complex(1, 1)` did exactly that while `(2).pow(complex(1, 1))` refused: the substitute narrower than the operator POOP still allows *and* than `pow(2, 1+1j)`, which CPython computes. `poop/types/_pow.py` tries the reflected half before refusing; the modulus form does not reflect, because CPython's three-argument `pow` has no reflected counterpart either. The refusal reads `#pow` rather than `#**` — it was naming the operator inside a method named after the builtin. `Complex.pow` was missing outright (`__pow__`/`__rpow__` existed, and `abs`/`negated` wrapped their dunders) and is now there. `Int.divmod` needs no such change and must not get one: CPython refuses `divmod(2, 1+1j)` too, so today's refusal is faithful.
+
 ### No `getattr` — `poop/validators/no_getattr.py`
 
 | Call | Reason | Substitute |
