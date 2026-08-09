@@ -290,6 +290,15 @@ def test_index_with_start() -> None:
     assert Tuple(Int(10), Int(20), Int(10)).index(Int(10), Int(1)) == Int(2)
 
 
+def test_index_honours_stop_without_start() -> None:
+    with pytest.raises(ValueError):
+        Tuple(Int(1), Int(2), Int(3)).index(Int(3), stop=Int(1))
+
+
+def test_index_reads_a_none_stop_as_the_end() -> None:
+    assert Tuple(Int(1), Int(2), Int(3)).index(Int(3), none, none) == Int(2)
+
+
 def test_index_with_start_and_stop() -> None:
     ts = Tuple(Int(5), Int(10), Int(5), Int(10))
     assert ts.index(Int(10), Int(2), Int(4)) == Int(3)

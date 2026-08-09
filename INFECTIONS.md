@@ -918,7 +918,7 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 
 ### Builtin-mirroring method signatures
 
-Every builtin-substitute method mirrors the **full** Python signature of the method it replaces — the same optional and variadic arguments, so `n.to_bytes()` and `xs.index(x, start, stop)` work exactly as in CPython. Optional arguments accept the POOP wrapper *or* `none` (both fall back to the builtin's default), following the same convention as the collection methods above (`zip(*others, strict=false)`, `enumerate(start=Int(0))`).
+Every builtin-substitute method mirrors the **full** Python signature of the method it replaces — the same optional and variadic arguments, so `n.to_bytes()` and `xs.index(x, start, stop)` work exactly as in CPython. Optional arguments accept the POOP wrapper *or* `none` (both fall back to the builtin's default), following the same convention as the collection methods above (`zip(*others, strict=false)`, `enumerate(start=Int(0))`). "Mirrors the full signature" includes the *combinations*: `List.index` and `Tuple.index` branched on which bound was present and the first branch dropped `stop` on the floor, so `[1, 2, 3].index(3, stop=1)` answered `2` where CPython raises — and the same branch read an explicit `none` stop as *stop at 0*, which makes every search fail. Both pass the bounds straight through now, defaulting a missing `stop` to `len` rather than `None` because `list.index`, unlike `str.index`, takes no `None` bound.
 
 | Type | Method | Signature | Notes |
 |---|---|---|---|

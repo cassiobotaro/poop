@@ -101,15 +101,20 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        from poop.types._unwrap import _is_absent, _opt_int
+        from poop.types._unwrap import _opt_int
         from poop.types.int import Int
 
+        # No branching on which bound was given: `stop` alone was dropped on
+        # the floor by the first branch, so `xs.index(3, stop=1)` answered a
+        # match from outside the bound it was handed. `len` rather than `None`
+        # for the missing `stop`, because `list.index` — unlike `str.index` —
+        # takes no `None` bound.
         try:
-            if _is_absent(start):
-                return Int(self._items.index(obj))
-            if _is_absent(stop):
-                return Int(self._items.index(obj, _opt_int(start, 0)))
-            return Int(self._items.index(obj, _opt_int(start, 0), _opt_int(stop, 0)))
+            return Int(
+                self._items.index(
+                    obj, _opt_int(start, 0), _opt_int(stop, len(self._items))
+                )
+            )
         except ValueError:
             raise no_element_equal_to(self, obj) from None
 

@@ -323,6 +323,27 @@ def test_index_not_found_raises() -> None:
         List(Int(1), Int(2)).index(Int(9))
 
 
+def test_index_honours_stop_without_start() -> None:
+    # `stop` was dropped whenever `start` was absent, so this answered 2 —
+    # a match from outside the bound the reader handed it.
+    with pytest.raises(ValueError):
+        List(Int(1), Int(2), Int(3)).index(Int(3), stop=Int(1))
+
+
+def test_index_reads_a_none_stop_as_the_end() -> None:
+    # `_opt_int(stop, 0)` read an explicit `none` as "stop at 0", which makes
+    # every search fail.
+    xs = List(Int(1), Int(2), Int(3))
+    assert xs.index(Int(3), none, none) == Int(2)
+    assert xs.index(Int(3), Int(1), none) == Int(2)
+
+
+def test_index_with_a_stop_that_excludes_the_only_match() -> None:
+    xs = List(Int(5), Int(10), Int(5), Int(10))
+    with pytest.raises(ValueError):
+        xs.index(Int(10), Int(0), Int(1))
+
+
 def test_insert_at_position() -> None:
     lst = List(Int(1), Int(3))
     lst.insert(Int(1), Int(2))
