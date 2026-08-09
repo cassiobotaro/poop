@@ -85,6 +85,11 @@ _FAILING = [
     "i = [1].iter()\nlist([1, 2, 3].filter(lambda v: i.next()))",
     "i = [1].iter()\ni.next()\ni.next()",
     "b = lambda: 1\nb(9)",
+    # The two constructs `DEFAULT_NAMESPACE` hands users directly: a non-block
+    # was reported by CPython's call machinery, one frame deep.
+    "Try(5).run()",
+    "Try(lambda: 1).except_(Exception, 5)",
+    "With(5).do(lambda x: x)",
     # A receiver that cannot be entered, and one that can be entered but never
     # exited: CPython names the missing dunder in both.
     "With(lambda: 5).do(lambda x: x)",

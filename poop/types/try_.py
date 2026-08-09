@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 from poop.types._cloak import cloak
+from poop.types.block import _require_block
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
 from poop.types.none import none
@@ -28,7 +30,9 @@ class Try(Object):
     __slots__ = ("_block", "_executed", "_finally_block", "_handlers")
 
     def __init__(self, block: Callable[[], object]) -> None:
-        self._block: Callable[[], object] | None = block
+        self._block: Callable[[], object] | None = _require_block(
+            block, "the protected argument", "write Try(lambda: …)"
+        )
         self._handlers: list[tuple[type[BaseException], Callable[[Error], object]]] = []
         self._finally_block: Callable[[], object] | None = None
         self._executed = False
@@ -38,6 +42,9 @@ class Try(Object):
         exc_type: type[BaseException],
         handler: Callable[[Error], object],
     ) -> Try:
+        _require_block(
+            handler, "the handler", "write .except_(ValueError, lambda e: …)"
+        )
         # Once executed the single-use drop has already run; re-populating
         # _handlers would pin the handler closure (and whatever it captured)
         # on a Try that can never consume it again.
@@ -62,11 +69,12 @@ class Try(Object):
                 "Try has already been executed; create a new Try instance to retry."
             )
         self._executed = True
-        block = self._block
+        # `_block` is never None here: `__init__` refuses a non-callable, and
+        # the post-run drop below is unreachable behind the guard above.
+        block = cast("Callable[[], object]", self._block)
         result: object = none
         try:
-            if block is not None:
-                result = block()
+            result = block()
         except BaseException as e:
             for exc_type, handler in self._handlers:
                 if isinstance(e, exc_type):

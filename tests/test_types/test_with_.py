@@ -206,3 +206,28 @@ def test_with_reads_the_protocol_off_the_type_not_the_instance() -> None:
 
     with pytest.raises(TypeError, match="it cannot be entered"):
         With(lambda: _Forger()).do(lambda _: None)
+
+
+def test_with_refuses_a_manager_argument_that_is_not_a_block() -> None:
+    # `With` takes a block that *answers* a manager, and passing the manager
+    # itself is the obvious first attempt. CPython answered `'C' object is not
+    # callable`, which says nothing about what was expected.
+    from poop.types.int import Int
+
+    with pytest.raises(TypeError) as info:
+        With(Int(5))  # ty: ignore[invalid-argument-type]
+    assert str(info.value) == (
+        "the manager argument must be a block, got an int — write With(lambda: …)"
+    )
+
+
+def test_with_refuses_a_manager_passed_instead_of_a_block() -> None:
+    class Manager:
+        def __enter__(self) -> str:
+            return "value"
+
+        def __exit__(self, *_: object) -> bool:
+            return False
+
+    with pytest.raises(TypeError, match="must be a block"):
+        With(Manager())  # ty: ignore[invalid-argument-type]

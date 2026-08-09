@@ -1,6 +1,7 @@
 import pytest
 
 from poop.types.error import Error
+from poop.types.int import Int
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.try_ import Try
@@ -206,11 +207,28 @@ def test_try_class_does_not_leak_module_path() -> None:
     assert repr(Try) == "<class 'Try'>"
 
 
-def test_try_with_null_block_answers_none_and_runs_finally() -> None:
-    from poop.types.none import none
-    from poop.types.try_ import Try
+def test_try_refuses_a_protected_argument_that_is_not_a_block() -> None:
+    # CPython answered `'int' object is not callable` from one frame inside
+    # `run()` — true of every POOP object, and silent about what was wanted.
+    with pytest.raises(TypeError) as info:
+        Try(Int(5))  # ty: ignore[invalid-argument-type]
+    assert str(info.value) == (
+        "the protected argument must be a block, got an int — write Try(lambda: …)"
+    )
 
+
+def test_try_refuses_a_handler_that_is_not_a_block() -> None:
+    with pytest.raises(TypeError) as info:
+        Try(lambda: none).except_(ValueError, Int(5))  # ty: ignore[invalid-argument-type]
+    assert str(info.value) == (
+        "the handler must be a block, got an int — "
+        "write .except_(ValueError, lambda e: …)"
+    )
+
+
+def test_try_refuses_at_construction_not_at_run() -> None:
+    """The failure lands where the mistake was written."""
     ran: list[str] = []
-    result = Try(None).finally_(lambda: ran.append("cleanup"))  # ty: ignore[invalid-argument-type]
-    assert result is none
-    assert ran == ["cleanup"]
+    with pytest.raises(TypeError):
+        Try(Int(5)).finally_(lambda: ran.append("cleanup"))  # ty: ignore[invalid-argument-type]
+    assert ran == []

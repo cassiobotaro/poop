@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 from poop.types._cloak import cloak
+from poop.types.block import _require_block
 from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
@@ -51,7 +52,9 @@ class With(Object):
     __slots__ = ("_cm_block",)
 
     def __init__(self, cm_block: Callable[[], Any]) -> None:
-        self._cm_block: Callable[[], Any] | None = cm_block
+        self._cm_block: Callable[[], Any] | None = _require_block(
+            cm_block, "the manager argument", "write With(lambda: …)"
+        )
 
     def do(self, body_block: Callable[[Any], object]) -> object:
         if self._cm_block is None:

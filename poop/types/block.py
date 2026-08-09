@@ -3,6 +3,7 @@ from inspect import Parameter, signature
 from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
+from poop.types._message import article
 from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
@@ -13,6 +14,26 @@ if TYPE_CHECKING:
 
 def _count(n: int) -> str:
     return f"{n} argument" if n == 1 else f"{n} arguments"
+
+
+def _require_block(value: Any, role: str, hint: str) -> Any:
+    """`value`, or a refusal naming the argument rather than the call.
+
+    Checked at the boundary, where the argument has a name, instead of at the
+    deferred call, where CPython answers `'int' object is not callable` — true
+    of every POOP object, and silent about what was expected. `With` is the
+    one worth optimizing for: it takes a block that *answers* a manager, and
+    passing the manager itself is the obvious first attempt.
+
+    The same argument proposal 2 settled for `With`: resolve what you need
+    before running anything, so the failure lands where the mistake was
+    written rather than after a deferred block has had side effects.
+    """
+    if not callable(value):
+        raise MIRRORS["TypeError"](
+            f"{role} must be a block, got {article(type(value).__name__)} — {hint}"
+        )
+    return value
 
 
 def _as_block(value: Any) -> Any:
