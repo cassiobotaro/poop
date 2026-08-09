@@ -16,6 +16,7 @@ from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean, true
 from poop.types.byte_array_iterator import ByteArrayIterator
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
@@ -119,6 +120,15 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def iter(self) -> ByteArrayIterator:
         return ByteArrayIterator(self)
+
+    def ord(self) -> Int:
+        # See `Bytes.ord`: CPython's `ord` takes a one-byte `bytearray` too.
+        try:
+            return Int(ord(self._value))
+        except TypeError:
+            raise MIRRORS["TypeError"](
+                f"#ord expects a single byte, got {len(self._value)}"
+            ) from None
 
     def __lt__(self, other: object) -> Boolean:
         if not isinstance(other, ByteArray):

@@ -708,3 +708,20 @@ def test_sorted_answers_a_list_of_ints() -> None:
     from poop.types.list import List
 
     assert Bytes(b"ba").sorted() == List(Int(97), Int(98))
+
+
+def test_ord_answers_the_byte_value() -> None:
+    # `no_chr` forbids `ord(x)` and names `x.ord()`; CPython's `ord` takes a
+    # one-byte `bytes` (`ord(b"a")` is 97) and only `Str` answered it.
+    from poop.types.int import Int
+
+    assert Bytes(b"a").ord() == Int(97)
+
+
+@pytest.mark.parametrize("data", [b"", b"ab"])
+def test_ord_refuses_a_receiver_that_is_not_one_byte(data: bytes) -> None:
+    # CPython answers `ord() expected a character, but string of length 2
+    # found` — the builtin as a call, and `string` for a receiver that prints
+    # as bytes.
+    with pytest.raises(TypeError, match="#ord expects a single byte"):
+        Bytes(data).ord()

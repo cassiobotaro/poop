@@ -353,6 +353,8 @@ there.
 | `chr(n)` | free function with procedural look | `n.chr()` |
 | `ord(c)` | free function with procedural look | `c.ord()` |
 
+`ord` lives on `Str`, `Bytes` and `ByteArray`, because CPython's takes a one-character `str` **or** a one-byte `bytes`/`bytearray` — `ord(b"a")` is `97` — and the two byte receivers answered nothing. A receiver of the wrong length answers `#ord expects a single byte, got 2`, where CPython said `ord() expected a character, but string of length 2 found`: the builtin spelled as the call this message substitutes, and `string` for a receiver that prints as bytes.
+
 ### No `divmod` — `poop/validators/no_divmod.py`
 
 | Call | Reason | Substitute |

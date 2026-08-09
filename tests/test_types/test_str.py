@@ -488,6 +488,11 @@ def test_splitlines() -> None:
     assert Str("a\nb\nc").splitlines() == List(Str("a"), Str("b"), Str("c"))
 
 
+def test_ord_refuses_a_receiver_that_is_not_one_character() -> None:
+    with pytest.raises(TypeError, match="#ord expects a single character"):
+        Str("ab").ord()
+
+
 def test_ord_returns_code_point() -> None:
     assert Str("A").ord() == Int(65)
 

@@ -935,3 +935,13 @@ def test_startswith_tuple_with_a_wrong_typed_member_raises() -> None:
 
     with pytest.raises(TypeError):
         _ba(b"ab").startswith(Tuple(Str("a")))
+
+
+def test_ord_answers_the_byte_value() -> None:
+    assert _ba(b"a").ord() == Int(97)
+
+
+@pytest.mark.parametrize("data", [b"", b"ab"])
+def test_ord_refuses_a_receiver_that_is_not_one_byte(data: bytes) -> None:
+    with pytest.raises(TypeError, match="#ord expects a single byte"):
+        _ba(data).ord()

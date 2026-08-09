@@ -12,6 +12,7 @@ from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes_iterator import BytesIterator
+from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -113,6 +114,23 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
     def iter(self) -> BytesIterator:
         return BytesIterator(self)
+
+    def ord(self) -> Int:
+        # `no_chr` forbids `ord(x)` and names `x.ord()`. CPython's `ord` takes
+        # a one-character `str` **or** a one-byte `bytes` — `ord(b"a")` is 97 —
+        # and only `Str` answered the message. A receiver that is not exactly
+        # one byte long is left to CPython's faithful TypeError.
+        from poop.types.int import Int
+
+        try:
+            return Int(ord(self._value))
+        except TypeError:
+            # CPython answers `ord() expected a character, but string of
+            # length 2 found`: the builtin as a call, and `string` for a
+            # receiver that prints as bytes.
+            raise MIRRORS["TypeError"](
+                f"#ord expects a single byte, got {len(self._value)}"
+            ) from None
 
     def reversed(self) -> Bytes:
         # `bytes` is a sequence, so `reversed(b"abc")` works in CPython and

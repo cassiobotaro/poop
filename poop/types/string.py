@@ -101,7 +101,15 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
     def ord(self) -> Int:
         from poop.types.int import Int
 
-        return Int(ord(self._value))
+        try:
+            return Int(ord(self._value))
+        except TypeError:
+            # CPython answers `ord() expected a character, but string of
+            # length 3 found` — the builtin spelled as the call this message
+            # substitutes.
+            raise MIRRORS["TypeError"](
+                f"#ord expects a single character, got {len(self._value)}"
+            ) from None
 
     def input(self) -> Str:
         return Str(builtins.input(self._value))
