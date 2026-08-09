@@ -46,6 +46,11 @@ class _SetAlgebraMixin:
     ``type(self)`` so the receiver's class wins.
     """
 
+    # An empty `__slots__`, because a slot-less class anywhere in an MRO
+    # restores the per-instance `__dict__` for everything below it — see the
+    # note in `_value_eq.py`.
+    __slots__ = ()
+
     _set_like: ClassVar[bool] = True
     _data: Any
 

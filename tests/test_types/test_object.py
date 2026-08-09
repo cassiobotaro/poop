@@ -219,6 +219,36 @@ def test_set_attr_on_unknown_slot_raises_attribute_error() -> None:
         Object().set_attr(Str("nonexistent"), Int(1))
 
 
+def test_a_wrapper_refuses_attached_state() -> None:
+    # Three slot-less mixins used to restore the `__dict__` for 36 of the 49
+    # wrappers, so a `Str` accepted state and two equal `Str`s could carry
+    # different attributes.
+    with pytest.raises(AttributeError) as info:
+        Str("abc").set_attr(Str("x"), Int(1))
+    assert str(info.value) == (
+        "str is a value — it holds no state of its own; "
+        "only an object of a class you defined can be given one"
+    )
+
+
+def test_the_refusal_names_no_dunder() -> None:
+    """CPython's own says `and no __dict__ for setting new attributes`."""
+    with pytest.raises(AttributeError) as info:
+        List(Int(1)).set_attr(Str("tag"), Str("a"))
+    assert "__dict__" not in str(info.value)
+
+
+def test_a_user_class_still_accepts_state() -> None:
+    # `ClassTransformer` builds user classes without `__slots__`, which is the
+    # line POOP wants drawn: values hold none, objects you define hold theirs.
+    class Counter(Object):
+        pass
+
+    obj = Counter()
+    obj.set_attr(Str("count"), Int(1))
+    assert obj.get_attr(Str("count")) == Int(1)
+
+
 def test_del_attr_removes_attribute() -> None:
     from poop.types.none import none
 

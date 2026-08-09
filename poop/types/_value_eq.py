@@ -8,6 +8,14 @@ if TYPE_CHECKING:
 
 
 class _ValueEqMixin:
+    # An empty `__slots__`, because a slot-less class anywhere in an MRO
+    # restores the per-instance `__dict__` for everything below it — this
+    # mixin alone defeated the declaration on 36 of the 49 wrappers, so a
+    # `Str` accepted attached state and two equal `Str`s could carry
+    # different attributes. It cannot collide with a concrete class's own
+    # slots, which is what makes it safe on all of them.
+    __slots__ = ()
+
     _eq_attr: ClassVar[str]
     # Wrappers sharing a non-None _eq_group compare equal by value across the
     # group, even when they are different classes — mirroring CPython, where

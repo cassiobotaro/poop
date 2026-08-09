@@ -46,6 +46,14 @@ def _sorted(
 
 
 class _IterableMixin:
+    # An empty `__slots__`, because a slot-less class anywhere in an MRO
+    # restores the per-instance `__dict__` for everything below it — this
+    # mixin alone defeated the declaration on 36 of the 49 wrappers, so a
+    # `Str` accepted attached state and two equal `Str`s could carry
+    # different attributes. It cannot collide with a concrete class's own
+    # slots, which is what makes it safe on all of them.
+    __slots__ = ()
+
     @abstractmethod
     def __iter__(self) -> Iterator[Any]: ...
 

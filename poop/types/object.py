@@ -233,9 +233,23 @@ class Object(metaclass=PoopMeta):
         return to_boolean(hasattr(self, self._checked_name(symbol)))
 
     def set_attr(self, name: Str, value: Any) -> NoneClass:
+        from poop.types.exceptions import MIRRORS
         from poop.types.none import none
 
-        builtins.setattr(self, self._checked_name(name), value)
+        # Outside the `try`: `_checked_name`'s own refusals are AttributeErrors
+        # too, and each already carries the sentence it wants to be read by.
+        raw = self._checked_name(name)
+        try:
+            builtins.setattr(self, raw, value)
+        except AttributeError:
+            # Every wrapper declares `__slots__`, so a value object holds no
+            # attached state — and CPython says so by naming `__dict__`, a
+            # dunder `no_dunder_attribute` bans and `_reject_dunder` will not
+            # even let a program spell. This names the distinction instead.
+            raise MIRRORS["AttributeError"](
+                f"{type(self).__name__} is a value — it holds no state of its "
+                "own; only an object of a class you defined can be given one"
+            ) from None
         return none
 
     def del_attr(self, name: Str) -> NoneClass:
