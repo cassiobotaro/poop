@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from operator import index as _index
 from typing import TYPE_CHECKING
 
-from poop.types._at import at_index
+from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _faithful
@@ -92,7 +92,14 @@ class Range(_IterableMixin, Object):
         return Int(self._range().count(_faithful(value)))
 
     def index(self, value: Int) -> Int:
-        return Int(self._range().index(_faithful(value)))
+        # `self`, not `self._range()`, as the receiver: the name in the message
+        # is the one the reader wrote, which is why `at` passes the POOP Range
+        # too. CPython answered `range.index(x): x not in range` — the method
+        # as a call, with a placeholder where the value belongs.
+        try:
+            return Int(self._range().index(_faithful(value)))
+        except ValueError:
+            raise no_element_equal_to(self, value) from None
 
     def start(self) -> Int:
         return self._start

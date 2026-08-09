@@ -51,6 +51,7 @@ _FAILING = [
     "[1, 2].pop(9)",
     "[1, 2].index(9)",
     "(1, 2).index(9)",
+    "range(5).index(9)",
     "[1, 2].remove(9)",
     # The six removals: `popitem()`, `pop from …` and `bytearray` are exactly
     # what this sweep is for, and three answered a bare repr with no sentence.

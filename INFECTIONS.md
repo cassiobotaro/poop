@@ -973,7 +973,7 @@ Both inherit `_IterableMixin` so chains like `col.map(f).filter(g).sum()` keep i
 | `reversed()` | returns reversed `Range` |
 | `includes(value)` | `true` if `value` is in the range |
 | `count(value)` | number of occurrences (always `0` or `1`) |
-| `index(value)` | position of `value`, or raises `ValueError` |
+| `index(value)` | position of `value`, or raises `ValueError` (`range has no element equal to 9`) |
 | `start()` / `stop()` / `step()` | the underlying `Int` bounds |
 
 **A sliced `Range` is a `Range`**, as `range(10)[1:3]` is `range(1, 3)` in CPython and as `reversed()` already answered. Wrapping the selected elements in a `List` allocated one `Int` per member of the *result*, so `range(1000000000000).slice(0, 3)` — three elements in Python — materialized a trillion. The exclusive stop is shifted back by `sign` to round-trip through the constructor's inclusive convention, the same encoding `reversed()` undoes.

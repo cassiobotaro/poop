@@ -289,7 +289,10 @@ def test_index_first_element() -> None:
 
 
 def test_index_not_found_raises() -> None:
-    with pytest.raises(ValueError):
+    # CPython answers `range.index(x): x not in range` — the sentence
+    # `no_element_equal_to`'s docstring quotes as the thing it replaced, with
+    # only the noun changed. Every other sequence already routed through it.
+    with pytest.raises(ValueError, match="range has no element equal to 9"):
         _range(1, 5).index(Int(9))
 
 
