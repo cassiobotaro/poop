@@ -360,6 +360,10 @@ class you defined can be given one`, where CPython named `__dict__`.
 `__dict__` descriptor is installed on the first slot-less base, so a per-class
 check would have passed with the bug in place. Verified against the old state —
 it fails on exactly the 36 classes the proposal predicted.
+
+One number in the heading is wrong and stays there as written: the sweep counts
+**50** POOP classes, not 49, at this commit and at the one that opened the item.
+36 of them carried a `__dict__`, which is the figure that mattered and is exact.
 `poop/types/_value_eq.py`, `_iterable_mixin.py`, `_set_algebra.py`, `object.py`,
 `tests/test_slots.py`, `tests/test_types/test_object.py`, `INFECTIONS.md`.
 
@@ -556,10 +560,12 @@ ValueError.dir().includes("raise_")       # -> False
 `INFECTIONS.md` already records the half of this that motivated proposal 1
 ("`dir()` never listed either name, so both were unreachable by reading and
 reachable by typing") — but it recorded it about `mro` and `register`, the two
-names POOP *refuses*. The same gap hides the twelve it answers: `name`,
-`superclass`, `print`, `class_name`, `get_attr`, `is_instance`, `assert_`, and
-the rest, plus `raise_` since item 27 made it a message. `:methods` reads the
-same `dir()`, so the REPL cannot show them either.
+names POOP *refuses*. The same gap hides the **26** it answers — `PoopMeta`
+carries 28 `class_side` descriptors, and only `mro` and `register` are refusals:
+`name`, `superclass`, `print`, `class_name`, `get_attr`, `is_instance`,
+`assert_`, `if_none`, and the rest, plus `raise_`, which item 27 made a message
+on `PoopExcMeta`. `:methods` reads the same `dir()`, so the REPL cannot show
+them either.
 
 **Solution.** `PoopMeta.dir` (`poop/types/meta.py`) merges the `class_side`
 descriptors found on `type(cls).__mro__` into its answer. The refusing ones
