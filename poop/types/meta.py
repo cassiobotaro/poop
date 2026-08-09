@@ -135,6 +135,24 @@ def _refuse(cls: type, name: str) -> None:
     )
 
 
+def _refuse_native(cls: type, name: str, instead: str) -> None:
+    """Refuse a name POOP never meant to offer, naming the message that does.
+
+    `type.mro` and `ABCMeta.register` arrive on every POOP class with the
+    metaclass, carry no leading underscore, and answer raw Python — but they
+    are not messages POOP designed, so `_refuse`'s wording ("asks an instance
+    about its class") says nothing true about them.
+    """
+    from poop.types.object import MessageNotUnderstood
+
+    raise MessageNotUnderstood(
+        f"{cls.__name__} does not understand #{name} — "
+        f"#{name} is Python's; a class answers #{instead}",
+        name=name,
+        obj=cls,
+    )
+
+
 class PoopMeta(ABCMeta):
     """Metaclass giving every POOP class the class-side protocol.
 
@@ -165,6 +183,36 @@ class PoopMeta(ABCMeta):
         if not bases:
             return none
         return bases[0]
+
+    @class_side
+    def mro(cls) -> Any:
+        """Refuse `type.mro` — `superclass` is the question POOP answers.
+
+        Inherited from the metaclass, it answered a raw Python list of raw
+        classes: `__mro__` under a spelling `no_dunder_attribute` cannot see,
+        holding the Python `object` that `superclass` stops short of on
+        purpose. `dir()` never listed it either, so it was unreachable by
+        reading and reachable by typing.
+
+        CPython calls this method to *compute* a new class's MRO — `mro_invoke`
+        consults the metaclass whenever it is not plain `type` — so refusing
+        unconditionally breaks every `class` statement in the language. During
+        that call the class has no `__mro__` yet; once it does, the caller is a
+        program rather than the interpreter, and that is the line drawn here.
+        """
+        if getattr(cls, "__mro__", None) is None:
+            return type.mro(cls)
+        _refuse_native(cls, "mro", "superclass")
+
+    @class_side
+    def register(cls, subclass: Any) -> Any:
+        """Refuse `ABCMeta.register` — inheritance is how POOP says "is a".
+
+        Virtual-subclass registration makes `is_instance` and `is_subclass`
+        answer true for a class that never inherited from the receiver, moving
+        the answer into a side table no reader of the class can see.
+        """
+        _refuse_native(cls, "register", "is_subclass")
 
     @class_side
     def has_attr(cls, name: Str) -> Boolean:

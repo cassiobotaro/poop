@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from poop.errors import ValidationError
+from poop.errors import ExecutionError, ValidationError
 from poop.interpreter import Interpreter
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
@@ -26,6 +26,10 @@ class _Dog(_Animal):
 
     def speak(self) -> Str:
         return Str("woof")
+
+
+class _Unrelated(Object):
+    __slots__ = ()
 
 
 def test_a_class_answers_print_instead_of_failing_to_bind() -> None:
@@ -309,3 +313,41 @@ def test_the_class_side_answers_a_block_for_a_method() -> None:
 def test_the_class_side_leaves_a_poop_class_alone() -> None:
     # A class is callable but is already an object with its own protocol.
     assert _Dog.get_attr(Str("superclass"))() is _Animal
+
+
+def test_a_class_refuses_mro_naming_superclass() -> None:
+    # `type.mro` arrived with the metaclass and answered a raw Python list of
+    # raw classes — `__mro__` under a spelling no_dunder_attribute cannot see,
+    # holding the Python `object` that `superclass` stops short of on purpose.
+    with pytest.raises(MessageNotUnderstood, match="a class answers #superclass"):
+        _Dog.mro()
+
+
+def test_refusing_mro_does_not_break_class_creation() -> None:
+    # CPython calls the metaclass's `mro` to compute a new class's MRO, so an
+    # unconditional refusal would break every `class` statement in the
+    # language. Building a fresh subclass here is the regression test.
+    class _Puppy(_Dog):
+        __slots__ = ()
+
+    assert _Puppy.superclass() is _Dog
+    assert _Puppy().speak() == Str("woof")
+    with pytest.raises(MessageNotUnderstood, match="a class answers #superclass"):
+        _Puppy.mro()
+
+
+def test_a_class_refuses_register_naming_is_subclass() -> None:
+    # ABCMeta's virtual-subclass registration made `is_instance` answer true
+    # for a class that never inherited from the receiver.
+    with pytest.raises(MessageNotUnderstood, match="a class answers #is_subclass"):
+        _Animal.register(_Unrelated)
+    assert _Unrelated().is_instance(_Animal) is false
+
+
+def test_neither_native_is_reachable_from_poop_source() -> None:
+    # Both are invisible to `dir()` — `type.__dir__` does not merge the
+    # metaclass's names — so nothing taught them and nothing stopped them.
+    interpreter = Interpreter()
+    for source in ("Object.mro()", "Object.register(Object)"):
+        with pytest.raises(ExecutionError, match="is Python's"):
+            interpreter.run_source(source)
