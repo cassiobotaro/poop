@@ -5,6 +5,7 @@ import pytest
 
 from poop.errors import ExecutionError, ValidationError
 from poop.interpreter import Interpreter
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.boolean import Boolean, false, true
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
@@ -623,3 +624,42 @@ def test_each_slot_names_what_it_wanted() -> None:
         )
     with pytest.raises(ExecutionError, match=r"P's hash must be an int, got a str"):
         _run('class P(Object):\n    def __hash__(self):\n        return "h"\n{P()}\n')
+
+
+# --- the ladder has no rung that is not there ---
+#
+# An alias's one base is the wrapper it stands for, and both are cloaked under
+# the builtin's name, so `int.superclass()` answered a class calling itself
+# `int` — which `is_identical(int)` then denied.
+
+
+def test_a_bare_builtin_name_climbs_straight_to_object() -> None:
+    from poop.transformers.int import IntTransformer
+
+    alias = IntTransformer.BINDINGS["_poop_int_cls"]
+    assert alias.superclass().name() == Str("object")  # ty: ignore[unresolved-attribute]
+
+
+def test_the_wrapper_and_its_alias_climb_alike() -> None:
+    from poop.transformers.list import ListTransformer
+
+    alias = ListTransformer.BINDINGS["_poop_list_cls"]
+    assert alias.superclass() == List.superclass()  # ty: ignore[unresolved-attribute]
+
+
+def test_a_subclass_of_a_builtin_still_sees_the_builtin() -> None:
+    # The rung that *is* there: a program's own class descends from the name
+    # it wrote, and `list` is what that name answers to.
+    ns: dict[str, Any] = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class Stack(list):\n    pass\n"
+        "parent = Stack.superclass().name()\n"
+        "grandparent = Stack.superclass().superclass().name()\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert ns["parent"] == Str("list")
+    assert ns["grandparent"] == Str("object")
+
+
+def test_the_root_still_answers_none() -> None:
+    assert Object.superclass() is none

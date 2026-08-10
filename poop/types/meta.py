@@ -340,6 +340,7 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def superclass(cls) -> Any:
+        from poop.types._alias import unalias
         from poop.types.none import none
 
         # Smalltalk answers nil for Object superclass, which is also how the
@@ -347,7 +348,17 @@ class PoopMeta(ABCMeta):
         bases = [base for base in cls.__bases__ if isinstance(base, PoopMeta)]
         if not bases:
             return none
-        return bases[0]
+        first = bases[0]
+        # An alias's one base is the wrapper it stands for, and both are
+        # cloaked under the builtin's name — so climbing from a bare builtin
+        # name met a rung that is not there: `int.superclass()` answered a
+        # class calling itself `int`, which `is_identical(int)` then denied,
+        # and `object` was two steps up instead of one. The pair is one class
+        # as far as a program can tell, which is the decision `__eq__` below
+        # already makes; the ladder says the same thing by stepping over it.
+        if first is unalias(cls):
+            return first.superclass()
+        return first
 
     def __eq__(cls, other: object) -> Boolean:
         """Compare two classes, answering a `Boolean` like every other `==`.
