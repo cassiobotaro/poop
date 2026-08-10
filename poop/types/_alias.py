@@ -57,6 +57,7 @@ from itertools import takewhile
 from typing import Any
 
 from poop.types._cloak import cloak
+from poop.types.exceptions import MIRRORS
 from poop.types.meta import PoopMeta
 
 
@@ -84,6 +85,56 @@ def _own_init(cls: type, alias: type) -> bool:
     return any("__init__" in klass.__dict__ for klass in above)
 
 
+def _fill(made: Any, converted: Any, slots: tuple[str, ...]) -> None:
+    """Write `converted`'s payload into `made`, slot by slot.
+
+    Copied, not shared: a converter is free to answer a value it was handed
+    (`frozenset(fs)` answers `fs`), and two objects sharing one list would be
+    one object wearing two classes.
+    """
+    for slot in slots:
+        setattr(made, slot, copy(getattr(converted, slot)))
+
+
+def _endow(
+    made: Any,
+    cls: type,
+    alias: Any,
+    slots: tuple[str, ...],
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> None:
+    """Give `made` a payload before its own `__init__` runs.
+
+    The `__new__` step Python has and POOP does not. CPython builds the value
+    in `__new__`, from the *constructor's* arguments, before `__init__` is
+    reached, and the two families differ there: `int.__new__` consumes the
+    arguments, so `class N(int)` whose `__init__` ignores them still answers
+    `4` for `N(4.9)`; `list.__new__` ignores them and hands `__init__` an
+    empty list, so `class Pair(list)` with a signature of its own is an
+    ordinary empty list carrying whatever state it set. POOP wrote the payload
+    in `__init__` alone, so a subclass that never passed it up came back with
+    no payload at all, and the first message answered `#_value` — the internal
+    slot name.
+
+    One positional argument and no keywords is the shape every converter
+    takes, so it converts. Otherwise the arguments are the subclass's own and
+    the wrapper's empty value stands in — and when there is none to stand in
+    (an `int` has no empty), the object cannot be built at all, which is what
+    CPython answers there too.
+    """
+    if len(args) == 1 and not kwargs:
+        _fill(made, alias.__dict__["_converter"](*args), slots)
+        return
+    empty = alias.__dict__["_empty"]
+    if empty is None:
+        raise MIRRORS["TypeError"](
+            f"this {cls.__name__} was built without its value — "
+            "a class built on a builtin must pass one up from its constructor"
+        )
+    _fill(made, empty, slots)
+
+
 class _AliasMeta(PoopMeta):
     """Makes a class answer a call the way its converter does.
 
@@ -104,25 +155,68 @@ class _AliasMeta(PoopMeta):
     cannot be rebuilt, so its converter's answer is passed through.
     """
 
+    def __new__(
+        mcls,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        /,
+        **kwargs: Any,
+    ) -> Any:
+        """Build the class, refusing a base that has no value to give.
+
+        `bool` is the one wrapper whose values are singletons with no payload,
+        and CPython refuses it as a base outright (`type 'bool' is not an
+        acceptable base type`). POOP let the class be defined and failed at
+        the first instance, with `Can't instantiate abstract class Flag
+        without an implementation for abstract methods '__bool__', '__str__',
+        …` — a dozen dunders in one sentence, from a program that spelled
+        none. Refusing where CPython refuses says the same thing in POOP's
+        words, and at the line that made the decision.
+        """
+        for base in bases:
+            wrapped = base.__dict__.get("_wrapped")
+            if wrapped is not None and not _payload_slots(wrapped):
+                raise MIRRORS["TypeError"](
+                    f"{base.__name__} cannot be subclassed — "
+                    "its values are the whole class"
+                )
+        return super().__new__(mcls, name, bases, namespace, **kwargs)
+
     def __call__(cls, *args: Any, **kwargs: Any) -> Any:
         if "_converter" in cls.__dict__:
             return cls.__dict__["_converter"](*args, **kwargs)
         alias = _alias_in(cls)
-        if _own_init(cls, alias):
-            return super().__call__(*args, **kwargs)
-        converted = alias.__dict__["_converter"](*args, **kwargs)
+        converter = alias.__dict__["_converter"]
         slots = _payload_slots(alias.__dict__["_wrapped"])
-        if not slots:
-            return converted
+        if _own_init(cls, alias):
+            # The `__new__` step Python has and POOP does not. For an
+            # immutable builtin CPython sets the value in `__new__`, from the
+            # *constructor's* arguments, before `__init__` is reached — so a
+            # subclass whose `__init__` ignores them still comes back working
+            # (`class N(int)` answering 4 for `N(4.9)`). Here the payload is
+            # written by `__init__`, so one that never passes it up left the
+            # object with no payload at all, reporting itself as `#_value`.
+            #
+            # One positional argument and no keywords is the shape every
+            # converter takes — "convert this value". Anything else is the
+            # subclass's own signature (`Tagged(xs, tag)`), which `__init__`
+            # is there to read, and `super().__init__(xs)` fills the payload
+            # from inside it.
+            #
+            # Every wrapper reachable here has a payload: the one that does
+            # not, `Boolean`, cannot be subclassed at all — `__new__` above
+            # refuses it where CPython refuses it.
+            made = object.__new__(cls)
+            _endow(made, cls, alias, slots, args, kwargs)
+            made.__init__(*args, **kwargs)
+            return made
+        converted = converter(*args, **kwargs)
         # `object.__new__`, not `cls.__new__`: the payload is about to be
         # written slot by slot, so the wrapper's own `__init__` must not run
         # over it — and no wrapper defines `__new__`.
         made = object.__new__(cls)
-        for slot in slots:
-            # Copied, not shared: a converter is free to answer a value it
-            # was handed (`frozenset(fs)` answers `fs`), and two objects
-            # sharing one list would be one object wearing two classes.
-            setattr(made, slot, copy(getattr(converted, slot)))
+        _fill(made, converted, slots)
         return made
 
 
@@ -210,12 +304,21 @@ def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> ty
         for slot in _payload_slots(wrapped):
             setattr(self, slot, copy(getattr(converted, slot)))
 
+    try:
+        # The wrapper's empty value, when it has one: `list()`, `dict()`,
+        # `set()`, `tuple()` — the families whose `__new__` hands `__init__`
+        # something to fill. An `int` has no empty, and CPython says so too.
+        empty: Any = wrapped()
+    except TypeError:
+        empty = None
+
     alias = _AliasMeta(
         name,
         (wrapped,),
         {
             "_converter": staticmethod(converter),
             "_wrapped": wrapped,
+            "_empty": empty,
             "__init__": __init__,
             "__slots__": (),
         },
