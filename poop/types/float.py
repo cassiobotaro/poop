@@ -3,6 +3,7 @@ import math
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
+from poop.types._alias import wrapped_instance
 from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
 from poop.types._minmax import _MISSING, _minmax
@@ -83,7 +84,7 @@ class Float(_NumericCompareMixin, Object):
 
     @classmethod
     def fromhex(cls, s: Str) -> Float:
-        return cls(_float.fromhex(_faithful(s)))
+        return wrapped_instance(cls, _float.fromhex(_faithful(s)))
 
     def real(self) -> Float:
         return self

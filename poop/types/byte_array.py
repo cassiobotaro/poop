@@ -2,6 +2,7 @@ from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._affix import affix_needle
+from poop.types._alias import wrapped_instance
 from poop.types._argument import a_bound, text_like
 from poop.types._at import (
     at_index,
@@ -112,6 +113,24 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
                 _opt_str(errors, "strict"),
             )
         )
+
+    @classmethod
+    def fromhex(cls, s: Str) -> ByteArray:
+        """The writable twin of `Bytes.fromhex`, which CPython has too.
+
+        `Bytes` and `ByteArray` mirror each other message for message — `hex`
+        is right above — and this was the one half-pair: `bytes.fromhex(…)`
+        answered while `bytearray.fromhex(…)` answered `bytearray does not
+        understand #fromhex`, for a spelling CPython supports.
+        """
+        try:
+            return wrapped_instance(
+                cls, bytearray.fromhex(text_like(s, "fromhex", "a str"))
+            )
+        except ValueError:
+            raise MIRRORS["ValueError"](
+                f"{s!r} is not hexadecimal — #fromhex reads pairs of hex digits"
+            ) from None
 
     def hex(
         self,

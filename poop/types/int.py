@@ -2,6 +2,7 @@ import builtins as _builtins
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, cast
 
+from poop.types._alias import wrapped_instance
 from poop.types._argument import byte_order
 from poop.types._cloak import cloak
 from poop.types._message import article, binary_refusal
@@ -149,12 +150,13 @@ class Int(_NumericCompareMixin, Object):
     ) -> Int:
         from poop.types._unwrap import _unwrap_bool
 
-        return cls(
+        return wrapped_instance(
+            cls,
             _int.from_bytes(
                 _faithful(b),
                 cast(Literal["little", "big"], byte_order(byteorder)),
                 signed=_unwrap_bool(signed, False),
-            )
+            ),
         )
 
     def __abs__(self) -> Int:

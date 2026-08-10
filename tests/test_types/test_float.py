@@ -416,3 +416,12 @@ def test_pow_takes_a_modulus_slot_and_refuses_it_as_an_operation() -> None:
 def test_an_absent_modulus_still_computes() -> None:
     assert Float(2.0).pow(Int(3)) == Float(8.0)
     assert Float(2.0).pow(Int(3), none) == Float(8.0)
+
+
+def test_fromhex_under_the_bare_builtin_name() -> None:
+    # The third of the three: `cannot convert float to float`.
+    from poop.transformers.float import FloatTransformer
+
+    alias = FloatTransformer.BINDINGS["_poop_float_cls"]
+    assert alias.fromhex(Str("0x1.8p+1")) == Float(3.0)  # ty: ignore[unresolved-attribute]
+    assert Float(1.0).fromhex(Str("0x1.8p+1")) == Float(3.0)
