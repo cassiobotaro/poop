@@ -41,8 +41,32 @@ def test_accepted_error_handlers_reach_the_codec(handler: str, expected: bytes) 
 
 
 def test_strict_is_the_default_handler() -> None:
-    with pytest.raises(UnicodeEncodeError):
+    # A ValueError, not a UnicodeEncodeError: `UnicodeError` is a ValueError
+    # in CPython's own tree, and the Unicode* family is outside the mirrored
+    # hierarchy — so a handler was told `ValueError` while the uncaught report
+    # printed `UnicodeEncodeError`, one failure under two names.
+    with pytest.raises(ValueError, match=r"^ascii cannot encode 'é' at position 0$"):
         Str("é").encode(Str("ascii"))
+
+
+def test_a_failed_encode_does_not_advertise_a_codec() -> None:
+    # `'ascii' codec can't encode character '\xe9' in position 1` sends the
+    # reader to a module POOP has no `import` to reach — the whole reason this
+    # file names its own surface.
+    with pytest.raises(ValueError, match=r"^ascii cannot encode 'é' at position 1$"):
+        Str("héllo").encode(Str("ascii"))
+
+
+def test_a_failed_decode_names_the_byte_it_could_not_read() -> None:
+    with pytest.raises(
+        ValueError, match=r"^utf-8 cannot decode byte 0xff at position 0$"
+    ):
+        Bytes(b"\xff\xfe").decode(Str("utf-8"))
+
+
+def test_a_failed_decode_from_a_byte_array_reads_the_same() -> None:
+    with pytest.raises(ValueError, match="utf-8 cannot decode byte 0xff at position 0"):
+        ByteArray(bytearray(b"\xff")).decode(Str("utf-8"))
 
 
 def test_an_unknown_encoding_does_not_point_at_the_codecs_module() -> None:

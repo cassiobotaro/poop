@@ -4,8 +4,14 @@
 native CPython class, the last raw primitive in POOP's own substitutes for two
 forbidden constructs. `INFECTIONS.md` justified it with "mirroring Python's full
 hierarchy (~100+ classes) is impractical"; Python 3.14 has 71 builtin
-exceptions, and a language with no I/O and no codecs cannot reach the `OSError`
-subtree or the `Unicode*` family. What it can reach is the table below.
+exceptions, and a language with no files and no modules cannot reach the
+`OSError` subtree. What it can reach is the table below.
+
+The `Unicode*` family is reachable — `encode`/`decode` can fail on the text
+they are handed — and is deliberately *not* mirrored: `_codec.py` rewords both
+failures as a `ValueError`, which is what `UnicodeError` is in CPython's tree,
+rather than reproducing a five-argument constructor whose `__str__` composes
+the `codec` sentence that module exists to keep out.
 
 No translation layer is needed, which is what makes this cheap: `Try._execute()`
 catches `except BaseException` and then matches with `isinstance()` — POOP's own
@@ -89,6 +95,13 @@ _HIERARCHY: tuple[tuple[type[BaseException], str | None], ...] = (
     (RecursionError, "RuntimeError"),
     (AssertionError, "Exception"),
     (StopIteration, "Exception"),
+    # `Str.input` is the one message that reads from outside the program, and
+    # end-of-input is the one failure it has. Without a mirror a program could
+    # not name what it was catching: `except_(EOFError, …)` answered `name
+    # 'EOFError' is not defined`, and `except_(Exception, …)` reported the
+    # kind as `Exception`, so the only I/O POOP has was also the only failure
+    # it could not handle by name.
+    (EOFError, "Exception"),
 )
 
 # Annotated as exception classes, not bare `type`: every POOP diagnostic is

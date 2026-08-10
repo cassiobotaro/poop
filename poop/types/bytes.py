@@ -5,7 +5,7 @@ from poop.types._affix import affix_needle
 from poop.types._argument import a_bound, text_like
 from poop.types._at import at_index
 from poop.types._cloak import cloak
-from poop.types._codec import encoding_name, handler_name
+from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _is_absent, _unwrap
@@ -85,9 +85,10 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.string import Str
 
         return Str(
-            self._value.decode(
-                encoding_name(_opt_str(encoding, "utf-8"), "decode"),
-                handler_name(_opt_str(errors, "strict"), "decode"),
+            decoded(
+                self._value,
+                _opt_str(encoding, "utf-8"),
+                _opt_str(errors, "strict"),
             )
         )
 

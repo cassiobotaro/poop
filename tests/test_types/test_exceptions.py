@@ -232,3 +232,25 @@ def test_raise_carries_keyword_arguments() -> None:
         "    MyError, lambda e: e.message()\n"
         ").run()\n"
     )
+
+
+def test_the_end_of_input_has_a_mirror() -> None:
+    """`Str.input` is the one message that reads from outside the program.
+
+    The reachability argument in this module's docstring was one short: end of
+    input needs no files and no modules, only a pipe, and a program could not
+    name what it was catching.
+    """
+    assert "EOFError" in MIRRORS
+    assert isinstance(EOFError("x"), MIRRORS["EOFError"])
+    assert not isinstance(ValueError("x"), MIRRORS["EOFError"])
+    assert MIRRORS["EOFError"].name() == Str("EOFError")  # ty: ignore[unresolved-attribute]
+
+
+def test_the_unicode_family_is_answered_by_value_error_instead() -> None:
+    # Deliberately unmirrored: `UnicodeError` is a ValueError in CPython's own
+    # tree, and mirroring it would mean reproducing a five-argument
+    # constructor whose __str__ composes the `codec` sentence `_codec.py`
+    # exists to keep out.
+    assert "UnicodeEncodeError" not in MIRRORS
+    assert "UnicodeDecodeError" not in MIRRORS

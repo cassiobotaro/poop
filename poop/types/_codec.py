@@ -83,3 +83,43 @@ def handler_name(name: Any, selector: str) -> str:
     raise MIRRORS["ValueError"](
         f"unknown error handler {raw!r} — POOP handles {_listed(_HANDLERS)}"
     )
+
+
+def _refusal(exc: UnicodeError, encoding: str, verb: str) -> Exception:
+    """POOP's sentence for text the named encoding cannot carry.
+
+    CPython answers `'ascii' codec can't encode character '\\xe9' in position
+    1: ordinal not in range(128)`, under a class no POOP program can spell
+    (`UnicodeEncodeError`). Both halves are the surface this module exists to
+    close: `codec` sends the reader to a module POOP cannot import, and the
+    class is outside the mirrored hierarchy, so a handler was told the kind
+    was `ValueError` while the uncaught report printed `UnicodeEncodeError` —
+    one failure under two names.
+
+    A `ValueError`, which is what `UnicodeError` is in CPython's tree too, so
+    `except_(ValueError, …)` catches exactly what it caught before.
+    """
+    start = getattr(exc, "start", 0)
+    subject = getattr(exc, "object", "")[start : start + 1]
+    shown = f"byte 0x{subject[0]:02x}" if isinstance(subject, bytes) else repr(subject)
+    return MIRRORS["ValueError"](
+        f"{encoding} cannot {verb} {shown} at position {start}"
+    )
+
+
+def encoded(text: str, encoding: Any, errors: Any) -> bytes:
+    """`text` as bytes, with both arguments and the failure worded by POOP."""
+    name = encoding_name(encoding, "encode")
+    try:
+        return text.encode(name, handler_name(errors, "encode"))
+    except UnicodeEncodeError as exc:
+        raise _refusal(exc, name, "encode") from None
+
+
+def decoded(data: bytes | bytearray, encoding: Any, errors: Any) -> str:
+    """`data` as text, with both arguments and the failure worded by POOP."""
+    name = encoding_name(encoding, "decode")
+    try:
+        return data.decode(name, handler_name(errors, "decode"))
+    except UnicodeDecodeError as exc:
+        raise _refusal(exc, name, "decode") from None

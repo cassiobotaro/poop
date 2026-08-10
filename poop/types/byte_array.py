@@ -10,7 +10,7 @@ from poop.types._at import (
     nothing_to_remove,
 )
 from poop.types._cloak import cloak
-from poop.types._codec import encoding_name, handler_name
+from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article
 from poop.types._repeat import _repeat_count
@@ -106,9 +106,10 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         from poop.types._unwrap import _opt_str
 
         return Str(
-            self._value.decode(
-                encoding_name(_opt_str(encoding, "utf-8"), "decode"),
-                handler_name(_opt_str(errors, "strict"), "decode"),
+            decoded(
+                self._value,
+                _opt_str(encoding, "utf-8"),
+                _opt_str(errors, "strict"),
             )
         )
 

@@ -7,7 +7,7 @@ from poop.types._affix import affix_needle
 from poop.types._argument import a_bound, text_like
 from poop.types._at import at_index
 from poop.types._cloak import cloak
-from poop.types._codec import encoding_name, handler_name
+from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
@@ -119,7 +119,14 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
             ) from None
 
     def input(self) -> Str:
-        return Str(builtins.input(self._value))
+        try:
+            return Str(builtins.input(self._value))
+        except EOFError:
+            # `EOF when reading a line` names CPython's own end-of-file
+            # condition and the *line* the reader never asked for. A pipe
+            # rather than a terminal is enough to reach it — it is what
+            # `examples/basics/greet.py` answered when its stdin was closed.
+            raise MIRRORS["EOFError"]("there is no more input to read") from None
 
     def at(self, index: Index) -> Str:
         return Str(at_index(self._value, index, self))
@@ -376,9 +383,10 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.bytes import Bytes
 
         return Bytes(
-            self._value.encode(
-                encoding_name(_opt_str(encoding, "utf-8"), "encode"),
-                handler_name(_opt_str(errors, "strict"), "encode"),
+            encoded(
+                self._value,
+                _opt_str(encoding, "utf-8"),
+                _opt_str(errors, "strict"),
             )
         )
 
