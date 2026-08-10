@@ -2,7 +2,123 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-*Empty — nothing open.*
+### 27. A block installed on a class is not bound to its receiver
+
+`set_attr` on a class is sanctioned — item 2 refused it only for POOP's own
+builtins, precisely so a program can extend the classes it defines — and the
+one thing a reader would reach for it with does not work:
+
+```
+class C(Object): ...
+C.set_attr("greet", lambda self: "hi")
+C().greet()      # TypeError: block expects 1 argument, got 0
+```
+
+The receiver is never passed. A *zero*-argument block works
+(`C.set_attr("greet", lambda: "hi")` answers `hi`), which says what is really
+happening: the block is stored as a plain class attribute, and reading it
+through an instance hands it back untouched. The refusal is the worst part —
+the reader wrote a one-argument block and is told it got none.
+
+Python's own rule is the one POOP wants here: a function found on the *class*
+binds to the instance, a function found on the *instance* does not
+(`C.greet = lambda self: 'hi'` then `C().greet()` answers `hi`; assigning the
+same lambda to `c.greet` does not bind). POOP already agrees with the second
+half by accident — `c.set_attr("greet", lambda: "hi")` works — and disagrees
+with the first.
+
+**Fix.** Give `Block` a `__get__` answering a block bound to the receiver, which
+makes it a *non-data* descriptor and therefore reproduces Python's split
+exactly: consulted for a class attribute, skipped for an instance one, no
+special case needed. `Block` already wraps its lambda and already composes the
+arity refusal, so the binding has one place to live. The half that works today
+must keep working — a `Block` held as *state* (`self.callback = lambda: …`) is
+data, not a method, and instance lookup never reaches the descriptor.
+
+---
+
+### 28. `Boolean` answers `to_bytes` and not `from_bytes`
+
+`INFECTIONS.md` states the rule for this receiver: "A `Boolean` answers the
+int-side messages too, not only the operators", and lists the family that was
+re-supplied by hand because `bool` is an `int` in Python and POOP keeps them as
+separate classes. One member of that family is missing, and it is half of a
+pair whose other half is there:
+
+```
+True.to_bytes(1, "big")          # b'\x01'
+True.from_bytes(b"\x01", "big")  # bool does not understand #from_bytes —
+                                 #   did you mean #to_bytes?
+```
+
+CPython answers both (`bool.from_bytes` is `int.from_bytes`, inherited). The
+hint makes it sharper than a plain gap: it points at the other half of the same
+pair, so the reader is told the message they did not want is the one that
+exists.
+
+**Fix.** Delegate `from_bytes` through `_as_int`, as the rest of the int-side
+family already does — it is a classmethod, so it answers an `Int`, which is
+what CPython answers too (`bool.from_bytes(b"\x01", "big")` is `1`, not
+`True`). The mechanical sweep that would have caught this is worth having as
+well: for each wrapper, the public messages CPython's counterpart answers and
+POOP's does not, with the deliberate omissions listed. It is how this was
+found, and it reported exactly one other gap worth acting on (item 30).
+
+---
+
+### 29. `:explain subscript` teaches only half of what the validator says
+
+`repl.py` explains a construct by running a snippet through the validators, and
+says why out loud: "the explanation is the validator's own message, so the two
+can never drift apart". They drifted anyway — not in wording, in coverage.
+Item 18 gave `no_subscript` a second message for a *store*, and the snippet is
+`x[0]`, a load:
+
+```
+>>> :explain subscript
+subscript obj[key] is forbidden — use obj.at(key) instead
+```
+
+So the reader who wrote `xs[0] = 9`, was told to use `obj.at_put(key, value)`,
+and typed `:explain subscript` to learn more is shown the *other* substitute —
+the reading one, which is what item 18 exists to stop that reader from being
+handed.
+
+**Fix.** The snippet becomes both spellings (`x[0]` and `x[0] = 1`), and the
+slice pair with them. `validate_all` already collects every error and
+`_meta_explain` already prints them all, so a two-line snippet reports both
+messages with no other change — verified. A test that each topic's snippet
+reports *every* message its validator can compose would keep the coverage
+honest, in the shape `test_doc_counts.py` uses for the README's numbers.
+
+---
+
+### 30. `MemoryView` is the one sequence that cannot be asked where
+
+Every sequence in the family answers `index` and `count` — `List`, `Tuple`,
+`Range`, `Bytes`, `ByteArray` — and `MemoryView` answers neither, though it
+answers `at`, `len`, `slice`, `iter`, `includes` and `hex`, and CPython's
+`memoryview` has had both since 3.10:
+
+```
+m = memoryview(b"aba")
+m.includes(98)   # True
+m.index(98)      # memoryview does not understand #index
+```
+
+`includes` is the substitute `no_in` names, so a program that has just been
+told the element is there has no way to ask where. The gap is inside POOP
+rather than against CPython: the surface criterion ("a message earns its place
+when it substitutes a forbidden construct") does not admit `index` on its own,
+but it admitted it on five siblings, and a reader moving between them meets one
+receiver that answers differently.
+
+**Fix.** Add both, delegating to the wrapped `memoryview` and routing the
+failure through `_at.no_element_equal_to`, as `List.index` does — the sentence
+is already written. The rest of what the surface sweep reported for
+`MemoryView` (`cast`, `strides`, `suboffsets`, `nbytes`, `release`, …) is the
+buffer protocol and stays out: it describes memory layout, which is the one
+thing POOP has no vocabulary for.
 
 ---
 
