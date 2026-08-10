@@ -49,12 +49,19 @@ class class_side:  # noqa: N801
 
     Instances are unaffected: instance lookup never consults the metaclass, so
     `Foo().print()` still finds `Object.print`.
+
+    `refuses` marks the descriptors that answer nothing but a refusal, so
+    `__dir__` below can leave them out. A flag rather than a list of names in
+    this module, for the reason `_EXEMPT` in `test_mirrored_raises.py` gives:
+    a list has to be kept in step by hand, and a new refusal added without
+    touching it would be advertised as a message.
     """
 
-    __slots__ = ("_fn", "_name")
+    __slots__ = ("_fn", "_name", "refuses")
 
-    def __init__(self, fn: FunctionType) -> None:
+    def __init__(self, fn: FunctionType, *, refuses: bool = False) -> None:
         self._fn = fn
+        self.refuses = refuses
         # Filled by __set_name__, which Python calls for every descriptor in a
         # class body — the only place this decorator is ever used.
         self._name = ""
@@ -90,6 +97,17 @@ class class_side:  # noqa: N801
         raise MIRRORS["AttributeError"](
             f"#{self._name} is answered by every class — it cannot be rebound"
         )
+
+
+def class_side_refusal(fn: FunctionType) -> class_side:
+    """A class-side descriptor that only ever refuses.
+
+    The decorator form of `class_side(fn, refuses=True)` — `@class_side(...)`
+    cannot spell it, since the decorator *is* the descriptor's constructor.
+    Reads as its own word at the call site, which is the point: the reader of
+    `@class_side_refusal` knows before the body what the method answers.
+    """
+    return class_side(fn, refuses=True)
 
 
 def _reject_dunder(name: str) -> None:
@@ -204,7 +222,7 @@ class PoopMeta(ABCMeta):
             return none
         return bases[0]
 
-    @class_side
+    @class_side_refusal
     def mro(cls) -> Any:
         """Refuse `type.mro` — `superclass` is the question POOP answers.
 
@@ -224,7 +242,7 @@ class PoopMeta(ABCMeta):
             return type.mro(cls)
         _refuse_native(cls, "mro", "superclass")
 
-    @class_side
+    @class_side_refusal
     def register(cls, subclass: Any) -> Any:
         """Refuse `ABCMeta.register` — inheritance is how POOP says "is a".
 
@@ -234,7 +252,7 @@ class PoopMeta(ABCMeta):
         """
         _refuse_native(cls, "register", "is_subclass")
 
-    @class_side
+    @class_side_refusal
     def raise_(cls, *args: Any, **kwargs: Any) -> Never:
         """Refuse `raise_` on a class that is not an error.
 
@@ -317,16 +335,51 @@ class PoopMeta(ABCMeta):
         escaped = cls.__name__.encode("ascii", "backslashreplace")
         return Str(escaped.decode("ascii"))
 
+    def __dir__(cls) -> list[str]:
+        """Merge the class side into `dir(cls)`, minus the refusals.
+
+        CPython's `type.__dir__` walks the class's *own* MRO only, so none of
+        the messages that live on the metaclass appeared in any discovery
+        surface: `Foo.dir()` answered no `name` and no `superclass`, and
+        `ValueError.dir()` no `raise_` — a documented protocol reachable only
+        by typing it. The other class-side messages were already listed, but
+        for the instance-side reason: `Object` happens to spell them the same.
+
+        Answered here rather than in `dir` below, because `dir` is not the only
+        reader: `:methods`, the REPL completer and the near-miss hint all call
+        Python's `dir`, and each would have needed its own copy of the merge.
+
+        A refusing descriptor is left out — offering a name that answers "that
+        is Python's, use #superclass" teaches worse than not offering it at
+        all. The merge only *adds*, so `class_` and `class_name` stay listed
+        even though the class side refuses them: `Object` answers both, and an
+        instance of `cls` is what the rest of this list describes.
+        """
+        answers: dict[str, bool] = {}
+        for metaclass in type(cls).__mro__:
+            for name, attr in vars(metaclass).items():
+                if isinstance(attr, class_side):
+                    # First in the metaclass MRO wins, as attribute lookup
+                    # itself resolves: `PoopExcMeta.raise_` is a message, and
+                    # `PoopMeta.raise_` below it is the refusing twin.
+                    answers.setdefault(name, not attr.refuses)
+        merged = (name for name, answered in answers.items() if answered)
+        # A set: the builtin `dir` sorts what it is handed but does not dedupe
+        # — `type.__dir__` does that internally, and this merge reaches past
+        # it, so every name `Object` also spells (`print`, `hash`, …) came back
+        # twice and `:methods` counted 51 messages on a class that has 30.
+        return sorted({*super().__dir__(), *merged})
+
     @class_side
     def dir(cls) -> List:
+        from poop.types._selectors import is_message
         from poop.types.list import List
         from poop.types.string import Str
 
         # Mirror `Object.dir`: hide every `_`-prefixed name so the class side
-        # never leaks dunders or the mangled `_poop_*` internals.
-        return List(
-            *(Str(name) for name in builtins_dir(cls) if not name.startswith("_"))
-        )
+        # never leaks dunders or the mangled `_poop_*` internals. `is_message`
+        # is the one copy of that rule, shared with `Object.dir` and the REPL.
+        return List(*(Str(name) for name in builtins_dir(cls) if is_message(name)))
 
     @class_side
     def format(cls, spec: Str | NoneClass | None = None) -> Str:
@@ -335,7 +388,7 @@ class PoopMeta(ABCMeta):
 
         return Str(builtins_format(cls.__name__, _unwrap(spec, "")))
 
-    @class_side
+    @class_side_refusal
     def class_(cls) -> Any:
         # Smalltalk answers the metaclass here — `Foo class` is `Foo class`.
         # POOP has none to answer with: `PoopMeta` is not itself a POOP class
@@ -345,7 +398,7 @@ class PoopMeta(ABCMeta):
         # `class_name` mean one thing on an instance and another on a class.
         _refuse(cls, "class_")
 
-    @class_side
+    @class_side_refusal
     def class_name(cls) -> Any:
         _refuse(cls, "class_name")
 

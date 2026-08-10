@@ -6,9 +6,10 @@ import pytest
 from poop.errors import ExecutionError, ValidationError
 from poop.interpreter import Interpreter
 from poop.types.boolean import Boolean, false, true
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.list import List
-from poop.types.meta import PoopMeta
+from poop.types.meta import PoopMeta, class_side
 from poop.types.none import none
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
@@ -178,6 +179,51 @@ def test_a_class_answers_dir_as_poop_strings() -> None:
     names = _Dog.dir()
     assert isinstance(names, List)
     assert all(isinstance(n, Str) for n in names._items)
+
+
+def _dir(cls: Any) -> list[str]:
+    """The messages `cls` lists, as plain strings.
+
+    `Any`, not `PoopMeta`: `MIRRORS` is a `dict[str, type[Exception]]`, and a
+    class object cannot be narrowed to the metaclass that answers `dir`.
+    """
+    return [str(name) for name in cls.dir()._items]
+
+
+def test_a_class_lists_every_class_side_message_it_answers() -> None:
+    # `type.__dir__` walks the class's own MRO only, so the whole class side
+    # was reachable by typing and invisible to every discovery surface.
+    answered = [
+        name
+        for name, attr in vars(PoopMeta).items()
+        if isinstance(attr, class_side) and not attr.refuses
+    ]
+    listed = _dir(_Dog)
+    assert set(answered) <= set(listed)
+    # The two the merge exists for: no instance-side method spells either.
+    assert "name" in listed
+    assert "superclass" in listed
+
+
+def test_a_class_does_not_list_the_messages_it_refuses() -> None:
+    # Offering `mro` would name a message that answers "that is Python's".
+    listed = _dir(_Dog)
+    assert "mro" not in listed
+    assert "register" not in listed
+
+
+def test_a_class_lists_each_message_once() -> None:
+    # The builtin `dir` sorts what `__dir__` answers but does not dedupe, so
+    # every name `Object` also spells came back twice.
+    listed = _dir(_Dog)
+    assert len(listed) == len(set(listed))
+
+
+def test_only_an_exception_class_lists_raise() -> None:
+    # `raise_` is a message on `PoopExcMeta` and a refusal on `PoopMeta`, so
+    # the merge has to resolve it per receiver, nearest metaclass first.
+    assert "raise_" in _dir(MIRRORS["ValueError"])
+    assert "raise_" not in _dir(_Dog)
 
 
 def test_a_class_answers_format() -> None:
