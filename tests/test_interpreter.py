@@ -118,6 +118,47 @@ def test_slice_subscript_is_forbidden() -> None:
         Interpreter().run_source("x = [1, 2, 3]\ny = x[1:2]")
 
 
+# --- a store is refused with the message that writes ---
+#
+# Both messages named a reader whatever the context, so `xs[0] = 9` was
+# answered with `use obj.at(key)`: advice that reads where the program wrote.
+
+
+def test_a_subscript_store_names_at_put() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source("x = [1, 2, 3]\nx[0] = 9")
+    assert "obj.at_put(key, value)" in str(exc_info.value)
+
+
+def test_a_dict_store_names_at_put_too() -> None:
+    # The receiver that had the substitute all along, and was never told.
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source('d = {}\nd["a"] = 1')
+    assert "obj.at_put(key, value)" in str(exc_info.value)
+
+
+def test_an_augmented_store_is_a_store() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source("x = [1, 2, 3]\nx[0] += 1")
+    assert "obj.at_put(key, value)" in str(exc_info.value)
+
+
+def test_a_slice_store_says_what_can_be_done_instead() -> None:
+    # There is no whole-slice write in POOP, so this one may not point at
+    # `slice`, which only reads.
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source("x = [1, 2, 3]\nx[0:2] = [9]")
+    message = str(exc_info.value)
+    assert "slice assignment" in message
+    assert "obj.at_put(index, value)" in message
+
+
+def test_a_load_still_names_the_reader() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Interpreter().run_source("x = [1, 2, 3]\ny = x[1:2]")
+    assert "obj.slice(start, stop)" in str(exc_info.value)
+
+
 def test_async_method_inside_class_raises() -> None:
     with pytest.raises(ValidationError) as exc_info:
         Interpreter().run_source(

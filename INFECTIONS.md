@@ -700,8 +700,12 @@ Four receivers answered nothing at all, so the ban had no substitute on them: `B
 
 | AST node | Condition | Reason | Substitute |
 |---|---|---|---|
-| `ast.Subscript` | no `ast.Slice` involved | `obj[key]` looks like an operator | `obj.at(key)` |
-| `ast.Subscript` | a bare `ast.Slice` or an `ast.Tuple` containing one (extended slices like `obj[i:j, k:l]`) | `obj[1:3]` looks like an operator | `obj.slice(start, stop)` |
+| `ast.Subscript` | no `ast.Slice` involved, `ast.Load` | `obj[key]` looks like an operator | `obj.at(key)` |
+| `ast.Subscript` | no `ast.Slice` involved, `ast.Store` | `obj[key] = value` looks like an operator | `obj.at_put(key, value)` |
+| `ast.Subscript` | a bare `ast.Slice` or an `ast.Tuple` containing one (extended slices like `obj[i:j, k:l]`), `ast.Load` | `obj[1:3]` looks like an operator | `obj.slice(start, stop)` |
+| `ast.Subscript` | a slice under `ast.Store` | `obj[1:3] = xs` looks like an operator | `obj.at_put(index, value)`, one element at a time |
+
+**The substitute follows the context, not just the node.** Both messages named a *reader* whatever the program was doing, so `xs[0] = 9` and `d["a"] = 1` were answered with "use obj.at(key) instead" — advice that reads where the program wrote, which sends a reader to a value or a `KeyError` for a program that was trying to store. The context is on the node (`ast.Store`, which also covers `xs[0] += 1`), and `at_put` is the message it wants; `List.at_put` was added in the same breath, since `Dict` and `ByteArray` answered it and the collection between them did not, so this validator was refusing a store with no substitute to name at all — the thing `CONTRIBUTING.md` says a validator may never do. A slice *write* still has no whole-slice substitute, so that branch says what can be done (element at a time) rather than pointing at `slice`, which only reads.
 
 **`at`'s own failures had to stop describing a subscript.** Every wrapper handed the index straight to CPython, so the message named the construct this validator bans: `string index out of range`, `list indices must be integers or slices, not str`, and — for a missing key — the bare `'b'`, a repr with nothing to say a lookup failed. `poop/types/_at.py` owns the wording for all nine wrappers that answer `at`, since writing it out nine times is how the next one gets forgotten: `str has no element at 10 — it has 3 elements`, `list.at expects an int index, got a str`, `dict has no key 'b'`. A `MappingProxy` names itself rather than the `Dict` behind it. An unhashable key is left to CPython on purpose — that failure is about the key, not the lookup, and `cannot use 'list' as a dict key` is already in POOP's vocabulary. Composing a sentence for `KeyError` also meant giving the mirrors `Exception.__str__`: `KeyError.__str__` answers `repr(args[0])`, so a POOP sentence came back wrapped in Python's quotes.
 
