@@ -57,6 +57,22 @@ _FAILING = [
     'b"ab".ord()',
     '"ab".ord()',
     "[1, 2].remove(9)",
+    # `del_attr` was the one member of the getattr-substitute family with no
+    # refusal of its own, so CPython named `__dict__` — the dunder
+    # `_reject_dunder` will not even let a program spell.
+    '"abc".del_attr("zzz")',
+    "[1].del_attr('append')",
+    # `has_next` exists so exhaustion can be *asked* about; it answered
+    # `dictionary changed size during iteration`, which `next` reworded.
+    'd = {"a": 1}\nit = d.iter()\nit.next()\nd.at_put("b", 2)\nit.has_next()',
+    # The `r`-prefixed searches were left on `_faithful`, so the same mistake
+    # one letter apart answered in two vocabularies.
+    '"abc".rfind(lambda c: c)',
+    '"abc".rindex(lambda c: c)',
+    # `pow() 3rd argument cannot be 0` names the builtin `no_pow` forbids; the
+    # float form answered CPython's *signature* instead of the operation.
+    "(2).pow(3, 0)",
+    "(2.0).pow(3, 5)",
     # The six removals: `popitem()`, `pop from …` and `bytearray` are exactly
     # what this sweep is for, and three answered a bare repr with no sentence.
     '{"a": 1}.pop("b")',
@@ -225,3 +241,139 @@ def test_no_poop_authored_message_names_a_forbidden_construct(
     assert named == [], (
         f"{path.relative_to(_ROOT)}:{lineno} composes {message!r}, naming {named}"
     )
+
+
+# --- the mechanical half: every message, sent wrong ---
+#
+# `_FAILING` above is opt-in *by program*, which its own docstring calls the
+# weak half ("a leak survives simply by not being on it"). Items 3, 5, 6, 7 and
+# 8 of the backlog were each found by writing one more program by hand. This
+# sweeps instead: every public message on every wrapper, called with
+# wrong-typed arguments, checked with the same patterns. It found 47 distinct
+# leaks across 114 receiver/message sites the day it was written, and it keeps
+# finding the next one without anyone remembering to add a program.
+
+_SAMPLES: dict[str, object] = {}
+
+
+def _receivers() -> dict[str, object]:
+    """One live value per wrapper, built the way a program would."""
+    if _SAMPLES:
+        return _SAMPLES
+    from poop.types.boolean import true
+    from poop.types.byte_array import ByteArray
+    from poop.types.bytes import Bytes
+    from poop.types.complex import Complex
+    from poop.types.dict import Dict
+    from poop.types.float import Float
+    from poop.types.frozen_set import FrozenSet
+    from poop.types.int import Int
+    from poop.types.list import List
+    from poop.types.none import none
+    from poop.types.range import Range
+    from poop.types.set import Set
+    from poop.types.slice import Slice
+    from poop.types.string import Str
+    from poop.types.tuple import Tuple
+
+    mapping = Dict()
+    mapping.at_put(Str("a"), Int(1))
+    _SAMPLES.update(
+        {
+            "int": Int(5),
+            "float": Float(2.5),
+            "complex": Complex(complex(1, 2)),
+            "bool": true,
+            "str": Str("abc"),
+            "bytes": Bytes(b"ab"),
+            "bytearray": ByteArray(bytearray(b"ab")),
+            "list": List(Int(1), Int(2)),
+            "tuple": Tuple(Int(1), Int(2)),
+            "dict": mapping,
+            "set": Set(Int(1)),
+            "frozenset": FrozenSet(Int(1)),
+            "range": Range(Int(0), Int(3)),
+            "slice": Slice(Int(0), Int(2)),
+            "none": none,
+        }
+    )
+    return _SAMPLES
+
+
+def _wrong_arguments() -> list[object]:
+    from poop.types.block import Block
+    from poop.types.boolean import true
+    from poop.types.dict import Dict
+    from poop.types.int import Int
+    from poop.types.list import List
+    from poop.types.none import none
+    from poop.types.string import Str
+
+    return [Str("zz"), Int(3), List(Int(1)), Block(lambda x: x), true, none, Dict()]
+
+
+# CPython's wrong-arity report is the one shape deliberately left to it:
+# `_cloak`'s docstring says so, and it only renames the callee. Everything
+# else is POOP's to word.
+_ARITY = re.compile(
+    r"(takes|missing|got) .*(positional argument|argument)|"
+    r"takes no arguments|"
+    r"expected \d+ arguments"
+)
+
+# Messages that must not be *sent* by the sweep: they block, exit, or mutate
+# the shared sample in a way later cases would read.
+_UNSENDABLE = frozenset(
+    {"input", "print", "does_not_understand", "while_true", "while_false"}
+)
+
+
+def _sweep_failures() -> list[tuple[str, str, str]]:
+    """(receiver, message, text) for every leak the wrong-argument sweep finds."""
+    from poop.types._message import poop_message
+    from poop.types._selectors import is_message
+
+    found: dict[tuple[str, str], tuple[str, str, str]] = {}
+    for label, receiver in _receivers().items():
+        for name in sorted(dir(receiver)):
+            if not is_message(name) or name in _UNSENDABLE:
+                continue
+            message = getattr(receiver, name, None)
+            if not callable(message):
+                continue
+            for bad in _wrong_arguments():
+                for args in ((bad,), (bad, bad)):
+                    try:
+                        message(*args)
+                    except BaseException as exc:  # noqa: BLE001
+                        text = poop_message(exc)
+                        if _ARITY.search(text) or any(f in text for f in _EXEMPT):
+                            continue
+                        named = [
+                            construct
+                            for construct, pattern in _FORBIDDEN.items()
+                            if pattern.search(text)
+                        ]
+                        if named:
+                            found.setdefault((label, name), (label, name, text))
+    return sorted(found.values())
+
+
+def test_no_message_leaks_pythons_wording_when_sent_wrong() -> None:
+    leaks = _sweep_failures()
+    assert leaks == [], "\n".join(
+        f"{label}.{name} -> {text!r}" for label, name, text in leaks
+    )
+
+
+def test_the_sweep_actually_sends_messages() -> None:
+    """A sweep that stopped reaching the wrappers would report a clean run."""
+    from poop.types._selectors import is_message
+
+    sendable = sum(
+        1
+        for receiver in _receivers().values()
+        for name in dir(receiver)
+        if is_message(name) and name not in _UNSENDABLE
+    )
+    assert sendable > 500
