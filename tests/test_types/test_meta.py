@@ -512,3 +512,114 @@ def test_identity_still_separates_the_wrapper_from_its_alias() -> None:
 def test_a_poop_class_is_still_hashable() -> None:
     # Defining `__eq__` drops `__hash__`, and `NATIVE_TO_POOP` keys on classes.
     assert len({_Dog, _Animal, _Dog}) == 2
+
+
+# --- the protocol slots a program is allowed to define ---
+#
+# A POOP method can only return POOP values, and CPython reads these slots
+# itself and demands a native — so every one of them was unsatisfiable from
+# inside the language, with a sentence that contradicted itself
+# (`__str__ returned non-string (type str)`).
+
+
+def _run(source: str) -> None:
+    Interpreter().run_source(source)
+
+
+def _printed(source: str, capsys: pytest.CaptureFixture[str]) -> str:
+    _run(source)
+    return capsys.readouterr().out.strip()
+
+
+def test_a_user_class_can_define_how_it_prints(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __str__(self):\n"
+        '        return "P!"\n'
+        "P().print()\n"
+        "str(P()).print()\n"
+    )
+    assert _printed(source, capsys) == "P!\nP!"
+
+
+def test_a_user_class_can_define_its_repr(capsys: pytest.CaptureFixture[str]) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __repr__(self):\n"
+        '        return "<P>"\n'
+        "P().repr().print()\n"
+    )
+    assert _printed(source, capsys) == "<P>"
+
+
+def test_a_user_class_can_define_its_truth(capsys: pytest.CaptureFixture[str]) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __bool__(self):\n"
+        "        return False\n"
+        "P().not_().print()\n"
+    )
+    assert _printed(source, capsys) == "True"
+
+
+def test_a_user_class_can_define_its_hash(capsys: pytest.CaptureFixture[str]) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __hash__(self):\n"
+        "        return 7\n"
+        "{P(), P()}.len().print()\n"
+    )
+    # Two instances hashing alike still differ by identity, as in Python.
+    assert _printed(source, capsys) == "2"
+
+
+def test_a_declared_length_answers_the_len_message(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The quiet member of the family: the slot raised nothing and answered
+    # nothing, because `len` is how POOP asks and nothing supplied it.
+    source = (
+        "class P(Object):\n"
+        "    def __len__(self):\n"
+        "        return 2\n"
+        "P().len().print()\n"
+    )
+    assert _printed(source, capsys) == "2"
+
+
+def test_a_class_that_defines_len_itself_keeps_it(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __len__(self):\n"
+        "        return 2\n"
+        "    def len(self):\n"
+        "        return 99\n"
+        "P().len().print()\n"
+    )
+    assert _printed(source, capsys) == "99"
+
+
+def test_a_wrong_answer_is_refused_by_role_not_by_slot() -> None:
+    # A message spelling `__str__` would name the construct
+    # `no_dunder_attribute` bans — and CPython's sentence called `str` the
+    # thing that is not a `str`.
+    with pytest.raises(ExecutionError, match=r"P's text must be a str, got an int"):
+        _run(
+            "class P(Object):\n    def __str__(self):\n        return 5\nP().print()\n"
+        )
+
+
+def test_each_slot_names_what_it_wanted() -> None:
+    with pytest.raises(ExecutionError, match=r"P's truth must be a bool, got a str"):
+        _run(
+            "class P(Object):\n"
+            "    def __bool__(self):\n"
+            '        return "yes"\n'
+            "P().not_()\n"
+        )
+    with pytest.raises(ExecutionError, match=r"P's hash must be an int, got a str"):
+        _run('class P(Object):\n    def __hash__(self):\n        return "h"\n{P()}\n')

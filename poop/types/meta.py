@@ -22,7 +22,7 @@ from builtins import (
 from builtins import (
     print as builtins_print,
 )
-from functools import partial
+from functools import partial, wraps
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Never
 
@@ -217,6 +217,72 @@ def _refuse_native(cls: type, name: str, instead: str) -> None:
     )
 
 
+# The protocol slots CPython reads directly, with the native each one must
+# answer and the POOP type a program can actually build. A POOP method can
+# only return a POOP value, so every one of these was unsatisfiable from
+# inside the language: `def __str__(self): return "P!"` answered `TypeError:
+# __str__ returned non-string (type str)` — a sentence that names `str` as the
+# thing that is not a `str`, because `_cloak` renamed the wrapper to the
+# builtin it stands for. `__bool__` was worse (`should return bool, returned
+# bool`), and `__hash__` printed `__poop__.P`, the marker `_reject_builtin`
+# uses to tell a user's class from a builtin.
+_PROTOCOL_SLOTS: dict[str, tuple[type, str, str]] = {
+    "__str__": (str, "str", "text"),
+    "__repr__": (str, "str", "repr"),
+    "__bool__": (bool, "bool", "truth"),
+    "__hash__": (int, "int", "hash"),
+    "__len__": (int, "int", "length"),
+}
+
+
+def _adapted(slot: str, method: Any) -> Any:
+    """`method` with its POOP answer unwrapped for CPython's protocol.
+
+    Wrapping happens where the class is built, so the wrappers in
+    `poop/types/` — which are written in Python and already answer natives —
+    pass through untouched: `to_python` is identity for a value that is
+    already one.
+    """
+    native, spelling, role = _PROTOCOL_SLOTS[slot]
+
+    @wraps(method)
+    def answer(self: Any, *args: Any, **kwargs: Any) -> Any:
+        value = method(self, *args, **kwargs)
+        # A native answer short-circuits, which is both the common case (every
+        # wrapper in `poop/types/` is written in Python) and what keeps this
+        # importable: `bool(x)` runs during the package's own import, before
+        # `_bridge` can be loaded.
+        if isinstance(value, native):
+            return value
+
+        from poop.types._bridge import to_python
+
+        raw = to_python(value)
+        if isinstance(raw, native):
+            return raw
+
+        from poop.types._message import article
+        from poop.types.exceptions import MIRRORS
+
+        # Named by the role, never by the slot: a message spelling `__str__`
+        # names the construct `no_dunder_attribute` bans — and CPython's own
+        # sentence for this was `__str__ returned non-string (type str)`,
+        # which calls `str` the thing that is not a `str`.
+        raise MIRRORS["TypeError"](
+            f"{type(self).__name__}'s {role} must be "
+            f"{article(spelling)}, got {article(type(value).__name__)}"
+        )
+
+    return answer
+
+
+def _length_message(self: Any) -> Any:
+    """`len` for a class that declared `__len__` and no message to ask with."""
+    from poop.types.int import Int
+
+    return Int(builtins.len(self))
+
+
 class PoopMeta(ABCMeta):
     """Metaclass giving every POOP class the class-side protocol.
 
@@ -230,6 +296,41 @@ class PoopMeta(ABCMeta):
     `Object` does not define today: a user class is free to declare its own
     `name` or `superclass` method, and the class side must still answer.
     """
+
+    def __new__(
+        mcls,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        /,
+        **kwargs: Any,
+    ) -> Any:
+        """Build the class, adapting the protocol slots it declares.
+
+        A POOP program may define `__str__`, `__repr__`, `__bool__`,
+        `__hash__` and `__len__` — that is how an object says how it prints,
+        compares or measures — but it can only *return* POOP values, and
+        CPython reads these slots itself and demands a native. Every one of
+        them was therefore impossible to satisfy from inside the language.
+        The answer is unwrapped here, once, where the class is built.
+
+        A class that declares `__len__` and no `len` also gets the message
+        for it: `len` is how POOP asks, `no_len` names it as the substitute
+        for the builtin, and a slot that raises nothing and answers nothing
+        is the quiet member of the same family.
+
+        The four parameters are positional-only: a class keyword is passed
+        through here on its way to `__init_subclass__`, and
+        `class ListIterator(..., name="list_iterator")` would otherwise
+        collide with this signature's own `name`.
+        """
+        for slot in _PROTOCOL_SLOTS:
+            method = namespace.get(slot)
+            if callable(method):
+                namespace[slot] = _adapted(slot, method)
+        if callable(namespace.get("__len__")) and "len" not in namespace:
+            namespace["len"] = _length_message
+        return super().__new__(mcls, name, bases, namespace, **kwargs)
 
     @class_side
     def name(cls) -> Str:
