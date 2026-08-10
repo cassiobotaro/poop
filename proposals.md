@@ -93,6 +93,31 @@ honest, in the shape `test_doc_counts.py` uses for the README's numbers.
 
 ---
 
+### 31. A file its editor gave a BOM cannot be run
+
+`poop/cli.py` reads the program with `encoding="utf-8"`, which keeps a
+byte-order mark as a literal `U+FEFF` character in the source. CPython strips
+it — running the same file with `python3` works — so POOP refuses a file
+Python accepts, and refuses it in the tokenizer's vocabulary:
+
+```
+poop: invalid non-printable character U+FEFF (greet.py, line 1)
+```
+
+A reader has nothing to act on: the character is invisible in every editor, the
+message names a code point rather than a byte-order mark, and nothing says the
+file is fine and the *reading* of it is not. Editors on Windows write this mark
+by default, so it costs a beginner their first program.
+
+**Fix.** Read with `encoding="utf-8-sig"`, which strips a leading mark and is
+otherwise identical to `utf-8` — the same thing CPython's own loader does. The
+REPL's stdin path has it too (`printf '\xef\xbb\xbf…' | poop` answers the
+same sentence) and takes the same one-word change wherever it decodes. A test
+runs a source file with a mark on it, since nothing else in the suite reads
+bytes that are not plain ASCII.
+
+---
+
 ### 30. `MemoryView` is the one sequence that cannot be asked where
 
 Every sequence in the family answers `index` and `count` — `List`, `Tuple`,
