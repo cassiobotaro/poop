@@ -253,9 +253,29 @@ class Object(metaclass=PoopMeta):
         return none
 
     def del_attr(self, name: Str) -> NoneClass:
+        from poop.types.exceptions import MIRRORS
         from poop.types.none import none
 
-        builtins.delattr(self, self._checked_name(name))
+        # Outside the `try`, as in `set_attr`: `_checked_name`'s own refusals
+        # are AttributeErrors too and already carry their sentence.
+        raw = self._checked_name(name)
+        try:
+            builtins.delattr(self, raw)
+        except AttributeError:
+            # Two failures, two sentences. An object that *can* hold state
+            # simply does not hold this name; one that cannot is a value, and
+            # CPython says so by naming `no __dict__ for setting new
+            # attributes` — the dunder `_reject_dunder` will not even let a
+            # program spell. `set_attr` needs only the second, since a
+            # receiver with a `__dict__` never fails there.
+            if builtins.hasattr(self, "__dict__"):
+                raise MIRRORS["AttributeError"](
+                    f"{type(self).__name__} has no attribute {raw!r} to remove"
+                ) from None
+            raise MIRRORS["AttributeError"](
+                f"{type(self).__name__} is a value — it holds no state of its "
+                "own; only an object of a class you defined can be given one"
+            ) from None
         return none
 
     def print(
