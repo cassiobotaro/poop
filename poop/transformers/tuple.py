@@ -8,6 +8,7 @@ from poop.transformers._collection import (
     wrap_elts,
 )
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.tuple import Tuple
 
 _poop_tuple = make_constructor(Tuple)
@@ -31,5 +32,5 @@ class TupleTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_tuple": _poop_tuple,
         "_poop_tuple_from": _poop_tuple_from,
-        "_poop_tuple_cls": Tuple,
+        "_poop_tuple_cls": builtin_alias(Tuple, _poop_tuple_from, "tuple"),
     }

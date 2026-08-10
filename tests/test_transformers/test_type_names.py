@@ -10,6 +10,7 @@ import pytest
 
 from poop import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
+from poop.types._alias import unalias
 from poop.types.block import Block
 from poop.types.boolean import Boolean
 from poop.types.byte_array import ByteArray
@@ -42,19 +43,19 @@ def _eval(source: str) -> object:
 @pytest.mark.parametrize(
     ("mangled", "type_"),
     [
-        ("_poop_boolean", Boolean),
-        ("_poop_str", Str),
-        ("_poop_int", Int),
-        ("_poop_float", Float),
+        ("_poop_bool_cls", Boolean),
+        ("_poop_str_cls", Str),
+        ("_poop_int_cls", Int),
+        ("_poop_float_cls", Float),
         ("_poop_list_cls", List),
         ("_poop_tuple_cls", Tuple),
-        ("_poop_dict", Dict),
+        ("_poop_dict_cls", Dict),
         ("_poop_set_cls", Set),
-        ("_poop_frozenset", FrozenSet),
-        ("_poop_bytes", Bytes),
-        ("_poop_bytearray", ByteArray),
-        ("_poop_memoryview", MemoryView),
-        ("_poop_complex", Complex),
+        ("_poop_frozenset_cls", FrozenSet),
+        ("_poop_bytes_cls", Bytes),
+        ("_poop_bytearray_cls", ByteArray),
+        ("_poop_memoryview_cls", MemoryView),
+        ("_poop_complex_cls", Complex),
         ("_poop_range_cls", Range),
         ("_poop_enumerate_cls", Enumerate),
         ("_poop_zip_cls", Zip),
@@ -66,7 +67,68 @@ def _eval(source: str) -> object:
 def test_mangled_type_binding_is_in_default_namespace(
     mangled: str, type_: type
 ) -> None:
-    assert DEFAULT_NAMESPACE[mangled] is type_
+    # `_cls` bindings are the alias a bare name resolves to — a subclass of the
+    # wrapper whose *call* is the converter, so that `x = list; x([1, 2])`
+    # answers what `list([1, 2])` answers. `unalias` is the question this test
+    # has always been asking: which POOP type does the name stand for.
+    assert unalias(DEFAULT_NAMESPACE[mangled]) is type_
+
+
+@pytest.mark.parametrize(
+    ("lowercase", "argument", "expected"),
+    [
+        ("list", "[1, 2]", "[1, 2]"),
+        ("tuple", "[1, 2]", "(1, 2)"),
+        ("set", "[1, 2]", "{1, 2}"),
+        ("frozenset", "[1, 2]", "frozenset({1, 2})"),
+        ("int", "(4.9)", "4"),
+        ("float", "(2)", "2.0"),
+        ("str", "(5)", "5"),
+        ("bool", "(0)", "False"),
+        ("complex", "(1)", "(1+0j)"),
+        ("bytes", "[65]", "b'A'"),
+        ("bytearray", "[65]", "bytearray(b'A')"),
+        ("range", "(3)", "range(0, 3)"),
+        ("dict", "", "{}"),
+    ],
+)
+def test_an_aliased_constructor_answers_what_the_direct_call_answers(
+    lowercase: str, argument: str, expected: str
+) -> None:
+    """A constructor is an object, so it travels — and had to stop meaning
+    something else once it did. `x = list; x([1, 2])` answered `[[1, 2]]`,
+    because a bare name resolved to the class (variadic, "build from these
+    elements") while the call resolved to the converter.
+    """
+    direct = _eval(f"{lowercase}({argument})")
+    aliased = _eval(f"(lambda c: c({argument}))({lowercase})")
+    assert str(direct) == expected
+    assert str(aliased) == expected
+
+
+def test_an_alias_still_serves_as_a_type_argument_and_a_base() -> None:
+    # The three things a bare builtin name is otherwise used for.
+    assert bool(_eval("[1].is_instance(list)")) is True
+    assert bool(_eval("[1].is_instance(tuple)")) is False
+    assert str(_eval("list.name()")) == "list"
+
+    interpreter = Interpreter()
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = interpreter.transform_source(
+        "class Stack(list):\n    pass\n"
+        "s = Stack()\n"
+        "s.append(1)\n"
+        "kind = s.class_name()\n"
+        "same = s.is_instance(list)\n"
+        "narrow = [1].is_instance(Stack)\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["s"]) == "[1]"
+    assert str(ns["kind"]) == "Stack"
+    assert bool(ns["same"]) is True
+    # `_wrapped` is read off `__dict__`, not inherited, or a subclass of the
+    # alias would match every instance of the wrapper.
+    assert bool(ns["narrow"]) is False
 
 
 @pytest.mark.parametrize(

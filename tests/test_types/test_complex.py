@@ -451,7 +451,7 @@ def test_bare_complex_name_is_rewritten() -> None:
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
     assert isinstance(assign.value, ast.Name)
-    assert assign.value.id == "_poop_complex"
+    assert assign.value.id == "_poop_complex_cls"
 
 
 def test_pow_answers_what_the_operator_answers() -> None:

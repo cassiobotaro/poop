@@ -125,15 +125,21 @@ class Object(metaclass=PoopMeta):
         return to_boolean(builtins.callable(self))
 
     def is_instance(self, type_: type) -> Boolean:
+        # `unalias` because a bare `int` resolves to the alias that makes a
+        # *call* mean conversion, and an `Int` is not an instance of it.
+        from poop.types._alias import unalias
+        from poop.types._argument import a_class
         from poop.types.boolean import to_boolean
 
-        return to_boolean(isinstance(self, type_))
+        return to_boolean(isinstance(self, a_class(unalias(type_), "is_instance")))
 
     @classmethod
     def is_subclass(cls, other: type) -> Boolean:
+        from poop.types._alias import unalias
+        from poop.types._argument import a_class
         from poop.types.boolean import to_boolean
 
-        return to_boolean(issubclass(cls, other))
+        return to_boolean(issubclass(cls, a_class(unalias(other), "is_subclass")))
 
     def repr(self) -> Str:
         from poop.types.string import Str

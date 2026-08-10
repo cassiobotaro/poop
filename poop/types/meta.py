@@ -449,12 +449,15 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def is_instance(cls, type_: type) -> Boolean:
+        from poop.types._alias import unalias
+        from poop.types._argument import a_class
         from poop.types.boolean import to_boolean
 
         # A class is an instance of its metaclass, not of its own bases, so
         # `Foo.is_instance(Object)` is `false` — `Foo.is_subclass(Object)` is
-        # the "descends from" question.
-        return to_boolean(isinstance(cls, type_))
+        # the "descends from" question. `unalias` for the reason
+        # `Object.is_instance` gives.
+        return to_boolean(isinstance(cls, a_class(unalias(type_), "is_instance")))
 
     @class_side
     def if_none(cls, block: Callable[[], Any]) -> Any:

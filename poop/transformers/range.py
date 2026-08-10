@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from poop.transformers._forwarding import make_forwarding_rewriter
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.int import Int
 from poop.types.range import Range
 
@@ -22,5 +23,5 @@ class RangeTransformer(BaseTransformer):
     rewriter = make_forwarding_rewriter("range", "_poop_range", "_poop_range_cls")
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_range": _poop_range,
-        "_poop_range_cls": Range,
+        "_poop_range_cls": builtin_alias(Range, _poop_range, "range"),
     }

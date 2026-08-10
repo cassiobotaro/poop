@@ -3,6 +3,7 @@ from typing import ClassVar, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
@@ -91,7 +92,7 @@ class _StrRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "str":
-            return ast.copy_location(ast.Name(id="_poop_str", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_str_cls", ctx=node.ctx), node)
         return node
 
 
@@ -99,5 +100,6 @@ class StrTransformer(BaseTransformer):
     rewriter = _StrRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_str": Str,
+        "_poop_str_cls": builtin_alias(Str, _poop_str_from, "str"),
         "_poop_str_from": _poop_str_from,
     }

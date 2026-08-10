@@ -8,6 +8,7 @@ from poop.transformers._collection import (
     wrap_elts,
 )
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.list import List
 
 _poop_list = make_constructor(List)
@@ -31,5 +32,5 @@ class ListTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_list": _poop_list,
         "_poop_list_from": _poop_list_from,
-        "_poop_list_cls": List,
+        "_poop_list_cls": builtin_alias(List, _poop_list_from, "list"),
     }

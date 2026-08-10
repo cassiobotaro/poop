@@ -174,7 +174,7 @@ def test_bare_memoryview_name_is_rewritten() -> None:
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
     assert isinstance(assign.value, ast.Name)
-    assert assign.value.id == "_poop_memoryview"
+    assert assign.value.id == "_poop_memoryview_cls"
 
 
 def test_at_accepts_a_boolean_index() -> None:

@@ -4,6 +4,7 @@ from typing import ClassVar, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
@@ -51,7 +52,9 @@ class _ByteArrayRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "bytearray":
-            return ast.copy_location(ast.Name(id="_poop_bytearray", ctx=node.ctx), node)
+            return ast.copy_location(
+                ast.Name(id="_poop_bytearray_cls", ctx=node.ctx), node
+            )
         return node
 
 
@@ -59,5 +62,8 @@ class ByteArrayTransformer(BaseTransformer):
     rewriter = _ByteArrayRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_bytearray": ByteArray,
+        "_poop_bytearray_cls": builtin_alias(
+            ByteArray, _poop_bytearray_from, "bytearray"
+        ),
         "_poop_bytearray_from": _poop_bytearray_from,
     }

@@ -3,6 +3,7 @@ from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
@@ -48,7 +49,7 @@ class _MemoryViewRewriter(ast.NodeTransformer):
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "memoryview":
             return ast.copy_location(
-                ast.Name(id="_poop_memoryview", ctx=node.ctx), node
+                ast.Name(id="_poop_memoryview_cls", ctx=node.ctx), node
             )
         return node
 
@@ -57,5 +58,8 @@ class MemoryViewTransformer(BaseTransformer):
     rewriter = _MemoryViewRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_memoryview": MemoryView,
+        "_poop_memoryview_cls": builtin_alias(
+            MemoryView, _poop_memoryview_from, "memoryview"
+        ),
         "_poop_memoryview_from": _poop_memoryview_from,
     }

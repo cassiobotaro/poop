@@ -27,4 +27,4 @@ def test_bare_bytearray_name_is_rewritten_to_the_mangled_binding() -> None:
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
     assert isinstance(assign.value, ast.Name)
-    assert assign.value.id == "_poop_bytearray"
+    assert assign.value.id == "_poop_bytearray_cls"

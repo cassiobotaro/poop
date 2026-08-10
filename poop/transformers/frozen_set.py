@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from poop.transformers._collection import CollectionRewriter, make_iterable_from
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.frozen_set import FrozenSet
 
 # Share the collection conversion machinery so frozenset(x) rejects a
@@ -16,12 +17,15 @@ _poop_frozenset_from = make_iterable_from(FrozenSet)
 class _FrozenSetRewriter(CollectionRewriter):
     builtin = "frozenset"
     call_target = "_poop_frozenset_from"
-    name_target = "_poop_frozenset"
+    name_target = "_poop_frozenset_cls"
 
 
 class FrozenSetTransformer(BaseTransformer):
     rewriter = _FrozenSetRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_frozenset": FrozenSet,
+        "_poop_frozenset_cls": builtin_alias(
+            FrozenSet, _poop_frozenset_from, "frozenset"
+        ),
         "_poop_frozenset_from": _poop_frozenset_from,
     }
