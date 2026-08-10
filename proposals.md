@@ -6,6 +6,75 @@ Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md
 
 ---
 
+### ~~22. A class-side constructor breaks under the name a program writes~~ — DONE
+
+**Decision + implemented.** `fromhex` and `from_bytes` built through `cls`, and
+`cls` is whatever the program named — under a bare builtin name that is the
+alias, whose call is the *converter*, which takes what a program writes rather
+than the finished Python value a classmethod holds. So all three broke in the
+only spelling a reader would use while the instance form quietly worked.
+
+`_alias.wrapped_instance` answers the three receivers: the alias answers the
+wrapper's own instance, a plain wrapper builds itself, and a program's
+`class B(bytes)` is built from the wrapper's constructor, so `B.fromhex(…)`
+still answers a `B` — the case that ruled out the simpler `unalias(cls)(…)`.
+`ByteArray.fromhex` was added alongside: `Bytes` and `ByteArray` mirror each
+other message for message and this was the one half-pair, for a spelling
+CPython supports. `poop/types/_alias.py`, `poop/types/{bytes,byte_array,int,
+float}.py`, four test modules, `INFECTIONS.md`.
+
+---
+
+### ~~23. `super().__init__(...)` is the third home of the convert/build gap~~ — DONE
+
+**Decision + implemented.** The alias carries its own `__init__`, which
+converts and fills the payload. The MRO puts it exactly where `super()` looks —
+`S.__mro__` is `(S, <alias>, List, …)` — so it intercepts that call and nothing
+else, and the three spellings of one intent (`list(xs)`, `Sub(xs)`,
+`super().__init__(xs)`) now agree.
+
+One consequence is deliberate and worth recording: `super().__init__(*xs)`, the
+spelling that used to be the workaround, now answers `list is built from at
+most one collection, got 2 arguments` — which is what the direct call answers,
+and what CPython answers to `list.__init__(self, 1, 2)`. A program written
+against the bug changes behaviour; a program written against Python does not.
+`poop/types/_alias.py`, `tests/test_transformers/test_type_names.py`,
+`INFECTIONS.md`.
+
+---
+
+### ~~24. `Str.format` is POOP's template surface with CPython's failures~~ — DONE
+
+**Decision + implemented.** All five modes are worded now: a missing name says
+what the template asked for and which arguments it was given, a missing
+position counts the values it got, and a spec the value cannot take names the
+value's kind. The brace errors keep the parser's sentence with `format string`
+replaced by `template`, since the fault they report really is in the text.
+
+Two things fell out of writing it. `_reject_field_access` had to move *inside*
+the guard — the unmatched-brace errors are raised by the parser it runs, not by
+`format` — and its own refusal therefore has to pass through untouched, on the
+`PoopExcMeta` test `reword_if_native` uses for exactly that reason. The five
+programs joined `_FAILING`, which is where the bare `KeyError: 'a'` is pinned:
+the sweep's "still says something" half catches a one-word message, while the
+patterns did not, and the exact wording is pinned in `tests/test_types/test_str.py`.
+`poop/types/string.py`, `tests/test_no_python_wording.py`, `INFECTIONS.md`.
+
+---
+
+### ~~25. `int.superclass()` answers a class that calls itself `int`~~ — DONE
+
+**Decision + implemented.** `PoopMeta.superclass` skips a base that `unalias`
+maps to the receiver, so the ladder no longer has a rung that is not there:
+`int.superclass()` answers `object`, one step, and the answer is the same class
+`(5).class_().superclass()` gives. It is the same "the alias and its wrapper
+are one class" decision item 12 made for `==`, which makes this the third
+question `_alias.unalias` answers. A program's own `class Stack(list)` is
+unaffected — its superclass *is* `list`, the name it wrote. `poop/types/meta.py`,
+`tests/test_types/test_meta.py`, `INFECTIONS.md`.
+
+---
+
 ### ~~12. A class comparison answers a Python `bool`, and answers it wrongly~~ — DONE
 
 **Decision + implemented.** `PoopMeta` defined no `__eq__`, so `int == int`

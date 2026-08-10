@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._affix import affix_needle
+from poop.types._alias import wrapped_instance
 from poop.types._argument import a_bound, text_like
 from poop.types._at import at_index
 from poop.types._cloak import cloak
@@ -111,7 +112,9 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         # position 0` — the message spelt as a call, with an argument index
         # for a message that takes exactly one.
         try:
-            return cls(bytes.fromhex(text_like(s, "fromhex", "a str")))
+            return wrapped_instance(
+                cls, bytes.fromhex(text_like(s, "fromhex", "a str"))
+            )
         except ValueError:
             raise MIRRORS["ValueError"](
                 f"{s!r} is not hexadecimal — #fromhex reads pairs of hex digits"

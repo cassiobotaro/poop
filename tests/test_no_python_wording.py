@@ -116,6 +116,16 @@ _FAILING = [
     "b = lambda: 1\nb(9)",
     # The two constructs `DEFAULT_NAMESPACE` hands users directly: a non-block
     # was reported by CPython's call machinery, one frame deep.
+    # `Str.format` is POOP's documented template surface, and every one of
+    # its failures was CPython's: a bare `KeyError: 'a'`, an index error
+    # naming the "positional args tuple", and a spec error naming a "format
+    # code" for an "object of type". The sweep varies *arguments*, never the
+    # receiver's own text, which is why it never saw these.
+    '"{a}".format(b=1)',
+    '"{}".format()',
+    '"{}{}".format(1)',
+    '"{:d}".format("a")',
+    '"{".format()',
     "Try(5).run()",
     "Try(lambda: 1).except_(Exception, 5)",
     "With(5).do(lambda x: x)",

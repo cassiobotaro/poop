@@ -725,3 +725,35 @@ def test_ord_refuses_a_receiver_that_is_not_one_byte(data: bytes) -> None:
     # as bytes.
     with pytest.raises(TypeError, match="#ord expects a single byte"):
         Bytes(data).ord()
+
+
+# --- a class-side constructor, under the name a program writes ---
+#
+# `fromhex` is a classmethod, so `cls` is whatever the program named — and a
+# bare builtin name is the alias, whose call is the *converter*. A converter
+# takes what a program writes, not the finished Python value a classmethod
+# holds, so the only spelling a reader would use was the broken one.
+
+
+def test_fromhex_under_the_bare_builtin_name() -> None:
+    from poop.transformers.bytes import BytesTransformer
+
+    alias = BytesTransformer.BINDINGS["_poop_bytes_cls"]
+    assert alias.fromhex(Str("6162")) == Bytes(b"ab")  # ty: ignore[unresolved-attribute]
+
+
+def test_fromhex_sent_to_an_instance_still_works() -> None:
+    assert Bytes(b"").fromhex(Str("6162")) == Bytes(b"ab")
+
+
+def test_fromhex_on_a_subclass_answers_the_subclass() -> None:
+    from poop.transformers.bytes import BytesTransformer
+
+    alias = BytesTransformer.BINDINGS["_poop_bytes_cls"]
+
+    class Sub(alias):  # ty: ignore[invalid-base]
+        __slots__ = ()
+
+    made = Sub.fromhex(Str("6162"))
+    assert isinstance(made, Sub)
+    assert made == Bytes(b"ab")

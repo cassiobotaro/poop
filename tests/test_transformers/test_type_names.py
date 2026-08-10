@@ -311,3 +311,68 @@ def test_class_name_returns_lowercase_for_poop_builtins(
     type_: type, lowercase: str
 ) -> None:
     assert type_.__name__ == lowercase
+
+
+# --- the one dunder call POOP sanctions ---
+#
+# `no_dunder_attribute` carves out `__init__` *for* `super().__init__(...)`,
+# so it is the constructor a program is invited to write — and it reached the
+# wrapper's variadic `__init__`, which means "build from these elements".
+
+
+@pytest.mark.parametrize(
+    ("lowercase", "argument", "expected"),
+    [
+        ("list", "[1, 2]", "[1, 2]"),
+        ("tuple", "[1, 2]", "(1, 2)"),
+        ("set", "[1, 2]", "{1, 2}"),
+        ("int", "(4.9)", "4"),
+        ("str", "(5)", "5"),
+        ("dict", '({"a": 1})', "{'a': 1}"),
+        ("bytes", "[65]", "b'A'"),
+    ],
+)
+def test_super_init_converts_like_the_builtin_call(
+    lowercase: str, argument: str, expected: str
+) -> None:
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        f"class Sub({lowercase}):\n"
+        "    def __init__(self, value):\n"
+        "        super().__init__(value)\n"
+        f"made = Sub({argument})\n"
+        "kind = made.class_name()\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["made"]) == expected
+    assert str(ns["kind"]) == "Sub"
+
+
+def test_super_init_leaves_room_for_the_subclass_own_state() -> None:
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class Tagged(list):\n"
+        "    def __init__(self, xs, tag):\n"
+        "        super().__init__(xs)\n"
+        "        self.tag = tag\n"
+        "made = Tagged([1, 2], 'x')\n"
+        "tag = made.tag\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["made"]) == "[1, 2]"
+    assert str(ns["tag"]) == "x"
+
+
+def test_super_init_refuses_over_supply_the_way_the_call_does() -> None:
+    # `super().__init__(*xs)` was the spelling that worked while the plain one
+    # was broken; it now answers what `list(1, 2)` answers, which is what
+    # CPython answers to `list.__init__(self, 1, 2)`.
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class Sub(list):\n"
+        "    def __init__(self, xs):\n"
+        "        super().__init__(*xs)\n"
+        "made = Sub([1, 2])\n"
+    )
+    with pytest.raises(TypeError, match="list is built from at most one collection"):
+        exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102

@@ -127,12 +127,44 @@ class _AliasMeta(PoopMeta):
 
 
 def _alias_in(cls: type) -> Any:
-    """The alias `cls` descends from.
+    """The alias `cls` descends from, or None when it descends from none.
 
-    Always one: `_AliasMeta` is the metaclass of the aliases and of nothing
-    else, so anything it is asked about is an alias or below one.
+    Every class `_AliasMeta` is asked about has one — it is the metaclass of
+    the aliases and of nothing else. `wrapped_instance` below asks about the
+    plain wrappers too, which do not.
     """
-    return next(klass for klass in cls.__mro__ if "_converter" in klass.__dict__)
+    return next(
+        (klass for klass in cls.__mro__ if "_converter" in klass.__dict__), None
+    )
+
+
+def wrapped_instance(cls: Any, *args: Any) -> Any:
+    """An instance of `cls`, built by the wrapper's constructor.
+
+    For POOP's own class-side constructors — `bytes.fromhex`, `int.from_bytes`,
+    `float.fromhex` — which hold a finished *Python* value and need it wrapped.
+    They used to spell that `cls(...)`, and `cls` is whatever the program
+    named: under a bare builtin name it is the alias, whose call is the
+    converter, and a converter takes what a program writes rather than a raw
+    value. So the three broke in the only spelling a reader would use, while
+    the same message sent to an instance worked:
+
+        bytes.fromhex("6162")   # 'int' object has no attribute '_value'
+        b"".fromhex("6162")     # b'ab'
+
+    Three receivers, three answers. The alias answers the wrapper's own
+    instance; a plain wrapper builds itself; a program's subclass is built
+    from the wrapper's constructor so `class B(bytes)` still answers a `B`.
+    """
+    wrapper = unalias(cls)
+    if wrapper is not cls:
+        return wrapper(*args)
+    alias = _alias_in(cls)
+    if alias is None:
+        return cls(*args)
+    made = object.__new__(cls)
+    alias.__dict__["_wrapped"].__init__(made, *args)
+    return made
 
 
 def unalias(type_: Any) -> Any:
@@ -158,12 +190,33 @@ def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> ty
     plain function living in a class body, which would otherwise bind `cls` as
     its first argument.
     """
+
+    def __init__(self: Any, *args: Any, **kwargs: Any) -> None:
+        """`super().__init__(...)` from a subclass — and it converts.
+
+        The third and last home of the convert/build gap. `no_dunder_attribute`
+        carves out exactly one dunder call, `__init__`, *for* this spelling, so
+        it is the constructor a program is invited to write — and it reached
+        the wrapper's variadic `__init__`, which means "build from these
+        elements": `class S(list)` calling `super().__init__(xs)` answered a
+        list holding one list, and `super().__init__(*xs)` was the spelling
+        that worked, with nothing to say so.
+
+        The alias sits between the subclass and the wrapper in the MRO
+        (`S.__mro__` is `(S, <alias>, List, …)`), which is exactly where
+        `super()` looks, so this intercepts that call and nothing else.
+        """
+        converted = converter(*args, **kwargs)
+        for slot in _payload_slots(wrapped):
+            setattr(self, slot, copy(getattr(converted, slot)))
+
     alias = _AliasMeta(
         name,
         (wrapped,),
         {
             "_converter": staticmethod(converter),
             "_wrapped": wrapped,
+            "__init__": __init__,
             "__slots__": (),
         },
     )

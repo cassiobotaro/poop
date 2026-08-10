@@ -698,3 +698,14 @@ def test_chr_out_of_range_names_no_call_and_no_hex_bound() -> None:
         Int(-1).chr()
     with pytest.raises(ValueError, match="codes run from 0 to 1114111"):
         Int(1114112).chr()
+
+
+def test_from_bytes_under_the_bare_builtin_name() -> None:
+    # `cls` is the alias there, whose call is the converter — which took the
+    # finished int a classmethod holds and answered `cannot convert int to
+    # int`, a sentence with nothing in it.
+    from poop.transformers.int import IntTransformer
+
+    alias = IntTransformer.BINDINGS["_poop_int_cls"]
+    assert alias.from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)  # ty: ignore[unresolved-attribute]
+    assert Int(1).from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)

@@ -959,3 +959,18 @@ def test_ord_answers_the_byte_value() -> None:
 def test_ord_refuses_a_receiver_that_is_not_one_byte(data: bytes) -> None:
     with pytest.raises(TypeError, match="#ord expects a single byte"):
         _ba(data).ord()
+
+
+def test_fromhex_is_answered_by_bytearray_too() -> None:
+    # `Bytes` and `ByteArray` mirror each other message for message, and this
+    # was the one half-pair — for a spelling CPython supports.
+    from poop.transformers.byte_array import ByteArrayTransformer
+
+    alias = ByteArrayTransformer.BINDINGS["_poop_bytearray_cls"]
+    assert alias.fromhex(Str("6162")) == ByteArray(bytearray(b"ab"))  # ty: ignore[unresolved-attribute]
+    assert ByteArray(bytearray()).fromhex(Str("6162")) == ByteArray(bytearray(b"ab"))
+
+
+def test_fromhex_refuses_what_is_not_hexadecimal() -> None:
+    with pytest.raises(ValueError, match="is not hexadecimal"):
+        ByteArray(bytearray()).fromhex(Str("zz"))
