@@ -16,6 +16,7 @@ from poop.types._iterable_mixin import _IterableMixin, _sorted
 from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
+from poop.types.exceptions import MIRRORS
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
 from poop.types.object import Object
@@ -53,6 +54,35 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         if isinstance(index, Slice):
             return List(*self._items[index._py_slice()])
         return at_index(self._items, index, self)
+
+    def at_put(self, index: Index, obj: Object) -> List:
+        """Replace the element at `index` — the write half of `at`.
+
+        `no_subscript` refuses `xs[0] = 9` and names a substitute; there was
+        none. `at` reads, `Dict.at_put` and `ByteArray.at_put` write, and the
+        one collection between them that is indexable, mutable and ordered had
+        no way to replace an element at all: `xs.pop(i)` followed by
+        `xs.insert(i, v)` is two messages for one assignment, and the list is
+        short an element in between.
+
+        Mirrors `ByteArray.at_put` down to the refusals, both of which are
+        reachable from the same slip — a bad position, and a position that is
+        not one.
+        """
+        from poop.types._message import article
+
+        try:
+            self._items[index] = obj
+        except IndexError:
+            raise no_element_at(self, self._items, index) from None
+        except TypeError:
+            # `list indices must be integers or slices, not str` — `indices`
+            # names the subscripting this message replaces.
+            raise MIRRORS["TypeError"](
+                f"{type(self).__name__}.at_put expects an int index, "
+                f"got {article(type(index).__name__)}"
+            ) from None
+        return self
 
     def slice(
         self,
