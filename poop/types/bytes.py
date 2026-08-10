@@ -86,8 +86,8 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
 
         return Str(
             self._value.decode(
-                encoding_name(_opt_str(encoding, "utf-8")),
-                handler_name(_opt_str(errors, "strict")),
+                encoding_name(_opt_str(encoding, "utf-8"), "decode"),
+                handler_name(_opt_str(errors, "strict"), "decode"),
             )
         )
 

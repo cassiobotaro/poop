@@ -377,8 +377,8 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
 
         return Bytes(
             self._value.encode(
-                encoding_name(_opt_str(encoding, "utf-8")),
-                handler_name(_opt_str(errors, "strict")),
+                encoding_name(_opt_str(encoding, "utf-8"), "encode"),
+                handler_name(_opt_str(errors, "strict"), "encode"),
             )
         )
 

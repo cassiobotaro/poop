@@ -58,7 +58,12 @@ def a_bound(value: Any, selector: str, role: str) -> Any:
     )
 
 
-def text_like(value: Any, selector: str, expected: str) -> Any:
+def text_like(
+    value: Any,
+    selector: str,
+    expected: str,
+    kinds: tuple[type, ...] = (str, bytes, bytearray),
+) -> Any:
     """The raw value behind a text argument, or POOP's refusal.
 
     CPython answers `center() argument 2 must be a byte string of length 1,
@@ -66,9 +71,15 @@ def text_like(value: Any, selector: str, expected: str) -> Any:
     spelt as a call, every time. `_needle` in `string.py` makes the same move
     for the block case; this covers the rest of the family and the receivers
     that had no guard at all.
+
+    `kinds` narrows what counts as text for the caller that needs it: an
+    encoding name and a byte order are `str` and nothing else, so accepting
+    `b"utf-8"` here would only move their refusal one line down, into the
+    branch that reports a *value* — the split `byte_order` below exists to
+    keep straight.
     """
     raw = getattr(value, "_value", value)
-    if isinstance(raw, (str, bytes, bytearray)):
+    if isinstance(raw, kinds):
         return raw
     raise MIRRORS["TypeError"](
         f"#{selector} expects {expected}, got {article(type(value).__name__)}"
@@ -90,7 +101,7 @@ def byte_order(value: Any) -> str:
     # Two failures, two classes, as CPython has them: a non-string is a
     # TypeError about the argument's kind, a misspelt one a ValueError about
     # its value. Only the sentences change.
-    raw = text_like(value, "to_bytes", "a str")
+    raw = text_like(value, "to_bytes", "a str", (str,))
     if raw in ("big", "little"):
         return raw
     raise MIRRORS["ValueError"](f"byte order must be 'big' or 'little', got {raw!r}")
