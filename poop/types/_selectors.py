@@ -53,6 +53,16 @@ def is_message(name: str) -> bool:
     return not name.startswith("_")
 
 
+def receiver_label(obj: object) -> str:
+    """How a receiver names itself in a message about it.
+
+    A class answers its own name — `type(cls)` says `PoopMeta`, an internal no
+    program can write. Shared with `:methods`, whose header read `PoopExcMeta
+    understands 30 messages` for `ValueError`.
+    """
+    return obj.__name__ if isinstance(obj, type) else type(obj).__name__
+
+
 def explain(obj: object, name: str, label: str | None = None) -> str:
     """The `does not understand` message, with the best hint available.
 
@@ -66,9 +76,8 @@ def explain(obj: object, name: str, label: str | None = None) -> str:
     here instead would mean asking every receiver for its class, which is a
     message a proxy is free to answer with anything.
     """
-    # A class answers its own name; `type(cls)` would say "PoopMeta".
     if label is None:
-        label = obj.__name__ if isinstance(obj, type) else type(obj).__name__
+        label = receiver_label(obj)
     poop_name = SMALLTALK_SELECTORS.get(name)
     if poop_name is not None and hasattr(obj, poop_name):
         return (

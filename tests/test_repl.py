@@ -552,6 +552,23 @@ def test_meta_methods_lists_messages(capsys: pytest.CaptureFixture[str]) -> None
     assert "understands" in out
 
 
+def test_meta_methods_on_a_class_shows_the_class_side(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The class side is a documented protocol that `dir()` did not list, so
+    # the REPL could not show it either — `Foo name` was reachable only by
+    # already knowing it existed.
+    repl, ns = _repl()
+    repl._interpreter.run_source_repl("class Foo(Object):\n    pass\n", ns)
+    capsys.readouterr()
+    repl._meta(":methods Foo")
+    out = capsys.readouterr().out
+    assert "superclass" in out
+    # And the header names the receiver, not the metaclass behind it.
+    assert out.startswith("Foo understands ")
+    assert "PoopMeta" not in out
+
+
 def test_meta_methods_literal_answers_poop_messages(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

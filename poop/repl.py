@@ -12,7 +12,7 @@ from rich.text import Text
 
 from poop.errors import PoopError, format_error, render_error
 from poop.transformers import DEFAULT_NAMESPACE
-from poop.types._selectors import is_message
+from poop.types._selectors import is_message, receiver_label
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
 from poop.types.float import Float
@@ -330,7 +330,7 @@ class Repl:
             _error(str(exc))
             return
         names = sorted(n for n in dir(obj) if is_message(n))
-        header = f"{type(obj).__name__} understands {len(names)} messages:"
+        header = f"{receiver_label(obj)} understands {len(names)} messages:"
         _OUT.print(Text(header, style="dim"), soft_wrap=True, highlight=False)
         # rich lays the messages out in as many columns as the terminal is wide
         # (a single column when the width is unknown, e.g. a pipe), replacing a
