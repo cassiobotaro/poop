@@ -190,12 +190,33 @@ def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> ty
     plain function living in a class body, which would otherwise bind `cls` as
     its first argument.
     """
+
+    def __init__(self: Any, *args: Any, **kwargs: Any) -> None:
+        """`super().__init__(...)` from a subclass — and it converts.
+
+        The third and last home of the convert/build gap. `no_dunder_attribute`
+        carves out exactly one dunder call, `__init__`, *for* this spelling, so
+        it is the constructor a program is invited to write — and it reached
+        the wrapper's variadic `__init__`, which means "build from these
+        elements": `class S(list)` calling `super().__init__(xs)` answered a
+        list holding one list, and `super().__init__(*xs)` was the spelling
+        that worked, with nothing to say so.
+
+        The alias sits between the subclass and the wrapper in the MRO
+        (`S.__mro__` is `(S, <alias>, List, …)`), which is exactly where
+        `super()` looks, so this intercepts that call and nothing else.
+        """
+        converted = converter(*args, **kwargs)
+        for slot in _payload_slots(wrapped):
+            setattr(self, slot, copy(getattr(converted, slot)))
+
     alias = _AliasMeta(
         name,
         (wrapped,),
         {
             "_converter": staticmethod(converter),
             "_wrapped": wrapped,
+            "__init__": __init__,
             "__slots__": (),
         },
     )
