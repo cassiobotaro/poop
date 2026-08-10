@@ -2,6 +2,7 @@ import ast
 from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean, false, to_boolean, true
 
 
@@ -44,7 +45,7 @@ class _BooleanRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "bool":
-            return ast.copy_location(ast.Name(id="_poop_boolean", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_bool_cls", ctx=node.ctx), node)
         return node
 
 
@@ -55,4 +56,5 @@ class BooleanTransformer(BaseTransformer):
         "_poop_false": false,
         "_poop_bool_from": _poop_bool_from,
         "_poop_boolean": Boolean,
+        "_poop_bool_cls": builtin_alias(Boolean, _poop_bool_from, "bool"),
     }

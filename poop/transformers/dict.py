@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers._collection import CollectionRewriter
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types._unwrap import _faithful
 from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
@@ -114,7 +115,7 @@ def _poop_dict_from(*args: object, **kwargs: Object) -> Dict:
 class _DictRewriter(CollectionRewriter):
     builtin = "dict"
     call_target = "_poop_dict_from"
-    name_target = "_poop_dict"
+    name_target = "_poop_dict_cls"
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
         # Unlike the other collection builtins, dict(...) accepts keywords
@@ -249,6 +250,7 @@ class DictTransformer(BaseTransformer):
     rewriter = _DictRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_dict": Dict,
+        "_poop_dict_cls": builtin_alias(Dict, _poop_dict_from, "dict"),
         "_poop_dict_from_pairs": _poop_dict_from_pairs,
         "_poop_dict_from": _poop_dict_from,
         "_poop_dict_merge": _poop_dict_merge,

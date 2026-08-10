@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from poop.transformers._forwarding import make_forwarding_rewriter
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.enumerate import Enumerate
 from poop.types.int import Int
 
@@ -16,5 +17,5 @@ class EnumerateTransformer(BaseTransformer):
     )
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_enumerate": _poop_enumerate,
-        "_poop_enumerate_cls": Enumerate,
+        "_poop_enumerate_cls": builtin_alias(Enumerate, _poop_enumerate, "enumerate"),
     }

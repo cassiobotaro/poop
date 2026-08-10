@@ -413,3 +413,213 @@ def test_neither_native_is_reachable_from_poop_source() -> None:
     for source in ("Object.mro()", "Object.register(Object)"):
         with pytest.raises(ExecutionError, match="is Python's"):
             interpreter.run_source(source)
+
+
+def test_a_poop_builtin_refuses_to_have_its_messages_changed() -> None:
+    # `__slots__` keeps state off the instance side; the class side had no
+    # equivalent, so `class_()` was a route to rewriting the language.
+    for cls in (Str, Int, List, Object):
+        with pytest.raises(AttributeError, match="is a POOP builtin"):
+            cls.set_attr(Str("zzz"), Int(1))
+        with pytest.raises(AttributeError, match="is a POOP builtin"):
+            cls.del_attr(Str("zzz"))
+
+
+def test_a_mirror_refuses_too() -> None:
+    # The mirrors are cloaked into `builtins` like every other wrapper.
+    # `MIRRORS` is annotated `type[Exception]`, which knows nothing of the
+    # class side, so the receiver is widened here rather than at the source.
+    mirror: Any = MIRRORS["ValueError"]
+    with pytest.raises(AttributeError, match="is a POOP builtin"):
+        mirror.set_attr(Str("zzz"), Int(1))
+
+
+def test_a_class_the_program_defined_still_takes_one() -> None:
+    # The distinction is the one `Object.set_attr` already draws for
+    # instances: only a class you defined can be given state.
+    class _Crate(Object):
+        __slots__ = ()
+
+    _Crate.set_attr(Str("tag"), Int(7))
+    assert _Crate.get_attr(Str("tag")) == Int(7)
+    _Crate.del_attr(Str("tag"))
+    assert _Crate.has_attr(Str("tag")) is false
+
+
+def test_the_name_is_checked_before_the_receiver() -> None:
+    # A forbidden *name* answers the ban it broke, on every receiver — the
+    # builtin refusal must not swallow the dunder one.
+    with pytest.raises(AttributeError, match="forbidden"):
+        Str.set_attr(Str("__dict__"), Int(1))
+
+
+def test_a_builtin_cannot_be_rewritten_from_poop_source() -> None:
+    # The end-to-end spelling: `class_()` is the sanctioned way to reach a
+    # class, and `no_getattr` names set_attr/del_attr as the substitutes.
+    interpreter = Interpreter()
+    for source in (
+        '"abc".class_().del_attr("upper")',
+        '(5).class_().set_attr("bit_length", lambda self: 1)',
+    ):
+        with pytest.raises(ExecutionError, match="is a POOP builtin"):
+            interpreter.run_source(source)
+
+
+# --- comparing two classes is a message, not a Python operator ---
+#
+# `Object.__eq__` answers a `Boolean`; a class is compared by its metaclass,
+# and nothing defined the message there — so `int == int` handed a raw Python
+# `bool` back to user code, which answered `'bool' object has no attribute
+# 'print'`.
+
+
+def test_class_equality_answers_a_poop_boolean() -> None:
+    assert isinstance(_Dog == _Dog, Boolean)
+    assert (_Dog == _Dog) is true
+    assert (_Dog == _Animal) is false
+
+
+def test_class_inequality_answers_a_poop_boolean() -> None:
+    assert isinstance(_Dog != _Animal, Boolean)
+    assert (_Dog != _Animal) is true
+    assert (_Dog != _Dog) is false
+
+
+def test_a_wrapper_equals_the_bare_name_that_spells_it() -> None:
+    # `class_()` answers the wrapper, a bare `int` the alias built on it, so
+    # `(5).class_() == int` was False for two objects that both say `int`.
+    from poop.transformers.int import IntTransformer
+
+    alias = IntTransformer.BINDINGS["_poop_int_cls"]
+    assert (Int(5).class_() == alias) is true
+    assert (alias == Int(5).class_()) is true
+
+
+def test_a_class_compared_with_a_non_class_is_simply_unequal() -> None:
+    assert (_Dog == Int(5)) is false
+    assert (_Dog != Int(5)) is true
+
+
+def test_identity_still_separates_the_wrapper_from_its_alias() -> None:
+    # `is_identical` asks identity, and those really are two objects — the
+    # question `==` answers is the other one.
+    from poop.transformers.int import IntTransformer
+
+    alias = IntTransformer.BINDINGS["_poop_int_cls"]
+    assert Int(5).class_().is_identical(alias) is false
+
+
+def test_a_poop_class_is_still_hashable() -> None:
+    # Defining `__eq__` drops `__hash__`, and `NATIVE_TO_POOP` keys on classes.
+    assert len({_Dog, _Animal, _Dog}) == 2
+
+
+# --- the protocol slots a program is allowed to define ---
+#
+# A POOP method can only return POOP values, and CPython reads these slots
+# itself and demands a native — so every one of them was unsatisfiable from
+# inside the language, with a sentence that contradicted itself
+# (`__str__ returned non-string (type str)`).
+
+
+def _run(source: str) -> None:
+    Interpreter().run_source(source)
+
+
+def _printed(source: str, capsys: pytest.CaptureFixture[str]) -> str:
+    _run(source)
+    return capsys.readouterr().out.strip()
+
+
+def test_a_user_class_can_define_how_it_prints(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __str__(self):\n"
+        '        return "P!"\n'
+        "P().print()\n"
+        "str(P()).print()\n"
+    )
+    assert _printed(source, capsys) == "P!\nP!"
+
+
+def test_a_user_class_can_define_its_repr(capsys: pytest.CaptureFixture[str]) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __repr__(self):\n"
+        '        return "<P>"\n'
+        "P().repr().print()\n"
+    )
+    assert _printed(source, capsys) == "<P>"
+
+
+def test_a_user_class_can_define_its_truth(capsys: pytest.CaptureFixture[str]) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __bool__(self):\n"
+        "        return False\n"
+        "P().not_().print()\n"
+    )
+    assert _printed(source, capsys) == "True"
+
+
+def test_a_user_class_can_define_its_hash(capsys: pytest.CaptureFixture[str]) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __hash__(self):\n"
+        "        return 7\n"
+        "{P(), P()}.len().print()\n"
+    )
+    # Two instances hashing alike still differ by identity, as in Python.
+    assert _printed(source, capsys) == "2"
+
+
+def test_a_declared_length_answers_the_len_message(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The quiet member of the family: the slot raised nothing and answered
+    # nothing, because `len` is how POOP asks and nothing supplied it.
+    source = (
+        "class P(Object):\n"
+        "    def __len__(self):\n"
+        "        return 2\n"
+        "P().len().print()\n"
+    )
+    assert _printed(source, capsys) == "2"
+
+
+def test_a_class_that_defines_len_itself_keeps_it(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        "class P(Object):\n"
+        "    def __len__(self):\n"
+        "        return 2\n"
+        "    def len(self):\n"
+        "        return 99\n"
+        "P().len().print()\n"
+    )
+    assert _printed(source, capsys) == "99"
+
+
+def test_a_wrong_answer_is_refused_by_role_not_by_slot() -> None:
+    # A message spelling `__str__` would name the construct
+    # `no_dunder_attribute` bans — and CPython's sentence called `str` the
+    # thing that is not a `str`.
+    with pytest.raises(ExecutionError, match=r"P's text must be a str, got an int"):
+        _run(
+            "class P(Object):\n    def __str__(self):\n        return 5\nP().print()\n"
+        )
+
+
+def test_each_slot_names_what_it_wanted() -> None:
+    with pytest.raises(ExecutionError, match=r"P's truth must be a bool, got a str"):
+        _run(
+            "class P(Object):\n"
+            "    def __bool__(self):\n"
+            '        return "yes"\n'
+            "P().not_()\n"
+        )
+    with pytest.raises(ExecutionError, match=r"P's hash must be an int, got a str"):
+        _run('class P(Object):\n    def __hash__(self):\n        return "h"\n{P()}\n')

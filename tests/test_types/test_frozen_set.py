@@ -365,3 +365,12 @@ def test_gt_proper_superset_true() -> None:
 
 def test_comparison_mixes_with_set() -> None:
     assert (FrozenSet(Int(1), Int(2), Int(3)) > Set(Int(1), Int(2))) is true
+
+
+def test_a_set_argument_can_be_asked_about() -> None:
+    # The reading half of `Set`'s fix: `fs.includes({1})` is a question, and
+    # a `set` is unhashable only for *storing*.
+    from poop.types.set import Set
+
+    assert FrozenSet(Int(1)).includes(Set(Int(1))) is false
+    assert FrozenSet(FrozenSet(Int(1))).includes(Set(Int(1))) is true

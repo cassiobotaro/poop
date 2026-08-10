@@ -151,7 +151,24 @@ class Float(_NumericCompareMixin, Object):
             return Complex(result)
         return Float(result)
 
-    def pow(self, other: object) -> Float | Complex:
+    def pow(
+        self, other: object, modulus: Int | NoneClass | None = None
+    ) -> Float | Complex:
+        # The third slot exists so the message has the same shape on every
+        # rung: without it `(2.0).pow(3, 5)` answered CPython's *signature*
+        # error — `float.pow() takes 2 positional arguments but 3 were given`,
+        # naming a message as a call — while `(2).pow(3.0, 5)` one line away
+        # answered the operation. CPython refuses the float form too, but as
+        # an operation, so the refusal is `Int.__pow__`'s own sentence.
+        #
+        # In `pow`, not `__pow__`: the operator never carries a third operand
+        # (`a ** b % m` is two operations, and the builtin `pow` is banned).
+        from poop.types._unwrap import _is_absent
+
+        if not _is_absent(modulus):
+            raise MIRRORS["TypeError"](
+                "pow's modulus is only defined when both operands are ints"
+            )
         # See `Int.pow`: `__pow__` answers `NotImplemented` for a `Complex` so
         # the operator can fall through to `Complex.__rpow__`, and the message
         # has to complete the same protocol or it refuses what `**` computes.

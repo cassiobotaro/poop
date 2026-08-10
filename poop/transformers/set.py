@@ -8,6 +8,7 @@ from poop.transformers._collection import (
     wrap_elts,
 )
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.set import Set
 
 _poop_set = make_constructor(Set)
@@ -29,5 +30,5 @@ class SetTransformer(BaseTransformer):
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_set": _poop_set,
         "_poop_set_from": _poop_set_from,
-        "_poop_set_cls": Set,
+        "_poop_set_cls": builtin_alias(Set, _poop_set_from, "set"),
     }

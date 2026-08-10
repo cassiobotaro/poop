@@ -108,14 +108,27 @@ def test_values_returns_dict_values_view() -> None:
     assert d.values().includes(Int(2)) is true
 
 
-def test_do_receives_tuple_pairs() -> None:
+def test_do_walks_the_keys() -> None:
+    """`do` used to be the one message here that answered pairs.
+
+    `map`, `filter`, `sorted`, `min`, `max` and `iter` on the same receiver
+    all walk the keys, and so does Python's `for k in d` — which is what
+    `no_loops` names `do` as the substitute for.
+    """
     d = Dict()
     d.at_put(Str("x"), Int(10))
     d.at_put(Str("y"), Int(20))
+    keys: list[object] = []
+    d.do(lambda key: keys.append(key))
+    assert keys == [Str("x"), Str("y")]
+
+
+def test_the_pair_spelling_is_items_do() -> None:
+    d = Dict()
+    d.at_put(Str("x"), Int(10))
     pairs: list[Tuple] = []
-    d.do(lambda pair: pairs.append(pair))
-    assert len(pairs) == 2
-    assert all(isinstance(p, Tuple) for p in pairs)
+    d.items().do(lambda pair: pairs.append(pair))
+    assert pairs == [Tuple(Str("x"), Int(10))]
 
 
 def test_eq_equal_dicts() -> None:
@@ -545,11 +558,14 @@ def test_sum_adds_the_keys() -> None:
     assert d.sum() == Int(3)
 
 
-def test_do_still_yields_pairs() -> None:
+def test_do_agrees_with_the_other_five_iterations() -> None:
+    # One receiver had two answers to "what is an element of a dict".
     d = _dict_with([("a", 1)])
-    seen: list[Tuple] = []
-    d.do(lambda pair: seen.append(pair))
-    assert seen == [Tuple(Str("a"), Int(1))]
+    seen: list[object] = []
+    d.do(lambda key: seen.append(key))
+    assert seen == [Str("a")]
+    assert seen == list(d.map(lambda key: key))
+    assert seen == [d.iter().next()]
 
 
 def test_mutating_while_iterating_is_worded_as_poop() -> None:
@@ -558,7 +574,7 @@ def test_mutating_while_iterating_is_worded_as_poop() -> None:
     # iteration" describes a `for` loop the program did not write.
     d = _dict_with([("a", 1)])
     with pytest.raises(RuntimeError, match="dict changed while it was being iterated"):
-        d.do(lambda pair: d.at_put(Str("b"), Int(2)))
+        d.do(lambda key: d.at_put(Str("b"), Int(2)))
 
 
 def test_mutating_while_a_cursor_is_open_is_worded_as_poop() -> None:

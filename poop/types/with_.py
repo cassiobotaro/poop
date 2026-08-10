@@ -5,7 +5,8 @@ from typing import Any
 
 from poop.types._cloak import cloak
 from poop.types.block import _require_block
-from poop.types.exceptions import MIRRORS
+from poop.types.error import Error
+from poop.types.exceptions import MIRRORS, poop_class_of
 from poop.types.none import none
 from poop.types.object import Object
 
@@ -44,6 +45,16 @@ class With(Object):
     protocol — a deliberate primitive leak, consistent with how Try uses native
     exception types.
 
+    That leak is the *protocol*, not the values passed through it. `__exit__`
+    used to receive `type(e)`, `e` and `e.__traceback__`: the native class
+    rather than the mirror `except_` matches, the bare exception rather than
+    the `Error` a handler is given, and a traceback object — a whole
+    introspection surface, reached through a dunder `no_dunder_attribute`
+    will not let a program spell. On the success path all three were Python's
+    `None`, so the first thing an `__exit__` asks (`kind.is_none()`) failed
+    there too. It now receives what `Try` hands a handler, and `none` for the
+    traceback POOP does not have.
+
     Usage:
         With(lambda: open('file.txt')).do(lambda f: f.read().print())
         With(lambda: lock).do(lambda _: critical_section())
@@ -70,14 +81,14 @@ class With(Object):
         try:
             result = body_block(value)
         except BaseException as e:
-            if not exit_(cm, type(e), e, e.__traceback__):
+            if not exit_(cm, poop_class_of(e), Error(e), none):
                 raise
             # __exit__ swallowed the exception, so the body never produced a
             # value to answer. Python's `with` just carries on past the block
             # here; `none` is that "carried on with nothing to show".
             return none
         else:
-            exit_(cm, None, None, None)
+            exit_(cm, none, none, none)
         return result
 
     def __str__(self) -> str:

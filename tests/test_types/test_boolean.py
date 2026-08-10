@@ -459,3 +459,26 @@ def test_min_takes_key_only_by_keyword() -> None:
 
     with pytest.raises(TypeError):
         true.min(Int(5), lambda n: n)  # ty: ignore[invalid-argument-type]
+
+
+def test_a_boolean_formats_as_the_int_it_stands_for() -> None:
+    # `bool` is an `int` subclass in CPython, so `format(True, ">6")` is the
+    # padded `1`. A Boolean has no `_value` slot, so `Object.format` fell
+    # through to `object.__format__`, which refuses every non-empty spec.
+    assert true.format(Str(">6")) == Str("     1")
+    assert true.format(Str("d")) == Str("1")
+    assert false.format(Str("03d")) == Str("000")
+
+
+def test_an_empty_spec_still_answers_the_word() -> None:
+    # `format(True, "")` is `'True'`, not `'1'` — folding to Int first would
+    # have changed the one spelling that already worked.
+    assert true.format() == Str("True")
+    assert false.format() == Str("False")
+    assert true.format(none) == Str("True")
+
+
+def test_the_two_formatting_paths_agree() -> None:
+    # The template path routes through `to_python` and was already right; this
+    # is the receiver path catching up.
+    assert Str("{:>6}").format(true) == true.format(Str(">6"))

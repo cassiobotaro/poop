@@ -60,7 +60,7 @@ Full Python → POOP recipe book: [`MIGRATION.md`](MIGRATION.md). Design rationa
 
 ## What's banned (and what to use instead)
 
-POOP runs ~69 validators on every program. Grouped by theme:
+POOP runs 70 validators on every program. Grouped by theme:
 
 **Control flow** — messages on a Boolean, not statements.
 - `if` / `else` / ternary → `cond.if_true(lambda: …)` / `cond.if_true_if_false(lambda: …, lambda: …)`
@@ -106,7 +106,7 @@ The full catalog with one row per validator and the substitute recipe lives in [
 
 ## Learn by example
 
-[`examples/`](examples/) ships 41 programs across three subfolders, grouped by what they teach.
+[`examples/`](examples/) ships 44 programs across three subfolders, grouped by what they teach.
 
 **Language basics** ([`examples/basics/`](examples/basics/))
 - [`hello_world.py`](examples/basics/hello_world.py) — the smallest POOP program
@@ -126,6 +126,7 @@ The full catalog with one row per validator and the substitute recipe lives in [
 - [`statistics.py`](examples/idiomatic/statistics.py) — number aggregation
 - [`rpn_calculator.py`](examples/idiomatic/rpn_calculator.py) — stack as a POOP `List`
 - [`roman_numerals.py`](examples/idiomatic/roman_numerals.py) — string mapping
+- [`managed_resource.py`](examples/idiomatic/managed_resource.py) — `With` and the `__exit__` protocol
 
 **Classic OO patterns** (Sandi Metz / GoF) ([`examples/patterns/`](examples/patterns/))
 

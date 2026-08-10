@@ -1,5 +1,4 @@
 import builtins
-from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
@@ -8,7 +7,6 @@ from poop.types._at import at_key, no_key, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _MISSING, _minmax
-from poop.types._mutated import iterating, reword_if_native
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.dict_items import DictItems
@@ -110,15 +108,14 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
     def values(self) -> DictValues:
         return DictValues(self)
 
-    def do(self, block: Callable[[Tuple], Any]) -> NoneClass:
-        # Overrides the mixin's to yield pairs, and so needs the same guard:
-        # `d.do(lambda p: d.at_put("b", 2))` answered CPython's `dictionary
-        # changed size during iteration`.
-        try:
-            deque((block(Tuple(k, v)) for k, v in self._data.items()), maxlen=0)
-        except RuntimeError as exc:
-            raise reword_if_native(exc, iterating(self)) from None
-        return none
+    # `do` is deliberately *not* overridden here. It used to yield `(key,
+    # value)` pairs while `map`, `filter`, `sorted`, `min`, `max` and `iter`
+    # on the same receiver all yielded keys — one receiver with two answers to
+    # "what is an element of a dict", and the odd one out was the message
+    # `no_loops` names as the substitute for `for k in d`, which walks the
+    # keys in Python. The mixin's `do` walks `__iter__` like its five
+    # siblings, and carries the same mutation guard, worded from the receiver.
+    # `d.items().do(...)` is the pair spelling, and answers `Tuple`s already.
 
     def min(
         self,

@@ -115,3 +115,79 @@ def test_object_as_base_class_is_fine() -> None:
     # rebinding is blocked.
     tree = ast.parse("class Foo(Object):\n    pass\nclass Bar(object):\n    pass")
     NoBuiltinShadowValidator().validate(tree)
+
+
+def test_assign_to_ellipsis_raises() -> None:
+    # EllipsisTransformer rewrites the name *and* the `...` literal to
+    # `_poop_ellipsis`, so `Ellipsis = 5` made `...` itself answer 5.
+    tree = ast.parse("Ellipsis = 5")
+    with pytest.raises(ValidationError, match="'Ellipsis'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_parameter_named_ellipsis_raises() -> None:
+    tree = ast.parse(
+        "class Tag:\n    def hold(self, Ellipsis):\n        return Ellipsis"
+    )
+    with pytest.raises(ValidationError, match="'Ellipsis'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+# --- the exception mirrors ---
+#
+# Three binding shapes, because the failure differs by shape: an assignment
+# target *is* an `ast.Name` and so gets rewritten (clobbering the mirror),
+# while a parameter and a class name are not — they keep their spelling while
+# every read of them in the body resolves to the mirror instead.
+
+
+def test_assign_to_mirror_raises() -> None:
+    tree = ast.parse("ValueError = 5")
+    with pytest.raises(ValidationError, match="'ValueError'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_parameter_named_mirror_raises() -> None:
+    tree = ast.parse(
+        "class Box:\n    def hold(self, ValueError):\n        return ValueError"
+    )
+    with pytest.raises(ValidationError, match="'ValueError'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_lambda_parameter_named_mirror_raises() -> None:
+    tree = ast.parse("b = lambda KeyError: KeyError")
+    with pytest.raises(ValidationError, match="'KeyError'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_class_named_mirror_raises() -> None:
+    tree = ast.parse("class KeyError:\n    pass")
+    with pytest.raises(ValidationError, match="'KeyError'"):
+        NoBuiltinShadowValidator().validate(tree)
+
+
+def test_every_mirror_is_reserved() -> None:
+    """Derived from MIRRORS, so a new mirror cannot be added unreserved."""
+    from poop.types.exceptions import MIRRORS
+
+    for name in MIRRORS:
+        tree = ast.parse(f"{name} = 5")
+        with pytest.raises(ValidationError, match=f"'{name}'"):
+            NoBuiltinShadowValidator().validate(tree)
+
+
+def test_mirror_as_base_class_is_fine() -> None:
+    # `class MyErr(ValueError)` is the sanctioned spelling of a user error, and
+    # a method may still be named after a mirror — it binds as a class
+    # attribute, not in the enclosing scope.
+    tree = ast.parse(
+        "class MyErr(ValueError):\n    pass\n"
+        "class Demo:\n    def ValueError(self):\n        pass"
+    )
+    NoBuiltinShadowValidator().validate(tree)
+
+
+def test_raising_a_mirror_is_fine() -> None:
+    tree = ast.parse('ValueError.raise_("boom")')
+    NoBuiltinShadowValidator().validate(tree)

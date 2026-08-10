@@ -25,7 +25,7 @@ one.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._cloak import cloak
 from poop.types._mutated import reword_if_native
@@ -49,6 +49,16 @@ class _PeekMixin:
     """`has_next` / `next` over an iterator that can be looked ahead by one."""
 
     __slots__ = ("_peeked",)
+
+    # What the mutation refusal calls the collection being walked. `_mutated`
+    # exists so that refusal names its receiver (`dict changed while it was
+    # being iterated`), and the cursor was the one place passing a literal —
+    # so `d.do(...)` and `d.iter().next()` reported the same fact in two
+    # vocabularies. `_IteratorBase` derives this from the CPython iterator
+    # name each concrete iterator already declares; the lazy views (`Map`,
+    # `Filter`, `Zip`, `Enumerate`) keep the default, which is honest: the
+    # mutated collection is the one behind them, and they cannot name it.
+    _iterating: ClassVar[str] = "the collection"
 
     def _materialize(self) -> Iterator[Any]:
         """The underlying Python iterator. Supplied by the concrete class."""
@@ -77,6 +87,13 @@ class _PeekMixin:
             return true
         try:
             self._peeked = next(self._materialize())
+        except RuntimeError as exc:
+            # The same rewording `next` and `__next__` already carry, and the
+            # one message of the three that exists so a program can *ask*
+            # instead of raising: it answered `dictionary changed size during
+            # iteration` — a word POOP does not use for a `dict`, describing a
+            # `for` loop the program did not write.
+            raise reword_if_native(exc, self._iterating) from None
         except StopIteration:
             return false
         return true
@@ -95,7 +112,7 @@ class _PeekMixin:
             # `dictionary changed size during iteration` — a word POOP does not
             # use for a `dict`, describing a `for` loop the program did not
             # write. POOP's own RuntimeErrors pass through untouched.
-            raise reword_if_native(exc, "the collection") from None
+            raise reword_if_native(exc, self._iterating) from None
         except StopIteration:
             if default is not _MISSING:
                 return default
@@ -115,7 +132,7 @@ class _PeekMixin:
         try:
             return self._wrap(next(self._materialize()))
         except RuntimeError as exc:
-            raise reword_if_native(exc, "the collection") from None
+            raise reword_if_native(exc, self._iterating) from None
 
 
 # Cloaked as `object`, the root's own spelling: these methods are inherited by

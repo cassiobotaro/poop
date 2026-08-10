@@ -2,6 +2,7 @@ from poop.types._bridge import to_poop, to_python
 from poop.types.boolean import Boolean, false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
+from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.frozen_set import FrozenSet
@@ -188,3 +189,15 @@ def test_to_poop_bool_not_misclassified_as_int() -> None:
 
 def test_to_python_NoneClass_instance() -> None:
     assert to_python(NoneClass()) is None
+
+
+def test_to_python_unwraps_complex() -> None:
+    # The scalar rung the ladder skipped: left wrapped, a Complex reached
+    # `str.format` as a POOP object and every non-empty spec was refused.
+    assert to_python(Complex(complex(1, 2))) == complex(1, 2)
+
+
+def test_to_poop_wraps_complex() -> None:
+    result = to_poop(complex(1, 2))
+    assert isinstance(result, Complex)
+    assert result._value == complex(1, 2)

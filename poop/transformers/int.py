@@ -2,6 +2,7 @@ import ast
 from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
@@ -108,7 +109,7 @@ class _IntRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "int":
-            return ast.copy_location(ast.Name(id="_poop_int", ctx=node.ctx), node)
+            return ast.copy_location(ast.Name(id="_poop_int_cls", ctx=node.ctx), node)
         return node
 
 
@@ -116,5 +117,6 @@ class IntTransformer(BaseTransformer):
     rewriter = _IntRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_int": Int,
+        "_poop_int_cls": builtin_alias(Int, _poop_int_from, "int"),
         "_poop_int_from": _poop_int_from,
     }

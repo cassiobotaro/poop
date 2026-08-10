@@ -5,6 +5,7 @@ import pytest
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
+from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -542,6 +543,36 @@ def test_input_with_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
     assert seen == ["Name: "]
 
 
+def test_input_at_end_of_input_is_worded_as_poop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`EOF when reading a line` names a condition, not a message.
+
+    A pipe rather than a terminal is enough to reach it —
+    `examples/basics/greet.py` answered exactly that with its stdin closed.
+    """
+
+    def fake_input(prompt: str) -> str:
+        raise EOFError("EOF when reading a line")
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    with pytest.raises(EOFError, match="^there is no more input to read$"):
+        Str("Name: ").input()
+
+
+def test_the_end_of_input_can_be_caught_by_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The mirror is what makes `except_(EOFError, …)` spellable at all: the
+    # only I/O POOP has was the only failure it could not handle by name.
+    def fake_input(prompt: str) -> str:
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    with pytest.raises(MIRRORS["EOFError"]):
+        Str("Name: ").input()
+
+
 def test_input_empty_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[str] = []
 
@@ -868,11 +899,15 @@ def test_find_count_and_index_keep_their_string_meaning() -> None:
     assert Str("abc").find(Str("b")) == Int(1)
     assert Str("abcb").count(Str("b")) == Int(2)
     assert Str("abc").index(Str("c")) == Int(2)
+    assert Str("abcb").rfind(Str("b")) == Int(3)
+    assert Str("abcb").rindex(Str("b")) == Int(3)
 
 
-@pytest.mark.parametrize("selector", ["find", "count", "index"])
-def test_the_three_string_searches_refuse_a_block(selector: str) -> None:
+@pytest.mark.parametrize("selector", ["find", "count", "index", "rfind", "rindex"])
+def test_the_string_searches_refuse_a_block(selector: str) -> None:
     # Arriving from `[1, 2].find(block)`, a reader writes a block here.
-    # CPython answered `find() argument 1 must be str, not function`.
+    # CPython answered `find() argument 1 must be str, not function`. The
+    # `r`-prefixed pair is the same message read from the other end and was
+    # left on CPython's wording, so one letter changed the vocabulary.
     with pytest.raises(TypeError, match="searches for a substring"):
         getattr(Str("abc"), selector)(lambda c: c == Str("b"))

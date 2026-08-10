@@ -22,7 +22,7 @@ from builtins import (
 from builtins import (
     print as builtins_print,
 )
-from functools import partial
+from functools import partial, wraps
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Never
 
@@ -140,6 +140,32 @@ def _reject_private(name: str) -> None:
         )
 
 
+def _reject_builtin(cls: type) -> None:
+    """Refuse a write to a class POOP defines rather than the program.
+
+    `__slots__` is what keeps state off the instance side, and every wrapper
+    declares one — `Object.set_attr` even has a sentence for that refusal. The
+    class side had no equivalent, and `class_()` hands the class out, so
+    `"abc".class_().del_attr("upper")` removed `upper` from every string in
+    the program and `(5).class_().set_attr("bit_length", block)` replaced a
+    message on `int`. The only names that happened to be safe were the
+    `class_side` descriptors, whose `__set__` refuses.
+
+    `__module__` is the discriminator already in place: `cloak` puts every
+    wrapper and every mirror in `builtins`, while a class a POOP program
+    defines carries `__poop__` from `_ALLOWED_BUILTINS["__name__"]`. It cannot
+    be forged either — `__module__` is a dunder, so `no_dunder_attribute`
+    refuses the literal spelling and `_reject_dunder` the computed one.
+    """
+    from poop.types.exceptions import MIRRORS
+
+    if cls.__module__ == "builtins":
+        raise MIRRORS["AttributeError"](
+            f"{cls.__name__} is a POOP builtin — its messages cannot be "
+            "changed; only a class you defined can be"
+        )
+
+
 def _checked_name(name: Str) -> str:
     """The raw name behind `name`, both class-side bans applied.
 
@@ -191,6 +217,72 @@ def _refuse_native(cls: type, name: str, instead: str) -> None:
     )
 
 
+# The protocol slots CPython reads directly, with the native each one must
+# answer and the POOP type a program can actually build. A POOP method can
+# only return a POOP value, so every one of these was unsatisfiable from
+# inside the language: `def __str__(self): return "P!"` answered `TypeError:
+# __str__ returned non-string (type str)` — a sentence that names `str` as the
+# thing that is not a `str`, because `_cloak` renamed the wrapper to the
+# builtin it stands for. `__bool__` was worse (`should return bool, returned
+# bool`), and `__hash__` printed `__poop__.P`, the marker `_reject_builtin`
+# uses to tell a user's class from a builtin.
+_PROTOCOL_SLOTS: dict[str, tuple[type, str, str]] = {
+    "__str__": (str, "str", "text"),
+    "__repr__": (str, "str", "repr"),
+    "__bool__": (bool, "bool", "truth"),
+    "__hash__": (int, "int", "hash"),
+    "__len__": (int, "int", "length"),
+}
+
+
+def _adapted(slot: str, method: Any) -> Any:
+    """`method` with its POOP answer unwrapped for CPython's protocol.
+
+    Wrapping happens where the class is built, so the wrappers in
+    `poop/types/` — which are written in Python and already answer natives —
+    pass through untouched: `to_python` is identity for a value that is
+    already one.
+    """
+    native, spelling, role = _PROTOCOL_SLOTS[slot]
+
+    @wraps(method)
+    def answer(self: Any, *args: Any, **kwargs: Any) -> Any:
+        value = method(self, *args, **kwargs)
+        # A native answer short-circuits, which is both the common case (every
+        # wrapper in `poop/types/` is written in Python) and what keeps this
+        # importable: `bool(x)` runs during the package's own import, before
+        # `_bridge` can be loaded.
+        if isinstance(value, native):
+            return value
+
+        from poop.types._bridge import to_python
+
+        raw = to_python(value)
+        if isinstance(raw, native):
+            return raw
+
+        from poop.types._message import article
+        from poop.types.exceptions import MIRRORS
+
+        # Named by the role, never by the slot: a message spelling `__str__`
+        # names the construct `no_dunder_attribute` bans — and CPython's own
+        # sentence for this was `__str__ returned non-string (type str)`,
+        # which calls `str` the thing that is not a `str`.
+        raise MIRRORS["TypeError"](
+            f"{type(self).__name__}'s {role} must be "
+            f"{article(spelling)}, got {article(type(value).__name__)}"
+        )
+
+    return answer
+
+
+def _length_message(self: Any) -> Any:
+    """`len` for a class that declared `__len__` and no message to ask with."""
+    from poop.types.int import Int
+
+    return Int(builtins.len(self))
+
+
 class PoopMeta(ABCMeta):
     """Metaclass giving every POOP class the class-side protocol.
 
@@ -204,6 +296,41 @@ class PoopMeta(ABCMeta):
     `Object` does not define today: a user class is free to declare its own
     `name` or `superclass` method, and the class side must still answer.
     """
+
+    def __new__(
+        mcls,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        /,
+        **kwargs: Any,
+    ) -> Any:
+        """Build the class, adapting the protocol slots it declares.
+
+        A POOP program may define `__str__`, `__repr__`, `__bool__`,
+        `__hash__` and `__len__` — that is how an object says how it prints,
+        compares or measures — but it can only *return* POOP values, and
+        CPython reads these slots itself and demands a native. Every one of
+        them was therefore impossible to satisfy from inside the language.
+        The answer is unwrapped here, once, where the class is built.
+
+        A class that declares `__len__` and no `len` also gets the message
+        for it: `len` is how POOP asks, `no_len` names it as the substitute
+        for the builtin, and a slot that raises nothing and answers nothing
+        is the quiet member of the same family.
+
+        The four parameters are positional-only: a class keyword is passed
+        through here on its way to `__init_subclass__`, and
+        `class ListIterator(..., name="list_iterator")` would otherwise
+        collide with this signature's own `name`.
+        """
+        for slot in _PROTOCOL_SLOTS:
+            method = namespace.get(slot)
+            if callable(method):
+                namespace[slot] = _adapted(slot, method)
+        if callable(namespace.get("__len__")) and "len" not in namespace:
+            namespace["len"] = _length_message
+        return super().__new__(mcls, name, bases, namespace, **kwargs)
 
     @class_side
     def name(cls) -> Str:
@@ -221,6 +348,41 @@ class PoopMeta(ABCMeta):
         if not bases:
             return none
         return bases[0]
+
+    def __eq__(cls, other: object) -> Boolean:
+        """Compare two classes, answering a `Boolean` like every other `==`.
+
+        `Object.__eq__` answers a POOP object, but a *class* is compared by
+        its metaclass, and nothing here defined the message — so `int == int`
+        fell through to `type.__eq__` and handed a raw Python `bool` back to
+        user code, which then answered `'bool' object has no attribute
+        'print'`: CPython's vocabulary for the thing POOP calls a message,
+        reached by the shortest program that compares two classes.
+
+        `unalias` on both sides, so the two spellings of one class are one
+        class. `class_()` answers the wrapper while a bare builtin name
+        answers the `_alias.py` subclass of it, so `(5).class_() == int` was
+        `False` for a program that is right — silently, and about two objects
+        that both call themselves `int`. `is_identical` deliberately does not
+        follow: it asks identity, and those really are two objects.
+        """
+        from poop.types._alias import unalias
+        from poop.types.boolean import to_boolean
+
+        return to_boolean(unalias(cls) is unalias(other))
+
+    def __ne__(cls, other: object) -> Boolean:
+        from poop.types._alias import unalias
+        from poop.types.boolean import false, true
+
+        return false if unalias(cls) is unalias(other) else true
+
+    # Defining `__eq__` sets `__hash__` to None, which would make every POOP
+    # class unhashable — `NATIVE_TO_POOP` keys on classes, and so does every
+    # `type` CPython puts in a set or dict. Identity hashing is also what
+    # keeps the `__eq__` above consistent for the classes it does *not*
+    # unalias: two distinct classes stay distinct in both.
+    __hash__ = type.__hash__
 
     @class_side_refusal
     def mro(cls) -> Any:
@@ -423,12 +585,15 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def is_instance(cls, type_: type) -> Boolean:
+        from poop.types._alias import unalias
+        from poop.types._argument import a_class
         from poop.types.boolean import to_boolean
 
         # A class is an instance of its metaclass, not of its own bases, so
         # `Foo.is_instance(Object)` is `false` — `Foo.is_subclass(Object)` is
-        # the "descends from" question.
-        return to_boolean(isinstance(cls, type_))
+        # the "descends from" question. `unalias` for the reason
+        # `Object.is_instance` gives.
+        return to_boolean(isinstance(cls, a_class(unalias(type_), "is_instance")))
 
     @class_side
     def if_none(cls, block: Callable[[], Any]) -> Any:
@@ -457,14 +622,21 @@ class PoopMeta(ABCMeta):
     def set_attr(cls, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
 
-        builtins.setattr(cls, _checked_name(name), value)
+        # Name first, receiver second: a forbidden *name* is refused by name
+        # on every receiver, so `str.set_attr("__dict__", …)` still answers
+        # the dunder ban rather than the builtin one.
+        raw = _checked_name(name)
+        _reject_builtin(cls)
+        builtins.setattr(cls, raw, value)
         return none
 
     @class_side
     def del_attr(cls, name: Str) -> NoneClass:
         from poop.types.none import none
 
-        builtins.delattr(cls, _checked_name(name))
+        raw = _checked_name(name)
+        _reject_builtin(cls)
+        builtins.delattr(cls, raw)
         return none
 
     @class_side

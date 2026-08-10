@@ -617,7 +617,7 @@ _BAD: Any = List(Int(1), Int(2))
         pytest.param(lambda: Bytes(b"abc").endswith(_BAD), TypeError, id="endswith"),
         pytest.param(lambda: Bytes(b"abc").strip(_BAD), TypeError, id="strip"),
         pytest.param(lambda: Bytes(b"abc").split(_BAD), TypeError, id="split"),
-        pytest.param(lambda: Bytes(b"abc").hex(_BAD), ValueError, id="hex_sep"),
+        pytest.param(lambda: Bytes(b"abc").hex(_BAD), TypeError, id="hex_sep"),
         pytest.param(lambda: Bytes.fromhex(_BAD), TypeError, id="fromhex"),
     ],
 )

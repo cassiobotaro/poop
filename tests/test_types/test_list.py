@@ -602,3 +602,43 @@ def test_sorted_and_sort_read_a_none_key_as_absent() -> None:
     xs = List(Int(2), Int(1))
     xs.sort(key=none)
     assert xs == List(Int(1), Int(2))
+
+
+# --- the write half of `at` ---
+#
+# `no_subscript` refuses `xs[0] = 9` and names a substitute; there was none.
+# `Dict` and `ByteArray` both answer `at_put`, and the collection between them
+# — indexable, mutable, ordered — could not replace an element at all.
+
+
+def test_at_put_replaces_the_element() -> None:
+    xs = List(Int(1), Int(2))
+    xs.at_put(Int(0), Int(9))
+    assert xs == List(Int(9), Int(2))
+
+
+def test_at_put_answers_the_receiver_for_chaining() -> None:
+    # As `Dict.at_put` and `ByteArray.at_put` do: a POOP-specific message with
+    # no Python counterpart to mirror.
+    xs = List(Int(1))
+    assert xs.at_put(Int(0), Int(5)) is xs
+
+
+def test_at_put_counts_from_the_end_like_at() -> None:
+    xs = List(Int(1), Int(2))
+    xs.at_put(Int(-1), Int(9))
+    assert xs == List(Int(1), Int(9))
+
+
+def test_at_put_out_of_range_answers_the_same_sentence_as_at() -> None:
+    with pytest.raises(IndexError, match="list has no element at 9 — it has 2"):
+        List(Int(1), Int(2)).at_put(Int(9), Int(0))
+
+
+def test_at_put_refuses_an_index_that_is_not_one() -> None:
+    # `list indices must be integers or slices, not str` names the
+    # subscripting this message replaces.
+    with pytest.raises(
+        TypeError, match=r"^list.at_put expects an int index, got a str$"
+    ):
+        List(Int(1)).at_put(Str("a"), Int(0))  # ty: ignore[invalid-argument-type]

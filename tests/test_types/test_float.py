@@ -7,6 +7,7 @@ from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -401,3 +402,17 @@ def test_pow_completes_the_reflected_protocol_for_a_complex() -> None:
 def test_pow_refusal_names_the_message_not_the_operator() -> None:
     with pytest.raises(TypeError, match=r"float does not understand #pow with a str"):
         Float(2.0).pow("x")
+
+
+def test_pow_takes_a_modulus_slot_and_refuses_it_as_an_operation() -> None:
+    # Without the third slot, `(2.0).pow(3, 5)` answered CPython's signature
+    # error — `float.pow() takes 2 positional arguments but 3 were given` —
+    # while `(2).pow(3.0, 5)` answered the operation. Same message, same
+    # mistake, two vocabularies.
+    with pytest.raises(TypeError, match="modulus is only defined when both operands"):
+        Float(2.0).pow(Int(3), Int(5))
+
+
+def test_an_absent_modulus_still_computes() -> None:
+    assert Float(2.0).pow(Int(3)) == Float(8.0)
+    assert Float(2.0).pow(Int(3), none) == Float(8.0)

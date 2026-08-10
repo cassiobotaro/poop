@@ -166,6 +166,23 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     ) -> Bytes:
         return self._as_int().to_bytes(length, byteorder, signed=signed)
 
+    def format(self, spec: Str | NoneClass | None = None) -> Str:
+        # `bool(self)`, not `_as_int()`, unlike every message around it:
+        # `format(True, "")` is `'True'` and `format(1, "")` is `'1'`, so
+        # folding first would change `True.format()` — the one spelling that
+        # worked — from `True` to `1`. `Object.format` reads `_value`, which a
+        # Boolean has no slot for, so it fell through to `object.__format__`
+        # and refused every non-empty spec while `"{:>6}".format(True)`, which
+        # routes through `to_python`, answered `'     1'`.
+        from poop.types._argument import text_like
+        from poop.types._unwrap import _is_absent
+        from poop.types.string import Str
+
+        # Through `text_like` for the reason `Object.format` does it: a
+        # non-`Str` spec answered `format() argument 2 must be str, not int`.
+        raw = "" if _is_absent(spec) else text_like(spec, "format", "a str")
+        return Str(_builtins.format(bool(self), raw))
+
     def as_integer_ratio(self) -> Tuple:
         return self._as_int().as_integer_ratio()
 

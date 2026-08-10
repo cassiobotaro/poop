@@ -4,9 +4,10 @@ from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._affix import affix_needle
+from poop.types._argument import a_bound, text_like
 from poop.types._at import at_index
 from poop.types._cloak import cloak
-from poop.types._codec import encoding_name, handler_name
+from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
@@ -57,19 +58,25 @@ def _reject_field_access(template: _str) -> None:
 
 
 def _needle(sub: object, selector: str) -> Any:
-    """The substring `find` / `index` / `count` look for.
+    """The substring `find` / `rfind` / `index` / `rindex` / `count` look for.
 
-    These three keep their string meaning where `_IterableMixin.find` takes a
+    These five keep their string meaning where `_IterableMixin.find` takes a
     block, so a reader arriving from `[1, 2].find(block)` writes a block here.
     CPython answers `find() argument 1 must be str, not function` — the method
     as a call, and `function`, which POOP prints as `<block>`.
+
+    The `r`-prefixed pair is the same message read from the other end, and was
+    left on `_faithful` — so `"abc".find(block)` and `"abc".rfind(block)`, the
+    same mistake one letter apart, answered in two different vocabularies.
     """
     if not isinstance(sub, Str) and callable(sub):
         raise MIRRORS["TypeError"](
             f"str's #{selector} searches for a substring — "
             "it takes the text to look for, not a block"
         )
-    return _faithful(sub)
+    # Anything else that is not text reached CPython and answered
+    # `find() argument 1 must be str, not int` — the message spelt as a call.
+    return text_like(sub, selector, "a str")
 
 
 class Str(_ValueEqMixin, _IterableMixin, Object):
@@ -112,7 +119,14 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
             ) from None
 
     def input(self) -> Str:
-        return Str(builtins.input(self._value))
+        try:
+            return Str(builtins.input(self._value))
+        except EOFError:
+            # `EOF when reading a line` names CPython's own end-of-file
+            # condition and the *line* the reader never asked for. A pipe
+            # rather than a terminal is enough to reach it — it is what
+            # `examples/basics/greet.py` answered when its stdin was closed.
+            raise MIRRORS["EOFError"]("there is no more input to read") from None
 
     def at(self, index: Index) -> Str:
         return Str(at_index(self._value, index, self))
@@ -213,8 +227,8 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
     ) -> Str:
         return Str(
             self._value.replace(
-                _faithful(old),
-                _faithful(new),
+                text_like(old, "replace", "a str"),
+                text_like(new, "replace", "a str"),
                 _unwrap(count, -1),
             )
         )
@@ -267,7 +281,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
 
         return Int(
             self._value.find(
-                _needle(sub, "find"), _unwrap(start, None), _unwrap(end, None)
+                _needle(sub, "find"),
+                a_bound(start, "find", "start"),
+                a_bound(end, "find", "end"),
             )
         )
 
@@ -281,7 +297,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
 
         return Int(
             self._value.index(
-                _needle(sub, "index"), _unwrap(start, None), _unwrap(end, None)
+                _needle(sub, "index"),
+                a_bound(start, "index", "start"),
+                a_bound(end, "index", "end"),
             )
         )
 
@@ -295,7 +313,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
 
         return Int(
             self._value.count(
-                _needle(sub, "count"), _unwrap(start, None), _unwrap(end, None)
+                _needle(sub, "count"),
+                a_bound(start, "count", "start"),
+                a_bound(end, "count", "end"),
             )
         )
 
@@ -307,7 +327,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
     ) -> Boolean:
         return to_boolean(
             self._value.startswith(
-                affix_needle(prefix), _unwrap(start, None), _unwrap(end, None)
+                affix_needle(prefix),
+                a_bound(start, "startswith", "start"),
+                a_bound(end, "startswith", "end"),
             )
         )
 
@@ -319,7 +341,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
     ) -> Boolean:
         return to_boolean(
             self._value.endswith(
-                affix_needle(suffix), _unwrap(start, None), _unwrap(end, None)
+                affix_needle(suffix),
+                a_bound(start, "endswith", "start"),
+                a_bound(end, "endswith", "end"),
             )
         )
 
@@ -359,9 +383,10 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.bytes import Bytes
 
         return Bytes(
-            self._value.encode(
-                encoding_name(_opt_str(encoding, "utf-8")),
-                handler_name(_opt_str(errors, "strict")),
+            encoded(
+                self._value,
+                _opt_str(encoding, "utf-8"),
+                _opt_str(errors, "strict"),
             )
         )
 
@@ -415,10 +440,10 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         return Tuple(*[Str(s) for s in self._value.rpartition(_faithful(sep))])
 
     def removeprefix(self, prefix: Str) -> Str:
-        return Str(self._value.removeprefix(_faithful(prefix)))
+        return Str(self._value.removeprefix(text_like(prefix, "removeprefix", "a str")))
 
     def removesuffix(self, suffix: Str) -> Str:
-        return Str(self._value.removesuffix(_faithful(suffix)))
+        return Str(self._value.removesuffix(text_like(suffix, "removesuffix", "a str")))
 
     def rfind(
         self,
@@ -429,7 +454,11 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.rfind(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.rfind(
+                _needle(sub, "rfind"),
+                a_bound(start, "rfind", "start"),
+                a_bound(end, "rfind", "end"),
+            )
         )
 
     def rindex(
@@ -441,7 +470,11 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         from poop.types.int import Int
 
         return Int(
-            self._value.rindex(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.rindex(
+                _needle(sub, "rindex"),
+                a_bound(start, "rindex", "start"),
+                a_bound(end, "rindex", "end"),
+            )
         )
 
     def rsplit(

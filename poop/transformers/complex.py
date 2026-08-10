@@ -3,6 +3,7 @@ from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
+from poop.types._alias import builtin_alias
 from poop.types._message import article
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
@@ -115,7 +116,9 @@ class _ComplexRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id == "complex":
-            return ast.copy_location(ast.Name(id="_poop_complex", ctx=node.ctx), node)
+            return ast.copy_location(
+                ast.Name(id="_poop_complex_cls", ctx=node.ctx), node
+            )
         return node
 
 
@@ -123,6 +126,7 @@ class ComplexTransformer(BaseTransformer):
     rewriter = _ComplexRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_complex": Complex,
+        "_poop_complex_cls": builtin_alias(Complex, _poop_complex_from, "complex"),
         "_poop_complex_literal": _poop_complex_literal,
         "_poop_complex_from": _poop_complex_from,
     }

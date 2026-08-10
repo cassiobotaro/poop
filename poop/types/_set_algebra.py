@@ -25,6 +25,32 @@ def _elements(other: object) -> Iterable[Object]:
     return cast("Iterable[Object]", other)
 
 
+def probed(obj: Any) -> Any:
+    """`obj` as something a set can be *asked* about.
+
+    A `Set` is unhashable, so `s.includes({1})`, `s.discard({1})` and
+    `s.remove({1})` all answered `cannot use 'set' as a set element` — a
+    refusal about *storing*, for three messages that only look. CPython draws
+    the line the other way: `set.__contains__`, `discard` and `remove` probe
+    with a temporary `frozenset`, so `{1} in s` is an ordinary question with
+    an ordinary answer (and `s.remove({1})` reaches its `KeyError`), while
+    `s.add({1})` stays refused.
+
+    The probe compares and hashes exactly as a stored `FrozenSet` does — both
+    read the raw `frozenset` behind `_data` — so a set really held inside a
+    set is found. Recognised through the `_set_like` marker `_other_set` uses,
+    and narrowed to a mutable `set`: a `FrozenSet` is already hashable and is
+    answered by itself.
+    """
+    raw = _other_set(obj)
+    if isinstance(raw, set):
+        # Function-local: `frozen_set` imports this module.
+        from poop.types.frozen_set import FrozenSet
+
+        return FrozenSet(*raw)
+    return obj
+
+
 def _other_set(other: object) -> Any:
     """Return the raw ``set``/``frozenset`` backing a set-like operand.
 

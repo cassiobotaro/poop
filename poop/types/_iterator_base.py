@@ -28,12 +28,26 @@ class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):
     __slots__ = ("_iter",)
     _repr_name: ClassVar[str] = "iterator"
 
-    def __init_subclass__(cls, *, name: str | None = None, **kwargs: Any) -> None:
+    def __init_subclass__(
+        cls,
+        *,
+        name: str | None = None,
+        iterating: str | None = None,
+        **kwargs: Any,
+    ) -> None:
         super().__init_subclass__(**kwargs)
         if name is not None:
             cls._repr_name = name
             # class_name() reads type(x).__name__ — answer the CPython name.
             cloak(cls, name)
+            # The collection this walks, for the mutation refusal in
+            # `_PeekMixin`: CPython's iterator names carry it in front
+            # (`list_iterator`, `dict_keyiterator`, `set_iterator`), so the
+            # label follows the name a concrete iterator already declares
+            # rather than being a second thing to keep in step. `iterating=`
+            # is for the one name where the prefix is not the collection's
+            # own spelling (`memory_iterator` walks a `memoryview`).
+            cls._iterating = iterating or name.split("_", 1)[0]
 
     def __init__(self, iterable: Iterable[Any]) -> None:
         self._iter: Iterator[Any] = iter(iterable)

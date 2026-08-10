@@ -4,10 +4,14 @@ CPython's failure advertised `codecs.encode()` — a module POOP has no `import`
 to reach, so the advice sent the reader somewhere the language cannot go.
 """
 
+from collections.abc import Callable
+from typing import Any
+
 import pytest
 
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
+from poop.types.int import Int
 from poop.types.string import Str
 
 _ENCODINGS = [
@@ -37,8 +41,32 @@ def test_accepted_error_handlers_reach_the_codec(handler: str, expected: bytes) 
 
 
 def test_strict_is_the_default_handler() -> None:
-    with pytest.raises(UnicodeEncodeError):
+    # A ValueError, not a UnicodeEncodeError: `UnicodeError` is a ValueError
+    # in CPython's own tree, and the Unicode* family is outside the mirrored
+    # hierarchy — so a handler was told `ValueError` while the uncaught report
+    # printed `UnicodeEncodeError`, one failure under two names.
+    with pytest.raises(ValueError, match=r"^ascii cannot encode 'é' at position 0$"):
         Str("é").encode(Str("ascii"))
+
+
+def test_a_failed_encode_does_not_advertise_a_codec() -> None:
+    # `'ascii' codec can't encode character '\xe9' in position 1` sends the
+    # reader to a module POOP has no `import` to reach — the whole reason this
+    # file names its own surface.
+    with pytest.raises(ValueError, match=r"^ascii cannot encode 'é' at position 1$"):
+        Str("héllo").encode(Str("ascii"))
+
+
+def test_a_failed_decode_names_the_byte_it_could_not_read() -> None:
+    with pytest.raises(
+        ValueError, match=r"^utf-8 cannot decode byte 0xff at position 0$"
+    ):
+        Bytes(b"\xff\xfe").decode(Str("utf-8"))
+
+
+def test_a_failed_decode_from_a_byte_array_reads_the_same() -> None:
+    with pytest.raises(ValueError, match="utf-8 cannot decode byte 0xff at position 0"):
+        ByteArray(bytearray(b"\xff")).decode(Str("utf-8"))
 
 
 def test_an_unknown_encoding_does_not_point_at_the_codecs_module() -> None:
@@ -67,3 +95,50 @@ def test_byte_array_decode_is_guarded_too() -> None:
 
 def test_the_default_encoding_is_still_utf_8() -> None:
     assert Str("é").encode() == Bytes("é".encode())
+
+
+# --- the argument's kind, before its value ---
+#
+# The table is read by lowercasing the argument, so a non-text one answered
+# `'int' object has no attribute 'lower'`: the wrapper naming the Python
+# method it happens to call, one guard short of the family in `_argument.py`.
+
+
+@pytest.mark.parametrize(
+    ("send", "selector"),
+    [
+        pytest.param(lambda arg: Str("abc").encode(arg), "encode", id="str"),
+        pytest.param(lambda arg: Bytes(b"ab").decode(arg), "decode", id="bytes"),
+        pytest.param(
+            lambda arg: ByteArray(bytearray(b"ab")).decode(arg),
+            "decode",
+            id="bytearray",
+        ),
+    ],
+)
+def test_a_non_text_encoding_is_refused_by_its_kind(
+    send: Callable[[Any], object], selector: str
+) -> None:
+    with pytest.raises(TypeError, match=f"^#{selector} expects a str, got an int$"):
+        send(Int(1))
+
+
+def test_a_bytes_encoding_is_refused_too() -> None:
+    # `kinds=(str,)`: accepting `b"utf-8"` here would only move the refusal
+    # into the branch that reports an unknown *value*.
+    with pytest.raises(TypeError, match="^#encode expects a str, got a bytes$"):
+        Str("abc").encode(Bytes(b"utf-8"))  # ty: ignore[invalid-argument-type]
+
+
+def test_a_non_text_error_handler_is_refused_by_its_kind() -> None:
+    # A ValueError about `1` said the handler was unknown, which describes a
+    # wrong-typed argument as a wrong-valued one.
+    with pytest.raises(TypeError, match="^#encode expects a str, got an int$"):
+        Str("abc").encode(Str("utf-8"), Int(1))  # ty: ignore[invalid-argument-type]
+
+
+def test_the_value_refusals_still_answer_a_value_error() -> None:
+    with pytest.raises(ValueError, match="unknown encoding 'rot13'"):
+        Str("a").encode(Str("rot13"))
+    with pytest.raises(ValueError, match="unknown error handler 'namereplace'"):
+        Str("a").encode(Str("utf-8"), Str("namereplace"))

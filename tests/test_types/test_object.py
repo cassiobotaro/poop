@@ -267,6 +267,26 @@ def test_del_attr_missing_raises_attribute_error() -> None:
         Object().del_attr(Str("nonexistent"))
 
 
+def test_del_attr_on_a_value_says_it_holds_no_state() -> None:
+    # CPython answered `'str' object has no attribute 'zzz' and no __dict__
+    # for setting new attributes` — naming the dunder `_reject_dunder` will
+    # not even let a program spell. `set_attr` composed this sentence already.
+    with pytest.raises(AttributeError, match="is a value — it holds no state"):
+        Str("abc").del_attr(Str("zzz"))
+    with pytest.raises(AttributeError, match="is a value — it holds no state"):
+        Int(5).del_attr(Str("bit_length"))
+
+
+def test_del_attr_on_a_stateful_object_names_the_missing_attribute() -> None:
+    # The other branch: telling an object that *can* hold state that it "holds
+    # no state of its own" would be false.
+    class Container(Object):
+        held: Int
+
+    with pytest.raises(AttributeError, match="has no attribute 'zzz' to remove"):
+        Container().del_attr(Str("zzz"))
+
+
 def test_repr_method_returns_str_type() -> None:
     result = Object().repr()
     assert isinstance(result, Str)

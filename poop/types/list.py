@@ -4,6 +4,7 @@ from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
+from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -15,6 +16,7 @@ from poop.types._iterable_mixin import _IterableMixin, _sorted
 from poop.types._repeat import _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
+from poop.types.exceptions import MIRRORS
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
 from poop.types.object import Object
@@ -52,6 +54,35 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         if isinstance(index, Slice):
             return List(*self._items[index._py_slice()])
         return at_index(self._items, index, self)
+
+    def at_put(self, index: Index, obj: Object) -> List:
+        """Replace the element at `index` — the write half of `at`.
+
+        `no_subscript` refuses `xs[0] = 9` and names a substitute; there was
+        none. `at` reads, `Dict.at_put` and `ByteArray.at_put` write, and the
+        one collection between them that is indexable, mutable and ordered had
+        no way to replace an element at all: `xs.pop(i)` followed by
+        `xs.insert(i, v)` is two messages for one assignment, and the list is
+        short an element in between.
+
+        Mirrors `ByteArray.at_put` down to the refusals, both of which are
+        reachable from the same slip — a bad position, and a position that is
+        not one.
+        """
+        from poop.types._message import article
+
+        try:
+            self._items[index] = obj
+        except IndexError:
+            raise no_element_at(self, self._items, index) from None
+        except TypeError:
+            # `list indices must be integers or slices, not str` — `indices`
+            # names the subscripting this message replaces.
+            raise MIRRORS["TypeError"](
+                f"{type(self).__name__}.at_put expects an int index, "
+                f"got {article(type(index).__name__)}"
+            ) from None
+        return self
 
     def slice(
         self,
@@ -185,7 +216,6 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        from poop.types._unwrap import _opt_int
         from poop.types.int import Int
 
         # No branching on which bound was given: `stop` alone was dropped on
@@ -196,7 +226,9 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         try:
             return Int(
                 self._items.index(
-                    obj, _opt_int(start, 0), _opt_int(stop, len(self._items))
+                    obj,
+                    a_bound(start, "index", "start") or 0,
+                    _opt_stop(a_bound(stop, "index", "stop"), len(self._items)),
                 )
             )
         except ValueError:

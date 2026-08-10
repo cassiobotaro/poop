@@ -125,15 +125,21 @@ class Object(metaclass=PoopMeta):
         return to_boolean(builtins.callable(self))
 
     def is_instance(self, type_: type) -> Boolean:
+        # `unalias` because a bare `int` resolves to the alias that makes a
+        # *call* mean conversion, and an `Int` is not an instance of it.
+        from poop.types._alias import unalias
+        from poop.types._argument import a_class
         from poop.types.boolean import to_boolean
 
-        return to_boolean(isinstance(self, type_))
+        return to_boolean(isinstance(self, a_class(unalias(type_), "is_instance")))
 
     @classmethod
     def is_subclass(cls, other: type) -> Boolean:
+        from poop.types._alias import unalias
+        from poop.types._argument import a_class
         from poop.types.boolean import to_boolean
 
-        return to_boolean(issubclass(cls, other))
+        return to_boolean(issubclass(cls, a_class(unalias(other), "is_subclass")))
 
     def repr(self) -> Str:
         from poop.types.string import Str
@@ -158,12 +164,28 @@ class Object(metaclass=PoopMeta):
         return List(*(Str(name) for name in builtins.dir(self) if is_message(name)))
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
+        from poop.types._argument import text_like
+        from poop.types._unwrap import _is_absent
+        from poop.types.exceptions import MIRRORS
         from poop.types.string import Str
 
-        spec_value = _unwrap(spec, "")
+        # Two leaks in one method. A non-`Str` spec answered `format()
+        # argument 2 must be str, not int` — the builtin `no_format` bans,
+        # spelt as the call this message replaces...
+        spec_value = "" if _is_absent(spec) else text_like(spec, "format", "a str")
         target = builtins.getattr(self, "_value", self)
-        return Str(builtins.format(target, spec_value))
+        try:
+            return Str(builtins.format(target, spec_value))
+        except TypeError:
+            # ...and a receiver with no `_value` fell through to
+            # `object.__format__`, which refuses every non-empty spec by
+            # naming the dunder: `unsupported format string passed to
+            # list.__format__`. CPython refuses these too — only the sentence
+            # is POOP's to write.
+            raise MIRRORS["TypeError"](
+                f"{type(self).__name__} takes no format spec — "
+                "only a number, a string or bytes does"
+            ) from None
 
     def _reject_dunder(self, name: str) -> None:
         """The runtime half of `no_dunder_attribute`.
@@ -253,9 +275,29 @@ class Object(metaclass=PoopMeta):
         return none
 
     def del_attr(self, name: Str) -> NoneClass:
+        from poop.types.exceptions import MIRRORS
         from poop.types.none import none
 
-        builtins.delattr(self, self._checked_name(name))
+        # Outside the `try`, as in `set_attr`: `_checked_name`'s own refusals
+        # are AttributeErrors too and already carry their sentence.
+        raw = self._checked_name(name)
+        try:
+            builtins.delattr(self, raw)
+        except AttributeError:
+            # Two failures, two sentences. An object that *can* hold state
+            # simply does not hold this name; one that cannot is a value, and
+            # CPython says so by naming `no __dict__ for setting new
+            # attributes` — the dunder `_reject_dunder` will not even let a
+            # program spell. `set_attr` needs only the second, since a
+            # receiver with a `__dict__` never fails there.
+            if builtins.hasattr(self, "__dict__"):
+                raise MIRRORS["AttributeError"](
+                    f"{type(self).__name__} has no attribute {raw!r} to remove"
+                ) from None
+            raise MIRRORS["AttributeError"](
+                f"{type(self).__name__} is a value — it holds no state of its "
+                "own; only an object of a class you defined can be given one"
+            ) from None
         return none
 
     def print(
