@@ -242,6 +242,11 @@ class Int(_NumericCompareMixin, Object):
             raise MIRRORS["TypeError"](
                 f"pow's modulus must be an int, got {article(type(modulus).__name__)}"
             )
+        # The third way a modulus can be wrong, and the one left to CPython:
+        # `pow() 3rd argument cannot be 0` names the builtin `no_pow` forbids,
+        # spelt as the call this message substitutes.
+        if modulus._value == 0:
+            raise MIRRORS["ValueError"]("pow's modulus cannot be 0")
         return Int(pow(self._value, other._value, _faithful(modulus)))
 
     def pow(

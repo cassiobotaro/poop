@@ -650,6 +650,22 @@ def test_pow_with_a_non_int_modulus_names_the_modulus() -> None:
         Int(2).pow(Int(3), modulus)
 
 
+def test_pow_with_a_zero_modulus_names_no_builtin() -> None:
+    # The third way a modulus can be wrong, and the one left on CPython's
+    # `pow() 3rd argument cannot be 0` — the builtin `no_pow` forbids, spelt
+    # as the call `a.pow(b, m)` substitutes.
+    with pytest.raises(ValueError, match=r"^pow's modulus cannot be 0$"):
+        Int(2).pow(Int(3), Int(0))
+
+
+def test_a_boolean_receiver_reaches_the_same_refusal() -> None:
+    # `Boolean.pow` delegates through `_as_int`, so it inherits the guard.
+    from poop.types.boolean import true
+
+    with pytest.raises(ValueError, match=r"^pow's modulus cannot be 0$"):
+        true.pow(Int(3), Int(0))
+
+
 def test_max_and_min_read_a_none_key_as_absent() -> None:
     # `key=None` is CPython's own default spelling; POOP's `None` is a
     # NoneClass instance, which `is None` read as a comparison block.
