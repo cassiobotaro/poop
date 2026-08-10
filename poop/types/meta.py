@@ -248,6 +248,41 @@ class PoopMeta(ABCMeta):
             return none
         return bases[0]
 
+    def __eq__(cls, other: object) -> Boolean:
+        """Compare two classes, answering a `Boolean` like every other `==`.
+
+        `Object.__eq__` answers a POOP object, but a *class* is compared by
+        its metaclass, and nothing here defined the message — so `int == int`
+        fell through to `type.__eq__` and handed a raw Python `bool` back to
+        user code, which then answered `'bool' object has no attribute
+        'print'`: CPython's vocabulary for the thing POOP calls a message,
+        reached by the shortest program that compares two classes.
+
+        `unalias` on both sides, so the two spellings of one class are one
+        class. `class_()` answers the wrapper while a bare builtin name
+        answers the `_alias.py` subclass of it, so `(5).class_() == int` was
+        `False` for a program that is right — silently, and about two objects
+        that both call themselves `int`. `is_identical` deliberately does not
+        follow: it asks identity, and those really are two objects.
+        """
+        from poop.types._alias import unalias
+        from poop.types.boolean import to_boolean
+
+        return to_boolean(unalias(cls) is unalias(other))
+
+    def __ne__(cls, other: object) -> Boolean:
+        from poop.types._alias import unalias
+        from poop.types.boolean import false, true
+
+        return false if unalias(cls) is unalias(other) else true
+
+    # Defining `__eq__` sets `__hash__` to None, which would make every POOP
+    # class unhashable — `NATIVE_TO_POOP` keys on classes, and so does every
+    # `type` CPython puts in a set or dict. Identity hashing is also what
+    # keeps the `__eq__` above consistent for the classes it does *not*
+    # unalias: two distinct classes stay distinct in both.
+    __hash__ = type.__hash__
+
     @class_side_refusal
     def mro(cls) -> Any:
         """Refuse `type.mro` — `superclass` is the question POOP answers.

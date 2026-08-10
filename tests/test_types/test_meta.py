@@ -463,3 +463,52 @@ def test_a_builtin_cannot_be_rewritten_from_poop_source() -> None:
     ):
         with pytest.raises(ExecutionError, match="is a POOP builtin"):
             interpreter.run_source(source)
+
+
+# --- comparing two classes is a message, not a Python operator ---
+#
+# `Object.__eq__` answers a `Boolean`; a class is compared by its metaclass,
+# and nothing defined the message there — so `int == int` handed a raw Python
+# `bool` back to user code, which answered `'bool' object has no attribute
+# 'print'`.
+
+
+def test_class_equality_answers_a_poop_boolean() -> None:
+    assert isinstance(_Dog == _Dog, Boolean)
+    assert (_Dog == _Dog) is true
+    assert (_Dog == _Animal) is false
+
+
+def test_class_inequality_answers_a_poop_boolean() -> None:
+    assert isinstance(_Dog != _Animal, Boolean)
+    assert (_Dog != _Animal) is true
+    assert (_Dog != _Dog) is false
+
+
+def test_a_wrapper_equals_the_bare_name_that_spells_it() -> None:
+    # `class_()` answers the wrapper, a bare `int` the alias built on it, so
+    # `(5).class_() == int` was False for two objects that both say `int`.
+    from poop.transformers.int import IntTransformer
+
+    alias = IntTransformer.BINDINGS["_poop_int_cls"]
+    assert (Int(5).class_() == alias) is true
+    assert (alias == Int(5).class_()) is true
+
+
+def test_a_class_compared_with_a_non_class_is_simply_unequal() -> None:
+    assert (_Dog == Int(5)) is false
+    assert (_Dog != Int(5)) is true
+
+
+def test_identity_still_separates_the_wrapper_from_its_alias() -> None:
+    # `is_identical` asks identity, and those really are two objects — the
+    # question `==` answers is the other one.
+    from poop.transformers.int import IntTransformer
+
+    alias = IntTransformer.BINDINGS["_poop_int_cls"]
+    assert Int(5).class_().is_identical(alias) is false
+
+
+def test_a_poop_class_is_still_hashable() -> None:
+    # Defining `__eq__` drops `__hash__`, and `NATIVE_TO_POOP` keys on classes.
+    assert len({_Dog, _Animal, _Dog}) == 2
