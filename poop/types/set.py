@@ -4,7 +4,12 @@ from typing import TYPE_CHECKING, ClassVar, Self
 from poop.types._at import no_element_equal_to, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._set_algebra import _elements, _other_set, _SetAlgebraMixin
+from poop.types._set_algebra import (
+    _elements,
+    _other_set,
+    _SetAlgebraMixin,
+    probed,
+)
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
@@ -36,13 +41,13 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         # `discard` is the spelling that asks; `remove` asserts, so only this
         # one can fail. CPython answers the element's bare repr.
         try:
-            self._data.remove(obj)
+            self._data.remove(probed(obj))
         except KeyError:
             raise no_element_equal_to(self, obj, "KeyError") from None
         return none
 
     def discard(self, obj: Object) -> NoneClass:
-        self._data.discard(obj)
+        self._data.discard(probed(obj))
         return none
 
     def clear(self) -> NoneClass:
@@ -96,7 +101,7 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         return to_boolean(self._data.issuperset(_elements(other)))
 
     def includes(self, obj: Object) -> Boolean:
-        return to_boolean(obj in self._data)
+        return to_boolean(probed(obj) in self._data)
 
     def len(self) -> Int:
         return Int(len(self._data))
@@ -111,7 +116,7 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         return SetIterator(self._data)
 
     def __contains__(self, item: object) -> bool:
-        return item in self._data
+        return probed(item) in self._data
 
     # In-place set operators mutate the receiver (CPython ``s |= other`` keeps
     # ``s``'s identity, so aliases observe the change). Without these, augmented

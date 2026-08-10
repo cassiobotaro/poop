@@ -591,3 +591,41 @@ def test_mutating_while_iterating_is_worded_as_poop() -> None:
     s = Set(Int(1))
     with pytest.raises(RuntimeError, match="set changed while it was being iterated"):
         s.do(lambda x: s.add(Int(9)))
+
+
+# --- asking about a set, as opposed to storing one ---
+#
+# CPython's `set.__contains__`, `discard` and `remove` probe with a temporary
+# `frozenset`, so a `set` argument is an ordinary question. POOP refused all
+# three with the message about *storing* one.
+
+
+def test_a_set_argument_can_be_asked_about() -> None:
+    assert Set(Int(1), Int(2)).includes(Set(Int(1))) is false
+
+
+def test_a_set_argument_can_be_discarded() -> None:
+    s = Set(Int(1), Int(2))
+    s.discard(Set(Int(1)))
+    assert s == Set(Int(1), Int(2))
+
+
+def test_removing_an_absent_set_answers_poops_own_refusal() -> None:
+    # Not `cannot use 'set' as a set element`: the element is not being
+    # stored, and the sentence a reader needs is the one about absence.
+    with pytest.raises(KeyError, match="set has no element equal to"):
+        Set(Int(1)).remove(Set(Int(1)))
+
+
+def test_a_set_really_held_inside_a_set_is_found_and_removed() -> None:
+    # The probe hashes and compares as the stored `FrozenSet` does, so the
+    # lookup is a real one rather than a blanket "no".
+    s = Set(FrozenSet(Int(1)), Int(2))
+    assert s.includes(Set(Int(1))) is true
+    s.discard(Set(Int(1)))
+    assert s == Set(Int(2))
+
+
+def test_storing_a_set_is_still_refused() -> None:
+    with pytest.raises(TypeError, match="cannot use 'set' as a set element"):
+        Set(Int(1)).add(Set(Int(2)))
