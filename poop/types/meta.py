@@ -140,6 +140,32 @@ def _reject_private(name: str) -> None:
         )
 
 
+def _reject_builtin(cls: type) -> None:
+    """Refuse a write to a class POOP defines rather than the program.
+
+    `__slots__` is what keeps state off the instance side, and every wrapper
+    declares one — `Object.set_attr` even has a sentence for that refusal. The
+    class side had no equivalent, and `class_()` hands the class out, so
+    `"abc".class_().del_attr("upper")` removed `upper` from every string in
+    the program and `(5).class_().set_attr("bit_length", block)` replaced a
+    message on `int`. The only names that happened to be safe were the
+    `class_side` descriptors, whose `__set__` refuses.
+
+    `__module__` is the discriminator already in place: `cloak` puts every
+    wrapper and every mirror in `builtins`, while a class a POOP program
+    defines carries `__poop__` from `_ALLOWED_BUILTINS["__name__"]`. It cannot
+    be forged either — `__module__` is a dunder, so `no_dunder_attribute`
+    refuses the literal spelling and `_reject_dunder` the computed one.
+    """
+    from poop.types.exceptions import MIRRORS
+
+    if cls.__module__ == "builtins":
+        raise MIRRORS["AttributeError"](
+            f"{cls.__name__} is a POOP builtin — its messages cannot be "
+            "changed; only a class you defined can be"
+        )
+
+
 def _checked_name(name: Str) -> str:
     """The raw name behind `name`, both class-side bans applied.
 
@@ -457,14 +483,21 @@ class PoopMeta(ABCMeta):
     def set_attr(cls, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
 
-        builtins.setattr(cls, _checked_name(name), value)
+        # Name first, receiver second: a forbidden *name* is refused by name
+        # on every receiver, so `str.set_attr("__dict__", …)` still answers
+        # the dunder ban rather than the builtin one.
+        raw = _checked_name(name)
+        _reject_builtin(cls)
+        builtins.setattr(cls, raw, value)
         return none
 
     @class_side
     def del_attr(cls, name: Str) -> NoneClass:
         from poop.types.none import none
 
-        builtins.delattr(cls, _checked_name(name))
+        raw = _checked_name(name)
+        _reject_builtin(cls)
+        builtins.delattr(cls, raw)
         return none
 
     @class_side

@@ -413,3 +413,53 @@ def test_neither_native_is_reachable_from_poop_source() -> None:
     for source in ("Object.mro()", "Object.register(Object)"):
         with pytest.raises(ExecutionError, match="is Python's"):
             interpreter.run_source(source)
+
+
+def test_a_poop_builtin_refuses_to_have_its_messages_changed() -> None:
+    # `__slots__` keeps state off the instance side; the class side had no
+    # equivalent, so `class_()` was a route to rewriting the language.
+    for cls in (Str, Int, List, Object):
+        with pytest.raises(AttributeError, match="is a POOP builtin"):
+            cls.set_attr(Str("zzz"), Int(1))
+        with pytest.raises(AttributeError, match="is a POOP builtin"):
+            cls.del_attr(Str("zzz"))
+
+
+def test_a_mirror_refuses_too() -> None:
+    # The mirrors are cloaked into `builtins` like every other wrapper.
+    # `MIRRORS` is annotated `type[Exception]`, which knows nothing of the
+    # class side, so the receiver is widened here rather than at the source.
+    mirror: Any = MIRRORS["ValueError"]
+    with pytest.raises(AttributeError, match="is a POOP builtin"):
+        mirror.set_attr(Str("zzz"), Int(1))
+
+
+def test_a_class_the_program_defined_still_takes_one() -> None:
+    # The distinction is the one `Object.set_attr` already draws for
+    # instances: only a class you defined can be given state.
+    class _Crate(Object):
+        __slots__ = ()
+
+    _Crate.set_attr(Str("tag"), Int(7))
+    assert _Crate.get_attr(Str("tag")) == Int(7)
+    _Crate.del_attr(Str("tag"))
+    assert _Crate.has_attr(Str("tag")) is false
+
+
+def test_the_name_is_checked_before_the_receiver() -> None:
+    # A forbidden *name* answers the ban it broke, on every receiver — the
+    # builtin refusal must not swallow the dunder one.
+    with pytest.raises(AttributeError, match="forbidden"):
+        Str.set_attr(Str("__dict__"), Int(1))
+
+
+def test_a_builtin_cannot_be_rewritten_from_poop_source() -> None:
+    # The end-to-end spelling: `class_()` is the sanctioned way to reach a
+    # class, and `no_getattr` names set_attr/del_attr as the substitutes.
+    interpreter = Interpreter()
+    for source in (
+        '"abc".class_().del_attr("upper")',
+        '(5).class_().set_attr("bit_length", lambda self: 1)',
+    ):
+        with pytest.raises(ExecutionError, match="is a POOP builtin"):
+            interpreter.run_source(source)
