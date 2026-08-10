@@ -127,3 +127,26 @@ def test_a_filter_block_running_off_an_iterator_is_refused_too() -> None:
     source = List(Int(1)).iter()
     with pytest.raises(RuntimeError, match="ask #has_next before #next"):
         list(List(Int(1), Int(2)).filter(lambda v: source.next()))
+
+
+def test_has_next_rewords_a_mutation_the_way_next_does() -> None:
+    # `next` and `__next__` reworded this and `has_next` did not, so the one
+    # message that exists to *ask* about exhaustion answered CPython's
+    # `dictionary changed size during iteration`.
+    d = Dict()
+    d.at_put(Str("a"), Int(1))
+    cursor = d.iter()
+    cursor.next()
+    d.at_put(Str("b"), Int(2))
+    with pytest.raises(RuntimeError, match="changed while it was being iterated"):
+        cursor.has_next()
+
+
+def test_has_next_leaves_poops_own_runtime_errors_alone() -> None:
+    # `reword_if_native` must not claim a RuntimeError POOP raised itself.
+    source = List(Int(1)).iter()
+    view = List(Int(1), Int(2)).map(lambda v: source.next())
+    assert view.has_next() is true
+    view.next()  # drain the buffered element so the next ask pulls again
+    with pytest.raises(RuntimeError, match="a block ran off the end of an iterator"):
+        view.has_next()

@@ -77,6 +77,13 @@ class _PeekMixin:
             return true
         try:
             self._peeked = next(self._materialize())
+        except RuntimeError as exc:
+            # The same rewording `next` and `__next__` already carry, and the
+            # one message of the three that exists so a program can *ask*
+            # instead of raising: it answered `dictionary changed size during
+            # iteration` — a word POOP does not use for a `dict`, describing a
+            # `for` loop the program did not write.
+            raise reword_if_native(exc, "the collection") from None
         except StopIteration:
             return false
         return true
