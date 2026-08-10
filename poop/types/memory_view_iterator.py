@@ -5,5 +5,7 @@ from poop.types.int import Int
 
 
 @final
-class MemoryViewIterator(_IteratorBase[Int], name="memory_iterator"):
+class MemoryViewIterator(
+    _IteratorBase[Int], name="memory_iterator", iterating="memoryview"
+):
     __slots__ = ()

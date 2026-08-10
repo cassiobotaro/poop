@@ -16,6 +16,7 @@ from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.set import Set
 from poop.types.string import Str
 
 
@@ -138,7 +139,7 @@ def test_has_next_rewords_a_mutation_the_way_next_does() -> None:
     cursor = d.iter()
     cursor.next()
     d.at_put(Str("b"), Int(2))
-    with pytest.raises(RuntimeError, match="changed while it was being iterated"):
+    with pytest.raises(RuntimeError, match="dict changed while it was being iterated"):
         cursor.has_next()
 
 
@@ -150,3 +151,65 @@ def test_has_next_leaves_poops_own_runtime_errors_alone() -> None:
     view.next()  # drain the buffered element so the next ask pulls again
     with pytest.raises(RuntimeError, match="a block ran off the end of an iterator"):
         view.has_next()
+
+
+# --- the refusal names the collection, from the cursor too ---
+#
+# `_mutated.iterating` exists so the mutation refusal names its receiver, and
+# `d.do(...)` used it while `d.iter().next()` passed the literal "the
+# collection" — the same fact in two vocabularies, one message apart. The
+# cursor half is the one `_peek.py` calls the idiomatic protocol.
+
+
+@pytest.mark.parametrize(
+    ("build", "mutate", "label"),
+    [
+        pytest.param(
+            lambda: _mutable_dict(),
+            lambda d: d.at_put(Str("b"), Int(2)),
+            "dict",
+            id="dict",
+        ),
+        pytest.param(
+            lambda: Set(Int(1)),
+            lambda s: s.add(Int(9)),
+            "set",
+            id="set",
+        ),
+    ],
+)
+def test_the_cursor_names_the_collection_it_walks(
+    build: Any, mutate: Any, label: str
+) -> None:
+    collection = build()
+    cursor = collection.iter()
+    mutate(collection)
+    with pytest.raises(RuntimeError, match=f"^{label} changed while it was being"):
+        cursor.next()
+
+
+def test_a_view_that_cannot_name_its_collection_stays_honest() -> None:
+    # `Map` / `Filter` / `Zip` / `Enumerate` wrap a source they do not name,
+    # so the default label is the truthful one rather than a guess.
+    from poop.types.map import Map
+
+    assert Map._iterating == "the collection"
+
+
+def test_every_concrete_iterator_derives_a_label() -> None:
+    # The label follows the CPython iterator name each one already declares,
+    # so a new iterator cannot ship without one.
+    from poop.types.dict_key_iterator import DictKeyIterator
+    from poop.types.list_iterator import ListIterator
+    from poop.types.memory_view_iterator import MemoryViewIterator
+
+    assert ListIterator._iterating == "list"
+    assert DictKeyIterator._iterating == "dict"
+    # The one name whose prefix is not the collection's own spelling.
+    assert MemoryViewIterator._iterating == "memoryview"
+
+
+def _mutable_dict() -> Dict:
+    d = Dict()
+    d.at_put(Str("a"), Int(1))
+    return d
