@@ -106,6 +106,86 @@ def test_an_aliased_constructor_answers_what_the_direct_call_answers(
     assert str(aliased) == expected
 
 
+@pytest.mark.parametrize(
+    ("lowercase", "argument", "expected"),
+    [
+        ("list", "[1, 2]", "[1, 2]"),
+        ("tuple", "[1, 2]", "(1, 2)"),
+        ("set", "[1, 2]", "{1, 2}"),
+        ("frozenset", "[1, 2]", "frozenset({1, 2})"),
+        ("int", "(4.9)", "4"),
+        ("float", "(2)", "2.0"),
+        ("str", "(5)", "5"),
+        ("complex", "(1)", "(1+0j)"),
+        ("bytes", "[65]", "b'A'"),
+        ("bytearray", "[65]", "bytearray(b'A')"),
+        ("range", "(3)", "range(0, 3)"),
+        ("dict", "", "{}"),
+    ],
+)
+def test_a_subclass_constructs_the_way_its_builtin_does(
+    lowercase: str, argument: str, expected: str
+) -> None:
+    """The same gap, one level down — and `class Stack(list)` is sanctioned.
+
+    Every row disagreed with the direct call: seven silently (`Stack([1, 2])`
+    held one list, `N(4.9)` an int holding 4.9) and six by refusing in
+    Python's words. `bool` is not here: its two values are singletons with no
+    payload to rebuild, so its converter's answer passes through.
+    """
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        f"class Sub({lowercase}):\n    pass\n"
+        f"made = Sub({argument})\n"
+        "kind = made.class_name()\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["made"]) == expected
+    assert str(ns["kind"]) == "Sub"
+
+
+def test_a_subclass_with_its_own_init_still_uses_it() -> None:
+    # What reading `_converter` off `cls.__dict__` was protecting.
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class Pair(list):\n"
+        "    def __init__(self, a, b):\n"
+        "        self.first = a\n"
+        "made = Pair(1, 2)\n"
+        "first = made.first\n"
+        "kind = made.class_name()\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["first"]) == "1"
+    assert str(ns["kind"]) == "Pair"
+
+
+def test_a_subclass_does_not_share_the_payload_it_was_built_from() -> None:
+    # A converter may answer a value it was handed, and two objects sharing
+    # one list would be one object wearing two classes.
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class Stack(list):\n    pass\n"
+        "source = [1, 2]\n"
+        "made = Stack(source)\n"
+        "made.append(3)\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["source"]) == "[1, 2]"
+    assert str(ns["made"]) == "[1, 2, 3]"
+
+
+def test_a_bool_subclass_answers_the_converter_directly() -> None:
+    # `Boolean` has no payload: its values are two singletons, and there is
+    # nothing to rebuild a subclass from.
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class Flag(bool):\n    pass\nmade = Flag(1)\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["made"]) == "True"
+
+
 def test_an_alias_still_serves_as_a_type_argument_and_a_base() -> None:
     # The three things a bare builtin name is otherwise used for.
     assert bool(_eval("[1].is_instance(list)")) is True
