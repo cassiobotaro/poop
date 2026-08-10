@@ -4,6 +4,7 @@ from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
+from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -185,7 +186,6 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        from poop.types._unwrap import _opt_int
         from poop.types.int import Int
 
         # No branching on which bound was given: `stop` alone was dropped on
@@ -196,7 +196,9 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         try:
             return Int(
                 self._items.index(
-                    obj, _opt_int(start, 0), _opt_int(stop, len(self._items))
+                    obj,
+                    a_bound(start, "index", "start") or 0,
+                    _opt_stop(a_bound(stop, "index", "stop"), len(self._items)),
                 )
             )
         except ValueError:

@@ -63,6 +63,20 @@ def test_at_put_mutates() -> None:
     assert ba.at(Int(0)) == Int(90)
 
 
+def test_at_put_out_of_range_names_the_receiver() -> None:
+    # `at` already routed through `_at`'s wording; `at_put` handed the index
+    # to CPython, which answered `bytearray index out of range` — the
+    # subscripting `no_subscript` bans, from the message replacing it.
+    with pytest.raises(IndexError, match="has no element at"):
+        ByteArray(bytearray(b"ab")).at_put(Int(9), Int(65))
+
+
+def test_at_put_with_a_non_int_index_names_the_message() -> None:
+    bad: Any = Str("x")
+    with pytest.raises(TypeError, match=r"at_put expects an int index, got a str"):
+        ByteArray(bytearray(b"ab")).at_put(bad, Int(65))
+
+
 def test_at_put_returns_self() -> None:
     ba = ByteArray(bytearray(b"abc"))
     result = ba.at_put(Int(0), Int(65))
@@ -823,7 +837,7 @@ _BAD: Any = List(Int(1), Int(2))
             # CPython answers ValueError here, not TypeError:
             # `bytearray(b"abc").hex([1, 2])` is "sep must be length 1.".
             lambda: ByteArray(bytearray(b"abc")).hex(_BAD),
-            ValueError,
+            TypeError,
             id="hex_sep",
         ),
         pytest.param(

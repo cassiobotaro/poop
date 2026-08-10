@@ -164,12 +164,28 @@ class Object(metaclass=PoopMeta):
         return List(*(Str(name) for name in builtins.dir(self) if is_message(name)))
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
+        from poop.types._argument import text_like
+        from poop.types._unwrap import _is_absent
+        from poop.types.exceptions import MIRRORS
         from poop.types.string import Str
 
-        spec_value = _unwrap(spec, "")
+        # Two leaks in one method. A non-`Str` spec answered `format()
+        # argument 2 must be str, not int` — the builtin `no_format` bans,
+        # spelt as the call this message replaces...
+        spec_value = "" if _is_absent(spec) else text_like(spec, "format", "a str")
         target = builtins.getattr(self, "_value", self)
-        return Str(builtins.format(target, spec_value))
+        try:
+            return Str(builtins.format(target, spec_value))
+        except TypeError:
+            # ...and a receiver with no `_value` fell through to
+            # `object.__format__`, which refuses every non-empty spec by
+            # naming the dunder: `unsupported format string passed to
+            # list.__format__`. CPython refuses these too — only the sentence
+            # is POOP's to write.
+            raise MIRRORS["TypeError"](
+                f"{type(self).__name__} takes no format spec — "
+                "only a number, a string or bytes does"
+            ) from None
 
     def _reject_dunder(self, name: str) -> None:
         """The runtime half of `no_dunder_attribute`.

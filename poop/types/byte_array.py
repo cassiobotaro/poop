@@ -2,6 +2,7 @@ from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._affix import affix_needle
+from poop.types._argument import a_bound, text_like
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -11,6 +12,7 @@ from poop.types._at import (
 from poop.types._cloak import cloak
 from poop.types._codec import encoding_name, handler_name
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._message import article
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
@@ -71,7 +73,18 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return ByteArray(bytearray(self._value[py]))
 
     def at_put(self, index: Index, byte: Int) -> ByteArray:
-        self._value[index] = _faithful(byte)
+        # CPython answers `bytearray indices must be integers or slices, not
+        # str` — `indices` naming the subscripting `no_subscript` bans, from
+        # the message that replaces it. `at` already routes through `_at`.
+        try:
+            self._value[index] = _faithful(byte)
+        except IndexError:
+            raise no_element_at(self, self._value, index) from None
+        except TypeError:
+            raise MIRRORS["TypeError"](
+                f"{type(self).__name__}.at_put expects an int index, "
+                f"got {article(type(index).__name__)}"
+            ) from None
         return self
 
     def includes(self, byte: Int) -> Boolean:
@@ -108,7 +121,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
         if _is_absent(sep):
             return Str(self._value.hex())
-        raw = _faithful(sep)
+        raw = text_like(sep, "hex", "a one-character separator")
         # CPython's hex() takes str or bytes, not bytearray, so a ByteArray
         # separator is converted — but nothing else is, or a List of Ints
         # would be silently coerced where CPython raises.
@@ -237,7 +250,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         fill = _unwrap(fillchar, None)
         if fill is None:
             return ByteArray(self._value.center(_faithful(width)))
-        return ByteArray(self._value.center(_faithful(width), fill))
+        return ByteArray(
+            self._value.center(
+                _faithful(width), text_like(fillchar, "center", "one byte")
+            )
+        )
 
     def count(
         self,
@@ -246,7 +263,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
-            self._value.count(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.count(
+                _faithful(sub),
+                a_bound(start, "count", "start"),
+                a_bound(end, "count", "end"),
+            )
         )
 
     def endswith(
@@ -259,8 +280,8 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             true
             if self._value.endswith(
                 affix_needle(suffix),
-                _unwrap(start, None),
-                _unwrap(end, None),
+                a_bound(start, "endswith", "start"),
+                a_bound(end, "endswith", "end"),
             )
             else false
         )
@@ -279,7 +300,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
-            self._value.find(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.find(
+                _faithful(sub),
+                a_bound(start, "find", "start"),
+                a_bound(end, "find", "end"),
+            )
         )
 
     def index(
@@ -289,7 +314,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
-            self._value.index(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.index(
+                _faithful(sub),
+                a_bound(start, "index", "start"),
+                a_bound(end, "index", "end"),
+            )
         )
 
     def isalnum(self) -> Boolean:
@@ -334,7 +363,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         fill = _unwrap(fillchar, None)
         if fill is None:
             return ByteArray(self._value.ljust(_faithful(width)))
-        return ByteArray(self._value.ljust(_faithful(width), fill))
+        return ByteArray(
+            self._value.ljust(
+                _faithful(width), text_like(fillchar, "ljust", "one byte")
+            )
+        )
 
     def lower(self) -> ByteArray:
         return ByteArray(self._value.lower())
@@ -373,7 +406,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
-            self._value.rfind(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.rfind(
+                _faithful(sub),
+                a_bound(start, "rfind", "start"),
+                a_bound(end, "rfind", "end"),
+            )
         )
 
     def rindex(
@@ -383,7 +420,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
-            self._value.rindex(_faithful(sub), _unwrap(start, None), _unwrap(end, None))
+            self._value.rindex(
+                _faithful(sub),
+                a_bound(start, "rindex", "start"),
+                a_bound(end, "rindex", "end"),
+            )
         )
 
     def rjust(
@@ -395,7 +436,11 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         fill = _unwrap(fillchar, None)
         if fill is None:
             return ByteArray(self._value.rjust(_faithful(width)))
-        return ByteArray(self._value.rjust(_faithful(width), fill))
+        return ByteArray(
+            self._value.rjust(
+                _faithful(width), text_like(fillchar, "rjust", "one byte")
+            )
+        )
 
     def rpartition(self, sep: ByteArray) -> Tuple:
         return Tuple(*[ByteArray(p) for p in self._value.rpartition(_faithful(sep))])
@@ -448,8 +493,8 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             true
             if self._value.startswith(
                 affix_needle(prefix),
-                _unwrap(start, None),
-                _unwrap(end, None),
+                a_bound(start, "startswith", "start"),
+                a_bound(end, "startswith", "end"),
             )
             else false
         )
