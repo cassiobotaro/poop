@@ -2,155 +2,76 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-### 22. A class-side constructor breaks under the name a program writes
-
-`fromhex` and `from_bytes` are classmethods, so `cls` is whatever the program
-named — and a bare builtin name is the `_alias.py` alias, whose `__call__` is
-the *converter*. A classmethod hands that converter an already-built Python
-value, which is the one thing it does not take:
-
-```
-bytes.fromhex("6162")        # AttributeError: 'int' object has no
-                             #   attribute '_value'
-int.from_bytes(b"\x01", "big")  # TypeError: cannot convert int to int
-float.fromhex("0x1.8p+1")    # TypeError: cannot convert float to float
-
-b"".fromhex("6162")          # b'ab'      — the same message, sent to
-(1).from_bytes(b"\x01", "big")  # 1       an instance, works
-(1.0).fromhex("0x1.8p+1")    # 3.0
-```
-
-Three of the four class-side constructors are broken, and broken in the only
-spelling a reader would write: `bytes.fromhex(...)` is how Python spells it and
-how `INFECTIONS.md` documents it. The instance form is the accident that still
-works. `dict.fromkeys` escapes because it never builds through `cls(...)`.
-
-The failures are also the two shapes the wording work keeps closing: `'int'
-object has no attribute '_value'` prints the internal slot name that
-`INFECTIONS.md`'s faithful-unwrap idiom exists to hide, and `cannot convert int
-to int` is a sentence with nothing in it — the converter reading
-`type(arg).__qualname__` off a *raw* value that is already the target type.
-
-Not a regression from item 13: verified against `d801393`, before this cycle
-touched `_AliasMeta`.
-
-**Fix.** The converter is for arguments a *program* supplies; a classmethod is
-POOP's own code and should build POOP's own way. Have the three classmethods
-construct through the wrapper rather than through `cls` — `unalias(cls)` is
-already the function that answers "the wrapper behind this name", and it keeps
-a genuine subclass (`class B(bytes)`) building a `B`. The alternative — teaching
-every converter to accept raw Python values — widens the surface that
-`_arity.py` narrowed on purpose. `ByteArray` has no `fromhex` at all, though
-CPython's `bytearray.fromhex` exists and `Bytes`/`ByteArray` mirror each other
-everywhere else; it belongs in the same commit.
+*Empty — nothing open.*
 
 ---
 
-### 23. `super().__init__(...)` is the third home of the convert/build gap
+### ~~22. A class-side constructor breaks under the name a program writes~~ — DONE
 
-Item 9 closed the gap for a bare name and item 13 for a subclass with no
-`__init__` of its own. The remaining door is the one spelling POOP *sanctions*:
-`no_dunder_attribute` carves out exactly one dunder call, `__init__`, for
-`super().__init__(...)`, and there it still means "build from these elements":
+**Decision + implemented.** `fromhex` and `from_bytes` built through `cls`, and
+`cls` is whatever the program named — under a bare builtin name that is the
+alias, whose call is the *converter*, which takes what a program writes rather
+than the finished Python value a classmethod holds. So all three broke in the
+only spelling a reader would use while the instance form quietly worked.
 
-```
-class S(list):
-    def __init__(self, xs):
-        super().__init__(xs)
-
-S([1, 2]).len().print()      # 1   — a list holding one list
-```
-
-Every builtin behaves as it did before item 13 the moment the program writes a
-constructor, which is what a Python programmer writes:
-
-```
-class N(int):
-    def __init__(self, v):
-        super().__init__(v)
-N(4.9)                       # an int holding 4.9, item 9's own example
-                             # then: float does not understand #+ with an int
-
-class D(dict):
-    def __init__(self, pairs):
-        super().__init__(pairs)
-D({"a": 1})                  # dict.__init__() takes 1 positional argument
-                             #   but 2 were given
-```
-
-`super().__init__(*xs)` is the spelling that works, and nothing says so.
-
-**Fix.** Give the alias its own `__init__`, which converts. The MRO puts it
-exactly where `super()` looks: for `class S(list)`, `S.__mro__` is
-`(S, <alias>, List, …)` — verified — so an `__init__` on the alias intercepts
-`super().__init__(...)` from the subclass and nothing else. It can reuse what
-`_AliasMeta.__call__` already does for the no-`__init__` case: run the
-converter, then copy the payload slots into `self`. Then the three spellings of
-one intent — `list(xs)`, `Sub(xs)`, `super().__init__(xs)` — finally agree.
+`_alias.wrapped_instance` answers the three receivers: the alias answers the
+wrapper's own instance, a plain wrapper builds itself, and a program's
+`class B(bytes)` is built from the wrapper's constructor, so `B.fromhex(…)`
+still answers a `B` — the case that ruled out the simpler `unalias(cls)(…)`.
+`ByteArray.fromhex` was added alongside: `Bytes` and `ByteArray` mirror each
+other message for message and this was the one half-pair, for a spelling
+CPython supports. `poop/types/_alias.py`, `poop/types/{bytes,byte_array,int,
+float}.py`, four test modules, `INFECTIONS.md`.
 
 ---
 
-### 24. `Str.format` is POOP's template surface with CPython's failures
+### ~~23. `super().__init__(...)` is the third home of the convert/build gap~~ — DONE
 
-`INFECTIONS.md` says `"{}".format(...)` "stays as POOP's template surface", and
-`Str._reject_field_access` already guards one half of it. The other half —
-what the message answers when the template and the arguments disagree — was
-never written, so all five failure modes are CPython's:
+**Decision + implemented.** The alias carries its own `__init__`, which
+converts and fills the payload. The MRO puts it exactly where `super()` looks —
+`S.__mro__` is `(S, <alias>, List, …)` — so it intercepts that call and nothing
+else, and the three spellings of one intent (`list(xs)`, `Sub(xs)`,
+`super().__init__(xs)`) now agree.
 
-```
-"{a}".format(b=1)    # KeyError: 'a'
-"{}".format()        # IndexError: Replacement index 0 out of range for
-                     #   positional args tuple
-"{}{}".format(1)     # the same, index 1
-"{:d}".format("a")   # ValueError: Unknown format code 'd' for object of
-                     #   type 'str'
-"{".format()         # ValueError: Single '{' encountered in format string
-```
-
-The first is the exact shape `poop/types/_at.py` was written to close for a
-missing key: a bare repr, with nothing to say that a lookup failed or where.
-The second names "positional args tuple" — Python's calling convention, for a
-message whose arguments POOP does not describe that way. The third names a
-"format code" and an "object of type", the type-level protocol vocabulary
-`_message.py` rewrites everywhere else.
-
-**Fix.** Wrap the `str.format` call in `Str.format` and reword its three
-exception types, the way `_at.py` owns the wording for nine receivers' `at`: a
-missing name says which field the template asked for and that no argument
-carried it, a missing position says how many arguments the template wants
-against how many it got, and a spec the value cannot take names the value's
-kind and the spec. The brace errors are the parser's and can stay, but they
-should say `template` rather than `format string` if they are touched at all.
-`tests/test_no_python_wording.py` gains the five programs — the sweep varies
-*arguments*, never the receiver's own text, which is why it never saw these.
+One consequence is deliberate and worth recording: `super().__init__(*xs)`, the
+spelling that used to be the workaround, now answers `list is built from at
+most one collection, got 2 arguments` — which is what the direct call answers,
+and what CPython answers to `list.__init__(self, 1, 2)`. A program written
+against the bug changes behaviour; a program written against Python does not.
+`poop/types/_alias.py`, `tests/test_transformers/test_type_names.py`,
+`INFECTIONS.md`.
 
 ---
 
-### 25. `int.superclass()` answers a class that calls itself `int`
+### ~~24. `Str.format` is POOP's template surface with CPython's failures~~ — DONE
 
-The class side is how a program explores the tree, and under a bare builtin
-name it has a rung that is not there:
+**Decision + implemented.** All five modes are worded now: a missing name says
+what the template asked for and which arguments it was given, a missing
+position counts the values it got, and a spec the value cannot take names the
+value's kind. The brace errors keep the parser's sentence with `format string`
+replaced by `template`, since the fault they report really is in the text.
 
-```
-int.superclass().name().print()              # int
-int.superclass().is_identical(int).print()   # False
-int.superclass().superclass().name().print() # object
+Two things fell out of writing it. `_reject_field_access` had to move *inside*
+the guard — the unmatched-brace errors are raised by the parser it runs, not by
+`format` — and its own refusal therefore has to pass through untouched, on the
+`PoopExcMeta` test `reword_if_native` uses for exactly that reason. The five
+programs joined `_FAILING`, which is where the bare `KeyError: 'a'` is pinned:
+the sweep's "still says something" half catches a one-word message, while the
+patterns did not, and the exact wording is pinned in `tests/test_types/test_str.py`.
+`poop/types/string.py`, `tests/test_no_python_wording.py`, `INFECTIONS.md`.
 
-(5).class_().superclass().name().print()     # object   — the right answer
-```
+---
 
-The alias is a subclass of the wrapper, so `__bases__` holds the wrapper, and
-both are cloaked as `int`. A reader climbing the ladder is told `int`'s
-superclass is `int`, and has to climb twice to reach `object`. A user class is
-unaffected (`B.superclass()` answers `A`, `A.superclass()` answers `object`),
-so the phantom rung appears exactly where the language is at its most
-"everything is an object".
+### ~~25. `int.superclass()` answers a class that calls itself `int`~~ — DONE
 
-**Fix.** `PoopMeta.superclass` should skip a base that `unalias` maps to the
-receiver itself — the alias and its wrapper are one class as far as a program
-can tell, which is the decision item 12 already made for `==`. `_alias.py` is
-where the pair is known; `superclass` is the third question it has to answer,
-after `is_instance`/`is_subclass` and `==`.
+**Decision + implemented.** `PoopMeta.superclass` skips a base that `unalias`
+maps to the receiver, so the ladder no longer has a rung that is not there:
+`int.superclass()` answers `object`, one step, and the answer is the same class
+`(5).class_().superclass()` gives. It is the same "the alias and its wrapper
+are one class" decision item 12 made for `==`, which makes this the third
+question `_alias.unalias` answers. A program's own `class Stack(list)` is
+unaffected — its superclass *is* `list`, the name it wrote. `poop/types/meta.py`,
+`tests/test_types/test_meta.py`, `INFECTIONS.md`.
 
 ---
 
