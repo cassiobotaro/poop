@@ -2,7 +2,58 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-*Empty — nothing open.*
+### 26. A subclass of an immutable builtin is born without its value
+
+Item 23 made `super().__init__(...)` convert, and the three spellings of that
+intent agree now. Running the whole matrix against CPython afterwards — which
+is what should have happened before it was merged — shows the row it does not
+cover: a subclass whose `__init__` never calls `super()` at all.
+
+```
+class N(int):
+    def __init__(self, v):
+        pass
+
+N(4.9).print()      # N does not understand #_value
+```
+
+CPython answers `4`, and so does `class S(str)` for `'5'` and `class T(tuple)`
+for `(1, 2)`. The reason is structural: for an immutable builtin the value is
+set by `__new__`, from the *constructor's* arguments, before `__init__` is
+reached — so a subclass that ignores its arguments still gets a working object.
+POOP has no `__new__` step: the payload is written by `__init__`, so when the
+program's own `__init__` does not pass it up, nothing ever writes it.
+
+The object that comes back is broken in the way this codebase works hardest to
+avoid. It is not merely wrong, it reports itself with `#_value` — the internal
+slot name `INFECTIONS.md`'s faithful-unwrap idiom exists to keep out of sight,
+now arriving through `does_not_understand`, on a receiver a program built with
+ordinary syntax.
+
+Not a regression from item 23: verified against `2922bcb`, before this cycle
+began. The mutable builtins are unaffected — `list`, `dict`, `set` and
+`bytearray` are filled by `__init__` in CPython too, which is exactly why they
+already agree.
+
+One divergence next door is deliberate and should stay: `class N(int)` calling
+`super().__init__(v)` works in POOP and is a `TypeError` in CPython
+(`object.__init__() takes exactly one argument`), because Python's immutables
+have nothing for `__init__` to do. Refusing it would break the one spelling
+item 23 exists to make right, for no gain a reader would recognise.
+
+**Fix.** Give the alias the `__new__` step Python has: when a subclass with its
+own `__init__` is called with exactly one positional argument and no keywords —
+the shape every converter takes, "convert this value" — convert it and fill the
+payload *before* `__init__` runs. A subclass with its own signature
+(`Tagged(xs, tag)`) is untouched, and keeps filling through `super()`.
+
+That leaves a residue: a subclass with a signature of its own that also never
+calls `super()`. CPython refuses it (`int.__new__` cannot take those
+arguments); POOP should not answer `#_value` either way, so `Object.__getattr__`
+should recognise a missing *declared slot* and say the object was never given
+its value — worded without naming the constructor, since a message spelling a
+dunder is what `no_dunder_attribute` bans and the static wording sweep would
+catch.
 
 ---
 
