@@ -2,410 +2,186 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-### 12. A class comparison answers a Python `bool`, and answers it wrongly
-
-Two facts, one cause. `Object.__eq__` answers a `Boolean`, so `(5 == 5)` is a
-POOP object — but a *class* is compared by its metaclass, and `PoopMeta` defines
-no `__eq__`. So the comparison falls through to `type.__eq__` and a raw Python
-`bool` reaches user code:
-
-```
-(int == int).print()
-#  ->  AttributeError: 'bool' object has no attribute 'print'
-```
-
-The failure names `'bool' object` and an *attribute*, which is CPython's
-vocabulary for the thing POOP calls a message, and it is reached by the shortest
-program that compares two classes. `!=` leaks the same way, and so does any
-`.if_true(...)` / `.not_()` a program would send next.
-
-The second fact is worse because it is silent. `class_()` answers the wrapper,
-while a bare builtin name answers the `_alias.py` subclass of that wrapper
-(item 9), so the two are different objects with the same `name()`:
-
-```
-(5).class_().name().print()  # int
-int.name().print()  # int
-(5).is_instance(int).print()  # True
-(5).class_().is_identical(int).print()  # False   <-- both are "int"
-```
-
-`is_instance` is right because both pairs route through `unalias`; the equality
-a reader reaches for first does not, and answers `False` for a program that is
-correct.
-
-**Fix.** Give `PoopMeta` an `__eq__` / `__ne__` answering a `Boolean`, comparing
-`unalias(cls)` against `unalias(other)` so a wrapper and its alias are one
-class — which closes both halves at once — and keep `__hash__` explicitly
-(defining `__eq__` drops it, and `NATIVE_TO_POOP` keys on classes). `unalias`
-already lives in `poop/types/_alias.py` and is already what
-`is_instance`/`is_subclass` call, so this is the same answer given to a third
-question rather than a new rule. `is_identical` must *not* follow it — it is
-identity, and a wrapper and its alias really are two objects — so the pair will
-disagree by design, and `INFECTIONS.md` should say which of the two a reader
-comparing classes is meant to send.
+*Empty — nothing open.*
 
 ---
 
-### 13. A builtin subclass constructs by the wrapper's rules, not the converter's
+### ~~12. A class comparison answers a Python `bool`, and answers it wrongly~~ — DONE
 
-Item 9 closed the gap between "convert this value" and "build from these
-elements" for a bare name. `_AliasMeta.__call__` reads `_converter` from
-`cls.__dict__` rather than inheriting it, deliberately — "a subclass must behave
-normally, or `class Stack(list)` would answer a `List` from `Stack()`" — and
-that leaves the whole gap open one level down, for the exact spelling
-`_alias.py` names as a legal use of a bare name (`class Stack(list): ...`):
+**Decision + implemented.** `PoopMeta` defined no `__eq__`, so `int == int`
+fell through to `type.__eq__` and handed a raw Python `bool` to user code,
+which answered `'bool' object has no attribute 'print'` — CPython's word for
+the thing POOP calls a message, from the shortest program that compares two
+classes. `__eq__` / `__ne__` answer a `Boolean` now and read both sides
+through `unalias`, which closes the silent half too: `(5).class_() == int` was
+`False` about two objects that both call themselves `int`.
 
-```
-class Stack(list): ...
-Stack([1, 2]).len().print()   # 1   — a Stack holding one list
-list([1, 2]).len().print()    # 2
-
-class N(int): ...
-n = N(4.9)                    # an int holding 4.9, exactly item 9's example
-(n + 1)                       # float does not understand #+ with an int
-
-class D(dict): ...
-D({"a": 1})                   # TypeError: dict.__init__() takes 1 positional
-                              #            argument but 2 were given
-class S(str): ...
-S(5)                          # TypeError: __str__ returned non-string (type int)
-
-class T(set): ...
-T([1, 2])                     # TypeError: cannot use 'list' as a set element
-```
-
-It is not a handful of them. Sending `class Sub(<name>): ...` the argument its
-converter takes, and comparing `Sub(x).repr()` against `<name>(x).repr()`, every
-row disagrees:
-
-```
-              Sub(x)                          <name>(x)
-int(4.9)      4.9                             4
-float("2.5")  2.5  (holding the str)          2.5
-str(5)        5    (holding the int)          '5'
-bytes("ab")   'ab' (holding the str)          b'ab'
-list([1, 2])  [[1, 2]]                        [1, 2]
-tuple([1,2])  ([1, 2],)                       (1, 2)
-complex(…)    '1+2j' (holding the str)        (1+2j)
-bool(1)       TypeError: Sub() takes no arguments
-bytearray(…)  TypeError: 'str' object cannot be interpreted as an integer
-dict({…})     TypeError: dict.__init__() takes 1 positional argument but 2 …
-set([1, 2])   TypeError: cannot use 'list' as a set element
-frozenset(…)  the same
-range(3)      TypeError: range.__init__() missing 1 required positional …
-```
-
-Seven are silent — "a value whose class and contents disagree", as item 9 put
-it, and each one detonates at the next message (`N(4.9) + 1` answers `float
-does not understand #+ with an int`). Six refuse, and every refusal is a Python
-one: a dunder, an arity, or a slot name, which is what items 3 and 10 exist to
-prevent.
-
-**Fix.** Route a subclass through the converter too, then build `cls` from the
-result — `_AliasMeta.__call__` looks `_converter` up along the MRO, and when
-`cls` is not the alias itself it converts the arguments and constructs `cls`
-from the converted payload. The guard that must survive is the one the current
-`__dict__` read was protecting: a subclass defining its own `__init__` keeps it,
-and `Stack()` answers a `Stack`, not a `List`. The mechanical test of item 9
-(`tests/test_transformers/test_type_names.py`) should grow a second row per
-constructor: `class Sub(<name>)` answers what `<name>(...)` answers, with the
-subclass's own class.
+`is_identical` deliberately does *not* unalias — it asks identity, and those
+really are two objects — so the pair disagrees by design, and `INFECTIONS.md`
+says which one a reader comparing classes should send. `__hash__` is
+re-declared as `type.__hash__`, since defining `__eq__` drops it and
+`NATIVE_TO_POOP` keys on classes. `poop/types/meta.py`,
+`tests/test_types/test_meta.py`, `INFECTIONS.md`.
 
 ---
 
-### 14. `encode` / `decode` do not guard the encoding argument
+### ~~13. A builtin subclass constructs by the wrapper's rules, not the converter's~~ — DONE
 
-`poop/types/_codec.py` exists so the codec table never shows through: it names
-four encodings and three handlers and refuses the rest in POOP's words. Both
-entry points hand the argument to `encoding_name`, which calls `.lower()` on it
-before anything checks what it is:
+**Decision + implemented.** `_AliasMeta.__call__` read `_converter` off
+`cls.__dict__` and stopped there, so the convert-versus-build gap item 9
+closed stayed open one level down — for the spelling `_alias.py` itself calls
+a legal use of a bare name. The converter is looked up along the MRO now and
+its answer rebuilt as `cls`, slot by slot: a subclass has the wrapper's slots,
+and `_payload_slots` reads them off `__slots__` rather than a table, so a new
+wrapper is covered by having one. The payload is copied, since a converter may
+answer a value it was handed.
 
-```
-"ab".encode(1)  #  AttributeError: 'int' object has no attribute 'lower'
-b"ab".decode(1)  #  the same, from ByteArray too
-```
-
-That is an internal implementation detail read back to the user — the wrapper
-naming the Python method it happens to call — and it is the shape item 10
-closed everywhere else with `poop/types/_argument.py`. The handler argument is
-half-guarded in the other direction: `"ab".encode("utf-8", 1)` answers
-`unknown error handler 1 — POOP handles strict, ignore and replace`, a
-`ValueError` about a *value* for what is a wrong-typed argument, the split item
-10 settled for `byte_order` (a non-string is a `TypeError` about the argument's
-kind, a misspelt one a `ValueError` about its value).
-
-**Fix.** Send both arguments through `_argument.text_like` before the lookup, so
-a non-`Str` answers `encode() argument 'encoding' must be str` in POOP's voice
-and only a real string reaches `encoding_name` / `handler_name`. One guard in
-`_codec.py` covers `Str.encode`, `Bytes.decode` and `ByteArray.decode` at once,
-which is the reason `_argument.py` is keyed on argument *kind*.
+Two exceptions, both deliberate. A subclass declaring its own `__init__` is
+built by it — that is what the `__dict__` read was protecting. And `bool` is
+not rebuildable: its two values are singletons with no payload, so its
+converter's answer passes through, which is why the mechanical test's table
+has twelve rows and not thirteen. `poop/types/_alias.py`,
+`tests/test_transformers/test_type_names.py`, `INFECTIONS.md`.
 
 ---
 
-### 15. A `Set` refuses a set argument that Python accepts
+### ~~14. `encode` / `decode` do not guard the encoding argument~~ — DONE
 
-CPython's `set.discard`, `set.remove` and `in` accept an unhashable `set`
-argument on purpose — they probe with a temporary `frozenset`, so asking
-whether a set is inside a set is an ordinary question with an ordinary answer.
-POOP refuses all three:
+**Decision + implemented.** The codec table is read by lowercasing the
+argument, so `"ab".encode(1)` answered `'int' object has no attribute 'lower'`
+— the wrapper naming the Python method it happens to call, the shape item 10
+closed everywhere else. Both arguments pass `_argument.text_like` before the
+lookup, and the handler stops reporting a wrong-*typed* argument as a
+wrong-*valued* one.
 
-```
-s = {1, 2}
-s.discard({1})  # TypeError: cannot use 'set' as a set element
-s.includes({1})  # TypeError: … (CPython answers False)
-s.remove({1})  # TypeError: … (CPython answers a KeyError)
-```
-
-A `FrozenSet` argument works, so the divergence is invisible until a program
-holds a `Set`. `remove` is the sharpest of the three: the refusal it should
-answer is `no_element_equal_to`, POOP's own sentence, and it never gets there.
-
-**Fix.** In `Set` / `FrozenSet`'s `discard`, `remove`, `includes` and
-`__contains__`, convert a `Set` argument to the equivalent `FrozenSet` payload
-before probing `_data`, mirroring CPython's fallback. The probe is
-read-only, so no element is ever stored — the ban on a `Set` *inside* a set
-(`{1}.add({2})`) stays exactly as it is, which is the distinction CPython draws
-and POOP currently does not.
+`text_like` grew a `kinds` parameter for the two callers that mean `str` and
+nothing else; narrowing it fixes `byte_order` the same way, where `b"big"`
+used to slip past the type check and fail as a value. `poop/types/_codec.py`,
+`poop/types/_argument.py`, three wrappers, `tests/test_types/test_codec.py`,
+`INFECTIONS.md`.
 
 ---
 
-### 16. The exception hierarchy misses what POOP's own surface raises
+### ~~15. A `Set` refuses a set argument that Python accepts~~ — DONE
 
-`poop/types/exceptions.py` justifies its 16 mirrors with a reachability
-argument: "a language with no I/O and no codecs cannot reach the `OSError`
-subtree or the `Unicode*` family". POOP has one input message and four
-encodings, and both of those are reachable through them:
-
-```
-"héllo".encode("ascii")
-#  ->  UnicodeEncodeError: 'ascii' codec can't encode character '\xe9'
-#      in position 1: ordinal not in range(128)
-```
-
-The sentence advertises a `codec` — the word `_codec.py` was written to keep out
-of messages — under a class name no program can spell. `EOFError` is the same
-gap on the input side, and it is not hypothetical: `examples/basics/greet.py`,
-a shipped example, answers `EOFError: EOF when reading a line` the moment its
-stdin is a pipe rather than a terminal, and no program can catch it by name:
-
-```
-Try(lambda: "name? ".input()).except_(EOFError, handler).run()
-#  ->  NameError: name 'EOFError' is not defined
-```
-
-`except_(Exception, …)` does catch it, but `e.kind().name()` then answers
-`Exception` — `poop_class_of` walks to the nearest mirrored ancestor, which is
-right as a rule and lossy exactly here, so the uncaught path prints
-`UnicodeEncodeError` while a handler is told `ValueError`: one exception, two
-names.
-
-**Fix.** Add the three natives POOP's own surface can raise to `_HIERARCHY` —
-`EOFError` under `Exception`, `UnicodeEncodeError` and `UnicodeDecodeError`
-under `ValueError` (their real parent) — and reword the two messages the way
-every other reachable failure is worded: `input`'s EOF as end of input rather
-than "EOF when reading a line", and the codec failures as the character and
-position that could not be encoded, without naming a codec module. Mirroring is
-the cheap half; the docstring's reachability argument should be corrected in the
-same commit, since it is what will be read the next time someone asks whether a
-mirror is needed.
+**Decision + implemented.** `s.includes({1})`, `s.discard({1})` and
+`s.remove({1})` all answered `cannot use 'set' as a set element` — a refusal
+about *storing*, given to three messages that only look. `_set_algebra.probed`
+answers a mutable set operand with an equivalent `FrozenSet`, which hashes and
+compares exactly as a stored one does, so a set really held inside a set is
+found rather than blanket-refused, `remove` reaches POOP's own
+`no_element_equal_to`, and `add` still refuses. Recognised through the
+`_set_like` marker `_other_set` already used, so no `Set` ↔ `FrozenSet` import
+cycle. `poop/types/_set_algebra.py`, `poop/types/{set,frozen_set}.py`, both
+test modules, `INFECTIONS.md`.
 
 ---
 
-### 17. The mutation refusal names the receiver in `do` and hides it in `next`
+### ~~16. The exception hierarchy misses what POOP's own surface raises~~ — DONE
 
-`_mutated.py` carries `iterating(receiver)` — "the label for a receiver being
-iterated — its own cloaked name" — and two call sites use it. The three sites in
-`_peek.py` pass the literal `"the collection"` instead, so the same fact reads
-two ways depending on which message noticed it:
+**Decision + implemented, and the two halves went different ways.** `EOFError`
+is mirrored: `Str.input` is the only message that reads from outside the
+program, end of input needs nothing more exotic than a pipe — it is what
+`examples/basics/greet.py` answered `EOF when reading a line` to — and without
+a mirror the class could not be named at all, while `except_(Exception, …)`
+reported the kind as `Exception`. `input` raises it with a sentence of its own.
 
-```
-d = {"a": 1}
-d.do(lambda k: d.at_put("b", 2))
-#  ->  dict changed while it was being iterated — …
-
-d = {"a": 1}
-it = d.iter()
-d.at_put("b", 2)
-it.next()
-#  ->  the collection changed while it was being iterated — …
-```
-
-This is the shape items 6 and 8 closed: one operation answering in two
-vocabularies because the guard was wired into one spelling and not its twin.
-Here the anonymous half is the *cursor* protocol `_peek.py`'s own docstring
-calls the idiomatic one, so it is the wording a reader following the examples
-meets first.
-
-**Fix.** Give `_PeekMixin` the label of the collection it iterates — the
-concrete iterators already hold it (`ListIterator` is built from the list's
-items) — and pass it to `reword_if_native` in `has_next`, `next` and `__next__`,
-so `d.iter().next()` says `dict` for the same reason `d.do(…)` does. A default
-of `"the collection"` keeps an iterator that cannot name its source honest
-rather than wrong.
+The `Unicode*` family is **not** mirrored, against what this item proposed.
+Its constructor takes five arguments and its `__str__` composes them into the
+`codec` sentence `_codec.py` exists to keep out, so a mirror would have
+reproduced the very message that made this a bug; and `poop_class_of` already
+answered `ValueError` for it, which is what `UnicodeError` is in CPython's own
+tree. Both failures are reworded instead — `ascii cannot encode 'é' at
+position 1`, `utf-8 cannot decode byte 0xff at position 0` — under one class a
+program can spell, which also ends the disagreement between the uncaught
+report and the handler. `poop/types/exceptions.py`, `poop/types/_codec.py`,
+`poop/types/string.py`, three test modules, `INFECTIONS.md`.
 
 ---
 
-### 18. `no_subscript` names a reader as the substitute for a write
+### ~~17. The mutation refusal names the receiver in `do` and hides it in `next`~~ — DONE
 
-`obj[key] = value` is refused with the substitute for *reading*:
+**Decision + implemented.** `_mutated.iterating` exists so the refusal names
+its receiver, and the cursor passed the literal `"the collection"` — so
+`d.do(…)` and `d.iter().next()` reported one fact in two vocabularies, with
+the anonymous half being the protocol `_peek.py` holds up as idiomatic.
 
-```
-xs = [1, 2]
-xs[0] = 9        # subscript obj[key] is forbidden — use obj.at(key) instead
-xs.at_put(0, 9)  # list does not understand #at_put
-
-d = {}
-d["a"] = 1       # subscript obj[key] is forbidden — use obj.at(key) instead
-d.at_put("a", 1) # works — the message just never mentions it
-```
-
-Two problems, one line apart. For a `Dict` the substitute exists and the
-refusal names the wrong one, so a reader follows the advice, writes
-`d.at("a")`, and gets a `KeyError` for a program that was trying to *store*.
-For a `List` there is no substitute at all: `at_put` is defined on `Dict` and
-`ByteArray` — `INFECTIONS.md` lists both as "POOP-specific methods with no
-Python equivalent" — and not on the one collection between them that is
-indexable, mutable and ordered. `xs.append`, `xs.insert` and `xs.pop` can
-simulate it (`xs.pop(i)` then `xs.insert(i, v)`), which is a two-message dance
-for one assignment and changes the list in between.
-
-This is the rule `CONTRIBUTING.md` states for validators: "Activate a validator
-only when the substitute exists — blocking without offering an alternative
-breaks code without teaching." `no_subscript` is active for the store context
-with no substitute for the most ordinary receiver.
-
-**Fix.** Two commits. Add `List.at_put(index, value)`, mirroring `ByteArray`'s
-(same name, same `Index` guard, same `self` return for chaining), so the
-substitute exists. Then let `no_subscript` see the context it is refusing — an
-`ast.Subscript` under a `Store` — and name `obj.at_put(key, value)` there,
-keeping `obj.at(key)` for a `Load`. The slice branch needs the same split or an
-honest refusal: `xs[1:3] = ys` has no substitute either, and today it is
-answered by the message about `obj.slice(...)`, which reads. `INFECTIONS.md`'s
-`no_subscript` table grows the second row.
+The label is derived from the CPython iterator name each concrete iterator
+already declares (`list_iterator` → `list`), so a new iterator cannot ship
+without one; `iterating=` covers `memory_iterator`, the single name whose
+prefix is not the collection's own spelling. The lazy views keep the default,
+which is honest rather than wrong — they cannot name the collection behind
+them. `poop/types/_peek.py`, `poop/types/_iterator_base.py`,
+`poop/types/memory_view_iterator.py`, `tests/test_types/test_peek.py`,
+`INFECTIONS.md`.
 
 ---
 
-### 19. `Dict.do` disagrees with every other way of iterating a `Dict`
+### ~~18. `no_subscript` names a reader as the substitute for a write~~ — DONE
 
-`Dict.do` overrides the mixin's to yield `(key, value)` pairs. Nothing else on
-the same receiver agrees with it:
+**Decision + implemented, in two commits.** `List.at_put` first, because a
+validator may not refuse a construct with no substitute to name: `Dict` and
+`ByteArray` both answered `at_put` and the collection between them — indexable,
+mutable, ordered — could not replace an element at all. It mirrors
+`ByteArray`'s down to both refusals and answers the receiver, so a write
+chains.
 
-```
-d = {"a": 1}
-d.do(lambda x: x.print())            # a 1        — a pair
-list(d.map(lambda x: x)).print()     # a          — a key
-list(d.filter(lambda x: True)).print()  # a       — a key
-d.sorted().print()                   # a          — a key
-d.min().print()                      # a          — a key
-d.iter().next().print()              # a          — a key
-```
-
-So `d.do(lambda k: k.upper())` — the shape every `List` example in `examples/`
-teaches — answers `tuple does not understand #upper`, while `d.map(lambda k:
-k.upper())` works. One receiver, two answers to "what is an element of a
-`dict`", and the one that differs is the message `no_loops` names as the
-substitute for `for k in d`, which in Python walks the keys.
-
-**Fix.** Make `do` yield keys like its five siblings and like Python's `for`,
-leaving `d.items().do(...)` as the pair spelling that already exists (and
-already answers `Tuple`s). The mutation guard `Dict.do` carries stays — it is
-about iterating the dict, not about what it yields. This is a breaking change
-for any program written against the pair form, so it wants a sweep of
-`examples/` and the docstring in `INFECTIONS.md` in the same commit; the
-alternative — pairs everywhere — contradicts `iter()`, `reversed()` and Python,
-and would need six methods changed instead of one.
+Then the validator reads the context off the node: an `ast.Store` (augmented
+assignment included) names `obj.at_put(key, value)`, a `Load` still names
+`obj.at(key)`. The slice branch splits the same way but has no whole-slice
+substitute to point at, so it says what can be done — element at a time —
+rather than naming `slice`, which reads. `poop/types/list.py`,
+`poop/validators/no_subscript.py`, `tests/test_types/test_list.py`,
+`tests/test_interpreter.py`, `INFECTIONS.md`.
 
 ---
 
-### 20. `With` hands `__exit__` three raw Python values
+### ~~19. `Dict.do` disagrees with every other way of iterating a `Dict`~~ — DONE
 
-`Try` wraps what it catches: a handler receives an `Error`, which answers
-`message()`, `kind()` and `class_name()`, and `poop/types/error.py` spends four
-docstrings on not leaking the wrapper. `With` hands the other half of the same
-job straight to CPython — `exit_(cm, type(e), e, e.__traceback__)` — so a
-user's `__exit__` receives values no POOP message works on:
+**Decision + implemented.** The override is dropped rather than rewritten: the
+mixin's `do` walks `__iter__` like `map`, `filter`, `sorted`, `min`, `max` and
+`iter` already did, and carries the same mutation guard worded from the
+receiver, so deleting eight lines was the whole change. `d.items().do(…)` is
+the pair spelling and answers `Tuple`s already.
 
-```
-class R(Object):
-    def __enter__(self):
-        return 1
-    def __exit__(self, kind, err, tb):
-        kind.is_none().print()   # 'NoneType' object has no attribute 'is_none'
-        err.message().print()    # 'ZeroDivisionError' object has no attribute
-        return False             #  'message'
-
-With(lambda: R()).do(lambda x: (1 / 0))
-```
-
-Three separate leaks in one call. `kind` is the *native* class, not the mirror,
-so it is not even the object `Try(…).except_(ZeroDivisionError, …)` matches
-against and no program can name it. `err` is the bare exception rather than an
-`Error`. `tb` is a traceback object — a whole introspection surface, reached
-through `__traceback__`, the dunder spelling `no_dunder_attribute` refuses. And
-on the success path all three are Python's `None`, not POOP's `none`, so the
-first thing an `__exit__` would ask (`kind.is_none()`) fails there too.
-
-The class docstring's "deliberate primitive leak" covers the *protocol* — that
-a manager must define `__enter__`/`__exit__` — not the values passed through
-it; `_protocol` already goes out of its way to keep `__exit__` out of the
-refusal it composes one method above.
-
-**Fix.** Pass what `Try` passes: `poop_class_of(e)` for the kind, `Error(e)` for
-the exception, and `none` for the traceback — POOP has no traceback object and
-inventing one would hand back the introspection surface. On the success path
-send `none` three times. The signature stays three arguments, so a manager
-written for Python's shape still binds, and the `With` receiver test in
-`tests/test_types/test_with_.py` grows a case that *reads* each argument rather
-than only counting them. `examples/` has no `With` program at all today — one
-belongs in the same commit, since this protocol is now the only place a POOP
-program meets a dunder it must implement itself.
+Breaking, as the item said — a block written for the pair form now receives the
+key. The sweep found nothing to change: no example iterated a `Dict` with `do`.
+`poop/types/dict.py`, `tests/test_types/test_dict.py`, `INFECTIONS.md`.
 
 ---
 
-### 21. A user class cannot satisfy the protocol slots it is allowed to define
+### ~~20. `With` hands `__exit__` three raw Python values~~ — DONE
 
-`class P(Object)` may define dunders — `__init__`, `__eq__`, `__lt__`,
-`__enter__` and `__add__` all work, and `CONTRIBUTING.md` tells a contributor to
-"wire dunders to public Python-named methods". But a POOP program can only
-produce POOP values, and four of those slots are read by CPython, which demands
-a native one:
+**Decision + implemented.** `__exit__` now receives what `Try` hands a
+handler — `poop_class_of(e)`, `Error(e)` — and `none` for the traceback, on
+both paths. The class docstring already called the *protocol* the deliberate
+primitive leak; the values were never part of that argument, and the third one
+was an introspection surface reached through a dunder no program may spell.
+The three-argument shape is unchanged, so a manager written to Python's
+signature still binds.
 
-```
-class P(Object):
-    def __str__(self):
-        return "P!"
-P().print()      # TypeError: __str__ returned non-string (type str)
+`examples/idiomatic/managed_resource.py` came in a second commit: `With` had no
+example at all, and it is the one construct where a POOP program implements
+dunders itself. `poop/types/with_.py`, `tests/test_types/test_with_.py`,
+`examples/`, `README.md`, `INFECTIONS.md`.
 
-    def __repr__(self):   # TypeError: __repr__ returned non-string (type str)
-    def __bool__(self):   # TypeError: __bool__ should return bool, returned bool
-    def __hash__(self):   # TypeError: cannot use '__poop__.P' as a set element
-                          #            (__hash__ method should return an integer)
-```
+---
 
-Each sentence is self-contradicting, because `_cloak` renamed the wrapper to the
-builtin it stands for: `__str__ returned non-string (type str)` names `str` as
-the thing that is not a `str`, and `__bool__ should return bool, returned bool`
-is a sentence with no information in it at all. All four name a dunder, which is
-the leak items 3, 5 and 10 exist to close, and the `__hash__` one additionally
-prints `__poop__.P` — the internal module marker `poop/types/meta.py` uses to
-tell a user's class from a builtin, which no program should ever see.
+### ~~21. A user class cannot satisfy the protocol slots it is allowed to define~~ — DONE
 
-There is no workaround: the value a POOP method can return is exactly the wrong
-kind. `__len__` is the quiet member of the family — defining it raises nothing
-and does nothing, since `len` is a message and `P` does not understand it.
+**Decision + implemented.** `PoopMeta.__new__` unwraps the answer of a
+user-defined `__str__`, `__repr__`, `__bool__`, `__hash__` or `__len__` where
+the class is built. A native answer short-circuits, which is what keeps the
+wrappers in `poop/types/` untouched and the package importable at all —
+`bool(x)` runs during its own import, before `_bridge` can be loaded.
 
-**Fix.** Adapt the four slots where the class is built. `PoopMeta` is on every
-POOP class already (`ClassTransformer` routes every user class through
-`Object`) and a `__new__` there sees the namespace before the class exists:
-wrap a user-defined `__str__` / `__repr__` /
-`__bool__` / `__hash__` so the POOP value it answers is unwrapped through
-`_bridge.to_python` on the way out, and refuse — in POOP's words, naming the
-message rather than the slot — anything that is not a `Str` / `Boolean` / `Int`.
-The wrapper classes are unaffected: they define these slots in
-`poop/types/`, in Python, and already return natives. `__len__` is the separate
-half: either wire `Object.len` to a user `__len__` or leave it out of the
-allowance, but it should not be a slot that silently does nothing.
+A wrong answer is refused by the *role* (`P's text must be a str, got an int`),
+never by the slot: a message spelling `__str__` would name the construct
+`no_dunder_attribute` bans, which is exactly what made CPython's own sentence
+unreadable (`__str__ returned non-string (type str)` calls `str` the thing
+that is not a `str`). `__len__` was the quiet member — it raised nothing and
+did nothing — so a class declaring it and no `len` now answers that message
+too. `poop/types/meta.py`, `tests/test_types/test_meta.py`, `INFECTIONS.md`.
 
 ---
 
