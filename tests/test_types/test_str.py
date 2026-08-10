@@ -911,3 +911,57 @@ def test_the_string_searches_refuse_a_block(selector: str) -> None:
     # left on CPython's wording, so one letter changed the vocabulary.
     with pytest.raises(TypeError, match="searches for a substring"):
         getattr(Str("abc"), selector)(lambda c: c == Str("b"))
+
+
+# --- the template surface answers for its own failures ---
+#
+# `"{}".format(...)` is POOP's documented template surface (f-strings are
+# banned), and all five of its failure modes were CPython's.
+
+
+def test_a_missing_name_says_what_the_template_asked_for() -> None:
+    # `KeyError: 'a'` is a bare repr with nothing to say a lookup failed —
+    # the shape `_at.py` was written to close for a missing dict key.
+    with pytest.raises(KeyError, match="the template asks for 'a'"):
+        Str("{a}").format(b=Int(1))
+
+
+def test_a_missing_name_lists_what_it_was_given() -> None:
+    with pytest.raises(KeyError, match="which no argument named: b, c"):
+        Str("{a}").format(b=Int(1), c=Int(2))
+    with pytest.raises(KeyError, match="which no argument named it"):
+        Str("{a}").format()
+
+
+def test_a_missing_position_counts_the_values_it_got() -> None:
+    # `Replacement index 0 out of range for positional args tuple` describes
+    # Python's calling convention.
+    with pytest.raises(IndexError, match="asks for more than the 0 values"):
+        Str("{}").format()
+    with pytest.raises(IndexError, match="asks for more than the 1 value it"):
+        Str("{}{}").format(Int(1))
+
+
+def test_a_spec_the_value_cannot_take_names_the_value() -> None:
+    # `Unknown format code 'd' for object of type 'str'` names the
+    # type-level protocol `_message.py` rewrites everywhere else.
+    with pytest.raises(ValueError, match="^a str cannot be formatted with 'd'$"):
+        Str("{:d}").format(Str("a"))
+    with pytest.raises(ValueError, match="^an int cannot be formatted with 's'$"):
+        Str("{:s}").format(Int(5))
+
+
+def test_an_unmatched_brace_calls_it_a_template() -> None:
+    # `format string` is Python's name for what POOP calls a template.
+    with pytest.raises(ValueError, match="^Single '{' encountered in template$"):
+        Str("{").format()
+
+
+def test_the_field_access_ban_still_answers_its_own_refusal() -> None:
+    # POOP's own ValueError passes through the rewording untouched.
+    with pytest.raises(ValueError, match="is forbidden — a format field"):
+        Str("{0.__class__}").format(Int(5))
+
+
+def test_a_template_that_works_is_untouched() -> None:
+    assert Str("{} and {b}").format(Int(1), b=Str("x")) == Str("1 and x")

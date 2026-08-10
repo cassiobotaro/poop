@@ -1,4 +1,5 @@
 import builtins
+import re
 from collections.abc import Callable, Iterator
 from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -9,12 +10,13 @@ from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._message import article
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
-from poop.types.exceptions import MIRRORS
+from poop.types.exceptions import MIRRORS, PoopExcMeta
 from poop.types.object import Object
 from poop.types.str_iterator import StrIterator
 
@@ -29,6 +31,9 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 _str = str  # alias to avoid shadowing in annotations
+
+# `Unknown format code 'd' for object of type 'str'`.
+_UNKNOWN_CODE = re.compile(r"^Unknown format code '(.+?)' for object of type '(.+?)'$")
 
 
 def _reject_field_access(template: _str) -> None:
@@ -55,6 +60,33 @@ def _reject_field_access(template: _str) -> None:
             )
         if spec:
             _reject_field_access(spec)
+
+
+def _offered(named: dict[_str, object]) -> _str:
+    """`: a, b` — the names a template could have used, or nothing."""
+    return f": {', '.join(sorted(named))}" if named else " it"
+
+
+def _template_refusal(exc: ValueError) -> Exception:
+    """POOP's wording for the two `ValueError`s `str.format` raises.
+
+    `Unknown format code 'd' for object of type 'str'` names a "format code"
+    and an "object of type" — the type-level protocol `_message.py` rewrites
+    everywhere else. The brace errors are the template parser's own and say
+    `format string`, which is Python's name for what POOP calls a template.
+    """
+    # POOP's own refusal — `_reject_field_access`'s — passes through
+    # untouched, on the test `reword_if_native` uses for the same reason.
+    if isinstance(type(exc), PoopExcMeta):
+        return exc
+    text = _str(exc)
+    match = _UNKNOWN_CODE.match(text)
+    if match is not None:
+        code, kind = match.groups()
+        return MIRRORS["ValueError"](
+            f"{article(kind)} cannot be formatted with {code!r}"
+        )
+    return MIRRORS["ValueError"](text.replace("format string", "template"))
 
 
 def _needle(sub: object, selector: str) -> Any:
@@ -263,13 +295,30 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         # "{:^10}".format(s).
         from poop.types._bridge import to_python
 
-        _reject_field_access(self._value)
-        return Str(
-            self._value.format(
-                *(to_python(a) for a in args),
-                **{k: to_python(v) for k, v in kwargs.items()},
-            )
-        )
+        positional = [to_python(a) for a in args]
+        named = {k: to_python(v) for k, v in kwargs.items()}
+        try:
+            # Inside the guard: the unmatched-brace errors are raised by the
+            # template parser this runs, not by `format` below.
+            _reject_field_access(self._value)
+            return Str(self._value.format(*positional, **named))
+        except KeyError as exc:
+            # A bare repr with nothing to say a lookup failed — the shape
+            # `_at.py` was written to close for a missing dict key.
+            raise MIRRORS["KeyError"](
+                f"the template asks for {exc.args[0]!r}, "
+                f"which no argument named{_offered(named)}"
+            ) from None
+        except IndexError:
+            # `Replacement index 0 out of range for positional args tuple`
+            # describes Python's calling convention, for a message whose
+            # arguments POOP does not describe that way.
+            raise MIRRORS["IndexError"](
+                f"the template asks for more than the {len(positional)} "
+                f"{'value' if len(positional) == 1 else 'values'} it was given"
+            ) from None
+        except ValueError as exc:
+            raise _template_refusal(exc) from None
 
     def find(
         self,
