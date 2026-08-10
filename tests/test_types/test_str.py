@@ -868,11 +868,15 @@ def test_find_count_and_index_keep_their_string_meaning() -> None:
     assert Str("abc").find(Str("b")) == Int(1)
     assert Str("abcb").count(Str("b")) == Int(2)
     assert Str("abc").index(Str("c")) == Int(2)
+    assert Str("abcb").rfind(Str("b")) == Int(3)
+    assert Str("abcb").rindex(Str("b")) == Int(3)
 
 
-@pytest.mark.parametrize("selector", ["find", "count", "index"])
-def test_the_three_string_searches_refuse_a_block(selector: str) -> None:
+@pytest.mark.parametrize("selector", ["find", "count", "index", "rfind", "rindex"])
+def test_the_string_searches_refuse_a_block(selector: str) -> None:
     # Arriving from `[1, 2].find(block)`, a reader writes a block here.
-    # CPython answered `find() argument 1 must be str, not function`.
+    # CPython answered `find() argument 1 must be str, not function`. The
+    # `r`-prefixed pair is the same message read from the other end and was
+    # left on CPython's wording, so one letter changed the vocabulary.
     with pytest.raises(TypeError, match="searches for a substring"):
         getattr(Str("abc"), selector)(lambda c: c == Str("b"))
