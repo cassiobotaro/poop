@@ -2,7 +2,10 @@ import contextlib
 
 import pytest
 
+from poop.types.error import Error
+from poop.types.exceptions import MIRRORS
 from poop.types.none import none
+from poop.types.string import Str
 from poop.types.with_ import With
 
 
@@ -48,7 +51,9 @@ def test_with_calls_exit_on_success() -> None:
     cm = _FakeContextManager()
     With(lambda: cm).do(lambda _: None)
     assert cm.exited is True
-    assert cm.exit_args == (None, None, None)
+    # POOP's `none`, not Python's `None`: an `__exit__` written in POOP asks
+    # `kind.is_none()` first, and that failed on the success path.
+    assert cm.exit_args == (none, none, none)
 
 
 def test_with_calls_exit_on_exception() -> None:
@@ -56,7 +61,29 @@ def test_with_calls_exit_on_exception() -> None:
     with pytest.raises(ValueError):
         With(lambda: cm).do(lambda _: (_ for _ in ()).throw(ValueError("boom")))
     assert cm.exited is True
-    assert cm.exit_args[0] is ValueError
+    # The mirror `except_` matches, not the native class no program can name.
+    assert cm.exit_args[0] is MIRRORS["ValueError"]
+
+
+def test_exit_receives_arguments_it_can_be_sent_messages() -> None:
+    """The three values, read rather than counted.
+
+    `type(e)`, `e` and `e.__traceback__` went straight through: the native
+    class, the bare exception, and an introspection surface reached by a
+    dunder `no_dunder_attribute` will not let a program spell.
+    """
+    cm = _FakeContextManager()
+    with pytest.raises(ValueError):
+        With(lambda: cm).do(lambda _: (_ for _ in ()).throw(ValueError("boom")))
+    kind, error, traceback = cm.exit_args
+    assert kind is MIRRORS["ValueError"]
+    assert kind.name() == Str("ValueError")  # ty: ignore[unresolved-attribute]
+    assert isinstance(error, Error)
+    assert error.message() == Str("boom")
+    assert error.kind() is MIRRORS["ValueError"]
+    # POOP has no traceback object, and inventing one would hand back the
+    # introspection surface the dunder ban exists to keep out.
+    assert traceback is none
 
 
 def test_with_reraises_exception_when_exit_returns_false() -> None:
