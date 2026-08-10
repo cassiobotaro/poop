@@ -5,6 +5,7 @@ from typing import Any
 from poop.types.boolean import Boolean, to_boolean
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
+from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.frozen_set import FrozenSet
@@ -21,7 +22,11 @@ def to_python(obj: object) -> Any:  # noqa: C901 — flat isinstance ladder, one
         return None
     if isinstance(obj, Boolean):
         return bool(obj)
-    if isinstance(obj, (Int, Float, Str, Bytes)):
+    # `Complex` belongs with the other scalar rungs: left wrapped it reached
+    # `str.format` as a POOP object, and `object.__format__` refuses every
+    # non-empty spec — so `"{:.2f}".format(complex(1, 2))` failed where CPython
+    # answers `1.00+2.00j`, naming `complex.__format__` on the way out.
+    if isinstance(obj, (Int, Float, Complex, Str, Bytes)):
         return obj._value
     if isinstance(obj, ByteArray):
         return bytearray(obj._value)
@@ -47,6 +52,11 @@ def to_poop(value: object) -> Any:  # noqa: C901 — flat isinstance ladder, one
         return Int(value)
     if isinstance(value, float):
         return Float(value)
+    # After `float`, though the order is only for readability: `complex` is a
+    # subclass of neither. The branch exists so the two halves of the bridge
+    # stay a pair — a one-sided one is the next reader's trap.
+    if isinstance(value, complex):
+        return Complex(value)
     if isinstance(value, str):
         return Str(value)
     if isinstance(value, bytearray):
