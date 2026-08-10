@@ -2,58 +2,39 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-### 26. A subclass of an immutable builtin is born without its value
+*Empty — nothing open.*
 
-Item 23 made `super().__init__(...)` convert, and the three spellings of that
-intent agree now. Running the whole matrix against CPython afterwards — which
-is what should have happened before it was merged — shows the row it does not
-cover: a subclass whose `__init__` never calls `super()` at all.
+---
 
-```
-class N(int):
-    def __init__(self, v):
-        pass
+### ~~26. A subclass of an immutable builtin is born without its value~~ — DONE
 
-N(4.9).print()      # N does not understand #_value
-```
+**Decision + implemented.** `_endow` gives the alias the `__new__` step Python
+has: one positional argument and no keywords is the shape every converter
+takes, so it converts and the payload is written *before* `__init__` runs.
 
-CPython answers `4`, and so does `class S(str)` for `'5'` and `class T(tuple)`
-for `(1, 2)`. The reason is structural: for an immutable builtin the value is
-set by `__new__`, from the *constructor's* arguments, before `__init__` is
-reached — so a subclass that ignores its arguments still gets a working object.
-POOP has no `__new__` step: the payload is written by `__init__`, so when the
-program's own `__init__` does not pass it up, nothing ever writes it.
+The residue the item predicted went the other way, and better. Rather than a
+guard in `Object.__getattr__` answering after the fact, the split CPython
+actually draws turned out to be available here too: a subclass with its own
+signature gets the wrapper's **empty** value (`list.__new__` hands `__init__`
+an empty list, so `class Pair(list)` with a two-argument constructor is an
+ordinary empty list carrying its own state — CPython agrees), and where there
+is no empty to give (an `int` has none) the object is refused at construction,
+which is both where the mistake is and what CPython answers. So no message
+ever reaches an unfinished object, and `__getattr__` was left alone.
 
-The object that comes back is broken in the way this codebase works hardest to
-avoid. It is not merely wrong, it reports itself with `#_value` — the internal
-slot name `INFECTIONS.md`'s faithful-unwrap idiom exists to keep out of sight,
-now arriving through `does_not_understand`, on a receiver a program built with
-ordinary syntax.
+One neighbour was found while covering the last branch and fixed with it:
+`class Flag(bool)` was allowed at definition and failed at the first instance
+with `Can't instantiate abstract class Flag without an implementation for
+abstract methods '__bool__', '__str__', …` — a dozen dunders in one sentence
+from a program that spelled none. `bool` is refused as a base now, where
+CPython refuses it, and that made two branches in `__call__` dead code.
 
-Not a regression from item 23: verified against `2922bcb`, before this cycle
-began. The mutable builtins are unaffected — `list`, `dict`, `set` and
-`bytearray` are filled by `__init__` in CPython too, which is exactly why they
-already agree.
-
-One divergence next door is deliberate and should stay: `class N(int)` calling
-`super().__init__(v)` works in POOP and is a `TypeError` in CPython
-(`object.__init__() takes exactly one argument`), because Python's immutables
-have nothing for `__init__` to do. Refusing it would break the one spelling
-item 23 exists to make right, for no gain a reader would recognise.
-
-**Fix.** Give the alias the `__new__` step Python has: when a subclass with its
-own `__init__` is called with exactly one positional argument and no keywords —
-the shape every converter takes, "convert this value" — convert it and fill the
-payload *before* `__init__` runs. A subclass with its own signature
-(`Tagged(xs, tag)`) is untouched, and keeps filling through `super()`.
-
-That leaves a residue: a subclass with a signature of its own that also never
-calls `super()`. CPython refuses it (`int.__new__` cannot take those
-arguments); POOP should not answer `#_value` either way, so `Object.__getattr__`
-should recognise a missing *declared slot* and say the object was never given
-its value — worded without naming the constructor, since a message spelling a
-dunder is what `no_dunder_attribute` bans and the static wording sweep would
-catch.
+The full matrix — nine subclass patterns across the mutable and immutable
+builtins — was run against CPython before and after, and agrees everywhere it
+should; the one deliberate divergence (`super().__init__(v)` on an `int`
+subclass, a `TypeError` in CPython) is argued in the item above.
+`poop/types/_alias.py`, `tests/test_transformers/test_type_names.py`,
+`INFECTIONS.md`.
 
 ---
 
