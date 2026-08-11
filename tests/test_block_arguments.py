@@ -182,3 +182,41 @@ def test_an_absent_key_is_still_absent() -> None:
         "[3, 1].sorted(key=None).print()\n"
         "[3, 1].min().print()\n"
     )
+
+
+# Proposal 46. A missing block fell through to CPython's call machinery, which
+# builds its sentence from the *function's* qualname — and the mixins are
+# cloaked as `object`, since no single builtin name is true for every wrapper
+# that inherits them. So `[1, 2].map()` blamed `object.map()`: a name a program
+# can write, for a class that does not answer `#map`, checkable in one line and
+# the opposite of what the refusal had just said.
+@pytest.mark.parametrize(
+    "source",
+    [
+        "[1, 2].do()",
+        "[1, 2].map()",
+        "[1, 2].filter()",
+        "[1, 2].filter_false()",
+        "[1, 2].find()",
+        "[1, 2].all()",
+        "[1, 2].any()",
+        '"ab".do()',
+        '{"a": 1}.map()',
+        "(1, 2).find()",
+    ],
+)
+def test_a_missing_block_is_refused_by_the_receiver(source: str) -> None:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    message = str(info.value)
+    assert "expects a block, got nothing" in message
+    # The falsifiable half: `object` does not answer any of these.
+    assert "object." not in message
+    assert "positional argument" not in message
+
+
+def test_reduce_names_the_initial_value_it_is_missing() -> None:
+    with pytest.raises(PoopError, match="expects an initial value and a block"):
+        Interpreter().run_source("[1, 2].reduce()\n")
+    with pytest.raises(PoopError, match="#reduce expects a block, got nothing"):
+        Interpreter().run_source("[1, 2].reduce(0)\n")

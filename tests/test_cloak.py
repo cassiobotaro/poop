@@ -108,7 +108,15 @@ def test_own_functions_answer_the_cloaked_class_name(index: int, cls: type) -> N
         # in POOP's words — see `test_transformers/test_constructor_arity.py`.
         # Inherited from a mixin, which owns no builtin name of its own: cloaked
         # as `object`, the root's spelling, rather than as a private one.
-        ("[1, 2].map()", "object.map()"),
+        #
+        # `[1, 2].map()` used to sit here too. Proposal 46: the cloak's own
+        # justification is "it only renames the callee", and that holds where
+        # the rename is true — `object` is a name a program can write, and
+        # `object` does not answer `#map`. The block slots carry a sentinel
+        # default now, so a missing block is refused by the receiver rather
+        # than by CPython's call machinery. The two below keep the exemption:
+        # they are over-supplied rather than under-supplied, which no default
+        # can catch.
         ("[1].iter().next(1, 2)", "object.next()"),
         ('{"a": 1}.keys().len(1)', "object.len()"),
         # `range`, `int`, `float`, `bool` and `enumerate` used to sit here for

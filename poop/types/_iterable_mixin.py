@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from poop.types.object import Object
     from poop.types.zip import Zip
 
+from poop.types._argument import MISSING
 from poop.types._cloak import cloak
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._mutated import iterating, reword_if_native
@@ -69,7 +70,7 @@ class _IterableMixin:
     def _iter_items(self) -> Iterator[Any]:
         return iter(self)
 
-    def do(self, block: Callable[[Any], Any]) -> NoneClass:
+    def do(self, block: Callable[[Any], Any] = MISSING) -> NoneClass:
         from poop.types._argument import a_block
 
         block = a_block(block, "do")
@@ -83,7 +84,7 @@ class _IterableMixin:
             raise reword_if_native(exc, iterating(self)) from None
         return none
 
-    def map(self, block: Callable[[Any], Any]) -> Map:
+    def map(self, block: Callable[[Any], Any] = MISSING) -> Map:
         from poop.types._argument import a_block
         from poop.types.map import Map
 
@@ -92,20 +93,20 @@ class _IterableMixin:
         # else entirely — or never, if the view is never walked.
         return Map(self, a_block(block, "map"))
 
-    def filter(self, block: Callable[[Any], Any]) -> Filter:
+    def filter(self, block: Callable[[Any], Any] = MISSING) -> Filter:
         from poop.types._argument import a_block
         from poop.types.filter import Filter
 
         return Filter(self, a_block(block, "filter"))
 
-    def filter_false(self, block: Callable[[Any], Any]) -> Filter:
+    def filter_false(self, block: Callable[[Any], Any] = MISSING) -> Filter:
         from poop.types._argument import a_block
         from poop.types.filter import Filter
 
         block = a_block(block, "filter_false")
         return Filter(self, lambda x: not bool(block(x)))
 
-    def find(self, block: Callable[[Any], Any]) -> Any:
+    def find(self, block: Callable[[Any], Any] = MISSING) -> Any:
         from poop.types._argument import a_block
 
         block = a_block(block, "find")
@@ -114,9 +115,20 @@ class _IterableMixin:
                 return item
         return none
 
-    def reduce(self, init: Any, block: Callable[[Any, Any], Any]) -> Any:
-        from poop.types._argument import a_block
+    def reduce(
+        self, init: Any = MISSING, block: Callable[[Any, Any], Any] = MISSING
+    ) -> Any:
+        from poop.types._argument import MISSING, a_block
+        from poop.types.exceptions import MIRRORS
 
+        if init is MISSING:
+            # Named separately: `#reduce expects a block, got nothing` would be
+            # true and unhelpful for `xs.reduce()`, where the initial value is
+            # what is missing first.
+            raise MIRRORS["TypeError"](
+                "#reduce expects an initial value and a block, got nothing — "
+                "write .reduce(start, lambda a, b: …)"
+            )
         block = a_block(block, "reduce", param="a, b")
         return functools_reduce(block, self._iter_items(), init)
 
@@ -166,13 +178,13 @@ class _IterableMixin:
 
         return List(*_sorted(self._iter_items(), key, reverse))
 
-    def all(self, block: Callable[[Any], Any]) -> Boolean:
+    def all(self, block: Callable[[Any], Any] = MISSING) -> Boolean:
         from poop.types._argument import a_block
 
         block = a_block(block, "all")
         return to_boolean(_builtins.all(bool(block(x)) for x in self._iter_items()))
 
-    def any(self, block: Callable[[Any], Any]) -> Boolean:
+    def any(self, block: Callable[[Any], Any] = MISSING) -> Boolean:
         from poop.types._argument import a_block
 
         block = a_block(block, "any")

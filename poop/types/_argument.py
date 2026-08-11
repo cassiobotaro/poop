@@ -150,6 +150,11 @@ def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
     )
 
 
+# The "argument not given" sentinel for a block slot, so a missing one is
+# refused by the receiver rather than by CPython's call machinery.
+MISSING: Any = object()
+
+
 def a_block(
     value: Any, selector: str, role: str = "a block", param: str = "item"
 ) -> Any:
@@ -177,9 +182,16 @@ def a_block(
     # `lambda: …` for a zero-argument block, not `lambda : …` — the branch
     # family and the `if_none` pair take no parameter at all.
     spelt = f"lambda {param}: …" if param else "lambda: …"
+    # `nothing` for an argument that was never passed. Without it, a missing
+    # block fell through to CPython's call machinery, which builds its sentence
+    # from the *function's* qualname — and the mixins are cloaked as `object`,
+    # since no single builtin name is true for every wrapper that inherits
+    # them. So `[1, 2].map()` blamed `object.map()`: a name a program can
+    # write, for a class that does not answer `#map`, checkable in one line and
+    # the opposite of what the refusal just said.
+    got = "nothing" if value is MISSING else article(type(value).__name__)
     raise MIRRORS["TypeError"](
-        f"#{selector} expects {role}, got {article(type(value).__name__)} — "
-        f"write .{selector}({spelt})"
+        f"#{selector} expects {role}, got {got} — write .{selector}({spelt})"
     )
 
 
