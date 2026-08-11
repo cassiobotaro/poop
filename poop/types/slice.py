@@ -133,7 +133,18 @@ def _field_eq(a: Index | None, b: Index | None) -> bool:
 
 
 def _field_str(value: Index | None) -> str:
-    return "None" if value is None else str(value)
+    """A component as it is displayed — `repr`, like every other container.
+
+    `__init__` takes its components as they are (`_py_slice` says why: `slice`
+    accepts any object, and the sequence being sliced resolves each one), so a
+    non-`Int` component is constructible and only refused on use. Reading it
+    with `str` displayed `slice(None, "a", None)` as `slice(None, a, None)` —
+    the *name* `a`, read back as source — and `slice(None, "", None)` as
+    `slice(None, , None)`, which is not source at all. `List`, `Tuple` and
+    `Dict` all build their displayed form from `repr` of each element; for the
+    integers the two spellings agree, which is why this only ever showed here.
+    """
+    return "None" if value is None else repr(value)
 
 
 cloak(Slice, "slice")

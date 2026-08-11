@@ -1,3 +1,5 @@
+from typing import Any
+
 from poop.types.boolean import false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -126,6 +128,18 @@ def test_str_three_arg() -> None:
 def test_repr_equals_str() -> None:
     s = Slice(Int(1), Int(4))
     assert repr(s) == str(s)
+
+
+def test_str_shows_a_text_component_as_a_literal() -> None:
+    # `slice` takes any object and only refuses it on use, so a text component
+    # is constructible — and `str` displayed it as the bare name `a`, which
+    # reads back as a *different* slice. CPython prints the literal.
+    text: Any = Str("a")
+    empty: Any = Str("")
+    items: Any = List(Int(1))
+    assert str(Slice(None, text)) == "slice(None, 'a', None)"
+    assert str(Slice(None, empty)) == "slice(None, '', None)"
+    assert str(Slice(text, items)) == "slice('a', [1], None)"
 
 
 # --- apply via obj.slice(Slice) ---
