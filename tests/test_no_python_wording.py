@@ -138,6 +138,11 @@ _FAILING = [
     "[1, 2].hash()",
     '{"a": 1}.keys().hash()',
     'memoryview(bytearray(b"ab")).hash()',
+    # Proposal 50: `*` was the one operator still worded by CPython.
+    '([1, 2] * "a")',
+    '("a" * "b")',
+    '(b"ab" * 2.5)',
+    "xs = [1]\nxs *= 'a'",
     '(1 + "a")',
     '(1 < "a")',
     "([1] + 1)",
@@ -171,6 +176,46 @@ _FAILING = [
     "class C(Object):\n    def __enter__(self):\n        return 1\n"
     "With(lambda: C()).do(lambda x: x)",
 ]
+
+
+# Every operator POOP allows, over every pair of receiver kinds. The program
+# list above covers operators only where someone thought to add a line, and
+# `*` was missing from it — `("a" + 1)` and `([1] + 1)` were there and no `*`
+# was, which is how 95 sites in one operator survived every run of this file.
+_OPERATORS = ["+", "-", "*", "/", "//", "%", "**", "<", "<=", ">", ">=", "&", "|", "^"]
+_OPERANDS = [
+    "5",
+    "2.5",
+    '"ab"',
+    "True",
+    "[1]",
+    "(1,)",
+    "{1}",
+    '{"a": 1}',
+    'b"ab"',
+    'bytearray(b"ab")',
+    "None",
+    "range(2)",
+    "1 + 2j",
+    "(lambda: 1)",
+]
+
+
+@pytest.mark.parametrize("operator", _OPERATORS)
+@pytest.mark.parametrize("left", _OPERANDS)
+def test_no_operator_answers_a_forbidden_construct(operator: str, left: str) -> None:
+    for right in _OPERANDS:  # noqa: PLR1702
+        source = f"({left} {operator} {right})"
+        try:
+            Interpreter().run_source(source + "\n")
+        except PoopError as exc:  # noqa: PERF203
+            message = str(exc)
+            named = [
+                construct
+                for construct, pattern in _FORBIDDEN.items()
+                if pattern.search(message)
+            ]
+            assert named == [], f"{source!r} answered {message!r}, naming {named}"
 
 
 def _failure(source: str) -> str:

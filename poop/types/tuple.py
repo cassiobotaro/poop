@@ -8,7 +8,7 @@ from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
-from poop.types._repeat import _repeat_count
+from poop.types._repeat import NOT_A_COUNT, _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.none import none
@@ -61,10 +61,16 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         return Tuple(*self._items + other._items)
 
     def __mul__(self, other: object) -> Tuple:
-        return Tuple(*self._items * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return Tuple(*self._items * count)
 
     def __rmul__(self, other: object) -> Tuple:
-        return Tuple(*self._items * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return Tuple(*self._items * count)
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)

@@ -642,3 +642,50 @@ def test_at_put_refuses_an_index_that_is_not_one() -> None:
         TypeError, match=r"^list.at_put expects an int index, got a str$"
     ):
         List(Int(1)).at_put(Str("a"), Int(0))  # ty: ignore[invalid-argument-type]
+
+
+# Proposal 50. `*` was the one operator still worded by CPython: `_repeat_count`
+# unwrapped any operand and handed it to the inner multiplication, whose
+# `can't multiply sequence by non-int of type 'str'` names a Python protocol
+# rather than a receiver and never reached `poop_message`.
+def test_multiplying_by_a_foreign_operand_speaks_poop() -> None:
+    # Through `poop_message`, exactly as the `__add__` tests do it: the operand
+    # guard answers `NotImplemented`, CPython raises the shape the translation
+    # step matches, and the sentence is composed there. Before this, the *inner*
+    # multiplication raised `can't multiply sequence by non-int of type 'str'`,
+    # which that step does not match and could not reword.
+    from poop.types._message import poop_message
+
+    with pytest.raises(TypeError) as info:
+        _ = List(Int(1)) * Str("a")
+    assert poop_message(info.value) == "list does not understand #* with a str"
+
+
+def test_the_reflected_half_is_guarded_too() -> None:
+    # Leaving `__rmul__` open sent `[1] * "a"` straight back into `Str.__rmul__`
+    # and out through the same leak.
+    from poop.types._message import poop_message
+
+    with pytest.raises(TypeError) as info:
+        _ = Str("a") * List(Int(1))
+    assert poop_message(info.value) == "str does not understand #* with a list"
+
+
+def test_in_place_multiplication_is_guarded() -> None:
+    from poop.types._message import poop_message
+
+    xs = List(Int(1))
+    with pytest.raises(TypeError) as info:
+        xs *= Str("a")
+    assert poop_message(info.value) == "list does not understand #*= with a str"
+
+
+def test_a_boolean_still_repeats_as_one_or_zero() -> None:
+    # The half `_repeat_count` really exists for, and the one that must stay.
+    assert List(Int(1)) * true == List(Int(1))
+    assert List(Int(1)) * false == List()
+
+
+def test_an_integer_still_repeats() -> None:
+    assert List(Int(1)) * Int(3) == List(Int(1), Int(1), Int(1))
+    assert Int(3) * List(Int(1)) == List(Int(1), Int(1), Int(1))

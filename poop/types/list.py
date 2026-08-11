@@ -13,7 +13,7 @@ from poop.types._at import (
 )
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
-from poop.types._repeat import _repeat_count
+from poop.types._repeat import NOT_A_COUNT, _repeat_count
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.exceptions import MIRRORS
@@ -129,10 +129,16 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         return to_boolean(a >= b)
 
     def __mul__(self, other: object) -> List:
-        return List(*self._items * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return List(*self._items * count)
 
     def __rmul__(self, other: object) -> List:
-        return List(*self._items * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return List(*self._items * count)
 
     # In-place sequence operators mutate the receiver (CPython ``xs += ys`` is
     # ``list.extend`` and ``xs *= n`` repeats in place, so ``xs`` keeps its
@@ -146,7 +152,10 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         return self
 
     def __imul__(self, other: object) -> Self:
-        self._items *= _repeat_count(other)
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        self._items *= count
         return self
 
     def __iter__(self) -> Iterator[Object]:

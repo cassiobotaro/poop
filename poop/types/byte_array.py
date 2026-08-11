@@ -14,7 +14,7 @@ from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article
-from poop.types._repeat import _repeat_count
+from poop.types._repeat import NOT_A_COUNT, _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean, true
@@ -193,10 +193,16 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return ByteArray(self._value + other._value)
 
     def __mul__(self, other: object) -> ByteArray:
-        return ByteArray(self._value * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return ByteArray(self._value * count)
 
     def __rmul__(self, other: object) -> ByteArray:
-        return ByteArray(self._value * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return ByteArray(self._value * count)
 
     def append(self, byte: Int) -> NoneClass:
         self._value.append(_faithful(byte))

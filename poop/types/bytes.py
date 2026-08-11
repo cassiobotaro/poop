@@ -8,7 +8,7 @@ from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._repeat import _repeat_count
+from poop.types._repeat import NOT_A_COUNT, _repeat_count
 from poop.types._unwrap import _faithful, _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, to_boolean, true
@@ -182,10 +182,16 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return Bytes(self._value + other._value)
 
     def __mul__(self, other: object) -> Bytes:
-        return Bytes(self._value * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return Bytes(self._value * count)
 
     def __rmul__(self, other: object) -> Bytes:
-        return Bytes(self._value * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return Bytes(self._value * count)
 
     def capitalize(self) -> Bytes:
         return Bytes(self._value.capitalize())

@@ -12,7 +12,7 @@ from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
 from poop.types._minmax import _MISSING, _minmax
-from poop.types._repeat import _repeat_count
+from poop.types._repeat import NOT_A_COUNT, _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -592,10 +592,16 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         return Str(self._value + other._value)
 
     def __mul__(self, other: object) -> Str:
-        return Str(self._value * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return Str(self._value * count)
 
     def __rmul__(self, other: object) -> Str:
-        return Str(self._value * _repeat_count(other))
+        count = _repeat_count(other)
+        if count is NOT_A_COUNT:
+            return NotImplemented
+        return Str(self._value * count)
 
     def __lt__(self, other: object) -> Boolean:
         if not isinstance(other, Str):
