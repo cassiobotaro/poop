@@ -1,6 +1,7 @@
 import ast
 import atexit
 import codeop
+import inspect
 import sys
 import textwrap
 from pathlib import Path
@@ -148,9 +149,15 @@ class _PoopCompleter:
             results = []
             for name in dir(obj):
                 if name.startswith(attr) and is_message(name):
-                    # Off the *type*: `getattr(obj, name)` runs a `property`
-                    # getter, so pressing Tab executed program code.
-                    val = getattr(type(obj), name, None)
+                    # `getattr_static`: reading the attribute off the *type*
+                    # was already required, because `getattr(obj, name)` runs a
+                    # `property` getter and pressing Tab then executed program
+                    # code. Going through `getattr` at all stopped working when
+                    # the class side started refusing instance messages —
+                    # `getattr(Int, "abs", None)` answers the default, so every
+                    # message lost its `(`. This resolves no descriptor at all,
+                    # which is what "off the type" meant in the first place.
+                    val = inspect.getattr_static(obj, name, None)
                     suffix = "(" if callable(val) else ""
                     results.append(f"{expr}.{name}{suffix}")
             return sorted(results)

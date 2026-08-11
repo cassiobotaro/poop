@@ -199,6 +199,60 @@ def _refuse(cls: type, name: str) -> None:
     )
 
 
+def _instance_only(cls: type, name: str) -> bool:
+    """Whether `name` resolves to a plain method — one only an instance answers.
+
+    Read off the MRO's dicts rather than through `getattr`, which is what
+    `__getattribute__` below has already intercepted. A `classmethod`,
+    `staticmethod`, `property` or `class_side` descriptor is not a
+    `FunctionType` here, so each keeps answering class-side as before.
+    """
+    for klass in type.__getattribute__(cls, "__mro__"):
+        if name in vars(klass):
+            return type(vars(klass)[name]) is FunctionType
+    return False
+
+
+def _reflected(cls: type, name: str) -> Any:
+    """`name` on `cls`, past the instance-side refusal.
+
+    `get_attr` / `has_attr` are the *reflective* substitutes `no_getattr`
+    names, and asking a class for one of its methods by name is a different
+    act from writing the message: the answer is the unbound function, which
+    takes its receiver explicitly exactly as it does in Python. `getattr`
+    itself now goes through `__getattribute__` and would be refused, so these
+    two read past it. Raises `AttributeError` when there is nothing there, as
+    `getattr` does, but never consults `__getattr__` — the callers decide what
+    a missing name means.
+    """
+    return type.__getattribute__(cls, name)
+
+
+def _refuse_instance_side(cls: type, name: str) -> None:
+    """Refuse a method the *instance* answers, reached through the class.
+
+    `class_side` exists to remove one failure — `INFECTIONS.md`: "the bans
+    contradicted themselves: `hash(Foo)` answers 'use `obj.hash()` instead'
+    while `Foo.hash()` answered a binding error, naming a substitute that did
+    not exist on that receiver". It removed it for `Object`'s protocol; the
+    wrapper's own messages were left, so `str.upper()` answered `str.upper()
+    missing 1 required positional argument: 'self'` — naming `self`, a
+    receiver POOP never spells, and "positional argument", which the wording
+    sweep bans outright. 64 of the 90 names `str.dir()` listed answered that.
+
+    The sentence is the shape `_refuse` and `_refuse_native` already use, so
+    the whole family reads like `class_` instead of like a binding failure.
+    """
+    from poop.types.object import MessageNotUnderstood
+
+    raise MessageNotUnderstood(
+        f"{cls.__name__} does not understand #{name} — "
+        f"#{name} asks an instance; send it to one",
+        name=name,
+        obj=cls,
+    )
+
+
 def _refuse_native(cls: type, name: str, instead: str) -> None:
     """Refuse a name POOP never meant to offer, naming the message that does.
 
@@ -449,7 +503,12 @@ class PoopMeta(ABCMeta):
     def has_attr(cls, name: Str) -> Boolean:
         from poop.types.boolean import to_boolean
 
-        return to_boolean(hasattr(cls, _checked_name(name)))
+        raw = _checked_name(name)
+        try:
+            _reflected(cls, raw)
+        except AttributeError:
+            return to_boolean(False)
+        return to_boolean(True)
 
     # `Object`'s protocol, answered class-side. Each needs its own descriptor:
     # a metaclass cannot inherit these into class-side lookup, which is the
@@ -508,6 +567,40 @@ class PoopMeta(ABCMeta):
         escaped = cls.__name__.encode("ascii", "backslashreplace")
         return Str(escaped.decode("ascii"))
 
+    if not TYPE_CHECKING:
+        # Hidden from the type checker for the reason `__getattr__` below and
+        # `Object.__getattr__` both give: a visible hook answers `Any` for
+        # every name, so `Foo.frobnicate()` would type-check on every POOP
+        # class and `ty` would stop catching typos across the codebase.
+        def __getattribute__(cls, name: str) -> Any:
+            """A method the instance answers is refused, not bound and handed out.
+
+            `type.__getattribute__` hands a plain function back unbound, so
+            every wrapper message reached through the class answered CPython's
+            binding error — `str.upper() missing 1 required positional
+            argument: 'self'`. See `_refuse_instance_side`. Narrow on purpose:
+            only a plain `FunctionType` found on the class's own MRO, so
+            `super().m()`, `classmethod`, `staticmethod`, `property`,
+            `class_side` and the metaclass's own messages all resolve exactly
+            as before. `_`-prefixed names are left alone, as `is_message`
+            already draws that boundary and the interpreter reads `__mro__`,
+            `__slots__` and the rest through it.
+            """
+            value = type.__getattribute__(cls, name)
+            # Two tests, cheapest first. `FunctionType` alone is not enough:
+            # `staticmethod.__get__` answers the *wrapped function*, so a
+            # `@staticmethod` — the one shape `no_class_machinery` leaves open
+            # and `examples/patterns/execute_around.py` is built on — looked
+            # exactly like an instance method here. `_instance_only` reads the
+            # MRO's dicts, where the wrapper is still visible.
+            if (
+                type(value) is FunctionType
+                and not name.startswith("_")
+                and _instance_only(cls, name)
+            ):
+                _refuse_instance_side(cls, name)
+            return value
+
     def __dir__(cls) -> list[str]:
         """Merge the class side into `dir(cls)`, minus the refusals.
 
@@ -524,9 +617,12 @@ class PoopMeta(ABCMeta):
 
         A refusing descriptor is left out — offering a name that answers "that
         is Python's, use #superclass" teaches worse than not offering it at
-        all. The merge only *adds*, so `class_` and `class_name` stay listed
-        even though the class side refuses them: `Object` answers both, and an
-        instance of `cls` is what the rest of this list describes.
+        all. The same rule now covers the instance-only half: this list used to
+        merge two receivers' messages under a header claiming one, so
+        `:methods str` said `str understands 90 messages` and 64 of them
+        answered a binding error. `class_` and `class_name` go with them —
+        `Object` answers both, but the class refuses them, and this is a list
+        of what *this* receiver understands.
         """
         answers: dict[str, bool] = {}
         for metaclass in type(cls).__mro__:
@@ -536,12 +632,17 @@ class PoopMeta(ABCMeta):
                     # itself resolves: `PoopExcMeta.raise_` is a message, and
                     # `PoopMeta.raise_` below it is the refusing twin.
                     answers.setdefault(name, not attr.refuses)
-        merged = (name for name, answered in answers.items() if answered)
+        merged = {name for name, answered in answers.items() if answered}
+        own = {name for name in super().__dir__() if not _instance_only(cls, name)}
         # A set: the builtin `dir` sorts what it is handed but does not dedupe
         # — `type.__dir__` does that internally, and this merge reaches past
         # it, so every name `Object` also spells (`print`, `hash`, …) came back
         # twice and `:methods` counted 51 messages on a class that has 30.
-        return sorted({*super().__dir__(), *merged})
+        # The union is what puts those back: `print` is a plain method on
+        # `Object` *and* a `class_side` message, so it is dropped by the filter
+        # and restored by the merge, which is exactly the two-receiver
+        # distinction the filter exists to draw.
+        return sorted(own | merged)
 
     @class_side
     def dir(cls) -> List:
@@ -627,7 +728,13 @@ class PoopMeta(ABCMeta):
 
         # Same wrap as the instance side: a class-side method answered a raw
         # Python function, which understands no message.
-        return _as_block(builtins.getattr(cls, _checked_name(name), *default))
+        raw = _checked_name(name)
+        try:
+            return _as_block(_reflected(cls, raw))
+        except AttributeError:
+            if default:
+                return default[0]
+            return cls.does_not_understand(raw)
 
     @class_side
     def set_attr(cls, name: Str, value: Any) -> NoneClass:
@@ -682,4 +789,11 @@ class PoopMeta(ABCMeta):
             # building the table a mirror would come from.
             if name.startswith("__") and name.endswith("__"):
                 raise AttributeError(name)
+            # The instance-side refusal lands here, not where it was raised:
+            # `MessageNotUnderstood` is an `AttributeError` on purpose, so
+            # `__getattribute__` failing sends Python straight to this hook,
+            # which would replace the sentence with the generic near-miss one.
+            # Asking the same question again is what keeps the teaching half.
+            if _instance_only(cls, name):
+                _refuse_instance_side(cls, name)
             return cls.does_not_understand(name)

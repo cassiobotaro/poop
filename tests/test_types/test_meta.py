@@ -663,3 +663,84 @@ def test_a_subclass_of_a_builtin_still_sees_the_builtin() -> None:
 
 def test_the_root_still_answers_none() -> None:
     assert Object.superclass() is none
+
+
+def test_a_class_refuses_an_instance_message_instead_of_binding_it() -> None:
+    # `class_side` exists to remove exactly this failure, and removed it for
+    # `Object`'s protocol only: the wrapper's own messages still answered
+    # `str.upper() missing 1 required positional argument: 'self'` — naming
+    # `self`, a receiver POOP never spells, and "positional argument", which
+    # the wording sweep bans outright.
+    from poop.transformers import DEFAULT_NAMESPACE
+
+    text = DEFAULT_NAMESPACE["_poop_str_cls"]
+    with pytest.raises(AttributeError) as info:
+        text.upper()  # ty: ignore[unresolved-attribute]
+    assert str(info.value) == (
+        "str does not understand #upper — #upper asks an instance; send it to one"
+    )
+
+
+def test_a_user_classs_own_method_refuses_the_same_way() -> None:
+    with pytest.raises(AttributeError, match=r"#speak asks an instance"):
+        _Dog.speak()  # ty: ignore[missing-argument]
+
+
+def test_the_class_side_still_answers_its_own_messages() -> None:
+    assert _Dog.name() == Str("_Dog")
+    assert _Dog.superclass() is _Animal
+    assert _Dog().speak() == Str("woof")
+
+
+def test_super_still_reaches_the_method_it_overrides() -> None:
+    # `super()` does not resolve through the metaclass, so the refusal must
+    # not reach it — the narrowness the guard was written for.
+    class _Puppy(_Dog):
+        __slots__ = ()
+
+        def speak(self) -> Str:
+            return super().speak() + Str("!")
+
+    assert _Puppy().speak() == Str("woof!")
+
+
+def test_a_staticmethod_is_not_refused() -> None:
+    # `staticmethod.__get__` answers the *wrapped function*, so a static
+    # method looks exactly like an instance method from the resolved value —
+    # and `@staticmethod` is the shape `no_class_machinery` leaves open.
+    class _Tool(Object):
+        __slots__ = ()
+
+        @staticmethod
+        def build() -> Str:
+            return Str("built")
+
+        @classmethod
+        def named(cls) -> Str:
+            return Str("named")
+
+    assert _Tool.build() == Str("built")
+    assert _Tool.named() == Str("named")
+
+
+def test_dir_lists_only_what_the_class_itself_answers() -> None:
+    # The list used to merge two receivers' messages under a header claiming
+    # one: `:methods str` said `str understands 90 messages` and 64 of them
+    # answered a binding error.
+    from poop.transformers import DEFAULT_NAMESPACE
+
+    for key in ("_poop_str_cls", "_poop_list_cls", "_poop_dict_cls", "_poop_int_cls"):
+        cls = DEFAULT_NAMESPACE[key]
+        for name in cls.dir():  # ty: ignore[unresolved-attribute]
+            getattr(cls, str(name._value))
+
+
+def test_the_class_side_get_attr_answers_a_default_for_a_missing_name() -> None:
+    # `getattr` itself is intercepted by the instance-side refusal now, so
+    # `get_attr` reads past it and has to answer the missing case itself.
+    assert _Dog.get_attr(Str("fly"), Str("none of them")) == Str("none of them")
+
+
+def test_the_class_side_get_attr_refuses_a_missing_name_without_a_default() -> None:
+    with pytest.raises(AttributeError, match=r"_Dog does not understand #fly"):
+        _Dog.get_attr(Str("fly"))
