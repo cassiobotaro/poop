@@ -47,12 +47,17 @@ def _minmax(
     """
     # Imported here, not at the top: this module is imported by `int.py`, and
     # `_unwrap` reaches `none.py` -> `object.py`, which sits above it.
+    from poop.types._argument import a_key
     from poop.types._unwrap import _is_absent
     from poop.types.exceptions import MIRRORS
 
     kwargs: dict[str, Any] = {}
     if not _is_absent(key):
-        kwargs["key"] = key
+        # Guarded here rather than at five call sites: this is the one place
+        # every `min`/`max` key passes through. Before it, a non-block reached
+        # CPython's sort and answered `'int' object is not callable` — true of
+        # every POOP object, and silent about what was expected.
+        kwargs["key"] = a_key(key, name.lstrip("#"))
     if default is not _MISSING:
         kwargs["default"] = default
         return func(iterable, **kwargs)

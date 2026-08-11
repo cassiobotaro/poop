@@ -97,10 +97,18 @@ class Object(metaclass=PoopMeta):
         raise MessageNotUnderstood(explain(self, name), name=name, obj=self)
 
     def if_none(self, block: Callable[[], Any]) -> Object:
+        from poop.types._argument import a_block
+
+        # Guarded on the receiver that does *not* run it: `(5).if_none(5)` said
+        # nothing while `None.if_none(5)` leaked, so whether a wrong argument
+        # was reported depended on the value in hand.
+        a_block(block, "if_none", param="")
         return self
 
     def if_not_none[T](self, block: Callable[[Object], T]) -> T:
-        return block(self)
+        from poop.types._argument import a_block
+
+        return a_block(block, "if_not_none")(self)
 
     def is_none(self) -> Boolean:
         from poop.types.boolean import false

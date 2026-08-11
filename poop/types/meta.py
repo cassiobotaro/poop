@@ -752,12 +752,19 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def if_none(cls, block: Callable[[], Any]) -> Any:
-        # A class is never none, so this answers the class unchanged.
+        # A class is never none, so this answers the class unchanged — and the
+        # block it never runs is still checked, for the reason `Object.if_none`
+        # gives: otherwise the report depends on the value in hand.
+        from poop.types._argument import a_block
+
+        a_block(block, "if_none", param="")
         return cls
 
     @class_side
     def if_not_none(cls, block: Callable[[Any], Any]) -> Any:
-        return block(cls)
+        from poop.types._argument import a_block
+
+        return a_block(block, "if_not_none")(cls)
 
     @class_side
     def assert_(cls, message: Str | NoneClass | None = None) -> Any:

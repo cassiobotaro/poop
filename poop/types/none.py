@@ -14,9 +14,14 @@ class NoneClass(Object):
     __slots__ = ()
 
     def if_none[T](self, block: Callable[[], T]) -> T:
-        return block()
+        from poop.types._argument import a_block
+
+        return a_block(block, "if_none", param="")()
 
     def if_not_none(self, block: Callable[[Object], Any]) -> NoneClass:
+        from poop.types._argument import a_block
+
+        a_block(block, "if_not_none")
         return self
 
     def is_none(self) -> Boolean:

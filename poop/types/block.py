@@ -225,13 +225,19 @@ class Block(Object):
         return f"block expects {expected}, got {given}"
 
     def while_true(self, body: Block) -> NoneClass:
+        from poop.types._argument import a_block
+
         # Through `self()`, not `self._fn()`: a condition block of the wrong
         # arity would otherwise answer CPython's wording from here.
+        body = a_block(body, "while_true", param="")
         while bool(self()):
             body()
         return none
 
     def while_false(self, body: Block) -> NoneClass:
+        from poop.types._argument import a_block
+
+        body = a_block(body, "while_false", param="")
         while not bool(self()):
             body()
         return none

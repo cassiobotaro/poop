@@ -150,6 +150,59 @@ def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
     )
 
 
+def a_block(
+    value: Any, selector: str, role: str = "a block", param: str = "item"
+) -> Any:
+    """`value`, or a refusal naming the message and the argument it wanted.
+
+    `_require_block`'s call-site twin for the ~40 messages that take a block and
+    reached the deferred call instead. Its docstring already made the argument:
+    "resolve what you need before running anything, so the failure lands where
+    the mistake was written rather than after a deferred block has had side
+    effects." Two proposals applied that to `Try` and `With`; nothing carried it
+    to the collection protocol, where blocks are what POOP replaced every
+    control structure *with*.
+
+    Sending a non-block split three ways, and all three were wrong: seventeen
+    messages leaked `'int' object is not callable` — true of every POOP object,
+    and silent about what was expected; five **accepted in silence**, because
+    `map`, `filter` and `filter_false` answer a view and call nothing until it
+    is walked; and the `if_*` family reported or not depending on the
+    *receiver's value*, so `True.if_true(5)` refused while `True.if_false(5)`
+    said nothing. A program could ship a mistake that only reports on the branch
+    it does not usually take.
+    """
+    if callable(value):
+        return value
+    # `lambda: …` for a zero-argument block, not `lambda : …` — the branch
+    # family and the `if_none` pair take no parameter at all.
+    spelt = f"lambda {param}: …" if param else "lambda: …"
+    raise MIRRORS["TypeError"](
+        f"#{selector} expects {role}, got {article(type(value).__name__)} — "
+        f"write .{selector}({spelt})"
+    )
+
+
+def a_key(value: Any, selector: str) -> Any:
+    """The optional `key` of `sorted` / `sort` / `min` / `max`, or a refusal.
+
+    Absent by default, unlike every other block slot, so it cannot go through
+    `a_block` — and it is the one that answered CPython's `'int' object is not
+    callable` from inside the sort rather than at the call the reader wrote.
+
+    Absence is the caller's to handle and is already handled there: `_minmax`
+    and `_sorted` both omit the kwarg entirely rather than pass `key=None`,
+    which matches no `min`/`max`/`sorted` overload. So this only ever sees a key
+    the program actually wrote.
+    """
+    if callable(value):
+        return value
+    raise MIRRORS["TypeError"](
+        f"#{selector}'s key must be a block, got {article(type(value).__name__)} — "
+        f"write .{selector}(key=lambda item: …)"
+    )
+
+
 def byte_order(value: Any) -> str:
     """`"big"` / `"little"`, or POOP's refusal.
 

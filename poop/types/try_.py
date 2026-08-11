@@ -88,6 +88,12 @@ class Try(Object):
         return self
 
     def finally_(self, block: Callable[[], object] | None = None) -> object:
+        # The one block argument on `Try` that was not routed through
+        # `_require_block`: `.finally_(5)` reached the deferred call and
+        # answered `'int' object is not callable`, while `.except_(E, 5)` — one
+        # method up, in the same class — named the handler.
+        if block is not None:
+            _require_block(block, "the cleanup", "write .finally_(lambda: …)")
         # Store the cleanup closure only while the Try can still run it; a
         # post-execution call is rejected by _execute() below, so retaining
         # `block` here would leak it on the already-dead Try.

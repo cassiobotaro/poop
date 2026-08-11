@@ -265,7 +265,7 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         reverse: Boolean = false,
     ) -> NoneClass:
         # Keyword-only, mirroring `list.sort(*, key, reverse)`. See `sorted`.
-        self._items[:] = _sorted(self._items, key, reverse)
+        self._items[:] = _sorted(self._items, key, reverse, "sort")
         return none
 
     def print(

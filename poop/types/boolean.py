@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast, final
 
+from poop.types._argument import a_block
 from poop.types._cloak import cloak
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
@@ -368,11 +369,12 @@ class _TrueClass(Boolean):
     __slots__ = ()
 
     def if_true[T](self, block: Callable[[], T]) -> T:
-        return block()
+        return a_block(block, "if_true", param="")()
 
     def if_false[T](self, block: Callable[[], T]) -> NoneClass:
         from poop.types.none import none
 
+        a_block(block, "if_false", param="")
         return none
 
     def if_true_if_false[T](
@@ -380,19 +382,22 @@ class _TrueClass(Boolean):
         true_block: Callable[[], T],
         false_block: Callable[[], T],
     ) -> T:
-        return true_block()
+        a_block(false_block, "if_true_if_false", role="a block", param="")
+        return a_block(true_block, "if_true_if_false", role="a block", param="")()
 
     def if_false_if_true[T](
         self,
         false_block: Callable[[], T],
         true_block: Callable[[], T],
     ) -> T:
-        return true_block()
+        a_block(false_block, "if_false_if_true", role="a block", param="")
+        return a_block(true_block, "if_false_if_true", role="a block", param="")()
 
     def and_(self, block: Callable[[], Boolean]) -> Boolean:
-        return block()
+        return a_block(block, "and_", param="")()
 
     def or_(self, block: Callable[[], Boolean]) -> Boolean:
+        a_block(block, "or_", param="")
         return self
 
     def not_(self) -> Boolean:
@@ -427,30 +432,37 @@ class _FalseClass(Boolean):
     def if_true[T](self, block: Callable[[], T]) -> NoneClass:
         from poop.types.none import none
 
+        # Guarded on the branch that does *not* run, which is the whole point:
+        # `False.if_true(5)` used to say nothing at all, so whether a wrong
+        # argument was reported depended on the receiver's value.
+        a_block(block, "if_true", param="")
         return none
 
     def if_false[T](self, block: Callable[[], T]) -> T:
-        return block()
+        return a_block(block, "if_false", param="")()
 
     def if_true_if_false[T](
         self,
         true_block: Callable[[], T],
         false_block: Callable[[], T],
     ) -> T:
-        return false_block()
+        a_block(true_block, "if_true_if_false", role="a block", param="")
+        return a_block(false_block, "if_true_if_false", role="a block", param="")()
 
     def if_false_if_true[T](
         self,
         false_block: Callable[[], T],
         true_block: Callable[[], T],
     ) -> T:
-        return false_block()
+        a_block(true_block, "if_false_if_true", role="a block", param="")
+        return a_block(false_block, "if_false_if_true", role="a block", param="")()
 
     def and_(self, block: Callable[[], Boolean]) -> Boolean:
+        a_block(block, "and_", param="")
         return self
 
     def or_(self, block: Callable[[], Boolean]) -> Boolean:
-        return block()
+        return a_block(block, "or_", param="")()
 
     def not_(self) -> Boolean:
         return true

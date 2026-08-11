@@ -394,3 +394,12 @@ def test_a_keyword_the_block_does_take_still_works() -> None:
     assert Block(lambda x, *, k: k)(1, k=2) == 2
     assert Block(lambda **kw: kw["anything"])(anything=3) == 3
     assert Block(lambda x, *, k=9: k)(1) == 9
+
+
+def test_a_key_that_is_already_a_block_passes_through() -> None:
+    # `a_key`'s middle branch: absent -> None, callable -> itself, anything
+    # else -> the refusal. Only the first and last had coverage.
+    from poop.types._argument import a_key
+
+    block = Block(lambda x: x)
+    assert a_key(block, "sorted") is block
