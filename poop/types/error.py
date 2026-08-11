@@ -1,12 +1,27 @@
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, Never, final
 
 from poop.types._cloak import cloak
 from poop.types._message import poop_message
+from poop.types.meta import class_side
 from poop.types.object import Object
 from poop.types.string import Str
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+
+
+def _answered_by_the_class_side(kind: type, name: str) -> bool:
+    """Whether `name` is a class-side message `kind` really answers.
+
+    Read off the metaclass MRO's dicts, not through `getattr`: a refusing
+    descriptor raises when asked, and `class_side_read_refusal` — the shape the
+    `BaseException` leftovers use — would look identical to a message otherwise.
+    """
+    for metaclass in type(kind).__mro__:
+        attr = vars(metaclass).get(name)
+        if isinstance(attr, class_side):
+            return not attr.refuses
+    return False
 
 
 @final
@@ -72,6 +87,23 @@ class Error(Object):
             issubclass(self.kind(), a_class(unalias(type_), "is_instance"))
         )
 
+    def raise_(self) -> Never:
+        """Signal this error again — POOP's substitute for a bare `raise`.
+
+        `raise_` is a *class-side* message, so `e.raise_()` used to answer
+        `ValueError does not understand #raise_` — the exact sentence
+        `PoopExcMeta.raise_`'s docstring quotes as the bug it was written to
+        remove, still reachable one spelling over, and false besides:
+        `ValueError` does understand `#raise_`.
+
+        What that fix bought was `e.kind().raise_(e.message())`, which builds a
+        **new** exception. This re-raises the one that was caught, so its
+        identity, its notes and its traceback survive — which is what a handler
+        that logs and rethrows actually wants, and what Python's bare `raise`
+        does.
+        """
+        raise self._exception
+
     def does_not_understand(self, name: str) -> Any:
         """Refuse under the caught exception's name, not the wrapper's.
 
@@ -81,11 +113,31 @@ class Error(Object):
         the class, wrong for an instance that stands for exactly one exception
         and names it everywhere else. Python agrees: `except ZeroDivisionError
         as e` reports `'ZeroDivisionError' object has no attribute 'zzz'`.
+
+        The transparent label is also what made this refusal falsifiable. It is
+        composed from `self.kind().name()` — a `#name` sent to the class, and
+        answered — so `e.name()` was refused by a sentence built out of the very
+        message it claimed the receiver did not understand. `name` and
+        `superclass` are class-side and an `Error` is an instance, so they are
+        still refused; what changes is that the sentence says so. POOP already
+        words the opposite direction (`#upper asks an instance; send it to one`)
+        and had nothing for this one.
         """
         from poop.types._selectors import explain
         from poop.types.object import MessageNotUnderstood
 
-        label = str(self.kind().name())
+        kind = self.kind()
+        label = str(kind.name())
+        # `vars` down the metaclass MRO rather than `hasattr`: asking the class
+        # is what raises here for a refusing descriptor, and a refusal is not an
+        # answer. Only a real class-side message earns the redirect.
+        if _answered_by_the_class_side(kind, name):
+            raise MessageNotUnderstood(
+                f"{label} does not understand #{name} — "
+                f"#{name} asks a class; send it to #kind()",
+                name=name,
+                obj=self,
+            )
         raise MessageNotUnderstood(explain(self, name, label), name=name, obj=self)
 
     def __str__(self) -> str:

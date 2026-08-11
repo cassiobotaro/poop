@@ -4,7 +4,7 @@ from poop.types.boolean import false, true
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
-from poop.types.object import Object
+from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
 
@@ -163,3 +163,77 @@ def test_every_message_about_the_class_agrees_with_kind() -> None:
     assert e.class_name() == kind.name()
     assert e.is_instance(kind) is true
     assert kind.is_subclass(MIRRORS["Exception"]) is true
+
+
+# Proposal 58. `raise_`, `name` and `superclass` are class-side messages the
+# mirror genuinely answers, and an `Error` refused all three under that class's
+# own name — a sentence `does_not_understand` built by sending `#name` to the
+# very class it then said did not understand `#name`.
+def test_raise_re_raises_the_very_exception_that_was_caught() -> None:
+    original = MIRRORS["ValueError"]("boom")
+    error = Error(original)
+    with pytest.raises(ValueError) as caught:
+        error.raise_()
+    # The identity, not merely the kind and the text: `e.kind().raise_(
+    # e.message())` built a new exception and dropped notes and traceback.
+    assert caught.value is original
+
+
+def test_raise_keeps_the_notes_a_new_exception_would_drop() -> None:
+    original = MIRRORS["ValueError"]("boom")
+    original.add_note("context worth keeping")
+    with pytest.raises(ValueError) as caught:
+        Error(original).raise_()
+    assert caught.value.__notes__ == ["context worth keeping"]
+
+
+@pytest.mark.parametrize("name", ["name", "superclass"])
+def test_a_class_side_message_is_refused_by_saying_so(name: str) -> None:
+    from poop.types.object import MessageNotUnderstood
+
+    error = Error(MIRRORS["ValueError"]("m"))
+    with pytest.raises(MessageNotUnderstood, match=f"#{name} asks a class"):
+        getattr(error, name)
+
+
+def test_the_redirect_names_the_message_that_answers() -> None:
+    from poop.types.object import MessageNotUnderstood
+
+    error = Error(MIRRORS["ValueError"]("m"))
+    with pytest.raises(MessageNotUnderstood, match=r"send it to #kind\(\)"):
+        error.name()  # ty: ignore[unresolved-attribute]
+    # And the redirect is true: the kind does answer it.
+    assert error.kind().name() == Str("ValueError")
+
+
+def test_an_unknown_name_keeps_the_generic_refusal() -> None:
+    from poop.types.object import MessageNotUnderstood
+
+    error = Error(MIRRORS["ValueError"]("m"))
+    with pytest.raises(MessageNotUnderstood, match="try :methods"):
+        error.zzz()  # ty: ignore[unresolved-attribute]
+
+
+def test_a_refusing_class_side_descriptor_is_not_redirected() -> None:
+    # `args` is a `class_side_read_refusal`, so the class does not answer it
+    # either — pointing at `#kind()` would send the reader to another refusal.
+    from poop.types.object import MessageNotUnderstood
+
+    error = Error(MIRRORS["ValueError"]("m"))
+    with pytest.raises(MessageNotUnderstood, match="try :methods"):
+        error.args  # ty: ignore[unresolved-attribute]
+
+
+def test_no_mirror_advertises_a_name_a_caught_error_refuses() -> None:
+    # The sweep the proposal asks for, now that both halves agree. `raise_` is
+    # answered by the error itself; `name` and `superclass` are refused by a
+    # sentence that does not claim the kind refuses them.
+    for kind, cls in MIRRORS.items():
+        error = Error(cls("m"))
+        for name in dir(cls):
+            if name.startswith("_") or name in {"name", "superclass"}:
+                continue
+            try:
+                getattr(error, name)
+            except MessageNotUnderstood:  # noqa: PERF203
+                pytest.fail(f"{kind}.dir() lists #{name}, which a caught error refuses")
