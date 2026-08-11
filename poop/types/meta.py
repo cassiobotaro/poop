@@ -635,6 +635,58 @@ class PoopMeta(ABCMeta):
                 _refuse_instance_side(cls, name)
             return value
 
+    def __setattr__(cls, name: str, value: Any) -> None:
+        """The undotted twin of `set_attr`, refused on the same terms.
+
+        Proposal 2 closed one spelling of this and its record says what for:
+        "`class_()` hands the class out — so `"abc".class_().del_attr("upper")`
+        removed `upper` from every string in the program". `_reject_builtin`
+        was called from `set_attr` and `del_attr` and from nowhere else, so the
+        plain assignment walked straight past it:
+
+            "abc".class_().set_attr("shout", block)   # refused
+            Object.shout = lambda self: self.repr()   # accepted
+            (5).shout().print()                       # 5!
+
+        One intent, two spellings, and the refused one was the sanctioned one.
+        The root is reachable by name on purpose, so `Object.foo = 5` wrote on
+        the real root and every object in the language answered `#foo` from
+        then on — exactly the encapsulation the `__slots__` decision exists to
+        hold.
+
+        The other receivers were polluted rather than hijacked, which is worse
+        rather than better: a bare builtin name binds the *alias*, so `str.upper
+        = …` was accepted, stuck to `_poop_str_cls`, and did nothing at all.
+        The reader was neither obeyed nor told why.
+
+        A class a program wrote is untouched — `C.foo = 5` is how a class holds
+        shared state, and `__module__` is `__poop__` there. `del` needs no twin:
+        `no_del` bans the statement outright.
+
+        `class_side.__set__` keeps its own wording for the names it owns, since
+        "answered by every class" says something truer about `#print` than "is a
+        POOP builtin" does — and being a data descriptor, it is consulted first.
+
+        `_`-prefixed names are left alone, which `is_message` already calls the
+        boundary of the message surface, and which is also what makes this
+        usable at all: `ABCMeta.__new__` writes `__abstractmethods__` while the
+        class is being built, and `cloak` writes `__module__`, `__name__` and
+        `__qualname__` — all of them before `exceptions` has finished importing
+        the table this refusal would come from. A program cannot reach those
+        spellings anyway; `no_dunder_attribute` refuses them at parse time.
+        """
+        # `class_side.__set__` first, where it owns the name: it is a data
+        # descriptor, so `type.__setattr__` would consult it anyway, and this
+        # override must not step in front of the truer sentence.
+        if not name.startswith("_") and _read_refusal(type(cls), name) is None:
+            owned = any(
+                isinstance(vars(metaclass).get(name), class_side)
+                for metaclass in type(cls).__mro__
+            )
+            if not owned:
+                _reject_builtin(cls)
+        super().__setattr__(name, value)
+
     def __dir__(cls) -> list[str]:
         """Merge the class side into `dir(cls)`, minus the refusals.
 

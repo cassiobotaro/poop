@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from poop.errors import ExecutionError, ValidationError
+from poop.errors import ExecutionError, PoopError, ValidationError
 from poop.interpreter import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.boolean import Boolean, false, true
@@ -755,3 +755,63 @@ def test_a_read_refusal_read_off_the_metaclass_answers_itself() -> None:
     descriptor = vars(PoopExcMeta)["args"]
     assert descriptor.__get__(None, PoopExcMeta) is descriptor
     assert descriptor.refuses is True
+
+
+# Proposal 47. `_reject_builtin` was called from `set_attr` and `del_attr` and
+# from nowhere else, so the plain assignment — the undotted twin — walked past
+# it. One intent, two spellings, and the refused one was the sanctioned one.
+@pytest.mark.parametrize(
+    "source",
+    [
+        "Object.shout = lambda self: 1",
+        "object.shout = lambda self: 1",
+        'str.upper = lambda self: "HACKED"',
+        "int.foo = 5",
+        "ValueError.foo = 5",
+        "list.foo = 5",
+    ],
+)
+def test_a_builtin_class_refuses_the_plain_assignment(source: str) -> None:
+    with pytest.raises(PoopError, match="is a POOP builtin"):
+        Interpreter().run_source(source + "\n")
+
+
+def test_the_root_can_no_longer_be_extended_from_user_code() -> None:
+    # The sharpest case: the root is reachable by name on purpose, so this used
+    # to write on the real root and every object in the language answered
+    # `#shout` from then on.
+    with pytest.raises(PoopError, match="is a POOP builtin"):
+        Interpreter().run_source("Object.shout = lambda self: 1\n(5).shout().print()\n")
+
+
+def test_the_silently_ineffective_half_closes_too() -> None:
+    # `str.upper = …` was *accepted* and did nothing: a bare builtin name binds
+    # the alias, so the write stuck to `_poop_str_cls` and `"abc".upper()` was
+    # unchanged. The reader was neither obeyed nor told why.
+    with pytest.raises(PoopError, match="is a POOP builtin"):
+        Interpreter().run_source(
+            'str.upper = lambda self: "HACKED"\n"abc".upper().print()\n'
+        )
+
+
+def test_a_class_the_program_defined_still_takes_both_spellings() -> None:
+    # `C.foo = 5` is how a class holds shared state; `__module__` is `__poop__`
+    # there, which is the discriminator `_reject_builtin` already used.
+    Interpreter().run_source(
+        "class C(Object):\n"
+        "    pass\n"
+        "C.foo = 5\n"
+        "C.foo.print()\n"
+        'C.set_attr("greet", lambda self: "hi")\n'
+        "C().greet().print()\n"
+    )
+
+
+@pytest.mark.parametrize("source", ["Object.print = 5", "int.name = 5", "C.print = 5"])
+def test_a_class_side_message_keeps_its_own_wording(source: str) -> None:
+    # `class_side.__set__` says something truer about `#print` than "is a POOP
+    # builtin" does, and it is a data descriptor, so it must not be stepped in
+    # front of — including on a class the program defined.
+    prelude = "class C(Object):\n    pass\n" if source.startswith("C.") else ""
+    with pytest.raises(PoopError, match="answered by every class"):
+        Interpreter().run_source(prelude + source + "\n")
