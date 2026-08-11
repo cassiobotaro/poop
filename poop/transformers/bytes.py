@@ -12,25 +12,45 @@ from poop.types.string import Str
 
 
 def _poop_bytes_from(*args: object, **kwargs: object) -> Bytes:
+    """`bytes()`, `bytes(source)` and the encoding form `bytes(text, encoding)`.
+
+    The text branch delegates to `Str.encode`, which is the guarded codec
+    surface — it used to reach into `arg._value` and call `str.encode` itself,
+    so the one argument in the language that `_codec.py` never saw was the one
+    in the constructor. Every consequence of that was the module's own
+    docstring read back: `bytes("ab", "rot13")` answered `'rot13' is not a text
+    encoding; use codecs.encode() to handle arbitrary codecs`, sending the
+    reader to a module `no_import` forbids, while `"ab".encode("rot13")` one
+    receiver away answered POOP's sentence. `bytes("é", "ascii")` leaked
+    CPython's `codec` report under a class no program can spell, and
+    `bytes("ab", 5)` — a wrong-*typed* encoding — was silently *ignored*,
+    falling back to utf-8, the shape proposal 14 closed for `encode` itself.
+
+    The encoding is required, as CPython requires it: without one there is no
+    answer to give, only a guess about what the text means as bytes.
+    """
     refuse_extra_arguments(
         "bytes",
         args,
         kwargs,
-        most=2,
-        built_from="at most one source, plus an encoding for text",
+        most=3,
+        built_from="at most one source, plus an encoding and errors for text",
         hint='write a b"…" literal for bytes',
     )
     arg = args[0] if args else None
-    encoding = args[1] if len(args) > 1 else None
+    codec = cast("tuple[Str, ...]", args[1:])
+    if isinstance(arg, Str):
+        if not codec:
+            raise MIRRORS["TypeError"]("string argument without an encoding")
+        return arg.encode(*codec)
+    if codec:
+        raise MIRRORS["TypeError"]("encoding without a string argument")
     if arg is None:
         return Bytes(b"")
     if isinstance(arg, Bytes):
         return arg
     if isinstance(arg, Int):
         return Bytes(bytes(arg._value))
-    if isinstance(arg, Str):
-        enc = encoding._value if isinstance(encoding, Str) else "utf-8"
-        return Bytes(arg._value.encode(enc))
     if isinstance(arg, Iterable):
         ints = cast("Iterable[Int]", arg)
         return Bytes(bytes(item._value for item in ints))

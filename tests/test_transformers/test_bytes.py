@@ -81,10 +81,38 @@ def test_bytes_from_int_returns_zero_filled() -> None:
     assert result._value == b"\x00\x00\x00"
 
 
-def test_bytes_from_str_uses_utf8_by_default() -> None:
-    result = _poop_bytes_from(Str("hello"))
+def test_bytes_from_str_requires_an_encoding() -> None:
+    # It used to invent utf-8, which is the one thing a converter between text
+    # and bytes must not do quietly: without an encoding there is no answer to
+    # give, only a guess about what the text means as bytes. CPython refuses
+    # for the same reason, in the same words.
+    with pytest.raises(TypeError, match="string argument without an encoding"):
+        _poop_bytes_from(Str("hello"))
+
+
+def test_bytes_refuses_an_encoding_without_text() -> None:
+    with pytest.raises(TypeError, match="encoding without a string argument"):
+        _poop_bytes_from(Bytes(b"ab"), Str("utf-8"))
+
+
+def test_bytes_from_str_routes_the_encoding_through_the_codec_surface() -> None:
+    # `_codec.py` exists to keep `'rot13' is not a text encoding; use
+    # codecs.encode() ...` out of the language — advice pointing at a module
+    # `no_import` forbids. The converter reached into `_value` and called
+    # `str.encode` itself, so it was the one encoding argument that never saw
+    # the guard; a wrong-*typed* one was ignored outright.
+    with pytest.raises(ValueError, match="unknown encoding 'rot13'"):
+        _poop_bytes_from(Str("ab"), Str("rot13"))
+    with pytest.raises(TypeError, match="#encode expects a str, got an int"):
+        _poop_bytes_from(Str("ab"), Int(5))
+    with pytest.raises(ValueError, match="ascii cannot encode 'é' at position 0"):
+        _poop_bytes_from(Str("é"), Str("ascii"))
+
+
+def test_bytes_from_str_takes_the_errors_handler_too() -> None:
+    result = _poop_bytes_from(Str("aéb"), Str("ascii"), Str("ignore"))
     assert isinstance(result, Bytes)
-    assert result._value == b"hello"
+    assert result._value == b"ab"
 
 
 def test_bytes_from_str_with_explicit_encoding() -> None:

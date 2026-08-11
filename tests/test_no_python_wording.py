@@ -97,6 +97,15 @@ _FAILING = [
     "(-1).chr()",
     'd = {"a": 1}\nd.do(lambda p: d.at_put("b", 2))',
     'str(b"ab", "utf-8", "strict", 1)',
+    # The converters' own codec argument: `bytes(text, …)` reached into
+    # `_value` and called `str.encode`, so it was the one encoding in the
+    # language `_codec.py` never saw, and answered CPython's advice to import
+    # a module POOP forbids.
+    'bytes("ab", "rot13")',
+    'bytes("é", "ascii")',
+    'bytes("ab", 5)',
+    'bytearray("ab")',
+    'bytearray("ab", "rot13")',
     "memoryview(b'ab', 1)",
     'int("abc")',
     'float("abc")',

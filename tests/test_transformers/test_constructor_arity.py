@@ -38,8 +38,13 @@ def _failure(source: str) -> str:
         ("dict(1, 2, 3)", "dict is built from at most one mapping"),
         ("complex(1, 2, 3)", "complex is built from at most a real"),
         ("memoryview(b'ab', 1)", "memoryview is built from exactly one bytes-like"),
-        ("bytearray('ab', 'utf-8', 'strict')", "bytearray is built from at most one"),
-        ("bytes(b'a', 'utf-8', 'strict')", "bytes is built from at most one source"),
+        # Four, not three: the text form takes `(text, encoding, errors)` on
+        # both, as CPython's does.
+        (
+            "bytearray('ab', 'utf-8', 'strict', 1)",
+            "bytearray is built from at most one",
+        ),
+        ("bytes('a', 'utf-8', 'strict', 1)", "bytes is built from at most one source"),
     ],
 )
 def test_an_over_supplied_constructor_is_refused(source: str, expected: str) -> None:
