@@ -18,6 +18,7 @@ import pytest
 
 from poop import Interpreter
 from poop.errors import PoopError
+from poop.types.exceptions import MIRRORS
 
 # Each pattern names a construct POOP does not have. `indices` and `index out
 # of range` describe subscripting (no_subscript); `operand type(s)` and `not
@@ -174,6 +175,20 @@ def test_every_failure_still_says_something(source: str) -> None:
     """Guards the sweep: an empty message passes every pattern above."""
     message = _failure(source).split(": ", 1)[-1]
     assert len(message.split()) >= 3
+
+
+@pytest.mark.parametrize("source", _FAILING)
+def test_the_reported_class_is_one_a_program_can_spell(source: str) -> None:
+    """The class in an uncaught report is the class `except_` matches.
+
+    `MessageNotUnderstood` is POOP's own class, outside `MIRRORS`, and it was
+    named in the report for every unknown selector in the language — while the
+    handler that caught it was told `AttributeError` and `MessageNotUnderstood`
+    itself answered `NameError: name ... is not defined`. One failure under two
+    names, which is the disagreement proposal 16 closed for `Unicode*`.
+    """
+    reported = _failure(source).split(":", 1)[0]
+    assert reported in MIRRORS, f"{source!r} reported {reported!r}, which is unnamable"
 
 
 def test_the_sweep_would_catch_a_regression() -> None:

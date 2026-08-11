@@ -3,6 +3,7 @@ import builtins
 
 from poop.errors import ExecutionError
 from poop.types._message import poop_message
+from poop.types.exceptions import poop_class_of
 
 # The only Python builtins user code may reach. `exec` hands a program
 # CPython's entire builtins namespace unless the globals dict already carries
@@ -54,11 +55,18 @@ def _describe(exc: BaseException) -> str:
 
     ``str(exc)`` alone drops the type: a missing key renders as the bare
     ``'zzz'``, with nothing to say a lookup failed, and a learner cannot tell
-    which class escaped a ``Try``. Class names are safe to surface here —
-    exceptions are never wrapped, so no ``_poop_*`` name can reach this path.
-    An empty message degrades to the bare name rather than a dangling colon.
+    which class escaped a ``Try``. An empty message degrades to the bare name
+    rather than a dangling colon.
+
+    The name is ``poop_class_of``'s, not ``type(exc)``'s, so the class in the
+    report is always one a program can write and always the class a handler is
+    given. Reading the raw type named ``MessageNotUnderstood`` — POOP's own
+    class, outside ``MIRRORS`` — for every unknown selector in the language,
+    while ``except_(AttributeError, …)`` caught it and ``e.class_().name()``
+    answered ``AttributeError``: one failure under two names, which is the
+    disagreement proposal 16 closed for the ``Unicode*`` family.
     """
-    name = type(exc).__name__
+    name = poop_class_of(exc).__name__
     message = poop_message(exc)
     return f"{name}: {message}" if message else name
 
