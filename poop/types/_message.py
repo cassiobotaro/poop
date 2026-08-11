@@ -55,6 +55,18 @@ def article(name: str) -> str:
     return f"an {name}" if name[:1].lower() in _VOWELS else f"a {name}"
 
 
+def no_format_spec(kind: str) -> str:
+    """The refusal for a receiver that takes no format spec at all.
+
+    Shared by POOP's two formatting spellings, which is the point: `Object.
+    format` composed this from `type(self).__name__` while the template path let
+    CPython's `unsupported format string passed to list.__format__` through —
+    naming a dunder `no_dunder_attribute` will not let a program spell, from a
+    construct the reader wrote with braces.
+    """
+    return f"{kind} takes no format spec — only a number, a string or bytes does"
+
+
 def binary_refusal(receiver: str, selector: str, operand: str) -> str:
     """POOP's answer when a receiver will not take that operand for `selector`.
 

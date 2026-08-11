@@ -199,25 +199,38 @@ class Object(metaclass=PoopMeta):
         from poop.types._argument import text_like
         from poop.types._unwrap import _is_absent
         from poop.types.exceptions import MIRRORS
-        from poop.types.string import Str
 
         # Two leaks in one method. A non-`Str` spec answered `format()
         # argument 2 must be str, not int` — the builtin `no_format` bans,
         # spelt as the call this message replaces...
+        from poop.types.string import Str, _template_refusal
+
         spec_value = "" if _is_absent(spec) else text_like(spec, "format", "a str")
         target = builtins.getattr(self, "_value", self)
         try:
             return Str(builtins.format(target, spec_value))
+        except ValueError as exc:
+            # The third leak, and the one a validator pointed at. `no_format`
+            # bans `format(x, spec)` and names `x.format(spec)`, and this method
+            # already caught the `TypeError` beside this clause and composed
+            # POOP's sentence for it — while the `ValueError` CPython raises
+            # from the same call passed straight through. So the template
+            # spelling answered `a float cannot be formatted with 'd'` and the
+            # message spelling answered `Unknown format code 'd' for object of
+            # type 'float'`: one failure, two vocabularies, chosen by which
+            # spelling the reader used. `_template_refusal` is receiver-
+            # independent — it reads the class name out of CPython's text — so
+            # both spellings now compose the same sentence.
+            raise _template_refusal(exc) from None
         except TypeError:
             # ...and a receiver with no `_value` fell through to
             # `object.__format__`, which refuses every non-empty spec by
             # naming the dunder: `unsupported format string passed to
             # list.__format__`. CPython refuses these too — only the sentence
             # is POOP's to write.
-            raise MIRRORS["TypeError"](
-                f"{type(self).__name__} takes no format spec — "
-                "only a number, a string or bytes does"
-            ) from None
+            from poop.types._message import no_format_spec
+
+            raise MIRRORS["TypeError"](no_format_spec(type(self).__name__)) from None
 
     def _reject_dunder(self, name: str) -> None:
         """The runtime half of `no_dunder_attribute`.

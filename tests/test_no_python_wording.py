@@ -34,6 +34,15 @@ _FORBIDDEN = {
     "a message as a call": re.compile(r"\b\w+\(\)|\b\w+\.\w+\("),
     "a banned dunder": re.compile(r"__\w+__"),
     "a generator": re.compile(r"\bgenerator\b|\byield\b"),
+    # CPython's format-spec reports. Nothing in them is a call, a dunder or an
+    # operator, so the six patterns above ran over ~17 leaking sites every time
+    # the suite ran and passed. `object of type 'int'` names the type-level
+    # protocol POOP rewrites everywhere else, and "format code" / "format
+    # specifier" describe a spec the reader wrote inside a template.
+    "a CPython format report": re.compile(
+        r"object of type|Unknown format code|Invalid format specifier|"
+        r"Unknown conversion specifier"
+    ),
 }
 
 # Programs whose failure a reader is meant to understand. Kept as source, not
@@ -118,6 +127,12 @@ _FAILING = [
     '[1, "a"].min()',
     '[1, "a"].max()',
     '("a" + 1)',
+    # Proposal 61: one message, two syntaxes, and only the template was worded.
+    '(2.5).format("d")',
+    '(5).format("zzz")',
+    '"{0:d}".format(2.5)',
+    '[1].format(">6")',
+    '"{0:>6}".format([1])',
     '(1 + "a")',
     '(1 < "a")',
     "([1] + 1)",

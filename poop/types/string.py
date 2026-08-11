@@ -10,7 +10,7 @@ from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._message import article
+from poop.types._message import article, no_format_spec
 from poop.types._minmax import _MISSING, _minmax
 from poop.types._repeat import _repeat_count
 from poop.types._unwrap import _faithful, _unwrap
@@ -34,6 +34,13 @@ _str = str  # alias to avoid shadowing in annotations
 
 # `Unknown format code 'd' for object of type 'str'`.
 _UNKNOWN_CODE = re.compile(r"^Unknown format code '(.+?)' for object of type '(.+?)'$")
+# The sibling shape, which no path worded: a spec CPython cannot parse at all,
+# rather than one it parsed and the receiver would not take.
+_BAD_SPEC = re.compile(r"^Invalid format specifier '(.*?)' for object of type '(.+?)'$")
+# The `TypeError` half, leaking the other way. `Object.format` catches this one
+# and composes POOP's sentence; the template path let it through, naming a
+# dunder `no_dunder_attribute` will not let a program spell.
+_NO_SPEC = re.compile(r"^unsupported format string passed to (.+?)\.__format__$")
 
 
 def _reject_field_access(template: _str) -> None:
@@ -67,13 +74,26 @@ def _offered(named: dict[_str, object]) -> _str:
     return f": {', '.join(sorted(named))}" if named else " it"
 
 
-def _template_refusal(exc: ValueError) -> Exception:
-    """POOP's wording for the two `ValueError`s `str.format` raises.
+def _template_refusal(exc: ValueError | TypeError) -> Exception:
+    """POOP's wording for the failures a format spec raises.
 
     `Unknown format code 'd' for object of type 'str'` names a "format code"
     and an "object of type" — the type-level protocol `_message.py` rewrites
     everywhere else. The brace errors are the template parser's own and say
     `format string`, which is Python's name for what POOP calls a template.
+
+    Shared by both spellings POOP offers. `Str.format` is the template surface
+    and reached this; `Object.format` is the substitute `no_format` *names*, and
+    it reached CPython — so `"{0:d}".format(2.5)` answered `a float cannot be
+    formatted with 'd'` while `(2.5).format("d")` answered `Unknown format code
+    'd' for object of type 'float'`. Same value, same code, same failure, and
+    the leaking half was the one a validator sends the reader to.
+
+    `Invalid format specifier` leaked on *both*, because the fallback below only
+    rewrites `format string` and that sentence contains neither brace wording
+    nor a format code. The `TypeError` leaked the other way — `Object.format`
+    worded it and the template path did not — so the shared sentence lives in
+    `no_format_spec` and both call sites compose it from there.
     """
     # POOP's own refusal — `_reject_field_access`'s — passes through
     # untouched, on the test `reword_if_native` uses for the same reason.
@@ -86,6 +106,15 @@ def _template_refusal(exc: ValueError) -> Exception:
         return MIRRORS["ValueError"](
             f"{article(kind)} cannot be formatted with {code!r}"
         )
+    match = _BAD_SPEC.match(text)
+    if match is not None:
+        spec, kind = match.groups()
+        return MIRRORS["ValueError"](
+            f"{spec!r} is not a format spec {article(kind)} understands"
+        )
+    match = _NO_SPEC.match(text)
+    if match is not None:
+        return MIRRORS["TypeError"](no_format_spec(match.group(1)))
     return MIRRORS["ValueError"](text.replace("format string", "template"))
 
 
@@ -318,6 +347,15 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
                 f"{'value' if len(positional) == 1 else 'values'} it was given"
             ) from None
         except ValueError as exc:
+            raise _template_refusal(exc) from None
+        except TypeError as exc:
+            # The `TypeError` half, and the one that leaks *out* of the
+            # template rather than into it: a receiver that takes no spec at
+            # all answered `unsupported format string passed to
+            # list.__format__` — a dunder `no_dunder_attribute` will not let a
+            # program spell, from a construct the reader wrote with braces.
+            # `Object.format` has composed POOP's sentence for this since it
+            # was written; both now compose it from `no_format_spec`.
             raise _template_refusal(exc) from None
 
     def find(

@@ -200,12 +200,20 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         # routes through `to_python`, answered `'     1'`.
         from poop.types._argument import text_like
         from poop.types._unwrap import _is_absent
-        from poop.types.string import Str
+        from poop.types.string import Str, _template_refusal
 
         # Through `text_like` for the reason `Object.format` does it: a
         # non-`Str` spec answered `format() argument 2 must be str, not int`.
         raw = "" if _is_absent(spec) else text_like(spec, "format", "a str")
-        return Str(_builtins.format(bool(self), raw))
+        try:
+            return Str(_builtins.format(bool(self), raw))
+        except ValueError as exc:
+            # The same reword `Object.format` applies. This override exists for
+            # the `bool(self)` above, and inherited the leak with the rest of
+            # the body: a rejected spec answered `Unknown format code 's' for
+            # object of type 'bool'` while the template spelling answered
+            # POOP's sentence.
+            raise _template_refusal(exc) from None
 
     def as_integer_ratio(self) -> Tuple:
         return self._as_int().as_integer_ratio()
