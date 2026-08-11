@@ -425,3 +425,11 @@ def test_fromhex_under_the_bare_builtin_name() -> None:
     alias = FloatTransformer.BINDINGS["_poop_float_cls"]
     assert alias.fromhex(Str("0x1.8p+1")) == Float(3.0)  # ty: ignore[unresolved-attribute]
     assert Float(1.0).fromhex(Str("0x1.8p+1")) == Float(3.0)
+
+
+def test_fromhex_names_the_message_like_its_byte_twins() -> None:
+    # Proposal 52: `bad argument type for built-in operation` names neither the
+    # receiver, the message nor the argument, while `Bytes.fromhex` and
+    # `ByteArray.fromhex` already answered `#fromhex expects a str, got an int`.
+    with pytest.raises(TypeError, match="#fromhex expects a str"):
+        Float.fromhex(Int(5))  # ty: ignore[invalid-argument-type]

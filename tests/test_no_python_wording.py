@@ -39,6 +39,14 @@ _FORBIDDEN = {
     # the suite ran and passed. `object of type 'int'` names the type-level
     # protocol POOP rewrites everywhere else, and "format code" / "format
     # specifier" describe a spec the reader wrote inside a template.
+    # Proposal 52: CPython's *argument* report. Nothing in it is a call, a
+    # dunder or an operator either, so about forty receiver/message sites ran
+    # under the patterns above and passed.
+    "a CPython argument report": re.compile(
+        r"is required, not '|argument should be|must be None or|"
+        r"expected a \w+-like object|has no len\(\)|bad argument type for built-in|"
+        r"requires string as left operand"
+    ),
     "a CPython format report": re.compile(
         r"object of type|Unknown format code|Invalid format specifier|"
         r"Unknown conversion specifier"

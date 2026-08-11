@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._affix import affix_needle
 from poop.types._alias import wrapped_instance
-from poop.types._argument import a_bound, text_like
+from poop.types._argument import a_bound, a_needle, bytes_like, text_like
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -34,6 +34,9 @@ if TYPE_CHECKING:
     from poop.types.slice import Slice
 
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
+
+
+_BYTE_KINDS = (bytes, bytearray, memoryview)
 
 
 class ByteArray(_ValueEqMixin, _IterableMixin, Object):
@@ -88,10 +91,12 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             ) from None
         return self
 
-    def includes(self, byte: Int) -> Boolean:
+    # `ByteArray | Int`: CPython searches for a subsequence *or* a byte value,
+    # and the guard admits both — the annotation said only one of them.
+    def includes(self, byte: ByteArray | Int) -> Boolean:
         # getattr-unwrap: a non-`_value` argument reaches bytearray.__contains__
         # raw and raises the faithful TypeError instead of leaking `_value`.
-        operand: Any = _faithful(byte)
+        operand: Any = a_needle(byte, "includes", "bytes or an int", _BYTE_KINDS)
         return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
@@ -284,13 +289,13 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def count(
         self,
-        sub: ByteArray,
+        sub: ByteArray | Int,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
             self._value.count(
-                _faithful(sub),
+                a_needle(sub, "count", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "count", "start"),
                 a_bound(end, "count", "end"),
             )
@@ -321,13 +326,13 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def find(
         self,
-        sub: ByteArray,
+        sub: ByteArray | Int,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
             self._value.find(
-                _faithful(sub),
+                a_needle(sub, "find", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "find", "start"),
                 a_bound(end, "find", "end"),
             )
@@ -335,13 +340,13 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def index(
         self,
-        sub: ByteArray,
+        sub: ByteArray | Int,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
             self._value.index(
-                _faithful(sub),
+                a_needle(sub, "index", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "index", "start"),
                 a_bound(end, "index", "end"),
             )
@@ -377,7 +382,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
         # bytearray.join unwrapped and raises the faithful TypeError instead
         # of being silently dropped.
-        pieces: list[Any] = [_faithful(p) for p in parts]
+        pieces: list[Any] = [bytes_like(p, "join") for p in parts]
         return ByteArray(self._value.join(pieces))
 
     def ljust(
@@ -400,16 +405,18 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def lstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
 
-        return ByteArray(self._value.lstrip(_unwrap(chars, None)))
+        return ByteArray(self._value.lstrip(bytes_like(chars, "lstrip", optional=True)))
 
     def partition(self, sep: ByteArray) -> Tuple:
-        return Tuple(*[ByteArray(p) for p in self._value.partition(_faithful(sep))])
+        return Tuple(
+            *[ByteArray(p) for p in self._value.partition(bytes_like(sep, "partition"))]
+        )
 
     def removeprefix(self, prefix: ByteArray) -> ByteArray:
-        return ByteArray(self._value.removeprefix(_faithful(prefix)))
+        return ByteArray(self._value.removeprefix(bytes_like(prefix, "removeprefix")))
 
     def removesuffix(self, suffix: ByteArray) -> ByteArray:
-        return ByteArray(self._value.removesuffix(_faithful(suffix)))
+        return ByteArray(self._value.removesuffix(bytes_like(suffix, "removesuffix")))
 
     def replace(
         self,
@@ -419,21 +426,21 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
     ) -> ByteArray:
         return ByteArray(
             self._value.replace(
-                _faithful(old),
-                _faithful(new),
+                bytes_like(old, "replace"),
+                bytes_like(new, "replace"),
                 _unwrap(count, -1),
             )
         )
 
     def rfind(
         self,
-        sub: ByteArray,
+        sub: ByteArray | Int,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
             self._value.rfind(
-                _faithful(sub),
+                a_needle(sub, "rfind", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "rfind", "start"),
                 a_bound(end, "rfind", "end"),
             )
@@ -441,13 +448,13 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def rindex(
         self,
-        sub: ByteArray,
+        sub: ByteArray | Int,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
         return Int(
             self._value.rindex(
-                _faithful(sub),
+                a_needle(sub, "rindex", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "rindex", "start"),
                 a_bound(end, "rindex", "end"),
             )
@@ -469,7 +476,12 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         )
 
     def rpartition(self, sep: ByteArray) -> Tuple:
-        return Tuple(*[ByteArray(p) for p in self._value.rpartition(_faithful(sep))])
+        return Tuple(
+            *[
+                ByteArray(p)
+                for p in self._value.rpartition(bytes_like(sep, "rpartition"))
+            ]
+        )
 
     def rsplit(
         self,
@@ -479,13 +491,15 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return List(
             *[
                 ByteArray(p)
-                for p in self._value.rsplit(_unwrap(sep, None), _unwrap(maxsplit, -1))
+                for p in self._value.rsplit(
+                    bytes_like(sep, "rsplit", optional=True), _unwrap(maxsplit, -1)
+                )
             ]
         )
 
     def rstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
 
-        return ByteArray(self._value.rstrip(_unwrap(chars, None)))
+        return ByteArray(self._value.rstrip(bytes_like(chars, "rstrip", optional=True)))
 
     def split(
         self,
@@ -495,7 +509,9 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
         return List(
             *[
                 ByteArray(p)
-                for p in self._value.split(_unwrap(sep, None), _unwrap(maxsplit, -1))
+                for p in self._value.split(
+                    bytes_like(sep, "split", optional=True), _unwrap(maxsplit, -1)
+                )
             ]
         )
 
@@ -527,7 +543,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
 
     def strip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
 
-        return ByteArray(self._value.strip(_unwrap(chars, None)))
+        return ByteArray(self._value.strip(bytes_like(chars, "strip", optional=True)))
 
     def swapcase(self) -> ByteArray:
         return ByteArray(self._value.swapcase())

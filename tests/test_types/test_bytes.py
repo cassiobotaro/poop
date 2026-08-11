@@ -42,11 +42,11 @@ def test_includes_false() -> None:
     assert Bytes(b"hello").includes(Int(0)) is false
 
 
-def test_includes_non_value_argument_raises_faithful_typeerror() -> None:
-    # A non-`_value` argument (List) must reach bytes.__contains__ raw and raise
-    # the faithful TypeError, not leak the internal `_value` name through
-    # dispatch. Mirrors CPython's `[1] in b"hello"`.
-    with pytest.raises(TypeError, match="bytes-like object"):
+def test_includes_refuses_a_non_bytes_argument_in_poops_words() -> None:
+    # Proposal 52: was left to CPython's `a bytes-like object is required, not
+    # 'list'` — a sentence with no receiver, no message and no substitute, and
+    # one the wording sweep could not see.
+    with pytest.raises(TypeError, match="#includes expects bytes or an int"):
         Bytes(b"hello").includes(List(Int(1)))  # ty: ignore[invalid-argument-type]
 
 
@@ -302,7 +302,7 @@ def test_join_accepts_other_bytes_like() -> None:
 def test_join_non_bytes_like_raises() -> None:
     # CPython raises TypeError rather than silently dropping the str element.
     parts = List(Bytes(b"a"), Str("x"), Bytes(b"b"))
-    with pytest.raises(TypeError, match="bytes-like object"):
+    with pytest.raises(TypeError, match="#join expects bytes"):
         Bytes(b"-").join(parts)
 
 
@@ -757,3 +757,58 @@ def test_fromhex_on_a_subclass_answers_the_subclass() -> None:
     made = Sub.fromhex(Str("6162"))
     assert isinstance(made, Sub)
     assert made == Bytes(b"ab")
+
+
+# Proposal 52. `_needle` was written for the search family and wired into `Str`
+# alone, so the same mistake one receiver over answered CPython — and eleven
+# more messages on both byte wrappers had no guard at all. None of those
+# sentences carries a call, a dunder or an operator, which is why the wording
+# sweep ran over about forty sites and passed.
+@pytest.mark.parametrize("selector", ["count", "find", "index", "rfind", "rindex"])
+def test_the_search_family_refuses_a_str_needle(selector: str) -> None:
+    with pytest.raises(TypeError, match=f"#{selector} expects bytes or an int"):
+        getattr(Bytes(b"abc"), selector)(Str("a"))
+
+
+@pytest.mark.parametrize(
+    "selector",
+    [
+        "partition",
+        "rpartition",
+        "removeprefix",
+        "removesuffix",
+        "split",
+        "rsplit",
+        "strip",
+        "lstrip",
+        "rstrip",
+    ],
+)
+def test_the_bytes_like_family_refuses_a_str_argument(selector: str) -> None:
+    with pytest.raises(TypeError, match=f"#{selector} expects bytes"):
+        getattr(Bytes(b"abc"), selector)(Str("a"))
+
+
+def test_join_names_the_message_rather_than_the_sequence_item() -> None:
+    # `sequence item 0: expected a bytes-like object, str found` describes a
+    # position in a Python sequence, for a message POOP spells `#join`.
+    with pytest.raises(TypeError, match="#join expects bytes"):
+        Bytes(b"-").join(List(Bytes(b"a"), Str("x")))
+
+
+def test_replace_refuses_a_str_on_either_side() -> None:
+    with pytest.raises(TypeError, match="#replace expects bytes"):
+        Bytes(b"abc").replace(Str("a"), Bytes(b"z"))  # ty: ignore[invalid-argument-type]
+    with pytest.raises(TypeError, match="#replace expects bytes"):
+        Bytes(b"abc").replace(Bytes(b"a"), Str("z"))  # ty: ignore[invalid-argument-type]
+
+
+def test_the_strip_family_still_takes_no_argument() -> None:
+    assert Bytes(b"  a  ").strip() == Bytes(b"a")
+    assert Bytes(b"xxaxx").strip(Bytes(b"x")) == Bytes(b"a")
+
+
+def test_a_byte_receiver_still_searches_for_an_integer() -> None:
+    # CPython's rule, which the guard must not tighten: `b"ab".count(97)` is 1.
+    assert Bytes(b"aab").count(Int(97)) == Int(2)
+    assert Bytes(b"aab").includes(Int(97)) is true

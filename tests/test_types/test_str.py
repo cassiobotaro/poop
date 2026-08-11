@@ -47,11 +47,11 @@ def test_includes_not_found() -> None:
     assert Str("hello").includes(Str("z")) is false
 
 
-def test_includes_non_value_argument_raises_faithful_typeerror() -> None:
-    # A non-`_value` argument (List) must reach str.__contains__ raw and raise
-    # the faithful TypeError, not leak the internal `_value` name through
-    # dispatch. Mirrors CPython's `[1] in "hello"`.
-    with pytest.raises(TypeError, match="requires string as left operand"):
+def test_includes_refuses_a_non_text_argument_in_poops_words() -> None:
+    # Was left to CPython as "the faithful TypeError". Proposal 52: `includes`
+    # is the substitute `no_in` points at, and `'in <string>' requires string as
+    # left operand, not int` quotes the banned operator in its Python spelling.
+    with pytest.raises(TypeError, match="#includes expects a str"):
         Str("hello").includes(List(Int(1)))  # ty: ignore[invalid-argument-type]
 
 
@@ -965,3 +965,26 @@ def test_the_field_access_ban_still_answers_its_own_refusal() -> None:
 
 def test_a_template_that_works_is_untouched() -> None:
     assert Str("{} and {b}").format(Int(1), b=Str("x")) == Str("1 and x")
+
+
+# Proposal 52. Three of `Str`'s own leaked the same shape, and one of them was
+# the sharpest sentence in the family: `includes` is the substitute `no_in`
+# points at, and its refusal quoted the banned operator in Python's spelling.
+def test_includes_does_not_quote_the_banned_operator() -> None:
+    with pytest.raises(TypeError, match="#includes expects a str") as info:
+        Str("abc").includes(Int(5))  # ty: ignore[invalid-argument-type]
+    assert "in <string>" not in str(info.value)
+
+
+@pytest.mark.parametrize("selector", ["strip", "lstrip", "rstrip"])
+def test_the_strip_family_names_the_message_as_a_message(selector: str) -> None:
+    # `strip arg must be None or str` names the message as a bare word and its
+    # own default in one breath — and `None` is a value POOP spells `none`.
+    with pytest.raises(TypeError, match=f"#{selector} expects a str") as info:
+        getattr(Str("abc"), selector)(Int(5))
+    assert "arg must be" not in str(info.value)
+
+
+def test_the_strip_family_still_takes_no_argument() -> None:
+    assert Str("  a  ").strip() == Str("a")
+    assert Str("xxaxx").strip(Str("x")) == Str("a")

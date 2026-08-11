@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._alias import wrapped_instance
+from poop.types._argument import text_like
 from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
 from poop.types._minmax import _MISSING, _minmax
@@ -13,7 +14,7 @@ from poop.types._numeric_compare import (
     _NumericCompareMixin,
 )
 from poop.types._pow import reflected_pow
-from poop.types._unwrap import _faithful, _unwrap
+from poop.types._unwrap import _unwrap
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
@@ -84,7 +85,12 @@ class Float(_NumericCompareMixin, Object):
 
     @classmethod
     def fromhex(cls, s: Str) -> Float:
-        return wrapped_instance(cls, _float.fromhex(_faithful(s)))
+        # `bad argument type for built-in operation` names neither the
+        # receiver, the message nor the argument. The two byte twins already
+        # answered `#fromhex expects a str, got an int`.
+        return wrapped_instance(
+            cls, _float.fromhex(text_like(s, "fromhex", "a str", (str,)))
+        )
 
     def real(self) -> Float:
         return self

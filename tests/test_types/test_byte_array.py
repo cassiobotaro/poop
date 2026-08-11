@@ -91,11 +91,12 @@ def test_includes_false() -> None:
     assert ByteArray(bytearray(b"hello")).includes(Int(0)) is false
 
 
-def test_includes_non_value_argument_raises_faithful_typeerror() -> None:
-    # A non-`_value` argument (List) must reach bytearray.__contains__ raw and
-    # raise the faithful TypeError, not leak the internal `_value` name.
+def test_includes_refuses_a_non_bytes_argument_in_poops_words() -> None:
+    # Proposal 52: was left to CPython's `a bytes-like object is required, not
+    # 'list'` — a sentence with no receiver, no message and no substitute, and
+    # one the wording sweep could not see.
     ba = ByteArray(bytearray(b"hi"))
-    with pytest.raises(TypeError, match="bytes-like object"):
+    with pytest.raises(TypeError, match="#includes expects bytes or an int"):
         ba.includes(List(Int(1)))  # ty: ignore[invalid-argument-type]
 
 
@@ -424,7 +425,7 @@ def test_join_non_bytes_like_raises() -> None:
     # CPython raises TypeError rather than silently dropping the int element.
     sep = ByteArray(bytearray(b"-"))
     parts = List(ByteArray(bytearray(b"a")), Int(5))
-    with pytest.raises(TypeError, match="bytes-like object"):
+    with pytest.raises(TypeError, match="#join expects bytes"):
         sep.join(parts)
 
 

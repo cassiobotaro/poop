@@ -86,6 +86,70 @@ def text_like(
     )
 
 
+def a_needle(
+    sub: object,
+    selector: str,
+    expected: str,
+    kinds: tuple[type, ...] = (str,),
+) -> Any:
+    """The substring or subsequence a search looks for, or POOP's refusal.
+
+    `find` / `rfind` / `index` / `rindex` / `count` keep their *text* meaning on
+    `Str`, `Bytes` and `ByteArray`, where `_IterableMixin`'s twins take a block
+    — so a reader arriving from `[1, 2].find(block)` writes a block here.
+
+    Lived in `string.py` and was wired into `Str` alone, which is proposal 6's
+    item reopening on the receiver next door: `"abc".count(5)` answered
+    `#count expects a str, got an int` while `b"abc".count(5.5)` answered
+    `argument should be integer or bytes-like object, not 'float'`. The
+    sentence was already receiver-independent; only its address was wrong.
+
+    The byte receivers accept an integer as well as a subsequence, which is
+    CPython's rule (`b"ab".count(97)` is 1), so `expected` carries what this
+    receiver takes.
+    """
+    from poop.types.string import Str
+
+    if not isinstance(sub, Str) and callable(sub):
+        raise MIRRORS["TypeError"](
+            f"{expected.split(' or ')[-1]}'s #{selector} searches for a "
+            f"subsequence — it takes what to look for, not a block"
+        )
+    raw = getattr(sub, "_value", sub)
+    # `kinds` is the receiver's, not a fixed set: `b"ab".count("x")` must be
+    # refused here rather than pass the guard and reach CPython, and the byte
+    # receivers additionally take an integer (`b"ab".count(97)` is 1), which is
+    # what `__index__` admits.
+    if isinstance(raw, kinds) or (bytes in kinds and hasattr(raw, "__index__")):
+        return raw
+    raise MIRRORS["TypeError"](
+        f"#{selector} expects {expected}, got {article(type(sub).__name__)}"
+    )
+
+
+def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
+    """The raw bytes behind an argument, or POOP's refusal.
+
+    The byte twins of everything `text_like` already guards on `Str`. CPython
+    answered `a bytes-like object is required, not 'str'` for eleven messages
+    on both byte wrappers — a sentence with no receiver, no message and no
+    substitute, and one the wording sweep could not see: it carries no call, no
+    dunder and no operator.
+    """
+    from poop.types._unwrap import _is_absent
+
+    # `optional` for the strip family, whose argument is genuinely absent by
+    # default — CPython's own `strip arg must be None or str` names that case.
+    if optional and _is_absent(value):
+        return None
+    raw = getattr(value, "_value", value)
+    if isinstance(raw, (bytes, bytearray, memoryview)):
+        return raw
+    raise MIRRORS["TypeError"](
+        f"#{selector} expects bytes, got {article(type(value).__name__)}"
+    )
+
+
 def byte_order(value: Any) -> str:
     """`"big"` / `"little"`, or POOP's refusal.
 

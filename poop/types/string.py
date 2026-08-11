@@ -118,6 +118,20 @@ def _template_refusal(exc: ValueError | TypeError) -> Exception:
     return MIRRORS["ValueError"](text.replace("format string", "template"))
 
 
+def _opt_text(chars: object, selector: str) -> Any:
+    """The optional `chars` of the strip family, or POOP's refusal.
+
+    CPython names the message as a bare word and its own default in one breath
+    — `strip arg must be None or str` — where `None` is a value POOP spells
+    `none` and "arg" is not a word the language uses.
+    """
+    from poop.types._unwrap import _is_absent
+
+    if _is_absent(chars):
+        return None
+    return text_like(chars, selector, "a str", (str,))
+
+
 def _needle(sub: object, selector: str) -> Any:
     """The substring `find` / `rfind` / `index` / `rindex` / `count` look for.
 
@@ -129,6 +143,11 @@ def _needle(sub: object, selector: str) -> Any:
     The `r`-prefixed pair is the same message read from the other end, and was
     left on `_faithful` — so `"abc".find(block)` and `"abc".rfind(block)`, the
     same mistake one letter apart, answered in two different vocabularies.
+
+    Kept here as `Str`'s own; its receiver-independent twin is
+    `_argument.a_needle`, which the byte wrappers use. Proposal 52 was this item
+    reopening one receiver over: the sentence was already general and only its
+    address was wrong.
     """
     if not isinstance(sub, Str) and callable(sub):
         raise MIRRORS["TypeError"](
@@ -237,10 +256,10 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         return _minmax(builtins.max, "#max", self, key, default)
 
     def includes(self, char: Str) -> Boolean:
-        # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
-        # str.__contains__ raw and raises the faithful TypeError ("requires
-        # string as left operand"), instead of leaking `_value` through dispatch.
-        operand: Any = _faithful(char)
+        # `includes` is the substitute `no_in` points at, and its own refusal
+        # quoted the banned operator in its Python spelling: `'in <string>'
+        # requires string as left operand, not int`.
+        operand: Any = text_like(char, "includes", "a str", (str,))
         return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
@@ -272,13 +291,13 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         return Str(self._value.swapcase())
 
     def strip(self, chars: Str | NoneClass | None = None) -> Str:
-        return Str(self._value.strip(_unwrap(chars, None)))
+        return Str(self._value.strip(_opt_text(chars, "strip")))
 
     def lstrip(self, chars: Str | NoneClass | None = None) -> Str:
-        return Str(self._value.lstrip(_unwrap(chars, None)))
+        return Str(self._value.lstrip(_opt_text(chars, "lstrip")))
 
     def rstrip(self, chars: Str | NoneClass | None = None) -> Str:
-        return Str(self._value.rstrip(_unwrap(chars, None)))
+        return Str(self._value.rstrip(_opt_text(chars, "rstrip")))
 
     def replace(
         self,
