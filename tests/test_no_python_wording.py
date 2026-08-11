@@ -61,6 +61,11 @@ _FAILING = [
     # refusal of its own, so CPython named `__dict__` — the dunder
     # `_reject_dunder` will not even let a program spell.
     '"abc".del_attr("zzz")',
+    # A method read by *writing* it stayed a native bound method, so asking it
+    # anything answered `'function' object has no attribute 'print'` — the
+    # value described as exactly the kind of thing a block is, then refusing
+    # what every block answers.
+    '"abc".upper.nope()',
     "[1].del_attr('append')",
     # `has_next` exists so exhaustion can be *asked* about; it answered
     # `dictionary changed size during iteration`, which `next` reworded.

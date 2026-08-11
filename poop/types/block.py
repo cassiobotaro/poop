@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from functools import partial
 from inspect import Parameter, signature
 from typing import TYPE_CHECKING, Any
 
@@ -81,6 +82,38 @@ class Block(Object):
                 self._arity_message(len(args) + len(kwargs))
             ) from None
 
+    def __get__(self, instance: Any, owner: type | None = None) -> Any:
+        """A block found on a *class* binds to the receiver, as a method does.
+
+        `set_attr` on a class is sanctioned — proposal 2 refused it only for
+        POOP's own builtins, precisely so a program can extend the classes it
+        defines — and the one thing a reader reaches for it with did not work:
+        `C.set_attr("greet", lambda self: "hi")` then `C().greet()` answered
+        `block expects 1 argument, got 0`, because the block was handed back
+        untouched and the receiver never passed. The refusal was the worst
+        part: the reader wrote a one-argument block and was told it got none.
+
+        Defining only `__get__` makes this a *non-data* descriptor, which is
+        exactly Python's own split and needs no special case: consulted for a
+        class attribute, skipped for one found in the instance's `__dict__`.
+        So a `Block` held as *state* (`self.callback = lambda: …`) still reads
+        back as itself — that half already worked and must keep working.
+
+        Answers `self` when read off the class (`C.greet`), as a function does.
+
+        The receiver is bound onto *this block*, not onto `_fn`: a wrong-arity
+        call then fails inside `__call__` above and is worded from the block
+        the program actually wrote (`block expects 0 arguments, got 1` for a
+        zero-argument block installed on a class, which is the mistake Python
+        reports too). Binding `_fn` directly hid that — `signature` refuses an
+        over-bound `partial`, so `_accepted` answered nothing and the refusal
+        degraded to `block does not accept 0 arguments`, about a call that
+        passed none.
+        """
+        if instance is None:
+            return self
+        return Block(partial(self, instance))
+
     def _accepted(self) -> tuple[int, int | None] | None:
         """How many arguments the block takes: (fewest, most), `None` unbounded.
 
@@ -133,8 +166,32 @@ class Block(Object):
     __repr__ = __str__
 
 
+class _MethodBlock(Block):
+    """A method read off an object, wrapped so it answers messages.
+
+    `Object.__getattribute__` hands one of these back for `"abc".upper`, so a
+    method read by writing it reads back as the same kind of object one
+    fetched by name does — `_as_block`'s rule, which had only been wired into
+    `get_attr`, the spelling almost nobody writes.
+
+    It answers everything a `Block` answers and calls like a *method*: the
+    arity refusal stays CPython's, because `cloak` has already worded that one
+    for a message (`str.upper() takes 1 positional argument but 2 were
+    given`), and `Block`'s rewording would replace the message's own name with
+    the word `block`. Skipping the rewrite also keeps `inspect.signature` out
+    of the failure path — it evaluates a wrapper's annotations, and half of
+    `poop/types/` declares names under `TYPE_CHECKING` only.
+    """
+
+    __slots__ = ()
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        return self._fn(*args, **kwargs)
+
+
 # A POOP block is a wrapped lambda, and CPython's class for a lambda is
 # `function` (`type(lambda: 0).__name__`). Answer that name so `class_()` and
 # `class_name()` mirror Python instead of leaking the `poop.types.block.Block`
 # path — the same cloak every other wrapper applies.
 cloak(Block, "function")
+cloak(_MethodBlock, "function")

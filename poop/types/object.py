@@ -1,6 +1,7 @@
 import builtins
 from builtins import print as _builtins_print
 from collections.abc import Callable
+from types import MethodType
 from typing import TYPE_CHECKING, Any, Self
 
 from poop.types._cloak import cloak
@@ -33,6 +34,37 @@ class Object(metaclass=PoopMeta):
         return type(self)
 
     if not TYPE_CHECKING:
+        # A method read off an object is a block, whichever way it was read.
+        #
+        # `_as_block` states the rule and was wired into `get_attr` only —
+        # the spelling almost nobody writes. The one everybody writes stayed
+        # native, so `"abc".get_attr("upper").print()` answered `<block>` while
+        # `"abc".upper.print()` answered `'function' object has no attribute
+        # 'print'`: CPython's word for a message, naming the value `function`,
+        # which is `Block`'s own cloak — the report described it as exactly the
+        # kind of thing a block is and then refused what every block answers.
+        # `real` and `imag` make it likelier still, being attributes in Python
+        # and messages here, so `(1 + 2j).real` is a correct Python reflex.
+        #
+        # `type(value) is MethodType` rather than `isinstance`: this runs on
+        # every attribute read in the language, including `poop/types/`'s own
+        # `self._value`, so the common path must be one identity check. A
+        # `classmethod`, `staticmethod` or `property` never arrives here as a
+        # `MethodType` bound to an instance, so each keeps answering as before.
+        #
+        # `_`-prefixed names are left alone, which `is_message` already calls
+        # the boundary of the message surface — a name a program may send never
+        # starts with one. It is also what makes this terminate: `Block` holds
+        # its callable in `_fn`, so wrapping that read would hand `__call__` a
+        # fresh `Block` to unwrap on every call, forever.
+        def __getattribute__(self, name: str) -> Any:
+            value = object.__getattribute__(self, name)
+            if type(value) is MethodType and not name.startswith("_"):
+                from poop.types.block import _MethodBlock
+
+                return _MethodBlock(value)
+            return value
+
         # Hidden from the type checker deliberately. A visible __getattr__
         # answers Any for every name, so `xs.frobnicate()` would type-check on
         # every POOP object and `ty` would stop catching typos across the whole
