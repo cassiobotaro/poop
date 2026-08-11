@@ -91,6 +91,34 @@ def cannot_be_hashed(exc: TypeError) -> str | None:
     )
 
 
+def too_deep() -> str:
+    """POOP's wording for a recursion that ran out of room.
+
+    `INFECTIONS.md` says why this one matters more here than in Python:
+    `RecursionError` is mirrored because "recursion is POOP's substitute for
+    every loop, which makes it the most reachable of the lot". CPython's
+    sentence names no receiver, offers no substitute, and — the part that
+    actually misleads — states a limit measured in Python frames, six of which
+    go to one POOP message send.
+
+    The substitutes are named by shape, which is what a reader who hit this
+    needs and what `maximum recursion depth exceeded` cannot tell them: a loop
+    written as recursion has `while_true`, and a walk over a collection has the
+    iteration protocol. Neither is discoverable from CPython's text.
+
+    Takes no exception: unlike every other rewrite here, this one does not read
+    CPython's text at all. Both spellings mean the same thing to a POOP program
+    — `maximum recursion depth exceeded` from the frame counter, and `Stack
+    overflow (used 8148 kB) while calling a Python object` from the C-stack
+    guard — so matching either would only add a way to miss one.
+    """
+    return (
+        "this recursion went too deep — a loop is spelt "
+        "(lambda: cond).while_true(lambda: …) and a walk over a collection "
+        "col.do(lambda item: …); recursion is for structures that nest"
+    )
+
+
 def no_format_spec(kind: str) -> str:
     """The refusal for a receiver that takes no format spec at all.
 

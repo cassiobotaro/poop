@@ -1,8 +1,9 @@
 import ast
 import builtins
+import sys
 
 from poop.errors import ExecutionError
-from poop.types._message import poop_message
+from poop.types._message import poop_message, too_deep
 from poop.types.exceptions import poop_class_of
 
 # The only Python builtins user code may reach. `exec` hands a program
@@ -27,6 +28,34 @@ _ALLOWED_BUILTINS: dict[str, object] = {
     "staticmethod": builtins.staticmethod,
     "property": builtins.property,
 }
+
+
+# One POOP message send is six Python frames, and only two of them are the
+# program: the reader's method and the block it was written in. The other four
+# are POOP getting out of its own way — `Block.__call__`, `_MethodBlock.__call__`
+# twice (reading `self.count` and reading the branch message), and the branch
+# method itself.
+#
+# `INFECTIONS.md` says why that matters: `RecursionError` is mirrored because
+# "recursion is POOP's substitute for every loop, which makes it the most
+# reachable of the lot". Nothing had ever adjusted the budget it runs against,
+# so a self-sending message ran 164 levels deep where the same recursion written
+# as a Python function runs 998 — both under CPython's default limit of 1000.
+#
+# Six thousand buys a POOP program roughly the thousand levels a Python program
+# already gets, which is the honest target: a language should not be an order of
+# magnitude shallower than the one it is built on, least of all the language
+# that banned `for`. `while_true` and `while_false` are real Python `while`
+# loops and have no ceiling at all, so this is about *structural* recursion —
+# `examples/patterns/interpreter.py` walks a tree, and the depth follows the
+# data.
+#
+# Safe to raise on 3.14, which is worth checking rather than assuming: CPython
+# guards the C stack separately and answers a catchable `RecursionError`
+# ("Stack overflow (used 8148 kB) while calling a Python object") rather than
+# crashing. So the ceiling moves and the floor underneath it holds.
+_FRAMES_PER_SEND = 6
+_RECURSION_LIMIT = 1000 * _FRAMES_PER_SEND
 
 
 def _user_lineno(exc: BaseException, filename: str) -> int | None:
@@ -94,7 +123,18 @@ def execute(
     # setdefault, not assignment: the REPL reuses one namespace across inputs,
     # and a program is free to have been handed its own (tests do).
     ns.setdefault("__builtins__", dict(_ALLOWED_BUILTINS))
+    # Raised, not set: a caller that has already asked for more keeps it. The
+    # REPL runs through here too, so both front ends get the same ceiling.
+    if sys.getrecursionlimit() < _RECURSION_LIMIT:
+        sys.setrecursionlimit(_RECURSION_LIMIT)
     try:
         exec(code, ns)  # noqa: S102
+    except RecursionError as exc:
+        # Reworded here rather than in `_describe`, which every failure passes
+        # through: this one is about the *interpreter's* budget, not about
+        # anything the program's own objects said.
+        raise ExecutionError(
+            f"RecursionError: {too_deep()}", _user_lineno(exc, filename)
+        ) from exc
     except Exception as exc:
         raise ExecutionError(_describe(exc), _user_lineno(exc, filename)) from exc
