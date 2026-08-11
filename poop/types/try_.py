@@ -1,14 +1,45 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
+from typing import Any, cast
 
+from poop.types._argument import a_class
 from poop.types._cloak import cloak
 from poop.types.block import _require_block
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
+from poop.types.tuple import Tuple
+
+
+def _exception_kind(kind: object) -> Any:
+    """The kind `except_` will match on, checked where it was written.
+
+    `except_` guarded its handler at the boundary and left the kind to
+    `isinstance` inside `_execute`, so a quoted class name answered
+    `isinstance() arg 2 must be a type, a tuple of types, or a union` — the
+    banned builtin spelt as the call replacing it, which proposal 10 closed on
+    all 15 receivers — and answered it only when the protected block *raised*.
+    The same mistake reported or said nothing depending on something else
+    entirely, and saying nothing means the handler was never installed.
+
+    A POOP `Tuple` unwraps to the native one `isinstance` needs, so Python's
+    own "catch either" spelling works rather than merely failing better; and a
+    class that is no exception is refused, as CPython refuses `except int`,
+    because a handler that can never fire is a mistake worth naming.
+    """
+    resolved = a_class(
+        tuple(kind._items) if isinstance(kind, Tuple) else kind, "except_"
+    )
+    members = resolved if isinstance(resolved, tuple) else (resolved,)
+    for member in members:
+        if not (isinstance(member, type) and issubclass(member, BaseException)):
+            raise MIRRORS["TypeError"](
+                f"#except_ catches exception classes, and "
+                f"{getattr(member, '__name__', member)!s} is not one"
+            )
+    return resolved
 
 
 class Try(Object):
@@ -42,6 +73,10 @@ class Try(Object):
         exc_type: type[BaseException],
         handler: Callable[[Error], object],
     ) -> Try:
+        # Both arguments checked here, where each has a name — the kind used to
+        # be stored untouched and first looked at by `isinstance`, inside
+        # `_execute`. See `_exception_kind`.
+        kind = _exception_kind(exc_type)
         _require_block(
             handler, "the handler", "write .except_(ValueError, lambda e: …)"
         )
@@ -49,7 +84,7 @@ class Try(Object):
         # _handlers would pin the handler closure (and whatever it captured)
         # on a Try that can never consume it again.
         if not self._executed:
-            self._handlers.append((exc_type, handler))
+            self._handlers.append((kind, handler))
         return self
 
     def finally_(self, block: Callable[[], object] | None = None) -> object:

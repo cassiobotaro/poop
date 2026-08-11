@@ -232,3 +232,54 @@ def test_try_refuses_at_construction_not_at_run() -> None:
     with pytest.raises(TypeError):
         Try(Int(5)).finally_(lambda: ran.append("cleanup"))  # ty: ignore[invalid-argument-type]
     assert ran == []
+
+
+def test_try_refuses_a_kind_that_is_not_a_class() -> None:
+    # The kind used to be stored untouched and first looked at by `isinstance`
+    # inside `_execute`, which answered `isinstance() arg 2 must be a type, a
+    # tuple of types, or a union` — the banned builtin spelt as the call that
+    # replaces it, which proposal 10 closed on all 15 receivers.
+    with pytest.raises(TypeError) as info:
+        Try(lambda: none).except_(Str("ValueError"), lambda e: none)  # ty: ignore[invalid-argument-type]
+    assert str(info.value) == "#except_ expects a class, got a str"
+
+
+def test_try_refuses_the_kind_where_it_was_written_not_where_it_raised() -> None:
+    # Deferring it made the same mistake report or say nothing depending on
+    # whether the protected block happened to raise — and saying nothing means
+    # the handler the program was relying on was never installed.
+    ran: list[str] = []
+    with pytest.raises(TypeError, match="#except_ expects a class"):
+        Try(lambda: ran.append("protected")).except_(Int(5), lambda e: none)  # ty: ignore[invalid-argument-type]
+    assert ran == []
+
+
+def test_try_refuses_a_class_that_is_no_exception() -> None:
+    # A handler that can never fire is a mistake worth naming; CPython refuses
+    # `except int` for the same reason.
+    from poop.transformers import DEFAULT_NAMESPACE
+
+    with pytest.raises(TypeError) as info:
+        Try(lambda: none).except_(DEFAULT_NAMESPACE["_poop_int_cls"], lambda e: none)  # ty: ignore[invalid-argument-type]
+    assert str(info.value) == "#except_ catches exception classes, and int is not one"
+
+
+def test_try_catches_either_of_a_tuple_of_kinds() -> None:
+    # Python's own "catch either" spelling: a POOP `Tuple` is a wrapper, so
+    # `isinstance` refused it and the spelling was unavailable.
+    from poop.types.exceptions import MIRRORS
+    from poop.types.tuple import Tuple
+
+    kinds = Tuple(MIRRORS["ValueError"], MIRRORS["ZeroDivisionError"])  # ty: ignore[invalid-argument-type]
+    caught = Try(lambda: _raise(MIRRORS["ZeroDivisionError"]("boom"))).except_(
+        kinds,  # ty: ignore[invalid-argument-type]
+        lambda e: Str("caught"),
+    )
+    assert caught.run() == Str("caught")
+
+
+def test_try_refuses_a_tuple_holding_something_that_is_not_a_class() -> None:
+    from poop.types.tuple import Tuple
+
+    with pytest.raises(TypeError, match="#except_ catches exception classes"):
+        Try(lambda: none).except_(Tuple(Int(5)), lambda e: none)  # ty: ignore[invalid-argument-type]
