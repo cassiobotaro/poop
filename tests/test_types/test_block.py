@@ -5,6 +5,7 @@ from poop.types.boolean import false, true
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.none import none
+from poop.types.string import Str
 
 
 def test_block_is_callable() -> None:
@@ -276,3 +277,61 @@ def test_a_private_name_is_not_wrapped() -> None:
 
     assert type(Str("abc")._value) is str
     assert type(Block(lambda: none)._fn) is not MethodType
+
+
+# Proposal 43. `Object` compares by identity and `__getattribute__` builds a
+# fresh wrapper on every read, so the same method on the same receiver was not
+# equal to itself. CPython's bound method compares by `__self__` and `__func__`
+# precisely so a program can ask "is this the same callback?".
+def test_a_method_read_twice_is_equal_to_itself() -> None:
+    text = Str("abc")
+    assert text.upper == text.upper
+
+
+def test_a_method_read_twice_hashes_the_same() -> None:
+    text = Str("abc")
+    assert text.upper.hash() == text.upper.hash()  # ty: ignore[unresolved-attribute]
+    assert hash(text.upper) == hash(text.upper)
+
+
+def test_two_different_methods_on_one_receiver_are_not_equal() -> None:
+    text = Str("abc")
+    assert not bool(text.upper == text.lower)
+
+
+def test_one_method_on_two_receivers_is_not_equal() -> None:
+    assert not bool(Str("abc").upper == Str("abd").upper)
+
+
+def test_a_method_is_not_equal_to_a_non_block() -> None:
+    assert not bool(Str("abc").upper == Int(5))
+
+
+def test_not_equal_is_the_negation() -> None:
+    text = Str("abc")
+    assert not bool(text.upper != text.upper)
+    assert bool(text.upper != text.lower)
+
+
+def test_a_registry_stops_registering_the_same_method_twice() -> None:
+    # The shape a reader actually hits: storing `obj.on_change` and later
+    # asking whether it is already registered answered no, every time.
+    text = Str("abc")
+    registry = {text.upper}
+    registry.add(text.upper)
+    assert len(registry) == 1
+
+
+def test_is_identical_still_answers_false() -> None:
+    # Unchanged and honest: those really are two objects, which INFECTIONS.md
+    # already documents as a deliberate disagreement for classes.
+    text = Str("abc")
+    assert text.upper.is_identical(text.upper) is false  # ty: ignore[unresolved-attribute]
+
+
+def test_a_block_literal_keeps_identity_equality() -> None:
+    # `Block` wraps a lambda, and two lambdas with the same body are different
+    # blocks in Smalltalk as in Python — so the change is on `_MethodBlock`.
+    one = Block(lambda: 1)
+    assert one == one
+    assert not bool(one == Block(lambda: 1))

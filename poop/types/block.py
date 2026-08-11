@@ -1,7 +1,8 @@
 from collections.abc import Callable
 from functools import partial
 from inspect import Parameter, signature
-from typing import TYPE_CHECKING, Any
+from types import MethodType
+from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._cloak import cloak
 from poop.types._message import article
@@ -10,6 +11,7 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 
 
@@ -187,6 +189,44 @@ class _MethodBlock(Block):
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self._fn(*args, **kwargs)
+
+    # Equality by the pair the bound method wraps — its receiver and its
+    # underlying function — which is exactly what CPython's bound method
+    # compares, and for the same reason: a program has to be able to ask "is
+    # this the same callback?".
+    #
+    # `Object` compares by identity, and `__getattribute__` builds a fresh
+    # wrapper on every read, so `s.upper == s.upper` was false — as were
+    # `.hash()` and every registry built on either. The shape a reader hits is
+    # storing `obj.on_change` and later asking whether it is already
+    # registered: the answer was no, every time, and nothing warned.
+    #
+    # `Block` itself keeps identity deliberately. It wraps a lambda, and two
+    # lambdas with the same body are different blocks in Smalltalk as in
+    # Python — so this lives here rather than on the base.
+    def _identity(self) -> tuple[Any, Any]:
+        # `_fn` is declared `Callable[..., Any]` on the base, and is always a
+        # `MethodType` here: `Object.__getattribute__` builds a `_MethodBlock`
+        # only for `type(value) is MethodType`.
+        method = cast("MethodType", self._fn)
+        return (method.__self__, method.__func__)
+
+    def __eq__(self, other: object) -> Boolean:
+        from poop.types.boolean import to_boolean
+
+        if not isinstance(other, _MethodBlock):
+            return to_boolean(False)
+        return to_boolean(self._identity() == other._identity())
+
+    def __ne__(self, other: object) -> Boolean:
+        from poop.types.boolean import false, true
+
+        return false if bool(self == other) else true
+
+    def __hash__(self) -> int:
+        # Consistent with __eq__ above, as CPython's bound method is: equal
+        # methods must hash equally or `set`/`dict` membership contradicts `==`.
+        return hash(self._identity())
 
 
 # A POOP block is a wrapped lambda, and CPython's class for a lambda is

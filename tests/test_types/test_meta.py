@@ -744,3 +744,14 @@ def test_the_class_side_get_attr_answers_a_default_for_a_missing_name() -> None:
 def test_the_class_side_get_attr_refuses_a_missing_name_without_a_default() -> None:
     with pytest.raises(AttributeError, match=r"_Dog does not understand #fly"):
         _Dog.get_attr(Str("fly"))
+
+
+def test_a_read_refusal_read_off_the_metaclass_answers_itself() -> None:
+    # `__get__(None, metacls)` — the descriptor protocol's "accessed on the
+    # class that owns me" case. Answering the descriptor keeps it inspectable
+    # (`__dir__` reads `refuses` off it) instead of refusing at import time.
+    from poop.types.exceptions import PoopExcMeta
+
+    descriptor = vars(PoopExcMeta)["args"]
+    assert descriptor.__get__(None, PoopExcMeta) is descriptor
+    assert descriptor.refuses is True
