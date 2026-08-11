@@ -1,9 +1,12 @@
-from typing import Any, final
+from typing import TYPE_CHECKING, Any, final
 
 from poop.types._cloak import cloak
 from poop.types._message import poop_message
 from poop.types.object import Object
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    from poop.types.boolean import Boolean
 
 
 @final
@@ -42,6 +45,32 @@ class Error(Object):
         `kind()` is the explicit spelling of the same answer.
         """
         return self.kind()
+
+    def is_instance(self, type_: type) -> Boolean:
+        """Transparent identity, like `class_` — ask the exception, not the wrapper.
+
+        `Object.is_instance` asks about `self`, and `self` is the `Error`, so a
+        handler that fired *because* the error is a `ValueError` was told it is
+        not one: `e.is_instance(ValueError)` answered false, `e.is_instance(
+        Exception)` answered false, and `e.is_instance(Object)` answered true —
+        the answer was about the wrapper, which `class_`'s docstring says is the
+        one object an `Error` must never be.
+
+        It cost a program the natural multi-way handler. `if` is banned and
+        `except_` chaining needs the kinds up front, so catching `Exception`
+        once and dispatching inside on `e.is_instance(...)` is how POOP spells
+        several `except` clauses — and that shape silently took no branch.
+
+        `unalias` is applied here rather than delegated to `Object.is_instance`
+        because the check runs against `kind()`, not against `self`.
+        """
+        from poop.types._alias import unalias
+        from poop.types._argument import a_class
+        from poop.types.boolean import to_boolean
+
+        return to_boolean(
+            issubclass(self.kind(), a_class(unalias(type_), "is_instance"))
+        )
 
     def does_not_understand(self, name: str) -> Any:
         """Refuse under the caught exception's name, not the wrapper's.

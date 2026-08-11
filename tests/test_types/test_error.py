@@ -1,5 +1,10 @@
+import pytest
+
+from poop.types.boolean import false, true
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
+from poop.types.object import Object
 from poop.types.string import Str
 
 
@@ -100,3 +105,61 @@ def test_explain_derives_the_label_when_none_is_given() -> None:
     from poop.types.int import Int
 
     assert explain(Int(1), "zzz").startswith("int does not understand")
+
+
+# Proposal 56. `class_`, `kind`, `class_name` and `__str__` were transparent;
+# `is_instance` asked about the wrapper, so a handler that fired *because* the
+# error is a ValueError was told it is not one.
+def test_is_instance_answers_for_the_wrapped_exception() -> None:
+    e = Error(ValueError("m"))
+    assert e.is_instance(MIRRORS["ValueError"]) is true
+
+
+def test_is_instance_answers_for_an_ancestor_kind() -> None:
+    e = Error(ZeroDivisionError("division by zero"))
+    assert e.is_instance(MIRRORS["ArithmeticError"]) is true
+    assert e.is_instance(MIRRORS["Exception"]) is true
+
+
+def test_is_instance_answers_false_for_an_unrelated_kind() -> None:
+    e = Error(ValueError("m"))
+    assert e.is_instance(MIRRORS["TypeError"]) is false
+
+
+def test_is_instance_is_not_about_the_wrapper() -> None:
+    # `Exception` is the discriminator between the two receivers: the wrapped
+    # exception is one, and `Error` — which inherits `Object` alone — is not.
+    # Asking about the wrapper answered false here; asking the exception
+    # answers true.
+    e = Error(ValueError("m"))
+    assert not isinstance(e, Exception)
+    assert e.is_instance(MIRRORS["Exception"]) is true
+    # `Object` is true for both receivers, and true for the *right* reason: a
+    # mirror is built on `(Exception, Object)`, so the caught exception really
+    # does live in the Object tree.
+    assert e.is_instance(Object) is true
+
+
+def test_is_instance_sees_a_user_defined_subclass() -> None:
+    class MyErr(MIRRORS["ValueError"]):  # ty: ignore[unsupported-base]
+        pass
+
+    e = Error(MyErr("m"))
+    assert e.is_instance(MyErr) is true
+    assert e.is_instance(MIRRORS["ValueError"]) is true
+
+
+def test_is_instance_refuses_a_non_class() -> None:
+    e = Error(ValueError("m"))
+    with pytest.raises(TypeError, match="#is_instance expects a class"):
+        e.is_instance(Int(5))  # ty: ignore[invalid-argument-type]
+
+
+def test_every_message_about_the_class_agrees_with_kind() -> None:
+    # The sweep the proposal asks for: `is_instance` was its only survivor.
+    e = Error(ValueError("m"))
+    kind = e.kind()
+    assert e.class_() is kind
+    assert e.class_name() == kind.name()
+    assert e.is_instance(kind) is true
+    assert kind.is_subclass(MIRRORS["Exception"]) is true
