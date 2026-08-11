@@ -56,15 +56,70 @@ class CollectionRewriter(ast.NodeTransformer):
         return node
 
 
+def spread(value: object, kind: str) -> object:
+    """`value`, or a refusal naming the literal the reader actually wrote.
+
+    `[*5]`, `(*5,)` and `{*5}` are literals with a spread, and all three
+    answered in terms of a constructor call the program never wrote:
+
+        [*5]     # list() argument after * must be an iterable, not int
+
+    `list()` is a message spelt as a call, which the wording sweep bans; it
+    names a construct absent from the source, since the reader wrote brackets;
+    and `[*5]` is not even routed through the `list` converter, so the name was
+    doubly not the one that ran.
+
+    The block form was already right and is the target this copies: `f(*5)`
+    answers `<block> argument after * must be an iterable, not int`, naming the
+    receiver in POOP's own spelling.
+    """
+    if isinstance(value, Iterable):
+        return value
+    from poop.types._message import article
+
+    raise MIRRORS["TypeError"](
+        f"a {kind} literal can only spread a collection, "
+        f"got {article(type(value).__qualname__)}"
+    )
+
+
+def _spread_elts(elts: list[ast.expr], kind: str) -> list[ast.expr]:
+    """Each starred element routed through `spread`, the rest untouched."""
+    return [
+        ast.copy_location(
+            ast.Starred(
+                value=ast.Call(
+                    func=ast.Name(id="_poop_spread", ctx=ast.Load()),
+                    args=[elt.value, ast.Constant(value=kind)],
+                    keywords=[],
+                ),
+                ctx=elt.ctx,
+            ),
+            elt,
+        )
+        if isinstance(elt, ast.Starred)
+        else elt
+        for elt in elts
+    ]
+
+
 def wrap_elts(node: ast.List | ast.Tuple | ast.Set, target: str) -> ast.Call:
     return ast.copy_location(
         ast.Call(
             func=ast.Name(id=target, ctx=ast.Load()),
-            args=node.elts,
+            args=_spread_elts(node.elts, _LITERAL_KIND[type(node)]),
             keywords=[],
         ),
         node,
     )
+
+
+# What the reader wrote, for `spread`'s sentence — never the converter's name.
+_LITERAL_KIND: dict[type[ast.AST], str] = {
+    ast.List: "list",
+    ast.Tuple: "tuple",
+    ast.Set: "set",
+}
 
 
 def make_constructor[T](poop_type: type[T]) -> Callable[..., T]:

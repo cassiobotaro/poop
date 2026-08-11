@@ -236,9 +236,11 @@ def test_dict_literal_with_unpacking_rewritten_to_merge() -> None:
 
 
 def test_dict_merge_rejects_non_dict_part() -> None:
-    # `{**a, **b}` merges POOP Dicts; ** -unpacking a non-Dict is a TypeError,
-    # not a silent AttributeError on the missing `_data`.
+    # `{**a, **b}` merges POOP Dicts; spreading a non-Dict is a TypeError, not
+    # a silent AttributeError on the missing `_data`. Proposal 51 reworded it:
+    # `cannot ** -unpack int into a dict display` carried a stray space and
+    # "dict display", Python's grammar word for what POOP calls a literal.
     from poop.transformers.dict import _poop_dict_merge
 
-    with pytest.raises(TypeError, match="unpack"):
+    with pytest.raises(TypeError, match="a dict literal can only spread a mapping"):
         _poop_dict_merge(Dict(), Int(1))  # ty: ignore[invalid-argument-type]

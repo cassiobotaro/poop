@@ -2,6 +2,8 @@ import ast
 
 import pytest
 
+from poop.errors import PoopError
+from poop.interpreter import Interpreter
 from poop.transformers.list import ListTransformer, _poop_list, _poop_list_from
 from poop.types.bytes import Bytes
 from poop.types.int import Int
@@ -134,3 +136,52 @@ def test_list_from_bytes() -> None:
 def test_list_from_unsupported_type_raises() -> None:
     with pytest.raises(TypeError, match="cannot convert"):
         _poop_list_from(Int(5))
+
+
+# Proposal 51. `[*x]`, `(*x,)` and `{*x}` are literals with a spread, and all
+# three answered in terms of a constructor call the program never wrote:
+# `list() argument after * must be an iterable, not int`.
+@pytest.mark.parametrize(
+    ("source", "kind"),
+    [
+        ("[*5]", "list"),
+        ("(*5,)", "tuple"),
+        ("{*5}", "set"),
+    ],
+)
+def test_a_spread_names_the_literal_the_reader_wrote(source: str, kind: str) -> None:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    message = str(info.value)
+    assert f"a {kind} literal can only spread a collection, got an int" in message
+    # The two things the old sentence carried and this one must not: a message
+    # spelt as a call, and a construct absent from the source.
+    assert "()" not in message
+    assert "after *" not in message
+
+
+def test_a_dict_spread_takes_the_mapping_twin() -> None:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source("{**5}\n")
+    message = str(info.value)
+    assert "a dict literal can only spread a mapping, got an int" in message
+    # `** -unpack` carried a stray space, and "dict display" is Python's
+    # grammar vocabulary for what POOP calls a literal.
+    assert "display" not in message
+    assert "-unpack" not in message
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "xs = [1, 2]\n[*xs, 3].print()",
+        "xs = [1, 2]\n(*xs, 3).print()",
+        "xs = [1, 2]\n{*xs, 3}.print()",
+        'd = {"a": 1}\n{**d, "b": 2}.print()',
+        '[*"ab"].print()',
+        "[*range(3)].print()",
+        '[*{"a": 1}].print()',
+    ],
+)
+def test_a_spread_of_something_iterable_still_works(source: str) -> None:
+    Interpreter().run_source(source + "\n")

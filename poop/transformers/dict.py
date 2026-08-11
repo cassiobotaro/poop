@@ -6,6 +6,7 @@ from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers._collection import CollectionRewriter
 from poop.transformers.base import BaseTransformer
 from poop.types._alias import builtin_alias
+from poop.types._message import article
 from poop.types._unwrap import _faithful
 from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
@@ -68,8 +69,13 @@ def _poop_dict_merge(*parts: Dict) -> Dict:
     d = Dict()
     for part in parts:
         if not isinstance(part, Dict):
+            # The mapping twin of `_collection.spread`, and the same sentence.
+            # This one was POOP's own and still wrong in two smaller ways: `**
+            # -unpack` carries a stray space, and "dict display" is Python's
+            # grammar vocabulary for a construct POOP calls a literal.
             raise MIRRORS["TypeError"](
-                f"cannot ** -unpack {type(part).__qualname__} into a dict display"
+                f"a dict literal can only spread a mapping, "
+                f"got {article(type(part).__qualname__)}"
             )
         d._data.update(part._data)
     return d

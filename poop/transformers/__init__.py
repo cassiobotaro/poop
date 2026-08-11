@@ -10,6 +10,7 @@ from builtins import (
 from keyword import iskeyword as _iskeyword
 from types import FunctionType as _FunctionType
 
+from poop.transformers._collection import spread as _spread
 from poop.transformers.base import BaseTransformer, Transformer
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
@@ -83,10 +84,17 @@ DEFAULT_TRANSFORMERS: _list[Transformer] = [cls() for cls in _TRANSFORMER_CLASSE
 # AST rewrite). The build below walks both kinds in declaration
 # order and refuses duplicate keys so a new transformer can't
 # silently overwrite a binding from an earlier one.
+# One binding shared by four literal forms rather than declared on whichever
+# transformer happens to run first: `[*x]`, `(*x,)`, `{*x}` and `{**x}` all
+# resolve their spread through it, and `_merge_bindings` refuses duplicates, so
+# it could not live in more than one `BINDINGS` anyway.
+_spread_namespace: _dict[str, _object] = {"_poop_spread": _spread}
+
 _BINDING_SOURCES: _list[_dict[str, _object]] = [
     *(cls.BINDINGS for cls in _TRANSFORMER_CLASSES),
     _try_namespace,
     _with_namespace,
+    _spread_namespace,
 ]
 
 

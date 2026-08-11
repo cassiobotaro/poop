@@ -143,6 +143,12 @@ _FAILING = [
     '("a" * "b")',
     '(b"ab" * 2.5)',
     "xs = [1]\nxs *= 'a'",
+    # Proposal 51: a spread into a literal named a constructor call the reader
+    # never wrote.
+    "[*5]",
+    "(*5,)",
+    "{*5}",
+    "{**5}",
     '(1 + "a")',
     '(1 < "a")',
     "([1] + 1)",
