@@ -228,3 +228,39 @@ def test_includes_with_a_foreign_argument_is_faithful() -> None:
     # False rather than a TypeError — and the unwrap must not turn a `List`
     # into its `_items` on the way in.
     assert _mv(b"ab").includes(List(Int(1))) is false  # ty: ignore[invalid-argument-type]
+
+
+def test_index_answers_where_includes_says_yes() -> None:
+    # The receiver could be told an element is there and not asked where —
+    # the one sequence in the family that answered `includes` and not `index`.
+    assert _mv(b"aba").includes(Int(98)) is true
+    assert _mv(b"aba").index(Int(98)) == Int(1)
+    assert _mv(b"aba").index(Int(97)) == Int(0)
+
+
+def test_index_takes_the_start_and_stop_bounds() -> None:
+    assert _mv(b"aba").index(Int(97), Int(1)) == Int(2)
+
+
+def test_index_refuses_a_missing_element_in_poops_wording() -> None:
+    # CPython says `memoryview.index(x): x not found` — the message written as
+    # a call, with a placeholder where the value the reader passed belongs.
+    with pytest.raises(ValueError, match=r"memoryview has no element equal to 99"):
+        _mv(b"aba").index(Int(99))
+
+
+def test_index_refuses_an_element_outside_the_bounds() -> None:
+    with pytest.raises(ValueError, match=r"memoryview has no element equal to 97"):
+        _mv(b"aba").index(Int(97), Int(1), Int(2))
+
+
+def test_count_counts_occurrences() -> None:
+    assert _mv(b"aba").count(Int(97)) == Int(2)
+    assert _mv(b"aba").count(Int(98)) == Int(1)
+    assert _mv(b"aba").count(Int(99)) == Int(0)
+
+
+def test_count_with_a_foreign_argument_is_faithful() -> None:
+    # As `includes` is: CPython compares element by element and answers 0
+    # rather than refusing.
+    assert _mv(b"ab").count(List(Int(1))) == Int(0)  # ty: ignore[invalid-argument-type]

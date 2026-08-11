@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from poop.types._at import at_index
+from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -74,6 +74,42 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         if isinstance(item, Int):
             return item._value in self._value
         return False
+
+    def count(self, byte: Int) -> Int:
+        # One argument, as CPython's `memoryview.count` takes — unlike the
+        # text wrappers', which carry `start`/`end`.
+        from poop.types._unwrap import _faithful
+
+        operand: Any = _faithful(byte)
+        return Int(self._value.count(operand))
+
+    def index(
+        self,
+        byte: Int,
+        start: Int | NoneClass | None = None,
+        stop: Index | NoneClass | None = None,
+    ) -> Int:
+        # `includes` is the substitute `no_in` names, and this receiver was the
+        # one sequence in the family that could be told an element is there and
+        # not asked where — `List`, `Tuple`, `Range`, `Bytes` and `ByteArray`
+        # all answer both. The failure routes through `no_element_equal_to` for
+        # the reason it exists: CPython says `memoryview.index(x): x not found`,
+        # the message written as a call with a placeholder where the value the
+        # reader passed belongs.
+        from poop.types._argument import _opt_stop, a_bound
+        from poop.types._unwrap import _faithful
+
+        operand: Any = _faithful(byte)
+        try:
+            return Int(
+                self._value.index(
+                    operand,
+                    a_bound(start, "index", "start") or 0,
+                    _opt_stop(a_bound(stop, "index", "stop"), len(self._value)),
+                )
+            )
+        except ValueError:
+            raise no_element_equal_to(self, byte) from None
 
     def hex(
         self,
