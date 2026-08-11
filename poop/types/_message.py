@@ -55,6 +55,42 @@ def article(name: str) -> str:
     return f"an {name}" if name[:1].lower() in _VOWELS else f"a {name}"
 
 
+# `unhashable type: 'list'` — CPython's bare sentence, which `Object.hash` let
+# through while the two storage sites answered a richer one.
+_UNHASHABLE = re.compile(r"^unhashable type: '(.+?)'$")
+
+
+def cannot_be_hashed(exc: TypeError) -> str | None:
+    """POOP's wording for `unhashable type: 'list'`, or `None` if unmatched.
+
+    `no_hash` bans `hash(x)` and names `obj.hash()`, and the substitute answered
+    CPython's sentence on nine receivers while the two places that reach the
+    *same* condition answered one that says where the value was going:
+
+        {[1]}                # cannot use 'list' as a set element (…)
+        {}.at_put([1], 2)    # cannot use 'list' as a dict key (…)
+        [1, 2].hash()        # unhashable type: 'list'
+
+    The bare form says "type" where POOP says class, quotes the class the
+    CPython way, and — the part a reader needs — says neither why nor what to do
+    instead. It also carries no call, no dunder and no operator, which is why
+    the wording sweep ran over all nine and passed.
+
+    CPython's own text is kept in parentheses for the reason `_cloak`'s
+    docstring gives for the storage sites keeping it: Python 3.14 put both
+    spellings in one line, and dropping the second loses the word a reader
+    searching for this failure will actually have.
+    """
+    match = _UNHASHABLE.match(str(exc))
+    if match is None:
+        return None
+    kind = match.group(1)
+    return (
+        f"{kind} cannot be hashed — a mutable object has no place "
+        f"as a set element or a dict key (unhashable type: {kind!r})"
+    )
+
+
 def no_format_spec(kind: str) -> str:
     """The refusal for a receiver that takes no format spec at all.
 

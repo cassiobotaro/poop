@@ -133,6 +133,11 @@ _FAILING = [
     '"{0:d}".format(2.5)',
     '[1].format(">6")',
     '"{0:>6}".format([1])',
+    # Proposal 55: `unhashable type: 'list'` — no call, no dunder, no operator,
+    # and no reason either.
+    "[1, 2].hash()",
+    '{"a": 1}.keys().hash()',
+    'memoryview(bytearray(b"ab")).hash()',
     '(1 + "a")',
     '(1 < "a")',
     "([1] + 1)",

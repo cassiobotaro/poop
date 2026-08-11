@@ -39,6 +39,27 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # invariant against Bytes.
         return hash(self._value)
 
+    def hash(self) -> Int:
+        """`Object.hash`, with the one reason CPython words differently.
+
+        The other unhashable receivers answer `unhashable type: 'list'`, which
+        `cannot_be_hashed` rewords. A writable memoryview answers `cannot hash
+        writable memoryview object` — a `ValueError`, not a `TypeError`, so that
+        rewrite never sees it, and the only sentence in the language that says
+        *object* where POOP says receiver. "Writable" is a buffer-protocol word
+        that `INFECTIONS.md` keeps out deliberately, so the reason is given in
+        terms of what the reader wrote instead.
+        """
+        from poop.types.exceptions import MIRRORS
+
+        try:
+            return super().hash()
+        except ValueError:
+            raise MIRRORS["TypeError"](
+                "a memoryview over a bytearray cannot be hashed — "
+                "the bytes behind it can still change"
+            ) from None
+
     def len(self) -> Int:
         return Int(len(self._value))
 

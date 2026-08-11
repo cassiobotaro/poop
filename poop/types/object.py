@@ -147,9 +147,22 @@ class Object(metaclass=PoopMeta):
         return self.class_().name()
 
     def hash(self) -> Int:
+        from poop.types._message import cannot_be_hashed
+        from poop.types.exceptions import MIRRORS
         from poop.types.int import Int
 
-        return Int(hash(self))
+        try:
+            return Int(hash(self))
+        except TypeError as exc:
+            # The substitute `no_hash` names, answering CPython's bare sentence
+            # on nine receivers while `{[1]}` and `{}.at_put([1], 2)` — the same
+            # condition, one level in — answered one that says where the value
+            # was going. Unmatched text passes through, on the rule `_message`'s
+            # module docstring sets for every rewrite here.
+            reworded = cannot_be_hashed(exc)
+            if reworded is None:
+                raise
+            raise MIRRORS["TypeError"](reworded) from None
 
     def callable(self) -> Boolean:
         from poop.types.boolean import to_boolean
