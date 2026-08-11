@@ -163,7 +163,7 @@ def test_includes_non_value_argument_answers_false() -> None:
     # A non-`_value` argument (List) must reach range.__contains__ raw and
     # answer false by equality scan (as in Python's `[1] in range(1, 5)`),
     # not leak the internal `_value` name through dispatch.
-    assert _range(1, 5).includes(List(Int(1))) is false  # ty: ignore[invalid-argument-type]
+    assert _range(1, 5).includes(List(Int(1))) is false
 
 
 def test_at_returns_element() -> None:
@@ -369,3 +369,48 @@ def test_sorted_answers_a_list() -> None:
     from poop.types.list import List
 
     assert _range(1, 3).sorted() == List(Int(1), Int(2), Int(3))
+
+
+# Proposal 57. A `Range` holds raw Python ints — the only receiver that does —
+# so a searched `Boolean` used to cross into the native `range` intact and
+# compare unequal to every element, while `at` and `__init__` folded it because
+# they route through `_index`. The three searches now fold it too, so a boolean
+# is 1/0 wherever the language looks for one.
+def test_includes_folds_a_boolean_to_one() -> None:
+    assert Range(Int(1), Int(5), Int(2)).includes(true) == true
+
+
+def test_includes_folds_a_boolean_to_zero() -> None:
+    assert Range(Int(0), Int(4), Int(2)).includes(false) == true
+    assert Range(Int(1), Int(5), Int(2)).includes(false) == false
+
+
+def test_count_folds_a_boolean() -> None:
+    assert Range(Int(1), Int(5), Int(2)).count(true) == Int(1)
+    assert Range(Int(1), Int(5), Int(2)).count(false) == Int(0)
+
+
+def test_index_folds_a_boolean() -> None:
+    assert Range(Int(1), Int(5), Int(2)).index(true) == Int(0)
+    assert Range(Int(0), Int(4), Int(2)).index(false) == Int(0)
+
+
+def test_a_boolean_search_agrees_with_the_int_it_folds_to() -> None:
+    # The contradiction the proposal is named for: the language answers
+    # `True == 1`, so a range holding 1 cannot answer that it holds no element
+    # equal to True.
+    rng = Range(Int(1), Int(5), Int(2))
+    assert rng.includes(true) == rng.includes(Int(1))
+    assert rng.count(true) == rng.count(Int(1))
+    assert rng.index(true) == rng.index(Int(1))
+
+
+def test_a_foreign_value_still_answers_rather_than_raising() -> None:
+    # `_searched` is not `_index`: a search must answer for a value that is no
+    # index at all, which is why the fold could not simply reuse the
+    # constructor's helper.
+    rng = Range(Int(1), Int(5), Int(2))
+    assert rng.includes(Str("a")) == false
+    assert rng.count(Str("a")) == Int(0)
+    with pytest.raises(ValueError, match="no element equal to"):
+        rng.index(Str("a"))

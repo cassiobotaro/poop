@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._unwrap import _faithful
+from poop.types._unwrap import _searched
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
@@ -82,22 +82,35 @@ class Range(_IterableMixin, Object):
         sign = 1 if sliced.step > 0 else -1
         return Range(Int(sliced.start), Int(sliced.stop - sign), Int(sliced.step))
 
-    def includes(self, item: Int) -> Boolean:
+    # The three searches unwrap through `_searched`, not `_faithful`, and the
+    # difference is the whole of proposal 57. A `Range` holds raw Python ints —
+    # it is the only receiver that does — so a searched value is compared by
+    # equality against a native `int`, and a `Boolean` carries no `_value` for
+    # `_faithful` to read. It crossed intact, `_num_value` had no branch for the
+    # raw `int` on the other side, and both directions declined: `includes(True)`
+    # answered false on a range starting at 1, while `includes(1)` answered true
+    # and `True == 1` answered true. `__init__` and `at` never had the bug
+    # because they route through `_index`, which names both rungs of the tower.
+    # `Object`, not `Int`, on all three — the same parameter `List` and `Tuple`
+    # declare. A search answers for whatever it is handed (`false`, `0`, or a
+    # refusal naming the value), so `Int` never described what these accept, and
+    # it excluded the other rung of the index tower the fold below now folds.
+    def includes(self, item: Object) -> Boolean:
         # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
         # range.__contains__ raw, which answers False by equality scan (as in
         # Python), instead of leaking the internal `_value` name through dispatch.
-        return to_boolean(_faithful(item) in self._range())
+        return to_boolean(_searched(item) in self._range())
 
-    def count(self, value: Int) -> Int:
-        return Int(self._range().count(_faithful(value)))
+    def count(self, value: Object) -> Int:
+        return Int(self._range().count(_searched(value)))
 
-    def index(self, value: Int) -> Int:
+    def index(self, value: Object) -> Int:
         # `self`, not `self._range()`, as the receiver: the name in the message
         # is the one the reader wrote, which is why `at` passes the POOP Range
         # too. CPython answered `range.index(x): x not in range` — the method
         # as a call, with a placeholder where the value belongs.
         try:
-            return Int(self._range().index(_faithful(value)))
+            return Int(self._range().index(_searched(value)))
         except ValueError:
             raise no_element_equal_to(self, value) from None
 

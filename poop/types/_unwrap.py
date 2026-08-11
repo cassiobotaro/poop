@@ -24,6 +24,32 @@ def _faithful(value: object) -> Any:
     return getattr(value, "_value", value)
 
 
+def _searched(value: object) -> Any:
+    """`_faithful`, plus the `Boolean` fold, for a value crossing into raw Python.
+
+    `_faithful` reads `_value`, and `Boolean` is the one wrapper in the language
+    that has none — the two rungs of the numeric tower are separate classes, as
+    `_index.py` says. Where the unwrapped value is handed to CPython as an
+    *index* that costs nothing, because `Boolean.__index__` folds it to 1/0 on
+    arrival. Where it is handed over to be compared by **equality** it costs the
+    answer: the wrapper crosses intact, meets a raw Python number, and
+    `_num_value` has no branch for one, so both directions of the comparison
+    decline and the two are unequal.
+
+    `Range` is the only receiver that reaches that case — every other collection
+    holds POOP objects, so the comparison is `Int(1) == true` and the tower's own
+    fold applies. Its `__init__` and `at` already route through `_index`; this is
+    what `includes`, `count` and `index` need, and it cannot be `_index` itself
+    because a search must answer `false`/`0` for a foreign value where `_index`
+    refuses one.
+    """
+    from poop.types.boolean import Boolean
+
+    if isinstance(value, Boolean):
+        return 1 if value else 0
+    return _faithful(value)
+
+
 def _attr_name(name: object) -> str:
     """The raw attribute name behind a `Str`, else CPython's own `TypeError`.
 
