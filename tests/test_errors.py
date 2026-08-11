@@ -1,3 +1,5 @@
+import pytest
+
 from poop.errors import (
     ExecutionError,
     TransformError,
@@ -115,3 +117,60 @@ def test_render_error_with_line_but_no_column_draws_no_caret() -> None:
     text = render_error(ExecutionError("KeyError: 'zzz'", 1), "d.at('zzz')")
     assert "^" not in text.plain
     assert "d.at('zzz')" in text.plain
+
+
+# Proposal 60. `_caret_column` did two conversions and stated the rule that
+# decides the third: a tab "is one character wide to `len` and eight to the
+# reader". A CJK ideograph is one character wide to `len` and two, so the caret
+# fell a column short per ideograph — and a combining mark is one character and
+# *zero*, so it overshot the other way.
+def _caret_and_target(source: str, needle: str) -> tuple[int, int]:
+    """Where the caret is printed, and where its target sits, in columns."""
+    from poop.errors import _display_width, format_error
+    from poop.interpreter import Interpreter
+
+    with pytest.raises(ValidationError) as info:
+        Interpreter().run_source(source + "\n")
+    lines = format_error(info.value, source + "\n").splitlines()
+    quoted = next(line for line in lines if line.startswith("  1 |"))
+    caret_line = next(line for line in lines if "^" in line)
+    body = quoted.split("| ", 1)[1]
+    # The caret line is spaces, one column each, so its printed column is just
+    # the count; the quoted line is not, so its target has to be measured.
+    printed = caret_line.index("^") - caret_line.index("|") - 2
+    return printed, _display_width(body[: body.index(needle)])
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "aeiou",  # ASCII — the case that always worked
+        "áéíóú",  # precomposed accents: multi-byte, one column each
+        "日本語",  # wide: one character, two columns
+        "💩💩",  # the project's own mascot, also wide
+        "áéí",  # decomposed: two characters, one column
+    ],
+    ids=["ascii", "precomposed", "cjk", "emoji", "decomposed"],
+)
+def test_the_caret_lands_under_its_target(text: str) -> None:
+    printed, target = _caret_and_target(f'r = "{text}" + (1 if True else 2)', "(1 if")
+    assert printed == target + 1  # the `1`, one column past the paren
+
+
+def test_display_width_counts_columns_not_characters() -> None:
+    from poop.errors import _display_width
+
+    assert _display_width("abc") == 3
+    assert _display_width("日本語") == 6
+    assert _display_width("💩") == 2
+    # A combining mark renders inside the character before it.
+    assert _display_width("á") == 1
+    # Precomposed is one character and one column — unchanged.
+    assert _display_width("á") == 1
+
+
+def test_a_tab_still_expands_to_its_stop() -> None:
+    # The conversion this one was added beside must keep working.
+    from poop.errors import _caret_column
+
+    assert _caret_column("\tx = 1", 1) == 8

@@ -1,4 +1,5 @@
 import re
+import unicodedata
 
 from rich.syntax import Syntax
 from rich.text import Text
@@ -88,14 +89,43 @@ def _quoted(line: str) -> str:
     return line.expandtabs()
 
 
+def _display_width(text: str) -> int:
+    """How many terminal columns `text` occupies.
+
+    The third conversion in the same family as the two below, and the same
+    argument: a tab is one character wide to `len` and eight to the reader, and
+    a CJK ideograph is one character wide to `len` and **two**. `len` measured
+    the first correctly only because `_quoted` had already expanded it.
+
+    Wide and full-width characters count two, combining marks count zero — the
+    two cases Unicode gives a stable answer for. A decomposed `á` is `a` plus
+    U+0301: legal Python source, visually identical to the precomposed form,
+    and two characters to `len`, so the caret used to run *past* its target
+    there while it fell short on CJK and emoji.
+
+    Grapheme clusters are where this stops, deliberately. A ZWJ emoji family is
+    seven code points and one column, flag sequences are two and two, and
+    terminals disagree about several of them; `unicodedata` has no answer and a
+    `wcwidth` dependency is not a trade worth making for a caret.
+    """
+    return sum(
+        0
+        if unicodedata.combining(char)
+        else (2 if unicodedata.east_asian_width(char) in ("W", "F") else 1)
+        for char in text
+    )
+
+
 def _caret_column(line: str, col: int) -> int:
-    # Two conversions, in this order. ast reports col_offset as a UTF-8 *byte*
+    # Three conversions, in this order. ast reports col_offset as a UTF-8 *byte*
     # offset while the gutter prints characters, so a non-ASCII character
     # earlier on the line pushed the caret one column right per extra byte;
     # then the prefix is expanded like the quoted line, since a tab is one
-    # character wide to `len` and eight to the reader.
+    # character wide to `len` and eight to the reader; then it is measured in
+    # the columns a terminal actually spends on it, since the caret line is
+    # spaces — one column each — and the quoted line is not.
     prefix = line.encode("utf-8")[:col].decode("utf-8", errors="replace")
-    return len(_quoted(prefix))
+    return _display_width(_quoted(prefix))
 
 
 def _message(exc: PoopError) -> str:
