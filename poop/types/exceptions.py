@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from typing import Any, Never, cast
 
-from poop.types.meta import PoopMeta, class_side
+from poop.types.meta import PoopMeta, class_side, class_side_read_refusal
 from poop.types.object import Object
 
 
@@ -111,6 +111,85 @@ MIRRORS: dict[str, type[Exception]] = {}
 NATIVE_TO_POOP: dict[type[BaseException], type] = {}
 
 
+# Names a mirror inherits from `BaseException` that POOP never designed, mapped
+# to the message a reader wanted instead — `None` where there is none.
+#
+# `PoopMeta` already refuses `type.mro` and `ABCMeta.register` for exactly this
+# reason, and `INFECTIONS.md` describes those two as "unreachable by reading and
+# reachable by typing". These are worse: `dir` *did* list them, so `:methods
+# ValueError` advertised them, and what they answered said they were not POOP's
+# — `args` a raw Python tuple, `with_traceback` a raw method descriptor, and
+# `add_note` a refusal naming `BaseException` and a `'str' object` no program
+# mentioned. The instance side already refused all of them, so the class
+# advertised names the caught error would not answer.
+#
+# Every one of them is an attribute of an exception *instance* in CPython, which
+# is why none means anything on the class — including `obj` and `value`, which
+# only two natives carry and which are therefore installed only where they exist.
+_PYTHON_ATTRIBUTES: dict[str, str | None] = {
+    "args": "message",
+    "add_note": None,
+    "with_traceback": None,
+    "obj": None,
+    "value": None,
+}
+
+
+def _refuse_python_attribute(cls: type, name: str, instead: str | None) -> Never:
+    """Refuse a name a mirror inherited from `BaseException`.
+
+    The shape `_refuse_native` uses for `mro` and `register`, with the pointer
+    aimed one receiver over: these are instance attributes, so the message a
+    reader wanted is answered by the *caught error*, not by the class.
+    """
+    from poop.types.object import MessageNotUnderstood
+
+    tail = (
+        f"a caught error answers #{instead}"
+        if instead is not None
+        else "POOP does not offer it"
+    )
+    raise MessageNotUnderstood(
+        f"{cls.__name__} does not understand #{name} — #{name} is Python's; {tail}",
+        name=name,
+        obj=cls,
+    )
+
+
+def _refusal_for(name: str, instead: str | None) -> class_side:
+    """A read-refusing class-side descriptor for one inherited name.
+
+    Read-refusing rather than call-refusing because every name here is an
+    *attribute*: `ValueError.args` carries no parentheses, so a refusal that
+    waits for a call would hand back the descriptor instead. `add_note` and
+    `with_traceback` are callables in CPython, but refusing them a step earlier
+    is what a reader wants — the message is about the name, not the call.
+
+    Installed on `PoopExcMeta`, which is where a `class_side` descriptor has to
+    live: a class body's own descriptor is invoked as `__get__(None, owner)` and
+    would answer itself, and `__dir__` filters the metaclass. `obj` and `value`
+    ride along even though only two natives carry them, so the refusal asks the
+    native before claiming a name is Python's — `AttributeError.obj` names why,
+    and `ValueError.obj` keeps the plain "does not understand" that is the truth
+    for it.
+    """
+
+    def refuse(cls: type) -> Never:
+        native = getattr(cls, "_native", None)
+        if native is None or not hasattr(native, name):
+            from poop.types._selectors import explain
+            from poop.types.object import MessageNotUnderstood
+
+            raise MessageNotUnderstood(
+                explain(cls, name, cls.__name__), name=name, obj=cls
+            )
+        return _refuse_python_attribute(cls, name, instead)
+
+    refuse.__name__ = name
+    refuse.__qualname__ = name
+    return class_side_read_refusal(cast("Any", refuse), refuses=True)
+
+
 def _build(native: type[BaseException], parent: str | None) -> None:
     # The root also inherits Object, so a user's `class MyError(Exception)`
     # lands inside the Object tree and answers print()/class_name() — before
@@ -141,6 +220,16 @@ def _build(native: type[BaseException], parent: str | None) -> None:
     )
     MIRRORS[native.__name__] = mirror
     NATIVE_TO_POOP[native] = mirror
+
+
+for _name, _instead in _PYTHON_ATTRIBUTES.items():
+    setattr(PoopExcMeta, _name, _refusal_for(_name, _instead))
+    # `__set_name__` is only called for descriptors written in a class body, and
+    # these are installed after `PoopExcMeta` is built — so `cloak_callable`
+    # never ran on them and `_name` stayed empty, which `__set__` reads when it
+    # refuses a rebind.
+    _refusal = vars(PoopExcMeta)[_name]
+    _refusal.__set_name__(PoopExcMeta, _name)
 
 
 for _native, _parent in _HIERARCHY:

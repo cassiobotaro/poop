@@ -99,6 +99,40 @@ class class_side:  # noqa: N801
         )
 
 
+class class_side_read_refusal(class_side):  # noqa: N801
+    """A class-side refusal that fires on *read* rather than on call.
+
+    `mro`, `register` and `raise_` are messages: a reader writes `Foo.mro()`,
+    and a refusal in the body fires when the call reaches it. The names a
+    mirror inherits from `BaseException` are *attributes* — `ValueError.args`
+    is written with no parentheses anywhere — so a refusal waiting for a call
+    never fires, and the read answers the descriptor object itself.
+
+    Still a `class_side`, so `__dir__` drops it by the `refuses` flag it
+    already reads and `__set__` keeps refusing the rebind.
+    """
+
+    __slots__ = ()
+
+    def __get__(self, cls: type | None, metacls: type) -> Any:
+        if cls is None:
+            return self
+        return self._fn(cls)
+
+
+def _read_refusal(metacls: type, name: str) -> class_side_read_refusal | None:
+    """The read-refusing descriptor answering `name`, if the metaclass has one.
+
+    Read off the metaclass MRO's dicts rather than through `getattr`, which is
+    the very lookup that lost the refusal in the first place.
+    """
+    for klass in metacls.__mro__:
+        attr = vars(klass).get(name)
+        if isinstance(attr, class_side_read_refusal):
+            return attr
+    return None
+
+
 def class_side_refusal(fn: FunctionType) -> class_side:
     """A class-side descriptor that only ever refuses.
 
@@ -634,6 +668,15 @@ class PoopMeta(ABCMeta):
                     answers.setdefault(name, not attr.refuses)
         merged = {name for name, answered in answers.items() if answered}
         own = {name for name in super().__dir__() if not _instance_only(cls, name)}
+        # Subtracted, not merely left unmerged. `merged` only *adds*, so a
+        # refusal could drop a name only when the metaclass was its sole
+        # source: `mro` and `register` qualified, and the names an exception
+        # mirror inherits from `BaseException` did not — `type.__dir__` walks
+        # `cls.__mro__` and finds `args` on the native base, so `:methods
+        # ValueError` advertised three names the class now refuses and the
+        # near-miss hint answered "did you mean #args?" to someone who had just
+        # written `args`.
+        refused = {name for name, answered in answers.items() if not answered}
         # A set: the builtin `dir` sorts what it is handed but does not dedupe
         # — `type.__dir__` does that internally, and this merge reaches past
         # it, so every name `Object` also spells (`print`, `hash`, …) came back
@@ -642,7 +685,7 @@ class PoopMeta(ABCMeta):
         # `Object` *and* a `class_side` message, so it is dropped by the filter
         # and restored by the merge, which is exactly the two-receiver
         # distinction the filter exists to draw.
-        return sorted(own | merged)
+        return sorted((own | merged) - refused)
 
     @class_side
     def dir(cls) -> List:
@@ -794,6 +837,14 @@ class PoopMeta(ABCMeta):
             # `__getattribute__` failing sends Python straight to this hook,
             # which would replace the sentence with the generic near-miss one.
             # Asking the same question again is what keeps the teaching half.
+            # A read-refusing descriptor lands here for exactly the same
+            # reason, one step earlier: it refuses inside `__get__`, and a
+            # `MessageNotUnderstood` raised from there reads to Python as "no
+            # such attribute", so the sentence it composed would be replaced by
+            # the generic one. Re-asking restores it.
+            refusal = _read_refusal(type(cls), name)
+            if refusal is not None:
+                refusal.__get__(cls, type(cls))
             if _instance_only(cls, name):
                 _refuse_instance_side(cls, name)
             return cls.does_not_understand(name)
