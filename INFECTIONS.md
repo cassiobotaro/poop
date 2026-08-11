@@ -414,7 +414,11 @@ there.
 
 | Call | Reason | Substitute |
 |---|---|---|
-| `format(x, spec)` | free function with procedural look | `x.format(spec)` |
+| `format(x, spec)` | free function with procedural look | `x.format(spec)` — except on a `Str`, where it is `"{:spec}".format(text)` |
+
+`Str` is the one exception and the ban names it. `Str.format` is POOP's *template* surface — the `"{}".format(x)` method that exists because f-strings are banned — so a spec handed to it is read as an argument for placeholders the string does not have, and `str.format` discards extra positional arguments: `"ab".format(">6")` answered `'ab'`, unchanged and silently, for a reader who had just been told to write exactly that. CPython refuses two of the three spec shapes outright (`Unknown format code 'd' for object of type 'str'`, `Sign not allowed in string format specifier`), so even the faithful behaviour would have been louder than a no-op.
+
+The alternative was to have `Str.format` disambiguate on its argument — one `Str` that parses as a format spec, with no placeholders in the receiver, meaning the `Object.format` sense. It reads better at the call site and was refused for the reason proposal 9 gives elsewhere: it decides by inspection, on "a value whose class and contents disagree". `tests/test_substitutes.py` now walks every Substitute column and sends what it names, which is what makes a row like this one falsifiable rather than decorative.
 
 ### `zip` → `Zip` — `poop/transformers/zip.py`
 
