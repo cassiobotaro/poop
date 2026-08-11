@@ -109,8 +109,14 @@ def test_block_arity_message_states_a_floor_for_a_variadic_block() -> None:
         Block(lambda a, *rest: a)()
 
 
-def test_block_arity_message_counts_keyword_arguments_too() -> None:
-    with pytest.raises(TypeError, match=r"^block expects 1 argument, got 2$"):
+def test_block_arity_message_leaves_keywords_to_the_keyword_refusal() -> None:
+    # Was `block expects 1 argument, got 2`, counting the keyword as if it were
+    # positional. Proposal 45: the count is not what is wrong here — the block
+    # has no `y` at all — and folding the two hid the fault whenever the numbers
+    # happened to match. `_keyword_message` names it; the count sees positionals.
+    with pytest.raises(
+        TypeError, match=r"^block does not take a keyword argument 'y'$"
+    ):
         Block(lambda x: x)(Int(1), y=Int(2))
 
 
@@ -335,3 +341,56 @@ def test_a_block_literal_keeps_identity_equality() -> None:
     one = Block(lambda: 1)
     assert one == one
     assert not bool(one == Block(lambda: 1))
+
+
+# Proposal 45. `__call__` handed `_arity_message` `len(args) + len(kwargs)`, so
+# every keyword mistake was reported as a count mismatch whose count matched:
+# `block expects 1 argument, got 1`. Two equal numbers and a refusal.
+def test_an_unexpected_keyword_is_named() -> None:
+    with pytest.raises(MIRRORS["TypeError"], match="does not take a keyword"):
+        Block(lambda x: x)(nope=1)
+
+
+def test_an_unexpected_keyword_beside_a_positional_is_named() -> None:
+    with pytest.raises(MIRRORS["TypeError"], match=r"keyword argument 'nope'"):
+        Block(lambda x, y: x)(1, nope=2)
+
+
+def test_a_keyword_that_duplicates_a_positional_is_named() -> None:
+    with pytest.raises(MIRRORS["TypeError"], match="already got 'x' as a positional"):
+        Block(lambda x: x)(1, x=2)
+
+
+def test_a_missing_keyword_only_argument_is_named() -> None:
+    with pytest.raises(MIRRORS["TypeError"], match="needs a keyword argument 'k'"):
+        Block(lambda x, *, k: x)(1)
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda b: b(nope=1),
+        lambda b: b(1, x=2),
+    ],
+    ids=["unexpected-keyword", "duplicate-of-a-positional"],
+)
+def test_no_refusal_states_two_equal_numbers(call: object) -> None:
+    # The shape the item is named for must be unrepresentable.
+    with pytest.raises(MIRRORS["TypeError"]) as info:
+        call(Block(lambda x: x))  # ty: ignore[call-non-callable]
+    assert "expects 1 argument, got 1" not in str(info.value)
+
+
+def test_the_count_message_still_counts_positionals() -> None:
+    with pytest.raises(MIRRORS["TypeError"], match="expects 1 argument, got 0"):
+        Block(lambda x: x)()
+    with pytest.raises(MIRRORS["TypeError"], match="expects 1 argument, got 2"):
+        Block(lambda x: x)(1, 2)
+
+
+def test_a_keyword_the_block_does_take_still_works() -> None:
+    # The half that must keep working: a block with a keyword parameter.
+    assert Block(lambda x=1: x)(x=2) == 2
+    assert Block(lambda x, *, k: k)(1, k=2) == 2
+    assert Block(lambda **kw: kw["anything"])(anything=3) == 3
+    assert Block(lambda x, *, k=9: k)(1) == 9

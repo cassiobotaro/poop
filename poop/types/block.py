@@ -80,9 +80,17 @@ class Block(Object):
             # `<lambda>()` — the Python name of an object POOP cloaks as
             # `function` and prints as `<block>` — and `positional argument`,
             # a calling convention a block does not have.
-            raise MIRRORS["TypeError"](
-                self._arity_message(len(args) + len(kwargs))
-            ) from None
+            #
+            # The two failures are separated before rewording. Folding them
+            # together — `len(args) + len(kwargs)` — reported a keyword the
+            # block cannot take as a *count* mismatch whose count matched, so
+            # `.do(item=x)` answered `block expects 1 argument, got 1`. The
+            # count message now sees `len(args)` alone, which makes that
+            # sentence unrepresentable.
+            keyword_fault = self._keyword_message(args, kwargs)
+            if keyword_fault is not None:
+                raise MIRRORS["TypeError"](keyword_fault) from None
+            raise MIRRORS["TypeError"](self._arity_message(len(args))) from None
 
     def __get__(self, instance: Any, owner: type | None = None) -> Any:
         """A block found on a *class* binds to the receiver, as a method does.
@@ -136,6 +144,72 @@ class Block(Object):
         required = sum(1 for param in positional if param.default is Parameter.empty)
         variadic = any(param.kind is Parameter.VAR_POSITIONAL for param in params)
         return required, None if variadic else len(positional)
+
+    def _keyword_message(
+        self, args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> str | None:
+        """The refusal for a *keyword* failure, or `None` if the count is at fault.
+
+        `__call__` used to hand `_arity_message` `len(args) + len(kwargs)`, so
+        every keyword mistake was reported as a count mismatch — and the count
+        came out right:
+
+            (lambda x: x)(nope=1)        # block expects 1 argument, got 1
+            (lambda x: x)(1, x=2)        # block expects 1 argument, got 1
+            (lambda x, *, k: x)(1)       # block expects 1 argument, got 1
+
+        A sentence stating two equal numbers and refusing anyway teaches
+        nothing, and none of the three mentioned the actual fault. CPython names
+        all three (`got an unexpected keyword argument 'nope'`, `got multiple
+        values for argument 'x'`, `missing 1 required keyword-only argument:
+        'k'`), which POOP is right to reword — `<lambda>` and "positional
+        argument" are both banned by the wording sweep — and was wrong to
+        collapse into one number.
+
+        Answers `None` when the signature cannot be read, which is the case
+        `_accepted` degrades on too, and when nothing about the keywords is
+        wrong — leaving `_arity_message` the positional count alone, which makes
+        `expects 1, got 1` unrepresentable.
+        """
+        try:
+            params = list(signature(self._fn).parameters.values())
+        except TypeError, ValueError:
+            return None
+        takes_any = any(param.kind is Parameter.VAR_KEYWORD for param in params)
+        by_keyword = [
+            param
+            for param in params
+            if param.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY)
+        ]
+        accepted = {param.name for param in by_keyword}
+        if not takes_any:
+            unexpected = next((name for name in kwargs if name not in accepted), None)
+            if unexpected is not None:
+                return f"block does not take a keyword argument {unexpected!r}"
+        # A name filled positionally *and* by keyword. Only the parameters the
+        # positional arguments actually reached can collide.
+        positional = [
+            param.name
+            for param in params
+            if param.kind
+            in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
+        ][: len(args)]
+        duplicate = next((name for name in positional if name in kwargs), None)
+        if duplicate is not None:
+            return f"block already got {duplicate!r} as a positional argument"
+        missing = next(
+            (
+                param.name
+                for param in params
+                if param.kind is Parameter.KEYWORD_ONLY
+                and param.default is Parameter.empty
+                and param.name not in kwargs
+            ),
+            None,
+        )
+        if missing is not None:
+            return f"block needs a keyword argument {missing!r}"
+        return None
 
     def _arity_message(self, given: int) -> str:
         accepted = self._accepted()
