@@ -2,6 +2,8 @@ from typing import Any
 
 import pytest
 
+from poop.errors import PoopError
+from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -497,3 +499,68 @@ def test_get_attr_leaves_a_non_callable_answer_alone() -> None:
 def test_get_attr_does_not_wrap_the_default() -> None:
     sentinel = object()
     assert Int(5).get_attr(Str("nonexistent"), sentinel) is sentinel
+
+
+# Proposal 48. `set_attr` and `del_attr` composed POOP's sentence; the plain
+# assignment leaked CPython's, which carried a dunder, the quoted class spelling
+# `'str' object`, and advice about a `__dict__` the reader cannot inspect
+# because `no_dunder_attribute` refuses the name.
+@pytest.mark.parametrize(
+    "source",
+    [
+        '"abc".x = 5',
+        "(5).x = 5",
+        "(2.5).x = 5",
+        "[1, 2].x = 5",
+        '{"a": 1}.x = 5',
+        "{1, 2}.x = 5",
+        "(1, 2).x = 5",
+        'b"ab".x = 5',
+        "True.x = 5",
+        "None.x = 5",
+    ],
+)
+def test_a_value_refuses_the_plain_assignment(source: str) -> None:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    message = str(info.value)
+    assert "is a value — it holds no state of its own" in message
+    # The three things CPython's sentence carried.
+    assert "__dict__" not in message
+    assert "' object" not in message
+
+
+def test_both_spellings_answer_the_same_sentence() -> None:
+    def failure(source: str) -> str:
+        with pytest.raises(PoopError) as info:
+            Interpreter().run_source(source + "\n")
+        return str(info.value)
+
+    assert failure('"abc".x = 5') == failure('"abc".set_attr("x", 5)')
+
+
+def test_a_user_object_still_takes_both_spellings() -> None:
+    Interpreter().run_source(
+        "class C(Object):\n"
+        "    pass\n"
+        "c = C()\n"
+        "c.x = 5\n"
+        "c.x.print()\n"
+        'c.set_attr("y", 6)\n'
+        "c.y.print()\n"
+    )
+
+
+def test_an_object_writing_its_own_slot_still_works() -> None:
+    # Out of scope deliberately: `self._balance = balance` inside a method is
+    # how a POOP object holds its own state, and nothing at the assignment site
+    # can tell that from a caller reaching into someone else's.
+    Interpreter().run_source(
+        "class C(Object):\n"
+        "    def init(self, v):\n"
+        "        self._v = v\n"
+        "        return self\n"
+        "    def v(self):\n"
+        "        return self._v\n"
+        "C().init(7).v().print()\n"
+    )

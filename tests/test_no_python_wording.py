@@ -157,6 +157,10 @@ _FAILING = [
     "(*5,)",
     "{*5}",
     "{**5}",
+    # Proposal 48: the assignment leaked the `__dict__` sentence proposal 3
+    # removed from `set_attr` and `del_attr`.
+    '"abc".x = 5',
+    "[1, 2].x = 5",
     '(1 + "a")',
     '(1 < "a")',
     "([1] + 1)",

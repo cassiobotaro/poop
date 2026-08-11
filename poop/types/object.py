@@ -85,6 +85,54 @@ class Object(metaclass=PoopMeta):
                 raise AttributeError(name)
             return self.does_not_understand(name)
 
+    def __setattr__(self, name: str, value: Any) -> None:
+        """The undotted twin of `set_attr`, refused by the same sentence.
+
+        Proposal 3's record quotes the sentence it closed word for word:
+        `"abc".del_attr("zzz")` answered `'str' object has no attribute 'zzz'
+        and no __dict__ for setting new attributes`, "naming the dunder
+        `_reject_dunder` will not even let a program spell". `set_attr` and
+        `del_attr` composed POOP's sentence for it; the assignment did not:
+
+            "abc".set_attr("x", 5)   # str is a value — it holds no state of
+                                     #   its own; only an object of a class you
+                                     #   defined can be given one
+            "abc".x = 5              # 'str' object has no attribute 'x' and no
+                                     #   __dict__ for setting new attributes
+
+        Every value receiver leaked it — 15 of them — and the leak carried three
+        things at once: a dunder, the quoted CPython class spelling `'str'
+        object`, and advice about a `__dict__` the reader cannot inspect because
+        `no_dunder_attribute` refuses the name. It is also the *more* natural
+        first attempt: a reader coming from Python writes `obj.x = 5` before
+        they know `set_attr` exists, so the leaked sentence was the first thing
+        the `__slots__` decision ever said to them.
+
+        The cost is bounded in a way `__getattribute__`'s is not: a wrapper
+        writes its payload once in `__init__` and never again, so this runs on
+        user-class stores and nothing else hot.
+
+        Out of scope deliberately: `C()._p = 5` on a user class succeeds while
+        `C().set_attr("_p", 5)` is refused as private. That pair should *not* be
+        levelled — `self._balance = balance` inside a method is how a POOP
+        object holds its own state, and nothing at the assignment site can tell
+        the object writing its own slot from a caller reaching into someone
+        else's. `set_attr` is reflection and can refuse; the assignment cannot.
+        """
+        from poop.types.exceptions import MIRRORS
+
+        try:
+            object.__setattr__(self, name, value)
+        except AttributeError:
+            # Every wrapper declares `__slots__`, so a value object holds no
+            # attached state — and CPython says so by naming `__dict__`, a
+            # dunder `no_dunder_attribute` bans and `_reject_dunder` will not
+            # even let a program spell. This names the distinction instead.
+            raise MIRRORS["AttributeError"](
+                f"{type(self).__name__} is a value — it holds no state of its "
+                "own; only an object of a class you defined can be given one"
+            ) from None
+
     def does_not_understand(self, name: str) -> Any:
         """Smalltalk's `doesNotUnderstand:` — the hook for an unknown message.
 
@@ -321,23 +369,12 @@ class Object(metaclass=PoopMeta):
         return to_boolean(hasattr(self, self._checked_name(symbol)))
 
     def set_attr(self, name: Str, value: Any) -> NoneClass:
-        from poop.types.exceptions import MIRRORS
         from poop.types.none import none
 
         # Outside the `try`: `_checked_name`'s own refusals are AttributeErrors
         # too, and each already carries the sentence it wants to be read by.
         raw = self._checked_name(name)
-        try:
-            builtins.setattr(self, raw, value)
-        except AttributeError:
-            # Every wrapper declares `__slots__`, so a value object holds no
-            # attached state — and CPython says so by naming `__dict__`, a
-            # dunder `no_dunder_attribute` bans and `_reject_dunder` will not
-            # even let a program spell. This names the distinction instead.
-            raise MIRRORS["AttributeError"](
-                f"{type(self).__name__} is a value — it holds no state of its "
-                "own; only an object of a class you defined can be given one"
-            ) from None
+        builtins.setattr(self, raw, value)
         return none
 
     def del_attr(self, name: Str) -> NoneClass:
