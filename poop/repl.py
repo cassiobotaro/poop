@@ -267,7 +267,13 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "decorator": "class C:\n    @twice\n    def m():\n        pass",
     "match": "match x:\n    case _:\n        pass",
     "fstring": 'f"{x}"',
-    "subscript": "x[0]",
+    # All four messages `no_subscript` composes. The snippet was `x[0]` alone,
+    # a *load*, so a reader who wrote `xs[0] = 9`, was told to use
+    # `obj.at_put(key, value)` and typed `:explain subscript` to learn more was
+    # shown the reading substitute — the one proposal 18 exists to stop that
+    # reader from being handed. `validate_all` collects every error and
+    # `_meta_explain` prints them all, so listing the spellings is the change.
+    "subscript": "x[0]\nx[0] = 1\nx[1:2]\nx[1:2] = y",
     "import": "import os",
     "invert": "~x",
     # `-x` on a Name, not on a literal: no_unary_minus allows `-1`.

@@ -1,5 +1,6 @@
 import ast
 import io
+import pathlib
 import sys
 
 import pytest
@@ -744,6 +745,53 @@ def test_every_validator_is_reachable_from_explain() -> None:
         if not any(trips(v, s) for s in snippets)
     }
     assert sorted(unreachable - _EXPLAIN_EXEMPT) == []
+
+
+def _reported_literals() -> list[str]:
+    """Every plain string a validator hands to `self.report(...)`.
+
+    Read out of the source, in the shape `test_doc_counts.py` uses for the
+    README's numbers: restating the messages here would put them in a second
+    place to keep in step, which is the drift being guarded against.
+    Composed messages (f-strings, the `make_*_validator` tables) are not
+    literals and are covered by the reachability test above.
+    """
+    found: list[str] = []
+    for path in sorted((pathlib.Path(validators.__file__).parent).rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if not (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "report"
+                and node.args
+            ):
+                continue
+            arg = node.args[0]
+            branches = [arg.body, arg.orelse] if isinstance(arg, ast.IfExp) else [arg]
+            found += [
+                b.value
+                for b in branches
+                if isinstance(b, ast.Constant) and isinstance(b.value, str)
+            ]
+    return found
+
+
+def test_every_message_a_validator_composes_is_explained() -> None:
+    # Reachability is not coverage. `no_subscript` grew a second message for a
+    # *store* (proposal 18) and the `subscript` snippet stayed `x[0]`, a load —
+    # so the reader who wrote `xs[0] = 9`, was told to use `obj.at_put(key,
+    # value)` and typed `:explain subscript` was shown the *reading*
+    # substitute, which is the one that proposal exists to stop them getting.
+    interp = Interpreter()
+    reported = {
+        error.args[0]
+        for topic in _EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)
+        for error in interp.validate_all(_explain_snippet(topic) or "")
+    }
+    missing = [m for m in _reported_literals() if m not in reported]
+    assert missing == []
 
 
 def test_meta_explain_without_arg_shows_usage(
