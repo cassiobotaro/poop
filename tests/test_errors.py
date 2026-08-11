@@ -67,6 +67,28 @@ def test_format_error_caret_lands_under_a_column_after_non_ascii() -> None:
     assert caret_line.index("^") == out.splitlines()[1].index("x")
 
 
+def test_format_error_caret_lands_under_a_column_after_tabs() -> None:
+    # A tab is one character and eight columns. Counting characters put the
+    # caret in the indentation of every tab-indented file, further off the
+    # deeper the nesting; the quoted line is expanded, so the caret can be
+    # found in it by index.
+    source = "\t\treturn x"
+    out = format_error(ValidationError("nope", 1, source.index("x")), source)
+    quoted, caret_line = out.splitlines()[1], out.splitlines()[-1]
+    assert "\t" not in quoted
+    assert caret_line.index("^") == quoted.index("x")
+
+
+def test_format_error_expands_tabs_before_the_terminal_can() -> None:
+    # The terminal expands tabs from the start of the *printed* line, which
+    # begins with the gutter — so its stops would not land where the file's do
+    # even if the caret counted eight. No tab survives into the output.
+    source = "\tx = 1"
+    out = format_error(ValidationError("nope", 1, 1), source)
+    assert "\t" not in out
+    assert "  1 |         x = 1" in out
+
+
 def test_format_error_counts_lines_the_way_the_tokenizer_does() -> None:
     # str.splitlines() breaks on \f, which the tokenizer does not — every line
     # after a form feed would be numbered out of step with the parser.

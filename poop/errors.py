@@ -75,11 +75,27 @@ def _error_location(exc: PoopError, source: str | None) -> tuple[int, str] | Non
     return lineno, lines[lineno - 1]
 
 
+def _quoted(line: str) -> str:
+    """The source line as it is printed, with tabs already expanded.
+
+    A tab is one character and eight columns, so quoting it raw put the caret
+    in the indentation of every tab-indented file — and the terminal expanded
+    those tabs from the start of the *printed* line, which begins with the
+    gutter, so its stops did not even land where the file's do. Expanding here
+    leaves no tab for the terminal to interpret; `_caret_column` measures the
+    same expansion, so the two cannot disagree.
+    """
+    return line.expandtabs()
+
+
 def _caret_column(line: str, col: int) -> int:
-    # ast reports col_offset as a UTF-8 *byte* offset while the gutter prints
-    # characters, so a non-ASCII character earlier on the line pushed the caret
-    # one column right per extra byte.
-    return len(line.encode("utf-8")[:col].decode("utf-8", errors="replace"))
+    # Two conversions, in this order. ast reports col_offset as a UTF-8 *byte*
+    # offset while the gutter prints characters, so a non-ASCII character
+    # earlier on the line pushed the caret one column right per extra byte;
+    # then the prefix is expanded like the quoted line, since a tab is one
+    # character wide to `len` and eight to the reader.
+    prefix = line.encode("utf-8")[:col].decode("utf-8", errors="replace")
+    return len(_quoted(prefix))
 
 
 def _message(exc: PoopError) -> str:
@@ -114,7 +130,7 @@ def format_error(exc: PoopError, source: str | None) -> str:
     if location is None:
         return f"poop: {exc}"
     lineno, line = location
-    parts = [f"poop: {_message(exc)}", f"{_line_gutter(lineno)}{line}"]
+    parts = [f"poop: {_message(exc)}", f"{_line_gutter(lineno)}{_quoted(line)}"]
     col = getattr(exc, "col_offset", None)
     if col is not None:
         parts.append(f"{_caret_gutter(lineno)}{' ' * _caret_column(line, col)}^")
@@ -133,7 +149,7 @@ def render_error(exc: PoopError, source: str | None) -> Text:
     if location is None:
         return Text(f"poop: {exc}", style="red")
     lineno, line = location
-    highlighted = _PY_SYNTAX.highlight(line)
+    highlighted = _PY_SYNTAX.highlight(_quoted(line))
     highlighted.rstrip()  # the highlighter appends a trailing newline
     rendered = Text.assemble(
         (f"poop: {_message(exc)}\n", "red"),
