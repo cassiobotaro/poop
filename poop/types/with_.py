@@ -68,6 +68,15 @@ class With(Object):
         )
 
     def do(self, body_block: Callable[[Any], object]) -> object:
+        # First, before the manager block runs. `_require_block` exists for
+        # this construct above all — its docstring names `With` as "the one
+        # worth optimizing for" — and `__init__` applied it to the manager
+        # while `do` left the body to the deferred call, which answered the
+        # very sentence quoted there as the thing being avoided: `'int' object
+        # is not callable`. Worse, it answered it *after* `enter(cm)`, so the
+        # manager was acquired and released for a program that was never going
+        # to use it — the ordering `_protocol` argues for one step up.
+        _require_block(body_block, "the body argument", "write .do(lambda resource: …)")
         if self._cm_block is None:
             raise MIRRORS["RuntimeError"](
                 "With has already run; create a new With instance to run again."

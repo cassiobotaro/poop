@@ -258,3 +258,43 @@ def test_with_refuses_a_manager_passed_instead_of_a_block() -> None:
 
     with pytest.raises(TypeError, match="must be a block"):
         With(Manager())  # ty: ignore[invalid-argument-type]
+
+
+def test_with_refuses_a_body_argument_that_is_not_a_block() -> None:
+    # `do` left the body to the deferred call, which answered `'int' object is
+    # not callable` — the sentence `_require_block` was written to remove, from
+    # the construct its docstring names as the one worth optimizing for.
+    import pytest
+
+    from poop.types.int import Int
+    from poop.types.with_ import With
+
+    with pytest.raises(TypeError) as info:
+        With(lambda: none).do(Int(5))  # ty: ignore[invalid-argument-type]
+    assert str(info.value) == (
+        "the body argument must be a block, got an int — write .do(lambda resource: …)"
+    )
+
+
+def test_with_checks_the_body_before_entering() -> None:
+    # The ordering `_protocol` argues for, one step up: the manager was
+    # acquired *and released* for a program that was never going to use it.
+    import pytest
+
+    from poop.types.int import Int
+    from poop.types.with_ import With
+
+    log: list[str] = []
+
+    class _Managed:
+        def __enter__(self):
+            log.append("acquired")
+            return self
+
+        def __exit__(self, *_args):
+            log.append("released")
+            return False
+
+    with pytest.raises(TypeError, match="the body argument must be a block"):
+        With(lambda: _Managed()).do(Int(5))  # ty: ignore[invalid-argument-type]
+    assert log == []
