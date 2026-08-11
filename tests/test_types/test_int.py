@@ -591,12 +591,20 @@ def test_int_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
     assert "does not understand" not in message
 
 
-def test_reflected_shift_folds_boolean_on_the_left() -> None:
-    # Boolean defines no __lshift__/__rshift__, so `<bool> << Int` resolves to
-    # Int's reflected shift, folding the bool to 1/0 (bool is an int subclass).
+def test_shift_folds_boolean_on_the_left() -> None:
+    # `Boolean` answers the forward operator itself now — it used to define
+    # none, and `Boolean << Boolean` reached neither side. Either way the
+    # answer folds to 1/0, as `bool` being an `int` subclass requires.
     assert true << Int(5) == Int(32)
     assert true >> Int(1) == Int(0)
     assert false << Int(4) == Int(0)
+
+
+def test_reflected_shift_still_answers_for_an_integral_on_the_left() -> None:
+    # No expression reaches these any more, but CPython's int defines both
+    # halves and a one-sided protocol is the next reader's trap.
+    assert Int(5).__rlshift__(true) == Int(32)
+    assert Int(1).__rrshift__(Int(4)) == Int(2)
 
 
 def test_reflected_shift_notimplemented_for_foreign_operand() -> None:

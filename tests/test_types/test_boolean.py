@@ -163,6 +163,28 @@ def test_bitwise_with_int_folds_to_int_wrapper() -> None:
         assert type(result).__name__ == "int", label
 
 
+def test_shift_between_booleans_folds_to_int() -> None:
+    # A shift has no boolean-algebra reading, so it folds whatever the other
+    # operand is: `True << True` is `2` in CPython, an int and not a bool.
+    # The mixed cases already worked through `Int`'s reflected side; only
+    # Boolean-against-Boolean reached neither operand.
+    from poop.types.int import Int
+
+    for result, expected, label in [
+        (true << true, 2, "lshift"),
+        (true >> true, 0, "rshift"),
+        (true << false, 1, "lshift-false"),
+        (false << true, 0, "lshift-from-false"),
+        (true << Int(3), 8, "lshift-int"),
+        (Int(5) << true, 10, "rlshift-int"),
+        (true >> Int(1), 0, "rshift-int"),
+        (Int(5) >> true, 2, "rrshift-int"),
+    ]:
+        assert isinstance(result, Int), label
+        assert result == Int(expected), label
+        assert type(result).__name__ == "int", label
+
+
 def test_bitwise_between_booleans_stays_boolean() -> None:
     # Two Booleans keep boolean algebra and return the singletons,
     # mirroring CPython's `True & False is False`.
@@ -373,6 +395,11 @@ def test_reflected_ops_fold_to_one_and_redispatch() -> None:
     assert true.__rand__(Int(0b0110)) == Int(0)
     assert true.__ror__(Int(0b0110)) == Int(0b0111)
     assert true.__rxor__(Int(0b0110)) == Int(0b0111)
+    # The shift pair has no expression that reaches it any more — `Boolean`
+    # answers the forward operator for both rungs now — but the protocol has
+    # two halves and a one-sided one is the next reader's trap.
+    assert true.__rlshift__(Int(5)) == Int(10)
+    assert true.__rrshift__(Int(5)) == Int(2)
 
 
 def test_reflected_op_with_operand_lacking_the_method_is_notimplemented() -> None:

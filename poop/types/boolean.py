@@ -337,6 +337,23 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     def __rxor__(self, other: object) -> Any:
         return self._rev(other, "__xor__")
 
+    # Shifts, unlike the three above, have no boolean-algebra reading — there
+    # is no Boolean answer to give, so they fold to `Int` whatever the other
+    # operand is, as CPython does (`True << True` is `2`). Without them the
+    # mixed cases still worked, because `Int` answers them from its own side
+    # (`__rlshift__` says so), and only `Boolean << Boolean` reached neither.
+    def __lshift__(self, other: object) -> Int:
+        return self._as_int().__lshift__(self._num(other))
+
+    def __rlshift__(self, other: object) -> Any:
+        return self._rev(other, "__lshift__")
+
+    def __rshift__(self, other: object) -> Int:
+        return self._as_int().__rshift__(self._num(other))
+
+    def __rrshift__(self, other: object) -> Any:
+        return self._rev(other, "__rshift__")
+
 
 @final
 class _TrueClass(Boolean):
