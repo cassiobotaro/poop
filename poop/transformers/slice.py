@@ -1,8 +1,37 @@
 import ast
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
+from poop.types.exceptions import MIRRORS
 from poop.types.slice import Slice
+
+if TYPE_CHECKING:
+    from poop.types._index import Index
+    from poop.types.none import NoneClass
+
+
+def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
+    """`slice(...)`, guarded. Proposal 9 recorded that `Slice(...)` *is* the
+    call, so unlike its siblings this one had no factory at all — and the
+    refusal that leaked was the sharpest of the eight, naming `__init__`, a
+    dunder `no_dunder_attribute` refuses, from a construct the program spelled
+    without a dunder anywhere.
+    """
+    refuse_extra_arguments(
+        "slice",
+        args,
+        kwargs,
+        most=3,
+        built_from="a stop, or a start and a stop and an optional step",
+        hint="write slice(stop) or slice(start, stop, step)",
+    )
+    if not args:
+        raise MIRRORS["TypeError"](
+            "slice is built from a stop, or a start and a stop and an optional "
+            "step, got nothing — write slice(stop) or slice(start, stop, step)"
+        )
+    return Slice(*cast("tuple[Index | NoneClass | None, ...]", args))
 
 
 class _SliceRewriter(ast.NodeTransformer):
@@ -19,7 +48,7 @@ class _SliceRewriter(ast.NodeTransformer):
                 args.insert(0, ast.Constant(value=None))
             return ast.copy_location(
                 ast.Call(
-                    func=ast.Name(id="_poop_slice", ctx=ast.Load()),
+                    func=ast.Name(id="_poop_slice_from", ctx=ast.Load()),
                     args=args,
                     keywords=[
                         ast.keyword(arg=kw.arg, value=self.visit(kw.value))
@@ -39,4 +68,7 @@ class _SliceRewriter(ast.NodeTransformer):
 
 class SliceTransformer(BaseTransformer):
     rewriter = _SliceRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_slice": Slice}
+    BINDINGS: ClassVar[dict[str, object]] = {
+        "_poop_slice": Slice,
+        "_poop_slice_from": _poop_slice_from,
+    }

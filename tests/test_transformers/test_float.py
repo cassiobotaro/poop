@@ -142,8 +142,8 @@ def test_float_from_an_unparsable_string_names_the_value() -> None:
 
 def test_float_refuses_a_keyword_argument() -> None:
     # Twin of the `bool(x=1)` guard: unconditionally rewritten, this answered
-    # `0.0` off the helper's default instead of a TypeError. Matched on the
-    # behaviour, not on the callee's spelling — that is the cloak's to pin, and
-    # `tests/test_cloak.py` does.
-    with pytest.raises(ExecutionError, match="unexpected keyword argument"):
+    # `0.0` off the helper's default instead of a TypeError. Proposal 44 gave
+    # the converter `refuse_extra_arguments`, so the sentence is POOP's now
+    # rather than CPython's `got an unexpected keyword argument`.
+    with pytest.raises(ExecutionError, match="float takes no keyword arguments"):
         Interpreter().run_source("float(x=1).print()")

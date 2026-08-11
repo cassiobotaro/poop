@@ -1,6 +1,7 @@
 import ast
 from typing import ClassVar
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
 from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean
@@ -10,7 +11,16 @@ from poop.types.int import Int
 from poop.types.string import Str
 
 
-def _poop_float_from(value: object = None) -> Float:
+def _poop_float_from(*args: object, **kwargs: object) -> Float:
+    refuse_extra_arguments(
+        "float",
+        args,
+        kwargs,
+        most=1,
+        built_from="at most one number or string",
+        hint="write a literal for a value",
+    )
+    value = args[0] if args else None
     if value is None:
         return Float(0.0)
     if isinstance(value, Float):

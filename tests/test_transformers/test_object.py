@@ -37,10 +37,13 @@ def test_other_names_are_untouched() -> None:
     assert _names("Objection") == ["Objection"]
 
 
-def test_declares_no_bindings_because_class_transformer_owns_the_name() -> None:
+def test_declares_no_binding_for_the_name_class_transformer_owns() -> None:
     # The namespace build raises on a duplicate key rather than letting one
-    # transformer silently overwrite another's binding.
-    assert ObjectTransformer.BINDINGS == {}
+    # transformer silently overwrite another's binding. Proposal 44 added a
+    # *call*-position factory here, which is a different key: the name position
+    # still resolves to the class `ClassTransformer` binds.
+    assert "_poop_object" not in ObjectTransformer.BINDINGS
+    assert set(ObjectTransformer.BINDINGS) == {"_poop_object_from"}
     assert ClassTransformer.BINDINGS == {"_poop_object": Object}
 
 

@@ -94,14 +94,14 @@ def test_poop_range_refuses_text_without_naming_int() -> None:
     # was `int() argument must be a string, a bytes-like object or a real
     # number` — a call, for something the program spelt `range`.
     with pytest.raises(TypeError) as info:
-        _poop_range(Str("3"))  # ty: ignore[invalid-argument-type]
+        _poop_range(Str("3"))
     assert str(info.value) == "'str' object cannot be interpreted as an integer"
 
 
 def test_poop_range_still_admits_the_boolean_rung() -> None:
     # Admitting `bool` is exactly what `index` is for: CPython's
     # `range(True, 5)` is `range(1, 5)`.
-    admitted = _poop_range(true, Int(5))  # ty: ignore[invalid-argument-type]
+    admitted = _poop_range(true, Int(5))
     assert list(admitted._iter()) == [Int(i) for i in range(1, 5)]
 
 

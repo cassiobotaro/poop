@@ -111,13 +111,12 @@ def test_own_functions_answer_the_cloaked_class_name(index: int, cls: type) -> N
         ("[1, 2].map()", "object.map()"),
         ("[1].iter().next(1, 2)", "object.next()"),
         ('{"a": 1}.keys().len(1)', "object.len()"),
-        # The rewriter helpers, whose mangled key `no_poop_prefix` reserves —
-        # so the message named a spelling the interpreter would then refuse.
-        ("range(1, 2, 3, 4)", "range()"),
-        ("int(1, 2, 3)", "int()"),
-        ("float(1, 2)", "float()"),
-        ("bool(1, 2)", "bool()"),
-        ("enumerate([1], 2, 3)", "enumerate()"),
+        # `range`, `int`, `float`, `bool` and `enumerate` used to sit here for
+        # the same reason `dict` did: the cloak made CPython's arity message
+        # name `range()` instead of `_poop_range()`. Proposal 44 gave all five
+        # (and `zip`, `object`, `slice`) the guard the other ten already had,
+        # so none of them reaches CPython's call machinery any more — see
+        # `test_transformers/test_constructor_arity.py`.
     ],
 )
 def test_arity_errors_name_no_internal_spelling(source: str, expected: str) -> None:

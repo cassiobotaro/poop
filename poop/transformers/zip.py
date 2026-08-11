@@ -7,9 +7,20 @@ from poop.types.exceptions import MIRRORS
 from poop.types.zip import Zip
 
 
-def _poop_zip(*sources: object, strict: object = None) -> Zip:
+def _poop_zip(*sources: object, **kwargs: object) -> Zip:
     from poop.types._unwrap import _is_absent
     from poop.types.boolean import Boolean
+
+    # `zip` is the one converter that legitimately takes any number of
+    # positional arguments, so `refuse_extra_arguments` has nothing to count
+    # here — only the keyword half applies, and `strict` is the single real one.
+    unexpected = next((name for name in kwargs if name != "strict"), None)
+    if unexpected is not None:
+        raise MIRRORS["TypeError"](
+            f"zip takes no keyword argument {unexpected!r} — "
+            "it is built from collections and an optional strict"
+        )
+    strict = kwargs.get("strict")
 
     if _is_absent(strict):
         return Zip(*sources, strict=None)

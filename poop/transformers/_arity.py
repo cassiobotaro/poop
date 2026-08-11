@@ -19,6 +19,16 @@ but the report named `__init__` — a dunder `no_dunder_attribute` bans outright
 
 So the call path is complete now: every `<builtin>(...)` reaches the converter
 whatever its arity, and the converter refuses in POOP's vocabulary.
+
+That claim was written when ten of the eighteen constructors used this and was
+made true for the other eight by proposal 44 — `float`, `bool`, `int`, `range`,
+`enumerate`, `zip`, `object` and `slice` all reached CPython's call machinery,
+each naming the builtin spelt as a *call* and saying "positional argument".
+Three needed more than the arity: `object` takes none at all, `zip`
+legitimately takes any number of iterables so only its `strict` keyword is
+real, and `slice` had no factory in front of the class, which is why its
+refusal named `__init__` — the same dunder this module was written to remove
+one constructor over.
 """
 
 from collections.abc import Mapping
@@ -47,6 +57,10 @@ def refuse_extra_arguments(
             f"{name} takes no keyword arguments — it is built from {built_from}"
         )
     if len(args) > most:
+        # Pluralised since `object` joined the list with `most=0`, which makes
+        # `got 1 arguments` reachable — no other converter can be over its
+        # limit by exactly one argument.
+        given = f"{len(args)} argument" + ("" if len(args) == 1 else "s")
         raise MIRRORS["TypeError"](
-            f"{name} is built from {built_from}, got {len(args)} arguments — {hint}"
+            f"{name} is built from {built_from}, got {given} — {hint}"
         )

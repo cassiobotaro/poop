@@ -1,6 +1,7 @@
 import ast
 from typing import ClassVar
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
 from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean
@@ -32,7 +33,17 @@ def _parsed(value: Str, base: int | None) -> Int:
         ) from None
 
 
-def _poop_int_from(value: object = None, base: object = None) -> Int:
+def _poop_int_from(*args: object, **kwargs: object) -> Int:
+    refuse_extra_arguments(
+        "int",
+        args,
+        kwargs,
+        most=2,
+        built_from="at most a value and a base",
+        hint="write a literal for a value",
+    )
+    value = args[0] if args else None
+    base = args[1] if len(args) > 1 else None
     if base is not None and not isinstance(value, Str):
         # Mirror CPython: a base is meaningful only when parsing a string.
         # int(10, 2) / int(3.5, 2) / int(True, 2) all raise TypeError there;

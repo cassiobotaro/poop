@@ -1,12 +1,22 @@
 import ast
 from typing import ClassVar
 
+from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer
 from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean, false, to_boolean, true
 
 
-def _poop_bool_from(value: object = None) -> Boolean:
+def _poop_bool_from(*args: object, **kwargs: object) -> Boolean:
+    refuse_extra_arguments(
+        "bool",
+        args,
+        kwargs,
+        most=1,
+        built_from="at most one value to test",
+        hint="write True or False for a literal",
+    )
+    value = args[0] if args else None
     if isinstance(value, Boolean):
         return value
     return to_boolean(bool(value))
