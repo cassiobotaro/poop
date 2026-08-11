@@ -31,7 +31,10 @@ class Interpreter:
         )
 
     def run_file(self, path: Path) -> None:
-        source = path.read_text(encoding="utf-8")
+        # `utf-8-sig` for the reason `cli.py` gives at its own read: a
+        # byte-order mark kept as a literal U+FEFF makes the tokenizer refuse
+        # a file CPython runs, naming a character no editor shows.
+        source = path.read_text(encoding="utf-8-sig")
         self.run_source(source, filename=str(path))
 
     def run_source(self, source: str, filename: str = "<string>") -> None:

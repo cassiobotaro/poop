@@ -66,7 +66,12 @@ def main(
         return
 
     try:
-        source = file.read_text(encoding="utf-8")
+        # `utf-8-sig`, not `utf-8`: an editor's byte-order mark would otherwise
+        # survive as a literal U+FEFF in the source and the tokenizer would
+        # answer `invalid non-printable character U+FEFF` — about a character
+        # invisible in every editor, from a file `python3` runs. CPython's own
+        # loader strips it; the codec is identical to `utf-8` otherwise.
+        source = file.read_text(encoding="utf-8-sig")
     except OSError as exc:
         # An unreadable path (missing file, a directory, no permission) is
         # an ordinary user mistake; keep the one-line `poop:` style instead

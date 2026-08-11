@@ -299,6 +299,13 @@ class Repl:
         self._interpreter = interpreter
         self._ns: dict[str, object] = dict(DEFAULT_NAMESPACE)
         self._input_no = 0
+        # The stdin path's half of `utf-8-sig`. `poop <file>` decodes with the
+        # codec that strips a byte-order mark; a piped program is read line by
+        # line through `input()`, which does not, so `printf '\xef\xbb\xbf…' |
+        # poop` answered the same `invalid non-printable character U+FEFF` the
+        # file path used to. A mark is only a mark at the head of the stream,
+        # so this is spent once.
+        self._leading_mark = True
         _setup_readline(self._ns)
 
     def _meta(self, line: str) -> None:
@@ -404,6 +411,10 @@ class Repl:
                     print()  # noqa: T201
                     buffer = []
                     continue
+
+                if self._leading_mark:
+                    self._leading_mark = False
+                    line = line.removeprefix("\ufeff")
 
                 if not buffer and line.lstrip().startswith(":"):
                     self._meta(line.lstrip())

@@ -22,6 +22,19 @@ def test_cli_runs_valid_file(tmp_path: Path) -> None:
     assert "hi\n" in result.output
 
 
+def test_cli_runs_a_file_its_editor_gave_a_byte_order_mark(tmp_path: Path) -> None:
+    # Editors on Windows write a BOM by default. Read as plain `utf-8` it
+    # survives as a literal U+FEFF and the tokenizer answers `invalid
+    # non-printable character U+FEFF` — about a character invisible in every
+    # editor, from a file `python3` runs. Nothing else in the suite reads
+    # bytes that are not plain ASCII.
+    f = tmp_path / "bom.py"
+    f.write_bytes(b"\xef\xbb\xbf" + b'"hi".print()\n')
+    result = runner.invoke(app, [str(f)])
+    assert result.exit_code == 0
+    assert "hi\n" in result.output
+
+
 def test_cli_exits_with_error_on_invalid_code(tmp_path: Path) -> None:
     f = tmp_path / "bad.py"
     f.write_text("print('x')\n", encoding="utf-8")

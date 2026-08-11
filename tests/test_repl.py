@@ -238,6 +238,31 @@ def test_run_stores_last_result_in_underscore(monkeypatch: pytest.MonkeyPatch) -
     assert repl._ns.get("_") == Int(2)
 
 
+def test_run_strips_a_byte_order_mark_from_the_first_line(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # `poop <file>` decodes with `utf-8-sig`; the piped path reads line by line
+    # through `input()`, which does not strip the mark, so a BOM-prefixed
+    # program answered `invalid non-printable character U+FEFF`.
+    monkeypatch.setattr("builtins.input", _fake_input('\ufeff"hi".print()', EOFError()))
+    Repl(Interpreter()).run()
+    out = capsys.readouterr()
+    assert "hi" in out.out
+    assert "U+FEFF" not in out.err
+
+
+def test_run_spends_the_mark_only_on_the_first_line(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # A mark is only a mark at the head of the stream; later in the session
+    # U+FEFF is an ordinary invalid character and still says so.
+    monkeypatch.setattr(
+        "builtins.input", _fake_input("x = 1", "\ufeffx.print()", EOFError())
+    )
+    Repl(Interpreter()).run()
+    assert "U+FEFF" in capsys.readouterr().err
+
+
 def test_run_poop_error_printed_to_stderr(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
