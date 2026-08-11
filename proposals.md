@@ -2,7 +2,180 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-*Empty — nothing open.*
+### 27. A block installed on a class is not bound to its receiver
+
+`set_attr` on a class is sanctioned — item 2 refused it only for POOP's own
+builtins, precisely so a program can extend the classes it defines — and the
+one thing a reader would reach for it with does not work:
+
+```
+class C(Object): ...
+C.set_attr("greet", lambda self: "hi")
+C().greet()      # TypeError: block expects 1 argument, got 0
+```
+
+The receiver is never passed. A *zero*-argument block works
+(`C.set_attr("greet", lambda: "hi")` answers `hi`), which says what is really
+happening: the block is stored as a plain class attribute, and reading it
+through an instance hands it back untouched. The refusal is the worst part —
+the reader wrote a one-argument block and is told it got none.
+
+Python's own rule is the one POOP wants here: a function found on the *class*
+binds to the instance, a function found on the *instance* does not
+(`C.greet = lambda self: 'hi'` then `C().greet()` answers `hi`; assigning the
+same lambda to `c.greet` does not bind). POOP already agrees with the second
+half by accident — `c.set_attr("greet", lambda: "hi")` works — and disagrees
+with the first.
+
+**Fix.** Give `Block` a `__get__` answering a block bound to the receiver, which
+makes it a *non-data* descriptor and therefore reproduces Python's split
+exactly: consulted for a class attribute, skipped for an instance one, no
+special case needed. `Block` already wraps its lambda and already composes the
+arity refusal, so the binding has one place to live. The half that works today
+must keep working — a `Block` held as *state* (`self.callback = lambda: …`) is
+data, not a method, and instance lookup never reaches the descriptor.
+
+---
+
+### 28. `Boolean` answers `to_bytes` and not `from_bytes`
+
+`INFECTIONS.md` states the rule for this receiver: "A `Boolean` answers the
+int-side messages too, not only the operators", and lists the family that was
+re-supplied by hand because `bool` is an `int` in Python and POOP keeps them as
+separate classes. One member of that family is missing, and it is half of a
+pair whose other half is there:
+
+```
+True.to_bytes(1, "big")          # b'\x01'
+True.from_bytes(b"\x01", "big")  # bool does not understand #from_bytes —
+                                 #   did you mean #to_bytes?
+```
+
+CPython answers both (`bool.from_bytes` is `int.from_bytes`, inherited). The
+hint makes it sharper than a plain gap: it points at the other half of the same
+pair, so the reader is told the message they did not want is the one that
+exists.
+
+**Fix.** Delegate `from_bytes` through `_as_int`, as the rest of the int-side
+family already does — it is a classmethod, so it answers an `Int`, which is
+what CPython answers too (`bool.from_bytes(b"\x01", "big")` is `1`, not
+`True`). The mechanical sweep that would have caught this is worth having as
+well: for each wrapper, the public messages CPython's counterpart answers and
+POOP's does not, with the deliberate omissions listed. It is how this was
+found, and it reported exactly one other gap worth acting on (item 30).
+
+---
+
+### 29. `:explain subscript` teaches only half of what the validator says
+
+`repl.py` explains a construct by running a snippet through the validators, and
+says why out loud: "the explanation is the validator's own message, so the two
+can never drift apart". They drifted anyway — not in wording, in coverage.
+Item 18 gave `no_subscript` a second message for a *store*, and the snippet is
+`x[0]`, a load:
+
+```
+>>> :explain subscript
+subscript obj[key] is forbidden — use obj.at(key) instead
+```
+
+So the reader who wrote `xs[0] = 9`, was told to use `obj.at_put(key, value)`,
+and typed `:explain subscript` to learn more is shown the *other* substitute —
+the reading one, which is what item 18 exists to stop that reader from being
+handed.
+
+**Fix.** The snippet becomes both spellings (`x[0]` and `x[0] = 1`), and the
+slice pair with them. `validate_all` already collects every error and
+`_meta_explain` already prints them all, so a two-line snippet reports both
+messages with no other change — verified. A test that each topic's snippet
+reports *every* message its validator can compose would keep the coverage
+honest, in the shape `test_doc_counts.py` uses for the README's numbers.
+
+---
+
+### 30. `MemoryView` is the one sequence that cannot be asked where
+
+Every sequence in the family answers `index` and `count` — `List`, `Tuple`,
+`Range`, `Bytes`, `ByteArray` — and `MemoryView` answers neither, though it
+answers `at`, `len`, `slice`, `iter`, `includes` and `hex`, and CPython's
+`memoryview` has had both since 3.10:
+
+```
+m = memoryview(b"aba")
+m.includes(98)   # True
+m.index(98)      # memoryview does not understand #index
+```
+
+`includes` is the substitute `no_in` names, so a program that has just been
+told the element is there has no way to ask where. The gap is inside POOP
+rather than against CPython: the surface criterion ("a message earns its place
+when it substitutes a forbidden construct") does not admit `index` on its own,
+but it admitted it on five siblings, and a reader moving between them meets one
+receiver that answers differently.
+
+**Fix.** Add both, delegating to the wrapped `memoryview` and routing the
+failure through `_at.no_element_equal_to`, as `List.index` does — the sentence
+is already written. The rest of what the surface sweep reported for
+`MemoryView` (`cast`, `strides`, `suboffsets`, `nbytes`, `release`, …) is the
+buffer protocol and stays out: it describes memory layout, which is the one
+thing POOP has no vocabulary for.
+
+---
+
+### 31. A file its editor gave a BOM cannot be run
+
+`poop/cli.py` reads the program with `encoding="utf-8"`, which keeps a
+byte-order mark as a literal `U+FEFF` character in the source. CPython strips
+it — running the same file with `python3` works — so POOP refuses a file
+Python accepts, and refuses it in the tokenizer's vocabulary:
+
+```
+poop: invalid non-printable character U+FEFF (greet.py, line 1)
+```
+
+A reader has nothing to act on: the character is invisible in every editor, the
+message names a code point rather than a byte-order mark, and nothing says the
+file is fine and the *reading* of it is not. Editors on Windows write this mark
+by default, so it costs a beginner their first program.
+
+**Fix.** Read with `encoding="utf-8-sig"`, which strips a leading mark and is
+otherwise identical to `utf-8` — the same thing CPython's own loader does. The
+REPL's stdin path has it too (`printf '\xef\xbb\xbf…' | poop` answers the
+same sentence) and takes the same one-word change wherever it decodes. A test
+runs a source file with a mark on it, since nothing else in the suite reads
+bytes that are not plain ASCII.
+
+---
+
+### ~~26. A subclass of an immutable builtin is born without its value~~ — DONE
+
+**Decision + implemented.** `_endow` gives the alias the `__new__` step Python
+has: one positional argument and no keywords is the shape every converter
+takes, so it converts and the payload is written *before* `__init__` runs.
+
+The residue the item predicted went the other way, and better. Rather than a
+guard in `Object.__getattr__` answering after the fact, the split CPython
+actually draws turned out to be available here too: a subclass with its own
+signature gets the wrapper's **empty** value (`list.__new__` hands `__init__`
+an empty list, so `class Pair(list)` with a two-argument constructor is an
+ordinary empty list carrying its own state — CPython agrees), and where there
+is no empty to give (an `int` has none) the object is refused at construction,
+which is both where the mistake is and what CPython answers. So no message
+ever reaches an unfinished object, and `__getattr__` was left alone.
+
+One neighbour was found while covering the last branch and fixed with it:
+`class Flag(bool)` was allowed at definition and failed at the first instance
+with `Can't instantiate abstract class Flag without an implementation for
+abstract methods '__bool__', '__str__', …` — a dozen dunders in one sentence
+from a program that spelled none. `bool` is refused as a base now, where
+CPython refuses it, and that made two branches in `__call__` dead code.
+
+The full matrix — nine subclass patterns across the mutable and immutable
+builtins — was run against CPython before and after, and agrees everywhere it
+should; the one deliberate divergence (`super().__init__(v)` on an `int`
+subclass, a `TypeError` in CPython) is argued in the item above.
+`poop/types/_alias.py`, `tests/test_transformers/test_type_names.py`,
+`INFECTIONS.md`.
 
 ---
 

@@ -84,7 +84,6 @@ def test_mangled_type_binding_is_in_default_namespace(
         ("int", "(4.9)", "4"),
         ("float", "(2)", "2.0"),
         ("str", "(5)", "5"),
-        ("bool", "(0)", "False"),
         ("complex", "(1)", "(1+0j)"),
         ("bytes", "[65]", "b'A'"),
         ("bytearray", "[65]", "bytearray(b'A')"),
@@ -175,15 +174,19 @@ def test_a_subclass_does_not_share_the_payload_it_was_built_from() -> None:
     assert str(ns["made"]) == "[1, 2, 3]"
 
 
-def test_a_bool_subclass_answers_the_converter_directly() -> None:
-    # `Boolean` has no payload: its values are two singletons, and there is
-    # nothing to rebuild a subclass from.
+def test_bool_cannot_be_subclassed() -> None:
+    """`Boolean` has no payload: its two values are the whole class.
+
+    CPython refuses it as a base outright (`type 'bool' is not an acceptable
+    base type`). POOP let the class be defined and failed at the first
+    instance with `Can't instantiate abstract class Flag without an
+    implementation for abstract methods '__bool__', '__str__', …` — a dozen
+    dunders in one sentence, from a program that spelled none.
+    """
     ns = dict(DEFAULT_NAMESPACE)
-    tree = Interpreter().transform_source(
-        "class Flag(bool):\n    pass\nmade = Flag(1)\n"
-    )
-    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
-    assert str(ns["made"]) == "True"
+    tree = Interpreter().transform_source("class Flag(bool):\n    pass\n")
+    with pytest.raises(TypeError, match="^bool cannot be subclassed — "):
+        exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
 
 
 def test_an_alias_still_serves_as_a_type_argument_and_a_base() -> None:
@@ -376,3 +379,97 @@ def test_super_init_refuses_over_supply_the_way_the_call_does() -> None:
     )
     with pytest.raises(TypeError, match="list is built from at most one collection"):
         exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+
+
+# --- the `__new__` step Python has and POOP did not ---
+#
+# For an immutable builtin CPython sets the value in `__new__`, from the
+# constructor's arguments, before `__init__` is reached — so a subclass whose
+# `__init__` ignores them still comes back working. POOP writes the payload in
+# `__init__`, so one that never passed it up left the object with none.
+
+
+@pytest.mark.parametrize(
+    ("lowercase", "argument", "expected"),
+    [
+        ("int", "(4.9)", "4"),
+        ("float", "(2)", "2.0"),
+        ("str", "(5)", "5"),
+        ("complex", "(1)", "(1+0j)"),
+        ("bytes", "[65]", "b'A'"),
+        ("tuple", "[1, 2]", "(1, 2)"),
+        ("frozenset", "[1, 2]", "frozenset({1, 2})"),
+        # The mutable four are filled by `__init__` in CPython too, which is
+        # why they agreed all along — they are here so the row stays pinned.
+        ("list", "[1, 2]", "[1, 2]"),
+        ("dict", '({"a": 1})', "{'a': 1}"),
+        ("set", "[1, 2]", "{1, 2}"),
+        ("bytearray", "[65]", "bytearray(b'A')"),
+    ],
+)
+def test_an_init_that_ignores_its_argument_still_gets_the_value(
+    lowercase: str, argument: str, expected: str
+) -> None:
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        f"class Sub({lowercase}):\n"
+        "    def __init__(self, value):\n"
+        "        pass\n"
+        f"made = Sub({argument})\n"
+        "kind = made.class_name()\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["made"]) == expected
+    assert str(ns["kind"]) == "Sub"
+
+
+def test_a_subclass_with_its_own_signature_is_left_to_its_init() -> None:
+    # Two arguments are not the shape a converter takes, so nothing is
+    # pre-filled and `super()` does the work from inside `__init__`.
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class Tagged(list):\n"
+        "    def __init__(self, xs, tag):\n"
+        "        super().__init__(xs)\n"
+        "        self.tag = tag\n"
+        "made = Tagged([1, 2], 'x')\n"
+        "tag = made.tag\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["made"]) == "[1, 2]"
+    assert str(ns["tag"]) == "x"
+
+
+def test_a_builtin_with_no_empty_cannot_be_built_without_a_value() -> None:
+    """A signature of its own *and* no `super()` call.
+
+    CPython refuses this at construction too — `int.__new__` cannot take
+    those arguments — and refusing here rather than at the first message
+    keeps the report where the mistake is. What POOP may not do either way is
+    answer `#_value`, the internal slot name.
+    """
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class N(int):\n    def __init__(self, a, b):\n        pass\nmade = N(1, 2)\n"
+    )
+    with pytest.raises(TypeError, match="was built without its value"):
+        exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+
+
+def test_a_builtin_with_an_empty_starts_from_it() -> None:
+    # `list.__new__` hands `__init__` an empty list, so a subclass with a
+    # signature of its own is an ordinary empty list carrying its own state —
+    # which is what CPython answers here.
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        "class Pair(list):\n"
+        "    def __init__(self, a, b):\n"
+        "        self.first = a\n"
+        "made = Pair(1, 2)\n"
+        "size = made.len()\n"
+        "first = made.first\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    assert str(ns["made"]) == "[]"
+    assert str(ns["size"]) == "0"
+    assert str(ns["first"]) == "1"
