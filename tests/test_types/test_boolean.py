@@ -431,6 +431,25 @@ def test_the_int_side_messages_answer_what_cpython_answers() -> None:
     assert true.conjugate() == Int(1)
 
 
+def test_from_bytes_completes_the_to_bytes_pair() -> None:
+    # The one half-pair in the int-side family: `to_bytes` answered and
+    # `from_bytes` did not, with the near-miss hint pointing back at the
+    # message the reader had not asked for.
+    from poop.types.bytes import Bytes
+
+    assert Boolean.from_bytes(Bytes(b"\x01"), Str("big")) is true
+    assert Boolean.from_bytes(Bytes(b"\x00"), Str("big")) is false
+
+
+def test_from_bytes_answers_a_boolean_because_cpython_runs_it_through_cls() -> None:
+    # Unlike `abs` and its neighbours, this one is not a fold: CPython builds
+    # the answer through `cls`, so `bool.from_bytes(b"\x05", "big")` is `True`
+    # and not `5`.
+    from poop.types.bytes import Bytes
+
+    assert Boolean.from_bytes(Bytes(b"\x05"), Str("big")) is true
+
+
 def test_the_int_side_messages_answer_an_int_not_a_boolean() -> None:
     # `abs(True)` is `1`, not `True`; answering a Boolean would be a quiet
     # type error one message down the chain.

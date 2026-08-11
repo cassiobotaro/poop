@@ -166,6 +166,30 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     ) -> Bytes:
         return self._as_int().to_bytes(length, byteorder, signed=signed)
 
+    @classmethod
+    def from_bytes(
+        cls,
+        b: Bytes,
+        byteorder: Str | NoneClass | None = None,
+        *,
+        signed: Boolean | NoneClass | None = None,
+    ) -> Boolean:
+        """`to_bytes` read back, the half of the pair that was missing.
+
+        The only int-side message with no instance to fold, so it cannot go
+        through `_as_int` like the rest of the family — it delegates to
+        `Int.from_bytes` and folds the answer. Its absence was sharper than a
+        plain gap: the near-miss hint pointed at `#to_bytes`, telling the
+        reader that the message they did not want is the one that exists.
+
+        A `Boolean` and not an `Int`, unlike `abs` and its neighbours: CPython
+        runs this one through `cls`, so `bool.from_bytes(b"\\x05", "big")` is
+        `True` — the answer is the receiver's kind here, not the fold's.
+        """
+        from poop.types.int import Int
+
+        return to_boolean(bool(Int.from_bytes(b, byteorder, signed=signed)))
+
     def format(self, spec: Str | NoneClass | None = None) -> Str:
         # `bool(self)`, not `_as_int()`, unlike every message around it:
         # `format(True, "")` is `'True'` and `format(1, "")` is `'1'`, so
