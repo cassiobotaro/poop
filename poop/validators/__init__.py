@@ -53,6 +53,7 @@ from poop.validators.no_open import NoOpenValidator
 from poop.validators.no_poop_prefix import NoPoopPrefixValidator
 from poop.validators.no_pow import NoPowValidator
 from poop.validators.no_print import NoPrintValidator
+from poop.validators.no_private_attribute import NoPrivateAttributeValidator
 from poop.validators.no_raise import NoRaiseValidator
 from poop.validators.no_repr import NoReprValidator
 from poop.validators.no_reversed import NoReversedValidator
@@ -145,6 +146,7 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoDelValidator(),
     NoImportValidator(),
     NoPoopPrefixValidator(),
+    NoPrivateAttributeValidator(),
     NoNamespaceShadowValidator(),
     NoBuiltinShadowValidator(),
 ]

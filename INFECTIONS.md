@@ -632,6 +632,24 @@ The only names POOP injects (`Try`, `With`) are already in scope and need no imp
 
 Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` under a `_poop_*` key (`_poop_int`, `_poop_list_cls`, `_poop_object`, …) so the rewritten AST resolves them at runtime. This validator stops user code from referencing the same names directly, preserving the abstraction that POOP types pass as their Python builtin counterparts.
 
+### No private attributes — `poop/validators/no_private_attribute.py`
+
+| AST node | Condition | Reason | Substitute |
+|---|---|---|---|
+| `ast.Attribute` | `attr` starts with a single `_` | reaching into another object's state, past every message it offers | `obj.get_attr(name)` |
+
+The twin of `no_poop_prefix` one underscore in. That validator reserves the mangled runtime names; this reserves the single-underscore internals every wrapper declares in `__slots__` — and those were the ones a program could actually reach. Two spellings of the act were already guarded and the third, the one a reader would type, was not:
+
+```
+"abc".get_attr("_value")   # _value is private — POOP objects do not expose their internals
+"abc"._value               # 'abc', a Python str
+"abc"._value.print()       # 'str' object has no attribute 'print'
+```
+
+That contradicts the first principle twice: "no naked Python primitive ever reaches runtime" was handing one out on request, and what came back answered nothing in CPython's own vocabulary — the sentence `does_not_understand` exists to replace, reachable from a two-token expression. The blind spot was visible in the code working around it: `_selectors.is_message` records that the REPL completer used to *offer* `x._value` and calls it "the encapsulation leak taught by the tool meant to teach the language" — the completer stopped offering the spelling and the spelling kept working; `examples/patterns/memento.py` shows `saved = editor._content` as the procedural Python POOP exists to prevent, in its own comment.
+
+Three receivers stay legal, because an object reaching its own state is not reaching into anything: `self`, `cls`, and the enclosing class by its own name. The last is not hypothetical — it is one site, `Transaction._commit` in `examples/patterns/execute_around.py`, where a `@staticmethod` has neither `self` nor `cls` to write. A sweep over `examples/` reports no other case, so the rule costs one allowance and no rewrites. Dunders belong to `no_dunder_attribute`, which says something more specific about each of them, and `_poop_*` to `no_poop_prefix`; refusing them here too would answer two sentences for one spelling.
+
 ### No namespace shadow — `poop/validators/no_namespace_shadow.py`
 
 | AST node | Reason |
