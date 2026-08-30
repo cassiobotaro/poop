@@ -26,7 +26,7 @@ include = ["poop*"]
 dev = [
     "prek>=0.4.13",
     "pytest-cov>=7.1.0",
-    "ruff>=0.16.2",
+    "ruff>=0.16.4",
     "ty>=0.0.70",
 ]
 
