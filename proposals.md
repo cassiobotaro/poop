@@ -60,33 +60,6 @@ the linter holds.
 
 ---
 
-### 69. `repl.py` imports `readline` in three functions and tracks one registration in a global
-
-`readline` is absent on one platform, and the module handles that three times:
-`_setup_readline`, `_save_history` and `_readline_input` each open with their
-own `try: import readline / except ImportError`. Whether history saving has
-been registered is a module-level flag flipped through `global
-_history_saver_registered`.
-
-The same file writes to stdout two ways: `_OUT.print(...)` for values, headers
-and the banner, and bare `print(...)` eight times — each with a `# noqa: T201`
-for a rule the project does not enable (item 75) — for usage lines, `:help`,
-and `:explain` output. The two paths wrap differently and only one of them is
-the console the module's own comment says "decides per destination".
-
-Smaller, same module: `_meta` dispatches three commands through `if`/`elif`;
-`run` saves and restores `sys.displayhook` by hand around a 65-line loop;
-`try: … except FileNotFoundError: pass` is `contextlib.suppress`.
-
-**Fix.** One guarded import at the top (`try: import readline` / `except
-ImportError: readline = None`), with the three functions testing the name. The
-saver registers itself once behind `functools.cache` rather than a `global`.
-Every write goes through `_OUT`. `_meta` becomes a `dict` of command → bound
-method, and the displayhook swap a small `@contextmanager`, which also lets
-`run`'s body be read without its `try`/`finally` frame.
-
----
-
 ### 75. Twenty-four `noqa` directives silence rules that are not enabled
 
 `pyproject.toml` selects `E4`, `E7`, `E9`, `W`, `F`, `UP`, `I`, `C90`, `S`,
