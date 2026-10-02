@@ -337,6 +337,42 @@ def test_update_from_wrong_length_pair_raises() -> None:
         _dict_with([(1, 10)]).update(List(Tuple(Int(2), Int(20), Int(30))))
 
 
+def test_update_with_no_mapping_is_a_no_op() -> None:
+    # `dict.update()` is a no-op in CPython, not a refusal — both halves of
+    # `dict.update([E], **F)` are optional there.
+    d = _dict_with([(1, 10)])
+    assert d.update() is none
+    assert d == _dict_with([(1, 10)])
+
+
+def test_update_with_an_absent_mapping_is_a_no_op() -> None:
+    # An explicit `none` reads as the absent argument, the convention every
+    # other optional argument in the language follows.
+    d = _dict_with([(1, 10)])
+    d.update(none)
+    assert d == _dict_with([(1, 10)])
+
+
+def test_update_from_keywords() -> None:
+    # `dict(b=2)` already built this key; `d.update(b=2)` refused to.
+    d = _dict_with([(1, 10)])
+    d.update(b=Int(2))
+    assert d.at(Str("b")) == Int(2)
+
+
+def test_update_applies_keywords_after_the_mapping() -> None:
+    # CPython's order: a name given both ways wins as a keyword.
+    d = Dict()
+    d.update(_dict_with([("a", 1)]), a=Int(9))
+    assert d.at(Str("a")) == Int(9)
+
+
+def test_update_from_pairs_and_keywords_together() -> None:
+    d = Dict()
+    d.update(List(Tuple(Str("a"), Int(1))), b=Int(2))
+    assert d == _dict_with([("a", 1), ("b", 2)])
+
+
 def test_eq_with_non_dict_returns_false() -> None:
     assert Dict().__eq__(Int(1)) is false
 

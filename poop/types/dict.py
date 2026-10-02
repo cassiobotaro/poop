@@ -7,6 +7,7 @@ from poop.types._at import at_key, no_key, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _MISSING, _minmax
+from poop.types._unwrap import _is_absent
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.dict_items import DictItems
@@ -16,6 +17,7 @@ from poop.types.dict_values import DictValues
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
+from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
@@ -214,21 +216,38 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         # `none` and stores `k: none`, matching `get`/`pop`'s optional default.
         return self._data.setdefault(key, none if default is None else default)
 
-    def update(self, other: Object) -> NoneClass:
+    def update(
+        self, other: Object | NoneClass | None = None, **pairs: Object
+    ) -> NoneClass:
         # CPython's dict.update accepts a mapping (Dict / read-only
         # MappingProxy) or an iterable of key/value pairs, e.g.
         # ``d.update([(k1, v1), (k2, v2)])`` — not just another dict.
+        #
+        # Both halves of `dict.update([E], **F)` are optional there, and this
+        # mirrored neither: `d.update()` — a no-op in CPython — answered
+        # `missing 1 required positional argument`, and `d.update(b=2)` an
+        # `unexpected keyword argument`, though the *constructor* one line of
+        # POOP away takes exactly that (`dict(b=2)`). One signature, two
+        # answers, decided by which spelling the reader reached for. An absent
+        # mapping is `_is_absent`, the test every other optional argument in
+        # the language uses.
         from poop.types.mapping_proxy import MappingProxy
 
         if isinstance(other, Dict):
             self._data.update(other._data)
         elif isinstance(other, MappingProxy):
             self._data.update(other._dict._data)
-        else:
+        elif not _is_absent(other):
             # Each pair is a POOP Tuple — itself a 2-element iterable, so
             # dict.update unpacks it and raises the faithful ValueError on a
             # wrong-length element.
             self._data.update(cast("Iterable[tuple[Object, Object]]", other))
+        # After the mapping, as CPython applies them: a name given both ways
+        # wins as a keyword. The keys arrive as raw `str` — CPython's `**`
+        # demands them — and are stored as `Str`, the key a `{"b": 2}` literal
+        # would have written.
+        for name, value in pairs.items():
+            self._data[Str(name)] = value
         return none
 
     # A dict can hold itself as a value — the same cycle `List` guards against,
