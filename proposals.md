@@ -252,36 +252,6 @@ and POOP's comparisons answer `Boolean`.
 
 ---
 
-### 72. Seven `object()` sentinels typed `Any`, three of them for "not passed"
-
-```
-_argument.py          MISSING: Any = object()
-_minmax.py            _MISSING: Any = object()
-_peek.py              _MISSING: Any = object()
-_peek.py              _UNPEEKED: Any = object()
-_repeat.py            NOT_A_COUNT: Any = object()
-_numeric_compare.py   _NOT_NUMERIC: Any = object()
-int.py                _NOT_INTEGRAL: Any = object()
-```
-
-Three distinct objects mean "the caller gave no argument".
-`_iterable_mixin.py` imports two of them and uses each in the same class —
-`block=MISSING` on `do`, `start=_MISSING` on `sum` — so which sentinel a
-parameter defaults to depends on which helper its author was reading. Passing
-one where the other is tested is silently "an argument was given".
-
-Typing them `Any` also throws away what a sentinel is for. `default: Any =
-_MISSING` makes the parameter `Any`, so nothing downstream is checked, and
-`if default is _MISSING` narrows nothing.
-
-**Fix.** One `MISSING` in one module, as a single-member `enum.Enum` — the
-spelling type checkers narrow on `is`, pending PEP 661 — so a parameter reads
-`default: Object | Missing = MISSING` and the branch after the test is typed.
-The four domain sentinels (`NOT_A_COUNT` and friends) get the same treatment
-in place: they are return values, where narrowing matters more.
-
----
-
 ### 73. A shadowed builtin is reached five different ways
 
 POOP's wrappers define methods named `print`, `hash`, `repr`, `len`, `sorted`…
