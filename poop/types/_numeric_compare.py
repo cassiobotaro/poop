@@ -4,7 +4,7 @@
 as ``1``/``0`` against ``Int``/``Float`` (``True > 0.5`` is ``True``,
 ``True == 1`` is ``True``). ``_num_value`` returns the raw Python number behind
 any numeric-tower operand (``Int``, ``Float`` or ``Boolean``), or the
-``_NOT_NUMERIC`` sentinel for a foreign operand — the caller then answers
+``NOT_NUMERIC`` sentinel for a foreign operand — the caller then answers
 ``NotImplemented`` (ordering) or a plain ``false``/``true`` (equality), so a
 mismatch raises CPython's faithful ``TypeError`` instead of leaking an
 ``AttributeError`` from a missing ``other._value``.
@@ -15,11 +15,10 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
+from poop.types._sentinel import NOT_NUMERIC
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
-
-_NOT_NUMERIC: Any = object()
 
 
 def _num_value(other: object) -> Any:
@@ -31,7 +30,7 @@ def _num_value(other: object) -> Any:
         return other._value
     if isinstance(other, Boolean):
         return 1 if other else 0
-    return _NOT_NUMERIC
+    return NOT_NUMERIC
 
 
 class _NumericCompareMixin:
@@ -57,7 +56,7 @@ class _NumericCompareMixin:
         from poop.types.boolean import to_boolean
 
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return NotImplemented
         return to_boolean(op(self._order_value(), v))
 
@@ -80,7 +79,7 @@ class _NumericCompareMixin:
         if isinstance(other, Complex):
             return to_boolean(self._order_value() == other._value)
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return false
         return to_boolean(self._order_value() == v)
 
@@ -91,7 +90,7 @@ class _NumericCompareMixin:
         if isinstance(other, Complex):
             return false if self._order_value() == other._value else true
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return true
         return false if self._order_value() == v else true
 

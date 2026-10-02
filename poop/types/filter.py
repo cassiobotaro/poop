@@ -5,7 +5,8 @@ from typing import Any
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._peek import _UNPEEKED, _PeekMixin
+from poop.types._peek import _PeekMixin
+from poop.types._sentinel import UNPEEKED
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
@@ -17,7 +18,7 @@ class Filter(_PeekMixin, _IterableMixin, Object):
         self._source = source
         self._block = block
         self._iter: Iterator[Any] | None = None
-        self._peeked: Any = _UNPEEKED
+        self._peeked: Any = UNPEEKED
 
     @staticmethod
     def _gen(source: Any, block: Any) -> Iterator[Any]:

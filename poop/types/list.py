@@ -13,7 +13,8 @@ from poop.types._at import (
 )
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
-from poop.types._repeat import NOT_A_COUNT, _repeat_count
+from poop.types._repeat import _repeat_count
+from poop.types._sentinel import NOT_A_COUNT
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.exceptions import MIRRORS

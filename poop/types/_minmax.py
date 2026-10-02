@@ -10,15 +10,12 @@ all, which is what lets all five reach it from the top of the file.
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from poop.types._sentinel import MISSING
+
 if TYPE_CHECKING:
     # Name only — importing `none` at runtime would put this module back under
     # the callers it has to stay above.
     from poop.types.none import NoneClass
-
-# The "argument not given" sentinel. Identity is what drives the `default`
-# branch below, so every caller must import *this* object rather than build a
-# lookalike.
-_MISSING: Any = object()
 
 
 def _minmax(
@@ -58,15 +55,15 @@ def _minmax(
         # CPython's sort and answered `'int' object is not callable` — true of
         # every POOP object, and silent about what was expected.
         kwargs["key"] = a_key(key, name.lstrip("#"))
-    if default is not _MISSING:
+    if default is not MISSING:
         kwargs["default"] = default
         return func(iterable, **kwargs)
     # The sentinel *as* the default, rather than catching the `ValueError`
     # CPython raises: its sentence is `min() iterable argument is empty`, and
     # a `ValueError` out of the user's own `key` block would be caught by the
     # same `except` and reported as an empty collection it says nothing about.
-    result = func(iterable, default=_MISSING, **kwargs)
-    if result is _MISSING:
+    result = func(iterable, default=MISSING, **kwargs)
+    if result is MISSING:
         raise MIRRORS["ValueError"](
             f"{name} of an empty collection is undefined — send it a default instead"
         )

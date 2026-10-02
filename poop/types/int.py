@@ -6,13 +6,13 @@ from poop.types._alias import wrapped_instance
 from poop.types._argument import byte_order
 from poop.types._cloak import cloak
 from poop.types._message import article, binary_refusal
-from poop.types._minmax import _MISSING, _minmax
+from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
-    _NOT_NUMERIC,
     _num_value,
     _NumericCompareMixin,
 )
 from poop.types._pow import reflected_pow
+from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types.boolean import true
 from poop.types.complex import Complex
@@ -29,11 +29,9 @@ if TYPE_CHECKING:
 
 _int = int  # alias to avoid shadowing by Int.int() method
 
-_NOT_INTEGRAL: Any = object()
-
 
 def _integral_value(other: object) -> Any:
-    """Raw int behind an Int/Boolean operand, else the ``_NOT_INTEGRAL`` sentinel.
+    """Raw int behind an Int/Boolean operand, else the ``NOT_INTEGRAL`` sentinel.
 
     Bitwise and shift operators accept only integral operands: ``Int`` and
     ``Boolean`` (``bool`` is an ``int`` subclass, so ``5 & True == 1``). A
@@ -47,7 +45,7 @@ def _integral_value(other: object) -> Any:
         return other._value
     if isinstance(other, Boolean):
         return 1 if other else 0
-    return _NOT_INTEGRAL
+    return NOT_INTEGRAL
 
 
 class Int(_NumericCompareMixin, Object):
@@ -81,7 +79,7 @@ class Int(_NumericCompareMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int:
         return cast(
-            "Int", _minmax(_builtins.max, "#max", (self, *others), key, _MISSING)
+            "Int", _minmax(_builtins.max, "#max", (self, *others), key, MISSING)
         )
 
     def min(
@@ -90,7 +88,7 @@ class Int(_NumericCompareMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int:
         return cast(
-            "Int", _minmax(_builtins.min, "#min", (self, *others), key, _MISSING)
+            "Int", _minmax(_builtins.min, "#min", (self, *others), key, MISSING)
         )
 
     def bit_count(self) -> Int:
@@ -276,7 +274,7 @@ class Int(_NumericCompareMixin, Object):
         from poop.types.tuple import Tuple
 
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
         q, r = divmod(self._value, v)
         if isinstance(other, Float):
@@ -293,31 +291,31 @@ class Int(_NumericCompareMixin, Object):
 
     def __lshift__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(self._value << v)
 
     def __rshift__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(self._value >> v)
 
     def __and__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(self._value & v)
 
     def __or__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(self._value | v)
 
     def __xor__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(self._value ^ v)
 
@@ -326,31 +324,31 @@ class Int(_NumericCompareMixin, Object):
     # `__lshift__`) resolves here instead of leaking a TypeError.
     def __rlshift__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(v << self._value)
 
     def __rrshift__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(v >> self._value)
 
     def __rand__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(v & self._value)
 
     def __ror__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(v | self._value)
 
     def __rxor__(self, other: object) -> Int:
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
         return Int(v ^ self._value)
 

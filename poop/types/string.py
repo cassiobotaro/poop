@@ -11,8 +11,9 @@ from poop.types._cloak import cloak
 from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
-from poop.types._minmax import _MISSING, _minmax
-from poop.types._repeat import NOT_A_COUNT, _repeat_count
+from poop.types._minmax import _minmax
+from poop.types._repeat import _repeat_count
+from poop.types._sentinel import MISSING, NOT_A_COUNT
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -243,7 +244,7 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         self,
         *,
         key: Callable[[Str], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(builtins.min, "#min", self, key, default)
 
@@ -251,7 +252,7 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         self,
         *,
         key: Callable[[Str], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(builtins.max, "#max", self, key, default)
 

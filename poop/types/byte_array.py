@@ -14,7 +14,8 @@ from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article
-from poop.types._repeat import NOT_A_COUNT, _repeat_count
+from poop.types._repeat import _repeat_count
+from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import _faithful, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean, true

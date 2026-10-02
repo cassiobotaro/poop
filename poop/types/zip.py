@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._peek import _UNPEEKED, _PeekMixin
+from poop.types._peek import _PeekMixin
+from poop.types._sentinel import UNPEEKED
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
@@ -49,7 +50,7 @@ class Zip(_PeekMixin, _IterableMixin, Object):
         self._sources = sources
         self._strict: Boolean = to_boolean(_unwrap_bool(strict, False))
         self._iter: Iterator[Tuple] | None = None
-        self._peeked: Any = _UNPEEKED
+        self._peeked: Any = UNPEEKED
 
     @staticmethod
     def _gen(sources: tuple[Any, ...], strict: bool) -> Iterator[Tuple]:

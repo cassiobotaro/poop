@@ -16,10 +16,10 @@ if TYPE_CHECKING:
     from poop.types.object import Object
     from poop.types.zip import Zip
 
-from poop.types._argument import MISSING
 from poop.types._cloak import cloak
-from poop.types._minmax import _MISSING, _minmax
+from poop.types._minmax import _minmax
 from poop.types._mutated import iterating, reword_if_native
+from poop.types._sentinel import MISSING, Missing
 from poop.types._unwrap import _is_absent
 from poop.types.boolean import false, to_boolean
 from poop.types.int import Int
@@ -70,7 +70,7 @@ class _IterableMixin:
     def _iter_items(self) -> Iterator[Any]:
         return iter(self)
 
-    def do(self, block: Callable[[Any], Any] = MISSING) -> NoneClass:
+    def do(self, block: Callable[[Any], Any] | Missing = MISSING) -> NoneClass:
         from poop.types._argument import a_block
 
         block = a_block(block, "do")
@@ -84,7 +84,7 @@ class _IterableMixin:
             raise reword_if_native(exc, iterating(self)) from None
         return none
 
-    def map(self, block: Callable[[Any], Any] = MISSING) -> Map:
+    def map(self, block: Callable[[Any], Any] | Missing = MISSING) -> Map:
         from poop.types._argument import a_block
         from poop.types.map import Map
 
@@ -93,20 +93,20 @@ class _IterableMixin:
         # else entirely — or never, if the view is never walked.
         return Map(self, a_block(block, "map"))
 
-    def filter(self, block: Callable[[Any], Any] = MISSING) -> Filter:
+    def filter(self, block: Callable[[Any], Any] | Missing = MISSING) -> Filter:
         from poop.types._argument import a_block
         from poop.types.filter import Filter
 
         return Filter(self, a_block(block, "filter"))
 
-    def filter_false(self, block: Callable[[Any], Any] = MISSING) -> Filter:
+    def filter_false(self, block: Callable[[Any], Any] | Missing = MISSING) -> Filter:
         from poop.types._argument import a_block
         from poop.types.filter import Filter
 
         block = a_block(block, "filter_false")
         return Filter(self, lambda x: not bool(block(x)))
 
-    def find(self, block: Callable[[Any], Any] = MISSING) -> Any:
+    def find(self, block: Callable[[Any], Any] | Missing = MISSING) -> Any:
         from poop.types._argument import a_block
 
         block = a_block(block, "find")
@@ -116,7 +116,7 @@ class _IterableMixin:
         return none
 
     def reduce(
-        self, init: Any = MISSING, block: Callable[[Any, Any], Any] = MISSING
+        self, init: Any = MISSING, block: Callable[[Any, Any], Any] | Missing = MISSING
     ) -> Any:
         from poop.types._argument import MISSING, a_block
         from poop.types.exceptions import MIRRORS
@@ -132,9 +132,9 @@ class _IterableMixin:
         block = a_block(block, "reduce", param="a, b")
         return functools_reduce(block, self._iter_items(), init)
 
-    def sum(self, start: Any = _MISSING) -> Any:
+    def sum(self, start: Any = MISSING) -> Any:
         items = self._iter_items()
-        if start is not _MISSING:
+        if start is not MISSING:
             return functools_reduce(lambda a, b: a + b, items, start)
         try:
             first = next(items)
@@ -146,7 +146,7 @@ class _IterableMixin:
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         # Keyword-only, as CPython spells `min(iterable, *, key, default)` and
         # for the reason the scalar rungs settled: positionally a block is
@@ -158,7 +158,7 @@ class _IterableMixin:
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(_builtins.max, "#max", self._iter_items(), key, default)
 
@@ -178,13 +178,13 @@ class _IterableMixin:
 
         return List(*_sorted(self._iter_items(), key, reverse))
 
-    def all(self, block: Callable[[Any], Any] = MISSING) -> Boolean:
+    def all(self, block: Callable[[Any], Any] | Missing = MISSING) -> Boolean:
         from poop.types._argument import a_block
 
         block = a_block(block, "all")
         return to_boolean(_builtins.all(bool(block(x)) for x in self._iter_items()))
 
-    def any(self, block: Callable[[Any], Any] = MISSING) -> Boolean:
+    def any(self, block: Callable[[Any], Any] | Missing = MISSING) -> Boolean:
         from poop.types._argument import a_block
 
         block = a_block(block, "any")

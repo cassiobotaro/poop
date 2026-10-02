@@ -7,13 +7,13 @@ from poop.types._alias import wrapped_instance
 from poop.types._argument import text_like
 from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
-from poop.types._minmax import _MISSING, _minmax
+from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
-    _NOT_NUMERIC,
     _num_value,
     _NumericCompareMixin,
 )
 from poop.types._pow import reflected_pow
+from poop.types._sentinel import MISSING, NOT_NUMERIC
 from poop.types._unwrap import _unwrap
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
@@ -53,7 +53,7 @@ class Float(_NumericCompareMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Float:
         return cast(
-            "Float", _minmax(_builtins.max, "#max", (self, *others), key, _MISSING)
+            "Float", _minmax(_builtins.max, "#max", (self, *others), key, MISSING)
         )
 
     def min(
@@ -62,7 +62,7 @@ class Float(_NumericCompareMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Float:
         return cast(
-            "Float", _minmax(_builtins.min, "#min", (self, *others), key, _MISSING)
+            "Float", _minmax(_builtins.min, "#min", (self, *others), key, MISSING)
         )
 
     def is_integer(self) -> Boolean:
@@ -192,7 +192,7 @@ class Float(_NumericCompareMixin, Object):
         from poop.types.tuple import Tuple
 
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
         q, r = divmod(self._value, v)
         return Tuple(Float(q), Float(r))

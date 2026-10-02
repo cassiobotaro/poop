@@ -8,7 +8,8 @@ from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._repeat import NOT_A_COUNT, _repeat_count
+from poop.types._repeat import _repeat_count
+from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import _faithful, _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, to_boolean, true

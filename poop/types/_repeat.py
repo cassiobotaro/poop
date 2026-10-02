@@ -1,9 +1,6 @@
 from typing import Any
 
-# Answered for an operand that is no repeat count at all, so the caller can
-# return `NotImplemented` and let CPython raise the shape `poop_message`
-# rewrites. A sentinel rather than `None`, which is a legitimate `_value`.
-NOT_A_COUNT: Any = object()
+from poop.types._sentinel import NOT_A_COUNT
 
 
 def _repeat_count(other: object) -> Any:

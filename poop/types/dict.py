@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 from poop.types._at import at_key, no_key, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._minmax import _MISSING, _minmax
+from poop.types._minmax import _minmax
+from poop.types._sentinel import MISSING
 from poop.types._unwrap import _is_absent
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -123,7 +124,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(builtins.min, "#min", self._data, key, default)
 
@@ -131,7 +132,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(builtins.max, "#max", self._data, key, default)
 
@@ -193,9 +194,9 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         return DictItems(self)
 
     def pop(
-        self, key: Object, default: Object | NoneClass | Any = _MISSING
+        self, key: Object, default: Object | NoneClass | Any = MISSING
     ) -> Object | NoneClass:
-        if default is _MISSING:
+        if default is MISSING:
             # Only the asserting form can fail: `pop(key, default)` answers the
             # default instead, which is why it is left to CPython.
             try:

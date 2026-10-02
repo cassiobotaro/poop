@@ -5,7 +5,8 @@ from typing import Any, ClassVar, Self
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._peek import _UNPEEKED, _PeekMixin
+from poop.types._peek import _PeekMixin
+from poop.types._sentinel import UNPEEKED
 from poop.types.object import Object
 
 
@@ -51,7 +52,7 @@ class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):
 
     def __init__(self, iterable: Iterable[Any]) -> None:
         self._iter: Iterator[Any] = iter(iterable)
-        self._peeked: Any = _UNPEEKED
+        self._peeked: Any = UNPEEKED
 
     def _materialize(self) -> Iterator[Any]:
         return self._iter

@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 from poop.types._message import article
+from poop.types._sentinel import MISSING
 from poop.types.exceptions import MIRRORS
 
 
@@ -148,11 +149,6 @@ def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
     raise MIRRORS["TypeError"](
         f"#{selector} expects bytes, got {article(type(value).__name__)}"
     )
-
-
-# The "argument not given" sentinel for a block slot, so a missing one is
-# refused by the receiver rather than by CPython's call machinery.
-MISSING: Any = object()
 
 
 def a_block(

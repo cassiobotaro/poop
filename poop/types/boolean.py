@@ -245,11 +245,11 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int | Boolean:
-        from poop.types._minmax import _MISSING, _minmax
+        from poop.types._minmax import MISSING, _minmax
 
         return cast(
             "Int | Boolean",
-            _minmax(_builtins.max, "#max", (self, *others), key, _MISSING),
+            _minmax(_builtins.max, "#max", (self, *others), key, MISSING),
         )
 
     def min(
@@ -257,11 +257,11 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int | Boolean:
-        from poop.types._minmax import _MISSING, _minmax
+        from poop.types._minmax import MISSING, _minmax
 
         return cast(
             "Int | Boolean",
-            _minmax(_builtins.min, "#min", (self, *others), key, _MISSING),
+            _minmax(_builtins.min, "#min", (self, *others), key, MISSING),
         )
 
     def _num(self, other: object) -> object:

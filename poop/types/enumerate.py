@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._peek import _UNPEEKED, _PeekMixin
+from poop.types._peek import _PeekMixin
+from poop.types._sentinel import UNPEEKED
 from poop.types._unwrap import _unwrap
 from poop.types.int import Int
 from poop.types.object import Object
@@ -22,7 +23,7 @@ class Enumerate(_PeekMixin, _IterableMixin, Object):
         self._source = source
         self._start: Int = Int(_unwrap(start, 0))
         self._iter: Iterator[Tuple] | None = None
-        self._peeked: Any = _UNPEEKED
+        self._peeked: Any = UNPEEKED
 
     @staticmethod
     def _gen(source: Any, start: int) -> Iterator[Tuple]:

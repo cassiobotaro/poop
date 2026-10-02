@@ -77,7 +77,7 @@ def test_asking_twice_buffers_once() -> None:
 
 
 def test_a_buffered_none_is_not_read_as_an_empty_buffer() -> None:
-    # `_UNPEEKED` is its own sentinel rather than `none` for this reason.
+    # `UNPEEKED` is its own sentinel rather than `none` for this reason.
     from poop.types.none import none
 
     it = List(none).iter()
