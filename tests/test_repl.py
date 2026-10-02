@@ -874,8 +874,8 @@ def test_is_safe_expr_rejects_syntax_error() -> None:
 def test_setup_readline_without_readline_module_is_a_noop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # A build without readline (`import readline` raising) must degrade quietly.
-    monkeypatch.setitem(sys.modules, "readline", None)
+    # A build without readline must degrade quietly.
+    monkeypatch.setattr("poop.repl._readline", None)
     _setup_readline({})
 
 
@@ -888,6 +888,13 @@ def test_setup_readline_missing_history_file_is_ignored(
 
     monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "does_not_exist")
     _setup_readline({})
+
+
+def test_save_history_without_readline_is_a_noop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("poop.repl._readline", None)
+    _save_history()
 
 
 def test_save_history_swallows_write_errors(
@@ -908,7 +915,7 @@ def test_readline_input_without_readline_falls_back_to_input(
 ) -> None:
     from poop.repl import _readline_input
 
-    monkeypatch.setitem(sys.modules, "readline", None)
+    monkeypatch.setattr("poop.repl._readline", None)
     monkeypatch.setattr("builtins.input", lambda prompt="": "typed")
     assert _readline_input(">>> ", "    ") == "typed"
 
