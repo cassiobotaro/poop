@@ -525,7 +525,7 @@ def test_diagnostic_colorizes_when_only_stderr_is_a_terminal(
     assert "poop: boom" in out
 
 
-def test_print_error_keeps_the_caret_aligned_and_plain_off_a_terminal(
+def test_report_keeps_the_caret_aligned_and_plain_off_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     buf = io.StringIO()
@@ -538,7 +538,7 @@ def test_print_error_keeps_the_caret_aligned_and_plain_off_a_terminal(
     assert "    | ^" in out
 
 
-def test_print_error_syntax_highlights_the_line_on_a_terminal(
+def test_report_syntax_highlights_the_line_on_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     buf = io.StringIO()
