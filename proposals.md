@@ -249,26 +249,6 @@ shadows anything, and re-export the three public names.
 
 ---
 
-### 74. `_bridge.py` is two `isinstance` ladders with the complexity check switched off
-
-`to_python` and `to_poop` are nine and thirteen `if isinstance(…): return`
-rungs, each under a `# noqa: C901 — flat isinstance ladder, one branch per
-primitive/container`. The comment is accurate, and it describes a dispatch
-table. (The one on `to_python` no longer suppresses anything — `RUF100`
-reports it unused.) The ladders also depend on rung order in a way nothing
-states: `bool` must be tested before `int` because it is a subclass, and a new
-wrapper is added by finding the right height in two functions.
-
-**Fix.** `functools.singledispatch` for both directions, one registered
-function per type. Dispatch follows the MRO, so `bool` beats `int` without
-anyone ordering it, the pairing of the two halves becomes two adjacent
-`register` blocks per type, and the `noqa`s go because there is no branchy
-function left to excuse. `to_python` is on a warm path (`meta._adapted` calls
-it for every non-native protocol answer), and `singledispatch` caches per
-type, so the lookup is one dict hit.
-
----
-
 ### 75. Twenty-four `noqa` directives silence rules that are not enabled
 
 `pyproject.toml` selects `E4`, `E7`, `E9`, `W`, `F`, `UP`, `I`, `C90`, `S`,
