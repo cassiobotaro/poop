@@ -7,8 +7,11 @@ from poop.types.boolean import false, true
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.int import Int as _Int
+from poop.types.list import List
+from poop.types.map import Map
 from poop.types.none import none
 from poop.types.set import Set
+from poop.types.tuple import Tuple
 
 
 def test_empty_set() -> None:
@@ -89,8 +92,6 @@ def test_do_visits_all_elements() -> None:
 
 
 def test_map_returns_lazy_map() -> None:
-    from poop.types.map import Map
-
     s = Set(Int(1), Int(2))
     result = s.map(lambda x: x)
     assert isinstance(result, Map)
@@ -261,82 +262,60 @@ def test_union_multiple_others() -> None:
 
 
 def test_union_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert Set(Int(1), Int(2)).union(List(Int(2), Int(3))) == Set(
         Int(1), Int(2), Int(3)
     )
 
 
 def test_intersection_accepts_non_set_iterable() -> None:
-    from poop.types.tuple import Tuple
-
     assert Set(Int(1), Int(2), Int(3)).intersection(Tuple(Int(2), Int(3))) == Set(
         Int(2), Int(3)
     )
 
 
 def test_difference_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert Set(Int(1), Int(2), Int(3)).difference(List(Int(2))) == Set(Int(1), Int(3))
 
 
 def test_symmetric_difference_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert Set(Int(1), Int(2)).symmetric_difference(List(Int(2), Int(3))) == Set(
         Int(1), Int(3)
     )
 
 
 def test_update_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     s = Set(Int(1))
     s.update(List(Int(2), Int(3)))
     assert s == Set(Int(1), Int(2), Int(3))
 
 
 def test_intersection_update_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     s = Set(Int(1), Int(2), Int(3))
     s.intersection_update(List(Int(2), Int(3)))
     assert s == Set(Int(2), Int(3))
 
 
 def test_difference_update_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     s = Set(Int(1), Int(2), Int(3))
     s.difference_update(List(Int(1)))
     assert s == Set(Int(2), Int(3))
 
 
 def test_symmetric_difference_update_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     s = Set(Int(1), Int(2))
     s.symmetric_difference_update(List(Int(2), Int(3)))
     assert s == Set(Int(1), Int(3))
 
 
 def test_isdisjoint_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert Set(Int(1), Int(2)).isdisjoint(List(Int(3))) is true
 
 
 def test_issubset_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert Set(Int(1), Int(2)).issubset(List(Int(1), Int(2), Int(3))) is true
 
 
 def test_issuperset_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert Set(Int(1), Int(2), Int(3)).issuperset(List(Int(1), Int(2))) is true
 
 
@@ -546,19 +525,11 @@ def test_comparison_with_non_set_raises() -> None:
 def test_set_inplace_ops_against_foreign_are_notimplemented() -> None:
     # `&=`, `-=`, `^=` against a non-set operand answer NotImplemented so
     # CPython falls back and raises its faithful TypeError.
-    from poop.types.int import Int
-    from poop.types.set import Set
-
     for op in ("__iand__", "__isub__", "__ixor__"):
         assert getattr(Set(Int(1)), op)(Int(3)) is NotImplemented
 
 
 def test_set_subset_superset_against_foreign_raise() -> None:
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.set import Set
-
     for op in (
         lambda: Set(Int(1)) <= Int(3),
         lambda: Set(Int(1)) >= Int(3),
@@ -572,14 +543,10 @@ def test_sorted_answers_a_list_in_order() -> None:
     # A `Set` is the receiver where the need is sharpest: it is the one whose
     # own iteration order a program must not rely on, and `no_sorted` named a
     # substitute that existed on `List` and `Tuple` only.
-    from poop.types.list import List
-
     assert Set(Int(3), Int(1), Int(2)).sorted() == List(Int(1), Int(2), Int(3))
 
 
 def test_sorted_takes_key_and_reverse() -> None:
-    from poop.types.list import List
-
     s = Set(Int(1), Int(2), Int(3))
     assert s.sorted(reverse=true) == List(Int(3), Int(2), Int(1))
     assert s.sorted(key=lambda n: n.negated()) == List(Int(3), Int(2), Int(1))

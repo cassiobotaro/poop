@@ -1,5 +1,6 @@
 import pytest
 
+from poop.types.boolean import false, true
 from poop.types.filter import Filter
 from poop.types.int import Int
 from poop.types.list import List
@@ -84,10 +85,6 @@ def test_filter_eq_is_identity() -> None:
 
 
 def test_filter_ne_is_identity_based() -> None:
-    from poop.types.boolean import false, true
-    from poop.types.filter import Filter
-    from poop.types.list import List
-
     f = Filter(List(), lambda x: True)
     assert (f != f) is false
     assert (f != Filter(List(), lambda x: True)) is true

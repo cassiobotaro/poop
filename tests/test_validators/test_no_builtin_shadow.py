@@ -3,6 +3,7 @@ import ast
 import pytest
 
 from poop.errors import ValidationError
+from poop.types.exceptions import MIRRORS
 from poop.validators.no_builtin_shadow import NoBuiltinShadowValidator
 
 
@@ -169,8 +170,6 @@ def test_class_named_mirror_raises() -> None:
 
 def test_every_mirror_is_reserved() -> None:
     """Derived from MIRRORS, so a new mirror cannot be added unreserved."""
-    from poop.types.exceptions import MIRRORS
-
     for name in MIRRORS:
         tree = ast.parse(f"{name} = 5")
         with pytest.raises(ValidationError, match=f"'{name}'"):

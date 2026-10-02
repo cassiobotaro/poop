@@ -1,8 +1,10 @@
 import pytest
 
+from poop.types._message import poop_message
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.map import Map
 from poop.types.none import none
 from poop.types.slice import Slice
 from poop.types.string import Str
@@ -68,8 +70,6 @@ def test_map_transforms_elements() -> None:
 
 
 def test_map_returns_lazy_map() -> None:
-    from poop.types.map import Map
-
     assert isinstance(List(Int(1)).map(lambda x: x), Map)
 
 
@@ -542,11 +542,6 @@ def test_inplace_mul_by_non_int_raises_typeerror() -> None:
 
 
 def test_list_gt_against_foreign_raises() -> None:
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.list import List
-
     with pytest.raises(TypeError):
         _ = List(Int(1)) > Int(1)
 
@@ -654,8 +649,6 @@ def test_multiplying_by_a_foreign_operand_speaks_poop() -> None:
     # step matches, and the sentence is composed there. Before this, the *inner*
     # multiplication raised `can't multiply sequence by non-int of type 'str'`,
     # which that step does not match and could not reword.
-    from poop.types._message import poop_message
-
     with pytest.raises(TypeError) as info:
         _ = List(Int(1)) * Str("a")
     assert poop_message(info.value) == "list does not understand #* with a str"
@@ -664,16 +657,12 @@ def test_multiplying_by_a_foreign_operand_speaks_poop() -> None:
 def test_the_reflected_half_is_guarded_too() -> None:
     # Leaving `__rmul__` open sent `[1] * "a"` straight back into `Str.__rmul__`
     # and out through the same leak.
-    from poop.types._message import poop_message
-
     with pytest.raises(TypeError) as info:
         _ = Str("a") * List(Int(1))
     assert poop_message(info.value) == "str does not understand #* with a list"
 
 
 def test_in_place_multiplication_is_guarded() -> None:
-    from poop.types._message import poop_message
-
     xs = List(Int(1))
     with pytest.raises(TypeError) as info:
         xs *= Str("a")

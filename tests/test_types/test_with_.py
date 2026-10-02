@@ -4,7 +4,9 @@ import pytest
 
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
 from poop.types.none import none
+from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.with_ import With
 
@@ -167,10 +169,6 @@ def test_with_class_does_not_leak_module_path() -> None:
 
 
 def test_with_cannot_run_twice() -> None:
-    import pytest
-
-    from poop.types.with_ import With
-
     class _Ctx:
         def __enter__(self):
             return self
@@ -189,10 +187,6 @@ def test_with_checks_exit_before_entering() -> None:
     # for the exit half only afterwards ran the acquisition of a manager that
     # could never release it: the side effect happened, and nothing was ever
     # going to undo it.
-    import pytest
-
-    from poop.types.with_ import With
-
     log: list[str] = []
 
     class _EnterOnly:
@@ -208,11 +202,6 @@ def test_with_checks_exit_before_entering() -> None:
 def test_with_names_the_protocol_for_a_plain_object() -> None:
     # `AttributeError: __enter__` named a dunder POOP bans everywhere else and
     # said nothing about what the program did wrong.
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.with_ import With
-
     with pytest.raises(TypeError, match="int does not support the context manager"):
         With(lambda: Int(5)).do(lambda _: None)
 
@@ -220,11 +209,6 @@ def test_with_names_the_protocol_for_a_plain_object() -> None:
 def test_with_reads_the_protocol_off_the_type_not_the_instance() -> None:
     # A `does_not_understand` hook answering a callable must not be able to
     # forge a context manager: Python's `with` reads both slots off the type.
-    import pytest
-
-    from poop.types.object import Object
-    from poop.types.with_ import With
-
     class _Forger(Object):
         __slots__ = ()
 
@@ -239,8 +223,6 @@ def test_with_refuses_a_manager_argument_that_is_not_a_block() -> None:
     # `With` takes a block that *answers* a manager, and passing the manager
     # itself is the obvious first attempt. CPython answered `'C' object is not
     # callable`, which says nothing about what was expected.
-    from poop.types.int import Int
-
     with pytest.raises(TypeError) as info:
         With(Int(5))  # ty: ignore[invalid-argument-type]
     assert str(info.value) == (
@@ -264,11 +246,6 @@ def test_with_refuses_a_body_argument_that_is_not_a_block() -> None:
     # `do` left the body to the deferred call, which answered `'int' object is
     # not callable` — the sentence `_require_block` was written to remove, from
     # the construct its docstring names as the one worth optimizing for.
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.with_ import With
-
     with pytest.raises(TypeError) as info:
         With(lambda: none).do(Int(5))  # ty: ignore[invalid-argument-type]
     assert str(info.value) == (
@@ -279,11 +256,6 @@ def test_with_refuses_a_body_argument_that_is_not_a_block() -> None:
 def test_with_checks_the_body_before_entering() -> None:
     # The ordering `_protocol` argues for, one step up: the manager was
     # acquired *and released* for a program that was never going to use it.
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.with_ import With
-
     log: list[str] = []
 
     class _Managed:

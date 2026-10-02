@@ -11,11 +11,14 @@ Two angles:
    `transformers/_registry.py`" class of bug.
 """
 
+import importlib
+import pkgutil
+from collections import Counter
 from pathlib import Path
 
 import pytest
 
-from poop import Interpreter
+from poop import Interpreter, transformers
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.base import BaseTransformer
 from poop.transformers.try_ import NAMESPACE as TRY_NAMESPACE
@@ -103,12 +106,6 @@ def test_no_duplicate_bindings_across_transformers() -> None:
     existing key, the manual merge would silently let the second
     spread win. This test catches that at startup.
     """
-    import importlib
-    import pkgutil
-    from collections import Counter
-
-    from poop import transformers
-
     declarations: list[tuple[str, str]] = []
     for mod_info in pkgutil.iter_modules(transformers.__path__):
         if mod_info.name == "base":

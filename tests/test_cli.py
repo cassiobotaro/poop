@@ -7,6 +7,7 @@ import pytest
 from rich.console import Console
 from typer.testing import CliRunner
 
+from poop import cli
 from poop.cli import app
 
 runner = CliRunner()
@@ -193,8 +194,6 @@ def test_an_error_is_syntax_highlighted_on_a_terminal(
 ) -> None:
     # On a colour stderr, a PoopError is rendered via render_error (coloured,
     # highlighted) rather than the plain format_error string.
-    from poop import cli
-
     buf = io.StringIO()
     monkeypatch.setattr(cli, "ERR", _term_console(buf))
     f = tmp_path / "bad.py"
@@ -220,8 +219,6 @@ def test_cli_no_file_starts_the_repl(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_cli_transformers_only_colorizes_on_a_terminal(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    from poop import cli
-
     buf = io.StringIO()
     monkeypatch.setattr(cli, "OUT", _term_console(buf))
     f = tmp_path / "ok.py"
@@ -234,8 +231,6 @@ def test_cli_transformers_only_colorizes_on_a_terminal(
 
 
 def test_entry_point_invokes_the_typer_app(monkeypatch: pytest.MonkeyPatch) -> None:
-    from poop import cli
-
     called: list[bool] = []
     monkeypatch.setattr(cli, "app", lambda: called.append(True))
     cli.entry_point()

@@ -1,3 +1,5 @@
+import ast
+
 import pytest
 
 from poop.parser import parse
@@ -10,7 +12,9 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.map import Map
 from poop.types.memory_view import MemoryView
+from poop.types.slice import Slice
 from poop.types.string import Str
 
 
@@ -47,8 +51,6 @@ def test_do_yields_int_values() -> None:
 
 
 def test_map_returns_lazy_map() -> None:
-    from poop.types.map import Map
-
     result = _mv(b"\x01\x02").map(lambda b: b)
     assert isinstance(result, Map)
 
@@ -168,8 +170,6 @@ def test_ne_with_non_memory_view_returns_true() -> None:
 
 
 def test_bare_memoryview_name_is_rewritten() -> None:
-    import ast
-
     tree = MemoryViewTransformer().transform(ast.parse("f = memoryview"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
@@ -206,8 +206,6 @@ def test_slice_answers_a_memory_view() -> None:
 
 
 def test_slice_accepts_a_slice_value_object() -> None:
-    from poop.types.slice import Slice
-
     assert _mv(b"abcd").slice(Slice(Int(1), Int(3))).tobytes() == Bytes(b"bc")
 
 

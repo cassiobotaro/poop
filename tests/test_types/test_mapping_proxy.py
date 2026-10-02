@@ -3,6 +3,10 @@ import pytest
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
+from poop.types.dict_items import DictItems
+from poop.types.dict_key_iterator import DictKeyIterator
+from poop.types.dict_keys import DictKeys
+from poop.types.dict_values import DictValues
 from poop.types.int import Int
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.none import none
@@ -142,29 +146,21 @@ def test_unhashable() -> None:
 
 
 def test_keys_returns_dict_keys() -> None:
-    from poop.types.dict_keys import DictKeys
-
     mp = MappingProxy(_make())
     assert isinstance(mp.keys(), DictKeys)
 
 
 def test_values_returns_dict_values() -> None:
-    from poop.types.dict_values import DictValues
-
     mp = MappingProxy(_make())
     assert isinstance(mp.values(), DictValues)
 
 
 def test_items_returns_dict_items() -> None:
-    from poop.types.dict_items import DictItems
-
     mp = MappingProxy(_make())
     assert isinstance(mp.items(), DictItems)
 
 
 def test_iter_method_returns_dict_key_iterator() -> None:
-    from poop.types.dict_key_iterator import DictKeyIterator
-
     mp = MappingProxy(_make())
     assert isinstance(mp.iter(), DictKeyIterator)
 

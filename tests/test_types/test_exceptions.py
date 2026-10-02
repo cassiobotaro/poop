@@ -1,6 +1,8 @@
 import pytest
 
+from poop.errors import ExecutionError
 from poop.interpreter import Interpreter
+from poop.types.error import Error
 from poop.types.exceptions import (
     MIRROR_NAMES,
     MIRRORS,
@@ -127,8 +129,6 @@ def test_except_lookup_error_catches_the_raw_keyerror_dict_raises() -> None:
 
 
 def test_unmatched_exception_is_still_reraised() -> None:
-    from poop.errors import ExecutionError
-
     with pytest.raises(ExecutionError, match="KeyError"):
         Interpreter().run_source(
             "class P:\n"
@@ -158,8 +158,6 @@ def test_poop_class_of_falls_back_to_exception_for_unmirrored_base() -> None:
     # A BaseException subtree with no mirror (KeyboardInterrupt is not under
     # Exception) answers with the root Exception mirror rather than leaking the
     # raw native class back to user code.
-    from poop.types.exceptions import MIRRORS, poop_class_of
-
     assert poop_class_of(KeyboardInterrupt()) is MIRRORS["Exception"]
 
 
@@ -306,8 +304,6 @@ def test_a_name_only_one_native_carries_is_refused_only_there() -> None:
 def test_the_class_and_the_caught_error_agree_on_a_python_attribute(name: str) -> None:
     # The disagreement the item was: the instance side refused all three while
     # the class advertised them. Both refuse now.
-    from poop.types.error import Error
-
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood):
         getattr(error, name)

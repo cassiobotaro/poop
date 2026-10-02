@@ -366,8 +366,6 @@ def test_an_empty_slice_answers_an_empty_range() -> None:
 
 
 def test_sorted_answers_a_list() -> None:
-    from poop.types.list import List
-
     assert _range(1, 3).sorted() == List(Int(1), Int(2), Int(3))
 
 

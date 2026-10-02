@@ -106,10 +106,6 @@ def test_poop_range_still_admits_the_boolean_rung() -> None:
 
 
 def test_bare_range_name_is_rewritten_to_the_mangled_binding() -> None:
-    import ast
-
-    from poop.transformers.range import RangeTransformer
-
     tree = RangeTransformer().transform(ast.parse("f = range"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

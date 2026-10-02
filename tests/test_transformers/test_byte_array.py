@@ -1,6 +1,8 @@
+import ast
+
 import pytest
 
-from poop.transformers.byte_array import _poop_bytearray_from
+from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.float import Float
@@ -56,10 +58,6 @@ def test_bytearray_from_text_takes_the_errors_handler_too() -> None:
 
 
 def test_bare_bytearray_name_is_rewritten_to_the_mangled_binding() -> None:
-    import ast
-
-    from poop.transformers.byte_array import ByteArrayTransformer
-
     tree = ByteArrayTransformer().transform(ast.parse("f = bytearray"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

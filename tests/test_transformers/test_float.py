@@ -5,6 +5,7 @@ import pytest
 from poop.errors import ExecutionError
 from poop.interpreter import Interpreter
 from poop.transformers.float import FloatTransformer, _poop_float_from
+from poop.types.boolean import false, true
 from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
@@ -108,8 +109,6 @@ def test_float_from_str_parses() -> None:
 
 def test_float_from_boolean() -> None:
     # proposal 154: float(True) -> 1.0, float(False) -> 0.0.
-    from poop.types.boolean import false, true
-
     assert _poop_float_from(true) == Float(1.0)
     assert _poop_float_from(false) == Float(0.0)
 

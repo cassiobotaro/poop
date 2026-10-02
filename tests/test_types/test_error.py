@@ -1,5 +1,6 @@
 import pytest
 
+from poop.types._selectors import explain
 from poop.types.boolean import false, true
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
@@ -77,10 +78,6 @@ def test_refusal_names_the_wrapped_class_not_the_wrapper() -> None:
     # `Error` is cloaked as `object` — right for the class, since no exception
     # name is true for it, and wrong for an instance that stands for exactly
     # one. Python reports `'ZeroDivisionError' object has no attribute 'zzz'`.
-    import pytest
-
-    from poop.types.object import MessageNotUnderstood
-
     with pytest.raises(MessageNotUnderstood, match="ZeroDivisionError does not"):
         Error(ZeroDivisionError("division by zero")).zzz()  # ty: ignore[unresolved-attribute]
 
@@ -88,10 +85,6 @@ def test_refusal_names_the_wrapped_class_not_the_wrapper() -> None:
 def test_refusal_keeps_every_hint_shape() -> None:
     # The label is the only thing overridden: the typo hint and the Smalltalk
     # selector table must still answer for an Error receiver.
-    import pytest
-
-    from poop.types.object import MessageNotUnderstood
-
     error = Error(ValueError("boom"))
     with pytest.raises(MessageNotUnderstood, match="did you mean #message"):
         error.mesage()  # ty: ignore[unresolved-attribute]
@@ -101,9 +94,6 @@ def test_refusal_keeps_every_hint_shape() -> None:
 
 def test_explain_derives_the_label_when_none_is_given() -> None:
     # Only Error passes one; every other receiver keeps naming its own type.
-    from poop.types._selectors import explain
-    from poop.types.int import Int
-
     assert explain(Int(1), "zzz").startswith("int does not understand")
 
 
@@ -189,16 +179,12 @@ def test_raise_keeps_the_notes_a_new_exception_would_drop() -> None:
 
 @pytest.mark.parametrize("name", ["name", "superclass"])
 def test_a_class_side_message_is_refused_by_saying_so(name: str) -> None:
-    from poop.types.object import MessageNotUnderstood
-
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood, match=f"#{name} asks a class"):
         getattr(error, name)
 
 
 def test_the_redirect_names_the_message_that_answers() -> None:
-    from poop.types.object import MessageNotUnderstood
-
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood, match=r"send it to #kind\(\)"):
         error.name()  # ty: ignore[unresolved-attribute]
@@ -207,8 +193,6 @@ def test_the_redirect_names_the_message_that_answers() -> None:
 
 
 def test_an_unknown_name_keeps_the_generic_refusal() -> None:
-    from poop.types.object import MessageNotUnderstood
-
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
         error.zzz()  # ty: ignore[unresolved-attribute]
@@ -217,8 +201,6 @@ def test_an_unknown_name_keeps_the_generic_refusal() -> None:
 def test_a_refusing_class_side_descriptor_is_not_redirected() -> None:
     # `args` is a `class_side_read_refusal`, so the class does not answer it
     # either — pointing at `#kind()` would send the reader to another refusal.
-    from poop.types.object import MessageNotUnderstood
-
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
         error.args  # ty: ignore[unresolved-attribute]  # noqa: B018

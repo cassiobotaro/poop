@@ -105,9 +105,6 @@ quote-style = "double"
 "tests/*" = [
   # use of assert detected
   "S101",
-  # tests import inside the test that needs the module, often on purpose
-  # (monkeypatching, import-time behaviour)
-  "PLC0415",
   # `match=` patterns are prose; an unescaped `.` matches itself too
   "RUF043",
   # mock helpers in tests deliberately use loose annotations

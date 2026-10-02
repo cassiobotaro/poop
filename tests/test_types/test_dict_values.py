@@ -1,6 +1,7 @@
 import pytest
 
 from poop.interpreter import Interpreter
+from poop.transformers.list import _poop_list_from
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.dict_reverse_value_iterator import DictReverseValueIterator
@@ -60,8 +61,6 @@ def test_mapping() -> None:
 
 
 def test_list_escape() -> None:
-    from poop.transformers.list import _poop_list_from
-
     values = DictValues(_make())
     lst = _poop_list_from(values)
     assert isinstance(lst, List)

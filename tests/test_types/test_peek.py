@@ -14,8 +14,13 @@ import pytest
 from poop.types._peek import _PeekMixin
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
+from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.list_iterator import ListIterator
+from poop.types.map import Map
+from poop.types.memory_view_iterator import MemoryViewIterator
+from poop.types.none import none
 from poop.types.set import Set
 from poop.types.string import Str
 
@@ -78,8 +83,6 @@ def test_asking_twice_buffers_once() -> None:
 
 def test_a_buffered_none_is_not_read_as_an_empty_buffer() -> None:
     # `UNPEEKED` is its own sentinel rather than `none` for this reason.
-    from poop.types.none import none
-
     it = List(none).iter()
     assert it.has_next() is true
     assert it.next() is none
@@ -191,18 +194,12 @@ def test_the_cursor_names_the_collection_it_walks(
 def test_a_view_that_cannot_name_its_collection_stays_honest() -> None:
     # `Map` / `Filter` / `Zip` / `Enumerate` wrap a source they do not name,
     # so the default label is the truthful one rather than a guess.
-    from poop.types.map import Map
-
     assert Map._iterating == "the collection"
 
 
 def test_every_concrete_iterator_derives_a_label() -> None:
     # The label follows the CPython iterator name each one already declares,
     # so a new iterator cannot ship without one.
-    from poop.types.dict_key_iterator import DictKeyIterator
-    from poop.types.list_iterator import ListIterator
-    from poop.types.memory_view_iterator import MemoryViewIterator
-
     assert ListIterator._iterating == "list"
     assert DictKeyIterator._iterating == "dict"
     # The one name whose prefix is not the collection's own spelling.

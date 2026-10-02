@@ -12,7 +12,7 @@ import pytest
 
 from poop.errors import PoopError
 from poop.interpreter import Interpreter
-from poop.types._message import article, binary_refusal, poop_message
+from poop.types._message import article, binary_refusal, cannot_be_hashed, poop_message
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
@@ -145,8 +145,6 @@ def test_a_hashable_receiver_still_answers_its_hash() -> None:
 def test_an_unmatched_type_error_passes_through() -> None:
     # The rule `_message`'s docstring sets for every rewrite in it: anything
     # unrecognised degrades to the old behaviour rather than to a crash.
-    from poop.types._message import cannot_be_hashed
-
     assert cannot_be_hashed(TypeError("something else entirely")) is None
     assert cannot_be_hashed(TypeError("unhashable type: 'list'")) is not None
 

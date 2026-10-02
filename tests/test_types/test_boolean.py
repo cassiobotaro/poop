@@ -1,8 +1,15 @@
+import pytest
+
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.boolean import false as false2
 from poop.types.boolean import true as true2
+from poop.types.bytes import Bytes
+from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.list import List
 from poop.types.none import none
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def test_true_is_instance_of_boolean() -> None:
@@ -147,8 +154,6 @@ def test_eager_or_operator() -> None:
 def test_bitwise_with_int_folds_to_int_wrapper() -> None:
     # `bool` is an int subclass: `True & 5 == 1`, `True | 5 == 5`,
     # `True ^ 5 == 4`, all yielding an int (POOP `Int`), never a raw int.
-    from poop.types.int import Int
-
     for result, expected, label in [
         (true & Int(5), 1, "and"),
         (Int(5) & true, 1, "rand"),
@@ -168,8 +173,6 @@ def test_shift_between_booleans_folds_to_int() -> None:
     # operand is: `True << True` is `2` in CPython, an int and not a bool.
     # The mixed cases already worked through `Int`'s reflected side; only
     # Boolean-against-Boolean reached neither operand.
-    from poop.types.int import Int
-
     for result, expected, label in [
         (true << true, 2, "lshift"),
         (true >> true, 0, "rshift"),
@@ -276,71 +279,49 @@ def test_to_boolean_accepts_poop_boolean() -> None:
 
 
 def test_add_with_int() -> None:
-    from poop.types.int import Int
-
     assert true + Int(1) == Int(2)
     assert Int(1) + true == Int(2)
 
 
 def test_add_two_booleans() -> None:
-    from poop.types.int import Int
-
     assert true + true == Int(2)
     assert true + false == Int(1)
 
 
 def test_mul_with_int() -> None:
-    from poop.types.int import Int
-
     assert true * Int(3) == Int(3)
     assert Int(3) * true == Int(3)
     assert false * Int(3) == Int(0)
 
 
 def test_sub_with_int() -> None:
-    from poop.types.int import Int
-
     assert true - Int(1) == Int(0)
     assert Int(3) - true == Int(2)
 
 
 def test_truediv_with_int() -> None:
-    from poop.types.float import Float
-    from poop.types.int import Int
-
     assert true / Int(2) == Float(0.5)
 
 
 def test_mod_with_int() -> None:
-    from poop.types.int import Int
-
     assert Int(10) % true == Int(0)
 
 
 def test_pow_with_int() -> None:
-    from poop.types.int import Int
-
     assert true ** Int(3) == Int(1)
     assert Int(2) ** true == Int(2)
 
 
 def test_add_with_float() -> None:
-    from poop.types.float import Float
-
     assert true + Float(1.5) == Float(2.5)
     assert Float(1.0) + true == Float(2.0)
 
 
 def test_sum_of_booleans_counts_truthy() -> None:
-    from poop.types.int import Int
-    from poop.types.list import List
-
     assert List(true, false, true, true).sum() == Int(3)
 
 
 def test_arithmetic_with_foreign_type_raises() -> None:
-    import pytest
-
     with pytest.raises(TypeError):
         _ = true + Str("x")
 
@@ -348,9 +329,6 @@ def test_arithmetic_with_foreign_type_raises() -> None:
 def test_comparison_with_numeric_tower_folds_as_int() -> None:
     # Proposal 165: bool is an int subclass — a Boolean orders/compares as 1/0
     # against the whole numeric tower, not just against other Booleans.
-    from poop.types.float import Float
-    from poop.types.int import Int
-
     assert true > Float(0.5)
     assert (false > Float(0.5)) is false
     assert true == Int(1)
@@ -362,8 +340,6 @@ def test_comparison_with_numeric_tower_folds_as_int() -> None:
 
 def test_comparison_with_foreign_type() -> None:
     # Equality answers false/true for a foreign operand; ordering raises.
-    import pytest
-
     assert (true == Str("x")) is false
     assert true != Str("x")
     with pytest.raises(TypeError):
@@ -371,15 +347,11 @@ def test_comparison_with_foreign_type() -> None:
 
 
 def test_floordiv_with_int() -> None:
-    from poop.types.int import Int
-
     assert true // Int(2) == Int(0)
     assert true // Int(1) == Int(1)
 
 
 def test_forward_mod_with_int() -> None:
-    from poop.types.int import Int
-
     assert true % Int(2) == Int(1)
     assert false % Int(3) == Int(0)
 
@@ -387,9 +359,6 @@ def test_forward_mod_with_int() -> None:
 def test_reflected_ops_fold_to_one_and_redispatch() -> None:
     # A left operand that delegates to Boolean's reflected op finds the bool
     # folded to 1 and re-dispatched through Int (bool is an int subclass).
-    from poop.types.float import Float
-    from poop.types.int import Int
-
     assert true.__rtruediv__(Int(4)) == Float(4.0)
     assert true.__rfloordiv__(Int(7)) == Int(7)
     assert true.__rand__(Int(0b0110)) == Int(0)
@@ -405,10 +374,6 @@ def test_reflected_ops_fold_to_one_and_redispatch() -> None:
 def test_reflected_op_with_operand_lacking_the_method_is_notimplemented() -> None:
     # `none` answers no arithmetic dunder, so Boolean's reflected fallback
     # yields NotImplemented and CPython raises its faithful TypeError.
-    import pytest
-
-    from poop.types.none import none
-
     assert true.__radd__(none) is NotImplemented
     with pytest.raises(TypeError):
         _ = none + true
@@ -429,10 +394,6 @@ def test_the_int_side_messages_answer_what_cpython_answers() -> None:
     # `bool` computes like an `int` in CPython, and every validator naming a
     # numeric substitute (`no_abs` → `x.abs()`, `no_bin` → `x.bin()`, …) left
     # a Boolean receiver with nowhere to go.
-    from poop.types.bytes import Bytes
-    from poop.types.int import Int
-    from poop.types.tuple import Tuple
-
     assert true.abs() == Int(1)
     assert true.bit_length() == Int(1)
     assert false.bit_count() == Int(0)
@@ -462,8 +423,6 @@ def test_from_bytes_completes_the_to_bytes_pair() -> None:
     # The one half-pair in the int-side family: `to_bytes` answered and
     # `from_bytes` did not, with the near-miss hint pointing back at the
     # message the reader had not asked for.
-    from poop.types.bytes import Bytes
-
     assert Boolean.from_bytes(Bytes(b"\x01"), Str("big")) is true
     assert Boolean.from_bytes(Bytes(b"\x00"), Str("big")) is false
 
@@ -472,16 +431,12 @@ def test_from_bytes_answers_a_boolean_because_cpython_runs_it_through_cls() -> N
     # Unlike `abs` and its neighbours, this one is not a fold: CPython builds
     # the answer through `cls`, so `bool.from_bytes(b"\x05", "big")` is `True`
     # and not `5`.
-    from poop.types.bytes import Bytes
-
     assert Boolean.from_bytes(Bytes(b"\x05"), Str("big")) is true
 
 
 def test_the_int_side_messages_answer_an_int_not_a_boolean() -> None:
     # `abs(True)` is `1`, not `True`; answering a Boolean would be a quiet
     # type error one message down the chain.
-    from poop.types.int import Int
-
     assert isinstance(true.abs(), Int)
     assert isinstance(true.real(), Int)
     assert true.abs().class_name() == Str("int")
@@ -490,8 +445,6 @@ def test_the_int_side_messages_answer_an_int_not_a_boolean() -> None:
 def test_min_and_max_answer_the_operand_cpython_answers() -> None:
     # These two are not folded through `_as_int`: they answer one of their
     # *operands*, and CPython's `min(True, 5)` is `True`.
-    from poop.types.int import Int
-
     assert true.min(Int(5)) is true
     assert true.max(Int(5)) == Int(5)
     assert false.max(true) is true
@@ -499,10 +452,6 @@ def test_min_and_max_answer_the_operand_cpython_answers() -> None:
 
 
 def test_min_takes_key_only_by_keyword() -> None:
-    import pytest
-
-    from poop.types.int import Int
-
     with pytest.raises(TypeError):
         true.min(Int(5), lambda n: n)  # ty: ignore[invalid-argument-type]
 

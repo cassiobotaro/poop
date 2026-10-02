@@ -3,6 +3,7 @@ from collections.abc import Callable
 
 import pytest
 
+from poop.transformers.list import _poop_list_from
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.dict_key_iterator import DictKeyIterator
@@ -78,8 +79,6 @@ def test_mapping() -> None:
 
 
 def test_list_escape() -> None:
-    from poop.transformers.list import _poop_list_from
-
     keys = DictKeys(_make())
     lst = _poop_list_from(keys)
     assert isinstance(lst, List)
@@ -270,6 +269,4 @@ def test_comparison_accepts_the_other_set_like_view() -> None:
 
 
 def test_sorted_answers_a_list_of_keys() -> None:
-    from poop.types.list import List
-
     assert DictKeys(_make()).sorted() == List(Str("a"), Str("b"))

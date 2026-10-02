@@ -69,10 +69,6 @@ def test_bindings_contains_mangled_slice() -> None:
 
 
 def test_bare_slice_name_is_rewritten_to_the_mangled_binding() -> None:
-    import ast
-
-    from poop.transformers.slice import SliceTransformer
-
     tree = SliceTransformer().transform(ast.parse("f = slice"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

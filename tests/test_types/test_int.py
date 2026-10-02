@@ -2,6 +2,9 @@ from typing import Any
 
 import pytest
 
+from poop.transformers.complex import _poop_complex_from
+from poop.transformers.float import _poop_float_from
+from poop.transformers.int import IntTransformer, _poop_int_from
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.complex import Complex
@@ -372,8 +375,6 @@ def test_round_with_poop_int_ndigits() -> None:
 
 
 def test_round_accepts_poop_none() -> None:
-    from poop.types.none import none
-
     assert Int(5).round(none) == Int(5)
 
 
@@ -390,23 +391,17 @@ def test_is_integer_always_true() -> None:
 
 
 def test_int_constructor_identity() -> None:
-    from poop.transformers.int import _poop_int_from
-
     n = Int(3)
     assert _poop_int_from(n) is n
 
 
 def test_float_constructor() -> None:
-    from poop.transformers.float import _poop_float_from
-
     result = _poop_float_from(Int(3))
     assert isinstance(result, Float)
     assert result._value == pytest.approx(3.0)
 
 
 def test_complex_constructor() -> None:
-    from poop.transformers.complex import _poop_complex_from
-
     assert _poop_complex_from(Int(3)) == Complex(3 + 0j)
 
 
@@ -499,15 +494,11 @@ def test_from_bytes_roundtrips_with_to_bytes() -> None:
 
 
 def test_eq_with_float_same_value() -> None:
-    from poop.types.float import Float
-
     assert Int(1) == Float(1.0)
     assert Int(2) != Float(2.5)
 
 
 def test_ne_with_float_same_value() -> None:
-    from poop.types.float import Float
-
     assert (Int(1) != Float(1.0)) is false
     assert (Int(2) != Float(2.5)) is true
 
@@ -517,8 +508,6 @@ def test_ne_with_non_numeric_returns_true() -> None:
 
 
 def test_arith_with_float_operand_promotes_to_float() -> None:
-    from poop.types.float import Float
-
     for op, expected_val in [
         (Int(1) + Float(2.5), 3.5),
         (Int(5) - Float(2.0), 3.0),
@@ -668,8 +657,6 @@ def test_pow_with_a_zero_modulus_names_no_builtin() -> None:
 
 def test_a_boolean_receiver_reaches_the_same_refusal() -> None:
     # `Boolean.pow` delegates through `_as_int`, so it inherits the guard.
-    from poop.types.boolean import true
-
     with pytest.raises(ValueError, match=r"^pow's modulus cannot be 0$"):
         true.pow(Int(3), Int(0))
 
@@ -712,8 +699,6 @@ def test_from_bytes_under_the_bare_builtin_name() -> None:
     # `cls` is the alias there, whose call is the converter — which took the
     # finished int a classmethod holds and answered `cannot convert int to
     # int`, a sentence with nothing in it.
-    from poop.transformers.int import IntTransformer
-
     alias = IntTransformer.BINDINGS["_poop_int_cls"]
     assert alias.from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)  # ty: ignore[unresolved-attribute]
     assert Int(1).from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)

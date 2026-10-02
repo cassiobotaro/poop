@@ -10,7 +10,9 @@ from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.map import Map
 from poop.types.memory_view import MemoryView
+from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -79,8 +81,6 @@ def test_do_yields_int_byte_values() -> None:
 
 
 def test_map_returns_lazy_map() -> None:
-    from poop.types.map import Map
-
     result = Bytes(b"\x01\x02").map(lambda b: b)
     assert isinstance(result, Map)
 
@@ -311,9 +311,6 @@ def test_join() -> None:
 
 
 def test_join_accepts_other_bytes_like() -> None:
-    from poop.types.byte_array import ByteArray
-    from poop.types.memory_view import MemoryView
-
     parts = List(Bytes(b"a"), ByteArray(bytearray(b"b")), MemoryView(memoryview(b"c")))
     assert Bytes(b"-").join(parts) == Bytes(b"a-b-c")
 
@@ -489,8 +486,6 @@ def test_add_concatenates() -> None:
 
 def test_add_accepts_a_byte_array() -> None:
     # CPython concatenates `bytes + bytearray` and answers bytes.
-    from poop.types.byte_array import ByteArray
-
     assert Bytes(b"ab") + ByteArray(bytearray(b"cd")) == Bytes(b"abcd")
 
 
@@ -514,8 +509,6 @@ def test_fromhex_roundtrips_with_hex() -> None:
 
 
 def test_methods_accept_poop_none_kwargs() -> None:
-    from poop.types.none import none
-
     base = Bytes(b"  hi  ")
     assert base.lstrip(chars=none) == Bytes(b"hi  ")
     assert base.rstrip(chars=none) == Bytes(b"  hi")
@@ -539,8 +532,6 @@ def test_find_with_start_and_end() -> None:
 
 
 def test_index_with_start_raises_when_absent() -> None:
-    import pytest
-
     with pytest.raises(ValueError):
         Bytes(b"hello hello").index(Bytes(b"hello"), Int(0), Int(4))
 
@@ -652,11 +643,6 @@ def test_bytes_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
 
 
 def test_bytes_ordering_against_foreign_raises() -> None:
-    import pytest
-
-    from poop.types.bytes import Bytes
-    from poop.types.int import Int
-
     for op in (
         lambda: Bytes(b"a") <= Int(1),
         lambda: Bytes(b"a") > Int(1),
@@ -693,47 +679,33 @@ def test_startswith_tuple_of_prefixes() -> None:
     # With `or` banned, a tuple is the only way to ask the question — and the
     # refusal was self-contradicting: the reader *did* pass a tuple, and
     # CPython said a tuple is not a tuple (it meant its own).
-    from poop.types.tuple import Tuple
-
     assert Bytes(b"ab").startswith(Tuple(Bytes(b"a"), Bytes(b"z"))) is true
     assert Bytes(b"ab").startswith(Tuple(Bytes(b"x"), Bytes(b"z"))) is false
 
 
 def test_endswith_tuple_of_suffixes() -> None:
-    from poop.types.tuple import Tuple
-
     assert Bytes(b"ab").endswith(Tuple(Bytes(b"b"), Bytes(b"z"))) is true
     assert Bytes(b"ab").endswith(Tuple(Bytes(b"x"), Bytes(b"z"))) is false
 
 
 def test_startswith_empty_tuple_is_false() -> None:
-    from poop.types.tuple import Tuple
-
     assert Bytes(b"ab").startswith(Tuple()) is false
 
 
 def test_startswith_tuple_with_a_wrong_typed_member_raises() -> None:
     # The members unwrap through `_faithful`, so a `Str` reaches CPython and
     # raises the faithful error instead of being silently coerced.
-    from poop.types.string import Str
-    from poop.types.tuple import Tuple
-
     with pytest.raises(TypeError):
         Bytes(b"ab").startswith(Tuple(Str("a")))
 
 
 def test_sorted_answers_a_list_of_ints() -> None:
-    from poop.types.int import Int
-    from poop.types.list import List
-
     assert Bytes(b"ba").sorted() == List(Int(97), Int(98))
 
 
 def test_ord_answers_the_byte_value() -> None:
     # `no_chr` forbids `ord(x)` and names `x.ord()`; CPython's `ord` takes a
     # one-byte `bytes` (`ord(b"a")` is 97) and only `Str` answered it.
-    from poop.types.int import Int
-
     assert Bytes(b"a").ord() == Int(97)
 
 
@@ -755,8 +727,6 @@ def test_ord_refuses_a_receiver_that_is_not_one_byte(data: bytes) -> None:
 
 
 def test_fromhex_under_the_bare_builtin_name() -> None:
-    from poop.transformers.bytes import BytesTransformer
-
     alias = BytesTransformer.BINDINGS["_poop_bytes_cls"]
     assert alias.fromhex(Str("6162")) == Bytes(b"ab")  # ty: ignore[unresolved-attribute]
 
@@ -766,8 +736,6 @@ def test_fromhex_sent_to_an_instance_still_works() -> None:
 
 
 def test_fromhex_on_a_subclass_answers_the_subclass() -> None:
-    from poop.transformers.bytes import BytesTransformer
-
     alias = BytesTransformer.BINDINGS["_poop_bytes_cls"]
 
     class Sub(alias):  # ty: ignore[invalid-base]

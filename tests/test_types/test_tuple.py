@@ -4,6 +4,7 @@ from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.map import Map
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -58,8 +59,6 @@ def test_map_transforms_elements() -> None:
 
 
 def test_map_returns_lazy_map() -> None:
-    from poop.types.map import Map
-
     assert isinstance(Tuple(Int(1)).map(lambda x: x), Map)
 
 
@@ -376,11 +375,6 @@ def test_ordering_with_foreign_operand_raises_typeerror() -> None:
 
 
 def test_tuple_gt_against_foreign_raises() -> None:
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.tuple import Tuple
-
     with pytest.raises(TypeError):
         _ = Tuple(Int(1)) > Int(1)
 

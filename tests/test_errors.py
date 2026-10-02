@@ -4,8 +4,12 @@ from poop.errors import (
     ExecutionError,
     TransformError,
     ValidationError,
+    _caret_column,
+    _display_width,
     format_error,
+    render_error,
 )
+from poop.interpreter import Interpreter
 
 
 def test_format_error_draws_gutter_and_caret() -> None:
@@ -102,8 +106,6 @@ def test_format_error_counts_lines_the_way_the_tokenizer_does() -> None:
 def test_render_error_without_source_is_a_plain_red_message() -> None:
     # No source to point at: render_error falls back to the bare `poop:` line,
     # coloured red, with neither gutter nor caret.
-    from poop.errors import render_error
-
     text = render_error(ValidationError("nope", 4, 8), None)
     assert text.plain == "poop: nope (line 4, col 8)"
     assert text.style == "red"
@@ -112,8 +114,6 @@ def test_render_error_without_source_is_a_plain_red_message() -> None:
 def test_render_error_with_line_but_no_column_draws_no_caret() -> None:
     # ExecutionError carries a line but no col_offset: the highlighted gutter is
     # drawn, but there is nothing to point a caret at.
-    from poop.errors import render_error
-
     text = render_error(ExecutionError("KeyError: 'zzz'", 1), "d.at('zzz')")
     assert "^" not in text.plain
     assert "d.at('zzz')" in text.plain
@@ -126,9 +126,6 @@ def test_render_error_with_line_but_no_column_draws_no_caret() -> None:
 # *zero*, so it overshot the other way.
 def _caret_and_target(source: str, needle: str) -> tuple[int, int]:
     """Where the caret is printed, and where its target sits, in columns."""
-    from poop.errors import _display_width, format_error
-    from poop.interpreter import Interpreter
-
     with pytest.raises(ValidationError) as info:
         Interpreter().run_source(source + "\n")
     lines = format_error(info.value, source + "\n").splitlines()
@@ -158,8 +155,6 @@ def test_the_caret_lands_under_its_target(text: str) -> None:
 
 
 def test_display_width_counts_columns_not_characters() -> None:
-    from poop.errors import _display_width
-
     assert _display_width("abc") == 3
     assert _display_width("日本語") == 6
     assert _display_width("💩") == 2
@@ -171,6 +166,4 @@ def test_display_width_counts_columns_not_characters() -> None:
 
 def test_a_tab_still_expands_to_its_stop() -> None:
     # The conversion this one was added beside must keep working.
-    from poop.errors import _caret_column
-
     assert _caret_column("\tx = 1", 1) == 8

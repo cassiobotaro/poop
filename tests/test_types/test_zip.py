@@ -1,3 +1,5 @@
+import ast
+
 import pytest
 
 from poop.parser import parse
@@ -9,6 +11,7 @@ from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.int import Int as _Int
 from poop.types.list import List
+from poop.types.none import none
 from poop.types.range import Range
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -249,8 +252,6 @@ def test_poop_zip_accepts_python_none_strict() -> None:
 
 
 def test_poop_zip_accepts_poop_none_strict() -> None:
-    from poop.types.none import none
-
     z = _poop_zip(List(Int(1)), List(Int(2)), strict=none)
     assert z._strict is false
 
@@ -266,8 +267,6 @@ def test_poop_zip_rejects_non_boolean_strict() -> None:
 
 
 def test_bare_zip_name_is_rewritten() -> None:
-    import ast
-
     tree = ZipTransformer().transform(ast.parse("f = zip"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

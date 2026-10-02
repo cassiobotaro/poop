@@ -18,7 +18,25 @@ import pytest
 
 from poop import Interpreter
 from poop.errors import PoopError
+from poop.types._message import poop_message
+from poop.types._selectors import is_message
+from poop.types.block import Block
+from poop.types.boolean import true
+from poop.types.byte_array import ByteArray
+from poop.types.bytes import Bytes
+from poop.types.complex import Complex
+from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
+from poop.types.float import Float
+from poop.types.frozen_set import FrozenSet
+from poop.types.int import Int
+from poop.types.list import List
+from poop.types.none import none
+from poop.types.range import Range
+from poop.types.set import Set
+from poop.types.slice import Slice
+from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 # Each pattern names a construct POOP does not have. `indices` and `index out
 # of range` describe subscripting (no_subscript); `operand type(s)` and `not
@@ -383,21 +401,6 @@ def _receivers() -> dict[str, object]:
     """One live value per wrapper, built the way a program would."""
     if _SAMPLES:
         return _SAMPLES
-    from poop.types.boolean import true
-    from poop.types.byte_array import ByteArray
-    from poop.types.bytes import Bytes
-    from poop.types.complex import Complex
-    from poop.types.dict import Dict
-    from poop.types.float import Float
-    from poop.types.frozen_set import FrozenSet
-    from poop.types.int import Int
-    from poop.types.list import List
-    from poop.types.none import none
-    from poop.types.range import Range
-    from poop.types.set import Set
-    from poop.types.slice import Slice
-    from poop.types.string import Str
-    from poop.types.tuple import Tuple
 
     mapping = Dict()
     mapping.at_put(Str("a"), Int(1))
@@ -424,14 +427,6 @@ def _receivers() -> dict[str, object]:
 
 
 def _wrong_arguments() -> list[object]:
-    from poop.types.block import Block
-    from poop.types.boolean import true
-    from poop.types.dict import Dict
-    from poop.types.int import Int
-    from poop.types.list import List
-    from poop.types.none import none
-    from poop.types.string import Str
-
     return [Str("zz"), Int(3), List(Int(1)), Block(lambda x: x), true, none, Dict()]
 
 
@@ -453,9 +448,6 @@ _UNSENDABLE = frozenset(
 
 def _sweep_failures() -> list[tuple[str, str, str]]:
     """(receiver, message, text) for every leak the wrong-argument sweep finds."""
-    from poop.types._message import poop_message
-    from poop.types._selectors import is_message
-
     found: dict[tuple[str, str], tuple[str, str, str]] = {}
     for label, receiver in _receivers().items():
         for name in sorted(dir(receiver)):
@@ -491,8 +483,6 @@ def test_no_message_leaks_pythons_wording_when_sent_wrong() -> None:
 
 def test_the_sweep_actually_sends_messages() -> None:
     """A sweep that stopped reaching the wrappers would report a clean run."""
-    from poop.types._selectors import is_message
-
     sendable = sum(
         1
         for receiver in _receivers().values()

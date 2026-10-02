@@ -19,6 +19,7 @@ import pytest
 import poop.types
 from poop import Interpreter
 from poop.errors import ExecutionError
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.meta import PoopMeta
 
 
@@ -161,8 +162,6 @@ def test_class_side_arity_errors_name_no_internal_spelling(
 
 def test_namespace_helpers_carry_no_reserved_prefix() -> None:
     """The sweep behind the table above: every binding, not the sampled ones."""
-    from poop.transformers import DEFAULT_NAMESPACE
-
     for key, value in DEFAULT_NAMESPACE.items():
         if inspect.isfunction(value):
             assert not value.__qualname__.startswith("_poop_"), key

@@ -5,6 +5,7 @@ from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
+from poop.types.tuple import Tuple
 
 
 def test_next_advances() -> None:
@@ -84,8 +85,6 @@ def test_reduce_is_understood() -> None:
 
 
 def test_enumerate_is_understood() -> None:
-    from poop.types.tuple import Tuple
-
     it = _IteratorBase([Int(5), Int(6)])
     assert list(it.enumerate()) == [
         Tuple(Int(0), Int(5)),

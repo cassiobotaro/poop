@@ -6,8 +6,11 @@ import pytest
 from poop.errors import ExecutionError, PoopError, ValidationError
 from poop.interpreter import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
+from poop.transformers.int import IntTransformer
+from poop.transformers.list import ListTransformer
+from poop.types.block import Block
 from poop.types.boolean import Boolean, false, true
-from poop.types.exceptions import MIRRORS
+from poop.types.exceptions import MIRRORS, PoopExcMeta
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.meta import PoopMeta, class_side
@@ -324,8 +327,6 @@ def test_the_isinstance_ban_now_names_a_message_that_exists() -> None:
 def test_class_side_accessed_on_metaclass_returns_the_descriptor() -> None:
     # Reached via the metaclass itself (instance is None): the descriptor
     # answers itself rather than a bound partial.
-    from poop.types.meta import PoopMeta, class_side
-
     assert isinstance(PoopMeta.__dict__["name"], class_side)
     assert PoopMeta.name is PoopMeta.__dict__["name"]
 
@@ -333,8 +334,6 @@ def test_class_side_accessed_on_metaclass_returns_the_descriptor() -> None:
 def test_class_side_message_cannot_be_reassigned() -> None:
     # A class-side name is a data descriptor; assigning over it on a class is
     # rejected rather than silently shadowing the message.
-    from poop.types.object import Object
-
     class _Thing(Object):
         __slots__ = ()
 
@@ -348,9 +347,6 @@ def test_class_side_message_cannot_be_reassigned() -> None:
 def test_the_set_attr_spelling_lands_on_the_same_sentence() -> None:
     # Both spellings of the mistake — the assignment and the sanctioned
     # substitute — reach `class_side.__set__`.
-    from poop.types.object import Object
-    from poop.types.string import Str
-
     class _Thing(Object):
         __slots__ = ()
 
@@ -378,8 +374,6 @@ def test_the_class_side_rejects_a_non_str_name_faithfully(call: Any) -> None:
 def test_the_class_side_answers_a_block_for_a_method() -> None:
     # Same wrap as the instance side; the unbound function takes its receiver
     # explicitly, as it does in Python.
-    from poop.types.block import Block
-
     speak = _Dog.get_attr(Str("speak"))
     assert isinstance(speak, Block)
     assert speak(_Dog()) == Str("woof")
@@ -501,8 +495,6 @@ def test_class_inequality_answers_a_poop_boolean() -> None:
 def test_a_wrapper_equals_the_bare_name_that_spells_it() -> None:
     # `class_()` answers the wrapper, a bare `int` the alias built on it, so
     # `(5).class_() == int` was False for two objects that both say `int`.
-    from poop.transformers.int import IntTransformer
-
     alias = IntTransformer.BINDINGS["_poop_int_cls"]
     assert (Int(5).class_() == alias) is true
     assert (alias == Int(5).class_()) is true
@@ -516,8 +508,6 @@ def test_a_class_compared_with_a_non_class_is_simply_unequal() -> None:
 def test_identity_still_separates_the_wrapper_from_its_alias() -> None:
     # `is_identical` asks identity, and those really are two objects — the
     # question `==` answers is the other one.
-    from poop.transformers.int import IntTransformer
-
     alias = IntTransformer.BINDINGS["_poop_int_cls"]
     assert Int(5).class_().is_identical(alias) is false
 
@@ -646,15 +636,11 @@ def test_each_slot_names_what_it_wanted() -> None:
 
 
 def test_a_bare_builtin_name_climbs_straight_to_object() -> None:
-    from poop.transformers.int import IntTransformer
-
     alias = IntTransformer.BINDINGS["_poop_int_cls"]
     assert alias.superclass().name() == Str("object")  # ty: ignore[unresolved-attribute]
 
 
 def test_the_wrapper_and_its_alias_climb_alike() -> None:
-    from poop.transformers.list import ListTransformer
-
     alias = ListTransformer.BINDINGS["_poop_list_cls"]
     assert alias.superclass() == List.superclass()  # ty: ignore[unresolved-attribute]
 
@@ -683,8 +669,6 @@ def test_a_class_refuses_an_instance_message_instead_of_binding_it() -> None:
     # `str.upper() missing 1 required positional argument: 'self'` — naming
     # `self`, a receiver POOP never spells, and "positional argument", which
     # the wording sweep bans outright.
-    from poop.transformers import DEFAULT_NAMESPACE
-
     text = DEFAULT_NAMESPACE["_poop_str_cls"]
     with pytest.raises(AttributeError) as info:
         text.upper()  # ty: ignore[unresolved-attribute]
@@ -739,8 +723,6 @@ def test_dir_lists_only_what_the_class_itself_answers() -> None:
     # The list used to merge two receivers' messages under a header claiming
     # one: `:methods str` said `str understands 90 messages` and 64 of them
     # answered a binding error.
-    from poop.transformers import DEFAULT_NAMESPACE
-
     for key in ("_poop_str_cls", "_poop_list_cls", "_poop_dict_cls", "_poop_int_cls"):
         cls = DEFAULT_NAMESPACE[key]
         for name in cls.dir():  # ty: ignore[unresolved-attribute]
@@ -762,8 +744,6 @@ def test_a_read_refusal_read_off_the_metaclass_answers_itself() -> None:
     # `__get__(None, metacls)` — the descriptor protocol's "accessed on the
     # class that owns me" case. Answering the descriptor keeps it inspectable
     # (`__dir__` reads `refuses` off it) instead of refusing at import time.
-    from poop.types.exceptions import PoopExcMeta
-
     descriptor = vars(PoopExcMeta)["args"]
     assert descriptor.__get__(None, PoopExcMeta) is descriptor
     assert descriptor.refuses is True

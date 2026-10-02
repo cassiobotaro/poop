@@ -1,10 +1,16 @@
+import gc
+import weakref
+
 import pytest
 
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.error import Error
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.try_ import Try
+from poop.types.tuple import Tuple
 
 
 def _raise(exc: BaseException) -> None:
@@ -126,9 +132,6 @@ class _Captured:
 def test_try_finally_after_run_does_not_retain_block() -> None:
     # A post-execution finally_ is rejected; it must not pin the cleanup
     # closure on the already-dead Try (single-use drop invariant).
-    import gc
-    import weakref
-
     def register_post_run() -> tuple[Try, weakref.ref[_Captured]]:
         t = Try(lambda: None)
         t.run()
@@ -146,9 +149,6 @@ def test_try_finally_after_run_does_not_retain_block() -> None:
 def test_try_except_after_run_does_not_retain_handler() -> None:
     # Registering a handler after execution is a no-op; it must not pin the
     # handler closure on a Try that can never consume it.
-    import gc
-    import weakref
-
     def register_post_run() -> tuple[Try, weakref.ref[_Captured]]:
         t = Try(lambda: None)
         t.run()
@@ -257,8 +257,6 @@ def test_try_refuses_the_kind_where_it_was_written_not_where_it_raised() -> None
 def test_try_refuses_a_class_that_is_no_exception() -> None:
     # A handler that can never fire is a mistake worth naming; CPython refuses
     # `except int` for the same reason.
-    from poop.transformers import DEFAULT_NAMESPACE
-
     with pytest.raises(TypeError) as info:
         Try(lambda: none).except_(DEFAULT_NAMESPACE["_poop_int_cls"], lambda e: none)  # ty: ignore[invalid-argument-type]
     assert str(info.value) == "#except_ catches exception classes, and int is not one"
@@ -267,9 +265,6 @@ def test_try_refuses_a_class_that_is_no_exception() -> None:
 def test_try_catches_either_of_a_tuple_of_kinds() -> None:
     # Python's own "catch either" spelling: a POOP `Tuple` is a wrapper, so
     # `isinstance` refused it and the spelling was unavailable.
-    from poop.types.exceptions import MIRRORS
-    from poop.types.tuple import Tuple
-
     kinds = Tuple(MIRRORS["ValueError"], MIRRORS["ZeroDivisionError"])  # ty: ignore[invalid-argument-type]
     caught = Try(lambda: _raise(MIRRORS["ZeroDivisionError"]("boom"))).except_(
         kinds,  # ty: ignore[invalid-argument-type]
@@ -279,7 +274,5 @@ def test_try_catches_either_of_a_tuple_of_kinds() -> None:
 
 
 def test_try_refuses_a_tuple_holding_something_that_is_not_a_class() -> None:
-    from poop.types.tuple import Tuple
-
     with pytest.raises(TypeError, match="#except_ catches exception classes"):
         Try(lambda: none).except_(Tuple(Int(5)), lambda e: none)  # ty: ignore[invalid-argument-type]

@@ -2,6 +2,8 @@ from typing import Any
 
 import pytest
 
+from poop.transformers.float import _poop_float_from
+from poop.transformers.int import _poop_int_from
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
@@ -335,14 +337,10 @@ def test_join_rejects_non_str_parts() -> None:
 
 
 def test_int_parses_integer_string() -> None:
-    from poop.transformers.int import _poop_int_from
-
     assert _poop_int_from(Str("42")) == Int(42)
 
 
 def test_float_parses_float_string() -> None:
-    from poop.transformers.float import _poop_float_from
-
     result = _poop_float_from(Str("3.14"))
     assert isinstance(result, Float)
     assert result._value == pytest.approx(3.14)
@@ -601,8 +599,6 @@ def test_input_propagates_eof(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_methods_accept_poop_none_kwargs() -> None:
-    from poop.types.none import none
-
     assert Str("hi").split(sep=none) == List(Str("hi"))
     assert Str("hi").center(Int(6), fillchar=none) == Str("  hi  ")
     assert Str("hi").ljust(Int(4), fillchar=none) == Str("hi  ")
@@ -785,19 +781,12 @@ def test_str_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
 
 
 def test_str_max_with_key_and_default() -> None:
-    from poop.types.string import Str
-
     # key selects the char by a transform; default is returned for empty input.
     assert Str("abc").max(key=lambda c: -ord(c._value)) == Str("a")
     assert Str("").max(default=Str("z")) == Str("z")
 
 
 def test_str_le_against_foreign_raises() -> None:
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.string import Str
-
     with pytest.raises(TypeError):
         _ = Str("a") <= Int(1)
 
@@ -878,8 +867,6 @@ def test_all_any_and_reduce() -> None:
 
 
 def test_enumerate_and_zip() -> None:
-    from poop.types.tuple import Tuple
-
     assert List(*Str("ab").enumerate()) == List(
         Tuple(Int(0), Str("a")), Tuple(Int(1), Str("b"))
     )

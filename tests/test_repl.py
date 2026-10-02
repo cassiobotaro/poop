@@ -1,11 +1,14 @@
 import ast
 import io
 import pathlib
+import readline
 import sys
+from pathlib import Path
 
 import pytest
 from rich.console import Console
 
+import poop.repl as repl
 import poop.validators as validators
 from poop.errors import ExecutionError, ParseError, ValidationError, report
 from poop.interpreter import Interpreter
@@ -17,15 +20,19 @@ from poop.repl import (
     _explain_calls,
     _explain_snippet,
     _indent_for,
+    _is_safe_expr,
     _PoopCompleter,
     _print_value,
+    _readline_input,
     _rl_color,
     _save_history,
     _setup_readline,
     _value_text,
 )
 from poop.transformers import DEFAULT_NAMESPACE
+from poop.types.boolean import true
 from poop.types.int import Int
+from poop.types.none import none
 from poop.types.string import Str
 from poop.validators import DEFAULT_VALIDATORS
 
@@ -166,8 +173,6 @@ def test_displayhook_poop_none_prints_nothing(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     # proposal 125: `.print()` answers POOP none, which must not echo.
-    from poop.types.none import none
-
     repl, _ = _repl()
     repl._displayhook(none)
     assert capsys.readouterr().out == ""
@@ -176,8 +181,6 @@ def test_displayhook_poop_none_prints_nothing(
 def test_displayhook_poop_none_does_not_clobber_underscore(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from poop.types.none import none
-
     repl, ns = _repl()
     repl._displayhook(Int(7))
     repl._displayhook(none)
@@ -470,8 +473,6 @@ def test_value_text_str_uses_quoted_repr() -> None:
 
 
 def test_value_text_bool_is_blue() -> None:
-    from poop.types.boolean import true
-
     assert _value_text(true).style == "blue"
 
 
@@ -862,8 +863,6 @@ def test_run_meta_command_does_not_touch_buffer(
 
 
 def test_is_safe_expr_rejects_syntax_error() -> None:
-    from poop.repl import _is_safe_expr
-
     assert _is_safe_expr("1 +") is False
     assert _is_safe_expr("x") is True
 
@@ -882,10 +881,6 @@ def test_setup_readline_without_readline_module_is_a_noop(
 def test_setup_readline_missing_history_file_is_ignored(
     monkeypatch: pytest.MonkeyPatch, tmp_path: object
 ) -> None:
-    from pathlib import Path
-
-    import poop.repl as repl
-
     monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "does_not_exist")
     _setup_readline({})
 
@@ -900,10 +895,6 @@ def test_save_history_without_readline_is_a_noop(
 def test_save_history_swallows_write_errors(
     monkeypatch: pytest.MonkeyPatch, tmp_path: object
 ) -> None:
-    from pathlib import Path
-
-    import poop.repl as repl
-
     # A history path under a missing directory makes write_history_file raise;
     # the saver must swallow it so a crash at exit is impossible.
     monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "nope" / "hist")
@@ -913,8 +904,6 @@ def test_save_history_swallows_write_errors(
 def test_readline_input_without_readline_falls_back_to_input(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from poop.repl import _readline_input
-
     monkeypatch.setattr("poop.repl._readline", None)
     monkeypatch.setattr("builtins.input", lambda prompt="": "typed")
     assert _readline_input(">>> ", "    ") == "typed"
@@ -923,10 +912,6 @@ def test_readline_input_without_readline_falls_back_to_input(
 def test_readline_input_pre_hook_inserts_indent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import readline
-
-    from poop.repl import _readline_input
-
     calls: dict[str, object] = {}
     monkeypatch.setattr(
         readline, "insert_text", lambda s: calls.__setitem__("insert", s)
@@ -971,8 +956,6 @@ def test_meta_explain_reports_an_allowed_construct(
 ) -> None:
     # If a topic's snippet trips no validator, `:explain` says so plainly rather
     # than pretending it is forbidden.
-    import poop.repl as repl
-
     monkeypatch.setitem(repl._EXPLAIN_SNIPPETS, "noop", "x")
     r, _ = _repl()
     r._meta(":explain noop")

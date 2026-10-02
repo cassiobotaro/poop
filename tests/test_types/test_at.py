@@ -18,6 +18,7 @@ from poop.types.list import List
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.memory_view import MemoryView
 from poop.types.range import Range
+from poop.types.slice import Slice
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -125,8 +126,6 @@ def test_list_remove_of_a_missing_value_states_the_value() -> None:
 def test_slice_with_a_non_index_bound_names_the_bound() -> None:
     # `slice indices must be integers or None or have an __index__ method`
     # named subscripting and a banned dunder in one breath.
-    from poop.types.slice import Slice
-
     # Deliberately ill-typed: the point is what a program is told when it
     # writes this, and `ty` is right that it should not.
     bound: Any = Str("a")

@@ -1,5 +1,6 @@
 import pytest
 
+from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.map import Map
@@ -80,10 +81,6 @@ def test_map_eq_is_identity() -> None:
 
 
 def test_map_ne_is_identity_based() -> None:
-    from poop.types.boolean import false, true
-    from poop.types.list import List
-    from poop.types.map import Map
-
     m = Map(List(), lambda x: x)
     assert (m != m) is false
     assert (m != Map(List(), lambda x: x)) is true

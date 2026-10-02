@@ -11,6 +11,7 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.map import Map
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -127,8 +128,6 @@ def test_do_yields_int_byte_values() -> None:
 
 
 def test_map_returns_lazy_map() -> None:
-    from poop.types.map import Map
-
     result = ByteArray(bytearray(b"\x01\x02")).map(lambda b: b)
     assert isinstance(result, Map)
 
@@ -632,8 +631,6 @@ def test_expandtabs_with_tabsize() -> None:
 
 
 def test_methods_accept_poop_none_kwargs() -> None:
-    from poop.types.none import none
-
     base = ByteArray(bytearray(b"  hi  "))
     assert base.lstrip(chars=none) == ByteArray(bytearray(b"hi  "))
     assert base.rstrip(chars=none) == ByteArray(bytearray(b"  hi"))
@@ -701,8 +698,6 @@ def test_find_with_start() -> None:
 
 
 def test_index_with_start_raises_when_absent() -> None:
-    import pytest
-
     ba = ByteArray(bytearray(b"hello hello"))
     sub = ByteArray(bytearray(b"hello"))
     with pytest.raises(ValueError):
@@ -875,9 +870,6 @@ def test_byte_array_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None
 
 
 def test_bytearray_ordering_between_bytearrays() -> None:
-    from poop.types.boolean import false, true
-    from poop.types.byte_array import ByteArray
-
     assert (ByteArray(b"abc") < ByteArray(b"abd")) is true
     assert (ByteArray(b"abc") <= ByteArray(b"abc")) is true
     assert (ByteArray(b"abd") > ByteArray(b"abc")) is true
@@ -886,11 +878,6 @@ def test_bytearray_ordering_between_bytearrays() -> None:
 
 
 def test_bytearray_ordering_against_foreign_raises() -> None:
-    import pytest
-
-    from poop.types.byte_array import ByteArray
-    from poop.types.int import Int
-
     for op in (
         lambda: ByteArray(b"a") < Int(1),
         lambda: ByteArray(b"a") <= Int(1),
@@ -926,28 +913,20 @@ def _ba(data: bytes) -> ByteArray:
 
 
 def test_startswith_tuple_of_prefixes() -> None:
-    from poop.types.tuple import Tuple
-
     assert _ba(b"ab").startswith(Tuple(_ba(b"a"), _ba(b"z"))) is true
     assert _ba(b"ab").startswith(Tuple(_ba(b"x"), _ba(b"z"))) is false
 
 
 def test_endswith_tuple_of_suffixes() -> None:
-    from poop.types.tuple import Tuple
-
     assert _ba(b"ab").endswith(Tuple(_ba(b"b"), _ba(b"z"))) is true
     assert _ba(b"ab").endswith(Tuple(_ba(b"x"), _ba(b"z"))) is false
 
 
 def test_startswith_empty_tuple_is_false() -> None:
-    from poop.types.tuple import Tuple
-
     assert _ba(b"ab").startswith(Tuple()) is false
 
 
 def test_startswith_tuple_with_a_wrong_typed_member_raises() -> None:
-    from poop.types.tuple import Tuple
-
     with pytest.raises(TypeError):
         _ba(b"ab").startswith(Tuple(Str("a")))
 
@@ -965,8 +944,6 @@ def test_ord_refuses_a_receiver_that_is_not_one_byte(data: bytes) -> None:
 def test_fromhex_is_answered_by_bytearray_too() -> None:
     # `Bytes` and `ByteArray` mirror each other message for message, and this
     # was the one half-pair — for a spelling CPython supports.
-    from poop.transformers.byte_array import ByteArrayTransformer
-
     alias = ByteArrayTransformer.BINDINGS["_poop_bytearray_cls"]
     assert alias.fromhex(Str("6162")) == ByteArray(bytearray(b"ab"))  # ty: ignore[unresolved-attribute]
     assert ByteArray(bytearray()).fromhex(Str("6162")) == ByteArray(bytearray(b"ab"))

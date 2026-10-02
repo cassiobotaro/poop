@@ -16,7 +16,8 @@ the report named `__init__`, a dunder `no_dunder_attribute` bans outright.
 import pytest
 
 from poop import Interpreter
-from poop.errors import ExecutionError
+from poop.errors import ExecutionError, PoopError
+from tests.test_no_python_wording import _FORBIDDEN
 
 
 def _failure(source: str) -> str:
@@ -147,9 +148,6 @@ _CONSTRUCTORS = [
 
 @pytest.mark.parametrize("builtin", _CONSTRUCTORS)
 def test_no_constructor_answers_cpython_call_machinery(builtin: str) -> None:
-    from poop.errors import PoopError
-    from tests.test_no_python_wording import _FORBIDDEN
-
     for source in (f"{builtin}(1, 2, 3, 4, 5)", f"{builtin}(nope=1)"):
         try:
             Interpreter().run_source(source)

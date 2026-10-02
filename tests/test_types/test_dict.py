@@ -3,19 +3,23 @@ import pytest
 from poop.parser import parse
 from poop.transformers.dict import DictTransformer, _poop_dict_from_pairs
 from poop.transformers.int import IntTransformer
+from poop.transformers.list import _poop_list_from
 from poop.transformers.string import StrTransformer
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.dict_items import DictItems
 from poop.types.dict_keys import DictKeys
+from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
 from poop.types.dict_values import DictValues
 from poop.types.int import Int
 from poop.types.int import Int as _Int
 from poop.types.list import List
+from poop.types.mapping_proxy import MappingProxy
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.string import Str as _Str
 from poop.types.tuple import Tuple
+from poop.types.zip import Zip
 
 
 def test_empty_dict() -> None:
@@ -245,8 +249,6 @@ def test_copy_is_shallow() -> None:
 
 
 def test_items_returns_dict_items_view() -> None:
-    from poop.transformers.list import _poop_list_from
-
     d = Dict()
     d.at_put(Int(1), Int(10))
     items = d.items()
@@ -325,8 +327,6 @@ def test_update_from_iterable_of_pairs() -> None:
 
 
 def test_update_from_mapping_proxy() -> None:
-    from poop.types.mapping_proxy import MappingProxy
-
     d = _dict_with([(1, 10)])
     d.update(MappingProxy(_dict_with([(2, 20)])))
     assert d.at(Int(2)) == Int(20)
@@ -446,9 +446,6 @@ def test_or_with_non_dict_returns_notimplemented() -> None:
 def test_setdefault_without_default_uses_none() -> None:
     # Proposal 166: CPython defaults the fill value to None — `d.setdefault(k)`
     # returns `none` and stores `k: none`.
-    from poop.types.none import none
-    from poop.types.string import Str
-
     d = Dict()
     assert d.setdefault(Str("x")) is none
     assert d.at(Str("x")) is none
@@ -461,8 +458,6 @@ def test_eq_with_mapping_proxy_is_symmetric() -> None:
     # CPython: ``dict == mappingproxy`` is True by value in both directions.
     # Returning ``false`` from the value-eq mixin suppressed the proxy's
     # reflected __eq__, leaving dict == proxy wrongly False.
-    from poop.types.mapping_proxy import MappingProxy
-
     d = _dict_with([(1, 10), (2, 20)])
     mp = MappingProxy(_dict_with([(1, 10), (2, 20)]))
     assert (d == mp) is true
@@ -479,8 +474,6 @@ def test_inplace_or_with_mapping_proxy_mutates_in_place() -> None:
     # any mapping), so aliases see the change. Returning NotImplemented handed
     # the operation to the proxy's reflected __ror__, which built a fresh Dict
     # and left the alias pointing at the unchanged original.
-    from poop.types.mapping_proxy import MappingProxy
-
     d = _dict_with([(1, 10)])
     alias = d
     d |= MappingProxy(_dict_with([(2, 20)]))
@@ -497,10 +490,6 @@ def test_inplace_or_with_foreign_operand_raises_typeerror() -> None:
 def test_dict_getitem_read_by_mapping_merge() -> None:
     # `{**d}` reads d via the mapping protocol (keys() + __getitem__), the only
     # place subscript is reachable (user subscript stays forbidden).
-    from poop.types.dict import Dict
-    from poop.types.int import Int
-    from poop.types.string import Str
-
     d = Dict()
     d._data[Str("a")] = Int(1)
     assert d.__getitem__(Str("a")) == Int(1)
@@ -509,9 +498,6 @@ def test_dict_getitem_read_by_mapping_merge() -> None:
 
 
 def test_dict_max_with_key_and_default() -> None:
-    from poop.types.dict import Dict
-    from poop.types.int import Int
-
     d = Dict()
     d._data[Int(1)] = Int(10)
     d._data[Int(2)] = Int(20)
@@ -520,11 +506,6 @@ def test_dict_max_with_key_and_default() -> None:
 
 
 def test_dict_zip_pairs_keys_with_others() -> None:
-    from poop.types.dict import Dict
-    from poop.types.int import Int
-    from poop.types.list import List
-    from poop.types.zip import Zip
-
     d = Dict()
     d._data[Int(1)] = Int(10)
     d._data[Int(2)] = Int(20)
@@ -561,8 +542,6 @@ def test_min_and_max_take_key_only_by_keyword() -> None:
 def test_reversed_answers_the_keys_in_reverse() -> None:
     # `reversed(d)` yields the keys in reverse in CPython, and `no_reversed`
     # named a substitute the `Dict` itself did not answer.
-    from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
-
     d = _dict_with([(1, 10), (2, 20)])
     rev = d.reversed()
     assert isinstance(rev, DictReverseKeyIterator)

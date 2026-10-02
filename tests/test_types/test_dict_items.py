@@ -3,6 +3,7 @@ from collections.abc import Callable
 
 import pytest
 
+from poop.transformers.list import _poop_list_from
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.dict_item_iterator import DictItemIterator
@@ -75,8 +76,6 @@ def test_mapping() -> None:
 
 
 def test_list_escape() -> None:
-    from poop.transformers.list import _poop_list_from
-
     items = DictItems(_make())
     lst = _poop_list_from(items)
     assert isinstance(lst, List)

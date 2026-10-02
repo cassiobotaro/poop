@@ -1,3 +1,5 @@
+import ast
+
 import pytest
 
 from poop.parser import parse
@@ -445,8 +447,6 @@ def test_complex_from_a_malformed_string_is_worded_like_int_and_float() -> None:
 
 
 def test_bare_complex_name_is_rewritten() -> None:
-    import ast
-
     tree = ComplexTransformer().transform(ast.parse("f = complex"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

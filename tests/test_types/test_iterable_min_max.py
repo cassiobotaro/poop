@@ -20,6 +20,7 @@ from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.memory_view import MemoryView
+from poop.types.none import none
 from poop.types.range import Range
 from poop.types.set import Set
 from poop.types.string import Str
@@ -140,8 +141,6 @@ def test_max_returns_first_element_on_tie() -> None:
 
 def test_default_none_is_distinguished_from_missing() -> None:
     """default=none should return POOP none, not raise."""
-    from poop.types.none import none
-
     assert List().min(default=none) is none
     assert List().max(default=none) is none
 
