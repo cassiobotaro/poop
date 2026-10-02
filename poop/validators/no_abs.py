@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoAbsValidator = make_call_name_validator(
-    forbidden={"abs"},
-    message="abs() is forbidden — use obj.abs() instead",
-)
+
+class NoAbsValidator(CallNameValidator):
+    forbidden = frozenset({"abs"})
+    message = "abs() is forbidden — use obj.abs() instead"

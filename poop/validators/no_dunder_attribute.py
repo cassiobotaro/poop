@@ -1,8 +1,7 @@
 import ast
 
-from poop.errors import ValidationError
 from poop.types._selectors import is_dunder
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 # `super().__init__(...)` is an `ast.Attribute` with a dunder attr, and
 # INFECTIONS.md allows `super` explicitly — "without it, subclasses cannot
@@ -94,5 +93,4 @@ class _Visitor(ErrorCollector):
 
 
 class NoDunderAttributeValidator(CollectingValidator):
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(), tree)
+    visitor = _Visitor

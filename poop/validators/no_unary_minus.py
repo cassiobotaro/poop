@@ -1,6 +1,6 @@
 import ast
 
-from poop.validators._op import make_op_validator
+from poop.validators._op import OpValidator
 
 # Unary `-` is allowed only on numeric literals. `bool` is excluded by
 # design: even though Python treats `bool` as a subclass of `int`, POOP
@@ -15,11 +15,12 @@ def _is_numeric_literal(node: ast.expr) -> bool:
     return type(node.value) in _NUMERIC_LITERAL_TYPES
 
 
-NoUnaryMinusValidator = make_op_validator(
-    ast.UnaryOp,
-    {
+class NoUnaryMinusValidator(OpValidator):
+    node_type = ast.UnaryOp
+    messages = {
         ast.USub: "unary minus is allowed only on numeric literals "
         "(int, float, complex) — use .negated() instead"
-    },
-    allow=lambda node: _is_numeric_literal(node.operand),
-)
+    }
+
+    def allow(self, node: ast.UnaryOp) -> bool:
+        return _is_numeric_literal(node.operand)

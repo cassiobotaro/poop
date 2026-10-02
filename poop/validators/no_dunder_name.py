@@ -1,7 +1,6 @@
 import ast
 
-from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+from poop.validators.base import CollectingValidator, ErrorCollector
 from poop.validators.no_dunder_attribute import dunder_message
 
 
@@ -25,5 +24,4 @@ class NoDunderNameValidator(CollectingValidator):
     namespace dict holds, so the guard has to live at validation time.
     """
 
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(), tree)
+    visitor = _Visitor

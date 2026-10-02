@@ -1,9 +1,9 @@
 import ast
 
-from poop.validators._node import make_node_validator
+from poop.validators._node import NodeValidator
 
-NoTypeAliasValidator = make_node_validator(
-    {
+
+class NoTypeAliasValidator(NodeValidator):
+    messages = {
         ast.TypeAlias: "type aliases are forbidden — POOP types differ from Python builtins"
     }
-)

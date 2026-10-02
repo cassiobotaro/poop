@@ -1,8 +1,10 @@
 import ast
 
-from poop.validators._op import make_op_validator
+from poop.validators._op import OpValidator
 
-NoInvertValidator = make_op_validator(
-    ast.UnaryOp,
-    {ast.Invert: "bitwise invert operator is forbidden — use .bit_invert() instead"},
-)
+
+class NoInvertValidator(OpValidator):
+    node_type = ast.UnaryOp
+    messages = {
+        ast.Invert: "bitwise invert operator is forbidden — use .bit_invert() instead"
+    }

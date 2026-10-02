@@ -117,12 +117,16 @@ Every infection follows the same pattern.
 
 ### A new validator (e.g. `no_foo`)
 
-1. Create `poop/validators/no_foo.py`. Reuse `_call_name.make_call_name_validator`
-   when forbidding builtin calls; otherwise subclass `CollectingValidator`
-   (`poop/validators/base.py`) and implement `collect()` — never `validate()`,
-   which the base derives by raising the first collected error. Collecting is
-   the primitive because `--validators-only` reports every error, and a raise
-   has already thrown away the rest of the walk.
+1. Create `poop/validators/no_foo.py`. Subclass one of the three shapes when
+   it fits, setting its class attributes — `CallNameValidator` (`forbidden`,
+   `message`) for a builtin name, `NodeValidator` (`messages`) for a node
+   type, `OpValidator` (`node_type`, `messages`) for an operator. Otherwise
+   subclass `CollectingValidator` (`poop/validators/base.py`) and set
+   `visitor` to an `ErrorCollector`, or override `collect()` when the visitor
+   needs arguments — never `validate()`, which the base derives by raising the
+   first collected error. Collecting is the primitive because
+   `--validators-only` reports every error, and a raise has already thrown
+   away the rest of the walk.
 2. Register it in `DEFAULT_VALIDATORS` (`poop/validators/__init__.py`).
 3. Add tests under `tests/test_validators/test_no_foo.py`.
 4. Add an entry to `INFECTIONS.md` with a `Substitute` column pointing to the

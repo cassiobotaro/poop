@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoMapValidator = make_call_name_validator(
-    forbidden={"map"},
-    message="map() is forbidden — use col.map(block) instead",
-)
+
+class NoMapValidator(CallNameValidator):
+    forbidden = frozenset({"map"})
+    message = "map() is forbidden — use col.map(block) instead"

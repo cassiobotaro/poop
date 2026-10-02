@@ -1,9 +1,9 @@
 import ast
 
-from poop.validators._node import make_node_validator
+from poop.validators._node import NodeValidator
 
-NoWalrusValidator = make_node_validator(
-    {
+
+class NoWalrusValidator(NodeValidator):
+    messages = {
         ast.NamedExpr: ":= (walrus operator) is forbidden — use a separate assignment instead"
     }
-)

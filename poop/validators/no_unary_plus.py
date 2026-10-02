@@ -1,8 +1,8 @@
 import ast
 
-from poop.validators._op import make_op_validator
+from poop.validators._op import OpValidator
 
-NoUnaryPlusValidator = make_op_validator(
-    ast.UnaryOp,
-    {ast.UAdd: "unary plus is forbidden — write the value directly"},
-)
+
+class NoUnaryPlusValidator(OpValidator):
+    node_type = ast.UnaryOp
+    messages = {ast.UAdd: "unary plus is forbidden — write the value directly"}

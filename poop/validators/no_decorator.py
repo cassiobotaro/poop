@@ -1,18 +1,12 @@
 import ast
 
-from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 # The three `INFECTIONS.md` reasons about and allows: "class-definition
 # decorators, not runtime operations on values". They are also exactly the
 # three non-machinery entries in `_ALLOWED_BUILTINS`, so the intended surface
 # was already written down twice — and checked nowhere.
 ALLOWED = ("staticmethod", "classmethod", "property")
-
-
-class NoDecoratorValidator(CollectingValidator):
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_NoDecoratorVisitor(), tree)
 
 
 def _spelling(node: ast.expr) -> str:
@@ -74,3 +68,7 @@ class _NoDecoratorVisitor(ErrorCollector):
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self._check(node)
         self.generic_visit(node)
+
+
+class NoDecoratorValidator(CollectingValidator):
+    visitor = _NoDecoratorVisitor

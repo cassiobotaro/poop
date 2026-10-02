@@ -1,5 +1,5 @@
 import ast
-from typing import Protocol
+from typing import Any, ClassVar, Protocol
 
 from poop.errors import ValidationError
 
@@ -37,10 +37,25 @@ class CollectingValidator:
     Running a program wants the first error and stops; `--validators-only`
     wants every occurrence. Collecting is the primitive because the reverse
     cannot be built: a raise has already thrown away the rest of the walk.
+
+    A subclass names its `visitor`, as a transformer names its `rewriter`, and
+    `collect` walks the tree with a fresh one. A visitor that needs arguments
+    overrides `collect` instead. One of the two is checked when the subclass
+    is defined, so a validator that forgot both fails at import rather than on
+    the first program it is handed.
     """
 
+    visitor: ClassVar[type[ErrorCollector]]
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if cls.collect is CollectingValidator.collect and not hasattr(cls, "visitor"):
+            raise TypeError(
+                f"{cls.__name__} sets no `visitor` and overrides no `collect`"
+            )
+
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        raise NotImplementedError
+        return collect_errors(self.visitor(), tree)
 
     def validate(self, tree: ast.Module) -> None:
         errors = self.collect(tree)

@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoInputValidator = make_call_name_validator(
-    forbidden={"input"},
-    message="input() is forbidden — use prompt.input() instead",
-)
+
+class NoInputValidator(CallNameValidator):
+    forbidden = frozenset({"input"})
+    message = "input() is forbidden — use prompt.input() instead"

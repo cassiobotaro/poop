@@ -1,6 +1,8 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoIntrospectionValidator = make_call_name_validator(
-    forbidden={"globals", "locals", "vars"},
-    message="{name}() is forbidden — state lives in instances, not in scope introspection",
-)
+
+class NoIntrospectionValidator(CallNameValidator):
+    forbidden = frozenset({"globals", "locals", "vars"})
+    message = (
+        "{name}() is forbidden — state lives in instances, not in scope introspection"
+    )

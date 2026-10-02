@@ -1,11 +1,11 @@
 import ast
 
-from poop.validators._op import make_op_validator
+from poop.validators._op import OpValidator
 
-NoAndOrValidator = make_op_validator(
-    ast.BoolOp,
-    {
+
+class NoAndOrValidator(OpValidator):
+    node_type = ast.BoolOp
+    messages = {
         ast.And: "and operator is forbidden — use .and_(lambda: ...) instead",
         ast.Or: "or operator is forbidden — use .or_(lambda: ...) instead",
-    },
-)
+    }

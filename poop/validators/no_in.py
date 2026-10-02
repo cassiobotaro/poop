@@ -1,11 +1,11 @@
 import ast
 
-from poop.validators._op import make_op_validator
+from poop.validators._op import OpValidator
 
-NoInValidator = make_op_validator(
-    ast.Compare,
-    {
+
+class NoInValidator(OpValidator):
+    node_type = ast.Compare
+    messages = {
         ast.In: "in operator is forbidden — use col.includes(x) instead",
         ast.NotIn: "not in operator is forbidden — use col.includes(x).not_() instead",
-    },
-)
+    }

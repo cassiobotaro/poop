@@ -1,7 +1,7 @@
 import ast
 
-from poop.validators._node import make_node_validator
+from poop.validators._node import NodeValidator
 
-NoRaiseValidator = make_node_validator(
-    {ast.Raise: "raise is forbidden — use ExcType.raise_('msg') instead"}
-)
+
+class NoRaiseValidator(NodeValidator):
+    messages = {ast.Raise: "raise is forbidden — use ExcType.raise_('msg') instead"}

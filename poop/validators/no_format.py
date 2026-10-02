@@ -19,12 +19,12 @@ refused elsewhere — so the template keeps `Str.format` and the ban points a
 `Str` at the spelling that actually works.
 """
 
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoFormatValidator = make_call_name_validator(
-    forbidden={"format"},
-    message=(
+
+class NoFormatValidator(CallNameValidator):
+    forbidden = frozenset({"format"})
+    message = (
         "format() is forbidden — use obj.format(spec) instead, "
         'or "{{:spec}}".format(text) for a str, whose #format is the template'
-    ),
-)
+    )

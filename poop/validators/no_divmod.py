@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoDivmodValidator = make_call_name_validator(
-    forbidden={"divmod"},
-    message="divmod() is forbidden — use a.divmod(b) instead",
-)
+
+class NoDivmodValidator(CallNameValidator):
+    forbidden = frozenset({"divmod"})
+    message = "divmod() is forbidden — use a.divmod(b) instead"

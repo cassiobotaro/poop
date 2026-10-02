@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoOpenValidator = make_call_name_validator(
-    forbidden={"open"},
-    message="open() is forbidden — POOP has no file I/O",
-)
+
+class NoOpenValidator(CallNameValidator):
+    forbidden = frozenset({"open"})
+    message = "open() is forbidden — POOP has no file I/O"

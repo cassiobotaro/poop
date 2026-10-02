@@ -1,10 +1,8 @@
 import ast
 
-from poop.errors import ValidationError
 from poop.validators.base import (
     CollectingValidator,
     ErrorCollector,
-    collect_errors,
     iter_params,
 )
 
@@ -56,5 +54,4 @@ class _Visitor(ErrorCollector):
 
 
 class NoPoopPrefixValidator(CollectingValidator):
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(), tree)
+    visitor = _Visitor

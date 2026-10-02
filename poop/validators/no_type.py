@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoTypeValidator = make_call_name_validator(
-    forbidden={"type"},
-    message="type() is forbidden — use obj.class_name() or polymorphism instead",
-)
+
+class NoTypeValidator(CallNameValidator):
+    forbidden = frozenset({"type"})
+    message = "type() is forbidden — use obj.class_name() or polymorphism instead"

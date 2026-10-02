@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoIterValidator = make_call_name_validator(
-    forbidden={"iter", "next", "aiter", "anext"},
-    message="{name}() is forbidden — use col.iter() / it.next() instead",
-)
+
+class NoIterValidator(CallNameValidator):
+    forbidden = frozenset({"iter", "next", "aiter", "anext"})
+    message = "{name}() is forbidden — use col.iter() / it.next() instead"

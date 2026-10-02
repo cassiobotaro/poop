@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoIsinstanceValidator = make_call_name_validator(
-    forbidden={"isinstance"},
-    message="isinstance() is forbidden — use obj.is_instance(Type) instead",
-)
+
+class NoIsinstanceValidator(CallNameValidator):
+    forbidden = frozenset({"isinstance"})
+    message = "isinstance() is forbidden — use obj.is_instance(Type) instead"
