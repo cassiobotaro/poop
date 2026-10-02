@@ -213,45 +213,6 @@ method, and the displayhook swap a small `@contextmanager`, which also lets
 
 ---
 
-### 70. Twenty ordering methods and five `__rmul__`s are one method each
-
-`Str`, `Bytes`, `ByteArray`, `List` and `Tuple` each write `__lt__`, `__le__`,
-`__gt__` and `__ge__` out in full, and the four differ by one character:
-
-```python
-def __lt__(self, other: object) -> Boolean:
-    if not isinstance(other, Bytes | ByteArray):
-        return NotImplemented
-    return to_boolean(self._value < other._value)
-
-def __le__(self, other: object) -> Boolean:
-    if not isinstance(other, Bytes | ByteArray):
-        return NotImplemented
-    return to_boolean(self._value <= other._value)
-```
-
-The pattern is already solved in-house: `_numeric_compare.py` writes each as
-`return self._order(other, operator.lt)`. And `_ValueEqMixin` already holds
-the two facts an ordering needs — `_eq_attr`, the payload to compare, and
-`_eq_group`, which wrappers compare across.
-
-In the same five classes `__rmul__` is a second copy of `__mul__`: the bodies
-compile to identical bytecode in all five.
-
-The duplication has a cost beyond lines. The `Bytes` comment above `__lt__`
-records that ordering against `bytearray` was "the one operation on the pair
-that did not" follow `==` and `+` — four methods had to be fixed in two
-classes, and `_eq_group` already knew the answer.
-
-**Fix.** An `_OrderedMixin` next to `_ValueEqMixin` generating the four from
-`operator.lt` / `le` / `gt` / `ge` over `_eq_attr`, with the comparable test
-the equality mixin already has; each generated function gets its `__name__`
-set so `cloak` reports it under the right selector. `__rmul__ = __mul__` in the
-five classes. `functools.total_ordering` is not the tool: it answers `bool`,
-and POOP's comparisons answer `Boolean`.
-
----
-
 ### 73. A shadowed builtin is reached five different ways
 
 POOP's wrappers define methods named `print`, `hash`, `repr`, `len`, `sorted`…
