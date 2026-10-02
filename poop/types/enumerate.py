@@ -11,7 +11,6 @@ from poop.types.object import Object
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 
 
@@ -45,16 +44,6 @@ class Enumerate(_PeekMixin, _IterableMixin, Object):
 
     def iter(self) -> Enumerate:
         return self
-
-    def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(self is other)
-
-    def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return false if self is other else true
 
     def __str__(self) -> str:
         return "<enumerate>"

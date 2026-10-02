@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._peek import _UNPEEKED, _PeekMixin
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
-
-if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
 
 
 class Filter(_PeekMixin, _IterableMixin, Object):
@@ -58,16 +55,6 @@ class Filter(_PeekMixin, _IterableMixin, Object):
 
     def iter(self) -> Filter:
         return self
-
-    def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(self is other)
-
-    def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return false if self is other else true
 
     def __str__(self) -> str:
         return "<filter>"

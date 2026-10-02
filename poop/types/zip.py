@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._peek import _UNPEEKED, _PeekMixin
-from poop.types.boolean import false, to_boolean, true
+from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 from poop.types.tuple import Tuple
@@ -99,15 +99,6 @@ class Zip(_PeekMixin, _IterableMixin, Object):
 
     def iter(self) -> Zip:
         return self
-
-    def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(self is other)
-
-    def __ne__(self, other: object) -> Boolean:
-
-        return false if self is other else true
 
     def __str__(self) -> str:
         return "<zip>"
