@@ -7,6 +7,9 @@ from collections.abc import Callable, Iterator
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, Any
 
+from poop.types._argument import a_block, a_key
+from poop.types.exceptions import MIRRORS
+
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.enumerate import Enumerate
@@ -44,8 +47,6 @@ def _sorted(
     through as a comparison block and `xs.sorted(key=None)` answered
     `'NoneType' object is not callable`.
     """
-    from poop.types._argument import a_key
-
     kwargs: dict[str, Any] = {"reverse": bool(reverse)}
     if not _is_absent(key):
         # The one place every `sorted`/`sort` key passes through, as `_minmax`
@@ -71,8 +72,6 @@ class _IterableMixin:
         return iter(self)
 
     def do(self, block: Callable[[Any], Any] | Missing = MISSING) -> NoneClass:
-        from poop.types._argument import a_block
-
         block = a_block(block, "do")
         # The one place every collection's iteration is driven to exhaustion,
         # so it is where a mutation mid-iteration surfaces: CPython's
@@ -85,7 +84,6 @@ class _IterableMixin:
         return none
 
     def map(self, block: Callable[[Any], Any] | Missing = MISSING) -> Map:
-        from poop.types._argument import a_block
         from poop.types.map import Map
 
         # Eagerly, though the view is lazy: this is the half no wording change
@@ -94,21 +92,17 @@ class _IterableMixin:
         return Map(self, a_block(block, "map"))
 
     def filter(self, block: Callable[[Any], Any] | Missing = MISSING) -> Filter:
-        from poop.types._argument import a_block
         from poop.types.filter import Filter
 
         return Filter(self, a_block(block, "filter"))
 
     def filter_false(self, block: Callable[[Any], Any] | Missing = MISSING) -> Filter:
-        from poop.types._argument import a_block
         from poop.types.filter import Filter
 
         block = a_block(block, "filter_false")
         return Filter(self, lambda x: not bool(block(x)))
 
     def find(self, block: Callable[[Any], Any] | Missing = MISSING) -> Any:
-        from poop.types._argument import a_block
-
         block = a_block(block, "find")
         for item in self._iter_items():
             if bool(block(item)):
@@ -118,9 +112,6 @@ class _IterableMixin:
     def reduce(
         self, init: Any = MISSING, block: Callable[[Any, Any], Any] | Missing = MISSING
     ) -> Any:
-        from poop.types._argument import MISSING, a_block
-        from poop.types.exceptions import MIRRORS
-
         if init is MISSING:
             # Named separately: `#reduce expects a block, got nothing` would be
             # true and unhelpful for `xs.reduce()`, where the initial value is
@@ -179,14 +170,10 @@ class _IterableMixin:
         return List(*_sorted(self._iter_items(), key, reverse))
 
     def all(self, block: Callable[[Any], Any] | Missing = MISSING) -> Boolean:
-        from poop.types._argument import a_block
-
         block = a_block(block, "all")
         return to_boolean(builtins.all(bool(block(x)) for x in self._iter_items()))
 
     def any(self, block: Callable[[Any], Any] | Missing = MISSING) -> Boolean:
-        from poop.types._argument import a_block
-
         block = a_block(block, "any")
         return to_boolean(builtins.any(bool(block(x)) for x in self._iter_items()))
 

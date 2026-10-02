@@ -17,7 +17,14 @@ from poop.types._message import article
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
-from poop.types._unwrap import _faithful, _unwrap
+from poop.types._unwrap import (
+    _faithful,
+    _is_absent,
+    _opt_int,
+    _opt_str,
+    _unwrap,
+    _unwrap_bool,
+)
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean, true
 from poop.types.byte_array_iterator import ByteArrayIterator
@@ -26,12 +33,13 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
 from poop.types.object import Object
+from poop.types.slice import _resolve_py_slice
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
@@ -74,8 +82,6 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> ByteArray:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         return ByteArray(bytearray(self._value[py]))
 
@@ -112,8 +118,6 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         encoding: Str | NoneClass | None = None,
         errors: Str | NoneClass | None = None,
     ) -> Str:
-        from poop.types._unwrap import _opt_str
-
         return Str(
             decoded(
                 self._value,
@@ -145,8 +149,6 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep: Str | ByteArray | NoneClass | None = None,
         bytes_per_sep: Int | NoneClass | None = None,
     ) -> Str:
-        from poop.types._unwrap import _is_absent, _opt_int
-
         if _is_absent(sep):
             return Str(self._value.hex())
         raw = text_like(sep, "hex", "a one-character separator")
@@ -208,8 +210,6 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return none
 
     def pop(self, index: Index | NoneClass | None = None) -> Int:
-        from poop.types._unwrap import _is_absent
-
         try:
             if _is_absent(index):
                 return Int(self._value.pop())
@@ -495,8 +495,6 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         )
 
     def splitlines(self, keepends: Boolean | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap_bool
-
         return List(
             *[
                 ByteArray(p)

@@ -18,7 +18,7 @@ from poop.types.object import Object
 from poop.types.set_iterator import SetIterator
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 
 

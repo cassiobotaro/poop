@@ -12,7 +12,7 @@ from poop.types.set import Set
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
 
 
 @final

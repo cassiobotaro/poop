@@ -11,7 +11,7 @@ from poop.types.object import Object
 from poop.types.set import Set
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
 
 
 @final

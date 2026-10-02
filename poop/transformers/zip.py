@@ -2,14 +2,13 @@ from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
+from poop.types._unwrap import _is_absent
+from poop.types.boolean import Boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.zip import Zip
 
 
 def _poop_zip(*sources: object, **kwargs: object) -> Zip:
-    from poop.types._unwrap import _is_absent
-    from poop.types.boolean import Boolean
-
     # `zip` is the one converter that legitimately takes any number of
     # positional arguments, so `refuse_extra_arguments` has nothing to count
     # here — only the keyword half applies, and `strict` is the single real one.

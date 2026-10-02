@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import call_at
+from poop.types._message import article
 from poop.types.exceptions import MIRRORS
 from poop.types.range import Range
 
@@ -38,7 +39,6 @@ def spread(value: object, kind: str) -> object:
     """
     if isinstance(value, Iterable):
         return value
-    from poop.types._message import article
 
     raise MIRRORS["TypeError"](
         f"a {kind} literal can only spread a collection, "

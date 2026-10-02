@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from poop.types._cloak import cloak
 from poop.types._mutated import reword_if_native
 from poop.types._sentinel import MISSING, UNPEEKED
+from poop.types.boolean import false, true
 from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
@@ -74,8 +75,6 @@ class _PeekMixin:
         )
 
     def has_next(self) -> Boolean:
-        from poop.types.boolean import false, true
-
         if self._peeked is not UNPEEKED:
             return true
         try:

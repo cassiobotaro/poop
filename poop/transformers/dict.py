@@ -10,6 +10,7 @@ from poop.types._unwrap import _faithful
 from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
 from poop.types.list import List
+from poop.types.mapping_proxy import MappingProxy
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -51,8 +52,6 @@ def _poop_kwargs_from(mapping: object) -> object:
     `argument after ** must be a mapping, not int`. Values stay POOP objects;
     a `**kw` parameter on the other side re-wraps them into a `Dict`.
     """
-    from poop.types.mapping_proxy import MappingProxy
-
     if isinstance(mapping, MappingProxy):
         mapping = mapping._dict
     if not isinstance(mapping, Dict):

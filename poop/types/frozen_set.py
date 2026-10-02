@@ -11,7 +11,7 @@ from poop.types.int import Int
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
 
 _frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name
 

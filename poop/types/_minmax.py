@@ -10,7 +10,9 @@ all, which is what lets all five reach it from the top of the file.
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from poop.types._argument import a_key
 from poop.types._sentinel import MISSING
+from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
     # Name only — importing `none` at runtime would put this module back under
@@ -44,9 +46,7 @@ def _minmax(
     """
     # Imported here, not at the top: this module is imported by `int.py`, and
     # `_unwrap` reaches `none.py` -> `object.py`, which sits above it.
-    from poop.types._argument import a_key
     from poop.types._unwrap import _is_absent
-    from poop.types.exceptions import MIRRORS
 
     kwargs: dict[str, Any] = {}
     if not _is_absent(key):

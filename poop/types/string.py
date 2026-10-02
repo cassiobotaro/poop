@@ -15,22 +15,23 @@ from poop.types._minmax import _minmax
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import MISSING, NOT_A_COUNT
-from poop.types._unwrap import _faithful, _unwrap
+from poop.types._unwrap import _faithful, _is_absent, _opt_str, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS, PoopExcMeta
+from poop.types.int import Int
+from poop.types.list import List
 from poop.types.object import Object
+from poop.types.slice import _resolve_py_slice
 from poop.types.str_iterator import StrIterator
+from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
-    from poop.types.int import Int
-    from poop.types.list import List
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
-    from poop.types.tuple import Tuple
 
 
 # `Unknown format code 'd' for object of type 'str'`.
@@ -126,8 +127,6 @@ def _opt_text(chars: object, selector: str) -> Any:
     — `strip arg must be None or str` — where `None` is a value POOP spells
     `none` and "arg" is not a word the language uses.
     """
-    from poop.types._unwrap import _is_absent
-
     if _is_absent(chars):
         return None
     return text_like(chars, selector, "a str", (str,))
@@ -179,16 +178,12 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         self._value = value._value if isinstance(value, Str) else value
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._value))
 
     def __len__(self) -> int:
         return len(self._value)
 
     def ord(self) -> Int:
-        from poop.types.int import Int
-
         try:
             return Int(ord(self._value))
         except TypeError:
@@ -218,8 +213,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> Str:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         return Str(self._value[py])
 
@@ -234,8 +227,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         # The one mixin message a string must not answer: `sum("ab")` is a
         # TypeError in CPython, and adding the characters up would answer the
         # string back, which is `join`'s job.
-        from poop.types.exceptions import MIRRORS
-
         raise MIRRORS["TypeError"](
             "str cannot be summed — send #join to a list of pieces instead"
         )
@@ -319,8 +310,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep: Str | NoneClass | None = None,
         maxsplit: Int | NoneClass | None = None,
     ) -> List:
-        from poop.types.list import List
-
         return List(
             *(
                 Str(p)
@@ -384,8 +373,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.find(
                 _needle(sub, "find"),
@@ -400,8 +387,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.index(
                 _needle(sub, "index"),
@@ -416,8 +401,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.count(
                 _needle(sub, "count"),
@@ -486,7 +469,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         encoding: Str | NoneClass | None = None,
         errors: Str | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types._unwrap import _opt_str
         from poop.types.bytes import Bytes
 
         return Bytes(
@@ -537,13 +519,9 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Str(self._value.zfill(_faithful(width)))
 
     def partition(self, sep: Str) -> Tuple:
-        from poop.types.tuple import Tuple
-
         return Tuple(*[Str(s) for s in self._value.partition(_faithful(sep))])
 
     def rpartition(self, sep: Str) -> Tuple:
-        from poop.types.tuple import Tuple
-
         return Tuple(*[Str(s) for s in self._value.rpartition(_faithful(sep))])
 
     def removeprefix(self, prefix: Str) -> Str:
@@ -558,8 +536,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.rfind(
                 _needle(sub, "rfind"),
@@ -574,8 +550,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.rindex(
                 _needle(sub, "rindex"),
@@ -589,8 +563,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep: Str | NoneClass | None = None,
         maxsplit: Int | NoneClass | None = None,
     ) -> List:
-        from poop.types.list import List
-
         return List(
             *(
                 Str(s)
@@ -599,9 +571,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         )
 
     def splitlines(self, keepends: Boolean | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap_bool
-        from poop.types.list import List
-
         return List(
             *[Str(s) for s in self._value.splitlines(_unwrap_bool(keepends, False))]
         )

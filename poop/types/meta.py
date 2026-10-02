@@ -16,7 +16,8 @@ from typing import TYPE_CHECKING, Any, Never
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
-from poop.types._selectors import is_dunder
+from poop.types._message import article
+from poop.types._selectors import explain, is_dunder, is_message
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -293,7 +294,6 @@ def _adapted(slot: str, method: Any) -> Any:
         if isinstance(raw, native):
             return raw
 
-        from poop.types._message import article
         from poop.types.exceptions import MIRRORS
 
         # Named by the role, never by the slot: a message spelling `__str__`
@@ -685,7 +685,6 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def dir(cls) -> List:
-        from poop.types._selectors import is_message
         from poop.types.list import List
         from poop.types.string import Str
 
@@ -821,7 +820,6 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def does_not_understand(cls, name: str) -> Any:
-        from poop.types._selectors import explain
         from poop.types.object import MessageNotUnderstood
 
         raise MessageNotUnderstood(explain(cls, name), name=name, obj=cls)

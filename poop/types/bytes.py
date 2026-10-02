@@ -11,23 +11,30 @@ from poop.types._iterable_mixin import _IterableMixin
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
-from poop.types._unwrap import _faithful, _is_absent, _unwrap
+from poop.types._unwrap import (
+    _faithful,
+    _is_absent,
+    _opt_int,
+    _opt_str,
+    _unwrap,
+    _unwrap_bool,
+)
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes_iterator import BytesIterator
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
+from poop.types.list import List
 from poop.types.object import Object
+from poop.types.slice import _resolve_py_slice
+from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
-    from poop.types.int import Int
-    from poop.types.list import List
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
-    from poop.types.string import Str
-    from poop.types.tuple import Tuple
 
 
 _BYTE_KINDS = (bytes, bytearray, memoryview)
@@ -43,16 +50,12 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         self._value = value._value if isinstance(value, Bytes) else value
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._value))
 
     def __len__(self) -> int:
         return len(self._value)
 
     def at(self, index: Index) -> Int:
-        from poop.types.int import Int
-
         return Int(at_index(self._value, index, self))
 
     def slice(
@@ -61,8 +64,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         return Bytes(self._value[py])
 
@@ -77,8 +78,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
-        from poop.types.int import Int
-
         if isinstance(item, Int):
             return item._value in self._value
         return False
@@ -88,9 +87,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         encoding: Str | NoneClass | None = None,
         errors: Str | NoneClass | None = None,
     ) -> Str:
-        from poop.types._unwrap import _opt_str
-        from poop.types.string import Str
-
         return Str(
             decoded(
                 self._value,
@@ -104,9 +100,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep: Str | Bytes | NoneClass | None = None,
         bytes_per_sep: Int | NoneClass | None = None,
     ) -> Str:
-        from poop.types._unwrap import _opt_int
-        from poop.types.string import Str
-
         if _is_absent(sep):
             return Str(self._value.hex())
         sep_value = text_like(sep, "hex", "a one-character separator")
@@ -127,8 +120,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
             ) from None
 
     def __iter__(self) -> Iterator[Int]:
-        from poop.types.int import Int
-
         return (Int(b) for b in self._value)
 
     def iter(self) -> BytesIterator:
@@ -139,8 +130,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         # a one-character `str` **or** a one-byte `bytes` — `ord(b"a")` is 97 —
         # and only `Str` answered the message. A receiver that is not exactly
         # one byte long is left to CPython's faithful TypeError.
-        from poop.types.int import Int
-
         try:
             return Int(ord(self._value))
         except TypeError:
@@ -194,8 +183,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.count(
                 a_needle(sub, "count", "bytes or an int", _BYTE_KINDS),
@@ -232,8 +219,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.find(
                 a_needle(sub, "find", "bytes or an int", _BYTE_KINDS),
@@ -248,8 +233,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.index(
                 a_needle(sub, "index", "bytes or an int", _BYTE_KINDS),
@@ -308,8 +291,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Bytes(self._value.lstrip(bytes_like(chars, "lstrip", optional=True)))
 
     def partition(self, sep: Bytes) -> Tuple:
-        from poop.types.tuple import Tuple
-
         return Tuple(
             *[Bytes(p) for p in self._value.partition(bytes_like(sep, "partition"))]
         )
@@ -340,8 +321,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.rfind(
                 a_needle(sub, "rfind", "bytes or an int", _BYTE_KINDS),
@@ -356,8 +335,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.rindex(
                 a_needle(sub, "rindex", "bytes or an int", _BYTE_KINDS),
@@ -377,8 +354,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         )
 
     def rpartition(self, sep: Bytes) -> Tuple:
-        from poop.types.tuple import Tuple
-
         return Tuple(
             *[Bytes(p) for p in self._value.rpartition(bytes_like(sep, "rpartition"))]
         )
@@ -388,8 +363,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep: Bytes | NoneClass | None = None,
         maxsplit: Int | NoneClass | None = None,
     ) -> List:
-        from poop.types.list import List
-
         return List(
             *[
                 Bytes(p)
@@ -407,8 +380,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep: Bytes | NoneClass | None = None,
         maxsplit: Int | NoneClass | None = None,
     ) -> List:
-        from poop.types.list import List
-
         return List(
             *[
                 Bytes(p)
@@ -419,9 +390,6 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         )
 
     def splitlines(self, keepends: Boolean | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap_bool
-        from poop.types.list import List
-
         return List(
             *[Bytes(p) for p in self._value.splitlines(_unwrap_bool(keepends, False))]
         )

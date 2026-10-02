@@ -14,18 +14,18 @@ from poop.types._numeric_compare import (
 )
 from poop.types._pow import reflected_pow
 from poop.types._sentinel import MISSING, NOT_NUMERIC
-from poop.types._unwrap import _unwrap
+from poop.types._unwrap import _is_absent, _unwrap
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
 from poop.types.object import Object
+from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
-    from poop.types.int import Int
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
-    from poop.types.string import Str
-    from poop.types.tuple import Tuple
 
 
 class Float(_NumericCompareMixin, Object):
@@ -66,9 +66,6 @@ class Float(_NumericCompareMixin, Object):
         return to_boolean(self._value.is_integer())
 
     def as_integer_ratio(self) -> Tuple:
-        from poop.types.int import Int
-        from poop.types.tuple import Tuple
-
         n, d = self._value.as_integer_ratio()
         return Tuple(Int(n), Int(d))
 
@@ -76,8 +73,6 @@ class Float(_NumericCompareMixin, Object):
         return self
 
     def hex(self) -> Str:
-        from poop.types.string import Str
-
         return Str(float(self._value).hex())
 
     @classmethod
@@ -102,50 +97,36 @@ class Float(_NumericCompareMixin, Object):
         return self.__abs__()
 
     def __add__(self, other: object) -> Float:
-        from poop.types.int import Int
-
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__radd__ run
         return Float(self._value + other._value)
 
     def __sub__(self, other: object) -> Float:
-        from poop.types.int import Int
-
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rsub__ run
         return Float(self._value - other._value)
 
     def __mul__(self, other: object) -> Float:
-        from poop.types.int import Int
-
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rmul__ run
         return Float(self._value * other._value)
 
     def __truediv__(self, other: object) -> Float:
-        from poop.types.int import Int
-
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rtruediv__ run
         return Float(self._value / other._value)
 
     def __floordiv__(self, other: object) -> Float:
-        from poop.types.int import Int
-
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rfloordiv__ run
         return Float(self._value // other._value)
 
     def __mod__(self, other: object) -> Float:
-        from poop.types.int import Int
-
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rmod__ run
         return Float(self._value % other._value)
 
     def __pow__(self, other: object) -> Float | Complex:
-        from poop.types.int import Int
-
         if isinstance(other, Complex):
             return NotImplemented
         if not isinstance(other, Int | Float):
@@ -167,8 +148,6 @@ class Float(_NumericCompareMixin, Object):
         #
         # In `pow`, not `__pow__`: the operator never carries a third operand
         # (`a ** b % m` is two operations, and the builtin `pow` is banned).
-        from poop.types._unwrap import _is_absent
-
         if not _is_absent(modulus):
             raise MIRRORS["TypeError"](
                 "pow's modulus is only defined when both operands are ints"
@@ -186,8 +165,6 @@ class Float(_NumericCompareMixin, Object):
         return result
 
     def __divmod__(self, other: object) -> Tuple:
-        from poop.types.tuple import Tuple
-
         v = _num_value(other)
         if v is NOT_NUMERIC:
             return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
@@ -203,32 +180,24 @@ class Float(_NumericCompareMixin, Object):
         return result
 
     def __ceil__(self) -> Int:
-        from poop.types.int import Int
-
         return Int(math.ceil(self._value))
 
     def ceil(self) -> Int:
         return self.__ceil__()
 
     def __floor__(self) -> Int:
-        from poop.types.int import Int
-
         return Int(math.floor(self._value))
 
     def floor(self) -> Int:
         return self.__floor__()
 
     def __trunc__(self) -> Int:
-        from poop.types.int import Int
-
         return Int(math.trunc(self._value))
 
     def trunc(self) -> Int:
         return self.__trunc__()
 
     def __round__(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
-        from poop.types.int import Int
-
         n = _unwrap(ndigits, None)
         result = round(self._value, n)
         return Int(result) if isinstance(result, int) else Float(result)

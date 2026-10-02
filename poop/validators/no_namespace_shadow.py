@@ -1,6 +1,7 @@
 import ast
 
 from poop.errors import ValidationError
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.validators.base import (
     CollectingValidator,
     ErrorCollector,
@@ -97,12 +98,7 @@ class NoNamespaceShadowValidator(CollectingValidator):
     def __init__(self) -> None:
         # Pull the set of user-facing entry points from
         # DEFAULT_NAMESPACE so the protected list stays in sync with
-        # whatever the transformers register. Lazy import to avoid
-        # validator → transformer eager-load at validators package
-        # import time (the cycle would still close, but this keeps
-        # the dependency clean).
-        from poop.transformers import DEFAULT_NAMESPACE
-
+        # whatever the transformers register.
         self._protected: frozenset[str] = frozenset(
             n for n in DEFAULT_NAMESPACE if not n.startswith("_poop_")
         )

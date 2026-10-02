@@ -4,9 +4,11 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.object import Object
+from poop.types.set import Set
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -45,8 +47,6 @@ def _set_like_elements(other: object) -> set[Object] | None:
     """
     from poop.types.dict_items import DictItems
     from poop.types.dict_keys import DictKeys
-    from poop.types.frozen_set import FrozenSet
-    from poop.types.set import Set
 
     if isinstance(other, DictKeys | DictItems | Set | FrozenSet):
         return _elements(other)

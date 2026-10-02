@@ -16,13 +16,14 @@ from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_keys import DictKeys
 from poop.types.dict_values import DictValues
 from poop.types.int import Int
+from poop.types.mapping_proxy import MappingProxy
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
     from poop.types.none import NoneClass
 
@@ -68,8 +69,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         # not a Dict, so _ValueEqMixin would return ``false`` and (being a real
         # value, not NotImplemented) suppress MappingProxy's reflected __eq__.
         # Unwrap the proxy here so the comparison stays symmetric.
-        from poop.types.mapping_proxy import MappingProxy
-
         if isinstance(other, MappingProxy):
             return to_boolean(self._data == other._dict._data)
         # Any Dict (incl. OrderedDict/DefaultDict subclasses) compares by its
@@ -83,8 +82,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         return super().__eq__(other)
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.mapping_proxy import MappingProxy
-
         if isinstance(other, MappingProxy):
             return to_boolean(self._data != other._dict._data)
         if isinstance(other, Dict):
@@ -95,8 +92,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
     def fromkeys(
         cls, keys: Iterable[Object], value: Object | NoneClass | None = None
     ) -> Dict:
-        from poop.types._unwrap import _is_absent
-
         fill: Object = none if _is_absent(value) else value
         d = cls()
         for k in keys:
@@ -178,8 +173,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         # MappingProxy's reflected ``__ror__``, rebind the name to a fresh
         # Dict, and silently leave any alias pointing at the unchanged
         # original. Unwrap the proxy here, as ``__eq__`` already does.
-        from poop.types.mapping_proxy import MappingProxy
-
         if isinstance(other, MappingProxy):
             self._data.update(other._dict._data)
             return self
@@ -230,8 +223,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         # answers, decided by which spelling the reader reached for. An absent
         # mapping is `_is_absent`, the test every other optional argument in
         # the language uses.
-        from poop.types.mapping_proxy import MappingProxy
-
         if isinstance(other, Dict):
             self._data.update(other._data)
         elif isinstance(other, MappingProxy):

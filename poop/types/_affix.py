@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import Any
 
 from poop.types._unwrap import _faithful
+from poop.types.tuple import Tuple
 
 
 def affix_needle(affix: object) -> Any:
@@ -35,8 +36,6 @@ def affix_needle(affix: object) -> Any:
     same reason: reading `._items` off it would answer `int does not understand
     #_items`, naming a POOP internal.
     """
-    from poop.types.tuple import Tuple  # circular: tuple imports string
-
     if isinstance(affix, Tuple):
         return tuple(_faithful(p) for p in affix._items)
     return _faithful(affix)

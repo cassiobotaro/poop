@@ -10,7 +10,7 @@ from poop.types.dict_value_iterator import DictValueIterator
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
 
 
 @final

@@ -32,8 +32,9 @@ from __future__ import annotations
 
 from typing import Any, Literal, Never, cast, get_args
 
+from poop.types._selectors import explain
 from poop.types.meta import PoopMeta, class_side, class_side_read_refusal
-from poop.types.object import Object
+from poop.types.object import MessageNotUnderstood, Object
 
 
 class PoopExcMeta(PoopMeta):
@@ -168,8 +169,6 @@ def _refuse_python_attribute(cls: type, name: str, instead: str | None) -> Never
     aimed one receiver over: these are instance attributes, so the message a
     reader wanted is answered by the *caught error*, not by the class.
     """
-    from poop.types.object import MessageNotUnderstood
-
     tail = (
         f"a caught error answers #{instead}"
         if instead is not None
@@ -203,9 +202,6 @@ def _refusal_for(name: str, instead: str | None) -> class_side:
     def refuse(cls: type) -> Never:
         native = getattr(cls, "_native", None)
         if native is None or not hasattr(native, name):
-            from poop.types._selectors import explain
-            from poop.types.object import MessageNotUnderstood
-
             raise MessageNotUnderstood(
                 explain(cls, name, cls.__name__), name=name, obj=cls
             )

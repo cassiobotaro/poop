@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast, final
 
-from poop.types._argument import a_block
+from poop.types._argument import a_block, text_like
 from poop.types._cloak import cloak
+from poop.types._minmax import MISSING, _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
 
@@ -199,7 +200,6 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         # Boolean has no slot for, so it fell through to `object.__format__`
         # and refused every non-empty spec while `"{:>6}".format(True)`, which
         # routes through `to_python`, answered `'     1'`.
-        from poop.types._argument import text_like
         from poop.types._unwrap import _is_absent
         from poop.types.string import Str, _template_refusal
 
@@ -245,8 +245,6 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int | Boolean:
-        from poop.types._minmax import MISSING, _minmax
-
         return cast(
             "Int | Boolean",
             _minmax(builtins.max, "#max", (self, *others), key, MISSING),
@@ -257,8 +255,6 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int | Boolean:
-        from poop.types._minmax import MISSING, _minmax
-
         return cast(
             "Int | Boolean",
             _minmax(builtins.min, "#min", (self, *others), key, MISSING),

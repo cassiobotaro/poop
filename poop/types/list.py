@@ -12,22 +12,24 @@ from poop.types._at import (
 )
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
+from poop.types._message import article
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
+from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
 from poop.types.object import Object
+from poop.types.slice import Slice, _resolve_py_slice
 
 if TYPE_CHECKING:
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
-    from poop.types.int import Int
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
-    from poop.types.slice import Slice
     from poop.types.string import Str
 
 
@@ -40,16 +42,12 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         self._items: list[Object] = list(elements)
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._items))
 
     def __len__(self) -> int:
         return len(self._items)
 
     def at(self, index: Index | Slice) -> Object:
-        from poop.types.slice import Slice
-
         if isinstance(index, Slice):
             return List(*self._items[index._py_slice()])
         return at_index(self._items, index, self)
@@ -68,8 +66,6 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         reachable from the same slip — a bad position, and a position that is
         not one.
         """
-        from poop.types._message import article
-
         try:
             self._items[index] = obj
         except IndexError:
@@ -89,8 +85,6 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> List:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         return List(*self._items[py])
 
@@ -150,8 +144,6 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return none
 
     def pop(self, index: Index | NoneClass | None = None) -> Object:
-        from poop.types._unwrap import _is_absent
-
         try:
             if _is_absent(index):
                 return self._items.pop()
@@ -171,8 +163,6 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return List(*self._items)
 
     def count(self, obj: Object) -> Int:
-        from poop.types.int import Int
-
         return Int(self._items.count(obj))
 
     def extend(self, other: Iterable[Object]) -> NoneClass:
@@ -185,8 +175,6 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         # No branching on which bound was given: `stop` alone was dropped on
         # the floor by the first branch, so `xs.index(3, stop=1)` answered a
         # match from outside the bound it was handed. `len` rather than `None`
@@ -234,8 +222,6 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        from poop.types._unwrap import _unwrap, _unwrap_bool
-
         sep_value = _unwrap(sep, " ")
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)

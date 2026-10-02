@@ -10,16 +10,18 @@ from poop.types._iterable_mixin import _IterableMixin, _sorted
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
+from poop.types._unwrap import _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
+from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
+from poop.types.slice import _resolve_py_slice
 from poop.types.tuple_iterator import TupleIterator
 
 if TYPE_CHECKING:
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
-    from poop.types.int import Int
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
     from poop.types.string import Str
@@ -33,8 +35,6 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         self._items: tuple[Object, ...] = tuple(elements)
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._items))
 
     def __len__(self) -> int:
@@ -49,8 +49,6 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> Tuple:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         return Tuple(*self._items[py])
 
@@ -93,8 +91,6 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Tuple(*builtins.reversed(self._items))
 
     def count(self, obj: Object) -> Int:
-        from poop.types.int import Int
-
         return Int(self._items.count(obj))
 
     def index(
@@ -103,8 +99,6 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         # No branching on which bound was given: `stop` alone was dropped on
         # the floor by the first branch, so `xs.index(3, stop=1)` answered a
         # match from outside the bound it was handed. `len` rather than `None`
@@ -130,8 +124,6 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        from poop.types._unwrap import _unwrap, _unwrap_bool
-
         sep_value = _unwrap(sep, " ")
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)

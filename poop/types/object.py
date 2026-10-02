@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Any, Self
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak
-from poop.types._selectors import is_dunder
+from poop.types._message import cannot_be_hashed, no_format_spec
+from poop.types._selectors import explain, is_dunder, is_message
 from poop.types.meta import PoopMeta
 
 if TYPE_CHECKING:
@@ -141,8 +142,6 @@ class Object(metaclass=PoopMeta):
         callable, which is also the only way to reach the arguments: attribute
         lookup runs before the call, so nothing here has seen them yet.
         """
-        from poop.types._selectors import explain
-
         raise MessageNotUnderstood(explain(self, name), name=name, obj=self)
 
     def if_none(self, block: Callable[[], Any]) -> Object:
@@ -204,7 +203,6 @@ class Object(metaclass=PoopMeta):
         return self.class_().name()
 
     def hash(self) -> Int:
-        from poop.types._message import cannot_be_hashed
         from poop.types.exceptions import MIRRORS
         from poop.types.int import Int
 
@@ -254,7 +252,6 @@ class Object(metaclass=PoopMeta):
         return Str(builtins.ascii(self))
 
     def dir(self) -> List:
-        from poop.types._selectors import is_message
         from poop.types.list import List
         from poop.types.string import Str
 
@@ -298,8 +295,6 @@ class Object(metaclass=PoopMeta):
             # naming the dunder: `unsupported format string passed to
             # list.__format__`. CPython refuses these too — only the sentence
             # is POOP's to write.
-            from poop.types._message import no_format_spec
-
             raise MIRRORS["TypeError"](no_format_spec(type(self).__name__)) from None
 
     def get_attr(self, name: Str, *default: Any) -> Any:

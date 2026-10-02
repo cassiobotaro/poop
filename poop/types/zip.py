@@ -6,13 +6,14 @@ from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._peek import _PeekMixin
 from poop.types._sentinel import UNPEEKED
+from poop.types._unwrap import _unwrap_bool
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 
 
@@ -43,8 +44,6 @@ class Zip(_PeekMixin, _IterableMixin, Object):
     def __init__(
         self, *sources: Any, strict: Boolean | NoneClass | None = None
     ) -> None:
-        from poop.types._unwrap import _unwrap_bool
-
         for source in sources:
             iter(source)
         self._sources = sources

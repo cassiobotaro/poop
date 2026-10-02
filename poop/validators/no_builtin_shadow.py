@@ -1,6 +1,7 @@
 import ast
 
 from poop.errors import ValidationError
+from poop.types.exceptions import MIRRORS
 from poop.validators.base import CollectingValidator, collect_errors
 from poop.validators.no_namespace_shadow import _Visitor
 
@@ -63,11 +64,7 @@ class NoBuiltinShadowValidator(CollectingValidator):
         # Derived from MIRRORS rather than tabulated, as
         # `no_namespace_shadow` derives its own set from DEFAULT_NAMESPACE: a
         # seventeenth mirror must not be addable without the reservation
-        # following it. Imported here rather than at module scope for the
-        # reason that validator gives — the cycle would close either way, but
-        # this keeps the validator -> types edge out of package import time.
-        from poop.types.exceptions import MIRRORS
-
+        # following it.
         self._protected: frozenset[str] = _BUILTIN_NAMES | frozenset(MIRRORS)
 
     def collect(self, tree: ast.Module) -> list[ValidationError]:

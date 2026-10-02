@@ -1,6 +1,7 @@
 from typing import Any
 
 from poop.types._sentinel import NOT_A_COUNT
+from poop.types.boolean import Boolean
 
 
 def _repeat_count(other: object) -> Any:
@@ -31,8 +32,6 @@ def _repeat_count(other: object) -> Any:
     Five wrappers answer ``*`` (``Str``, ``List``, ``Tuple``, ``Bytes``,
     ``ByteArray``) against fourteen operand kinds — 95 sites, one operator.
     """
-    from poop.types.boolean import Boolean
-
     if isinstance(other, Boolean):
         return int(bool(other))
     raw = getattr(other, "_value", other)

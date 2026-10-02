@@ -14,7 +14,7 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.dict import Dict
     from poop.types.dict_items import DictItems
     from poop.types.dict_keys import DictKeys

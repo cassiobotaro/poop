@@ -13,14 +13,13 @@ from poop.types._numeric_compare import (
 )
 from poop.types._pow import reflected_pow
 from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC
-from poop.types._unwrap import _faithful, _unwrap
-from poop.types.boolean import true
+from poop.types._unwrap import _faithful, _is_absent, _opt_int, _unwrap, _unwrap_bool
+from poop.types.boolean import Boolean, true
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
     from poop.types.float import Float
     from poop.types.none import NoneClass
@@ -37,8 +36,6 @@ def _integral_value(other: object) -> Any:
     ``NotImplemented`` and CPython raises its faithful ``TypeError`` instead of
     leaking an ``AttributeError`` from a missing ``other._value``.
     """
-    from poop.types.boolean import Boolean
-
     if isinstance(other, Int):
         return other._value
     if isinstance(other, Boolean):
@@ -121,7 +118,6 @@ class Int(_NumericCompareMixin, Object):
         *,
         signed: Boolean | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types._unwrap import _opt_int, _unwrap_bool
         from poop.types.bytes import Bytes
 
         return Bytes(
@@ -140,8 +136,6 @@ class Int(_NumericCompareMixin, Object):
         *,
         signed: Boolean | NoneClass | None = None,
     ) -> Int:
-        from poop.types._unwrap import _unwrap_bool
-
         return wrapped_instance(
             cls,
             int.from_bytes(
@@ -212,7 +206,6 @@ class Int(_NumericCompareMixin, Object):
     def __pow__(
         self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
-        from poop.types._unwrap import _is_absent
         from poop.types.float import Float
 
         if isinstance(other, Complex):

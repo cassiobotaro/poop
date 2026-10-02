@@ -5,6 +5,8 @@ from rich.console import Console
 from rich.syntax import Syntax
 from rich.text import Text
 
+from poop.console import in_colour
+
 
 class PoopError(Exception):
     """Base for all interpreter errors.
@@ -237,8 +239,6 @@ def report(exc: PoopError, source: str | None, console: Console) -> None:
     The CLI and the REPL each carried this choice, one through `typer.echo`
     and one through the console, and only the rendering was shared.
     """
-    from poop.console import in_colour
-
     if in_colour(console):
         console.print(render_error(exc, source), soft_wrap=True)
     else:
