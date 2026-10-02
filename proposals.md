@@ -60,51 +60,6 @@ the linter holds.
 
 ---
 
-### 65. A syntax error is the one error reported without its line
-
-```
-x = 1
-y = (2 +
-z = 3
-```
-
-```
-poop: '(' was never closed (bad.py, line 2)
-```
-
-Every other failure quotes the source and points at it:
-
-```
-poop: if statements are forbidden — use cond.if_true(block) / …
-  2 | if x:
-    | ^
-```
-
-`format_error` exists so "one program reports the same way on both surfaces",
-and the most common mistake a newcomer makes is the one it cannot format.
-`parser.parse` raises `ParseError(str(exc))`, flattening `lineno` and `offset`
-into the text; `executor.execute` keeps them for the `SyntaxError` that
-`compile` raises — `ExecutionError(exc.msg, exc.lineno)` — so a module-level
-`return` gets the gutter an unclosed parenthesis does not. The REPL's `codeop`
-branch flattens the same way (`_error(str(exc))`).
-
-Underneath is a hierarchy that does not declare what its members carry.
-`errors.py` reads `getattr(exc, "lineno", None)` once and
-`getattr(exc, "col_offset", None)` twice, and takes the message from
-`exc.args[0]` (so does `repl.py`): duck typing against classes defined forty
-lines up in the same file.
-
-**Fix.** `PoopError` declares the surface — `lineno: int | None = None`,
-`col_offset: int | None = None`, and a `message` property — and the three
-`getattr`s and two `args[0]`s read attributes. `ParseError` takes `exc.msg`,
-`exc.lineno` and the column, converted on the way in: `SyntaxError.offset` is
-1-based and counts characters (`x = "éé" +* 2` reports 11) where
-`_caret_column` expects `ast`'s 0-based UTF-8 byte offset (12 there), so it is
-`len(line[: offset - 1].encode())`, not a subtraction. `TransformError` is also
-the one error class missing from `poop.__all__`.
-
----
-
 ### 66. Sixty-one of the 71 validators are the same anonymous class
 
 ```python
