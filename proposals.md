@@ -14,52 +14,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues while the backlog has open items; the next one is 76.
 Once every item has been implemented and deleted, numbering starts over at 1.
 
-### 64. 158 of the 298 function-local imports break no cycle
-
-`CONTRIBUTING.md`: "All imports live at the top of the module. Use a
-function-local `import` only to break a circular import." `poop/` holds 298
-function-local imports of its own modules. Building the module-level import
-graph and asking, for each one, whether its target already reaches the
-importing module, says 158 of them could be hoisted together without closing
-a cycle. The sharpest cases import the module at the top *and* inside the
-function:
-
-```python
-# poop/types/_iterable_mixin.py
-from poop.types._argument import MISSING          # line 19, module level
-
-    def do(self, block=MISSING):
-        from poop.types._argument import a_block  # and again in map, filter,
-                                                   # filter_false, find, reduce,
-                                                   # all and any
-```
-
-`reduce` re-imports `MISSING` itself, shadowing the module-level name with the
-same object. `bytes.py` has 21 such imports and none closes a cycle today;
-`float.py` 16 and none; `string.py` 17 of 19. Sixteen modules also import
-`to_boolean` at runtime at the top and then again under `if TYPE_CHECKING:`
-(ruff `TC004`).
-
-The 140 that remain are real, and concentrated: `meta.py` (44) and `object.py`
-(39) sit under everything, so the root's protocol cannot name `Boolean` or
-`Str` at import time. Those should stay — but only three sites in the whole
-package say so (`# circular: block imports Object`), so a reader cannot tell a
-load-bearing lazy import from a habitual one.
-
-Two pairs are free one way only: `float → int` (12 sites) and `int → float`
-(8) each hoist alone and form a cycle together, so the hoist is a set to pick,
-not a search-and-replace.
-
-**Fix.** Hoist the 158, drop the 16 duplicate `TYPE_CHECKING` imports, and turn
-on ruff's `PLC0415` so each survivor carries a `# noqa: PLC0415` naming its
-cycle. Trialled for `_iterable_mixin.py` (the eight `a_block` imports and
-`_sorted`'s `a_key` hoisted): suite and `ty` pass. The per-call cost is small
-but not zero — every `xs.do(…)` and `xs.map(…)` runs an import statement
-before it does anything — and the rule in `CONTRIBUTING.md` would become one
-the linter holds.
-
----
-
 ### 75. Twenty-four `noqa` directives silence rules that are not enabled
 
 `pyproject.toml` selects `E4`, `E7`, `E9`, `W`, `F`, `UP`, `I`, `C90`, `S`,
