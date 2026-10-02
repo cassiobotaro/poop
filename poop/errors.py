@@ -6,23 +6,67 @@ from rich.text import Text
 
 
 class PoopError(Exception):
-    """Base for all interpreter errors."""
+    """Base for all interpreter errors.
+
+    Declares the whole surface the renderers read — a message and where it
+    points — so `format_error` reads attributes instead of probing each
+    subclass with `getattr`. `col_offset` is `ast`'s convention: 0-based, in
+    UTF-8 bytes, which is what `_caret_column` converts from.
+    """
+
+    lineno: int | None = None
+    col_offset: int | None = None
+
+    def __init__(
+        self, message: str, lineno: int | None = None, col_offset: int | None = None
+    ) -> None:
+        self.lineno = lineno
+        self.col_offset = col_offset
+        super().__init__(message)
+
+    @property
+    def message(self) -> str:
+        """The sentence alone, without the location `__str__` appends."""
+        return self.args[0]
+
+    def __str__(self) -> str:
+        where = [
+            f"{label} {value}"
+            for label, value in (("line", self.lineno), ("col", self.col_offset))
+            if value is not None
+        ]
+        return f"{self.message} ({', '.join(where)})" if where else self.message
 
 
 class ParseError(PoopError):
-    """Raised when ast.parse fails on source code."""
+    """Raised when the source is not Python at all."""
+
+    @classmethod
+    def from_syntax_error(cls, exc: SyntaxError) -> ParseError:
+        """The parser's failure, keeping the position CPython already found.
+
+        `str(exc)` flattened it into the text — `'(' was never closed (bad.py,
+        line 2)` — so the one error a newcomer hits first was the one reported
+        without the source line and caret every other error gets.
+
+        `SyntaxError.offset` counts *characters* from 1; `col_offset` is
+        `ast`'s 0-based UTF-8 byte offset, so `x = "éé" +* 2` is 11 to one and
+        12 to the other. Converted here, once, against the line CPython quotes.
+        """
+        col = None
+        if exc.offset is not None and exc.text is not None:
+            col = len(exc.text[: max(exc.offset - 1, 0)].encode("utf-8"))
+        return cls(exc.msg, exc.lineno, col)
 
 
 class ValidationError(PoopError):
     """Raised when a validator rejects the AST."""
 
-    def __init__(self, message: str, lineno: int, col_offset: int) -> None:
-        self.lineno = lineno
-        self.col_offset = col_offset
-        super().__init__(message)
+    lineno: int
+    col_offset: int
 
-    def __str__(self) -> str:
-        return f"{super().__str__()} (line {self.lineno}, col {self.col_offset})"
+    def __init__(self, message: str, lineno: int, col_offset: int) -> None:
+        super().__init__(message, lineno, col_offset)
 
 
 class TransformError(PoopError):
@@ -33,20 +77,14 @@ class TransformError(PoopError):
         super().__init__(message)
 
     def __str__(self) -> str:
-        return f"{super().__str__()} (transformer {self.transformer})"
+        return f"{self.message} (transformer {self.transformer})"
 
 
 class ExecutionError(PoopError):
     """Raised when exec() raises during evaluation."""
 
     def __init__(self, message: str, lineno: int | None = None) -> None:
-        self.lineno = lineno
-        super().__init__(message)
-
-    def __str__(self) -> str:
-        if self.lineno is None:
-            return super().__str__()
-        return f"{super().__str__()} (line {self.lineno})"
+        super().__init__(message, lineno)
 
 
 # Python's tokenizer ends a line only on \n, \r\n or \r, so those are the breaks
@@ -69,7 +107,7 @@ def _error_location(exc: PoopError, source: str | None) -> tuple[int, str] | Non
     quote, or when the line falls outside it — the cases where a caller can only
     show the bare message.
     """
-    lineno = getattr(exc, "lineno", None)
+    lineno = exc.lineno
     lines = _LINE_BREAK.split(source) if source is not None else []
     if lineno is None or not 1 <= lineno <= len(lines):
         return None
@@ -128,10 +166,6 @@ def _caret_column(line: str, col: int) -> int:
     return _display_width(_quoted(prefix))
 
 
-def _message(exc: PoopError) -> str:
-    return exc.args[0] if exc.args else str(exc)
-
-
 def _line_gutter(lineno: int) -> str:
     """The `  N | ` prefix that precedes the quoted source line."""
     return f"  {lineno} | "
@@ -160,8 +194,8 @@ def format_error(exc: PoopError, source: str | None) -> str:
     if location is None:
         return f"poop: {exc}"
     lineno, line = location
-    parts = [f"poop: {_message(exc)}", f"{_line_gutter(lineno)}{_quoted(line)}"]
-    col = getattr(exc, "col_offset", None)
+    parts = [f"poop: {exc.message}", f"{_line_gutter(lineno)}{_quoted(line)}"]
+    col = exc.col_offset
     if col is not None:
         parts.append(f"{_caret_gutter(lineno)}{' ' * _caret_column(line, col)}^")
     return "\n".join(parts)
@@ -182,11 +216,11 @@ def render_error(exc: PoopError, source: str | None) -> Text:
     highlighted = _PY_SYNTAX.highlight(_quoted(line))
     highlighted.rstrip()  # the highlighter appends a trailing newline
     rendered = Text.assemble(
-        (f"poop: {_message(exc)}\n", "red"),
+        (f"poop: {exc.message}\n", "red"),
         (_line_gutter(lineno), "dim"),
         highlighted,
     )
-    col = getattr(exc, "col_offset", None)
+    col = exc.col_offset
     if col is not None:
         rendered.append(f"\n{_caret_gutter(lineno)}", style="dim")
         rendered.append(f"{' ' * _caret_column(line, col)}^", style="red")

@@ -11,7 +11,7 @@ from rich.columns import Columns
 from rich.console import Console
 from rich.text import Text
 
-from poop.errors import PoopError, format_error, render_error
+from poop.errors import ParseError, PoopError, format_error, render_error
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types._selectors import is_message, receiver_label
 from poop.types.boolean import Boolean
@@ -377,7 +377,7 @@ class Repl:
             _OUT.print(Text(f"{arg} is allowed in POOP.", style="green"))
             return
         for err in errors:
-            print(err.args[0])  # noqa: T201
+            print(err.message)  # noqa: T201
 
     def _displayhook(self, value: object) -> None:
         # POOP's `none` (NoneClass) is the answer of every void message,
@@ -433,7 +433,7 @@ class Repl:
                 try:
                     result = codeop.compile_command(source)
                 except SyntaxError as exc:
-                    _error(str(exc))
+                    _print_error(ParseError.from_syntax_error(exc), source)
                     buffer = []
                     continue
 
