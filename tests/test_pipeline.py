@@ -42,7 +42,7 @@ def test_example_runs_through_full_pipeline(
     example: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr("builtins.input", lambda *_args, **_kwargs: "Test")
-    Interpreter().run_file(example)
+    Interpreter().run_source(example.read_text(encoding="utf-8-sig"), str(example))
 
 
 def test_examples_directory_has_files() -> None:

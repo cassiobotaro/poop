@@ -7,18 +7,17 @@ import pytest
 from rich.console import Console
 
 import poop.validators as validators
-from poop.errors import ExecutionError, ParseError, ValidationError
+from poop.errors import ExecutionError, ParseError, ValidationError, report
 from poop.interpreter import Interpreter
 from poop.repl import (
     _CYAN,
-    _EXPLAIN_CALLS,
     _EXPLAIN_SNIPPETS,
     Repl,
     _error,
+    _explain_calls,
     _explain_snippet,
     _indent_for,
     _PoopCompleter,
-    _print_error,
     _print_value,
     _rl_color,
     _save_history,
@@ -29,6 +28,8 @@ from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.int import Int
 from poop.types.string import Str
 from poop.validators import DEFAULT_VALIDATORS
+
+_DEFAULT_CALLS = _explain_calls(DEFAULT_VALIDATORS)
 
 
 def _repl() -> tuple[Repl, dict[str, object]]:
@@ -528,8 +529,9 @@ def test_print_error_keeps_the_caret_aligned_and_plain_off_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     buf = io.StringIO()
-    monkeypatch.setattr("poop.repl._ERR", _console(buf, terminal=False))
-    _print_error(ValidationError("if is forbidden", 1, 0), "if x:")
+    report(
+        ValidationError("if is forbidden", 1, 0), "if x:", _console(buf, terminal=False)
+    )
     out = buf.getvalue()
     assert "\x1b[" not in out
     assert "  1 | if x:" in out
@@ -540,8 +542,9 @@ def test_print_error_syntax_highlights_the_line_on_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     buf = io.StringIO()
-    monkeypatch.setattr("poop.repl._ERR", _console(buf, terminal=True))
-    _print_error(ValidationError("if is forbidden", 1, 0), "if x:")
+    report(
+        ValidationError("if is forbidden", 1, 0), "if x:", _console(buf, terminal=True)
+    )
     out = buf.getvalue()
     assert "\x1b[" in out  # coloured
     assert "poop: if is forbidden" in out  # the message survives intact
@@ -728,7 +731,10 @@ def test_every_validator_is_reachable_from_explain() -> None:
     # hand-written, which is how `import`, `invert`, the unary operators and
     # `type_alias` went missing in the first place.
     names = {id(o): n for n, o in vars(validators).items() if isinstance(o, type)}
-    snippets = [_explain_snippet(t) for t in _EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)]
+    snippets = [
+        _explain_snippet(t, _DEFAULT_CALLS)
+        for t in _DEFAULT_CALLS | set(_EXPLAIN_SNIPPETS)
+    ]
 
     def trips(validator: object, source: str | None) -> bool:
         if source is None:
@@ -787,8 +793,8 @@ def test_every_message_a_validator_composes_is_explained() -> None:
     interp = Interpreter()
     reported = {
         error.args[0]
-        for topic in _EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)
-        for error in interp.validate_all(_explain_snippet(topic) or "")
+        for topic in _DEFAULT_CALLS | set(_EXPLAIN_SNIPPETS)
+        for error in interp.validate_all(_explain_snippet(topic, _DEFAULT_CALLS) or "")
     }
     missing = [m for m in _reported_literals() if m not in reported]
     assert missing == []
@@ -806,7 +812,7 @@ def test_meta_explain_every_known_construct_produces_output(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     repl, _ = _repl()
-    for construct in sorted(_EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)):
+    for construct in sorted(_DEFAULT_CALLS | set(_EXPLAIN_SNIPPETS)):
         repl._meta(f":explain {construct}")
         out = capsys.readouterr().out
         # Asserting `"forbidden" in out` only proxied for "a validator spoke",

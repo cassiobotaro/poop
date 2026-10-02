@@ -188,20 +188,22 @@ def _term_console(buf: io.StringIO) -> Console:
     )
 
 
-def test_emit_error_syntax_highlights_on_a_terminal(
-    monkeypatch: pytest.MonkeyPatch,
+def test_an_error_is_syntax_highlighted_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     # On a colour stderr, a PoopError is rendered via render_error (coloured,
     # highlighted) rather than the plain format_error string.
     from poop import cli
-    from poop.errors import ValidationError
 
     buf = io.StringIO()
-    monkeypatch.setattr(cli, "_ERR", _term_console(buf))
-    cli._emit_error(ValidationError("if is forbidden", 1, 0), "if x:")
+    monkeypatch.setattr(cli, "ERR", _term_console(buf))
+    f = tmp_path / "bad.py"
+    f.write_text("if x:\n    pass\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f)])
+    assert result.exit_code == 1
     out = buf.getvalue()
     assert "\x1b[" in out
-    assert "poop: if is forbidden" in out
+    assert "poop: if statements are forbidden" in out
 
 
 def test_cli_no_file_starts_the_repl(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -221,7 +223,7 @@ def test_cli_transformers_only_colorizes_on_a_terminal(
     from poop import cli
 
     buf = io.StringIO()
-    monkeypatch.setattr(cli, "_OUT", _term_console(buf))
+    monkeypatch.setattr(cli, "OUT", _term_console(buf))
     f = tmp_path / "ok.py"
     f.write_text('"hi".print()\n', encoding="utf-8")
     result = runner.invoke(app, [str(f), "--transformers-only"])

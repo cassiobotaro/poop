@@ -62,7 +62,8 @@ Entry point is `poop/cli.py` (CLI via `typer`); `main.py` is a thin wrapper that
 - `poop/types/` — Smalltalk-style type wrappers (`object.py` is the root, `meta.py` the class side): one module per wrapped builtin and iterator; see the directory listing and the `INFECTIONS.md` catalog for the full inventory and the rules wrappers must follow
 - `poop/executor.py` — compiles and executes AST with an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
-- `poop/errors.py` — `PoopError` hierarchy and `format_error`, shared by the CLI and the REPL
+- `poop/errors.py` — `PoopError` hierarchy and `report` (with `format_error` / `render_error` beneath it), shared by the CLI and the REPL
+- `poop/console.py` — the stdout/stderr console pair both front ends write through
 - `poop/repl.py` — the interactive REPL
 
 POOP is the language, not the library: it mirrors no stdlib module. If Python needs an `import` to reach something, POOP does not offer it — `DEFAULT_NAMESPACE` exposes exactly two names user code can name: `Try` and `With`, the constructs replacing the `try`/`except` and `with` keywords. (The dict itself is larger — every other key is a mangled `_poop_*` binding, including the exception classes, which reach user code by transformer rewrite rather than by being named directly.) User code also runs against a builtins allow-list (`_ALLOWED_BUILTINS` in `poop/executor.py`), so every Python builtin POOP does not own answers `NameError`. There is no file I/O and no async. Do not add a module mirror back without revisiting that decision.

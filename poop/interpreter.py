@@ -1,5 +1,4 @@
 import ast
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from poop.errors import TransformError, ValidationError
@@ -30,16 +29,17 @@ class Interpreter:
             namespace if namespace is not None else DEFAULT_NAMESPACE
         )
 
-    def run_file(self, path: Path) -> None:
-        # `utf-8-sig` for the reason `cli.py` gives at its own read: a
-        # byte-order mark kept as a literal U+FEFF makes the tokenizer refuse
-        # a file CPython runs, naming a character no editor shows.
-        source = path.read_text(encoding="utf-8-sig")
-        self.run_source(source, filename=str(path))
+    @property
+    def validators(self) -> list[Validator]:
+        return self._validators
+
+    def new_namespace(self) -> dict[str, object]:
+        """A fresh copy of the namespace programs run against."""
+        return dict(self._namespace)
 
     def run_source(self, source: str, filename: str = "<string>") -> None:
-        tree = self._validate_and_transform(source, filename)
-        execute(tree, filename=filename, namespace=dict(self._namespace))
+        tree = self.transform_source(source, filename)
+        execute(tree, filename=filename, namespace=self.new_namespace())
 
     def validate_all(
         self, source: str, filename: str = "<string>"
@@ -58,9 +58,6 @@ class Interpreter:
         errors.sort(key=lambda error: (error.lineno, error.col_offset))
         return errors
 
-    def transform_source(self, source: str, filename: str = "<string>") -> ast.Module:
-        return self._validate_and_transform(source, filename)
-
     def run_source_repl(
         self, source: str, namespace: dict[str, object], filename: str = "<repl>"
     ) -> None:
@@ -69,10 +66,10 @@ class Interpreter:
         # numbers count against that earlier buffer. A per-input filename lets
         # the executor keep only frames from the input being run, so a reported
         # line always exists in the source shown alongside it.
-        tree = self._validate_and_transform(source, filename=filename)
+        tree = self.transform_source(source, filename=filename)
         execute(tree, filename=filename, namespace=namespace, interactive=True)
 
-    def _validate_and_transform(self, source: str, filename: str) -> ast.Module:
+    def transform_source(self, source: str, filename: str = "<string>") -> ast.Module:
         tree: ast.Module = parse(source, filename=filename)
         for validator in self._validators:
             validator.validate(tree)

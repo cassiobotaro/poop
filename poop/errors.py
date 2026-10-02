@@ -1,6 +1,7 @@
 import re
 import unicodedata
 
+from rich.console import Console
 from rich.syntax import Syntax
 from rich.text import Text
 
@@ -225,3 +226,22 @@ def render_error(exc: PoopError, source: str | None) -> Text:
         rendered.append(f"\n{_caret_gutter(lineno)}", style="dim")
         rendered.append(f"{' ' * _caret_column(line, col)}^", style="red")
     return rendered
+
+
+def report(exc: PoopError, source: str | None, console: Console) -> None:
+    """Print `exc` on `console` the way both front ends do.
+
+    A colour terminal gets the syntax-highlighted `render_error`; a pipe or
+    `NO_COLOR` gets `format_error`'s plain text, with rich's markup and
+    highlighting off so a `[` in the source is printed rather than parsed.
+    The CLI and the REPL each carried this choice, one through `typer.echo`
+    and one through the console, and only the rendering was shared.
+    """
+    from poop.console import in_colour
+
+    if in_colour(console):
+        console.print(render_error(exc, source), soft_wrap=True)
+    else:
+        console.print(
+            format_error(exc, source), soft_wrap=True, highlight=False, markup=False
+        )

@@ -8,11 +8,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from rich.columns import Columns
-from rich.console import Console
 from rich.text import Text
 
-from poop.errors import ParseError, PoopError, format_error, render_error
-from poop.transformers import DEFAULT_NAMESPACE
+from poop.console import ERR, OUT, in_colour
+from poop.errors import ParseError, PoopError, report
 from poop.types._selectors import is_message, receiver_label
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
@@ -20,10 +19,12 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass
 from poop.types.string import Str
-from poop.validators import DEFAULT_VALIDATORS
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from poop.interpreter import Interpreter
+    from poop.validators import Validator
 
 _HISTORY_FILE = Path.home() / ".poop_history"
 _HISTORY_MAX = 1000
@@ -33,12 +34,9 @@ _HISTORY_MAX = 1000
 # leaks another callback into the global atexit registry.
 _history_saver_registered = False
 
-# One console per stream, so colorization is decided per destination: value
-# echoes and prompts write to stdout, diagnostics to stderr. rich detects each
-# stream's tty independently and honors NO_COLOR, so `poop 2>err.log` never
-# leaks ANSI into the file while the interactive stdout stays colored.
-_OUT = Console()
-_ERR = Console(stderr=True)
+# Module names for the shared pair, so a test can swap the REPL's own.
+_OUT = OUT
+_ERR = ERR
 
 # readline needs \001/\002 non-printing markers to measure prompt width, which
 # rich does not emit — so the prompt keeps manual ANSI, gated on rich's own
@@ -64,7 +62,7 @@ def _print_value(value: object) -> None:
 
 def _rl_color(text: str, *codes: str) -> str:
     """Color a readline prompt (stdout-bound), keeping readline width markers."""
-    if not _OUT.is_terminal or _OUT.no_color:
+    if not in_colour(_OUT):
         return text
     return f"\001{''.join(codes)}\002{text}\001{_RESET}\002"
 
@@ -76,21 +74,6 @@ def _error(message: str) -> None:
     one place — a new call site cannot forget the prefix or the stream.
     """
     _ERR.print(Text(f"poop: {message}", style="red"), soft_wrap=True, highlight=False)
-
-
-def _print_error(exc: PoopError, source: str | None) -> None:
-    """Print a formatted error on stderr: message, source gutter, caret.
-
-    On a colour terminal the offending line is Python-highlighted via
-    `render_error`; off a terminal (a pipe, `NO_COLOR`) the plain `format_error`
-    text is printed instead, so redirected error output stays clean.
-    """
-    if _ERR.is_terminal and not _ERR.no_color:
-        _ERR.print(render_error(exc, source), soft_wrap=True)
-    else:
-        _ERR.print(
-            format_error(exc, source), soft_wrap=True, highlight=False, markup=False
-        )
 
 
 _SAFE_AST_NODES: tuple[type[ast.AST], ...] = (
@@ -225,17 +208,20 @@ def _readline_input(prompt: str, indent: str) -> str:
         readline.set_pre_input_hook(None)
 
 
-# Forbidden builtins explained by running `<name>(x)` through the
-# validators — the explanation is the validator's own message, so the
-# two can never drift apart. The topic list is derived from the same
-# validators for the same reason: hand-maintained, it fell two names
-# behind (`delattr`, `__import__`), and a missing topic does not fail
-# quietly — it answers "it may simply be allowed" about a banned name.
-_EXPLAIN_CALLS = frozenset(
-    name
-    for validator in DEFAULT_VALIDATORS
-    for name in getattr(validator, "forbidden", ())
-)
+def _explain_calls(validators: Iterable[Validator]) -> frozenset[str]:
+    """The builtins `:explain` covers by running `<name>(x)` through validators.
+
+    The explanation is the validator's own message, so the two can never
+    drift apart. The topic list is derived from the same validators for the
+    same reason: hand-maintained, it fell two names behind (`delattr`,
+    `__import__`), and a missing topic does not fail quietly — it answers "it
+    may simply be allowed" about a banned name. Read off the interpreter the
+    REPL was handed, so an injected set explains its own bans.
+    """
+    return frozenset(
+        name for validator in validators for name in getattr(validator, "forbidden", ())
+    )
+
 
 # Forbidden statements and operators need a minimal valid snippet.
 _EXPLAIN_SNIPPETS: dict[str, str] = {
@@ -295,8 +281,8 @@ _META_HELP = """\
 :help               show this help"""
 
 
-def _explain_snippet(construct: str) -> str | None:
-    if construct in _EXPLAIN_CALLS:
+def _explain_snippet(construct: str, calls: frozenset[str]) -> str | None:
+    if construct in calls:
         return f"{construct}(x)"
     return _EXPLAIN_SNIPPETS.get(construct)
 
@@ -304,7 +290,8 @@ def _explain_snippet(construct: str) -> str | None:
 class Repl:
     def __init__(self, interpreter: Interpreter) -> None:
         self._interpreter = interpreter
-        self._ns: dict[str, object] = dict(DEFAULT_NAMESPACE)
+        self._ns: dict[str, object] = interpreter.new_namespace()
+        self._explain_calls = _explain_calls(interpreter.validators)
         self._input_no = 0
         # The stdin path's half of `utf-8-sig`. `poop <file>` decodes with the
         # codec that strips a byte-order mark; a piped program is read line by
@@ -362,9 +349,9 @@ class Repl:
         if not arg:
             print("usage: :explain <construct>")  # noqa: T201
             return
-        snippet = _explain_snippet(arg)
+        snippet = _explain_snippet(arg, self._explain_calls)
         if snippet is None:
-            known = sorted(_EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS))
+            known = sorted(self._explain_calls | set(_EXPLAIN_SNIPPETS))
             # Not "it may simply be allowed": nothing here checked that, and
             # for a banned construct with no topic the guess is a flat lie.
             print(  # noqa: T201
@@ -433,7 +420,7 @@ class Repl:
                 try:
                     result = codeop.compile_command(source)
                 except SyntaxError as exc:
-                    _print_error(ParseError.from_syntax_error(exc), source)
+                    report(ParseError.from_syntax_error(exc), source, _ERR)
                     buffer = []
                     continue
 
@@ -450,9 +437,9 @@ class Repl:
                         source, self._ns, filename=f"<repl-{self._input_no}>"
                     )
                 except PoopError as exc:
-                    # The one diagnostic that does not go through _error():
-                    # it carries the source gutter and caret the plain sink
-                    # cannot, and syntax-highlights the offending line on a tty.
-                    _print_error(exc, source)
+                    # Through `report`, like the syntax error above, rather
+                    # than _error(): it carries the source gutter and caret
+                    # the plain sink cannot, highlighted on a tty.
+                    report(exc, source, _ERR)
         finally:
             sys.displayhook = original_hook

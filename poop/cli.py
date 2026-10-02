@@ -5,33 +5,14 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.console import Console
 from rich.syntax import Syntax
 
-from poop.errors import PoopError, format_error, render_error
+from poop.console import ERR, OUT, in_colour
+from poop.errors import PoopError, report
 from poop.interpreter import Interpreter
 from poop.repl import Repl
 
 app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
-
-# stdout for the AST dump, stderr for diagnostics — each detects its own tty and
-# NO_COLOR, so `poop file 2>err.log` colours neither the redirected file nor a
-# non-terminal, matching how the REPL renders on both streams.
-_OUT = Console()
-_ERR = Console(stderr=True)
-
-
-def _emit_error(exc: PoopError, source: str | None) -> None:
-    """Report a PoopError on stderr the same way the REPL does.
-
-    A colour terminal gets the syntax-highlighted `render_error`; a pipe or
-    NO_COLOR gets the plain `format_error` string, echoed through typer so it
-    reaches the same stream typer would have used.
-    """
-    if _ERR.is_terminal and not _ERR.no_color:
-        _ERR.print(render_error(exc, source), soft_wrap=True)
-    else:
-        typer.echo(format_error(exc, source), err=True)
 
 
 @contextmanager
@@ -39,7 +20,7 @@ def _poop_errors(source: str | None = None) -> Iterator[None]:
     try:
         yield
     except PoopError as exc:
-        _emit_error(exc, source)
+        report(exc, source, ERR)
         raise typer.Exit(1) from exc
 
 
@@ -93,17 +74,17 @@ def main(
             typer.echo("No validation errors.")
             return
         for err in errors:
-            _emit_error(err, source)
+            report(err, source, ERR)
         raise typer.Exit(1)
 
     if transformers_only:
         with _poop_errors(source):
             tree = interpreter.transform_source(source, filename)
         code = ast.unparse(tree)
-        if _OUT.is_terminal and not _OUT.no_color:
+        if in_colour(OUT):
             # `background_color="default"` keeps the terminal's own background
             # instead of painting a themed block behind the dump.
-            _OUT.print(
+            OUT.print(
                 Syntax(code, "python", theme="ansi_dark", background_color="default")
             )
         else:
