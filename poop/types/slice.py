@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class Slice(Object):
-    __slots__ = ("_start", "_stop", "_step")
+    __slots__ = ("_start", "_step", "_stop")
 
     def __init__(
         self,
@@ -45,7 +45,8 @@ class Slice(Object):
         return slice(self._start, self._stop, self._step)
 
     def indices(self, length: Index) -> Tuple:
-        from poop.types.tuple import Tuple
+        # circular: tuple imports slice
+        from poop.types.tuple import Tuple  # noqa: PLC0415
 
         start, stop, step = self._py_slice().indices(length)
         return Tuple(Int(start), Int(stop), Int(step))

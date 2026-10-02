@@ -127,12 +127,12 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep_value = _unwrap(sep, " ")
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)
-        builtins.print(
+        builtins.print(  # noqa: T201 — the language's own #print
             *[str(item) for item in self._items],
             sep=sep_value,
             end=end_value,
             flush=flush_value,
-        )  # noqa: T201
+        )
         return none
 
     # A tuple is immutable but not acyclic — it can hold a list that holds the
@@ -140,7 +140,7 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     @recursive_repr(fillvalue="(...)")
     def __str__(self) -> str:
         if len(self._items) == 1:
-            return f"({repr(self._items[0])},)"
+            return f"({self._items[0]!r},)"
         return f"({', '.join(repr(item) for item in self._items)})"
 
     __repr__ = __str__

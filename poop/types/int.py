@@ -107,7 +107,8 @@ class Int(_NumericCompareMixin, Object):
         return self
 
     def as_integer_ratio(self) -> Tuple:
-        from poop.types.tuple import Tuple
+        # circular: tuple imports int
+        from poop.types.tuple import Tuple  # noqa: PLC0415
 
         return Tuple(self, Int(1))
 
@@ -118,7 +119,8 @@ class Int(_NumericCompareMixin, Object):
         *,
         signed: Boolean | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types.bytes import Bytes
+        # circular: bytes imports int
+        from poop.types.bytes import Bytes  # noqa: PLC0415
 
         return Bytes(
             self._value.to_bytes(
@@ -152,7 +154,8 @@ class Int(_NumericCompareMixin, Object):
         return self.__abs__()
 
     def __add__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__radd__ run
@@ -161,7 +164,8 @@ class Int(_NumericCompareMixin, Object):
         return Int(self._value + other._value)
 
     def __sub__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rsub__ run
@@ -170,7 +174,8 @@ class Int(_NumericCompareMixin, Object):
         return Int(self._value - other._value)
 
     def __mul__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rmul__ run (Str/Bytes repeat, etc.)
@@ -179,14 +184,16 @@ class Int(_NumericCompareMixin, Object):
         return Int(self._value * other._value)
 
     def __truediv__(self, other: object) -> Float:
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rtruediv__ run
         return Float(self._value / other._value)
 
     def __floordiv__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rfloordiv__ run
@@ -195,7 +202,8 @@ class Int(_NumericCompareMixin, Object):
         return Int(self._value // other._value)
 
     def __mod__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rmod__ run
@@ -206,7 +214,8 @@ class Int(_NumericCompareMixin, Object):
     def __pow__(
         self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if isinstance(other, Complex):
             return NotImplemented
@@ -257,8 +266,11 @@ class Int(_NumericCompareMixin, Object):
         return result
 
     def __divmod__(self, other: object) -> Tuple:
-        from poop.types.float import Float
-        from poop.types.tuple import Tuple
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
+
+        # circular: tuple imports int
+        from poop.types.tuple import Tuple  # noqa: PLC0415
 
         v = _num_value(other)
         if v is NOT_NUMERIC:
@@ -373,22 +385,26 @@ class Int(_NumericCompareMixin, Object):
         return hash(self._value)
 
     def bin(self) -> Str:
-        from poop.types.string import Str
+        # circular: string imports int
+        from poop.types.string import Str  # noqa: PLC0415
 
         return Str(bin(self._value))
 
     def hex(self) -> Str:
-        from poop.types.string import Str
+        # circular: string imports int
+        from poop.types.string import Str  # noqa: PLC0415
 
         return Str(hex(self._value))
 
     def oct(self) -> Str:
-        from poop.types.string import Str
+        # circular: string imports int
+        from poop.types.string import Str  # noqa: PLC0415
 
         return Str(oct(self._value))
 
     def chr(self) -> Str:
-        from poop.types.string import Str
+        # circular: string imports int
+        from poop.types.string import Str  # noqa: PLC0415
 
         try:
             return Str(chr(self._value))

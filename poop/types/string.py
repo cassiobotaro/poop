@@ -331,7 +331,8 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         # is POOP's documented template-formatting surface. The rare
         # "apply a spec to a string" case stays expressible as
         # "{:^10}".format(s).
-        from poop.types._bridge import to_python
+        # circular: _bridge imports string
+        from poop.types._bridge import to_python  # noqa: PLC0415
 
         positional = [to_python(a) for a in args]
         named = {k: to_python(v) for k, v in kwargs.items()}
@@ -469,7 +470,8 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         encoding: Str | NoneClass | None = None,
         errors: Str | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types.bytes import Bytes
+        # circular: bytes imports string
+        from poop.types.bytes import Bytes  # noqa: PLC0415
 
         return Bytes(
             encoded(

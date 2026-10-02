@@ -84,7 +84,8 @@ class _IterableMixin:
         return none
 
     def map(self, block: Callable[[Any], Any] | Missing = MISSING) -> Map:
-        from poop.types.map import Map
+        # circular: map imports _iterable_mixin
+        from poop.types.map import Map  # noqa: PLC0415
 
         # Eagerly, though the view is lazy: this is the half no wording change
         # reaches. A `Map` built over a non-block simply fails later, somewhere
@@ -92,12 +93,14 @@ class _IterableMixin:
         return Map(self, a_block(block, "map"))
 
     def filter(self, block: Callable[[Any], Any] | Missing = MISSING) -> Filter:
-        from poop.types.filter import Filter
+        # circular: filter imports _iterable_mixin
+        from poop.types.filter import Filter  # noqa: PLC0415
 
         return Filter(self, a_block(block, "filter"))
 
     def filter_false(self, block: Callable[[Any], Any] | Missing = MISSING) -> Filter:
-        from poop.types.filter import Filter
+        # circular: filter imports _iterable_mixin
+        from poop.types.filter import Filter  # noqa: PLC0415
 
         block = a_block(block, "filter_false")
         return Filter(self, lambda x: not bool(block(x)))
@@ -165,7 +168,8 @@ class _IterableMixin:
         # banned with nowhere to go. A `List`, as CPython's `sorted` always
         # answers a `list` whatever it was handed; `Tuple` overrides to keep
         # its own type, which can hold an order.
-        from poop.types.list import List
+        # circular: list imports _iterable_mixin
+        from poop.types.list import List  # noqa: PLC0415
 
         return List(*_sorted(self._iter_items(), key, reverse))
 
@@ -178,12 +182,14 @@ class _IterableMixin:
         return to_boolean(builtins.any(bool(block(x)) for x in self._iter_items()))
 
     def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:
-        from poop.types.enumerate import Enumerate
+        # circular: enumerate imports _iterable_mixin
+        from poop.types.enumerate import Enumerate  # noqa: PLC0415
 
         return Enumerate(self, start)
 
     def zip(self, *others: Object, strict: Boolean | NoneClass | None = None) -> Zip:
-        from poop.types.zip import Zip
+        # circular: zip imports _iterable_mixin
+        from poop.types.zip import Zip  # noqa: PLC0415
 
         return Zip(self, *others, strict=strict)
 

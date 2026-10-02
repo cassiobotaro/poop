@@ -64,7 +64,8 @@ class Zip(_PeekMixin, _IterableMixin, Object):
         the same number in both spellings (`a.zip(b)` and `zip(a, b)`).
         """
         if not strict:
-            for items in builtins.zip(*sources):
+            # Shortest wins, as CPython's own non-strict `zip` does.
+            for items in builtins.zip(*sources, strict=False):
                 yield Tuple(*items)
             return
         iterators = [iter(source) for source in sources]

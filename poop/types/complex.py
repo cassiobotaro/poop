@@ -20,12 +20,14 @@ class Complex(Object):
         self._value = value._value if isinstance(value, Complex) else value
 
     def real(self) -> Float:
-        from poop.types.float import Float
+        # circular: float imports complex
+        from poop.types.float import Float  # noqa: PLC0415
 
         return Float(self._value.real)
 
     def imag(self) -> Float:
-        from poop.types.float import Float
+        # circular: float imports complex
+        from poop.types.float import Float  # noqa: PLC0415
 
         return Float(self._value.imag)
 
@@ -33,7 +35,8 @@ class Complex(Object):
         return Complex(self._value.conjugate())
 
     def __abs__(self) -> Float:
-        from poop.types.float import Float
+        # circular: float imports complex
+        from poop.types.float import Float  # noqa: PLC0415
 
         return Float(abs(self._value))
 
@@ -41,8 +44,11 @@ class Complex(Object):
         return self.__abs__()
 
     def _coerce(self, other: object) -> _complex | None:
-        from poop.types.float import Float
-        from poop.types.int import Int
+        # circular: float imports complex
+        from poop.types.float import Float  # noqa: PLC0415
+
+        # circular: int imports complex
+        from poop.types.int import Int  # noqa: PLC0415
 
         if isinstance(other, Complex):
             return other._value

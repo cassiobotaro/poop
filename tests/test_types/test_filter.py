@@ -80,7 +80,7 @@ def test_filter_eq_is_identity() -> None:
     a = Filter(src, lambda x: True)
     b = Filter(src, lambda x: True)
     assert a == a
-    assert not (a == b)
+    assert bool(a == b) is False
 
 
 def test_filter_ne_is_identity_based() -> None:

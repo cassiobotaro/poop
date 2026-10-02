@@ -27,7 +27,7 @@ def a_class(value: Any, selector: str) -> Any:
     a tuple of types, or a union` — the builtin it replaces, spelt as the call
     it replaces. `issubclass` said the same about itself.
     """
-    if isinstance(value, type) or isinstance(value, tuple):
+    if isinstance(value, type | tuple):
         return value
     raise MIRRORS["TypeError"](
         f"#{selector} expects a class, got {article(type(value).__name__)}"
@@ -49,7 +49,8 @@ def a_bound(value: Any, selector: str, role: str) -> Any:
     Unwraps as well as guards, so a call site spells one helper where it used
     to spell `_unwrap(start, None)`.
     """
-    from poop.types._unwrap import _unwrap
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _unwrap  # noqa: PLC0415
 
     raw = _unwrap(value, None)
     if raw is None or hasattr(raw, "__index__"):
@@ -109,7 +110,8 @@ def a_needle(
     CPython's rule (`b"ab".count(97)` is 1), so `expected` carries what this
     receiver takes.
     """
-    from poop.types.string import Str
+    # circular: string imports _argument
+    from poop.types.string import Str  # noqa: PLC0415
 
     if not isinstance(sub, Str) and callable(sub):
         raise MIRRORS["TypeError"](
@@ -137,7 +139,8 @@ def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
     substitute, and one the wording sweep could not see: it carries no call, no
     dunder and no operator.
     """
-    from poop.types._unwrap import _is_absent
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _is_absent  # noqa: PLC0415
 
     # `optional` for the strip family, whose argument is genuinely absent by
     # default — CPython's own `strip arg must be None or str` names that case.
@@ -219,7 +222,8 @@ def byte_order(value: Any) -> str:
     as a call. The two valid spellings are named here rather than left to the
     conversion, so a typo (`"Big"`) is refused by the message that takes it.
     """
-    from poop.types._unwrap import _is_absent
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _is_absent  # noqa: PLC0415
 
     if _is_absent(value):
         return "big"

@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from poop.types.string import Str
 
 
-class class_side:  # noqa: N801
+class class_side:
     """Binds a metaclass method to the class, ahead of same-named instance ones.
 
     `Foo.print` would otherwise never reach the metaclass: looking an attribute
@@ -90,7 +90,7 @@ class class_side:  # noqa: N801
         )
 
 
-class class_side_read_refusal(class_side):  # noqa: N801
+class class_side_read_refusal(class_side):
     """A class-side refusal that fires on *read* rather than on call.
 
     `mro`, `register` and `raise_` are messages: a reader writes `Foo.mro()`,
@@ -811,7 +811,7 @@ class PoopMeta(ABCMeta):
         from poop.types._unwrap import _unwrap, _unwrap_bool
         from poop.types.none import none
 
-        builtins.print(
+        builtins.print(  # noqa: T201 — the language's own #print
             cls.__name__,
             end=_unwrap(end, "\n"),
             flush=_unwrap_bool(flush, False),

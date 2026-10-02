@@ -1,5 +1,6 @@
 import ast
 from collections.abc import Iterable
+from itertools import batched
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from poop.transformers._arity import refuse_extra_arguments
@@ -19,9 +20,10 @@ if TYPE_CHECKING:
 
 
 def _poop_dict_from_pairs(*pairs: Object) -> Dict:
+    # The rewrite always hands over an even run of key, value; `strict` makes a
+    # stray odd element a failure rather than a silently dropped key.
     d = Dict()
-    it = iter(pairs)
-    for k, v in zip(it, it):
+    for k, v in batched(pairs, 2, strict=True):
         d._data[k] = v
     return d
 
@@ -195,7 +197,7 @@ class _DictRewriter(BuiltinRewriter):
         self.generic_visit(node)
         if all(k is not None for k in node.keys):
             flat: list[ast.expr] = []
-            for k, v in zip(node.keys, node.values):
+            for k, v in zip(node.keys, node.values, strict=True):
                 flat.append(cast("ast.expr", k))
                 flat.append(v)
             return self._pairs_call(flat, node)
@@ -203,7 +205,7 @@ class _DictRewriter(BuiltinRewriter):
         # pairs becomes a _poop_dict_from_pairs(...), each **x stays as x,
         # and _poop_dict_merge folds them left to right.
         return self._merge_call(
-            self._fold_parts(zip(node.keys, node.values), node, []), node
+            self._fold_parts(zip(node.keys, node.values, strict=True), node, []), node
         )
 
 

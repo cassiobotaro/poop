@@ -285,21 +285,21 @@ def test_dir_does_not_advertise_a_refused_name(kind: MirrorName, name: str) -> N
 
 def test_args_names_the_message_a_caught_error_answers() -> None:
     with pytest.raises(MessageNotUnderstood, match="a caught error answers #message"):
-        MIRRORS["ValueError"].args
+        MIRRORS["ValueError"].args  # noqa: B018
 
 
 def test_a_name_only_one_native_carries_is_refused_only_there() -> None:
     # `obj` and `value` ride on the metaclass with the other three, so the
     # refusal asks the native before claiming a name is Python's.
     with pytest.raises(MessageNotUnderstood, match="#obj is Python's"):
-        MIRRORS["AttributeError"].obj  # ty: ignore[unresolved-attribute]
+        MIRRORS["AttributeError"].obj  # ty: ignore[unresolved-attribute]  # noqa: B018
     with pytest.raises(MessageNotUnderstood, match="#value is Python's"):
-        MIRRORS["StopIteration"].value  # ty: ignore[unresolved-attribute]
+        MIRRORS["StopIteration"].value  # ty: ignore[unresolved-attribute]  # noqa: B018
     # ValueError has neither in CPython, so neither sentence would be true.
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        MIRRORS["ValueError"].obj  # ty: ignore[unresolved-attribute]
+        MIRRORS["ValueError"].obj  # ty: ignore[unresolved-attribute]  # noqa: B018
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        MIRRORS["ValueError"].value  # ty: ignore[unresolved-attribute]
+        MIRRORS["ValueError"].value  # ty: ignore[unresolved-attribute]  # noqa: B018
 
 
 @pytest.mark.parametrize("name", ["args", "add_note", "with_traceback"])

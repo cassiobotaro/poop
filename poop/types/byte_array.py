@@ -176,7 +176,8 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def __add__(self, other: object) -> ByteArray:
         # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
         # answers bytearray. Anything else -> faithful TypeError, not #_value.
-        from poop.types.bytes import Bytes  # circular: bytes imports ByteArray
+        # circular: bytes imports byte_array
+        from poop.types.bytes import Bytes  # noqa: PLC0415
 
         if not isinstance(other, ByteArray | Bytes):
             return NotImplemented

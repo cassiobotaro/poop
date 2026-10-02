@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @final
-class DictItems(_DictView, name="dict_items"):
+class DictItems(_DictView, name="dict_items"):  # noqa: PLW1641 — a live set-like view, unhashable as in CPython
     """Live view over a Dict's items, mirroring Python's dict_items."""
 
     __slots__ = ()

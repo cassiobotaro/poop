@@ -12,7 +12,7 @@ from poop.types.object import Object
 
 
 class Filter(_PeekMixin, _IterableMixin, Object):
-    __slots__ = ("_iter", "_source", "_block")
+    __slots__ = ("_block", "_iter", "_source")
 
     def __init__(self, source: Any, block: Callable[[Any], Any]) -> None:
         self._source = source

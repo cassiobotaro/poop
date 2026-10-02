@@ -1,7 +1,7 @@
 """
 FizzBuzz
 
-Prints numbers 1–100, replacing multiples of 3 with Fizz, multiples of
+Prints numbers 1 to 100, replacing multiples of 3 with Fizz, multiples of
 5 with Buzz, and multiples of both with FizzBuzz.
 Demonstrates range().do() and nested if_true_if_false.
 

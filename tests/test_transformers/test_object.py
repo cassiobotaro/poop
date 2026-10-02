@@ -44,7 +44,7 @@ def test_declares_no_binding_for_the_name_class_transformer_owns() -> None:
     # still resolves to the class `ClassTransformer` binds.
     assert "_poop_object" not in ObjectTransformer.BINDINGS
     assert set(ObjectTransformer.BINDINGS) == {"_poop_object_from"}
-    assert ClassTransformer.BINDINGS == {"_poop_object": Object}
+    assert {"_poop_object": Object} == ClassTransformer.BINDINGS
 
 
 def test_order_against_class_transformer_is_free() -> None:

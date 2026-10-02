@@ -244,7 +244,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
     # and the same ellipsis CPython prints for it. See the note on `List`.
     @recursive_repr(fillvalue="{...}")
     def __str__(self) -> str:
-        pairs = ", ".join(f"{repr(k)}: {repr(v)}" for k, v in self._data.items())
+        pairs = ", ".join(f"{k!r}: {v!r}" for k, v in self._data.items())
         return "{" + pairs + "}"
 
     __repr__ = __str__

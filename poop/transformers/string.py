@@ -33,7 +33,8 @@ def _poop_str_from(*args: object, **kwargs: object) -> Str:
         # spelling a reader can write; the names are checked below.
         keywords=True,
     )
-    given: dict[str, object] = dict(zip(_SLOTS, args))
+    # Fewer arguments than slots is the ordinary case; the guard above caps it.
+    given: dict[str, object] = dict(zip(_SLOTS, args, strict=False))
     for name, value in kwargs.items():
         if name not in _SLOTS:
             raise MIRRORS["TypeError"](

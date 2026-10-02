@@ -75,8 +75,28 @@ select = [
   "ANN",
   # flake-pyi
   "PYI",
+  # flake8-bugbear
+  "B",
+  # flake8-simplify
+  "SIM",
+  # flake8-blind-except
+  "BLE",
+  # flake8-print — the language's own `print` is the one sanctioned call
+  "T20",
+  # import-outside-top-level: CONTRIBUTING.md allows a function-local import
+  # only to break a cycle, so each one says which (`# noqa: PLC0415`)
+  "PLC0415",
+  # eq-without-hash: defining `__eq__` clears `__hash__`
+  "PLW1641",
+  # ruff-specific, including RUF100, which keeps every `noqa` honest
+  "RUF",
 ]
-ignore = ["ANN401"]
+ignore = [
+  "ANN401",
+  # The configuration ClassVars of a validator (`messages`, `forbidden`) are
+  # annotated once on the base class; ruff cannot see the inherited annotation.
+  "RUF012",
+]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -85,6 +105,11 @@ quote-style = "double"
 "tests/*" = [
   # use of assert detected
   "S101",
+  # tests import inside the test that needs the module, often on purpose
+  # (monkeypatching, import-time behaviour)
+  "PLC0415",
+  # `match=` patterns are prose; an unescaped `.` matches itself too
+  "RUF043",
   # mock helpers in tests deliberately use loose annotations
   "ANN001",
   "ANN002",
@@ -96,6 +121,10 @@ quote-style = "double"
   # binding to 0.0.0.0 in ipaddress predicate tests is intentional
   "S104",
 ]
+# The root of the type tree: every POOP type these name imports them first, so
+# each of their imports of the package is necessarily lazy.
+"poop/types/meta.py" = ["PLC0415"]
+"poop/types/object.py" = ["PLC0415"]
 "examples/**/*.py" = [
   # names injected at runtime by the POOP interpreter namespace
   "F821",

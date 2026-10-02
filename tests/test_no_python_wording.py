@@ -222,11 +222,11 @@ _OPERANDS = [
 @pytest.mark.parametrize("operator", _OPERATORS)
 @pytest.mark.parametrize("left", _OPERANDS)
 def test_no_operator_answers_a_forbidden_construct(operator: str, left: str) -> None:
-    for right in _OPERANDS:  # noqa: PLR1702
+    for right in _OPERANDS:
         source = f"({left} {operator} {right})"
         try:
             Interpreter().run_source(source + "\n")
-        except PoopError as exc:  # noqa: PERF203
+        except PoopError as exc:
             message = str(exc)
             named = [
                 construct

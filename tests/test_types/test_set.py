@@ -540,7 +540,7 @@ def test_comparison_mixes_with_frozenset() -> None:
 
 def test_comparison_with_non_set_raises() -> None:
     with pytest.raises(TypeError):
-        Set(Int(1)) < Int(2)
+        Set(Int(1)) < Int(2)  # noqa: B015
 
 
 def test_set_inplace_ops_against_foreign_are_notimplemented() -> None:

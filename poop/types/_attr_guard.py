@@ -34,8 +34,11 @@ def _reject_dunder(name: str) -> None:
     this guard and the exemption with it, so `str.get_attr("__init__")(s, "x")`
     did exactly that until both receivers shared this one.
     """
-    from poop.types.exceptions import MIRRORS
-    from poop.validators.no_dunder_attribute import dunder_message
+    # circular: exceptions -> meta -> _attr_guard
+    from poop.types.exceptions import MIRRORS  # noqa: PLC0415
+
+    # circular: no_dunder_attribute -> types -> object -> _attr_guard
+    from poop.validators.no_dunder_attribute import dunder_message  # noqa: PLC0415
 
     message = dunder_message(name, allow_init=False)
     if message is not None:
@@ -53,7 +56,8 @@ def _reject_private(name: str) -> None:
     `_reject_dunder`; this covers the single-underscore convention Python
     honours only by etiquette.
     """
-    from poop.types.exceptions import MIRRORS
+    # circular: exceptions -> meta -> _attr_guard
+    from poop.types.exceptions import MIRRORS  # noqa: PLC0415
 
     if name.startswith("_") and not is_dunder(name):
         raise MIRRORS["AttributeError"](
@@ -69,7 +73,8 @@ def _checked_name(name: object) -> str:
     `#_value` out of the substitute `no_getattr` points at. One copy, because
     two had already drifted apart (see `_reject_dunder`).
     """
-    from poop.types._unwrap import _attr_name
+    # circular: _unwrap -> boolean -> object -> _attr_guard
+    from poop.types._unwrap import _attr_name  # noqa: PLC0415
 
     raw = _attr_name(name)
     _reject_dunder(raw)

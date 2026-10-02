@@ -46,7 +46,8 @@ def _minmax(
     """
     # Imported here, not at the top: this module is imported by `int.py`, and
     # `_unwrap` reaches `none.py` -> `object.py`, which sits above it.
-    from poop.types._unwrap import _is_absent
+    # circular: _unwrap -> boolean -> _minmax
+    from poop.types._unwrap import _is_absent  # noqa: PLC0415
 
     kwargs: dict[str, Any] = {}
     if not _is_absent(key):

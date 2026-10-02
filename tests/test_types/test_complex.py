@@ -315,7 +315,7 @@ def test_transformer_does_not_affect_int_literals() -> None:
     tree = ComplexTransformer().transform(parse("x = 42"))
     ns: dict[str, object] = {}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
-    assert ns["x"] == 42  # noqa: PLR2004
+    assert ns["x"] == 42
 
 
 def test_complex_from_str() -> None:

@@ -98,7 +98,8 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     # Int's arithmetic; the reflected ops compute ``other <op> int(self)`` so
     # ``3 - True`` reuses ``Int.__sub__``.
     def _as_int(self) -> Int:
-        from poop.types.int import Int
+        # circular: int imports boolean
+        from poop.types.int import Int  # noqa: PLC0415
 
         return Int(1) if self else Int(0)
 
@@ -188,7 +189,8 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         runs this one through `cls`, so `bool.from_bytes(b"\\x05", "big")` is
         `True` — the answer is the receiver's kind here, not the fold's.
         """
-        from poop.types.int import Int
+        # circular: int imports boolean
+        from poop.types.int import Int  # noqa: PLC0415
 
         return to_boolean(bool(Int.from_bytes(b, byteorder, signed=signed)))
 
@@ -200,8 +202,11 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         # Boolean has no slot for, so it fell through to `object.__format__`
         # and refused every non-empty spec while `"{:>6}".format(True)`, which
         # routes through `to_python`, answered `'     1'`.
-        from poop.types._unwrap import _is_absent
-        from poop.types.string import Str, _template_refusal
+        # circular: _unwrap imports boolean
+        from poop.types._unwrap import _is_absent  # noqa: PLC0415
+
+        # circular: string imports boolean
+        from poop.types.string import Str, _template_refusal  # noqa: PLC0415
 
         # Through `text_like` for the reason `Object.format` does it: a
         # non-`Str` spec answered `format() argument 2 must be str, not int`.
@@ -368,7 +373,8 @@ class _TrueClass(Boolean):
         return a_block(block, "if_true", param="")()
 
     def if_false[T](self, block: Callable[[], T]) -> NoneClass:
-        from poop.types.none import none
+        # circular: none imports boolean
+        from poop.types.none import none  # noqa: PLC0415
 
         a_block(block, "if_false", param="")
         return none
@@ -426,7 +432,8 @@ class _FalseClass(Boolean):
     __slots__ = ()
 
     def if_true[T](self, block: Callable[[], T]) -> NoneClass:
-        from poop.types.none import none
+        # circular: none imports boolean
+        from poop.types.none import none  # noqa: PLC0415
 
         # Guarded on the branch that does *not* run, which is the whole point:
         # `False.if_true(5)` used to say nothing at all, so whether a wrong

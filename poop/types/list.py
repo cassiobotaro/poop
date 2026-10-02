@@ -225,12 +225,12 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep_value = _unwrap(sep, " ")
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)
-        builtins.print(
+        builtins.print(  # noqa: T201 — the language's own #print
             *[str(item) for item in self._items],
             sep=sep_value,
             end=end_value,
             flush=flush_value,
-        )  # noqa: T201
+        )
         return none
 
     # A list can hold itself, and printing one used to recurse until the stack

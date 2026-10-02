@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
 
-class _ValueEqMixin:
+class _ValueEqMixin:  # noqa: PLW1641 — each concrete class hashes by value or not at all
     # An empty `__slots__`, because a slot-less class anywhere in an MRO
     # restores the per-instance `__dict__` for everything below it — this
     # mixin alone defeated the declaration on 36 of the 49 wrappers, so a

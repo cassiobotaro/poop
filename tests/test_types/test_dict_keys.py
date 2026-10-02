@@ -208,7 +208,7 @@ def test_isdisjoint_with_empty_set() -> None:
 
 def test_reversed_dunder() -> None:
     keys = DictKeys(_make())
-    assert list(reversed(keys))[0] == Str("b")
+    assert next(reversed(keys)) == Str("b")
 
 
 # --- proposal 3: any iterable for the algebraic operators, set-like only for

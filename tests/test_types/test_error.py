@@ -221,7 +221,7 @@ def test_a_refusing_class_side_descriptor_is_not_redirected() -> None:
 
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        error.args  # ty: ignore[unresolved-attribute]
+        error.args  # ty: ignore[unresolved-attribute]  # noqa: B018
 
 
 def test_no_mirror_advertises_a_name_a_caught_error_refuses() -> None:
@@ -235,5 +235,5 @@ def test_no_mirror_advertises_a_name_a_caught_error_refuses() -> None:
                 continue
             try:
                 getattr(error, name)
-            except MessageNotUnderstood:  # noqa: PERF203
+            except MessageNotUnderstood:
                 pytest.fail(f"{kind}.dir() lists #{name}, which a caught error refuses")

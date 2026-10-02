@@ -45,8 +45,11 @@ def _set_like_elements(other: object) -> set[Object] | None:
     so the view's reflected operator runs — CPython's
     ``frozenset({1}) | {2: 3}.keys()`` is a ``set``, not a ``frozenset``.
     """
-    from poop.types.dict_items import DictItems
-    from poop.types.dict_keys import DictKeys
+    # circular: dict_items imports _dict_view
+    from poop.types.dict_items import DictItems  # noqa: PLC0415
+
+    # circular: dict_keys imports _dict_view
+    from poop.types.dict_keys import DictKeys  # noqa: PLC0415
 
     if isinstance(other, DictKeys | DictItems | Set | FrozenSet):
         return _elements(other)

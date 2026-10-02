@@ -81,7 +81,8 @@ class MappingProxy(_IterableMixin, Object):
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, MappingProxy):
             return to_boolean(self._dict == other._dict)
-        from poop.types.dict import Dict
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
 
         if isinstance(other, Dict):
             return to_boolean(self._dict == other)
@@ -98,7 +99,8 @@ class MappingProxy(_IterableMixin, Object):
         operand, so `proxy | 5` answered `int does not understand #_data` — a
         POOP internal — where CPython answers `unsupported operand type(s)`.
         """
-        from poop.types.dict import Dict
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
 
         if isinstance(other, MappingProxy):
             return other._dict._data
@@ -107,7 +109,8 @@ class MappingProxy(_IterableMixin, Object):
         return None
 
     def __or__(self, other: object) -> Dict:
-        from poop.types.dict import Dict
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
 
         other_data = self._merge_data(other)
         if other_data is None:
@@ -120,7 +123,8 @@ class MappingProxy(_IterableMixin, Object):
         # CPython: ``dict | mappingproxy`` yields a ``dict`` ({**left, **right}).
         # ``Dict.__or__`` returns NotImplemented for a non-Dict right operand,
         # so Python falls back to this reflected form with ``other`` on the left.
-        from poop.types.dict import Dict
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
 
         other_data = self._merge_data(other)
         if other_data is None:

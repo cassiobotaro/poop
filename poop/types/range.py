@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class Range(_IterableMixin, Object):
-    __slots__ = ("_start", "_stop", "_step")
+    __slots__ = ("_start", "_step", "_stop")
 
     def __init__(
         self,

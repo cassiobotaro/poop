@@ -22,9 +22,14 @@ if TYPE_CHECKING:
 
 
 def _num_value(other: object) -> Any:
-    from poop.types.boolean import Boolean
-    from poop.types.float import Float
-    from poop.types.int import Int
+    # circular: boolean imports _numeric_compare
+    from poop.types.boolean import Boolean  # noqa: PLC0415
+
+    # circular: float imports _numeric_compare
+    from poop.types.float import Float  # noqa: PLC0415
+
+    # circular: int imports _numeric_compare
+    from poop.types.int import Int  # noqa: PLC0415
 
     if isinstance(other, Int | Float):
         return other._value
@@ -33,7 +38,7 @@ def _num_value(other: object) -> Any:
     return NOT_NUMERIC
 
 
-class _NumericCompareMixin:
+class _NumericCompareMixin:  # noqa: PLW1641 — the numeric rungs hash themselves
     """The comparison protocol shared by the whole numeric tower.
 
     ``Int``, ``Float`` and ``Boolean`` order and compare identically once each
@@ -53,7 +58,8 @@ class _NumericCompareMixin:
         return self._value
 
     def _order(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
-        from poop.types.boolean import to_boolean
+        # circular: boolean imports _numeric_compare
+        from poop.types.boolean import to_boolean  # noqa: PLC0415
 
         v = _num_value(other)
         if v is NOT_NUMERIC:
@@ -73,8 +79,11 @@ class _NumericCompareMixin:
         return self._order(other, operator.ge)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, to_boolean
-        from poop.types.complex import Complex
+        # circular: boolean imports _numeric_compare
+        from poop.types.boolean import false, to_boolean  # noqa: PLC0415
+
+        # circular: complex -> boolean -> _numeric_compare
+        from poop.types.complex import Complex  # noqa: PLC0415
 
         if isinstance(other, Complex):
             return to_boolean(self._order_value() == other._value)
@@ -84,8 +93,11 @@ class _NumericCompareMixin:
         return to_boolean(self._order_value() == v)
 
     def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-        from poop.types.complex import Complex
+        # circular: boolean imports _numeric_compare
+        from poop.types.boolean import false, true  # noqa: PLC0415
+
+        # circular: complex -> boolean -> _numeric_compare
+        from poop.types.complex import Complex  # noqa: PLC0415
 
         if isinstance(other, Complex):
             return false if self._order_value() == other._value else true

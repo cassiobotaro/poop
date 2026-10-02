@@ -76,7 +76,7 @@ def test_map_eq_is_identity() -> None:
     a = Map(src, lambda x: x)
     b = Map(src, lambda x: x)
     assert a == a
-    assert not (a == b)
+    assert bool(a == b) is False
 
 
 def test_map_ne_is_identity_based() -> None:

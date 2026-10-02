@@ -45,7 +45,8 @@ def probed(obj: Any) -> Any:
     raw = _other_set(obj)
     if isinstance(raw, set):
         # Function-local: `frozen_set` imports this module.
-        from poop.types.frozen_set import FrozenSet
+        # circular: frozen_set imports _set_algebra
+        from poop.types.frozen_set import FrozenSet  # noqa: PLC0415
 
         return FrozenSet(*raw)
     return obj

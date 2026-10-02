@@ -181,7 +181,7 @@ def test_a_class_reprs_as_its_name_like_print_does() -> None:
 
 
 def test_a_class_ascii_escapes_a_non_ascii_name() -> None:
-    class Ação(Object):  # noqa: N801
+    class Ação(Object):
         __slots__ = ()
 
     assert Ação.repr() == Str("Ação")

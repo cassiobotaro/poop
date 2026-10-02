@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @final
-class DictKeys(_DictView, name="dict_keys"):
+class DictKeys(_DictView, name="dict_keys"):  # noqa: PLW1641 — a live set-like view, unhashable as in CPython
     """Live view over a Dict's keys, mirroring Python's dict_keys."""
 
     __slots__ = ()
