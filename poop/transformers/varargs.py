@@ -1,7 +1,7 @@
 import ast
 from typing import ClassVar
 
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, call_at
 
 
 def _rebind(name: str, helper: str) -> ast.Assign:
@@ -55,25 +55,15 @@ class _VarargsRewriter(ast.NodeTransformer):
         and worked around it there; this generalises the same fix to every
         call. It has to run after that transformer (and after
         `RaiseTransformer`, whose `_poop_raise(Exc, **kw)` this then covers),
-        which the declaration order in `__init__.py` guarantees.
+        which the declaration order in `_registry.py` guarantees.
         """
         self.generic_visit(node)
         for kw in node.keywords:
             if kw.arg is None:
-                kw.value = ast.copy_location(
-                    ast.Call(
-                        func=ast.Name(id="_poop_kwargs_from", ctx=ast.Load()),
-                        args=[kw.value],
-                        keywords=[],
-                    ),
-                    kw.value,
-                )
+                kw.value = call_at("_poop_kwargs_from", [kw.value], kw.value)
         return node
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
-        return self._rewrite_function(node)
-
-    def _rewrite_function(self, node: ast.FunctionDef) -> ast.AST:
         self.generic_visit(node)
         prologue = _prologue(node.args)
         if prologue:

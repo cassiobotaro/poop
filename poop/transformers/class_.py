@@ -1,27 +1,18 @@
 import ast
 from typing import ClassVar
 
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, name_at
 from poop.types.object import Object
 
 
 class _ClassRewriter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
         self.generic_visit(node)
-
-        object_base = ast.Name(id="_poop_object", ctx=ast.Load())
-
+        # Only the implicit base is this rewriter's: an explicit `object` or
+        # `Object` in a base list is rewritten by `ObjectTransformer`, which
+        # handles both spellings in every position.
         if not node.bases:
-            node.bases = [object_base]
-            return node
-
-        new_bases = []
-        for base in node.bases:
-            if isinstance(base, ast.Name) and base.id in ("object", "Object"):
-                new_bases.append(object_base)
-            else:
-                new_bases.append(base)
-        node.bases = new_bases
+            node.bases = [name_at("_poop_object", node)]
         return node
 
 
@@ -30,8 +21,10 @@ class ClassTransformer(BaseTransformer):
 
     Rewrites:
         class Foo:         → class Foo(Object):
-        class Foo(object): → class Foo(Object):
         class Foo(Bar):    → unchanged (already has a POOP or custom base)
+
+    `class Foo(object)` is `ObjectTransformer`'s, which rewrites the name
+    wherever it appears.
 
     This mirrors Python 3's implicit inheritance from `object`, but uses
     POOP's Object so user classes gain print(), is_none(), not_none(),

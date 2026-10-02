@@ -1,7 +1,7 @@
 from typing import ClassVar
 
-from poop.transformers._collection import CollectionRewriter, make_iterable_from
-from poop.transformers.base import BaseTransformer
+from poop.transformers._collection import make_iterable_from
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.frozen_set import FrozenSet
 
@@ -14,7 +14,7 @@ from poop.types.frozen_set import FrozenSet
 _poop_frozenset_from = make_iterable_from(FrozenSet)
 
 
-class _FrozenSetRewriter(CollectionRewriter):
+class _FrozenSetRewriter(BuiltinRewriter):
     builtin = "frozenset"
     call_target = "_poop_frozenset_from"
     name_target = "_poop_frozenset_cls"

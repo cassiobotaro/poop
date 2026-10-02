@@ -2,7 +2,7 @@ import ast
 from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
 from poop.types._message import article
 from poop.types.complex import Complex
@@ -60,7 +60,11 @@ def _poop_complex_from(*args: object, **kwargs: object) -> Complex:
     return Complex(complex(real._value, imag._value))
 
 
-class _ComplexRewriter(ast.NodeTransformer):
+class _ComplexRewriter(BuiltinRewriter):
+    builtin = "complex"
+    call_target = "_poop_complex_from"
+    name_target = "_poop_complex_cls"
+
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         # Fold `r ± ij` literal patterns (e.g. 1+2j, 3.0-1j) into a single Complex.
         # Python parses these as BinOp instead of a single complex Constant.
@@ -75,50 +79,15 @@ class _ComplexRewriter(ast.NodeTransformer):
             if isinstance(node.op, ast.Sub):
                 imag_part = -imag_part
             combined = complex(node.left.value, imag_part.imag)
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_complex_literal", ctx=ast.Load()),
-                    args=[ast.Constant(value=combined)],
-                    keywords=[],
-                ),
-                node,
+            return call_at(
+                "_poop_complex_literal", [ast.Constant(value=combined)], node
             )
         self.generic_visit(node)
         return node
 
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
         if isinstance(node.value, complex):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_complex_literal", ctx=ast.Load()),
-                    args=[node],
-                    keywords=[],
-                ),
-                node,
-            )
-        return node
-
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "complex":
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_complex_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "complex":
-            return ast.copy_location(
-                ast.Name(id="_poop_complex_cls", ctx=node.ctx), node
-            )
+            return call_at("_poop_complex_literal", [node], node)
         return node
 
 

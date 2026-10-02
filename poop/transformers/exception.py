@@ -1,7 +1,7 @@
 import ast
 from typing import ClassVar
 
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, name_at
 from poop.types.exceptions import MIRRORS
 
 _BINDINGS: dict[str, object] = {
@@ -12,9 +12,7 @@ _BINDINGS: dict[str, object] = {
 class _ExceptionRewriter(ast.NodeTransformer):
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if node.id in MIRRORS:
-            return ast.copy_location(
-                ast.Name(id=f"_poop_{node.id}", ctx=node.ctx), node
-            )
+            return name_at(f"_poop_{node.id}", node, node.ctx)
         return node
 
 

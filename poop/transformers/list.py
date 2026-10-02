@@ -2,12 +2,11 @@ import ast
 from typing import ClassVar
 
 from poop.transformers._collection import (
-    CollectionRewriter,
     make_constructor,
     make_iterable_from,
     wrap_elts,
 )
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.list import List
 
@@ -15,7 +14,7 @@ _poop_list = make_constructor(List)
 _poop_list_from = make_iterable_from(List, copy=True)
 
 
-class _ListRewriter(CollectionRewriter):
+class _ListRewriter(BuiltinRewriter):
     builtin = "list"
     call_target = "_poop_list_from"
     name_target = "_poop_list_cls"

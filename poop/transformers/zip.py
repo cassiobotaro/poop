@@ -1,7 +1,6 @@
 from typing import ClassVar
 
-from poop.transformers._forwarding import make_forwarding_rewriter
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.exceptions import MIRRORS
 from poop.types.zip import Zip
@@ -29,8 +28,14 @@ def _poop_zip(*sources: object, **kwargs: object) -> Zip:
     raise MIRRORS["TypeError"](f"strict must be bool, got {type(strict).__qualname__}")
 
 
+class _ZipRewriter(BuiltinRewriter):
+    builtin = "zip"
+    call_target = "_poop_zip"
+    name_target = "_poop_zip_cls"
+
+
 class ZipTransformer(BaseTransformer):
-    rewriter = make_forwarding_rewriter("zip", "_poop_zip", "_poop_zip_cls")
+    rewriter = _ZipRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_zip": _poop_zip,
         "_poop_zip_cls": builtin_alias(Zip, _poop_zip, "zip"),

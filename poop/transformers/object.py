@@ -1,8 +1,7 @@
-import ast
 from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types.object import Object
 
 
@@ -37,29 +36,13 @@ def _poop_object_from(*args: object, **kwargs: object) -> Object:
 _OBJECT_NAMES = frozenset({"object", "Object"})
 
 
-class _ObjectRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        # Call position routes to the factory; every other position falls
-        # through to `visit_Name` and stays the class.
-        if isinstance(node.func, ast.Name) and node.func.id in _OBJECT_NAMES:
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_object_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
+class _ObjectRewriter(BuiltinRewriter):
+    # Call position routes to the factory; every other position stays the class.
+    call_target = "_poop_object_from"
+    name_target = "_poop_object"
 
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id in _OBJECT_NAMES:
-            return ast.copy_location(ast.Name(id="_poop_object", ctx=node.ctx), node)
-        return node
+    def is_builtin(self, name: str) -> bool:
+        return name in _OBJECT_NAMES
 
 
 class ObjectTransformer(BaseTransformer):

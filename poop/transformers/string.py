@@ -2,7 +2,7 @@ import ast
 from typing import ClassVar, cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -61,38 +61,14 @@ def _poop_str_from(*args: object, **kwargs: object) -> Str:
     return Str(str(source))
 
 
-class _StrRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "str":
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_str_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
+class _StrRewriter(BuiltinRewriter):
+    builtin = "str"
+    call_target = "_poop_str_from"
+    name_target = "_poop_str_cls"
 
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
         if isinstance(node.value, str):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_str", ctx=ast.Load()),
-                    args=[node],
-                    keywords=[],
-                ),
-                node,
-            )
-        return node
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "str":
-            return ast.copy_location(ast.Name(id="_poop_str_cls", ctx=node.ctx), node)
+            return call_at("_poop_str", [node], node)
         return node
 
 

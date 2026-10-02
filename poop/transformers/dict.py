@@ -3,8 +3,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers._collection import CollectionRewriter
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
 from poop.types._message import article
 from poop.types._unwrap import _faithful
@@ -118,32 +117,12 @@ def _poop_dict_from(*args: object, **kwargs: Object) -> Dict:
     return d
 
 
-class _DictRewriter(CollectionRewriter):
+class _DictRewriter(BuiltinRewriter):
     builtin = "dict"
     call_target = "_poop_dict_from"
     name_target = "_poop_dict_cls"
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        # Unlike the other collection builtins, dict(...) accepts keywords
-        # (dict(a=1, b=2)). Forward named keywords to _poop_dict_from.
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == self.builtin
-            and len(node.args) <= 1
-            and node.keywords
-            and all(kw.arg is not None for kw in node.keywords)
-        ):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id=self.call_target, ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
         # A `**x` splat (kw.arg is None) cannot reach the bare `_poop_dict`
         # class: Python's `**` unpacking demands raw `str` keys, but a POOP
         # Dict carries `Str` keys, so `_poop_dict(**other)` raises
@@ -160,12 +139,7 @@ class _DictRewriter(CollectionRewriter):
             # normalise it through `_poop_dict_from` so `_poop_dict_merge`
             # always sees a Dict part.
             parts: list[ast.expr] = [
-                ast.Call(
-                    func=ast.Name(id="_poop_dict_from", ctx=ast.Load()),
-                    args=[self.visit(arg)],
-                    keywords=[],
-                )
-                for arg in node.args
+                call_at("_poop_dict_from", [self.visit(arg)], arg) for arg in node.args
             ]
             # A named keyword is a plain pair; `**x` (kw.arg is None) is a
             # splat. The StrTransformer has already run, so wrap the keyword
@@ -175,11 +149,7 @@ class _DictRewriter(CollectionRewriter):
                 (None, self.visit(kw.value))
                 if kw.arg is None
                 else (
-                    ast.Call(
-                        func=ast.Name(id="_poop_str", ctx=ast.Load()),
-                        args=[ast.Constant(value=kw.arg)],
-                        keywords=[],
-                    ),
+                    call_at("_poop_str", [ast.Constant(value=kw.arg)], kw.value),
                     self.visit(kw.value),
                 )
                 for kw in node.keywords
@@ -216,25 +186,11 @@ class _DictRewriter(CollectionRewriter):
 
     @staticmethod
     def _merge_call(parts: list[ast.expr], ref: ast.AST) -> ast.expr:
-        return ast.copy_location(
-            ast.Call(
-                func=ast.Name(id="_poop_dict_merge", ctx=ast.Load()),
-                args=parts,
-                keywords=[],
-            ),
-            ref,
-        )
+        return call_at("_poop_dict_merge", parts, ref)
 
     @staticmethod
     def _pairs_call(flat: list[ast.expr], ref: ast.AST) -> ast.expr:
-        return ast.copy_location(
-            ast.Call(
-                func=ast.Name(id="_poop_dict_from_pairs", ctx=ast.Load()),
-                args=flat,
-                keywords=[],
-            ),
-            ref,
-        )
+        return call_at("_poop_dict_from_pairs", flat, ref)
 
     def visit_Dict(self, node: ast.Dict) -> ast.AST:
         self.generic_visit(node)

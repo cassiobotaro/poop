@@ -2,8 +2,7 @@ from operator import index as _index
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers._forwarding import make_forwarding_rewriter
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
@@ -56,8 +55,14 @@ def _poop_range(*args: object, **kwargs: object) -> Range:
     return Range(Int(_index(stop_or_start)), Int(_index(stop) - sign), Int(step_value))
 
 
+class _RangeRewriter(BuiltinRewriter):
+    builtin = "range"
+    call_target = "_poop_range"
+    name_target = "_poop_range_cls"
+
+
 class RangeTransformer(BaseTransformer):
-    rewriter = make_forwarding_rewriter("range", "_poop_range", "_poop_range_cls")
+    rewriter = _RangeRewriter
     BINDINGS: ClassVar[dict[str, object]] = {
         "_poop_range": _poop_range,
         "_poop_range_cls": builtin_alias(Range, _poop_range, "range"),
