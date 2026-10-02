@@ -108,46 +108,6 @@ cost of the one-file-per-infection convention `CONTRIBUTING.md` teaches.
 
 ---
 
-### 67. Ten rewriters carry one `visit_Call`, and a docstring defends a difference that is gone
-
-`_forwarding.py` explains why it exists: "This differs from `_collection.py`'s
-`CollectionRewriter`, which guards on `not node.keywords and len(node.args) <=
-1` and drops keywords — so these three need their own factory rather than
-reusing it." Proposal 44 removed that guard. The two `visit_Call` bodies are
-now the same but for `self.builtin` against a closed-over `builtin`, and so
-are the two `visit_Name`s.
-
-The same pair is written out by hand in `int.py`, `string.py`, `bytes.py`,
-`byte_array.py`, `complex.py`, `memory_view.py` and `object.py`; `slice.py`
-adds one line to it. Across `poop/transformers/` that is 48
-`ast.copy_location(...)` calls and 56 hand-built `ast.Name(id=…, ctx=…)` nodes
-for what is, almost everywhere, "this name, at that node".
-
-Three smaller leftovers of the same history:
-
-- `boolean.py` and `float.py` still guard on `not node.keywords`, with comments
-  saying an unguarded rewrite answered `0.0` / `False` off the helper's
-  default. True when written; both converters now open with
-  `refuse_extra_arguments`, so either route ends at the same refusal
-  (`float takes no keyword arguments — …`) and the guard only decides how many
-  hops it takes.
-- `_ClassRewriter` rewrites `object` / `Object` in a base list, with its own
-  `("object", "Object")` tuple beside `object.py`'s `_OBJECT_NAMES`.
-  `ObjectTransformer` rewrites both names in every position, base lists
-  included — `_ObjectRewriter` alone turns `class A(object)` into
-  `class A(_poop_object)` — so only the empty-bases branch does anything.
-- `_ReturnRewriter.visit_FunctionDef` is a one-line call to
-  `_rewrite_function`, which has no other caller.
-
-**Fix.** One `BuiltinRewriter` base — what `CollectionRewriter` already is,
-taking a set of names so `object` fits — subclassed by every constructor
-rewriter; `make_forwarding_rewriter` and its docstring go. Two AST builders in
-`base.py`, `name_at(id, node)` and `call_at(target, args, node, keywords=())`,
-replace the `copy_location` boilerplate. `_ClassRewriter` keeps only the
-implicit-base branch.
-
----
-
 ### 68. The CLI and the REPL each keep their own consoles and their own error printer
 
 `cli.py` and `repl.py` both declare `_OUT = Console()` / `_ERR =
