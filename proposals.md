@@ -252,39 +252,6 @@ and POOP's comparisons answer `Boolean`.
 
 ---
 
-### 71. `MIRRORS["TypeError"]` — 115 string keys no checker can see
-
-Every diagnostic POOP raises goes through `raise MIRRORS["TypeError"](…)`: 70
-`TypeError`, 20 `ValueError`, 9 `AttributeError`, and so on, 115 in
-`poop/`. `MIRRORS` is a `dict[str, type[Exception]]`, so a mistyped key passes
-ruff and `ty` and fails as a `KeyError` at the moment of raising — on an error
-path, the least-exercised code there is, and reported to the user as a failure
-unrelated to what they did.
-
-`ty` can hold the keys if the mapping says what they are:
-
-```python
-type MirrorName = Literal["TypeError", "ValueError", …]
-MIRRORS: dict[MirrorName, type[Exception]]
-
-raise MIRRORS["TypeEror"]("x")
-# error[invalid-argument-type]: … cannot be called with key of type
-#   `Literal["TypeEror"]`
-```
-
-Checked against the pinned `ty`: the typo is reported, and with the present
-`dict[str, …]` annotation it is not.
-
-**Fix.** A `MirrorName` literal type in `exceptions.py` listing the 17 names in
-`_HIERARCHY`, and `MIRRORS` annotated with it. The dynamic readers
-(`MIRRORS[native.__name__] = mirror` in `_build`, `node.id in MIRRORS` in
-`ExceptionTransformer`) keep a `str`-keyed view of the same dict.
-`test_mirrored_raises.py` is unaffected — the spelling it sweeps for does not
-change. A test that `MirrorName`'s arguments equal `_HIERARCHY`'s names keeps
-the literal from becoming the second list the module tries not to have.
-
----
-
 ### 72. Seven `object()` sentinels typed `Any`, three of them for "not passed"
 
 ```
