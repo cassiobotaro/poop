@@ -30,7 +30,7 @@ costs nothing; `tests/test_mirrored_raises.py` sweeps both packages for it.
 
 from __future__ import annotations
 
-from typing import Any, Never, cast
+from typing import Any, Literal, Never, cast, get_args
 
 from poop.types.meta import PoopMeta, class_side, class_side_read_refusal
 from poop.types.object import Object
@@ -74,9 +74,35 @@ class PoopExcMeta(PoopMeta):
         return isinstance(obj, native)
 
 
+# The keys `MIRRORS` answers, spelt out so a type checker can hold them: 115
+# raises go through `MIRRORS["..."]`, and as a `dict[str, …]` a mistyped key
+# passed every check and failed as a `KeyError` on the error path itself — the
+# least-exercised code there is. `test_mirror_names_match_the_hierarchy` keeps
+# this from becoming a second list to keep in step with `_HIERARCHY` by hand.
+type MirrorName = Literal[
+    "Exception",
+    "ArithmeticError",
+    "LookupError",
+    "ZeroDivisionError",
+    "OverflowError",
+    "IndexError",
+    "KeyError",
+    "AttributeError",
+    "NameError",
+    "TypeError",
+    "ValueError",
+    "RuntimeError",
+    "NotImplementedError",
+    "RecursionError",
+    "AssertionError",
+    "StopIteration",
+    "EOFError",
+]
+MIRROR_NAMES: tuple[MirrorName, ...] = get_args(MirrorName.__value__)
+
 # (native class, the POOP parent's name) — mirrors Python's own tree, so
 # `except_(LookupError, ...)` catches a raw KeyError the way `except` does.
-_HIERARCHY: tuple[tuple[type[BaseException], str | None], ...] = (
+_HIERARCHY: tuple[tuple[type[BaseException], MirrorName | None], ...] = (
     (Exception, None),
     (ArithmeticError, "Exception"),
     (LookupError, "Exception"),
@@ -107,7 +133,7 @@ _HIERARCHY: tuple[tuple[type[BaseException], str | None], ...] = (
 # Annotated as exception classes, not bare `type`: every POOP diagnostic is
 # raised through this table (`raise MIRRORS["TypeError"](...)`), so the values
 # have to be raisable to the type checker as well as at runtime.
-MIRRORS: dict[str, type[Exception]] = {}
+MIRRORS: dict[MirrorName, type[Exception]] = {}
 NATIVE_TO_POOP: dict[type[BaseException], type] = {}
 
 
@@ -190,7 +216,7 @@ def _refusal_for(name: str, instead: str | None) -> class_side:
     return class_side_read_refusal(cast("Any", refuse), refuses=True)
 
 
-def _build(native: type[BaseException], parent: str | None) -> None:
+def _build(native: type[BaseException], parent: MirrorName | None) -> None:
     # The root also inherits Object, so a user's `class MyError(Exception)`
     # lands inside the Object tree and answers print()/class_name() — before
     # this it sat outside it entirely.
@@ -218,7 +244,7 @@ def _build(native: type[BaseException], parent: str | None) -> None:
             },
         ),
     )
-    MIRRORS[native.__name__] = mirror
+    MIRRORS[cast("MirrorName", native.__name__)] = mirror
     NATIVE_TO_POOP[native] = mirror
 
 

@@ -1,7 +1,13 @@
 import pytest
 
 from poop.interpreter import Interpreter
-from poop.types.exceptions import MIRRORS, PoopExcMeta, poop_class_of
+from poop.types.exceptions import (
+    MIRROR_NAMES,
+    MIRRORS,
+    MirrorName,
+    PoopExcMeta,
+    poop_class_of,
+)
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
@@ -265,7 +271,7 @@ def test_the_unicode_family_is_answered_by_value_error_instead() -> None:
 @pytest.mark.parametrize("kind", sorted(MIRRORS))
 @pytest.mark.parametrize("name", ["args", "add_note", "with_traceback"])
 def test_a_mirror_refuses_the_names_it_inherited_from_baseexception(
-    kind: str, name: str
+    kind: MirrorName, name: str
 ) -> None:
     with pytest.raises(MessageNotUnderstood, match=f"#{name} is Python's"):
         getattr(MIRRORS[kind], name)
@@ -273,7 +279,7 @@ def test_a_mirror_refuses_the_names_it_inherited_from_baseexception(
 
 @pytest.mark.parametrize("kind", sorted(MIRRORS))
 @pytest.mark.parametrize("name", ["args", "add_note", "with_traceback"])
-def test_dir_does_not_advertise_a_refused_name(kind: str, name: str) -> None:
+def test_dir_does_not_advertise_a_refused_name(kind: MirrorName, name: str) -> None:
     assert name not in dir(MIRRORS[kind])
 
 
@@ -314,3 +320,10 @@ def test_the_class_side_messages_still_answer() -> None:
     assert MIRRORS["ValueError"].superclass() is MIRRORS["Exception"]  # ty: ignore[unresolved-attribute]
     with pytest.raises(ValueError, match="still raisable"):
         MIRRORS["ValueError"].raise_("still raisable")  # ty: ignore[unresolved-attribute]
+
+
+def test_mirror_names_match_the_hierarchy() -> None:
+    # `MirrorName` exists so a type checker can hold the keys; this keeps the
+    # literal and the table it describes from drifting apart.
+    assert set(MIRROR_NAMES) == set(MIRRORS)
+    assert len(MIRROR_NAMES) == len(MIRRORS)
