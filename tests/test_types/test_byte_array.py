@@ -975,3 +975,23 @@ def test_fromhex_is_answered_by_bytearray_too() -> None:
 def test_fromhex_refuses_what_is_not_hexadecimal() -> None:
     with pytest.raises(ValueError, match="is not hexadecimal"):
         ByteArray(bytearray()).fromhex(Str("zz"))
+
+
+def test_ordering_crosses_to_bytes() -> None:
+    # The mirror half of `test_bytes.py`'s: the pair orders in either
+    # direction in CPython, and POOP refused both.
+    assert (ByteArray(bytearray(b"ab")) < Bytes(b"ac")) is true
+    assert (ByteArray(bytearray(b"ab")) <= Bytes(b"ab")) is true
+    assert (ByteArray(bytearray(b"ab")) > Bytes(b"aa")) is true
+    assert (ByteArray(bytearray(b"ab")) >= Bytes(b"ab")) is true
+
+
+def test_ordering_against_a_foreign_operand_still_raises() -> None:
+    for op in (
+        lambda: ByteArray(bytearray(b"a")) < Str("b"),
+        lambda: ByteArray(bytearray(b"a")) <= Str("b"),
+        lambda: ByteArray(bytearray(b"a")) > Str("b"),
+        lambda: ByteArray(bytearray(b"a")) >= Str("b"),
+    ):
+        with pytest.raises(TypeError):
+            op()

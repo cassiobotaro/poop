@@ -122,3 +122,11 @@ def test_exhaustion_is_still_catchable_as_stop_iteration() -> None:
 
 def test_a_default_still_answers_instead_of_raising() -> None:
     assert List().iter().next(Int(0)) == Int(0)
+
+
+def test_iter_answers_the_iterator_itself() -> None:
+    # `iter(it) is it` in Python, and `x.iter() is x` is what `Map`, `Filter`,
+    # `Enumerate` and `Zip` already answered — the message was defined per
+    # class, so the fifteen concrete iterators were the half without one.
+    it = _IteratorBase([Int(1)])
+    assert it.iter() is it

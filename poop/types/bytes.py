@@ -160,22 +160,31 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
         return hash(self._value)
 
     def __lt__(self, other: object) -> Boolean:
-        if not isinstance(other, Bytes):
-            return NotImplemented  # foreign operand -> faithful TypeError
+        # Both byte-likes pass, as they do for `__add__` below and for `==`
+        # through `_eq_group`: CPython orders `bytes` against `bytearray` in
+        # either direction, and this was the one operation on the pair that
+        # did not. So `b"ab" == bytearray(b"ab")` answered true, `b"ab" +
+        # bytearray(b"cd")` concatenated, `b"ab".includes(bytearray(b"a"))`
+        # found it — and `b"ab" < bytearray(b"ac")` answered `bytes does not
+        # understand #< with a bytearray`, about the one pair of classes the
+        # language keeps interchangeable everywhere else. Anything else is
+        # still a foreign operand -> faithful TypeError, not #_value.
+        if not isinstance(other, Bytes | ByteArray):
+            return NotImplemented
         return to_boolean(self._value < other._value)
 
     def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, Bytes):
+        if not isinstance(other, Bytes | ByteArray):
             return NotImplemented
         return to_boolean(self._value <= other._value)
 
     def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, Bytes):
+        if not isinstance(other, Bytes | ByteArray):
             return NotImplemented
         return to_boolean(self._value > other._value)
 
     def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, Bytes):
+        if not isinstance(other, Bytes | ByteArray):
             return NotImplemented
         return to_boolean(self._value >= other._value)
 

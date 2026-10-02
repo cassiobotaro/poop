@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeIs, cast
 
 from poop.types._affix import affix_needle
 from poop.types._alias import wrapped_instance
@@ -30,6 +30,7 @@ from poop.types.tuple import Tuple
 if TYPE_CHECKING:
     from poop.types._index import Index
     from poop.types.boolean import Boolean, to_boolean
+    from poop.types.bytes import Bytes
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
@@ -168,23 +169,38 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
                 f"#ord expects a single byte, got {len(self._value)}"
             ) from None
 
+    def _ordered_with(self, other: object) -> TypeIs[ByteArray | Bytes]:
+        """Whether `other` is a byte-like `<` and its three siblings order.
+
+        See `Bytes.__lt__` for the whole of it: the pair orders in CPython, and
+        this was the one operation POOP kept apart. The runtime import is local
+        for the reason `__add__` below states — `bytes` imports `ByteArray`.
+
+        `TypeIs` (PEP 742), as `_unwrap._is_absent` uses it and for the same
+        reason: the four callers read `other._value` on the far side of the
+        guard, which is only a `_value` once this has narrowed it.
+        """
+        from poop.types.bytes import Bytes
+
+        return isinstance(other, ByteArray | Bytes)
+
     def __lt__(self, other: object) -> Boolean:
-        if not isinstance(other, ByteArray):
+        if not self._ordered_with(other):
             return NotImplemented  # foreign operand -> faithful TypeError
         return to_boolean(self._value < other._value)
 
     def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, ByteArray):
+        if not self._ordered_with(other):
             return NotImplemented
         return to_boolean(self._value <= other._value)
 
     def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, ByteArray):
+        if not self._ordered_with(other):
             return NotImplemented
         return to_boolean(self._value > other._value)
 
     def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, ByteArray):
+        if not self._ordered_with(other):
             return NotImplemented
         return to_boolean(self._value >= other._value)
 
