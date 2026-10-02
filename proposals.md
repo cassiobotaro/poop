@@ -60,54 +60,6 @@ the linter holds.
 
 ---
 
-### 66. Sixty-one of the 71 validators are the same anonymous class
-
-```python
->>> Counter(type(v).__qualname__ for v in DEFAULT_VALIDATORS).most_common(3)
-[('make_call_name_validator.<locals>._Validator', 38),
- ('make_node_validator.<locals>._Validator', 16),
- ('make_op_validator.<locals>._Validator', 7)]
-```
-
-The three factories build a *class* per configuration, and every one of those
-classes is then instantiated exactly once, with no arguments, in
-`DEFAULT_VALIDATORS`. A class whose only variation is closed-over data is an
-instance wearing a class's clothes: `NoLenValidator` and `NoAbsValidator`
-differ by a frozenset and a string. Two of the factories also assemble their
-visitor with `type("_Visitor", (ErrorCollector,), {f"visit_{…}": fn})` to get
-per-node-type dispatch that a dict lookup in `visit` gives directly.
-
-The hand-written validators have the mirror-image problem. Each repeats
-
-```python
-class NoSubscriptValidator(CollectingValidator):
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_NoSubscriptVisitor(), tree)
-```
-
-— ten times, seven of them with a zero-argument visitor — where the
-transformers, one package over, say the same thing as data:
-`rewriter = _ListRewriter`. And `CollectingValidator.collect` raises
-`NotImplementedError` instead of being abstract, so a subclass that forgets it
-fails at the first program rather than at import.
-
-**Fix.** Ordinary classes taking their configuration in `__init__` —
-`CallNameValidator(forbidden, message)`, `NodeValidator(messages)`,
-`OpValidator(node_type, messages, allow=…)` — so `NoLenValidator =
-CallNameValidator({"len"}, "…")` is an instance with a real type and a useful
-`repr`; `forbidden` becomes a plain attribute, which is what `:explain` already
-reads through `getattr`. `CollectingValidator` gains a `visitor: ClassVar`
-defaulting `collect`, as `BaseTransformer.rewriter` does, and becomes an `ABC`.
-The three validators that hand arguments to their visitor keep overriding.
-
-Out of scope, but worth deciding once: the 38 call-name validators are 38
-modules and 38 imports for what is a `dict[str, str]` of name → message. One
-table would also make validation one walk instead of 71 (11.8 ms against
-0.13 ms for a single `ast.walk` on `examples/patterns/interpreter.py`), at the
-cost of the one-file-per-infection convention `CONTRIBUTING.md` teaches.
-
----
-
 ### 68. The CLI and the REPL each keep their own consoles and their own error printer
 
 `cli.py` and `repl.py` both declare `_OUT = Console()` / `_ERR =
