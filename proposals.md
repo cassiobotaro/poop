@@ -14,51 +14,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues while the backlog has open items; the next one is 76.
 Once every item has been implemented and deleted, numbering starts over at 1.
 
-### 63. The class side reopens `__init__` — one guard, written twice, has drifted
-
-`Object._reject_dunder` passes `allow_init=False`, and its docstring says why:
-"`get_attr("__init__")` answered a callable that re-initialized the receiver in
-place — `Str`, `Int` and `Tuple` all mutable, and a `Dict` keyed on one left
-holding an entry reachable under neither the old spelling nor the new."
-
-`poop/types/meta.py` carries its own `_reject_dunder` for the class side, which
-calls `dunder_message(name)` and so inherits the carve-out the instance side
-turned off:
-
-```
-"abc".get_attr("__init__")           # __init__ is forbidden — use Klass(...) instead
-str.get_attr("__init__")             # <block>
-
-s = "abc"
-d = {s: 1}
-str.get_attr("__init__")(s, "ZAP")
-s.print()                            # ZAP
-d.includes("abc").print()            # False
-d.includes("ZAP").print()            # False
-d.print()                            # {'ZAP': 1}
-```
-
-That is the hazard the docstring describes, word for word, one receiver over.
-
-The cause is structural rather than a slip. `_reject_dunder`,
-`_reject_private` and `_checked_name` each exist twice — as methods on `Object`
-that never read `self`, and as module functions in `meta.py` — and the test
-underneath them, `name.startswith("__") and name.endswith("__")`, is spelt
-inline six times across `object.py`, `meta.py`, `no_dunder_attribute.py` and
-`no_private_attribute.py`. `_selectors.is_message` exists because "four
-surfaces answer the same question … and three of them had their own copy of
-the rule"; this is the same shape one predicate over.
-
-**Fix.** One copy. `is_dunder(name)` beside `is_message` in `_selectors.py`,
-and a single `checked_name(name)` (dunder ban with `allow_init=False`, private
-ban, `_attr_name`) that both `Object` and `PoopMeta` call — `_unwrap.py`
-already holds `_attr_name` and both sides already import from it. The three
-methods on `Object` become calls to it; the three functions in `meta.py` go
-away. A test asserting that every name `Object.get_attr` refuses is refused by
-`PoopMeta.get_attr` too would keep the sides in step.
-
----
-
 ### 64. 158 of the 298 function-local imports break no cycle
 
 `CONTRIBUTING.md`: "All imports live at the top of the module. Use a
