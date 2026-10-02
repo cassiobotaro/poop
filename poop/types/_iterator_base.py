@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Self
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
@@ -57,6 +57,28 @@ class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):
         return self._iter
 
     def __iter__(self) -> Iterator[T]:
+        return self
+
+    def iter(self) -> Self:
+        """The iterator itself, as `iter(it) is it` in Python.
+
+        `_IterableMixin` gives every iterator the collection protocol — the
+        paragraph in `INFECTIONS.md` that says so lists `do`, `map`, `filter`,
+        `find`, `reduce`, `sum`, `min`, `max`, `all`, `any`, `enumerate`, `zip`
+        — and `iter` was the one message of it defined per class instead of on
+        a shared base, so the concrete iterators were the half of the family
+        that never got one. `Map`, `Filter`, `Enumerate` and `Zip` answer it
+        already, and answer `self`, which is the mirror of `iter(zip(...)) is
+        zip(...)` recorded there. The other fifteen refused it:
+
+            [1, 2].iter().iter()          # list_iterator does not understand
+            d.keys().reversed().iter()    # #iter — did you mean #filter?
+
+        One family, two answers to `no_iter`'s substitute column (`col.iter()`),
+        decided by which iterator the receiver happened to hand back — and the
+        refusing half is reached by ordinary chaining, since `Dict.reversed()`
+        and the three view `reversed()`s all answer a concrete iterator.
+        """
         return self
 
     def __str__(self) -> str:
