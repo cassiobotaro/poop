@@ -5,6 +5,7 @@ import pytest
 from poop.parser import parse
 from poop.transformers.bytes import BytesTransformer
 from poop.types.boolean import false, true
+from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -125,6 +126,16 @@ def test_ge_equal() -> None:
 def test_lt_foreign_operand_raises() -> None:
     with pytest.raises(TypeError):
         Bytes(b"a") < Str("b")  # noqa: B015
+
+
+def test_ordering_crosses_to_a_bytearray() -> None:
+    # CPython orders the pair, and every other operation on it already did:
+    # `==` through `_eq_group`, `+` through `__add__`, `includes` through the
+    # subsequence search. Ordering was the one that refused.
+    assert (Bytes(b"ab") < ByteArray(bytearray(b"ac"))) is true
+    assert (Bytes(b"ab") <= ByteArray(bytearray(b"ab"))) is true
+    assert (Bytes(b"ab") > ByteArray(bytearray(b"aa"))) is true
+    assert (Bytes(b"ab") >= ByteArray(bytearray(b"ab"))) is true
 
 
 def test_hashable() -> None:
