@@ -60,44 +60,6 @@ the linter holds.
 
 ---
 
-### 68. The CLI and the REPL each keep their own consoles and their own error printer
-
-`cli.py` and `repl.py` both declare `_OUT = Console()` / `_ERR =
-Console(stderr=True)`, and both define the same decision:
-
-```python
-if _ERR.is_terminal and not _ERR.no_color:
-    _ERR.print(render_error(exc, source), soft_wrap=True)
-else:
-    …format_error(exc, source)…
-```
-
-— `cli._emit_error` through `typer.echo`, `repl._print_error` through
-`_ERR.print`. `errors.py` was written so the two surfaces report alike; the
-last step, choosing between its two renderers, is the part still duplicated.
-
-`Interpreter` is built for injection — validators, transformers and namespace
-are constructor arguments — and the REPL quietly ignores two of the three:
-`Repl.__init__` copies `DEFAULT_NAMESPACE` rather than the interpreter's, and
-`_EXPLAIN_CALLS` is computed at import from `DEFAULT_VALIDATORS`. So
-`Repl(Interpreter(namespace=…, validators=…))` validates with the injected
-set, runs against the default namespace, and explains the default bans.
-
-Two methods on `Interpreter` are also thinner than their names:
-`transform_source` is `return self._validate_and_transform(source, filename)`,
-and `run_file` — its own copy of the `utf-8-sig` read and of the comment
-explaining it — is called only from tests, since the CLI reads the file itself
-to keep the source for the error gutter.
-
-**Fix.** A `report(exc, source, console)` in `errors.py` owning the
-terminal/plain choice, used by both front ends, with one shared console pair.
-`Repl` takes its namespace and its explain topics from the interpreter it was
-handed (say, an `interpreter.new_namespace()` and a public `validators`). Make
-`_validate_and_transform` the public `transform_source`, and either have the
-CLI call `run_file` or drop it.
-
----
-
 ### 69. `repl.py` imports `readline` in three functions and tracks one registration in a global
 
 `readline` is absent on one platform, and the module handles that three times:
