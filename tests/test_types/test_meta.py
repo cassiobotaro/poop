@@ -73,6 +73,18 @@ def test_a_class_get_attr_rejects_a_private_name() -> None:
         _Dog.get_attr(Str("_data"))
 
 
+@pytest.mark.parametrize("receiver", ["str", '"abc"', "Foo", "Foo()"])
+@pytest.mark.parametrize("message", ["get_attr", "has_attr"])
+def test_init_is_refused_on_both_sides(receiver: str, message: str) -> None:
+    # The class side kept its own copy of the guard and, with it, the
+    # `super().__init__` carve-out the instance side had closed — so
+    # `str.get_attr("__init__")(s, "ZAP")` re-ran the constructor on a live
+    # `Str` and stranded the entry a `Dict` held under it.
+    source = f'class Foo:\n    pass\n{receiver}.{message}("__init__")'
+    with pytest.raises(ExecutionError, match="__init__ is forbidden"):
+        Interpreter().run_source(source)
+
+
 def test_instances_still_get_the_instance_side() -> None:
     # The metaclass must not shadow instance messages: lookup on an instance
     # never consults the metaclass.

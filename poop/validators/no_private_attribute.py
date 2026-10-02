@@ -35,6 +35,7 @@ the single-underscore internals every wrapper declares in `__slots__`.
 import ast
 
 from poop.errors import ValidationError
+from poop.types._selectors import is_dunder
 from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
 # Receivers an object may reach a private name on, because reaching your own
@@ -67,7 +68,7 @@ def _is_private(name: str) -> bool:
     """
     if name.startswith("_poop_"):
         return False
-    return name.startswith("_") and not (name.startswith("__") and name.endswith("__"))
+    return name.startswith("_") and not is_dunder(name)
 
 
 class _Visitor(ErrorCollector):

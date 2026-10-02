@@ -43,7 +43,7 @@ def is_message(name: str) -> bool:
 
     Every `_`-prefixed name is hidden: dunders (`no_dunder_attribute` bans
     them), the mangled `_poop_*` bindings, and the single-underscore internals
-    `Object._reject_private` refuses at runtime. Four surfaces answer the same
+    `_reject_private` refuses at runtime. Four surfaces answer the same
     question — `dir()`, `:methods`, the near-miss hint below, and the REPL's
     tab-completion — and three of them had their own copy of the rule. The
     fourth, the completer, spelt it `not name.startswith("__")` and so offered
@@ -51,6 +51,15 @@ def is_message(name: str) -> bool:
     encapsulation leak taught by the tool meant to teach the language.
     """
     return not name.startswith("_")
+
+
+def is_dunder(name: str) -> bool:
+    """`__name__`-shaped — Python's protocol, never POOP's message surface.
+
+    The one copy of the test the dunder ban, the private ban and the two
+    `__getattr__` hooks all ask. It was spelt inline at each of them.
+    """
+    return name.startswith("__") and name.endswith("__")
 
 
 def receiver_label(obj: object) -> str:

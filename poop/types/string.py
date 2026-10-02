@@ -50,7 +50,7 @@ def _reject_field_access(template: _str) -> None:
     literal no validator can read, so `"{0.__class__}".format(5)` printed
     `<class 'int'>` — reopening exactly what `no_dunder_attribute` closes, and
     `{0[0]}` what `no_subscript` closes. This is the third half of the same
-    ban, alongside `Object._reject_dunder`: both guard a spelling that reaches
+    ban, alongside `_reject_dunder`: both guard a spelling that reaches
     the runtime as data.
 
     Only the field *name* is inspected — a format spec may legitimately carry a

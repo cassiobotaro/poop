@@ -26,7 +26,9 @@ from functools import partial, wraps
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Never
 
+from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
+from poop.types._selectors import is_dunder
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -93,7 +95,7 @@ class class_side:  # noqa: N801
         # A sentence, not the bare name: `AttributeError: name` read as if the
         # *word* `name` were the problem, and both spellings of the mistake —
         # `Foo.name = 5` and the sanctioned `Foo.set_attr("name", 5)` — landed
-        # on it. `_reject_private`, ten lines down, is the model.
+        # on it. `_reject_private` (`_attr_guard.py`) is the model.
         raise MIRRORS["AttributeError"](
             f"#{self._name} is answered by every class — it cannot be rebound"
         )
@@ -144,36 +146,6 @@ def class_side_refusal(fn: FunctionType) -> class_side:
     return class_side(fn, refuses=True)
 
 
-def _reject_dunder(name: str) -> None:
-    """The class-side half of `no_dunder_attribute`, mirroring `Object`'s.
-
-    Both read the same `dunder_message`, so the ban says one thing whether the
-    receiver is an instance or a class.
-    """
-    from poop.types.exceptions import MIRRORS
-    from poop.validators.no_dunder_attribute import dunder_message
-
-    message = dunder_message(name)
-    if message is not None:
-        raise MIRRORS["AttributeError"](message.lstrip("."))
-
-
-def _reject_private(name: str) -> None:
-    """The class-side half of `Object._reject_private` — refuse `_`-privates.
-
-    A class is an object too, so `Foo.get_attr("_data")` must be refused for the
-    same reason the instance side refuses it: it reaches internals the mangling
-    scheme exists to hide.
-    """
-    from poop.types.exceptions import MIRRORS
-
-    is_dunder = name.startswith("__") and name.endswith("__")
-    if name.startswith("_") and not is_dunder:
-        raise MIRRORS["AttributeError"](
-            f"{name} is private — POOP objects do not expose their internals"
-        )
-
-
 def _reject_builtin(cls: type) -> None:
     """Refuse a write to a class POOP defines rather than the program.
 
@@ -198,22 +170,6 @@ def _reject_builtin(cls: type) -> None:
             f"{cls.__name__} is a POOP builtin — its messages cannot be "
             "changed; only a class you defined can be"
         )
-
-
-def _checked_name(name: Str) -> str:
-    """The raw name behind `name`, both class-side bans applied.
-
-    The class-side twin of `Object._checked_name`, down to `_attr_name`
-    keeping a non-`Str` name from leaking `#_value`: `Foo.get_attr([1])` used
-    to answer `list does not understand #_value` exactly as the instance side
-    did.
-    """
-    from poop.types._unwrap import _attr_name
-
-    raw = _attr_name(name)
-    _reject_dunder(raw)
-    _reject_private(raw)
-    return raw
 
 
 def _refuse(cls: type, name: str) -> None:
@@ -889,7 +845,7 @@ class PoopMeta(ABCMeta):
             # Native on purpose, like `Object.__getattr__`: Python's own
             # attribute probe, answered before `exceptions` has finished
             # building the table a mirror would come from.
-            if name.startswith("__") and name.endswith("__"):
+            if is_dunder(name):
                 raise AttributeError(name)
             # The instance-side refusal lands here, not where it was raised:
             # `MessageNotUnderstood` is an `AttributeError` on purpose, so

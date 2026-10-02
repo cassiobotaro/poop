@@ -4,7 +4,9 @@ from collections.abc import Callable
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Self
 
+from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak
+from poop.types._selectors import is_dunder
 from poop.types.meta import PoopMeta
 
 if TYPE_CHECKING:
@@ -81,7 +83,7 @@ class Object(metaclass=PoopMeta):
             # a diagnostic a program reads. It also runs while `exceptions` is
             # still importing — the mirrors are built on `Object` — so the
             # table it would consult may not hold this name yet.
-            if name.startswith("__") and name.endswith("__"):
+            if is_dunder(name):
                 raise AttributeError(name)
             return self.does_not_understand(name)
 
@@ -301,79 +303,24 @@ class Object(metaclass=PoopMeta):
 
             raise MIRRORS["TypeError"](no_format_spec(type(self).__name__)) from None
 
-    def _reject_dunder(self, name: str) -> None:
-        """The runtime half of `no_dunder_attribute`.
-
-        `no_getattr` bans `getattr` and offers these four as the substitute, so
-        without this `get_attr("__dict__")` reopens exactly what the validator
-        closes. A computed name — `"__dict" + "__"` — puts that spelling beyond
-        any static validator's reach, which is why the guard has to live here.
-
-        `allow_init=False`: the validator's `__init__` carve-out exists for
-        `super().__init__(...)`, a *syntax*, and these four messages are not
-        it. With the exemption inherited, `get_attr("__init__")` answered a
-        callable that re-initialized the receiver in place — `Str`, `Int` and
-        `Tuple` all mutable, and a `Dict` keyed on one left holding an entry
-        reachable under neither the old spelling nor the new.
-        """
-        from poop.types.exceptions import MIRRORS
-        from poop.validators.no_dunder_attribute import dunder_message
-
-        message = dunder_message(name, allow_init=False)
-        if message is not None:
-            raise MIRRORS["AttributeError"](message.lstrip("."))
-
-    def _reject_private(self, name: str) -> None:
-        """POOP encapsulation: refuse `_`-prefixed private names.
-
-        `get_attr("_value")` would hand back the raw Python primitive a POOP
-        object wraps — a naked native in user code — and `_items`/`_data`/`_fn`
-        expose the same internals; the mangled `_poop_*` bindings hide here too.
-        A computed name — `"_val" + "ue"` — is invisible to any static
-        validator, so the guard lives at runtime. Dunders are handled by
-        `_reject_dunder`; this covers the single-underscore convention Python
-        honours only by etiquette.
-        """
-        from poop.types.exceptions import MIRRORS
-
-        is_dunder = name.startswith("__") and name.endswith("__")
-        if name.startswith("_") and not is_dunder:
-            raise MIRRORS["AttributeError"](
-                f"{name} is private — POOP objects do not expose their internals"
-            )
-
-    def _checked_name(self, name: Str) -> str:
-        """The raw name behind `name`, both bans applied.
-
-        Every accessor needs the same three steps, and `_attr_name` is what
-        keeps a non-`Str` name from leaking `#_value` out of the substitute
-        `no_getattr` points at.
-        """
-        from poop.types._unwrap import _attr_name
-
-        raw = _attr_name(name)
-        self._reject_dunder(raw)
-        self._reject_private(raw)
-        return raw
-
     def get_attr(self, name: Str, *default: Any) -> Any:
         from poop.types.block import _as_block  # circular: block imports Object
 
         # Guarded before the default is consulted: a forbidden name is refused,
         # not quietly answered with a fallback.
-        return _as_block(builtins.getattr(self, self._checked_name(name), *default))
+        return _as_block(builtins.getattr(self, _checked_name(name), *default))
 
     def has_attr(self, symbol: Str) -> Boolean:
         from poop.types.boolean import to_boolean
 
-        return to_boolean(hasattr(self, self._checked_name(symbol)))
+        return to_boolean(hasattr(self, _checked_name(symbol)))
 
     def set_attr(self, name: Str, value: Any) -> NoneClass:
         from poop.types.none import none
 
         # Outside the `try`: `_checked_name`'s own refusals are AttributeErrors
         # too, and each already carries the sentence it wants to be read by.
-        raw = self._checked_name(name)
+        raw = _checked_name(name)
         builtins.setattr(self, raw, value)
         return none
 
@@ -383,7 +330,7 @@ class Object(metaclass=PoopMeta):
 
         # Outside the `try`, as in `set_attr`: `_checked_name`'s own refusals
         # are AttributeErrors too and already carry their sentence.
-        raw = self._checked_name(name)
+        raw = _checked_name(name)
         try:
             builtins.delattr(self, raw)
         except AttributeError:
