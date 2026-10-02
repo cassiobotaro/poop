@@ -10,18 +10,6 @@ from __future__ import annotations
 
 import builtins
 from abc import ABCMeta
-from builtins import (
-    dir as builtins_dir,
-)
-from builtins import (
-    format as builtins_format,
-)
-from builtins import (
-    hash as builtins_hash,
-)
-from builtins import (
-    print as builtins_print,
-)
 from functools import partial, wraps
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Never
@@ -510,7 +498,7 @@ class PoopMeta(ABCMeta):
     def hash(cls) -> Int:
         from poop.types.int import Int
 
-        return Int(builtins_hash(cls))
+        return Int(builtins.hash(cls))
 
     @class_side
     def is_none(cls) -> Boolean:
@@ -704,14 +692,14 @@ class PoopMeta(ABCMeta):
         # Mirror `Object.dir`: hide every `_`-prefixed name so the class side
         # never leaks dunders or the mangled `_poop_*` internals. `is_message`
         # is the one copy of that rule, shared with `Object.dir` and the REPL.
-        return List(*(Str(name) for name in builtins_dir(cls) if is_message(name)))
+        return List(*(Str(name) for name in builtins.dir(cls) if is_message(name)))
 
     @class_side
     def format(cls, spec: Str | NoneClass | None = None) -> Str:
         from poop.types._unwrap import _unwrap
         from poop.types.string import Str
 
-        return Str(builtins_format(cls.__name__, _unwrap(spec, "")))
+        return Str(builtins.format(cls.__name__, _unwrap(spec, "")))
 
     @class_side_refusal
     def class_(cls) -> Any:
@@ -824,7 +812,7 @@ class PoopMeta(ABCMeta):
         from poop.types._unwrap import _unwrap, _unwrap_bool
         from poop.types.none import none
 
-        builtins_print(
+        builtins.print(
             cls.__name__,
             end=_unwrap(end, "\n"),
             flush=_unwrap_bool(flush, False),

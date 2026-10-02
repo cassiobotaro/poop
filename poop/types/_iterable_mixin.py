@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import builtins as _builtins
+import builtins
 from abc import abstractmethod
 from collections import deque
 from collections.abc import Callable, Iterator
@@ -52,7 +52,7 @@ def _sorted(
         # is for `min`/`max`. A non-block reached CPython's sort and answered
         # `'int' object is not callable`.
         kwargs["key"] = a_key(key, selector)
-    return _builtins.sorted(iterable, **kwargs)
+    return builtins.sorted(iterable, **kwargs)
 
 
 class _IterableMixin:
@@ -152,7 +152,7 @@ class _IterableMixin:
         # for the reason the scalar rungs settled: positionally a block is
         # indistinguishable from a value, and `xs.min(0)` — the plain reading
         # of "the smallest, or 0 if empty" — handed `0` to the key slot.
-        return _minmax(_builtins.min, "#min", self._iter_items(), key, default)
+        return _minmax(builtins.min, "#min", self._iter_items(), key, default)
 
     def max(
         self,
@@ -160,7 +160,7 @@ class _IterableMixin:
         key: Callable[[Any], Any] | NoneClass | None = None,
         default: Any = MISSING,
     ) -> Any:
-        return _minmax(_builtins.max, "#max", self._iter_items(), key, default)
+        return _minmax(builtins.max, "#max", self._iter_items(), key, default)
 
     def sorted(
         self,
@@ -182,13 +182,13 @@ class _IterableMixin:
         from poop.types._argument import a_block
 
         block = a_block(block, "all")
-        return to_boolean(_builtins.all(bool(block(x)) for x in self._iter_items()))
+        return to_boolean(builtins.all(bool(block(x)) for x in self._iter_items()))
 
     def any(self, block: Callable[[Any], Any] | Missing = MISSING) -> Boolean:
         from poop.types._argument import a_block
 
         block = a_block(block, "any")
-        return to_boolean(_builtins.any(bool(block(x)) for x in self._iter_items()))
+        return to_boolean(builtins.any(bool(block(x)) for x in self._iter_items()))
 
     def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:
         from poop.types.enumerate import Enumerate

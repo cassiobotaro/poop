@@ -26,8 +26,6 @@ if TYPE_CHECKING:
     from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
     from poop.types.none import NoneClass
 
-_dict = dict  # alias to avoid shadowing by Dict class name in annotations
-
 
 class Dict(_ValueEqMixin, _IterableMixin, Object):
     """A mapping, and — since proposal 24 — a collection like any other.
@@ -43,7 +41,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
     __hash__ = None
 
     def __init__(self) -> None:
-        self._data: _dict[Object, Object] = {}
+        self._data: dict[Object, Object] = {}
 
     def at(self, key: Object) -> Object:
         return at_key(self._data, key, self)

@@ -1,4 +1,4 @@
-import builtins as _builtins
+import builtins
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast, final
@@ -207,7 +207,7 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         # non-`Str` spec answered `format() argument 2 must be str, not int`.
         raw = "" if _is_absent(spec) else text_like(spec, "format", "a str")
         try:
-            return Str(_builtins.format(bool(self), raw))
+            return Str(builtins.format(bool(self), raw))
         except ValueError as exc:
             # The same reword `Object.format` applies. This override exists for
             # the `bool(self)` above, and inherited the leak with the rest of
@@ -249,7 +249,7 @@ class Boolean(_NumericCompareMixin, Object, ABC):
 
         return cast(
             "Int | Boolean",
-            _minmax(_builtins.max, "#max", (self, *others), key, MISSING),
+            _minmax(builtins.max, "#max", (self, *others), key, MISSING),
         )
 
     def min(
@@ -261,7 +261,7 @@ class Boolean(_NumericCompareMixin, Object, ABC):
 
         return cast(
             "Int | Boolean",
-            _minmax(_builtins.min, "#min", (self, *others), key, MISSING),
+            _minmax(builtins.min, "#min", (self, *others), key, MISSING),
         )
 
     def _num(self, other: object) -> object:

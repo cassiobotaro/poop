@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from poop.types.slice import Slice
     from poop.types.tuple import Tuple
 
-_str = str  # alias to avoid shadowing in annotations
 
 # `Unknown format code 'd' for object of type 'str'`.
 _UNKNOWN_CODE = re.compile(r"^Unknown format code '(.+?)' for object of type '(.+?)'$")
@@ -45,7 +44,7 @@ _BAD_SPEC = re.compile(r"^Invalid format specifier '(.*?)' for object of type '(
 _NO_SPEC = re.compile(r"^unsupported format string passed to (.+?)\.__format__$")
 
 
-def _reject_field_access(template: _str) -> None:
+def _reject_field_access(template: str) -> None:
     """Refuse `{0.attr}` / `{0[key]}` — a format field is not an escape hatch.
 
     `str.format` reads attributes and items at *runtime*, from inside a string
@@ -71,7 +70,7 @@ def _reject_field_access(template: _str) -> None:
             _reject_field_access(spec)
 
 
-def _offered(named: dict[_str, object]) -> _str:
+def _offered(named: dict[str, object]) -> str:
     """`: a, b` — the names a template could have used, or nothing."""
     return f": {', '.join(sorted(named))}" if named else " it"
 
@@ -101,7 +100,7 @@ def _template_refusal(exc: ValueError | TypeError) -> Exception:
     # untouched, on the test `reword_if_native` uses for the same reason.
     if isinstance(type(exc), PoopExcMeta):
         return exc
-    text = _str(exc)
+    text = str(exc)
     match = _UNKNOWN_CODE.match(text)
     if match is not None:
         code, kind = match.groups()
@@ -176,7 +175,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
 
-    def __init__(self, value: _str | Str) -> None:
+    def __init__(self, value: str | Str) -> None:
         self._value = value._value if isinstance(value, Str) else value
 
     def len(self) -> Int:
@@ -623,10 +622,10 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def __hash__(self) -> int:
         return hash(self._value)
 
-    def __str__(self) -> _str:
+    def __str__(self) -> str:
         return self._value
 
-    def __repr__(self) -> _str:
+    def __repr__(self) -> str:
         return repr(self._value)
 
 

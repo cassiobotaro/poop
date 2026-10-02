@@ -21,8 +21,6 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean, to_boolean
     from poop.types.none import NoneClass
 
-_set = set  # alias to avoid shadowing by Set class name in annotations
-
 
 class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_data",)
@@ -31,7 +29,7 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
-        self._data: _set[Object] = _set(elements)
+        self._data: set[Object] = set(elements)
 
     def add(self, obj: Object) -> NoneClass:
         self._data.add(obj)

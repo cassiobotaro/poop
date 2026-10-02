@@ -1,4 +1,4 @@
-import builtins as _builtins
+import builtins
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
@@ -65,7 +65,7 @@ class Zip(_PeekMixin, _IterableMixin, Object):
         the same number in both spellings (`a.zip(b)` and `zip(a, b)`).
         """
         if not strict:
-            for items in _builtins.zip(*sources):
+            for items in builtins.zip(*sources):
                 yield Tuple(*items)
             return
         iterators = [iter(source) for source in sources]

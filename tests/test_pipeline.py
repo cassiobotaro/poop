@@ -8,7 +8,7 @@ Two angles:
    DEFAULT_NAMESPACE, so user code can reach `Try`, `With`, `Map`,
    `Filter`, etc. without needing to know which source exposed them.
    Catches the "I forgot to wire the binding into
-   `transformers/__init__.py`" class of bug.
+   `transformers/_registry.py`" class of bug.
 """
 
 from pathlib import Path
@@ -62,7 +62,7 @@ def test_transformer_bindings_present_in_default_namespace(
         assert name in DEFAULT_NAMESPACE, (
             f"{transformer_cls.__name__} declares BINDING '{name}' "
             f"but it is missing from DEFAULT_NAMESPACE — likely not wired "
-            f"into poop/transformers/__init__.py"
+            f"into poop/transformers/_registry.py"
         )
         assert DEFAULT_NAMESPACE[name] is value, (
             f"{transformer_cls.__name__} BINDING '{name}' resolves to a "
@@ -82,7 +82,7 @@ def test_namespace_module_bindings_present_in_default_namespace(
         assert name in DEFAULT_NAMESPACE, (
             f"poop/transformers/{module_name}.py NAMESPACE declares "
             f"'{name}' but it is missing from DEFAULT_NAMESPACE — likely "
-            f"not merged in poop/transformers/__init__.py"
+            f"not merged in poop/transformers/_registry.py"
         )
         assert DEFAULT_NAMESPACE[name] is value, (
             f"poop/transformers/{module_name}.py NAMESPACE '{name}' "

@@ -1,5 +1,4 @@
 import builtins
-from builtins import print as _builtins_print
 from collections.abc import Callable
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Self
@@ -360,7 +359,7 @@ class Object(metaclass=PoopMeta):
 
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)
-        _builtins_print(str(self), end=end_value, flush=flush_value)  # noqa: T201
+        builtins.print(str(self), end=end_value, flush=flush_value)  # noqa: T201
         return none
 
     def __str__(self) -> str:

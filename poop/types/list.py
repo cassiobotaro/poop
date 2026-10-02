@@ -1,5 +1,4 @@
-from builtins import print as _builtins_print
-from builtins import reversed as builtins_reversed
+import builtins
 from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self
@@ -31,8 +30,6 @@ if TYPE_CHECKING:
     from poop.types.slice import Slice
     from poop.types.string import Str
 
-_list = list  # alias to avoid shadowing by List class name in annotations
-
 
 class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
@@ -40,7 +37,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
-        self._items: _list[Object] = _list(elements)
+        self._items: list[Object] = list(elements)
 
     def len(self) -> Int:
         from poop.types.int import Int
@@ -146,7 +143,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return List(*_sorted(self._items, key, reverse))
 
     def reversed(self) -> List:
-        return List(*builtins_reversed(self._items))
+        return List(*builtins.reversed(self._items))
 
     def append(self, obj: Object) -> NoneClass:
         self._items.append(obj)
@@ -242,7 +239,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep_value = _unwrap(sep, " ")
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)
-        _builtins_print(
+        builtins.print(
             *[str(item) for item in self._items],
             sep=sep_value,
             end=end_value,

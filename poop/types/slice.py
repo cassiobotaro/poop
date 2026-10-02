@@ -13,8 +13,6 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
     from poop.types.tuple import Tuple
 
-_slice = slice  # alias to avoid shadowing by Slice class name
-
 
 class Slice(Object):
     __slots__ = ("_start", "_stop", "_step")
@@ -49,7 +47,7 @@ class Slice(Object):
         # sequence being sliced resolves each through `__index__`, which Int
         # answers. Reading `._value` here refused a Boolean component and
         # leaked `#_value` for anything else.
-        return _slice(self._start, self._stop, self._step)
+        return slice(self._start, self._stop, self._step)
 
     def indices(self, length: Index) -> Tuple:
         from poop.types.int import Int

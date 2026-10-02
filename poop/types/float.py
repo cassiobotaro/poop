@@ -1,4 +1,4 @@
-import builtins as _builtins
+import builtins
 import math
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
@@ -27,14 +27,11 @@ if TYPE_CHECKING:
     from poop.types.string import Str
     from poop.types.tuple import Tuple
 
-_float = float  # alias to avoid shadowing by Float.float() method
-_int = int  # alias to avoid shadowing by annotations
-
 
 class Float(_NumericCompareMixin, Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _float | Float) -> None:
+    def __init__(self, value: float | Float) -> None:
         self._value = value._value if isinstance(value, Float) else value
 
     def negated(self) -> Float:
@@ -53,7 +50,7 @@ class Float(_NumericCompareMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Float:
         return cast(
-            "Float", _minmax(_builtins.max, "#max", (self, *others), key, MISSING)
+            "Float", _minmax(builtins.max, "#max", (self, *others), key, MISSING)
         )
 
     def min(
@@ -62,7 +59,7 @@ class Float(_NumericCompareMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Float:
         return cast(
-            "Float", _minmax(_builtins.min, "#min", (self, *others), key, MISSING)
+            "Float", _minmax(builtins.min, "#min", (self, *others), key, MISSING)
         )
 
     def is_integer(self) -> Boolean:
@@ -81,7 +78,7 @@ class Float(_NumericCompareMixin, Object):
     def hex(self) -> Str:
         from poop.types.string import Str
 
-        return Str(_float(self._value).hex())
+        return Str(float(self._value).hex())
 
     @classmethod
     def fromhex(cls, s: Str) -> Float:
@@ -89,7 +86,7 @@ class Float(_NumericCompareMixin, Object):
         # receiver, the message nor the argument. The two byte twins already
         # answered `#fromhex expects a str, got an int`.
         return wrapped_instance(
-            cls, _float.fromhex(text_like(s, "fromhex", "a str", (str,)))
+            cls, float.fromhex(text_like(s, "fromhex", "a str", (str,)))
         )
 
     def real(self) -> Float:
@@ -234,22 +231,22 @@ class Float(_NumericCompareMixin, Object):
 
         n = _unwrap(ndigits, None)
         result = round(self._value, n)
-        return Int(result) if isinstance(result, _int) else Float(result)
+        return Int(result) if isinstance(result, int) else Float(result)
 
     def round(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
         return self.__round__(ndigits)
 
-    def __int__(self) -> _int:
-        return _int(self._value)
+    def __int__(self) -> int:
+        return int(self._value)
 
     # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
     # across the numeric tower live in _NumericCompareMixin, driven by
     # _order_value() (Float's raw value is self._value, the default).
 
-    def __hash__(self) -> _int:
+    def __hash__(self) -> int:
         return hash(self._value)
 
-    def __float__(self) -> _float:
+    def __float__(self) -> float:
         return self._value
 
     def __bool__(self) -> bool:

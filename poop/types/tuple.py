@@ -1,5 +1,4 @@
-from builtins import print as _builtins_print
-from builtins import reversed as builtins_reversed
+import builtins
 from collections.abc import Callable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -25,15 +24,13 @@ if TYPE_CHECKING:
     from poop.types.slice import Slice
     from poop.types.string import Str
 
-_tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
-
 
 class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
     _eq_attr: ClassVar[str] = "_items"
 
     def __init__(self, *elements: Object) -> None:
-        self._items: _tuple[Object, ...] = _tuple(elements)
+        self._items: tuple[Object, ...] = tuple(elements)
 
     def len(self) -> Int:
         from poop.types.int import Int
@@ -93,7 +90,7 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Tuple(*_sorted(self._items, key, reverse))
 
     def reversed(self) -> Tuple:
-        return Tuple(*builtins_reversed(self._items))
+        return Tuple(*builtins.reversed(self._items))
 
     def count(self, obj: Object) -> Int:
         from poop.types.int import Int
@@ -138,7 +135,7 @@ class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep_value = _unwrap(sep, " ")
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)
-        _builtins_print(
+        builtins.print(
             *[str(item) for item in self._items],
             sep=sep_value,
             end=end_value,

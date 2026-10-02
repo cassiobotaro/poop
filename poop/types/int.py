@@ -1,4 +1,4 @@
-import builtins as _builtins
+import builtins
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -27,8 +27,6 @@ if TYPE_CHECKING:
     from poop.types.string import Str
     from poop.types.tuple import Tuple
 
-_int = int  # alias to avoid shadowing by Int.int() method
-
 
 def _integral_value(other: object) -> Any:
     """Raw int behind an Int/Boolean operand, else the ``NOT_INTEGRAL`` sentinel.
@@ -51,7 +49,7 @@ def _integral_value(other: object) -> Any:
 class Int(_NumericCompareMixin, Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _int | Int) -> None:
+    def __init__(self, value: int | Int) -> None:
         self._value = value._value if isinstance(value, Int) else value
 
     def negated(self) -> Int:
@@ -78,18 +76,14 @@ class Int(_NumericCompareMixin, Object):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int:
-        return cast(
-            "Int", _minmax(_builtins.max, "#max", (self, *others), key, MISSING)
-        )
+        return cast("Int", _minmax(builtins.max, "#max", (self, *others), key, MISSING))
 
     def min(
         self,
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int:
-        return cast(
-            "Int", _minmax(_builtins.min, "#min", (self, *others), key, MISSING)
-        )
+        return cast("Int", _minmax(builtins.min, "#min", (self, *others), key, MISSING))
 
     def bit_count(self) -> Int:
         return Int(self._value.bit_count())
@@ -150,7 +144,7 @@ class Int(_NumericCompareMixin, Object):
 
         return wrapped_instance(
             cls,
-            _int.from_bytes(
+            int.from_bytes(
                 _faithful(b),
                 cast(Literal["little", "big"], byte_order(byteorder)),
                 signed=_unwrap_bool(signed, False),
@@ -382,7 +376,7 @@ class Int(_NumericCompareMixin, Object):
     # across the numeric tower live in _NumericCompareMixin, driven by
     # _order_value() below (Int's raw value is self._value, the default).
 
-    def __hash__(self) -> _int:
+    def __hash__(self) -> int:
         return hash(self._value)
 
     def bin(self) -> Str:
@@ -412,10 +406,10 @@ class Int(_NumericCompareMixin, Object):
                 f"{self._value} is not a character code — codes run from 0 to 1114111"
             ) from None
 
-    def __int__(self) -> _int:
+    def __int__(self) -> int:
         return self._value
 
-    def __index__(self) -> _int:
+    def __index__(self) -> int:
         # Python's index protocol, so an `Int` *is* an index: `xs.at(i)` hands
         # the wrapper straight to CPython instead of unwrapping `i._value` by
         # hand, which leaked `#_value` for a foreign index and refused a

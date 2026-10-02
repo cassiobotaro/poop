@@ -132,7 +132,7 @@ Every infection follows the same pattern.
 ### A new transformer (e.g. `foo`)
 
 1. Create `poop/transformers/foo.py`.
-2. Register it in `_TRANSFORMER_CLASSES` (`poop/transformers/__init__.py`), which
+2. Register it in `_TRANSFORMER_CLASSES` (`poop/transformers/_registry.py`), which
    builds `DEFAULT_TRANSFORMERS`. Declare any helper in a `BINDINGS` ClassVar —
    `DEFAULT_NAMESPACE` is assembled from those and refuses duplicate keys; do not
    write into it directly. Registration order is the transform order and is

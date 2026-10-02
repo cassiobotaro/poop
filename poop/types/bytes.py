@@ -29,8 +29,6 @@ if TYPE_CHECKING:
     from poop.types.string import Str
     from poop.types.tuple import Tuple
 
-_bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
-
 
 _BYTE_KINDS = (bytes, bytearray, memoryview)
 
@@ -41,7 +39,7 @@ class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     _eq_group: ClassVar[str] = "bytes"
     _order_group: ClassVar[str] = "bytes"
 
-    def __init__(self, value: _bytes | Bytes) -> None:
+    def __init__(self, value: bytes | Bytes) -> None:
         self._value = value._value if isinstance(value, Bytes) else value
 
     def len(self) -> Int:

@@ -1,6 +1,7 @@
 import pytest
 
-from poop.transformers import DEFAULT_NAMESPACE, _merge_bindings
+from poop.transformers import DEFAULT_NAMESPACE
+from poop.transformers._registry import _merge_bindings
 
 
 def test_merge_bindings_folds_sources_left_to_right() -> None:

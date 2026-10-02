@@ -1,4 +1,4 @@
-import builtins as _builtins
+import builtins
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
@@ -27,7 +27,7 @@ class Enumerate(_PeekMixin, _IterableMixin, Object):
 
     @staticmethod
     def _gen(source: Any, start: int) -> Iterator[Tuple]:
-        for i, item in _builtins.enumerate(source, start):
+        for i, item in builtins.enumerate(source, start):
             yield Tuple(Int(i), item)
 
     def _materialize(self) -> Iterator[Tuple]:
