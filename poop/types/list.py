@@ -2,7 +2,7 @@ from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import (
@@ -13,6 +13,7 @@ from poop.types._at import (
 )
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
+from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types._value_eq import _ValueEqMixin
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 _list = list  # alias to avoid shadowing by List class name in annotations
 
 
-class List(_ValueEqMixin, _IterableMixin, Object):
+class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
     _eq_attr: ClassVar[str] = "_items"
     __hash__ = None
@@ -101,53 +102,14 @@ class List(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented  # foreign operand -> faithful TypeError
         return List(*self._items + other._items)
 
-    def __lt__(self, other: object) -> Boolean:
-        if not isinstance(other, List):
-            return NotImplemented  # foreign operand -> faithful TypeError
-        a = cast("_list[Any]", self._items)
-        b = cast("_list[Any]", other._items)
-        return to_boolean(a < b)
-
-    def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, List):
-            return NotImplemented
-        a = cast("_list[Any]", self._items)
-        b = cast("_list[Any]", other._items)
-        return to_boolean(a <= b)
-
-    def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, List):
-            return NotImplemented
-        a = cast("_list[Any]", self._items)
-        b = cast("_list[Any]", other._items)
-        return to_boolean(a > b)
-
-    def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, List):
-            return NotImplemented
-        a = cast("_list[Any]", self._items)
-        b = cast("_list[Any]", other._items)
-        return to_boolean(a >= b)
-
     def __mul__(self, other: object) -> List:
         count = _repeat_count(other)
         if count is NOT_A_COUNT:
             return NotImplemented
         return List(*self._items * count)
 
-    def __rmul__(self, other: object) -> List:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return List(*self._items * count)
+    __rmul__ = __mul__
 
-    # In-place sequence operators mutate the receiver (CPython ``xs += ys`` is
-    # ``list.extend`` and ``xs *= n`` repeats in place, so ``xs`` keeps its
-    # identity and aliases observe the change). Without these, augmented
-    # assignment would fall back to the binary ``__add__``/``__mul__``, rebind
-    # the name to a fresh List, and silently leave any alias pointing at the
-    # unchanged original. ``+=`` takes any iterable, like ``extend`` and unlike
-    # ``__add__``, which stays List-only.
     def __iadd__(self, other: Iterable[Object]) -> Self:
         self._items.extend(other)
         return self

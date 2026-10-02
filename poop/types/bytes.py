@@ -8,6 +8,7 @@ from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import _faithful, _is_absent, _unwrap
@@ -34,10 +35,11 @@ _bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
 _BYTE_KINDS = (bytes, bytearray, memoryview)
 
 
-class Bytes(_ValueEqMixin, _IterableMixin, Object):
+class Bytes(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
     _eq_group: ClassVar[str] = "bytes"
+    _order_group: ClassVar[str] = "bytes"
 
     def __init__(self, value: _bytes | Bytes) -> None:
         self._value = value._value if isinstance(value, Bytes) else value
@@ -160,35 +162,6 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
     def __hash__(self) -> int:
         return hash(self._value)
 
-    def __lt__(self, other: object) -> Boolean:
-        # Both byte-likes pass, as they do for `__add__` below and for `==`
-        # through `_eq_group`: CPython orders `bytes` against `bytearray` in
-        # either direction, and this was the one operation on the pair that
-        # did not. So `b"ab" == bytearray(b"ab")` answered true, `b"ab" +
-        # bytearray(b"cd")` concatenated, `b"ab".includes(bytearray(b"a"))`
-        # found it — and `b"ab" < bytearray(b"ac")` answered `bytes does not
-        # understand #< with a bytearray`, about the one pair of classes the
-        # language keeps interchangeable everywhere else. Anything else is
-        # still a foreign operand -> faithful TypeError, not #_value.
-        if not isinstance(other, Bytes | ByteArray):
-            return NotImplemented
-        return to_boolean(self._value < other._value)
-
-    def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, Bytes | ByteArray):
-            return NotImplemented
-        return to_boolean(self._value <= other._value)
-
-    def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, Bytes | ByteArray):
-            return NotImplemented
-        return to_boolean(self._value > other._value)
-
-    def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, Bytes | ByteArray):
-            return NotImplemented
-        return to_boolean(self._value >= other._value)
-
     def __add__(self, other: object) -> Bytes:
         # Both byte-likes pass: CPython concatenates `bytes + bytearray` and
         # answers bytes. Anything else -> faithful TypeError, not #_value.
@@ -202,11 +175,7 @@ class Bytes(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return Bytes(self._value * count)
 
-    def __rmul__(self, other: object) -> Bytes:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return Bytes(self._value * count)
+    __rmul__ = __mul__
 
     def capitalize(self) -> Bytes:
         return Bytes(self._value.capitalize())

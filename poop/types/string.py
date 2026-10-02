@@ -12,6 +12,7 @@ from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
 from poop.types._minmax import _minmax
+from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import MISSING, NOT_A_COUNT
 from poop.types._unwrap import _faithful, _unwrap
@@ -160,7 +161,7 @@ def _needle(sub: object, selector: str) -> Any:
     return text_like(sub, selector, "a str")
 
 
-class Str(_ValueEqMixin, _IterableMixin, Object):
+class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     """A string, and — since proposal 24 — a collection like any other.
 
     `no_map`, `no_filter`, `no_all`, `no_any` and `no_loops` each name a
@@ -617,31 +618,7 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return Str(self._value * count)
 
-    def __rmul__(self, other: object) -> Str:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return Str(self._value * count)
-
-    def __lt__(self, other: object) -> Boolean:
-        if not isinstance(other, Str):
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._value < other._value)
-
-    def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, Str):
-            return NotImplemented
-        return to_boolean(self._value <= other._value)
-
-    def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, Str):
-            return NotImplemented
-        return to_boolean(self._value > other._value)
-
-    def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, Str):
-            return NotImplemented
-        return to_boolean(self._value >= other._value)
+    __rmul__ = __mul__
 
     def __hash__(self) -> int:
         return hash(self._value)

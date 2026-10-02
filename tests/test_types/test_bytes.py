@@ -10,6 +10,7 @@ from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.memory_view import MemoryView
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -136,6 +137,13 @@ def test_ordering_crosses_to_a_bytearray() -> None:
     assert (Bytes(b"ab") <= ByteArray(bytearray(b"ab"))) is true
     assert (Bytes(b"ab") > ByteArray(bytearray(b"aa"))) is true
     assert (Bytes(b"ab") >= ByteArray(bytearray(b"ab"))) is true
+
+
+def test_ordering_does_not_cross_to_a_memoryview() -> None:
+    # `memoryview` shares the *equality* group with the pair, and CPython
+    # still refuses to order it — so ordering keeps its own, narrower group.
+    with pytest.raises(TypeError):
+        Bytes(b"a") < MemoryView(memoryview(b"b"))  # noqa: B015
 
 
 def test_hashable() -> None:

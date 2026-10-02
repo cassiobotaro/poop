@@ -2,12 +2,13 @@ from builtins import print as _builtins_print
 from builtins import reversed as builtins_reversed
 from collections.abc import Callable, Iterator
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
+from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types._value_eq import _ValueEqMixin
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 _tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
 
 
-class Tuple(_ValueEqMixin, _IterableMixin, Object):
+class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
     _eq_attr: ClassVar[str] = "_items"
 
@@ -67,11 +68,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return Tuple(*self._items * count)
 
-    def __rmul__(self, other: object) -> Tuple:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return Tuple(*self._items * count)
+    __rmul__ = __mul__
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)
@@ -126,34 +123,6 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
             )
         except ValueError:
             raise no_element_equal_to(self, obj) from None
-
-    def __lt__(self, other: object) -> Boolean:
-        if not isinstance(other, Tuple):
-            return NotImplemented  # foreign operand -> faithful TypeError
-        a = cast("tuple[Any, ...]", self._items)
-        b = cast("tuple[Any, ...]", other._items)
-        return to_boolean(a < b)
-
-    def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, Tuple):
-            return NotImplemented
-        a = cast("tuple[Any, ...]", self._items)
-        b = cast("tuple[Any, ...]", other._items)
-        return to_boolean(a <= b)
-
-    def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, Tuple):
-            return NotImplemented
-        a = cast("tuple[Any, ...]", self._items)
-        b = cast("tuple[Any, ...]", other._items)
-        return to_boolean(a > b)
-
-    def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, Tuple):
-            return NotImplemented
-        a = cast("tuple[Any, ...]", self._items)
-        b = cast("tuple[Any, ...]", other._items)
-        return to_boolean(a >= b)
 
     def __hash__(self) -> int:
         return hash(self._items)

@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, TypeIs, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._affix import affix_needle
 from poop.types._alias import wrapped_instance
@@ -14,6 +14,7 @@ from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article
+from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import _faithful, _unwrap
@@ -31,7 +32,6 @@ from poop.types.tuple import Tuple
 if TYPE_CHECKING:
     from poop.types._index import Index
     from poop.types.boolean import Boolean, to_boolean
-    from poop.types.bytes import Bytes
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
@@ -41,10 +41,11 @@ _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 _BYTE_KINDS = (bytes, bytearray, memoryview)
 
 
-class ByteArray(_ValueEqMixin, _IterableMixin, Object):
+class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
     _eq_group: ClassVar[str] = "bytes"
+    _order_group: ClassVar[str] = "bytes"
     __hash__ = None
 
     def __init__(
@@ -170,41 +171,6 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
                 f"#ord expects a single byte, got {len(self._value)}"
             ) from None
 
-    def _ordered_with(self, other: object) -> TypeIs[ByteArray | Bytes]:
-        """Whether `other` is a byte-like `<` and its three siblings order.
-
-        See `Bytes.__lt__` for the whole of it: the pair orders in CPython, and
-        this was the one operation POOP kept apart. The runtime import is local
-        for the reason `__add__` below states — `bytes` imports `ByteArray`.
-
-        `TypeIs` (PEP 742), as `_unwrap._is_absent` uses it and for the same
-        reason: the four callers read `other._value` on the far side of the
-        guard, which is only a `_value` once this has narrowed it.
-        """
-        from poop.types.bytes import Bytes
-
-        return isinstance(other, ByteArray | Bytes)
-
-    def __lt__(self, other: object) -> Boolean:
-        if not self._ordered_with(other):
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._value < other._value)
-
-    def __le__(self, other: object) -> Boolean:
-        if not self._ordered_with(other):
-            return NotImplemented
-        return to_boolean(self._value <= other._value)
-
-    def __gt__(self, other: object) -> Boolean:
-        if not self._ordered_with(other):
-            return NotImplemented
-        return to_boolean(self._value > other._value)
-
-    def __ge__(self, other: object) -> Boolean:
-        if not self._ordered_with(other):
-            return NotImplemented
-        return to_boolean(self._value >= other._value)
-
     def __add__(self, other: object) -> ByteArray:
         # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
         # answers bytearray. Anything else -> faithful TypeError, not #_value.
@@ -220,11 +186,7 @@ class ByteArray(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return ByteArray(self._value * count)
 
-    def __rmul__(self, other: object) -> ByteArray:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return ByteArray(self._value * count)
+    __rmul__ = __mul__
 
     def append(self, byte: Int) -> NoneClass:
         self._value.append(_faithful(byte))
