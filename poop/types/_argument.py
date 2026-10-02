@@ -10,8 +10,6 @@ handful of families, which is why the wording lives here rather than being
 written out once per receiver.
 """
 
-from __future__ import annotations
-
 from typing import Any
 
 from poop.types._message import article

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types.boolean import to_boolean

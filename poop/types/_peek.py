@@ -23,8 +23,6 @@ that can answer it structurally (`ListIterator`, `RangeIterator`, `StrIterator`)
 one.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._cloak import cloak

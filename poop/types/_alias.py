@@ -49,8 +49,6 @@ answer as the subclass. What the `__dict__` read was protecting is kept
 explicitly: a subclass that declares its own `__init__` is built by it.
 """
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from copy import copy
 from itertools import takewhile

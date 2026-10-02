@@ -14,8 +14,6 @@ whoever owns the operation, and nine wrappers own the same one, so it lives here
 instead of being written out nine times.
 """
 
-from __future__ import annotations
-
 from typing import Any
 
 from poop.types.exceptions import MIRRORS, MirrorName

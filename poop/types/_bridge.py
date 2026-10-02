@@ -10,8 +10,6 @@ each type's two halves sit next to each other.
 Anything unregistered passes through unchanged in both directions.
 """
 
-from __future__ import annotations
-
 from functools import singledispatch
 from typing import Any
 

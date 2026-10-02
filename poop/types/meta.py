@@ -6,8 +6,6 @@ thesis held for instances only, and `Foo.print()` answered a Python binding
 failure — `Object.print() missing 1 required positional argument: 'self'`.
 """
 
-from __future__ import annotations
-
 import builtins
 from abc import ABCMeta
 from functools import partial, wraps

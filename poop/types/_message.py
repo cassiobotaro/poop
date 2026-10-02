@@ -23,8 +23,6 @@ so a rewording upstream degrades to the old behaviour rather than to a crash.
 upgrade that changes them fails loudly instead of silently regressing.
 """
 
-from __future__ import annotations
-
 import re
 
 # A tuple, not the string "aeiou": `"" in "aeiou"` is True, so a nameless type

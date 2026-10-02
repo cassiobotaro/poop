@@ -18,8 +18,6 @@ three codec-independent error handlers — `backslashreplace`, `namereplace` and
 `surrogateescape` are the same machinery reached by another name.
 """
 
-from __future__ import annotations
-
 from typing import Any
 
 from poop.types._argument import text_like

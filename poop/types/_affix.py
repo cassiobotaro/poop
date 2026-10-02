@@ -17,8 +17,6 @@ the sentence told them a tuple is not a tuple — CPython describing its own
 string-specific, so the rule lives here rather than in `string.py`.
 """
 
-from __future__ import annotations
-
 from typing import Any
 
 from poop.types._unwrap import _faithful

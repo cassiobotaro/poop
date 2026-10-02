@@ -28,8 +28,6 @@ Subclassing keeps it catchable by anything that caught the native, so the rule
 costs nothing; `tests/test_mirrored_raises.py` sweeps both packages for it.
 """
 
-from __future__ import annotations
-
 from typing import Any, Literal, Never, cast, get_args
 
 from poop.types._selectors import explain
