@@ -163,12 +163,9 @@ iteration — `for` is a keyword, `for_each` is a Java/JS idiom.
 When `proposals.md` item N is implemented:
 
 1. Implement in atomic commits as described above.
-2. Either:
-   - **Strike + DONE:** rename the heading to `### ~~N. …~~ — DONE` and
-     replace the body with a short "Decision + implemented" summary, **or**
-   - **Remove:** delete the entry entirely and renumber subsequent items
-     sequentially. Update internal cross-references (`#N` mentions elsewhere
-     in the file).
+2. Delete the entry from `proposals.md` — no `DONE` marker, no summary. The
+   remaining items keep their numbers; new items continue from the highest.
+   Once the backlog is empty, numbering starts over at 1.
 3. Update `INFECTIONS.md` if the proposal touched validators, transformers, or
    types.
 4. Final commit message: `docs: close proposal N — <one-line decision>`.
