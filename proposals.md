@@ -213,42 +213,6 @@ method, and the displayhook swap a small `@contextmanager`, which also lets
 
 ---
 
-### 73. A shadowed builtin is reached five different ways
-
-POOP's wrappers define methods named `print`, `hash`, `repr`, `len`, `sorted`…
-so the modules that hold them need another route to the real builtin. There
-are five:
-
-```python
-import builtins                                   # object.py, string.py, dict.py
-import builtins as _builtins                      # int.py, float.py, boolean.py, …
-from builtins import print as _builtins_print     # object.py, list.py, tuple.py
-from builtins import hash as builtins_hash        # meta.py — four separate statements
-_bytes = bytes  # alias to avoid shadowing by Bytes class name in annotations
-```
-
-`meta.py` and `object.py` each use two of them in one file. Nine modules carry
-the last form (`_dict`, `_set`, `_tuple`, `_slice`, `_bytes`, `_list`, `_str`,
-`_float`, `_int`), and the reason given does not hold as written: a class named
-`Bytes` cannot shadow `bytes`, and none of the nine classes defines a method
-with the builtin's name. Trialled on `bytes.py` — alias deleted, `_bytes` →
-`bytes` — the suite and `ty` pass.
-
-`poop/transformers/__init__.py` has the one real shadow, and it is
-self-inflicted: importing the submodules `dict`, `list` and `object` binds
-those names in the package namespace, so the file opens with three `from
-builtins import (dict as _dict, …)` blocks and writes `_list[type[…]]`
-throughout.
-
-**Fix.** One convention — `import builtins` and qualified `builtins.print(…)`
-at the call site, which is greppable and needs no alias table — and delete the
-module-level aliases wherever removing them leaves `ty` green. Move the
-registry (`_TRANSFORMER_CLASSES`, `_merge_bindings`, `DEFAULT_NAMESPACE`) out
-of `__init__.py` into `poop/transformers/_registry.py`, where no submodule
-shadows anything, and re-export the three public names.
-
----
-
 ### 75. Twenty-four `noqa` directives silence rules that are not enabled
 
 `pyproject.toml` selects `E4`, `E7`, `E9`, `W`, `F`, `UP`, `I`, `C90`, `S`,
