@@ -14,34 +14,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues while the backlog has open items; the next one is 76.
 Once every item has been implemented and deleted, numbering starts over at 1.
 
-### 62. `map`, `filter`, `zip` and `enumerate` are unhashable, by an `__eq__` they did not need
-
-```
-t = {[1, 2].map(lambda x: x)}
-# TypeError: cannot use 'map' as a set element (unhashable type: 'map')
-```
-
-CPython hashes all four by identity — `len({map(str, [1])})` is `1` — and so
-does POOP for every *concrete* iterator: `{[1, 2].iter()}` builds. The four
-lazy views are the exception, and not on purpose.
-
-Each of `Map`, `Filter`, `Zip` and `Enumerate` defines `__eq__` and `__ne__`.
-All four `__eq__`s compile to the same bytecode as `Object.__eq__` — identity,
-answered as a `Boolean` — and each `__ne__` is its negation, as `Object.__ne__`
-is. They add nothing. What they remove is the hash: a class that defines
-`__eq__` without `__hash__` gets `__hash__ = None`, which `Object` itself
-knows and says in a comment ("Defining `__eq__` clears `__hash__`, so this has
-to exist"). The views re-declared the first half and not the second.
-
-**Fix.** Delete the four `__eq__` / `__ne__` pairs and inherit `Object`'s,
-which arrive with its `__hash__`. Trialled on a copy of the tree: the whole
-suite passes, `m == m` is still `True`, two separately built maps are still
-unequal, and the set literal above answers `1`. Ruff's `PLW1641` reports these
-four among the eight classes it flags; item 75 proposes turning it on so the
-next one is caught at commit time.
-
----
-
 ### 63. The class side reopens `__init__` — one guard, written twice, has drifted
 
 `Object._reject_dunder` passes `allow_init=False`, and its docstring says why:
