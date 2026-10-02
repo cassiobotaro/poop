@@ -459,12 +459,12 @@ Every collection exposes `.iter()` returning a specialized one-shot iterator tha
 | View | iter | set ops | comparison | mapping |
 |---|---|---|---|---|
 | `DictKeys` | `DictKeyIterator` | `\|`, `&`, `-`, `^` → `Set`; `isdisjoint` | `__eq__`, `__le__`, `__lt__`, `__ge__`, `__gt__` (set semantics) | `mapping()` → `MappingProxy` |
-| `DictValues` | `DictValueIterator` | none (values may be unhashable) | inherits `Object` identity (Python parity) | `mapping()` |
+| `DictValues` | `DictValueIterator` | none (values may be unhashable) | inherits `Object` identity and hash (Python parity) | `mapping()` |
 | `DictItems` | `DictItemIterator` (yields `Tuple(k, v)`) | `\|`, `&`, `-`, `^` → `Set` of `Tuple`; `isdisjoint` | full set semantics like `DictKeys` | `mapping()` |
 
 **The set operators take any iterable; the comparisons do not.** CPython's set-like views accept any iterable for `|`, `&`, `-`, `^` and for `isdisjoint` (`{"a": 1}.keys() | ["a", "c"]` is valid) but require a set-like on the right of `<= < >= >` (`dict_keys <= list` is a `TypeError`). POOP keeps both halves through `_elements` / `_set_like_elements` in `_dict_view.py`: the algebraic half only *iterates* the operand, so a non-iterable one answers CPython's `'int' object is not iterable`, and the comparison half answers `NotImplemented` for anything but the two set-like views and `Set`/`FrozenSet`. Neither reads `other._data` — the older code did, so `{"a": 1}.keys() | [2]` answered `list does not understand #_data` and rejected a valid program at the same time. `_set_like_elements` deliberately does *not* reuse `_SetAlgebraMixin`'s `_set_like` marker: claiming a view there would make `frozenset({1}) | {2: 3}.keys()` answer a frozenset, where CPython answers a set through the view's reflected operator.
 
-All three views are unhashable (`__hash__ = None`), expose `len()`/`includes()`/`__contains__`, and support `__reversed__`. `DictKeys` and `DictValues` inherit `_IterableMixin`; `DictItems` also inherits the mixin and yields `Tuple(k, v)` from `__iter__`. To materialize a view as a `List`, use `list(view)` — the `ListTransformer` rewrites the call to `_poop_list_from(view)`, which accepts any iterable.
+`DictKeys` and `DictItems` are unhashable (`__hash__ = None`): they are set-like and compare by contents that change under them, as in CPython. `DictValues` is neither, so it compares *and hashes* by identity — CPython puts `d.values()` in a set, and the base class once refused that for all three. All three expose `len()`/`includes()`/`__contains__`, and support `__reversed__`. `DictKeys` and `DictValues` inherit `_IterableMixin`; `DictItems` also inherits the mixin and yields `Tuple(k, v)` from `__iter__`. To materialize a view as a `List`, use `list(view)` — the `ListTransformer` rewrites the call to `_poop_list_from(view)`, which accepts any iterable.
 
 ### MappingProxy — `poop/types/mapping_proxy.py`
 

@@ -13,10 +13,13 @@ if TYPE_CHECKING:
 
 
 @final
-class DictKeys(_DictView, name="dict_keys"):  # noqa: PLW1641 — a live set-like view, unhashable as in CPython
+class DictKeys(_DictView, name="dict_keys"):
     """Live view over a Dict's keys, mirroring Python's dict_keys."""
 
     __slots__ = ()
+    # Set-like and compared by contents, which change under it: unhashable,
+    # as in CPython. `dict_values` is neither, and hashes by identity.
+    __hash__ = None  # type: ignore[assignment]
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._dict._data)

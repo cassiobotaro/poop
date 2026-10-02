@@ -99,7 +99,6 @@ def test_binary_refusal_matches_message_not_understood_s_shape() -> None:
         "{1, 2}.hash()",
         'bytearray(b"ab").hash()',
         '{"a": 1}.keys().hash()',
-        '{"a": 1}.values().hash()',
         '{"a": 1}.items().hash()',
         "([1, 2],).hash()",
     ],

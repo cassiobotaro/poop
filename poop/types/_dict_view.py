@@ -66,7 +66,6 @@ class _DictView(_IterableMixin, Object):
     """
 
     __slots__ = ("_dict",)
-    __hash__ = None  # type: ignore[assignment]
     _repr_name: ClassVar[str] = "dict_view"
 
     def __init_subclass__(cls, *, name: str | None = None, **kwargs: Any) -> None:
