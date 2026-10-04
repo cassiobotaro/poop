@@ -231,7 +231,7 @@ def a_key(value: Any, selector: str) -> Any:
     )
 
 
-def byte_order(value: Any) -> str:
+def byte_order(value: Any, selector: str) -> str:
     """`"big"` / `"little"`, or POOP's refusal.
 
     `to_bytes` and `from_bytes` handed the argument to CPython, which answered
@@ -247,7 +247,7 @@ def byte_order(value: Any) -> str:
     # Two failures, two classes, as CPython has them: a non-string is a
     # TypeError about the argument's kind, a misspelt one a ValueError about
     # its value. Only the sentences change.
-    raw = text_like(value, "to_bytes", "a str", (str,))
+    raw = text_like(value, selector, "a str", (str,))
     if raw in ("big", "little"):
         return raw
     raise MIRRORS["ValueError"](f"byte order must be 'big' or 'little', got {raw!r}")
@@ -263,6 +263,25 @@ def max_split(value: Any, selector: str) -> int:
     """
     raw = a_bound(value, selector, "maxsplit")
     return -1 if raw is None else raw
+
+
+def byte_source(value: Any, selector: str) -> Any:
+    """What `from_bytes` reads its bytes from, or POOP's refusal.
+
+    `bytes_like` for a message that also takes any iterable of ints, as
+    `int.from_bytes([1, 2])` does. Anything else reached CPython, which
+    answered `cannot convert 'int' object to bytes` — and a collection of the
+    wrong things answered about an element, in the same words `max_split`
+    replaces.
+    """
+    raw = getattr(value, "_value", value)
+    # An int is asked first: `bytes(5)` is five zero bytes, not a refusal.
+    if not hasattr(raw, "__index__"):
+        try:
+            return bytes(raw)
+        except TypeError:
+            pass
+    return bytes_like(value, selector)
 
 
 def _opt_stop(bound: Any, end: int) -> int:
