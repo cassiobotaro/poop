@@ -83,8 +83,8 @@ DEFAULT_TRANSFORMERS: list[Transformer] = [cls() for cls in _TRANSFORMER_CLASSES
 
 # Bindings sourced from class-based transformers (PascalCase types
 # rewritten into POOP equivalents at parse time) and from
-# namespace-only modules (lowercase stdlib mirrors injected with no
-# AST rewrite). The build below walks both kinds in declaration
+# namespace-only modules (`Try` and `With`, the two names user code can
+# spell, injected with no AST rewrite). The build below walks both kinds in declaration
 # order and refuses duplicate keys so a new transformer can't
 # silently overwrite a binding from an earlier one.
 # One binding shared by four literal forms rather than declared on whichever
@@ -112,8 +112,9 @@ def _spelling(key: str) -> str:
     Derived rather than tabulated: a table is a second list to keep in step
     with `BINDINGS`, and the whole point of this module's build is that a new
     transformer cannot be wired into one place and forgotten in another.
-    `iskeyword` restores the trailing underscore POOP already spells its
-    keyword substitutes with (`raise_`), so `_poop_raise` reads as `raise_`.
+    `iskeyword` restores the trailing underscore POOP spells its keyword
+    substitutes with (`raise_`), so a binding named after a keyword would read
+    as the message a program writes.
     """
     stem = key.removeprefix("_poop_")
     for suffix in _HELPER_SUFFIXES:

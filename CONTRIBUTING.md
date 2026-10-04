@@ -98,7 +98,7 @@ Place a new example in the subfolder that matches what it teaches:
 - `examples/basics/` — language fundamentals (control flow, collections, classes
   with state).
 - `examples/idiomatic/` — idiomatic POOP usage (method chaining, null-safe
-  cascades, `async`, etc.).
+  cascades, etc.).
 - `examples/patterns/` — Sandi Metz / GoF object-oriented patterns.
 
 ### Use the actual current year
@@ -140,7 +140,7 @@ Every infection follows the same pattern.
    builds `DEFAULT_TRANSFORMERS`. Declare any helper in a `BINDINGS` ClassVar —
    `DEFAULT_NAMESPACE` is assembled from those and refuses duplicate keys; do not
    write into it directly. Registration order is the transform order and is
-   sometimes load-bearing (`ExceptionTransformer` after `RaiseTransformer`) —
+   sometimes load-bearing (`SliceTransformer` after `NoneTransformer`) —
    comment the reason when it is.
 3. Add tests under `tests/test_transformers/test_foo.py`.
 4. Add an entry to `INFECTIONS.md`.

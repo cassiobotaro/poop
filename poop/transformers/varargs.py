@@ -56,9 +56,8 @@ class _VarargsRewriter(ast.NodeTransformer):
         — because `**` demands raw `str` keys and a POOP `Dict` carries `Str`.
         `DictTransformer` had already met the constraint for `dict(**other)`
         and worked around it there; this generalises the same fix to every
-        call. It has to run after that transformer (and after
-        `RaiseTransformer`, whose `_poop_raise(Exc, **kw)` this then covers),
-        which the declaration order in `_registry.py` guarantees.
+        call. It has to run after that transformer, which the declaration
+        order in `_registry.py` guarantees.
         """
         self.generic_visit(node)
         for kw in node.keywords:

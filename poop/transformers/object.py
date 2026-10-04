@@ -46,7 +46,7 @@ class _ObjectRewriter(BuiltinRewriter):
 class ObjectTransformer(BaseTransformer):
     """Rewrites `object` and `Object` to POOP's root class.
 
-    `ClassTransformer` already rewrites both in a base list, so
+    `ClassTransformer` used to rewrite both in a base list, so
     `class Foo(object)` worked while a bare `object` resolved to CPython's
     class and a bare `Object` was a `NameError` — the capital name was
     accepted in exactly one syntactic position, for a name bound nowhere.
@@ -59,11 +59,9 @@ class ObjectTransformer(BaseTransformer):
     duplicate key rather than letting one transformer quietly overwrite
     another's.
 
-    Order against `ClassTransformer` is genuinely free, unlike
-    `ExceptionTransformer`'s against `RaiseTransformer`: whichever runs first
-    leaves `_poop_object` behind, which the other no longer matches. It sits
-    after so that a base list is already rewritten and this only ever sees the
-    spellings `ClassTransformer` does not handle.
+    Order against `ClassTransformer` is free: that one only adds the implicit
+    base to a class with none, and every spelt `object` or `Object` — a base
+    list included — is this rewriter's.
     """
 
     rewriter = _ObjectRewriter
