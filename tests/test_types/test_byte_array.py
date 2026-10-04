@@ -346,6 +346,20 @@ def test_center_no_fill() -> None:
     assert ByteArray(bytearray(b"hi")).center(Int(6)) == ByteArray(bytearray(b"  hi  "))
 
 
+@pytest.mark.parametrize(
+    "selector", ["find", "count", "index", "rfind", "rindex", "includes"]
+)
+def test_the_searches_refuse_a_block_naming_the_receiver(selector: str) -> None:
+    # The sentence used to take its receiver from the argument's description
+    # ("bytes or an int"), so it blamed "an int" for a bytearray receiver.
+    with pytest.raises(
+        TypeError,
+        match=f"^bytearray's #{selector} searches for a subsequence — "
+        "it takes what to look for, not a block$",
+    ):
+        getattr(ByteArray(b"abc"), selector)(lambda: 1)
+
+
 def test_count() -> None:
     assert ByteArray(bytearray(b"abcabc")).count(ByteArray(bytearray(b"ab"))) == Int(2)
 

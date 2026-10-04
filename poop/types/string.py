@@ -5,7 +5,7 @@ from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._affix import affix_needle
-from poop.types._argument import a_bound, text_like
+from poop.types._argument import a_bound, a_needle, text_like
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoded
@@ -130,33 +130,6 @@ def _opt_text(chars: object, selector: str) -> Any:
     if _is_absent(chars):
         return None
     return text_like(chars, selector, "a str", (str,))
-
-
-def _needle(sub: object, selector: str) -> Any:
-    """The substring `find` / `rfind` / `index` / `rindex` / `count` look for.
-
-    These five keep their string meaning where `_IterableMixin.find` takes a
-    block, so a reader arriving from `[1, 2].find(block)` writes a block here.
-    CPython answers `find() argument 1 must be str, not function` — the method
-    as a call, and `function`, which POOP prints as `<block>`.
-
-    The `r`-prefixed pair is the same message read from the other end, and was
-    left on `_faithful` — so `"abc".find(block)` and `"abc".rfind(block)`, the
-    same mistake one letter apart, answered in two different vocabularies.
-
-    Kept here as `Str`'s own; its receiver-independent twin is
-    `_argument.a_needle`, which the byte wrappers use. Proposal 52 was this item
-    reopening one receiver over: the sentence was already general and only its
-    address was wrong.
-    """
-    if not isinstance(sub, Str) and callable(sub):
-        raise MIRRORS["TypeError"](
-            f"str's #{selector} searches for a substring — "
-            "it takes the text to look for, not a block"
-        )
-    # Anything else that is not text reached CPython and answered
-    # `find() argument 1 must be str, not int` — the message spelt as a call.
-    return text_like(sub, selector, "a str")
 
 
 class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
@@ -376,7 +349,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.find(
-                _needle(sub, "find"),
+                a_needle(self, sub, "find", "a str"),
                 a_bound(start, "find", "start"),
                 a_bound(end, "find", "end"),
             )
@@ -390,7 +363,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.index(
-                _needle(sub, "index"),
+                a_needle(self, sub, "index", "a str"),
                 a_bound(start, "index", "start"),
                 a_bound(end, "index", "end"),
             )
@@ -404,7 +377,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.count(
-                _needle(sub, "count"),
+                a_needle(self, sub, "count", "a str"),
                 a_bound(start, "count", "start"),
                 a_bound(end, "count", "end"),
             )
@@ -540,7 +513,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.rfind(
-                _needle(sub, "rfind"),
+                a_needle(self, sub, "rfind", "a str"),
                 a_bound(start, "rfind", "start"),
                 a_bound(end, "rfind", "end"),
             )
@@ -554,7 +527,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.rindex(
-                _needle(sub, "rindex"),
+                a_needle(self, sub, "rindex", "a str"),
                 a_bound(start, "rindex", "start"),
                 a_bound(end, "rindex", "end"),
             )

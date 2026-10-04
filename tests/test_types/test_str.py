@@ -896,7 +896,11 @@ def test_the_string_searches_refuse_a_block(selector: str) -> None:
     # CPython answered `find() argument 1 must be str, not function`. The
     # `r`-prefixed pair is the same message read from the other end and was
     # left on CPython's wording, so one letter changed the vocabulary.
-    with pytest.raises(TypeError, match="searches for a substring"):
+    with pytest.raises(
+        TypeError,
+        match=f"^str's #{selector} searches for a substring — "
+        "it takes the text to look for, not a block$",
+    ):
         getattr(Str("abc"), selector)(lambda c: c == Str("b"))
 
 

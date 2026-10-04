@@ -68,9 +68,9 @@ def text_like(
 
     CPython answers `center() argument 2 must be a byte string of length 1,
     not int` and `replace() argument 1 must be str, not int` — the message
-    spelt as a call, every time. `_needle` in `string.py` makes the same move
-    for the block case; this covers the rest of the family and the receivers
-    that had no guard at all.
+    spelt as a call, every time. `a_needle` makes the same move for the block
+    case; this covers the rest of the family and the receivers that had no
+    guard at all.
 
     `kinds` narrows what counts as text for the caller that needs it: an
     encoding name and a byte order are `str` and nothing else, so accepting
@@ -87,6 +87,7 @@ def text_like(
 
 
 def a_needle(
+    receiver: object,
     sub: object,
     selector: str,
     expected: str,
@@ -97,12 +98,13 @@ def a_needle(
     `find` / `rfind` / `index` / `rindex` / `count` keep their *text* meaning on
     `Str`, `Bytes` and `ByteArray`, where `_IterableMixin`'s twins take a block
     — so a reader arriving from `[1, 2].find(block)` writes a block here.
+    CPython answers `find() argument 1 must be str, not function` — the method
+    as a call, and `function`, which POOP prints as `<block>`.
 
-    Lived in `string.py` and was wired into `Str` alone, which is proposal 6's
-    item reopening on the receiver next door: `"abc".count(5)` answered
-    `#count expects a str, got an int` while `b"abc".count(5.5)` answered
-    `argument should be integer or bytes-like object, not 'float'`. The
-    sentence was already receiver-independent; only its address was wrong.
+    The block refusal names the class the message was sent to, read from
+    `receiver`. It used to be parsed out of `expected`, the phrase describing
+    the *argument*, so `b"abc".count(block)` blamed "an int" — the last thing
+    the argument may be, not the receiver.
 
     The byte receivers accept an integer as well as a subsequence, which is
     CPython's rule (`b"ab".count(97)` is 1), so `expected` carries what this
@@ -112,9 +114,12 @@ def a_needle(
     from poop.types.string import Str  # noqa: PLC0415
 
     if not isinstance(sub, Str) and callable(sub):
+        text = str in kinds
+        sought = "substring" if text else "subsequence"
+        wanted = "the text to look for" if text else "what to look for"
         raise MIRRORS["TypeError"](
-            f"{expected.split(' or ')[-1]}'s #{selector} searches for a "
-            f"subsequence — it takes what to look for, not a block"
+            f"{type(receiver).__name__}'s #{selector} searches for a {sought} — "
+            f"it takes {wanted}, not a block"
         )
     raw = getattr(sub, "_value", sub)
     # `kinds` is the receiver's, not a fixed set: `b"ab".count("x")` must be

@@ -213,6 +213,20 @@ def test_center_with_fill() -> None:
     assert Bytes(b"hi").center(Int(6), Bytes(b"*")) == Bytes(b"**hi**")
 
 
+@pytest.mark.parametrize(
+    "selector", ["find", "count", "index", "rfind", "rindex", "includes"]
+)
+def test_the_searches_refuse_a_block_naming_the_receiver(selector: str) -> None:
+    # The sentence used to take its receiver from the argument's description
+    # ("bytes or an int"), so it blamed "an int" for a bytes receiver.
+    with pytest.raises(
+        TypeError,
+        match=f"^bytes's #{selector} searches for a subsequence — "
+        "it takes what to look for, not a block$",
+    ):
+        getattr(Bytes(b"abc"), selector)(lambda: 1)
+
+
 def test_count() -> None:
     assert Bytes(b"abcabc").count(Bytes(b"ab")) == Int(2)
 

@@ -105,7 +105,7 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def includes(self, byte: ByteArray | Int) -> Boolean:
         # getattr-unwrap: a non-`_value` argument reaches bytearray.__contains__
         # raw and raises the faithful TypeError instead of leaking `_value`.
-        operand: Any = a_needle(byte, "includes", "bytes or an int", _BYTE_KINDS)
+        operand: Any = a_needle(self, byte, "includes", "bytes or an int", _BYTE_KINDS)
         return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
@@ -275,7 +275,7 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.count(
-                a_needle(sub, "count", "bytes or an int", _BYTE_KINDS),
+                a_needle(self, sub, "count", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "count", "start"),
                 a_bound(end, "count", "end"),
             )
@@ -312,7 +312,7 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.find(
-                a_needle(sub, "find", "bytes or an int", _BYTE_KINDS),
+                a_needle(self, sub, "find", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "find", "start"),
                 a_bound(end, "find", "end"),
             )
@@ -326,7 +326,7 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.index(
-                a_needle(sub, "index", "bytes or an int", _BYTE_KINDS),
+                a_needle(self, sub, "index", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "index", "start"),
                 a_bound(end, "index", "end"),
             )
@@ -420,7 +420,7 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.rfind(
-                a_needle(sub, "rfind", "bytes or an int", _BYTE_KINDS),
+                a_needle(self, sub, "rfind", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "rfind", "start"),
                 a_bound(end, "rfind", "end"),
             )
@@ -434,7 +434,7 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Int:
         return Int(
             self._value.rindex(
-                a_needle(sub, "rindex", "bytes or an int", _BYTE_KINDS),
+                a_needle(self, sub, "rindex", "bytes or an int", _BYTE_KINDS),
                 a_bound(start, "rindex", "start"),
                 a_bound(end, "rindex", "end"),
             )
