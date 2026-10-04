@@ -17,36 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 13. Comments and docs that describe a language POOP no longer is
-
-Each of these states something the code next to it contradicts.
-
-- **`RaiseTransformer`** does not exist; `raise_` became a class-side message.
-  It is still named as a live ordering constraint in `CONTRIBUTING.md`
-  ("Registration order … is sometimes load-bearing (`ExceptionTransformer`
-  after `RaiseTransformer`)"), in `varargs.py` ("has to run after … 
-  `RaiseTransformer`, whose `_poop_raise(Exc, **kw)` this then covers") and in
-  `ObjectTransformer`'s docstring.
-- **`math`** is not a namespace binding; the namespace is `Try` and `With`.
-  `no_namespace_shadow.py` explains its parameter check with `def m(self,
-  math)` and `lambda math: math.sqrt(2)`.
-- **Nested `def`s.** `no_namespace_shadow.py`: "nested defs are legal POOP
-  (no_free_functions allows them inside a method)". `no_free_functions`
-  refuses them, and says so in its own comment.
-- **"lowercase stdlib mirrors"** in `_registry.py`'s comment on
-  `_BINDING_SOURCES`, for `Try` and `With`, which are neither.
-- **`ObjectTransformer`'s docstring**: "`ClassTransformer` already rewrites
-  both in a base list". `ClassTransformer`'s own comment says the opposite:
-  "Only the implicit base is this rewriter's".
-- **`async`** is listed in `CONTRIBUTING.md` as something
-  `examples/idiomatic/` teaches. `no_async` bans it and no example uses it.
-
-**Fix.** Rewrite each to say what is true today. The `CONTRIBUTING.md`
-example needs a real ordering constraint to cite; `_registry.py` names one
-("SliceTransformer relies on NoneTransformer having run").
-
----
-
 ### 14. 110 comments cite a proposal by a number that names nothing
 
 `proposal N` appears 19 times in `poop/`, 88 times in `tests/` and 3 times in
