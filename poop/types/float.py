@@ -4,7 +4,7 @@ import operator
 from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._alias import wrapped_instance
-from poop.types._argument import text_like
+from poop.types._argument import an_int, text_like
 from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
 from poop.types._minmax import _minmax
@@ -14,7 +14,7 @@ from poop.types._numeric_compare import (
 )
 from poop.types._pow import reflected_pow
 from poop.types._sentinel import MISSING, NOT_NUMERIC
-from poop.types._unwrap import _is_absent, _unwrap
+from poop.types._unwrap import _is_absent
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
@@ -198,7 +198,7 @@ class Float(_NumericCompareMixin, Object):
         return self.__trunc__()
 
     def __round__(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
-        n = _unwrap(ndigits, None)
+        n = an_int(ndigits, "round", "ndigits", None)
         result = round(self._value, n)
         return Int(result) if isinstance(result, int) else Float(result)
 

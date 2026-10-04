@@ -265,6 +265,31 @@ def max_split(value: Any, selector: str) -> int:
     return -1 if raw is None else raw
 
 
+def an_int(value: Any, selector: str, role: str, default: Any = MISSING) -> Any:
+    """The raw integer behind `value`, or POOP's refusal.
+
+    `a_bound` for the integers that are not positions: a width, a length, a
+    digit count, an index, a byte. CPython answered `'str' object cannot be
+    interpreted as an integer` for all of them — the sentence `max_split`
+    replaces, on 29 more receiver/message sites the wording sweep could not
+    see, since it carries no call, no dunder and no operator.
+
+    `default` is what an absent argument stands for. Without one the argument
+    is mandatory, and `none` is refused like any other non-integer.
+    """
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _is_absent  # noqa: PLC0415
+
+    if default is not MISSING and _is_absent(value):
+        return default
+    raw = getattr(value, "_value", value)
+    if hasattr(raw, "__index__"):
+        return raw
+    raise MIRRORS["TypeError"](
+        f"#{selector}'s {role} must be an int, got {article(type(value).__name__)}"
+    )
+
+
 def byte_source(value: Any, selector: str) -> Any:
     """What `from_bytes` reads its bytes from, or POOP's refusal.
 

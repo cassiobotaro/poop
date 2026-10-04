@@ -63,7 +63,11 @@ _FORBIDDEN = {
     "a CPython argument report": re.compile(
         r"is required, not '|argument should be|must be None or|"
         r"expected a \w+-like object|has no len\(\)|bad argument type for built-in|"
-        r"requires string as left operand"
+        r"requires string as left operand|"
+        # Three more of CPython's most common sentences, as bare of calls and
+        # dunders as the ones above: an integer argument handed something
+        # else, and a conversion the program never asked for.
+        r"cannot be interpreted as|cannot convert '"
     ),
     "a CPython format report": re.compile(
         r"object of type|Unknown format code|Invalid format specifier|"
@@ -317,7 +321,11 @@ _PACKAGES = ("poop/types", "poop/transformers")
 # and a POOP message shown with its arguments looks like a Python call to the
 # patterns above. Listed as fragments, so an exemption says which *phrase* is
 # sanctioned rather than blessing a whole message forever.
-_EXEMPT: tuple[str, ...] = ("obj.get_attr(...) / obj.at(...)",)
+_EXEMPT: tuple[str, ...] = (
+    "obj.get_attr(...) / obj.at(...)",
+    # `Slice` answers a message spelt `indices`; a refusal has to name it.
+    "#indices's length",
+)
 
 
 def _mirror_messages() -> list[tuple[pathlib.Path, int, str]]:

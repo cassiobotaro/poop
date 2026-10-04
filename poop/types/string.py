@@ -4,7 +4,7 @@ from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._affix import affix_needle
-from poop.types._argument import a_bound, a_needle, max_split, text_like
+from poop.types._argument import a_bound, a_needle, an_int, max_split, text_like
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoded
@@ -438,8 +438,8 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def center(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Str(self._value.center(_faithful(width)))
-        return Str(self._value.center(_faithful(width), fill))
+            return Str(self._value.center(an_int(width, "center", "width")))
+        return Str(self._value.center(an_int(width, "center", "width"), fill))
 
     def encode(
         self,
@@ -458,10 +458,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         )
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> Str:
-        size = _unwrap(tabsize, None)
-        if size is None:
-            return Str(self._value.expandtabs())
-        return Str(self._value.expandtabs(size))
+        return Str(self._value.expandtabs(an_int(tabsize, "expandtabs", "tabsize", 8)))
 
     def isascii(self) -> Boolean:
         return to_boolean(self._value.isascii())
@@ -484,17 +481,17 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def ljust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Str(self._value.ljust(_faithful(width)))
-        return Str(self._value.ljust(_faithful(width), fill))
+            return Str(self._value.ljust(an_int(width, "ljust", "width")))
+        return Str(self._value.ljust(an_int(width, "ljust", "width"), fill))
 
     def rjust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return Str(self._value.rjust(_faithful(width)))
-        return Str(self._value.rjust(_faithful(width), fill))
+            return Str(self._value.rjust(an_int(width, "rjust", "width")))
+        return Str(self._value.rjust(an_int(width, "rjust", "width"), fill))
 
     def zfill(self, width: Int) -> Str:
-        return Str(self._value.zfill(_faithful(width)))
+        return Str(self._value.zfill(an_int(width, "zfill", "width")))
 
     def partition(self, sep: Str) -> Tuple:
         return Tuple(

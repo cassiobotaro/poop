@@ -2,7 +2,7 @@ import builtins
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
-from poop.types._argument import _opt_stop, a_bound
+from poop.types._argument import _opt_stop, a_bound, an_int
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -148,7 +148,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         try:
             if _is_absent(index):
                 return self._items.pop()
-            return self._items.pop(index)
+            return self._items.pop(an_int(index, "pop", "index"))
         except IndexError:
             # `pop index out of range` / `pop from empty list` — the method
             # named as a Python call, and no receiver in either sentence.
@@ -193,7 +193,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
             raise no_element_equal_to(self, obj) from None
 
     def insert(self, i: Index, obj: Object) -> NoneClass:
-        self._items.insert(i, obj)
+        self._items.insert(an_int(i, "insert", "index"), obj)
         return none
 
     def remove(self, obj: Object) -> NoneClass:
