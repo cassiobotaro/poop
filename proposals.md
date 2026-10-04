@@ -17,37 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 8. `Map`, `Filter`, `Zip` and `Enumerate` each rebuild the same skeleton
-
-Each of the four declares `_iter` and `_peeked`, defines a `_materialize` that
-builds its generator on first use and drops the source, and then repeats
-
-```python
-def __iter__(self) -> Iterator[Any]:
-    return self
-
-def iter(self) -> Map:
-    return self
-
-def __str__(self) -> str:
-    return "<map>"
-
-__repr__ = __str__
-```
-
-and ends with `cloak(Map, "map")`. `Map` and `Filter` differ in two lines of
-`_gen` and one string.
-
-`_IteratorBase` already holds this for the concrete iterators: `__iter__`,
-`iter`, the `<name>` repr, and the cloak, driven by a class keyword
-(`class ListIterator(_IteratorBase[Object], name="list_iterator")`).
-
-**Fix.** A `_LazyView` base beside `_IteratorBase` taking the same `name=`
-keyword and owning `_materialize`'s build-once step; each view keeps its
-`__init__` and its `_gen`.
-
----
-
 ### 9. The transformer base lags the validator base
 
 `CollectingValidator` got three things that `BaseTransformer` did not.
