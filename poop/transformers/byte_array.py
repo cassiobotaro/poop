@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import ClassVar, cast
+from typing import cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
@@ -58,7 +58,7 @@ class _ByteArrayRewriter(BuiltinRewriter):
 
 class ByteArrayTransformer(BaseTransformer):
     rewriter = _ByteArrayRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_bytearray": ByteArray,
         "_poop_bytearray_cls": builtin_alias(
             ByteArray, _poop_bytearray_from, "bytearray"

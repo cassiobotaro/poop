@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
@@ -67,7 +66,7 @@ class _FloatRewriter(BuiltinRewriter):
 
 class FloatTransformer(BaseTransformer):
     rewriter = _FloatRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_float": Float,
         "_poop_float_cls": builtin_alias(Float, _poop_float_from, "float"),
         "_poop_float_from": _poop_float_from,

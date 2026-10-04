@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers._collection import (
     make_constructor,
@@ -28,7 +27,7 @@ class _TupleRewriter(BuiltinRewriter):
 
 class TupleTransformer(BaseTransformer):
     rewriter = _TupleRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_tuple": _poop_tuple,
         "_poop_tuple_from": _poop_tuple_from,
         "_poop_tuple_cls": builtin_alias(Tuple, _poop_tuple_from, "tuple"),

@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
@@ -97,7 +96,7 @@ class _IntRewriter(BuiltinRewriter):
 
 class IntTransformer(BaseTransformer):
     rewriter = _IntRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_int": Int,
         "_poop_int_cls": builtin_alias(Int, _poop_int_from, "int"),
         "_poop_int_from": _poop_int_from,

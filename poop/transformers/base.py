@@ -1,6 +1,8 @@
 import ast
 from collections.abc import Iterable
-from typing import ClassVar, Protocol
+from typing import Any, ClassVar, Protocol
+
+from poop.types.exceptions import MIRRORS
 
 
 class Transformer(Protocol):
@@ -10,13 +12,20 @@ class Transformer(Protocol):
 class BaseTransformer:
     """Base class for AST transformers.
 
-    Subclasses should define:
+    Subclasses set, as plain class attributes (annotated once, here):
     - rewriter: the NodeTransformer class to use
     - BINDINGS: dict of names to inject into the namespace (optional)
     """
 
-    rewriter: type[ast.NodeTransformer]
+    rewriter: ClassVar[type[ast.NodeTransformer]]
     BINDINGS: ClassVar[dict[str, object]] = {}
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        # At class definition, as `CollectingValidator` checks its `visitor`:
+        # otherwise a transformer that forgot one failed on the first program.
+        super().__init_subclass__(**kwargs)
+        if not hasattr(cls, "rewriter"):
+            raise MIRRORS["TypeError"](f"{cls.__name__} sets no `rewriter`")
 
     def transform(self, tree: ast.Module) -> ast.Module:
         tree = self.rewriter().visit(tree)

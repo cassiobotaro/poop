@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer, name_at
 
@@ -31,7 +30,7 @@ class _ReturnRewriter(ast.NodeTransformer):
         last = node.body[-1] if node.body else None
         if not isinstance(last, (ast.Return, ast.Raise)):
             node.body.append(
-                ast.Return(value=ast.Name(id="_poop_none", ctx=ast.Load()))
+                ast.copy_location(ast.Return(value=name_at("_poop_none", node)), node)
             )
         return node
 
@@ -43,4 +42,3 @@ class ReturnTransformer(BaseTransformer):
     """
 
     rewriter = _ReturnRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {}

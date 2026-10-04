@@ -1,7 +1,7 @@
 import ast
 from collections.abc import Iterable
 from itertools import batched
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
@@ -211,7 +211,7 @@ class _DictRewriter(BuiltinRewriter):
 
 class DictTransformer(BaseTransformer):
     rewriter = _DictRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_dict": Dict,
         "_poop_dict_cls": builtin_alias(Dict, _poop_dict_from, "dict"),
         "_poop_dict_from_pairs": _poop_dict_from_pairs,

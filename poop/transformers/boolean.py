@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, name_at
@@ -37,7 +36,7 @@ class _BooleanRewriter(BuiltinRewriter):
 
 class BooleanTransformer(BaseTransformer):
     rewriter = _BooleanRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_true": true,
         "_poop_false": false,
         "_poop_bool_from": _poop_bool_from,

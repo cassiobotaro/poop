@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
@@ -93,7 +92,7 @@ class _ComplexRewriter(BuiltinRewriter):
 
 class ComplexTransformer(BaseTransformer):
     rewriter = _ComplexRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_complex": Complex,
         "_poop_complex_cls": builtin_alias(Complex, _poop_complex_from, "complex"),
         "_poop_complex_literal": _poop_complex_literal,

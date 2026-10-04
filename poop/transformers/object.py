@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types.object import Object
@@ -69,4 +67,4 @@ class ObjectTransformer(BaseTransformer):
     """
 
     rewriter = _ObjectRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_object_from": _poop_object_from}
+    BINDINGS = {"_poop_object_from": _poop_object_from}

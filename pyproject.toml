@@ -93,8 +93,9 @@ select = [
 ]
 ignore = [
   "ANN401",
-  # The configuration ClassVars of a validator (`messages`, `forbidden`) are
-  # annotated once on the base class; ruff cannot see the inherited annotation.
+  # The configuration ClassVars of a validator (`messages`, `forbidden`) and of
+  # a transformer (`rewriter`, `BINDINGS`) are annotated once on the base
+  # class; ruff cannot see the inherited annotation.
   "RUF012",
 ]
 

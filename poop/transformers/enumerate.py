@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
@@ -35,7 +35,7 @@ class _EnumerateRewriter(BuiltinRewriter):
 
 class EnumerateTransformer(BaseTransformer):
     rewriter = _EnumerateRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_enumerate": _poop_enumerate,
         "_poop_enumerate_cls": builtin_alias(Enumerate, _poop_enumerate, "enumerate"),
     }

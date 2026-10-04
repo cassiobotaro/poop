@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
@@ -36,7 +34,7 @@ class _MemoryViewRewriter(BuiltinRewriter):
 
 class MemoryViewTransformer(BaseTransformer):
     rewriter = _MemoryViewRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_memoryview": MemoryView,
         "_poop_memoryview_cls": builtin_alias(
             MemoryView, _poop_memoryview_from, "memoryview"

@@ -1,5 +1,5 @@
 from operator import index as _index
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
@@ -63,7 +63,7 @@ class _RangeRewriter(BuiltinRewriter):
 
 class RangeTransformer(BaseTransformer):
     rewriter = _RangeRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_range": _poop_range,
         "_poop_range_cls": builtin_alias(Range, _poop_range, "range"),
     }

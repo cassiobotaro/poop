@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers._collection import (
     make_constructor,
@@ -26,7 +25,7 @@ class _SetRewriter(BuiltinRewriter):
 
 class SetTransformer(BaseTransformer):
     rewriter = _SetRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_set": _poop_set,
         "_poop_set_from": _poop_set_from,
         "_poop_set_cls": builtin_alias(Set, _poop_set_from, "set"),

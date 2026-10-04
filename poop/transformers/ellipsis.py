@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer, name_at
 from poop.types.ellipsis import ellipsis
@@ -21,4 +20,4 @@ class _EllipsisRewriter(ast.NodeTransformer):
 
 class EllipsisTransformer(BaseTransformer):
     rewriter = _EllipsisRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_ellipsis": ellipsis}
+    BINDINGS = {"_poop_ellipsis": ellipsis}

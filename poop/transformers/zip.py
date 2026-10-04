@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types._unwrap import _is_absent
@@ -35,7 +33,7 @@ class _ZipRewriter(BuiltinRewriter):
 
 class ZipTransformer(BaseTransformer):
     rewriter = _ZipRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_zip": _poop_zip,
         "_poop_zip_cls": builtin_alias(Zip, _poop_zip, "zip"),
     }

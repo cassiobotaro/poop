@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers._collection import (
     make_constructor,
@@ -28,7 +27,7 @@ class _ListRewriter(BuiltinRewriter):
 
 class ListTransformer(BaseTransformer):
     rewriter = _ListRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_list": _poop_list,
         "_poop_list_from": _poop_list_from,
         "_poop_list_cls": builtin_alias(List, _poop_list_from, "list"),

@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer, name_at
 from poop.types.object import Object
@@ -32,4 +31,4 @@ class ClassTransformer(BaseTransformer):
     """
 
     rewriter = _ClassRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_object": Object}
+    BINDINGS = {"_poop_object": Object}

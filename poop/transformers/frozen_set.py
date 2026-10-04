@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from poop.transformers._collection import make_iterable_from
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
@@ -22,7 +20,7 @@ class _FrozenSetRewriter(BuiltinRewriter):
 
 class FrozenSetTransformer(BaseTransformer):
     rewriter = _FrozenSetRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_frozenset": FrozenSet,
         "_poop_frozenset_cls": builtin_alias(
             FrozenSet, _poop_frozenset_from, "frozenset"

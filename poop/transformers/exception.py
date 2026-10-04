@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer, name_at
 from poop.types.exceptions import MIRRORS
@@ -36,4 +35,4 @@ class ExceptionTransformer(BaseTransformer):
     """
 
     rewriter = _ExceptionRewriter
-    BINDINGS: ClassVar[dict[str, object]] = _BINDINGS
+    BINDINGS = _BINDINGS

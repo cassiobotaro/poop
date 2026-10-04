@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer, name_at
 from poop.types.none import none
@@ -14,4 +13,4 @@ class _NoneRewriter(ast.NodeTransformer):
 
 class NoneTransformer(BaseTransformer):
     rewriter = _NoneRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {"_poop_none": none}
+    BINDINGS = {"_poop_none": none}

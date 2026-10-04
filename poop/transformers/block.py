@@ -1,5 +1,4 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer, call_at
 from poop.types.block import Block
@@ -13,6 +12,6 @@ class _BlockRewriter(ast.NodeTransformer):
 
 class BlockTransformer(BaseTransformer):
     rewriter = _BlockRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_block": Block,
     }
