@@ -40,25 +40,31 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         return self
 
     def union(self, *others: Object) -> FrozenSet:
-        return FrozenSet(*self._data.union(*(_elements(o) for o in others)))
+        return FrozenSet(*self._data.union(*(_elements(o, "union") for o in others)))
 
     def intersection(self, *others: Object) -> FrozenSet:
-        return FrozenSet(*self._data.intersection(*(_elements(o) for o in others)))
+        return FrozenSet(
+            *self._data.intersection(*(_elements(o, "intersection") for o in others))
+        )
 
     def difference(self, *others: Object) -> FrozenSet:
-        return FrozenSet(*self._data.difference(*(_elements(o) for o in others)))
+        return FrozenSet(
+            *self._data.difference(*(_elements(o, "difference") for o in others))
+        )
 
     def symmetric_difference(self, other: Object) -> FrozenSet:
-        return FrozenSet(*self._data.symmetric_difference(_elements(other)))
+        return FrozenSet(
+            *self._data.symmetric_difference(_elements(other, "symmetric_difference"))
+        )
 
     def isdisjoint(self, other: Object) -> Boolean:
-        return to_boolean(self._data.isdisjoint(_elements(other)))
+        return to_boolean(self._data.isdisjoint(_elements(other, "isdisjoint")))
 
     def issubset(self, other: Object) -> Boolean:
-        return to_boolean(self._data.issubset(_elements(other)))
+        return to_boolean(self._data.issubset(_elements(other, "issubset")))
 
     def issuperset(self, other: Object) -> Boolean:
-        return to_boolean(self._data.issuperset(_elements(other)))
+        return to_boolean(self._data.issuperset(_elements(other, "issuperset")))
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._data)

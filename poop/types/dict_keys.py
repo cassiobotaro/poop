@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, final
 
+from poop.types._argument import a_collection
 from poop.types._dict_view import _DictView, _elements, _set_like_elements
 from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_key_iterator import DictKeyIterator
@@ -41,7 +42,11 @@ class DictKeys(_DictView, name="dict_keys"):
         return item in self._dict._data
 
     def isdisjoint(self, other: object) -> Boolean:
-        return to_boolean(self._dict._data.keys().isdisjoint(_elements(other)))
+        return to_boolean(
+            self._dict._data.keys().isdisjoint(
+                _elements(a_collection(other, "isdisjoint"))
+            )
+        )
 
     def __or__(self, other: object) -> Set:
         return Set(*(self._dict._data.keys() | _elements(other)))

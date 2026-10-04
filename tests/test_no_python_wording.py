@@ -67,7 +67,9 @@ _FORBIDDEN = {
         # Three more of CPython's most common sentences, as bare of calls and
         # dunders as the ones above: an integer argument handed something
         # else, and a conversion the program never asked for.
-        r"cannot be interpreted as|cannot convert '"
+        r"cannot be interpreted as|cannot convert '|"
+        # "Iterable" is the protocol `no_iter` bans; POOP says "a collection".
+        r"object is not|\biterable\b"
     ),
     "a CPython format report": re.compile(
         r"object of type|Unknown format code|Invalid format specifier|"

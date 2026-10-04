@@ -4,7 +4,14 @@ from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._affix import affix_needle
-from poop.types._argument import a_bound, a_needle, an_int, max_split, text_like
+from poop.types._argument import (
+    a_bound,
+    a_collection,
+    a_needle,
+    an_int,
+    max_split,
+    text_like,
+)
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoded
@@ -298,7 +305,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         # str.join validate. Str parts join cleanly; anything else (Int,
         # Bytes, ...) reaches str.join unwrapped and raises the faithful
         # TypeError instead of being silently stringified via str(p).
-        pieces: list[Any] = [_faithful(p) for p in parts]
+        pieces: list[Any] = [_faithful(p) for p in a_collection(parts, "join")]
         return Str(self._value.join(pieces))
 
     def format(self, *args: Object, **kwargs: Object) -> Str:

@@ -2,7 +2,7 @@ import builtins
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
-from poop.types._argument import _opt_stop, a_bound, an_int
+from poop.types._argument import _opt_stop, a_bound, a_collection, an_int
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -167,7 +167,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Int(self._items.count(obj))
 
     def extend(self, other: Iterable[Object]) -> NoneClass:
-        self._items.extend(other)
+        self._items.extend(a_collection(other, "extend"))
         return none
 
     def index(

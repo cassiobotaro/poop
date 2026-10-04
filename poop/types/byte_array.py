@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._alias import wrapped_instance
-from poop.types._argument import an_int, text_like
+from poop.types._argument import a_collection, an_int, text_like
 from poop.types._at import (
     no_element_at,
     no_element_equal_to,
@@ -130,8 +130,14 @@ class ByteArray(
     def copy(self) -> ByteArray:
         return ByteArray(self._value)
 
-    def extend(self, iterable: ByteArray) -> NoneClass:
-        self._value.extend(_faithful(iterable))
+    def extend(self, iterable: Object) -> NoneClass:
+        raw = _faithful(a_collection(iterable, "extend"))
+        # Bytes are already bytes; anything else is a collection whose every
+        # element must be one, and CPython answered for the first that was not
+        # with `expected iterable of integers; got: 'str'`.
+        if not isinstance(raw, (bytes, _bytearray, memoryview)):
+            raw = [an_int(byte, "extend", "byte") for byte in raw]
+        self._value.extend(raw)
         return none
 
     def insert(self, i: Index, byte: Int) -> NoneClass:

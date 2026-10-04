@@ -10,6 +10,7 @@ handful of families, which is why the wording lives here rather than being
 written out once per receiver.
 """
 
+from collections.abc import Iterable
 from typing import Any
 
 from poop.types._message import article
@@ -287,6 +288,37 @@ def an_int(value: Any, selector: str, role: str, default: Any = MISSING) -> Any:
         return raw
     raise MIRRORS["TypeError"](
         f"#{selector}'s {role} must be an int, got {article(type(value).__name__)}"
+    )
+
+
+def a_collection(value: Any, selector: str) -> Any:
+    """`value` when it can be walked, else POOP's refusal.
+
+    `zip`, the set algebra, `join`, `extend`, `update` and `fromkeys` take
+    anything with elements, and a scalar reached CPython: `'int' object is not
+    iterable`, on 33 receiver/message sites. "Iterable" is the protocol
+    `no_iter` bans, and POOP has no such word — what it has is "a collection",
+    the word a spread into a literal already refuses with.
+    """
+    if isinstance(value, Iterable):
+        return value
+    raise MIRRORS["TypeError"](
+        f"#{selector} expects a collection, got {article(type(value).__name__)}"
+    )
+
+
+def a_pair(value: Any, selector: str) -> Any:
+    """One entry of a collection of key/value pairs, or POOP's refusal.
+
+    `d.update([1])` passes `a_collection` — it was handed one — and CPython
+    then answered `object is not iterable` about the element, with no subject
+    at all.
+    """
+    if isinstance(value, Iterable):
+        return value
+    raise MIRRORS["TypeError"](
+        f"#{selector} expects key/value pairs, "
+        f"got {article(type(value).__name__)} among them"
     )
 
 

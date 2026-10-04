@@ -136,7 +136,7 @@ def test_zip_str() -> None:
 
 
 def test_zip_rejects_non_iterable_source() -> None:
-    with pytest.raises(TypeError, match="'int' object is not iterable"):
+    with pytest.raises(TypeError, match="^#zip expects a collection, got an int$"):
         Zip(Int(42), List(Int(1)))
 
 

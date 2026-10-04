@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, final
 
+from poop.types._argument import a_collection
 from poop.types._dict_view import _DictView, _elements, _set_like_elements
 from poop.types.boolean import false, to_boolean
 from poop.types.dict_item_iterator import DictItemIterator
@@ -48,7 +49,11 @@ class DictItems(_DictView, name="dict_items"):
         return k in self._dict._data and bool(self._dict._data[k] == v)
 
     def isdisjoint(self, other: object) -> Boolean:
-        return to_boolean(self._poop_own_set().isdisjoint(_elements(other)))
+        return to_boolean(
+            self._poop_own_set().isdisjoint(
+                _elements(a_collection(other, "isdisjoint"))
+            )
+        )
 
     def _poop_own_set(self) -> set[Object]:
         # Mirroring CPython, an operand's members are *not* required to be

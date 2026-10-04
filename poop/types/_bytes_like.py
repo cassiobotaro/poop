@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 from poop.types._affix import affix_needle
 from poop.types._argument import (
     a_bound,
+    a_collection,
     a_needle,
     an_int,
     bytes_like,
@@ -254,7 +255,7 @@ class _BytesLikeMixin[B: Object]:
         # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
         # the native join unwrapped and raises the faithful TypeError instead of
         # being silently dropped.
-        pieces: list[Any] = [bytes_like(p, "join") for p in parts]
+        pieces: list[Any] = [bytes_like(p, "join") for p in a_collection(parts, "join")]
         return self._rewrap(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
