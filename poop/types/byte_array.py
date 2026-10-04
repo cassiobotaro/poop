@@ -1,56 +1,43 @@
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from poop.types._affix import affix_needle
 from poop.types._alias import wrapped_instance
-from poop.types._argument import a_bound, a_needle, bytes_like, text_like
+from poop.types._argument import text_like
 from poop.types._at import (
-    at_index,
     no_element_at,
     no_element_equal_to,
     nothing_to_remove,
 )
+from poop.types._bytes_like import _BytesLikeMixin
 from poop.types._cloak import cloak
-from poop.types._codec import decoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article
 from poop.types._ordered import _OrderedMixin
-from poop.types._repeat import _repeat_count
-from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import (
     _faithful,
     _is_absent,
     _opt_int,
-    _opt_str,
-    _unwrap,
-    _unwrap_bool,
 )
 from poop.types._value_eq import _ValueEqMixin
-from poop.types.boolean import false, to_boolean, true
 from poop.types.byte_array_iterator import ByteArrayIterator
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
-from poop.types.list import List
 from poop.types.none import none
 from poop.types.object import Object
-from poop.types.slice import _resolve_py_slice
 from poop.types.string import Str
-from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types._index import Index
-    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
-    from poop.types.slice import Slice
 
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 
 
-_BYTE_KINDS = (bytes, bytearray, memoryview)
-
-
-class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
+class ByteArray(
+    _BytesLikeMixin["ByteArray"], _OrderedMixin, _ValueEqMixin, _IterableMixin, Object
+):
     __slots__ = ("_value",)
+    _value: _bytearray
     _eq_attr: ClassVar[str] = "_value"
     _eq_group: ClassVar[str] = "bytes"
     _order_group: ClassVar[str] = "bytes"
@@ -61,29 +48,14 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         value: _bytearray | bytes | ByteArray | Iterable[int] | None = None,
     ) -> None:
         if value is None:
-            self._value: _bytearray = _bytearray()
+            self._value = _bytearray()
         elif isinstance(value, ByteArray):
             self._value = _bytearray(value._value)
         else:
             self._value = _bytearray(value)
 
-    def len(self) -> Int:
-        return Int(len(self._value))
-
-    def __len__(self) -> int:
-        return len(self._value)
-
-    def at(self, index: Index) -> Int:
-        return Int(at_index(self._value, index, self))
-
-    def slice(
-        self,
-        start_or_slice: Index | Slice | NoneClass | None,
-        stop: Index | NoneClass | None = None,
-        step: Index | NoneClass | None = None,
-    ) -> ByteArray:
-        py = _resolve_py_slice(start_or_slice, stop, step)
-        return ByteArray(bytearray(self._value[py]))
+    def _rewrap(self, raw: Any) -> ByteArray:
+        return ByteArray(raw)
 
     def at_put(self, index: Index, byte: Int) -> ByteArray:
         # CPython answers `bytearray indices must be integers or slices, not
@@ -99,32 +71,6 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
                 f"got {article(type(index).__name__)}"
             ) from None
         return self
-
-    # `ByteArray | Int`: CPython searches for a subsequence *or* a byte value,
-    # and the guard admits both — the annotation said only one of them.
-    def includes(self, byte: ByteArray | Int) -> Boolean:
-        # getattr-unwrap: a non-`_value` argument reaches bytearray.__contains__
-        # raw and raises the faithful TypeError instead of leaking `_value`.
-        operand: Any = a_needle(self, byte, "includes", "bytes or an int", _BYTE_KINDS)
-        return to_boolean(operand in self._value)
-
-    def __contains__(self, item: object) -> bool:
-        if isinstance(item, Int):
-            return item._value in self._value
-        return False
-
-    def decode(
-        self,
-        encoding: Str | NoneClass | None = None,
-        errors: Str | NoneClass | None = None,
-    ) -> Str:
-        return Str(
-            decoded(
-                self._value,
-                _opt_str(encoding, "utf-8"),
-                _opt_str(errors, "strict"),
-            )
-        )
 
     @classmethod
     def fromhex(cls, s: Str) -> ByteArray:
@@ -158,20 +104,8 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         sep_value = bytes(raw) if isinstance(raw, _bytearray) else raw
         return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
 
-    def __iter__(self) -> Iterator[Int]:
-        return (Int(b) for b in self._value)
-
     def iter(self) -> ByteArrayIterator:
         return ByteArrayIterator(self)
-
-    def ord(self) -> Int:
-        # See `Bytes.ord`: CPython's `ord` takes a one-byte `bytearray` too.
-        try:
-            return Int(ord(self._value))
-        except TypeError:
-            raise MIRRORS["TypeError"](
-                f"#ord expects a single byte, got {len(self._value)}"
-            ) from None
 
     def __add__(self, other: object) -> ByteArray:
         # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
@@ -182,14 +116,6 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         if not isinstance(other, ByteArray | Bytes):
             return NotImplemented
         return ByteArray(self._value + other._value)
-
-    def __mul__(self, other: object) -> ByteArray:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return ByteArray(self._value * count)
-
-    __rmul__ = __mul__
 
     def append(self, byte: Int) -> NoneClass:
         self._value.append(_faithful(byte))
@@ -240,305 +166,6 @@ class ByteArray(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         """
         self._value.reverse()
         return none
-
-    def reversed(self) -> ByteArray:
-        """A new `ByteArray` with the bytes in reverse order.
-
-        The substitute `no_reversed` points at; `reverse`, above, is the
-        in-place mutation.
-        """
-        return ByteArray(self._value[::-1])
-
-    def capitalize(self) -> ByteArray:
-        return ByteArray(self._value.capitalize())
-
-    def center(
-        self,
-        width: Int,
-        fillchar: ByteArray | NoneClass | None = None,
-    ) -> ByteArray:
-
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return ByteArray(self._value.center(_faithful(width)))
-        return ByteArray(
-            self._value.center(
-                _faithful(width), text_like(fillchar, "center", "one byte")
-            )
-        )
-
-    def count(
-        self,
-        sub: ByteArray | Int,
-        start: Int | NoneClass | None = None,
-        end: Int | NoneClass | None = None,
-    ) -> Int:
-        return Int(
-            self._value.count(
-                a_needle(self, sub, "count", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "count", "start"),
-                a_bound(end, "count", "end"),
-            )
-        )
-
-    def endswith(
-        self,
-        suffix: ByteArray | Tuple,
-        start: Int | NoneClass | None = None,
-        end: Int | NoneClass | None = None,
-    ) -> Boolean:
-        return (
-            true
-            if self._value.endswith(
-                affix_needle(suffix),
-                a_bound(start, "endswith", "start"),
-                a_bound(end, "endswith", "end"),
-            )
-            else false
-        )
-
-    def expandtabs(self, tabsize: Int | NoneClass | None = None) -> ByteArray:
-
-        size = _unwrap(tabsize, None)
-        if size is None:
-            return ByteArray(self._value.expandtabs())
-        return ByteArray(self._value.expandtabs(size))
-
-    def find(
-        self,
-        sub: ByteArray | Int,
-        start: Int | NoneClass | None = None,
-        end: Int | NoneClass | None = None,
-    ) -> Int:
-        return Int(
-            self._value.find(
-                a_needle(self, sub, "find", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "find", "start"),
-                a_bound(end, "find", "end"),
-            )
-        )
-
-    def index(
-        self,
-        sub: ByteArray | Int,
-        start: Int | NoneClass | None = None,
-        end: Int | NoneClass | None = None,
-    ) -> Int:
-        return Int(
-            self._value.index(
-                a_needle(self, sub, "index", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "index", "start"),
-                a_bound(end, "index", "end"),
-            )
-        )
-
-    def isalnum(self) -> Boolean:
-        return to_boolean(self._value.isalnum())
-
-    def isalpha(self) -> Boolean:
-        return to_boolean(self._value.isalpha())
-
-    def isascii(self) -> Boolean:
-        return to_boolean(self._value.isascii())
-
-    def isdigit(self) -> Boolean:
-        return to_boolean(self._value.isdigit())
-
-    def islower(self) -> Boolean:
-        return to_boolean(self._value.islower())
-
-    def isspace(self) -> Boolean:
-        return to_boolean(self._value.isspace())
-
-    def istitle(self) -> Boolean:
-        return to_boolean(self._value.istitle())
-
-    def isupper(self) -> Boolean:
-        return to_boolean(self._value.isupper())
-
-    def join(self, parts: List) -> ByteArray:
-        # Mirror CPython: unwrap each element to its underlying value and let
-        # bytearray.join validate. Bytes-like POOP wrappers (Bytes/ByteArray/
-        # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
-        # bytearray.join unwrapped and raises the faithful TypeError instead
-        # of being silently dropped.
-        pieces: list[Any] = [bytes_like(p, "join") for p in parts]
-        return ByteArray(self._value.join(pieces))
-
-    def ljust(
-        self,
-        width: Int,
-        fillchar: ByteArray | NoneClass | None = None,
-    ) -> ByteArray:
-
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return ByteArray(self._value.ljust(_faithful(width)))
-        return ByteArray(
-            self._value.ljust(
-                _faithful(width), text_like(fillchar, "ljust", "one byte")
-            )
-        )
-
-    def lower(self) -> ByteArray:
-        return ByteArray(self._value.lower())
-
-    def lstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
-
-        return ByteArray(self._value.lstrip(bytes_like(chars, "lstrip", optional=True)))
-
-    def partition(self, sep: ByteArray) -> Tuple:
-        return Tuple(
-            *[ByteArray(p) for p in self._value.partition(bytes_like(sep, "partition"))]
-        )
-
-    def removeprefix(self, prefix: ByteArray) -> ByteArray:
-        return ByteArray(self._value.removeprefix(bytes_like(prefix, "removeprefix")))
-
-    def removesuffix(self, suffix: ByteArray) -> ByteArray:
-        return ByteArray(self._value.removesuffix(bytes_like(suffix, "removesuffix")))
-
-    def replace(
-        self,
-        old: ByteArray,
-        new: ByteArray,
-        count: Int | NoneClass | None = None,
-    ) -> ByteArray:
-        return ByteArray(
-            self._value.replace(
-                bytes_like(old, "replace"),
-                bytes_like(new, "replace"),
-                _unwrap(count, -1),
-            )
-        )
-
-    def rfind(
-        self,
-        sub: ByteArray | Int,
-        start: Int | NoneClass | None = None,
-        end: Int | NoneClass | None = None,
-    ) -> Int:
-        return Int(
-            self._value.rfind(
-                a_needle(self, sub, "rfind", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "rfind", "start"),
-                a_bound(end, "rfind", "end"),
-            )
-        )
-
-    def rindex(
-        self,
-        sub: ByteArray | Int,
-        start: Int | NoneClass | None = None,
-        end: Int | NoneClass | None = None,
-    ) -> Int:
-        return Int(
-            self._value.rindex(
-                a_needle(self, sub, "rindex", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "rindex", "start"),
-                a_bound(end, "rindex", "end"),
-            )
-        )
-
-    def rjust(
-        self,
-        width: Int,
-        fillchar: ByteArray | NoneClass | None = None,
-    ) -> ByteArray:
-
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return ByteArray(self._value.rjust(_faithful(width)))
-        return ByteArray(
-            self._value.rjust(
-                _faithful(width), text_like(fillchar, "rjust", "one byte")
-            )
-        )
-
-    def rpartition(self, sep: ByteArray) -> Tuple:
-        return Tuple(
-            *[
-                ByteArray(p)
-                for p in self._value.rpartition(bytes_like(sep, "rpartition"))
-            ]
-        )
-
-    def rsplit(
-        self,
-        sep: ByteArray | NoneClass | None = None,
-        maxsplit: Int | NoneClass | None = None,
-    ) -> List:
-        return List(
-            *[
-                ByteArray(p)
-                for p in self._value.rsplit(
-                    bytes_like(sep, "rsplit", optional=True), _unwrap(maxsplit, -1)
-                )
-            ]
-        )
-
-    def rstrip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
-
-        return ByteArray(self._value.rstrip(bytes_like(chars, "rstrip", optional=True)))
-
-    def split(
-        self,
-        sep: ByteArray | NoneClass | None = None,
-        maxsplit: Int | NoneClass | None = None,
-    ) -> List:
-        return List(
-            *[
-                ByteArray(p)
-                for p in self._value.split(
-                    bytes_like(sep, "split", optional=True), _unwrap(maxsplit, -1)
-                )
-            ]
-        )
-
-    def splitlines(self, keepends: Boolean | NoneClass | None = None) -> List:
-        return List(
-            *[
-                ByteArray(p)
-                for p in self._value.splitlines(_unwrap_bool(keepends, False))
-            ]
-        )
-
-    def startswith(
-        self,
-        prefix: ByteArray | Tuple,
-        start: Int | NoneClass | None = None,
-        end: Int | NoneClass | None = None,
-    ) -> Boolean:
-        return (
-            true
-            if self._value.startswith(
-                affix_needle(prefix),
-                a_bound(start, "startswith", "start"),
-                a_bound(end, "startswith", "end"),
-            )
-            else false
-        )
-
-    def strip(self, chars: ByteArray | NoneClass | None = None) -> ByteArray:
-
-        return ByteArray(self._value.strip(bytes_like(chars, "strip", optional=True)))
-
-    def swapcase(self) -> ByteArray:
-        return ByteArray(self._value.swapcase())
-
-    def title(self) -> ByteArray:
-        return ByteArray(self._value.title())
-
-    def upper(self) -> ByteArray:
-        return ByteArray(self._value.upper())
-
-    def zfill(self, width: Int) -> ByteArray:
-        return ByteArray(self._value.zfill(_faithful(width)))
-
-    def __str__(self) -> str:
-        return repr(self._value)
-
-    __repr__ = __str__
 
 
 cloak(ByteArray, "bytearray")
