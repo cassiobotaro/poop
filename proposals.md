@@ -17,35 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 2. `{}.items().iter().do(5)` answers `'int' object is not callable`
-
-```
-[1].iter().do(5)
-# TypeError: #do expects a block, got an int — write .do(lambda item: …)
-{"a": 1}.items().iter().do(5)
-# TypeError: 'int' object is not callable
-{"a": 1}.items().iter().do()
-# TypeError: object.do() missing 1 required positional argument: 'block'
-```
-
-Both leaks are ones `a_block` was written to close: its docstring names
-CPython's "not callable", and its body the missing block that "blamed
-`object.map()`".
-
-`_DictItemIteratorBase` (`poop/types/_dict_item_iterator_base.py`) overrides
-`do` with a copy that has no `a_block` guard and no `reword_if_native`. Its
-comment gives the reason for the override: "Through `self`, not `self._iter`: a
-pair parked by `has_next` would otherwise be skipped, and would arrive
-unwrapped". `_IterableMixin.do` already iterates through `self` —
-`_iter_items()` is `iter(self)`, and `_IteratorBase.__iter__` answers `self` —
-so the inherited method does what the override was written to do.
-
-**Fix.** Delete the override. Trialled: the suite passes, both sentences above
-become `#do expects a block, got …`, and a pair parked by `has_next` is still
-delivered, wrapped as a `Tuple`.
-
----
-
 ### 3. `None`, `True`, `False` and `...` can each be built a second time
 
 ```
