@@ -74,9 +74,6 @@ class DictKeys(_DictView, name="dict_keys"):
             return false
         return true if set(self._dict._data.keys()) == raw else false
 
-    def __ne__(self, other: object) -> Boolean:
-        return false if bool(self.__eq__(other)) else true
-
     def __le__(self, other: object) -> Boolean:
         raw = _set_like_elements(other)
         if raw is None:

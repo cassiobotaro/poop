@@ -6,7 +6,7 @@ from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _is_absent, _searched
-from poop.types.boolean import false, to_boolean, true
+from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.object import Object
@@ -161,9 +161,6 @@ class Range(_IterableMixin, Object):
         if isinstance(other, Range):
             return to_boolean(self._range() == other._range())
         return to_boolean(False)
-
-    def __ne__(self, other: object) -> Boolean:
-        return false if bool(self == other) else true
 
     def __hash__(self) -> int:
         # Equal ranges must hash equally; defer to the native range's hash,

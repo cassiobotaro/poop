@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
-from poop.types.boolean import Boolean, false, to_boolean, true
+from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
@@ -143,10 +143,6 @@ class Complex(Object):
     def __eq__(self, other: object) -> Boolean:
         v = self._coerce(other)
         return false if v is None else to_boolean(self._value == v)
-
-    def __ne__(self, other: object) -> Boolean:
-        v = self._coerce(other)
-        return true if v is None else to_boolean(self._value != v)
 
     def __hash__(self) -> int:
         return hash(self._value)

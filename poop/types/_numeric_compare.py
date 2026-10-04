@@ -92,20 +92,6 @@ class _NumericCompareMixin:  # noqa: PLW1641 — the numeric rungs hash themselv
             return false
         return to_boolean(self._order_value() == v)
 
-    def __ne__(self, other: object) -> Boolean:
-        # circular: boolean imports _numeric_compare
-        from poop.types.boolean import false, true  # noqa: PLC0415
-
-        # circular: complex -> boolean -> _numeric_compare
-        from poop.types.complex import Complex  # noqa: PLC0415
-
-        if isinstance(other, Complex):
-            return false if self._order_value() == other._value else true
-        v = _num_value(other)
-        if v is NOT_NUMERIC:
-            return true
-        return false if self._order_value() == v else true
-
 
 # Cloaked as `object`, the root's own spelling: these methods are inherited by
 # many wrappers, so no single builtin name is true for all of them — and left

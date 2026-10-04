@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, cast
 from poop.types._argument import a_block
 from poop.types._cloak import cloak
 from poop.types._message import article
-from poop.types.boolean import false, to_boolean, true
+from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
@@ -293,9 +293,6 @@ class _MethodBlock(Block):
         if not isinstance(other, _MethodBlock):
             return to_boolean(False)
         return to_boolean(self._identity() == other._identity())
-
-    def __ne__(self, other: object) -> Boolean:
-        return false if bool(self == other) else true
 
     def __hash__(self) -> int:
         # Consistent with __eq__ above, as CPython's bound method is: equal

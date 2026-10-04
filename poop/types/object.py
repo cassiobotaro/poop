@@ -369,9 +369,13 @@ class Object(metaclass=PoopMeta):
         return to_boolean(self is other)
 
     def __ne__(self, other: object) -> Boolean:
+        # The one `__ne__`: a POOP `==` answers a `Boolean`, so Python's
+        # derived `__ne__` (a raw `bool`) cannot be used — but every rule for
+        # equality lives in an `__eq__`, and restating each one here with the
+        # answer flipped meant keeping two copies in step by hand.
         from poop.types.boolean import false, true
 
-        return false if self is other else true
+        return false if self == other else true
 
     def __hash__(self) -> int:
         # Python's own identity hash, not `id(self)`. Defining __eq__ clears

@@ -81,13 +81,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
             return to_boolean(self._data == other._data)
         return super().__eq__(other)
 
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, MappingProxy):
-            return to_boolean(self._data != other._dict._data)
-        if isinstance(other, Dict):
-            return to_boolean(self._data != other._data)
-        return super().__ne__(other)
-
     @classmethod
     def fromkeys(
         cls, keys: Iterable[Object], value: Object | NoneClass | None = None

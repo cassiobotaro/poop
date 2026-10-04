@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._dict_view import _DictView, _elements, _set_like_elements
-from poop.types.boolean import false, to_boolean, true
+from poop.types.boolean import false, to_boolean
 from poop.types.dict_item_iterator import DictItemIterator
 from poop.types.dict_reverse_item_iterator import DictReverseItemIterator
 from poop.types.object import Object
@@ -87,9 +87,6 @@ class DictItems(_DictView, name="dict_items"):
         if raw is None:
             return false
         return to_boolean(self._poop_own_set() == raw)
-
-    def __ne__(self, other: object) -> Boolean:
-        return false if bool(self.__eq__(other)) else true
 
     def __le__(self, other: object) -> Boolean:
         raw = _set_like_elements(other)

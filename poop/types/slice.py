@@ -60,11 +60,6 @@ class Slice(Object):
             return false
         return false
 
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Slice):
-            return false if bool(self == other) else true
-        return true
-
     def __hash__(self) -> int:
         return hash((self._start, self._stop, self._step))
 
