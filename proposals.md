@@ -17,26 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 10. `poop.types` re-exports 19 names that nothing imports
-
-`poop/types/__init__.py` imports 19 modules and lists 19 names in `__all__`.
-Nothing uses them: there is no `from poop.types import …` anywhere in `poop/`
-or `tests/` (two tests `import poop.types` only to walk the package). The
-list is also not the package's surface — it has `Set` and `FrozenSet` and no
-`List` or `Tuple`, `Slice` and no `MappingProxy`.
-
-It is not free either. Importing any submodule runs the package `__init__`
-first, so `import poop.types._selectors` — a module with no dependencies —
-loads the whole type tree, in the order this file happens to list. That makes
-the file a hidden input to every import cycle in the package.
-
-**Fix.** Empty the file. Trialled: the suite passes, `poop.cli` imports, and
-each of nine modules picked across the package (`int`, `block`, `_bridge`,
-`exceptions`, `meta`, `_unwrap`, `string`, and the two pipeline packages)
-imports cold on its own.
-
----
-
 ### 11. Three helpers that always raise are annotated `-> None`
 
 `_refuse`, `_refuse_instance_side` and `_refuse_native` in `poop/types/meta.py`
