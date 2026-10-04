@@ -1,4 +1,3 @@
-from abc import ABC
 from typing import Any
 
 import pytest
@@ -137,18 +136,6 @@ def test_a_class_gets_no_selector_hint_it_cannot_honour() -> None:
         _Dog.size()  # ty: ignore[unresolved-attribute]
 
 
-def test_poop_meta_derives_from_abcmeta() -> None:
-    # `Boolean(Object, ABC)` fails with a metaclass conflict otherwise.
-    assert issubclass(PoopMeta, type(ABC))
-
-
-def test_an_abstract_poop_class_still_builds() -> None:
-    class _Abstract(Object, ABC):
-        __slots__ = ()
-
-    assert _Abstract.name() == Str("_Abstract")
-
-
 def test_the_metaclass_propagates_without_being_declared() -> None:
     # ClassTransformer routes every user class through Object, so nothing has
     # to name PoopMeta for a class to answer.
@@ -225,7 +212,6 @@ def test_a_class_does_not_list_the_messages_it_refuses() -> None:
     # Offering `mro` would name a message that answers "that is Python's".
     listed = _dir(_Dog)
     assert "mro" not in listed
-    assert "register" not in listed
 
 
 def test_a_class_lists_each_message_once() -> None:
@@ -405,21 +391,11 @@ def test_refusing_mro_does_not_break_class_creation() -> None:
         _Puppy.mro()
 
 
-def test_a_class_refuses_register_naming_is_subclass() -> None:
-    # ABCMeta's virtual-subclass registration made `is_instance` answer true
-    # for a class that never inherited from the receiver.
-    with pytest.raises(MessageNotUnderstood, match="a class answers #is_subclass"):
-        _Animal.register(_Unrelated)
-    assert _Unrelated().is_instance(_Animal) is false
-
-
-def test_neither_native_is_reachable_from_poop_source() -> None:
-    # Both are invisible to `dir()` — `type.__dir__` does not merge the
-    # metaclass's names — so nothing taught them and nothing stopped them.
-    interpreter = Interpreter()
-    for source in ("Object.mro()", "Object.register(Object)"):
-        with pytest.raises(ExecutionError, match="is Python's"):
-            interpreter.run_source(source)
+def test_mro_is_not_reachable_from_poop_source() -> None:
+    # Invisible to `dir()` — `type.__dir__` does not merge the metaclass's
+    # names — so nothing taught it and nothing stopped it.
+    with pytest.raises(ExecutionError, match="is Python's"):
+        Interpreter().run_source("Object.mro()")
 
 
 def test_a_poop_builtin_refuses_to_have_its_messages_changed() -> None:

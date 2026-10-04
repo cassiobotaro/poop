@@ -7,7 +7,6 @@ failure — `Object.print() missing 1 required positional argument: 'self'`.
 """
 
 import builtins
-from abc import ABCMeta
 from functools import partial, wraps
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Never
@@ -91,7 +90,7 @@ class class_side:
 class class_side_read_refusal(class_side):
     """A class-side refusal that fires on *read* rather than on call.
 
-    `mro`, `register` and `raise_` are messages: a reader writes `Foo.mro()`,
+    `mro` and `raise_` are messages: a reader writes `Foo.mro()`,
     and a refusal in the body fires when the call reaches it. The names a
     mirror inherits from `BaseException` are *attributes* — `ValueError.args`
     is written with no parentheses anywhere — so a refusal waiting for a call
@@ -233,10 +232,10 @@ def _refuse_instance_side(cls: type, name: str) -> None:
 def _refuse_native(cls: type, name: str, instead: str) -> None:
     """Refuse a name POOP never meant to offer, naming the message that does.
 
-    `type.mro` and `ABCMeta.register` arrive on every POOP class with the
-    metaclass, carry no leading underscore, and answer raw Python — but they
-    are not messages POOP designed, so `_refuse`'s wording ("asks an instance
-    about its class") says nothing true about them.
+    `type.mro` arrives on every POOP class with the metaclass, carries no
+    leading underscore, and answers raw Python — but it is not a message POOP
+    designed, so `_refuse`'s wording ("asks an instance about its class") says
+    nothing true about it.
     """
     from poop.types.object import MessageNotUnderstood
 
@@ -313,14 +312,16 @@ def _length_message(self: Any) -> Any:
     return Int(builtins.len(self))
 
 
-class PoopMeta(ABCMeta):
+class PoopMeta(type):
     """Metaclass giving every POOP class the class-side protocol.
 
-    Derives from `ABCMeta`, not `type`: `Boolean(Object, ABC)` otherwise fails
-    with "metaclass conflict: the metaclass of a derived class must be a
-    (non-strict) subclass of the metaclasses of all its bases". It propagates
-    for free — `ClassTransformer` already routes every user class through
-    `Object`, and a metaclass is inherited.
+    Derives from `type`, not `ABCMeta`. It used to be `ABCMeta` so that
+    `Boolean(Object, ABC)` would not fail with a metaclass conflict — one
+    abstract class, with two `@final` subclasses in the same module — and every
+    `isinstance` against a POOP class paid for it in
+    `ABCMeta.__instancecheck__`: about a quarter of a loop-heavy program's run.
+    It propagates for free — `ClassTransformer` already routes every user class
+    through `Object`, and a metaclass is inherited.
 
     Every message here is a `class_side` descriptor, including the ones
     `Object` does not define today: a user class is free to declare its own
@@ -444,16 +445,6 @@ class PoopMeta(ABCMeta):
         if getattr(cls, "__mro__", None) is None:
             return type.mro(cls)
         _refuse_native(cls, "mro", "superclass")
-
-    @class_side_refusal
-    def register(cls, subclass: Any) -> Any:
-        """Refuse `ABCMeta.register` — inheritance is how POOP says "is a".
-
-        Virtual-subclass registration makes `is_instance` and `is_subclass`
-        answer true for a class that never inherited from the receiver, moving
-        the answer into a side table no reader of the class can see.
-        """
-        _refuse_native(cls, "register", "is_subclass")
 
     @class_side_refusal
     def raise_(cls, *args: Any, **kwargs: Any) -> Never:
@@ -611,10 +602,9 @@ class PoopMeta(ABCMeta):
 
         `_`-prefixed names are left alone, which `is_message` already calls the
         boundary of the message surface, and which is also what makes this
-        usable at all: `ABCMeta.__new__` writes `__abstractmethods__` while the
-        class is being built, and `cloak` writes `__module__`, `__name__` and
-        `__qualname__` — all of them before `exceptions` has finished importing
-        the table this refusal would come from. A program cannot reach those
+        usable at all: `cloak` writes `__module__`, `__name__` and
+        `__qualname__` while the type tree is being built — before `exceptions`
+        has finished importing the table this refusal would come from. A program cannot reach those
         spellings anyway; `no_dunder_attribute` refuses them at parse time.
         """
         # `class_side.__set__` first, where it owns the name: it is a data
@@ -664,7 +654,7 @@ class PoopMeta(ABCMeta):
         own = {name for name in super().__dir__() if not _instance_only(cls, name)}
         # Subtracted, not merely left unmerged. `merged` only *adds*, so a
         # refusal could drop a name only when the metaclass was its sole
-        # source: `mro` and `register` qualified, and the names an exception
+        # source: `mro` qualified, and the names an exception
         # mirror inherits from `BaseException` did not — `type.__dir__` walks
         # `cls.__mro__` and finds `args` on the native base, so `:methods
         # ValueError` advertised three names the class now refuses and the

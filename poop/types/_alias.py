@@ -35,9 +35,9 @@ name is otherwise used for:
 Only `__call__` is intercepted. The obvious companion — an `__instancecheck__`
 delegating to the wrapped class, as `PoopExcMeta` does for the mirrors — does
 not work here and is worth recording: the alias *is* a subclass of the wrapper,
-so `ABCMeta.__subclasscheck__` walks `List.__subclasses__()`, reaches the alias,
-and asks it the same question, which delegates back. It recurses until the stack
-gives out. The type-argument case is answered one level up instead, by
+and while `PoopMeta` derived from `ABCMeta`, `ABCMeta.__subclasscheck__` walked
+`List.__subclasses__()`, reached the alias, and asked it the same question,
+which delegated back. It recursed until the stack gave out. The type-argument case is answered one level up instead, by
 `unalias` below, which the two `is_instance`/`is_subclass` pairs call.
 
 `__call__` covers the subclasses too. It used to read `cls.__dict__` and stop

@@ -1,5 +1,4 @@
 import builtins
-from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast, final
 
@@ -19,8 +18,13 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 
-class Boolean(_NumericCompareMixin, Object, ABC):
-    """Abstract base for Smalltalk-style boolean objects."""
+class Boolean(_NumericCompareMixin, Object):
+    """Base for Smalltalk-style boolean objects.
+
+    Never instantiated: `__new__` answers `false`, so every boolean is one of
+    the two subclasses' instances, and the methods here that raise are the
+    protocol both of them implement.
+    """
 
     __slots__ = ()
 
@@ -44,52 +48,52 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     def __repr__(self) -> str:
         return str(self)
 
-    @abstractmethod
-    def if_true[T](self, block: Callable[[], T]) -> T | NoneClass: ...
+    def if_true[T](self, block: Callable[[], T]) -> T | NoneClass:
+        raise NotImplementedError
 
-    @abstractmethod
-    def if_false[T](self, block: Callable[[], T]) -> T | NoneClass: ...
+    def if_false[T](self, block: Callable[[], T]) -> T | NoneClass:
+        raise NotImplementedError
 
-    @abstractmethod
     def if_true_if_false[T](
         self,
         true_block: Callable[[], T],
         false_block: Callable[[], T],
-    ) -> T: ...
+    ) -> T:
+        raise NotImplementedError
 
-    @abstractmethod
     def if_false_if_true[T](
         self,
         false_block: Callable[[], T],
         true_block: Callable[[], T],
-    ) -> T: ...
+    ) -> T:
+        raise NotImplementedError
 
-    @abstractmethod
-    def and_(self, block: Callable[[], Boolean]) -> Boolean: ...
+    def and_(self, block: Callable[[], Boolean]) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def or_(self, block: Callable[[], Boolean]) -> Boolean: ...
+    def or_(self, block: Callable[[], Boolean]) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def not_(self) -> Boolean: ...
+    def not_(self) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def xor(self, other: Boolean) -> Boolean: ...
+    def xor(self, other: Boolean) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def eqv(self, other: Boolean) -> Boolean: ...
+    def eqv(self, other: Boolean) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def _bool_and(self, other: Boolean) -> Boolean: ...
+    def _bool_and(self, other: Boolean) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def _bool_or(self, other: Boolean) -> Boolean: ...
+    def _bool_or(self, other: Boolean) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def __bool__(self) -> bool: ...
+    def __bool__(self) -> bool:
+        raise NotImplementedError
 
-    @abstractmethod
-    def __str__(self) -> str: ...
+    def __str__(self) -> str:
+        raise NotImplementedError
 
     def __index__(self) -> int:
         # Same reason `_order_value` folds to 1/0: `bool` is an `int` subclass,

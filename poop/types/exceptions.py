@@ -139,9 +139,9 @@ NATIVE_TO_POOP: dict[type[BaseException], type] = {}
 # Names a mirror inherits from `BaseException` that POOP never designed, mapped
 # to the message a reader wanted instead — `None` where there is none.
 #
-# `PoopMeta` already refuses `type.mro` and `ABCMeta.register` for exactly this
-# reason, and `INFECTIONS.md` describes those two as "unreachable by reading and
-# reachable by typing". These are worse: `dir` *did* list them, so `:methods
+# `PoopMeta` already refuses `type.mro` for exactly this reason, and
+# `INFECTIONS.md` describes it as "unreachable by reading and reachable by
+# typing". These are worse: `dir` *did* list them, so `:methods
 # ValueError` advertised them, and what they answered said they were not POOP's
 # — `args` a raw Python tuple, `with_traceback` a raw method descriptor, and
 # `add_note` a refusal naming `BaseException` and a `'str' object` no program
