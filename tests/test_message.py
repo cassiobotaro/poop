@@ -87,7 +87,7 @@ def test_binary_refusal_matches_message_not_understood_s_shape() -> None:
     assert binary_refusal("str", "+", "int") == "str does not understand #+ with an int"
 
 
-# Proposal 55. `no_hash` bans `hash(x)` and names `obj.hash()`; the substitute
+# `no_hash` bans `hash(x)` and names `obj.hash()`; the substitute
 # answered CPython's bare `unhashable type: 'list'` on nine receivers, while the
 # two places that reach the same condition — a set element and a dict key —
 # answered a sentence that says where the value was going.

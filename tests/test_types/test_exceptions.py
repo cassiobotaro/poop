@@ -161,7 +161,7 @@ def test_poop_class_of_falls_back_to_exception_for_unmirrored_base() -> None:
     assert poop_class_of(KeyboardInterrupt()) is MIRRORS["Exception"]
 
 
-# `raise_` as a real message — proposal 27
+# `raise_` as a real message
 
 
 def test_raise_from_a_computed_class() -> None:
@@ -260,7 +260,7 @@ def test_the_unicode_family_is_answered_by_value_error_instead() -> None:
     assert "UnicodeDecodeError" not in MIRRORS
 
 
-# Proposal 42. The mirrors inherit `BaseException`, so `args`, `add_note` and
+# The mirrors inherit `BaseException`, so `args`, `add_note` and
 # `with_traceback` arrived on all 17 — plus `obj` on AttributeError and `value`
 # on StopIteration. `dir` listed them, so `:methods ValueError` advertised
 # names the caught error already refused, and what they answered said they were

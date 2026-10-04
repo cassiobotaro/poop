@@ -571,7 +571,7 @@ class PoopMeta(type):
     def __setattr__(cls, name: str, value: Any) -> None:
         """The undotted twin of `set_attr`, refused on the same terms.
 
-        Proposal 2 closed one spelling of this and its record says what for:
+        Commit 385f48b closed one spelling of this and says what for:
         "`class_()` hands the class out — so `"abc".class_().del_attr("upper")`
         removed `upper` from every string in the program". `_reject_builtin`
         was called from `set_attr` and `del_attr` and from nowhere else, so the
@@ -706,8 +706,8 @@ class PoopMeta(type):
     # banned on a class too: `Foo is Bar` (no_is), `isinstance(Foo, T)`
     # (no_isinstance), `getattr`/`setattr`/`delattr` (no_getattr/…),
     # `assert Foo` (no_assert). Without them the ban named a substitute that
-    # did not exist on the receiver — item 14's original contradiction, which
-    # its first pass measured short by nine.
+    # did not exist on the receiver — the contradiction the class side was
+    # first given these for, which its first pass measured short by nine.
 
     @class_side
     def is_identical(cls, other: Any) -> Boolean:

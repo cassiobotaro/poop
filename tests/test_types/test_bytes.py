@@ -47,7 +47,7 @@ def test_includes_false() -> None:
 
 
 def test_includes_refuses_a_non_bytes_argument_in_poops_words() -> None:
-    # Proposal 52: was left to CPython's `a bytes-like object is required, not
+    # Was left to CPython's `a bytes-like object is required, not
     # 'list'` — a sentence with no receiver, no message and no substitute, and
     # one the wording sweep could not see.
     with pytest.raises(TypeError, match="#includes expects bytes or an int"):
@@ -566,7 +566,7 @@ def test_rmul_returns_repeated_bytes() -> None:
     assert Bytes(b"ab").__rmul__(Int(3)) == Bytes(b"ababab")
 
 
-# --- New: optional parameters (proposals 41, 43-44, v1.1.2) ---
+# --- New: optional parameters ---
 
 
 def test_split_with_maxsplit() -> None:
@@ -646,7 +646,7 @@ _BAD: Any = List(Int(1), Int(2))
     ],
 )
 def test_bytes_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
-    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # A mandatory argument that carries no `_value` (a
     # List) must reach the underlying Python method raw and raise the faithful
     # exception, never leak the internal `#_value` name through dispatch.
     with pytest.raises(exc) as info:
@@ -686,7 +686,7 @@ def test_reversed_of_empty_bytes() -> None:
     assert Bytes(b"").reversed() == Bytes(b"")
 
 
-# startswith/endswith with a tuple of prefixes — proposal 22
+# startswith/endswith with a tuple of prefixes
 
 
 def test_startswith_tuple_of_prefixes() -> None:
@@ -760,7 +760,7 @@ def test_fromhex_on_a_subclass_answers_the_subclass() -> None:
     assert made == Bytes(b"ab")
 
 
-# Proposal 52. `_needle` was written for the search family and wired into `Str`
+# `_needle` was written for the search family and wired into `Str`
 # alone, so the same mistake one receiver over answered CPython — and eleven
 # more messages on both byte wrappers had no guard at all. None of those
 # sentences carries a call, a dunder or an operator, which is why the wording

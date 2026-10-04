@@ -108,7 +108,7 @@ def test_mod() -> None:
 
 def test_arithmetic_returns_notimplemented_for_foreign_operand() -> None:
     # A non-Int/Float operand must yield NotImplemented so Python can try the
-    # right operand's reflected dunder (proposal 115).
+    # right operand's reflected dunder.
     f = _ForeignNumber()
     assert Float(2.5).__add__(f) is NotImplemented
     assert Float(2.5).__sub__(f) is NotImplemented
@@ -305,7 +305,7 @@ def test_fromhex_roundtrips_with_hex() -> None:
     assert Float.fromhex(f.hex()) == f
 
 
-# --- Cross-POOP-type numeric equality (proposal 86) ---
+# --- Cross-POOP-type numeric equality ---
 
 
 def test_eq_with_int_same_value() -> None:
@@ -334,7 +334,7 @@ def test_divmod_with_int() -> None:
 
 
 def test_divmod_folds_boolean() -> None:
-    # bool is an int subclass: divmod(7.0, True) == (7.0, 0.0)
+    # `bool` is an int subclass: divmod(7.0, True) == (7.0, 0.0)
     assert Float(7.0).divmod(true) == Tuple(Float(7.0), Float(0.0))
 
 
@@ -364,7 +364,7 @@ _BAD: Any = List(Int(1), Int(2))
     ],
 )
 def test_float_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
-    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # A mandatory argument that carries no `_value` (a
     # List) must reach the underlying Python method raw and raise the faithful
     # exception, never leak the internal `#_value` name through dispatch.
     with pytest.raises(exc) as info:
@@ -414,7 +414,7 @@ def test_fromhex_under_the_bare_builtin_name() -> None:
 
 
 def test_fromhex_names_the_message_like_its_byte_twins() -> None:
-    # Proposal 52: `bad argument type for built-in operation` names neither the
+    # `bad argument type for built-in operation` names neither the
     # receiver, the message nor the argument, while `Bytes.fromhex` and
     # `ByteArray.fromhex` already answered `#fromhex expects a str, got an int`.
     with pytest.raises(TypeError, match="#fromhex expects a str"):

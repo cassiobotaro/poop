@@ -161,7 +161,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # that is neither the POOP name nor the cloak — and unstable across
         # runs, so no test could pin it and no example could show it. Printing
         # the bytes themselves would re-materialize an arbitrarily large
-        # buffer just to print it, which is the cost proposal 10 refused, so
+        # buffer just to print it, a cost already refused elsewhere, so
         # this summarizes and `hex()` shows the contents on request.
         return f"<memoryview of {self._value.nbytes} bytes>"
 

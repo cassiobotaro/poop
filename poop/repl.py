@@ -283,8 +283,7 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     # All four messages `no_subscript` composes. The snippet was `x[0]` alone,
     # a *load*, so a reader who wrote `xs[0] = 9`, was told to use
     # `obj.at_put(key, value)` and typed `:explain subscript` to learn more was
-    # shown the reading substitute — the one proposal 18 exists to stop that
-    # reader from being handed. `validate_all` collects every error and
+    # shown the reading substitute — the one a writer must never be handed. `validate_all` collects every error and
     # `_meta_explain` prints them all, so listing the spellings is the change.
     "subscript": "x[0]\nx[0] = 1\nx[1:2]\nx[1:2] = y",
     "import": "import os",

@@ -95,7 +95,7 @@ def test_super_init_still_runs_end_to_end() -> None:
 
 
 def test_every_occurrence_is_reported() -> None:
-    # Collecting, per proposal 10.
+    # Validators collect every error rather than raising the first.
     errors = Interpreter().validate_all(
         "class C:\n    def m(self):\n        x.__len__()\n        y.__mro__\n"
     )

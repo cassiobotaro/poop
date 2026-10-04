@@ -326,7 +326,7 @@ def test_mul_repeats() -> None:
 
 
 def test_mul_by_boolean_folds_to_int() -> None:
-    # bool is an int subclass in CPython: (1, 2) * True == (1, 2).
+    # `bool` is an int subclass in CPython: (1, 2) * True == (1, 2).
     assert Tuple(Int(1), Int(2)) * true == Tuple(Int(1), Int(2))
     assert Tuple(Int(1), Int(2)) * false == Tuple()
 
@@ -366,7 +366,7 @@ def test_rmul_returns_repeated_tuple() -> None:
 
 
 def test_ordering_with_foreign_operand_raises_typeerror() -> None:
-    # Proposal 164: a foreign operand answers CPython's TypeError, not a
+    # A foreign operand answers CPython's TypeError, not a
     # leaking AttributeError from a missing `other._items`.
     with pytest.raises(TypeError):
         _ = Tuple(Int(1)) < Int(2)

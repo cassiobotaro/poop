@@ -14,7 +14,7 @@ def _repeat_count(other: object) -> Any:
     The other half used to unwrap anything at all and hand it to the wrapped
     sequence's ``__mul__``, "so [it] raises CPython's faithful ``can't multiply
     sequence by non-int`` ``TypeError``". Faithful to CPython is exactly what
-    proposal 10 spent an item overturning, and that sentence names "sequence" —
+    the wording sweep overturned, and that sentence names "sequence" —
     a Python protocol, not a receiver — quotes the class the CPython way, and
     describes the operator as a type-level protocol rather than a message, which
     the wording sweep bans under `operator-as-protocol`:

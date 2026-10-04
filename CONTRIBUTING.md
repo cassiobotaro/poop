@@ -174,6 +174,10 @@ When `proposals.md` item N is implemented:
    types.
 4. Final commit message: `docs: close proposal N — <one-line decision>`.
 
+Code, tests and docs cite commits, not proposal numbers: a closed entry is
+deleted and numbering restarts once the backlog empties, so a number names
+nothing a reader can look up.
+
 ## Pull requests
 
 - Branch from `main`. Use a short, lowercase, hyphenated name

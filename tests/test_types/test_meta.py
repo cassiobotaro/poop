@@ -301,7 +301,7 @@ def test_class_side_attr_access_keeps_the_dunder_guard() -> None:
 
 
 def test_the_isinstance_ban_now_names_a_message_that_exists() -> None:
-    # item 14's contradiction, for the last of the messages it missed:
+    # A ban naming a substitute that does not exist, for the last such message:
     # `isinstance(Foo, T)` is banned and points at `Foo.is_instance(T)`.
     with pytest.raises(ValidationError, match="obj.is_instance"):
         Interpreter().run_source(
@@ -725,7 +725,7 @@ def test_a_read_refusal_read_off_the_metaclass_answers_itself() -> None:
     assert descriptor.refuses is True
 
 
-# Proposal 47. `_reject_builtin` was called from `set_attr` and `del_attr` and
+# `_reject_builtin` was called from `set_attr` and `del_attr` and
 # from nowhere else, so the plain assignment — the undotted twin — walked past
 # it. One intent, two spellings, and the refused one was the sanctioned one.
 @pytest.mark.parametrize(

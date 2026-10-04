@@ -81,9 +81,9 @@ class Range(_IterableMixin, Object):
         return Range(Int(sliced.start), Int(sliced.stop - sign), Int(sliced.step))
 
     # The three searches unwrap through `_searched`, not `_faithful`, and the
-    # difference is the whole of proposal 57. A `Range` holds raw Python ints —
-    # it is the only receiver that does — so a searched value is compared by
-    # equality against a native `int`, and a `Boolean` carries no `_value` for
+    # difference matters. A `Range` holds raw Python ints — it is the only
+    # receiver that does — so a searched value is compared by equality against
+    # a native `int`, and a `Boolean` carries no `_value` for
     # `_faithful` to read. It crossed intact, `_num_value` had no branch for the
     # raw `int` on the other side, and both directions declined: `includes(True)`
     # answered false on a range starting at 1, while `includes(1)` answered true

@@ -91,7 +91,8 @@ class Object(metaclass=PoopMeta):
     def __setattr__(self, name: str, value: Any) -> None:
         """The undotted twin of `set_attr`, refused by the same sentence.
 
-        Proposal 3's record quotes the sentence it closed word for word:
+        Commit 4ca259f, which gave `del_attr` its refusal, quotes the
+        sentence it closed:
         `"abc".del_attr("zzz")` answered `'str' object has no attribute 'zzz'
         and no __dict__ for setting new attributes`, "naming the dunder
         `_reject_dunder` will not even let a program spell". `set_attr` and

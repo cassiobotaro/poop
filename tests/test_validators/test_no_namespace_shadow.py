@@ -90,7 +90,7 @@ def test_vararg_with_protected_name_raises() -> None:
 
 
 def test_lambda_parameter_with_protected_name_raises() -> None:
-    # proposal 153: lambdas (POOP's block form) carry most user code, so
+    # Lambdas (POOP's block form) carry most user code, so
     # the shadowing hazard applies to them too.
     tree = ast.parse("f = lambda Try: Try")
     with pytest.raises(ValidationError, match="POOP namespace"):

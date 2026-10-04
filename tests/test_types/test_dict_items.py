@@ -275,7 +275,7 @@ def test_dir_hides_the_poop_own_set_internal() -> None:
     assert all(not name.startswith("_") for name in names)
 
 
-# --- proposal 3: any iterable for the algebraic operators, set-like only for
+# --- any iterable for the algebraic operators, set-like only for
 # the comparisons — and neither may leak `#_data` ---
 
 

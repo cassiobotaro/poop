@@ -334,8 +334,8 @@ def test_format_without_spec_returns_str() -> None:
 def test_format_int_with_hex_spec() -> None:
     assert Int(42).format(Str("x")) == Str("2a")
     assert Float(3.14159).format(Str(".2f")) == Str("3.14")
-    # Str overrides Object.format with str.format template semantics
-    # (proposal 151), so the "apply a spec to a string" case is written
+    # Str overrides Object.format with str.format template semantics,
+    # so the "apply a spec to a string" case is written
     # via the template form instead of Str("abc").format(Str(">5")).
     assert Str("{:>5}").format(Str("abc")) == Str("  abc")
 
@@ -490,7 +490,7 @@ def test_get_attr_does_not_wrap_the_default() -> None:
     assert Int(5).get_attr(Str("nonexistent"), sentinel) is sentinel
 
 
-# Proposal 48. `set_attr` and `del_attr` composed POOP's sentence; the plain
+# `set_attr` and `del_attr` composed POOP's sentence; the plain
 # assignment leaked CPython's, which carried a dunder, the quoted class spelling
 # `'str' object`, and advice about a `__dict__` the reader cannot inspect
 # because `no_dunder_attribute` refuses the name.

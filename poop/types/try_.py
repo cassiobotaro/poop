@@ -19,8 +19,8 @@ def _exception_kind(kind: object) -> Any:
     `except_` guarded its handler at the boundary and left the kind to
     `isinstance` inside `_execute`, so a quoted class name answered
     `isinstance() arg 2 must be a type, a tuple of types, or a union` — the
-    banned builtin spelt as the call replacing it, which proposal 10 closed on
-    all 15 receivers — and answered it only when the protected block *raised*.
+    banned builtin spelt as the call replacing it, which the wording sweep
+    closed on all 15 receivers — and answered it only when the protected block *raised*.
     The same mistake reported or said nothing depending on something else
     entirely, and saying nothing means the handler was never installed.
 

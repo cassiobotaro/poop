@@ -87,7 +87,7 @@ def test_dict_from_no_arg_returns_empty() -> None:
 
 
 def test_dict_from_kwargs() -> None:
-    # proposal 135: dict(a=1, b=2) keyword form.
+    # dict(a=1, b=2) keyword form.
     result = _poop_dict_from(a=Int(1), b=Int(2))
     expected = Dict()
     expected._data[Str("a")] = Int(1)
@@ -214,7 +214,7 @@ def test_dict_from_unsupported_type_raises() -> None:
 
 
 def test_dict_literal_with_unpacking_rewritten_to_merge() -> None:
-    # proposal 142: a `**` display is now rewritten to _poop_dict_merge.
+    # A `**` display is rewritten to _poop_dict_merge.
     tree = _transform("x = {**d, 'a': 1}")
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
@@ -225,7 +225,7 @@ def test_dict_literal_with_unpacking_rewritten_to_merge() -> None:
 
 def test_dict_merge_rejects_non_dict_part() -> None:
     # `{**a, **b}` merges POOP Dicts; spreading a non-Dict is a TypeError, not
-    # a silent AttributeError on the missing `_data`. Proposal 51 reworded it:
+    # a silent AttributeError on the missing `_data`. The sentence used to be
     # `cannot ** -unpack int into a dict display` carried a stray space and
     # "dict display", Python's grammar word for what POOP calls a literal.
     with pytest.raises(TypeError, match="a dict literal can only spread a mapping"):

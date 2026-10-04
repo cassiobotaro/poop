@@ -116,7 +116,7 @@ def test_no_class_answers_a_private_name() -> None:
         # Inherited from a mixin, which owns no builtin name of its own: cloaked
         # as `object`, the root's spelling, rather than as a private one.
         #
-        # `[1, 2].map()` used to sit here too. Proposal 46: the cloak's own
+        # `[1, 2].map()` used to sit here too. The cloak's own
         # justification is "it only renames the callee", and that holds where
         # the rename is true — `object` is a name a program can write, and
         # `object` does not answer `#map`. The block slots carry a sentinel
@@ -130,9 +130,9 @@ def test_no_class_answers_a_private_name() -> None:
         ("[1].iter().iter(1)", "object.iter()"),
         # `range`, `int`, `float`, `bool` and `enumerate` used to sit here for
         # the same reason `dict` did: the cloak made CPython's arity message
-        # name `range()` instead of `_poop_range()`. Proposal 44 gave all five
-        # (and `zip`, `object`, `slice`) the guard the other ten already had,
-        # so none of them reaches CPython's call machinery any more — see
+        # name `range()` instead of `_poop_range()`. All five (and `zip`,
+        # `object`, `slice`) were given the guard the other ten already had, so
+        # none of them reaches CPython's call machinery any more — see
         # `test_transformers/test_constructor_arity.py`.
     ],
 )

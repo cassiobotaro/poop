@@ -138,7 +138,7 @@ def test_int_from_non_string_with_base_raises() -> None:
 
 
 def test_int_from_boolean() -> None:
-    # proposal 154: int(True) -> 1, int(False) -> 0.
+    # int(True) -> 1, int(False) -> 0.
     assert _poop_int_from(true) == Int(1)
     assert _poop_int_from(false) == Int(0)
 

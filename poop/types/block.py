@@ -31,7 +31,7 @@ def _require_block(value: Any, role: str, hint: str) -> Any:
     one worth optimizing for: it takes a block that *answers* a manager, and
     passing the manager itself is the obvious first attempt.
 
-    The same argument proposal 2 settled for `With`: resolve what you need
+    The same argument already settled for `With`: resolve what you need
     before running anything, so the failure lands where the mistake was
     written rather than after a deferred block has had side effects.
     """
@@ -98,8 +98,8 @@ class Block(Object):
     def __get__(self, instance: Any, owner: type | None = None) -> Any:
         """A block found on a *class* binds to the receiver, as a method does.
 
-        `set_attr` on a class is sanctioned — proposal 2 refused it only for
-        POOP's own builtins, precisely so a program can extend the classes it
+        `set_attr` on a class is sanctioned — it is refused only for POOP's
+        own builtins, precisely so a program can extend the classes it
         defines — and the one thing a reader reaches for it with did not work:
         `C.set_attr("greet", lambda self: "hi")` then `C().greet()` answered
         `block expects 1 argument, got 0`, because the block was handed back

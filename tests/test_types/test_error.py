@@ -97,7 +97,7 @@ def test_explain_derives_the_label_when_none_is_given() -> None:
     assert explain(Int(1), "zzz").startswith("int does not understand")
 
 
-# Proposal 56. `class_`, `kind`, `class_name` and `__str__` were transparent;
+# `class_`, `kind`, `class_name` and `__str__` were transparent;
 # `is_instance` asked about the wrapper, so a handler that fired *because* the
 # error is a ValueError was told it is not one.
 def test_is_instance_answers_for_the_wrapped_exception() -> None:
@@ -155,7 +155,7 @@ def test_every_message_about_the_class_agrees_with_kind() -> None:
     assert kind.is_subclass(MIRRORS["Exception"]) is true
 
 
-# Proposal 58. `raise_`, `name` and `superclass` are class-side messages the
+# `raise_`, `name` and `superclass` are class-side messages the
 # mirror genuinely answers, and an `Error` refused all three under that class's
 # own name — a sentence `does_not_understand` built by sending `#name` to the
 # very class it then said did not understand `#name`.

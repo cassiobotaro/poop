@@ -57,7 +57,7 @@ def test_async_method_inside_class_passes() -> None:
 
 
 def test_nested_function_inside_method_raises() -> None:
-    # proposals.md item 7: a `def` nested inside a method is not a message to
+    # A `def` nested inside a method is not a message to
     # any object — its direct parent is the method, not a class. Smalltalk has
     # blocks (lambdas), not named local functions, so it is rejected.
     source = "class Foo:\n    def bar(self) -> None:\n        def helper() -> None:\n            pass"

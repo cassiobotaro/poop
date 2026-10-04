@@ -213,7 +213,7 @@ def test_reversed_dunder() -> None:
     assert next(reversed(keys)) == Str("b")
 
 
-# --- proposal 3: any iterable for the algebraic operators, set-like only for
+# --- any iterable for the algebraic operators, set-like only for
 # the comparisons — and neither may leak `#_data` ---
 
 

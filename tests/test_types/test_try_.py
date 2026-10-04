@@ -163,7 +163,7 @@ def test_try_except_after_run_does_not_retain_handler() -> None:
 
 
 def test_try_answers_the_protected_block_value() -> None:
-    # The whole point of proposal 5: `try: return f()` needs a substitute.
+    # The point of answering the block's value: `try: return f()` needs one.
     assert Try(lambda: 42).run() == 42
 
 
@@ -238,7 +238,7 @@ def test_try_refuses_a_kind_that_is_not_a_class() -> None:
     # The kind used to be stored untouched and first looked at by `isinstance`
     # inside `_execute`, which answered `isinstance() arg 2 must be a type, a
     # tuple of types, or a union` — the banned builtin spelt as the call that
-    # replaces it, which proposal 10 closed on all 15 receivers.
+    # replaces it. All 15 receivers now word it themselves.
     with pytest.raises(TypeError) as info:
         Try(lambda: none).except_(Str("ValueError"), lambda e: none)  # ty: ignore[invalid-argument-type]
     assert str(info.value) == "#except_ expects a class, got a str"

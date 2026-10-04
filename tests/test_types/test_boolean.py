@@ -275,7 +275,7 @@ def test_to_boolean_accepts_poop_boolean() -> None:
     assert to_boolean(false) is false
 
 
-# Arithmetic — bool behaves as int 1/0 (proposal 160)
+# Arithmetic — bool behaves as int 1/0
 
 
 def test_add_with_int() -> None:
@@ -327,7 +327,7 @@ def test_arithmetic_with_foreign_type_raises() -> None:
 
 
 def test_comparison_with_numeric_tower_folds_as_int() -> None:
-    # Proposal 165: bool is an int subclass — a Boolean orders/compares as 1/0
+    # `bool` is an int subclass — a Boolean orders/compares as 1/0
     # against the whole numeric tower, not just against other Booleans.
     assert true > Float(0.5)
     assert (false > Float(0.5)) is false
@@ -380,14 +380,14 @@ def test_reflected_op_with_operand_lacking_the_method_is_notimplemented() -> Non
 
 
 def test_boolean_answers_the_index_protocol() -> None:
-    # bool is an int subclass in CPython: [10, 20][True] is 20.
+    # `bool` is an int subclass in CPython: [10, 20][True] is 20.
     assert [10, 20][true] == 20
     assert [10, 20][false] == 10
     assert true.__index__() == 1
     assert false.__index__() == 0
 
 
-# the int-side messages — proposal 25
+# the int-side messages
 
 
 def test_the_int_side_messages_answer_what_cpython_answers() -> None:

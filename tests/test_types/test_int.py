@@ -93,7 +93,7 @@ def test_min_returns_first_on_tie() -> None:
 
 
 def test_min_max_accept_a_boolean() -> None:
-    # bool is an int subclass in CPython: min(1, True) == 1, max(0, True) is
+    # `bool` is an int subclass in CPython: min(1, True) == 1, max(0, True) is
     # True. Reading `other._value` used to answer "bool does not understand
     # #_value" instead.
     assert Int(1).min(true) == Int(1)
@@ -152,7 +152,7 @@ def test_mod() -> None:
 
 def test_arithmetic_returns_notimplemented_for_foreign_operand() -> None:
     # A non-Int/Float operand must yield NotImplemented so Python can try the
-    # right operand's reflected dunder (proposal 115).
+    # right operand's reflected dunder.
     f = _ForeignNumber()
     assert Int(2).__add__(f) is NotImplemented
     assert Int(2).__sub__(f) is NotImplemented
@@ -169,7 +169,7 @@ def test_reflected_add_reaches_foreign_radd() -> None:
 
 
 def test_mul_by_str_repeats_via_str_rmul() -> None:
-    # proposal 152: 3 * "ab" must answer Str("ababab"), not a corrupted Int.
+    # 3 * "ab" must answer Str("ababab"), not a corrupted Int.
     assert Int(3) * Str("ab") == Str("ababab")
 
 
@@ -301,7 +301,7 @@ def test_bitwise_xor() -> None:
 
 
 def test_bitwise_and_folds_boolean_as_one() -> None:
-    # bool is an int subclass: 5 & True == 1
+    # `bool` is an int subclass: 5 & True == 1
     assert Int(5) & true == Int(1)
     assert Int(5) & false == Int(0)
 
@@ -490,7 +490,7 @@ def test_from_bytes_roundtrips_with_to_bytes() -> None:
     assert Int.from_bytes(b, Str("big")) == n
 
 
-# --- Cross-POOP-type numeric equality (proposal 86) ---
+# --- Cross-POOP-type numeric equality ---
 
 
 def test_eq_with_float_same_value() -> None:
@@ -520,13 +520,13 @@ def test_arith_with_float_operand_promotes_to_float() -> None:
 
 
 def test_pow_with_modulus() -> None:
-    # 3-arg modular exponentiation (proposal 83).
+    # 3-arg modular exponentiation.
     assert Int(5).pow(Int(3), Int(7)) == Int(6)
     assert Int(2).__pow__(Int(10), Int(1000)) == Int(24)
 
 
 def test_ordering_with_foreign_operand_raises_typeerror() -> None:
-    # Proposal 164: ordering a foreign operand must answer CPython's TypeError,
+    # Ordering a foreign operand must answer CPython's TypeError,
     # not leak an AttributeError from a missing `other._value`.
     with pytest.raises(TypeError):
         _ = Int(2) < Str("x")
@@ -535,7 +535,7 @@ def test_ordering_with_foreign_operand_raises_typeerror() -> None:
 
 
 def test_equality_folds_boolean_as_int() -> None:
-    # Proposal 165: bool is an int subclass, so Int compares against Booleans.
+    # `bool` is an int subclass, so Int compares against Booleans.
     assert Int(1) == true
     assert Int(0) == false
     assert (Int(1) != true) is false
@@ -543,7 +543,7 @@ def test_equality_folds_boolean_as_int() -> None:
 
 
 def test_ordering_with_boolean_operand() -> None:
-    # Proposal 165: `Int(0) < True` is True (0 < 1).
+    # `Int(0) < True` is True (0 < 1).
     assert Int(0) < true
     assert Int(2) > true
 
@@ -570,7 +570,7 @@ _BAD: Any = List(Int(1), Int(2))
     ],
 )
 def test_int_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
-    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # A mandatory argument that carries no `_value` (a
     # List) must reach the underlying Python method raw and raise the faithful
     # exception, never leak the internal `#_value` name through dispatch.
     with pytest.raises(exc) as info:

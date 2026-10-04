@@ -45,7 +45,7 @@ def test_cli_exits_with_error_on_invalid_code(tmp_path: Path) -> None:
 
 
 def test_cli_missing_file_shows_clean_diagnostic(tmp_path: Path) -> None:
-    # proposal 137: an unreadable path is a user mistake, not a traceback.
+    # An unreadable path is a user mistake, not a traceback.
     missing = tmp_path / "nope.py"
     result = runner.invoke(app, [str(missing)])
     assert result.exit_code == 1

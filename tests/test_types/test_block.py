@@ -116,7 +116,7 @@ def test_block_arity_message_states_a_floor_for_a_variadic_block() -> None:
 
 def test_block_arity_message_leaves_keywords_to_the_keyword_refusal() -> None:
     # Was `block expects 1 argument, got 2`, counting the keyword as if it were
-    # positional. Proposal 45: the count is not what is wrong here — the block
+    # positional. The count is not what is wrong here — the block
     # has no `y` at all — and folding the two hid the fault whenever the numbers
     # happened to match. `_keyword_message` names it; the count sees positionals.
     with pytest.raises(
@@ -259,7 +259,7 @@ def test_a_private_name_is_not_wrapped() -> None:
     assert type(Block(lambda: none)._fn) is not MethodType
 
 
-# Proposal 43. `Object` compares by identity and `__getattribute__` builds a
+# `Object` compares by identity and `__getattribute__` builds a
 # fresh wrapper on every read, so the same method on the same receiver was not
 # equal to itself. CPython's bound method compares by `__self__` and `__func__`
 # precisely so a program can ask "is this the same callback?".
@@ -317,7 +317,7 @@ def test_a_block_literal_keeps_identity_equality() -> None:
     assert not bool(one == Block(lambda: 1))
 
 
-# Proposal 45. `__call__` handed `_arity_message` `len(args) + len(kwargs)`, so
+# `__call__` handed `_arity_message` `len(args) + len(kwargs)`, so
 # every keyword mistake was reported as a count mismatch whose count matched:
 # `block expects 1 argument, got 1`. Two equal numbers and a refusal.
 def test_an_unexpected_keyword_is_named() -> None:

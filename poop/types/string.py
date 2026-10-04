@@ -134,7 +134,7 @@ def _opt_text(chars: object, selector: str) -> Any:
 
 
 class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
-    """A string, and — since proposal 24 — a collection like any other.
+    """A string, and a collection like any other.
 
     `no_map`, `no_filter`, `no_all`, `no_any` and `no_loops` each name a
     message on the collection as the substitute, `_IterableMixin` supplies

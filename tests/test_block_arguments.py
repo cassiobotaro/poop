@@ -184,7 +184,7 @@ def test_an_absent_key_is_still_absent() -> None:
     )
 
 
-# Proposal 46. A missing block fell through to CPython's call machinery, which
+# A missing block fell through to CPython's call machinery, which
 # builds its sentence from the *function's* qualname — and the mixins are
 # cloaked as `object`, since no single builtin name is true for every wrapper
 # that inherits them. So `[1, 2].map()` blamed `object.map()`: a name a program

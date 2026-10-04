@@ -50,7 +50,7 @@ def test_includes_not_found() -> None:
 
 
 def test_includes_refuses_a_non_text_argument_in_poops_words() -> None:
-    # Was left to CPython as "the faithful TypeError". Proposal 52: `includes`
+    # Was left to CPython as "the faithful TypeError". `includes`
     # is the substitute `no_in` points at, and `'in <string>' requires string as
     # left operand, not int` quotes the banned operator in its Python spelling.
     with pytest.raises(TypeError, match="#includes expects a str"):
@@ -205,7 +205,7 @@ def test_endswith_false() -> None:
     assert Str("hello").endswith(Str("he")) is false
 
 
-# startswith/endswith with a tuple of prefixes — proposal 136
+# startswith/endswith with a tuple of prefixes
 
 
 def test_startswith_tuple_of_prefixes() -> None:
@@ -230,7 +230,7 @@ def test_endswith_tuple_with_non_str_raises() -> None:
         Str("abc").endswith(Tuple(Str("z"), Int(5)))
 
 
-# str.format template method — proposal 151
+# str.format template method
 
 
 def test_format_positional() -> None:
@@ -501,7 +501,7 @@ def test_slice_with_step() -> None:
 
 
 def test_slice_open_ended_with_none_stop() -> None:
-    # proposal 143: a POOP `none` stop means "to the end" (obj[2:]).
+    # A POOP `none` stop means "to the end" (obj[2:]).
     assert Str("hello").slice(Int(2), none) == Str("llo")
 
 
@@ -677,7 +677,7 @@ def test_rindex_with_start() -> None:
     assert Str("hello hello").rindex(Str("hello"), Int(0), Int(5)) == Int(0)
 
 
-# --- New: optional parameters (proposals 43-44, v1.1.2) ---
+# --- New: optional parameters ---
 
 
 def test_startswith_with_start() -> None:
@@ -707,7 +707,7 @@ def test_replace_with_poop_none_count() -> None:
 
 
 def test_ordering_with_foreign_operand_raises_typeerror() -> None:
-    # Proposal 164: a foreign operand answers CPython's TypeError, not a
+    # A foreign operand answers CPython's TypeError, not a
     # leaking AttributeError from a missing `other._value`.
     with pytest.raises(TypeError):
         _ = Str("a") < Int(1)
@@ -770,7 +770,7 @@ _BAD_INT: Any = Int(1)
     ],
 )
 def test_str_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
-    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # A mandatory argument that carries no `_value` (a
     # List) must reach the underlying Python method raw and raise the faithful
     # exception, never leak the internal `#_value` name through dispatch.
     with pytest.raises(exc) as info:
@@ -842,7 +842,7 @@ def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
     assert "_value" not in str(info.value)
 
 
-# the iteration protocol — proposal 24
+# the iteration protocol
 
 
 def test_do_visits_each_character() -> None:
@@ -958,7 +958,7 @@ def test_a_template_that_works_is_untouched() -> None:
     assert Str("{} and {b}").format(Int(1), b=Str("x")) == Str("1 and x")
 
 
-# Proposal 52. Three of `Str`'s own leaked the same shape, and one of them was
+# Three of `Str`'s own leaked the same shape, and one of them was
 # the sharpest sentence in the family: `includes` is the substitute `no_in`
 # points at, and its refusal quoted the banned operator in Python's spelling.
 def test_includes_does_not_quote_the_banned_operator() -> None:

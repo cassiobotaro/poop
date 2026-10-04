@@ -115,7 +115,7 @@ def test_str_from_bool_converts() -> None:
     assert _poop_str_from(false)._value == "False"
 
 
-# the decoding form, and the refusals around it — proposal 23
+# the decoding form, and the refusals around it
 
 
 def test_str_from_bytes_and_encoding_decodes() -> None:

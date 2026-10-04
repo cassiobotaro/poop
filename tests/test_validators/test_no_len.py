@@ -43,8 +43,7 @@ def test_method_named_len_is_not_blocked() -> None:
 
 
 def test_rebinding_len_is_blocked() -> None:
-    # proposal 145: a bare reference to a forbidden builtin in any
-    # position (here an assignment RHS) reopens the wrapper layer.
+    # A bare reference to a forbidden builtin in any position (here an assignment RHS) reopens the wrapper layer.
     tree = ast.parse("f = len")
     with pytest.raises(ValidationError, match="len"):
         NoLenValidator().validate(tree)

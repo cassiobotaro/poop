@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
 
 def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
-    """`slice(...)`, guarded. Proposal 9 recorded that `Slice(...)` *is* the
-    call, so unlike its siblings this one had no factory at all — and the
+    """`slice(...)`, guarded. `Slice(...)` *is* the call, so unlike its
+    siblings this one had no factory at all — and the
     refusal that leaked was the sharpest of the eight, naming `__init__`, a
     dunder `no_dunder_attribute` refuses, from a construct the program spelled
     without a dunder anywhere.

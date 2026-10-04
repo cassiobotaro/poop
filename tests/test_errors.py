@@ -119,7 +119,7 @@ def test_render_error_with_line_but_no_column_draws_no_caret() -> None:
     assert "d.at('zzz')" in text.plain
 
 
-# Proposal 60. `_caret_column` did two conversions and stated the rule that
+# `_caret_column` did two conversions and stated the rule that
 # decides the third: a tab "is one character wide to `len` and eight to the
 # reader". A CJK ideograph is one character wide to `len` and two, so the caret
 # fell a column short per ideograph — and a combining mark is one character and

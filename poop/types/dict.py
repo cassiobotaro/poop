@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 class Dict(_ValueEqMixin, _IterableMixin, Object):
-    """A mapping, and — since proposal 24 — a collection like any other.
+    """A mapping, and a collection like any other.
 
     The mixin's messages iterate what CPython iterates, the keys, so
     `d.map(block)` matches `map(f, d)` and `d.items().map(...)` is the

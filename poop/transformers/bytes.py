@@ -26,7 +26,7 @@ def _poop_bytes_from(*args: object, **kwargs: object) -> Bytes:
     receiver away answered POOP's sentence. `bytes("é", "ascii")` leaked
     CPython's `codec` report under a class no program can spell, and
     `bytes("ab", 5)` — a wrong-*typed* encoding — was silently *ignored*,
-    falling back to utf-8, the shape proposal 14 closed for `encode` itself.
+    falling back to utf-8, the shape already closed for `encode` itself.
 
     The encoding is required, as CPython requires it: without one there is no
     answer to give, only a guess about what the text means as bytes.

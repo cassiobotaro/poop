@@ -304,7 +304,7 @@ def test_slice_with_step() -> None:
 
 
 def test_slice_open_ended() -> None:
-    # proposal 143: open-ended slice with a POOP `none` stop. POOP's Range
+    # Open-ended slice with a POOP `none` stop. POOP's Range
     # is inclusive, so range(0, 5) is [0, 1, 2, 3, 4, 5].
     result = _range(0, 5).slice(Int(2), none)
     assert result == Range(Int(2), Int(5))
@@ -325,7 +325,7 @@ def test_step_zero_raises_at_construction() -> None:
 
 
 def test_range_wrong_type_args_are_faithful_not_value_leaks() -> None:
-    # proposals.md item 9: a non-`_value` argument (a List) must reach the
+    # A non-`_value` argument (a List) must reach the
     # underlying range method raw. `count` answers 0 by equality scan (as in
     # Python), `index` raises ValueError, `at` raises TypeError — none leak the
     # internal `#_value` name.
@@ -369,7 +369,7 @@ def test_sorted_answers_a_list() -> None:
     assert _range(1, 3).sorted() == List(Int(1), Int(2), Int(3))
 
 
-# Proposal 57. A `Range` holds raw Python ints — the only receiver that does —
+# A `Range` holds raw Python ints — the only receiver that does —
 # so a searched `Boolean` used to cross into the native `range` intact and
 # compare unequal to every element, while `at` and `__init__` folded it because
 # they route through `_index`. The three searches now fold it too, so a boolean

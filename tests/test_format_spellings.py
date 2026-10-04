@@ -47,8 +47,7 @@ def test_the_two_spellings_agree(value: str, spec: str) -> None:
     template = _answer(f'"{{0:{spec}}}".format({value})')
     if message == "ok" or template == "ok":
         # `Str` is the documented exception — its `format` is the template
-        # surface, which proposal 54 is about. Everything else must fail or
-        # succeed together.
+        # surface. Everything else must fail or succeed together.
         return
     assert message == template, (
         f'({value}).format({spec!r}) and "{{0:{spec}}}".format({value}) '

@@ -57,7 +57,7 @@ _FORBIDDEN = {
     # the suite ran and passed. `object of type 'int'` names the type-level
     # protocol POOP rewrites everywhere else, and "format code" / "format
     # specifier" describe a spec the reader wrote inside a template.
-    # Proposal 52: CPython's *argument* report. Nothing in it is a call, a
+    # CPython's *argument* report. Nothing in it is a call, a
     # dunder or an operator either, so about forty receiver/message sites ran
     # under the patterns above and passed.
     "a CPython argument report": re.compile(
@@ -153,30 +153,30 @@ _FAILING = [
     '[1, "a"].min()',
     '[1, "a"].max()',
     '("a" + 1)',
-    # Proposal 61: one message, two syntaxes, and only the template was worded.
+    # One message, two syntaxes, and only the template was worded.
     '(2.5).format("d")',
     '(5).format("zzz")',
     '"{0:d}".format(2.5)',
     '[1].format(">6")',
     '"{0:>6}".format([1])',
-    # Proposal 55: `unhashable type: 'list'` — no call, no dunder, no operator,
+    # `unhashable type: 'list'` — no call, no dunder, no operator,
     # and no reason either.
     "[1, 2].hash()",
     '{"a": 1}.keys().hash()',
     'memoryview(bytearray(b"ab")).hash()',
-    # Proposal 50: `*` was the one operator still worded by CPython.
+    # `*` was the one operator still worded by CPython.
     '([1, 2] * "a")',
     '("a" * "b")',
     '(b"ab" * 2.5)',
     "xs = [1]\nxs *= 'a'",
-    # Proposal 51: a spread into a literal named a constructor call the reader
+    # A spread into a literal named a constructor call the reader
     # never wrote.
     "[*5]",
     "(*5,)",
     "{*5}",
     "{**5}",
-    # Proposal 48: the assignment leaked the `__dict__` sentence proposal 3
-    # removed from `set_attr` and `del_attr`.
+    # The assignment leaked the `__dict__` sentence already removed from
+    # `set_attr` and `del_attr`.
     '"abc".x = 5',
     "[1, 2].x = 5",
     '(1 + "a")',
@@ -286,7 +286,7 @@ def test_the_reported_class_is_one_a_program_can_spell(source: str) -> None:
     named in the report for every unknown selector in the language — while the
     handler that caught it was told `AttributeError` and `MessageNotUnderstood`
     itself answered `NameError: name ... is not defined`. One failure under two
-    names, which is the disagreement proposal 16 closed for `Unicode*`.
+    names, the same disagreement already closed for the `Unicode*` family.
     """
     reported = _failure(source).split(":", 1)[0]
     assert reported in MIRRORS, f"{source!r} reported {reported!r}, which is unnamable"

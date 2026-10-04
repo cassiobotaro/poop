@@ -172,7 +172,7 @@ def test_displayhook_none_prints_nothing(capsys: pytest.CaptureFixture[str]) -> 
 def test_displayhook_poop_none_prints_nothing(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # proposal 125: `.print()` answers POOP none, which must not echo.
+    # `.print()` answers POOP none, which must not echo.
     repl, _ = _repl()
     repl._displayhook(none)
     assert capsys.readouterr().out == ""
@@ -787,10 +787,10 @@ def _reported_literals() -> list[str]:
 
 def test_every_message_a_validator_composes_is_explained() -> None:
     # Reachability is not coverage. `no_subscript` grew a second message for a
-    # *store* (proposal 18) and the `subscript` snippet stayed `x[0]`, a load —
-    # so the reader who wrote `xs[0] = 9`, was told to use `obj.at_put(key,
-    # value)` and typed `:explain subscript` was shown the *reading*
-    # substitute, which is the one that proposal exists to stop them getting.
+    # *store* and the `subscript` snippet stayed `x[0]`, a load — so the
+    # reader who wrote `xs[0] = 9`, was told to use `obj.at_put(key, value)`
+    # and typed `:explain subscript` was shown the *reading* substitute, which
+    # is the one the second message exists to stop them getting.
     interp = Interpreter()
     reported = {
         error.args[0]

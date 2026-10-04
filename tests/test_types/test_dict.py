@@ -400,7 +400,7 @@ def test_fromkeys_empty_keys() -> None:
     assert result.len() == Int(0)
 
 
-# --- New: explicit default for pop (proposal 32, v1.2.0) ---
+# --- New: explicit default for pop ---
 
 
 def test_pop_with_explicit_default() -> None:
@@ -410,7 +410,7 @@ def test_pop_with_explicit_default() -> None:
     assert d.pop(Int(1), Str("missing")) == Int(10)
 
 
-# --- Dict | merge (proposal 89, Python 3.9+) ---
+# --- Dict | merge (Python 3.9+) ---
 
 
 def test_or_merges_two_dicts() -> None:
@@ -444,7 +444,7 @@ def test_or_with_non_dict_returns_notimplemented() -> None:
 
 
 def test_setdefault_without_default_uses_none() -> None:
-    # Proposal 166: CPython defaults the fill value to None — `d.setdefault(k)`
+    # CPython defaults the fill value to None — `d.setdefault(k)`
     # returns `none` and stores `k: none`.
     d = Dict()
     assert d.setdefault(Str("x")) is none
@@ -549,7 +549,7 @@ def test_reversed_answers_the_keys_in_reverse() -> None:
     assert rev.next() == Int(1)
 
 
-# the iteration protocol over the keys — proposal 24
+# the iteration protocol over the keys
 
 
 def test_map_and_filter_run_over_the_keys() -> None:

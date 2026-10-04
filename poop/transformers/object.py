@@ -51,8 +51,8 @@ class ObjectTransformer(BaseTransformer):
     class and a bare `Object` was a `NameError` — the capital name was
     accepted in exactly one syntactic position, for a name bound nowhere.
     Every other lowercase builtin has had a `Name`-position rewrite all along;
-    `object` joined them in proposal 13, and `Object` joins here so the POOP
-    spelling resolves everywhere the Python one does.
+    `object` joined them first, and `Object` joins here so the POOP spelling
+    resolves everywhere the Python one does.
 
     Binds only the call-position factory: `ClassTransformer` already binds
     `_poop_object` for the implicit base, and the namespace build rejects a

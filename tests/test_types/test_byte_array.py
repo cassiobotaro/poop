@@ -93,7 +93,7 @@ def test_includes_false() -> None:
 
 
 def test_includes_refuses_a_non_bytes_argument_in_poops_words() -> None:
-    # Proposal 52: was left to CPython's `a bytes-like object is required, not
+    # Was left to CPython's `a bytes-like object is required, not
     # 'list'` — a sentence with no receiver, no message and no substitute, and
     # one the wording sweep could not see.
     ba = ByteArray(bytearray(b"hi"))
@@ -598,7 +598,7 @@ def test_mul_repeats() -> None:
 
 
 def test_mul_by_boolean_folds_to_int() -> None:
-    # bool is an int subclass in CPython: bytearray(b"ab") * True == b"ab".
+    # `bool` is an int subclass in CPython: bytearray(b"ab") * True == b"ab".
     assert ByteArray(bytearray(b"ab")) * true == ByteArray(bytearray(b"ab"))
     assert ByteArray(bytearray(b"ab")) * false == ByteArray(bytearray())
 
@@ -675,7 +675,7 @@ def test_rmul_by_boolean_folds_to_int() -> None:
     assert true * ByteArray(bytearray(b"ab")) == ByteArray(bytearray(b"ab"))
 
 
-# --- New: optional parameters (proposals 41-44, v1.1.2) ---
+# --- New: optional parameters ---
 
 
 def test_split_with_maxsplit() -> None:
@@ -873,7 +873,7 @@ _BAD: Any = List(Int(1), Int(2))
     ],
 )
 def test_byte_array_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
-    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # A mandatory argument that carries no `_value` (a
     # List) must reach the underlying Python method raw and raise the faithful
     # exception, never leak the internal `#_value` name through dispatch.
     with pytest.raises(exc) as info:
@@ -919,7 +919,7 @@ def test_at_and_at_put_accept_a_boolean_index() -> None:
     assert ba.at(Int(1)) == Int(99)
 
 
-# startswith/endswith with a tuple of prefixes — proposal 22
+# startswith/endswith with a tuple of prefixes
 
 
 def _ba(data: bytes) -> ByteArray:
