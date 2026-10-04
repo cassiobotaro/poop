@@ -17,38 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 7. Ordering is written once; arithmetic is written 39 times
-
-`_OrderedMixin` and `_NumericCompareMixin` each state their rule once and pass
-the operator in: `return self._compare(other, operator.lt)`. The arithmetic
-next to them was not given the same treatment:
-
-```python
-def __add__(self, other: object) -> Int | Float:
-    from poop.types.float import Float
-
-    if not isinstance(other, Int | Float):
-        return NotImplemented
-    if isinstance(other, Float):
-        return Float(self._value + other._value)
-    return Int(self._value + other._value)
-```
-
-`Int` repeats that body for `-`, `*`, `//` and `%` with one character changed,
-then a four-line body ten times for `<<`, `>>`, `&`, `|`, `^` and their
-reflections. `Float` has six identical bodies, `Complex` ten (five operators,
-each forward and reflected), `_SetAlgebraMixin` eight. 39 methods in four
-shapes.
-
-In `Int`, each copy also runs `from poop.types.float import Float` on every
-call: the `int ↔ float` cycle is paid once per operator rather than once.
-
-**Fix.** One helper per shape, taking the operator from `operator`, with each
-dunder a one-line call to it — exactly what `_OrderedMixin` does. The dunders
-stay as named methods, so `cloak` and `ty` see what they see now.
-
----
-
 ### 8. `Map`, `Filter`, `Zip` and `Enumerate` each rebuild the same skeleton
 
 Each of the four declares `_iter` and `_peeked`, defines a `_materialize` that
