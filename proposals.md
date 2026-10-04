@@ -17,27 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 12. 80 annotation-only imports are imported at runtime
-
-`CONTRIBUTING.md`: "Imports needed exclusively for type annotations go inside
-an `if TYPE_CHECKING:` block at the top of the module — never function-local,
-never alongside runtime imports." Ruff's `TC` rules check that, and they are
-not in `select`. Over `poop/` they report 80: 65 standard-library imports
-(mostly `collections.abc.Callable` and `Iterator`), 11 first-party, 1
-third-party and 3 `cast` targets.
-
-Trialled with `ruff check --select TC --fix --unsafe-fixes`. One import must
-stay: `poop/cli.py`'s `Path`, because typer reads `main`'s annotations at
-runtime — moving it fails 19 tests in `tests/test_cli.py` with `NameError:
-name 'Path' is not defined`. With that file exempt the suite and `ty` pass;
-the 56 import blocks the move unsorts are fixed by `ruff check --fix`.
-
-**Fix.** Add `TC` to `select`, apply the fix, and exempt `poop/cli.py` with
-the reason stated, as the other per-file ignores are. This is what the closed
-item about `PLC0415` did for the other half of the same paragraph.
-
----
-
 ### 13. Comments and docs that describe a language POOP no longer is
 
 Each of these states something the code next to it contradicts.
