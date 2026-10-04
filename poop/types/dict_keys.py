@@ -1,7 +1,12 @@
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import a_collection
-from poop.types._dict_view import _DictView, _elements, _set_like_elements
+from poop.types._dict_view import (
+    _DictView,
+    _elements,
+    _operand,
+    _set_like_elements,
+)
 from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
@@ -49,28 +54,52 @@ class DictKeys(_DictView, name="dict_keys"):
         )
 
     def __or__(self, other: object) -> Set:
-        return Set(*(self._dict._data.keys() | _elements(other)))
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*(self._dict._data.keys() | raw))
 
     def __ror__(self, other: object) -> Set:
-        return Set(*(_elements(other) | self._dict._data.keys()))
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*(raw | self._dict._data.keys()))
 
     def __and__(self, other: object) -> Set:
-        return Set(*(self._dict._data.keys() & _elements(other)))
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*(self._dict._data.keys() & raw))
 
     def __rand__(self, other: object) -> Set:
-        return Set(*(_elements(other) & self._dict._data.keys()))
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*(raw & self._dict._data.keys()))
 
     def __sub__(self, other: object) -> Set:
-        return Set(*(self._dict._data.keys() - _elements(other)))
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*(self._dict._data.keys() - raw))
 
     def __rsub__(self, other: object) -> Set:
-        return Set(*(_elements(other) - self._dict._data.keys()))
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*(raw - self._dict._data.keys()))
 
     def __xor__(self, other: object) -> Set:
-        return Set(*(self._dict._data.keys() ^ _elements(other)))
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*(self._dict._data.keys() ^ raw))
 
     def __rxor__(self, other: object) -> Set:
-        return Set(*(_elements(other) ^ self._dict._data.keys()))
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*(raw ^ self._dict._data.keys()))
 
     def __eq__(self, other: object) -> Boolean:
         # Equality answers false for a non-set-like operand rather than

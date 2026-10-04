@@ -243,6 +243,11 @@ _OPERANDS = [
     "range(2)",
     "1 + 2j",
     "(lambda: 1)",
+    # The set-like views carry `|`, `&`, `-` and `^` of their own, in both
+    # directions, and were on neither side of any pair here.
+    '{"a": 1}.keys()',
+    '{"a": 1}.items()',
+    '{"a": 1}.values()',
 ]
 
 
@@ -251,6 +256,30 @@ _OPERANDS = [
 def test_no_operator_answers_a_forbidden_construct(operator: str, left: str) -> None:
     for right in _OPERANDS:
         source = f"({left} {operator} {right})"
+        try:
+            Interpreter().run_source(source + "\n")
+        except PoopError as exc:
+            message = str(exc)
+            named = [
+                construct
+                for construct, pattern in _FORBIDDEN.items()
+                if pattern.search(message)
+            ]
+            assert named == [], f"{source!r} answered {message!r}, naming {named}"
+
+
+# `xs += 5` is its own dunder, so the binary pairs above never reach it — the
+# one augmented line in `_FAILING` was `*=`, which is how `+=` on a list kept
+# CPython's sentence.
+@pytest.mark.parametrize(
+    "operator", [op for op in _OPERATORS if op not in ("<", "<=", ">", ">=")]
+)
+@pytest.mark.parametrize("left", _OPERANDS)
+def test_no_augmented_operator_answers_a_forbidden_construct(
+    operator: str, left: str
+) -> None:
+    for right in _OPERANDS:
+        source = f"xs = {left}\nxs {operator}= {right}"
         try:
             Interpreter().run_source(source + "\n")
         except PoopError as exc:

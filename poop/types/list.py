@@ -1,4 +1,5 @@
 import builtins
+from collections.abc import Iterable
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
@@ -26,7 +27,7 @@ from poop.types.object import Object
 from poop.types.slice import Slice, _resolve_py_slice
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Callable, Iterator
 
     from poop.types._index import Index
     from poop.types.boolean import Boolean
@@ -103,6 +104,10 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __rmul__ = __mul__
 
     def __iadd__(self, other: Iterable[Object]) -> Self:
+        # Declined rather than guarded: `xs += 5` is an operator, and its
+        # refusal is the one `xs + 5` already gives.
+        if not isinstance(other, Iterable):
+            return NotImplemented
         self._items.extend(other)
         return self
 

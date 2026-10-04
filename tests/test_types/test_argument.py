@@ -179,3 +179,21 @@ def test_the_guarded_affixes_still_answer() -> None:
     assert Str("ab").endswith(Tuple(Str("z"), Str("b"))) == true
     assert Bytes(b"ab").startswith(Tuple(Bytes(b"z"), Bytes(b"a"))) == true
     assert ByteArray(bytearray(b"ab")).endswith(Bytes(b"b")) == true
+
+
+@pytest.mark.parametrize(
+    ("source", "wanted"),
+    [
+        ('{"a": 1}.keys() | 5', "dict_keys does not understand #| with an int"),
+        ('5 & {"a": 1}.keys()', "int does not understand #& with a dict_keys"),
+        ('{"a": 1}.items() ^ 5', "dict_items does not understand #^ with an int"),
+        ('5 - {"a": 1}.items()', "int does not understand #- with a dict_items"),
+        ("xs = [1]\nxs += 5", "list does not understand #+= with an int"),
+    ],
+)
+def test_an_operator_declines_a_scalar_where_a_message_refuses_one(
+    source: str, wanted: str
+) -> None:
+    # An operator's refusal is the operator's sentence, not `a_collection`'s —
+    # and not `'int' object is not iterable`.
+    assert f"TypeError: {wanted}" in _failure(source)
