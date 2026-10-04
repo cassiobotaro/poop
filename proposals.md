@@ -17,23 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 11. Three helpers that always raise are annotated `-> None`
-
-`_refuse`, `_refuse_instance_side` and `_refuse_native` in `poop/types/meta.py`
-end in an unconditional `raise` and are annotated `-> None`. Their twins in
-`exceptions.py` (`_refuse_python_attribute`, `refuse`) say `-> Never`, and so
-does `PoopMeta.raise_`, a few lines from the three.
-
-The difference is visible to a reader and to the tools. `PoopMeta.mro` returns
-a value on one branch and calls `_refuse_native` on the other, so it looks like
-it can fall off the end and answer `None`; ruff's `RET503` reports exactly
-that.
-
-**Fix.** `-> Never` on the three. Trialled: `ty`, ruff and the suite pass, and
-`RET503` goes quiet without a `noqa`.
-
----
-
 ### 12. 80 annotation-only imports are imported at runtime
 
 `CONTRIBUTING.md`: "Imports needed exclusively for type annotations go inside
