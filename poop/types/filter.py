@@ -1,8 +1,10 @@
-from collections.abc import Callable, Iterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from poop.types._iterator_base import _LazyView
 from poop.types.exceptions import MIRRORS
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
 
 
 class Filter(_LazyView[Any], name="filter"):

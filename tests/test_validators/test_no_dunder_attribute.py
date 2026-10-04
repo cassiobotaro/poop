@@ -1,6 +1,6 @@
 import ast
 import re
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -12,6 +12,9 @@ from poop.validators.no_dunder_attribute import (
     NoDunderAttributeValidator,
     dunder_message,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _validate(source: str) -> None:

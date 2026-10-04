@@ -1,4 +1,3 @@
-import ast
 from typing import TYPE_CHECKING
 
 from poop.errors import TransformError, ValidationError
@@ -8,6 +7,8 @@ from poop.transformers import DEFAULT_NAMESPACE, DEFAULT_TRANSFORMERS
 from poop.validators import DEFAULT_VALIDATORS
 
 if TYPE_CHECKING:
+    import ast
+
     from poop.transformers import Transformer
     from poop.validators import Validator
 

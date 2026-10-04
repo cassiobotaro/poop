@@ -1,9 +1,12 @@
-import ast
+from typing import TYPE_CHECKING
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, name_at
 from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean, false, to_boolean, true
+
+if TYPE_CHECKING:
+    import ast
 
 
 def _poop_bool_from(*args: object, **kwargs: object) -> Boolean:

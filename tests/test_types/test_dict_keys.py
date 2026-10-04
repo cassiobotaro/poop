@@ -1,5 +1,5 @@
 import operator
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -15,6 +15,9 @@ from poop.types.list import List
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.set import Set
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _make() -> Dict:

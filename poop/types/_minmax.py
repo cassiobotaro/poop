@@ -7,7 +7,6 @@ a module its own callers sit underneath. Its own home has no POOP imports at
 all, which is what lets all five reach it from the top of the file.
 """
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from poop.types._argument import a_key
@@ -17,6 +16,8 @@ from poop.types.exceptions import MIRRORS
 if TYPE_CHECKING:
     # Name only — importing `none` at runtime would put this module back under
     # the callers it has to stay above.
+    from collections.abc import Callable
+
     from poop.types.none import NoneClass
 
 

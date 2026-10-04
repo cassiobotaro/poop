@@ -11,13 +11,14 @@ mismatch raises CPython's faithful ``TypeError`` instead of leaking an
 """
 
 import operator
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
 from poop.types._sentinel import NOT_NUMERIC
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.boolean import Boolean
 
 

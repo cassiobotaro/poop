@@ -8,7 +8,6 @@ import textwrap
 from contextlib import contextmanager, suppress
 from functools import cache
 from pathlib import Path
-from types import ModuleType
 from typing import TYPE_CHECKING
 
 from rich.columns import Columns
@@ -24,6 +23,13 @@ from poop.types.int import Int
 from poop.types.none import NoneClass
 from poop.types.string import Str
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Iterator
+    from types import ModuleType
+
+    from poop.interpreter import Interpreter
+    from poop.validators import Validator
+
 
 # Imported once, here: a build without it (Windows ships none) gets a REPL
 # with no completion or history rather than one that fails. Each of the three
@@ -36,12 +42,6 @@ def _optional_readline() -> ModuleType | None:
 
 
 _readline = _optional_readline()
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
-
-    from poop.interpreter import Interpreter
-    from poop.validators import Validator
 
 _HISTORY_FILE = Path.home() / ".poop_history"
 _HISTORY_MAX = 1000

@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, final
 
 from poop.types._argument import a_block, no_arguments
@@ -7,6 +6,8 @@ from poop.types.boolean import false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.boolean import Boolean
 
 

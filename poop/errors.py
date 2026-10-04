@@ -1,11 +1,14 @@
 import re
 import unicodedata
+from typing import TYPE_CHECKING
 
-from rich.console import Console
 from rich.syntax import Syntax
 from rich.text import Text
 
 from poop.console import in_colour
+
+if TYPE_CHECKING:
+    from rich.console import Console
 
 
 class PoopError(Exception):

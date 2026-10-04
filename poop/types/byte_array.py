@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._alias import wrapped_instance
@@ -27,6 +26,8 @@ from poop.types.object import Object
 from poop.types.string import Str
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from poop.types._index import Index
     from poop.types.none import NoneClass
 

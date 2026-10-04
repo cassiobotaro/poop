@@ -49,14 +49,16 @@ answer as the subclass. What the `__dict__` read was protecting is kept
 explicitly: a subclass that declares its own `__init__` is built by it.
 """
 
-from collections.abc import Callable
 from copy import copy
 from itertools import takewhile
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
 from poop.types.exceptions import MIRRORS
 from poop.types.meta import PoopMeta
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _payload_slots(cls: type) -> tuple[str, ...]:

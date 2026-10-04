@@ -1,11 +1,10 @@
 import operator
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from poop.types.boolean import Boolean
     from poop.types.object import Object

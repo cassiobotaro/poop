@@ -1,16 +1,17 @@
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._dict_view import _DictView, _elements, _set_like_elements
 from poop.types.boolean import false, to_boolean
 from poop.types.dict_item_iterator import DictItemIterator
 from poop.types.dict_reverse_item_iterator import DictReverseItemIterator
-from poop.types.object import Object
 from poop.types.set import Set
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types.boolean import Boolean
+    from poop.types.object import Object
 
 
 @final

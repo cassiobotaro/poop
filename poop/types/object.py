@@ -1,5 +1,4 @@
 import builtins
-from collections.abc import Callable
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Self
 
@@ -10,6 +9,8 @@ from poop.types._selectors import explain, is_dunder, is_message
 from poop.types.meta import PoopMeta
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.boolean import Boolean
     from poop.types.int import Int
     from poop.types.list import List

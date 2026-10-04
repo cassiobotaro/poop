@@ -1,5 +1,4 @@
-from collections.abc import Callable
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._argument import a_class
 from poop.types._cloak import cloak
@@ -9,6 +8,9 @@ from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _exception_kind(kind: object) -> Any:

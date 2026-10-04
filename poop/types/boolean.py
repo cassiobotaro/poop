@@ -1,5 +1,4 @@
 import builtins
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast, final
 
 from poop.types._argument import a_block, no_arguments, text_like
@@ -9,6 +8,8 @@ from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.bytes import Bytes
     from poop.types.complex import Complex
     from poop.types.float import Float

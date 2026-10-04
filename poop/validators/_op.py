@@ -1,9 +1,12 @@
 import ast
-from collections.abc import Callable, Mapping
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from poop.errors import ValidationError
 from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    from poop.errors import ValidationError
 
 type OpNode = ast.UnaryOp | ast.BoolOp | ast.Compare
 

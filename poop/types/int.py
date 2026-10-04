@@ -1,6 +1,5 @@
 import builtins
 import operator
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from poop.types._alias import wrapped_instance
@@ -21,6 +20,8 @@ from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.bytes import Bytes
     from poop.types.float import Float
     from poop.types.none import NoneClass
@@ -126,7 +127,7 @@ class Int(_NumericCompareMixin, Object):
         return Bytes(
             self._value.to_bytes(
                 _opt_int(length, 1),
-                cast(Literal["little", "big"], byte_order(byteorder)),
+                cast("Literal['little', 'big']", byte_order(byteorder)),
                 signed=_unwrap_bool(signed, False),
             )
         )
@@ -143,7 +144,7 @@ class Int(_NumericCompareMixin, Object):
             cls,
             int.from_bytes(
                 _faithful(b),
-                cast(Literal["little", "big"], byte_order(byteorder)),
+                cast("Literal['little', 'big']", byte_order(byteorder)),
                 signed=_unwrap_bool(signed, False),
             ),
         )

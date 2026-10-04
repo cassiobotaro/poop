@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._cloak import cloak
@@ -11,6 +10,8 @@ from poop.types.int import Int
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types.boolean import Boolean
 
 _frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name

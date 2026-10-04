@@ -1,7 +1,10 @@
-import ast
+from typing import TYPE_CHECKING
 
 from poop.validators.base import CollectingValidator, ErrorCollector
 from poop.validators.no_dunder_attribute import dunder_message
+
+if TYPE_CHECKING:
+    import ast
 
 
 class _Visitor(ErrorCollector):

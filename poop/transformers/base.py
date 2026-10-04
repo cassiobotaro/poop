@@ -1,8 +1,10 @@
 import ast
-from collections.abc import Iterable
-from typing import Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 from poop.types.exceptions import MIRRORS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class Transformer(Protocol):

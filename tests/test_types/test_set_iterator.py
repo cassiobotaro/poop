@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poop.types.int import Int
-from poop.types.object import Object
 from poop.types.set import Set
 from poop.types.set_iterator import SetIterator
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def test_iter_returns_set_iterator() -> None:

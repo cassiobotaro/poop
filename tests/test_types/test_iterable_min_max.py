@@ -5,8 +5,7 @@ Mirrors Python's `min(iterable, *, key=None, default=...)`. Lives on
 ByteArray, MemoryView, Enumerate, and Zip all get it for free.
 """
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -26,6 +25,9 @@ from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 from poop.types.zip import Zip
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _ints(*values: int) -> list[Int]:

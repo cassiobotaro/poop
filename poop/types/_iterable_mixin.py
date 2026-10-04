@@ -1,7 +1,6 @@
 import builtins
 from abc import abstractmethod
 from collections import deque
-from collections.abc import Callable, Iterator
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, Any
 
@@ -9,6 +8,8 @@ from poop.types._argument import a_block, a_key
 from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
     from poop.types.boolean import Boolean
     from poop.types.enumerate import Enumerate
     from poop.types.filter import Filter

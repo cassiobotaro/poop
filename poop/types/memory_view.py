@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from poop.types._argument import _opt_stop, a_bound
@@ -17,6 +16,8 @@ from poop.types.slice import _resolve_py_slice
 from poop.types.string import Str
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
@@ -151,7 +152,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
 
     def tobytes(self, order: Str | NoneClass | None = None) -> Bytes:
         return Bytes(
-            self._value.tobytes(cast(Literal["C", "F", "A"], _unwrap(order, "C")))
+            self._value.tobytes(cast("Literal['C', 'F', 'A']", _unwrap(order, "C")))
         )
 
     def __str__(self) -> str:

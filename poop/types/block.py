@@ -1,7 +1,5 @@
-from collections.abc import Callable
 from functools import partial
 from inspect import Parameter, signature
-from types import MethodType
 from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._argument import a_block
@@ -13,6 +11,9 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import MethodType
+
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 

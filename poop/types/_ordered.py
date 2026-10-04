@@ -12,13 +12,14 @@ anything, in CPython as here.
 """
 
 import operator
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._cloak import cloak
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.boolean import Boolean
 
 

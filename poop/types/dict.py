@@ -1,5 +1,4 @@
 import builtins
-from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
@@ -23,6 +22,8 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Iterator
+
     from poop.types.boolean import Boolean
     from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
     from poop.types.none import NoneClass

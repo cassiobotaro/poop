@@ -1,8 +1,11 @@
-import ast
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from poop.errors import ValidationError
 from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+
+if TYPE_CHECKING:
+    import ast
+
+    from poop.errors import ValidationError
 
 
 class _Visitor(ErrorCollector):

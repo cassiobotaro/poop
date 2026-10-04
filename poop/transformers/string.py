@@ -1,5 +1,4 @@
-import ast
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
@@ -8,6 +7,9 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    import ast
 
 # CPython's own parameter names: `str(object=b"", encoding=..., errors=...)`.
 _SLOTS = ("object", "encoding", "errors")

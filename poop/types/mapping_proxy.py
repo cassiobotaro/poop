@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._at import at_key
@@ -12,6 +11,8 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types.boolean import Boolean
     from poop.types.dict import Dict
     from poop.types.dict_items import DictItems

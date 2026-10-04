@@ -1,6 +1,6 @@
 import ast
+from typing import TYPE_CHECKING
 
-from poop.errors import ValidationError
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.validators.base import (
     CollectingValidator,
@@ -8,6 +8,9 @@ from poop.validators.base import (
     collect_errors,
     iter_params,
 )
+
+if TYPE_CHECKING:
+    from poop.errors import ValidationError
 
 _NAMESPACE_MESSAGE = (
     "{name!r} is a POOP namespace binding; reassigning it shadows the "

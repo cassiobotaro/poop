@@ -1,5 +1,4 @@
 import builtins
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._iterator_base import _LazyView
@@ -9,6 +8,8 @@ from poop.types.exceptions import MIRRORS
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 

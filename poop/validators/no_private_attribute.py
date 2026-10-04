@@ -33,10 +33,13 @@ the single-underscore internals every wrapper declares in `__slots__`.
 """
 
 import ast
+from typing import TYPE_CHECKING
 
-from poop.errors import ValidationError
 from poop.types._selectors import is_dunder
 from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+
+if TYPE_CHECKING:
+    from poop.errors import ValidationError
 
 # Receivers an object may reach a private name on, because reaching your own
 # state is not reaching *into* anything.

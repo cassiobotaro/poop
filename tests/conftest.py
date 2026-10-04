@@ -9,8 +9,6 @@ to work unchanged; new or refactored tests can opt in.
 from __future__ import annotations
 
 import ast
-import re
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import pytest
@@ -18,6 +16,9 @@ import pytest
 from poop.errors import ValidationError
 
 if TYPE_CHECKING:
+    import re
+    from collections.abc import Callable
+
     from poop.validators.base import Validator
 
 

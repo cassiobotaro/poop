@@ -88,6 +88,9 @@ select = [
   "PLC0415",
   # eq-without-hash: defining `__eq__` clears `__hash__`
   "PLW1641",
+  # flake8-type-checking: CONTRIBUTING.md puts annotation-only imports inside
+  # `if TYPE_CHECKING:`
+  "TC",
   # ruff-specific, including RUF100, which keeps every `noqa` honest
   "RUF",
 ]
@@ -123,6 +126,9 @@ quote-style = "double"
 # each of their imports of the package is necessarily lazy.
 "poop/types/meta.py" = ["PLC0415"]
 "poop/types/object.py" = ["PLC0415"]
+# typer reads `main`'s annotations at runtime to build the CLI, so `Path` is
+# a runtime import there, annotation or not.
+"poop/cli.py" = ["TC003"]
 "examples/**/*.py" = [
   # names injected at runtime by the POOP interpreter namespace
   "F821",

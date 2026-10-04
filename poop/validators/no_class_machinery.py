@@ -1,7 +1,10 @@
-import ast
+from typing import TYPE_CHECKING
 
 from poop.validators.base import CollectingValidator, ErrorCollector
 from poop.validators.no_decorator import ALLOWED as _DECORATORS
+
+if TYPE_CHECKING:
+    import ast
 
 # The four non-dunder entries in `_ALLOWED_BUILTINS` (`poop/executor.py`).
 # The other two, `__build_class__` and `__name__`, are dunders, and

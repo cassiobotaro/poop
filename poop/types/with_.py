@@ -1,5 +1,4 @@
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
 from poop.types.block import _require_block
@@ -7,6 +6,9 @@ from poop.types.error import Error
 from poop.types.exceptions import MIRRORS, poop_class_of
 from poop.types.none import none
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _protocol(cm: Any) -> tuple[Any, Any]:

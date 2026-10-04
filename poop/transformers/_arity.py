@@ -31,9 +31,12 @@ refusal named `__init__` — the same dunder this module was written to remove
 one constructor over.
 """
 
-from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 from poop.types.exceptions import MIRRORS
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 def refuse_extra_arguments(

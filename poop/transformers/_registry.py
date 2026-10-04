@@ -9,9 +9,9 @@ nothing.
 
 from keyword import iskeyword as _iskeyword
 from types import FunctionType as _FunctionType
+from typing import TYPE_CHECKING
 
 from poop.transformers._collection import spread as _spread
-from poop.transformers.base import BaseTransformer, Transformer
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
@@ -41,6 +41,9 @@ from poop.transformers.varargs import VarargsTransformer
 from poop.transformers.with_ import NAMESPACE as _with_namespace
 from poop.transformers.zip import ZipTransformer
 from poop.types._cloak import cloak_callable
+
+if TYPE_CHECKING:
+    from poop.transformers.base import BaseTransformer, Transformer
 
 # Declaration order is load-bearing: every transformer runs on the tree
 # the previous ones already rewrote (e.g. SliceTransformer relies on

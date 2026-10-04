@@ -1,4 +1,4 @@
-import pytest
+from typing import TYPE_CHECKING
 
 from poop.interpreter import Interpreter
 from poop.transformers.list import _poop_list_from
@@ -11,6 +11,9 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def _make() -> Dict:

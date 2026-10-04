@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from operator import index as _index
 from typing import TYPE_CHECKING
 
@@ -14,6 +13,8 @@ from poop.types.range_iterator import RangeIterator
 from poop.types.slice import _resolve_py_slice
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass

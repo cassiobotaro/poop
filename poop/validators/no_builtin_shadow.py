@@ -1,9 +1,13 @@
-import ast
+from typing import TYPE_CHECKING
 
-from poop.errors import ValidationError
 from poop.types.exceptions import MIRRORS
 from poop.validators.base import CollectingValidator, collect_errors
 from poop.validators.no_namespace_shadow import _Visitor
+
+if TYPE_CHECKING:
+    import ast
+
+    from poop.errors import ValidationError
 
 # The lowercase builtin names the type transformers rewrite to mangled
 # `_poop_*` globals. Rebinding one (an assignment, a class name, or a

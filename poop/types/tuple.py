@@ -1,5 +1,4 @@
 import builtins
-from collections.abc import Callable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -20,6 +19,8 @@ from poop.types.slice import _resolve_py_slice
 from poop.types.tuple_iterator import TupleIterator
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass

@@ -12,7 +12,6 @@ what differs: construction, `+`, `fromhex`, `hex`, hashing, the iterator it
 hands out and, on `ByteArray`, the mutators.
 """
 
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._affix import affix_needle
@@ -33,6 +32,8 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.byte_array import ByteArray

@@ -1,10 +1,13 @@
-import ast
+from typing import TYPE_CHECKING
 
 from poop.validators.base import (
     CollectingValidator,
     ErrorCollector,
     iter_params,
 )
+
+if TYPE_CHECKING:
+    import ast
 
 _PREFIX = "_poop_"
 

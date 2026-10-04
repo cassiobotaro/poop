@@ -1,7 +1,6 @@
 import builtins
 import math
 import operator
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._alias import wrapped_instance
@@ -25,6 +24,8 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 

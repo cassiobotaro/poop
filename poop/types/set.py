@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar, Self
 
 from poop.types._at import no_element_equal_to, nothing_to_remove
@@ -18,6 +17,8 @@ from poop.types.object import Object
 from poop.types.set_iterator import SetIterator
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 

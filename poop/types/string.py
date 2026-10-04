@@ -1,6 +1,5 @@
 import builtins
 import re
-from collections.abc import Callable, Iterator
 from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -27,6 +26,8 @@ from poop.types.str_iterator import StrIterator
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes

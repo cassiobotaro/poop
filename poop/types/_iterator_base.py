@@ -1,11 +1,13 @@
-from collections.abc import Iterable, Iterator
-from typing import Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._peek import _PeekMixin
 from poop.types._sentinel import UNPEEKED
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
 
 
 class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):

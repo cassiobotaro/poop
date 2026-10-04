@@ -1,6 +1,4 @@
 import operator
-from collections.abc import Callable
-from types import NotImplementedType
 from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
@@ -10,6 +8,9 @@ from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import NotImplementedType
+
     from poop.types.float import Float
 
 _complex = complex  # alias to avoid shadowing by Complex class name
