@@ -1,8 +1,9 @@
 import builtins
+from collections.abc import Iterable
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
-from poop.types._argument import _opt_stop, a_bound
+from poop.types._argument import _opt_stop, a_bound, a_collection, an_int
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -26,7 +27,7 @@ from poop.types.object import Object
 from poop.types.slice import Slice, _resolve_py_slice
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Callable, Iterator
 
     from poop.types._index import Index
     from poop.types.boolean import Boolean
@@ -103,6 +104,10 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __rmul__ = __mul__
 
     def __iadd__(self, other: Iterable[Object]) -> Self:
+        # Declined rather than guarded: `xs += 5` is an operator, and its
+        # refusal is the one `xs + 5` already gives.
+        if not isinstance(other, Iterable):
+            return NotImplemented
         self._items.extend(other)
         return self
 
@@ -148,7 +153,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         try:
             if _is_absent(index):
                 return self._items.pop()
-            return self._items.pop(index)
+            return self._items.pop(an_int(index, "pop", "index"))
         except IndexError:
             # `pop index out of range` / `pop from empty list` — the method
             # named as a Python call, and no receiver in either sentence.
@@ -167,7 +172,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Int(self._items.count(obj))
 
     def extend(self, other: Iterable[Object]) -> NoneClass:
-        self._items.extend(other)
+        self._items.extend(a_collection(other, "extend"))
         return none
 
     def index(
@@ -193,7 +198,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
             raise no_element_equal_to(self, obj) from None
 
     def insert(self, i: Index, obj: Object) -> NoneClass:
-        self._items.insert(i, obj)
+        self._items.insert(an_int(i, "insert", "index"), obj)
         return none
 
     def remove(self, obj: Object) -> NoneClass:

@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from poop.types._argument import _opt_stop, a_bound
+from poop.types._argument import _opt_stop, a_bound, an_int
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._unwrap import _faithful, _is_absent, _opt_int, _unwrap
+from poop.types._unwrap import _faithful, _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes
@@ -135,7 +135,11 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # `tobytes` copies the whole buffer to show any of it.
         if _is_absent(sep):
             return Str(self._value.hex())
-        return Str(self._value.hex(_faithful(sep), _opt_int(bytes_per_sep, 1)))
+        return Str(
+            self._value.hex(
+                _faithful(sep), an_int(bytes_per_sep, "hex", "bytes_per_sep", 1)
+            )
+        )
 
     def __iter__(self) -> Iterator[Int]:
         return (Int(b) for b in self._value)

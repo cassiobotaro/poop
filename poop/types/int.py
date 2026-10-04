@@ -3,7 +3,7 @@ import operator
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from poop.types._alias import wrapped_instance
-from poop.types._argument import byte_order, byte_source
+from poop.types._argument import an_int, byte_order, byte_source
 from poop.types._cloak import cloak
 from poop.types._message import article, binary_refusal
 from poop.types._minmax import _minmax
@@ -13,7 +13,7 @@ from poop.types._numeric_compare import (
 )
 from poop.types._pow import reflected_pow
 from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC
-from poop.types._unwrap import _faithful, _is_absent, _opt_int, _unwrap, _unwrap_bool
+from poop.types._unwrap import _faithful, _is_absent, _unwrap_bool
 from poop.types.boolean import Boolean, true
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
@@ -126,7 +126,7 @@ class Int(_NumericCompareMixin, Object):
 
         return Bytes(
             self._value.to_bytes(
-                _opt_int(length, 1),
+                an_int(length, "to_bytes", "length", 1),
                 cast("Literal['little', 'big']", byte_order(byteorder, "to_bytes")),
                 signed=_unwrap_bool(signed, False),
             )
@@ -336,8 +336,7 @@ class Int(_NumericCompareMixin, Object):
         return self.__trunc__()
 
     def __round__(self, ndigits: Int | NoneClass | None = None) -> Int:
-
-        n = _unwrap(ndigits, None)
+        n = an_int(ndigits, "round", "ndigits", None)
         return Int(round(self._value, n))
 
     def round(self, ndigits: Int | NoneClass | None = None) -> Int:

@@ -104,7 +104,9 @@ def test_enumerate_str_does_not_leak_start() -> None:
 
 
 def test_enumerate_rejects_non_iterable_source() -> None:
-    with pytest.raises(TypeError, match="'int' object is not iterable"):
+    with pytest.raises(
+        TypeError, match="^#enumerate expects a collection, got an int$"
+    ):
         Enumerate(Int(42))
 
 

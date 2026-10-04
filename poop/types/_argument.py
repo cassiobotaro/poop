@@ -10,6 +10,7 @@ handful of families, which is why the wording lives here rather than being
 written out once per receiver.
 """
 
+from collections.abc import Iterable
 from typing import Any
 
 from poop.types._message import article
@@ -263,6 +264,62 @@ def max_split(value: Any, selector: str) -> int:
     """
     raw = a_bound(value, selector, "maxsplit")
     return -1 if raw is None else raw
+
+
+def an_int(value: Any, selector: str, role: str, default: Any = MISSING) -> Any:
+    """The raw integer behind `value`, or POOP's refusal.
+
+    `a_bound` for the integers that are not positions: a width, a length, a
+    digit count, an index, a byte. CPython answered `'str' object cannot be
+    interpreted as an integer` for all of them — the sentence `max_split`
+    replaces, on 29 more receiver/message sites the wording sweep could not
+    see, since it carries no call, no dunder and no operator.
+
+    `default` is what an absent argument stands for. Without one the argument
+    is mandatory, and `none` is refused like any other non-integer.
+    """
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _is_absent  # noqa: PLC0415
+
+    if default is not MISSING and _is_absent(value):
+        return default
+    raw = getattr(value, "_value", value)
+    if hasattr(raw, "__index__"):
+        return raw
+    raise MIRRORS["TypeError"](
+        f"#{selector}'s {role} must be an int, got {article(type(value).__name__)}"
+    )
+
+
+def a_collection(value: Any, selector: str) -> Any:
+    """`value` when it can be walked, else POOP's refusal.
+
+    `zip`, the set algebra, `join`, `extend`, `update` and `fromkeys` take
+    anything with elements, and a scalar reached CPython: `'int' object is not
+    iterable`, on 33 receiver/message sites. "Iterable" is the protocol
+    `no_iter` bans, and POOP has no such word — what it has is "a collection",
+    the word a spread into a literal already refuses with.
+    """
+    if isinstance(value, Iterable):
+        return value
+    raise MIRRORS["TypeError"](
+        f"#{selector} expects a collection, got {article(type(value).__name__)}"
+    )
+
+
+def a_pair(value: Any, selector: str) -> Any:
+    """One entry of a collection of key/value pairs, or POOP's refusal.
+
+    `d.update([1])` passes `a_collection` — it was handed one — and CPython
+    then answered `object is not iterable` about the element, with no subject
+    at all.
+    """
+    if isinstance(value, Iterable):
+        return value
+    raise MIRRORS["TypeError"](
+        f"#{selector} expects key/value pairs, "
+        f"got {article(type(value).__name__)} among them"
+    )
 
 
 def byte_source(value: Any, selector: str) -> Any:

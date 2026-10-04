@@ -1,14 +1,13 @@
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._alias import wrapped_instance
-from poop.types._argument import text_like
+from poop.types._argument import an_int, text_like
 from poop.types._bytes_like import _BytesLikeMixin
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._ordered import _OrderedMixin
 from poop.types._unwrap import (
     _is_absent,
-    _opt_int,
 )
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.byte_array import ByteArray
@@ -45,7 +44,9 @@ class Bytes(
         if _is_absent(sep):
             return Str(self._value.hex())
         sep_value = text_like(sep, "hex", "a one-character separator")
-        return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
+        return Str(
+            self._value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1))
+        )
 
     @classmethod
     def fromhex(cls, s: Str) -> Bytes:

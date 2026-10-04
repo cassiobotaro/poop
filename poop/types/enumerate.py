@@ -1,6 +1,7 @@
 import builtins
 from typing import TYPE_CHECKING, Any
 
+from poop.types._argument import a_collection
 from poop.types._iterator_base import _LazyView
 from poop.types._unwrap import _unwrap
 from poop.types.int import Int
@@ -17,7 +18,7 @@ class Enumerate(_LazyView[Tuple], name="enumerate"):
 
     def __init__(self, source: Any, start: Int | NoneClass | None = None) -> None:
         super().__init__()
-        iter(source)
+        a_collection(source, "enumerate")
         self._source = source
         self._start: Int = Int(_unwrap(start, 0))
 

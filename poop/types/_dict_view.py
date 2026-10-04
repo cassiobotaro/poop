@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._cloak import cloak
@@ -9,8 +10,6 @@ from poop.types.object import Object
 from poop.types.set import Set
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from poop.types.dict import Dict
 
 
@@ -26,6 +25,20 @@ def _elements(other: object) -> set[Object]:
     ``_SetAlgebraMixin._elements`` documents for the set *method* forms.
     """
     return set(cast("Iterable[Object]", other))
+
+
+def _operand(other: object) -> set[Object] | None:
+    """``_elements(other)`` for a set *operator*, or ``None`` to decline.
+
+    ``isdisjoint`` is a message and refuses a scalar through ``a_collection``.
+    An operator handed one answers ``NotImplemented`` instead, so the refusal
+    is the sentence every other operator in the language gives —
+    ``dict_keys does not understand #| with an int`` — where ``set(5)``
+    answered ``'int' object is not iterable``.
+    """
+    if isinstance(other, Iterable):
+        return _elements(other)
+    return None
 
 
 def _set_like_elements(other: object) -> set[Object] | None:

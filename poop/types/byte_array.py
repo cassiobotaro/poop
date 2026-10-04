@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._alias import wrapped_instance
-from poop.types._argument import text_like
+from poop.types._argument import a_collection, an_int, text_like
 from poop.types._at import (
     no_element_at,
     no_element_equal_to,
@@ -15,7 +15,6 @@ from poop.types._ordered import _OrderedMixin
 from poop.types._unwrap import (
     _faithful,
     _is_absent,
-    _opt_int,
 )
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.byte_array_iterator import ByteArrayIterator
@@ -103,7 +102,9 @@ class ByteArray(
         # separator is converted — but nothing else is, or a List of Ints
         # would be silently coerced where CPython raises.
         sep_value = bytes(raw) if isinstance(raw, _bytearray) else raw
-        return Str(self._value.hex(sep_value, _opt_int(bytes_per_sep, 1)))
+        return Str(
+            self._value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1))
+        )
 
     def iter(self) -> ByteArrayIterator:
         return ByteArrayIterator(self)
@@ -119,7 +120,7 @@ class ByteArray(
         return ByteArray(self._value + other._value)
 
     def append(self, byte: Int) -> NoneClass:
-        self._value.append(_faithful(byte))
+        self._value.append(an_int(byte, "append", "byte"))
         return none
 
     def clear(self) -> NoneClass:
@@ -129,21 +130,25 @@ class ByteArray(
     def copy(self) -> ByteArray:
         return ByteArray(self._value)
 
-    def extend(self, iterable: ByteArray) -> NoneClass:
-        self._value.extend(_faithful(iterable))
+    def extend(self, iterable: Object) -> NoneClass:
+        raw = _faithful(a_collection(iterable, "extend"))
+        # Bytes are already bytes; anything else is a collection whose every
+        # element must be one, and CPython answered for the first that was not
+        # with `expected iterable of integers; got: 'str'`.
+        if not isinstance(raw, (bytes, _bytearray, memoryview)):
+            raw = [an_int(byte, "extend", "byte") for byte in raw]
+        self._value.extend(raw)
         return none
 
     def insert(self, i: Index, byte: Int) -> NoneClass:
-        self._value.insert(i, _faithful(byte))
+        self._value.insert(an_int(i, "insert", "index"), an_int(byte, "insert", "byte"))
         return none
 
     def pop(self, index: Index | NoneClass | None = None) -> Int:
         try:
             if _is_absent(index):
                 return Int(self._value.pop())
-            # typeshed types bytearray.pop's index as `int`, though CPython
-            # takes any __index__ object here, as `list.pop` does.
-            return Int(self._value.pop(cast("int", index)))
+            return Int(self._value.pop(an_int(index, "pop", "index")))
         except IndexError:
             # The same two sentences `List.pop` answers — `pop from empty
             # bytearray` and `pop index out of range` name the method as a
@@ -154,7 +159,7 @@ class ByteArray(
 
     def remove(self, byte: Int) -> NoneClass:
         try:
-            self._value.remove(_faithful(byte))
+            self._value.remove(an_int(byte, "remove", "byte"))
         except ValueError:
             raise no_element_equal_to(self, byte) from None
         return none

@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from poop.types._argument import an_int
 from poop.types._cloak import cloak
 from poop.types.boolean import false, true
 from poop.types.exceptions import MIRRORS
@@ -46,7 +47,9 @@ class Slice(Object):
         # circular: tuple imports slice
         from poop.types.tuple import Tuple  # noqa: PLC0415
 
-        start, stop, step = self._py_slice().indices(length)
+        start, stop, step = self._py_slice().indices(
+            an_int(length, "indices", "length")
+        )
         return Tuple(Int(start), Int(stop), Int(step))
 
     def __eq__(self, other: object) -> Boolean:

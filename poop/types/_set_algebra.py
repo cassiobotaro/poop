@@ -1,6 +1,7 @@
 import operator
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
+from poop.types._argument import a_collection
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
     from poop.types.object import Object
 
 
-def _elements(other: object) -> Iterable[Object]:
+def _elements(other: object, selector: str) -> Iterable[Object]:
     """A set *method* operand as a raw iterable of its elements.
 
     Unlike the set operators (``|``/``&``/``-``/``^``, which require two
@@ -18,10 +19,10 @@ def _elements(other: object) -> Iterable[Object]:
     ``difference``/``isdisjoint``/... — accept any iterable, so
     ``{1}.union([2, 3])`` is valid. Every POOP collection is itself
     Python-iterable, so the cast states what the runtime already guarantees;
-    a non-iterable operand raises the faithful ``TypeError`` from the set call
-    (mirroring ``{1}.union(5)``).
+    a non-iterable operand is refused by ``a_collection``, in the name of the
+    message it was handed to.
     """
-    return cast("Iterable[Object]", other)
+    return cast("Iterable[Object]", a_collection(other, selector))
 
 
 def probed(obj: Any) -> Any:

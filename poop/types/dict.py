@@ -2,6 +2,7 @@ import builtins
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
+from poop.types._argument import a_collection, a_pair
 from poop.types._at import at_key, no_key, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
@@ -88,7 +89,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
     ) -> Dict:
         fill: Object = none if _is_absent(value) else value
         d = cls()
-        for k in keys:
+        for k in a_collection(keys, "fromkeys"):
             d._data[k] = fill
         return d
 
@@ -225,7 +226,12 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
             # Each pair is a POOP Tuple — itself a 2-element iterable, so
             # dict.update unpacks it and raises the faithful ValueError on a
             # wrong-length element.
-            self._data.update(cast("Iterable[tuple[Object, Object]]", other))
+            self._data.update(
+                cast(
+                    "Iterable[tuple[Object, Object]]",
+                    (a_pair(p, "update") for p in a_collection(other, "update")),
+                )
+            )
         # After the mapping, as CPython applies them: a name given both ways
         # wins as a keyword. The keys arrive as raw `str` — CPython's `**`
         # demands them — and are stored as `Str`, the key a `{"b": 2}` literal

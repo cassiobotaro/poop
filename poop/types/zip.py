@@ -1,6 +1,7 @@
 import builtins
 from typing import TYPE_CHECKING, Any
 
+from poop.types._argument import a_collection
 from poop.types._iterator_base import _LazyView
 from poop.types._unwrap import _unwrap_bool
 from poop.types.boolean import to_boolean
@@ -43,7 +44,7 @@ class Zip(_LazyView[Tuple], name="zip"):
     ) -> None:
         super().__init__()
         for source in sources:
-            iter(source)
+            a_collection(source, "zip")
         self._sources = sources
         self._strict: Boolean = to_boolean(_unwrap_bool(strict, False))
 

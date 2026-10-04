@@ -63,7 +63,16 @@ _FORBIDDEN = {
     "a CPython argument report": re.compile(
         r"is required, not '|argument should be|must be None or|"
         r"expected a \w+-like object|has no len\(\)|bad argument type for built-in|"
-        r"requires string as left operand"
+        r"requires string as left operand|"
+        # Three more of CPython's most common sentences, as bare of calls and
+        # dunders as the ones above: an integer argument handed something
+        # else, and a conversion the program never asked for.
+        r"cannot be interpreted as|cannot convert '|"
+        # "Iterable" is the protocol `no_iter` bans; POOP says "a collection".
+        r"object is not|\biterable\b|"
+        # The message as a bare word, and "arg" — `startswith first arg must
+        # be str or a tuple of str` and its `must only contain` twin.
+        r"must be str\b|first arg must be|must only contain"
     ),
     "a CPython format report": re.compile(
         r"object of type|Unknown format code|Invalid format specifier|"
@@ -234,6 +243,11 @@ _OPERANDS = [
     "range(2)",
     "1 + 2j",
     "(lambda: 1)",
+    # The set-like views carry `|`, `&`, `-` and `^` of their own, in both
+    # directions, and were on neither side of any pair here.
+    '{"a": 1}.keys()',
+    '{"a": 1}.items()',
+    '{"a": 1}.values()',
 ]
 
 
@@ -242,6 +256,30 @@ _OPERANDS = [
 def test_no_operator_answers_a_forbidden_construct(operator: str, left: str) -> None:
     for right in _OPERANDS:
         source = f"({left} {operator} {right})"
+        try:
+            Interpreter().run_source(source + "\n")
+        except PoopError as exc:
+            message = str(exc)
+            named = [
+                construct
+                for construct, pattern in _FORBIDDEN.items()
+                if pattern.search(message)
+            ]
+            assert named == [], f"{source!r} answered {message!r}, naming {named}"
+
+
+# `xs += 5` is its own dunder, so the binary pairs above never reach it — the
+# one augmented line in `_FAILING` was `*=`, which is how `+=` on a list kept
+# CPython's sentence.
+@pytest.mark.parametrize(
+    "operator", [op for op in _OPERATORS if op not in ("<", "<=", ">", ">=")]
+)
+@pytest.mark.parametrize("left", _OPERANDS)
+def test_no_augmented_operator_answers_a_forbidden_construct(
+    operator: str, left: str
+) -> None:
+    for right in _OPERANDS:
+        source = f"xs = {left}\nxs {operator}= {right}"
         try:
             Interpreter().run_source(source + "\n")
         except PoopError as exc:
@@ -317,7 +355,11 @@ _PACKAGES = ("poop/types", "poop/transformers")
 # and a POOP message shown with its arguments looks like a Python call to the
 # patterns above. Listed as fragments, so an exemption says which *phrase* is
 # sanctioned rather than blessing a whole message forever.
-_EXEMPT: tuple[str, ...] = ("obj.get_attr(...) / obj.at(...)",)
+_EXEMPT: tuple[str, ...] = (
+    "obj.get_attr(...) / obj.at(...)",
+    # `Slice` answers a message spelt `indices`; a refusal has to name it.
+    "#indices's length",
+)
 
 
 def _mirror_messages() -> list[tuple[pathlib.Path, int, str]]:

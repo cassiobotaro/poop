@@ -17,7 +17,9 @@ from typing import TYPE_CHECKING, Any
 from poop.types._affix import affix_needle
 from poop.types._argument import (
     a_bound,
+    a_collection,
     a_needle,
+    an_int,
     bytes_like,
     max_split,
     text_like,
@@ -27,7 +29,7 @@ from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
-from poop.types._unwrap import _faithful, _opt_str, _unwrap, _unwrap_bool
+from poop.types._unwrap import _opt_str, _unwrap, _unwrap_bool
 from poop.types.boolean import false, to_boolean, true
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
@@ -152,10 +154,11 @@ class _BytesLikeMixin[B: Object]:
     def center(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return self._rewrap(self._value.center(_faithful(width)))
+            return self._rewrap(self._value.center(an_int(width, "center", "width")))
         return self._rewrap(
             self._value.center(
-                _faithful(width), text_like(fillchar, "center", "one byte")
+                an_int(width, "center", "width"),
+                text_like(fillchar, "center", "one byte"),
             )
         )
 
@@ -182,7 +185,9 @@ class _BytesLikeMixin[B: Object]:
         return (
             true
             if self._value.endswith(
-                affix_needle(suffix),
+                affix_needle(
+                    suffix, "endswith", "bytes or a tuple of bytes", _BYTE_KINDS
+                ),
                 a_bound(start, "endswith", "start"),
                 a_bound(end, "endswith", "end"),
             )
@@ -190,10 +195,9 @@ class _BytesLikeMixin[B: Object]:
         )
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> B:
-        size = _unwrap(tabsize, None)
-        if size is None:
-            return self._rewrap(self._value.expandtabs())
-        return self._rewrap(self._value.expandtabs(size))
+        return self._rewrap(
+            self._value.expandtabs(an_int(tabsize, "expandtabs", "tabsize", 8))
+        )
 
     def find(
         self,
@@ -253,16 +257,17 @@ class _BytesLikeMixin[B: Object]:
         # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
         # the native join unwrapped and raises the faithful TypeError instead of
         # being silently dropped.
-        pieces: list[Any] = [bytes_like(p, "join") for p in parts]
+        pieces: list[Any] = [bytes_like(p, "join") for p in a_collection(parts, "join")]
         return self._rewrap(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return self._rewrap(self._value.ljust(_faithful(width)))
+            return self._rewrap(self._value.ljust(an_int(width, "ljust", "width")))
         return self._rewrap(
             self._value.ljust(
-                _faithful(width), text_like(fillchar, "ljust", "one byte")
+                an_int(width, "ljust", "width"),
+                text_like(fillchar, "ljust", "one byte"),
             )
         )
 
@@ -337,10 +342,11 @@ class _BytesLikeMixin[B: Object]:
     def rjust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
         fill = _unwrap(fillchar, None)
         if fill is None:
-            return self._rewrap(self._value.rjust(_faithful(width)))
+            return self._rewrap(self._value.rjust(an_int(width, "rjust", "width")))
         return self._rewrap(
             self._value.rjust(
-                _faithful(width), text_like(fillchar, "rjust", "one byte")
+                an_int(width, "rjust", "width"),
+                text_like(fillchar, "rjust", "one byte"),
             )
         )
 
@@ -404,7 +410,9 @@ class _BytesLikeMixin[B: Object]:
         return (
             true
             if self._value.startswith(
-                affix_needle(prefix),
+                affix_needle(
+                    prefix, "startswith", "bytes or a tuple of bytes", _BYTE_KINDS
+                ),
                 a_bound(start, "startswith", "start"),
                 a_bound(end, "startswith", "end"),
             )
@@ -426,7 +434,7 @@ class _BytesLikeMixin[B: Object]:
         return self._rewrap(self._value.upper())
 
     def zfill(self, width: Int) -> B:
-        return self._rewrap(self._value.zfill(_faithful(width)))
+        return self._rewrap(self._value.zfill(an_int(width, "zfill", "width")))
 
     def __str__(self) -> str:
         return repr(self._value)
