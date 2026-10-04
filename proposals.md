@@ -17,32 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 5. `__ne__` is written twelve times
-
-A POOP `==` answers a `Boolean`, so Python's derived `__ne__` (which answers a
-raw `bool`) cannot be used and each class writes its own. Eleven live under
-`Object`; `PoopMeta` has the twelfth. Five of the eleven only negate
-`__eq__`, in three spellings:
-
-```python
-return false if bool(self == other) else true            # range, block
-return false if bool(self.__eq__(other)) else true       # dict_keys, dict_items
-eq = self.__eq__(other); return false if bool(eq) else true   # mapping_proxy
-```
-
-The other six (`_ValueEqMixin`, `_NumericCompareMixin`, `Complex`, `Dict`,
-`Slice`, `Object`) restate their `__eq__`'s rule with the answer flipped, so
-each comparison rule is written twice and has to be kept in step by hand. The
-lazy views had the same pair until an earlier item deleted it.
-
-**Fix.** `Object.__ne__` becomes `false if self == other else true`, and the
-other ten are deleted (about 50 lines). Trialled: 5045 tests pass. The three that
-fail are in `tests/test_types/test_value_eq.py`, whose fixture classes inherit
-`_ValueEqMixin` *without* `Object` — a shape no wrapper has. They pass once
-the fixtures inherit `Object` as every real user of the mixin does.
-
----
-
 ### 6. `Bytes` and `ByteArray` are the same 50 methods, written twice
 
 Both classes define 54 methods with the same name. Normalising the class name
