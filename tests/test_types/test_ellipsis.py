@@ -1,3 +1,5 @@
+import pytest
+
 from poop.types.boolean import false, true
 from poop.types.ellipsis import EllipsisClass, ellipsis
 from poop.types.ellipsis import ellipsis as ellipsis2
@@ -41,3 +43,12 @@ def test_class_name_answers_python_type_name() -> None:
 def test_class_passes_as_the_python_builtin() -> None:
     assert EllipsisClass.__module__ == "builtins"
     assert repr(EllipsisClass) == repr(type(...))
+
+
+def test_the_class_answers_the_one_ellipsis() -> None:
+    assert EllipsisClass() is ellipsis
+
+
+def test_the_class_takes_no_arguments() -> None:
+    with pytest.raises(TypeError, match=r"^ellipsis\(\) takes no arguments$"):
+        EllipsisClass(1)

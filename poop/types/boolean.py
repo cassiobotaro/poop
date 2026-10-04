@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast, final
 
-from poop.types._argument import a_block, text_like
+from poop.types._argument import a_block, no_arguments, text_like
 from poop.types._cloak import cloak
 from poop.types._minmax import MISSING, _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
@@ -23,6 +23,17 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     """Abstract base for Smalltalk-style boolean objects."""
 
     __slots__ = ()
+
+    # Two booleans exist and no constructor builds a third. `class_()` hands
+    # each class out, so `True.class_()()` built a second `True` that was not
+    # identical to the first, and the base itself answered CPython's abstract-
+    # class sentence: a dozen dunders and private names from a program that
+    # spelt none. `bool()` is `False` in CPython, so the base answers `false`
+    # and each subclass answers its own instance — never `Self`, which is the
+    # point.
+    def __new__(cls, *args: object, **kwargs: object) -> Boolean:  # noqa: PYI034
+        no_arguments(cls, args, kwargs)
+        return false
 
     # `bool` is an `int` subclass, so a Boolean folds to 1/0 for the numeric
     # tower's comparison protocol (ordering + equality) shared via
@@ -369,6 +380,10 @@ class Boolean(_NumericCompareMixin, Object, ABC):
 class _TrueClass(Boolean):
     __slots__ = ()
 
+    def __new__(cls, *args: object, **kwargs: object) -> Boolean:
+        no_arguments(cls, args, kwargs)
+        return true
+
     def if_true[T](self, block: Callable[[], T]) -> T:
         return a_block(block, "if_true", param="")()
 
@@ -492,8 +507,8 @@ class _FalseClass(Boolean):
         return hash(False)
 
 
-true: Boolean = _TrueClass()
-false: Boolean = _FalseClass()
+true: Boolean = object.__new__(_TrueClass)
+false: Boolean = object.__new__(_FalseClass)
 
 
 def to_boolean(value: object) -> Boolean:

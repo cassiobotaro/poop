@@ -17,6 +17,20 @@ from poop.types._sentinel import MISSING
 from poop.types.exceptions import MIRRORS
 
 
+def no_arguments(
+    cls: type, args: tuple[object, ...], kwargs: dict[str, object]
+) -> None:
+    """Refuse a constructor call that passed anything, in CPython's words.
+
+    For the singletons, whose `__new__` answers the one instance and so takes
+    `*args` only to word the refusal: left to CPython, an extra argument named
+    `__new__` or `__init__`, where `type(None)(1)` says `NoneType takes no
+    arguments`.
+    """
+    if args or kwargs:
+        raise MIRRORS["TypeError"](f"{cls.__name__}() takes no arguments")
+
+
 def a_class(value: Any, selector: str) -> Any:
     """`value` when it can stand for a class, else POOP's refusal.
 

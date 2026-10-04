@@ -477,3 +477,22 @@ def test_the_two_formatting_paths_agree() -> None:
     # The template path routes through `to_python` and was already right; this
     # is the receiver path catching up.
     assert Str("{:>6}").format(true) == true.format(Str(">6"))
+
+
+# Two booleans exist and no constructor builds a third: each class answers its
+# own instance, and the base answers `false`, as `bool()` does.
+def test_each_class_answers_its_own_instance() -> None:
+    assert type(true)() is true
+    assert type(false)() is false
+
+
+def test_the_base_answers_false_as_bool_does() -> None:
+    assert Boolean() is false
+
+
+@pytest.mark.parametrize(
+    "cls", [Boolean, type(true), type(false)], ids=["base", "true", "false"]
+)
+def test_the_classes_take_no_arguments(cls: type) -> None:
+    with pytest.raises(TypeError, match=r"^bool\(\) takes no arguments$"):
+        cls(1)
