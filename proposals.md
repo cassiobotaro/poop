@@ -17,59 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 4. `PoopMeta` inherits `ABCMeta` for one class, and every `isinstance` pays
-
-`PoopMeta`'s docstring: "Derives from `ABCMeta`, not `type`: `Boolean(Object,
-ABC)` otherwise fails with 'metaclass conflict'". So the metaclass of every
-class in the language is an ABC metaclass because `Boolean` declares 13
-`@abstractmethod`s — for two `@final` subclasses that live in the same module.
-(`_IterableMixin.__iter__` is the only other `@abstractmethod` in `poop/`.)
-
-The cost is in `isinstance`. With a plain `type` metaclass CPython answers in
-C; with `ABCMeta` every check that is not an exact-type hit goes through
-`ABCMeta.__instancecheck__` and its caches. The wrappers ask constantly:
-`Int.__init__` tests `isinstance(value, Int)` on a raw `int`, and `_is_absent`
-tests `isinstance(value, NoneClass)` on nearly everything.
-
-Trialled by changing two lines (`class PoopMeta(type)`, and `Boolean` without
-`ABC`):
-
-| | `ABCMeta` | `type` |
-|---|---|---|
-| `isinstance(5, Int)` | 422 ns | 86 ns |
-| `_is_absent(Int(1))` | 2665 ns | 384 ns |
-| `Int(5)` | 1236 ns | 816 ns |
-| `Int(1) + Int(1)` | 5325 ns | 2492 ns |
-| benchmark program | 10.8–11.9 s | 7.8–8.1 s |
-
-The benchmark is a 150 000-turn `while_true` counter, a
-`range(150000).map(…).filter(…).sum()` chain and a `map`/`filter` chain over
-80 000 strings, measured three times: about a quarter of the run. Under
-cProfile, a one-fifth-size run of the baseline makes 678 013 calls to
-`_abc._abc_instancecheck`.
-
-Two tests fail in the trial, and both pin the derivation itself:
-`test_poop_meta_derives_from_abcmeta` and
-`test_an_abstract_poop_class_still_builds`, which builds `class
-_Abstract(Object, ABC)` in Python. A POOP program cannot write that class —
-`import` is banned and `ABC` is not in the namespace — so no program loses
-anything.
-
-`ABCMeta` also brought three things the code then had to work around:
-
-- `register`, refused by a `class_side_refusal` and its test;
-- `ABCMeta.__subclasscheck__` walking `__subclasses__()`, which `_alias.py`
-  records as recursing "until the stack gives out";
-- `__abstractmethods__`, written during class creation, which
-  `PoopMeta.__setattr__` carves out.
-
-**Fix.** `class PoopMeta(type)`. `Boolean` keeps its abstract methods as plain
-methods that raise, or loses them — after item 3 a bare `Boolean()` answers
-`false`, so no instance of the base exists to reach them. The `register`
-refusal and its test go, along with the two tests above.
-
----
-
 ### 5. `__ne__` is written twelve times
 
 A POOP `==` answers a `Boolean`, so Python's derived `__ne__` (which answers a
