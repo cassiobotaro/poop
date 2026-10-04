@@ -17,34 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 6. `Bytes` and `ByteArray` are the same 50 methods, written twice
-
-Both classes define 54 methods with the same name. Normalising the class name
-(`ByteArray` → `Bytes`) and comparing the method bodies with docstrings
-stripped, **50 of the 54 are identical**: about 290 lines in `bytes.py` and 310
-in `byte_array.py`. The four that differ are `__init__`, `__add__`, `fromhex`
-and `hex`. `ByteArray` adds nine mutators; `Bytes` adds `__hash__`.
-
-The `bytearray` converter (`poop/transformers/byte_array.py`) says the two
-"mirror each other message for message", and the cost of keeping a mirror by
-hand is already on record there: the text form was "the one half-pair",
-present on `bytes` and missing on `bytearray`.
-`_ordered.py` records the same cost for the comparisons ("had to be fixed in
-two classes, four methods each") and fixed it with a shared mixin.
-
-**Fix.** A `_BytesLikeMixin` holding the 50, with one hook for "wrap this raw
-value as my own class". CPython does the same: `bytes` and `bytearray` share
-`bytes_methods.c`.
-
-One decision is the maintainer's. `cloak` renames only the functions a class
-owns, and the shared mixins are cloaked as `object`. So a wrong-arity call
-would read `object.upper() takes 1 positional argument…` where it reads
-`bytes.upper()` today. Cloaking the mixin as `bytes` keeps the name true for
-one receiver and close for the other; `_eq_group` and `_order_group` already
-call the pair `"bytes"`.
-
----
-
 ### 7. Ordering is written once; arithmetic is written 39 times
 
 `_OrderedMixin` and `_NumericCompareMixin` each state their rule once and pass
