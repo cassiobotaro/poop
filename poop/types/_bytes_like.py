@@ -15,7 +15,13 @@ hands out and, on `ByteArray`, the mutators.
 from typing import TYPE_CHECKING, Any
 
 from poop.types._affix import affix_needle
-from poop.types._argument import a_bound, a_needle, bytes_like, text_like
+from poop.types._argument import (
+    a_bound,
+    a_needle,
+    bytes_like,
+    max_split,
+    text_like,
+)
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import decoded
@@ -355,7 +361,8 @@ class _BytesLikeMixin[B: Object]:
             *[
                 self._rewrap(p)
                 for p in self._value.rsplit(
-                    bytes_like(sep, "rsplit", optional=True), _unwrap(maxsplit, -1)
+                    bytes_like(sep, "rsplit", optional=True),
+                    max_split(maxsplit, "rsplit"),
                 )
             ]
         )
@@ -374,7 +381,8 @@ class _BytesLikeMixin[B: Object]:
             *[
                 self._rewrap(p)
                 for p in self._value.split(
-                    bytes_like(sep, "split", optional=True), _unwrap(maxsplit, -1)
+                    bytes_like(sep, "split", optional=True),
+                    max_split(maxsplit, "split"),
                 )
             ]
         )

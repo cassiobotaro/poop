@@ -15,6 +15,7 @@ from rich.text import Text
 
 from poop.console import ERR, OUT, in_colour
 from poop.errors import ParseError, PoopError, report
+from poop.executor import confine
 from poop.types._selectors import is_message, receiver_label
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
@@ -317,6 +318,10 @@ class Repl:
     def __init__(self, interpreter: Interpreter) -> None:
         self._interpreter = interpreter
         self._ns: dict[str, object] = interpreter.new_namespace()
+        # Before anything evaluates against it: `:methods` and the completer
+        # `eval` on their own, and an unconfined namespace would be handed
+        # CPython's builtins for the rest of the session.
+        confine(self._ns)
         self._explain_calls = _explain_calls(interpreter.validators)
         self._input_no = 0
         # The stdin path's half of `utf-8-sig`. `poop <file>` decodes with the

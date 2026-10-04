@@ -3,7 +3,7 @@ import operator
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from poop.types._alias import wrapped_instance
-from poop.types._argument import byte_order
+from poop.types._argument import byte_order, byte_source
 from poop.types._cloak import cloak
 from poop.types._message import article, binary_refusal
 from poop.types._minmax import _minmax
@@ -127,7 +127,7 @@ class Int(_NumericCompareMixin, Object):
         return Bytes(
             self._value.to_bytes(
                 _opt_int(length, 1),
-                cast("Literal['little', 'big']", byte_order(byteorder)),
+                cast("Literal['little', 'big']", byte_order(byteorder, "to_bytes")),
                 signed=_unwrap_bool(signed, False),
             )
         )
@@ -143,8 +143,8 @@ class Int(_NumericCompareMixin, Object):
         return wrapped_instance(
             cls,
             int.from_bytes(
-                _faithful(b),
-                cast("Literal['little', 'big']", byte_order(byteorder)),
+                byte_source(b, "from_bytes"),
+                cast("Literal['little', 'big']", byte_order(byteorder, "from_bytes")),
                 signed=_unwrap_bool(signed, False),
             ),
         )

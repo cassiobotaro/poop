@@ -654,6 +654,16 @@ def test_meta_methods_unknown_name_reports_error(
     assert "poop:" in capsys.readouterr().err
 
 
+def test_meta_methods_does_not_widen_the_builtins_allow_list() -> None:
+    # `:methods` evaluates on its own, and `eval` plants CPython's builtins in
+    # a namespace that has none — so one `:methods 1` before the first input
+    # made `OSError` (and every other builtin) reachable for the whole session.
+    repl, ns = _repl()
+    repl._meta(":methods 1")
+    with pytest.raises(ExecutionError, match="NameError: name 'OSError'"):
+        repl._interpreter.run_source_repl("OSError.print()", ns)
+
+
 def test_meta_explain_statement_uses_validator_message(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

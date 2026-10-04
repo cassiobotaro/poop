@@ -100,6 +100,20 @@ def _describe(exc: BaseException) -> str:
     return f"{name}: {message}" if message else name
 
 
+def confine(namespace: dict[str, object]) -> None:
+    """Bind the builtins allow-list in `namespace`, unless one is already there.
+
+    `exec` and `eval` plant CPython's full `builtins` in any namespace that
+    reaches them without a `__builtins__`, so whoever evaluates against a
+    namespace before `execute` has seen it — the REPL's `:methods` and its
+    completer — must confine it first, or the whole session answers
+    `AttributeError` where a program answers `NameError`.
+    """
+    # setdefault, not assignment: the REPL reuses one namespace across inputs,
+    # and a program is free to have been handed its own (tests do).
+    namespace.setdefault("__builtins__", dict(_ALLOWED_BUILTINS))
+
+
 def execute(
     tree: ast.Module,
     filename: str = "<unknown>",
@@ -120,9 +134,7 @@ def execute(
         # leaking a raw SyntaxError past the CLI's error handler.
         raise ExecutionError(exc.msg, exc.lineno) from exc
     ns: dict[str, object] = namespace if namespace is not None else {}
-    # setdefault, not assignment: the REPL reuses one namespace across inputs,
-    # and a program is free to have been handed its own (tests do).
-    ns.setdefault("__builtins__", dict(_ALLOWED_BUILTINS))
+    confine(ns)
     # Raised, not set: a caller that has already asked for more keeps it. The
     # REPL runs through here too, so both front ends get the same ceiling.
     if sys.getrecursionlimit() < _RECURSION_LIMIT:

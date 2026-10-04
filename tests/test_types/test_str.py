@@ -976,6 +976,41 @@ def test_the_strip_family_names_the_message_as_a_message(selector: str) -> None:
     assert "arg must be" not in str(info.value)
 
 
+@pytest.mark.parametrize("selector", ["split", "rsplit"])
+def test_the_split_pair_names_the_message_as_a_message(selector: str) -> None:
+    # `must be str or None, not int` names no message at all, where the byte
+    # twins already answered `#split expects bytes, got an int`.
+    with pytest.raises(TypeError, match=f"^#{selector} expects a str, got an int$"):
+        getattr(Str("a,b"), selector)(Int(5))
+
+
+@pytest.mark.parametrize("selector", ["split", "rsplit"])
+def test_the_split_pair_still_takes_no_separator(selector: str) -> None:
+    assert getattr(Str("a b"), selector)() == List(Str("a"), Str("b"))
+    assert getattr(Str("a b"), selector)(none) == List(Str("a"), Str("b"))
+
+
+@pytest.mark.parametrize("selector", ["split", "rsplit"])
+def test_the_split_pair_names_its_maxsplit(selector: str) -> None:
+    # `'str' object cannot be interpreted as an integer` names neither the
+    # message nor the argument.
+    wanted = f"^#{selector}'s maxsplit must be an int, got a str$"
+    with pytest.raises(TypeError, match=wanted):
+        getattr(Str("a,b"), selector)(Str(","), Str("x"))
+    whole = List(Str("a"), Str("b"))
+    assert getattr(Str("a,b"), selector)(Str(","), none) == whole
+    assert getattr(Str("a,b"), selector)(Str(","), Int(1)) == whole
+
+
+@pytest.mark.parametrize("selector", ["partition", "rpartition"])
+def test_the_partition_pair_names_the_message_as_a_message(selector: str) -> None:
+    # `must be str, not int` names no message at all.
+    with pytest.raises(TypeError, match=f"^#{selector} expects a str, got an int$"):
+        getattr(Str("a,b"), selector)(Int(5))
+    with pytest.raises(TypeError, match=f"^#{selector} expects a str, got a bytes$"):
+        getattr(Str("a,b"), selector)(Bytes(b","))
+
+
 def test_the_strip_family_still_takes_no_argument() -> None:
     assert Str("  a  ").strip() == Str("a")
     assert Str("xxaxx").strip(Str("x")) == Str("a")

@@ -472,6 +472,24 @@ def test_from_bytes_big_endian() -> None:
     assert Int.from_bytes(Bytes(b"\x00\xff"), Str("big")) == Int(255)
 
 
+def test_a_byte_order_refusal_names_the_message_it_was_sent_to() -> None:
+    # `byte_order` serves both halves of the pair and hard-coded one of them,
+    # so `int.from_bytes(b"ab", 5)` blamed `#to_bytes`.
+    with pytest.raises(TypeError, match="^#from_bytes expects a str, got an int$"):
+        Int.from_bytes(Bytes(b"ab"), Int(5))  # ty: ignore[invalid-argument-type]
+    with pytest.raises(TypeError, match="^#to_bytes expects a str, got an int$"):
+        Int(1).to_bytes(Int(2), Int(5))  # ty: ignore[invalid-argument-type]
+
+
+def test_from_bytes_refuses_what_is_not_bytes_as_a_message() -> None:
+    # `cannot convert 'int' object to bytes` names no message; a collection of
+    # the wrong things answered about an element instead.
+    with pytest.raises(TypeError, match="^#from_bytes expects bytes, got an int$"):
+        Int.from_bytes(Int(5))  # ty: ignore[invalid-argument-type]
+    with pytest.raises(TypeError, match="^#from_bytes expects bytes, got a list$"):
+        Int.from_bytes(List(Str("a")))  # ty: ignore[invalid-argument-type]
+
+
 def test_from_bytes_little_endian() -> None:
     assert Int.from_bytes(Bytes(b"\xff\x00"), Str("little")) == Int(255)
 
