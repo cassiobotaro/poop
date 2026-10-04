@@ -17,37 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 1. A block handed to `bytes`' `#count` is refused in the name of "an int"
-
-```
-b"abc".count(lambda: 1)
-# TypeError: an int's #count searches for a subsequence — it takes what to
-#   look for, not a block
-"abc".count(lambda: 1)
-# TypeError: str's #count searches for a substring — it takes the text to
-#   look for, not a block
-```
-
-The receiver is `bytes`; the sentence names `an int`. `bytearray` answers the
-same, and so do `find`, `rfind`, `index`, `rindex` and `includes` on both.
-
-`a_needle` (`poop/types/_argument.py`) has no receiver to name, so it derives
-one from the phrase describing the *argument*: `expected.split(" or ")[-1]`.
-For `"bytes or an int"` that is the last alternative the argument may be, not
-the class that was sent the message. No test pins the byte wording — the only
-`searches for a` assertion in `tests/` is `Str`'s.
-
-`Str` is right because it never calls `a_needle`. The helper's docstring says
-it "lived in `string.py` and was wired into `Str` alone", but the move was a
-copy: `string.py` still carries `_needle` and its five call sites, so the
-block refusal exists twice, in two wordings.
-
-**Fix.** One helper, taking the receiver's name from the receiver
-(`type(self).__name__`) instead of parsing it out of `expected`. `Str` calls it
-too and `_needle` goes away. A test per byte receiver pins the sentence.
-
----
-
 ### 2. `{}.items().iter().do(5)` answers `'int' object is not callable`
 
 ```
