@@ -17,37 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 9. The transformer base lags the validator base
-
-`CollectingValidator` got three things that `BaseTransformer` did not.
-
-- **One annotation.** `pyproject.toml` ignores `RUF012` because "the
-  configuration ClassVars of a validator (`messages`, `forbidden`) are
-  annotated once on the base class". The transformers re-annotate instead:
-  `BINDINGS: ClassVar[dict[str, object]]` appears on all 26 subclasses, and 19
-  modules import `ClassVar` for nothing else.
-- **A default that is used.** `ReturnTransformer`, `VarargsTransformer` and
-  `UnpackTransformer` each declare `BINDINGS = {}`, which the base already
-  provides.
-- **A check at import.** A validator that sets no `visitor` fails when its
-  class is defined; a transformer that sets no `rewriter` fails on the first
-  program. `rewriter` is also annotated as an instance attribute, where
-  `visitor` is a `ClassVar`.
-
-Two smaller things in the same package. `call_at` and `name_at` exist because
-"every rewrite in this package replaces one node with a call to a binding, and
-each spelt out `copy_location(Call(func=Name(...), ...), node)` by hand" —
-`varargs.py`, `unpack.py` and `return_.py` still build theirs by hand. And
-`varargs.py` states the `vararg → _poop_tuple_from`, `kwarg →
-_poop_dict_from_kwargs` pairing twice, once for `def` and once for `lambda`.
-
-**Fix.** Drop the 26 annotations and the three empty dicts, make `rewriter` a
-`ClassVar` checked in `__init_subclass__`, and route the hand-built nodes
-through `call_at` and `name_at`. The annotation half is trialled: 26 files
-change, and ruff, `ty` and the suite all pass.
-
----
-
 ### 10. `poop.types` re-exports 19 names that nothing imports
 
 `poop/types/__init__.py` imports 19 modules and lists 19 names in `__all__`.
