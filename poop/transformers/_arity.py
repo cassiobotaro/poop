@@ -21,7 +21,7 @@ So the call path is complete now: every `<builtin>(...)` reaches the converter
 whatever its arity, and the converter refuses in POOP's vocabulary.
 
 That claim was written when ten of the eighteen constructors used this and was
-made true for the other eight by proposal 44 — `float`, `bool`, `int`, `range`,
+made true for the other eight afterwards — `float`, `bool`, `int`, `range`,
 `enumerate`, `zip`, `object` and `slice` all reached CPython's call machinery,
 each naming the builtin spelt as a *call* and saying "positional argument".
 Three needed more than the arity: `object` takes none at all, `zip`
@@ -31,9 +31,12 @@ refusal named `__init__` — the same dunder this module was written to remove
 one constructor over.
 """
 
-from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 from poop.types.exceptions import MIRRORS
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 def refuse_extra_arguments(

@@ -35,9 +35,9 @@ name is otherwise used for:
 Only `__call__` is intercepted. The obvious companion — an `__instancecheck__`
 delegating to the wrapped class, as `PoopExcMeta` does for the mirrors — does
 not work here and is worth recording: the alias *is* a subclass of the wrapper,
-so `ABCMeta.__subclasscheck__` walks `List.__subclasses__()`, reaches the alias,
-and asks it the same question, which delegates back. It recurses until the stack
-gives out. The type-argument case is answered one level up instead, by
+and while `PoopMeta` derived from `ABCMeta`, `ABCMeta.__subclasscheck__` walked
+`List.__subclasses__()`, reached the alias, and asked it the same question,
+which delegated back. It recursed until the stack gave out. The type-argument case is answered one level up instead, by
 `unalias` below, which the two `is_instance`/`is_subclass` pairs call.
 
 `__call__` covers the subclasses too. It used to read `cls.__dict__` and stop
@@ -49,16 +49,16 @@ answer as the subclass. What the `__dict__` read was protecting is kept
 explicitly: a subclass that declares its own `__init__` is built by it.
 """
 
-from __future__ import annotations
-
-from collections.abc import Callable
 from copy import copy
 from itertools import takewhile
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
 from poop.types.exceptions import MIRRORS
 from poop.types.meta import PoopMeta
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _payload_slots(cls: type) -> tuple[str, ...]:

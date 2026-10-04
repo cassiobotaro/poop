@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poop.types.dict import Dict
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.int import Int
-from poop.types.object import Object
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def test_iter_returns_dict_key_iterator() -> None:

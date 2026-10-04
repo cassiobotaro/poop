@@ -1,7 +1,4 @@
-from __future__ import annotations
-
-from collections.abc import Callable
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._argument import a_class
 from poop.types._cloak import cloak
@@ -12,6 +9,9 @@ from poop.types.none import none
 from poop.types.object import Object
 from poop.types.tuple import Tuple
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 def _exception_kind(kind: object) -> Any:
     """The kind `except_` will match on, checked where it was written.
@@ -19,8 +19,8 @@ def _exception_kind(kind: object) -> Any:
     `except_` guarded its handler at the boundary and left the kind to
     `isinstance` inside `_execute`, so a quoted class name answered
     `isinstance() arg 2 must be a type, a tuple of types, or a union` — the
-    banned builtin spelt as the call replacing it, which proposal 10 closed on
-    all 15 receivers — and answered it only when the protected block *raised*.
+    banned builtin spelt as the call replacing it, which the wording sweep
+    closed on all 15 receivers — and answered it only when the protected block *raised*.
     The same mistake reported or said nothing depending on something else
     entirely, and saying nothing means the handler was never installed.
 

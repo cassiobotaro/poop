@@ -1,17 +1,16 @@
-from __future__ import annotations
-
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._dict_view import _DictView, _elements, _set_like_elements
 from poop.types.boolean import false, to_boolean, true
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
-from poop.types.object import Object
 from poop.types.set import Set
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from collections.abc import Iterator
+
+    from poop.types.boolean import Boolean
+    from poop.types.object import Object
 
 
 @final
@@ -19,6 +18,9 @@ class DictKeys(_DictView, name="dict_keys"):
     """Live view over a Dict's keys, mirroring Python's dict_keys."""
 
     __slots__ = ()
+    # Set-like and compared by contents, which change under it: unhashable,
+    # as in CPython. `dict_values` is neither, and hashes by identity.
+    __hash__ = None  # type: ignore[assignment]
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._dict._data)
@@ -72,9 +74,6 @@ class DictKeys(_DictView, name="dict_keys"):
         if raw is None:
             return false
         return true if set(self._dict._data.keys()) == raw else false
-
-    def __ne__(self, other: object) -> Boolean:
-        return false if bool(self.__eq__(other)) else true
 
     def __le__(self, other: object) -> Boolean:
         raw = _set_like_elements(other)

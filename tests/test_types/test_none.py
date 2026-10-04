@@ -1,3 +1,5 @@
+import pytest
+
 from poop.types.boolean import false, true
 from poop.types.none import NoneClass, none
 from poop.types.none import none as none2
@@ -61,3 +63,14 @@ def test_if_not_none_does_not_execute_block() -> None:
 def test_if_not_none_executes_block_on_object() -> None:
     obj = Object()
     assert obj.if_not_none(lambda v: v) is obj
+
+
+# `type(None)() is None` in CPython; `class_()` hands the class out, so a
+# second None was one call away and was neither identical nor equal to the first.
+def test_the_class_answers_the_one_none() -> None:
+    assert NoneClass() is none
+
+
+def test_the_class_takes_no_arguments() -> None:
+    with pytest.raises(TypeError, match=r"^NoneType\(\) takes no arguments$"):
+        NoneClass(1)

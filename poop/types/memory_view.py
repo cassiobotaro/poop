@@ -1,22 +1,27 @@
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
+from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types._unwrap import _faithful, _is_absent, _opt_int, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes
+from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.memory_view_iterator import MemoryViewIterator
 from poop.types.object import Object
+from poop.types.slice import _resolve_py_slice
+from poop.types.string import Str
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
-    from poop.types.string import Str
 
 _memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
 
@@ -50,8 +55,6 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         that `INFECTIONS.md` keeps out deliberately, so the reason is given in
         terms of what the reader wrote instead.
         """
-        from poop.types.exceptions import MIRRORS
-
         try:
             return super().hash()
         except ValueError:
@@ -77,8 +80,6 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     ) -> MemoryView:
         # `mv[0:2]` is a `memoryview` in CPython and `no_subscript` names
         # `.slice(...)` as the substitute — every other sequence answered it.
-        from poop.types.slice import _resolve_py_slice
-
         return MemoryView(self._value[_resolve_py_slice(start_or_slice, stop, step)])
 
     def includes(self, byte: Int) -> Boolean:
@@ -86,8 +87,6 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # `col.includes(x)`. Unwrapped through `_faithful`, as `Bytes.includes`
         # is, so a foreign argument reaches CPython whole rather than leaking
         # the internal `_value` name through dispatch.
-        from poop.types._unwrap import _faithful
-
         operand: Any = _faithful(byte)
         return to_boolean(operand in self._value)
 
@@ -99,8 +98,6 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     def count(self, byte: Int) -> Int:
         # One argument, as CPython's `memoryview.count` takes — unlike the
         # text wrappers', which carry `start`/`end`.
-        from poop.types._unwrap import _faithful
-
         operand: Any = _faithful(byte)
         return Int(self._value.count(operand))
 
@@ -117,9 +114,6 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # the reason it exists: CPython says `memoryview.index(x): x not found`,
         # the message written as a call with a placeholder where the value the
         # reader passed belongs.
-        from poop.types._argument import _opt_stop, a_bound
-        from poop.types._unwrap import _faithful
-
         operand: Any = _faithful(byte)
         try:
             return Int(
@@ -139,9 +133,6 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     ) -> Str:
         # The one message that shows the contents: `__str__` summarizes, and
         # `tobytes` copies the whole buffer to show any of it.
-        from poop.types._unwrap import _faithful, _is_absent, _opt_int
-        from poop.types.string import Str
-
         if _is_absent(sep):
             return Str(self._value.hex())
         return Str(self._value.hex(_faithful(sep), _opt_int(bytes_per_sep, 1)))
@@ -160,10 +151,8 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         return MemoryView(self._value[::-1])
 
     def tobytes(self, order: Str | NoneClass | None = None) -> Bytes:
-        from poop.types._unwrap import _unwrap
-
         return Bytes(
-            self._value.tobytes(cast(Literal["C", "F", "A"], _unwrap(order, "C")))
+            self._value.tobytes(cast("Literal['C', 'F', 'A']", _unwrap(order, "C")))
         )
 
     def __str__(self) -> str:
@@ -172,7 +161,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # that is neither the POOP name nor the cloak — and unstable across
         # runs, so no test could pin it and no example could show it. Printing
         # the bytes themselves would re-materialize an arbitrarily large
-        # buffer just to print it, which is the cost proposal 10 refused, so
+        # buffer just to print it, a cost already refused elsewhere, so
         # this summarizes and `hex()` shows the contents on request.
         return f"<memoryview of {self._value.nbytes} bytes>"
 

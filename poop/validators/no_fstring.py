@@ -1,9 +1,10 @@
 import ast
 
-from poop.validators._node import make_node_validator
+from poop.validators._node import NodeValidator
 
-NoFstringValidator = make_node_validator(
-    {
+
+class NoFstringValidator(NodeValidator):
+    messages = {
         ast.JoinedStr: (
             "f-strings are forbidden — build strings with concatenation, "
             'e.g. ("Hello, " + name) or ("count: " + str(n))'
@@ -14,4 +15,3 @@ NoFstringValidator = make_node_validator(
             'build strings with concatenation, e.g. ("count: " + str(n))'
         ),
     }
-)

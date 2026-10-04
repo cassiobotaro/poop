@@ -93,7 +93,7 @@ def _describe(exc: BaseException) -> str:
     class, outside ``MIRRORS`` — for every unknown selector in the language,
     while ``except_(AttributeError, …)`` caught it and ``e.class_().name()``
     answered ``AttributeError``: one failure under two names, which is the
-    disagreement proposal 16 closed for the ``Unicode*`` family.
+    disagreement already closed for the ``Unicode*`` family.
     """
     name = poop_class_of(exc).__name__
     message = poop_message(exc)

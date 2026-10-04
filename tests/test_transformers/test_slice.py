@@ -62,17 +62,12 @@ def test_other_names_not_rewritten() -> None:
 def test_bindings_contains_mangled_slice() -> None:
     assert "_poop_slice" in SliceTransformer.BINDINGS
     assert SliceTransformer.BINDINGS["_poop_slice"] is Slice
-    # Proposal 44: a call goes through the factory, which guards the arity.
-    # `Slice(...)` *is* the call — proposal 9 — so this was the one constructor
-    # with no factory at all, and its refusal named `slice.__init__()`.
+    # A call goes through the factory, which guards the arity. `Slice(...)`
+    # *is* the call, so this was the one constructor with no factory at all, and its refusal named `slice.__init__()`.
     assert "_poop_slice_from" in SliceTransformer.BINDINGS
 
 
 def test_bare_slice_name_is_rewritten_to_the_mangled_binding() -> None:
-    import ast
-
-    from poop.transformers.slice import SliceTransformer
-
     tree = SliceTransformer().transform(ast.parse("f = slice"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

@@ -1,8 +1,7 @@
 import ast
 import copy
-from typing import ClassVar
 
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, call_at
 
 
 def _collect_starred(target: ast.expr, acc: list[ast.expr]) -> None:
@@ -21,13 +20,11 @@ def _rebind(target_value: ast.expr) -> ast.Assign:
     # Subscript is rejected by no_subscript) — all of which carry `ctx`.
     if isinstance(load, (ast.Name, ast.Attribute, ast.Subscript, ast.Starred)):
         load.ctx = ast.Load()
-    return ast.Assign(
-        targets=[store],
-        value=ast.Call(
-            func=ast.Name(id="_poop_list_from", ctx=ast.Load()),
-            args=[load],
-            keywords=[],
+    return ast.copy_location(
+        ast.Assign(
+            targets=[store], value=call_at("_poop_list_from", [load], target_value)
         ),
+        target_value,
     )
 
 
@@ -59,4 +56,3 @@ class UnpackTransformer(BaseTransformer):
     """
 
     rewriter = _UnpackRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {}

@@ -8,5 +8,5 @@ When an item is implemented, delete its entry from this file — no `DONE`
 marker and no summary left behind. The decision and its reasoning belong in
 [`INFECTIONS.md`](INFECTIONS.md), and the diff lives in the git history.
 
-Number the next item 62: earlier numbers are still cited in code comments, so
-a `proposal N` there keeps pointing at one entry and never at two.
+Numbering continues from the highest open item; the next one is 1. Once every
+item has been implemented and deleted, numbering starts over at 1.

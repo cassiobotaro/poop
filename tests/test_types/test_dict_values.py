@@ -1,5 +1,7 @@
-import pytest
+from typing import TYPE_CHECKING
 
+from poop.interpreter import Interpreter
+from poop.transformers.list import _poop_list_from
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.dict_reverse_value_iterator import DictReverseValueIterator
@@ -9,6 +11,9 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def _make() -> Dict:
@@ -59,8 +64,6 @@ def test_mapping() -> None:
 
 
 def test_list_escape() -> None:
-    from poop.transformers.list import _poop_list_from
-
     values = DictValues(_make())
     lst = _poop_list_from(values)
     assert isinstance(lst, List)
@@ -107,9 +110,23 @@ def test_str_repr() -> None:
     assert str(values) == "dict_values([1, 2])"
 
 
-def test_unhashable() -> None:
-    with pytest.raises(TypeError):
-        hash(DictValues(_make()))
+def test_hashes_by_identity_as_cpython_does() -> None:
+    # Compared by identity like any `Object`, so hashed by identity too:
+    # CPython puts `d.values()` in a set, and so does POOP.
+    d = _make()
+    values = DictValues(d)
+    assert hash(values) == hash(values)
+    assert values in {values: 1}
+    assert len({values, DictValues(d)}) == 2
+
+
+def test_a_values_view_is_a_set_element_in_a_program(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(
+        'd = {"a": 1}\nv = d.values()\n{v, d.values()}.len().print()\n{v: 1}.at(v).print()'
+    )
+    assert capsys.readouterr().out == "2\n1\n"
 
 
 def test_reversed_dunder() -> None:

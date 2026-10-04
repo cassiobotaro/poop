@@ -1,12 +1,6 @@
 import ast
 
-from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
-
-
-class NoFreeFunctionsValidator(CollectingValidator):
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_NoFreeFunctionsVisitor(), tree)
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 
 class _NoFreeFunctionsVisitor(ErrorCollector):
@@ -41,3 +35,7 @@ class _NoFreeFunctionsVisitor(ErrorCollector):
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         self._reject_if_free(node, "async functions")
+
+
+class NoFreeFunctionsValidator(CollectingValidator):
+    visitor = _NoFreeFunctionsVisitor

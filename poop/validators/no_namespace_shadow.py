@@ -1,12 +1,16 @@
 import ast
+from typing import TYPE_CHECKING
 
-from poop.errors import ValidationError
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.validators.base import (
     CollectingValidator,
     ErrorCollector,
     collect_errors,
     iter_params,
 )
+
+if TYPE_CHECKING:
+    from poop.errors import ValidationError
 
 _NAMESPACE_MESSAGE = (
     "{name!r} is a POOP namespace binding; reassigning it shadows the "
@@ -58,8 +62,8 @@ class _Visitor(ErrorCollector):
 
     def _check_args(self, args: ast.arguments) -> None:
         # A parameter named after a namespace binding shadows it inside the
-        # body exactly like a local assignment does, so `def m(self, math):`
-        # makes `math.sqrt(...)` fail in confusing ways — the same hazard the
+        # body exactly like a local assignment does, so `def m(self, Try):`
+        # makes `Try(...)` inside it call the argument — the same hazard the
         # assignment check guards against.
         for param in iter_params(args):
             self._check(param.arg, param)
@@ -68,9 +72,9 @@ class _Visitor(ErrorCollector):
         # A def directly in a class body is a method: it binds as a class
         # attribute, not in the namespace scope, so `class Calc: def Try(self)`
         # stays allowed. A def anywhere else binds a real local name and
-        # shadows the binding exactly like `Try = ...` does — nested defs are
-        # legal POOP (no_free_functions allows them inside a method), so
-        # `def Try(block): ...` there silently hijacks the entry point.
+        # shadows the binding exactly like `Try = ...` does. `no_free_functions`
+        # refuses such a def, but every validator collects (`--validators-only`
+        # reports all of them), so this one still names the shadowing.
         if not self._in_class_body:
             self._check(node.name, node)
         self._check_args(node.args)
@@ -88,7 +92,7 @@ class _Visitor(ErrorCollector):
     def visit_Lambda(self, node: ast.Lambda) -> None:
         # Lambdas are POOP's block form and carry most user code, so the
         # same shadowing hazard the def check guards against applies here
-        # too (`lambda math: math.sqrt(2)` silently shadows the namespace).
+        # too (`lambda With: With(r)` silently shadows the namespace).
         self._check_args(node.args)
         self.generic_visit(node)
 
@@ -97,12 +101,7 @@ class NoNamespaceShadowValidator(CollectingValidator):
     def __init__(self) -> None:
         # Pull the set of user-facing entry points from
         # DEFAULT_NAMESPACE so the protected list stays in sync with
-        # whatever the transformers register. Lazy import to avoid
-        # validator → transformer eager-load at validators package
-        # import time (the cycle would still close, but this keeps
-        # the dependency clean).
-        from poop.transformers import DEFAULT_NAMESPACE
-
+        # whatever the transformers register.
         self._protected: frozenset[str] = frozenset(
             n for n in DEFAULT_NAMESPACE if not n.startswith("_poop_")
         )

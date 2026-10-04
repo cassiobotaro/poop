@@ -1,7 +1,15 @@
 import pytest
 
+from poop.errors import ExecutionError
 from poop.interpreter import Interpreter
-from poop.types.exceptions import MIRRORS, PoopExcMeta, poop_class_of
+from poop.types.error import Error
+from poop.types.exceptions import (
+    MIRROR_NAMES,
+    MIRRORS,
+    MirrorName,
+    PoopExcMeta,
+    poop_class_of,
+)
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
@@ -121,8 +129,6 @@ def test_except_lookup_error_catches_the_raw_keyerror_dict_raises() -> None:
 
 
 def test_unmatched_exception_is_still_reraised() -> None:
-    from poop.errors import ExecutionError
-
     with pytest.raises(ExecutionError, match="KeyError"):
         Interpreter().run_source(
             "class P:\n"
@@ -152,12 +158,10 @@ def test_poop_class_of_falls_back_to_exception_for_unmirrored_base() -> None:
     # A BaseException subtree with no mirror (KeyboardInterrupt is not under
     # Exception) answers with the root Exception mirror rather than leaking the
     # raw native class back to user code.
-    from poop.types.exceptions import MIRRORS, poop_class_of
-
     assert poop_class_of(KeyboardInterrupt()) is MIRRORS["Exception"]
 
 
-# `raise_` as a real message — proposal 27
+# `raise_` as a real message
 
 
 def test_raise_from_a_computed_class() -> None:
@@ -256,7 +260,7 @@ def test_the_unicode_family_is_answered_by_value_error_instead() -> None:
     assert "UnicodeDecodeError" not in MIRRORS
 
 
-# Proposal 42. The mirrors inherit `BaseException`, so `args`, `add_note` and
+# The mirrors inherit `BaseException`, so `args`, `add_note` and
 # `with_traceback` arrived on all 17 — plus `obj` on AttributeError and `value`
 # on StopIteration. `dir` listed them, so `:methods ValueError` advertised
 # names the caught error already refused, and what they answered said they were
@@ -265,7 +269,7 @@ def test_the_unicode_family_is_answered_by_value_error_instead() -> None:
 @pytest.mark.parametrize("kind", sorted(MIRRORS))
 @pytest.mark.parametrize("name", ["args", "add_note", "with_traceback"])
 def test_a_mirror_refuses_the_names_it_inherited_from_baseexception(
-    kind: str, name: str
+    kind: MirrorName, name: str
 ) -> None:
     with pytest.raises(MessageNotUnderstood, match=f"#{name} is Python's"):
         getattr(MIRRORS[kind], name)
@@ -273,35 +277,33 @@ def test_a_mirror_refuses_the_names_it_inherited_from_baseexception(
 
 @pytest.mark.parametrize("kind", sorted(MIRRORS))
 @pytest.mark.parametrize("name", ["args", "add_note", "with_traceback"])
-def test_dir_does_not_advertise_a_refused_name(kind: str, name: str) -> None:
+def test_dir_does_not_advertise_a_refused_name(kind: MirrorName, name: str) -> None:
     assert name not in dir(MIRRORS[kind])
 
 
 def test_args_names_the_message_a_caught_error_answers() -> None:
     with pytest.raises(MessageNotUnderstood, match="a caught error answers #message"):
-        MIRRORS["ValueError"].args
+        MIRRORS["ValueError"].args  # noqa: B018
 
 
 def test_a_name_only_one_native_carries_is_refused_only_there() -> None:
     # `obj` and `value` ride on the metaclass with the other three, so the
     # refusal asks the native before claiming a name is Python's.
     with pytest.raises(MessageNotUnderstood, match="#obj is Python's"):
-        MIRRORS["AttributeError"].obj  # ty: ignore[unresolved-attribute]
+        MIRRORS["AttributeError"].obj  # ty: ignore[unresolved-attribute]  # noqa: B018
     with pytest.raises(MessageNotUnderstood, match="#value is Python's"):
-        MIRRORS["StopIteration"].value  # ty: ignore[unresolved-attribute]
+        MIRRORS["StopIteration"].value  # ty: ignore[unresolved-attribute]  # noqa: B018
     # ValueError has neither in CPython, so neither sentence would be true.
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        MIRRORS["ValueError"].obj  # ty: ignore[unresolved-attribute]
+        MIRRORS["ValueError"].obj  # ty: ignore[unresolved-attribute]  # noqa: B018
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        MIRRORS["ValueError"].value  # ty: ignore[unresolved-attribute]
+        MIRRORS["ValueError"].value  # ty: ignore[unresolved-attribute]  # noqa: B018
 
 
 @pytest.mark.parametrize("name", ["args", "add_note", "with_traceback"])
 def test_the_class_and_the_caught_error_agree_on_a_python_attribute(name: str) -> None:
     # The disagreement the item was: the instance side refused all three while
     # the class advertised them. Both refuse now.
-    from poop.types.error import Error
-
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood):
         getattr(error, name)
@@ -314,3 +316,10 @@ def test_the_class_side_messages_still_answer() -> None:
     assert MIRRORS["ValueError"].superclass() is MIRRORS["Exception"]  # ty: ignore[unresolved-attribute]
     with pytest.raises(ValueError, match="still raisable"):
         MIRRORS["ValueError"].raise_("still raisable")  # ty: ignore[unresolved-attribute]
+
+
+def test_mirror_names_match_the_hierarchy() -> None:
+    # `MirrorName` exists so a type checker can hold the keys; this keeps the
+    # literal and the table it describes from drifting apart.
+    assert set(MIRROR_NAMES) == set(MIRRORS)
+    assert len(MIRROR_NAMES) == len(MIRRORS)

@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoAnyValidator = make_call_name_validator(
-    forbidden={"any"},
-    message="any() is forbidden — use col.any(block) instead",
-)
+
+class NoAnyValidator(CallNameValidator):
+    forbidden = frozenset({"any"})
+    message = "any() is forbidden — use col.any(block) instead"

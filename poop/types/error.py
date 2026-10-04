@@ -1,9 +1,14 @@
 from typing import TYPE_CHECKING, Any, Never, final
 
+from poop.types._alias import unalias
+from poop.types._argument import a_class
 from poop.types._cloak import cloak
 from poop.types._message import poop_message
+from poop.types._selectors import explain
+from poop.types.boolean import to_boolean
+from poop.types.exceptions import poop_class_of
 from poop.types.meta import class_side
-from poop.types.object import Object
+from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
 if TYPE_CHECKING:
@@ -46,8 +51,6 @@ class Error(Object):
         make, a name standing in for a class, and it survived only because POOP
         had no class objects to answer with. It does now.
         """
-        from poop.types.exceptions import poop_class_of
-
         return poop_class_of(self._exception)
 
     def class_(self) -> Any:
@@ -79,10 +82,6 @@ class Error(Object):
         `unalias` is applied here rather than delegated to `Object.is_instance`
         because the check runs against `kind()`, not against `self`.
         """
-        from poop.types._alias import unalias
-        from poop.types._argument import a_class
-        from poop.types.boolean import to_boolean
-
         return to_boolean(
             issubclass(self.kind(), a_class(unalias(type_), "is_instance"))
         )
@@ -123,9 +122,6 @@ class Error(Object):
         words the opposite direction (`#upper asks an instance; send it to one`)
         and had nothing for this one.
         """
-        from poop.types._selectors import explain
-        from poop.types.object import MessageNotUnderstood
-
         kind = self.kind()
         label = str(kind.name())
         # `vars` down the metaclass MRO rather than `hasattr`: asking the class

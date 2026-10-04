@@ -1,3 +1,5 @@
+import ast
+
 import pytest
 
 from poop.parser import parse
@@ -315,7 +317,7 @@ def test_transformer_does_not_affect_int_literals() -> None:
     tree = ComplexTransformer().transform(parse("x = 42"))
     ns: dict[str, object] = {}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
-    assert ns["x"] == 42  # noqa: PLR2004
+    assert ns["x"] == 42
 
 
 def test_complex_from_str() -> None:
@@ -445,8 +447,6 @@ def test_complex_from_a_malformed_string_is_worded_like_int_and_float() -> None:
 
 
 def test_bare_complex_name_is_rewritten() -> None:
-    import ast
-
     tree = ComplexTransformer().transform(ast.parse("f = complex"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

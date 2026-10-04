@@ -1,10 +1,13 @@
-import pytest
+from typing import TYPE_CHECKING
 
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_object_print_outputs_str(capsys: pytest.CaptureFixture[str]) -> None:

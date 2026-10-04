@@ -1,7 +1,7 @@
 import ast
 
-from poop.validators._node import make_node_validator
+from poop.validators._node import NodeValidator
 
-NoAssertValidator = make_node_validator(
-    {ast.Assert: "assert is forbidden — use obj.assert_('message') instead"}
-)
+
+class NoAssertValidator(NodeValidator):
+    messages = {ast.Assert: "assert is forbidden — use obj.assert_('message') instead"}

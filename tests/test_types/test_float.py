@@ -1,7 +1,11 @@
+import math
 from typing import Any
 
 import pytest
 
+from poop.transformers.complex import _poop_complex_from
+from poop.transformers.float import FloatTransformer, _poop_float_from
+from poop.transformers.int import _poop_int_from
 from poop.types.boolean import false, true
 from poop.types.complex import Complex
 from poop.types.float import Float
@@ -104,7 +108,7 @@ def test_mod() -> None:
 
 def test_arithmetic_returns_notimplemented_for_foreign_operand() -> None:
     # A non-Int/Float operand must yield NotImplemented so Python can try the
-    # right operand's reflected dunder (proposal 115).
+    # right operand's reflected dunder.
     f = _ForeignNumber()
     assert Float(2.5).__add__(f) is NotImplemented
     assert Float(2.5).__sub__(f) is NotImplemented
@@ -229,8 +233,6 @@ def test_round_with_digits_returns_float() -> None:
 
 
 def test_round_accepts_poop_none() -> None:
-    from poop.types.none import none
-
     assert Float(2.5).round(none) == Int(2)
 
 
@@ -239,8 +241,6 @@ def test_int_conversion() -> None:
 
 
 def test_complex_constructor() -> None:
-    from poop.transformers.complex import _poop_complex_from
-
     assert _poop_complex_from(Float(2.5)) == Complex(2.5 + 0j)
 
 
@@ -257,15 +257,11 @@ def test_floordiv() -> None:
 
 
 def test_int_truncates() -> None:
-    from poop.transformers.int import _poop_int_from
-
     assert _poop_int_from(Float(3.7)) == Int(3)
     assert _poop_int_from(Float(-2.9)) == Int(-2)
 
 
 def test_float_constructor_identity() -> None:
-    from poop.transformers.float import _poop_float_from
-
     f = Float(1.5)
     assert _poop_float_from(f) is f
 
@@ -309,19 +305,15 @@ def test_fromhex_roundtrips_with_hex() -> None:
     assert Float.fromhex(f.hex()) == f
 
 
-# --- Cross-POOP-type numeric equality (proposal 86) ---
+# --- Cross-POOP-type numeric equality ---
 
 
 def test_eq_with_int_same_value() -> None:
-    from poop.types.int import Int
-
     assert Float(1.0) == Int(1)
     assert Float(2.5) != Int(2)
 
 
 def test_ne_with_int_same_value() -> None:
-    from poop.types.int import Int
-
     assert (Float(1.0) != Int(1)) is false
     assert (Float(2.5) != Int(2)) is true
 
@@ -332,8 +324,6 @@ def test_ne_with_non_numeric_returns_true() -> None:
 
 def test_ceil_floor_trunc_protocol() -> None:
     # __ceil__/__floor__/__trunc__ used by math.ceil/floor/trunc
-    import math
-
     assert math.ceil(Float(3.2)) == Int(4)
     assert math.floor(Float(3.7)) == Int(3)
     assert math.trunc(Float(3.7)) == Int(3)
@@ -344,7 +334,7 @@ def test_divmod_with_int() -> None:
 
 
 def test_divmod_folds_boolean() -> None:
-    # bool is an int subclass: divmod(7.0, True) == (7.0, 0.0)
+    # `bool` is an int subclass: divmod(7.0, True) == (7.0, 0.0)
     assert Float(7.0).divmod(true) == Tuple(Float(7.0), Float(0.0))
 
 
@@ -374,7 +364,7 @@ _BAD: Any = List(Int(1), Int(2))
     ],
 )
 def test_float_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
-    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # A mandatory argument that carries no `_value` (a
     # List) must reach the underlying Python method raw and raise the faithful
     # exception, never leak the internal `#_value` name through dispatch.
     with pytest.raises(exc) as info:
@@ -392,8 +382,6 @@ def test_min_max_take_a_key_like_the_builtin() -> None:
 
 
 def test_pow_completes_the_reflected_protocol_for_a_complex() -> None:
-    from poop.types.complex import Complex
-
     assert Float(2.0).pow(Complex(complex(1, 1))) == Float(2.0) ** Complex(
         complex(1, 1)
     )
@@ -420,15 +408,13 @@ def test_an_absent_modulus_still_computes() -> None:
 
 def test_fromhex_under_the_bare_builtin_name() -> None:
     # The third of the three: `cannot convert float to float`.
-    from poop.transformers.float import FloatTransformer
-
     alias = FloatTransformer.BINDINGS["_poop_float_cls"]
     assert alias.fromhex(Str("0x1.8p+1")) == Float(3.0)  # ty: ignore[unresolved-attribute]
     assert Float(1.0).fromhex(Str("0x1.8p+1")) == Float(3.0)
 
 
 def test_fromhex_names_the_message_like_its_byte_twins() -> None:
-    # Proposal 52: `bad argument type for built-in operation` names neither the
+    # `bad argument type for built-in operation` names neither the
     # receiver, the message nor the argument, while `Bytes.fromhex` and
     # `ByteArray.fromhex` already answered `#fromhex expects a str, got an int`.
     with pytest.raises(TypeError, match="#fromhex expects a str"):

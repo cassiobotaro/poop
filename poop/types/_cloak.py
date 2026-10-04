@@ -30,8 +30,6 @@ bare function — the `_poop_*` rewriter helpers, whose leaked spelling is one
 then refuse.
 """
 
-from __future__ import annotations
-
 from types import FunctionType
 
 

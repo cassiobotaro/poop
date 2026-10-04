@@ -4,37 +4,42 @@
 as ``1``/``0`` against ``Int``/``Float`` (``True > 0.5`` is ``True``,
 ``True == 1`` is ``True``). ``_num_value`` returns the raw Python number behind
 any numeric-tower operand (``Int``, ``Float`` or ``Boolean``), or the
-``_NOT_NUMERIC`` sentinel for a foreign operand — the caller then answers
+``NOT_NUMERIC`` sentinel for a foreign operand — the caller then answers
 ``NotImplemented`` (ordering) or a plain ``false``/``true`` (equality), so a
 mismatch raises CPython's faithful ``TypeError`` instead of leaking an
 ``AttributeError`` from a missing ``other._value``.
 """
 
 import operator
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
+from poop.types._sentinel import NOT_NUMERIC
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from collections.abc import Callable
 
-_NOT_NUMERIC: Any = object()
+    from poop.types.boolean import Boolean
 
 
 def _num_value(other: object) -> Any:
-    from poop.types.boolean import Boolean
-    from poop.types.float import Float
-    from poop.types.int import Int
+    # circular: boolean imports _numeric_compare
+    from poop.types.boolean import Boolean  # noqa: PLC0415
+
+    # circular: float imports _numeric_compare
+    from poop.types.float import Float  # noqa: PLC0415
+
+    # circular: int imports _numeric_compare
+    from poop.types.int import Int  # noqa: PLC0415
 
     if isinstance(other, Int | Float):
         return other._value
     if isinstance(other, Boolean):
         return 1 if other else 0
-    return _NOT_NUMERIC
+    return NOT_NUMERIC
 
 
-class _NumericCompareMixin:
+class _NumericCompareMixin:  # noqa: PLW1641 — the numeric rungs hash themselves
     """The comparison protocol shared by the whole numeric tower.
 
     ``Int``, ``Float`` and ``Boolean`` order and compare identically once each
@@ -54,10 +59,11 @@ class _NumericCompareMixin:
         return self._value
 
     def _order(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
-        from poop.types.boolean import to_boolean
+        # circular: boolean imports _numeric_compare
+        from poop.types.boolean import to_boolean  # noqa: PLC0415
 
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return NotImplemented
         return to_boolean(op(self._order_value(), v))
 
@@ -74,26 +80,18 @@ class _NumericCompareMixin:
         return self._order(other, operator.ge)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, to_boolean
-        from poop.types.complex import Complex
+        # circular: boolean imports _numeric_compare
+        from poop.types.boolean import false, to_boolean  # noqa: PLC0415
+
+        # circular: complex -> boolean -> _numeric_compare
+        from poop.types.complex import Complex  # noqa: PLC0415
 
         if isinstance(other, Complex):
             return to_boolean(self._order_value() == other._value)
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return false
         return to_boolean(self._order_value() == v)
-
-    def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-        from poop.types.complex import Complex
-
-        if isinstance(other, Complex):
-            return false if self._order_value() == other._value else true
-        v = _num_value(other)
-        if v is _NOT_NUMERIC:
-            return true
-        return false if self._order_value() == v else true
 
 
 # Cloaked as `object`, the root's own spelling: these methods are inherited by

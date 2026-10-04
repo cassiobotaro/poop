@@ -1,11 +1,10 @@
-from __future__ import annotations
-
+import operator
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from poop.types.boolean import Boolean
     from poop.types.object import Object
@@ -45,7 +44,8 @@ def probed(obj: Any) -> Any:
     raw = _other_set(obj)
     if isinstance(raw, set):
         # Function-local: `frozen_set` imports this module.
-        from poop.types.frozen_set import FrozenSet
+        # circular: frozen_set imports _set_algebra
+        from poop.types.frozen_set import FrozenSet  # noqa: PLC0415
 
         return FrozenSet(*raw)
     return obj
@@ -80,29 +80,23 @@ class _SetAlgebraMixin:
     _set_like: ClassVar[bool] = True
     _data: Any
 
-    def __and__(self, other: object) -> Self:
+    def _algebra(self, other: object, op: Callable[[Any, Any], Any]) -> Self:
         raw = _other_set(other)
         if raw is None:
             return NotImplemented
-        return type(self)(*(self._data & raw))
+        return type(self)(*op(self._data, raw))
+
+    def __and__(self, other: object) -> Self:
+        return self._algebra(other, operator.and_)
 
     def __or__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return type(self)(*(self._data | raw))
+        return self._algebra(other, operator.or_)
 
     def __sub__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return type(self)(*(self._data - raw))
+        return self._algebra(other, operator.sub)
 
     def __xor__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return type(self)(*(self._data ^ raw))
+        return self._algebra(other, operator.xor)
 
     # Comparison operators are subset/superset tests for sets in CPython
     # (``<`` proper subset, ``<=`` subset, ``>`` proper superset, ``>=``

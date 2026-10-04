@@ -16,6 +16,8 @@ protocol here is what makes the deliberate `NotImplemented` mean what it says.
 
 from typing import Any
 
+from poop.types._unwrap import _is_absent
+
 
 def reflected_pow(receiver: Any, other: Any, modulus: Any) -> Any:
     """`other.__rpow__(receiver)`, or `NotImplemented` when there is no route.
@@ -24,8 +26,6 @@ def reflected_pow(receiver: Any, other: Any, modulus: Any) -> Any:
     reflected counterpart in CPython either, so a present modulus means the
     refusal stands.
     """
-    from poop.types._unwrap import _is_absent
-
     if not _is_absent(modulus):
         return NotImplemented
     reflected = getattr(other, "__rpow__", None)

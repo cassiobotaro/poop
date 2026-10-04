@@ -12,7 +12,7 @@ import pytest
 
 from poop.errors import PoopError
 from poop.interpreter import Interpreter
-from poop.types._message import article, binary_refusal, poop_message
+from poop.types._message import article, binary_refusal, cannot_be_hashed, poop_message
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
@@ -87,7 +87,7 @@ def test_binary_refusal_matches_message_not_understood_s_shape() -> None:
     assert binary_refusal("str", "+", "int") == "str does not understand #+ with an int"
 
 
-# Proposal 55. `no_hash` bans `hash(x)` and names `obj.hash()`; the substitute
+# `no_hash` bans `hash(x)` and names `obj.hash()`; the substitute
 # answered CPython's bare `unhashable type: 'list'` on nine receivers, while the
 # two places that reach the same condition — a set element and a dict key —
 # answered a sentence that says where the value was going.
@@ -99,7 +99,6 @@ def test_binary_refusal_matches_message_not_understood_s_shape() -> None:
         "{1, 2}.hash()",
         'bytearray(b"ab").hash()',
         '{"a": 1}.keys().hash()',
-        '{"a": 1}.values().hash()',
         '{"a": 1}.items().hash()',
         "([1, 2],).hash()",
     ],
@@ -146,8 +145,6 @@ def test_a_hashable_receiver_still_answers_its_hash() -> None:
 def test_an_unmatched_type_error_passes_through() -> None:
     # The rule `_message`'s docstring sets for every rewrite in it: anything
     # unrecognised degrades to the old behaviour rather than to a crash.
-    from poop.types._message import cannot_be_hashed
-
     assert cannot_be_hashed(TypeError("something else entirely")) is None
     assert cannot_be_hashed(TypeError("unhashable type: 'list'")) is not None
 

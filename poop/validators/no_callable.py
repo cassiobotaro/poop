@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoCallableValidator = make_call_name_validator(
-    forbidden={"callable"},
-    message="callable() is forbidden — use obj.callable() instead",
-)
+
+class NoCallableValidator(CallNameValidator):
+    forbidden = frozenset({"callable"})
+    message = "callable() is forbidden — use obj.callable() instead"

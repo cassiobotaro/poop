@@ -1,12 +1,13 @@
-from __future__ import annotations
-
-from collections.abc import Iterable, Iterator
-from typing import Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._peek import _UNPEEKED, _PeekMixin
+from poop.types._peek import _PeekMixin
+from poop.types._sentinel import UNPEEKED
 from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
 
 
 class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):
@@ -51,7 +52,7 @@ class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):
 
     def __init__(self, iterable: Iterable[Any]) -> None:
         self._iter: Iterator[Any] = iter(iterable)
-        self._peeked: Any = _UNPEEKED
+        self._peeked: Any = UNPEEKED
 
     def _materialize(self) -> Iterator[Any]:
         return self._iter
@@ -85,3 +86,58 @@ class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):
         return f"<{self._repr_name}>"
 
     __repr__ = __str__
+
+
+class _LazyView[T](_PeekMixin, _IterableMixin, Object):
+    """Base for the lazy views `map`, `filter`, `zip` and `enumerate`.
+
+    `_IteratorBase`'s sibling: the same `__iter__`, `iter`, `<name>` repr and
+    cloak, driven by the same `name=` keyword, over a generator built on first
+    use instead of a Python iterator handed in. Each view supplies `_generate`,
+    which builds that generator from the view's own arguments and drops them —
+    the generator owns them from then on, so a consumed view stops pinning its
+    whole source and its block.
+    """
+
+    __slots__ = ("_iter",)
+    _repr_name: ClassVar[str] = "view"
+
+    def __init_subclass__(cls, *, name: str | None = None, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if name is not None:
+            cls._repr_name = name
+            cloak(cls, name)
+
+    def __init__(self) -> None:
+        self._iter: Iterator[T] | None = None
+        self._peeked: Any = UNPEEKED
+
+    def _generate(self) -> Iterator[T]:
+        raise NotImplementedError
+
+    def _materialize(self) -> Iterator[T]:
+        if self._iter is None:
+            self._iter = self._generate()
+        return self._iter
+
+    def __iter__(self) -> Iterator[T]:
+        # `self`, not the raw generator: an element parked by `has_next` would
+        # otherwise be skipped by whatever iterated next.
+        return self
+
+    def iter(self) -> Self:
+        return self
+
+    def __str__(self) -> str:
+        return f"<{self._repr_name}>"
+
+    __repr__ = __str__
+
+
+# Cloaked as `object`, as the shared mixins are: `iter` and `__str__` are
+# inherited by every concrete iterator and view, so no single builtin name is true for
+# all of them — and left alone CPython blamed `_IteratorBase` in every
+# wrong-arity message, a private name `_reject_private` exists to keep out of
+# user code.
+cloak(_IteratorBase, "object")
+cloak(_LazyView, "object")

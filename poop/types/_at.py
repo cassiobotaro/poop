@@ -14,11 +14,9 @@ whoever owns the operation, and nine wrappers own the same one, so it lives here
 instead of being written out nine times.
 """
 
-from __future__ import annotations
-
 from typing import Any
 
-from poop.types.exceptions import MIRRORS
+from poop.types.exceptions import MIRRORS, MirrorName
 
 
 def _size(count: int) -> str:
@@ -40,7 +38,7 @@ def no_element_at(receiver: object, items: Any, index: Any) -> Exception:
 
 
 def no_element_equal_to(
-    receiver: object, value: Any, mirror: str = "ValueError"
+    receiver: object, value: Any, mirror: MirrorName = "ValueError"
 ) -> Exception:
     """The mirrored `ValueError` for a value the receiver does not hold.
 
@@ -63,7 +61,7 @@ def no_key(receiver: object, key: Any) -> Exception:
     return MIRRORS["KeyError"](f"{type(receiver).__name__} has no key {key!r}")
 
 
-def nothing_to_remove(receiver: object, mirror: str = "KeyError") -> Exception:
+def nothing_to_remove(receiver: object, mirror: MirrorName = "KeyError") -> Exception:
     """The mirrored refusal for a removal from an empty receiver.
 
     CPython spells it four ways — `popitem(): dictionary is empty`, `pop from

@@ -2,16 +2,19 @@ from typing import ClassVar
 
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
+from poop.types.object import Object
 
 
-class _Wrapper(_ValueEqMixin):
+# Each fixture inherits `Object` as every real user of the mixin does: the
+# mixin owns `__eq__`, and `__ne__` is `Object`'s negation of it.
+class _Wrapper(_ValueEqMixin, Object):
     _eq_attr: ClassVar[str] = "_value"
 
     def __init__(self, value: int) -> None:
         self._value = value
 
 
-class _OtherWrapper(_ValueEqMixin):
+class _OtherWrapper(_ValueEqMixin, Object):
     _eq_attr: ClassVar[str] = "_value"
 
     def __init__(self, value: int) -> None:

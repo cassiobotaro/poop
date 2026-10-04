@@ -1,12 +1,13 @@
-import ast
+from typing import TYPE_CHECKING
 
-from poop.errors import ValidationError
 from poop.validators.base import (
     CollectingValidator,
     ErrorCollector,
-    collect_errors,
     iter_params,
 )
+
+if TYPE_CHECKING:
+    import ast
 
 _PREFIX = "_poop_"
 
@@ -56,5 +57,4 @@ class _Visitor(ErrorCollector):
 
 
 class NoPoopPrefixValidator(CollectingValidator):
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(), tree)
+    visitor = _Visitor

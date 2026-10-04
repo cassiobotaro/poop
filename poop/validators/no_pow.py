@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoPowValidator = make_call_name_validator(
-    forbidden={"pow"},
-    message="pow() is forbidden — use a.pow(b) instead",
-)
+
+class NoPowValidator(CallNameValidator):
+    forbidden = frozenset({"pow"})
+    message = "pow() is forbidden — use a.pow(b) instead"

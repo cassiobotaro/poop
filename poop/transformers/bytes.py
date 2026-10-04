@@ -1,14 +1,16 @@
-import ast
 from collections.abc import Iterable
-from typing import ClassVar, cast
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
 from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    import ast
 
 
 def _poop_bytes_from(*args: object, **kwargs: object) -> Bytes:
@@ -24,7 +26,7 @@ def _poop_bytes_from(*args: object, **kwargs: object) -> Bytes:
     receiver away answered POOP's sentence. `bytes("é", "ascii")` leaked
     CPython's `codec` report under a class no program can spell, and
     `bytes("ab", 5)` — a wrong-*typed* encoding — was silently *ignored*,
-    falling back to utf-8, the shape proposal 14 closed for `encode` itself.
+    falling back to utf-8, the shape already closed for `encode` itself.
 
     The encoding is required, as CPython requires it: without one there is no
     answer to give, only a guess about what the text means as bytes.
@@ -57,44 +59,20 @@ def _poop_bytes_from(*args: object, **kwargs: object) -> Bytes:
     raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to bytes")
 
 
-class _BytesRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "bytes":
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_bytes_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
+class _BytesRewriter(BuiltinRewriter):
+    builtin = "bytes"
+    call_target = "_poop_bytes_from"
+    name_target = "_poop_bytes_cls"
 
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
         if isinstance(node.value, bytes):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_bytes", ctx=ast.Load()),
-                    args=[node],
-                    keywords=[],
-                ),
-                node,
-            )
-        return node
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "bytes":
-            return ast.copy_location(ast.Name(id="_poop_bytes_cls", ctx=node.ctx), node)
+            return call_at("_poop_bytes", [node], node)
         return node
 
 
 class BytesTransformer(BaseTransformer):
     rewriter = _BytesRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_bytes": Bytes,
         "_poop_bytes_cls": builtin_alias(Bytes, _poop_bytes_from, "bytes"),
         "_poop_bytes_from": _poop_bytes_from,

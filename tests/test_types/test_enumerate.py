@@ -1,3 +1,5 @@
+import ast
+
 import pytest
 
 from poop.parser import parse
@@ -11,6 +13,7 @@ from poop.types.enumerate import Enumerate
 from poop.types.int import Int
 from poop.types.int import Int as _Int
 from poop.types.list import List
+from poop.types.none import none
 from poop.types.range import Range
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -43,8 +46,6 @@ def test_enumerate_custom_start() -> None:
 
 
 def test_enumerate_poop_none_start_uses_default() -> None:
-    from poop.types.none import none
-
     pairs = list(List(Str("a")).enumerate(start=none))
     assert pairs[0] == Tuple(Int(0), Str("a"))
 
@@ -191,8 +192,6 @@ def test_next_advances() -> None:
 
 
 def test_exhaustion_raises_stop_iteration() -> None:
-    import pytest
-
     e = List(Int(1)).enumerate()
     e.next()
     with pytest.raises(StopIteration):
@@ -218,8 +217,6 @@ def test_do_consumes_one_shot() -> None:
 
 
 def test_bare_enumerate_name_is_rewritten() -> None:
-    import ast
-
     tree = EnumerateTransformer().transform(ast.parse("f = enumerate"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

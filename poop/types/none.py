@@ -1,11 +1,13 @@
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, final
 
+from poop.types._argument import a_block, no_arguments
 from poop.types._cloak import cloak
 from poop.types.boolean import false, true
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.boolean import Boolean
 
 
@@ -13,14 +15,17 @@ if TYPE_CHECKING:
 class NoneClass(Object):
     __slots__ = ()
 
-    def if_none[T](self, block: Callable[[], T]) -> T:
-        from poop.types._argument import a_block
+    # CPython's answer: `type(None)() is None`. `class_()` hands the class
+    # out and a class is callable, so without this `None.class_()()` built a
+    # second None — printing `None`, neither identical nor equal to the first.
+    def __new__(cls, *args: object, **kwargs: object) -> NoneClass:
+        no_arguments(cls, args, kwargs)
+        return none
 
+    def if_none[T](self, block: Callable[[], T]) -> T:
         return a_block(block, "if_none", param="")()
 
     def if_not_none(self, block: Callable[[Object], Any]) -> NoneClass:
-        from poop.types._argument import a_block
-
         a_block(block, "if_not_none")
         return self
 
@@ -39,6 +44,6 @@ class NoneClass(Object):
         return False
 
 
-none: NoneClass = NoneClass()
+none: NoneClass = object.__new__(NoneClass)
 
 cloak(NoneClass, "NoneType")

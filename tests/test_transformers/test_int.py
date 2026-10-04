@@ -3,6 +3,7 @@ import ast
 import pytest
 
 from poop.transformers.int import IntTransformer, _poop_int_from
+from poop.types.boolean import false, true
 from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
@@ -131,17 +132,13 @@ def test_int_from_non_string_with_base_raises() -> None:
     # convert non-string with explicit base` — the builtin as a call, in a
     # message POOP composes itself. The base must not be silently dropped for
     # Int/Float/Boolean values.
-    from poop.types.boolean import true
-
     for value in (Int(10), Float(3.5), true):
         with pytest.raises(TypeError, match="a base applies only to text"):
             _poop_int_from(value, Int(2))
 
 
 def test_int_from_boolean() -> None:
-    # proposal 154: int(True) -> 1, int(False) -> 0.
-    from poop.types.boolean import false, true
-
+    # int(True) -> 1, int(False) -> 0.
     assert _poop_int_from(true) == Int(1)
     assert _poop_int_from(false) == Int(0)
 

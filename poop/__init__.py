@@ -1,4 +1,10 @@
-from poop.errors import ExecutionError, ParseError, PoopError, ValidationError
+from poop.errors import (
+    ExecutionError,
+    ParseError,
+    PoopError,
+    TransformError,
+    ValidationError,
+)
 from poop.interpreter import Interpreter
 
 __all__ = [
@@ -6,5 +12,6 @@ __all__ = [
     "Interpreter",
     "ParseError",
     "PoopError",
+    "TransformError",
     "ValidationError",
 ]

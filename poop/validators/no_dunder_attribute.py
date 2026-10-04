@@ -1,7 +1,7 @@
 import ast
 
-from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+from poop.types._selectors import is_dunder
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 # `super().__init__(...)` is an `ast.Attribute` with a dunder attr, and
 # INFECTIONS.md allows `super` explicitly — "without it, subclasses cannot
@@ -51,7 +51,7 @@ def dunder_message(
     every immutable wrapper was mutable and a `Dict` keyed on one lost the
     entry. It defaults to `dotted`, keeping both AST validators unchanged.
     """
-    if not (name.startswith("__") and name.endswith("__")):
+    if not is_dunder(name):
         return None
     # `__init__` is carved out for `super().__init__(...)`, an attribute — a
     # bare `__init__` Name has no such use, and neither has `get_attr`.
@@ -74,7 +74,7 @@ def _is_super_call(node: ast.expr) -> bool:
     covered any receiver: `s.__init__("zap")` re-ran the constructor on a live
     value, leaving `Str`, `Int` and `Tuple` all mutable and a `Dict` keyed on
     one holding an entry reachable under neither the old spelling nor the new.
-    That is the hazard `Object._reject_dunder` already describes word for word
+    That is the hazard `_reject_dunder` already describes word for word
     — it closed the `get_attr` path and left this, the shorter one, open.
     """
     return (
@@ -93,5 +93,4 @@ class _Visitor(ErrorCollector):
 
 
 class NoDunderAttributeValidator(CollectingValidator):
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(), tree)
+    visitor = _Visitor

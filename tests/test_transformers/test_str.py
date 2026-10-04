@@ -4,6 +4,8 @@ import pytest
 
 from poop.transformers.string import StrTransformer, _poop_str_from
 from poop.types.boolean import false, true
+from poop.types.byte_array import ByteArray
+from poop.types.bytes import Bytes
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -113,13 +115,10 @@ def test_str_from_bool_converts() -> None:
     assert _poop_str_from(false)._value == "False"
 
 
-# the decoding form, and the refusals around it — proposal 23
+# the decoding form, and the refusals around it
 
 
 def test_str_from_bytes_and_encoding_decodes() -> None:
-    from poop.types.byte_array import ByteArray
-    from poop.types.bytes import Bytes
-
     assert _poop_str_from(Bytes(b"ab"), Str("utf-8")) == Str("ab")
     assert _poop_str_from(Bytes(b"ab"), encoding=Str("utf-8")) == Str("ab")
     assert _poop_str_from(ByteArray(bytearray(b"ab")), Str("utf-8"), Str("strict")) == (

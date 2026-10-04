@@ -1,26 +1,28 @@
-from collections.abc import Iterator
 from operator import index as _index
 from typing import TYPE_CHECKING
 
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._unwrap import _searched
+from poop.types._unwrap import _is_absent, _searched
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.object import Object
 from poop.types.range_iterator import RangeIterator
+from poop.types.slice import _resolve_py_slice
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
 
 class Range(_IterableMixin, Object):
-    __slots__ = ("_start", "_stop", "_step")
+    __slots__ = ("_start", "_step", "_stop")
 
     def __init__(
         self,
@@ -28,8 +30,6 @@ class Range(_IterableMixin, Object):
         stop: Index,
         step: Index | NoneClass | None = None,
     ) -> None:
-        from poop.types._unwrap import _is_absent
-
         # `_index` rather than `._value`: it takes the whole index rung of the
         # tower (`range(True, 5)` is `range(1, 5)` in CPython) and answers
         # CPython's own TypeError for anything else, where reading the slot
@@ -68,8 +68,6 @@ class Range(_IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> Range:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         # A Range answers a Range, as `range(10)[1:3]` answers `range(1, 3)`
         # and as `reversed()` right below already does. Wrapping the selected
@@ -83,9 +81,9 @@ class Range(_IterableMixin, Object):
         return Range(Int(sliced.start), Int(sliced.stop - sign), Int(sliced.step))
 
     # The three searches unwrap through `_searched`, not `_faithful`, and the
-    # difference is the whole of proposal 57. A `Range` holds raw Python ints —
-    # it is the only receiver that does — so a searched value is compared by
-    # equality against a native `int`, and a `Boolean` carries no `_value` for
+    # difference matters. A `Range` holds raw Python ints — it is the only
+    # receiver that does — so a searched value is compared by equality against
+    # a native `int`, and a `Boolean` carries no `_value` for
     # `_faithful` to read. It crossed intact, `_num_value` had no branch for the
     # raw `int` on the other side, and both directions declined: `includes(True)`
     # answered false on a range starting at 1, while `includes(1)` answered true
@@ -164,11 +162,6 @@ class Range(_IterableMixin, Object):
         if isinstance(other, Range):
             return to_boolean(self._range() == other._range())
         return to_boolean(False)
-
-    def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return false if bool(self == other) else true
 
     def __hash__(self) -> int:
         # Equal ranges must hash equally; defer to the native range's hash,

@@ -1,13 +1,16 @@
-from types import NotImplementedType
+import operator
 from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
-from poop.types.boolean import Boolean, false, to_boolean, true
+from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import NotImplementedType
+
     from poop.types.float import Float
 
 _complex = complex  # alias to avoid shadowing by Complex class name
@@ -20,12 +23,14 @@ class Complex(Object):
         self._value = value._value if isinstance(value, Complex) else value
 
     def real(self) -> Float:
-        from poop.types.float import Float
+        # circular: float imports complex
+        from poop.types.float import Float  # noqa: PLC0415
 
         return Float(self._value.real)
 
     def imag(self) -> Float:
-        from poop.types.float import Float
+        # circular: float imports complex
+        from poop.types.float import Float  # noqa: PLC0415
 
         return Float(self._value.imag)
 
@@ -33,7 +38,8 @@ class Complex(Object):
         return Complex(self._value.conjugate())
 
     def __abs__(self) -> Float:
-        from poop.types.float import Float
+        # circular: float imports complex
+        from poop.types.float import Float  # noqa: PLC0415
 
         return Float(abs(self._value))
 
@@ -41,8 +47,11 @@ class Complex(Object):
         return self.__abs__()
 
     def _coerce(self, other: object) -> _complex | None:
-        from poop.types.float import Float
-        from poop.types.int import Int
+        # circular: float imports complex
+        from poop.types.float import Float  # noqa: PLC0415
+
+        # circular: int imports complex
+        from poop.types.int import Int  # noqa: PLC0415
 
         if isinstance(other, Complex):
             return other._value
@@ -54,65 +63,52 @@ class Complex(Object):
             return _complex(bool(other))
         return None
 
-    def __add__(self, other: object) -> Complex | NotImplementedType:
+    def _arith(
+        self,
+        other: object,
+        op: Callable[[_complex, _complex], _complex],
+        *,
+        reflected: bool = False,
+    ) -> Complex | NotImplementedType:
+        """`self op other`, or `other op self` when `reflected`.
+
+        For any operand `_coerce` takes; anything else answers
+        `NotImplemented`.
+        """
         v = self._coerce(other)
         if v is None:
             return NotImplemented
-        return Complex(self._value + v)
+        return Complex(op(v, self._value) if reflected else op(self._value, v))
+
+    def __add__(self, other: object) -> Complex | NotImplementedType:
+        return self._arith(other, operator.add)
 
     def __radd__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v + self._value)
+        return self._arith(other, operator.add, reflected=True)
 
     def __sub__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(self._value - v)
+        return self._arith(other, operator.sub)
 
     def __rsub__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v - self._value)
+        return self._arith(other, operator.sub, reflected=True)
 
     def __mul__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(self._value * v)
+        return self._arith(other, operator.mul)
 
     def __rmul__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v * self._value)
+        return self._arith(other, operator.mul, reflected=True)
 
     def __truediv__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(self._value / v)
+        return self._arith(other, operator.truediv)
 
     def __rtruediv__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v / self._value)
+        return self._arith(other, operator.truediv, reflected=True)
 
     def __pow__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(self._value**v)
+        return self._arith(other, operator.pow)
 
     def __rpow__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v**self._value)
+        return self._arith(other, operator.pow, reflected=True)
 
     def pow(self, other: object) -> Complex:
         # `no_pow` names `a.pow(b)` as the substitute for the builtin, and
@@ -137,10 +133,6 @@ class Complex(Object):
     def __eq__(self, other: object) -> Boolean:
         v = self._coerce(other)
         return false if v is None else to_boolean(self._value == v)
-
-    def __ne__(self, other: object) -> Boolean:
-        v = self._coerce(other)
-        return true if v is None else to_boolean(self._value != v)
 
     def __hash__(self) -> int:
         return hash(self._value)

@@ -1,5 +1,16 @@
-from __future__ import annotations
+"""The two directions between a POOP value and the Python value it wraps.
 
+One registered function per type, dispatched on the argument's class. Two
+`isinstance` ladders did this before, and depended on rung order in a way
+nothing stated — `bool` had to be tested before `int`, being a subclass — while
+a new wrapper had to be slotted in at the right height of both. Dispatch follows
+the MRO, so the most specific registration wins without anyone ordering it, and
+each type's two halves sit next to each other.
+
+Anything unregistered passes through unchanged in both directions.
+"""
+
+from functools import singledispatch
 from typing import Any
 
 from poop.types.boolean import Boolean, to_boolean
@@ -17,63 +28,132 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 
-def to_python(obj: object) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
-    if obj is none or isinstance(obj, NoneClass):
-        return None
-    if isinstance(obj, Boolean):
-        return bool(obj)
-    # `Complex` belongs with the other scalar rungs: left wrapped it reached
-    # `str.format` as a POOP object, and `object.__format__` refuses every
-    # non-empty spec — so `"{:.2f}".format(complex(1, 2))` failed where CPython
-    # answers `1.00+2.00j`, naming `complex.__format__` on the way out.
-    if isinstance(obj, (Int, Float, Complex, Str, Bytes)):
-        return obj._value
-    if isinstance(obj, ByteArray):
-        return bytearray(obj._value)
-    if isinstance(obj, List):
-        return [to_python(item) for item in obj._items]
-    if isinstance(obj, Tuple):
-        return tuple(to_python(item) for item in obj._items)
-    if isinstance(obj, Dict):
-        return {to_python(k): to_python(v) for k, v in obj._data.items()}
-    if isinstance(obj, Set):
-        return {to_python(item) for item in obj._data}
-    if isinstance(obj, FrozenSet):
-        return frozenset(to_python(item) for item in obj._data)
+@singledispatch
+def to_python(obj: object) -> Any:
     return obj
 
 
-def to_poop(value: object) -> Any:  # noqa: C901 — flat isinstance ladder, one branch per primitive/container
-    if value is None:
-        return none
-    if isinstance(value, bool):
-        return to_boolean(value)
-    if isinstance(value, int):
-        return Int(value)
-    if isinstance(value, float):
-        return Float(value)
-    # After `float`, though the order is only for readability: `complex` is a
-    # subclass of neither. The branch exists so the two halves of the bridge
-    # stay a pair — a one-sided one is the next reader's trap.
-    if isinstance(value, complex):
-        return Complex(value)
-    if isinstance(value, str):
-        return Str(value)
-    if isinstance(value, bytearray):
-        return ByteArray(value)
-    if isinstance(value, bytes):
-        return Bytes(value)
-    if isinstance(value, list):
-        return List(*(to_poop(v) for v in value))
-    if isinstance(value, tuple):
-        return Tuple(*(to_poop(v) for v in value))
-    if isinstance(value, dict):
-        d = Dict()
-        for k, v in value.items():
-            d.at_put(Str(k) if isinstance(k, str) else to_poop(k), to_poop(v))
-        return d
-    if isinstance(value, set):
-        return Set(*(to_poop(v) for v in value))
-    if isinstance(value, frozenset):
-        return FrozenSet(*(to_poop(v) for v in value))
+@singledispatch
+def to_poop(value: object) -> Any:
     return value
+
+
+@to_python.register
+def _(obj: NoneClass) -> None:
+    return None
+
+
+@to_poop.register
+def _(value: None) -> NoneClass:
+    return none
+
+
+@to_python.register
+def _(obj: Boolean) -> bool:
+    return bool(obj)
+
+
+@to_poop.register
+def _(value: bool) -> Boolean:
+    return to_boolean(value)
+
+
+# `Complex` belongs with the other scalar rungs: left wrapped it reached
+# `str.format` as a POOP object, and `object.__format__` refuses every non-empty
+# spec — so `"{:.2f}".format(complex(1, 2))` failed where CPython answers
+# `1.00+2.00j`, naming `complex.__format__` on the way out.
+@to_python.register(Int)
+@to_python.register(Float)
+@to_python.register(Complex)
+@to_python.register(Str)
+@to_python.register(Bytes)
+def _(obj: Int | Float | Complex | Str | Bytes) -> Any:
+    return obj._value
+
+
+@to_poop.register
+def _(value: int) -> Int:
+    return Int(value)
+
+
+@to_poop.register
+def _(value: float) -> Float:
+    return Float(value)
+
+
+@to_poop.register
+def _(value: complex) -> Complex:
+    return Complex(value)
+
+
+@to_poop.register
+def _(value: str) -> Str:
+    return Str(value)
+
+
+@to_poop.register
+def _(value: bytes) -> Bytes:
+    return Bytes(value)
+
+
+@to_python.register
+def _(obj: ByteArray) -> bytearray:
+    return bytearray(obj._value)
+
+
+@to_poop.register
+def _(value: bytearray) -> ByteArray:
+    return ByteArray(value)
+
+
+@to_python.register
+def _(obj: List) -> list[Any]:
+    return [to_python(item) for item in obj._items]
+
+
+@to_poop.register
+def _(value: list) -> List:
+    return List(*(to_poop(v) for v in value))
+
+
+@to_python.register
+def _(obj: Tuple) -> tuple[Any, ...]:
+    return tuple(to_python(item) for item in obj._items)
+
+
+@to_poop.register
+def _(value: tuple) -> Tuple:
+    return Tuple(*(to_poop(v) for v in value))
+
+
+@to_python.register
+def _(obj: Dict) -> dict[Any, Any]:
+    return {to_python(k): to_python(v) for k, v in obj._data.items()}
+
+
+@to_poop.register
+def _(value: dict) -> Dict:
+    d = Dict()
+    for k, v in value.items():
+        d.at_put(to_poop(k), to_poop(v))
+    return d
+
+
+@to_python.register
+def _(obj: Set) -> set[Any]:
+    return {to_python(item) for item in obj._data}
+
+
+@to_poop.register
+def _(value: set) -> Set:
+    return Set(*(to_poop(v) for v in value))
+
+
+@to_python.register
+def _(obj: FrozenSet) -> frozenset[Any]:
+    return frozenset(to_python(item) for item in obj._data)
+
+
+@to_poop.register
+def _(value: frozenset) -> FrozenSet:
+    return FrozenSet(*(to_poop(v) for v in value))

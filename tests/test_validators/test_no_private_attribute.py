@@ -5,6 +5,8 @@ spelling was the only guarded spelling — and the open one handed back a naked
 Python primitive that answered nothing in POOP's vocabulary.
 """
 
+import pathlib
+
 import pytest
 
 from poop.errors import PoopError, ValidationError
@@ -95,8 +97,6 @@ def test_every_occurrence_is_reported() -> None:
 
 def test_the_examples_corpus_is_clean() -> None:
     # The sweep the proposal promised: one allowance, no rewrites.
-    import pathlib
-
     root = pathlib.Path(__file__).parent.parent.parent / "examples"
     offenders = [
         path.name

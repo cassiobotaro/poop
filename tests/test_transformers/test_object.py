@@ -39,19 +39,18 @@ def test_other_names_are_untouched() -> None:
 
 def test_declares_no_binding_for_the_name_class_transformer_owns() -> None:
     # The namespace build raises on a duplicate key rather than letting one
-    # transformer silently overwrite another's binding. Proposal 44 added a
-    # *call*-position factory here, which is a different key: the name position
+    # transformer silently overwrite another's binding. The *call*-position
+    # factory added here which is a different key: the name position
     # still resolves to the class `ClassTransformer` binds.
     assert "_poop_object" not in ObjectTransformer.BINDINGS
     assert set(ObjectTransformer.BINDINGS) == {"_poop_object_from"}
-    assert ClassTransformer.BINDINGS == {"_poop_object": Object}
+    assert {"_poop_object": Object} == ClassTransformer.BINDINGS
 
 
 def test_order_against_class_transformer_is_free() -> None:
-    # Unlike ExceptionTransformer against RaiseTransformer, either order works:
-    # whichever runs first leaves `_poop_object`, which the other no longer
-    # matches. Asserted rather than assumed, since a silent dependency here is
-    # exactly what bit proposal 12.
+    # Either order works: whichever runs first leaves `_poop_object`, which the
+    # other no longer matches. Asserted rather than assumed, since a silent
+    # ordering dependency between transformers has bitten before.
     source = "class Foo(object):\n    pass\n"
     after = ObjectTransformer().transform(
         ClassTransformer().transform(ast.parse(source))

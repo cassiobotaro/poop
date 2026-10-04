@@ -1,13 +1,15 @@
-import ast
-from typing import ClassVar, cast
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    import ast
 
 # CPython's own parameter names: `str(object=b"", encoding=..., errors=...)`.
 _SLOTS = ("object", "encoding", "errors")
@@ -33,7 +35,8 @@ def _poop_str_from(*args: object, **kwargs: object) -> Str:
         # spelling a reader can write; the names are checked below.
         keywords=True,
     )
-    given: dict[str, object] = dict(zip(_SLOTS, args))
+    # Fewer arguments than slots is the ordinary case; the guard above caps it.
+    given: dict[str, object] = dict(zip(_SLOTS, args, strict=False))
     for name, value in kwargs.items():
         if name not in _SLOTS:
             raise MIRRORS["TypeError"](
@@ -61,44 +64,20 @@ def _poop_str_from(*args: object, **kwargs: object) -> Str:
     return Str(str(source))
 
 
-class _StrRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "str":
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_str_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
+class _StrRewriter(BuiltinRewriter):
+    builtin = "str"
+    call_target = "_poop_str_from"
+    name_target = "_poop_str_cls"
 
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
         if isinstance(node.value, str):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_str", ctx=ast.Load()),
-                    args=[node],
-                    keywords=[],
-                ),
-                node,
-            )
-        return node
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "str":
-            return ast.copy_location(ast.Name(id="_poop_str_cls", ctx=node.ctx), node)
+            return call_at("_poop_str", [node], node)
         return node
 
 
 class StrTransformer(BaseTransformer):
     rewriter = _StrRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_str": Str,
         "_poop_str_cls": builtin_alias(Str, _poop_str_from, "str"),
         "_poop_str_from": _poop_str_from,

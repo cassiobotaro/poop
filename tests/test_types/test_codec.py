@@ -4,8 +4,7 @@ CPython's failure advertised `codecs.encode()` — a module POOP has no `import`
 to reach, so the advice sent the reader somewhere the language cannot go.
 """
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -13,6 +12,9 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 _ENCODINGS = [
     "utf-8",

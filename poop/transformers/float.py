@@ -1,8 +1,7 @@
 import ast
-from typing import ClassVar
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean
 from poop.types.exceptions import MIRRORS
@@ -42,64 +41,32 @@ def _poop_float_from(*args: object, **kwargs: object) -> Float:
     raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to float")
 
 
-class _FloatRewriter(ast.NodeTransformer):
-    def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
-        if isinstance(node.op, ast.USub) and isinstance(node.operand, ast.Constant):
-            if isinstance(node.operand.value, float):
-                collapsed = ast.copy_location(
-                    ast.Constant(value=-node.operand.value), node
-                )
-                return ast.copy_location(
-                    ast.Call(
-                        func=ast.Name(id="_poop_float", ctx=ast.Load()),
-                        args=[collapsed],
-                        keywords=[],
-                    ),
-                    node,
-                )
-        return self.generic_visit(node)
+class _FloatRewriter(BuiltinRewriter):
+    builtin = "float"
+    call_target = "_poop_float_from"
+    name_target = "_poop_float_cls"
 
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        # `not node.keywords`: see the twin guard in `boolean.py`. Rewritten
-        # unconditionally, `float(x=1)` answered `0.0` off the helper's
-        # default instead of CPython's `float() takes no keyword arguments`.
+    def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
+        # `-5` parses as `USub(Constant(5))`; folded here so the literal is one
+        # value, not a message sent to a positive one.
         if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == "float"
-            and not node.keywords
+            isinstance(node.op, ast.USub)
+            and isinstance(node.operand, ast.Constant)
+            and isinstance(node.operand.value, float)
         ):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_float_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
+            folded = ast.copy_location(ast.Constant(value=-node.operand.value), node)
+            return call_at("_poop_float", [folded], node)
+        return self.generic_visit(node)
 
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
         if isinstance(node.value, float):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_float", ctx=ast.Load()),
-                    args=[node],
-                    keywords=[],
-                ),
-                node,
-            )
-        return node
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "float":
-            return ast.copy_location(ast.Name(id="_poop_float_cls", ctx=node.ctx), node)
+            return call_at("_poop_float", [node], node)
         return node
 
 
 class FloatTransformer(BaseTransformer):
     rewriter = _FloatRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_float": Float,
         "_poop_float_cls": builtin_alias(Float, _poop_float_from, "float"),
         "_poop_float_from": _poop_float_from,

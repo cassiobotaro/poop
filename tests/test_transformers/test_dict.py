@@ -2,10 +2,12 @@ import ast
 
 import pytest
 
+from poop.interpreter import Interpreter
 from poop.transformers.dict import (
     DictTransformer,
     _poop_dict_from,
     _poop_dict_from_pairs,
+    _poop_dict_merge,
 )
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -85,7 +87,7 @@ def test_dict_from_no_arg_returns_empty() -> None:
 
 
 def test_dict_from_kwargs() -> None:
-    # proposal 135: dict(a=1, b=2) keyword form.
+    # dict(a=1, b=2) keyword form.
     result = _poop_dict_from(a=Int(1), b=Int(2))
     expected = Dict()
     expected._data[Str("a")] = Int(1)
@@ -102,14 +104,10 @@ def test_dict_from_mapping_and_kwargs() -> None:
 
 
 def test_dict_kwargs_via_interpreter() -> None:
-    from poop.interpreter import Interpreter
-
     Interpreter().run_source('dict(a=1, b=2).at("a").print()')
 
 
 def test_dict_merge_helper() -> None:
-    from poop.transformers.dict import _poop_dict_merge
-
     a = Dict()
     a._data[Str("x")] = Int(1)
     b = Dict()
@@ -120,8 +118,6 @@ def test_dict_merge_helper() -> None:
 
 
 def test_dict_merge_later_overrides_earlier() -> None:
-    from poop.transformers.dict import _poop_dict_merge
-
     a = Dict()
     a._data[Str("x")] = Int(1)
     b = Dict()
@@ -130,8 +126,6 @@ def test_dict_merge_later_overrides_earlier() -> None:
 
 
 def test_dict_splat_via_interpreter() -> None:
-    from poop.interpreter import Interpreter
-
     Interpreter().run_source('{**{"x": 1}, "y": 2}.at("y").print()')
 
 
@@ -139,8 +133,6 @@ def test_dict_call_double_splat_copies_mapping() -> None:
     # `dict(**other)` must not reach the bare `_poop_dict` class — Python's
     # `**` unpacking demands raw str keys but a POOP Dict carries Str keys,
     # so the splat is folded into a `_poop_dict_merge` instead.
-    from poop.interpreter import Interpreter
-
     Interpreter().run_source(
         'other = {"a": 1, "b": 2}\n'
         "d = dict(**other)\n"
@@ -150,8 +142,6 @@ def test_dict_call_double_splat_copies_mapping() -> None:
 
 
 def test_dict_call_named_and_double_splat_merge() -> None:
-    from poop.interpreter import Interpreter
-
     Interpreter().run_source(
         'more = {"b": 9, "c": 3}\n'
         "d = dict(a=1, **more)\n"
@@ -161,8 +151,6 @@ def test_dict_call_named_and_double_splat_merge() -> None:
 
 
 def test_dict_call_positional_and_double_splat_merge() -> None:
-    from poop.interpreter import Interpreter
-
     Interpreter().run_source(
         'base = {"x": 0}\n'
         'more = {"b": 9, "c": 3}\n'
@@ -226,7 +214,7 @@ def test_dict_from_unsupported_type_raises() -> None:
 
 
 def test_dict_literal_with_unpacking_rewritten_to_merge() -> None:
-    # proposal 142: a `**` display is now rewritten to _poop_dict_merge.
+    # A `**` display is rewritten to _poop_dict_merge.
     tree = _transform("x = {**d, 'a': 1}")
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)
@@ -237,10 +225,8 @@ def test_dict_literal_with_unpacking_rewritten_to_merge() -> None:
 
 def test_dict_merge_rejects_non_dict_part() -> None:
     # `{**a, **b}` merges POOP Dicts; spreading a non-Dict is a TypeError, not
-    # a silent AttributeError on the missing `_data`. Proposal 51 reworded it:
+    # a silent AttributeError on the missing `_data`. The sentence used to be
     # `cannot ** -unpack int into a dict display` carried a stray space and
     # "dict display", Python's grammar word for what POOP calls a literal.
-    from poop.transformers.dict import _poop_dict_merge
-
     with pytest.raises(TypeError, match="a dict literal can only spread a mapping"):
         _poop_dict_merge(Dict(), Int(1))  # ty: ignore[invalid-argument-type]

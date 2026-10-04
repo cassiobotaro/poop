@@ -19,6 +19,7 @@ import pytest
 import poop.types
 from poop import Interpreter
 from poop.errors import ExecutionError
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.meta import PoopMeta
 
 
@@ -94,6 +95,12 @@ def test_own_functions_answer_the_cloaked_class_name(index: int, cls: type) -> N
             assert fn.__qualname__.startswith(f"{cls.__qualname__}.")
 
 
+def test_no_class_answers_a_private_name() -> None:
+    # A wrong-arity message is built from the owning function's qualname, so a
+    # shared base left uncloaked blames itself — `_IteratorBase.iter()` did.
+    assert [cls for cls in _classes() if cls.__qualname__.startswith("_")] == []
+
+
 @pytest.mark.parametrize(
     ("source", "expected"),
     [
@@ -109,7 +116,7 @@ def test_own_functions_answer_the_cloaked_class_name(index: int, cls: type) -> N
         # Inherited from a mixin, which owns no builtin name of its own: cloaked
         # as `object`, the root's spelling, rather than as a private one.
         #
-        # `[1, 2].map()` used to sit here too. Proposal 46: the cloak's own
+        # `[1, 2].map()` used to sit here too. The cloak's own
         # justification is "it only renames the callee", and that holds where
         # the rename is true — `object` is a name a program can write, and
         # `object` does not answer `#map`. The block slots carry a sentinel
@@ -119,11 +126,13 @@ def test_own_functions_answer_the_cloaked_class_name(index: int, cls: type) -> N
         # can catch.
         ("[1].iter().next(1, 2)", "object.next()"),
         ('{"a": 1}.keys().len(1)', "object.len()"),
+        # Owned by `_IteratorBase`, which was left uncloaked and blamed itself.
+        ("[1].iter().iter(1)", "object.iter()"),
         # `range`, `int`, `float`, `bool` and `enumerate` used to sit here for
         # the same reason `dict` did: the cloak made CPython's arity message
-        # name `range()` instead of `_poop_range()`. Proposal 44 gave all five
-        # (and `zip`, `object`, `slice`) the guard the other ten already had,
-        # so none of them reaches CPython's call machinery any more — see
+        # name `range()` instead of `_poop_range()`. All five (and `zip`,
+        # `object`, `slice`) were given the guard the other ten already had, so
+        # none of them reaches CPython's call machinery any more — see
         # `test_transformers/test_constructor_arity.py`.
     ],
 )
@@ -161,8 +170,6 @@ def test_class_side_arity_errors_name_no_internal_spelling(
 
 def test_namespace_helpers_carry_no_reserved_prefix() -> None:
     """The sweep behind the table above: every binding, not the sampled ones."""
-    from poop.transformers import DEFAULT_NAMESPACE
-
     for key, value in DEFAULT_NAMESPACE.items():
         if inspect.isfunction(value):
             assert not value.__qualname__.startswith("_poop_"), key

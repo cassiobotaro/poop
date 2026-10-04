@@ -1,36 +1,39 @@
 import builtins
 import re
-from collections.abc import Callable, Iterator
 from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._affix import affix_needle
-from poop.types._argument import a_bound, text_like
+from poop.types._argument import a_bound, a_needle, text_like
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
-from poop.types._minmax import _MISSING, _minmax
-from poop.types._repeat import NOT_A_COUNT, _repeat_count
-from poop.types._unwrap import _faithful, _unwrap
+from poop.types._minmax import _minmax
+from poop.types._ordered import _OrderedMixin
+from poop.types._repeat import _repeat_count
+from poop.types._sentinel import MISSING, NOT_A_COUNT
+from poop.types._unwrap import _faithful, _is_absent, _opt_str, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS, PoopExcMeta
+from poop.types.int import Int
+from poop.types.list import List
 from poop.types.object import Object
+from poop.types.slice import _resolve_py_slice
 from poop.types.str_iterator import StrIterator
+from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
+    from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
-    from poop.types.int import Int
-    from poop.types.list import List
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
-    from poop.types.tuple import Tuple
 
-_str = str  # alias to avoid shadowing in annotations
 
 # `Unknown format code 'd' for object of type 'str'`.
 _UNKNOWN_CODE = re.compile(r"^Unknown format code '(.+?)' for object of type '(.+?)'$")
@@ -43,14 +46,14 @@ _BAD_SPEC = re.compile(r"^Invalid format specifier '(.*?)' for object of type '(
 _NO_SPEC = re.compile(r"^unsupported format string passed to (.+?)\.__format__$")
 
 
-def _reject_field_access(template: _str) -> None:
+def _reject_field_access(template: str) -> None:
     """Refuse `{0.attr}` / `{0[key]}` — a format field is not an escape hatch.
 
     `str.format` reads attributes and items at *runtime*, from inside a string
     literal no validator can read, so `"{0.__class__}".format(5)` printed
     `<class 'int'>` — reopening exactly what `no_dunder_attribute` closes, and
     `{0[0]}` what `no_subscript` closes. This is the third half of the same
-    ban, alongside `Object._reject_dunder`: both guard a spelling that reaches
+    ban, alongside `_reject_dunder`: both guard a spelling that reaches
     the runtime as data.
 
     Only the field *name* is inspected — a format spec may legitimately carry a
@@ -69,7 +72,7 @@ def _reject_field_access(template: _str) -> None:
             _reject_field_access(spec)
 
 
-def _offered(named: dict[_str, object]) -> _str:
+def _offered(named: dict[str, object]) -> str:
     """`: a, b` — the names a template could have used, or nothing."""
     return f": {', '.join(sorted(named))}" if named else " it"
 
@@ -99,7 +102,7 @@ def _template_refusal(exc: ValueError | TypeError) -> Exception:
     # untouched, on the test `reword_if_native` uses for the same reason.
     if isinstance(type(exc), PoopExcMeta):
         return exc
-    text = _str(exc)
+    text = str(exc)
     match = _UNKNOWN_CODE.match(text)
     if match is not None:
         code, kind = match.groups()
@@ -125,42 +128,13 @@ def _opt_text(chars: object, selector: str) -> Any:
     — `strip arg must be None or str` — where `None` is a value POOP spells
     `none` and "arg" is not a word the language uses.
     """
-    from poop.types._unwrap import _is_absent
-
     if _is_absent(chars):
         return None
     return text_like(chars, selector, "a str", (str,))
 
 
-def _needle(sub: object, selector: str) -> Any:
-    """The substring `find` / `rfind` / `index` / `rindex` / `count` look for.
-
-    These five keep their string meaning where `_IterableMixin.find` takes a
-    block, so a reader arriving from `[1, 2].find(block)` writes a block here.
-    CPython answers `find() argument 1 must be str, not function` — the method
-    as a call, and `function`, which POOP prints as `<block>`.
-
-    The `r`-prefixed pair is the same message read from the other end, and was
-    left on `_faithful` — so `"abc".find(block)` and `"abc".rfind(block)`, the
-    same mistake one letter apart, answered in two different vocabularies.
-
-    Kept here as `Str`'s own; its receiver-independent twin is
-    `_argument.a_needle`, which the byte wrappers use. Proposal 52 was this item
-    reopening one receiver over: the sentence was already general and only its
-    address was wrong.
-    """
-    if not isinstance(sub, Str) and callable(sub):
-        raise MIRRORS["TypeError"](
-            f"str's #{selector} searches for a substring — "
-            "it takes the text to look for, not a block"
-        )
-    # Anything else that is not text reached CPython and answered
-    # `find() argument 1 must be str, not int` — the message spelt as a call.
-    return text_like(sub, selector, "a str")
-
-
-class Str(_ValueEqMixin, _IterableMixin, Object):
-    """A string, and — since proposal 24 — a collection like any other.
+class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
+    """A string, and a collection like any other.
 
     `no_map`, `no_filter`, `no_all`, `no_any` and `no_loops` each name a
     message on the collection as the substitute, `_IterableMixin` supplies
@@ -174,20 +148,16 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
 
-    def __init__(self, value: _str | Str) -> None:
+    def __init__(self, value: str | Str) -> None:
         self._value = value._value if isinstance(value, Str) else value
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._value))
 
     def __len__(self) -> int:
         return len(self._value)
 
     def ord(self) -> Int:
-        from poop.types.int import Int
-
         try:
             return Int(ord(self._value))
         except TypeError:
@@ -217,8 +187,6 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> Str:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         return Str(self._value[py])
 
@@ -233,8 +201,6 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         # The one mixin message a string must not answer: `sum("ab")` is a
         # TypeError in CPython, and adding the characters up would answer the
         # string back, which is `join`'s job.
-        from poop.types.exceptions import MIRRORS
-
         raise MIRRORS["TypeError"](
             "str cannot be summed — send #join to a list of pieces instead"
         )
@@ -243,7 +209,7 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         self,
         *,
         key: Callable[[Str], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(builtins.min, "#min", self, key, default)
 
@@ -251,7 +217,7 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         self,
         *,
         key: Callable[[Str], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(builtins.max, "#max", self, key, default)
 
@@ -318,8 +284,6 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         sep: Str | NoneClass | None = None,
         maxsplit: Int | NoneClass | None = None,
     ) -> List:
-        from poop.types.list import List
-
         return List(
             *(
                 Str(p)
@@ -341,7 +305,8 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         # is POOP's documented template-formatting surface. The rare
         # "apply a spec to a string" case stays expressible as
         # "{:^10}".format(s).
-        from poop.types._bridge import to_python
+        # circular: _bridge imports string
+        from poop.types._bridge import to_python  # noqa: PLC0415
 
         positional = [to_python(a) for a in args]
         named = {k: to_python(v) for k, v in kwargs.items()}
@@ -383,11 +348,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.find(
-                _needle(sub, "find"),
+                a_needle(self, sub, "find", "a str"),
                 a_bound(start, "find", "start"),
                 a_bound(end, "find", "end"),
             )
@@ -399,11 +362,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.index(
-                _needle(sub, "index"),
+                a_needle(self, sub, "index", "a str"),
                 a_bound(start, "index", "start"),
                 a_bound(end, "index", "end"),
             )
@@ -415,11 +376,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.count(
-                _needle(sub, "count"),
+                a_needle(self, sub, "count", "a str"),
                 a_bound(start, "count", "start"),
                 a_bound(end, "count", "end"),
             )
@@ -485,8 +444,8 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         encoding: Str | NoneClass | None = None,
         errors: Str | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types._unwrap import _opt_str
-        from poop.types.bytes import Bytes
+        # circular: bytes imports string
+        from poop.types.bytes import Bytes  # noqa: PLC0415
 
         return Bytes(
             encoded(
@@ -536,13 +495,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         return Str(self._value.zfill(_faithful(width)))
 
     def partition(self, sep: Str) -> Tuple:
-        from poop.types.tuple import Tuple
-
         return Tuple(*[Str(s) for s in self._value.partition(_faithful(sep))])
 
     def rpartition(self, sep: Str) -> Tuple:
-        from poop.types.tuple import Tuple
-
         return Tuple(*[Str(s) for s in self._value.rpartition(_faithful(sep))])
 
     def removeprefix(self, prefix: Str) -> Str:
@@ -557,11 +512,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.rfind(
-                _needle(sub, "rfind"),
+                a_needle(self, sub, "rfind", "a str"),
                 a_bound(start, "rfind", "start"),
                 a_bound(end, "rfind", "end"),
             )
@@ -573,11 +526,9 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         return Int(
             self._value.rindex(
-                _needle(sub, "rindex"),
+                a_needle(self, sub, "rindex", "a str"),
                 a_bound(start, "rindex", "start"),
                 a_bound(end, "rindex", "end"),
             )
@@ -588,8 +539,6 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         sep: Str | NoneClass | None = None,
         maxsplit: Int | NoneClass | None = None,
     ) -> List:
-        from poop.types.list import List
-
         return List(
             *(
                 Str(s)
@@ -598,9 +547,6 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
         )
 
     def splitlines(self, keepends: Boolean | NoneClass | None = None) -> List:
-        from poop.types._unwrap import _unwrap_bool
-        from poop.types.list import List
-
         return List(
             *[Str(s) for s in self._value.splitlines(_unwrap_bool(keepends, False))]
         )
@@ -616,39 +562,15 @@ class Str(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return Str(self._value * count)
 
-    def __rmul__(self, other: object) -> Str:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return Str(self._value * count)
-
-    def __lt__(self, other: object) -> Boolean:
-        if not isinstance(other, Str):
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._value < other._value)
-
-    def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, Str):
-            return NotImplemented
-        return to_boolean(self._value <= other._value)
-
-    def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, Str):
-            return NotImplemented
-        return to_boolean(self._value > other._value)
-
-    def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, Str):
-            return NotImplemented
-        return to_boolean(self._value >= other._value)
+    __rmul__ = __mul__
 
     def __hash__(self) -> int:
         return hash(self._value)
 
-    def __str__(self) -> _str:
+    def __str__(self) -> str:
         return self._value
 
-    def __repr__(self) -> _str:
+    def __repr__(self) -> str:
         return repr(self._value)
 
 

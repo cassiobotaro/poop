@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoFilterValidator = make_call_name_validator(
-    forbidden={"filter"},
-    message="filter() is forbidden — use col.filter(block) instead",
-)
+
+class NoFilterValidator(CallNameValidator):
+    forbidden = frozenset({"filter"})
+    message = "filter() is forbidden — use col.filter(block) instead"

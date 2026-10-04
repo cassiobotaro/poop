@@ -1,10 +1,15 @@
+from types import MethodType
+
 import pytest
 
+from poop.types._argument import a_key
 from poop.types.block import Block
 from poop.types.boolean import false, true
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.none import none
+from poop.types.object import Object
 from poop.types.string import Str
 
 
@@ -111,7 +116,7 @@ def test_block_arity_message_states_a_floor_for_a_variadic_block() -> None:
 
 def test_block_arity_message_leaves_keywords_to_the_keyword_refusal() -> None:
     # Was `block expects 1 argument, got 2`, counting the keyword as if it were
-    # positional. Proposal 45: the count is not what is wrong here — the block
+    # positional. The count is not what is wrong here — the block
     # has no `y` at all — and folding the two hid the fault whenever the numbers
     # happened to match. `_keyword_message` names it; the count sees positionals.
     with pytest.raises(
@@ -154,9 +159,6 @@ def test_block_on_a_class_binds_to_the_receiver() -> None:
     # it defines, and the one thing a reader reaches for it with did not work:
     # the block was stored as a plain class attribute and read back untouched,
     # so a one-argument block was told it got none.
-    from poop.types.object import Object
-    from poop.types.string import Str
-
     class C(Object):
         __slots__ = ()
 
@@ -165,9 +167,6 @@ def test_block_on_a_class_binds_to_the_receiver() -> None:
 
 
 def test_block_on_a_class_passes_further_arguments_after_the_receiver() -> None:
-    from poop.types.object import Object
-    from poop.types.string import Str
-
     class C(Object):
         __slots__ = ()
 
@@ -177,9 +176,6 @@ def test_block_on_a_class_passes_further_arguments_after_the_receiver() -> None:
 
 def test_block_read_off_the_class_is_unbound() -> None:
     # As a function is: `C.greet` answers the block itself, `C().greet` binds.
-    from poop.types.object import Object
-    from poop.types.string import Str
-
     class C(Object):
         __slots__ = ()
 
@@ -192,9 +188,6 @@ def test_block_held_as_instance_state_is_not_bound() -> None:
     # Only `__get__` is defined, which makes this a *non-data* descriptor —
     # Python's own split, so a block found in the instance's `__dict__` is
     # handed back as itself. That half already worked and must keep working.
-    from poop.types.object import Object
-    from poop.types.string import Str
-
     class C(Object):
         pass
 
@@ -207,9 +200,6 @@ def test_a_zero_argument_block_on_a_class_is_told_it_got_the_receiver() -> None:
     # Binding is Python's rule, so this now fails — and it must fail in the
     # block's own words, counting the receiver it was handed rather than
     # degrading to "does not accept 0 arguments" about a call that passed none.
-    from poop.types.object import Object
-    from poop.types.string import Str
-
     class C(Object):
         __slots__ = ()
 
@@ -219,9 +209,6 @@ def test_a_zero_argument_block_on_a_class_is_told_it_got_the_receiver() -> None:
 
 
 def test_a_bound_block_does_not_reword_a_type_error_from_its_body() -> None:
-    from poop.types.object import Object
-    from poop.types.string import Str
-
     class C(Object):
         __slots__ = ()
 
@@ -236,23 +223,16 @@ def test_a_method_read_off_an_object_is_a_block() -> None:
     # answered `'function' object has no attribute 'print'` — CPython's word
     # for a message, naming the value `function`, which is `Block`'s own
     # cloak. Same object, same message, two answers.
-    from poop.types.string import Str
-
     assert repr(Str("abc").upper) == "<block>"
     assert Str("abc").upper.callable() is true  # ty: ignore[unresolved-attribute]
     assert Str("abc").upper() == Str("ABC")
 
 
 def test_a_method_read_by_name_and_by_writing_it_agree() -> None:
-    from poop.types.string import Str
-
     assert repr(Str("abc").get_attr(Str("upper"))) == repr(Str("abc").upper)
 
 
 def test_a_bound_method_still_works_as_a_block_value() -> None:
-    from poop.types.list import List
-    from poop.types.object import Object
-
     class C(Object):
         __slots__ = ()
 
@@ -267,8 +247,6 @@ def test_a_method_keeps_cpythons_arity_wording_not_the_blocks() -> None:
     # *message*; rewording it as a block's would replace `str.upper` with the
     # word `block`, and would drag `inspect.signature` — which evaluates a
     # wrapper's `TYPE_CHECKING`-only annotations — into every failed call.
-    from poop.types.string import Str
-
     with pytest.raises(TypeError, match=r"str\.upper\(\) takes 1 positional"):
         Str("abc").upper(Int(1))  # ty: ignore[too-many-positional-arguments]
 
@@ -277,15 +255,11 @@ def test_a_private_name_is_not_wrapped() -> None:
     # `is_message` already calls `_` the boundary of the message surface, and
     # `Block` holds its callable in `_fn` — wrapping that read would hand
     # `__call__` a fresh block to unwrap on every call, forever.
-    from types import MethodType
-
-    from poop.types.string import Str
-
     assert type(Str("abc")._value) is str
     assert type(Block(lambda: none)._fn) is not MethodType
 
 
-# Proposal 43. `Object` compares by identity and `__getattribute__` builds a
+# `Object` compares by identity and `__getattribute__` builds a
 # fresh wrapper on every read, so the same method on the same receiver was not
 # equal to itself. CPython's bound method compares by `__self__` and `__func__`
 # precisely so a program can ask "is this the same callback?".
@@ -343,7 +317,7 @@ def test_a_block_literal_keeps_identity_equality() -> None:
     assert not bool(one == Block(lambda: 1))
 
 
-# Proposal 45. `__call__` handed `_arity_message` `len(args) + len(kwargs)`, so
+# `__call__` handed `_arity_message` `len(args) + len(kwargs)`, so
 # every keyword mistake was reported as a count mismatch whose count matched:
 # `block expects 1 argument, got 1`. Two equal numbers and a refusal.
 def test_an_unexpected_keyword_is_named() -> None:
@@ -399,7 +373,5 @@ def test_a_keyword_the_block_does_take_still_works() -> None:
 def test_a_key_that_is_already_a_block_passes_through() -> None:
     # `a_key`'s middle branch: absent -> None, callable -> itself, anything
     # else -> the refusal. Only the first and last had coverage.
-    from poop.types._argument import a_key
-
     block = Block(lambda x: x)
     assert a_key(block, "sorted") is block

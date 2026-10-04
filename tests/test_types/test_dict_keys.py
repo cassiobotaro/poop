@@ -1,8 +1,9 @@
 import operator
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pytest
 
+from poop.transformers.list import _poop_list_from
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.dict_key_iterator import DictKeyIterator
@@ -14,6 +15,9 @@ from poop.types.list import List
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.set import Set
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _make() -> Dict:
@@ -78,8 +82,6 @@ def test_mapping() -> None:
 
 
 def test_list_escape() -> None:
-    from poop.transformers.list import _poop_list_from
-
     keys = DictKeys(_make())
     lst = _poop_list_from(keys)
     assert isinstance(lst, List)
@@ -208,10 +210,10 @@ def test_isdisjoint_with_empty_set() -> None:
 
 def test_reversed_dunder() -> None:
     keys = DictKeys(_make())
-    assert list(reversed(keys))[0] == Str("b")
+    assert next(reversed(keys)) == Str("b")
 
 
-# --- proposal 3: any iterable for the algebraic operators, set-like only for
+# --- any iterable for the algebraic operators, set-like only for
 # the comparisons — and neither may leak `#_data` ---
 
 
@@ -270,6 +272,4 @@ def test_comparison_accepts_the_other_set_like_view() -> None:
 
 
 def test_sorted_answers_a_list_of_keys() -> None:
-    from poop.types.list import List
-
     assert DictKeys(_make()).sorted() == List(Str("a"), Str("b"))

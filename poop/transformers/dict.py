@@ -1,16 +1,17 @@
 import ast
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar, cast
+from itertools import batched
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers._collection import CollectionRewriter
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
 from poop.types._message import article
 from poop.types._unwrap import _faithful
 from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
 from poop.types.list import List
+from poop.types.mapping_proxy import MappingProxy
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -19,9 +20,10 @@ if TYPE_CHECKING:
 
 
 def _poop_dict_from_pairs(*pairs: Object) -> Dict:
+    # The rewrite always hands over an even run of key, value; `strict` makes a
+    # stray odd element a failure rather than a silently dropped key.
     d = Dict()
-    it = iter(pairs)
-    for k, v in zip(it, it):
+    for k, v in batched(pairs, 2, strict=True):
         d._data[k] = v
     return d
 
@@ -52,8 +54,6 @@ def _poop_kwargs_from(mapping: object) -> object:
     `argument after ** must be a mapping, not int`. Values stay POOP objects;
     a `**kw` parameter on the other side re-wraps them into a `Dict`.
     """
-    from poop.types.mapping_proxy import MappingProxy
-
     if isinstance(mapping, MappingProxy):
         mapping = mapping._dict
     if not isinstance(mapping, Dict):
@@ -118,32 +118,12 @@ def _poop_dict_from(*args: object, **kwargs: Object) -> Dict:
     return d
 
 
-class _DictRewriter(CollectionRewriter):
+class _DictRewriter(BuiltinRewriter):
     builtin = "dict"
     call_target = "_poop_dict_from"
     name_target = "_poop_dict_cls"
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        # Unlike the other collection builtins, dict(...) accepts keywords
-        # (dict(a=1, b=2)). Forward named keywords to _poop_dict_from.
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == self.builtin
-            and len(node.args) <= 1
-            and node.keywords
-            and all(kw.arg is not None for kw in node.keywords)
-        ):
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id=self.call_target, ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
         # A `**x` splat (kw.arg is None) cannot reach the bare `_poop_dict`
         # class: Python's `**` unpacking demands raw `str` keys, but a POOP
         # Dict carries `Str` keys, so `_poop_dict(**other)` raises
@@ -160,12 +140,7 @@ class _DictRewriter(CollectionRewriter):
             # normalise it through `_poop_dict_from` so `_poop_dict_merge`
             # always sees a Dict part.
             parts: list[ast.expr] = [
-                ast.Call(
-                    func=ast.Name(id="_poop_dict_from", ctx=ast.Load()),
-                    args=[self.visit(arg)],
-                    keywords=[],
-                )
-                for arg in node.args
+                call_at("_poop_dict_from", [self.visit(arg)], arg) for arg in node.args
             ]
             # A named keyword is a plain pair; `**x` (kw.arg is None) is a
             # splat. The StrTransformer has already run, so wrap the keyword
@@ -175,11 +150,7 @@ class _DictRewriter(CollectionRewriter):
                 (None, self.visit(kw.value))
                 if kw.arg is None
                 else (
-                    ast.Call(
-                        func=ast.Name(id="_poop_str", ctx=ast.Load()),
-                        args=[ast.Constant(value=kw.arg)],
-                        keywords=[],
-                    ),
+                    call_at("_poop_str", [ast.Constant(value=kw.arg)], kw.value),
                     self.visit(kw.value),
                 )
                 for kw in node.keywords
@@ -216,31 +187,17 @@ class _DictRewriter(CollectionRewriter):
 
     @staticmethod
     def _merge_call(parts: list[ast.expr], ref: ast.AST) -> ast.expr:
-        return ast.copy_location(
-            ast.Call(
-                func=ast.Name(id="_poop_dict_merge", ctx=ast.Load()),
-                args=parts,
-                keywords=[],
-            ),
-            ref,
-        )
+        return call_at("_poop_dict_merge", parts, ref)
 
     @staticmethod
     def _pairs_call(flat: list[ast.expr], ref: ast.AST) -> ast.expr:
-        return ast.copy_location(
-            ast.Call(
-                func=ast.Name(id="_poop_dict_from_pairs", ctx=ast.Load()),
-                args=flat,
-                keywords=[],
-            ),
-            ref,
-        )
+        return call_at("_poop_dict_from_pairs", flat, ref)
 
     def visit_Dict(self, node: ast.Dict) -> ast.AST:
         self.generic_visit(node)
         if all(k is not None for k in node.keys):
             flat: list[ast.expr] = []
-            for k, v in zip(node.keys, node.values):
+            for k, v in zip(node.keys, node.values, strict=True):
                 flat.append(cast("ast.expr", k))
                 flat.append(v)
             return self._pairs_call(flat, node)
@@ -248,13 +205,13 @@ class _DictRewriter(CollectionRewriter):
         # pairs becomes a _poop_dict_from_pairs(...), each **x stays as x,
         # and _poop_dict_merge folds them left to right.
         return self._merge_call(
-            self._fold_parts(zip(node.keys, node.values), node, []), node
+            self._fold_parts(zip(node.keys, node.values, strict=True), node, []), node
         )
 
 
 class DictTransformer(BaseTransformer):
     rewriter = _DictRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_dict": Dict,
         "_poop_dict_cls": builtin_alias(Dict, _poop_dict_from, "dict"),
         "_poop_dict_from_pairs": _poop_dict_from_pairs,

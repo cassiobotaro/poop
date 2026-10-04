@@ -6,27 +6,15 @@ thesis held for instances only, and `Foo.print()` answered a Python binding
 failure — `Object.print() missing 1 required positional argument: 'self'`.
 """
 
-from __future__ import annotations
-
 import builtins
-from abc import ABCMeta
-from builtins import (
-    dir as builtins_dir,
-)
-from builtins import (
-    format as builtins_format,
-)
-from builtins import (
-    hash as builtins_hash,
-)
-from builtins import (
-    print as builtins_print,
-)
 from functools import partial, wraps
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Never
 
+from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
+from poop.types._message import article
+from poop.types._selectors import explain, is_dunder, is_message
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,7 +26,7 @@ if TYPE_CHECKING:
     from poop.types.string import Str
 
 
-class class_side:  # noqa: N801
+class class_side:
     """Binds a metaclass method to the class, ahead of same-named instance ones.
 
     `Foo.print` would otherwise never reach the metaclass: looking an attribute
@@ -93,16 +81,16 @@ class class_side:  # noqa: N801
         # A sentence, not the bare name: `AttributeError: name` read as if the
         # *word* `name` were the problem, and both spellings of the mistake —
         # `Foo.name = 5` and the sanctioned `Foo.set_attr("name", 5)` — landed
-        # on it. `_reject_private`, ten lines down, is the model.
+        # on it. `_reject_private` (`_attr_guard.py`) is the model.
         raise MIRRORS["AttributeError"](
             f"#{self._name} is answered by every class — it cannot be rebound"
         )
 
 
-class class_side_read_refusal(class_side):  # noqa: N801
+class class_side_read_refusal(class_side):
     """A class-side refusal that fires on *read* rather than on call.
 
-    `mro`, `register` and `raise_` are messages: a reader writes `Foo.mro()`,
+    `mro` and `raise_` are messages: a reader writes `Foo.mro()`,
     and a refusal in the body fires when the call reaches it. The names a
     mirror inherits from `BaseException` are *attributes* — `ValueError.args`
     is written with no parentheses anywhere — so a refusal waiting for a call
@@ -144,36 +132,6 @@ def class_side_refusal(fn: FunctionType) -> class_side:
     return class_side(fn, refuses=True)
 
 
-def _reject_dunder(name: str) -> None:
-    """The class-side half of `no_dunder_attribute`, mirroring `Object`'s.
-
-    Both read the same `dunder_message`, so the ban says one thing whether the
-    receiver is an instance or a class.
-    """
-    from poop.types.exceptions import MIRRORS
-    from poop.validators.no_dunder_attribute import dunder_message
-
-    message = dunder_message(name)
-    if message is not None:
-        raise MIRRORS["AttributeError"](message.lstrip("."))
-
-
-def _reject_private(name: str) -> None:
-    """The class-side half of `Object._reject_private` — refuse `_`-privates.
-
-    A class is an object too, so `Foo.get_attr("_data")` must be refused for the
-    same reason the instance side refuses it: it reaches internals the mangling
-    scheme exists to hide.
-    """
-    from poop.types.exceptions import MIRRORS
-
-    is_dunder = name.startswith("__") and name.endswith("__")
-    if name.startswith("_") and not is_dunder:
-        raise MIRRORS["AttributeError"](
-            f"{name} is private — POOP objects do not expose their internals"
-        )
-
-
 def _reject_builtin(cls: type) -> None:
     """Refuse a write to a class POOP defines rather than the program.
 
@@ -200,23 +158,7 @@ def _reject_builtin(cls: type) -> None:
         )
 
 
-def _checked_name(name: Str) -> str:
-    """The raw name behind `name`, both class-side bans applied.
-
-    The class-side twin of `Object._checked_name`, down to `_attr_name`
-    keeping a non-`Str` name from leaking `#_value`: `Foo.get_attr([1])` used
-    to answer `list does not understand #_value` exactly as the instance side
-    did.
-    """
-    from poop.types._unwrap import _attr_name
-
-    raw = _attr_name(name)
-    _reject_dunder(raw)
-    _reject_private(raw)
-    return raw
-
-
-def _refuse(cls: type, name: str) -> None:
+def _refuse(cls: type, name: str) -> Never:
     """Refuse an instance-only message, naming the class-side one instead.
 
     Not routed through `does_not_understand`: its difflib hint would answer
@@ -262,7 +204,7 @@ def _reflected(cls: type, name: str) -> Any:
     return type.__getattribute__(cls, name)
 
 
-def _refuse_instance_side(cls: type, name: str) -> None:
+def _refuse_instance_side(cls: type, name: str) -> Never:
     """Refuse a method the *instance* answers, reached through the class.
 
     `class_side` exists to remove one failure — `INFECTIONS.md`: "the bans
@@ -287,13 +229,13 @@ def _refuse_instance_side(cls: type, name: str) -> None:
     )
 
 
-def _refuse_native(cls: type, name: str, instead: str) -> None:
+def _refuse_native(cls: type, name: str, instead: str) -> Never:
     """Refuse a name POOP never meant to offer, naming the message that does.
 
-    `type.mro` and `ABCMeta.register` arrive on every POOP class with the
-    metaclass, carry no leading underscore, and answer raw Python — but they
-    are not messages POOP designed, so `_refuse`'s wording ("asks an instance
-    about its class") says nothing true about them.
+    `type.mro` arrives on every POOP class with the metaclass, carries no
+    leading underscore, and answers raw Python — but it is not a message POOP
+    designed, so `_refuse`'s wording ("asks an instance about its class") says
+    nothing true about it.
     """
     from poop.types.object import MessageNotUnderstood
 
@@ -349,7 +291,6 @@ def _adapted(slot: str, method: Any) -> Any:
         if isinstance(raw, native):
             return raw
 
-        from poop.types._message import article
         from poop.types.exceptions import MIRRORS
 
         # Named by the role, never by the slot: a message spelling `__str__`
@@ -371,14 +312,16 @@ def _length_message(self: Any) -> Any:
     return Int(builtins.len(self))
 
 
-class PoopMeta(ABCMeta):
+class PoopMeta(type):
     """Metaclass giving every POOP class the class-side protocol.
 
-    Derives from `ABCMeta`, not `type`: `Boolean(Object, ABC)` otherwise fails
-    with "metaclass conflict: the metaclass of a derived class must be a
-    (non-strict) subclass of the metaclasses of all its bases". It propagates
-    for free — `ClassTransformer` already routes every user class through
-    `Object`, and a metaclass is inherited.
+    Derives from `type`, not `ABCMeta`. It used to be `ABCMeta` so that
+    `Boolean(Object, ABC)` would not fail with a metaclass conflict — one
+    abstract class, with two `@final` subclasses in the same module — and every
+    `isinstance` against a POOP class paid for it in
+    `ABCMeta.__instancecheck__`: about a quarter of a loop-heavy program's run.
+    It propagates for free — `ClassTransformer` already routes every user class
+    through `Object`, and a metaclass is inherited.
 
     Every message here is a `class_side` descriptor, including the ones
     `Object` does not define today: a user class is free to declare its own
@@ -504,16 +447,6 @@ class PoopMeta(ABCMeta):
         _refuse_native(cls, "mro", "superclass")
 
     @class_side_refusal
-    def register(cls, subclass: Any) -> Any:
-        """Refuse `ABCMeta.register` — inheritance is how POOP says "is a".
-
-        Virtual-subclass registration makes `is_instance` and `is_subclass`
-        answer true for a class that never inherited from the receiver, moving
-        the answer into a side table no reader of the class can see.
-        """
-        _refuse_native(cls, "register", "is_subclass")
-
-    @class_side_refusal
     def raise_(cls, *args: Any, **kwargs: Any) -> Never:
         """Refuse `raise_` on a class that is not an error.
 
@@ -554,7 +487,7 @@ class PoopMeta(ABCMeta):
     def hash(cls) -> Int:
         from poop.types.int import Int
 
-        return Int(builtins_hash(cls))
+        return Int(builtins.hash(cls))
 
     @class_side
     def is_none(cls) -> Boolean:
@@ -638,7 +571,7 @@ class PoopMeta(ABCMeta):
     def __setattr__(cls, name: str, value: Any) -> None:
         """The undotted twin of `set_attr`, refused on the same terms.
 
-        Proposal 2 closed one spelling of this and its record says what for:
+        Commit 385f48b closed one spelling of this and says what for:
         "`class_()` hands the class out — so `"abc".class_().del_attr("upper")`
         removed `upper` from every string in the program". `_reject_builtin`
         was called from `set_attr` and `del_attr` and from nowhere else, so the
@@ -669,10 +602,9 @@ class PoopMeta(ABCMeta):
 
         `_`-prefixed names are left alone, which `is_message` already calls the
         boundary of the message surface, and which is also what makes this
-        usable at all: `ABCMeta.__new__` writes `__abstractmethods__` while the
-        class is being built, and `cloak` writes `__module__`, `__name__` and
-        `__qualname__` — all of them before `exceptions` has finished importing
-        the table this refusal would come from. A program cannot reach those
+        usable at all: `cloak` writes `__module__`, `__name__` and
+        `__qualname__` while the type tree is being built — before `exceptions`
+        has finished importing the table this refusal would come from. A program cannot reach those
         spellings anyway; `no_dunder_attribute` refuses them at parse time.
         """
         # `class_side.__set__` first, where it owns the name: it is a data
@@ -722,7 +654,7 @@ class PoopMeta(ABCMeta):
         own = {name for name in super().__dir__() if not _instance_only(cls, name)}
         # Subtracted, not merely left unmerged. `merged` only *adds*, so a
         # refusal could drop a name only when the metaclass was its sole
-        # source: `mro` and `register` qualified, and the names an exception
+        # source: `mro` qualified, and the names an exception
         # mirror inherits from `BaseException` did not — `type.__dir__` walks
         # `cls.__mro__` and finds `args` on the native base, so `:methods
         # ValueError` advertised three names the class now refuses and the
@@ -741,21 +673,20 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def dir(cls) -> List:
-        from poop.types._selectors import is_message
         from poop.types.list import List
         from poop.types.string import Str
 
         # Mirror `Object.dir`: hide every `_`-prefixed name so the class side
         # never leaks dunders or the mangled `_poop_*` internals. `is_message`
         # is the one copy of that rule, shared with `Object.dir` and the REPL.
-        return List(*(Str(name) for name in builtins_dir(cls) if is_message(name)))
+        return List(*(Str(name) for name in builtins.dir(cls) if is_message(name)))
 
     @class_side
     def format(cls, spec: Str | NoneClass | None = None) -> Str:
         from poop.types._unwrap import _unwrap
         from poop.types.string import Str
 
-        return Str(builtins_format(cls.__name__, _unwrap(spec, "")))
+        return Str(builtins.format(cls.__name__, _unwrap(spec, "")))
 
     @class_side_refusal
     def class_(cls) -> Any:
@@ -775,8 +706,8 @@ class PoopMeta(ABCMeta):
     # banned on a class too: `Foo is Bar` (no_is), `isinstance(Foo, T)`
     # (no_isinstance), `getattr`/`setattr`/`delattr` (no_getattr/…),
     # `assert Foo` (no_assert). Without them the ban named a substitute that
-    # did not exist on the receiver — item 14's original contradiction, which
-    # its first pass measured short by nine.
+    # did not exist on the receiver — the contradiction the class side was
+    # first given these for, which its first pass measured short by nine.
 
     @class_side
     def is_identical(cls, other: Any) -> Boolean:
@@ -868,7 +799,7 @@ class PoopMeta(ABCMeta):
         from poop.types._unwrap import _unwrap, _unwrap_bool
         from poop.types.none import none
 
-        builtins_print(
+        builtins.print(  # noqa: T201 — the language's own #print
             cls.__name__,
             end=_unwrap(end, "\n"),
             flush=_unwrap_bool(flush, False),
@@ -877,7 +808,6 @@ class PoopMeta(ABCMeta):
 
     @class_side
     def does_not_understand(cls, name: str) -> Any:
-        from poop.types._selectors import explain
         from poop.types.object import MessageNotUnderstood
 
         raise MessageNotUnderstood(explain(cls, name), name=name, obj=cls)
@@ -889,7 +819,7 @@ class PoopMeta(ABCMeta):
             # Native on purpose, like `Object.__getattr__`: Python's own
             # attribute probe, answered before `exceptions` has finished
             # building the table a mirror would come from.
-            if name.startswith("__") and name.endswith("__"):
+            if is_dunder(name):
                 raise AttributeError(name)
             # The instance-side refusal lands here, not where it was raised:
             # `MessageNotUnderstood` is an `AttributeError` on purpose, so

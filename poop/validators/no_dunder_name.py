@@ -1,8 +1,10 @@
-import ast
+from typing import TYPE_CHECKING
 
-from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+from poop.validators.base import CollectingValidator, ErrorCollector
 from poop.validators.no_dunder_attribute import dunder_message
+
+if TYPE_CHECKING:
+    import ast
 
 
 class _Visitor(ErrorCollector):
@@ -25,5 +27,4 @@ class NoDunderNameValidator(CollectingValidator):
     namespace dict holds, so the guard has to live at validation time.
     """
 
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(), tree)
+    visitor = _Visitor

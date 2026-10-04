@@ -98,7 +98,7 @@ Place a new example in the subfolder that matches what it teaches:
 - `examples/basics/` — language fundamentals (control flow, collections, classes
   with state).
 - `examples/idiomatic/` — idiomatic POOP usage (method chaining, null-safe
-  cascades, `async`, etc.).
+  cascades, etc.).
 - `examples/patterns/` — Sandi Metz / GoF object-oriented patterns.
 
 ### Use the actual current year
@@ -117,12 +117,16 @@ Every infection follows the same pattern.
 
 ### A new validator (e.g. `no_foo`)
 
-1. Create `poop/validators/no_foo.py`. Reuse `_call_name.make_call_name_validator`
-   when forbidding builtin calls; otherwise subclass `CollectingValidator`
-   (`poop/validators/base.py`) and implement `collect()` — never `validate()`,
-   which the base derives by raising the first collected error. Collecting is
-   the primitive because `--validators-only` reports every error, and a raise
-   has already thrown away the rest of the walk.
+1. Create `poop/validators/no_foo.py`. Subclass one of the three shapes when
+   it fits, setting its class attributes — `CallNameValidator` (`forbidden`,
+   `message`) for a builtin name, `NodeValidator` (`messages`) for a node
+   type, `OpValidator` (`node_type`, `messages`) for an operator. Otherwise
+   subclass `CollectingValidator` (`poop/validators/base.py`) and set
+   `visitor` to an `ErrorCollector`, or override `collect()` when the visitor
+   needs arguments — never `validate()`, which the base derives by raising the
+   first collected error. Collecting is the primitive because
+   `--validators-only` reports every error, and a raise has already thrown
+   away the rest of the walk.
 2. Register it in `DEFAULT_VALIDATORS` (`poop/validators/__init__.py`).
 3. Add tests under `tests/test_validators/test_no_foo.py`.
 4. Add an entry to `INFECTIONS.md` with a `Substitute` column pointing to the
@@ -132,11 +136,11 @@ Every infection follows the same pattern.
 ### A new transformer (e.g. `foo`)
 
 1. Create `poop/transformers/foo.py`.
-2. Register it in `_TRANSFORMER_CLASSES` (`poop/transformers/__init__.py`), which
+2. Register it in `_TRANSFORMER_CLASSES` (`poop/transformers/_registry.py`), which
    builds `DEFAULT_TRANSFORMERS`. Declare any helper in a `BINDINGS` ClassVar —
    `DEFAULT_NAMESPACE` is assembled from those and refuses duplicate keys; do not
    write into it directly. Registration order is the transform order and is
-   sometimes load-bearing (`ExceptionTransformer` after `RaiseTransformer`) —
+   sometimes load-bearing (`SliceTransformer` after `NoneTransformer`) —
    comment the reason when it is.
 3. Add tests under `tests/test_transformers/test_foo.py`.
 4. Add an entry to `INFECTIONS.md`.
@@ -163,15 +167,16 @@ iteration — `for` is a keyword, `for_each` is a Java/JS idiom.
 When `proposals.md` item N is implemented:
 
 1. Implement in atomic commits as described above.
-2. Either:
-   - **Strike + DONE:** rename the heading to `### ~~N. …~~ — DONE` and
-     replace the body with a short "Decision + implemented" summary, **or**
-   - **Remove:** delete the entry entirely and renumber subsequent items
-     sequentially. Update internal cross-references (`#N` mentions elsewhere
-     in the file).
+2. Delete the entry from `proposals.md` — no `DONE` marker, no summary. The
+   remaining items keep their numbers; new items continue from the highest.
+   Once the backlog is empty, numbering starts over at 1.
 3. Update `INFECTIONS.md` if the proposal touched validators, transformers, or
    types.
 4. Final commit message: `docs: close proposal N — <one-line decision>`.
+
+Code, tests and docs cite commits, not proposal numbers: a closed entry is
+deleted and numbering restarts once the backlog empties, so a number names
+nothing a reader can look up.
 
 ## Pull requests
 

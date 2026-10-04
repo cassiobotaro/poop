@@ -1,10 +1,10 @@
 import ast
 
-from poop.validators._node import make_node_validator
+from poop.validators._node import NodeValidator
 
-NoGlobalValidator = make_node_validator(
-    {
+
+class NoGlobalValidator(NodeValidator):
+    messages = {
         ast.Global: "global is forbidden — state lives in instances, not in scope manipulation",
         ast.Nonlocal: "nonlocal is forbidden — state lives in instances, not in scope manipulation",
     }
-)

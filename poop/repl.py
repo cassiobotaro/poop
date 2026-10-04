@@ -1,18 +1,20 @@
 import ast
 import atexit
 import codeop
+import importlib
 import inspect
 import sys
 import textwrap
+from contextlib import contextmanager, suppress
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from rich.columns import Columns
-from rich.console import Console
 from rich.text import Text
 
-from poop.errors import PoopError, format_error, render_error
-from poop.transformers import DEFAULT_NAMESPACE
+from poop.console import ERR, OUT, in_colour
+from poop.errors import ParseError, PoopError, report
 from poop.types._selectors import is_message, receiver_label
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
@@ -20,25 +22,33 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.none import NoneClass
 from poop.types.string import Str
-from poop.validators import DEFAULT_VALIDATORS
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Iterator
+    from types import ModuleType
+
     from poop.interpreter import Interpreter
+    from poop.validators import Validator
+
+
+# Imported once, here: a build without it (Windows ships none) gets a REPL
+# with no completion or history rather than one that fails. Each of the three
+# functions using it used to repeat the guarded import.
+def _optional_readline() -> ModuleType | None:
+    try:
+        return importlib.import_module("readline")
+    except ImportError:  # pragma: no cover - present wherever the suite runs
+        return None
+
+
+_readline = _optional_readline()
 
 _HISTORY_FILE = Path.home() / ".poop_history"
 _HISTORY_MAX = 1000
 
-# atexit registrations are never removed, so guard against re-registering the
-# history saver every time a Repl is constructed — otherwise each instance
-# leaks another callback into the global atexit registry.
-_history_saver_registered = False
-
-# One console per stream, so colorization is decided per destination: value
-# echoes and prompts write to stdout, diagnostics to stderr. rich detects each
-# stream's tty independently and honors NO_COLOR, so `poop 2>err.log` never
-# leaks ANSI into the file while the interactive stdout stays colored.
-_OUT = Console()
-_ERR = Console(stderr=True)
+# Module names for the shared pair, so a test can swap the REPL's own.
+_OUT = OUT
+_ERR = ERR
 
 # readline needs \001/\002 non-printing markers to measure prompt width, which
 # rich does not emit — so the prompt keeps manual ANSI, gated on rich's own
@@ -64,7 +74,7 @@ def _print_value(value: object) -> None:
 
 def _rl_color(text: str, *codes: str) -> str:
     """Color a readline prompt (stdout-bound), keeping readline width markers."""
-    if not _OUT.is_terminal or _OUT.no_color:
+    if not in_colour(_OUT):
         return text
     return f"\001{''.join(codes)}\002{text}\001{_RESET}\002"
 
@@ -76,21 +86,6 @@ def _error(message: str) -> None:
     one place — a new call site cannot forget the prefix or the stream.
     """
     _ERR.print(Text(f"poop: {message}", style="red"), soft_wrap=True, highlight=False)
-
-
-def _print_error(exc: PoopError, source: str | None) -> None:
-    """Print a formatted error on stderr: message, source gutter, caret.
-
-    On a colour terminal the offending line is Python-highlighted via
-    `render_error`; off a terminal (a pipe, `NO_COLOR`) the plain `format_error`
-    text is printed instead, so redirected error output stays clean.
-    """
-    if _ERR.is_terminal and not _ERR.no_color:
-        _ERR.print(render_error(exc, source), soft_wrap=True)
-    else:
-        _ERR.print(
-            format_error(exc, source), soft_wrap=True, highlight=False, markup=False
-        )
 
 
 _SAFE_AST_NODES: tuple[type[ast.AST], ...] = (
@@ -166,35 +161,33 @@ class _PoopCompleter:
 
 
 def _setup_readline(namespace: dict[str, object]) -> None:
-    try:
-        import readline
-    except ImportError:
+    if _readline is None:
         return
 
-    readline.parse_and_bind("tab: complete")
-    readline.set_completer(_PoopCompleter(namespace).complete)
-    readline.set_completer_delims(" \t\n`!@#$^&*()-=+[{]}\\|;:'\",<>/?")
+    _readline.parse_and_bind("tab: complete")
+    _readline.set_completer(_PoopCompleter(namespace).complete)
+    _readline.set_completer_delims(" \t\n`!@#$^&*()-=+[{]}\\|;:'\",<>/?")
 
-    try:
-        readline.read_history_file(_HISTORY_FILE)
-    except FileNotFoundError:
-        pass
+    with suppress(FileNotFoundError):
+        _readline.read_history_file(_HISTORY_FILE)
 
-    readline.set_history_length(_HISTORY_MAX)
+    _readline.set_history_length(_HISTORY_MAX)
+    _register_history_saver()
 
-    global _history_saver_registered
-    if not _history_saver_registered:
-        atexit.register(_save_history)
-        _history_saver_registered = True
+
+@cache
+def _register_history_saver() -> None:
+    # Once per process: atexit registrations are never removed, so each Repl
+    # registering its own would leak another callback into the global registry.
+    atexit.register(_save_history)
 
 
 def _save_history() -> None:
-    try:
-        import readline
-
-        readline.write_history_file(_HISTORY_FILE)
-    except Exception:  # noqa: BLE001, S110
-        pass
+    if _readline is None:
+        return
+    # Runs at exit, where an unwritable history file must not become a crash.
+    with suppress(Exception):
+        _readline.write_history_file(_HISTORY_FILE)
 
 
 def _indent_for(buffer: list[str]) -> str:
@@ -206,12 +199,8 @@ def _indent_for(buffer: list[str]) -> str:
 
 
 def _readline_input(prompt: str, indent: str) -> str:
-    try:
-        import readline
-    except ImportError:
-        return input(prompt)
-
-    if not indent:
+    readline = _readline
+    if readline is None or not indent:
         return input(prompt)
 
     def _pre_hook() -> None:
@@ -225,17 +214,41 @@ def _readline_input(prompt: str, indent: str) -> str:
         readline.set_pre_input_hook(None)
 
 
-# Forbidden builtins explained by running `<name>(x)` through the
-# validators — the explanation is the validator's own message, so the
-# two can never drift apart. The topic list is derived from the same
-# validators for the same reason: hand-maintained, it fell two names
-# behind (`delattr`, `__import__`), and a missing topic does not fail
-# quietly — it answers "it may simply be allowed" about a banned name.
-_EXPLAIN_CALLS = frozenset(
-    name
-    for validator in DEFAULT_VALIDATORS
-    for name in getattr(validator, "forbidden", ())
-)
+def _say(text: str = "") -> None:
+    """Write REPL output on stdout, as typed: no markup, no highlighting.
+
+    The REPL wrote through `_OUT` for values and headers and through bare
+    `print` for usage lines, `:help` and `:explain` — two paths to one stream,
+    and only one of them the console that decides colour per destination.
+    """
+    _OUT.print(text, soft_wrap=True, highlight=False, markup=False)
+
+
+@contextmanager
+def _displaying_through(hook: Callable[[object], None]) -> Iterator[None]:
+    """Route expression results through `hook` for the duration."""
+    original = sys.displayhook
+    sys.displayhook = hook
+    try:
+        yield
+    finally:
+        sys.displayhook = original
+
+
+def _explain_calls(validators: Iterable[Validator]) -> frozenset[str]:
+    """The builtins `:explain` covers by running `<name>(x)` through validators.
+
+    The explanation is the validator's own message, so the two can never
+    drift apart. The topic list is derived from the same validators for the
+    same reason: hand-maintained, it fell two names behind (`delattr`,
+    `__import__`), and a missing topic does not fail quietly — it answers "it
+    may simply be allowed" about a banned name. Read off the interpreter the
+    REPL was handed, so an injected set explains its own bans.
+    """
+    return frozenset(
+        name for validator in validators for name in getattr(validator, "forbidden", ())
+    )
+
 
 # Forbidden statements and operators need a minimal valid snippet.
 _EXPLAIN_SNIPPETS: dict[str, str] = {
@@ -270,8 +283,7 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     # All four messages `no_subscript` composes. The snippet was `x[0]` alone,
     # a *load*, so a reader who wrote `xs[0] = 9`, was told to use
     # `obj.at_put(key, value)` and typed `:explain subscript` to learn more was
-    # shown the reading substitute — the one proposal 18 exists to stop that
-    # reader from being handed. `validate_all` collects every error and
+    # shown the reading substitute — the one a writer must never be handed. `validate_all` collects every error and
     # `_meta_explain` prints them all, so listing the spellings is the change.
     "subscript": "x[0]\nx[0] = 1\nx[1:2]\nx[1:2] = y",
     "import": "import os",
@@ -295,8 +307,8 @@ _META_HELP = """\
 :help               show this help"""
 
 
-def _explain_snippet(construct: str) -> str | None:
-    if construct in _EXPLAIN_CALLS:
+def _explain_snippet(construct: str, calls: frozenset[str]) -> str | None:
+    if construct in calls:
         return f"{construct}(x)"
     return _EXPLAIN_SNIPPETS.get(construct)
 
@@ -304,7 +316,8 @@ def _explain_snippet(construct: str) -> str | None:
 class Repl:
     def __init__(self, interpreter: Interpreter) -> None:
         self._interpreter = interpreter
-        self._ns: dict[str, object] = dict(DEFAULT_NAMESPACE)
+        self._ns: dict[str, object] = interpreter.new_namespace()
+        self._explain_calls = _explain_calls(interpreter.validators)
         self._input_no = 0
         # The stdin path's half of `utf-8-sig`. `poop <file>` decodes with the
         # codec that strips a byte-order mark; a piped program is read line by
@@ -316,21 +329,21 @@ class Repl:
         _setup_readline(self._ns)
 
     def _meta(self, line: str) -> None:
-        parts = line[1:].split(maxsplit=1)
-        cmd = parts[0] if parts else ""
-        arg = parts[1].strip() if len(parts) > 1 else ""
-        if cmd == "methods":
-            self._meta_methods(arg)
-        elif cmd == "explain":
-            self._meta_explain(arg)
-        elif cmd == "help":
-            print(_META_HELP)  # noqa: T201
-        else:
+        cmd, _, arg = line[1:].strip().partition(" ")
+        commands: dict[str, Callable[[str], None]] = {
+            "methods": self._meta_methods,
+            "explain": self._meta_explain,
+            "help": lambda _arg: _say(_META_HELP),
+        }
+        command = commands.get(cmd)
+        if command is None:
             _error(f"unknown meta-command :{cmd} — try :help")
+            return
+        command(arg.strip())
 
     def _meta_methods(self, arg: str) -> None:
         if not arg:
-            print("usage: :methods <expr>")  # noqa: T201
+            _say("usage: :methods <expr>")
             return
         if not _is_safe_expr(arg):
             _error(":methods takes a variable or literal — calls are not evaluated")
@@ -344,7 +357,7 @@ class Repl:
                 # `_is_safe_expr` already guaranteed an eval-mode expression, so
                 # the transformed body is always an `Expr`; this guards a future
                 # transformer that could inject a statement ahead of it.
-                raise SyntaxError("not an expression")  # noqa: TRY301
+                raise SyntaxError("not an expression")
             code = compile(ast.Expression(stmt.value), "<methods>", "eval")
             obj = eval(code, self._ns)  # noqa: S307
         except Exception as exc:  # noqa: BLE001
@@ -360,24 +373,22 @@ class Repl:
 
     def _meta_explain(self, arg: str) -> None:
         if not arg:
-            print("usage: :explain <construct>")  # noqa: T201
+            _say("usage: :explain <construct>")
             return
-        snippet = _explain_snippet(arg)
+        snippet = _explain_snippet(arg, self._explain_calls)
         if snippet is None:
-            known = sorted(_EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS))
+            known = sorted(self._explain_calls | set(_EXPLAIN_SNIPPETS))
             # Not "it may simply be allowed": nothing here checked that, and
             # for a banned construct with no topic the guess is a flat lie.
-            print(  # noqa: T201
-                f"poop: no :explain topic for {arg!r}.\nKnown constructs:"
-            )
-            print(textwrap.fill("  ".join(known), width=80))  # noqa: T201
+            _say(f"poop: no :explain topic for {arg!r}.\nKnown constructs:")
+            _say(textwrap.fill("  ".join(known), width=80))
             return
         errors = self._interpreter.validate_all(snippet, "<explain>")
         if not errors:
             _OUT.print(Text(f"{arg} is allowed in POOP.", style="green"))
             return
         for err in errors:
-            print(err.args[0])  # noqa: T201
+            _say(err.message)
 
     def _displayhook(self, value: object) -> None:
         # POOP's `none` (NoneClass) is the answer of every void message,
@@ -398,10 +409,7 @@ class Repl:
             )
         )
         buffer: list[str] = []
-        original_hook = sys.displayhook
-        sys.displayhook = self._displayhook
-
-        try:
+        with _displaying_through(self._displayhook):
             while True:
                 try:
                     indent = _indent_for(buffer)
@@ -412,10 +420,10 @@ class Repl:
                     )
                     line = _readline_input(prompt, indent)
                 except EOFError:
-                    print()  # noqa: T201
+                    _say()
                     break
                 except KeyboardInterrupt:
-                    print()  # noqa: T201
+                    _say()
                     buffer = []
                     continue
 
@@ -433,7 +441,7 @@ class Repl:
                 try:
                     result = codeop.compile_command(source)
                 except SyntaxError as exc:
-                    _error(str(exc))
+                    report(ParseError.from_syntax_error(exc), source, _ERR)
                     buffer = []
                     continue
 
@@ -450,9 +458,7 @@ class Repl:
                         source, self._ns, filename=f"<repl-{self._input_no}>"
                     )
                 except PoopError as exc:
-                    # The one diagnostic that does not go through _error():
-                    # it carries the source gutter and caret the plain sink
-                    # cannot, and syntax-highlights the offending line on a tty.
-                    _print_error(exc, source)
-        finally:
-            sys.displayhook = original_hook
+                    # Through `report`, like the syntax error above, rather
+                    # than _error(): it carries the source gutter and caret
+                    # the plain sink cannot, highlighted on a tty.
+                    report(exc, source, _ERR)

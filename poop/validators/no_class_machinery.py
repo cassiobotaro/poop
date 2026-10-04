@@ -1,8 +1,10 @@
-import ast
+from typing import TYPE_CHECKING
 
-from poop.errors import ValidationError
-from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
+from poop.validators.base import CollectingValidator, ErrorCollector
 from poop.validators.no_decorator import ALLOWED as _DECORATORS
+
+if TYPE_CHECKING:
+    import ast
 
 # The four non-dunder entries in `_ALLOWED_BUILTINS` (`poop/executor.py`).
 # The other two, `__build_class__` and `__name__`, are dunders, and
@@ -79,5 +81,4 @@ class _Visitor(ErrorCollector):
 
 
 class NoClassMachineryValidator(CollectingValidator):
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(), tree)
+    visitor = _Visitor

@@ -1,3 +1,5 @@
+import pytest as _pytest
+
 from poop.parser import parse
 from poop.transformers.frozen_set import FrozenSetTransformer, _poop_frozenset_from
 from poop.transformers.int import IntTransformer
@@ -7,9 +9,12 @@ from poop.types.dict import Dict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.int import Int as _Int
+from poop.types.list import List
+from poop.types.map import Map
 from poop.types.none import none
 from poop.types.set import Set
 from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 
 def test_empty_frozenset() -> None:
@@ -50,8 +55,6 @@ def test_do_visits_all_elements() -> None:
 
 
 def test_map_returns_lazy_map() -> None:
-    from poop.types.map import Map
-
     result = FrozenSet(Int(1), Int(2)).map(lambda x: x)
     assert isinstance(result, Map)
 
@@ -204,44 +207,32 @@ def test_union_multiple_others() -> None:
 
 
 def test_union_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert FrozenSet(Int(1), Int(2)).union(List(Int(3))) == FrozenSet(
         Int(1), Int(2), Int(3)
     )
 
 
 def test_difference_accepts_non_set_iterable() -> None:
-    from poop.types.tuple import Tuple
-
     assert FrozenSet(Int(1), Int(2), Int(3)).difference(Tuple(Int(2))) == FrozenSet(
         Int(1), Int(3)
     )
 
 
 def test_symmetric_difference_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert FrozenSet(Int(1), Int(2)).symmetric_difference(
         List(Int(2), Int(3))
     ) == FrozenSet(Int(1), Int(3))
 
 
 def test_isdisjoint_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert FrozenSet(Int(1)).isdisjoint(List(Int(2))) is true
 
 
 def test_issubset_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert FrozenSet(Int(1), Int(2)).issubset(List(Int(1), Int(2), Int(3))) is true
 
 
 def test_issuperset_accepts_non_set_iterable() -> None:
-    from poop.types.list import List
-
     assert FrozenSet(Int(1), Int(2), Int(3)).issuperset(List(Int(1))) is true
 
 
@@ -328,7 +319,6 @@ def test_dunder_ops_return_notimplemented_on_wrong_type() -> None:
     # Matches Set's defensive pattern: operators against non-FrozenSet
     # return NotImplemented so Python falls through to TypeError.
     f = FrozenSet(Int(1))
-    import pytest as _pytest
 
     with _pytest.raises(TypeError):
         _ = f & "wrong"
@@ -370,7 +360,5 @@ def test_comparison_mixes_with_set() -> None:
 def test_a_set_argument_can_be_asked_about() -> None:
     # The reading half of `Set`'s fix: `fs.includes({1})` is a question, and
     # a `set` is unhashable only for *storing*.
-    from poop.types.set import Set
-
     assert FrozenSet(Int(1)).includes(Set(Int(1))) is false
     assert FrozenSet(FrozenSet(Int(1))).includes(Set(Int(1))) is true

@@ -1,17 +1,16 @@
-import builtins as _builtins
-from collections.abc import Iterator
+import builtins
 from typing import TYPE_CHECKING, Any
 
-from poop.types._cloak import cloak
-from poop.types._iterable_mixin import _IterableMixin
-from poop.types._peek import _UNPEEKED, _PeekMixin
-from poop.types.boolean import false, to_boolean, true
+from poop.types._iterator_base import _LazyView
+from poop.types._unwrap import _unwrap_bool
+from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
-from poop.types.object import Object
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from collections.abc import Iterator
+
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 
 
@@ -36,20 +35,17 @@ def _refuse_leftovers(iterators: list[Iterator[Any]]) -> None:
         )
 
 
-class Zip(_PeekMixin, _IterableMixin, Object):
-    __slots__ = ("_iter", "_sources", "_strict")
+class Zip(_LazyView[Tuple], name="zip"):
+    __slots__ = ("_sources", "_strict")
 
     def __init__(
         self, *sources: Any, strict: Boolean | NoneClass | None = None
     ) -> None:
-        from poop.types._unwrap import _unwrap_bool
-
+        super().__init__()
         for source in sources:
             iter(source)
         self._sources = sources
         self._strict: Boolean = to_boolean(_unwrap_bool(strict, False))
-        self._iter: Iterator[Tuple] | None = None
-        self._peeked: Any = _UNPEEKED
 
     @staticmethod
     def _gen(sources: tuple[Any, ...], strict: bool) -> Iterator[Tuple]:
@@ -64,7 +60,8 @@ class Zip(_PeekMixin, _IterableMixin, Object):
         the same number in both spellings (`a.zip(b)` and `zip(a, b)`).
         """
         if not strict:
-            for items in _builtins.zip(*sources):
+            # Shortest wins, as CPython's own non-strict `zip` does.
+            for items in builtins.zip(*sources, strict=False):
                 yield Tuple(*items)
             return
         iterators = [iter(source) for source in sources]
@@ -84,35 +81,7 @@ class Zip(_PeekMixin, _IterableMixin, Object):
                     return
             yield Tuple(*items)
 
-    def _materialize(self) -> Iterator[Tuple]:
-        if self._iter is None:
-            self._iter = self._gen(self._sources, bool(self._strict))
-            # The generator now owns the sources; drop our copy so a consumed
-            # Zip stops pinning all of its source iterables.
-            self._sources = ()
-        return self._iter
-
-    def __iter__(self) -> Iterator[Tuple]:
-        # `self`, not the raw generator: an element parked by `has_next` would
-        # otherwise be skipped by whatever iterated next.
-        return self
-
-    def iter(self) -> Zip:
-        return self
-
-    def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(self is other)
-
-    def __ne__(self, other: object) -> Boolean:
-
-        return false if self is other else true
-
-    def __str__(self) -> str:
-        return "<zip>"
-
-    __repr__ = __str__
-
-
-cloak(Zip, "zip")
+    def _generate(self) -> Iterator[Tuple]:
+        sources = self._sources
+        self._sources = ()
+        return self._gen(sources, bool(self._strict))

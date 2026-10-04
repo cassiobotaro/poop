@@ -138,7 +138,7 @@ def test_list_from_unsupported_type_raises() -> None:
         _poop_list_from(Int(5))
 
 
-# Proposal 51. `[*x]`, `(*x,)` and `{*x}` are literals with a spread, and all
+# `[*x]`, `(*x,)` and `{*x}` are literals with a spread, and all
 # three answered in terms of a constructor call the program never wrote:
 # `list() argument after * must be an iterable, not int`.
 @pytest.mark.parametrize(

@@ -23,26 +23,18 @@ that can answer it structurally (`ListIterator`, `RangeIterator`, `StrIterator`)
 one.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._cloak import cloak
 from poop.types._mutated import reword_if_native
+from poop.types._sentinel import MISSING, UNPEEKED
+from poop.types.boolean import false, true
 from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from poop.types.boolean import Boolean
-
-# "No default given", so `it.next()` still raises while `it.next(x)` answers x —
-# mirroring Python's two-arg `next(iterator, default)`.
-_MISSING: Any = object()
-
-# "Nothing buffered", distinct from a buffered `none`: an iterator yielding
-# POOP's `none` must not read as an empty buffer.
-_UNPEEKED: Any = object()
 
 
 class _PeekMixin:
@@ -81,9 +73,7 @@ class _PeekMixin:
         )
 
     def has_next(self) -> Boolean:
-        from poop.types.boolean import false, true
-
-        if self._peeked is not _UNPEEKED:
+        if self._peeked is not UNPEEKED:
             return true
         try:
             self._peeked = next(self._materialize())
@@ -100,11 +90,11 @@ class _PeekMixin:
 
     def _buffered(self) -> Any:
         value = self._peeked
-        self._peeked = _UNPEEKED
+        self._peeked = UNPEEKED
         return self._wrap(value)
 
-    def next(self, default: Any = _MISSING) -> Any:
-        if self._peeked is not _UNPEEKED:
+    def next(self, default: Any = MISSING) -> Any:
+        if self._peeked is not UNPEEKED:
             return self._buffered()
         try:
             value = next(self._materialize())
@@ -114,7 +104,7 @@ class _PeekMixin:
             # write. POOP's own RuntimeErrors pass through untouched.
             raise reword_if_native(exc, self._iterating) from None
         except StopIteration:
-            if default is not _MISSING:
+            if default is not MISSING:
                 return default
             # Still a mirrored StopIteration — it is in `_HIERARCHY` precisely
             # so a Try can catch it — but with a sentence. The native carries
@@ -127,7 +117,7 @@ class _PeekMixin:
     def __next__(self) -> Any:
         # Every iteration path goes through the buffer, or a peeked element
         # would be skipped by the `do`/`map`/`filter` that came after the ask.
-        if self._peeked is not _UNPEEKED:
+        if self._peeked is not UNPEEKED:
             return self._buffered()
         try:
             return self._wrap(next(self._materialize()))

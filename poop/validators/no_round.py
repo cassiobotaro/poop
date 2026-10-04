@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoRoundValidator = make_call_name_validator(
-    forbidden={"round"},
-    message="round() is forbidden — use obj.round() instead",
-)
+
+class NoRoundValidator(CallNameValidator):
+    forbidden = frozenset({"round"})
+    message = "round() is forbidden — use obj.round() instead"

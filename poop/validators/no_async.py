@@ -1,6 +1,6 @@
 import ast
 
-from poop.validators._node import make_node_validator
+from poop.validators._node import NodeValidator
 
 # `await` needs its own row: ast.parse accepts a module-level `await`
 # (only compile() rejects it), so without this the node would sail past
@@ -11,9 +11,9 @@ from poop.validators._node import make_node_validator
 _ASYNC_DEF = "async def is forbidden — POOP has no way to drive a coroutine"
 _AWAIT = "await is forbidden — POOP has no way to drive a coroutine"
 
-NoAsyncValidator = make_node_validator(
-    {
+
+class NoAsyncValidator(NodeValidator):
+    messages = {
         ast.AsyncFunctionDef: _ASYNC_DEF,
         ast.Await: _AWAIT,
     }
-)

@@ -4,9 +4,12 @@ import pytest
 
 from poop.errors import PoopError
 from poop.interpreter import Interpreter
+from poop.types.block import Block
 from poop.types.boolean import false, true
+from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.none import none
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
@@ -204,8 +207,6 @@ def test_set_attr_rejects_a_private_name() -> None:
 
 
 def test_set_attr_writes_to_declared_slot() -> None:
-    from poop.types.none import none
-
     class Container(Object):
         __slots__ = ("data",)
         data: Int
@@ -252,8 +253,6 @@ def test_a_user_class_still_accepts_state() -> None:
 
 
 def test_del_attr_removes_attribute() -> None:
-    from poop.types.none import none
-
     class Container(Object):
         data: Int
 
@@ -333,12 +332,10 @@ def test_format_without_spec_returns_str() -> None:
 
 
 def test_format_int_with_hex_spec() -> None:
-    from poop.types.float import Float
-
     assert Int(42).format(Str("x")) == Str("2a")
     assert Float(3.14159).format(Str(".2f")) == Str("3.14")
-    # Str overrides Object.format with str.format template semantics
-    # (proposal 151), so the "apply a spec to a string" case is written
+    # Str overrides Object.format with str.format template semantics,
+    # so the "apply a spec to a string" case is written
     # via the template form instead of Str("abc").format(Str(">5")).
     assert Str("{:>5}").format(Str("abc")) == Str("  abc")
 
@@ -349,22 +346,16 @@ def test_format_invalid_spec_raises_value_error() -> None:
 
 
 def test_format_with_poop_none_treats_as_no_spec() -> None:
-    from poop.types.none import none
-
     assert Int(42).format(none) == Str("42")
 
 
 def test_print_accepts_poop_none_for_end(capsys: pytest.CaptureFixture[str]) -> None:
-    from poop.types.none import none
-
     Int(7).print(end=none)
     captured = capsys.readouterr()
     assert captured.out == "7\n"
 
 
 def test_print_accepts_poop_none_for_flush(capsys: pytest.CaptureFixture[str]) -> None:
-    from poop.types.none import none
-
     Int(7).print(flush=none)
     captured = capsys.readouterr()
     assert captured.out == "7\n"
@@ -464,8 +455,6 @@ def test_get_attr_answers_a_block_for_a_method() -> None:
     # The bound method CPython answers understands no message: `m.print()`
     # raised Python's own AttributeError. Block is what a lambda is already
     # wrapped in, so a method reads back as the same kind of object.
-    from poop.types.block import Block
-
     method = Str("abc").get_attr(Str("upper"))
     assert isinstance(method, Block)
     assert method() == Str("ABC")
@@ -501,7 +490,7 @@ def test_get_attr_does_not_wrap_the_default() -> None:
     assert Int(5).get_attr(Str("nonexistent"), sentinel) is sentinel
 
 
-# Proposal 48. `set_attr` and `del_attr` composed POOP's sentence; the plain
+# `set_attr` and `del_attr` composed POOP's sentence; the plain
 # assignment leaked CPython's, which carried a dunder, the quoted class spelling
 # `'str' object`, and advice about a `__dict__` the reader cannot inspect
 # because `no_dunder_attribute` refuses the name.

@@ -7,6 +7,7 @@ import pytest
 from rich.console import Console
 from typer.testing import CliRunner
 
+from poop import cli
 from poop.cli import app
 
 runner = CliRunner()
@@ -44,7 +45,7 @@ def test_cli_exits_with_error_on_invalid_code(tmp_path: Path) -> None:
 
 
 def test_cli_missing_file_shows_clean_diagnostic(tmp_path: Path) -> None:
-    # proposal 137: an unreadable path is a user mistake, not a traceback.
+    # An unreadable path is a user mistake, not a traceback.
     missing = tmp_path / "nope.py"
     result = runner.invoke(app, [str(missing)])
     assert result.exit_code == 1
@@ -188,20 +189,20 @@ def _term_console(buf: io.StringIO) -> Console:
     )
 
 
-def test_emit_error_syntax_highlights_on_a_terminal(
-    monkeypatch: pytest.MonkeyPatch,
+def test_an_error_is_syntax_highlighted_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     # On a colour stderr, a PoopError is rendered via render_error (coloured,
     # highlighted) rather than the plain format_error string.
-    from poop import cli
-    from poop.errors import ValidationError
-
     buf = io.StringIO()
-    monkeypatch.setattr(cli, "_ERR", _term_console(buf))
-    cli._emit_error(ValidationError("if is forbidden", 1, 0), "if x:")
+    monkeypatch.setattr(cli, "ERR", _term_console(buf))
+    f = tmp_path / "bad.py"
+    f.write_text("if x:\n    pass\n", encoding="utf-8")
+    result = runner.invoke(app, [str(f)])
+    assert result.exit_code == 1
     out = buf.getvalue()
     assert "\x1b[" in out
-    assert "poop: if is forbidden" in out
+    assert "poop: if statements are forbidden" in out
 
 
 def test_cli_no_file_starts_the_repl(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -218,10 +219,8 @@ def test_cli_no_file_starts_the_repl(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_cli_transformers_only_colorizes_on_a_terminal(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    from poop import cli
-
     buf = io.StringIO()
-    monkeypatch.setattr(cli, "_OUT", _term_console(buf))
+    monkeypatch.setattr(cli, "OUT", _term_console(buf))
     f = tmp_path / "ok.py"
     f.write_text('"hi".print()\n', encoding="utf-8")
     result = runner.invoke(app, [str(f), "--transformers-only"])
@@ -232,8 +231,6 @@ def test_cli_transformers_only_colorizes_on_a_terminal(
 
 
 def test_entry_point_invokes_the_typer_app(monkeypatch: pytest.MonkeyPatch) -> None:
-    from poop import cli
-
     called: list[bool] = []
     monkeypatch.setattr(cli, "app", lambda: called.append(True))
     cli.entry_point()

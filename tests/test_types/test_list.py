@@ -1,8 +1,10 @@
 import pytest
 
+from poop.types._message import poop_message
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.map import Map
 from poop.types.none import none
 from poop.types.slice import Slice
 from poop.types.string import Str
@@ -68,8 +70,6 @@ def test_map_transforms_elements() -> None:
 
 
 def test_map_returns_lazy_map() -> None:
-    from poop.types.map import Map
-
     assert isinstance(List(Int(1)).map(lambda x: x), Map)
 
 
@@ -429,7 +429,7 @@ def test_mul_repeats() -> None:
 
 
 def test_mul_by_boolean_folds_to_int() -> None:
-    # bool is an int subclass in CPython: [1, 2] * True == [1, 2].
+    # `bool` is an int subclass in CPython: [1, 2] * True == [1, 2].
     assert List(Int(1), Int(2)) * true == List(Int(1), Int(2))
     assert List(Int(1), Int(2)) * false == List()
 
@@ -447,7 +447,7 @@ def test_ne_with_non_list_returns_true() -> None:
     assert List(Int(1)).__ne__(Int(1)) is true
 
 
-# Lexicographic ordering — proposal 150
+# Lexicographic ordering
 
 
 def test_list_lt_lexicographic() -> None:
@@ -472,7 +472,7 @@ def test_print_accepts_poop_none_kwargs(capsys: pytest.CaptureFixture[str]) -> N
     assert captured.out == "1 2\n"
 
 
-# --- New: optional parameters (proposals 33 & 39, v1.2.0) ---
+# --- New: optional parameters ---
 
 
 def test_pop_at_index() -> None:
@@ -493,7 +493,7 @@ def test_rmul_returns_repeated_list() -> None:
 
 
 def test_ordering_with_foreign_operand_raises_typeerror() -> None:
-    # Proposal 164: a foreign operand answers CPython's TypeError, not a
+    # A foreign operand answers CPython's TypeError, not a
     # leaking AttributeError from a missing `other._items`.
     with pytest.raises(TypeError):
         _ = List(Int(1)) < Int(2)
@@ -542,11 +542,6 @@ def test_inplace_mul_by_non_int_raises_typeerror() -> None:
 
 
 def test_list_gt_against_foreign_raises() -> None:
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.list import List
-
     with pytest.raises(TypeError):
         _ = List(Int(1)) > Int(1)
 
@@ -644,7 +639,7 @@ def test_at_put_refuses_an_index_that_is_not_one() -> None:
         List(Int(1)).at_put(Str("a"), Int(0))  # ty: ignore[invalid-argument-type]
 
 
-# Proposal 50. `*` was the one operator still worded by CPython: `_repeat_count`
+# `*` was the one operator still worded by CPython: `_repeat_count`
 # unwrapped any operand and handed it to the inner multiplication, whose
 # `can't multiply sequence by non-int of type 'str'` names a Python protocol
 # rather than a receiver and never reached `poop_message`.
@@ -654,8 +649,6 @@ def test_multiplying_by_a_foreign_operand_speaks_poop() -> None:
     # step matches, and the sentence is composed there. Before this, the *inner*
     # multiplication raised `can't multiply sequence by non-int of type 'str'`,
     # which that step does not match and could not reword.
-    from poop.types._message import poop_message
-
     with pytest.raises(TypeError) as info:
         _ = List(Int(1)) * Str("a")
     assert poop_message(info.value) == "list does not understand #* with a str"
@@ -664,16 +657,12 @@ def test_multiplying_by_a_foreign_operand_speaks_poop() -> None:
 def test_the_reflected_half_is_guarded_too() -> None:
     # Leaving `__rmul__` open sent `[1] * "a"` straight back into `Str.__rmul__`
     # and out through the same leak.
-    from poop.types._message import poop_message
-
     with pytest.raises(TypeError) as info:
         _ = Str("a") * List(Int(1))
     assert poop_message(info.value) == "str does not understand #* with a list"
 
 
 def test_in_place_multiplication_is_guarded() -> None:
-    from poop.types._message import poop_message
-
     xs = List(Int(1))
     with pytest.raises(TypeError) as info:
         xs *= Str("a")

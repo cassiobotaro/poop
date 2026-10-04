@@ -1,39 +1,36 @@
-import builtins as _builtins
-from collections.abc import Callable
+import builtins
+import operator
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import byte_order
 from poop.types._cloak import cloak
 from poop.types._message import article, binary_refusal
-from poop.types._minmax import _MISSING, _minmax
+from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
-    _NOT_NUMERIC,
     _num_value,
     _NumericCompareMixin,
 )
 from poop.types._pow import reflected_pow
-from poop.types._unwrap import _faithful, _unwrap
-from poop.types.boolean import true
+from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC
+from poop.types._unwrap import _faithful, _is_absent, _opt_int, _unwrap, _unwrap_bool
+from poop.types.boolean import Boolean, true
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from collections.abc import Callable
+
     from poop.types.bytes import Bytes
     from poop.types.float import Float
     from poop.types.none import NoneClass
     from poop.types.string import Str
     from poop.types.tuple import Tuple
 
-_int = int  # alias to avoid shadowing by Int.int() method
-
-_NOT_INTEGRAL: Any = object()
-
 
 def _integral_value(other: object) -> Any:
-    """Raw int behind an Int/Boolean operand, else the ``_NOT_INTEGRAL`` sentinel.
+    """Raw int behind an Int/Boolean operand, else the ``NOT_INTEGRAL`` sentinel.
 
     Bitwise and shift operators accept only integral operands: ``Int`` and
     ``Boolean`` (``bool`` is an ``int`` subclass, so ``5 & True == 1``). A
@@ -41,19 +38,17 @@ def _integral_value(other: object) -> Any:
     ``NotImplemented`` and CPython raises its faithful ``TypeError`` instead of
     leaking an ``AttributeError`` from a missing ``other._value``.
     """
-    from poop.types.boolean import Boolean
-
     if isinstance(other, Int):
         return other._value
     if isinstance(other, Boolean):
         return 1 if other else 0
-    return _NOT_INTEGRAL
+    return NOT_INTEGRAL
 
 
 class Int(_NumericCompareMixin, Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _int | Int) -> None:
+    def __init__(self, value: int | Int) -> None:
         self._value = value._value if isinstance(value, Int) else value
 
     def negated(self) -> Int:
@@ -80,18 +75,14 @@ class Int(_NumericCompareMixin, Object):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int:
-        return cast(
-            "Int", _minmax(_builtins.max, "#max", (self, *others), key, _MISSING)
-        )
+        return cast("Int", _minmax(builtins.max, "#max", (self, *others), key, MISSING))
 
     def min(
         self,
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int:
-        return cast(
-            "Int", _minmax(_builtins.min, "#min", (self, *others), key, _MISSING)
-        )
+        return cast("Int", _minmax(builtins.min, "#min", (self, *others), key, MISSING))
 
     def bit_count(self) -> Int:
         return Int(self._value.bit_count())
@@ -118,7 +109,8 @@ class Int(_NumericCompareMixin, Object):
         return self
 
     def as_integer_ratio(self) -> Tuple:
-        from poop.types.tuple import Tuple
+        # circular: tuple imports int
+        from poop.types.tuple import Tuple  # noqa: PLC0415
 
         return Tuple(self, Int(1))
 
@@ -129,13 +121,13 @@ class Int(_NumericCompareMixin, Object):
         *,
         signed: Boolean | NoneClass | None = None,
     ) -> Bytes:
-        from poop.types._unwrap import _opt_int, _unwrap_bool
-        from poop.types.bytes import Bytes
+        # circular: bytes imports int
+        from poop.types.bytes import Bytes  # noqa: PLC0415
 
         return Bytes(
             self._value.to_bytes(
                 _opt_int(length, 1),
-                cast(Literal["little", "big"], byte_order(byteorder)),
+                cast("Literal['little', 'big']", byte_order(byteorder)),
                 signed=_unwrap_bool(signed, False),
             )
         )
@@ -148,13 +140,11 @@ class Int(_NumericCompareMixin, Object):
         *,
         signed: Boolean | NoneClass | None = None,
     ) -> Int:
-        from poop.types._unwrap import _unwrap_bool
-
         return wrapped_instance(
             cls,
-            _int.from_bytes(
+            int.from_bytes(
                 _faithful(b),
-                cast(Literal["little", "big"], byte_order(byteorder)),
+                cast("Literal['little', 'big']", byte_order(byteorder)),
                 signed=_unwrap_bool(signed, False),
             ),
         )
@@ -165,63 +155,51 @@ class Int(_NumericCompareMixin, Object):
     def abs(self) -> Int:
         return self.__abs__()
 
-    def __add__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
+    def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Int | Float:
+        """`self op other`, an `Int` beside an `Int` and a `Float` beside a `Float`.
+
+        Written once and handed the operator, as `_OrderedMixin._compare` is.
+        Anything outside the pair answers `NotImplemented`, so the operand's
+        reflected method runs — `Str`/`Bytes` repeat for `*`, `Boolean` and
+        `Complex` for the rest.
+        """
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__radd__ run
+            return NotImplemented
         if isinstance(other, Float):
-            return Float(self._value + other._value)
-        return Int(self._value + other._value)
+            return Float(op(self._value, other._value))
+        return Int(op(self._value, other._value))
+
+    def __add__(self, other: object) -> Int | Float:
+        return self._arith(other, operator.add)
 
     def __sub__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rsub__ run
-        if isinstance(other, Float):
-            return Float(self._value - other._value)
-        return Int(self._value - other._value)
+        return self._arith(other, operator.sub)
 
     def __mul__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rmul__ run (Str/Bytes repeat, etc.)
-        if isinstance(other, Float):
-            return Float(self._value * other._value)
-        return Int(self._value * other._value)
+        return self._arith(other, operator.mul)
 
     def __truediv__(self, other: object) -> Float:
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rtruediv__ run
         return Float(self._value / other._value)
 
     def __floordiv__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rfloordiv__ run
-        if isinstance(other, Float):
-            return Float(self._value // other._value)
-        return Int(self._value // other._value)
+        return self._arith(other, operator.floordiv)
 
     def __mod__(self, other: object) -> Int | Float:
-        from poop.types.float import Float
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rmod__ run
-        if isinstance(other, Float):
-            return Float(self._value % other._value)
-        return Int(self._value % other._value)
+        return self._arith(other, operator.mod)
 
     def __pow__(
         self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
-        from poop.types._unwrap import _is_absent
-        from poop.types.float import Float
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
 
         if isinstance(other, Complex):
             return NotImplemented
@@ -272,11 +250,14 @@ class Int(_NumericCompareMixin, Object):
         return result
 
     def __divmod__(self, other: object) -> Tuple:
-        from poop.types.float import Float
-        from poop.types.tuple import Tuple
+        # circular: float imports int
+        from poop.types.float import Float  # noqa: PLC0415
+
+        # circular: tuple imports int
+        from poop.types.tuple import Tuple  # noqa: PLC0415
 
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
         q, r = divmod(self._value, v)
         if isinstance(other, Float):
@@ -291,68 +272,50 @@ class Int(_NumericCompareMixin, Object):
             )
         return result
 
-    def __lshift__(self, other: object) -> Int:
+    def _bitwise(
+        self, other: object, op: Callable[[int, int], int], *, reflected: bool = False
+    ) -> Int:
+        """`self op other` for a shift or bitwise operator; `other op self`
+        when `reflected`. An operand that is not integral answers
+        `NotImplemented`.
+        """
         v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
+        if v is NOT_INTEGRAL:
             return NotImplemented
-        return Int(self._value << v)
+        return Int(op(v, self._value) if reflected else op(self._value, v))
+
+    def __lshift__(self, other: object) -> Int:
+        return self._bitwise(other, operator.lshift)
 
     def __rshift__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(self._value >> v)
+        return self._bitwise(other, operator.rshift)
 
     def __and__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(self._value & v)
+        return self._bitwise(other, operator.and_)
 
     def __or__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(self._value | v)
+        return self._bitwise(other, operator.or_)
 
     def __xor__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(self._value ^ v)
+        return self._bitwise(other, operator.xor)
 
     # Reflected bitwise/shift operators — CPython's int defines these too, so a
     # `<integral> OP Int` expression (e.g. `True << 5`, where Boolean has no
     # `__lshift__`) resolves here instead of leaking a TypeError.
     def __rlshift__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v << self._value)
+        return self._bitwise(other, operator.lshift, reflected=True)
 
     def __rrshift__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v >> self._value)
+        return self._bitwise(other, operator.rshift, reflected=True)
 
     def __rand__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v & self._value)
+        return self._bitwise(other, operator.and_, reflected=True)
 
     def __ror__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v | self._value)
+        return self._bitwise(other, operator.or_, reflected=True)
 
     def __rxor__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is _NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v ^ self._value)
+        return self._bitwise(other, operator.xor, reflected=True)
 
     def __ceil__(self) -> Int:
         return self
@@ -384,26 +347,30 @@ class Int(_NumericCompareMixin, Object):
     # across the numeric tower live in _NumericCompareMixin, driven by
     # _order_value() below (Int's raw value is self._value, the default).
 
-    def __hash__(self) -> _int:
+    def __hash__(self) -> int:
         return hash(self._value)
 
     def bin(self) -> Str:
-        from poop.types.string import Str
+        # circular: string imports int
+        from poop.types.string import Str  # noqa: PLC0415
 
         return Str(bin(self._value))
 
     def hex(self) -> Str:
-        from poop.types.string import Str
+        # circular: string imports int
+        from poop.types.string import Str  # noqa: PLC0415
 
         return Str(hex(self._value))
 
     def oct(self) -> Str:
-        from poop.types.string import Str
+        # circular: string imports int
+        from poop.types.string import Str  # noqa: PLC0415
 
         return Str(oct(self._value))
 
     def chr(self) -> Str:
-        from poop.types.string import Str
+        # circular: string imports int
+        from poop.types.string import Str  # noqa: PLC0415
 
         try:
             return Str(chr(self._value))
@@ -414,10 +381,10 @@ class Int(_NumericCompareMixin, Object):
                 f"{self._value} is not a character code — codes run from 0 to 1114111"
             ) from None
 
-    def __int__(self) -> _int:
+    def __int__(self) -> int:
         return self._value
 
-    def __index__(self) -> _int:
+    def __index__(self) -> int:
         # Python's index protocol, so an `Int` *is* an index: `xs.at(i)` hands
         # the wrapper straight to CPython instead of unwrapping `i._value` by
         # hand, which leaked `#_value` for a foreign index and refused a

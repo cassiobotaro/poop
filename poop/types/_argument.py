@@ -10,12 +10,25 @@ handful of families, which is why the wording lives here rather than being
 written out once per receiver.
 """
 
-from __future__ import annotations
-
 from typing import Any
 
 from poop.types._message import article
+from poop.types._sentinel import MISSING
 from poop.types.exceptions import MIRRORS
+
+
+def no_arguments(
+    cls: type, args: tuple[object, ...], kwargs: dict[str, object]
+) -> None:
+    """Refuse a constructor call that passed anything, in CPython's words.
+
+    For the singletons, whose `__new__` answers the one instance and so takes
+    `*args` only to word the refusal: left to CPython, an extra argument named
+    `__new__` or `__init__`, where `type(None)(1)` says `NoneType takes no
+    arguments`.
+    """
+    if args or kwargs:
+        raise MIRRORS["TypeError"](f"{cls.__name__}() takes no arguments")
 
 
 def a_class(value: Any, selector: str) -> Any:
@@ -26,7 +39,7 @@ def a_class(value: Any, selector: str) -> Any:
     a tuple of types, or a union` — the builtin it replaces, spelt as the call
     it replaces. `issubclass` said the same about itself.
     """
-    if isinstance(value, type) or isinstance(value, tuple):
+    if isinstance(value, type | tuple):
         return value
     raise MIRRORS["TypeError"](
         f"#{selector} expects a class, got {article(type(value).__name__)}"
@@ -48,7 +61,8 @@ def a_bound(value: Any, selector: str, role: str) -> Any:
     Unwraps as well as guards, so a call site spells one helper where it used
     to spell `_unwrap(start, None)`.
     """
-    from poop.types._unwrap import _unwrap
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _unwrap  # noqa: PLC0415
 
     raw = _unwrap(value, None)
     if raw is None or hasattr(raw, "__index__"):
@@ -68,9 +82,9 @@ def text_like(
 
     CPython answers `center() argument 2 must be a byte string of length 1,
     not int` and `replace() argument 1 must be str, not int` — the message
-    spelt as a call, every time. `_needle` in `string.py` makes the same move
-    for the block case; this covers the rest of the family and the receivers
-    that had no guard at all.
+    spelt as a call, every time. `a_needle` makes the same move for the block
+    case; this covers the rest of the family and the receivers that had no
+    guard at all.
 
     `kinds` narrows what counts as text for the caller that needs it: an
     encoding name and a byte order are `str` and nothing else, so accepting
@@ -87,6 +101,7 @@ def text_like(
 
 
 def a_needle(
+    receiver: object,
     sub: object,
     selector: str,
     expected: str,
@@ -97,23 +112,28 @@ def a_needle(
     `find` / `rfind` / `index` / `rindex` / `count` keep their *text* meaning on
     `Str`, `Bytes` and `ByteArray`, where `_IterableMixin`'s twins take a block
     — so a reader arriving from `[1, 2].find(block)` writes a block here.
+    CPython answers `find() argument 1 must be str, not function` — the method
+    as a call, and `function`, which POOP prints as `<block>`.
 
-    Lived in `string.py` and was wired into `Str` alone, which is proposal 6's
-    item reopening on the receiver next door: `"abc".count(5)` answered
-    `#count expects a str, got an int` while `b"abc".count(5.5)` answered
-    `argument should be integer or bytes-like object, not 'float'`. The
-    sentence was already receiver-independent; only its address was wrong.
+    The block refusal names the class the message was sent to, read from
+    `receiver`. It used to be parsed out of `expected`, the phrase describing
+    the *argument*, so `b"abc".count(block)` blamed "an int" — the last thing
+    the argument may be, not the receiver.
 
     The byte receivers accept an integer as well as a subsequence, which is
     CPython's rule (`b"ab".count(97)` is 1), so `expected` carries what this
     receiver takes.
     """
-    from poop.types.string import Str
+    # circular: string imports _argument
+    from poop.types.string import Str  # noqa: PLC0415
 
     if not isinstance(sub, Str) and callable(sub):
+        text = str in kinds
+        sought = "substring" if text else "subsequence"
+        wanted = "the text to look for" if text else "what to look for"
         raise MIRRORS["TypeError"](
-            f"{expected.split(' or ')[-1]}'s #{selector} searches for a "
-            f"subsequence — it takes what to look for, not a block"
+            f"{type(receiver).__name__}'s #{selector} searches for a {sought} — "
+            f"it takes {wanted}, not a block"
         )
     raw = getattr(sub, "_value", sub)
     # `kinds` is the receiver's, not a fixed set: `b"ab".count("x")` must be
@@ -136,7 +156,8 @@ def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
     substitute, and one the wording sweep could not see: it carries no call, no
     dunder and no operator.
     """
-    from poop.types._unwrap import _is_absent
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _is_absent  # noqa: PLC0415
 
     # `optional` for the strip family, whose argument is genuinely absent by
     # default — CPython's own `strip arg must be None or str` names that case.
@@ -148,11 +169,6 @@ def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
     raise MIRRORS["TypeError"](
         f"#{selector} expects bytes, got {article(type(value).__name__)}"
     )
-
-
-# The "argument not given" sentinel for a block slot, so a missing one is
-# refused by the receiver rather than by CPython's call machinery.
-MISSING: Any = object()
 
 
 def a_block(
@@ -223,7 +239,8 @@ def byte_order(value: Any) -> str:
     as a call. The two valid spellings are named here rather than left to the
     conversion, so a typo (`"Big"`) is refused by the message that takes it.
     """
-    from poop.types._unwrap import _is_absent
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _is_absent  # noqa: PLC0415
 
     if _is_absent(value):
         return "big"

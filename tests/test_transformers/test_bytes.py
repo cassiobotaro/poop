@@ -133,10 +133,6 @@ def test_bytes_from_unsupported_type_raises() -> None:
 
 
 def test_bare_bytes_name_is_rewritten_to_the_mangled_binding() -> None:
-    import ast
-
-    from poop.transformers.bytes import BytesTransformer
-
     tree = BytesTransformer().transform(ast.parse("f = bytes"))
     assign = tree.body[0]
     assert isinstance(assign, ast.Assign)

@@ -8,14 +8,17 @@ Two angles:
    DEFAULT_NAMESPACE, so user code can reach `Try`, `With`, `Map`,
    `Filter`, etc. without needing to know which source exposed them.
    Catches the "I forgot to wire the binding into
-   `transformers/__init__.py`" class of bug.
+   `transformers/_registry.py`" class of bug.
 """
 
+import importlib
+import pkgutil
+from collections import Counter
 from pathlib import Path
 
 import pytest
 
-from poop import Interpreter
+from poop import Interpreter, transformers
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.base import BaseTransformer
 from poop.transformers.try_ import NAMESPACE as TRY_NAMESPACE
@@ -42,7 +45,7 @@ def test_example_runs_through_full_pipeline(
     example: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr("builtins.input", lambda *_args, **_kwargs: "Test")
-    Interpreter().run_file(example)
+    Interpreter().run_source(example.read_text(encoding="utf-8-sig"), str(example))
 
 
 def test_examples_directory_has_files() -> None:
@@ -62,7 +65,7 @@ def test_transformer_bindings_present_in_default_namespace(
         assert name in DEFAULT_NAMESPACE, (
             f"{transformer_cls.__name__} declares BINDING '{name}' "
             f"but it is missing from DEFAULT_NAMESPACE — likely not wired "
-            f"into poop/transformers/__init__.py"
+            f"into poop/transformers/_registry.py"
         )
         assert DEFAULT_NAMESPACE[name] is value, (
             f"{transformer_cls.__name__} BINDING '{name}' resolves to a "
@@ -82,7 +85,7 @@ def test_namespace_module_bindings_present_in_default_namespace(
         assert name in DEFAULT_NAMESPACE, (
             f"poop/transformers/{module_name}.py NAMESPACE declares "
             f"'{name}' but it is missing from DEFAULT_NAMESPACE — likely "
-            f"not merged in poop/transformers/__init__.py"
+            f"not merged in poop/transformers/_registry.py"
         )
         assert DEFAULT_NAMESPACE[name] is value, (
             f"poop/transformers/{module_name}.py NAMESPACE '{name}' "
@@ -103,12 +106,6 @@ def test_no_duplicate_bindings_across_transformers() -> None:
     existing key, the manual merge would silently let the second
     spread win. This test catches that at startup.
     """
-    import importlib
-    import pkgutil
-    from collections import Counter
-
-    from poop import transformers
-
     declarations: list[tuple[str, str]] = []
     for mod_info in pkgutil.iter_modules(transformers.__path__):
         if mod_info.name == "base":

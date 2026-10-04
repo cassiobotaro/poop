@@ -1,40 +1,39 @@
-import builtins as _builtins
+import builtins
 import math
-from collections.abc import Callable
+import operator
 from typing import TYPE_CHECKING, Any, cast
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import text_like
 from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
-from poop.types._minmax import _MISSING, _minmax
+from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
-    _NOT_NUMERIC,
     _num_value,
     _NumericCompareMixin,
 )
 from poop.types._pow import reflected_pow
-from poop.types._unwrap import _unwrap
+from poop.types._sentinel import MISSING, NOT_NUMERIC
+from poop.types._unwrap import _is_absent, _unwrap
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
 from poop.types.object import Object
+from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
-    from poop.types.int import Int
-    from poop.types.none import NoneClass
-    from poop.types.string import Str
-    from poop.types.tuple import Tuple
+    from collections.abc import Callable
 
-_float = float  # alias to avoid shadowing by Float.float() method
-_int = int  # alias to avoid shadowing by annotations
+    from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
 
 
 class Float(_NumericCompareMixin, Object):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _float | Float) -> None:
+    def __init__(self, value: float | Float) -> None:
         self._value = value._value if isinstance(value, Float) else value
 
     def negated(self) -> Float:
@@ -53,7 +52,7 @@ class Float(_NumericCompareMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Float:
         return cast(
-            "Float", _minmax(_builtins.max, "#max", (self, *others), key, _MISSING)
+            "Float", _minmax(builtins.max, "#max", (self, *others), key, MISSING)
         )
 
     def min(
@@ -62,16 +61,13 @@ class Float(_NumericCompareMixin, Object):
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Float:
         return cast(
-            "Float", _minmax(_builtins.min, "#min", (self, *others), key, _MISSING)
+            "Float", _minmax(builtins.min, "#min", (self, *others), key, MISSING)
         )
 
     def is_integer(self) -> Boolean:
         return to_boolean(self._value.is_integer())
 
     def as_integer_ratio(self) -> Tuple:
-        from poop.types.int import Int
-        from poop.types.tuple import Tuple
-
         n, d = self._value.as_integer_ratio()
         return Tuple(Int(n), Int(d))
 
@@ -79,9 +75,7 @@ class Float(_NumericCompareMixin, Object):
         return self
 
     def hex(self) -> Str:
-        from poop.types.string import Str
-
-        return Str(_float(self._value).hex())
+        return Str(float(self._value).hex())
 
     @classmethod
     def fromhex(cls, s: Str) -> Float:
@@ -89,7 +83,7 @@ class Float(_NumericCompareMixin, Object):
         # receiver, the message nor the argument. The two byte twins already
         # answered `#fromhex expects a str, got an int`.
         return wrapped_instance(
-            cls, _float.fromhex(text_like(s, "fromhex", "a str", (str,)))
+            cls, float.fromhex(text_like(s, "fromhex", "a str", (str,)))
         )
 
     def real(self) -> Float:
@@ -104,51 +98,35 @@ class Float(_NumericCompareMixin, Object):
     def abs(self) -> Float:
         return self.__abs__()
 
-    def __add__(self, other: object) -> Float:
-        from poop.types.int import Int
+    def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Float:
+        """`self op other` against an `Int` or a `Float`.
 
+        Anything else answers `NotImplemented`, so the operand's reflected
+        method runs.
+        """
         if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__radd__ run
-        return Float(self._value + other._value)
+            return NotImplemented
+        return Float(op(self._value, other._value))
+
+    def __add__(self, other: object) -> Float:
+        return self._arith(other, operator.add)
 
     def __sub__(self, other: object) -> Float:
-        from poop.types.int import Int
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rsub__ run
-        return Float(self._value - other._value)
+        return self._arith(other, operator.sub)
 
     def __mul__(self, other: object) -> Float:
-        from poop.types.int import Int
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rmul__ run
-        return Float(self._value * other._value)
+        return self._arith(other, operator.mul)
 
     def __truediv__(self, other: object) -> Float:
-        from poop.types.int import Int
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rtruediv__ run
-        return Float(self._value / other._value)
+        return self._arith(other, operator.truediv)
 
     def __floordiv__(self, other: object) -> Float:
-        from poop.types.int import Int
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rfloordiv__ run
-        return Float(self._value // other._value)
+        return self._arith(other, operator.floordiv)
 
     def __mod__(self, other: object) -> Float:
-        from poop.types.int import Int
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rmod__ run
-        return Float(self._value % other._value)
+        return self._arith(other, operator.mod)
 
     def __pow__(self, other: object) -> Float | Complex:
-        from poop.types.int import Int
-
         if isinstance(other, Complex):
             return NotImplemented
         if not isinstance(other, Int | Float):
@@ -170,8 +148,6 @@ class Float(_NumericCompareMixin, Object):
         #
         # In `pow`, not `__pow__`: the operator never carries a third operand
         # (`a ** b % m` is two operations, and the builtin `pow` is banned).
-        from poop.types._unwrap import _is_absent
-
         if not _is_absent(modulus):
             raise MIRRORS["TypeError"](
                 "pow's modulus is only defined when both operands are ints"
@@ -189,10 +165,8 @@ class Float(_NumericCompareMixin, Object):
         return result
 
     def __divmod__(self, other: object) -> Tuple:
-        from poop.types.tuple import Tuple
-
         v = _num_value(other)
-        if v is _NOT_NUMERIC:
+        if v is NOT_NUMERIC:
             return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
         q, r = divmod(self._value, v)
         return Tuple(Float(q), Float(r))
@@ -206,50 +180,42 @@ class Float(_NumericCompareMixin, Object):
         return result
 
     def __ceil__(self) -> Int:
-        from poop.types.int import Int
-
         return Int(math.ceil(self._value))
 
     def ceil(self) -> Int:
         return self.__ceil__()
 
     def __floor__(self) -> Int:
-        from poop.types.int import Int
-
         return Int(math.floor(self._value))
 
     def floor(self) -> Int:
         return self.__floor__()
 
     def __trunc__(self) -> Int:
-        from poop.types.int import Int
-
         return Int(math.trunc(self._value))
 
     def trunc(self) -> Int:
         return self.__trunc__()
 
     def __round__(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
-        from poop.types.int import Int
-
         n = _unwrap(ndigits, None)
         result = round(self._value, n)
-        return Int(result) if isinstance(result, _int) else Float(result)
+        return Int(result) if isinstance(result, int) else Float(result)
 
     def round(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
         return self.__round__(ndigits)
 
-    def __int__(self) -> _int:
-        return _int(self._value)
+    def __int__(self) -> int:
+        return int(self._value)
 
     # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
     # across the numeric tower live in _NumericCompareMixin, driven by
     # _order_value() (Float's raw value is self._value, the default).
 
-    def __hash__(self) -> _int:
+    def __hash__(self) -> int:
         return hash(self._value)
 
-    def __float__(self) -> _float:
+    def __float__(self) -> float:
         return self._value
 
     def __bool__(self) -> bool:

@@ -12,8 +12,15 @@ def _transform(source: str) -> ast.Module:
     return ClassTransformer().transform(tree)
 
 
-def _first_class_bases(source: str) -> list[str]:
-    tree = _transform(source)
+def _pipeline(source: str) -> ast.Module:
+    # An explicit `object` / `Object` base is `ObjectTransformer`'s, which
+    # rewrites both spellings in every position — so the base-list cases are
+    # asserted on the whole pipeline rather than on `ClassTransformer` alone.
+    return Interpreter().transform_source(source)
+
+
+def _first_class_bases(source: str, transform=_transform) -> list[str]:
+    tree = transform(source)
     cls = next(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef))
     return [b.id for b in cls.bases if isinstance(b, ast.Name)]
 
@@ -24,12 +31,12 @@ def test_class_without_base_gets_object() -> None:
 
 
 def test_class_with_object_base_gets_rewritten() -> None:
-    bases = _first_class_bases("class Foo(object): pass")
+    bases = _first_class_bases("class Foo(object): pass", _pipeline)
     assert bases == ["_poop_object"]
 
 
 def test_class_with_explicit_Object_base_gets_rewritten() -> None:
-    bases = _first_class_bases("class Foo(Object): pass")
+    bases = _first_class_bases("class Foo(Object): pass", _pipeline)
     assert bases == ["_poop_object"]
 
 
@@ -60,7 +67,7 @@ def test_transformed_class_inherits_from_object_at_runtime() -> None:
 
 
 def test_class_with_object_base_inherits_at_runtime() -> None:
-    tree = _transform("class Cat(object): pass\nc = Cat()")
+    tree = _pipeline("class Cat(object): pass\nc = Cat()")
     ns = dict(DEFAULT_NAMESPACE)
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
     assert isinstance(ns["c"], Object)

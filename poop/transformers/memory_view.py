@@ -1,8 +1,5 @@
-import ast
-from typing import ClassVar
-
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -29,34 +26,15 @@ def _poop_memoryview_from(*args: object, **kwargs: object) -> MemoryView:
     )
 
 
-class _MemoryViewRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "memoryview":
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_memoryview_from", ctx=ast.Load()),
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
-
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "memoryview":
-            return ast.copy_location(
-                ast.Name(id="_poop_memoryview_cls", ctx=node.ctx), node
-            )
-        return node
+class _MemoryViewRewriter(BuiltinRewriter):
+    builtin = "memoryview"
+    call_target = "_poop_memoryview_from"
+    name_target = "_poop_memoryview_cls"
 
 
 class MemoryViewTransformer(BaseTransformer):
     rewriter = _MemoryViewRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_memoryview": MemoryView,
         "_poop_memoryview_cls": builtin_alias(
             MemoryView, _poop_memoryview_from, "memoryview"

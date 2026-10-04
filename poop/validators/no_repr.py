@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoReprValidator = make_call_name_validator(
-    forbidden={"repr"},
-    message="repr() is forbidden — use obj.repr() instead",
-)
+
+class NoReprValidator(CallNameValidator):
+    forbidden = frozenset({"repr"})
+    message = "repr() is forbidden — use obj.repr() instead"

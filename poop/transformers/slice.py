@@ -1,8 +1,8 @@
 import ast
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types.exceptions import MIRRORS
 from poop.types.slice import Slice
 
@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
 
 def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
-    """`slice(...)`, guarded. Proposal 9 recorded that `Slice(...)` *is* the
-    call, so unlike its siblings this one had no factory at all — and the
+    """`slice(...)`, guarded. `Slice(...)` *is* the call, so unlike its
+    siblings this one had no factory at all — and the
     refusal that leaked was the sharpest of the eight, naming `__init__`, a
     dunder `no_dunder_attribute` refuses, from a construct the program spelled
     without a dunder anywhere.
@@ -34,41 +34,27 @@ def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
     return Slice(*cast("tuple[Index | NoneClass | None, ...]", args))
 
 
-class _SliceRewriter(ast.NodeTransformer):
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and node.func.id == "slice":
-            args = [self.visit(arg) for arg in node.args]
-            # CPython's one-argument `slice(stop)` means `slice(None, stop,
-            # None)` — the lone argument is the stop, not the start. Slice(...)
-            # binds positionals as (start, stop, step), so a bare `slice(x)`
-            # would wrongly make x the start; inject the implicit None start to
-            # mirror the builtin (NoneTransformer has already run, so a raw
-            # `None` constant reaches Slice, whose _coerce maps it to None).
-            if len(args) == 1 and not node.keywords:
-                args.insert(0, ast.Constant(value=None))
-            return ast.copy_location(
-                ast.Call(
-                    func=ast.Name(id="_poop_slice_from", ctx=ast.Load()),
-                    args=args,
-                    keywords=[
-                        ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                        for kw in node.keywords
-                    ],
-                ),
-                node,
-            )
-        self.generic_visit(node)
-        return node
+class _SliceRewriter(BuiltinRewriter):
+    builtin = "slice"
+    call_target = "_poop_slice_from"
+    name_target = "_poop_slice"
 
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id == "slice":
-            return ast.copy_location(ast.Name(id="_poop_slice", ctx=node.ctx), node)
-        return node
+    def call_args(self, node: ast.Call) -> list[ast.expr]:
+        args = super().call_args(node)
+        # CPython's one-argument `slice(stop)` means `slice(None, stop, None)` —
+        # the lone argument is the stop, not the start. Slice(...) binds
+        # positionals as (start, stop, step), so a bare `slice(x)` would wrongly
+        # make x the start; inject the implicit None start to mirror the builtin
+        # (NoneTransformer has already run, so a raw `None` constant reaches
+        # Slice, whose _coerce maps it to None).
+        if len(args) == 1 and not node.keywords:
+            args.insert(0, ast.Constant(value=None))
+        return args
 
 
 class SliceTransformer(BaseTransformer):
     rewriter = _SliceRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {
+    BINDINGS = {
         "_poop_slice": Slice,
         "_poop_slice_from": _poop_slice_from,
     }

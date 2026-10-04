@@ -1,8 +1,9 @@
 import operator
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pytest
 
+from poop.transformers.list import _poop_list_from
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.dict_item_iterator import DictItemIterator
@@ -15,6 +16,9 @@ from poop.types.mapping_proxy import MappingProxy
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _make() -> Dict:
@@ -75,8 +79,6 @@ def test_mapping() -> None:
 
 
 def test_list_escape() -> None:
-    from poop.transformers.list import _poop_list_from
-
     items = DictItems(_make())
     lst = _poop_list_from(items)
     assert isinstance(lst, List)
@@ -273,7 +275,7 @@ def test_dir_hides_the_poop_own_set_internal() -> None:
     assert all(not name.startswith("_") for name in names)
 
 
-# --- proposal 3: any iterable for the algebraic operators, set-like only for
+# --- any iterable for the algebraic operators, set-like only for
 # the comparisons — and neither may leak `#_data` ---
 
 

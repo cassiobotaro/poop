@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoGetattrValidator = make_call_name_validator(
-    forbidden={"getattr"},
-    message="getattr() is forbidden — use obj.get_attr(name) instead",
-)
+
+class NoGetattrValidator(CallNameValidator):
+    forbidden = frozenset({"getattr"})
+    message = "getattr() is forbidden — use obj.get_attr(name) instead"

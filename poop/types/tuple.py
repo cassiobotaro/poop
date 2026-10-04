@@ -1,41 +1,41 @@
-from builtins import print as _builtins_print
-from builtins import reversed as builtins_reversed
-from collections.abc import Callable, Iterator
+import builtins
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
-from poop.types._repeat import NOT_A_COUNT, _repeat_count
+from poop.types._ordered import _OrderedMixin
+from poop.types._repeat import _repeat_count
+from poop.types._sentinel import NOT_A_COUNT
+from poop.types._unwrap import _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
+from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
+from poop.types.slice import _resolve_py_slice
 from poop.types.tuple_iterator import TupleIterator
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
-    from poop.types.int import Int
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
     from poop.types.string import Str
 
-_tuple = tuple  # alias to avoid shadowing by Tuple class name in annotations
 
-
-class Tuple(_ValueEqMixin, _IterableMixin, Object):
+class Tuple(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
     _eq_attr: ClassVar[str] = "_items"
 
     def __init__(self, *elements: Object) -> None:
-        self._items: _tuple[Object, ...] = _tuple(elements)
+        self._items: tuple[Object, ...] = tuple(elements)
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._items))
 
     def __len__(self) -> int:
@@ -50,8 +50,6 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> Tuple:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         return Tuple(*self._items[py])
 
@@ -66,11 +64,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented
         return Tuple(*self._items * count)
 
-    def __rmul__(self, other: object) -> Tuple:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return Tuple(*self._items * count)
+    __rmul__ = __mul__
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._items)
@@ -95,11 +89,9 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         return Tuple(*_sorted(self._items, key, reverse))
 
     def reversed(self) -> Tuple:
-        return Tuple(*builtins_reversed(self._items))
+        return Tuple(*builtins.reversed(self._items))
 
     def count(self, obj: Object) -> Int:
-        from poop.types.int import Int
-
         return Int(self._items.count(obj))
 
     def index(
@@ -108,8 +100,6 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         # No branching on which bound was given: `stop` alone was dropped on
         # the floor by the first branch, so `xs.index(3, stop=1)` answered a
         # match from outside the bound it was handed. `len` rather than `None`
@@ -126,34 +116,6 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         except ValueError:
             raise no_element_equal_to(self, obj) from None
 
-    def __lt__(self, other: object) -> Boolean:
-        if not isinstance(other, Tuple):
-            return NotImplemented  # foreign operand -> faithful TypeError
-        a = cast("tuple[Any, ...]", self._items)
-        b = cast("tuple[Any, ...]", other._items)
-        return to_boolean(a < b)
-
-    def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, Tuple):
-            return NotImplemented
-        a = cast("tuple[Any, ...]", self._items)
-        b = cast("tuple[Any, ...]", other._items)
-        return to_boolean(a <= b)
-
-    def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, Tuple):
-            return NotImplemented
-        a = cast("tuple[Any, ...]", self._items)
-        b = cast("tuple[Any, ...]", other._items)
-        return to_boolean(a > b)
-
-    def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, Tuple):
-            return NotImplemented
-        a = cast("tuple[Any, ...]", self._items)
-        b = cast("tuple[Any, ...]", other._items)
-        return to_boolean(a >= b)
-
     def __hash__(self) -> int:
         return hash(self._items)
 
@@ -163,17 +125,15 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        from poop.types._unwrap import _unwrap, _unwrap_bool
-
         sep_value = _unwrap(sep, " ")
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)
-        _builtins_print(
+        builtins.print(  # noqa: T201 — the language's own #print
             *[str(item) for item in self._items],
             sep=sep_value,
             end=end_value,
             flush=flush_value,
-        )  # noqa: T201
+        )
         return none
 
     # A tuple is immutable but not acyclic — it can hold a list that holds the
@@ -181,7 +141,7 @@ class Tuple(_ValueEqMixin, _IterableMixin, Object):
     @recursive_repr(fillvalue="(...)")
     def __str__(self) -> str:
         if len(self._items) == 1:
-            return f"({repr(self._items[0])},)"
+            return f"({self._items[0]!r},)"
         return f"({', '.join(repr(item) for item in self._items)})"
 
     __repr__ = __str__

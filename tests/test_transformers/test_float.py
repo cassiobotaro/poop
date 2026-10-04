@@ -5,6 +5,7 @@ import pytest
 from poop.errors import ExecutionError
 from poop.interpreter import Interpreter
 from poop.transformers.float import FloatTransformer, _poop_float_from
+from poop.types.boolean import false, true
 from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
@@ -107,9 +108,7 @@ def test_float_from_str_parses() -> None:
 
 
 def test_float_from_boolean() -> None:
-    # proposal 154: float(True) -> 1.0, float(False) -> 0.0.
-    from poop.types.boolean import false, true
-
+    # float(True) -> 1.0, float(False) -> 0.0.
     assert _poop_float_from(true) == Float(1.0)
     assert _poop_float_from(false) == Float(0.0)
 
@@ -142,8 +141,8 @@ def test_float_from_an_unparsable_string_names_the_value() -> None:
 
 def test_float_refuses_a_keyword_argument() -> None:
     # Twin of the `bool(x=1)` guard: unconditionally rewritten, this answered
-    # `0.0` off the helper's default instead of a TypeError. Proposal 44 gave
-    # the converter `refuse_extra_arguments`, so the sentence is POOP's now
+    # `0.0` off the helper's default instead of a TypeError. The converter
+    # now calls `refuse_extra_arguments`, so the sentence is POOP's now
     # rather than CPython's `got an unexpected keyword argument`.
     with pytest.raises(ExecutionError, match="float takes no keyword arguments"):
         Interpreter().run_source("float(x=1).print()")

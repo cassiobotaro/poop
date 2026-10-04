@@ -1,12 +1,12 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.object import Object
+from poop.types.set import Set
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -43,10 +43,11 @@ def _set_like_elements(other: object) -> set[Object] | None:
     so the view's reflected operator runs — CPython's
     ``frozenset({1}) | {2: 3}.keys()`` is a ``set``, not a ``frozenset``.
     """
-    from poop.types.dict_items import DictItems
-    from poop.types.dict_keys import DictKeys
-    from poop.types.frozen_set import FrozenSet
-    from poop.types.set import Set
+    # circular: dict_items imports _dict_view
+    from poop.types.dict_items import DictItems  # noqa: PLC0415
+
+    # circular: dict_keys imports _dict_view
+    from poop.types.dict_keys import DictKeys  # noqa: PLC0415
 
     if isinstance(other, DictKeys | DictItems | Set | FrozenSet):
         return _elements(other)
@@ -65,7 +66,6 @@ class _DictView(_IterableMixin, Object):
     """
 
     __slots__ = ("_dict",)
-    __hash__ = None  # type: ignore[assignment]
     _repr_name: ClassVar[str] = "dict_view"
 
     def __init_subclass__(cls, *, name: str | None = None, **kwargs: Any) -> None:

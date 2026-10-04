@@ -1,23 +1,20 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
 from poop.types.boolean import false, true
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
+from poop.types.none import NoneClass, none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
     from poop.types._index import Index
     from poop.types.boolean import Boolean
-    from poop.types.none import NoneClass
     from poop.types.tuple import Tuple
-
-_slice = slice  # alias to avoid shadowing by Slice class name
 
 
 class Slice(Object):
-    __slots__ = ("_start", "_stop", "_step")
+    __slots__ = ("_start", "_step", "_stop")
 
     def __init__(
         self,
@@ -30,18 +27,12 @@ class Slice(Object):
         self._step: Index | None = _coerce(step)
 
     def start(self) -> Index | NoneClass:
-        from poop.types.none import none
-
         return self._start if self._start is not None else none
 
     def stop(self) -> Index | NoneClass:
-        from poop.types.none import none
-
         return self._stop if self._stop is not None else none
 
     def step(self) -> Index | NoneClass:
-        from poop.types.none import none
-
         return self._step if self._step is not None else none
 
     def _py_slice(self) -> slice:
@@ -49,11 +40,11 @@ class Slice(Object):
         # sequence being sliced resolves each through `__index__`, which Int
         # answers. Reading `._value` here refused a Boolean component and
         # leaked `#_value` for anything else.
-        return _slice(self._start, self._stop, self._step)
+        return slice(self._start, self._stop, self._step)
 
     def indices(self, length: Index) -> Tuple:
-        from poop.types.int import Int
-        from poop.types.tuple import Tuple
+        # circular: tuple imports slice
+        from poop.types.tuple import Tuple  # noqa: PLC0415
 
         start, stop, step = self._py_slice().indices(length)
         return Tuple(Int(start), Int(stop), Int(step))
@@ -68,11 +59,6 @@ class Slice(Object):
                 return true
             return false
         return false
-
-    def __ne__(self, other: object) -> Boolean:
-        if isinstance(other, Slice):
-            return false if bool(self == other) else true
-        return true
 
     def __hash__(self) -> int:
         return hash((self._start, self._stop, self._step))
@@ -117,8 +103,6 @@ def _resolve_py_slice(
 
 
 def _coerce(value: Index | NoneClass | None) -> Index | None:
-    from poop.types.none import NoneClass
-
     if value is None or isinstance(value, NoneClass):
         return None
     return value

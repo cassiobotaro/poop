@@ -100,7 +100,7 @@ def test_a_substitute_answers_what_the_ban_promises(
 
 
 def test_the_str_exception_is_named_by_the_ban_itself() -> None:
-    # The fix proposal 54 chose: `Str.format` keeps the template meaning, and
+    # The fix chosen: `Str.format` keeps the template meaning, and
     # the ban's message carries the exception rather than pointing every
     # receiver at a spelling that is a no-op on one of them.
     with pytest.raises(PoopError) as info:

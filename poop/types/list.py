@@ -1,8 +1,6 @@
-from builtins import print as _builtins_print
-from builtins import reversed as builtins_reversed
-from collections.abc import Callable, Iterable, Iterator
+import builtins
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import (
@@ -13,44 +11,44 @@ from poop.types._at import (
 )
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
-from poop.types._repeat import NOT_A_COUNT, _repeat_count
+from poop.types._message import article
+from poop.types._ordered import _OrderedMixin
+from poop.types._repeat import _repeat_count
+from poop.types._sentinel import NOT_A_COUNT
+from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
 from poop.types.object import Object
+from poop.types.slice import Slice, _resolve_py_slice
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Iterator
+
     from poop.types._index import Index
-    from poop.types.boolean import Boolean, to_boolean
-    from poop.types.int import Int
+    from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
-    from poop.types.slice import Slice
     from poop.types.string import Str
 
-_list = list  # alias to avoid shadowing by List class name in annotations
 
-
-class List(_ValueEqMixin, _IterableMixin, Object):
+class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
     _eq_attr: ClassVar[str] = "_items"
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
-        self._items: _list[Object] = _list(elements)
+        self._items: list[Object] = list(elements)
 
     def len(self) -> Int:
-        from poop.types.int import Int
-
         return Int(len(self._items))
 
     def __len__(self) -> int:
         return len(self._items)
 
     def at(self, index: Index | Slice) -> Object:
-        from poop.types.slice import Slice
-
         if isinstance(index, Slice):
             return List(*self._items[index._py_slice()])
         return at_index(self._items, index, self)
@@ -69,8 +67,6 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         reachable from the same slip — a bad position, and a position that is
         not one.
         """
-        from poop.types._message import article
-
         try:
             self._items[index] = obj
         except IndexError:
@@ -90,8 +86,6 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         stop: Index | NoneClass | None = None,
         step: Index | NoneClass | None = None,
     ) -> List:
-        from poop.types.slice import _resolve_py_slice
-
         py = _resolve_py_slice(start_or_slice, stop, step)
         return List(*self._items[py])
 
@@ -100,53 +94,14 @@ class List(_ValueEqMixin, _IterableMixin, Object):
             return NotImplemented  # foreign operand -> faithful TypeError
         return List(*self._items + other._items)
 
-    def __lt__(self, other: object) -> Boolean:
-        if not isinstance(other, List):
-            return NotImplemented  # foreign operand -> faithful TypeError
-        a = cast("_list[Any]", self._items)
-        b = cast("_list[Any]", other._items)
-        return to_boolean(a < b)
-
-    def __le__(self, other: object) -> Boolean:
-        if not isinstance(other, List):
-            return NotImplemented
-        a = cast("_list[Any]", self._items)
-        b = cast("_list[Any]", other._items)
-        return to_boolean(a <= b)
-
-    def __gt__(self, other: object) -> Boolean:
-        if not isinstance(other, List):
-            return NotImplemented
-        a = cast("_list[Any]", self._items)
-        b = cast("_list[Any]", other._items)
-        return to_boolean(a > b)
-
-    def __ge__(self, other: object) -> Boolean:
-        if not isinstance(other, List):
-            return NotImplemented
-        a = cast("_list[Any]", self._items)
-        b = cast("_list[Any]", other._items)
-        return to_boolean(a >= b)
-
     def __mul__(self, other: object) -> List:
         count = _repeat_count(other)
         if count is NOT_A_COUNT:
             return NotImplemented
         return List(*self._items * count)
 
-    def __rmul__(self, other: object) -> List:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return List(*self._items * count)
+    __rmul__ = __mul__
 
-    # In-place sequence operators mutate the receiver (CPython ``xs += ys`` is
-    # ``list.extend`` and ``xs *= n`` repeats in place, so ``xs`` keeps its
-    # identity and aliases observe the change). Without these, augmented
-    # assignment would fall back to the binary ``__add__``/``__mul__``, rebind
-    # the name to a fresh List, and silently leave any alias pointing at the
-    # unchanged original. ``+=`` takes any iterable, like ``extend`` and unlike
-    # ``__add__``, which stays List-only.
     def __iadd__(self, other: Iterable[Object]) -> Self:
         self._items.extend(other)
         return self
@@ -183,15 +138,13 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         return List(*_sorted(self._items, key, reverse))
 
     def reversed(self) -> List:
-        return List(*builtins_reversed(self._items))
+        return List(*builtins.reversed(self._items))
 
     def append(self, obj: Object) -> NoneClass:
         self._items.append(obj)
         return none
 
     def pop(self, index: Index | NoneClass | None = None) -> Object:
-        from poop.types._unwrap import _is_absent
-
         try:
             if _is_absent(index):
                 return self._items.pop()
@@ -211,8 +164,6 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         return List(*self._items)
 
     def count(self, obj: Object) -> Int:
-        from poop.types.int import Int
-
         return Int(self._items.count(obj))
 
     def extend(self, other: Iterable[Object]) -> NoneClass:
@@ -225,8 +176,6 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        from poop.types.int import Int
-
         # No branching on which bound was given: `stop` alone was dropped on
         # the floor by the first branch, so `xs.index(3, stop=1)` answered a
         # match from outside the bound it was handed. `len` rather than `None`
@@ -274,17 +223,15 @@ class List(_ValueEqMixin, _IterableMixin, Object):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        from poop.types._unwrap import _unwrap, _unwrap_bool
-
         sep_value = _unwrap(sep, " ")
         end_value = _unwrap(end, "\n")
         flush_value = _unwrap_bool(flush, False)
-        _builtins_print(
+        builtins.print(  # noqa: T201 — the language's own #print
             *[str(item) for item in self._items],
             sep=sep_value,
             end=end_value,
             flush=flush_value,
-        )  # noqa: T201
+        )
         return none
 
     # A list can hold itself, and printing one used to recurse until the stack

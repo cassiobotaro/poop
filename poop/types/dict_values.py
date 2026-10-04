@@ -1,16 +1,15 @@
-from __future__ import annotations
-
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._dict_view import _DictView
 from poop.types.boolean import to_boolean
 from poop.types.dict_reverse_value_iterator import DictReverseValueIterator
 from poop.types.dict_value_iterator import DictValueIterator
-from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from collections.abc import Iterator
+
+    from poop.types.boolean import Boolean
+    from poop.types.object import Object
 
 
 @final

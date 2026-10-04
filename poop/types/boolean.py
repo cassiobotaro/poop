@@ -1,14 +1,15 @@
-import builtins as _builtins
-from abc import ABC, abstractmethod
-from collections.abc import Callable
+import builtins
 from typing import TYPE_CHECKING, Any, cast, final
 
-from poop.types._argument import a_block
+from poop.types._argument import a_block, no_arguments, text_like
 from poop.types._cloak import cloak
+from poop.types._minmax import MISSING, _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poop.types.bytes import Bytes
     from poop.types.complex import Complex
     from poop.types.float import Float
@@ -18,10 +19,26 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 
-class Boolean(_NumericCompareMixin, Object, ABC):
-    """Abstract base for Smalltalk-style boolean objects."""
+class Boolean(_NumericCompareMixin, Object):
+    """Base for Smalltalk-style boolean objects.
+
+    Never instantiated: `__new__` answers `false`, so every boolean is one of
+    the two subclasses' instances, and the methods here that raise are the
+    protocol both of them implement.
+    """
 
     __slots__ = ()
+
+    # Two booleans exist and no constructor builds a third. `class_()` hands
+    # each class out, so `True.class_()()` built a second `True` that was not
+    # identical to the first, and the base itself answered CPython's abstract-
+    # class sentence: a dozen dunders and private names from a program that
+    # spelt none. `bool()` is `False` in CPython, so the base answers `false`
+    # and each subclass answers its own instance — never `Self`, which is the
+    # point.
+    def __new__(cls, *args: object, **kwargs: object) -> Boolean:  # noqa: PYI034
+        no_arguments(cls, args, kwargs)
+        return false
 
     # `bool` is an `int` subclass, so a Boolean folds to 1/0 for the numeric
     # tower's comparison protocol (ordering + equality) shared via
@@ -32,52 +49,52 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     def __repr__(self) -> str:
         return str(self)
 
-    @abstractmethod
-    def if_true[T](self, block: Callable[[], T]) -> T | NoneClass: ...
+    def if_true[T](self, block: Callable[[], T]) -> T | NoneClass:
+        raise NotImplementedError
 
-    @abstractmethod
-    def if_false[T](self, block: Callable[[], T]) -> T | NoneClass: ...
+    def if_false[T](self, block: Callable[[], T]) -> T | NoneClass:
+        raise NotImplementedError
 
-    @abstractmethod
     def if_true_if_false[T](
         self,
         true_block: Callable[[], T],
         false_block: Callable[[], T],
-    ) -> T: ...
+    ) -> T:
+        raise NotImplementedError
 
-    @abstractmethod
     def if_false_if_true[T](
         self,
         false_block: Callable[[], T],
         true_block: Callable[[], T],
-    ) -> T: ...
+    ) -> T:
+        raise NotImplementedError
 
-    @abstractmethod
-    def and_(self, block: Callable[[], Boolean]) -> Boolean: ...
+    def and_(self, block: Callable[[], Boolean]) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def or_(self, block: Callable[[], Boolean]) -> Boolean: ...
+    def or_(self, block: Callable[[], Boolean]) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def not_(self) -> Boolean: ...
+    def not_(self) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def xor(self, other: Boolean) -> Boolean: ...
+    def xor(self, other: Boolean) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def eqv(self, other: Boolean) -> Boolean: ...
+    def eqv(self, other: Boolean) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def _bool_and(self, other: Boolean) -> Boolean: ...
+    def _bool_and(self, other: Boolean) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def _bool_or(self, other: Boolean) -> Boolean: ...
+    def _bool_or(self, other: Boolean) -> Boolean:
+        raise NotImplementedError
 
-    @abstractmethod
-    def __bool__(self) -> bool: ...
+    def __bool__(self) -> bool:
+        raise NotImplementedError
 
-    @abstractmethod
-    def __str__(self) -> str: ...
+    def __str__(self) -> str:
+        raise NotImplementedError
 
     def __index__(self) -> int:
         # Same reason `_order_value` folds to 1/0: `bool` is an `int` subclass,
@@ -97,7 +114,8 @@ class Boolean(_NumericCompareMixin, Object, ABC):
     # Int's arithmetic; the reflected ops compute ``other <op> int(self)`` so
     # ``3 - True`` reuses ``Int.__sub__``.
     def _as_int(self) -> Int:
-        from poop.types.int import Int
+        # circular: int imports boolean
+        from poop.types.int import Int  # noqa: PLC0415
 
         return Int(1) if self else Int(0)
 
@@ -187,7 +205,8 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         runs this one through `cls`, so `bool.from_bytes(b"\\x05", "big")` is
         `True` — the answer is the receiver's kind here, not the fold's.
         """
-        from poop.types.int import Int
+        # circular: int imports boolean
+        from poop.types.int import Int  # noqa: PLC0415
 
         return to_boolean(bool(Int.from_bytes(b, byteorder, signed=signed)))
 
@@ -199,15 +218,17 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         # Boolean has no slot for, so it fell through to `object.__format__`
         # and refused every non-empty spec while `"{:>6}".format(True)`, which
         # routes through `to_python`, answered `'     1'`.
-        from poop.types._argument import text_like
-        from poop.types._unwrap import _is_absent
-        from poop.types.string import Str, _template_refusal
+        # circular: _unwrap imports boolean
+        from poop.types._unwrap import _is_absent  # noqa: PLC0415
+
+        # circular: string imports boolean
+        from poop.types.string import Str, _template_refusal  # noqa: PLC0415
 
         # Through `text_like` for the reason `Object.format` does it: a
         # non-`Str` spec answered `format() argument 2 must be str, not int`.
         raw = "" if _is_absent(spec) else text_like(spec, "format", "a str")
         try:
-            return Str(_builtins.format(bool(self), raw))
+            return Str(builtins.format(bool(self), raw))
         except ValueError as exc:
             # The same reword `Object.format` applies. This override exists for
             # the `bool(self)` above, and inherited the leak with the rest of
@@ -245,11 +266,9 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int | Boolean:
-        from poop.types._minmax import _MISSING, _minmax
-
         return cast(
             "Int | Boolean",
-            _minmax(_builtins.max, "#max", (self, *others), key, _MISSING),
+            _minmax(builtins.max, "#max", (self, *others), key, MISSING),
         )
 
     def min(
@@ -257,11 +276,9 @@ class Boolean(_NumericCompareMixin, Object, ABC):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int | Boolean:
-        from poop.types._minmax import _MISSING, _minmax
-
         return cast(
             "Int | Boolean",
-            _minmax(_builtins.min, "#min", (self, *others), key, _MISSING),
+            _minmax(builtins.min, "#min", (self, *others), key, MISSING),
         )
 
     def _num(self, other: object) -> object:
@@ -368,11 +385,16 @@ class Boolean(_NumericCompareMixin, Object, ABC):
 class _TrueClass(Boolean):
     __slots__ = ()
 
+    def __new__(cls, *args: object, **kwargs: object) -> Boolean:
+        no_arguments(cls, args, kwargs)
+        return true
+
     def if_true[T](self, block: Callable[[], T]) -> T:
         return a_block(block, "if_true", param="")()
 
     def if_false[T](self, block: Callable[[], T]) -> NoneClass:
-        from poop.types.none import none
+        # circular: none imports boolean
+        from poop.types.none import none  # noqa: PLC0415
 
         a_block(block, "if_false", param="")
         return none
@@ -430,7 +452,8 @@ class _FalseClass(Boolean):
     __slots__ = ()
 
     def if_true[T](self, block: Callable[[], T]) -> NoneClass:
-        from poop.types.none import none
+        # circular: none imports boolean
+        from poop.types.none import none  # noqa: PLC0415
 
         # Guarded on the branch that does *not* run, which is the whole point:
         # `False.if_true(5)` used to say nothing at all, so whether a wrong
@@ -489,8 +512,8 @@ class _FalseClass(Boolean):
         return hash(False)
 
 
-true: Boolean = _TrueClass()
-false: Boolean = _FalseClass()
+true: Boolean = object.__new__(_TrueClass)
+false: Boolean = object.__new__(_FalseClass)
 
 
 def to_boolean(value: object) -> Boolean:

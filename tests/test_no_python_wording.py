@@ -18,7 +18,25 @@ import pytest
 
 from poop import Interpreter
 from poop.errors import PoopError
+from poop.types._message import poop_message
+from poop.types._selectors import is_message
+from poop.types.block import Block
+from poop.types.boolean import true
+from poop.types.byte_array import ByteArray
+from poop.types.bytes import Bytes
+from poop.types.complex import Complex
+from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
+from poop.types.float import Float
+from poop.types.frozen_set import FrozenSet
+from poop.types.int import Int
+from poop.types.list import List
+from poop.types.none import none
+from poop.types.range import Range
+from poop.types.set import Set
+from poop.types.slice import Slice
+from poop.types.string import Str
+from poop.types.tuple import Tuple
 
 # Each pattern names a construct POOP does not have. `indices` and `index out
 # of range` describe subscripting (no_subscript); `operand type(s)` and `not
@@ -39,7 +57,7 @@ _FORBIDDEN = {
     # the suite ran and passed. `object of type 'int'` names the type-level
     # protocol POOP rewrites everywhere else, and "format code" / "format
     # specifier" describe a spec the reader wrote inside a template.
-    # Proposal 52: CPython's *argument* report. Nothing in it is a call, a
+    # CPython's *argument* report. Nothing in it is a call, a
     # dunder or an operator either, so about forty receiver/message sites ran
     # under the patterns above and passed.
     "a CPython argument report": re.compile(
@@ -135,30 +153,30 @@ _FAILING = [
     '[1, "a"].min()',
     '[1, "a"].max()',
     '("a" + 1)',
-    # Proposal 61: one message, two syntaxes, and only the template was worded.
+    # One message, two syntaxes, and only the template was worded.
     '(2.5).format("d")',
     '(5).format("zzz")',
     '"{0:d}".format(2.5)',
     '[1].format(">6")',
     '"{0:>6}".format([1])',
-    # Proposal 55: `unhashable type: 'list'` — no call, no dunder, no operator,
+    # `unhashable type: 'list'` — no call, no dunder, no operator,
     # and no reason either.
     "[1, 2].hash()",
     '{"a": 1}.keys().hash()',
     'memoryview(bytearray(b"ab")).hash()',
-    # Proposal 50: `*` was the one operator still worded by CPython.
+    # `*` was the one operator still worded by CPython.
     '([1, 2] * "a")',
     '("a" * "b")',
     '(b"ab" * 2.5)',
     "xs = [1]\nxs *= 'a'",
-    # Proposal 51: a spread into a literal named a constructor call the reader
+    # A spread into a literal named a constructor call the reader
     # never wrote.
     "[*5]",
     "(*5,)",
     "{*5}",
     "{**5}",
-    # Proposal 48: the assignment leaked the `__dict__` sentence proposal 3
-    # removed from `set_attr` and `del_attr`.
+    # The assignment leaked the `__dict__` sentence already removed from
+    # `set_attr` and `del_attr`.
     '"abc".x = 5',
     "[1, 2].x = 5",
     '(1 + "a")',
@@ -222,11 +240,11 @@ _OPERANDS = [
 @pytest.mark.parametrize("operator", _OPERATORS)
 @pytest.mark.parametrize("left", _OPERANDS)
 def test_no_operator_answers_a_forbidden_construct(operator: str, left: str) -> None:
-    for right in _OPERANDS:  # noqa: PLR1702
+    for right in _OPERANDS:
         source = f"({left} {operator} {right})"
         try:
             Interpreter().run_source(source + "\n")
-        except PoopError as exc:  # noqa: PERF203
+        except PoopError as exc:
             message = str(exc)
             named = [
                 construct
@@ -268,7 +286,7 @@ def test_the_reported_class_is_one_a_program_can_spell(source: str) -> None:
     named in the report for every unknown selector in the language — while the
     handler that caught it was told `AttributeError` and `MessageNotUnderstood`
     itself answered `NameError: name ... is not defined`. One failure under two
-    names, which is the disagreement proposal 16 closed for `Unicode*`.
+    names, the same disagreement already closed for the `Unicode*` family.
     """
     reported = _failure(source).split(":", 1)[0]
     assert reported in MIRRORS, f"{source!r} reported {reported!r}, which is unnamable"
@@ -383,21 +401,6 @@ def _receivers() -> dict[str, object]:
     """One live value per wrapper, built the way a program would."""
     if _SAMPLES:
         return _SAMPLES
-    from poop.types.boolean import true
-    from poop.types.byte_array import ByteArray
-    from poop.types.bytes import Bytes
-    from poop.types.complex import Complex
-    from poop.types.dict import Dict
-    from poop.types.float import Float
-    from poop.types.frozen_set import FrozenSet
-    from poop.types.int import Int
-    from poop.types.list import List
-    from poop.types.none import none
-    from poop.types.range import Range
-    from poop.types.set import Set
-    from poop.types.slice import Slice
-    from poop.types.string import Str
-    from poop.types.tuple import Tuple
 
     mapping = Dict()
     mapping.at_put(Str("a"), Int(1))
@@ -424,14 +427,6 @@ def _receivers() -> dict[str, object]:
 
 
 def _wrong_arguments() -> list[object]:
-    from poop.types.block import Block
-    from poop.types.boolean import true
-    from poop.types.dict import Dict
-    from poop.types.int import Int
-    from poop.types.list import List
-    from poop.types.none import none
-    from poop.types.string import Str
-
     return [Str("zz"), Int(3), List(Int(1)), Block(lambda x: x), true, none, Dict()]
 
 
@@ -453,9 +448,6 @@ _UNSENDABLE = frozenset(
 
 def _sweep_failures() -> list[tuple[str, str, str]]:
     """(receiver, message, text) for every leak the wrong-argument sweep finds."""
-    from poop.types._message import poop_message
-    from poop.types._selectors import is_message
-
     found: dict[tuple[str, str], tuple[str, str, str]] = {}
     for label, receiver in _receivers().items():
         for name in sorted(dir(receiver)):
@@ -491,8 +483,6 @@ def test_no_message_leaks_pythons_wording_when_sent_wrong() -> None:
 
 def test_the_sweep_actually_sends_messages() -> None:
     """A sweep that stopped reaching the wrappers would report a clean run."""
-    from poop.types._selectors import is_message
-
     sendable = sum(
         1
         for receiver in _receivers().values()

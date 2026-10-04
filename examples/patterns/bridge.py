@@ -15,7 +15,7 @@ count explodes:
     class AdvancedRadioRemote: ...
 
 POOP keeps the two sides apart and bridges them by holding a
-reference. Remotes × Devices combine at runtime, not in the class
+reference. Remotes and devices combine at runtime, not in the class
 list.
 
 Smalltalk:

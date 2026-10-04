@@ -1,5 +1,4 @@
 import ast
-from pathlib import Path
 
 import pytest
 
@@ -66,10 +65,11 @@ def test_transformer_failure_raises_transform_error() -> None:
     assert isinstance(exc_info.value.__cause__, RuntimeError)
 
 
-def test_run_file_reads_and_executes(tmp_path: Path) -> None:
-    f = tmp_path / "hello.py"
-    f.write_text("x = 42\n", encoding="utf-8")
-    Interpreter().run_file(f)
+def test_new_namespace_is_a_fresh_copy_each_time() -> None:
+    interp = Interpreter(namespace={"k": 1})
+    first = interp.new_namespace()
+    first["k"] = 2
+    assert interp.new_namespace() == {"k": 1}
 
 
 def test_true_literal_becomes_boolean_instance() -> None:

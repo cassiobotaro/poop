@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar, Self
 
 from poop.types._at import no_element_equal_to, nothing_to_remove
@@ -18,10 +17,10 @@ from poop.types.object import Object
 from poop.types.set_iterator import SetIterator
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
-    from poop.types.none import NoneClass
+    from collections.abc import Iterator
 
-_set = set  # alias to avoid shadowing by Set class name in annotations
+    from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
 
 
 class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
@@ -31,7 +30,7 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:
-        self._data: _set[Object] = _set(elements)
+        self._data: set[Object] = set(elements)
 
     def add(self, obj: Object) -> NoneClass:
         self._data.add(obj)

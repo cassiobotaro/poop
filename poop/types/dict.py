@@ -1,12 +1,12 @@
 import builtins
-from collections.abc import Callable, Iterable, Iterator
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types._at import at_key, no_key, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._minmax import _MISSING, _minmax
+from poop.types._minmax import _minmax
+from poop.types._sentinel import MISSING
 from poop.types._unwrap import _is_absent
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -15,21 +15,22 @@ from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_keys import DictKeys
 from poop.types.dict_values import DictValues
 from poop.types.int import Int
+from poop.types.mapping_proxy import MappingProxy
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from collections.abc import Callable, Iterable, Iterator
+
+    from poop.types.boolean import Boolean
     from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
     from poop.types.none import NoneClass
 
-_dict = dict  # alias to avoid shadowing by Dict class name in annotations
-
 
 class Dict(_ValueEqMixin, _IterableMixin, Object):
-    """A mapping, and — since proposal 24 — a collection like any other.
+    """A mapping, and a collection like any other.
 
     The mixin's messages iterate what CPython iterates, the keys, so
     `d.map(block)` matches `map(f, d)` and `d.items().map(...)` is the
@@ -42,7 +43,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
     __hash__ = None
 
     def __init__(self) -> None:
-        self._data: _dict[Object, Object] = {}
+        self._data: dict[Object, Object] = {}
 
     def at(self, key: Object) -> Object:
         return at_key(self._data, key, self)
@@ -69,8 +70,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         # not a Dict, so _ValueEqMixin would return ``false`` and (being a real
         # value, not NotImplemented) suppress MappingProxy's reflected __eq__.
         # Unwrap the proxy here so the comparison stays symmetric.
-        from poop.types.mapping_proxy import MappingProxy
-
         if isinstance(other, MappingProxy):
             return to_boolean(self._data == other._dict._data)
         # Any Dict (incl. OrderedDict/DefaultDict subclasses) compares by its
@@ -83,21 +82,10 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
             return to_boolean(self._data == other._data)
         return super().__eq__(other)
 
-    def __ne__(self, other: object) -> Boolean:
-        from poop.types.mapping_proxy import MappingProxy
-
-        if isinstance(other, MappingProxy):
-            return to_boolean(self._data != other._dict._data)
-        if isinstance(other, Dict):
-            return to_boolean(self._data != other._data)
-        return super().__ne__(other)
-
     @classmethod
     def fromkeys(
         cls, keys: Iterable[Object], value: Object | NoneClass | None = None
     ) -> Dict:
-        from poop.types._unwrap import _is_absent
-
         fill: Object = none if _is_absent(value) else value
         d = cls()
         for k in keys:
@@ -123,7 +111,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(builtins.min, "#min", self._data, key, default)
 
@@ -131,7 +119,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = _MISSING,
+        default: Any = MISSING,
     ) -> Any:
         return _minmax(builtins.max, "#max", self._data, key, default)
 
@@ -179,8 +167,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         # MappingProxy's reflected ``__ror__``, rebind the name to a fresh
         # Dict, and silently leave any alias pointing at the unchanged
         # original. Unwrap the proxy here, as ``__eq__`` already does.
-        from poop.types.mapping_proxy import MappingProxy
-
         if isinstance(other, MappingProxy):
             self._data.update(other._dict._data)
             return self
@@ -193,9 +179,9 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         return DictItems(self)
 
     def pop(
-        self, key: Object, default: Object | NoneClass | Any = _MISSING
+        self, key: Object, default: Object | NoneClass | Any = MISSING
     ) -> Object | NoneClass:
-        if default is _MISSING:
+        if default is MISSING:
             # Only the asserting form can fail: `pop(key, default)` answers the
             # default instead, which is why it is left to CPython.
             try:
@@ -231,8 +217,6 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         # answers, decided by which spelling the reader reached for. An absent
         # mapping is `_is_absent`, the test every other optional argument in
         # the language uses.
-        from poop.types.mapping_proxy import MappingProxy
-
         if isinstance(other, Dict):
             self._data.update(other._data)
         elif isinstance(other, MappingProxy):
@@ -254,7 +238,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
     # and the same ellipsis CPython prints for it. See the note on `List`.
     @recursive_repr(fillvalue="{...}")
     def __str__(self) -> str:
-        pairs = ", ".join(f"{repr(k)}: {repr(v)}" for k, v in self._data.items())
+        pairs = ", ".join(f"{k!r}: {v!r}" for k, v in self._data.items())
         return "{" + pairs + "}"
 
     __repr__ = __str__

@@ -2,6 +2,8 @@ from typing import Any
 
 import pytest
 
+from poop.transformers.float import _poop_float_from
+from poop.transformers.int import _poop_int_from
 from poop.types.boolean import false, true
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
@@ -48,7 +50,7 @@ def test_includes_not_found() -> None:
 
 
 def test_includes_refuses_a_non_text_argument_in_poops_words() -> None:
-    # Was left to CPython as "the faithful TypeError". Proposal 52: `includes`
+    # Was left to CPython as "the faithful TypeError". `includes`
     # is the substitute `no_in` points at, and `'in <string>' requires string as
     # left operand, not int` quotes the banned operator in its Python spelling.
     with pytest.raises(TypeError, match="#includes expects a str"):
@@ -203,7 +205,7 @@ def test_endswith_false() -> None:
     assert Str("hello").endswith(Str("he")) is false
 
 
-# startswith/endswith with a tuple of prefixes — proposal 136
+# startswith/endswith with a tuple of prefixes
 
 
 def test_startswith_tuple_of_prefixes() -> None:
@@ -228,7 +230,7 @@ def test_endswith_tuple_with_non_str_raises() -> None:
         Str("abc").endswith(Tuple(Str("z"), Int(5)))
 
 
-# str.format template method — proposal 151
+# str.format template method
 
 
 def test_format_positional() -> None:
@@ -335,14 +337,10 @@ def test_join_rejects_non_str_parts() -> None:
 
 
 def test_int_parses_integer_string() -> None:
-    from poop.transformers.int import _poop_int_from
-
     assert _poop_int_from(Str("42")) == Int(42)
 
 
 def test_float_parses_float_string() -> None:
-    from poop.transformers.float import _poop_float_from
-
     result = _poop_float_from(Str("3.14"))
     assert isinstance(result, Float)
     assert result._value == pytest.approx(3.14)
@@ -503,7 +501,7 @@ def test_slice_with_step() -> None:
 
 
 def test_slice_open_ended_with_none_stop() -> None:
-    # proposal 143: a POOP `none` stop means "to the end" (obj[2:]).
+    # A POOP `none` stop means "to the end" (obj[2:]).
     assert Str("hello").slice(Int(2), none) == Str("llo")
 
 
@@ -601,8 +599,6 @@ def test_input_propagates_eof(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_methods_accept_poop_none_kwargs() -> None:
-    from poop.types.none import none
-
     assert Str("hi").split(sep=none) == List(Str("hi"))
     assert Str("hi").center(Int(6), fillchar=none) == Str("  hi  ")
     assert Str("hi").ljust(Int(4), fillchar=none) == Str("hi  ")
@@ -681,7 +677,7 @@ def test_rindex_with_start() -> None:
     assert Str("hello hello").rindex(Str("hello"), Int(0), Int(5)) == Int(0)
 
 
-# --- New: optional parameters (proposals 43-44, v1.1.2) ---
+# --- New: optional parameters ---
 
 
 def test_startswith_with_start() -> None:
@@ -711,7 +707,7 @@ def test_replace_with_poop_none_count() -> None:
 
 
 def test_ordering_with_foreign_operand_raises_typeerror() -> None:
-    # Proposal 164: a foreign operand answers CPython's TypeError, not a
+    # A foreign operand answers CPython's TypeError, not a
     # leaking AttributeError from a missing `other._value`.
     with pytest.raises(TypeError):
         _ = Str("a") < Int(1)
@@ -774,7 +770,7 @@ _BAD_INT: Any = Int(1)
     ],
 )
 def test_str_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
-    # proposals.md item 9: a mandatory argument that carries no `_value` (a
+    # A mandatory argument that carries no `_value` (a
     # List) must reach the underlying Python method raw and raise the faithful
     # exception, never leak the internal `#_value` name through dispatch.
     with pytest.raises(exc) as info:
@@ -785,19 +781,12 @@ def test_str_wrong_type_arg_is_faithful_not_value_leak(call, exc) -> None:
 
 
 def test_str_max_with_key_and_default() -> None:
-    from poop.types.string import Str
-
     # key selects the char by a transform; default is returned for empty input.
     assert Str("abc").max(key=lambda c: -ord(c._value)) == Str("a")
     assert Str("").max(default=Str("z")) == Str("z")
 
 
 def test_str_le_against_foreign_raises() -> None:
-    import pytest
-
-    from poop.types.int import Int
-    from poop.types.string import Str
-
     with pytest.raises(TypeError):
         _ = Str("a") <= Int(1)
 
@@ -853,7 +842,7 @@ def test_at_with_a_foreign_index_is_faithful_not_a_value_leak() -> None:
     assert "_value" not in str(info.value)
 
 
-# the iteration protocol — proposal 24
+# the iteration protocol
 
 
 def test_do_visits_each_character() -> None:
@@ -878,8 +867,6 @@ def test_all_any_and_reduce() -> None:
 
 
 def test_enumerate_and_zip() -> None:
-    from poop.types.tuple import Tuple
-
     assert List(*Str("ab").enumerate()) == List(
         Tuple(Int(0), Str("a")), Tuple(Int(1), Str("b"))
     )
@@ -909,7 +896,11 @@ def test_the_string_searches_refuse_a_block(selector: str) -> None:
     # CPython answered `find() argument 1 must be str, not function`. The
     # `r`-prefixed pair is the same message read from the other end and was
     # left on CPython's wording, so one letter changed the vocabulary.
-    with pytest.raises(TypeError, match="searches for a substring"):
+    with pytest.raises(
+        TypeError,
+        match=f"^str's #{selector} searches for a substring — "
+        "it takes the text to look for, not a block$",
+    ):
         getattr(Str("abc"), selector)(lambda c: c == Str("b"))
 
 
@@ -967,7 +958,7 @@ def test_a_template_that_works_is_untouched() -> None:
     assert Str("{} and {b}").format(Int(1), b=Str("x")) == Str("1 and x")
 
 
-# Proposal 52. Three of `Str`'s own leaked the same shape, and one of them was
+# Three of `Str`'s own leaked the same shape, and one of them was
 # the sharpest sentence in the family: `includes` is the substitute `no_in`
 # points at, and its refusal quoted the banned operator in Python's spelling.
 def test_includes_does_not_quote_the_banned_operator() -> None:

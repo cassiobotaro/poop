@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoSortedValidator = make_call_name_validator(
-    forbidden={"sorted"},
-    message="sorted() is forbidden — use col.sorted() instead",
-)
+
+class NoSortedValidator(CallNameValidator):
+    forbidden = frozenset({"sorted"})
+    message = "sorted() is forbidden — use col.sorted() instead"

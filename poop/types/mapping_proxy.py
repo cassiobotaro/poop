@@ -1,12 +1,9 @@
-from __future__ import annotations
-
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, final
 
 from poop.types._at import at_key
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types.boolean import false, to_boolean, true
+from poop.types.boolean import false, to_boolean
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
 from poop.types.int import Int
@@ -14,7 +11,9 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean, to_boolean
+    from collections.abc import Iterator
+
+    from poop.types.boolean import Boolean
     from poop.types.dict import Dict
     from poop.types.dict_items import DictItems
     from poop.types.dict_keys import DictKeys
@@ -81,15 +80,12 @@ class MappingProxy(_IterableMixin, Object):
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, MappingProxy):
             return to_boolean(self._dict == other._dict)
-        from poop.types.dict import Dict
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
 
         if isinstance(other, Dict):
             return to_boolean(self._dict == other)
         return false
-
-    def __ne__(self, other: object) -> Boolean:
-        eq = self.__eq__(other)
-        return false if bool(eq) else true
 
     def _merge_data(self, other: object) -> dict[Object, Object] | None:
         """The operand's mapping, or None when it is not one.
@@ -98,7 +94,8 @@ class MappingProxy(_IterableMixin, Object):
         operand, so `proxy | 5` answered `int does not understand #_data` — a
         POOP internal — where CPython answers `unsupported operand type(s)`.
         """
-        from poop.types.dict import Dict
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
 
         if isinstance(other, MappingProxy):
             return other._dict._data
@@ -107,7 +104,8 @@ class MappingProxy(_IterableMixin, Object):
         return None
 
     def __or__(self, other: object) -> Dict:
-        from poop.types.dict import Dict
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
 
         other_data = self._merge_data(other)
         if other_data is None:
@@ -120,7 +118,8 @@ class MappingProxy(_IterableMixin, Object):
         # CPython: ``dict | mappingproxy`` yields a ``dict`` ({**left, **right}).
         # ``Dict.__or__`` returns NotImplemented for a non-Dict right operand,
         # so Python falls back to this reflected form with ``other`` on the left.
-        from poop.types.dict import Dict
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
 
         other_data = self._merge_data(other)
         if other_data is None:

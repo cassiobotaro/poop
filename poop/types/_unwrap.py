@@ -1,5 +1,6 @@
 from typing import Any, TypeIs, overload
 
+from poop.types.boolean import Boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.none import NoneClass
 
@@ -43,8 +44,6 @@ def _searched(value: object) -> Any:
     because a search must answer `false`/`0` for a foreign value where `_index`
     refuses one.
     """
-    from poop.types.boolean import Boolean
-
     if isinstance(value, Boolean):
         return 1 if value else 0
     return _faithful(value)

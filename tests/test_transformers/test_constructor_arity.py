@@ -16,7 +16,8 @@ the report named `__init__`, a dunder `no_dunder_attribute` bans outright.
 import pytest
 
 from poop import Interpreter
-from poop.errors import ExecutionError
+from poop.errors import ExecutionError, PoopError
+from tests.test_no_python_wording import _FORBIDDEN
 
 
 def _failure(source: str) -> str:
@@ -45,9 +46,9 @@ def _failure(source: str) -> str:
             "bytearray is built from at most one",
         ),
         ("bytes('a', 'utf-8', 'strict', 1)", "bytes is built from at most one source"),
-        # Proposal 44: eight of the eighteen still answered CPython's call
-        # machinery, each naming the builtin spelt as a *call* and saying
-        # "positional argument" — which the wording sweep bans outright.
+        # Eight of the eighteen used to answer CPython's call machinery, each
+        # naming the builtin spelt as a *call* and saying "positional argument"
+        # — which the wording sweep bans outright.
         ("float(5, 5)", "float is built from at most one number or string"),
         ("bool(5, 5)", "bool is built from at most one value to test"),
         ("int(1, 2, 3)", "int is built from at most a value and a base"),
@@ -56,8 +57,8 @@ def _failure(source: str) -> str:
         ("object(5)", "object is built from nothing"),
         # The sharpest of the eight: `slice.__init__() takes from 1 to 4
         # positional arguments`, naming a dunder from a construct the program
-        # spelled without one. `Slice(...)` *is* the call (proposal 9), so this
-        # was the one constructor with no factory at all.
+        # spelled without one. `Slice(...)` *is* the call, so this was the one
+        # constructor with no factory at all.
         ("slice(1, 2, 3, 4)", "slice is built from a stop"),
     ],
 )
@@ -147,9 +148,6 @@ _CONSTRUCTORS = [
 
 @pytest.mark.parametrize("builtin", _CONSTRUCTORS)
 def test_no_constructor_answers_cpython_call_machinery(builtin: str) -> None:
-    from poop.errors import PoopError
-    from tests.test_no_python_wording import _FORBIDDEN
-
     for source in (f"{builtin}(1, 2, 3, 4, 5)", f"{builtin}(nope=1)"):
         try:
             Interpreter().run_source(source)

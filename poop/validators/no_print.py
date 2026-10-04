@@ -1,6 +1,6 @@
-from poop.validators._call_name import make_call_name_validator
+from poop.validators._call_name import CallNameValidator
 
-NoPrintValidator = make_call_name_validator(
-    forbidden={"print"},
-    message="print is forbidden — use obj.print() instead",
-)
+
+class NoPrintValidator(CallNameValidator):
+    forbidden = frozenset({"print"})
+    message = "print is forbidden — use obj.print() instead"

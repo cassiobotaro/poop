@@ -1,26 +1,19 @@
-from __future__ import annotations
-
-from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any
 
-from poop.types._cloak import cloak
-from poop.types._iterable_mixin import _IterableMixin
-from poop.types._peek import _UNPEEKED, _PeekMixin
+from poop.types._iterator_base import _LazyView
 from poop.types.exceptions import MIRRORS
-from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from poop.types.boolean import Boolean
+    from collections.abc import Callable, Iterator
 
 
-class Filter(_PeekMixin, _IterableMixin, Object):
-    __slots__ = ("_iter", "_source", "_block")
+class Filter(_LazyView[Any], name="filter"):
+    __slots__ = ("_block", "_source")
 
     def __init__(self, source: Any, block: Callable[[Any], Any]) -> None:
+        super().__init__()
         self._source = source
         self._block = block
-        self._iter: Iterator[Any] | None = None
-        self._peeked: Any = _UNPEEKED
 
     @staticmethod
     def _gen(source: Any, block: Any) -> Iterator[Any]:
@@ -42,37 +35,7 @@ class Filter(_PeekMixin, _IterableMixin, Object):
             if bool(value):
                 yield item
 
-    def _materialize(self) -> Iterator[Any]:
-        if self._iter is None:
-            self._iter = self._gen(self._source, self._block)
-            # The generator now owns the source and block; drop our copies so
-            # a consumed Filter stops pinning its whole source and its closure.
-            self._source = None
-            self._block = None
-        return self._iter
-
-    def __iter__(self) -> Iterator[Any]:
-        # `self`, not the raw generator: an element parked by `has_next` would
-        # otherwise be skipped by whatever iterated next.
-        return self
-
-    def iter(self) -> Filter:
-        return self
-
-    def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(self is other)
-
-    def __ne__(self, other: object) -> Boolean:
-        from poop.types.boolean import false, true
-
-        return false if self is other else true
-
-    def __str__(self) -> str:
-        return "<filter>"
-
-    __repr__ = __str__
-
-
-cloak(Filter, "filter")
+    def _generate(self) -> Iterator[Any]:
+        source, block = self._source, self._block
+        self._source = self._block = None
+        return self._gen(source, block)

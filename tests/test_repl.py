@@ -1,34 +1,42 @@
 import ast
 import io
 import pathlib
+import readline
 import sys
+from pathlib import Path
 
 import pytest
 from rich.console import Console
 
+import poop.repl as repl
 import poop.validators as validators
-from poop.errors import ExecutionError, ParseError, ValidationError
+from poop.errors import ExecutionError, ParseError, ValidationError, report
 from poop.interpreter import Interpreter
 from poop.repl import (
     _CYAN,
-    _EXPLAIN_CALLS,
     _EXPLAIN_SNIPPETS,
     Repl,
     _error,
+    _explain_calls,
     _explain_snippet,
     _indent_for,
+    _is_safe_expr,
     _PoopCompleter,
-    _print_error,
     _print_value,
+    _readline_input,
     _rl_color,
     _save_history,
     _setup_readline,
     _value_text,
 )
 from poop.transformers import DEFAULT_NAMESPACE
+from poop.types.boolean import true
 from poop.types.int import Int
+from poop.types.none import none
 from poop.types.string import Str
 from poop.validators import DEFAULT_VALIDATORS
+
+_DEFAULT_CALLS = _explain_calls(DEFAULT_VALIDATORS)
 
 
 def _repl() -> tuple[Repl, dict[str, object]]:
@@ -164,9 +172,7 @@ def test_displayhook_none_prints_nothing(capsys: pytest.CaptureFixture[str]) -> 
 def test_displayhook_poop_none_prints_nothing(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # proposal 125: `.print()` answers POOP none, which must not echo.
-    from poop.types.none import none
-
+    # `.print()` answers POOP none, which must not echo.
     repl, _ = _repl()
     repl._displayhook(none)
     assert capsys.readouterr().out == ""
@@ -175,8 +181,6 @@ def test_displayhook_poop_none_prints_nothing(
 def test_displayhook_poop_none_does_not_clobber_underscore(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from poop.types.none import none
-
     repl, ns = _repl()
     repl._displayhook(Int(7))
     repl._displayhook(none)
@@ -469,8 +473,6 @@ def test_value_text_str_uses_quoted_repr() -> None:
 
 
 def test_value_text_bool_is_blue() -> None:
-    from poop.types.boolean import true
-
     assert _value_text(true).style == "blue"
 
 
@@ -524,24 +526,26 @@ def test_diagnostic_colorizes_when_only_stderr_is_a_terminal(
     assert "poop: boom" in out
 
 
-def test_print_error_keeps_the_caret_aligned_and_plain_off_a_terminal(
+def test_report_keeps_the_caret_aligned_and_plain_off_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     buf = io.StringIO()
-    monkeypatch.setattr("poop.repl._ERR", _console(buf, terminal=False))
-    _print_error(ValidationError("if is forbidden", 1, 0), "if x:")
+    report(
+        ValidationError("if is forbidden", 1, 0), "if x:", _console(buf, terminal=False)
+    )
     out = buf.getvalue()
     assert "\x1b[" not in out
     assert "  1 | if x:" in out
     assert "    | ^" in out
 
 
-def test_print_error_syntax_highlights_the_line_on_a_terminal(
+def test_report_syntax_highlights_the_line_on_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     buf = io.StringIO()
-    monkeypatch.setattr("poop.repl._ERR", _console(buf, terminal=True))
-    _print_error(ValidationError("if is forbidden", 1, 0), "if x:")
+    report(
+        ValidationError("if is forbidden", 1, 0), "if x:", _console(buf, terminal=True)
+    )
     out = buf.getvalue()
     assert "\x1b[" in out  # coloured
     assert "poop: if is forbidden" in out  # the message survives intact
@@ -728,7 +732,10 @@ def test_every_validator_is_reachable_from_explain() -> None:
     # hand-written, which is how `import`, `invert`, the unary operators and
     # `type_alias` went missing in the first place.
     names = {id(o): n for n, o in vars(validators).items() if isinstance(o, type)}
-    snippets = [_explain_snippet(t) for t in _EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)]
+    snippets = [
+        _explain_snippet(t, _DEFAULT_CALLS)
+        for t in _DEFAULT_CALLS | set(_EXPLAIN_SNIPPETS)
+    ]
 
     def trips(validator: object, source: str | None) -> bool:
         if source is None:
@@ -780,15 +787,15 @@ def _reported_literals() -> list[str]:
 
 def test_every_message_a_validator_composes_is_explained() -> None:
     # Reachability is not coverage. `no_subscript` grew a second message for a
-    # *store* (proposal 18) and the `subscript` snippet stayed `x[0]`, a load —
-    # so the reader who wrote `xs[0] = 9`, was told to use `obj.at_put(key,
-    # value)` and typed `:explain subscript` was shown the *reading*
-    # substitute, which is the one that proposal exists to stop them getting.
+    # *store* and the `subscript` snippet stayed `x[0]`, a load — so the
+    # reader who wrote `xs[0] = 9`, was told to use `obj.at_put(key, value)`
+    # and typed `:explain subscript` was shown the *reading* substitute, which
+    # is the one the second message exists to stop them getting.
     interp = Interpreter()
     reported = {
         error.args[0]
-        for topic in _EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)
-        for error in interp.validate_all(_explain_snippet(topic) or "")
+        for topic in _DEFAULT_CALLS | set(_EXPLAIN_SNIPPETS)
+        for error in interp.validate_all(_explain_snippet(topic, _DEFAULT_CALLS) or "")
     }
     missing = [m for m in _reported_literals() if m not in reported]
     assert missing == []
@@ -806,7 +813,7 @@ def test_meta_explain_every_known_construct_produces_output(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     repl, _ = _repl()
-    for construct in sorted(_EXPLAIN_CALLS | set(_EXPLAIN_SNIPPETS)):
+    for construct in sorted(_DEFAULT_CALLS | set(_EXPLAIN_SNIPPETS)):
         repl._meta(f":explain {construct}")
         out = capsys.readouterr().out
         # Asserting `"forbidden" in out` only proxied for "a validator spoke",
@@ -856,8 +863,6 @@ def test_run_meta_command_does_not_touch_buffer(
 
 
 def test_is_safe_expr_rejects_syntax_error() -> None:
-    from poop.repl import _is_safe_expr
-
     assert _is_safe_expr("1 +") is False
     assert _is_safe_expr("x") is True
 
@@ -868,29 +873,28 @@ def test_is_safe_expr_rejects_syntax_error() -> None:
 def test_setup_readline_without_readline_module_is_a_noop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # A build without readline (`import readline` raising) must degrade quietly.
-    monkeypatch.setitem(sys.modules, "readline", None)
+    # A build without readline must degrade quietly.
+    monkeypatch.setattr("poop.repl._readline", None)
     _setup_readline({})
 
 
 def test_setup_readline_missing_history_file_is_ignored(
     monkeypatch: pytest.MonkeyPatch, tmp_path: object
 ) -> None:
-    from pathlib import Path
-
-    import poop.repl as repl
-
     monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "does_not_exist")
     _setup_readline({})
+
+
+def test_save_history_without_readline_is_a_noop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("poop.repl._readline", None)
+    _save_history()
 
 
 def test_save_history_swallows_write_errors(
     monkeypatch: pytest.MonkeyPatch, tmp_path: object
 ) -> None:
-    from pathlib import Path
-
-    import poop.repl as repl
-
     # A history path under a missing directory makes write_history_file raise;
     # the saver must swallow it so a crash at exit is impossible.
     monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "nope" / "hist")
@@ -900,9 +904,7 @@ def test_save_history_swallows_write_errors(
 def test_readline_input_without_readline_falls_back_to_input(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from poop.repl import _readline_input
-
-    monkeypatch.setitem(sys.modules, "readline", None)
+    monkeypatch.setattr("poop.repl._readline", None)
     monkeypatch.setattr("builtins.input", lambda prompt="": "typed")
     assert _readline_input(">>> ", "    ") == "typed"
 
@@ -910,10 +912,6 @@ def test_readline_input_without_readline_falls_back_to_input(
 def test_readline_input_pre_hook_inserts_indent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import readline
-
-    from poop.repl import _readline_input
-
     calls: dict[str, object] = {}
     monkeypatch.setattr(
         readline, "insert_text", lambda s: calls.__setitem__("insert", s)
@@ -958,8 +956,6 @@ def test_meta_explain_reports_an_allowed_construct(
 ) -> None:
     # If a topic's snippet trips no validator, `:explain` says so plainly rather
     # than pretending it is forbidden.
-    import poop.repl as repl
-
     monkeypatch.setitem(repl._EXPLAIN_SNIPPETS, "noop", "x")
     r, _ = _repl()
     r._meta(":explain noop")

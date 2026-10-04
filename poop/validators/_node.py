@@ -1,41 +1,37 @@
-import ast
-from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, ClassVar
 
-from poop.errors import ValidationError
 from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
+if TYPE_CHECKING:
+    import ast
+    from collections.abc import Mapping
 
-def make_node_validator(
-    messages: Mapping[type[ast.AST], str],
-) -> type[CollectingValidator]:
-    """Factory for validators that forbid specific AST node types.
+    from poop.errors import ValidationError
 
-    Args:
-        messages: Mapping from AST node type to error message. One
-            visit_<NodeType> method is generated per entry.
 
-    Returns:
-        A Validator class that reports every banned node.
+class _Visitor(ErrorCollector):
+    def __init__(self, messages: Mapping[type[ast.AST], str]) -> None:
+        super().__init__()
+        self._messages = messages
+
+    def visit(self, node: ast.AST) -> None:
+        message = self._messages.get(type(node))
+        if message is not None:
+            self.report(message, node)
+        # Descend into the rejected node rather than stopping there: an `if`
+        # nested in an `if` is two rewrites, and reporting only the outer one
+        # restores the fix-one/rerun loop this exists to end.
+        self.generic_visit(node)
+
+
+class NodeValidator(CollectingValidator):
+    """Forbids specific AST node types.
+
+    A subclass sets `messages`, mapping each banned node type to the error it
+    reports.
     """
 
-    def _make_visit(msg: str) -> Callable[[ErrorCollector, ast.AST], None]:
-        def visit(self: ErrorCollector, node: ast.AST) -> None:
-            self.report(msg, node)
-            # Descend into the rejected node rather than stopping there: an
-            # `if` nested in an `if` is two rewrites, and reporting only the
-            # outer one restores the fix-one/rerun loop this exists to end.
-            self.generic_visit(node)
+    messages: ClassVar[Mapping[type[ast.AST], str]]
 
-        return visit
-
-    visitor_methods: dict[str, Callable[[ErrorCollector, ast.AST], None]] = {
-        f"visit_{node_type.__name__}": _make_visit(msg)
-        for node_type, msg in messages.items()
-    }
-    visitor_cls = type("_Visitor", (ErrorCollector,), visitor_methods)
-
-    class _Validator(CollectingValidator):
-        def collect(self, tree: ast.Module) -> list[ValidationError]:
-            return collect_errors(visitor_cls(), tree)
-
-    return _Validator
+    def collect(self, tree: ast.Module) -> list[ValidationError]:
+        return collect_errors(_Visitor(self.messages), tree)

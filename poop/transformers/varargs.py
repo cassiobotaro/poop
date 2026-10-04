@@ -1,28 +1,31 @@
 import ast
-from typing import ClassVar
 
-from poop.transformers.base import BaseTransformer
+from poop.transformers.base import BaseTransformer, call_at, name_at
+
+# Each variadic parameter and the helper that converts it — stated once for
+# both `def` (a prologue) and `lambda` (a wrapping call).
+_CONVERTERS = (("vararg", "_poop_tuple_from"), ("kwarg", "_poop_dict_from_kwargs"))
 
 
-def _rebind(name: str, helper: str) -> ast.Assign:
+def _variadics(args: ast.arguments) -> list[tuple[str, str]]:
+    """`(parameter name, converter)` for each variadic parameter `args` has."""
+    found = []
+    for slot, helper in _CONVERTERS:
+        param = getattr(args, slot)
+        if param is not None:
+            found.append((param.arg, helper))
+    return found
+
+
+def _rebind(name: str, helper: str, node: ast.AST) -> ast.Assign:
     """`<name> = <helper>(<name>)` — convert a variadic parameter to POOP."""
-    return ast.Assign(
-        targets=[ast.Name(id=name, ctx=ast.Store())],
-        value=ast.Call(
-            func=ast.Name(id=helper, ctx=ast.Load()),
-            args=[ast.Name(id=name, ctx=ast.Load())],
-            keywords=[],
+    return ast.copy_location(
+        ast.Assign(
+            targets=[name_at(name, node, ast.Store())],
+            value=call_at(helper, [name_at(name, node)], node),
         ),
+        node,
     )
-
-
-def _prologue(args: ast.arguments) -> list[ast.stmt]:
-    stmts: list[ast.stmt] = []
-    if args.vararg is not None:
-        stmts.append(_rebind(args.vararg.arg, "_poop_tuple_from"))
-    if args.kwarg is not None:
-        stmts.append(_rebind(args.kwarg.arg, "_poop_dict_from_kwargs"))
-    return stmts
 
 
 class _VarargsRewriter(ast.NodeTransformer):
@@ -53,40 +56,26 @@ class _VarargsRewriter(ast.NodeTransformer):
         — because `**` demands raw `str` keys and a POOP `Dict` carries `Str`.
         `DictTransformer` had already met the constraint for `dict(**other)`
         and worked around it there; this generalises the same fix to every
-        call. It has to run after that transformer (and after
-        `RaiseTransformer`, whose `_poop_raise(Exc, **kw)` this then covers),
-        which the declaration order in `__init__.py` guarantees.
+        call. It has to run after that transformer, which the declaration
+        order in `_registry.py` guarantees.
         """
         self.generic_visit(node)
         for kw in node.keywords:
             if kw.arg is None:
-                kw.value = ast.copy_location(
-                    ast.Call(
-                        func=ast.Name(id="_poop_kwargs_from", ctx=ast.Load()),
-                        args=[kw.value],
-                        keywords=[],
-                    ),
-                    kw.value,
-                )
+                kw.value = call_at("_poop_kwargs_from", [kw.value], kw.value)
         return node
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
-        return self._rewrite_function(node)
-
-    def _rewrite_function(self, node: ast.FunctionDef) -> ast.AST:
         self.generic_visit(node)
-        prologue = _prologue(node.args)
-        if prologue:
-            node.body = prologue + node.body
+        prologue = [
+            _rebind(name, helper, node) for name, helper in _variadics(node.args)
+        ]
+        node.body = prologue + node.body
         return node
 
     def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
         self.generic_visit(node)
-        names: list[tuple[str, str]] = []
-        if node.args.vararg is not None:
-            names.append((node.args.vararg.arg, "_poop_tuple_from"))
-        if node.args.kwarg is not None:
-            names.append((node.args.kwarg.arg, "_poop_dict_from_kwargs"))
+        names = _variadics(node.args)
         if not names:
             return node
         # lambda <params>: body  ->
@@ -106,12 +95,7 @@ class _VarargsRewriter(ast.NodeTransformer):
         call = ast.Call(
             func=inner,
             args=[
-                ast.Call(
-                    func=ast.Name(id=helper, ctx=ast.Load()),
-                    args=[ast.Name(id=name, ctx=ast.Load())],
-                    keywords=[],
-                )
-                for name, helper in names
+                call_at(helper, [name_at(name, node)], node) for name, helper in names
             ],
             keywords=[],
         )
@@ -127,4 +111,3 @@ class VarargsTransformer(BaseTransformer):
     """
 
     rewriter = _VarargsRewriter
-    BINDINGS: ClassVar[dict[str, object]] = {}
