@@ -4,7 +4,7 @@ from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from poop.types._affix import affix_needle
-from poop.types._argument import a_bound, a_needle, text_like
+from poop.types._argument import a_bound, a_needle, max_split, text_like
 from poop.types._at import at_index
 from poop.types._cloak import cloak
 from poop.types._codec import encoded
@@ -287,7 +287,9 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return List(
             *(
                 Str(p)
-                for p in self._value.split(_unwrap(sep, None), _unwrap(maxsplit, -1))
+                for p in self._value.split(
+                    _opt_text(sep, "split"), max_split(maxsplit, "split")
+                )
             )
         )
 
@@ -495,10 +497,24 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Str(self._value.zfill(_faithful(width)))
 
     def partition(self, sep: Str) -> Tuple:
-        return Tuple(*[Str(s) for s in self._value.partition(_faithful(sep))])
+        return Tuple(
+            *[
+                Str(s)
+                for s in self._value.partition(
+                    text_like(sep, "partition", "a str", (str,))
+                )
+            ]
+        )
 
     def rpartition(self, sep: Str) -> Tuple:
-        return Tuple(*[Str(s) for s in self._value.rpartition(_faithful(sep))])
+        return Tuple(
+            *[
+                Str(s)
+                for s in self._value.rpartition(
+                    text_like(sep, "rpartition", "a str", (str,))
+                )
+            ]
+        )
 
     def removeprefix(self, prefix: Str) -> Str:
         return Str(self._value.removeprefix(text_like(prefix, "removeprefix", "a str")))
@@ -542,7 +558,9 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return List(
             *(
                 Str(s)
-                for s in self._value.rsplit(_unwrap(sep, None), _unwrap(maxsplit, -1))
+                for s in self._value.rsplit(
+                    _opt_text(sep, "rsplit"), max_split(maxsplit, "rsplit")
+                )
             )
         )
 

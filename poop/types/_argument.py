@@ -253,6 +253,18 @@ def byte_order(value: Any) -> str:
     raise MIRRORS["ValueError"](f"byte order must be 'big' or 'little', got {raw!r}")
 
 
+def max_split(value: Any, selector: str) -> int:
+    """The raw `maxsplit` of `split` / `rsplit`, or POOP's refusal.
+
+    CPython answered `'str' object cannot be interpreted as an integer` — no
+    message, no argument, and "interpreted as" naming a conversion the program
+    never asked for. `a_bound` already words the same mistake for positions;
+    an absent one is CPython's `-1`, every split there is.
+    """
+    raw = a_bound(value, selector, "maxsplit")
+    return -1 if raw is None else raw
+
+
 def _opt_stop(bound: Any, end: int) -> int:
     """`bound`, or the whole length when it was absent.
 

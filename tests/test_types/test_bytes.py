@@ -575,6 +575,15 @@ def test_split_with_maxsplit() -> None:
     )
 
 
+@pytest.mark.parametrize("selector", ["split", "rsplit"])
+def test_the_split_pair_names_its_maxsplit(selector: str) -> None:
+    # `'str' object cannot be interpreted as an integer` names neither the
+    # message nor the argument.
+    wanted = f"^#{selector}'s maxsplit must be an int, got a str$"
+    with pytest.raises(TypeError, match=wanted):
+        getattr(Bytes(b"a,b"), selector)(Bytes(b","), Str("x"))
+
+
 def test_rsplit_with_maxsplit() -> None:
     assert Bytes(b"a:b:c:d").rsplit(Bytes(b":"), Int(2)) == List(
         Bytes(b"a:b"), Bytes(b"c"), Bytes(b"d")
