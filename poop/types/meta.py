@@ -158,7 +158,7 @@ def _reject_builtin(cls: type) -> None:
         )
 
 
-def _refuse(cls: type, name: str) -> None:
+def _refuse(cls: type, name: str) -> Never:
     """Refuse an instance-only message, naming the class-side one instead.
 
     Not routed through `does_not_understand`: its difflib hint would answer
@@ -204,7 +204,7 @@ def _reflected(cls: type, name: str) -> Any:
     return type.__getattribute__(cls, name)
 
 
-def _refuse_instance_side(cls: type, name: str) -> None:
+def _refuse_instance_side(cls: type, name: str) -> Never:
     """Refuse a method the *instance* answers, reached through the class.
 
     `class_side` exists to remove one failure — `INFECTIONS.md`: "the bans
@@ -229,7 +229,7 @@ def _refuse_instance_side(cls: type, name: str) -> None:
     )
 
 
-def _refuse_native(cls: type, name: str, instead: str) -> None:
+def _refuse_native(cls: type, name: str, instead: str) -> Never:
     """Refuse a name POOP never meant to offer, naming the message that does.
 
     `type.mro` arrives on every POOP class with the metaclass, carries no
