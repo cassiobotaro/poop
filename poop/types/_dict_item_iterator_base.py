@@ -1,14 +1,8 @@
-from collections import deque
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from poop.types._cloak import cloak
 from poop.types._iterator_base import _IteratorBase
-from poop.types.none import none
 from poop.types.tuple import Tuple
-
-if TYPE_CHECKING:
-    from poop.types.none import NoneClass
 
 
 class _DictItemIteratorBase(_IteratorBase[Tuple]):
@@ -26,12 +20,6 @@ class _DictItemIteratorBase(_IteratorBase[Tuple]):
     def _wrap(self, value: Any) -> Tuple:
         k, v = value
         return Tuple(k, v)
-
-    def do(self, block: Callable[[Tuple], Any]) -> NoneClass:
-        # Through `self`, not `self._iter`: a pair parked by `has_next` would
-        # otherwise be skipped, and would arrive unwrapped if it were not.
-        deque((block(item) for item in self), maxlen=0)
-        return none
 
 
 # Cloaked as `object`, the root's own spelling: these methods are inherited by

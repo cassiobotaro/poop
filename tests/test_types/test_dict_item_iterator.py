@@ -47,5 +47,24 @@ def test_one_shot_after_do() -> None:
         it.next()
 
 
+def test_do_delivers_a_pair_parked_by_has_next_wrapped() -> None:
+    it = DictItemIterator([(Str("a"), Int(1)), (Str("b"), Int(2))])
+    it.has_next()
+    seen: list[Tuple] = []
+    it.do(lambda t: seen.append(t))
+    assert seen == [Tuple(Str("a"), Int(1)), Tuple(Str("b"), Int(2))]
+    assert all(isinstance(t, Tuple) for t in seen)
+
+
+def test_do_refuses_a_non_block() -> None:
+    with pytest.raises(TypeError, match=r"^#do expects a block, got an int"):
+        DictItemIterator([]).do(Int(5))  # ty: ignore[invalid-argument-type]
+
+
+def test_do_refuses_a_missing_block() -> None:
+    with pytest.raises(TypeError, match=r"^#do expects a block, got nothing"):
+        DictItemIterator([]).do()
+
+
 def test_str_repr() -> None:
     assert str(DictItemIterator([])) == "<dict_itemiterator>"
