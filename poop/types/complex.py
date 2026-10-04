@@ -1,3 +1,5 @@
+import operator
+from collections.abc import Callable
 from types import NotImplementedType
 from typing import TYPE_CHECKING
 
@@ -60,65 +62,52 @@ class Complex(Object):
             return _complex(bool(other))
         return None
 
-    def __add__(self, other: object) -> Complex | NotImplementedType:
+    def _arith(
+        self,
+        other: object,
+        op: Callable[[_complex, _complex], _complex],
+        *,
+        reflected: bool = False,
+    ) -> Complex | NotImplementedType:
+        """`self op other`, or `other op self` when `reflected`.
+
+        For any operand `_coerce` takes; anything else answers
+        `NotImplemented`.
+        """
         v = self._coerce(other)
         if v is None:
             return NotImplemented
-        return Complex(self._value + v)
+        return Complex(op(v, self._value) if reflected else op(self._value, v))
+
+    def __add__(self, other: object) -> Complex | NotImplementedType:
+        return self._arith(other, operator.add)
 
     def __radd__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v + self._value)
+        return self._arith(other, operator.add, reflected=True)
 
     def __sub__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(self._value - v)
+        return self._arith(other, operator.sub)
 
     def __rsub__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v - self._value)
+        return self._arith(other, operator.sub, reflected=True)
 
     def __mul__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(self._value * v)
+        return self._arith(other, operator.mul)
 
     def __rmul__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v * self._value)
+        return self._arith(other, operator.mul, reflected=True)
 
     def __truediv__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(self._value / v)
+        return self._arith(other, operator.truediv)
 
     def __rtruediv__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v / self._value)
+        return self._arith(other, operator.truediv, reflected=True)
 
     def __pow__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(self._value**v)
+        return self._arith(other, operator.pow)
 
     def __rpow__(self, other: object) -> Complex | NotImplementedType:
-        v = self._coerce(other)
-        if v is None:
-            return NotImplemented
-        return Complex(v**self._value)
+        return self._arith(other, operator.pow, reflected=True)
 
     def pow(self, other: object) -> Complex:
         # `no_pow` names `a.pow(b)` as the substitute for the builtin, and

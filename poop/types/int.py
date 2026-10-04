@@ -1,4 +1,5 @@
 import builtins
+import operator
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -153,35 +154,31 @@ class Int(_NumericCompareMixin, Object):
     def abs(self) -> Int:
         return self.__abs__()
 
-    def __add__(self, other: object) -> Int | Float:
+    def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Int | Float:
+        """`self op other`, an `Int` beside an `Int` and a `Float` beside a `Float`.
+
+        Written once and handed the operator, as `_OrderedMixin._compare` is.
+        Anything outside the pair answers `NotImplemented`, so the operand's
+        reflected method runs — `Str`/`Bytes` repeat for `*`, `Boolean` and
+        `Complex` for the rest.
+        """
         # circular: float imports int
         from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__radd__ run
+            return NotImplemented
         if isinstance(other, Float):
-            return Float(self._value + other._value)
-        return Int(self._value + other._value)
+            return Float(op(self._value, other._value))
+        return Int(op(self._value, other._value))
+
+    def __add__(self, other: object) -> Int | Float:
+        return self._arith(other, operator.add)
 
     def __sub__(self, other: object) -> Int | Float:
-        # circular: float imports int
-        from poop.types.float import Float  # noqa: PLC0415
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rsub__ run
-        if isinstance(other, Float):
-            return Float(self._value - other._value)
-        return Int(self._value - other._value)
+        return self._arith(other, operator.sub)
 
     def __mul__(self, other: object) -> Int | Float:
-        # circular: float imports int
-        from poop.types.float import Float  # noqa: PLC0415
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rmul__ run (Str/Bytes repeat, etc.)
-        if isinstance(other, Float):
-            return Float(self._value * other._value)
-        return Int(self._value * other._value)
+        return self._arith(other, operator.mul)
 
     def __truediv__(self, other: object) -> Float:
         # circular: float imports int
@@ -192,24 +189,10 @@ class Int(_NumericCompareMixin, Object):
         return Float(self._value / other._value)
 
     def __floordiv__(self, other: object) -> Int | Float:
-        # circular: float imports int
-        from poop.types.float import Float  # noqa: PLC0415
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rfloordiv__ run
-        if isinstance(other, Float):
-            return Float(self._value // other._value)
-        return Int(self._value // other._value)
+        return self._arith(other, operator.floordiv)
 
     def __mod__(self, other: object) -> Int | Float:
-        # circular: float imports int
-        from poop.types.float import Float  # noqa: PLC0415
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rmod__ run
-        if isinstance(other, Float):
-            return Float(self._value % other._value)
-        return Int(self._value % other._value)
+        return self._arith(other, operator.mod)
 
     def __pow__(
         self, other: object, modulus: Int | NoneClass | None = None
@@ -288,68 +271,50 @@ class Int(_NumericCompareMixin, Object):
             )
         return result
 
-    def __lshift__(self, other: object) -> Int:
+    def _bitwise(
+        self, other: object, op: Callable[[int, int], int], *, reflected: bool = False
+    ) -> Int:
+        """`self op other` for a shift or bitwise operator; `other op self`
+        when `reflected`. An operand that is not integral answers
+        `NotImplemented`.
+        """
         v = _integral_value(other)
         if v is NOT_INTEGRAL:
             return NotImplemented
-        return Int(self._value << v)
+        return Int(op(v, self._value) if reflected else op(self._value, v))
+
+    def __lshift__(self, other: object) -> Int:
+        return self._bitwise(other, operator.lshift)
 
     def __rshift__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(self._value >> v)
+        return self._bitwise(other, operator.rshift)
 
     def __and__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(self._value & v)
+        return self._bitwise(other, operator.and_)
 
     def __or__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(self._value | v)
+        return self._bitwise(other, operator.or_)
 
     def __xor__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(self._value ^ v)
+        return self._bitwise(other, operator.xor)
 
     # Reflected bitwise/shift operators — CPython's int defines these too, so a
     # `<integral> OP Int` expression (e.g. `True << 5`, where Boolean has no
     # `__lshift__`) resolves here instead of leaking a TypeError.
     def __rlshift__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v << self._value)
+        return self._bitwise(other, operator.lshift, reflected=True)
 
     def __rrshift__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v >> self._value)
+        return self._bitwise(other, operator.rshift, reflected=True)
 
     def __rand__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v & self._value)
+        return self._bitwise(other, operator.and_, reflected=True)
 
     def __ror__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v | self._value)
+        return self._bitwise(other, operator.or_, reflected=True)
 
     def __rxor__(self, other: object) -> Int:
-        v = _integral_value(other)
-        if v is NOT_INTEGRAL:
-            return NotImplemented
-        return Int(v ^ self._value)
+        return self._bitwise(other, operator.xor, reflected=True)
 
     def __ceil__(self) -> Int:
         return self

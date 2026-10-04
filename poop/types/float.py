@@ -1,5 +1,6 @@
 import builtins
 import math
+import operator
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
@@ -96,35 +97,33 @@ class Float(_NumericCompareMixin, Object):
     def abs(self) -> Float:
         return self.__abs__()
 
-    def __add__(self, other: object) -> Float:
+    def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Float:
+        """`self op other` against an `Int` or a `Float`.
+
+        Anything else answers `NotImplemented`, so the operand's reflected
+        method runs.
+        """
         if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__radd__ run
-        return Float(self._value + other._value)
+            return NotImplemented
+        return Float(op(self._value, other._value))
+
+    def __add__(self, other: object) -> Float:
+        return self._arith(other, operator.add)
 
     def __sub__(self, other: object) -> Float:
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rsub__ run
-        return Float(self._value - other._value)
+        return self._arith(other, operator.sub)
 
     def __mul__(self, other: object) -> Float:
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rmul__ run
-        return Float(self._value * other._value)
+        return self._arith(other, operator.mul)
 
     def __truediv__(self, other: object) -> Float:
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rtruediv__ run
-        return Float(self._value / other._value)
+        return self._arith(other, operator.truediv)
 
     def __floordiv__(self, other: object) -> Float:
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rfloordiv__ run
-        return Float(self._value // other._value)
+        return self._arith(other, operator.floordiv)
 
     def __mod__(self, other: object) -> Float:
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rmod__ run
-        return Float(self._value % other._value)
+        return self._arith(other, operator.mod)
 
     def __pow__(self, other: object) -> Float | Complex:
         if isinstance(other, Complex):

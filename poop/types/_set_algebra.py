@@ -1,3 +1,5 @@
+import operator
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from poop.types.boolean import to_boolean
@@ -79,29 +81,23 @@ class _SetAlgebraMixin:
     _set_like: ClassVar[bool] = True
     _data: Any
 
-    def __and__(self, other: object) -> Self:
+    def _algebra(self, other: object, op: Callable[[Any, Any], Any]) -> Self:
         raw = _other_set(other)
         if raw is None:
             return NotImplemented
-        return type(self)(*(self._data & raw))
+        return type(self)(*op(self._data, raw))
+
+    def __and__(self, other: object) -> Self:
+        return self._algebra(other, operator.and_)
 
     def __or__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return type(self)(*(self._data | raw))
+        return self._algebra(other, operator.or_)
 
     def __sub__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return type(self)(*(self._data - raw))
+        return self._algebra(other, operator.sub)
 
     def __xor__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return type(self)(*(self._data ^ raw))
+        return self._algebra(other, operator.xor)
 
     # Comparison operators are subset/superset tests for sets in CPython
     # (``<`` proper subset, ``<=`` subset, ``>`` proper superset, ``>=``
