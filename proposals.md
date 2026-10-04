@@ -17,43 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 15. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 3. `None`, `True`, `False` and `...` can each be built a second time
-
-```
-x = None.class_()()
-x.print()                      # None
-x.is_identical(None).print()   # False
-(x == None).print()            # False
-
-t = True.class_()()
-t.is_identical(True).print()   # False
-
-(...).class_()().is_identical(...).print()   # False
-
-True.class_().superclass()()
-# TypeError: Can't instantiate abstract class bool without an implementation
-#   for abstract methods '__bool__', '__str__', '_bool_and', '_bool_or',
-#   'and_', 'eqv', 'if_false', 'if_false_if_true', 'if_true', …
-```
-
-`class_()` hands the class out and a class is callable, so each singleton is
-one expression away from a twin. The second `None` prints as `None` and is
-neither identical nor equal to the first, since `Object.__eq__` is identity.
-The last line is the sentence `_alias.py` already calls a leak ("a dozen
-dunders in one sentence, from a program that spelled none") and closed for
-`class Flag(bool)`; this is the same sentence one spelling over, with two
-private names in it.
-
-CPython has the answer: `type(None)() is None` and `type(...)() is ...` are
-both `True`, and `bool()` is `False`.
-
-**Fix.** `__new__` on `NoneClass`, `EllipsisClass`, `_TrueClass` and
-`_FalseClass` answers the existing instance, and `Boolean()` answers `false`
-as `bool()` does. Do this before item 4: without `ABCMeta`, a bare `Boolean()`
-would otherwise build a third boolean in silence.
-
----
-
 ### 4. `PoopMeta` inherits `ABCMeta` for one class, and every `isinstance` pays
 
 `PoopMeta`'s docstring: "Derives from `ABCMeta`, not `type`: `Boolean(Object,
