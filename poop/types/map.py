@@ -1,22 +1,17 @@
 from collections.abc import Callable, Iterator
 from typing import Any
 
-from poop.types._cloak import cloak
-from poop.types._iterable_mixin import _IterableMixin
-from poop.types._peek import _PeekMixin
-from poop.types._sentinel import UNPEEKED
+from poop.types._iterator_base import _LazyView
 from poop.types.exceptions import MIRRORS
-from poop.types.object import Object
 
 
-class Map(_PeekMixin, _IterableMixin, Object):
-    __slots__ = ("_block", "_iter", "_source")
+class Map(_LazyView[Any], name="map"):
+    __slots__ = ("_block", "_source")
 
     def __init__(self, source: Any, block: Callable[[Any], Any]) -> None:
+        super().__init__()
         self._source = source
         self._block = block
-        self._iter: Iterator[Any] | None = None
-        self._peeked: Any = UNPEEKED
 
     @staticmethod
     def _gen(source: Any, block: Any) -> Iterator[Any]:
@@ -37,27 +32,7 @@ class Map(_PeekMixin, _IterableMixin, Object):
                 ) from None
             yield value
 
-    def _materialize(self) -> Iterator[Any]:
-        if self._iter is None:
-            self._iter = self._gen(self._source, self._block)
-            # The generator now owns the source and block; drop our copies so
-            # a consumed Map stops pinning its whole source and its closure.
-            self._source = None
-            self._block = None
-        return self._iter
-
-    def __iter__(self) -> Iterator[Any]:
-        # `self`, not the raw generator: an element parked by `has_next` would
-        # otherwise be skipped by whatever iterated next.
-        return self
-
-    def iter(self) -> Map:
-        return self
-
-    def __str__(self) -> str:
-        return "<map>"
-
-    __repr__ = __str__
-
-
-cloak(Map, "map")
+    def _generate(self) -> Iterator[Any]:
+        source, block = self._source, self._block
+        self._source = self._block = None
+        return self._gen(source, block)
