@@ -185,7 +185,9 @@ class _BytesLikeMixin[B: Object]:
         return (
             true
             if self._value.endswith(
-                affix_needle(suffix),
+                affix_needle(
+                    suffix, "endswith", "bytes or a tuple of bytes", _BYTE_KINDS
+                ),
                 a_bound(start, "endswith", "start"),
                 a_bound(end, "endswith", "end"),
             )
@@ -408,7 +410,9 @@ class _BytesLikeMixin[B: Object]:
         return (
             true
             if self._value.startswith(
-                affix_needle(prefix),
+                affix_needle(
+                    prefix, "startswith", "bytes or a tuple of bytes", _BYTE_KINDS
+                ),
                 a_bound(start, "startswith", "start"),
                 a_bound(end, "startswith", "end"),
             )

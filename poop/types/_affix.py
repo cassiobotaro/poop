@@ -19,21 +19,24 @@ string-specific, so the rule lives here rather than in `string.py`.
 
 from typing import Any
 
-from poop.types._unwrap import _faithful
+from poop.types._argument import text_like
 from poop.types.tuple import Tuple
 
 
-def affix_needle(affix: object) -> Any:
-    """The native argument behind a POOP affix, or the affix reaching CPython raw.
+def affix_needle(
+    affix: object, selector: str, expected: str, kinds: tuple[type, ...]
+) -> Any:
+    """The native argument behind a POOP affix, or POOP's refusal.
 
     A scalar (`Str` / `Bytes` / `ByteArray`) unwraps to its value; a `Tuple` to
-    a tuple of faithfully unwrapped members, so a wrong-typed member reaches
-    CPython and raises the faithful error instead of being silently coerced.
+    a tuple of its unwrapped members.
 
-    Anything that is neither — an `Int`, a `List` — reaches CPython raw for the
-    same reason: reading `._items` off it would answer `int does not understand
-    #_items`, naming a POOP internal.
+    Anything else used to reach CPython raw, which answered `startswith first
+    arg must be str or a tuple of str, not int` — the message as a bare word
+    and "arg", the shape `_opt_text` replaced for the strip family — and, for a
+    wrong member, `tuple for startswith must only contain str`. Both are
+    `text_like`'s to refuse, in the receiver's own `expected`.
     """
     if isinstance(affix, Tuple):
-        return tuple(_faithful(p) for p in affix._items)
-    return _faithful(affix)
+        return tuple(text_like(p, selector, expected, kinds) for p in affix._items)
+    return text_like(affix, selector, expected, kinds)

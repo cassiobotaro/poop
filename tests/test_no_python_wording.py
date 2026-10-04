@@ -69,7 +69,10 @@ _FORBIDDEN = {
         # else, and a conversion the program never asked for.
         r"cannot be interpreted as|cannot convert '|"
         # "Iterable" is the protocol `no_iter` bans; POOP says "a collection".
-        r"object is not|\biterable\b"
+        r"object is not|\biterable\b|"
+        # The message as a bare word, and "arg" — `startswith first arg must
+        # be str or a tuple of str` and its `must only contain` twin.
+        r"must be str\b|first arg must be|must only contain"
     ),
     "a CPython format report": re.compile(
         r"object of type|Unknown format code|Invalid format specifier|"

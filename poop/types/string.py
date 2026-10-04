@@ -401,7 +401,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Boolean:
         return to_boolean(
             self._value.startswith(
-                affix_needle(prefix),
+                affix_needle(prefix, "startswith", "a str or a tuple of str", (str,)),
                 a_bound(start, "startswith", "start"),
                 a_bound(end, "startswith", "end"),
             )
@@ -415,7 +415,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Boolean:
         return to_boolean(
             self._value.endswith(
-                affix_needle(suffix),
+                affix_needle(suffix, "endswith", "a str or a tuple of str", (str,)),
                 a_bound(start, "endswith", "start"),
                 a_bound(end, "endswith", "end"),
             )

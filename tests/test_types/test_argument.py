@@ -149,3 +149,33 @@ def test_the_guarded_collections_still_answer() -> None:
     pairs.update(List(Tuple(Str("a"), Int(1))))
     assert pairs.at(Str("a")) == Int(1)
     assert Dict.fromkeys(Str("ab")).len() == Int(2)
+
+
+@pytest.mark.parametrize(
+    ("source", "selector", "expected"),
+    [
+        ('"ab".startswith(5)', "startswith", "a str or a tuple of str"),
+        ('"ab".endswith(5)', "endswith", "a str or a tuple of str"),
+        ('"ab".startswith(("a", 5))', "startswith", "a str or a tuple of str"),
+        ('b"ab".startswith(5)', "startswith", "bytes or a tuple of bytes"),
+        (
+            'bytearray(b"ab").endswith((b"a", 5))',
+            "endswith",
+            "bytes or a tuple of bytes",
+        ),
+    ],
+)
+def test_an_affix_argument_names_its_message(
+    source: str, selector: str, expected: str
+) -> None:
+    # `startswith first arg must be str or a tuple of str, not int` spells the
+    # message as a bare word, and "arg" is not a word the language uses.
+    wanted = f"TypeError: #{selector} expects {expected}, got an int (line 1)"
+    assert _failure(source) == wanted
+
+
+def test_the_guarded_affixes_still_answer() -> None:
+    assert Str("ab").startswith(Str("a")) == true
+    assert Str("ab").endswith(Tuple(Str("z"), Str("b"))) == true
+    assert Bytes(b"ab").startswith(Tuple(Bytes(b"z"), Bytes(b"a"))) == true
+    assert ByteArray(bytearray(b"ab")).endswith(Bytes(b"b")) == true
