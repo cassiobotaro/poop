@@ -84,3 +84,11 @@ class _IteratorBase[T](_PeekMixin, _IterableMixin, Object):
         return f"<{self._repr_name}>"
 
     __repr__ = __str__
+
+
+# Cloaked as `object`, as the shared mixins are: `iter` and `__str__` are
+# inherited by every concrete iterator, so no single builtin name is true for
+# all of them — and left alone CPython blamed `_IteratorBase` in every
+# wrong-arity message, a private name `_reject_private` exists to keep out of
+# user code.
+cloak(_IteratorBase, "object")

@@ -95,6 +95,12 @@ def test_own_functions_answer_the_cloaked_class_name(index: int, cls: type) -> N
             assert fn.__qualname__.startswith(f"{cls.__qualname__}.")
 
 
+def test_no_class_answers_a_private_name() -> None:
+    # A wrong-arity message is built from the owning function's qualname, so a
+    # shared base left uncloaked blames itself — `_IteratorBase.iter()` did.
+    assert [cls for cls in _classes() if cls.__qualname__.startswith("_")] == []
+
+
 @pytest.mark.parametrize(
     ("source", "expected"),
     [
@@ -120,6 +126,8 @@ def test_own_functions_answer_the_cloaked_class_name(index: int, cls: type) -> N
         # can catch.
         ("[1].iter().next(1, 2)", "object.next()"),
         ('{"a": 1}.keys().len(1)', "object.len()"),
+        # Owned by `_IteratorBase`, which was left uncloaked and blamed itself.
+        ("[1].iter().iter(1)", "object.iter()"),
         # `range`, `int`, `float`, `bool` and `enumerate` used to sit here for
         # the same reason `dict` did: the cloak made CPython's arity message
         # name `range()` instead of `_poop_range()`. Proposal 44 gave all five
