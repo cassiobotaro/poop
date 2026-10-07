@@ -205,8 +205,6 @@ def _refusal_for(name: str, instead: str | None) -> class_side:
             )
         return _refuse_python_attribute(cls, name, instead)
 
-    refuse.__name__ = name
-    refuse.__qualname__ = name
     return class_side_read_refusal(cast("Any", refuse), refuses=True)
 
 
@@ -243,13 +241,13 @@ def _build(native: type[BaseException], parent: MirrorName | None) -> None:
 
 
 for _name, _instead in _PYTHON_ATTRIBUTES.items():
-    setattr(PoopExcMeta, _name, _refusal_for(_name, _instead))
+    _refusal = _refusal_for(_name, _instead)
     # `__set_name__` is only called for descriptors written in a class body, and
-    # these are installed after `PoopExcMeta` is built — so `cloak_callable`
-    # never ran on them and `_name` stayed empty, which `__set__` reads when it
-    # refuses a rebind.
-    _refusal = vars(PoopExcMeta)[_name]
+    # these are installed after `PoopExcMeta` is built — so it is called here:
+    # it names the function through `cloak_callable` and fills `_name`, which
+    # `__set__` reads when it refuses a rebind.
     _refusal.__set_name__(PoopExcMeta, _name)
+    setattr(PoopExcMeta, _name, _refusal)
 
 
 for _native, _parent in _HIERARCHY:
