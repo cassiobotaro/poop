@@ -28,6 +28,11 @@ def transform(transformer: Transformer, source: str) -> ast.Module:
     return transformer.transform(ast.parse(source))
 
 
+def rewritten(transformer: Transformer, source: str) -> str:
+    """`source` run through one transformer, unparsed back to source."""
+    return ast.unparse(transform(transformer, source))
+
+
 # The `feed_input` fixture's type, for a test's signature.
 type FeedInput = Callable[..., None]
 

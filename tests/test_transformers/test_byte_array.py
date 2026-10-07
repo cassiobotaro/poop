@@ -1,5 +1,3 @@
-import ast
-
 import pytest
 
 from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
@@ -9,6 +7,7 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
+from tests._support import rewritten
 
 
 def test_bytearray_from_list_of_ints() -> None:
@@ -58,8 +57,6 @@ def test_bytearray_from_text_takes_the_errors_handler_too() -> None:
 
 
 def test_bare_bytearray_name_is_rewritten_to_the_mangled_binding() -> None:
-    tree = ByteArrayTransformer().transform(ast.parse("f = bytearray"))
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Name)
-    assert assign.value.id == "_poop_bytearray_cls"
+    assert rewritten(ByteArrayTransformer(), "f = bytearray") == (
+        "f = _poop_bytearray_cls"
+    )

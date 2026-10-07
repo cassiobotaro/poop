@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 
 import pytest
@@ -11,47 +10,40 @@ from poop.types.complex import Complex
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, FloatTransformer())
-
-
-def test_float_literal_is_rewritten() -> None:
-    tree = _transform("x = 3.14")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_float"
-    assert isinstance(call.args[0], ast.Constant)
-    assert call.args[0].value == 3.14
+_rewritten = partial(rewritten, FloatTransformer())
 
 
-def test_int_literal_is_not_rewritten() -> None:
-    tree = _transform("x = 42")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Constant)
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("x = 3.14", "x = _poop_float(3.14)"),
+        ("x = -3.14", "x = _poop_float(-3.14)"),
+        ('float("3.14")', "_poop_float_from('3.14')"),
+    ],
+    ids=["literal", "negative_literal_collapsed", "call"],
+)
+def test_float_is_rewritten(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
-def test_string_literal_is_not_rewritten() -> None:
-    tree = _transform('x = "hello"')
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Constant)
-
-
-def test_negative_float_literal_is_collapsed() -> None:
-    tree = _transform("x = -3.14")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_float"
-    assert isinstance(call.args[0], ast.Constant)
-    assert call.args[0].value == -3.14
+@pytest.mark.parametrize(
+    "source",
+    [
+        "x = 42",
+        "x = 'hello'",
+        "x.float()",
+        "x = -y",
+        # `-5` is USub on a Constant, but the value is an int, not a float, so
+        # the float rewriter leaves it for the int transformer instead of
+        # wrapping it.
+        "y = -5",
+    ],
+    ids=["int", "str", "method_named_float", "negative_variable", "negative_int"],
+)
+def test_float_is_not_rewritten(source: str) -> None:
+    assert _rewritten(source) == source
 
 
 def test_bindings_contains_float_class() -> None:
@@ -60,24 +52,6 @@ def test_bindings_contains_float_class() -> None:
 
 def test_bindings_contains_float_from_factory() -> None:
     assert FloatTransformer.BINDINGS["_poop_float_from"] is _poop_float_from
-
-
-def test_float_call_is_rewritten() -> None:
-    tree = _transform('float("3.14")')
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_float_from"
-
-
-def test_method_named_float_is_not_rewritten() -> None:
-    tree = _transform("x.float()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "float"
 
 
 # _poop_float_from factory tests
@@ -115,20 +89,6 @@ def test_float_from_boolean() -> None:
 def test_float_from_unsupported_type_raises() -> None:
     with pytest.raises(TypeError, match="cannot convert complex to float"):
         _poop_float_from(Complex(complex(1, 2)))
-
-
-def test_negative_variable_not_collapsed() -> None:
-    tree = _transform("x = -y")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.UnaryOp)
-
-
-def test_negative_non_float_literal_is_not_wrapped_as_a_float() -> None:
-    # `-5` is USub on a Constant, but the value is an int, not a float, so the
-    # float rewriter leaves it for the int transformer instead of wrapping it.
-    tree = _transform("y = -5")
-    assert "_poop_float" not in ast.unparse(tree)
 
 
 def test_float_from_an_unparsable_string_names_the_value() -> None:

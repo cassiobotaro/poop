@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 
 import pytest
@@ -12,68 +11,34 @@ from poop.types.list import List
 from poop.types.range import Range
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, ListTransformer())
-
-
-def test_list_literal_is_rewritten() -> None:
-    tree = _transform("x = [1, 2, 3]")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_list"
-    assert len(call.args) == 3
+_rewritten = partial(rewritten, ListTransformer())
 
 
-def test_empty_list_is_rewritten() -> None:
-    tree = _transform("x = []")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_list"
-    assert len(call.args) == 0
-
-
-def test_store_context_not_rewritten() -> None:
-    tree = _transform("[a, b] = (1, 2)")
-    # Assignment target is a List node with Store context — must NOT be rewritten
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    target = assign.targets[0]
-    assert isinstance(target, ast.List)
-
-
-def test_list_call_is_rewritten() -> None:
-    tree = _transform("list(x)")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_list_from"
-
-
-def test_list_call_no_arg_is_rewritten() -> None:
-    tree = _transform("list()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_list_from"
-    assert len(expr.value.args) == 0
-
-
-def test_method_named_list_is_not_rewritten() -> None:
-    tree = _transform("x.list()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "list"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("x = [1, 2, 3]", "x = _poop_list(1, 2, 3)"),
+        ("x = []", "x = _poop_list()"),
+        # An assignment target is a List node with Store context — it must
+        # NOT be rewritten.
+        ("[a, b] = (1, 2)", "[a, b] = (1, 2)"),
+        ("list(x)", "_poop_list_from(x)"),
+        ("list()", "_poop_list_from()"),
+        ("x.list()", "x.list()"),
+    ],
+    ids=[
+        "literal",
+        "empty_literal",
+        "store_context",
+        "call",
+        "call_no_arg",
+        "method_named_list",
+    ],
+)
+def test_list_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_poop_list() -> None:

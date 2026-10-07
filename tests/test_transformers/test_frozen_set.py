@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 
 import pytest
@@ -12,37 +11,22 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.range import Range
 from poop.types.tuple import Tuple
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, FrozenSetTransformer())
-
-
-def test_frozenset_call_is_rewritten() -> None:
-    tree = _transform("frozenset(x)")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_frozenset_from"
+_rewritten = partial(rewritten, FrozenSetTransformer())
 
 
-def test_frozenset_call_no_arg_is_rewritten() -> None:
-    tree = _transform("frozenset()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_frozenset_from"
-    assert len(expr.value.args) == 0
-
-
-def test_method_named_frozenset_is_not_rewritten() -> None:
-    tree = _transform("x.frozenset()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "frozenset"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("frozenset(x)", "_poop_frozenset_from(x)"),
+        ("frozenset()", "_poop_frozenset_from()"),
+        ("x.frozenset()", "x.frozenset()"),
+    ],
+    ids=["call", "call_no_arg", "method_named_frozenset"],
+)
+def test_frozenset_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_poop_frozenset_from() -> None:

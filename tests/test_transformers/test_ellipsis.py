@@ -2,6 +2,7 @@ import ast
 
 from poop.transformers.ellipsis import EllipsisTransformer
 from poop.types.ellipsis import ellipsis
+from tests._support import rewritten
 
 
 def _run(source: str) -> dict[str, object]:
@@ -26,11 +27,7 @@ def test_ellipsis_in_a_collection_is_transformed() -> None:
 
 def test_bare_ellipsis_statement_is_transformed() -> None:
     # A stub body evaluates and discards, but must not evaluate a raw primitive.
-    tree = EllipsisTransformer().transform(ast.parse("..."))
-    stmt = tree.body[0]
-    assert isinstance(stmt, ast.Expr)
-    assert isinstance(stmt.value, ast.Name)
-    assert stmt.value.id == "_poop_ellipsis"
+    assert rewritten(EllipsisTransformer(), "...") == "_poop_ellipsis"
 
 
 def test_other_constants_are_left_alone() -> None:
