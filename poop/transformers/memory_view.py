@@ -17,9 +17,7 @@ def _poop_memoryview_from(*args: object, **kwargs: object) -> MemoryView:
         hint="write memoryview(b) over the buffer you mean",
     )
     arg = args[0] if args else None
-    if isinstance(arg, Bytes):
-        return MemoryView(memoryview(arg._value))
-    if isinstance(arg, ByteArray):
+    if isinstance(arg, Bytes | ByteArray):
         return MemoryView(memoryview(arg._value))
     raise MIRRORS["TypeError"](
         f"memoryview: a bytes-like object is required, not {type(arg).__qualname__}"
