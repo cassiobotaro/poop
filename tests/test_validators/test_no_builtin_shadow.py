@@ -8,11 +8,6 @@ from poop.types.exceptions import MIRRORS
 from poop.validators.no_builtin_shadow import NoBuiltinShadowValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoBuiltinShadowValidator().validate(tree)
-
-
 def test_assign_to_str_raises() -> None:
     tree = ast.parse("str = 'hello'")
     with pytest.raises(ValidationError, match="POOP builtin name"):

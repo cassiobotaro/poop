@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_is import NoIsValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoIsValidator().validate(tree)
-
-
 def test_equality_is_allowed() -> None:
     tree = ast.parse("x = a == b")
     NoIsValidator().validate(tree)

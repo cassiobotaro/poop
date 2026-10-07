@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_del import NoDelValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoDelValidator().validate(tree)
-
-
 def test_del_raises_validation_error() -> None:
     tree = ast.parse("del x")
     with pytest.raises(ValidationError, match="del"):

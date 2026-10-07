@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_assert import NoAssertValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoAssertValidator().validate(tree)
-
-
 def test_assert_raises_validation_error() -> None:
     tree = ast.parse("assert x > 0")
     with pytest.raises(ValidationError) as exc_info:

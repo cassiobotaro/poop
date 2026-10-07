@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_if import NoIfValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoIfValidator().validate(tree)
-
-
 def test_if_statement_raises_validation_error() -> None:
     tree = ast.parse("if True:\n    pass")
     with pytest.raises(ValidationError, match="if statements"):

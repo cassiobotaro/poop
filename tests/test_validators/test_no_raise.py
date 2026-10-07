@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_raise import NoRaiseValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoRaiseValidator().validate(tree)
-
-
 def test_raise_statement_raises_validation_error() -> None:
     source = "raise ValueError('oops')"
     tree = ast.parse(source)

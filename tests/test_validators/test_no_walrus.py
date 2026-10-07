@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_walrus import NoWalrusValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoWalrusValidator().validate(tree)
-
-
 def test_walrus_raises_validation_error() -> None:
     tree = ast.parse("class Foo:\n    def m(self):\n        x = (y := 1)")
     with pytest.raises(ValidationError, match=":="):

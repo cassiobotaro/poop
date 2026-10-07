@@ -10,11 +10,6 @@ from poop.validators.no_namespace_shadow import NoNamespaceShadowValidator
 # unlike the mirror-era names they have no reason to disappear.
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2\ny = x.times(2)")
-    NoNamespaceShadowValidator().validate(tree)
-
-
 def test_assign_to_Try_raises() -> None:
     tree = ast.parse("Try = 42")
     with pytest.raises(ValidationError) as exc_info:

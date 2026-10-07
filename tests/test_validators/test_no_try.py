@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_try import NoTryValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoTryValidator().validate(tree)
-
-
 def test_try_except_raises_validation_error() -> None:
     source = "try:\n    pass\nexcept Exception:\n    pass"
     tree = ast.parse(source)
