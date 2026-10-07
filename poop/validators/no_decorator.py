@@ -55,19 +55,16 @@ class _NoDecoratorVisitor(ErrorCollector):
                 decorator,
             )
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+    def _visit_decorated(
+        self, node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> None:
         self._check(node)
         self.generic_visit(node)
 
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        # `async def` is rejected by `no_async` in its own right, but a
-        # decorator on one must not slip through on the way.
-        self._check(node)
-        self.generic_visit(node)
-
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        self._check(node)
-        self.generic_visit(node)
+    # Every node that carries a `decorator_list`. `async def` is rejected by
+    # `no_async` in its own right, but a decorator on one must not slip through
+    # on the way.
+    visit_FunctionDef = visit_AsyncFunctionDef = visit_ClassDef = _visit_decorated
 
 
 class NoDecoratorValidator(CollectingValidator):

@@ -83,11 +83,7 @@ class _Visitor(ErrorCollector):
         self.generic_visit(node)
         self._in_class_body = outer
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        self._visit_function(node)
-
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self._visit_function(node)
+    visit_FunctionDef = visit_AsyncFunctionDef = _visit_function
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
         # Lambdas are POOP's block form and carry most user code, so the
