@@ -104,6 +104,12 @@ class _SetAlgebraMixin:
             return NotImplemented
         return self._rewrap(op(self._data, raw))
 
+    def _compare(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
+        raw = _other_set(other)
+        if raw is None:
+            return NotImplemented
+        return to_boolean(op(self._data, raw))
+
     def __len__(self) -> int:
         return len(self._data)
 
@@ -131,25 +137,13 @@ class _SetAlgebraMixin:
     # augmented comparison falls through to ``Object`` and raises ``TypeError``.
     # Equality (``==``/``!=``) stays with ``_ValueEqMixin``.
     def __le__(self, other: object) -> Boolean:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return to_boolean(self._data <= raw)
+        return self._compare(other, operator.le)
 
     def __lt__(self, other: object) -> Boolean:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return to_boolean(self._data < raw)
+        return self._compare(other, operator.lt)
 
     def __ge__(self, other: object) -> Boolean:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return to_boolean(self._data >= raw)
+        return self._compare(other, operator.ge)
 
     def __gt__(self, other: object) -> Boolean:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        return to_boolean(self._data > raw)
+        return self._compare(other, operator.gt)

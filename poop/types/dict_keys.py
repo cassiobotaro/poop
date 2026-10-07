@@ -1,16 +1,10 @@
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Any, final
 
 from poop.types._argument import a_collection
-from poop.types._dict_view import (
-    _DictView,
-    _elements,
-    _operand,
-    _set_like_elements,
-)
-from poop.types.boolean import false, to_boolean, true
+from poop.types._dict_view import _elements, _SetLikeView
+from poop.types.boolean import to_boolean
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
-from poop.types.set import Set
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -20,13 +14,13 @@ if TYPE_CHECKING:
 
 
 @final
-class DictKeys(_DictView, name="dict_keys"):
+class DictKeys(_SetLikeView, name="dict_keys"):
     """Live view over a Dict's keys, mirroring Python's dict_keys."""
 
     __slots__ = ()
-    # Set-like and compared by contents, which change under it: unhashable,
-    # as in CPython. `dict_values` is neither, and hashes by identity.
-    __hash__ = None  # type: ignore[assignment]
+
+    def _own(self) -> Any:
+        return self._dict._data.keys()
 
     def __iter__(self) -> Iterator[Object]:
         return iter(self._dict._data)
@@ -48,90 +42,8 @@ class DictKeys(_DictView, name="dict_keys"):
 
     def isdisjoint(self, other: object) -> Boolean:
         return to_boolean(
-            self._dict._data.keys().isdisjoint(
-                _elements(a_collection(other, "isdisjoint"))
-            )
+            self._own().isdisjoint(_elements(a_collection(other, "isdisjoint")))
         )
-
-    def __or__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(self._dict._data.keys() | raw))
-
-    def __ror__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(raw | self._dict._data.keys()))
-
-    def __and__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(self._dict._data.keys() & raw))
-
-    def __rand__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(raw & self._dict._data.keys()))
-
-    def __sub__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(self._dict._data.keys() - raw))
-
-    def __rsub__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(raw - self._dict._data.keys()))
-
-    def __xor__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(self._dict._data.keys() ^ raw))
-
-    def __rxor__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(raw ^ self._dict._data.keys()))
-
-    def __eq__(self, other: object) -> Boolean:
-        # Equality answers false for a non-set-like operand rather than
-        # raising, exactly as `dict.keys() == [...]` does in CPython.
-        raw = _set_like_elements(other)
-        if raw is None:
-            return false
-        return true if set(self._dict._data.keys()) == raw else false
-
-    def __le__(self, other: object) -> Boolean:
-        raw = _set_like_elements(other)
-        if raw is None:
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._dict._data.keys() <= raw)
-
-    def __lt__(self, other: object) -> Boolean:
-        raw = _set_like_elements(other)
-        if raw is None:
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._dict._data.keys() < raw)
-
-    def __ge__(self, other: object) -> Boolean:
-        raw = _set_like_elements(other)
-        if raw is None:
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._dict._data.keys() >= raw)
-
-    def __gt__(self, other: object) -> Boolean:
-        raw = _set_like_elements(other)
-        if raw is None:
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._dict._data.keys() > raw)
 
     def _repr_items(self) -> str:
         return ", ".join(repr(k) for k in self._dict._data)

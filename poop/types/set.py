@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, ClassVar, Self
+import operator
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from poop.types._at import no_element_equal_to, nothing_to_remove
 from poop.types._cloak import cloak
@@ -17,7 +18,7 @@ from poop.types.object import Object
 from poop.types.set_iterator import SetIterator
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
@@ -123,38 +124,29 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     def iter(self) -> SetIterator:
         return SetIterator(self._data)
 
+    def _inplace(self, other: object, op: Callable[[Any, Any], Any]) -> Self:
+        raw = _other_set(other)
+        if raw is None:
+            return NotImplemented
+        op(self._data, raw)
+        return self
+
     # In-place set operators mutate the receiver (CPython ``s |= other`` keeps
     # ``s``'s identity, so aliases observe the change). Without these, augmented
     # assignment would fall back to the binary ``__or__``/... from
     # _SetAlgebraMixin, rebind the name to a fresh Set, and silently leave any
     # alias pointing at the unchanged original.
     def __ior__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        self._data |= raw
-        return self
+        return self._inplace(other, operator.ior)
 
     def __iand__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        self._data &= raw
-        return self
+        return self._inplace(other, operator.iand)
 
     def __isub__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        self._data -= raw
-        return self
+        return self._inplace(other, operator.isub)
 
     def __ixor__(self, other: object) -> Self:
-        raw = _other_set(other)
-        if raw is None:
-            return NotImplemented
-        self._data ^= raw
-        return self
+        return self._inplace(other, operator.ixor)
 
     def __str__(self) -> str:
         if not self._data:
