@@ -16,28 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 4. The CLI writes each stream through two unrelated paths
-
-`poop/console.py` exists so colour is decided per destination, and the REPL's
-`_say` was added because it had "two paths to one stream". `main` in
-`poop/cli.py` still has the split: `PoopError`s and the coloured AST dump go
-through `report(..., ERR)` and `OUT.print`, while the two read failures,
-`No validation errors.` and the plain dump go through `typer.echo`. A
-`NO_COLOR`/pipe decision is made by rich for one line and by click for the next.
-
-The two `except` branches around `read_text` differ only in
-`exc.strerror`/`exc.reason`, and `main` does four jobs: read, validate-only,
-transform-only, run.
-
-**Fix.** Route everything through the two consoles — `ERR.print(..., markup=False,
-highlight=False)` for the read failures, `OUT.print` for the rest — and the
-`in_colour(OUT)` branch becomes one `OUT.print(Syntax(...) if in_colour(OUT)
-else code)`. A `_read_source(file) -> str` owns the two `except`s. `Console()`
-resolves `sys.stdout` lazily, so `CliRunner` captures it exactly as it already
-captures `report(..., ERR)` in `tests/test_cli.py`. While there,
-`--validators-only --transformers-only` together silently runs the first;
-one `typer.BadParameter` says so.
-
 ### 5. Two validators re-implement `NodeVisitor` dispatch by hand
 
 `_Visitor` in `poop/validators/no_namespace_shadow.py` (shared by
