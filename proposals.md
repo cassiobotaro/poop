@@ -16,30 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 11. The scalars wire their operators the long way round
-
-- `__rand__`, `__ror__`, `__rxor__` on `Int` and `__radd__`, `__rmul__` on
-  `Complex` go through `_bitwise(..., reflected=True)` / `_arith(...,
-  reflected=True)`, though `&`, `|`, `^`, `+`, `*` commute. The codebase's own
-  idiom is `__rmul__ = __mul__` (`_sequence.py`, `string.py`,
-  `_bytes_like.py`). Only the two shifts and `-`, `/`, `**` on `Complex` need
-  the swapped form.
-- `abs`, `ceil`, `floor`, `trunc`, `round` on `Int` and `Float` are written
-  as `def abs(self): return self.__abs__()` — the message calling the dunder,
-  the opposite of `Complex.__neg__ = ... self.negated()` and of CONTRIBUTING's
-  "wire dunders to public methods". Ten two-line pairs become `__abs__ = abs`
-  one-liners, the way `__repr__ = __str__` already reads; the qualname a
-  wrong-arity call reports stays `int.abs`. `Int.__ceil__`, `__floor__` and
-  `__trunc__` are three copies of `return self`.
-- `Complex._coerce` is the `Int | Float | Boolean` chain of
-  `_numeric_compare._num_value` with a `None` sentinel where the rest of the
-  tower uses `NOT_NUMERIC`; `_numeric_compare` has no top-level POOP imports,
-  so `complex.py` can call it.
-
-**Fix.** Aliases for the commutative reflections; message once, dunder
-aliased, for the five unary pairs; `_coerce` through `_num_value`. No wording
-changes.
-
 ### 12. `_IterableMixin` hand-rolls `find`, `sum`, `all` and `any`
 
 `find` is a `for`/`if`/`return` with a `none` tail — `next((item for item in
