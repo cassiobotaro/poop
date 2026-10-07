@@ -18,11 +18,11 @@ from poop.types._affix import affix_needle
 from poop.types._argument import (
     a_bound,
     a_collection,
+    a_fill,
     a_needle,
     an_int,
     bytes_like,
     max_split,
-    text_like,
 )
 from poop.types._at import at_index
 from poop.types._cloak import cloak
@@ -152,14 +152,10 @@ class _BytesLikeMixin[B: Object]:
         return self._rewrap(self._value.capitalize())
 
     def center(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return self._rewrap(self._value.center(an_int(width, "center", "width")))
+        w = an_int(width, "center", "width")
+        fill = a_fill(fillchar, "center", "one byte", (bytes, bytearray))
         return self._rewrap(
-            self._value.center(
-                an_int(width, "center", "width"),
-                text_like(fillchar, "center", "one byte"),
-            )
+            self._value.center(w) if fill is None else self._value.center(w, fill)
         )
 
     def count(
@@ -261,14 +257,10 @@ class _BytesLikeMixin[B: Object]:
         return self._rewrap(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return self._rewrap(self._value.ljust(an_int(width, "ljust", "width")))
+        w = an_int(width, "ljust", "width")
+        fill = a_fill(fillchar, "ljust", "one byte", (bytes, bytearray))
         return self._rewrap(
-            self._value.ljust(
-                an_int(width, "ljust", "width"),
-                text_like(fillchar, "ljust", "one byte"),
-            )
+            self._value.ljust(w) if fill is None else self._value.ljust(w, fill)
         )
 
     def lower(self) -> B:
@@ -340,14 +332,10 @@ class _BytesLikeMixin[B: Object]:
         )
 
     def rjust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return self._rewrap(self._value.rjust(an_int(width, "rjust", "width")))
+        w = an_int(width, "rjust", "width")
+        fill = a_fill(fillchar, "rjust", "one byte", (bytes, bytearray))
         return self._rewrap(
-            self._value.rjust(
-                an_int(width, "rjust", "width"),
-                text_like(fillchar, "rjust", "one byte"),
-            )
+            self._value.rjust(w) if fill is None else self._value.rjust(w, fill)
         )
 
     def rpartition(self, sep: BytesLike) -> Tuple:

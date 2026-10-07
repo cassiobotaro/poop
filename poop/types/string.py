@@ -7,6 +7,7 @@ from poop.types._affix import affix_needle
 from poop.types._argument import (
     a_bound,
     a_collection,
+    a_fill,
     a_needle,
     an_int,
     max_split,
@@ -443,10 +444,11 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Str(self._value.casefold())
 
     def center(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return Str(self._value.center(an_int(width, "center", "width")))
-        return Str(self._value.center(an_int(width, "center", "width"), fill))
+        w = an_int(width, "center", "width")
+        fill = a_fill(fillchar, "center", "one character", (str,))
+        return Str(
+            self._value.center(w) if fill is None else self._value.center(w, fill)
+        )
 
     def encode(
         self,
@@ -486,16 +488,14 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return to_boolean(self._value.istitle())
 
     def ljust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return Str(self._value.ljust(an_int(width, "ljust", "width")))
-        return Str(self._value.ljust(an_int(width, "ljust", "width"), fill))
+        w = an_int(width, "ljust", "width")
+        fill = a_fill(fillchar, "ljust", "one character", (str,))
+        return Str(self._value.ljust(w) if fill is None else self._value.ljust(w, fill))
 
     def rjust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return Str(self._value.rjust(an_int(width, "rjust", "width")))
-        return Str(self._value.rjust(an_int(width, "rjust", "width"), fill))
+        w = an_int(width, "rjust", "width")
+        fill = a_fill(fillchar, "rjust", "one character", (str,))
+        return Str(self._value.rjust(w) if fill is None else self._value.rjust(w, fill))
 
     def zfill(self, width: Int) -> Str:
         return Str(self._value.zfill(an_int(width, "zfill", "width")))

@@ -1014,3 +1014,21 @@ def test_the_partition_pair_names_the_message_as_a_message(selector: str) -> Non
 def test_the_strip_family_still_takes_no_argument() -> None:
     assert Str("  a  ").strip() == Str("a")
     assert Str("xxaxx").strip(Str("x")) == Str("a")
+
+
+@pytest.mark.parametrize("selector", ["center", "ljust", "rjust"])
+@pytest.mark.parametrize(
+    ("fill", "expected"),
+    [
+        (Int(1), "#{} expects one character, got an int"),
+        (Str("xy"), "#{} expects one character, got a str of length 2"),
+        (Str(""), "#{} expects one character, got a str of length 0"),
+    ],
+    ids=["int", "two-characters", "empty"],
+)
+def test_a_wrong_fill_is_refused_in_poops_words(
+    selector: str, fill: object, expected: str
+) -> None:
+    """CPython answered `The fill character must be ...` for all three."""
+    with pytest.raises(TypeError, match=f"^{expected.format(selector)}$"):
+        getattr(Str("ab"), selector)(Int(6), fill)

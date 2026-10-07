@@ -148,6 +148,30 @@ def a_needle(
     )
 
 
+def a_fill(value: Any, selector: str, expected: str, kinds: tuple[type, ...]) -> Any:
+    """The optional fill of `center` / `ljust` / `rjust`, or POOP's refusal.
+
+    `None` when the fill is absent. CPython words a wrong fill three ways, none
+    of them POOP's: `The fill character must be a unicode character, not int`,
+    `The fill character must be exactly one character long`, and on the byte
+    twins `center(): argument 2 must be a byte string of length 1, not a bytes
+    object of length 2` — the message spelt as a call. `Str` reached all of
+    them unguarded, and the byte twins guarded the type but not the length.
+    """
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _is_absent  # noqa: PLC0415
+
+    if _is_absent(value):
+        return None
+    raw = text_like(value, selector, expected, kinds)
+    if len(raw) != 1:
+        raise MIRRORS["TypeError"](
+            f"#{selector} expects {expected}, "
+            f"got {article(type(value).__name__)} of length {len(raw)}"
+        )
+    return raw
+
+
 def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
     """The raw bytes behind an argument, or POOP's refusal.
 
