@@ -278,12 +278,12 @@ def _refuse_native(cls: type, name: str, instead: str) -> Never:
 # builtin it stands for. `__bool__` was worse (`should return bool, returned
 # bool`), and `__hash__` printed `__poop__.P`, the marker `_reject_builtin`
 # uses to tell a user's class from a builtin.
-_PROTOCOL_SLOTS: dict[str, tuple[type, str, str]] = {
-    "__str__": (str, "str", "text"),
-    "__repr__": (str, "str", "repr"),
-    "__bool__": (bool, "bool", "truth"),
-    "__hash__": (int, "int", "hash"),
-    "__len__": (int, "int", "length"),
+_PROTOCOL_SLOTS: dict[str, tuple[type, str]] = {
+    "__str__": (str, "text"),
+    "__repr__": (str, "repr"),
+    "__bool__": (bool, "truth"),
+    "__hash__": (int, "hash"),
+    "__len__": (int, "length"),
 }
 
 
@@ -295,7 +295,7 @@ def _adapted(slot: str, method: Any) -> Any:
     pass through untouched: `to_python` is identity for a value that is
     already one.
     """
-    native, spelling, role = _PROTOCOL_SLOTS[slot]
+    native, role = _PROTOCOL_SLOTS[slot]
 
     @wraps(method)
     def answer(self: Any, *args: Any, **kwargs: Any) -> Any:
@@ -321,7 +321,7 @@ def _adapted(slot: str, method: Any) -> Any:
         # which calls `str` the thing that is not a `str`.
         raise MIRRORS["TypeError"](
             f"{type(self).__name__}'s {role} must be "
-            f"{article(spelling)}, got {article(type(value).__name__)}"
+            f"{article(native.__name__)}, got {article(type(value).__name__)}"
         )
 
     return answer
@@ -398,10 +398,9 @@ class PoopMeta(type):
 
         # Smalltalk answers nil for Object superclass, which is also how the
         # raw Python `object` at the root stays out of reach.
-        bases = [base for base in cls.__bases__ if isinstance(base, PoopMeta)]
-        if not bases:
+        first = next((b for b in cls.__bases__ if isinstance(b, PoopMeta)), None)
+        if first is None:
             return none
-        first = bases[0]
         # An alias's one base is the wrapper it stands for, and both are
         # cloaked under the builtin's name — so climbing from a bare builtin
         # name met a rung that is not there: `int.superclass()` answered a
@@ -436,10 +435,11 @@ class PoopMeta(type):
         return to_boolean(unalias(cls) is unalias(other))
 
     def __ne__(cls, other: object) -> Boolean:
-        from poop.types._alias import unalias
+        # The rule lives in `__eq__` alone, as `Object.__ne__` keeps it: a
+        # second copy with the answer flipped is one to keep in step by hand.
         from poop.types.boolean import to_boolean
 
-        return to_boolean(unalias(cls) is not unalias(other))
+        return to_boolean(not bool(cls == other))
 
     # Defining `__eq__` sets `__hash__` to None, which would make every POOP
     # class unhashable — `NATIVE_TO_POOP` keys on classes, and so does every
