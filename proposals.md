@@ -16,21 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 12. `_IterableMixin` hand-rolls `find`, `sum`, `all` and `any`
-
-`find` is a `for`/`if`/`return` with a `none` tail — `next((item for item in
-... if block(item)), none)`. `sum` spells the empty case as a `try/except
-StopIteration` around `next(items)` — `next(items, Int(0))` — and folds with
-`lambda a, b: a + b` — `operator.add`. `all` and `any` wrap each answer in
-`bool(...)` inside `builtins.all` / `builtins.any`, which truth-test their
-elements themselves; `Boolean.__bool__` is what makes that work, and `find`'s
-`if bool(block(item))` is the same redundancy. `builtins.sum` stays avoided for
-the `__radd__` reason CLAUDE.md records.
-
-**Fix.** The four spellings above; `all`/`any` become
-`to_boolean(builtins.all(map(block, self._iter_items())))`. Semantics are
-identical and the existing tests cover all four.
-
 ### 13. Wrappers are rebuilt from a raw payload the long way round
 
 - `Dict.fromkeys` in `poop/types/dict.py` is a `for` loop over `d._data[k] =
