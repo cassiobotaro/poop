@@ -2,7 +2,7 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 4–12 come from a Pythonic-code review of the whole package and the test
+Items 5–12 come from a Pythonic-code review of the whole package and the test
 suite, after the wording sweeps closed. They remove duplication or hand-rolled
 spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -13,19 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 4. `List` and `Tuple` spell thirteen methods twice
-
-`len`, `__len__`, `slice`, `__add__`, `__mul__`, `__rmul__`, `__iter__`,
-`includes`, `__contains__`, `sorted`, `reversed`, `count`, `index` and `print`
-in `poop/types/list.py` and `poop/types/tuple.py` differ only in whether the
-result is built with `List(...)` or `Tuple(...)`; `print` is byte-identical,
-and `index` carries the same five-line comment in both files.
-
-**Fix.** A `_SequenceMixin` holding `_items` and the `_rewrap(raw)` hook of
-item 1, with the thirteen bodies written once. `List` keeps its mutators;
-`Tuple` keeps `__hash__`. About ninety lines go, and the next `index`-style
-fix lands in one place.
 
 ### 5. The `NotImplemented` tail is hand-written thirty-five times
 
