@@ -164,14 +164,15 @@ class Int(_NumericCompareMixin, Object):
         reflected method runs — `Str`/`Bytes` repeat for `*`, `Boolean` and
         `Complex` for the rest.
         """
-        # circular: float imports int
+        # circular: float imports int, and _bridge imports both
+        from poop.types._bridge import to_poop  # noqa: PLC0415
         from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented
-        if isinstance(other, Float):
-            return Float(op(self._value, other._value))
-        return Int(op(self._value, other._value))
+        # `to_poop` is the raw-to-POOP dispatch: an `int` answer is an `Int`,
+        # a `float` one a `Float`, whichever operator produced it.
+        return to_poop(op(self._value, other._value))
 
     def __add__(self, other: object) -> Int | Float:
         return self._arith(other, operator.add)
@@ -183,12 +184,8 @@ class Int(_NumericCompareMixin, Object):
         return self._arith(other, operator.mul)
 
     def __truediv__(self, other: object) -> Float:
-        # circular: float imports int
-        from poop.types.float import Float  # noqa: PLC0415
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rtruediv__ run
-        return Float(self._value / other._value)
+        # `/` answers a `float` on every pair, so `_arith` answers a `Float`.
+        return cast("Float", self._arith(other, operator.truediv))
 
     def __floordiv__(self, other: object) -> Int | Float:
         return self._arith(other, operator.floordiv)
@@ -199,7 +196,8 @@ class Int(_NumericCompareMixin, Object):
     def __pow__(
         self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
-        # circular: float imports int
+        # circular: float imports int, and _bridge imports both
+        from poop.types._bridge import to_poop  # noqa: PLC0415
         from poop.types.float import Float  # noqa: PLC0415
 
         if isinstance(other, Complex):
@@ -207,12 +205,7 @@ class Int(_NumericCompareMixin, Object):
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
         if _is_absent(modulus):
-            result = self._value**other._value
-            if isinstance(result, complex):
-                return Complex(result)
-            if isinstance(result, float):
-                return Float(result)
-            return Int(result)
+            return to_poop(self._value**other._value)
         if isinstance(other, Float):
             raise MIRRORS["TypeError"](
                 "pow's modulus is only defined when both operands are ints"

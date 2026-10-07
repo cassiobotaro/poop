@@ -131,10 +131,10 @@ class Float(_NumericCompareMixin, Object):
             return NotImplemented
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
-        result = self._value**other._value
-        if isinstance(result, complex):
-            return Complex(result)
-        return Float(result)
+        # circular: _bridge imports float
+        from poop.types._bridge import to_poop  # noqa: PLC0415
+
+        return to_poop(self._value**other._value)
 
     def pow(
         self, other: object, modulus: Int | NoneClass | None = None
@@ -198,9 +198,10 @@ class Float(_NumericCompareMixin, Object):
         return self.__trunc__()
 
     def __round__(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
-        n = an_int(ndigits, "round", "ndigits", None)
-        result = round(self._value, n)
-        return Int(result) if isinstance(result, int) else Float(result)
+        # circular: _bridge imports float
+        from poop.types._bridge import to_poop  # noqa: PLC0415
+
+        return to_poop(round(self._value, an_int(ndigits, "round", "ndigits", None)))
 
     def round(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
         return self.__round__(ndigits)
