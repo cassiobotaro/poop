@@ -24,14 +24,13 @@ class DictValues(_DictView, name="dict_values"):
     def iter(self) -> DictValueIterator:
         return DictValueIterator(self._dict._data.values())
 
-    def __reversed__(self) -> DictReverseValueIterator:
-        return DictReverseValueIterator(reversed(self._dict._data.values()))
-
     def reversed(self) -> DictReverseValueIterator:
         return DictReverseValueIterator(reversed(self._dict._data.values()))
 
+    __reversed__ = reversed
+
     def includes(self, value: Object) -> Boolean:
-        return to_boolean(value in self._dict._data.values())
+        return to_boolean(value in self)
 
     def __contains__(self, item: object) -> bool:
         return item in self._dict._data.values()

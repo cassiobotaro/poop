@@ -28,14 +28,13 @@ class DictKeys(_SetLikeView, name="dict_keys"):
     def iter(self) -> DictKeyIterator:
         return DictKeyIterator(self._dict._data)
 
-    def __reversed__(self) -> DictReverseKeyIterator:
-        return DictReverseKeyIterator(reversed(self._dict._data))
-
     def reversed(self) -> DictReverseKeyIterator:
         return DictReverseKeyIterator(reversed(self._dict._data))
 
+    __reversed__ = reversed
+
     def includes(self, key: Object) -> Boolean:
-        return to_boolean(key in self._dict._data)
+        return to_boolean(key in self)
 
     def __contains__(self, item: object) -> bool:
         return item in self._dict._data

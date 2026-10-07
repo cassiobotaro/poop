@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._set_algebra import _elements, _SetAlgebraMixin, probed
+from poop.types._set_algebra import _elements, _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.frozen_set_iterator import FrozenSetIterator
@@ -24,7 +24,7 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         self._data: frozenset[Object] = frozenset(elements)
 
     def includes(self, obj: Object) -> Boolean:
-        return to_boolean(probed(obj) in self._data)
+        return to_boolean(obj in self)
 
     def len(self) -> Int:
         return Int(len(self._data))

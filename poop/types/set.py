@@ -113,7 +113,7 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
         return to_boolean(self._data.issuperset(_elements(other, "issuperset")))
 
     def includes(self, obj: Object) -> Boolean:
-        return to_boolean(probed(obj) in self._data)
+        return to_boolean(obj in self)
 
     def len(self) -> Int:
         return Int(len(self._data))

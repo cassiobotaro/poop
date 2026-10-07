@@ -71,7 +71,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         return self
 
     def includes(self, key: Object) -> Boolean:
-        return to_boolean(key in self._data)
+        return to_boolean(key in self)
 
     def __eq__(self, other: object) -> Boolean:
         # CPython: ``dict == mappingproxy`` is True by value. A MappingProxy is

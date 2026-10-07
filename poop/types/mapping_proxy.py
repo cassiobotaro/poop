@@ -65,11 +65,10 @@ class MappingProxy(_IterableMixin, Object):
     def iter(self) -> DictKeyIterator:
         return DictKeyIterator(self._dict._data)
 
-    def __reversed__(self) -> DictReverseKeyIterator:
-        return DictReverseKeyIterator(reversed(self._dict._data))
-
     def reversed(self) -> DictReverseKeyIterator:
         return DictReverseKeyIterator(reversed(self._dict._data))
+
+    __reversed__ = reversed
 
     def __contains__(self, item: object) -> bool:
         return item in self._dict
