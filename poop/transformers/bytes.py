@@ -1,16 +1,13 @@
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.string import Str
-
-if TYPE_CHECKING:
-    import ast
 
 
 def _poop_bytes_from(*args: object, **kwargs: object) -> Bytes:
@@ -63,11 +60,8 @@ class _BytesRewriter(BuiltinRewriter):
     builtin = "bytes"
     call_target = "_poop_bytes_from"
     name_target = "_poop_bytes_cls"
-
-    def visit_Constant(self, node: ast.Constant) -> ast.AST:
-        if isinstance(node.value, bytes):
-            return call_at("_poop_bytes", [node], node)
-        return node
+    literal_type = bytes
+    literal_target = "_poop_bytes"
 
 
 class BytesTransformer(BaseTransformer):

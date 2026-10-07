@@ -1,7 +1,5 @@
-import ast
-
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean
 from poop.types.exceptions import MIRRORS
@@ -45,23 +43,8 @@ class _FloatRewriter(BuiltinRewriter):
     builtin = "float"
     call_target = "_poop_float_from"
     name_target = "_poop_float_cls"
-
-    def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
-        # `-5` parses as `USub(Constant(5))`; folded here so the literal is one
-        # value, not a message sent to a positive one.
-        if (
-            isinstance(node.op, ast.USub)
-            and isinstance(node.operand, ast.Constant)
-            and isinstance(node.operand.value, float)
-        ):
-            folded = ast.copy_location(ast.Constant(value=-node.operand.value), node)
-            return call_at("_poop_float", [folded], node)
-        return self.generic_visit(node)
-
-    def visit_Constant(self, node: ast.Constant) -> ast.AST:
-        if isinstance(node.value, float):
-            return call_at("_poop_float", [node], node)
-        return node
+    literal_type = float
+    literal_target = "_poop_float"
 
 
 class FloatTransformer(BaseTransformer):

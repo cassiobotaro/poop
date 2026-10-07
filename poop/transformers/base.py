@@ -70,6 +70,11 @@ class BuiltinRewriter(ast.NodeTransformer):
     builtin: ClassVar[str]
     call_target: ClassVar[str]
     name_target: ClassVar[str]
+    # The literal this builtin owns, if any, and the binding that wraps it:
+    # `5` becomes `_poop_int(5)`. `type(value) is literal_type`, not
+    # `isinstance`, so `True` is never read as an int.
+    literal_type: ClassVar[type | None] = None
+    literal_target: ClassVar[str]
 
     def is_builtin(self, name: str) -> bool:
         return name == self.builtin
@@ -92,3 +97,20 @@ class BuiltinRewriter(ast.NodeTransformer):
         if self.is_builtin(node.id):
             return name_at(self.name_target, node, node.ctx)
         return node
+
+    def visit_Constant(self, node: ast.Constant) -> ast.AST:
+        if self.literal_type is not None and type(node.value) is self.literal_type:
+            return call_at(self.literal_target, [node], node)
+        return node
+
+    def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.AST:
+        # `-5` parses as `USub(Constant(5))`; folded here so the literal is one
+        # value, not a message sent to a positive one. Only the two real
+        # numbers have a negative literal.
+        match node:
+            case ast.UnaryOp(
+                op=ast.USub(), operand=ast.Constant(value=int() | float() as value)
+            ) if type(value) is self.literal_type:
+                folded = ast.copy_location(ast.Constant(value=-value), node)
+                return call_at(self.literal_target, [folded], node)
+        return self.generic_visit(node)
