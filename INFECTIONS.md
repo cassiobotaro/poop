@@ -677,6 +677,8 @@ Reuses the namespace-shadow `_Visitor` over every name a transformer rewrites in
 
 The mirrors and `Ellipsis` were the two gaps, and both sides of the hazard were live. An assignment target *is* an `ast.Name`, so `ValueError = 5` became `_poop_ValueError = 5` and clobbered the mirror for the rest of the program; a parameter (`ast.arg`) and a class name (`ClassDef.name`) are *not*, so they kept their spelling while every read of them in the body still rewrote to the mirror — `def hold(self, ValueError): return ValueError` answered the class and never saw its argument, and `class KeyError(Object)` defined a class no program could then name. `Ellipsis` was the sharpest, because it is the named spelling of a *literal*: after `Ellipsis = 5`, `...` itself answered `5`. The mirror half of the set is derived from `MIRRORS` rather than written out, for the reason `no_namespace_shadow` reads `DEFAULT_NAMESPACE` — a seventeenth mirror cannot be added without the reservation following it.
 
+**The rewriters' half is derived, as the mirrors' half always was.** It used to be a table of twenty names in the validator, while its own comment argued that the mirrors had to be derived so a new one could not ship without its reservation — the hazard the table reopened for the next rewriter. Each rewriter now declares `names`, every spelling it claims (`{builtin}` by default; `object` and `Object` on the root's; `Ellipsis` on the ellipsis rewriter), and `RESERVED_NAMES` in `poop/transformers/_registry.py` unions them over the registered transformers, beside the `DEFAULT_NAMESPACE` it is built like.
+
 ### No `sum` — `poop/validators/no_sum.py`
 
 | Call | Reason | Substitute |

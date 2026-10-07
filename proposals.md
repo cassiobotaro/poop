@@ -2,7 +2,7 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 8–12 come from a Pythonic-code review of the whole package and the test
+Items 9–12 come from a Pythonic-code review of the whole package and the test
 suite, after the wording sweeps closed. They remove duplication or hand-rolled
 spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -13,24 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 8. `no_builtin_shadow` tabulates by hand the set the rewriters already know
-
-`_BUILTIN_NAMES` in `poop/validators/no_builtin_shadow.py` lists twenty names.
-They are exactly the `builtin` of the eighteen `BuiltinRewriter` subclasses,
-plus the two spellings `ObjectTransformer` rewrites, plus `Ellipsis`. The
-module's own comment argues that the *mirror* half must be "derived rather
-than tabulated" so a new mirror cannot be added without the reservation
-following it; the builtin half is tabulated, so a new rewriter is exactly
-that hazard.
-
-**Fix.** `names: ClassVar[frozenset[str]]` on `BuiltinRewriter`, defaulting to
-`{builtin}`; `_ObjectRewriter` sets `{"object", "Object"}` and loses its
-`is_builtin` override; `_EllipsisRewriter` gains `{"Ellipsis"}`. The validator
-unions `cls.rewriter.names` over `_TRANSFORMER_CLASSES`.
-`no_namespace_shadow.py` already imports from `poop.transformers`, so no new
-cycle. A test asserting the derived set equals today's literal fails first and
-is then deleted with the literal.
 
 ### 9. The `bytes` and `bytearray` converters are the same function
 
