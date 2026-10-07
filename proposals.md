@@ -16,42 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 5. Two validators re-implement `NodeVisitor` dispatch by hand
-
-`_Visitor` in `poop/validators/no_namespace_shadow.py` (shared by
-`no_builtin_shadow`) carries a recursive `_visit_target` over `Name` / `Tuple`
-/ `List` / `Starred`, three `visit_*Assign` methods that call it, a
-`_check_args` over `iter_params(args)` and a `visit_Lambda` — all to find
-`Name` nodes in `Store` context and `arg` nodes. `no_poop_prefix.py` repeats
-the parameter half. The class *is* an `ast.NodeVisitor`: `generic_visit`
-already recurses into the unpacking forms and into `arguments`, and the two
-hooks that name those nodes are
-
-```python
-def visit_Name(self, node: ast.Name) -> None:
-    if isinstance(node.ctx, ast.Store):
-        self._check(node.id, node)
-
-def visit_arg(self, node: ast.arg) -> None:
-    self._check(node.arg, node)
-```
-
-Verified: `visit_arg` sees every parameter of `def f(a, /, b, *c, d, **e)` and
-of `lambda p, *q, **r`. Error positions are unchanged (both report at the
-`Name` / `arg`). The one widening: `for Try in xs` and `with ... as Try`
-targets are `Store` names, so the shadow validators now also report them, on
-top of `no_loops` / `no_with` — consistent with every validator collecting.
-
-Two more walkers in the same family: `_collect_starred` in
-`poop/transformers/unpack.py` is an accumulator-by-mutation recursion that
-`ast.walk` with a `Starred`-in-`Store` filter writes as one comprehension, and
-`_ClassNames` in `poop/validators/no_private_attribute.py` is a whole visitor
-class whose job is `{n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}`.
-
-**Fix.** The two hooks above; `_visit_target`, the three `visit_*Assign`,
-`_check_args`, `visit_Lambda` and `iter_params` (then without callers) go.
-`ast.walk` for the other two. No existing test flips.
-
 ### 6. `Int` and `Float` re-dispatch a raw result that `to_poop` already dispatches
 
 `to_poop` in `poop/types/_bridge.py` is a `singledispatch` from `int` / `float`
