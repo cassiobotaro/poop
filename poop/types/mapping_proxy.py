@@ -103,28 +103,26 @@ class MappingProxy(_IterableMixin, Object):
             return other._data
         return None
 
-    def _merged(self, other: object, *, reflected: bool) -> Dict:
+    def __or__(self, other: object) -> Dict:
         # circular: dict imports mapping_proxy
         from poop.types.dict import Dict  # noqa: PLC0415
 
         other_data = self._merge_data(other)
         if other_data is None:
             return NotImplemented  # foreign operand -> faithful TypeError
-        left, right = self._dict._data, other_data
-        if reflected:
-            left, right = right, left
-        merged = Dict()
-        merged._data = left | right
-        return merged
-
-    def __or__(self, other: object) -> Dict:
-        return self._merged(other, reflected=False)
+        return Dict._wrapping(self._dict._data | other_data)
 
     def __ror__(self, other: object) -> Dict:
         # CPython: ``dict | mappingproxy`` yields a ``dict`` ({**left, **right}).
         # ``Dict.__or__`` returns NotImplemented for a non-Dict right operand,
         # so Python falls back to this reflected form with ``other`` on the left.
-        return self._merged(other, reflected=True)
+        # circular: dict imports mapping_proxy
+        from poop.types.dict import Dict  # noqa: PLC0415
+
+        other_data = self._merge_data(other)
+        if other_data is None:
+            return NotImplemented
+        return Dict._wrapping(other_data | self._dict._data)
 
     def __str__(self) -> str:
         return f"mappingproxy({self._dict})"

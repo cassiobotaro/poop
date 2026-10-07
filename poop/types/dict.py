@@ -46,6 +46,13 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
     def __init__(self) -> None:
         self._data: dict[Object, Object] = {}
 
+    @classmethod
+    def _wrapping(cls, data: dict[Object, Object]) -> Self:
+        """A `cls` over `data`, a raw dict this call hands over."""
+        wrapped = cls()
+        wrapped._data = data
+        return wrapped
+
     def at(self, key: Object) -> Object:
         return at_key(self._data, key, self)
 
@@ -88,10 +95,7 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         cls, keys: Iterable[Object], value: Object | NoneClass | None = None
     ) -> Dict:
         fill: Object = none if _is_absent(value) else value
-        d = cls()
-        for k in a_collection(keys, "fromkeys"):
-            d._data[k] = fill
-        return d
+        return cls._wrapping(dict.fromkeys(a_collection(keys, "fromkeys"), fill))
 
     def keys(self) -> DictKeys:
         return DictKeys(self)
@@ -150,16 +154,12 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
         return none
 
     def copy(self) -> Dict:
-        new = Dict()
-        new._data = self._data.copy()
-        return new
+        return Dict._wrapping(self._data.copy())
 
     def __or__(self, other: Dict) -> Dict:
         if not isinstance(other, Dict):
             return NotImplemented
-        merged = self.copy()
-        merged._data.update(other._data)
-        return merged
+        return Dict._wrapping(self._data | other._data)
 
     def __ior__(self, other: object) -> Self:
         # CPython's ``d |= proxy`` updates in place — ``dict.__ior__`` is
