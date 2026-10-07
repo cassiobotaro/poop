@@ -50,6 +50,11 @@ def test_custom_validators_replace_defaults() -> None:
     Interpreter(validators=[]).run_source("if True:\n    pass")
 
 
+def test_an_interpreter_does_not_share_the_default_registry() -> None:
+    Interpreter().validators.clear()
+    assert Interpreter().validators
+
+
 def test_transformer_failure_raises_transform_error() -> None:
     class BoomTransformer:
         def transform(self, tree: ast.Module) -> ast.Module:

@@ -1,3 +1,4 @@
+from operator import attrgetter
 from typing import TYPE_CHECKING
 
 from poop.errors import TransformError, ValidationError
@@ -20,10 +21,13 @@ class Interpreter:
         transformers: list[Transformer] | None = None,
         namespace: dict[str, object] | None = None,
     ) -> None:
-        self._validators: list[Validator] = (
+        # Copies, not the lists themselves: `validators` hands its list out, and
+        # handing out `DEFAULT_VALIDATORS` let one interpreter's `append` rewrite
+        # the registry of every interpreter built after it, the REPL's included.
+        self._validators: list[Validator] = list(
             validators if validators is not None else DEFAULT_VALIDATORS
         )
-        self._transformers: list[Transformer] = (
+        self._transformers: list[Transformer] = list(
             transformers if transformers is not None else DEFAULT_TRANSFORMERS
         )
         self._namespace: dict[str, object] = (
@@ -53,11 +57,14 @@ class Interpreter:
         occurrence; sorting puts them in the order they are read in.
         """
         tree: ast.Module = parse(source, filename=filename)
-        errors: list[ValidationError] = [
-            error for validator in self._validators for error in validator.collect(tree)
-        ]
-        errors.sort(key=lambda error: (error.lineno, error.col_offset))
-        return errors
+        return sorted(
+            (
+                error
+                for validator in self._validators
+                for error in validator.collect(tree)
+            ),
+            key=attrgetter("lineno", "col_offset"),
+        )
 
     def run_source_repl(
         self, source: str, namespace: dict[str, object], filename: str = "<repl>"
