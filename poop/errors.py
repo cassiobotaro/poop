@@ -133,6 +133,15 @@ def _quoted(line: str) -> str:
     return line.expandtabs()
 
 
+def _column_width(char: str) -> int:
+    """The columns one character takes: a combining mark none, a wide one two."""
+    if unicodedata.combining(char):
+        return 0
+    if unicodedata.east_asian_width(char) in ("W", "F"):
+        return 2
+    return 1
+
+
 def _display_width(text: str) -> int:
     """How many terminal columns `text` occupies.
 
@@ -152,12 +161,7 @@ def _display_width(text: str) -> int:
     terminals disagree about several of them; `unicodedata` has no answer and a
     `wcwidth` dependency is not a trade worth making for a caret.
     """
-    return sum(
-        0
-        if unicodedata.combining(char)
-        else (2 if unicodedata.east_asian_width(char) in ("W", "F") else 1)
-        for char in text
-    )
+    return sum(map(_column_width, text))
 
 
 def _caret_column(line: str, col: int) -> int:
