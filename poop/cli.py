@@ -2,7 +2,7 @@ import ast
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from rich.syntax import Syntax
@@ -11,6 +11,9 @@ from poop.console import ERR, OUT, in_colour
 from poop.errors import PoopError, report
 from poop.interpreter import Interpreter
 from poop.repl import Repl
+
+if TYPE_CHECKING:
+    from rich.console import Console
 
 app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
 
@@ -21,6 +24,35 @@ def _poop_errors(source: str | None = None) -> Iterator[None]:
         yield
     except PoopError as exc:
         report(exc, source, ERR)
+        raise typer.Exit(1) from exc
+
+
+def _write(console: Console, text: str) -> None:
+    """One line on `console`, as typed: no markup, no highlighting, no wrap.
+
+    Every line the CLI writes goes through one of the two consoles, so the
+    `NO_COLOR` / pipe decision is rich's for each stream — not rich's for the
+    errors and click's for the line after them.
+    """
+    console.print(text, soft_wrap=True, highlight=False, markup=False)
+
+
+def _read_source(file: Path) -> str:
+    try:
+        # `utf-8-sig`, not `utf-8`: an editor's byte-order mark would otherwise
+        # survive as a literal U+FEFF in the source and the tokenizer would
+        # answer `invalid non-printable character U+FEFF` — about a character
+        # invisible in every editor, from a file `python3` runs. CPython's own
+        # loader strips it; the codec is identical to `utf-8` otherwise.
+        return file.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError) as exc:
+        # An unreadable path (missing file, a directory, no permission) or a
+        # non-UTF-8 file is an ordinary user mistake; keep the one-line
+        # `poop:` style instead of leaking a rich-formatted traceback through
+        # typer. A decode error is not an OSError, and words its cause as
+        # `reason` rather than `strerror`.
+        reason = exc.strerror if isinstance(exc, OSError) else exc.reason
+        _write(ERR, f"poop: cannot read '{file}': {reason}")
         raise typer.Exit(1) from exc
 
 
@@ -40,38 +72,24 @@ def main(
         ),
     ] = False,
 ) -> None:
+    if validators_only and transformers_only:
+        raise typer.BadParameter(
+            "--validators-only and --transformers-only cannot be combined"
+        )
     interpreter = Interpreter()
 
     if file is None:
         Repl(interpreter).run()
         return
 
-    try:
-        # `utf-8-sig`, not `utf-8`: an editor's byte-order mark would otherwise
-        # survive as a literal U+FEFF in the source and the tokenizer would
-        # answer `invalid non-printable character U+FEFF` — about a character
-        # invisible in every editor, from a file `python3` runs. CPython's own
-        # loader strips it; the codec is identical to `utf-8` otherwise.
-        source = file.read_text(encoding="utf-8-sig")
-    except OSError as exc:
-        # An unreadable path (missing file, a directory, no permission) is
-        # an ordinary user mistake; keep the one-line `poop:` style instead
-        # of leaking a rich-formatted traceback through typer.
-        typer.echo(f"poop: cannot read '{file}': {exc.strerror}", err=True)
-        raise typer.Exit(1) from exc
-    except UnicodeDecodeError as exc:
-        # A non-UTF-8 source file is an ordinary user mistake too, but it is
-        # not an OSError; keep the clean `poop:` style instead of leaking a
-        # rich-formatted traceback through typer.
-        typer.echo(f"poop: cannot read '{file}': {exc.reason}", err=True)
-        raise typer.Exit(1) from exc
+    source = _read_source(file)
     filename = str(file)
 
     if validators_only:
         with _poop_errors(source):
             errors = interpreter.validate_all(source, filename)
         if not errors:
-            typer.echo("No validation errors.")
+            _write(OUT, "No validation errors.")
             return
         for err in errors:
             report(err, source, ERR)
@@ -88,7 +106,7 @@ def main(
                 Syntax(code, "python", theme="ansi_dark", background_color="default")
             )
         else:
-            typer.echo(code)
+            _write(OUT, code)
         return
 
     with _poop_errors(source):

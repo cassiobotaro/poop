@@ -212,3 +212,11 @@ def test_entry_point_invokes_the_typer_app(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setattr(cli, "app", lambda: called.append(True))
     cli.entry_point()
     assert called == [True]
+
+
+def test_the_two_only_flags_cannot_be_combined(source_file: SourceFile) -> None:
+    # Combined, the first one silently won and the second was dropped.
+    f = source_file("x = 1\n")
+    result = runner.invoke(app, [str(f), "--validators-only", "--transformers-only"])
+    assert result.exit_code == 2
+    assert "cannot be combined" in result.output
