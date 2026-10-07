@@ -16,32 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 13. Wrappers are rebuilt from a raw payload the long way round
-
-- `Dict.fromkeys` in `poop/types/dict.py` is a `for` loop over `d._data[k] =
-  fill`; `dict.fromkeys` is the builtin it mirrors. `Dict.copy` builds an
-  empty `Dict` and assigns `_data`; `Dict.__or__` does `merged =
-  self.copy(); merged._data.update(other._data)` — the pre-3.9 spelling of
-  `self._data | other._data`; `_merged` in `poop/types/mapping_proxy.py` does
-  the same with a `reflected: bool` whose only job is to swap two names. A
-  `Dict._wrapping(data)` classmethod makes all four one-liners and dissolves
-  `_merged`.
-- `Range.slice` and `Range.reversed` in `poop/types/range.py` both re-encode a
-  native `range` with the same three lines (`sign = 1 if r.step > 0 else -1;
-  Range(Int(r.start), Int(r.stop - sign), Int(r.step))`) — the inverse of
-  `_range()`. A `Range._from_native(r)` is the missing half of that pair.
-- `__reversed__` and `reversed` are identical bodies on `DictKeys`,
-  `DictValues`, `DictItems` and `MappingProxy`; `__reversed__` written once on
-  `_DictView` as `return self.reversed()` wires the dunder to the message.
-  `includes` re-spells `__contains__` on seven receivers (`DictKeys`,
-  `DictValues`, `Dict`, `List`, `Tuple`, `Set`, `FrozenSet`) as
-  `to_boolean(x in self._payload)` beside `x in self._payload`;
-  `DictItems.includes` already reads `to_boolean(pair in self)` with a comment
-  saying why. `Str`, `Bytes` and `MemoryView` are not candidates: their
-  `includes` guards the argument and their `__contains__` does not.
-
-**Fix.** As listed. Purely structural; no test changes.
-
 ### 14. The transformers spell stdlib shapes by hand
 
 - `_DictRewriter._fold_parts` in `poop/transformers/dict.py` is a run-length
