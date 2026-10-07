@@ -2,7 +2,7 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 7–12 come from a Pythonic-code review of the whole package and the test
+Items 8–12 come from a Pythonic-code review of the whole package and the test
 suite, after the wording sweeps closed. They remove duplication or hand-rolled
 spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -13,20 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 7. Five `visit_Constant` and two `visit_UnaryOp` are the same literal fold
-
-`poop/transformers/int.py`, `float.py`, `string.py`, `bytes.py` and
-`complex.py` each define `visit_Constant` as "if the value is a `T`, wrap it
-in a call to `_poop_t`"; `int.py` and `float.py` each define `visit_UnaryOp`
-to fold `-5` into one literal, with identical comments. `int.py` spells
-`isinstance(v, int) and not isinstance(v, bool)` twice.
-
-**Fix.** Two ClassVars on `BuiltinRewriter` in `poop/transformers/base.py`,
-`literal_type` and `literal_target`, and the two visitors written once.
-`type(v) is self.literal_type` excludes `bool` for free. `complex.py` keeps
-its `visit_BinOp` fold; `boolean.py`, `none.py` and `ellipsis.py` rewrite to
-a *name*, not a call, and stay as they are.
 
 ### 8. `no_builtin_shadow` tabulates by hand the set the rewriters already know
 
