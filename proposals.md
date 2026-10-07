@@ -16,24 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 6. `Int` and `Float` re-dispatch a raw result that `to_poop` already dispatches
-
-`to_poop` in `poop/types/_bridge.py` is a `singledispatch` from `int` / `float`
-/ `complex` to `Int` / `Float` / `Complex`. Five sites re-implement it by hand:
-`Int.__pow__` (`isinstance(result, complex)` → `Complex`, `float` → `Float`,
-else `Int`), `Float.__pow__` (the same minus the `Int` arm), `Float.__round__`
-(`Int(result) if isinstance(result, int) else Float(result)`), `Int._arith`
-(`Float(...)` if the other is a `Float`, else `Int(...)`), and
-`Int.__truediv__`, a copy of `_arith` that hard-codes `Float` and so is the one
-arithmetic operator that does not go through it.
-
-**Fix.** `_arith` returns `to_poop(op(self._value, other._value))`, with
-`to_poop` imported locally the way `string.py` imports `to_python`;
-`__truediv__` becomes `self._arith(other, operator.truediv)`; the two `__pow__`
-and `__round__` return `to_poop(...)`. Arithmetic never yields a raw `bool`,
-so the `bool` registration cannot be hit. The modulus branch of `Int.__pow__`
-is untouched.
-
 ### 7. `Map` and `Filter` are one class written twice
 
 `poop/types/map.py` and `poop/types/filter.py` differ in two lines out of
