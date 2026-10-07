@@ -2,8 +2,8 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 11–12 come from a Pythonic-code review of the whole package and the test
-suite, after the wording sweeps closed. They remove duplication or hand-rolled
+Item 12 comes from a Pythonic-code review of the whole package and the test
+suite, after the wording sweeps closed. It removes duplication or hand-rolled
 spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
 
@@ -13,31 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 11. The test suite re-rolls what `conftest.py` and pytest already give
-
-- `tests/conftest.py` defines `parse` and `assert_rejects` "to keep the ~60
-  validator tests focused". Neither has a single user. Meanwhile
-  `tests/test_validators/` holds 436 `ast.parse(` calls and 332 raw
-  `pytest.raises(ValidationError)` blocks, and five files each define their
-  own `_validate(src)`.
-- Thirteen files in `tests/test_transformers/` define the same two-line
-  `_transform(source)` helper, differing only in the transformer class.
-- `tests/test_repl.py` installs a fake `builtins.input` in twelve tests and
-  swaps `poop.repl._OUT` / `_ERR` eight times by hand; `tests/test_cli.py`
-  builds the same `rich.Console` under another name and writes a file under
-  `tmp_path` sixteen times.
-- Seven test files each compute the repository root from `__file__`, and two
-  duplicate the `("poop/types", "poop/transformers")` tuple the sweeps walk.
-- Suite-wide, `assert "..." in str(exc_info.value)` appears 77 times against
-  454 uses of `match=`. The reason is likely that `match` is `re.search` and
-  needs `re.escape` around `()`; `tests/test_no_in.py` escapes by hand.
-
-**Fix.** Either adopt `assert_rejects` across the validator tests or delete
-both fixtures. Add `transform(transformer, source)`, `feed_input`,
-`terminal_console`, `source_file`, `REPO_ROOT` and `SWEPT_PACKAGES` to
-`conftest.py` and point the copies at them. Convert the `in str(...)` asserts
-to `match=re.escape(...)`. Each bullet is its own commit.
 
 ### 12. Small stdlib and consistency spellings, one commit each
 
