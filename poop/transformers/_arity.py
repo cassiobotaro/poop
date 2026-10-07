@@ -47,13 +47,15 @@ def refuse_extra_arguments(
     most: int,
     built_from: str,
     hint: str,
+    empty: bool = True,
     keywords: bool = False,
 ) -> None:
     """Refuse a call the builtin itself would refuse, in POOP's words.
 
     `built_from` reads into both sentences (`dict is built from one mapping`),
-    and `hint` points at the spelling that works. `keywords` marks the one
-    constructor that legitimately takes them — `dict(a=1)`.
+    and `hint` points at the spelling that works. `empty=False` marks
+    the constructors that cannot be called with nothing (`range()`); `keywords`
+    marks the one constructor that legitimately takes them — `dict(a=1)`.
     """
     if kwargs and not keywords:
         raise MIRRORS["TypeError"](
@@ -66,4 +68,8 @@ def refuse_extra_arguments(
         given = f"{len(args)} argument" + ("" if len(args) == 1 else "s")
         raise MIRRORS["TypeError"](
             f"{name} is built from {built_from}, got {given} — {hint}"
+        )
+    if not args and not empty:
+        raise MIRRORS["TypeError"](
+            f"{name} is built from {built_from}, got nothing — {hint}"
         )

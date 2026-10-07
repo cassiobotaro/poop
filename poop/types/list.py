@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
-from poop.types._argument import _opt_stop, a_bound, a_collection, an_int
+from poop.types._argument import a_collection, an_int
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -16,7 +16,8 @@ from poop.types._message import article
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
-from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
+from poop.types._sequence import _SequenceMixin
+from poop.types._unwrap import _is_absent
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.exceptions import MIRRORS
@@ -27,7 +28,7 @@ from poop.types.object import Object
 from poop.types.slice import Slice, _resolve_py_slice
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable
 
     from poop.types._index import Index
     from poop.types.boolean import Boolean
@@ -35,10 +36,13 @@ if TYPE_CHECKING:
     from poop.types.string import Str
 
 
-class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
+class List(_SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_items",)
     _eq_attr: ClassVar[str] = "_items"
     __hash__ = None
+
+    def _rewrap(self, raw: Iterable[Object]) -> List:
+        return List(*raw)
 
     def __init__(self, *elements: Object) -> None:
         self._items: list[Object] = list(elements)
@@ -46,12 +50,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def len(self) -> Int:
         return Int(len(self._items))
 
-    def __len__(self) -> int:
-        return len(self._items)
-
-    def at(self, index: Index | Slice) -> Object:
-        if isinstance(index, Slice):
-            return List(*self._items[index._py_slice()])
+    def at(self, index: Index) -> Object:
         return at_index(self._items, index, self)
 
     def at_put(self, index: Index, obj: Object) -> List:
@@ -95,14 +94,6 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
             return NotImplemented  # foreign operand -> faithful TypeError
         return List(*self._items + other._items)
 
-    def __mul__(self, other: object) -> List:
-        count = _repeat_count(other)
-        if count is NOT_A_COUNT:
-            return NotImplemented
-        return List(*self._items * count)
-
-    __rmul__ = __mul__
-
     def __iadd__(self, other: Iterable[Object]) -> Self:
         # Declined rather than guarded: `xs += 5` is an operator, and its
         # refusal is the one `xs + 5` already gives.
@@ -118,17 +109,11 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         self._items *= count
         return self
 
-    def __iter__(self) -> Iterator[Object]:
-        return iter(self._items)
-
     def iter(self) -> ListIterator:
         return ListIterator(self._items)
 
     def includes(self, obj: Object) -> Boolean:
         return to_boolean(obj in self._items)
-
-    def __contains__(self, item: object) -> bool:
-        return item in self._items
 
     def sorted(
         self,
@@ -181,21 +166,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        # No branching on which bound was given: `stop` alone was dropped on
-        # the floor by the first branch, so `xs.index(3, stop=1)` answered a
-        # match from outside the bound it was handed. `len` rather than `None`
-        # for the missing `stop`, because `list.index` — unlike `str.index` —
-        # takes no `None` bound.
-        try:
-            return Int(
-                self._items.index(
-                    obj,
-                    a_bound(start, "index", "start") or 0,
-                    _opt_stop(a_bound(stop, "index", "stop"), len(self._items)),
-                )
-            )
-        except ValueError:
-            raise no_element_equal_to(self, obj) from None
+        return self._index_of(obj, start, stop)
 
     def insert(self, i: Index, obj: Object) -> NoneClass:
         self._items.insert(an_int(i, "insert", "index"), obj)
@@ -228,16 +199,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        sep_value = _unwrap(sep, " ")
-        end_value = _unwrap(end, "\n")
-        flush_value = _unwrap_bool(flush, False)
-        builtins.print(  # noqa: T201 — the language's own #print
-            *[str(item) for item in self._items],
-            sep=sep_value,
-            end=end_value,
-            flush=flush_value,
-        )
-        return none
+        return self._print_items(sep, end, flush)
 
     # A list can hold itself, and printing one used to recurse until the stack
     # gave out — a `RecursionError` about POOP's own internals, raised by a

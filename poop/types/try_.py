@@ -138,8 +138,7 @@ class Try(Object):
     def __str__(self) -> str:
         return "Try"
 
-    def __repr__(self) -> str:
-        return str(self)
+    __repr__ = __str__
 
 
 # `Try` is a legitimate user-facing name, but without this cloak `class_()`

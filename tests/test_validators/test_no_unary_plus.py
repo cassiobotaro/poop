@@ -18,9 +18,8 @@ def test_unary_minus_is_not_affected() -> None:
 
 def test_unary_plus_on_variable_raises() -> None:
     tree = ast.parse("x = 1\ny = +x")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="unary plus"):
         NoUnaryPlusValidator().validate(tree)
-    assert "unary plus" in str(exc_info.value)
 
 
 def test_unary_plus_on_literal_raises() -> None:

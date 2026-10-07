@@ -14,9 +14,8 @@ def test_valid_code_passes() -> None:
 def test_try_except_raises_validation_error() -> None:
     source = "try:\n    pass\nexcept Exception:\n    pass"
     tree = ast.parse(source)
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="try/except"):
         NoTryValidator().validate(tree)
-    assert "try/except" in str(exc_info.value)
 
 
 def test_try_finally_raises_validation_error() -> None:

@@ -108,7 +108,9 @@ def test_render_error_without_source_is_a_plain_red_message() -> None:
     # coloured red, with neither gutter nor caret.
     text = render_error(ValidationError("nope", 4, 8), None)
     assert text.plain == "poop: nope (line 4, col 8)"
-    assert text.style == "red"
+    assert [(span.start, span.end, span.style) for span in text.spans] == [
+        (0, len(text), "red")
+    ]
 
 
 def test_render_error_with_line_but_no_column_draws_no_caret() -> None:

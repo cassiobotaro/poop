@@ -1,15 +1,14 @@
 import ast
+from functools import partial
 
 from poop import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.class_ import ClassTransformer
 from poop.types.boolean import _FalseClass
 from poop.types.object import Object
+from tests._support import transform
 
-
-def _transform(source: str) -> ast.Module:
-    tree = ast.parse(source)
-    return ClassTransformer().transform(tree)
+_transform = partial(transform, ClassTransformer())
 
 
 def _pipeline(source: str) -> ast.Module:

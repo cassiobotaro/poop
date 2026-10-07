@@ -23,9 +23,8 @@ def test_bitwise_invert_is_allowed() -> None:
 
 def test_not_raises_validation_error() -> None:
     tree = ast.parse("x = not True")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="not operator"):
         NoNotValidator().validate(tree)
-    assert "not operator" in str(exc_info.value)
 
 
 def test_error_message_mentions_not_method() -> None:

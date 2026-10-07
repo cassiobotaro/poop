@@ -10,11 +10,9 @@ from poop.types.int import Int
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterable
 
     from poop.types.boolean import Boolean
-
-_frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name
 
 
 class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
@@ -23,16 +21,13 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     _eq_group: ClassVar[str] = "set"
 
     def __init__(self, *elements: Object) -> None:
-        self._data: _frozenset[Object] = _frozenset(elements)
+        self._data: frozenset[Object] = frozenset(elements)
 
     def includes(self, obj: Object) -> Boolean:
         return to_boolean(probed(obj) in self._data)
 
     def len(self) -> Int:
         return Int(len(self._data))
-
-    def __len__(self) -> int:
-        return len(self._data)
 
     def copy(self) -> FrozenSet:
         # CPython returns the receiver itself — a frozenset is immutable, so
@@ -66,14 +61,11 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     def issuperset(self, other: Object) -> Boolean:
         return to_boolean(self._data.issuperset(_elements(other, "issuperset")))
 
-    def __iter__(self) -> Iterator[Object]:
-        return iter(self._data)
+    def _rewrap(self, raw: Iterable[Object]) -> FrozenSet:
+        return FrozenSet(*raw)
 
     def iter(self) -> FrozenSetIterator:
         return FrozenSetIterator(self._data)
-
-    def __contains__(self, item: object) -> bool:
-        return probed(item) in self._data
 
     def __hash__(self) -> int:
         return hash(self._data)

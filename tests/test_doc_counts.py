@@ -11,14 +11,12 @@ The same argument `test_no_python_wording.py`'s static half makes for messages
 nobody remembered to write a program for.
 """
 
-import pathlib
 import re
 
 import pytest
 
 from poop.validators import DEFAULT_VALIDATORS
-
-_ROOT = pathlib.Path(__file__).resolve().parents[1]
+from tests._support import REPO_ROOT
 
 
 def _validator_count() -> int:
@@ -26,7 +24,7 @@ def _validator_count() -> int:
 
 
 def _example_count() -> int:
-    return len(list((_ROOT / "examples").rglob("*.py")))
+    return len(list((REPO_ROOT / "examples").rglob("*.py")))
 
 
 # (file, pattern capturing one number, what the number must equal). The
@@ -49,7 +47,7 @@ _ACTUAL = {"validators": _validator_count, "examples": _example_count}
 def test_a_documented_count_matches_the_code(
     filename: str, pattern: str, kind: str
 ) -> None:
-    text = (_ROOT / filename).read_text(encoding="utf-8")
+    text = (REPO_ROOT / filename).read_text(encoding="utf-8")
     match = re.search(pattern, text)
     assert match is not None, (
         f"{filename} no longer states its {kind} count in the expected shape "
@@ -66,8 +64,8 @@ def test_the_readme_lists_every_example_it_ships() -> None:
     The list was right while the sentence above it was two behind, which is
     what made the drift invisible to a reader skimming either one.
     """
-    text = (_ROOT / "README.md").read_text(encoding="utf-8")
+    text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     listed = re.findall(r"^- \[`([a-z0-9_]+\.py)`\]", text, flags=re.MULTILINE)
-    on_disk = {path.name for path in (_ROOT / "examples").rglob("*.py")}
+    on_disk = {path.name for path in (REPO_ROOT / "examples").rglob("*.py")}
     assert set(listed) == on_disk
     assert len(listed) == len(on_disk), "an example is listed twice"

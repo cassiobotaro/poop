@@ -52,18 +52,10 @@ class _Visitor(ErrorCollector):
         self, node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
     ) -> None:
         self._decorators.update(node.decorator_list)
-
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        self._allow_decorators(node)
         self.generic_visit(node)
 
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self._allow_decorators(node)
-        self.generic_visit(node)
-
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        self._allow_decorators(node)
-        self.generic_visit(node)
+    # Every node that carries a `decorator_list`.
+    visit_FunctionDef = visit_AsyncFunctionDef = visit_ClassDef = _allow_decorators
 
     def visit_Call(self, node: ast.Call) -> None:
         self._callees.add(node.func)

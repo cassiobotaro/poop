@@ -1,11 +1,11 @@
 import ast
+from functools import partial
 
 from poop.interpreter import Interpreter
 from poop.transformers.unpack import UnpackTransformer, _rebind
+from tests._support import transform
 
-
-def _transform(src: str) -> ast.Module:
-    return UnpackTransformer().transform(ast.parse(src))
+_transform = partial(transform, UnpackTransformer())
 
 
 def test_starred_assign_appends_rebind() -> None:

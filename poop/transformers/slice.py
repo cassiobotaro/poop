@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
-from poop.types.exceptions import MIRRORS
 from poop.types.slice import Slice
 
 if TYPE_CHECKING:
@@ -25,12 +24,8 @@ def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
         most=3,
         built_from="a stop, or a start and a stop and an optional step",
         hint="write slice(stop) or slice(start, stop, step)",
+        empty=False,
     )
-    if not args:
-        raise MIRRORS["TypeError"](
-            "slice is built from a stop, or a start and a stop and an optional "
-            "step, got nothing — write slice(stop) or slice(start, stop, step)"
-        )
     return Slice(*cast("tuple[Index | NoneClass | None, ...]", args))
 
 

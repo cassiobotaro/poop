@@ -7,7 +7,7 @@ from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
 from poop.types._message import article
-from poop.types._unwrap import _faithful
+from poop.types._raw import _faithful
 from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
 from poop.types.list import List

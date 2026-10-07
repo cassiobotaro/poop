@@ -18,9 +18,8 @@ def test_not_is_not_affected() -> None:
 
 def test_and_raises_validation_error() -> None:
     tree = ast.parse("x = True and False")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="and operator"):
         NoAndOrValidator().validate(tree)
-    assert "and operator" in str(exc_info.value)
 
 
 def test_and_error_message_mentions_and_method() -> None:
@@ -31,9 +30,8 @@ def test_and_error_message_mentions_and_method() -> None:
 
 def test_or_raises_validation_error() -> None:
     tree = ast.parse("x = True or False")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="or operator"):
         NoAndOrValidator().validate(tree)
-    assert "or operator" in str(exc_info.value)
 
 
 def test_or_error_message_mentions_or_method() -> None:

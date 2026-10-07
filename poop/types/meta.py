@@ -415,9 +415,9 @@ class PoopMeta(type):
 
     def __ne__(cls, other: object) -> Boolean:
         from poop.types._alias import unalias
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return false if unalias(cls) is unalias(other) else true
+        return to_boolean(unalias(cls) is not unalias(other))
 
     # Defining `__eq__` sets `__hash__` to None, which would make every POOP
     # class unhashable — `NATIVE_TO_POOP` keys on classes, and so does every
@@ -468,14 +468,14 @@ class PoopMeta(type):
 
     @class_side
     def has_attr(cls, name: Str) -> Boolean:
-        from poop.types.boolean import to_boolean
+        from poop.types.boolean import false, true
 
         raw = _checked_name(name)
         try:
             _reflected(cls, raw)
         except AttributeError:
-            return to_boolean(False)
-        return to_boolean(True)
+            return false
+        return true
 
     # `Object`'s protocol, answered class-side. Each needs its own descriptor:
     # a metaclass cannot inherit these into class-side lookup, which is the
@@ -717,9 +717,9 @@ class PoopMeta(type):
 
     @class_side
     def not_identical(cls, other: Any) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return false if cls is other else true
+        return to_boolean(cls is not other)
 
     @class_side
     def is_instance(cls, type_: type) -> Boolean:

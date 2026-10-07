@@ -1,48 +1,48 @@
 """Shared pytest fixtures for the POOP test suite.
 
-These helpers exist to keep the ~60 validator tests and ~25 transformer
-tests focused on what's being tested rather than the boilerplate of
-`ast.parse + pytest.raises(ValidationError)`. Existing tests continue
-to work unchanged; new or refactored tests can opt in.
+Plain helpers that tests import by name live in `tests/_support.py`;
+pytest discourages importing from a conftest.
 """
 
-from __future__ import annotations
-
-import ast
 from typing import TYPE_CHECKING
 
 import pytest
 
-from poop.errors import ValidationError
-
 if TYPE_CHECKING:
-    import re
-    from collections.abc import Callable
+    from pathlib import Path
 
-    from poop.validators.base import Validator
-
-
-@pytest.fixture
-def parse() -> Callable[[str], ast.Module]:
-    return ast.parse
+    from tests._support import FeedInput, SourceFile
 
 
 @pytest.fixture
-def assert_rejects() -> Callable[..., ValidationError]:
-    def _assert_rejects(
-        validator: Validator,
-        source: str,
-        *,
-        lineno: int | None = None,
-        match: str | re.Pattern[str] | None = None,
-    ) -> ValidationError:
-        tree = ast.parse(source)
-        with pytest.raises(ValidationError, match=match) as exc_info:
-            validator.validate(tree)
-        if lineno is not None:
-            assert exc_info.value.lineno == lineno, (
-                f"expected lineno={lineno}, got {exc_info.value.lineno}"
-            )
-        return exc_info.value
+def feed_input(monkeypatch: pytest.MonkeyPatch) -> FeedInput:
+    """Answer `input()` with `responses`, raising any that is an exception.
 
-    return _assert_rejects
+    `EOFError()` ends a REPL session the way Ctrl-D does, and
+    `KeyboardInterrupt()` the way Ctrl-C does.
+    """
+
+    def _feed(*responses: str | BaseException) -> None:
+        answers = iter(responses)
+
+        def _input(_prompt: str = "") -> str:
+            answer = next(answers)
+            if isinstance(answer, BaseException):
+                raise answer
+            return answer
+
+        monkeypatch.setattr("builtins.input", _input)
+
+    return _feed
+
+
+@pytest.fixture
+def source_file(tmp_path: Path) -> SourceFile:
+    """Write a POOP program under `tmp_path` as UTF-8 and answer its path."""
+
+    def _write(text: str, name: str = "prog.py") -> Path:
+        path = tmp_path / name
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    return _write

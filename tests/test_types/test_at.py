@@ -13,6 +13,8 @@ import pytest
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.dict import Dict
+from poop.types.ellipsis import ellipsis
+from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.mapping_proxy import MappingProxy
@@ -131,3 +133,15 @@ def test_slice_with_a_non_index_bound_names_the_bound() -> None:
     bound: Any = Str("a")
     with pytest.raises(TypeError, match=r"^slice bounds must be int, got a str$"):
         Str("abc").slice(Slice(bound, Int(2)))
+
+
+@pytest.mark.parametrize(
+    ("wrong", "named"),
+    [(Str("x"), "a str"), (Float(1.0), "a float"), (ellipsis, "an ellipsis")],
+)
+def test_a_wrong_index_is_named_with_its_article(wrong: Any, named: str) -> None:
+    """`at_index` wrote `got a {type}`, so it would say `got a ellipsis`."""
+    with pytest.raises(
+        TypeError, match=f"^tuple.at expects an int index, got {named}$"
+    ):
+        Tuple(Int(1)).at(wrong)

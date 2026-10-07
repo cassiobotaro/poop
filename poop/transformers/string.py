@@ -1,15 +1,12 @@
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
 from poop.types.string import Str
-
-if TYPE_CHECKING:
-    import ast
 
 # CPython's own parameter names: `str(object=b"", encoding=..., errors=...)`.
 _SLOTS = ("object", "encoding", "errors")
@@ -68,11 +65,8 @@ class _StrRewriter(BuiltinRewriter):
     builtin = "str"
     call_target = "_poop_str_from"
     name_target = "_poop_str_cls"
-
-    def visit_Constant(self, node: ast.Constant) -> ast.AST:
-        if isinstance(node.value, str):
-            return call_at("_poop_str", [node], node)
-        return node
+    literal_type = str
+    literal_target = "_poop_str"
 
 
 class StrTransformer(BaseTransformer):

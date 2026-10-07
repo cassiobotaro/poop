@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 import pytest
-from rich.console import Console
 
 import poop.repl as repl
 import poop.validators as validators
@@ -35,6 +34,7 @@ from poop.types.int import Int
 from poop.types.none import none
 from poop.types.string import Str
 from poop.validators import DEFAULT_VALIDATORS
+from tests._support import FeedInput, console
 
 _DEFAULT_CALLS = _explain_calls(DEFAULT_VALIDATORS)
 
@@ -190,36 +190,23 @@ def test_displayhook_poop_none_does_not_clobber_underscore(
 # --- run() integration ---
 
 
-def _fake_input(*responses: object) -> object:
-    """Returns a function that yields responses, raising exceptions when given one."""
-
-    def _input(_prompt: str) -> str:
-        val = next(it)
-        if isinstance(val, BaseException):
-            raise val
-        return str(val)
-
-    it = iter(responses)
-    return _input
-
-
 def test_run_exits_on_eof(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr("builtins.input", _fake_input(EOFError()))
+    feed_input(EOFError())
     Repl(Interpreter()).run()
 
 
 def test_run_ctrl_c_clears_buffer_and_continues(
-    monkeypatch: pytest.MonkeyPatch,
+    feed_input: FeedInput,
 ) -> None:
-    monkeypatch.setattr("builtins.input", _fake_input(KeyboardInterrupt(), EOFError()))
+    feed_input(KeyboardInterrupt(), EOFError())
     Repl(Interpreter()).run()
 
 
-def test_run_restores_displayhook_after_exit(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_run_restores_displayhook_after_exit(feed_input: FeedInput) -> None:
     original = sys.displayhook
-    monkeypatch.setattr("builtins.input", _fake_input(EOFError()))
+    feed_input(EOFError())
     Repl(Interpreter()).run()
     assert sys.displayhook is original
 
@@ -236,20 +223,20 @@ def test_run_restores_displayhook_on_exception(monkeypatch: pytest.MonkeyPatch) 
     assert sys.displayhook is original
 
 
-def test_run_stores_last_result_in_underscore(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_run_stores_last_result_in_underscore(feed_input: FeedInput) -> None:
     repl = Repl(Interpreter())
-    monkeypatch.setattr("builtins.input", _fake_input("1 + 1", EOFError()))
+    feed_input("1 + 1", EOFError())
     repl.run()
     assert repl._ns.get("_") == Int(2)
 
 
 def test_run_strips_a_byte_order_mark_from_the_first_line(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # `poop <file>` decodes with `utf-8-sig`; the piped path reads line by line
     # through `input()`, which does not strip the mark, so a BOM-prefixed
     # program answered `invalid non-printable character U+FEFF`.
-    monkeypatch.setattr("builtins.input", _fake_input('\ufeff"hi".print()', EOFError()))
+    feed_input('\ufeff"hi".print()', EOFError())
     Repl(Interpreter()).run()
     out = capsys.readouterr()
     assert "hi" in out.out
@@ -257,32 +244,28 @@ def test_run_strips_a_byte_order_mark_from_the_first_line(
 
 
 def test_run_spends_the_mark_only_on_the_first_line(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # A mark is only a mark at the head of the stream; later in the session
     # U+FEFF is an ordinary invalid character and still says so.
-    monkeypatch.setattr(
-        "builtins.input", _fake_input("x = 1", "\ufeffx.print()", EOFError())
-    )
+    feed_input("x = 1", "\ufeffx.print()", EOFError())
     Repl(Interpreter()).run()
     assert "U+FEFF" in capsys.readouterr().err
 
 
 def test_run_poop_error_printed_to_stderr(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(
-        "builtins.input", _fake_input("if True:\n    pass\n", "", EOFError())
-    )
+    feed_input("if True:\n    pass\n", "", EOFError())
     Repl(Interpreter()).run()
     assert "poop:" in capsys.readouterr().err
 
 
 def test_run_poop_error_shows_the_source_line_and_caret(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # The REPL holds the source; it used to cite a line that had scrolled away.
-    monkeypatch.setattr("builtins.input", _fake_input("print(x)", EOFError()))
+    feed_input("print(x)", EOFError())
     Repl(Interpreter()).run()
     err = capsys.readouterr().err
     assert "  1 | print(x)" in err
@@ -290,17 +273,17 @@ def test_run_poop_error_shows_the_source_line_and_caret(
 
 
 def test_run_poop_error_does_not_repeat_the_position(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr("builtins.input", _fake_input("print(x)", EOFError()))
+    feed_input("print(x)", EOFError())
     Repl(Interpreter()).run()
     assert "(line 1, col 0)" not in capsys.readouterr().err
 
 
 def test_run_runtime_error_shows_the_source_line(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr("builtins.input", _fake_input("1 / 0", EOFError()))
+    feed_input("1 / 0", EOFError())
     Repl(Interpreter()).run()
     err = capsys.readouterr().err
     assert "ZeroDivisionError" in err
@@ -308,25 +291,22 @@ def test_run_runtime_error_shows_the_source_line(
 
 
 def test_run_error_line_refers_to_the_current_input_not_an_earlier_one(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # A method defined in one input raises when called from a later, multi-line
     # input. The deepest traceback frame is the method's `raise`, whose line
     # counts against the *earlier* buffer — citing it against the current one
     # pointed the gutter at an unrelated line. The cited line must be the call
     # site in the current buffer (line 3), never the stale line 2.
-    monkeypatch.setattr(
-        "builtins.input",
-        _fake_input(
-            "class Foo:",
-            "    def bar(self): ValueError.raise_('boom')",
-            "",
-            "x = (",
-            "    99",
-            "    + Foo().bar()",
-            ")",
-            EOFError(),
-        ),
+    feed_input(
+        "class Foo:",
+        "    def bar(self): ValueError.raise_('boom')",
+        "",
+        "x = (",
+        "    99",
+        "    + Foo().bar()",
+        ")",
+        EOFError(),
     )
     Repl(Interpreter()).run()
     err = capsys.readouterr().err
@@ -451,15 +431,6 @@ def test_poop_completer_attr_allows_literal() -> None:
 # --- colorized output (rich, one console per stream) ---
 
 
-def _console(buf: io.StringIO, *, terminal: bool) -> Console:
-    return Console(
-        file=buf,
-        force_terminal=terminal,
-        color_system="standard",
-        no_color=not terminal,
-    )
-
-
 def test_value_text_int_is_yellow() -> None:
     text = _value_text(Int(1))
     assert text.plain == "1"
@@ -482,7 +453,7 @@ def test_value_text_other_is_unstyled() -> None:
 
 def test_print_value_emits_ansi_on_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
     buf = io.StringIO()
-    monkeypatch.setattr("poop.repl._OUT", _console(buf, terminal=True))
+    monkeypatch.setattr("poop.repl._OUT", console(buf, terminal=True))
     _print_value(Int(1))
     out = buf.getvalue()
     assert "\x1b[" in out
@@ -493,7 +464,7 @@ def test_print_value_plain_when_not_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     buf = io.StringIO()
-    monkeypatch.setattr("poop.repl._OUT", _console(buf, terminal=False))
+    monkeypatch.setattr("poop.repl._OUT", console(buf, terminal=False))
     _print_value(Int(1))
     assert buf.getvalue() == "1\n"
 
@@ -504,8 +475,8 @@ def test_diagnostics_and_values_colorize_per_stream(
     # `poop 2>err.log`: stdout a tty, stderr a file. The value echo colorizes
     # off stdout while the diagnostic must not leak ANSI into redirected stderr.
     out_buf, err_buf = io.StringIO(), io.StringIO()
-    monkeypatch.setattr("poop.repl._OUT", _console(out_buf, terminal=True))
-    monkeypatch.setattr("poop.repl._ERR", _console(err_buf, terminal=False))
+    monkeypatch.setattr("poop.repl._OUT", console(out_buf, terminal=True))
+    monkeypatch.setattr("poop.repl._ERR", console(err_buf, terminal=False))
     _print_value(Int(1))
     _error("boom")
     assert "\x1b[" in out_buf.getvalue()
@@ -518,8 +489,8 @@ def test_diagnostic_colorizes_when_only_stderr_is_a_terminal(
     # The reverse (`poop >out.txt`): stderr a tty, stdout a file. The
     # diagnostic must still colorize off stderr.
     err_buf = io.StringIO()
-    monkeypatch.setattr("poop.repl._OUT", _console(io.StringIO(), terminal=False))
-    monkeypatch.setattr("poop.repl._ERR", _console(err_buf, terminal=True))
+    monkeypatch.setattr("poop.repl._OUT", console(io.StringIO(), terminal=False))
+    monkeypatch.setattr("poop.repl._ERR", console(err_buf, terminal=True))
     _error("boom")
     out = err_buf.getvalue()
     assert "\x1b[" in out
@@ -531,7 +502,7 @@ def test_report_keeps_the_caret_aligned_and_plain_off_a_terminal(
 ) -> None:
     buf = io.StringIO()
     report(
-        ValidationError("if is forbidden", 1, 0), "if x:", _console(buf, terminal=False)
+        ValidationError("if is forbidden", 1, 0), "if x:", console(buf, terminal=False)
     )
     out = buf.getvalue()
     assert "\x1b[" not in out
@@ -544,7 +515,7 @@ def test_report_syntax_highlights_the_line_on_a_terminal(
 ) -> None:
     buf = io.StringIO()
     report(
-        ValidationError("if is forbidden", 1, 0), "if x:", _console(buf, terminal=True)
+        ValidationError("if is forbidden", 1, 0), "if x:", console(buf, terminal=True)
     )
     out = buf.getvalue()
     assert "\x1b[" in out  # coloured
@@ -557,14 +528,14 @@ def test_report_syntax_highlights_the_line_on_a_terminal(
 
 
 def test_rl_color_plain_when_not_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("poop.repl._OUT", _console(io.StringIO(), terminal=False))
+    monkeypatch.setattr("poop.repl._OUT", console(io.StringIO(), terminal=False))
     assert _rl_color(">>>", _CYAN) == ">>>"
 
 
 def test_rl_color_wraps_with_readline_markers_on_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("poop.repl._OUT", _console(io.StringIO(), terminal=True))
+    monkeypatch.setattr("poop.repl._OUT", console(io.StringIO(), terminal=True))
     result = _rl_color(">>>", _CYAN)
     assert result.startswith("\001")
     assert _CYAN in result
@@ -850,21 +821,19 @@ def test_meta_unknown_command_suggests_help(
 
 
 def test_run_dispatches_meta_command(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repl = Repl(Interpreter())
-    monkeypatch.setattr("builtins.input", _fake_input(":explain if", EOFError()))
+    feed_input(":explain if", EOFError())
     repl.run()
     assert "if_true" in capsys.readouterr().out
 
 
 def test_run_meta_command_does_not_touch_buffer(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repl = Repl(Interpreter())
-    monkeypatch.setattr(
-        "builtins.input", _fake_input(":help", "x = 1 + 1", "x", EOFError())
-    )
+    feed_input(":help", "x = 1 + 1", "x", EOFError())
     repl.run()
     assert repl._ns.get("x") == Int(2)
 
@@ -945,13 +914,11 @@ def test_readline_input_pre_hook_inserts_indent(
 
 
 def test_run_syntax_error_clears_buffer_and_continues(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # A definitive syntax error (not an incomplete line) is reported and the
     # buffer reset, so the next line starts fresh rather than re-parsing junk.
-    monkeypatch.setattr(
-        "builtins.input", _fake_input(")", "x = 1 + 1", "x", EOFError())
-    )
+    feed_input(")", "x = 1 + 1", "x", EOFError())
     repl = Repl(Interpreter())
     repl.run()
     assert "poop:" in capsys.readouterr().err

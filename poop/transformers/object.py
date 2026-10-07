@@ -38,9 +38,7 @@ class _ObjectRewriter(BuiltinRewriter):
     # Call position routes to the factory; every other position stays the class.
     call_target = "_poop_object_from"
     name_target = "_poop_object"
-
-    def is_builtin(self, name: str) -> bool:
-        return name in _OBJECT_NAMES
+    names = _OBJECT_NAMES
 
 
 class ObjectTransformer(BaseTransformer):

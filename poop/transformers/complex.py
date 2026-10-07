@@ -63,6 +63,8 @@ class _ComplexRewriter(BuiltinRewriter):
     builtin = "complex"
     call_target = "_poop_complex_from"
     name_target = "_poop_complex_cls"
+    literal_type = complex
+    literal_target = "_poop_complex_literal"
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         # Fold `r ± ij` literal patterns (e.g. 1+2j, 3.0-1j) into a single Complex.
@@ -82,11 +84,6 @@ class _ComplexRewriter(BuiltinRewriter):
                 "_poop_complex_literal", [ast.Constant(value=combined)], node
             )
         self.generic_visit(node)
-        return node
-
-    def visit_Constant(self, node: ast.Constant) -> ast.AST:
-        if isinstance(node.value, complex):
-            return call_at("_poop_complex_literal", [node], node)
         return node
 
 

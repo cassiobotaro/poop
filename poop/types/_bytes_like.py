@@ -18,11 +18,11 @@ from poop.types._affix import affix_needle
 from poop.types._argument import (
     a_bound,
     a_collection,
+    a_fill,
     a_needle,
     an_int,
     bytes_like,
     max_split,
-    text_like,
 )
 from poop.types._at import at_index
 from poop.types._cloak import cloak
@@ -30,7 +30,7 @@ from poop.types._codec import decoded
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import _opt_str, _unwrap, _unwrap_bool
-from poop.types.boolean import false, to_boolean, true
+from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.list import List
@@ -40,7 +40,7 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
     from poop.types._index import Index
     from poop.types.boolean import Boolean
@@ -152,13 +152,47 @@ class _BytesLikeMixin[B: Object]:
         return self._rewrap(self._value.capitalize())
 
     def center(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return self._rewrap(self._value.center(an_int(width, "center", "width")))
+        w = an_int(width, "center", "width")
+        fill = a_fill(fillchar, "center", "one byte", (bytes, bytearray))
         return self._rewrap(
-            self._value.center(
-                an_int(width, "center", "width"),
-                text_like(fillchar, "center", "one byte"),
+            self._value.center(w) if fill is None else self._value.center(w, fill)
+        )
+
+    def _search(
+        self,
+        method: Callable[..., int],
+        selector: str,
+        sub: object,
+        start: Int | NoneClass | None,
+        end: Int | NoneClass | None,
+    ) -> Int:
+        """`find` and its four siblings: one guarded call to the native method.
+
+        The bound method rather than a name to `getattr`, so a misspelt
+        selector cannot reach the wrong native method.
+        """
+        return Int(
+            method(
+                a_needle(self, sub, selector, "bytes or an int", _BYTE_KINDS),
+                a_bound(start, selector, "start"),
+                a_bound(end, selector, "end"),
+            )
+        )
+
+    def _affix(
+        self,
+        method: Callable[..., bool],
+        selector: str,
+        affix: object,
+        start: Int | NoneClass | None,
+        end: Int | NoneClass | None,
+    ) -> Boolean:
+        """`startswith` / `endswith`, guarded the way `_search` is."""
+        return to_boolean(
+            method(
+                affix_needle(affix, selector, "bytes or a tuple of bytes", _BYTE_KINDS),
+                a_bound(start, selector, "start"),
+                a_bound(end, selector, "end"),
             )
         )
 
@@ -168,13 +202,7 @@ class _BytesLikeMixin[B: Object]:
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.count(
-                a_needle(self, sub, "count", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "count", "start"),
-                a_bound(end, "count", "end"),
-            )
-        )
+        return self._search(self._value.count, "count", sub, start, end)
 
     def endswith(
         self,
@@ -182,17 +210,7 @@ class _BytesLikeMixin[B: Object]:
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        return (
-            true
-            if self._value.endswith(
-                affix_needle(
-                    suffix, "endswith", "bytes or a tuple of bytes", _BYTE_KINDS
-                ),
-                a_bound(start, "endswith", "start"),
-                a_bound(end, "endswith", "end"),
-            )
-            else false
-        )
+        return self._affix(self._value.endswith, "endswith", suffix, start, end)
 
     def expandtabs(self, tabsize: Int | NoneClass | None = None) -> B:
         return self._rewrap(
@@ -205,13 +223,7 @@ class _BytesLikeMixin[B: Object]:
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.find(
-                a_needle(self, sub, "find", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "find", "start"),
-                a_bound(end, "find", "end"),
-            )
-        )
+        return self._search(self._value.find, "find", sub, start, end)
 
     def index(
         self,
@@ -219,13 +231,7 @@ class _BytesLikeMixin[B: Object]:
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.index(
-                a_needle(self, sub, "index", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "index", "start"),
-                a_bound(end, "index", "end"),
-            )
-        )
+        return self._search(self._value.index, "index", sub, start, end)
 
     def isalnum(self) -> Boolean:
         return to_boolean(self._value.isalnum())
@@ -261,14 +267,10 @@ class _BytesLikeMixin[B: Object]:
         return self._rewrap(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return self._rewrap(self._value.ljust(an_int(width, "ljust", "width")))
+        w = an_int(width, "ljust", "width")
+        fill = a_fill(fillchar, "ljust", "one byte", (bytes, bytearray))
         return self._rewrap(
-            self._value.ljust(
-                an_int(width, "ljust", "width"),
-                text_like(fillchar, "ljust", "one byte"),
-            )
+            self._value.ljust(w) if fill is None else self._value.ljust(w, fill)
         )
 
     def lower(self) -> B:
@@ -317,13 +319,7 @@ class _BytesLikeMixin[B: Object]:
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.rfind(
-                a_needle(self, sub, "rfind", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "rfind", "start"),
-                a_bound(end, "rfind", "end"),
-            )
-        )
+        return self._search(self._value.rfind, "rfind", sub, start, end)
 
     def rindex(
         self,
@@ -331,23 +327,13 @@ class _BytesLikeMixin[B: Object]:
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.rindex(
-                a_needle(self, sub, "rindex", "bytes or an int", _BYTE_KINDS),
-                a_bound(start, "rindex", "start"),
-                a_bound(end, "rindex", "end"),
-            )
-        )
+        return self._search(self._value.rindex, "rindex", sub, start, end)
 
     def rjust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        fill = _unwrap(fillchar, None)
-        if fill is None:
-            return self._rewrap(self._value.rjust(an_int(width, "rjust", "width")))
+        w = an_int(width, "rjust", "width")
+        fill = a_fill(fillchar, "rjust", "one byte", (bytes, bytearray))
         return self._rewrap(
-            self._value.rjust(
-                an_int(width, "rjust", "width"),
-                text_like(fillchar, "rjust", "one byte"),
-            )
+            self._value.rjust(w) if fill is None else self._value.rjust(w, fill)
         )
 
     def rpartition(self, sep: BytesLike) -> Tuple:
@@ -407,17 +393,7 @@ class _BytesLikeMixin[B: Object]:
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        return (
-            true
-            if self._value.startswith(
-                affix_needle(
-                    prefix, "startswith", "bytes or a tuple of bytes", _BYTE_KINDS
-                ),
-                a_bound(start, "startswith", "start"),
-                a_bound(end, "startswith", "end"),
-            )
-            else false
-        )
+        return self._affix(self._value.startswith, "startswith", prefix, start, end)
 
     def strip(self, chars: BytesLike | NoneClass | None = None) -> B:
         return self._rewrap(

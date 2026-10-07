@@ -16,6 +16,7 @@ instead of being written out nine times.
 
 from typing import Any
 
+from poop.types._message import article
 from poop.types.exceptions import MIRRORS, MirrorName
 
 
@@ -90,7 +91,7 @@ def at_index(items: Any, index: Any, receiver: object) -> Any:
         # The only TypeError a sequence lookup raises: the index is not one.
         raise MIRRORS["TypeError"](
             f"{type(receiver).__name__}.at expects an int index, "
-            f"got a {type(index).__name__}"
+            f"got {article(type(index).__name__)}"
         ) from None
 
 

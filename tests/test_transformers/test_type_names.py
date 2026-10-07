@@ -473,3 +473,27 @@ def test_a_builtin_with_an_empty_starts_from_it() -> None:
     assert str(ns["made"]) == "[]"
     assert str(ns["size"]) == "0"
     assert str(ns["first"]) == "1"
+
+
+@pytest.mark.parametrize("op", ["|", "&", "-", "^"])
+@pytest.mark.parametrize(
+    ("builtin", "expected"), [("set", "set"), ("frozenset", "frozenset")]
+)
+@pytest.mark.parametrize("reflected", [False, True], ids=["forward", "reflected"])
+def test_a_set_operator_on_a_subclass_answers_the_builtin(
+    op: str, builtin: str, expected: str, reflected: bool
+) -> None:
+    """`Bag() | {1}` answered `cannot convert int to set`.
+
+    The operators built their result with `type(self)`, and on a user subclass
+    that is the alias, whose call *converts* its argument. CPython answers the
+    builtin from an operator on a subclass, and so does POOP.
+    """
+    expression = f"{{1}} {op} Bag()" if reflected else f"Bag() {op} {{1}}"
+    ns = dict(DEFAULT_NAMESPACE)
+    tree = Interpreter().transform_source(
+        f"class Bag({builtin}):\n    pass\nkind = ({expression}).class_name()\n"
+    )
+    exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
+    left = "set" if reflected else expected
+    assert str(ns["kind"]) == left

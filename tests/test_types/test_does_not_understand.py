@@ -1,4 +1,5 @@
 import copy
+import re
 
 import pytest
 
@@ -14,9 +15,10 @@ from poop.types.string import Str
 def test_unknown_message_speaks_smalltalk_not_python() -> None:
     # `'int' object has no attribute` says attribute, not message, in a
     # language whose thesis is that everything is a message.
-    with pytest.raises(MessageNotUnderstood) as exc_info:
+    with pytest.raises(
+        MessageNotUnderstood, match=re.escape("does not understand #frobnicate")
+    ):
         Int(5).frobnicate()  # ty: ignore[unresolved-attribute]
-    assert "does not understand #frobnicate" in str(exc_info.value)
 
 
 def test_unknown_message_points_at_methods_when_it_has_no_hint() -> None:

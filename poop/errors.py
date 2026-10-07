@@ -182,14 +182,17 @@ def _caret_gutter(lineno: int) -> str:
     return "  " + " " * len(str(lineno)) + " | "
 
 
-def format_error(exc: PoopError, source: str | None) -> str:
-    """Render an error, with the offending source line and a caret under it.
+# The style `render_error` reads as "syntax-highlight this segment" rather
+# than as a rich style name.
+_CODE = "code"
 
-    Shared by the CLI and the REPL so one program reports the same way on both
-    surfaces. The REPL used to print the bare message, citing a line and column
-    that pointed into a buffer already scrolled away — while holding the source
-    in hand. This is the plain-text form; `render_error` is the coloured,
-    syntax-highlighted form a terminal gets.
+
+def _error_segments(exc: PoopError, source: str | None) -> list[tuple[str, str]]:
+    """The error's layout once, as `(text, style)` pairs.
+
+    `poop:` and the message, the numbered gutter quoting the offending line,
+    and a caret under the column. `format_error` keeps the texts and
+    `render_error` the styles; the layout used to be written in both, by hand.
 
     The position is stated once. With the source line in view, the gutter
     carries the line number and the caret the column, so the `(line N, col M)`
@@ -198,39 +201,52 @@ def format_error(exc: PoopError, source: str | None) -> str:
     """
     location = _error_location(exc, source)
     if location is None:
-        return f"poop: {exc}"
+        return [(f"poop: {exc}", "red")]
     lineno, line = location
-    parts = [f"poop: {exc.message}", f"{_line_gutter(lineno)}{_quoted(line)}"]
-    col = exc.col_offset
-    if col is not None:
-        parts.append(f"{_caret_gutter(lineno)}{' ' * _caret_column(line, col)}^")
-    return "\n".join(parts)
+    segments = [
+        (f"poop: {exc.message}\n", "red"),
+        (_line_gutter(lineno), "dim"),
+        (_quoted(line), _CODE),
+    ]
+    if exc.col_offset is not None:
+        segments += [
+            (f"\n{_caret_gutter(lineno)}", "dim"),
+            (" " * _caret_column(line, exc.col_offset) + "^", "red"),
+        ]
+    return segments
+
+
+def format_error(exc: PoopError, source: str | None) -> str:
+    """Render an error, with the offending source line and a caret under it.
+
+    Shared by the CLI and the REPL so one program reports the same way on both
+    surfaces. The REPL used to print the bare message, citing a line and column
+    that pointed into a buffer already scrolled away — while holding the source
+    in hand. This is the plain-text form; `render_error` is the coloured,
+    syntax-highlighted form a terminal gets.
+    """
+    return "".join(text for text, _ in _error_segments(exc, source))
+
+
+def _styled(text: str, style: str) -> Text:
+    if style != _CODE:
+        return Text(text, style=style)
+    highlighted = _PY_SYNTAX.highlight(text)
+    highlighted.rstrip()  # the highlighter appends a trailing newline
+    return highlighted
 
 
 def render_error(exc: PoopError, source: str | None) -> Text:
-    """Coloured, syntax-highlighted twin of `format_error` for a terminal.
+    """Coloured, syntax-highlighted form of `format_error` for a terminal.
 
-    Same layout — `poop:` message, source gutter, caret — but the message is
-    red, the gutter dim, and the quoted line is Python-highlighted. Callers use
-    it only when the destination console has colour; elsewhere `format_error`'s
-    plain string is printed instead, so pipes and `NO_COLOR` are unaffected.
+    Same segments — the message is red, the gutter dim, and the quoted line is
+    Python-highlighted. Callers use it only when the destination console has
+    colour; elsewhere `format_error`'s plain string is printed instead, so
+    pipes and `NO_COLOR` are unaffected.
     """
-    location = _error_location(exc, source)
-    if location is None:
-        return Text(f"poop: {exc}", style="red")
-    lineno, line = location
-    highlighted = _PY_SYNTAX.highlight(_quoted(line))
-    highlighted.rstrip()  # the highlighter appends a trailing newline
-    rendered = Text.assemble(
-        (f"poop: {exc.message}\n", "red"),
-        (_line_gutter(lineno), "dim"),
-        highlighted,
+    return Text.assemble(
+        *(_styled(t, style) for t, style in _error_segments(exc, source))
     )
-    col = exc.col_offset
-    if col is not None:
-        rendered.append(f"\n{_caret_gutter(lineno)}", style="dim")
-        rendered.append(f"{' ' * _caret_column(line, col)}^", style="red")
-    return rendered
 
 
 def report(exc: PoopError, source: str | None, console: Console) -> None:

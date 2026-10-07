@@ -1,8 +1,10 @@
+import operator
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
+from poop.types.boolean import false, to_boolean
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.mapping_proxy import MappingProxy
@@ -10,6 +12,9 @@ from poop.types.object import Object
 from poop.types.set import Set
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from poop.types.boolean import Boolean
     from poop.types.dict import Dict
 
 
@@ -114,3 +119,88 @@ class _DictView(_IterableMixin, Object):
 # alone CPython blamed `_DictView` in every wrong-arity message, a private name
 # `_reject_private` exists to keep out of user code.
 cloak(_DictView, "object")
+
+
+class _SetLikeView(_DictView):
+    """The set algebra and comparisons `dict_keys` and `dict_items` share.
+
+    The two views differed only in what their own side is — the keys view
+    itself, or a set of `Tuple` pairs — and spelled every operator twice over
+    that difference. `_own` is that difference; everything else is written
+    once. `isdisjoint` stays on each class: it is a message, and a wrong-arity
+    report names the function's owner.
+    """
+
+    __slots__ = ()
+    # Set-like and compared by contents, which change under it: unhashable,
+    # as in CPython. `dict_values` is neither, and hashes by identity.
+    __hash__ = None  # type: ignore[assignment]
+
+    def _own(self) -> Any:
+        """The receiver's own side, as something a `set` operator accepts."""
+        raise NotImplementedError
+
+    def _algebra(self, other: object, op: Callable[[Any, Any], Any]) -> Set:
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*op(self._own(), raw))
+
+    def _reflected(self, other: object, op: Callable[[Any, Any], Any]) -> Set:
+        raw = _operand(other)
+        if raw is None:
+            return NotImplemented
+        return Set(*op(raw, self._own()))
+
+    def _compare(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
+        raw = _set_like_elements(other)
+        if raw is None:
+            return NotImplemented  # foreign operand -> faithful TypeError
+        return to_boolean(op(self._own(), raw))
+
+    def __or__(self, other: object) -> Set:
+        return self._algebra(other, operator.or_)
+
+    def __ror__(self, other: object) -> Set:
+        return self._reflected(other, operator.or_)
+
+    def __and__(self, other: object) -> Set:
+        return self._algebra(other, operator.and_)
+
+    def __rand__(self, other: object) -> Set:
+        return self._reflected(other, operator.and_)
+
+    def __sub__(self, other: object) -> Set:
+        return self._algebra(other, operator.sub)
+
+    def __rsub__(self, other: object) -> Set:
+        return self._reflected(other, operator.sub)
+
+    def __xor__(self, other: object) -> Set:
+        return self._algebra(other, operator.xor)
+
+    def __rxor__(self, other: object) -> Set:
+        return self._reflected(other, operator.xor)
+
+    def __eq__(self, other: object) -> Boolean:
+        # Equality answers false for a non-set-like operand rather than
+        # raising, exactly as `dict.keys() == [...]` does in CPython.
+        raw = _set_like_elements(other)
+        if raw is None:
+            return false
+        return to_boolean(self._own() == raw)
+
+    def __le__(self, other: object) -> Boolean:
+        return self._compare(other, operator.le)
+
+    def __lt__(self, other: object) -> Boolean:
+        return self._compare(other, operator.lt)
+
+    def __ge__(self, other: object) -> Boolean:
+        return self._compare(other, operator.ge)
+
+    def __gt__(self, other: object) -> Boolean:
+        return self._compare(other, operator.gt)
+
+
+cloak(_SetLikeView, "object")

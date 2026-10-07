@@ -1,4 +1,5 @@
 import ast
+from functools import partial
 
 import pytest
 
@@ -8,11 +9,9 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
+from tests._support import transform
 
-
-def _transform(source: str) -> ast.Module:
-    tree = ast.parse(source)
-    return BytesTransformer().transform(tree)
+_transform = partial(transform, BytesTransformer())
 
 
 def test_bytes_literal_is_rewritten() -> None:

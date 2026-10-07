@@ -1,5 +1,6 @@
 from typing import Any, TypeIs, overload
 
+from poop.types._raw import _faithful
 from poop.types.boolean import Boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.none import NoneClass
@@ -10,19 +11,6 @@ def _is_absent(value: object) -> TypeIs[NoneClass | None]:
     # else/fall-through branch sees `x` with NoneClass | None removed, so
     # `x._value` resolves without a per-call-site ignore directive.
     return value is None or isinstance(value, NoneClass)
-
-
-def _faithful(value: object) -> Any:
-    """Unwrap a *mandatory* argument's `_value`, or return it raw if it has none.
-
-    A POOP value that carries no `_value` — a `List` / `Set` / `Dict` / `Tuple`
-    handed where a scalar (`Str` / `Bytes` / `Int`) was expected — reaches the
-    underlying Python call unchanged, so Python raises the faithful `TypeError`
-    instead of leaking the internal `#_value` name through
-    `does_not_understand`. Returns `Any` so the raw fallback slots into a
-    `str` / `bytes` / `int` parameter without a per-call-site ignore.
-    """
-    return getattr(value, "_value", value)
 
 
 def _searched(value: object) -> Any:

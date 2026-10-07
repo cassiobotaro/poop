@@ -33,6 +33,13 @@ _ENCODINGS: dict[str, frozenset[str]] = {
     "ascii": frozenset({"ascii", "us-ascii"}),
 }
 
+# The same table read the way `encoding_name` asks it: spelling -> canonical.
+_CANONICAL: dict[str, str] = {
+    spelling: canonical
+    for canonical, spellings in _ENCODINGS.items()
+    for spelling in spellings
+}
+
 _HANDLERS = ("strict", "ignore", "replace")
 
 
@@ -54,10 +61,9 @@ def encoding_name(name: Any, selector: str) -> str:
     # a `Str` reaching here directly would otherwise print through its own
     # repr, and the two spellings of the same mistake must read alike.
     raw = text_like(name, selector, "a str", (str,))
-    wanted = raw.lower().replace("_", "-")
-    for canonical, spellings in _ENCODINGS.items():
-        if wanted in spellings:
-            return canonical
+    canonical = _CANONICAL.get(raw.lower().replace("_", "-"))
+    if canonical is not None:
+        return canonical
     raise MIRRORS["ValueError"](
         f"unknown encoding {raw!r} — POOP encodes {_listed(list(_ENCODINGS))}"
     )

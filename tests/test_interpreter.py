@@ -1,4 +1,5 @@
 import ast
+import re
 
 import pytest
 
@@ -26,21 +27,18 @@ def test_syntax_error_raises_parse_error() -> None:
 
 
 def test_if_statement_raises_validation_error() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="if statements"):
         Interpreter().run_source("if True:\n    pass")
-    assert "if statements" in str(exc_info.value)
 
 
 def test_if_expression_raises_validation_error() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="ternary"):
         Interpreter().run_source("x = 1 if True else 2")
-    assert "ternary" in str(exc_info.value)
 
 
 def test_error_message_includes_line_number() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="line 2"):
         Interpreter().run_source("x = 1\nif True:\n    pass")
-    assert "line 2" in str(exc_info.value)
 
 
 def test_runtime_error_raises_execution_error() -> None:
@@ -107,9 +105,8 @@ def test_float_divmod_returns_tuple_of_floats() -> None:
 
 
 def test_subscript_raises_validation_error() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("obj.at(key)")):
         Interpreter().run_source("x = [1, 2, 3]\ny = x[0]")
-    assert "obj.at(key)" in str(exc_info.value)
 
 
 def test_slice_subscript_is_forbidden() -> None:
@@ -125,22 +122,19 @@ def test_slice_subscript_is_forbidden() -> None:
 
 
 def test_a_subscript_store_names_at_put() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("obj.at_put(key, value)")):
         Interpreter().run_source("x = [1, 2, 3]\nx[0] = 9")
-    assert "obj.at_put(key, value)" in str(exc_info.value)
 
 
 def test_a_dict_store_names_at_put_too() -> None:
     # The receiver that had the substitute all along, and was never told.
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("obj.at_put(key, value)")):
         Interpreter().run_source('d = {}\nd["a"] = 1')
-    assert "obj.at_put(key, value)" in str(exc_info.value)
 
 
 def test_an_augmented_store_is_a_store() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("obj.at_put(key, value)")):
         Interpreter().run_source("x = [1, 2, 3]\nx[0] += 1")
-    assert "obj.at_put(key, value)" in str(exc_info.value)
 
 
 def test_a_slice_store_says_what_can_be_done_instead() -> None:
@@ -154,55 +148,49 @@ def test_a_slice_store_says_what_can_be_done_instead() -> None:
 
 
 def test_a_load_still_names_the_reader() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("obj.slice(start, stop)")):
         Interpreter().run_source("x = [1, 2, 3]\ny = x[1:2]")
-    assert "obj.slice(start, stop)" in str(exc_info.value)
 
 
 def test_async_method_inside_class_raises() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="async def is forbidden"):
         Interpreter().run_source(
             "class Foo:\n    async def bar(self):\n        return 1\nFoo()\n"
         )
-    assert "async def is forbidden" in str(exc_info.value)
 
 
 def test_free_async_function_raises() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="async def is forbidden"):
         Interpreter().run_source("async def foo():\n    return 1\n")
-    assert "async def is forbidden" in str(exc_info.value)
 
 
 def test_async_for_reports_the_async_def_root_cause() -> None:
     # no_async runs ahead of no_loops on purpose: fixing the `async for`
     # would only surface the async def ban on the next run.
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="async def is forbidden"):
         Interpreter().run_source(
             "class Foo:\n"
             "    async def bar(self):\n"
             "        async for x in self.items():\n"
             "            x\n"
         )
-    assert "async def is forbidden" in str(exc_info.value)
 
 
 def test_async_with_reports_the_async_def_root_cause() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="async def is forbidden"):
         Interpreter().run_source(
             "class Foo:\n"
             "    async def bar(self):\n"
             "        async with self.lock() as l:\n"
             "            l\n"
         )
-    assert "async def is forbidden" in str(exc_info.value)
 
 
 def test_async_generator_raises() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="async def is forbidden"):
         Interpreter().run_source(
             "class Foo:\n    async def bar(self):\n        yield 1\n"
         )
-    assert "async def is forbidden" in str(exc_info.value)
 
 
 def test_validators_only_still_reports_the_specific_async_construct() -> None:

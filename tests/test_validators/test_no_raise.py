@@ -14,9 +14,8 @@ def test_valid_code_passes() -> None:
 def test_raise_statement_raises_validation_error() -> None:
     source = "raise ValueError('oops')"
     tree = ast.parse(source)
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="raise"):
         NoRaiseValidator().validate(tree)
-    assert "raise" in str(exc_info.value)
 
 
 def test_raise_without_argument_raises_validation_error() -> None:

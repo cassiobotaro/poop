@@ -13,16 +13,14 @@ def test_valid_code_passes() -> None:
 
 def test_if_statement_raises_validation_error() -> None:
     tree = ast.parse("if True:\n    pass")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="if statements"):
         NoIfValidator().validate(tree)
-    assert "if statements" in str(exc_info.value)
 
 
 def test_if_expression_raises_validation_error() -> None:
     tree = ast.parse("x = 1 if True else 2")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="ternary"):
         NoIfValidator().validate(tree)
-    assert "ternary" in str(exc_info.value)
 
 
 def test_validation_error_carries_line_number() -> None:

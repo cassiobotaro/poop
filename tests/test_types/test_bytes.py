@@ -822,3 +822,22 @@ def test_a_byte_receiver_still_searches_for_an_integer() -> None:
     # CPython's rule, which the guard must not tighten: `b"ab".count(97)` is 1.
     assert Bytes(b"aab").count(Int(97)) == Int(2)
     assert Bytes(b"aab").includes(Int(97)) is true
+
+
+@pytest.mark.parametrize("selector", ["center", "ljust", "rjust"])
+@pytest.mark.parametrize("receiver", [Bytes(b"ab"), ByteArray(bytearray(b"ab"))])
+@pytest.mark.parametrize(
+    ("fill", "expected"),
+    [
+        (Int(1), "#{} expects one byte, got an int"),
+        (Str("x"), "#{} expects one byte, got a str"),
+        (Bytes(b"xy"), "#{} expects one byte, got a bytes of length 2"),
+    ],
+    ids=["int", "str", "two-bytes"],
+)
+def test_a_wrong_fill_is_refused_in_poops_words(
+    selector: str, receiver: object, fill: object, expected: str
+) -> None:
+    """The length leaked `center(): argument 2 must be a byte string ...`."""
+    with pytest.raises(TypeError, match=f"^{expected.format(selector)}$"):
+        getattr(receiver, selector)(Int(6), fill)

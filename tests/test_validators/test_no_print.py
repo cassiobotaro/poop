@@ -13,9 +13,8 @@ def test_valid_code_passes() -> None:
 
 def test_print_call_raises_validation_error() -> None:
     tree = ast.parse('print("hello")')
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="print"):
         NoPrintValidator().validate(tree)
-    assert "print" in str(exc_info.value)
 
 
 def test_error_message_mentions_obj_print() -> None:

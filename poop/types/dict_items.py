@@ -1,16 +1,10 @@
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import a_collection
-from poop.types._dict_view import (
-    _DictView,
-    _elements,
-    _operand,
-    _set_like_elements,
-)
-from poop.types.boolean import false, to_boolean
+from poop.types._dict_view import _elements, _SetLikeView
+from poop.types.boolean import to_boolean
 from poop.types.dict_item_iterator import DictItemIterator
 from poop.types.dict_reverse_item_iterator import DictReverseItemIterator
-from poop.types.set import Set
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
@@ -21,13 +15,10 @@ if TYPE_CHECKING:
 
 
 @final
-class DictItems(_DictView, name="dict_items"):
+class DictItems(_SetLikeView, name="dict_items"):
     """Live view over a Dict's items, mirroring Python's dict_items."""
 
     __slots__ = ()
-    # Set-like and compared by contents, which change under it: unhashable,
-    # as in CPython. `dict_values` is neither, and hashes by identity.
-    __hash__ = None  # type: ignore[assignment]
 
     def __iter__(self) -> Iterator[Tuple]:
         return (Tuple(k, v) for k, v in self._dict._data.items())
@@ -55,97 +46,15 @@ class DictItems(_DictView, name="dict_items"):
 
     def isdisjoint(self, other: object) -> Boolean:
         return to_boolean(
-            self._poop_own_set().isdisjoint(
-                _elements(a_collection(other, "isdisjoint"))
-            )
+            self._own().isdisjoint(_elements(a_collection(other, "isdisjoint")))
         )
 
-    def _poop_own_set(self) -> set[Object]:
+    def _own(self) -> set[Object]:
         # Mirroring CPython, an operand's members are *not* required to be
         # 2-tuples: `dict.items() ^ {99}` keeps the 99, so non-pair elements
         # must survive `|`/`^` rather than be dropped. Only the *own* side is
         # built from pairs.
         return {Tuple(k, v) for k, v in self._dict._data.items()}
-
-    def __or__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(self._poop_own_set() | raw))
-
-    def __ror__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(raw | self._poop_own_set()))
-
-    def __and__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(self._poop_own_set() & raw))
-
-    def __rand__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(raw & self._poop_own_set()))
-
-    def __sub__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(self._poop_own_set() - raw))
-
-    def __rsub__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(raw - self._poop_own_set()))
-
-    def __xor__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(self._poop_own_set() ^ raw))
-
-    def __rxor__(self, other: object) -> Set:
-        raw = _operand(other)
-        if raw is None:
-            return NotImplemented
-        return Set(*(raw ^ self._poop_own_set()))
-
-    def __eq__(self, other: object) -> Boolean:
-        # Equality answers false for a non-set-like operand rather than
-        # raising, exactly as `dict.items() == [...]` does in CPython.
-        raw = _set_like_elements(other)
-        if raw is None:
-            return false
-        return to_boolean(self._poop_own_set() == raw)
-
-    def __le__(self, other: object) -> Boolean:
-        raw = _set_like_elements(other)
-        if raw is None:
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._poop_own_set() <= raw)
-
-    def __lt__(self, other: object) -> Boolean:
-        raw = _set_like_elements(other)
-        if raw is None:
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._poop_own_set() < raw)
-
-    def __ge__(self, other: object) -> Boolean:
-        raw = _set_like_elements(other)
-        if raw is None:
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._poop_own_set() >= raw)
-
-    def __gt__(self, other: object) -> Boolean:
-        raw = _set_like_elements(other)
-        if raw is None:
-            return NotImplemented  # foreign operand -> faithful TypeError
-        return to_boolean(self._poop_own_set() > raw)
 
     def _repr_items(self) -> str:
         return ", ".join(f"({k!r}, {v!r})" for k, v in self._dict._data.items())
