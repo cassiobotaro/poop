@@ -2,8 +2,8 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 2–12 come from a Pythonic-code review of the whole package and the test
-suite, after the wording sweeps closed. Items 2 and 3 change behaviour a
+Items 3–12 come from a Pythonic-code review of the whole package and the test
+suite, after the wording sweeps closed. Item 3 changes behaviour a
 program can observe; the rest remove duplication or hand-rolled spellings of
 things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -14,25 +14,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 2. `Str.center` / `ljust` / `rjust` answer CPython's fill-character sentence
-
-`"ab".center(6, 1)` answers `The fill character must be a unicode character,
-not int`; `b"ab".center(6, 1)` one receiver away answers `#center expects one
-byte, got an int`. The three `Str` methods in `poop/types/string.py` unwrap
-`fillchar` and hand the raw value to `str.center` unguarded; their six bytes
-twins in `poop/types/_bytes_like.py` guard through `text_like`.
-
-All six sites also spell the optional argument as two calls — one with the
-fill, one without — around an `if fill is None`, and the bytes side unwraps
-`fillchar` twice (once through `_unwrap`, once through `text_like`).
-
-**Fix.** `_opt_text(fillchar, selector)` already exists in `string.py` for the
-strip family and returns `None` for an absent argument or the guarded text;
-use it, and `bytes_like(fillchar, selector, optional=True)` on the bytes side.
-Each method becomes one call with a conditional argument. Add the three `Str`
-selectors with a non-`Str` fill to the wrong-argument sweep in
-`tests/test_no_python_wording.py`, which does not reach them today.
 
 ### 3. `List.at` takes a slice; `Tuple.at`, `Range.at` and `Str.at` refuse one
 
