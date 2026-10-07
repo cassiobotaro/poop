@@ -2,7 +2,7 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 5–12 come from a Pythonic-code review of the whole package and the test
+Items 6–12 come from a Pythonic-code review of the whole package and the test
 suite, after the wording sweeps closed. They remove duplication or hand-rolled
 spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -13,30 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 5. The `NotImplemented` tail is hand-written thirty-five times
-
-```python
-raw = _other_set(other)
-if raw is None:
-    return NotImplemented
-return <op>(self._data, raw)
-```
-
-Sites: twelve each in `poop/types/dict_keys.py` and `poop/types/dict_items.py`
-(eight set operators and four orderings per view), four in-place operators in
-`poop/types/set.py`, five in `poop/types/_set_algebra.py`, two in
-`poop/types/mapping_proxy.py`. The codebase already has the template twice —
-`_SetAlgebraMixin._algebra(other, op)` and `_OrderedMixin._compare(other, op)`
-in `poop/types/_ordered.py` — and only the four binary set operators use it.
-
-**Fix.** `_compare` on `_SetAlgebraMixin` with `operator.le/lt/ge/gt`;
-`_inplace` on `Set` with `operator.ior/iand/isub/ixor`; a `_SetLikeView` base
-under the two dict views with one hook, `_own() -> set`, and generic
-`_algebra`, `_reflected`, `_compare`, `isdisjoint` and `__eq__`. The
-twenty-four view methods become one-liners, and the two spellings of `__eq__`
-(`true if ... else false` in `DictKeys`, `to_boolean(...)` in `DictItems`)
-become one.
 
 ### 6. The substring-search family is one body written fourteen times
 
