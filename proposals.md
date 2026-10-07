@@ -2,7 +2,7 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 6–12 come from a Pythonic-code review of the whole package and the test
+Items 7–12 come from a Pythonic-code review of the whole package and the test
 suite, after the wording sweeps closed. They remove duplication or hand-rolled
 spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -13,21 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 6. The substring-search family is one body written fourteen times
-
-`find`, `index`, `count`, `rfind` and `rindex` in `poop/types/string.py` and
-again in `poop/types/_bytes_like.py` are each
-`Int(self._value.<m>(a_needle(...), a_bound(start, ...), a_bound(end, ...)))`
-with the selector repeated three times as a string; `startswith` and
-`endswith` on both classes are the same shape over `affix_needle`.
-
-**Fix.** A `_search(method, selector, sub, start, end)` helper per class,
-taking the *bound* method (`self._value.find`) rather than a name to
-`getattr`, so each public method is one line and stays an explicit `def` —
-`ty`, `dir()` and `:methods` need the defs, as `boolean.py` records. The
-bytes side also spells `true if ... else false` where `Str` spells
-`to_boolean(...)`; `to_boolean` is already imported there.
 
 ### 7. Five `visit_Constant` and two `visit_UnaryOp` are the same literal fold
 
