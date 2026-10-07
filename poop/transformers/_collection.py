@@ -8,13 +8,17 @@ constructor binding, spreads included — and the converter factories.
 
 import ast
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import call_at
 from poop.types._message import article
+from poop.types.byte_array import ByteArray
+from poop.types.bytes import Bytes
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
 from poop.types.range import Range
+from poop.types.string import Str
 
 if TYPE_CHECKING:
     from poop.types.object import Object
@@ -112,5 +116,65 @@ def make_iterable_from[T](
         raise MIRRORS["TypeError"](
             f"cannot convert {type(arg).__qualname__} to {poop_type.__name__}"
         )
+
+    return _from
+
+
+def make_bytes_from[T: (Bytes, ByteArray)](
+    poop_type: type[T],
+    build: Callable[[Any], T],
+    *,
+    hint: str,
+    copy: bool = False,
+) -> Callable[..., T]:
+    """The converter for `bytes(...)` or `bytearray(...)`: the two mirror each
+    other message for message, constructor included.
+
+    The text form delegates to `Str.encode`, the guarded codec surface. Reaching
+    into `arg._value` and calling `str.encode` here was the one argument in the
+    language `_codec.py` never saw: `bytes("ab", "rot13")` answered `'rot13' is
+    not a text encoding; use codecs.encode() to handle arbitrary codecs`,
+    sending the reader to a module `no_import` forbids; `bytes("é", "ascii")`
+    leaked CPython's codec report; and `bytes("ab", 5)` was silently *ignored*,
+    falling back to utf-8. The encoding is required, as CPython requires it:
+    without one there is no answer, only a guess about what the text means as
+    bytes. `bytearray` once took no text at all — `most=1` refused legal
+    Python, and the one-argument spelling fell through to iterating the text,
+    answering `'str' object cannot be interpreted as an integer`.
+
+    `build` makes the receiver from whatever its own builtin accepts, so a byte
+    out of range is refused in that builtin's words (`bytes must be in
+    range(0, 256)` against `byte must be ...`). `copy` is
+    `make_iterable_from`'s: `bytes(b)` answers `b` itself, as CPython's does,
+    and `bytearray(b)` a copy that does not alias it.
+    """
+    name = poop_type.__name__
+
+    def _from(*args: object, **kwargs: object) -> T:
+        refuse_extra_arguments(
+            name,
+            args,
+            kwargs,
+            most=3,
+            built_from="at most one source, plus an encoding and errors for text",
+            hint=hint,
+        )
+        arg = args[0] if args else None
+        codec = cast("tuple[Str, ...]", args[1:])
+        if isinstance(arg, Str):
+            if not codec:
+                raise MIRRORS["TypeError"]("string argument without an encoding")
+            return build(arg.encode(*codec)._value)
+        if codec:
+            raise MIRRORS["TypeError"]("encoding without a string argument")
+        if arg is None:
+            return build(b"")
+        if not copy and isinstance(arg, poop_type):
+            return arg
+        if isinstance(arg, Bytes | Int):
+            return build(arg._value)
+        if isinstance(arg, Iterable):
+            return build(item._value for item in cast("Iterable[Int]", arg))
+        raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to {name}")
 
     return _from
