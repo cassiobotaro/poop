@@ -17,7 +17,7 @@ from poop.types.object import Object
 from poop.types.set_iterator import SetIterator
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterable
 
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
@@ -117,17 +117,11 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     def len(self) -> Int:
         return Int(len(self._data))
 
-    def __len__(self) -> int:
-        return len(self._data)
-
-    def __iter__(self) -> Iterator[Object]:
-        return iter(self._data)
+    def _rewrap(self, raw: Iterable[Object]) -> Set:
+        return Set(*raw)
 
     def iter(self) -> SetIterator:
         return SetIterator(self._data)
-
-    def __contains__(self, item: object) -> bool:
-        return probed(item) in self._data
 
     # In-place set operators mutate the receiver (CPython ``s |= other`` keeps
     # ``s``'s identity, so aliases observe the change). Without these, augmented

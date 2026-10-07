@@ -5,7 +5,7 @@ from poop.types._argument import a_collection
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Iterator
 
     from poop.types.boolean import Boolean
     from poop.types.object import Object
@@ -69,8 +69,21 @@ class _SetAlgebraMixin:
 
     CPython lets ``set`` and ``frozenset`` mix freely under these operators, and
     the result takes the *left* operand's type (``{1} | frozenset({2})`` is a
-    ``set``; ``frozenset({1}) | {2}`` is a ``frozenset``). Results are built with
-    ``type(self)`` so the receiver's class wins.
+    ``set``; ``frozenset({1}) | {2}`` is a ``frozenset``). Results are built
+    through ``_rewrap`` so the receiver's builtin wins.
+
+    The builtin's, not ``type(self)``: on a user subclass ``type(self)`` is the
+    class built on the ``builtin_alias``, whose call *converts* its argument —
+    so ``Bag() | {1}`` read ``Bag(1)`` as "convert ``1`` to a set" and answered
+    ``cannot convert int to set``. CPython answers ``set`` from an operator on a
+    ``set`` subclass, and so does POOP; ``_BytesLikeMixin._rewrap`` states the
+    same rule for the bytes pair.
+
+    The *messages* (``union``, ``isdisjoint``, ...) stay on each class rather
+    than here: a wrong-arity call is reported under the function's
+    ``__qualname__``, and a function shared by both classes can carry only one
+    of ``set.isdisjoint`` and ``frozenset.isdisjoint``. The dunders below are
+    never sent by name, so they are shared.
     """
 
     # An empty `__slots__`, because a slot-less class anywhere in an MRO
@@ -81,11 +94,24 @@ class _SetAlgebraMixin:
     _set_like: ClassVar[bool] = True
     _data: Any
 
+    def _rewrap(self, raw: Iterable[Object]) -> Self:
+        """`raw`'s elements as the receiver's own builtin kind."""
+        raise NotImplementedError
+
     def _algebra(self, other: object, op: Callable[[Any, Any], Any]) -> Self:
         raw = _other_set(other)
         if raw is None:
             return NotImplemented
-        return type(self)(*op(self._data, raw))
+        return self._rewrap(op(self._data, raw))
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __iter__(self) -> Iterator[Object]:
+        return iter(self._data)
+
+    def __contains__(self, item: object) -> bool:
+        return probed(item) in self._data
 
     def __and__(self, other: object) -> Self:
         return self._algebra(other, operator.and_)
