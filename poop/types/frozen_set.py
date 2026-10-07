@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 
     from poop.types.boolean import Boolean
 
-_frozenset = frozenset  # alias to avoid shadowing by FrozenSet class name
-
 
 class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     __slots__ = ("_data",)
@@ -23,7 +21,7 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
     _eq_group: ClassVar[str] = "set"
 
     def __init__(self, *elements: Object) -> None:
-        self._data: _frozenset[Object] = _frozenset(elements)
+        self._data: frozenset[Object] = frozenset(elements)
 
     def includes(self, obj: Object) -> Boolean:
         return to_boolean(probed(obj) in self._data)
