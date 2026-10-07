@@ -16,31 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 1. A class-side message read without a call is a `functools.partial`
-
-```python
-(5).class_name.print()      # <block>
-Foo.get_attr("name").print()  # <block>
-int.name.print()            # poop: AttributeError: 'functools.partial' object has no attribute 'print'
-```
-
-`Object.__getattribute__` in `poop/types/object.py` wraps every bound method
-it hands out in `_MethodBlock`, so that "a method read off an object is a
-block, whichever way it was read". The class side does not: `class_side.__get__`
-in `poop/types/meta.py` answers `partial(self._fn, cls)`, a stdlib object no
-POOP program can spell, and the exact leak the `__getattribute__` comment
-describes (`'function' object has no attribute 'print'`) one receiver over.
-Two `partial`s also compare unequal, so `Foo.name == Foo.name` is `false`
-while `Foo.get_attr("name")` goes through `_as_block` and answers a block.
-
-**Fix.** Bind the way Python binds and wrap the way the instance side wraps:
-`_MethodBlock(MethodType(self._fn, cls))`, with `block` imported locally as
-the metaclass already imports its neighbours. `MethodType` gives
-`_MethodBlock._identity` the `__self__`/`__func__` pair it reads, so equality
-follows. `_MethodBlock.__call__` is a passthrough, so the cloaked wrong-arity
-wording is unchanged. A test reading `int.name.print()` and
-`Foo.name.class_name()` fails first.
-
 ### 2. Four arguments still reach CPython unguarded
 
 ```python
