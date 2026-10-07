@@ -4,7 +4,8 @@ from poop.types._argument import _opt_stop, a_bound, an_int
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._unwrap import _faithful, _is_absent, _unwrap
+from poop.types._raw import _faithful
+from poop.types._unwrap import _is_absent, _unwrap
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes

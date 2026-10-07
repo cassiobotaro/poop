@@ -14,6 +14,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from poop.types._message import article
+from poop.types._raw import _faithful
 from poop.types._sentinel import MISSING
 from poop.types.exceptions import MIRRORS
 
@@ -93,7 +94,7 @@ def text_like(
     branch that reports a *value* — the split `byte_order` below exists to
     keep straight.
     """
-    raw = getattr(value, "_value", value)
+    raw = _faithful(value)
     if isinstance(raw, kinds):
         return raw
     raise MIRRORS["TypeError"](
@@ -136,7 +137,7 @@ def a_needle(
             f"{type(receiver).__name__}'s #{selector} searches for a {sought} — "
             f"it takes {wanted}, not a block"
         )
-    raw = getattr(sub, "_value", sub)
+    raw = _faithful(sub)
     # `kinds` is the receiver's, not a fixed set: `b"ab".count("x")` must be
     # refused here rather than pass the guard and reach CPython, and the byte
     # receivers additionally take an integer (`b"ab".count(97)` is 1), which is
@@ -188,7 +189,7 @@ def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
     # default — CPython's own `strip arg must be None or str` names that case.
     if optional and _is_absent(value):
         return None
-    raw = getattr(value, "_value", value)
+    raw = _faithful(value)
     if isinstance(raw, (bytes, bytearray, memoryview)):
         return raw
     raise MIRRORS["TypeError"](
@@ -307,7 +308,7 @@ def an_int(value: Any, selector: str, role: str, default: Any = MISSING) -> Any:
 
     if default is not MISSING and _is_absent(value):
         return default
-    raw = getattr(value, "_value", value)
+    raw = _faithful(value)
     if hasattr(raw, "__index__"):
         return raw
     raise MIRRORS["TypeError"](
@@ -355,7 +356,7 @@ def byte_source(value: Any, selector: str) -> Any:
     wrong things answered about an element, in the same words `max_split`
     replaces.
     """
-    raw = getattr(value, "_value", value)
+    raw = _faithful(value)
     # An int is asked first: `bytes(5)` is five zero bytes, not a refusal.
     if not hasattr(raw, "__index__"):
         try:

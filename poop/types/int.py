@@ -12,8 +12,9 @@ from poop.types._numeric_compare import (
     _NumericCompareMixin,
 )
 from poop.types._pow import reflected_pow
+from poop.types._raw import _faithful
 from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC
-from poop.types._unwrap import _faithful, _is_absent, _unwrap_bool
+from poop.types._unwrap import _is_absent, _unwrap_bool
 from poop.types.boolean import Boolean, true
 from poop.types.complex import Complex
 from poop.types.exceptions import MIRRORS

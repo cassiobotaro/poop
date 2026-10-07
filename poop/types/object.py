@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Self
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak
 from poop.types._message import cannot_be_hashed, no_format_spec
+from poop.types._raw import _faithful
 from poop.types._selectors import explain, is_dunder, is_message
 from poop.types.meta import PoopMeta
 
@@ -188,7 +189,7 @@ class Object(metaclass=PoopMeta):
     def assert_(self, message: Str | NoneClass | None = None) -> Self:
         # Imported here, not at module scope: `exceptions` is built on top of
         # `Object`, so the dependency only runs one way at import time.
-        from poop.types._unwrap import _faithful, _is_absent
+        from poop.types._unwrap import _is_absent
         from poop.types.exceptions import MIRRORS
 
         if bool(self):
@@ -275,7 +276,7 @@ class Object(metaclass=PoopMeta):
         from poop.types.string import Str, _template_refusal
 
         spec_value = "" if _is_absent(spec) else text_like(spec, "format", "a str")
-        target = builtins.getattr(self, "_value", self)
+        target = _faithful(self)
         try:
             return Str(builtins.format(target, spec_value))
         except ValueError as exc:

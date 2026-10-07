@@ -1,5 +1,6 @@
 from typing import Any
 
+from poop.types._raw import _faithful
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types.boolean import Boolean
 
@@ -34,7 +35,7 @@ def _repeat_count(other: object) -> Any:
     """
     if isinstance(other, Boolean):
         return int(bool(other))
-    raw = getattr(other, "_value", other)
+    raw = _faithful(other)
     # `__index__`, not `isinstance(raw, int)`: CPython repeats a sequence by
     # anything with an index, and POOP's own `Index` rung is exactly that.
     if isinstance(raw, int) or hasattr(raw, "__index__"):

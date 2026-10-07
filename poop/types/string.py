@@ -20,9 +20,10 @@ from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
 from poop.types._minmax import _minmax
 from poop.types._ordered import _OrderedMixin
+from poop.types._raw import _faithful
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import MISSING, NOT_A_COUNT
-from poop.types._unwrap import _faithful, _is_absent, _opt_str, _unwrap, _unwrap_bool
+from poop.types._unwrap import _is_absent, _opt_str, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS, PoopExcMeta
