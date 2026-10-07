@@ -2,7 +2,7 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 10–12 come from a Pythonic-code review of the whole package and the test
+Items 11–12 come from a Pythonic-code review of the whole package and the test
 suite, after the wording sweeps closed. They remove duplication or hand-rolled
 spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -13,19 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 10. `format_error` and `render_error` are hand-kept twins
-
-Both functions in `poop/errors.py` compute the location, emit `poop:` plus the
-message, the numbered gutter with the quoted line, and the optional caret
-line. The docstring calls `render_error` the "twin"; a change to the layout is
-made twice, and `tests/test_errors.py` and `tests/test_repl.py` test the two
-layouts separately.
-
-**Fix.** One `_error_segments(exc, source) -> list[tuple[str, str]]` yielding
-`(text, style)` pairs. `format_error` joins the texts; `render_error`
-assembles them, swapping the quoted-line segment for the syntax-highlighted
-`Text`. The layout is stated once.
 
 ### 11. The test suite re-rolls what `conftest.py` and pytest already give
 
