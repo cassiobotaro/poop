@@ -2,7 +2,7 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 9–12 come from a Pythonic-code review of the whole package and the test
+Items 10–12 come from a Pythonic-code review of the whole package and the test
 suite, after the wording sweeps closed. They remove duplication or hand-rolled
 spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -13,25 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 9. The `bytes` and `bytearray` converters are the same function
-
-`_poop_bytes_from` in `poop/transformers/bytes.py` and `_poop_bytearray_from`
-in `poop/transformers/byte_array.py` share the arity guard, the `codec =
-args[1:]` split, the four-way `Str` / `Bytes` / `Int` / `Iterable` dispatch
-and the final refusal; they differ in the wrapper, the hint literal and one
-`._value` hop. `poop/transformers/_collection.py` already solves this shape
-for the four collections with `make_iterable_from`.
-
-Three converters — `enumerate.py`, `range.py`, `slice.py` — also call
-`refuse_extra_arguments` and then, on `if not args`, raise a sentence that
-retypes the same `built_from` and `hint` by hand.
-
-**Fix.** A `make_bytes_from(wrapper, *, hint)` factory beside
-`make_iterable_from`; the registry already cloaks factory-built functions, so
-error messages keep their names. Give `refuse_extra_arguments` in
-`poop/transformers/_arity.py` a `least=` bound that words the "got nothing"
-case from the same `built_from` and `hint`, and drop the three hand copies.
 
 ### 10. `format_error` and `render_error` are hand-kept twins
 
