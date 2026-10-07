@@ -16,27 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 7. `Map` and `Filter` are one class written twice
-
-`poop/types/map.py` and `poop/types/filter.py` differ in two lines out of
-forty: the class name and `yield value` versus `if bool(value): yield item`.
-The `__slots__`, `__init__`, `_generate`, the fifteen-line PEP 479 comment and
-the `try/except StopIteration` around the block call are byte-identical.
-
-One level up, `_IteratorBase` and `_LazyView` in `poop/types/_iterator_base.py`
-restate `__init_subclass__`, `__iter__`, `iter`, `__str__` and `__repr__`; the
-`_LazyView` docstring itself says "the same `__iter__`, `iter`, `<name>` repr
-and cloak".
-
-**Fix.** A `_BlockView(_LazyView)` holding the slots, the constructor, the
-guarded `_call(block, item)` with the PEP 479 comment once, and a `_generate`
-that hands `(source, block)` to a per-class `_gen`; `Map._gen` is one
-generator expression and `Filter._gen` the other. A `_Cursor` base under
-`_IteratorBase` and `_LazyView` holds the five shared members, leaving
-`_IteratorBase` with `__init__`, `_materialize` and the `_iterating` slot the
-lazy views must not have (`_peek.py` says why). Both bases cloaked `object`
-like the other mixins; `class_name()` answers are unchanged.
-
 ### 8. `_PeekMixin` spells the pull-and-reword `try` three times
 
 `has_next`, `next` and `__next__` in `poop/types/_peek.py` each wrap
