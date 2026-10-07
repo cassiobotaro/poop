@@ -16,22 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 10. The metaclass MRO is scanned for a `class_side` four times, once redundantly
-
-`_read_refusal` and `PoopMeta.__dir__` in `poop/types/meta.py`,
-`PoopMeta.__setattr__`'s `owned = any(...)`, and `_answered_by_the_class_side`
-in `poop/types/error.py` each walk `type(cls).__mro__` reading
-`vars(klass).get(name)` for a `class_side`. In `__setattr__` the
-`_read_refusal(...) is None` precheck is dead: `class_side_read_refusal`
-subclasses `class_side`, so whenever it is non-`None` `owned` is already true
-and `_reject_builtin` is skipped either way.
-
-**Fix.** One `_class_side_named(metacls, name) -> class_side | None` in
-`meta.py` — `next((attr for m in metacls.__mro__ if isinstance(attr :=
-vars(m).get(name), class_side)), None)` — that `_read_refusal`, `__setattr__`
-and `error.py` call; the precheck goes. `test_meta.py`'s read-refusal tests
-stay green.
-
 ### 11. The scalars wire their operators the long way round
 
 - `__rand__`, `__ror__`, `__rxor__` on `Int` and `__radd__`, `__rmul__` on
