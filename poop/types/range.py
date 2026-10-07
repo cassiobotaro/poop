@@ -64,8 +64,7 @@ class Range(_IterableMixin, Object):
         return Range(Int(native.start), Int(native.stop - sign), Int(native.step))
 
     def _iter(self) -> Iterator[Int]:
-        for i in self._range():
-            yield Int(i)
+        return map(Int, self._range())
 
     def __iter__(self) -> Iterator[Int]:
         return self._iter()

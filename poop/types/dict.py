@@ -198,10 +198,10 @@ class Dict(_ValueEqMixin, _IterableMixin, Object):
             raise nothing_to_remove(self) from None
         return Tuple(k, v)
 
-    def setdefault(self, key: Object, default: Object | None = None) -> Object:
+    def setdefault(self, key: Object, default: Object = none) -> Object:
         # CPython defaults the fill value to None — `d.setdefault(k)` returns
-        # `none` and stores `k: none`, matching `get`/`pop`'s optional default.
-        return self._data.setdefault(key, none if default is None else default)
+        # `none` and stores `k: none`, as `get` defaults to `none`.
+        return self._data.setdefault(key, default)
 
     def update(
         self, other: Object | NoneClass | None = None, **pairs: Object

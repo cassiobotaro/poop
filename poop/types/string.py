@@ -200,8 +200,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Str(self._value[py])
 
     def __iter__(self) -> Iterator[Str]:
-        for ch in self._value:
-            yield Str(ch)
+        return map(Str, self._value)
 
     def iter(self) -> StrIterator:
         return StrIterator(self)
