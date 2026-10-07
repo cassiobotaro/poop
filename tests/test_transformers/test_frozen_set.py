@@ -1,4 +1,5 @@
 import ast
+from functools import partial
 
 import pytest
 
@@ -11,11 +12,9 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.range import Range
 from poop.types.tuple import Tuple
+from tests._support import transform
 
-
-def _transform(source: str) -> ast.Module:
-    tree = ast.parse(source)
-    return FrozenSetTransformer().transform(tree)
+_transform = partial(transform, FrozenSetTransformer())
 
 
 def test_frozenset_call_is_rewritten() -> None:

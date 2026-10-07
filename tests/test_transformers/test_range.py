@@ -1,4 +1,5 @@
 import ast
+from functools import partial
 from typing import Any
 
 import pytest
@@ -9,11 +10,9 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.range import Range
 from poop.types.string import Str
+from tests._support import transform
 
-
-def _transform(source: str) -> ast.Module:
-    tree = ast.parse(source)
-    return RangeTransformer().transform(tree)
+_transform = partial(transform, RangeTransformer())
 
 
 def test_range_call_is_rewritten() -> None:

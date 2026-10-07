@@ -1,4 +1,5 @@
 import ast
+from functools import partial
 
 import pytest
 
@@ -14,11 +15,9 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+from tests._support import transform
 
-
-def _transform(source: str) -> ast.Module:
-    tree = ast.parse(source)
-    return DictTransformer().transform(tree)
+_transform = partial(transform, DictTransformer())
 
 
 def test_dict_literal_is_rewritten() -> None:

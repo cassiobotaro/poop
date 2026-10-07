@@ -1,11 +1,11 @@
 import ast
+from functools import partial
 
 from poop.interpreter import Interpreter
 from poop.transformers.return_ import ReturnTransformer
+from tests._support import transform
 
-
-def _transform(src: str) -> ast.Module:
-    return ReturnTransformer().transform(ast.parse(src))
+_transform = partial(transform, ReturnTransformer())
 
 
 def _last_stmt(func: ast.FunctionDef | ast.AsyncFunctionDef) -> ast.stmt:

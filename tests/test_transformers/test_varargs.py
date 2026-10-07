@@ -1,15 +1,15 @@
 import ast
 import re
+from functools import partial
 
 import pytest
 
 from poop.errors import ExecutionError
 from poop.interpreter import Interpreter
 from poop.transformers.varargs import VarargsTransformer
+from tests._support import transform
 
-
-def _transform(src: str) -> ast.Module:
-    return VarargsTransformer().transform(ast.parse(src))
+_transform = partial(transform, VarargsTransformer())
 
 
 def test_vararg_gets_tuple_prologue() -> None:

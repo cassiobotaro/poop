@@ -1,12 +1,11 @@
 import ast
+from functools import partial
 
 from poop.transformers.slice import SliceTransformer
 from poop.types.slice import Slice
+from tests._support import transform
 
-
-def _transform(source: str) -> ast.Module:
-    tree = ast.parse(source)
-    return SliceTransformer().transform(tree)
+_transform = partial(transform, SliceTransformer())
 
 
 def test_slice_call_is_rewritten_to_mangled() -> None:

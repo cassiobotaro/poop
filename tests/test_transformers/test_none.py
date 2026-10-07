@@ -1,12 +1,11 @@
 import ast
+from functools import partial
 
 from poop.transformers.none import NoneTransformer
 from poop.types.none import none
+from tests._support import transform
 
-
-def _transform(source: str) -> ast.Module:
-    tree = ast.parse(source)
-    return NoneTransformer().transform(tree)
+_transform = partial(transform, NoneTransformer())
 
 
 def test_none_literal_is_rewritten() -> None:
