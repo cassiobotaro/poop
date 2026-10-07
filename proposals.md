@@ -16,36 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 2. Four arguments still reach CPython unguarded
-
-```python
-"abc".replace("a", "b", "x")       # TypeError: 'str' object cannot be interpreted as an integer
-b"abc".replace(b"a", b"b", "x")    # same sentence
-[1, 2].enumerate("a").do(...)      # same sentence — and only when walked
-memoryview(b"ab").tobytes(5)       # TypeError: tobytes() argument 'order' must be str or None, not int
-memoryview(b"ab").hex(5)           # TypeError: object of type 'int' has no len()
-b"ab".hex(5)                       # #hex expects a one-character separator, got an int
-```
-
-`an_int`'s docstring in `poop/types/_argument.py` says it replaces `'str'
-object cannot be interpreted as an integer` on every integer that is not a
-position. Four sites still unwrap raw: `count` in `Str.replace`
-(`poop/types/string.py`) and in the bytes `replace`
-(`poop/types/_bytes_like.py`) through `_unwrap(count, -1)`; `start` in
-`Enumerate.__init__` (`poop/types/enumerate.py`) through
-`Int(_unwrap(start, 0))`, which also wraps a non-int inside an `Int` and
-defers the failure to the first walk — the shape `a_block`'s docstring argues
-against; and `order` in `MemoryView.tobytes` plus `sep` in `MemoryView.hex`
-(`poop/types/memory_view.py`), where the `Bytes.hex` twin one module over
-already guards through `text_like`.
-
-**Fix.** `an_int(count, "replace", "count", -1)` on both `replace`s,
-`an_int(start, "enumerate", "start", 0)` before the `Int(...)`, and `text_like`
-with the sentence `Bytes.hex` uses on the two `MemoryView` messages. One
-wrong-type test per site; the wording sweep in
-`tests/test_no_python_wording.py` cannot see these, since the sentence carries
-no call, dunder or operator.
-
 ### 3. `Interpreter()` hands out the module-level default lists
 
 `Interpreter.__init__` in `poop/interpreter.py` stores `DEFAULT_VALIDATORS`
