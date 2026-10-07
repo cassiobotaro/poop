@@ -7,7 +7,7 @@ from poop.types._message import poop_message
 from poop.types._selectors import explain
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import poop_class_of
-from poop.types.meta import class_side
+from poop.types.meta import class_side_named
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
@@ -22,11 +22,8 @@ def _answered_by_the_class_side(kind: type, name: str) -> bool:
     descriptor raises when asked, and `class_side_read_refusal` — the shape the
     `BaseException` leftovers use — would look identical to a message otherwise.
     """
-    for metaclass in type(kind).__mro__:
-        attr = vars(metaclass).get(name)
-        if isinstance(attr, class_side):
-            return not attr.refuses
-    return False
+    found = class_side_named(type(kind), name)
+    return found is not None and not found.refuses
 
 
 @final
