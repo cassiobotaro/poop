@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from poop.transformers import RESERVED_NAMES
 from poop.types.exceptions import MIRRORS
 from poop.validators.base import CollectingValidator, collect_errors
 from poop.validators.no_namespace_shadow import _Visitor
@@ -9,48 +10,23 @@ if TYPE_CHECKING:
 
     from poop.errors import ValidationError
 
-# The lowercase builtin names the type transformers rewrite to mangled
-# `_poop_*` globals. Rebinding one (an assignment, a class name, or a
-# def/lambda parameter) silently retargets the interpreter's internals —
-# e.g. `str = "x"` replaces the literal constructor, and `def m(self, dict)`
-# makes the body operate on the internal Dict class instead of the argument.
-# Reserving them turns the silent corruption into a parse-time diagnostic,
-# mirroring how `no_namespace_shadow` protects namespace bindings.
-_BUILTIN_NAMES = frozenset(
-    {
-        # `object` and `Object` are the two spellings ObjectTransformer
-        # rewrites to `_poop_object` in every position, Store included. So
-        # `object = 5` becomes `_poop_object = 5` and clobbers the root class
-        # itself — the next `class Foo` then implicitly inherits an Int. A
-        # method parameter named `object` is the same hazard as one named
-        # `dict`: the body's references rewrite to the class, not the argument.
-        "object",
-        "Object",
-        "bool",
-        "int",
-        "float",
-        "complex",
-        "str",
-        "bytes",
-        "bytearray",
-        "memoryview",
-        "list",
-        "tuple",
-        "dict",
-        "set",
-        "frozenset",
-        "range",
-        "slice",
-        "enumerate",
-        "zip",
-        # `Ellipsis` is the named spelling of `...`, and EllipsisTransformer
-        # rewrites both to `_poop_ellipsis` in every position — so
-        # `Ellipsis = 5` did not merely shadow a name, it made the *literal*
-        # `...` answer 5 for the rest of the program.
-        "Ellipsis",
-    }
-)
-
+# The names the type transformers rewrite to mangled `_poop_*` globals.
+# Rebinding one (an assignment, a class name, or a def/lambda parameter)
+# silently retargets the interpreter's internals — e.g. `str = "x"` replaces
+# the literal constructor, and `def m(self, dict)` makes the body operate on
+# the internal Dict class instead of the argument. Reserving them turns the
+# silent corruption into a parse-time diagnostic, mirroring how
+# `no_namespace_shadow` protects namespace bindings.
+#
+# Two spellings are easy to miss. `object` and `Object` both rewrite to
+# `_poop_object` in every position, so `object = 5` clobbers the root class
+# itself and the next `class Foo` implicitly inherits an Int. `Ellipsis` is
+# the named spelling of `...`, so `Ellipsis = 5` made the *literal* `...`
+# answer 5 for the rest of the program.
+#
+# Derived from the rewriters (`RESERVED_NAMES`), not tabulated here: a table
+# is a second list, and a new rewriter must not be addable without its
+# reservation following it.
 _MESSAGE = "{name!r} is a POOP builtin name; it cannot be rebound"
 
 
@@ -65,11 +41,10 @@ class NoBuiltinShadowValidator(CollectingValidator):
         # `def hold(self, ValueError): return ValueError` answered the class
         # and never saw its argument.
         #
-        # Derived from MIRRORS rather than tabulated, as
-        # `no_namespace_shadow` derives its own set from DEFAULT_NAMESPACE: a
-        # seventeenth mirror must not be addable without the reservation
-        # following it.
-        self._protected: frozenset[str] = _BUILTIN_NAMES | frozenset(MIRRORS)
+        # Derived from MIRRORS rather than tabulated, for the reason the
+        # rewriters' names are: a new mirror must not be addable without the
+        # reservation following it.
+        self._protected: frozenset[str] = RESERVED_NAMES | frozenset(MIRRORS)
 
     def collect(self, tree: ast.Module) -> list[ValidationError]:
         return collect_errors(_Visitor(self._protected, _MESSAGE), tree)

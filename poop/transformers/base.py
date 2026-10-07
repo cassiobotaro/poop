@@ -70,14 +70,22 @@ class BuiltinRewriter(ast.NodeTransformer):
     builtin: ClassVar[str]
     call_target: ClassVar[str]
     name_target: ClassVar[str]
+    # Every spelling this rewriter claims, Store included — so every one is a
+    # name a program must not rebind. `{builtin}` unless a subclass says more.
+    names: ClassVar[frozenset[str]]
     # The literal this builtin owns, if any, and the binding that wraps it:
     # `5` becomes `_poop_int(5)`. `type(value) is literal_type`, not
     # `isinstance`, so `True` is never read as an int.
     literal_type: ClassVar[type | None] = None
     literal_target: ClassVar[str]
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if "names" not in cls.__dict__:
+            cls.names = frozenset({cls.builtin})
+
     def is_builtin(self, name: str) -> bool:
-        return name == self.builtin
+        return name in self.names
 
     def call_args(self, node: ast.Call) -> list[ast.expr]:
         """The converter's positional arguments; a hook for `slice`."""

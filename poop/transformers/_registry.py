@@ -152,3 +152,11 @@ def _merge_bindings(sources: list[dict[str, object]]) -> dict[str, object]:
 
 
 DEFAULT_NAMESPACE: dict[str, object] = _merge_bindings(_BINDING_SOURCES)
+
+# The names the rewriters claim in every position, Store included: rebinding
+# one retargets the interpreter's internals, so `no_builtin_shadow` reserves
+# them. Derived from the rewriters, as `DEFAULT_NAMESPACE` is from the
+# bindings, so a new rewriter cannot ship without its reservation.
+RESERVED_NAMES: frozenset[str] = frozenset().union(
+    *(getattr(cls.rewriter, "names", ()) for cls in _TRANSFORMER_CLASSES)
+)

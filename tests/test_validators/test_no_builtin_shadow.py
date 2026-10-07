@@ -3,6 +3,7 @@ import ast
 import pytest
 
 from poop.errors import ValidationError
+from poop.transformers import RESERVED_NAMES
 from poop.types.exceptions import MIRRORS
 from poop.validators.no_builtin_shadow import NoBuiltinShadowValidator
 
@@ -190,3 +191,43 @@ def test_mirror_as_base_class_is_fine() -> None:
 def test_raising_a_mirror_is_fine() -> None:
     tree = ast.parse('ValueError.raise_("boom")')
     NoBuiltinShadowValidator().validate(tree)
+
+
+def test_the_reserved_names_are_every_spelling_a_rewriter_claims() -> None:
+    """Pinned so a rewriter that stops declaring its names is noticed.
+
+    The set is derived from the rewriters; this is the list it replaced.
+    """
+    assert (
+        frozenset(
+            {
+                "object",
+                "Object",
+                "bool",
+                "int",
+                "float",
+                "complex",
+                "str",
+                "bytes",
+                "bytearray",
+                "memoryview",
+                "list",
+                "tuple",
+                "dict",
+                "set",
+                "frozenset",
+                "range",
+                "slice",
+                "enumerate",
+                "zip",
+                "Ellipsis",
+            }
+        )
+        == RESERVED_NAMES
+    )
+
+
+@pytest.mark.parametrize("name", sorted(RESERVED_NAMES))
+def test_every_reserved_name_is_refused_as_a_target(name: str) -> None:
+    with pytest.raises(ValidationError, match=f"^{name!r} is a POOP builtin name"):
+        NoBuiltinShadowValidator().validate(ast.parse(f"{name} = 5"))
