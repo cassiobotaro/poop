@@ -2,10 +2,14 @@ import ast
 import builtins
 import sys
 import traceback
+from typing import TYPE_CHECKING, Literal
 
 from poop.errors import ExecutionError
 from poop.types._message import poop_message, too_deep
 from poop.types.exceptions import poop_class_of
+
+if TYPE_CHECKING:
+    from types import CodeType
 
 # The only Python builtins user code may reach. `exec` hands a program
 # CPython's entire builtins namespace unless the globals dict already carries
@@ -114,25 +118,34 @@ def confine(namespace: dict[str, object]) -> None:
     namespace.setdefault("__builtins__", dict(_ALLOWED_BUILTINS))
 
 
-def execute(
-    tree: ast.Module,
-    filename: str = "<unknown>",
-    namespace: dict[str, object] | None = None,
-    *,
-    interactive: bool = False,
-) -> None:
+def _compile(
+    tree: ast.Module, filename: str, mode: Literal["exec", "single"]
+) -> CodeType:
+    """`tree` compiled in `mode`, with a compile-time failure as a PoopError.
+
+    `"single"` is the REPL's mode — an expression statement echoes its value —
+    and takes an `ast.Interactive` rather than the parsed module.
+    """
+    source: ast.Module | ast.Interactive = tree
+    if mode == "single":
+        source = ast.copy_location(ast.Interactive(body=tree.body), tree)
     try:
-        if interactive:
-            interactive_tree = ast.Interactive(body=tree.body)
-            ast.copy_location(interactive_tree, tree)
-            code = compile(interactive_tree, filename=filename, mode="single")
-        else:
-            code = compile(tree, filename=filename, mode="exec")
+        return compile(source, filename=filename, mode=mode)
     except SyntaxError as exc:
         # ast.parse accepts some constructs that compile rejects (e.g. a
         # module-level `return`); surface them as a PoopError instead of
         # leaking a raw SyntaxError past the CLI's error handler.
         raise ExecutionError(exc.msg, exc.lineno) from exc
+
+
+def execute(
+    tree: ast.Module,
+    filename: str = "<unknown>",
+    namespace: dict[str, object] | None = None,
+    *,
+    mode: Literal["exec", "single"] = "exec",
+) -> None:
+    code = _compile(tree, filename, mode)
     ns: dict[str, object] = namespace if namespace is not None else {}
     confine(ns)
     # Raised, not set: a caller that has already asked for more keeps it. The

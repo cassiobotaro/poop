@@ -75,7 +75,7 @@ class Interpreter:
         # the executor keep only frames from the input being run, so a reported
         # line always exists in the source shown alongside it.
         tree = self.transform_source(source, filename=filename)
-        execute(tree, filename=filename, namespace=namespace, interactive=True)
+        execute(tree, filename=filename, namespace=namespace, mode="single")
 
     def transform_source(self, source: str, filename: str = "<string>") -> ast.Module:
         tree: ast.Module = parse(source, filename=filename)
