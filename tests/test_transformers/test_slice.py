@@ -1,61 +1,35 @@
-import ast
 from functools import partial
+
+import pytest
 
 from poop.transformers.slice import SliceTransformer
 from poop.types.slice import Slice
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, SliceTransformer())
-
-
-def test_slice_call_is_rewritten_to_mangled() -> None:
-    tree = _transform("x = slice(1, 5)")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_slice_from"
+_rewritten = partial(rewritten, SliceTransformer())
 
 
-def test_slice_three_arg_is_rewritten() -> None:
-    tree = _transform("x = slice(0, 10, 2)")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_slice_from"
-    assert len(call.args) == 3
-
-
-def test_slice_one_arg_injects_none_start() -> None:
-    # CPython's slice(stop) means slice(None, stop): the lone argument is the
-    # stop, so the rewrite must insert an implicit None start before it.
-    tree = _transform("x = slice(5)")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_slice_from"
-    assert len(call.args) == 2
-    start = call.args[0]
-    assert isinstance(start, ast.Constant)
-    assert start.value is None
-    stop = call.args[1]
-    assert isinstance(stop, ast.Constant)
-    assert stop.value == 5
-
-
-def test_other_names_not_rewritten() -> None:
-    tree = _transform("x = myslice(1, 5)")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "myslice"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("x = slice(1, 5)", "x = _poop_slice_from(1, 5)"),
+        ("x = slice(0, 10, 2)", "x = _poop_slice_from(0, 10, 2)"),
+        # CPython's slice(stop) means slice(None, stop): the lone argument is
+        # the stop, so the rewrite must insert an implicit None start before it.
+        ("x = slice(5)", "x = _poop_slice_from(None, 5)"),
+        ("x = myslice(1, 5)", "x = myslice(1, 5)"),
+        ("f = slice", "f = _poop_slice"),
+    ],
+    ids=[
+        "call",
+        "three_args",
+        "one_arg_injects_none_start",
+        "other_names_untouched",
+        "bare_name_to_mangled_binding",
+    ],
+)
+def test_slice_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_mangled_slice() -> None:
@@ -64,11 +38,3 @@ def test_bindings_contains_mangled_slice() -> None:
     # A call goes through the factory, which guards the arity. `Slice(...)`
     # *is* the call, so this was the one constructor with no factory at all, and its refusal named `slice.__init__()`.
     assert "_poop_slice_from" in SliceTransformer.BINDINGS
-
-
-def test_bare_slice_name_is_rewritten_to_the_mangled_binding() -> None:
-    tree = SliceTransformer().transform(ast.parse("f = slice"))
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Name)
-    assert assign.value.id == "_poop_slice"

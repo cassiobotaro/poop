@@ -150,11 +150,10 @@ class Int(_NumericCompareMixin, Object):
             ),
         )
 
-    def __abs__(self) -> Int:
+    def abs(self) -> Int:
         return Int(abs(self._value))
 
-    def abs(self) -> Int:
-        return self.__abs__()
+    __abs__ = abs
 
     def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Int | Float:
         """`self op other`, an `Int` beside an `Int` and a `Float` beside a `Float`.
@@ -164,14 +163,15 @@ class Int(_NumericCompareMixin, Object):
         reflected method runs — `Str`/`Bytes` repeat for `*`, `Boolean` and
         `Complex` for the rest.
         """
-        # circular: float imports int
+        # circular: float imports int, and _bridge imports both
+        from poop.types._bridge import to_poop  # noqa: PLC0415
         from poop.types.float import Float  # noqa: PLC0415
 
         if not isinstance(other, Int | Float):
             return NotImplemented
-        if isinstance(other, Float):
-            return Float(op(self._value, other._value))
-        return Int(op(self._value, other._value))
+        # `to_poop` is the raw-to-POOP dispatch: an `int` answer is an `Int`,
+        # a `float` one a `Float`, whichever operator produced it.
+        return to_poop(op(self._value, other._value))
 
     def __add__(self, other: object) -> Int | Float:
         return self._arith(other, operator.add)
@@ -183,12 +183,8 @@ class Int(_NumericCompareMixin, Object):
         return self._arith(other, operator.mul)
 
     def __truediv__(self, other: object) -> Float:
-        # circular: float imports int
-        from poop.types.float import Float  # noqa: PLC0415
-
-        if not isinstance(other, Int | Float):
-            return NotImplemented  # let other.__rtruediv__ run
-        return Float(self._value / other._value)
+        # `/` answers a `float` on every pair, so `_arith` answers a `Float`.
+        return cast("Float", self._arith(other, operator.truediv))
 
     def __floordiv__(self, other: object) -> Int | Float:
         return self._arith(other, operator.floordiv)
@@ -199,7 +195,8 @@ class Int(_NumericCompareMixin, Object):
     def __pow__(
         self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
-        # circular: float imports int
+        # circular: float imports int, and _bridge imports both
+        from poop.types._bridge import to_poop  # noqa: PLC0415
         from poop.types.float import Float  # noqa: PLC0415
 
         if isinstance(other, Complex):
@@ -207,12 +204,7 @@ class Int(_NumericCompareMixin, Object):
         if not isinstance(other, Int | Float):
             return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
         if _is_absent(modulus):
-            result = self._value**other._value
-            if isinstance(result, complex):
-                return Complex(result)
-            if isinstance(result, float):
-                return Float(result)
-            return Int(result)
+            return to_poop(self._value**other._value)
         if isinstance(other, Float):
             raise MIRRORS["TypeError"](
                 "pow's modulus is only defined when both operands are ints"
@@ -309,39 +301,31 @@ class Int(_NumericCompareMixin, Object):
     def __rrshift__(self, other: object) -> Int:
         return self._bitwise(other, operator.rshift, reflected=True)
 
-    def __rand__(self, other: object) -> Int:
-        return self._bitwise(other, operator.and_, reflected=True)
-
-    def __ror__(self, other: object) -> Int:
-        return self._bitwise(other, operator.or_, reflected=True)
-
-    def __rxor__(self, other: object) -> Int:
-        return self._bitwise(other, operator.xor, reflected=True)
-
-    def __ceil__(self) -> Int:
-        return self
+    # `&`, `|` and `^` commute, so their reflected halves are the operators.
+    __rand__ = __and__
+    __ror__ = __or__
+    __rxor__ = __xor__
 
     def ceil(self) -> Int:
-        return self.__ceil__()
-
-    def __floor__(self) -> Int:
         return self
+
+    __ceil__ = ceil
 
     def floor(self) -> Int:
-        return self.__floor__()
-
-    def __trunc__(self) -> Int:
         return self
 
-    def trunc(self) -> Int:
-        return self.__trunc__()
+    __floor__ = floor
 
-    def __round__(self, ndigits: Int | NoneClass | None = None) -> Int:
+    def trunc(self) -> Int:
+        return self
+
+    __trunc__ = trunc
+
+    def round(self, ndigits: Int | NoneClass | None = None) -> Int:
         n = an_int(ndigits, "round", "ndigits", None)
         return Int(round(self._value, n))
 
-    def round(self, ndigits: Int | NoneClass | None = None) -> Int:
-        return self.__round__(ndigits)
+    __round__ = round
 
     # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
     # across the numeric tower live in _NumericCompareMixin, driven by

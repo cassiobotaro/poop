@@ -30,6 +30,21 @@ class MessageNotUnderstood(AttributeError):
     """
 
 
+def _holds_no_state(receiver: object) -> Exception:
+    """The refusal for attaching state to a value, for `__setattr__` and `del_attr`.
+
+    One sentence for both: CPython names `__dict__` in each, a dunder
+    `no_dunder_attribute` bans, and two copies of the replacement drift.
+    """
+    # circular: exceptions imports object
+    from poop.types.exceptions import MIRRORS
+
+    return MIRRORS["AttributeError"](
+        f"{type(receiver).__name__} is a value — it holds no state of its "
+        "own; only an object of a class you defined can be given one"
+    )
+
+
 class Object(metaclass=PoopMeta):
     __slots__ = ()
 
@@ -124,7 +139,6 @@ class Object(metaclass=PoopMeta):
         the object writing its own slot from a caller reaching into someone
         else's. `set_attr` is reflection and can refuse; the assignment cannot.
         """
-        from poop.types.exceptions import MIRRORS
 
         try:
             object.__setattr__(self, name, value)
@@ -133,10 +147,7 @@ class Object(metaclass=PoopMeta):
             # attached state — and CPython says so by naming `__dict__`, a
             # dunder `no_dunder_attribute` bans and `_reject_dunder` will not
             # even let a program spell. This names the distinction instead.
-            raise MIRRORS["AttributeError"](
-                f"{type(self).__name__} is a value — it holds no state of its "
-                "own; only an object of a class you defined can be given one"
-            ) from None
+            raise _holds_no_state(self) from None
 
     def does_not_understand(self, name: str) -> Any:
         """Smalltalk's `doesNotUnderstand:` — the hook for an unknown message.
@@ -341,10 +352,7 @@ class Object(metaclass=PoopMeta):
                 raise MIRRORS["AttributeError"](
                     f"{type(self).__name__} has no attribute {raw!r} to remove"
                 ) from None
-            raise MIRRORS["AttributeError"](
-                f"{type(self).__name__} is a value — it holds no state of its "
-                "own; only an object of a class you defined can be given one"
-            ) from None
+            raise _holds_no_state(self) from None
         return none
 
     def print(

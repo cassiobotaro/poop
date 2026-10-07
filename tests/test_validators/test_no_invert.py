@@ -7,11 +7,6 @@ from poop.errors import ValidationError
 from poop.validators.no_invert import NoInvertValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoInvertValidator().validate(tree)
-
-
 def test_invert_on_variable_raises() -> None:
     tree = ast.parse("x = ~y")
     with pytest.raises(ValidationError, match=re.escape("bit_invert()")):

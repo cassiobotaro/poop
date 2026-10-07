@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_poop_prefix import NoPoopPrefixValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoPoopPrefixValidator().validate(tree)
-
-
 def test_poop_prefixed_name_raises() -> None:
     tree = ast.parse("x = _poop_int")
     with pytest.raises(ValidationError, match="_poop_int is forbidden"):

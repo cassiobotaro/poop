@@ -4,14 +4,6 @@ import copy
 from poop.transformers.base import BaseTransformer, call_at
 
 
-def _collect_starred(target: ast.expr, acc: list[ast.expr]) -> None:
-    if isinstance(target, ast.Starred):
-        acc.append(target.value)
-    elif isinstance(target, (ast.Tuple, ast.List)):
-        for elt in target.elts:
-            _collect_starred(elt, acc)
-
-
 def _rebind(target_value: ast.expr) -> ast.Assign:
     """`<t> = _poop_list_from(<t>)` for a starred rest-target `<t>`."""
     store = copy.deepcopy(target_value)  # outermost Store, inner Load
@@ -41,9 +33,15 @@ class _UnpackRewriter(ast.NodeTransformer):
 
     def visit_Assign(self, node: ast.Assign) -> ast.AST | list[ast.stmt]:
         self.generic_visit(node)
-        starred: list[ast.expr] = []
-        for target in node.targets:
-            _collect_starred(target, starred)
+        # A `Starred` in `Store` context is a rest-target, at any depth of the
+        # unpacking; a star inside an expression the target reads (a call's
+        # `*args` under an attribute) is `Load`, and is left alone.
+        starred = [
+            star.value
+            for target in node.targets
+            for star in ast.walk(target)
+            if isinstance(star, ast.Starred) and isinstance(star.ctx, ast.Store)
+        ]
         if not starred:
             return node
         return [node, *(_rebind(t) for t in starred)]

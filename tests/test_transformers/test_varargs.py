@@ -1,4 +1,3 @@
-import ast
 import re
 from functools import partial
 
@@ -7,38 +6,28 @@ import pytest
 from poop.errors import ExecutionError
 from poop.interpreter import Interpreter
 from poop.transformers.varargs import VarargsTransformer
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, VarargsTransformer())
-
-
-def test_vararg_gets_tuple_prologue() -> None:
-    tree = _transform("def f(*args):\n    return args")
-    func = tree.body[0]
-    assert isinstance(func, ast.FunctionDef)
-    first = func.body[0]
-    assert isinstance(first, ast.Assign)
-    assert isinstance(first.value, ast.Call)
-    assert isinstance(first.value.func, ast.Name)
-    assert first.value.func.id == "_poop_tuple_from"
+_rewritten = partial(rewritten, VarargsTransformer())
 
 
-def test_kwarg_gets_dict_prologue() -> None:
-    tree = _transform("def f(**kw):\n    return kw")
-    func = tree.body[0]
-    assert isinstance(func, ast.FunctionDef)
-    first = func.body[0]
-    assert isinstance(first, ast.Assign)
-    assert isinstance(first.value, ast.Call)
-    assert isinstance(first.value.func, ast.Name)
-    assert first.value.func.id == "_poop_dict_from_kwargs"
-
-
-def test_no_variadic_params_unchanged() -> None:
-    tree = _transform("def f(a, b):\n    return a")
-    func = tree.body[0]
-    assert isinstance(func, ast.FunctionDef)
-    assert isinstance(func.body[0], ast.Return)
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            "def f(*args):\n    return args",
+            "def f(*args):\n    args = _poop_tuple_from(args)\n    return args",
+        ),
+        (
+            "def f(**kw):\n    return kw",
+            "def f(**kw):\n    kw = _poop_dict_from_kwargs(kw)\n    return kw",
+        ),
+        ("def f(a, b):\n    return a", "def f(a, b):\n    return a"),
+    ],
+    ids=["vararg_gets_tuple_prologue", "kwarg_gets_dict_prologue", "no_variadics"],
+)
+def test_def_prologue(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_vararg_is_poop_tuple_via_interpreter() -> None:
@@ -66,8 +55,9 @@ def test_lambda_vararg_is_poop_tuple_via_interpreter() -> None:
 def test_lambda_kwarg_gets_dict_conversion() -> None:
     # `lambda **kw: ...` wraps kw so the body sees a POOP Dict, mirroring how a
     # `def`'s **kwargs are converted.
-    tree = _transform("f = lambda **kw: kw")
-    assert "_poop_dict_from_kwargs" in ast.unparse(tree)
+    assert _rewritten("f = lambda **kw: kw") == (
+        "f = lambda **kw: (lambda kw: kw)(_poop_dict_from_kwargs(kw))"
+    )
 
 
 # --- the call site: the other end of the variadic round trip ---

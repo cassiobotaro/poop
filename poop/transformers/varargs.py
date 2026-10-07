@@ -9,12 +9,11 @@ _CONVERTERS = (("vararg", "_poop_tuple_from"), ("kwarg", "_poop_dict_from_kwargs
 
 def _variadics(args: ast.arguments) -> list[tuple[str, str]]:
     """`(parameter name, converter)` for each variadic parameter `args` has."""
-    found = []
-    for slot, helper in _CONVERTERS:
-        param = getattr(args, slot)
-        if param is not None:
-            found.append((param.arg, helper))
-    return found
+    return [
+        (param.arg, helper)
+        for slot, helper in _CONVERTERS
+        if (param := getattr(args, slot)) is not None
+    ]
 
 
 def _rebind(name: str, helper: str, node: ast.AST) -> ast.Assign:
@@ -67,10 +66,9 @@ class _VarargsRewriter(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         self.generic_visit(node)
-        prologue = [
+        node.body[:0] = [
             _rebind(name, helper, node) for name, helper in _variadics(node.args)
         ]
-        node.body = prologue + node.body
         return node
 
     def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
@@ -80,26 +78,17 @@ class _VarargsRewriter(ast.NodeTransformer):
             return node
         # lambda <params>: body  ->
         # lambda <params>: (lambda xs, kw: body)(conv(xs), conv(kw))
+        # Every other field of `arguments` and `Call` defaults to empty (3.13+).
         inner = ast.Lambda(
-            args=ast.arguments(
-                posonlyargs=[],
-                args=[ast.arg(arg=name) for name, _ in names],
-                vararg=None,
-                kwonlyargs=[],
-                kw_defaults=[],
-                kwarg=None,
-                defaults=[],
-            ),
+            args=ast.arguments(args=[ast.arg(arg=name) for name, _ in names]),
             body=node.body,
         )
-        call = ast.Call(
+        node.body = ast.Call(
             func=inner,
             args=[
                 call_at(helper, [name_at(name, node)], node) for name, helper in names
             ],
-            keywords=[],
         )
-        node.body = call
         return node
 
 

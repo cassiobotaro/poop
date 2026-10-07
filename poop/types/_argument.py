@@ -61,17 +61,9 @@ def a_bound(value: Any, selector: str, role: str) -> Any:
     messages that carry bounds without one.
 
     Unwraps as well as guards, so a call site spells one helper where it used
-    to spell `_unwrap(start, None)`.
+    to spell `_unwrap(start, None)`. An optional `an_int`: absent is `None`.
     """
-    # circular: _unwrap -> boolean -> _argument
-    from poop.types._unwrap import _unwrap  # noqa: PLC0415
-
-    raw = _unwrap(value, None)
-    if raw is None or hasattr(raw, "__index__"):
-        return raw
-    raise MIRRORS["TypeError"](
-        f"#{selector}'s {role} must be an int, got {article(type(value).__name__)}"
-    )
+    return an_int(value, selector, role, None)
 
 
 def text_like(
@@ -287,8 +279,7 @@ def max_split(value: Any, selector: str) -> int:
     never asked for. `a_bound` already words the same mistake for positions;
     an absent one is CPython's `-1`, every split there is.
     """
-    raw = a_bound(value, selector, "maxsplit")
-    return -1 if raw is None else raw
+    return an_int(value, selector, "maxsplit", -1)
 
 
 def an_int(value: Any, selector: str, role: str, default: Any = MISSING) -> Any:

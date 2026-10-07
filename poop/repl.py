@@ -110,6 +110,11 @@ def _is_safe_expr(expr: str) -> bool:
     return all(isinstance(node, _SAFE_AST_NODES) for node in ast.walk(tree))
 
 
+def _completion(name: str, value: object) -> str:
+    """`name` as Tab completes it: with a `(` when it is called."""
+    return f"{name}(" if callable(value) else name
+
+
 class _PoopCompleter:
     def __init__(self, namespace: dict[str, object]) -> None:
         self._ns = namespace
@@ -128,37 +133,33 @@ class _PoopCompleter:
     def _name_matches(self, text: str) -> list[str]:
         # `is_message`, not a `_poop_`-only filter: any other `_`-prefixed key
         # is machinery too, and offering it teaches a name `get_attr` refuses.
-        results = []
-        for name, val in self._ns.items():
-            if name.startswith(text) and is_message(name):
-                suffix = "(" if callable(val) else ""
-                results.append(name + suffix)
-        return sorted(results)
+        return sorted(
+            _completion(name, value)
+            for name, value in self._ns.items()
+            if name.startswith(text) and is_message(name)
+        )
 
     def _attr_matches(self, text: str) -> list[str]:
-        dot = text.rfind(".")
-        expr, attr = text[:dot], text[dot + 1 :]
+        expr, _, attr = text.rpartition(".")
         if not _is_safe_expr(expr):
             return []
         try:
             obj = eval(expr, self._ns)  # noqa: S307
-            results = []
-            for name in dir(obj):
-                if name.startswith(attr) and is_message(name):
-                    # `getattr_static`: reading the attribute off the *type*
-                    # was already required, because `getattr(obj, name)` runs a
-                    # `property` getter and pressing Tab then executed program
-                    # code. Going through `getattr` at all stopped working when
-                    # the class side started refusing instance messages —
-                    # `getattr(Int, "abs", None)` answers the default, so every
-                    # message lost its `(`. This resolves no descriptor at all,
-                    # which is what "off the type" meant in the first place.
-                    val = inspect.getattr_static(obj, name, None)
-                    suffix = "(" if callable(val) else ""
-                    results.append(f"{expr}.{name}{suffix}")
-            return sorted(results)
+            names = dir(obj)
         except Exception:  # noqa: BLE001
             return []
+        # `getattr_static`: reading the attribute off the *type* was already
+        # required, because `getattr(obj, name)` runs a `property` getter and
+        # pressing Tab then executed program code. Going through `getattr` at
+        # all stopped working when the class side started refusing instance
+        # messages — `getattr(Int, "abs", None)` answers the default, so every
+        # message lost its `(`. This resolves no descriptor at all, which is
+        # what "off the type" meant in the first place.
+        return sorted(
+            f"{expr}.{_completion(name, inspect.getattr_static(obj, name, None))}"
+            for name in names
+            if name.startswith(attr) and is_message(name)
+        )
 
 
 def _setup_readline(namespace: dict[str, object]) -> None:
@@ -335,16 +336,17 @@ class Repl:
 
     def _meta(self, line: str) -> None:
         cmd, _, arg = line[1:].strip().partition(" ")
-        commands: dict[str, Callable[[str], None]] = {
-            "methods": self._meta_methods,
-            "explain": self._meta_explain,
-            "help": lambda _arg: _say(_META_HELP),
-        }
-        command = commands.get(cmd)
+        # Name-based dispatch, as `cmd.Cmd` does with `do_*`: `:foo` runs
+        # `_meta_foo`. `isidentifier` keeps `:_meta` or `:__class__` from
+        # reaching any other attribute.
+        command = getattr(self, f"_meta_{cmd}", None) if cmd.isidentifier() else None
         if command is None:
             _error(f"unknown meta-command :{cmd} — try :help")
             return
         command(arg.strip())
+
+    def _meta_help(self, _arg: str) -> None:
+        _say(_META_HELP)
 
     def _meta_methods(self, arg: str) -> None:
         if not arg:

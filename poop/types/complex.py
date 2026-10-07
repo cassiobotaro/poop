@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
+from poop.types._numeric_compare import _num_value
+from poop.types._sentinel import NOT_NUMERIC
 from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
@@ -47,21 +49,12 @@ class Complex(Object):
         return self.__abs__()
 
     def _coerce(self, other: object) -> _complex | None:
-        # circular: float imports complex
-        from poop.types.float import Float  # noqa: PLC0415
-
-        # circular: int imports complex
-        from poop.types.int import Int  # noqa: PLC0415
-
         if isinstance(other, Complex):
             return other._value
-        if isinstance(other, (Int, Float)):
-            return _complex(other._value)
-        # `bool` is an `int` subclass, so a Boolean folds in as 1/0 across the
-        # numeric tower — `True + (1+2j)`, `(1+2j) ** True`, etc. all coerce.
-        if isinstance(other, Boolean):
-            return _complex(bool(other))
-        return None
+        # The rest of the tower's coercion: an `Int`, a `Float`, or a Boolean
+        # folded in as 1/0 — `True + (1+2j)`, `(1+2j) ** True` all coerce.
+        value = _num_value(other)
+        return None if value is NOT_NUMERIC else _complex(value)
 
     def _arith(
         self,
@@ -83,8 +76,7 @@ class Complex(Object):
     def __add__(self, other: object) -> Complex | NotImplementedType:
         return self._arith(other, operator.add)
 
-    def __radd__(self, other: object) -> Complex | NotImplementedType:
-        return self._arith(other, operator.add, reflected=True)
+    __radd__ = __add__  # `+` commutes
 
     def __sub__(self, other: object) -> Complex | NotImplementedType:
         return self._arith(other, operator.sub)
@@ -95,8 +87,7 @@ class Complex(Object):
     def __mul__(self, other: object) -> Complex | NotImplementedType:
         return self._arith(other, operator.mul)
 
-    def __rmul__(self, other: object) -> Complex | NotImplementedType:
-        return self._arith(other, operator.mul, reflected=True)
+    __rmul__ = __mul__  # `*` commutes
 
     def __truediv__(self, other: object) -> Complex | NotImplementedType:
         return self._arith(other, operator.truediv)

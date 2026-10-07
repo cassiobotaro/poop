@@ -58,7 +58,7 @@ class Tuple(_SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin, Object
         return TupleIterator(self._items)
 
     def includes(self, obj: Object) -> Boolean:
-        return to_boolean(obj in self._items)
+        return to_boolean(obj in self)
 
     def sorted(
         self,

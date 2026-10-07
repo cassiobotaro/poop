@@ -841,3 +841,10 @@ def test_a_wrong_fill_is_refused_in_poops_words(
     """The length leaked `center(): argument 2 must be a byte string ...`."""
     with pytest.raises(TypeError, match=f"^{expected.format(selector)}$"):
         getattr(receiver, selector)(Int(6), fill)
+
+
+@pytest.mark.parametrize("kind", [Bytes, ByteArray])
+def test_replace_names_its_count(kind: Any) -> None:
+    with pytest.raises(TypeError, match="^#replace's count must be an int, got a str$"):
+        kind(b"abc").replace(Bytes(b"a"), Bytes(b"b"), Str("x"))
+    assert kind(b"aa").replace(Bytes(b"a"), Bytes(b"b"), Int(1)) == kind(b"ba")

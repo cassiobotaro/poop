@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 
 import pytest
@@ -10,64 +9,33 @@ from poop.types.list import List
 from poop.types.range import Range
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, TupleTransformer())
-
-
-def test_tuple_literal_rewritten() -> None:
-    tree = _transform("result = (1, 2, 3)")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_tuple"
+_rewritten = partial(rewritten, TupleTransformer())
 
 
-def test_tuple_literal_elements() -> None:
-    tree = _transform("result = (1, 2)")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_tuple"
-    assert len(call.args) == 2
-
-
-def test_store_context_preserved() -> None:
-    tree = _transform("(a, b) = (1, 2)")
-    src = ast.unparse(tree)
-    assert "_poop_tuple" not in src or src.count("_poop_tuple") == 1
-
-
-def test_tuple_call_is_rewritten() -> None:
-    tree = _transform("tuple(x)")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_tuple_from"
-
-
-def test_tuple_call_no_arg_is_rewritten() -> None:
-    tree = _transform("tuple()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_tuple_from"
-    assert len(expr.value.args) == 0
-
-
-def test_method_named_tuple_is_not_rewritten() -> None:
-    tree = _transform("x.tuple()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "tuple"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("result = (1, 2, 3)", "result = _poop_tuple(1, 2, 3)"),
+        ("result = (1, 2)", "result = _poop_tuple(1, 2)"),
+        # The Store-context target stays a plain tuple; only the value wraps.
+        ("(a, b) = (1, 2)", "a, b = _poop_tuple(1, 2)"),
+        ("tuple(x)", "_poop_tuple_from(x)"),
+        ("tuple()", "_poop_tuple_from()"),
+        ("x.tuple()", "x.tuple()"),
+    ],
+    ids=[
+        "literal",
+        "literal_elements",
+        "store_context_preserved",
+        "call",
+        "call_no_arg",
+        "method_named_tuple",
+    ],
+)
+def test_tuple_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contain_factory() -> None:

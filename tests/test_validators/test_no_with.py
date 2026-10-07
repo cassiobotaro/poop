@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_with import NoWithValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoWithValidator().validate(tree)
-
-
 def test_with_statement_raises_validation_error() -> None:
     source = "with open('f') as f:\n    pass"
     tree = ast.parse(source)

@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 
 import pytest
@@ -9,47 +8,23 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, BytesTransformer())
-
-
-def test_bytes_literal_is_rewritten() -> None:
-    tree = _transform("x = b'hello'")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_bytes"
+_rewritten = partial(rewritten, BytesTransformer())
 
 
-def test_bytes_call_is_rewritten() -> None:
-    tree = _transform("bytes(x)")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_bytes_from"
-
-
-def test_bytes_call_with_encoding_is_rewritten() -> None:
-    tree = _transform('bytes(x, "utf-8")')
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_bytes_from"
-    assert len(expr.value.args) == 2
-
-
-def test_method_named_bytes_is_not_rewritten() -> None:
-    tree = _transform("x.bytes()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "bytes"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("x = b'hello'", "x = _poop_bytes(b'hello')"),
+        ("bytes(x)", "_poop_bytes_from(x)"),
+        ('bytes(x, "utf-8")', "_poop_bytes_from(x, 'utf-8')"),
+        ("x.bytes()", "x.bytes()"),
+    ],
+    ids=["literal", "call", "call_with_encoding", "method_named_bytes"],
+)
+def test_bytes_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_bytes_class() -> None:
@@ -132,8 +107,4 @@ def test_bytes_from_unsupported_type_raises() -> None:
 
 
 def test_bare_bytes_name_is_rewritten_to_the_mangled_binding() -> None:
-    tree = BytesTransformer().transform(ast.parse("f = bytes"))
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Name)
-    assert assign.value.id == "_poop_bytes_cls"
+    assert _rewritten("f = bytes") == "f = _poop_bytes_cls"

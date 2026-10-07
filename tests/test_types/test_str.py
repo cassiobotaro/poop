@@ -1032,3 +1032,13 @@ def test_a_wrong_fill_is_refused_in_poops_words(
     """CPython answered `The fill character must be ...` for all three."""
     with pytest.raises(TypeError, match=f"^{expected.format(selector)}$"):
         getattr(Str("ab"), selector)(Int(6), fill)
+
+
+def test_replace_names_its_count() -> None:
+    # `'str' object cannot be interpreted as an integer`, the sentence `an_int`
+    # replaces, reached this one argument unguarded.
+    wrong: Any = Str("x")
+    with pytest.raises(TypeError, match="^#replace's count must be an int, got a str$"):
+        Str("abc").replace(Str("a"), Str("b"), wrong)
+    assert Str("aa").replace(Str("a"), Str("b"), none) == Str("bb")
+    assert Str("aa").replace(Str("a"), Str("b"), Int(1)) == Str("ba")

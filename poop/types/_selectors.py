@@ -72,6 +72,11 @@ def receiver_label(obj: object) -> str:
     return obj.__name__ if isinstance(obj, type) else type(obj).__name__
 
 
+def not_understood(label: str, name: str, hint: str) -> str:
+    """`<label> does not understand #<name> — <hint>`, the refusal's one shape."""
+    return f"{label} does not understand #{name} — {hint}"
+
+
 def explain(obj: object, name: str, label: str | None = None) -> str:
     """The `does not understand` message, with the best hint available.
 
@@ -89,10 +94,7 @@ def explain(obj: object, name: str, label: str | None = None) -> str:
         label = receiver_label(obj)
     poop_name = SMALLTALK_SELECTORS.get(name)
     if poop_name is not None and hasattr(obj, poop_name):
-        return (
-            f"{label} does not understand #{name} — "
-            f"Smalltalk's #{name} is #{poop_name} here"
-        )
+        return not_understood(label, name, f"Smalltalk's #{name} is #{poop_name} here")
     known = [n for n in dir(obj) if is_message(n)]
     # 0.7, not difflib's default 0.6. With the table above carrying the
     # Smalltalk vocabulary, all that is left here is typos, and those score
@@ -102,5 +104,5 @@ def explain(obj: object, name: str, label: str | None = None) -> str:
     # cheaper than confidently naming a message the user never meant.
     matches = difflib.get_close_matches(name, known, n=1, cutoff=0.7)
     if matches:
-        return f"{label} does not understand #{name} — did you mean #{matches[0]}?"
-    return f"{label} does not understand #{name} — try :methods to list its messages"
+        return not_understood(label, name, f"did you mean #{matches[0]}?")
+    return not_understood(label, name, "try :methods to list its messages")

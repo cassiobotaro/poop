@@ -72,21 +72,12 @@ def _unwrap_bool(value: object, default: bool) -> bool:
     return bool(value)
 
 
-# Typed thin aliases — readability shortcuts that share `_unwrap`'s body,
+# A typed thin alias — a readability shortcut that shares `_unwrap`'s body,
 # so Bytes / ByteArray / Str need not re-declare the same 2-line helper.
 #
-# Note on semantics: both route through `_unwrap`, which treats Python
+# Note on semantics: it routes through `_unwrap`, which treats Python
 # `None` and POOP `NoneClass` alike as absent — user code that passes
 # `none` is handled identically to the missing-arg case.
-
-
-@overload
-def _opt_int(value: object, default: int) -> int: ...
-@overload
-def _opt_int(value: object, default: None = None) -> int | None: ...
-def _opt_int(value: object, default: int | None = None) -> int | None:
-    """`Int | None` → `int` (with default) or `int | None` (default omitted)."""
-    return _unwrap(value, default)
 
 
 @overload

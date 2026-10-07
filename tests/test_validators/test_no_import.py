@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_import import NoImportValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoImportValidator().validate(tree)
-
-
 def test_import_raises_validation_error() -> None:
     tree = ast.parse("import os")
     with pytest.raises(ValidationError, match="import is forbidden"):

@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_type_alias import NoTypeAliasValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoTypeAliasValidator().validate(tree)
-
-
 def test_type_alias_raises_validation_error() -> None:
     tree = ast.parse("type X = int")
     with pytest.raises(ValidationError):

@@ -1,40 +1,36 @@
 import ast
 
+import pytest
+
 from poop.interpreter import Interpreter
 from poop.transformers import DEFAULT_TRANSFORMERS
 from poop.transformers.class_ import ClassTransformer
 from poop.transformers.object import ObjectTransformer
 from poop.types.object import Object
+from tests._support import rewritten
 
 
-def _names(source: str) -> list[str]:
-    tree = ObjectTransformer().transform(ast.parse(source))
-    return [n.id for n in ast.walk(tree) if isinstance(n, ast.Name)]
-
-
-def test_bare_object_is_rewritten() -> None:
-    # It was the one lowercase builtin with no Name-position rewrite, so it
-    # reached runtime as the raw CPython class.
-    assert _names("object") == ["_poop_object"]
-
-
-def test_object_is_rewritten_wherever_it_is_named() -> None:
-    assert "_poop_object" in _names("x.is_instance(object)")
-    assert "_poop_object" in _names("f = object")
-
-
-def test_capital_object_is_a_real_name_now() -> None:
-    # `Object` was accepted only as a class-base string and was a NameError
-    # everywhere else; it now resolves like `object`, in every position.
-    assert _names("Object") == ["_poop_object"]
-    assert "_poop_object" in _names("Object.print()")
-    assert "_poop_object" in _names("x.is_instance(Object)")
-
-
-def test_other_names_are_untouched() -> None:
-    assert _names("objects") == ["objects"]
-    assert _names("my_object") == ["my_object"]
-    assert _names("Objection") == ["Objection"]
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        # It was the one lowercase builtin with no Name-position rewrite, so it
+        # reached runtime as the raw CPython class.
+        ("object", "_poop_object"),
+        ("x.is_instance(object)", "x.is_instance(_poop_object)"),
+        ("f = object", "f = _poop_object"),
+        # `Object` was accepted only as a class-base string and was a NameError
+        # everywhere else; it now resolves like `object`, in every position.
+        ("Object", "_poop_object"),
+        ("Object.print()", "_poop_object.print()"),
+        ("x.is_instance(Object)", "x.is_instance(_poop_object)"),
+        # Other names are untouched.
+        ("objects", "objects"),
+        ("my_object", "my_object"),
+        ("Objection", "Objection"),
+    ],
+)
+def test_object_is_rewritten_wherever_it_is_named(source: str, expected: str) -> None:
+    assert rewritten(ObjectTransformer(), source) == expected
 
 
 def test_declares_no_binding_for_the_name_class_transformer_owns() -> None:

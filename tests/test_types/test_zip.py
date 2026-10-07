@@ -248,17 +248,17 @@ def test_do_consumes_one_shot() -> None:
 
 def test_poop_zip_accepts_python_none_strict() -> None:
     z = _poop_zip(List(Int(1)), List(Int(2)), strict=None)
-    assert z._strict is false
+    assert z._strict is False
 
 
 def test_poop_zip_accepts_poop_none_strict() -> None:
     z = _poop_zip(List(Int(1)), List(Int(2)), strict=none)
-    assert z._strict is false
+    assert z._strict is False
 
 
 def test_poop_zip_accepts_boolean_strict() -> None:
     z = _poop_zip(List(Int(1)), List(Int(2)), strict=true)
-    assert z._strict is true
+    assert z._strict is True
 
 
 def test_poop_zip_rejects_non_boolean_strict() -> None:

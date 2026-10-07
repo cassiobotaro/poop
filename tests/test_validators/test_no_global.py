@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_global import NoGlobalValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoGlobalValidator().validate(tree)
-
-
 def test_global_raises_validation_error() -> None:
     tree = ast.parse("class Foo:\n    def m(self):\n        global x")
     with pytest.raises(ValidationError, match="global"):

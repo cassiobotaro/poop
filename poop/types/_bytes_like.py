@@ -29,7 +29,7 @@ from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
-from poop.types._unwrap import _opt_str, _unwrap, _unwrap_bool
+from poop.types._unwrap import _opt_str, _unwrap_bool
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
@@ -309,7 +309,7 @@ class _BytesLikeMixin[B: Object]:
             self._value.replace(
                 bytes_like(old, "replace"),
                 bytes_like(new, "replace"),
-                _unwrap(count, -1),
+                an_int(count, "replace", "count", -1),
             )
         )
 

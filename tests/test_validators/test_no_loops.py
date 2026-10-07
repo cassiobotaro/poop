@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_loops import NoLoopsValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoLoopsValidator().validate(tree)
-
-
 def test_for_loop_raises_validation_error() -> None:
     tree = ast.parse("for i in range(10):\n    pass")
     with pytest.raises(ValidationError, match="for loops"):

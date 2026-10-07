@@ -89,19 +89,10 @@ class _Visitor(ErrorCollector):
         self.generic_visit(node)
 
 
-class _ClassNames(ast.NodeVisitor):
-    """Every class name the module defines, for the `@staticmethod` allowance."""
-
-    def __init__(self) -> None:
-        self.names: set[str] = set()
-
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        self.names.add(node.name)
-        self.generic_visit(node)
-
-
 class NoPrivateAttributeValidator(CollectingValidator):
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        names = _ClassNames()
-        names.visit(tree)
-        return collect_errors(_Visitor(frozenset(names.names)), tree)
+        # Every class name the module defines, for the `@staticmethod` allowance.
+        own = frozenset(
+            node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
+        )
+        return collect_errors(_Visitor(own), tree)

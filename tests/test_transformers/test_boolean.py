@@ -1,4 +1,5 @@
 import ast
+from functools import partial
 
 import pytest
 
@@ -8,38 +9,31 @@ from poop.transformers.boolean import BooleanTransformer, _poop_bool_from
 from poop.types.boolean import false, true
 from poop.types.int import Int
 from poop.types.string import Str
+from tests._support import rewritten
+
+_rewritten = partial(rewritten, BooleanTransformer())
 
 
-def _first_value(source: str) -> ast.expr:
-    tree = ast.parse(source)
-    transformed = BooleanTransformer().transform(tree)
-    assign = transformed.body[0]
-    assert isinstance(assign, ast.Assign)
-    return assign.value
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("x = True", "x = _poop_true"),
+        ("x = False", "x = _poop_false"),
+        ("bool(x)", "_poop_bool_from(x)"),
+    ],
+    ids=["true_literal", "false_literal", "call"],
+)
+def test_bool_is_rewritten(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
-def test_true_literal_replaced_by_poop_true_name() -> None:
-    value = _first_value("x = True")
-    assert isinstance(value, ast.Name)
-    assert value.id == "_poop_true"
-
-
-def test_false_literal_replaced_by_poop_false_name() -> None:
-    value = _first_value("x = False")
-    assert isinstance(value, ast.Name)
-    assert value.id == "_poop_false"
-
-
-def test_integer_constant_not_altered() -> None:
-    value = _first_value("x = 1")
-    assert isinstance(value, ast.Constant)
-    assert value.value == 1
-
-
-def test_string_constant_not_altered() -> None:
-    value = _first_value("x = 'hello'")
-    assert isinstance(value, ast.Constant)
-    assert value.value == "hello"
+@pytest.mark.parametrize(
+    "source",
+    ["x = 1", "x = 'hello'", "x.bool()"],
+    ids=["int_constant", "str_constant", "method_named_bool"],
+)
+def test_bool_is_not_rewritten(source: str) -> None:
+    assert _rewritten(source) == source
 
 
 def test_transformed_nodes_have_line_info() -> None:
@@ -60,26 +54,6 @@ def test_bindings_contain_true_and_false_singletons() -> None:
 
 def test_bindings_contain_bool_from_factory() -> None:
     assert BooleanTransformer.BINDINGS["_poop_bool_from"] is _poop_bool_from
-
-
-def test_bool_call_is_rewritten() -> None:
-    tree = ast.parse("bool(x)")
-    transformed = BooleanTransformer().transform(tree)
-    expr = transformed.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_bool_from"
-
-
-def test_method_named_bool_is_not_rewritten() -> None:
-    tree = ast.parse("x.bool()")
-    transformed = BooleanTransformer().transform(tree)
-    expr = transformed.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "bool"
 
 
 # _poop_bool_from factory tests

@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_match import NoMatchValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoMatchValidator().validate(tree)
-
-
 def test_match_raises_validation_error() -> None:
     tree = ast.parse(
         "class Foo:\n    def m(self, x):\n        match x:\n            case 1:\n                pass"

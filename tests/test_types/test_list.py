@@ -332,7 +332,7 @@ def test_index_honours_stop_without_start() -> None:
 
 
 def test_index_reads_a_none_stop_as_the_end() -> None:
-    # `_opt_int(stop, 0)` read an explicit `none` as "stop at 0", which makes
+    # An unwrap with a default of 0 read an explicit `none` as "stop at 0", which makes
     # every search fail.
     xs = List(Int(1), Int(2), Int(3))
     assert xs.index(Int(3), none, none) == Int(2)

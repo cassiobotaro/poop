@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_comprehension import NoComprehensionValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoComprehensionValidator().validate(tree)
-
-
 def test_list_comprehension_raises_validation_error() -> None:
     tree = ast.parse("[x for x in col]")
     with pytest.raises(ValidationError, match="list comprehension"):

@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 
 import pytest
@@ -10,29 +9,39 @@ from poop.types.bytes import Bytes
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, StrTransformer())
-
-
-def test_str_literal_is_rewritten() -> None:
-    tree = _transform('x = "hello"')
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_str"
-    assert isinstance(call.args[0], ast.Constant)
-    assert call.args[0].value == "hello"
+_rewritten = partial(rewritten, StrTransformer())
 
 
-def test_int_literal_is_not_rewritten() -> None:
-    tree = _transform("x = 42")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Constant)
-    assert assign.value.value == 42
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('x = "hello"', "x = _poop_str('hello')"),
+        ("x = 42", "x = 42"),
+        ("str(x)", "_poop_str_from(x)"),
+        # `str(b"x", encoding=...)` is a valid CPython call answering `"x"`.
+        # It used to fall through to the class rename, which answered
+        # `str.__init__() takes 2 positional arguments but 3 were given` — a
+        # dunder the program never wrote. The keyword is preserved, not dropped.
+        (
+            'str(b"x", encoding="utf-8")',
+            "_poop_str_from(b'x', encoding=_poop_str('utf-8'))",
+        ),
+        ('str(b"x", "utf-8")', "_poop_str_from(b'x', _poop_str('utf-8'))"),
+        ("x.str()", "x.str()"),
+    ],
+    ids=[
+        "literal",
+        "int_literal_not_rewritten",
+        "call",
+        "call_with_keyword_reaches_the_converter",
+        "call_with_two_positional_args_reaches_the_converter",
+        "method_named_str",
+    ],
+)
+def test_str_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_str_class() -> None:
@@ -41,46 +50,6 @@ def test_bindings_contains_str_class() -> None:
 
 def test_bindings_contains_str_from_factory() -> None:
     assert StrTransformer.BINDINGS["_poop_str_from"] is _poop_str_from
-
-
-def test_str_call_is_rewritten() -> None:
-    tree = _transform("str(x)")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_str_from"
-
-
-# `str(b"x", encoding=...)` is a valid CPython call answering `"x"`. It used to
-# fall through to the class rename, which answered `str.__init__() takes 2
-# positional arguments but 3 were given` — a dunder the program never wrote.
-def test_str_call_with_keyword_reaches_the_converter() -> None:
-    tree = _transform('str(b"x", encoding="utf-8")')
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_str_from"
-    assert expr.value.keywords  # the encoding keyword is preserved, not dropped
-
-
-def test_str_call_with_two_positional_args_reaches_the_converter() -> None:
-    tree = _transform('str(b"x", "utf-8")')
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_str_from"
-
-
-def test_method_named_str_is_not_rewritten() -> None:
-    tree = _transform("x.str()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "str"
 
 
 # _poop_str_from factory tests

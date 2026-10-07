@@ -1,4 +1,5 @@
 import builtins
+import operator
 from abc import abstractmethod
 from collections import deque
 from functools import reduce as functools_reduce
@@ -106,10 +107,7 @@ class _IterableMixin:
 
     def find(self, block: Callable[[Any], Any] | Missing = MISSING) -> Any:
         block = a_block(block, "find")
-        for item in self._iter_items():
-            if bool(block(item)):
-                return item
-        return none
+        return next((item for item in self._iter_items() if block(item)), none)
 
     def reduce(
         self, init: Any = MISSING, block: Callable[[Any, Any], Any] | Missing = MISSING
@@ -127,13 +125,11 @@ class _IterableMixin:
 
     def sum(self, start: Any = MISSING) -> Any:
         items = self._iter_items()
-        if start is not MISSING:
-            return functools_reduce(lambda a, b: a + b, items, start)
-        try:
-            first = next(items)
-        except StopIteration:
-            return Int(0)
-        return functools_reduce(lambda a, b: a + b, items, first)
+        if start is MISSING:
+            # The first element, not `Int(0)`, when there is one: a collection
+            # of `Str`s or `List`s sums without a start that matches its kind.
+            start = next(items, Int(0))
+        return functools_reduce(operator.add, items, start)
 
     def min(
         self,
@@ -173,12 +169,10 @@ class _IterableMixin:
         return List(*_sorted(self._iter_items(), key, reverse))
 
     def all(self, block: Callable[[Any], Any] | Missing = MISSING) -> Boolean:
-        block = a_block(block, "all")
-        return to_boolean(builtins.all(bool(block(x)) for x in self._iter_items()))
+        return to_boolean(builtins.all(map(a_block(block, "all"), self._iter_items())))
 
     def any(self, block: Callable[[Any], Any] | Missing = MISSING) -> Boolean:
-        block = a_block(block, "any")
-        return to_boolean(builtins.any(bool(block(x)) for x in self._iter_items()))
+        return to_boolean(builtins.any(map(a_block(block, "any"), self._iter_items())))
 
     def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:
         # circular: enumerate imports _iterable_mixin

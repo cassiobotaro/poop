@@ -1,9 +1,8 @@
 import builtins
 from typing import TYPE_CHECKING, Any
 
-from poop.types._argument import a_collection
+from poop.types._argument import a_collection, an_int
 from poop.types._iterator_base import _LazyView
-from poop.types._unwrap import _unwrap
 from poop.types.int import Int
 from poop.types.tuple import Tuple
 
@@ -20,7 +19,9 @@ class Enumerate(_LazyView[Tuple], name="enumerate"):
         super().__init__()
         a_collection(source, "enumerate")
         self._source = source
-        self._start: Int = Int(_unwrap(start, 0))
+        # Guarded here, not on the first walk: a wrong `start` used to be
+        # wrapped in an `Int` as is and refused by CPython only when walked.
+        self._start: Int = Int(an_int(start, "enumerate", "start", 0))
 
     @staticmethod
     def _gen(source: Any, start: int) -> Iterator[Tuple]:

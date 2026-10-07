@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 
 import pytest
@@ -15,48 +14,25 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
 from poop.types.tuple import Tuple
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, DictTransformer())
-
-
-def test_dict_literal_is_rewritten() -> None:
-    tree = _transform('x = {"a": 1}')
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_dict_from_pairs"
-    assert len(call.args) == 2
+_rewritten = partial(rewritten, DictTransformer())
 
 
-def test_dict_call_is_rewritten() -> None:
-    tree = _transform("dict(x)")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_dict_from"
-
-
-def test_dict_call_no_arg_is_rewritten() -> None:
-    tree = _transform("dict()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_dict_from"
-    assert len(expr.value.args) == 0
-
-
-def test_method_named_dict_is_not_rewritten() -> None:
-    tree = _transform("x.dict()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "dict"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('x = {"a": 1}', "x = _poop_dict_from_pairs('a', 1)"),
+        ("dict(x)", "_poop_dict_from(x)"),
+        ("dict()", "_poop_dict_from()"),
+        ("x.dict()", "x.dict()"),
+        # A `**` display is rewritten to _poop_dict_merge.
+        ("x = {**d, 'a': 1}", "x = _poop_dict_merge(d, _poop_dict_from_pairs('a', 1))"),
+    ],
+    ids=["literal", "call", "call_no_arg", "method_named_dict", "literal_unpacking"],
+)
+def test_dict_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_poop_dict_from_pairs() -> None:
@@ -210,16 +186,6 @@ def test_dict_from_invalid_item_type_raises() -> None:
 def test_dict_from_unsupported_type_raises() -> None:
     with pytest.raises(TypeError, match="cannot convert"):
         _poop_dict_from(Int(42))
-
-
-def test_dict_literal_with_unpacking_rewritten_to_merge() -> None:
-    # A `**` display is rewritten to _poop_dict_merge.
-    tree = _transform("x = {**d, 'a': 1}")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Call)
-    assert isinstance(assign.value.func, ast.Name)
-    assert assign.value.func.id == "_poop_dict_merge"
 
 
 def test_dict_merge_rejects_non_dict_part() -> None:

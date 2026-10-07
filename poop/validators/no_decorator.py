@@ -11,13 +11,15 @@ ALLOWED = ("staticmethod", "classmethod", "property")
 
 def _spelling(node: ast.expr) -> str:
     """How the decorator was written, for the message that refuses it."""
-    if isinstance(node, ast.Name):
-        return node.id
-    if isinstance(node, ast.Attribute):
-        return f"{_spelling(node.value)}.{node.attr}"
-    if isinstance(node, ast.Call):
-        return f"{_spelling(node.func)}(...)"
-    return ast.unparse(node)
+    match node:
+        case ast.Name(id=name):
+            return name
+        case ast.Attribute(value=value, attr=attr):
+            return f"{_spelling(value)}.{attr}"
+        case ast.Call(func=func):
+            return f"{_spelling(func)}(...)"
+        case _:
+            return ast.unparse(node)
 
 
 class _NoDecoratorVisitor(ErrorCollector):

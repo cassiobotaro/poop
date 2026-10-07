@@ -7,14 +7,14 @@ failure — `Object.print() missing 1 required positional argument: 'self'`.
 """
 
 import builtins
-from functools import partial, wraps
-from types import FunctionType
+from functools import wraps
+from types import FunctionType, MethodType
 from typing import TYPE_CHECKING, Any, Never
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
 from poop.types._message import article
-from poop.types._selectors import explain, is_dunder, is_message
+from poop.types._selectors import explain, is_dunder, is_message, not_understood
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -71,7 +71,18 @@ class class_side:
     def __get__(self, cls: type | None, metacls: type) -> Any:
         if cls is None:
             return self
-        return partial(self._fn, cls)
+        method = MethodType(self._fn, cls)
+        # CPython itself reads `mro` through here while it builds the class —
+        # before `__mro__` exists, and before `block` can be imported at all.
+        if getattr(cls, "__mro__", None) is None:
+            return method
+        # A `_MethodBlock`, the shape `Object.__getattribute__` answers for the
+        # instance side: a `functools.partial` here leaked as
+        # `'functools.partial' object has no attribute 'print'` for
+        # `int.name.print()`, and two reads of `Foo.name` compared unequal.
+        from poop.types.block import _MethodBlock  # circular: block imports Object
+
+        return _MethodBlock(method)
 
     def __set__(self, cls: type, value: object) -> None:
         # Imported here, not at module scope: `exceptions` builds its classes
@@ -108,17 +119,28 @@ class class_side_read_refusal(class_side):
         return self._fn(cls)
 
 
-def _read_refusal(metacls: type, name: str) -> class_side_read_refusal | None:
-    """The read-refusing descriptor answering `name`, if the metaclass has one.
+def class_side_named(metacls: type, name: str) -> class_side | None:
+    """The `class_side` descriptor answering `name` down the metaclass MRO.
 
-    Read off the metaclass MRO's dicts rather than through `getattr`, which is
-    the very lookup that lost the refusal in the first place.
+    Read off the MRO's dicts rather than through `getattr`: a refusing
+    descriptor raises when asked, which is the very lookup that lost the
+    refusal in the first place, and would look identical to a message
+    otherwise.
     """
-    for klass in metacls.__mro__:
-        attr = vars(klass).get(name)
-        if isinstance(attr, class_side_read_refusal):
-            return attr
-    return None
+    return next(
+        (
+            attr
+            for klass in metacls.__mro__
+            if isinstance(attr := vars(klass).get(name), class_side)
+        ),
+        None,
+    )
+
+
+def _read_refusal(metacls: type, name: str) -> class_side_read_refusal | None:
+    """The read-refusing descriptor answering `name`, if the metaclass has one."""
+    found = class_side_named(metacls, name)
+    return found if isinstance(found, class_side_read_refusal) else None
 
 
 def class_side_refusal(fn: FunctionType) -> class_side:
@@ -168,8 +190,11 @@ def _refuse(cls: type, name: str) -> Never:
     from poop.types.object import MessageNotUnderstood
 
     raise MessageNotUnderstood(
-        f"{cls.__name__} does not understand #{name} — "
-        f"#{name} asks an instance about its class; a class answers #name",
+        not_understood(
+            cls.__name__,
+            name,
+            f"#{name} asks an instance about its class; a class answers #name",
+        ),
         name=name,
         obj=cls,
     )
@@ -222,8 +247,11 @@ def _refuse_instance_side(cls: type, name: str) -> Never:
     from poop.types.object import MessageNotUnderstood
 
     raise MessageNotUnderstood(
-        f"{cls.__name__} does not understand #{name} — "
-        f"#{name} asks an instance; send it to one",
+        not_understood(
+            cls.__name__,
+            name,
+            f"#{name} asks an instance; send it to one",
+        ),
         name=name,
         obj=cls,
     )
@@ -240,8 +268,11 @@ def _refuse_native(cls: type, name: str, instead: str) -> Never:
     from poop.types.object import MessageNotUnderstood
 
     raise MessageNotUnderstood(
-        f"{cls.__name__} does not understand #{name} — "
-        f"#{name} is Python's; a class answers #{instead}",
+        not_understood(
+            cls.__name__,
+            name,
+            f"#{name} is Python's; a class answers #{instead}",
+        ),
         name=name,
         obj=cls,
     )
@@ -256,12 +287,12 @@ def _refuse_native(cls: type, name: str, instead: str) -> Never:
 # builtin it stands for. `__bool__` was worse (`should return bool, returned
 # bool`), and `__hash__` printed `__poop__.P`, the marker `_reject_builtin`
 # uses to tell a user's class from a builtin.
-_PROTOCOL_SLOTS: dict[str, tuple[type, str, str]] = {
-    "__str__": (str, "str", "text"),
-    "__repr__": (str, "str", "repr"),
-    "__bool__": (bool, "bool", "truth"),
-    "__hash__": (int, "int", "hash"),
-    "__len__": (int, "int", "length"),
+_PROTOCOL_SLOTS: dict[str, tuple[type, str]] = {
+    "__str__": (str, "text"),
+    "__repr__": (str, "repr"),
+    "__bool__": (bool, "truth"),
+    "__hash__": (int, "hash"),
+    "__len__": (int, "length"),
 }
 
 
@@ -273,7 +304,7 @@ def _adapted(slot: str, method: Any) -> Any:
     pass through untouched: `to_python` is identity for a value that is
     already one.
     """
-    native, spelling, role = _PROTOCOL_SLOTS[slot]
+    native, role = _PROTOCOL_SLOTS[slot]
 
     @wraps(method)
     def answer(self: Any, *args: Any, **kwargs: Any) -> Any:
@@ -299,7 +330,7 @@ def _adapted(slot: str, method: Any) -> Any:
         # which calls `str` the thing that is not a `str`.
         raise MIRRORS["TypeError"](
             f"{type(self).__name__}'s {role} must be "
-            f"{article(spelling)}, got {article(type(value).__name__)}"
+            f"{article(native.__name__)}, got {article(type(value).__name__)}"
         )
 
     return answer
@@ -376,10 +407,9 @@ class PoopMeta(type):
 
         # Smalltalk answers nil for Object superclass, which is also how the
         # raw Python `object` at the root stays out of reach.
-        bases = [base for base in cls.__bases__ if isinstance(base, PoopMeta)]
-        if not bases:
+        first = next((b for b in cls.__bases__ if isinstance(b, PoopMeta)), None)
+        if first is None:
             return none
-        first = bases[0]
         # An alias's one base is the wrapper it stands for, and both are
         # cloaked under the builtin's name — so climbing from a bare builtin
         # name met a rung that is not there: `int.superclass()` answered a
@@ -414,10 +444,11 @@ class PoopMeta(type):
         return to_boolean(unalias(cls) is unalias(other))
 
     def __ne__(cls, other: object) -> Boolean:
-        from poop.types._alias import unalias
+        # The rule lives in `__eq__` alone, as `Object.__ne__` keeps it: a
+        # second copy with the answer flipped is one to keep in step by hand.
         from poop.types.boolean import to_boolean
 
-        return to_boolean(unalias(cls) is not unalias(other))
+        return to_boolean(not bool(cls == other))
 
     # Defining `__eq__` sets `__hash__` to None, which would make every POOP
     # class unhashable — `NATIVE_TO_POOP` keys on classes, and so does every
@@ -610,13 +641,8 @@ class PoopMeta(type):
         # `class_side.__set__` first, where it owns the name: it is a data
         # descriptor, so `type.__setattr__` would consult it anyway, and this
         # override must not step in front of the truer sentence.
-        if not name.startswith("_") and _read_refusal(type(cls), name) is None:
-            owned = any(
-                isinstance(vars(metaclass).get(name), class_side)
-                for metaclass in type(cls).__mro__
-            )
-            if not owned:
-                _reject_builtin(cls)
+        if not name.startswith("_") and class_side_named(type(cls), name) is None:
+            _reject_builtin(cls)
         super().__setattr__(name, value)
 
     def __dir__(cls) -> list[str]:

@@ -23,7 +23,7 @@ from poop.types._ordered import _OrderedMixin
 from poop.types._raw import _faithful
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import MISSING, NOT_A_COUNT
-from poop.types._unwrap import _is_absent, _opt_str, _unwrap, _unwrap_bool
+from poop.types._unwrap import _is_absent, _opt_str, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS, PoopExcMeta
@@ -200,8 +200,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Str(self._value[py])
 
     def __iter__(self) -> Iterator[Str]:
-        for ch in self._value:
-            yield Str(ch)
+        return map(Str, self._value)
 
     def iter(self) -> StrIterator:
         return StrIterator(self)
@@ -284,7 +283,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
             self._value.replace(
                 text_like(old, "replace", "a str"),
                 text_like(new, "replace", "a str"),
-                _unwrap(count, -1),
+                an_int(count, "replace", "count", -1),
             )
         )
 

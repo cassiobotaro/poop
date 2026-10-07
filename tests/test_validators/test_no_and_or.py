@@ -6,11 +6,6 @@ from poop.errors import ValidationError
 from poop.validators.no_and_or import NoAndOrValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoAndOrValidator().validate(tree)
-
-
 def test_not_is_not_affected() -> None:
     tree = ast.parse("x = True\ny = not x")
     NoAndOrValidator().validate(tree)

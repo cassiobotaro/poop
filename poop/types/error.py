@@ -4,10 +4,10 @@ from poop.types._alias import unalias
 from poop.types._argument import a_class
 from poop.types._cloak import cloak
 from poop.types._message import poop_message
-from poop.types._selectors import explain
+from poop.types._selectors import explain, not_understood
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import poop_class_of
-from poop.types.meta import class_side
+from poop.types.meta import class_side_named
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
@@ -22,11 +22,8 @@ def _answered_by_the_class_side(kind: type, name: str) -> bool:
     descriptor raises when asked, and `class_side_read_refusal` — the shape the
     `BaseException` leftovers use — would look identical to a message otherwise.
     """
-    for metaclass in type(kind).__mro__:
-        attr = vars(metaclass).get(name)
-        if isinstance(attr, class_side):
-            return not attr.refuses
-    return False
+    found = class_side_named(type(kind), name)
+    return found is not None and not found.refuses
 
 
 @final
@@ -129,8 +126,9 @@ class Error(Object):
         # answer. Only a real class-side message earns the redirect.
         if _answered_by_the_class_side(kind, name):
             raise MessageNotUnderstood(
-                f"{label} does not understand #{name} — "
-                f"#{name} asks a class; send it to #kind()",
+                not_understood(
+                    label, name, f"#{name} asks a class; send it to #kind()"
+                ),
                 name=name,
                 obj=self,
             )

@@ -128,7 +128,11 @@ Every infection follows the same pattern.
    `--validators-only` reports every error, and a raise has already thrown
    away the rest of the walk.
 2. Register it in `DEFAULT_VALIDATORS` (`poop/validators/__init__.py`).
-3. Add tests under `tests/test_validators/test_no_foo.py`.
+3. Add tests under `tests/test_validators/test_no_foo.py`. A
+   `CallNameValidator`'s mechanical contract (refusal, line number, method
+   allowed, plain code passes) is covered by the shared parametrised
+   `tests/test_validators/test_call_name.py`, so its own test file holds only
+   what is specific to it.
 4. Add an entry to `INFECTIONS.md` with a `Substitute` column pointing to the
    POOP equivalent. **Activate a validator only when the substitute exists** —
    blocking without offering an alternative breaks code without teaching.

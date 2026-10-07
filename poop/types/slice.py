@@ -52,16 +52,18 @@ class Slice(Object):
         )
         return Tuple(Int(start), Int(stop), Int(step))
 
+    def _fields(self) -> tuple[Index | None, Index | None, Index | None]:
+        return (self._start, self._stop, self._step)
+
     def __eq__(self, other: object) -> Boolean:
+        # Tuple equality, as CPython's own `slice` compares: `None` equals only
+        # `None`, and identity short-circuits before `==` is asked.
         return to_boolean(
-            isinstance(other, Slice)
-            and _field_eq(self._start, other._start)
-            and _field_eq(self._stop, other._stop)
-            and _field_eq(self._step, other._step)
+            isinstance(other, Slice) and self._fields() == other._fields()
         )
 
     def __hash__(self) -> int:
-        return hash((self._start, self._stop, self._step))
+        return hash(self._fields())
 
     def __str__(self) -> str:
         # Mirror Python's `repr(slice(...))` exactly: lowercase `slice`,
@@ -106,14 +108,6 @@ def _coerce(value: Index | NoneClass | None) -> Index | None:
     if value is None or isinstance(value, NoneClass):
         return None
     return value
-
-
-def _field_eq(a: Index | None, b: Index | None) -> bool:
-    if a is None and b is None:
-        return True
-    if a is None or b is None:
-        return False
-    return bool(a == b)
 
 
 def _field_str(value: Index | None) -> str:

@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any
 from poop.types._argument import a_collection
 from poop.types._iterator_base import _LazyView
 from poop.types._unwrap import _unwrap_bool
-from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.tuple import Tuple
 
@@ -46,7 +45,7 @@ class Zip(_LazyView[Tuple], name="zip"):
         for source in sources:
             a_collection(source, "zip")
         self._sources = sources
-        self._strict: Boolean = to_boolean(_unwrap_bool(strict, False))
+        self._strict: bool = _unwrap_bool(strict, False)
 
     @staticmethod
     def _gen(sources: tuple[Any, ...], strict: bool) -> Iterator[Tuple]:
@@ -85,4 +84,4 @@ class Zip(_LazyView[Tuple], name="zip"):
     def _generate(self) -> Iterator[Tuple]:
         sources = self._sources
         self._sources = ()
-        return self._gen(sources, bool(self._strict))
+        return self._gen(sources, self._strict)

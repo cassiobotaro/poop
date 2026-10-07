@@ -52,9 +52,19 @@ class Range(_IterableMixin, Object):
         sign = 1 if step > 0 else -1
         return range(start, stop + sign, step)
 
+    @staticmethod
+    def _from_native(native: range) -> Range:
+        """The `Range` over `native`, `_range`'s inverse.
+
+        A native `range` excludes its stop and a `Range` includes it, so the
+        stop is shifted back one step's sign to round-trip through
+        `__init__`'s inclusive convention.
+        """
+        sign = 1 if native.step > 0 else -1
+        return Range(Int(native.start), Int(native.stop - sign), Int(native.step))
+
     def _iter(self) -> Iterator[Int]:
-        for i in self._range():
-            yield Int(i)
+        return map(Int, self._range())
 
     def __iter__(self) -> Iterator[Int]:
         return self._iter()
@@ -74,11 +84,7 @@ class Range(_IterableMixin, Object):
         # elements in a List instead allocated one Int per member of the
         # result: `range(1000000000000).slice(0, 3)` is three elements in
         # CPython and was a materialized trillion here.
-        sliced = self._range()[py]
-        # Round-trip the exclusive stop back through __init__'s inclusive
-        # convention, exactly as `reversed()` does.
-        sign = 1 if sliced.step > 0 else -1
-        return Range(Int(sliced.start), Int(sliced.stop - sign), Int(sliced.step))
+        return Range._from_native(self._range()[py])
 
     # The three searches unwrap through `_searched`, not `_faithful`, and the
     # difference matters. A `Range` holds raw Python ints — it is the only
@@ -140,15 +146,8 @@ class Range(_IterableMixin, Object):
         # not necessarily `_stop`: Range(0, 10, 3) yields [0, 3, 6, 9], so
         # seeding the reversed range from `_stop` (10) would produce the
         # non-members [10, 7, 4, 1]. Slice-reverse gives the correct,
-        # empty-safe sequence; shift the resulting exclusive stop back by
-        # `sign` to round-trip through __init__'s inclusive convention.
-        reversed_range = self._range()[::-1]
-        sign = 1 if reversed_range.step > 0 else -1
-        return Range(
-            Int(reversed_range.start),
-            Int(reversed_range.stop - sign),
-            Int(reversed_range.step),
-        )
+        # empty-safe sequence.
+        return Range._from_native(self._range()[::-1])
 
     def len(self) -> Int:
         return Int(len(self._range()))

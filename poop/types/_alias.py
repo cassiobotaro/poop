@@ -188,21 +188,11 @@ class _AliasMeta(PoopMeta):
             return cls.__dict__["_converter"](*args, **kwargs)
         alias = _alias_in(cls)
         converter = alias.__dict__["_converter"]
-        slots = _payload_slots(alias.__dict__["_wrapped"])
+        slots = alias.__dict__["_slots"]
         if _own_init(cls, alias):
-            # The `__new__` step Python has and POOP does not. For an
-            # immutable builtin CPython sets the value in `__new__`, from the
-            # *constructor's* arguments, before `__init__` is reached — so a
-            # subclass whose `__init__` ignores them still comes back working
-            # (`class N(int)` answering 4 for `N(4.9)`). Here the payload is
-            # written by `__init__`, so one that never passes it up left the
-            # object with no payload at all, reporting itself as `#_value`.
-            #
-            # One positional argument and no keywords is the shape every
-            # converter takes — "convert this value". Anything else is the
-            # subclass's own signature (`Tagged(xs, tag)`), which `__init__`
-            # is there to read, and `super().__init__(xs)` fills the payload
-            # from inside it.
+            # The `__new__` step Python has and POOP does not — `_endow` says
+            # why, and why one positional argument converts while any other
+            # shape is the subclass's own signature for `__init__` to read.
             #
             # Every wrapper reachable here has a payload: the one that does
             # not, `Boolean`, cannot be subclassed at all — `__new__` above
@@ -285,6 +275,9 @@ def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> ty
     its first argument.
     """
 
+    # Fixed when the alias is built, so read off the wrapper's MRO once.
+    slots = _payload_slots(wrapped)
+
     def __init__(self: Any, *args: Any, **kwargs: Any) -> None:
         """`super().__init__(...)` from a subclass — and it converts.
 
@@ -300,9 +293,7 @@ def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> ty
         (`S.__mro__` is `(S, <alias>, List, …)`), which is exactly where
         `super()` looks, so this intercepts that call and nothing else.
         """
-        converted = converter(*args, **kwargs)
-        for slot in _payload_slots(wrapped):
-            setattr(self, slot, copy(getattr(converted, slot)))
+        _fill(self, converter(*args, **kwargs), slots)
 
     try:
         # The wrapper's empty value, when it has one: `list()`, `dict()`,
@@ -318,6 +309,7 @@ def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> ty
         {
             "_converter": staticmethod(converter),
             "_wrapped": wrapped,
+            "_slots": slots,
             "_empty": empty,
             "__init__": __init__,
             "__slots__": (),

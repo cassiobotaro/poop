@@ -7,11 +7,6 @@ from poop.errors import ValidationError
 from poop.validators.no_unary_minus import NoUnaryMinusValidator
 
 
-def test_valid_code_passes() -> None:
-    tree = ast.parse("x = 1 + 2")
-    NoUnaryMinusValidator().validate(tree)
-
-
 def test_negative_literal_is_allowed() -> None:
     tree = ast.parse("x = -1")
     NoUnaryMinusValidator().validate(tree)

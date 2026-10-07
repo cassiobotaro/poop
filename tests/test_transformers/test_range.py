@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 from typing import Any
 
@@ -10,29 +9,22 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.range import Range
 from poop.types.string import Str
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, RangeTransformer())
-
-
-def test_range_call_is_rewritten() -> None:
-    tree = _transform("x = range(5)")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_range"
+_rewritten = partial(rewritten, RangeTransformer())
 
 
-def test_range_not_rewritten_for_other_names() -> None:
-    tree = _transform("x = myrange(5)")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "myrange"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("x = range(5)", "x = _poop_range(5)"),
+        ("x = myrange(5)", "x = myrange(5)"),
+        ("f = range", "f = _poop_range_cls"),
+    ],
+    ids=["call", "other_names_untouched", "bare_name_to_mangled_binding"],
+)
+def test_range_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_poop_range() -> None:
@@ -102,11 +94,3 @@ def test_poop_range_still_admits_the_boolean_rung() -> None:
     # `range(True, 5)` is `range(1, 5)`.
     admitted = _poop_range(true, Int(5))
     assert list(admitted._iter()) == [Int(i) for i in range(1, 5)]
-
-
-def test_bare_range_name_is_rewritten_to_the_mangled_binding() -> None:
-    tree = RangeTransformer().transform(ast.parse("f = range"))
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Name)
-    assert assign.value.id == "_poop_range_cls"

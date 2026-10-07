@@ -1,4 +1,3 @@
-import ast
 from functools import partial
 
 import pytest
@@ -9,48 +8,23 @@ from poop.types.list import List
 from poop.types.range import Range
 from poop.types.set import Set
 from poop.types.tuple import Tuple
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, SetTransformer())
-
-
-def test_set_literal_is_rewritten() -> None:
-    tree = _transform("x = {1, 2, 3}")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    call = assign.value
-    assert isinstance(call, ast.Call)
-    assert isinstance(call.func, ast.Name)
-    assert call.func.id == "_poop_set"
-    assert len(call.args) == 3
+_rewritten = partial(rewritten, SetTransformer())
 
 
-def test_set_call_is_rewritten() -> None:
-    tree = _transform("set(x)")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_set_from"
-
-
-def test_set_call_no_arg_is_rewritten() -> None:
-    tree = _transform("set()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Name)
-    assert expr.value.func.id == "_poop_set_from"
-    assert len(expr.value.args) == 0
-
-
-def test_method_named_set_is_not_rewritten() -> None:
-    tree = _transform("x.set()")
-    expr = tree.body[0]
-    assert isinstance(expr, ast.Expr)
-    assert isinstance(expr.value, ast.Call)
-    assert isinstance(expr.value.func, ast.Attribute)
-    assert expr.value.func.attr == "set"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("x = {1, 2, 3}", "x = _poop_set(1, 2, 3)"),
+        ("set(x)", "_poop_set_from(x)"),
+        ("set()", "_poop_set_from()"),
+        ("x.set()", "x.set()"),
+    ],
+    ids=["literal", "call", "call_no_arg", "method_named_set"],
+)
+def test_set_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_poop_set() -> None:

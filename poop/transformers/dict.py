@@ -1,6 +1,6 @@
 import ast
 from collections.abc import Iterable
-from itertools import batched
+from itertools import batched, chain, groupby
 from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
@@ -132,7 +132,7 @@ class _DictRewriter(BuiltinRewriter):
         # `dict(other, x=1, **more)` merges left to right like CPython.
         if (
             isinstance(node.func, ast.Name)
-            and node.func.id == self.builtin
+            and self.is_builtin(node.func.id)
             and len(node.args) <= 1
             and any(kw.arg is None for kw in node.keywords)
         ):
@@ -155,34 +155,26 @@ class _DictRewriter(BuiltinRewriter):
                 )
                 for kw in node.keywords
             ]
-            return self._merge_call(self._fold_parts(entries, node, parts), node)
+            return self._merge_call([*parts, *self._fold_parts(entries, node)], node)
         return super().visit_Call(node)
 
     def _fold_parts(
-        self,
-        entries: Iterable[tuple[ast.expr | None, ast.expr]],
-        ref: ast.AST,
-        parts: list[ast.expr],
+        self, entries: Iterable[tuple[ast.expr | None, ast.expr]], ref: ast.AST
     ) -> list[ast.expr]:
         """Fold (key, value) entries into `_poop_dict_merge` arguments.
 
-        A `None` key marks a `**x` splat: it flushes the pending run of
-        plain pairs into a `_poop_dict_from_pairs(...)` part, then appends
-        `x` whole. Shared by the `dict(a, **b)` call path and the
-        `{**a, 'k': v}` display path so both fold identically.
+        A `None` key marks a `**x` splat, which stays `x` whole; each run of
+        plain pairs between splats becomes one `_poop_dict_from_pairs(...)`.
+        Shared by the `dict(a, **b)` call path and the `{**a, 'k': v}` display
+        path so both fold identically.
         """
-        pending: list[ast.expr] = []
-        for key, value in entries:
-            if key is None:
-                if pending:
-                    parts.append(self._pairs_call(pending, ref))
-                    pending = []
-                parts.append(value)
+        parts: list[ast.expr] = []
+        for is_splat, run in groupby(entries, key=lambda entry: entry[0] is None):
+            if is_splat:
+                parts.extend(value for _, value in run)
             else:
-                pending.append(key)
-                pending.append(value)
-        if pending:
-            parts.append(self._pairs_call(pending, ref))
+                pairs = cast("Iterable[tuple[ast.expr, ast.expr]]", run)
+                parts.append(self._pairs_call(list(chain.from_iterable(pairs)), ref))
         return parts
 
     @staticmethod
@@ -195,18 +187,15 @@ class _DictRewriter(BuiltinRewriter):
 
     def visit_Dict(self, node: ast.Dict) -> ast.AST:
         self.generic_visit(node)
+        entries = list(zip(node.keys, node.values, strict=True))
         if all(k is not None for k in node.keys):
-            flat: list[ast.expr] = []
-            for k, v in zip(node.keys, node.values, strict=True):
-                flat.append(cast("ast.expr", k))
-                flat.append(v)
-            return self._pairs_call(flat, node)
+            # No splat: one `_poop_dict_from_pairs`, without a merge around it.
+            pairs = cast("list[tuple[ast.expr, ast.expr]]", entries)
+            return self._pairs_call(list(chain.from_iterable(pairs)), node)
         # A `**x` entry (key is None) makes this a merge: each run of plain
         # pairs becomes a _poop_dict_from_pairs(...), each **x stays as x,
         # and _poop_dict_merge folds them left to right.
-        return self._merge_call(
-            self._fold_parts(zip(node.keys, node.values, strict=True), node, []), node
-        )
+        return self._merge_call(self._fold_parts(entries, node), node)
 
 
 class DictTransformer(BaseTransformer):

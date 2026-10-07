@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from poop.types._argument import _opt_stop, a_bound, an_int
+from poop.types._argument import _opt_stop, a_bound, an_int, text_like
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._raw import _faithful
-from poop.types._unwrap import _is_absent, _unwrap
+from poop.types._unwrap import _is_absent
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes
@@ -136,10 +136,9 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # `tobytes` copies the whole buffer to show any of it.
         if _is_absent(sep):
             return Str(self._value.hex())
+        sep_value = text_like(sep, "hex", "a one-character separator")
         return Str(
-            self._value.hex(
-                _faithful(sep), an_int(bytes_per_sep, "hex", "bytes_per_sep", 1)
-            )
+            self._value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1))
         )
 
     def __iter__(self) -> Iterator[Int]:
@@ -156,9 +155,8 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         return MemoryView(self._value[::-1])
 
     def tobytes(self, order: Str | NoneClass | None = None) -> Bytes:
-        return Bytes(
-            self._value.tobytes(cast("Literal['C', 'F', 'A']", _unwrap(order, "C")))
-        )
+        raw = "C" if _is_absent(order) else text_like(order, "tobytes", "a str", (str,))
+        return Bytes(self._value.tobytes(cast("Literal['C', 'F', 'A']", raw)))
 
     def __str__(self) -> str:
         # CPython prints `<memory at 0x70cb7ab59240>`: the raw pointer

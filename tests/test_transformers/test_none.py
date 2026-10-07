@@ -1,28 +1,21 @@
-import ast
 from functools import partial
+
+import pytest
 
 from poop.transformers.none import NoneTransformer
 from poop.types.none import none
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, NoneTransformer())
-
-
-def test_none_literal_is_rewritten() -> None:
-    tree = _transform("x = None")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    name = assign.value
-    assert isinstance(name, ast.Name)
-    assert name.id == "_poop_none"
+_rewritten = partial(rewritten, NoneTransformer())
 
 
-def test_other_constants_are_unchanged() -> None:
-    tree = _transform("x = 42")
-    assign = tree.body[0]
-    assert isinstance(assign, ast.Assign)
-    assert isinstance(assign.value, ast.Constant)
-    assert assign.value.value == 42
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [("x = None", "x = _poop_none"), ("x = 42", "x = 42")],
+    ids=["none_literal", "other_constants_unchanged"],
+)
+def test_none_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_bindings_contains_none() -> None:

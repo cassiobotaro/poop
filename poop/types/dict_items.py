@@ -26,11 +26,10 @@ class DictItems(_SetLikeView, name="dict_items"):
     def iter(self) -> DictItemIterator:
         return DictItemIterator(self._dict._data.items())
 
-    def __reversed__(self) -> DictReverseItemIterator:
-        return DictReverseItemIterator(reversed(self._dict._data.items()))
-
     def reversed(self) -> DictReverseItemIterator:
         return DictReverseItemIterator(reversed(self._dict._data.items()))
+
+    __reversed__ = reversed
 
     def includes(self, pair: Tuple) -> Boolean:
         # Delegate to __contains__ so a non-Tuple argument answers false the way

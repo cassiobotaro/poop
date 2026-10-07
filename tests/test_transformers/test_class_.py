@@ -1,12 +1,14 @@
 import ast
 from functools import partial
 
+import pytest
+
 from poop import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.class_ import ClassTransformer
 from poop.types.boolean import _FalseClass
 from poop.types.object import Object
-from tests._support import transform
+from tests._support import rewritten, transform
 
 _transform = partial(transform, ClassTransformer())
 
@@ -18,40 +20,27 @@ def _pipeline(source: str) -> ast.Module:
     return Interpreter().transform_source(source)
 
 
-def _first_class_bases(source: str, transform=_transform) -> list[str]:
-    tree = transform(source)
-    cls = next(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef))
-    return [b.id for b in cls.bases if isinstance(b, ast.Name)]
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("class Foo: pass", "class Foo(_poop_object):\n    pass"),
+        ("class Bar(Foo): pass", "class Bar(Foo):\n    pass"),
+        (
+            "class Outer:\n    class Inner: pass",
+            "class Outer(_poop_object):\n\n    class Inner(_poop_object):\n        pass",
+        ),
+    ],
+    ids=["without_base_gets_object", "custom_base_unchanged", "nested_class"],
+)
+def test_class_bases(source: str, expected: str) -> None:
+    assert rewritten(ClassTransformer(), source) == expected
 
 
-def test_class_without_base_gets_object() -> None:
-    bases = _first_class_bases("class Foo: pass")
-    assert bases == ["_poop_object"]
-
-
-def test_class_with_object_base_gets_rewritten() -> None:
-    bases = _first_class_bases("class Foo(object): pass", _pipeline)
-    assert bases == ["_poop_object"]
-
-
-def test_class_with_explicit_Object_base_gets_rewritten() -> None:
-    bases = _first_class_bases("class Foo(Object): pass", _pipeline)
-    assert bases == ["_poop_object"]
-
-
-def test_class_with_custom_base_unchanged() -> None:
-    bases = _first_class_bases("class Bar(Foo): pass")
-    assert bases == ["Foo"]
-
-
-def test_nested_class_also_transformed() -> None:
-    source = "class Outer:\n    class Inner: pass"
-    tree = _transform(source)
-    classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
-    for cls in classes:
-        assert any(
-            isinstance(b, ast.Name) and b.id == "_poop_object" for b in cls.bases
-        ), f"{cls.name} missing _poop_object base"
+@pytest.mark.parametrize(
+    "source", ["class Foo(object): pass", "class Foo(Object): pass"]
+)
+def test_class_with_an_explicit_object_base_gets_rewritten(source: str) -> None:
+    assert ast.unparse(_pipeline(source)) == "class Foo(_poop_object):\n    pass"
 
 
 def test_class_transformer_bindings_contains_object() -> None:

@@ -1,49 +1,35 @@
 import ast
 from functools import partial
 
+import pytest
+
 from poop.interpreter import Interpreter
 from poop.transformers.unpack import UnpackTransformer, _rebind
-from tests._support import transform
+from tests._support import rewritten
 
-_transform = partial(transform, UnpackTransformer())
-
-
-def test_starred_assign_appends_rebind() -> None:
-    tree = _transform("c, *rest = xs")
-    assert len(tree.body) == 2
-    rebind = tree.body[1]
-    assert isinstance(rebind, ast.Assign)
-    assert isinstance(rebind.value, ast.Call)
-    assert isinstance(rebind.value.func, ast.Name)
-    assert rebind.value.func.id == "_poop_list_from"
-    target = rebind.targets[0]
-    assert isinstance(target, ast.Name)
-    assert target.id == "rest"
+_rewritten = partial(rewritten, UnpackTransformer())
 
 
-def test_plain_assign_unchanged() -> None:
-    tree = _transform("a, b = xs")
-    assert len(tree.body) == 1
-
-
-def test_nested_starred_rebinds_inner() -> None:
-    tree = _transform("a, (b, *inner) = xs")
-    assert len(tree.body) == 2
-    rebind = tree.body[1]
-    assert isinstance(rebind, ast.Assign)
-    target = rebind.targets[0]
-    assert isinstance(target, ast.Name)
-    assert target.id == "inner"
-
-
-def test_attribute_starred_target() -> None:
-    tree = _transform("a, *self.rest = xs")
-    assert len(tree.body) == 2
-    rebind = tree.body[1]
-    assert isinstance(rebind, ast.Assign)
-    target = rebind.targets[0]
-    assert isinstance(target, ast.Attribute)
-    assert target.attr == "rest"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("c, *rest = xs", "c, *rest = xs\nrest = _poop_list_from(rest)"),
+        ("a, b = xs", "a, b = xs"),
+        ("a, (b, *inner) = xs", "a, (b, *inner) = xs\ninner = _poop_list_from(inner)"),
+        (
+            "a, *self.rest = xs",
+            "a, *self.rest = xs\nself.rest = _poop_list_from(self.rest)",
+        ),
+    ],
+    ids=[
+        "starred_assign_appends_rebind",
+        "plain_assign_unchanged",
+        "nested_starred_rebinds_inner",
+        "attribute_starred_target",
+    ],
+)
+def test_unpack_rewrite(source: str, expected: str) -> None:
+    assert _rewritten(source) == expected
 
 
 def test_rest_is_poop_list_via_interpreter() -> None:

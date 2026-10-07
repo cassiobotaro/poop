@@ -42,6 +42,19 @@ def test_a_class_answers_print_instead_of_failing_to_bind() -> None:
     _Dog.print()
 
 
+def test_a_class_side_message_read_without_a_call_is_a_block() -> None:
+    # It was a `functools.partial`, so `int.name.print()` answered
+    # `'functools.partial' object has no attribute 'print'`.
+    assert isinstance(_Dog.name, Block)
+    assert _Dog.name.class_name() == Str("function")
+    assert Interpreter().run_source("int.name.print()") is None
+
+
+def test_two_reads_of_a_class_side_message_are_equal() -> None:
+    assert _Dog.name == _Dog.name
+    assert _Dog.name != _Animal.name
+
+
 def test_a_class_answers_its_name() -> None:
     assert _Dog.name() == Str("_Dog")
 
