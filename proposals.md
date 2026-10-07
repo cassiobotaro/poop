@@ -16,19 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 8. `_PeekMixin` spells the pull-and-reword `try` three times
-
-`has_next`, `next` and `__next__` in `poop/types/_peek.py` each wrap
-`next(self._materialize())` in the same `except RuntimeError as exc: raise
-reword_if_native(exc, self._iterating) from None`, with the `dictionary
-changed size during iteration` story told three times in comments, and `next`
-and `__next__` open with the same buffered-value prologue.
-
-**Fix.** One `_pull(self) -> Any` with the `try` and the comment; the three
-messages call it. `StopIteration` is not a `RuntimeError`, so the catch order
-is preserved and `next`'s `default` / `_exhausted` branch sits on top of
-`_pull` unchanged.
-
 ### 9. `a_bound` and `max_split` are `an_int` with a default
 
 `a_bound(value, selector, role)` in `poop/types/_argument.py` unwraps,
