@@ -16,27 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 9. `a_bound` and `max_split` are `an_int` with a default
-
-`a_bound(value, selector, role)` in `poop/types/_argument.py` unwraps,
-accepts `None` or an `__index__`, and raises `#{selector}'s {role} must be an
-int, got ...`; `an_int(value, selector, role, default)` does the same with the
-absent case named. `max_split` is `a_bound` with `"maxsplit"` and `-1` for
-`None`. Verified by script that `a_bound(v, s, r) == an_int(v, s, r,
-default=None)` and `max_split(v, s) == an_int(v, s, "maxsplit", default=-1)`
-on `None`, `none`, `Int(3)`, `Int(0)`, and that the refusal text is identical
-for `Str("x")` and `1.5`. Fourteen `a_bound` and twenty-five `an_int` call
-sites.
-
-Same family, lower value: `a_collection` and `a_pair` are the identical
-`isinstance(value, Iterable)` guard with a different sentence, and
-`bytes_like(..., optional=True)` is a boolean flag whose only job is an
-`_is_absent` short-circuit the strip family could spell as `a_fill` does.
-
-**Fix.** `a_bound` and `max_split` become one-line calls to `an_int` (their
-docstrings stay). The messages are byte-identical, so `test_str.py`,
-`test_bytes.py` and `test_byte_array.py` keep passing.
-
 ### 10. The metaclass MRO is scanned for a `class_side` four times, once redundantly
 
 `_read_refusal` and `PoopMeta.__dir__` in `poop/types/meta.py`,
