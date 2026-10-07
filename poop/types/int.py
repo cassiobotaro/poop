@@ -150,11 +150,10 @@ class Int(_NumericCompareMixin, Object):
             ),
         )
 
-    def __abs__(self) -> Int:
+    def abs(self) -> Int:
         return Int(abs(self._value))
 
-    def abs(self) -> Int:
-        return self.__abs__()
+    __abs__ = abs
 
     def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Int | Float:
         """`self op other`, an `Int` beside an `Int` and a `Float` beside a `Float`.
@@ -302,39 +301,31 @@ class Int(_NumericCompareMixin, Object):
     def __rrshift__(self, other: object) -> Int:
         return self._bitwise(other, operator.rshift, reflected=True)
 
-    def __rand__(self, other: object) -> Int:
-        return self._bitwise(other, operator.and_, reflected=True)
-
-    def __ror__(self, other: object) -> Int:
-        return self._bitwise(other, operator.or_, reflected=True)
-
-    def __rxor__(self, other: object) -> Int:
-        return self._bitwise(other, operator.xor, reflected=True)
-
-    def __ceil__(self) -> Int:
-        return self
+    # `&`, `|` and `^` commute, so their reflected halves are the operators.
+    __rand__ = __and__
+    __ror__ = __or__
+    __rxor__ = __xor__
 
     def ceil(self) -> Int:
-        return self.__ceil__()
-
-    def __floor__(self) -> Int:
         return self
+
+    __ceil__ = ceil
 
     def floor(self) -> Int:
-        return self.__floor__()
-
-    def __trunc__(self) -> Int:
         return self
 
-    def trunc(self) -> Int:
-        return self.__trunc__()
+    __floor__ = floor
 
-    def __round__(self, ndigits: Int | NoneClass | None = None) -> Int:
+    def trunc(self) -> Int:
+        return self
+
+    __trunc__ = trunc
+
+    def round(self, ndigits: Int | NoneClass | None = None) -> Int:
         n = an_int(ndigits, "round", "ndigits", None)
         return Int(round(self._value, n))
 
-    def round(self, ndigits: Int | NoneClass | None = None) -> Int:
-        return self.__round__(ndigits)
+    __round__ = round
 
     # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
     # across the numeric tower live in _NumericCompareMixin, driven by

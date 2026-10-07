@@ -92,11 +92,10 @@ class Float(_NumericCompareMixin, Object):
     def imag(self) -> Float:
         return Float(0.0)
 
-    def __abs__(self) -> Float:
+    def abs(self) -> Float:
         return Float(abs(self._value))
 
-    def abs(self) -> Float:
-        return self.__abs__()
+    __abs__ = abs
 
     def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Float:
         """`self op other` against an `Int` or a `Float`.
@@ -179,32 +178,28 @@ class Float(_NumericCompareMixin, Object):
             )
         return result
 
-    def __ceil__(self) -> Int:
+    def ceil(self) -> Int:
         return Int(math.ceil(self._value))
 
-    def ceil(self) -> Int:
-        return self.__ceil__()
-
-    def __floor__(self) -> Int:
-        return Int(math.floor(self._value))
+    __ceil__ = ceil
 
     def floor(self) -> Int:
-        return self.__floor__()
+        return Int(math.floor(self._value))
 
-    def __trunc__(self) -> Int:
-        return Int(math.trunc(self._value))
+    __floor__ = floor
 
     def trunc(self) -> Int:
-        return self.__trunc__()
+        return Int(math.trunc(self._value))
 
-    def __round__(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
+    __trunc__ = trunc
+
+    def round(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
         # circular: _bridge imports float
         from poop.types._bridge import to_poop  # noqa: PLC0415
 
         return to_poop(round(self._value, an_int(ndigits, "round", "ndigits", None)))
 
-    def round(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
-        return self.__round__(ndigits)
+    __round__ = round
 
     def __int__(self) -> int:
         return int(self._value)
