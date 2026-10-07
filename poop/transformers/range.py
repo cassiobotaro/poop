@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, cast
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.range import Range
 
@@ -34,12 +33,8 @@ def _poop_range(*args: object, **kwargs: object) -> Range:
         most=3,
         built_from="a stop, or a start and a stop and an optional step",
         hint="write range(stop) or range(start, stop, step)",
+        empty=False,
     )
-    if not args:
-        raise MIRRORS["TypeError"](
-            "range is built from a stop, or a start and a stop and an optional "
-            "step, got nothing — write range(stop) or range(start, stop, step)"
-        )
     # `*args: object` is what the guard above needs to count; `_index` refuses
     # anything outside the index rung at runtime, which is the check that
     # matters and the one this converter exists for.
