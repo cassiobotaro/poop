@@ -4,7 +4,7 @@ from poop.types._alias import unalias
 from poop.types._argument import a_class
 from poop.types._cloak import cloak
 from poop.types._message import poop_message
-from poop.types._selectors import explain
+from poop.types._selectors import explain, not_understood
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import poop_class_of
 from poop.types.meta import class_side_named
@@ -126,8 +126,9 @@ class Error(Object):
         # answer. Only a real class-side message earns the redirect.
         if _answered_by_the_class_side(kind, name):
             raise MessageNotUnderstood(
-                f"{label} does not understand #{name} — "
-                f"#{name} asks a class; send it to #kind()",
+                not_understood(
+                    label, name, f"#{name} asks a class; send it to #kind()"
+                ),
                 name=name,
                 obj=self,
             )

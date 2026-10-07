@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Never
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
 from poop.types._message import article
-from poop.types._selectors import explain, is_dunder, is_message
+from poop.types._selectors import explain, is_dunder, is_message, not_understood
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -190,8 +190,11 @@ def _refuse(cls: type, name: str) -> Never:
     from poop.types.object import MessageNotUnderstood
 
     raise MessageNotUnderstood(
-        f"{cls.__name__} does not understand #{name} — "
-        f"#{name} asks an instance about its class; a class answers #name",
+        not_understood(
+            cls.__name__,
+            name,
+            f"#{name} asks an instance about its class; a class answers #name",
+        ),
         name=name,
         obj=cls,
     )
@@ -244,8 +247,11 @@ def _refuse_instance_side(cls: type, name: str) -> Never:
     from poop.types.object import MessageNotUnderstood
 
     raise MessageNotUnderstood(
-        f"{cls.__name__} does not understand #{name} — "
-        f"#{name} asks an instance; send it to one",
+        not_understood(
+            cls.__name__,
+            name,
+            f"#{name} asks an instance; send it to one",
+        ),
         name=name,
         obj=cls,
     )
@@ -262,8 +268,11 @@ def _refuse_native(cls: type, name: str, instead: str) -> Never:
     from poop.types.object import MessageNotUnderstood
 
     raise MessageNotUnderstood(
-        f"{cls.__name__} does not understand #{name} — "
-        f"#{name} is Python's; a class answers #{instead}",
+        not_understood(
+            cls.__name__,
+            name,
+            f"#{name} is Python's; a class answers #{instead}",
+        ),
         name=name,
         obj=cls,
     )

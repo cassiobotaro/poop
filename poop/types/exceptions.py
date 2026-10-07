@@ -30,7 +30,7 @@ costs nothing; `tests/test_mirrored_raises.py` sweeps both packages for it.
 
 from typing import Any, Literal, Never, cast, get_args
 
-from poop.types._selectors import explain
+from poop.types._selectors import explain, not_understood
 from poop.types.meta import PoopMeta, class_side, class_side_read_refusal
 from poop.types.object import MessageNotUnderstood, Object
 
@@ -173,7 +173,7 @@ def _refuse_python_attribute(cls: type, name: str, instead: str | None) -> Never
         else "POOP does not offer it"
     )
     raise MessageNotUnderstood(
-        f"{cls.__name__} does not understand #{name} — #{name} is Python's; {tail}",
+        not_understood(cls.__name__, name, f"#{name} is Python's; {tail}"),
         name=name,
         obj=cls,
     )
