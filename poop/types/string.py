@@ -352,19 +352,51 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
             # was written; both now compose it from `no_format_spec`.
             raise _template_refusal(exc) from None
 
+    def _search(
+        self,
+        method: Callable[..., int],
+        selector: str,
+        sub: object,
+        start: Int | NoneClass | None,
+        end: Int | NoneClass | None,
+    ) -> Int:
+        """`find` and its four siblings: one guarded call to the native method.
+
+        The bound method rather than a name to `getattr`, so a misspelt
+        selector cannot reach the wrong native method.
+        """
+        return Int(
+            method(
+                a_needle(self, sub, selector, "a str"),
+                a_bound(start, selector, "start"),
+                a_bound(end, selector, "end"),
+            )
+        )
+
+    def _affix(
+        self,
+        method: Callable[..., bool],
+        selector: str,
+        affix: object,
+        start: Int | NoneClass | None,
+        end: Int | NoneClass | None,
+    ) -> Boolean:
+        """`startswith` / `endswith`, guarded the way `_search` is."""
+        return to_boolean(
+            method(
+                affix_needle(affix, selector, "a str or a tuple of str", (str,)),
+                a_bound(start, selector, "start"),
+                a_bound(end, selector, "end"),
+            )
+        )
+
     def find(
         self,
         sub: Str,
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.find(
-                a_needle(self, sub, "find", "a str"),
-                a_bound(start, "find", "start"),
-                a_bound(end, "find", "end"),
-            )
-        )
+        return self._search(self._value.find, "find", sub, start, end)
 
     def index(
         self,
@@ -372,13 +404,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.index(
-                a_needle(self, sub, "index", "a str"),
-                a_bound(start, "index", "start"),
-                a_bound(end, "index", "end"),
-            )
-        )
+        return self._search(self._value.index, "index", sub, start, end)
 
     def count(
         self,
@@ -386,13 +412,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.count(
-                a_needle(self, sub, "count", "a str"),
-                a_bound(start, "count", "start"),
-                a_bound(end, "count", "end"),
-            )
-        )
+        return self._search(self._value.count, "count", sub, start, end)
 
     def startswith(
         self,
@@ -400,13 +420,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        return to_boolean(
-            self._value.startswith(
-                affix_needle(prefix, "startswith", "a str or a tuple of str", (str,)),
-                a_bound(start, "startswith", "start"),
-                a_bound(end, "startswith", "end"),
-            )
-        )
+        return self._affix(self._value.startswith, "startswith", prefix, start, end)
 
     def endswith(
         self,
@@ -414,13 +428,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Boolean:
-        return to_boolean(
-            self._value.endswith(
-                affix_needle(suffix, "endswith", "a str or a tuple of str", (str,)),
-                a_bound(start, "endswith", "start"),
-                a_bound(end, "endswith", "end"),
-            )
-        )
+        return self._affix(self._value.endswith, "endswith", suffix, start, end)
 
     def isalpha(self) -> Boolean:
         return to_boolean(self._value.isalpha())
@@ -532,13 +540,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.rfind(
-                a_needle(self, sub, "rfind", "a str"),
-                a_bound(start, "rfind", "start"),
-                a_bound(end, "rfind", "end"),
-            )
-        )
+        return self._search(self._value.rfind, "rfind", sub, start, end)
 
     def rindex(
         self,
@@ -546,13 +548,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         start: Int | NoneClass | None = None,
         end: Int | NoneClass | None = None,
     ) -> Int:
-        return Int(
-            self._value.rindex(
-                a_needle(self, sub, "rindex", "a str"),
-                a_bound(start, "rindex", "start"),
-                a_bound(end, "rindex", "end"),
-            )
-        )
+        return self._search(self._value.rindex, "rindex", sub, start, end)
 
     def rsplit(
         self,
