@@ -7,8 +7,8 @@ failure — `Object.print() missing 1 required positional argument: 'self'`.
 """
 
 import builtins
-from functools import partial, wraps
-from types import FunctionType
+from functools import wraps
+from types import FunctionType, MethodType
 from typing import TYPE_CHECKING, Any, Never
 
 from poop.types._attr_guard import _checked_name
@@ -71,7 +71,18 @@ class class_side:
     def __get__(self, cls: type | None, metacls: type) -> Any:
         if cls is None:
             return self
-        return partial(self._fn, cls)
+        method = MethodType(self._fn, cls)
+        # CPython itself reads `mro` through here while it builds the class —
+        # before `__mro__` exists, and before `block` can be imported at all.
+        if getattr(cls, "__mro__", None) is None:
+            return method
+        # A `_MethodBlock`, the shape `Object.__getattribute__` answers for the
+        # instance side: a `functools.partial` here leaked as
+        # `'functools.partial' object has no attribute 'print'` for
+        # `int.name.print()`, and two reads of `Foo.name` compared unequal.
+        from poop.types.block import _MethodBlock  # circular: block imports Object
+
+        return _MethodBlock(method)
 
     def __set__(self, cls: type, value: object) -> None:
         # Imported here, not at module scope: `exceptions` builds its classes
