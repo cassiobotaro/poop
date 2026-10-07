@@ -8,11 +8,9 @@ from typer.testing import CliRunner
 
 from poop import cli
 from poop.cli import app
-from tests._support import FeedInput, SourceFile, console
+from tests._support import REPO_ROOT, FeedInput, SourceFile, console
 
 runner = CliRunner()
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_cli_runs_valid_file(source_file: SourceFile) -> None:

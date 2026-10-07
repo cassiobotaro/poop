@@ -5,13 +5,12 @@ spelling was the only guarded spelling — and the open one handed back a naked
 Python primitive that answered nothing in POOP's vocabulary.
 """
 
-import pathlib
-
 import pytest
 
 from poop.errors import PoopError, ValidationError
 from poop.interpreter import Interpreter
 from poop.validators.no_private_attribute import NoPrivateAttributeValidator
+from tests._support import REPO_ROOT
 
 
 def _errors(source: str) -> list[ValidationError]:
@@ -97,7 +96,7 @@ def test_every_occurrence_is_reported() -> None:
 
 def test_the_examples_corpus_is_clean() -> None:
     # The sweep the proposal promised: one allowance, no rewrites.
-    root = pathlib.Path(__file__).parent.parent.parent / "examples"
+    root = REPO_ROOT / "examples"
     offenders = [
         path.name
         for path in sorted(root.rglob("*.py"))

@@ -8,14 +8,15 @@ reintroducing it, which is exactly how the sites this replaced accumulated.
 """
 
 import ast
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from poop.types.exceptions import MIRRORS
+from tests._support import REPO_ROOT, SWEPT_PACKAGES
 
-_ROOT = Path(__file__).resolve().parents[1]
-_PACKAGES = ("poop/types", "poop/transformers")
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # Enclosing function -> why the native class stays. Keyed by function rather
 # than by line, which moves, or by file, which holds both kinds of raise.
@@ -51,8 +52,8 @@ class _Raises(ast.NodeVisitor):
 def _sources() -> list[Path]:
     return sorted(
         path
-        for package in _PACKAGES
-        for path in (_ROOT / package).rglob("*.py")
+        for package in SWEPT_PACKAGES
+        for path in package.rglob("*.py")
         if "__pycache__" not in path.parts
     )
 
@@ -103,7 +104,7 @@ def _mirror_key(node: ast.Raise) -> str | None:
 
 def test_no_native_exception_class_is_raised() -> None:
     offenders = [
-        f"{path.relative_to(_ROOT)}:{node.lineno} raises {_raised_name(node)}"
+        f"{path.relative_to(REPO_ROOT)}:{node.lineno} raises {_raised_name(node)}"
         for path, node, func in _raises()
         if _raised_name(node) in MIRRORS
         and func not in _EXEMPT
@@ -118,7 +119,7 @@ def test_no_native_exception_class_is_raised() -> None:
 def test_every_mirror_key_raised_exists() -> None:
     """A typo in the key would otherwise surface as a KeyError at runtime."""
     keys = [
-        (path.relative_to(_ROOT), node.lineno, key)
+        (path.relative_to(REPO_ROOT), node.lineno, key)
         for path, node, _ in _raises()
         if (key := _mirror_key(node)) is not None
     ]

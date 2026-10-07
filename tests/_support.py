@@ -6,15 +6,21 @@ importing from.
 
 import ast
 from collections.abc import Callable
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from rich.console import Console
 
 if TYPE_CHECKING:
     import io
-    from pathlib import Path
 
     from poop.transformers.base import Transformer
+
+# The repository root, for the tests that read its files.
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+# The packages whose POOP-authored messages the static sweeps read.
+SWEPT_PACKAGES = (REPO_ROOT / "poop" / "types", REPO_ROOT / "poop" / "transformers")
 
 
 def transform(transformer: Transformer, source: str) -> ast.Module:

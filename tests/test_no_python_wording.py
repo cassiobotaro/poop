@@ -37,6 +37,7 @@ from poop.types.set import Set
 from poop.types.slice import Slice
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+from tests._support import REPO_ROOT, SWEPT_PACKAGES
 
 # Each pattern names a construct POOP does not have. `indices` and `index out
 # of range` describe subscripting (no_subscript); `operand type(s)` and `not
@@ -348,8 +349,6 @@ def test_the_sweep_would_catch_a_regression() -> None:
 # program. The same argument `tests/test_mirrored_raises.py` makes for the
 # *class* half of the rule.
 
-_ROOT = pathlib.Path(__file__).resolve().parents[1]
-_PACKAGES = ("poop/types", "poop/transformers")
 
 # A message may legitimately quote the POOP spelling the reader should write,
 # and a POOP message shown with its arguments looks like a Python call to the
@@ -365,8 +364,8 @@ _EXEMPT: tuple[str, ...] = (
 def _mirror_messages() -> list[tuple[pathlib.Path, int, str]]:
     """Every string literal handed to a `MIRRORS[...]` call, with its site."""
     found: list[tuple[pathlib.Path, int, str]] = []
-    for package in _PACKAGES:
-        for path in sorted((_ROOT / package).rglob("*.py")):
+    for package in SWEPT_PACKAGES:
+        for path in sorted(package.rglob("*.py")):
             if "__pycache__" in path.parts:
                 continue
             tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -422,7 +421,7 @@ def test_no_poop_authored_message_names_a_forbidden_construct(
         if pattern.search(message)
     ]
     assert named == [], (
-        f"{path.relative_to(_ROOT)}:{lineno} composes {message!r}, naming {named}"
+        f"{path.relative_to(REPO_ROOT)}:{lineno} composes {message!r}, naming {named}"
     )
 
 

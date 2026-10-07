@@ -23,14 +23,14 @@ annotated `Callable`, and each one is sent an `Int`.
 """
 
 import ast
-import pathlib
 
 import pytest
 
 from poop.errors import ExecutionError, PoopError
 from poop.interpreter import Interpreter
+from tests._support import REPO_ROOT
 
-_TYPES = pathlib.Path(__file__).parent.parent / "poop" / "types"
+_TYPES = REPO_ROOT / "poop" / "types"
 
 # The sentence every block guard composes. `Try` and `With` keep
 # `_require_block`'s original role-first wording (`the handler must be a

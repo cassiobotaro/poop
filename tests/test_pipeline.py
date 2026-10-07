@@ -14,7 +14,7 @@ Two angles:
 import importlib
 import pkgutil
 from collections import Counter
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -23,8 +23,12 @@ from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.base import BaseTransformer
 from poop.transformers.try_ import NAMESPACE as TRY_NAMESPACE
 from poop.transformers.with_ import NAMESPACE as WITH_NAMESPACE
+from tests._support import REPO_ROOT
 
-EXAMPLES_DIR = Path(__file__).parent.parent / "examples"
+if TYPE_CHECKING:
+    from pathlib import Path
+
+EXAMPLES_DIR = REPO_ROOT / "examples"
 EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.py"))
 
 TRANSFORMERS_WITH_BINDINGS = sorted(
