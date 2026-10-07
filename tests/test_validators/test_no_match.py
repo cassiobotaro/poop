@@ -15,9 +15,8 @@ def test_match_raises_validation_error() -> None:
     tree = ast.parse(
         "class Foo:\n    def m(self, x):\n        match x:\n            case 1:\n                pass"
     )
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="match"):
         NoMatchValidator().validate(tree)
-    assert "match" in str(exc_info.value)
 
 
 def test_error_mentions_polymorphism() -> None:

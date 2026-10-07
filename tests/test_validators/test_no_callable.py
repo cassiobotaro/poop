@@ -1,4 +1,5 @@
 import ast
+import re
 
 import pytest
 
@@ -13,9 +14,8 @@ def test_valid_code_passes() -> None:
 
 def test_callable_raises_validation_error() -> None:
     tree = ast.parse("callable(x)")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("callable()")):
         NoCallableValidator().validate(tree)
-    assert "callable()" in str(exc_info.value)
 
 
 def test_error_message_suggests_method() -> None:

@@ -19,16 +19,14 @@ def test_method_inside_class_passes() -> None:
 
 def test_free_function_raises_validation_error() -> None:
     tree = ast.parse("def foo() -> None:\n    pass")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="free functions"):
         NoFreeFunctionsValidator().validate(tree)
-    assert "free functions" in str(exc_info.value)
 
 
 def test_free_async_function_raises_validation_error() -> None:
     tree = ast.parse("async def foo() -> None:\n    pass")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="free async functions"):
         NoFreeFunctionsValidator().validate(tree)
-    assert "free async functions" in str(exc_info.value)
 
 
 def test_free_function_carries_line_number() -> None:
@@ -62,9 +60,8 @@ def test_nested_function_inside_method_raises() -> None:
     # blocks (lambdas), not named local functions, so it is rejected.
     source = "class Foo:\n    def bar(self) -> None:\n        def helper() -> None:\n            pass"
     tree = ast.parse(source)
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="free functions"):
         NoFreeFunctionsValidator().validate(tree)
-    assert "free functions" in str(exc_info.value)
 
 
 def test_nested_async_function_inside_method_raises() -> None:
@@ -75,9 +72,8 @@ def test_nested_async_function_inside_method_raises() -> None:
         "            pass"
     )
     tree = ast.parse(source)
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="free async functions"):
         NoFreeFunctionsValidator().validate(tree)
-    assert "free async functions" in str(exc_info.value)
 
 
 def test_doubly_nested_function_raises() -> None:

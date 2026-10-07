@@ -1,4 +1,5 @@
 import ast
+import re
 
 import pytest
 
@@ -13,9 +14,8 @@ def test_valid_code_passes() -> None:
 
 def test_isinstance_call_raises_validation_error() -> None:
     tree = ast.parse("isinstance(x, int)")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("isinstance()")):
         NoIsinstanceValidator().validate(tree)
-    assert "isinstance()" in str(exc_info.value)
 
 
 def test_error_message_suggests_method() -> None:

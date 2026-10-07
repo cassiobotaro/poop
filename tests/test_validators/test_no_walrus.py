@@ -13,9 +13,8 @@ def test_valid_code_passes() -> None:
 
 def test_walrus_raises_validation_error() -> None:
     tree = ast.parse("class Foo:\n    def m(self):\n        x = (y := 1)")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=":="):
         NoWalrusValidator().validate(tree)
-    assert ":=" in str(exc_info.value)
 
 
 def test_walrus_carries_line_number() -> None:

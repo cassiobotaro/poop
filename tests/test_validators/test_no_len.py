@@ -1,4 +1,5 @@
 import ast
+import re
 
 import pytest
 
@@ -13,9 +14,8 @@ def test_valid_code_passes() -> None:
 
 def test_len_call_raises_validation_error() -> None:
     tree = ast.parse('len("abc")')
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("len()")):
         NoLenValidator().validate(tree)
-    assert "len()" in str(exc_info.value)
 
 
 def test_error_message_suggests_method() -> None:

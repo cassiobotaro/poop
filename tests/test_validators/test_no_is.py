@@ -18,16 +18,14 @@ def test_equality_is_allowed() -> None:
 
 def test_is_none_raises() -> None:
     tree = ast.parse("x = a is None")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="is operator"):
         NoIsValidator().validate(tree)
-    assert "is operator" in str(exc_info.value)
 
 
 def test_is_not_none_raises() -> None:
     tree = ast.parse("x = a is not None")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="is not operator"):
         NoIsValidator().validate(tree)
-    assert "is not operator" in str(exc_info.value)
 
 
 def test_is_general_raises() -> None:

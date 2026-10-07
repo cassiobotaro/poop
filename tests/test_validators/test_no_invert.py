@@ -1,4 +1,5 @@
 import ast
+import re
 
 import pytest
 
@@ -13,9 +14,8 @@ def test_valid_code_passes() -> None:
 
 def test_invert_on_variable_raises() -> None:
     tree = ast.parse("x = ~y")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("bit_invert()")):
         NoInvertValidator().validate(tree)
-    assert "bit_invert()" in str(exc_info.value)
 
 
 def test_invert_on_literal_raises() -> None:

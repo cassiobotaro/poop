@@ -13,18 +13,16 @@ def test_valid_code_passes() -> None:
 
 def test_global_raises_validation_error() -> None:
     tree = ast.parse("class Foo:\n    def m(self):\n        global x")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="global"):
         NoGlobalValidator().validate(tree)
-    assert "global" in str(exc_info.value)
 
 
 def test_nonlocal_raises_validation_error() -> None:
     tree = ast.parse(
         "class Foo:\n    def m(self):\n        def inner():\n            nonlocal x"
     )
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="nonlocal"):
         NoGlobalValidator().validate(tree)
-    assert "nonlocal" in str(exc_info.value)
 
 
 def test_global_carries_line_number() -> None:

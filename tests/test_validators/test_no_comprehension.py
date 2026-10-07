@@ -13,30 +13,26 @@ def test_valid_code_passes() -> None:
 
 def test_list_comprehension_raises_validation_error() -> None:
     tree = ast.parse("[x for x in col]")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="list comprehension"):
         NoComprehensionValidator().validate(tree)
-    assert "list comprehension" in str(exc_info.value)
 
 
 def test_set_comprehension_raises_validation_error() -> None:
     tree = ast.parse("{x for x in col}")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="set comprehension"):
         NoComprehensionValidator().validate(tree)
-    assert "set comprehension" in str(exc_info.value)
 
 
 def test_dict_comprehension_raises_validation_error() -> None:
     tree = ast.parse("{k: v for k, v in items}")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="dict comprehension"):
         NoComprehensionValidator().validate(tree)
-    assert "dict comprehension" in str(exc_info.value)
 
 
 def test_generator_expression_raises_validation_error() -> None:
     tree = ast.parse("sum(x for x in col)")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="generator expression"):
         NoComprehensionValidator().validate(tree)
-    assert "generator expression" in str(exc_info.value)
 
 
 def test_error_message_mentions_map() -> None:

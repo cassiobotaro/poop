@@ -1,4 +1,5 @@
 import ast
+import re
 
 import pytest
 
@@ -19,9 +20,8 @@ def test_concatenation_passes() -> None:
 
 def test_interpolated_fstring_raises() -> None:
     tree = ast.parse('x = f"hi {n}"')
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("f-string")):
         NoFstringValidator().validate(tree)
-    assert "f-string" in str(exc_info.value)
 
 
 def test_constant_fstring_also_raises() -> None:
@@ -36,9 +36,8 @@ def test_interpolated_tstring_raises() -> None:
     # t-strings (PEP 750, Python 3.14) use the same {...} interpolation and
     # produce a raw Template, so they bypass POOP Str just like f-strings.
     tree = ast.parse('x = t"hi {n}"')
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("t-string")):
         NoFstringValidator().validate(tree)
-    assert "t-string" in str(exc_info.value)
 
 
 def test_constant_tstring_also_raises() -> None:

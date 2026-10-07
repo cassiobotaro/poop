@@ -43,9 +43,8 @@ def test_augmented_assignment_raises() -> None:
 
 def test_tuple_unpacking_with_protected_name_raises() -> None:
     tree = ast.parse("Try, x = 1, 2")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="Try"):
         NoNamespaceShadowValidator().validate(tree)
-    assert "Try" in str(exc_info.value)
 
 
 def test_starred_unpacking_with_protected_name_raises() -> None:
@@ -56,9 +55,8 @@ def test_starred_unpacking_with_protected_name_raises() -> None:
 
 def test_class_named_Try_raises() -> None:
     tree = ast.parse("class Try:\n    pass")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="Try"):
         NoNamespaceShadowValidator().validate(tree)
-    assert "Try" in str(exc_info.value)
 
 
 def test_assignment_inside_method_also_raises() -> None:

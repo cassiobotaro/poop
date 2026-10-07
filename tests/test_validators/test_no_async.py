@@ -25,9 +25,8 @@ def test_free_async_function_raises() -> None:
 
 def test_message_explains_why() -> None:
     tree = ast.parse("async def foo():\n    return 1")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="no way to drive a coroutine"):
         NoAsyncValidator().validate(tree)
-    assert "no way to drive a coroutine" in str(exc_info.value)
 
 
 def test_error_carries_line_number() -> None:

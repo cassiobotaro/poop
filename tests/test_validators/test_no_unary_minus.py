@@ -1,4 +1,5 @@
 import ast
+import re
 
 import pytest
 
@@ -23,9 +24,8 @@ def test_negative_float_literal_is_allowed() -> None:
 
 def test_unary_minus_on_variable_raises() -> None:
     tree = ast.parse("x = -y")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=re.escape("negated()")):
         NoUnaryMinusValidator().validate(tree)
-    assert "negated()" in str(exc_info.value)
 
 
 def test_unary_minus_on_call_raises() -> None:

@@ -13,16 +13,14 @@ def test_valid_code_passes() -> None:
 
 def test_yield_raises_validation_error() -> None:
     tree = ast.parse("class Foo:\n    def m(self):\n        yield 1")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="yield"):
         NoYieldValidator().validate(tree)
-    assert "yield" in str(exc_info.value)
 
 
 def test_yield_from_raises_validation_error() -> None:
     tree = ast.parse("class Foo:\n    def m(self):\n        yield from [1, 2]")
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="yield from"):
         NoYieldValidator().validate(tree)
-    assert "yield from" in str(exc_info.value)
 
 
 def test_yield_carries_line_number() -> None:
