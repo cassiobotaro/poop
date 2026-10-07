@@ -61,6 +61,11 @@ def _as_block(value: Any) -> Any:
     return value
 
 
+# The parameter kinds a positional argument and a keyword argument can fill.
+_POSITIONAL = frozenset({Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD})
+_BY_KEYWORD = frozenset({Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY})
+
+
 class Block(Object):
     __slots__ = ("_fn",)
 
@@ -127,23 +132,26 @@ class Block(Object):
             return self
         return Block(partial(self, instance))
 
+    def _params(self) -> list[Parameter] | None:
+        """The block's parameters, or `None` when CPython cannot introspect it.
+
+        A handful of CPython's own builtins carry no signature, and `get_attr`
+        can hand one to `_as_block`.
+        """
+        try:
+            return list(signature(self._fn).parameters.values())
+        except TypeError, ValueError:
+            return None
+
     def _accepted(self) -> tuple[int, int | None] | None:
         """How many arguments the block takes: (fewest, most), `None` unbounded.
 
-        Answers `None` when CPython cannot introspect the callable — a handful
-        of its own builtins carry no signature, and `get_attr` can hand one to
-        `_as_block`.
+        Answers `None` when `_params` cannot read the signature.
         """
-        try:
-            params = list(signature(self._fn).parameters.values())
-        except TypeError, ValueError:
+        params = self._params()
+        if params is None:
             return None
-        positional = [
-            param
-            for param in params
-            if param.kind
-            in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
-        ]
+        positional = [param for param in params if param.kind in _POSITIONAL]
         required = sum(1 for param in positional if param.default is Parameter.empty)
         variadic = any(param.kind is Parameter.VAR_POSITIONAL for param in params)
         return required, None if variadic else len(positional)
@@ -174,16 +182,11 @@ class Block(Object):
         wrong — leaving `_arity_message` the positional count alone, which makes
         `expects 1, got 1` unrepresentable.
         """
-        try:
-            params = list(signature(self._fn).parameters.values())
-        except TypeError, ValueError:
+        params = self._params()
+        if params is None:
             return None
         takes_any = any(param.kind is Parameter.VAR_KEYWORD for param in params)
-        by_keyword = [
-            param
-            for param in params
-            if param.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY)
-        ]
+        by_keyword = [param for param in params if param.kind in _BY_KEYWORD]
         accepted = {param.name for param in by_keyword}
         if not takes_any:
             unexpected = next((name for name in kwargs if name not in accepted), None)
@@ -191,12 +194,9 @@ class Block(Object):
                 return f"block does not take a keyword argument {unexpected!r}"
         # A name filled positionally *and* by keyword. Only the parameters the
         # positional arguments actually reached can collide.
-        positional = [
-            param.name
-            for param in params
-            if param.kind
-            in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
-        ][: len(args)]
+        positional = [param.name for param in params if param.kind in _POSITIONAL][
+            : len(args)
+        ]
         duplicate = next((name for name in positional if name in kwargs), None)
         if duplicate is not None:
             return f"block already got {duplicate!r} as a positional argument"
