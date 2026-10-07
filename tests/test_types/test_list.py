@@ -34,14 +34,15 @@ def test_at_returns_element() -> None:
     assert lst.at(Int(1)) == Int(20)
 
 
-def test_at_with_slice_returns_sublist() -> None:
+def test_at_refuses_a_slice_as_its_siblings_do() -> None:
+    """`at` reads one element; `slice` is the message that slices.
+
+    `List.at` alone took a `Slice`, so one spelling sliced a list and refused
+    a tuple, a range and a str.
+    """
     lst = List(Int(10), Int(20), Int(30), Int(40))
-    assert lst.at(Slice(Int(1), Int(3))) == List(Int(20), Int(30))
-
-
-def test_at_with_slice_matches_slice_method() -> None:
-    lst = List(Int(0), Int(1), Int(2), Int(3), Int(4))
-    assert lst.at(Slice(Int(0), Int(5), Int(2))) == lst.slice(Int(0), Int(5), Int(2))
+    with pytest.raises(TypeError, match="^list.at expects an int index, got a slice$"):
+        lst.at(Slice(Int(1), Int(3)))  # ty: ignore[invalid-argument-type]
 
 
 def test_includes_true() -> None:

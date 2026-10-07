@@ -49,9 +49,7 @@ class List(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def __len__(self) -> int:
         return len(self._items)
 
-    def at(self, index: Index | Slice) -> Object:
-        if isinstance(index, Slice):
-            return List(*self._items[index._py_slice()])
+    def at(self, index: Index) -> Object:
         return at_index(self._items, index, self)
 
     def at_put(self, index: Index, obj: Object) -> List:
