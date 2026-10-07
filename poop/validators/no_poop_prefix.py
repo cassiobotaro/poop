@@ -1,10 +1,6 @@
 from typing import TYPE_CHECKING
 
-from poop.validators.base import (
-    CollectingValidator,
-    ErrorCollector,
-    iter_params,
-)
+from poop.validators.base import CollectingValidator, ErrorCollector
 
 if TYPE_CHECKING:
     import ast
@@ -21,13 +17,12 @@ class _Visitor(ErrorCollector):
                 node,
             )
 
-    def _check_args(self, args: ast.arguments) -> None:
+    def visit_arg(self, node: ast.arg) -> None:
         # Parameters bind names inside the body, so a `_poop_`-prefixed
         # parameter (def or lambda) reopens a reserved identifier exactly
         # like a reference does. A bare `lambda _poop_x: 1` never mentions
         # the name in its body, so visit_Name alone would miss it.
-        for param in iter_params(args):
-            self._reject(param.arg, param)
+        self._reject(node.arg, node)
 
     def visit_Name(self, node: ast.Name) -> None:
         self._reject(node.id, node)
@@ -45,15 +40,10 @@ class _Visitor(ErrorCollector):
         # nested def would create a reserved identifier the runtime owns,
         # and its name is never a Name node, so visit_Name would miss it.
         self._reject(node.name, node)
-        self._check_args(node.args)
         self.generic_visit(node)
 
     # An async def binds the same name and args as a def; share the handler.
     visit_AsyncFunctionDef = visit_FunctionDef
-
-    def visit_Lambda(self, node: ast.Lambda) -> None:
-        self._check_args(node.args)
-        self.generic_visit(node)
 
 
 class NoPoopPrefixValidator(CollectingValidator):

@@ -2,12 +2,7 @@ import ast
 from typing import TYPE_CHECKING
 
 from poop.transformers import DEFAULT_NAMESPACE
-from poop.validators.base import (
-    CollectingValidator,
-    ErrorCollector,
-    collect_errors,
-    iter_params,
-)
+from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
 if TYPE_CHECKING:
     from poop.errors import ValidationError
@@ -29,29 +24,21 @@ class _Visitor(ErrorCollector):
         if name in self._protected:
             self.report(self._message.format(name=name), node)
 
-    def _visit_target(self, target: ast.AST) -> None:
-        # Handles `x = ...`, `x: T = ...`, `x += ...`, and unpacking
-        # forms like `x, y = ...` / `[x, y] = ...` / `(*x,) = ...`.
-        if isinstance(target, ast.Name):
-            self._check(target.id, target)
-        elif isinstance(target, ast.Tuple | ast.List):
-            for elt in target.elts:
-                self._visit_target(elt)
-        elif isinstance(target, ast.Starred):
-            self._visit_target(target.value)
+    def visit_Name(self, node: ast.Name) -> None:
+        # Every name a statement binds is a `Name` in `Store` context: `x = ...`,
+        # `x: T = ...`, `x += ...`, each name of an unpacking (`x, *y = ...`),
+        # and the targets of `for`, `with ... as` and `:=`. `generic_visit`
+        # already walks into the tuples, lists and stars around them.
+        if isinstance(node.ctx, ast.Store):
+            self._check(node.id, node)
 
-    def visit_Assign(self, node: ast.Assign) -> None:
-        for target in node.targets:
-            self._visit_target(target)
-        self.generic_visit(node)
-
-    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
-        self._visit_target(node.target)
-        self.generic_visit(node)
-
-    def visit_AugAssign(self, node: ast.AugAssign) -> None:
-        self._visit_target(node.target)
-        self.generic_visit(node)
+    def visit_arg(self, node: ast.arg) -> None:
+        # A parameter named after a namespace binding shadows it inside the
+        # body exactly like a local assignment does, so `def m(self, Try):`
+        # makes `Try(...)` inside it call the argument. Every parameter of a
+        # def or a lambda — `*args` and `**kwargs` included — is an `arg`;
+        # lambdas are POOP's block form and carry most user code.
+        self._check(node.arg, node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self._check(node.name, node)
@@ -59,14 +46,6 @@ class _Visitor(ErrorCollector):
         self._in_class_body = True
         self.generic_visit(node)
         self._in_class_body = outer
-
-    def _check_args(self, args: ast.arguments) -> None:
-        # A parameter named after a namespace binding shadows it inside the
-        # body exactly like a local assignment does, so `def m(self, Try):`
-        # makes `Try(...)` inside it call the argument — the same hazard the
-        # assignment check guards against.
-        for param in iter_params(args):
-            self._check(param.arg, param)
 
     def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         # A def directly in a class body is a method: it binds as a class
@@ -77,20 +56,12 @@ class _Visitor(ErrorCollector):
         # reports all of them), so this one still names the shadowing.
         if not self._in_class_body:
             self._check(node.name, node)
-        self._check_args(node.args)
         outer = self._in_class_body
         self._in_class_body = False
         self.generic_visit(node)
         self._in_class_body = outer
 
     visit_FunctionDef = visit_AsyncFunctionDef = _visit_function
-
-    def visit_Lambda(self, node: ast.Lambda) -> None:
-        # Lambdas are POOP's block form and carry most user code, so the
-        # same shadowing hazard the def check guards against applies here
-        # too (`lambda With: With(r)` silently shadows the namespace).
-        self._check_args(node.args)
-        self.generic_visit(node)
 
 
 class NoNamespaceShadowValidator(CollectingValidator):

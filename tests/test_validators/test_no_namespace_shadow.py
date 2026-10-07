@@ -170,3 +170,19 @@ def test_method_named_Try_in_nested_class_is_fine() -> None:
     source = "class Outer:\n    class Inner:\n        def Try(self):\n            pass"
     tree = ast.parse(source)
     NoNamespaceShadowValidator().validate(tree)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "for Try in xs:\n    pass",
+        "with r as Try:\n    pass",
+        "(Try := 1)",
+        "a, *Try = xs",
+    ],
+)
+def test_every_binding_target_is_checked(source: str) -> None:
+    # Every `Store` name binds, whichever statement wrote it; `no_loops` and
+    # `no_with` refuse the first two too, and every validator collects.
+    with pytest.raises(ValidationError, match="'Try' is a POOP namespace binding"):
+        NoNamespaceShadowValidator().validate(ast.parse(source))
