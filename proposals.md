@@ -16,23 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 3. `Interpreter()` hands out the module-level default lists
-
-`Interpreter.__init__` in `poop/interpreter.py` stores `DEFAULT_VALIDATORS`
-and `DEFAULT_TRANSFORMERS` themselves when no argument is given, and the
-`validators` property returns that list — so `Interpreter().validators.append(...)`
-(or `.clear()`) rewrites the registry for every later interpreter in the
-process, the REPL's included. `namespace` is the one of the three already
-copied, by `new_namespace`.
-
-While there, `validate_all` builds a list, sorts it in place with a `lambda`
-and returns it; `sorted(..., key=attrgetter("lineno", "col_offset"))` is the
-one expression.
-
-**Fix.** `list(validators)` / `list(DEFAULT_VALIDATORS)` (same for
-transformers), and the `sorted` form. A test that appends to one interpreter's
-`validators` and checks a fresh one is unaffected fails first.
-
 ### 4. The CLI writes each stream through two unrelated paths
 
 `poop/console.py` exists so colour is decided per destination, and the REPL's
