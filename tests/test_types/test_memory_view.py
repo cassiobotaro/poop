@@ -1,4 +1,5 @@
 import ast
+from typing import Any
 
 import pytest
 
@@ -262,3 +263,20 @@ def test_count_with_a_foreign_argument_is_faithful() -> None:
     # As `includes` is: CPython compares element by element and answers 0
     # rather than refusing.
     assert _mv(b"ab").count(List(Int(1))) == Int(0)  # ty: ignore[invalid-argument-type]
+
+
+def test_hex_guards_its_separator_like_bytes_does() -> None:
+    wrong: Any = Int(5)
+    with pytest.raises(
+        TypeError, match="^#hex expects a one-character separator, got an int$"
+    ):
+        MemoryView(memoryview(b"ab")).hex(wrong)
+    assert MemoryView(memoryview(b"ab")).hex(Str(":")) == Str("61:62")
+
+
+def test_tobytes_guards_its_order() -> None:
+    wrong: Any = Int(5)
+    # CPython answered `tobytes() argument 'order' must be str or None, not int`.
+    with pytest.raises(TypeError, match="^#tobytes expects a str, got an int$"):
+        MemoryView(memoryview(b"ab")).tobytes(wrong)
+    assert MemoryView(memoryview(b"ab")).tobytes(Str("C")) == Bytes(b"ab")

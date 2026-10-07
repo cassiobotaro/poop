@@ -1,4 +1,5 @@
 import ast
+from typing import Any
 
 import pytest
 
@@ -224,3 +225,12 @@ def test_bare_enumerate_name_is_rewritten() -> None:
     assert isinstance(assign, ast.Assign)
     assert isinstance(assign.value, ast.Name)
     assert assign.value.id == "_poop_enumerate_cls"
+
+
+def test_a_wrong_start_is_refused_when_built_not_when_walked() -> None:
+    wrong: Any = Str("a")
+    with pytest.raises(
+        TypeError, match="^#enumerate's start must be an int, got a str$"
+    ):
+        Enumerate(List(Int(1)), wrong)
+    assert List(*Enumerate(List(Str("a")), none)) == List(Tuple(Int(0), Str("a")))
