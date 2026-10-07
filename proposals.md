@@ -2,8 +2,8 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 1–12 come from a Pythonic-code review of the whole package and the test
-suite, after the wording sweeps closed. The first three change behaviour a
+Items 2–12 come from a Pythonic-code review of the whole package and the test
+suite, after the wording sweeps closed. Items 2 and 3 change behaviour a
 program can observe; the rest remove duplication or hand-rolled spellings of
 things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
@@ -14,39 +14,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 1. A set operator on a user subclass answers `cannot convert int to set`
-
-```python
-class Bag(set):
-    pass
-
-(Bag() | {1}).print()      # poop: TypeError: cannot convert int to set
-Bag().union({1}).print()   # {1}
-```
-
-`_SetAlgebraMixin._algebra` in `poop/types/_set_algebra.py` builds its result
-with `type(self)(*op(self._data, raw))`. On `Set` itself that spreads the
-elements into `Set.__init__`; on a user subclass, `type(self)` is the class
-built on the `builtin_alias`, whose metaclass `__call__` *converts* its
-argument, so `Bag(1)` is read as "convert `1` to a set" and refused. The eight
-operator dunders of `Set` and `FrozenSet` (`|`, `&`, `-`, `^`, each in both
-directions) all go through it; `FrozenSet` answers `cannot convert int to
-frozenset` the same way. The message forms (`union`, `intersection`, ...) build
-`Set(...)` directly and are fine.
-
-`_BytesLikeMixin._rewrap` in `poop/types/_bytes_like.py` already states the
-rule: "The builtin's, not `type(self)`: CPython answers `bytes` from a method
-sent to a `bytes` subclass, and so does POOP." `_algebra` is the one site in
-the package that answers `type(self)`.
-
-**Fix.** Give `_SetAlgebraMixin` the same `_rewrap(raw)` hook, implemented by
-`Set` and `FrozenSet`, and build `_algebra`'s result through it. Then move the
-twelve methods the two classes spell identically except for the constructor
-name — `union`, `intersection`, `difference`, `symmetric_difference`,
-`isdisjoint`, `issubset`, `issuperset`, `includes`, `len`, `__len__`,
-`__iter__`, `__contains__` — into the mixin, through the same hook. A test
-with a `set` and a `frozenset` subclass under each operator fails first.
 
 ### 2. `Str.center` / `ljust` / `rjust` answer CPython's fill-character sentence
 
