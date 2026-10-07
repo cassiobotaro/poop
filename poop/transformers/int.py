@@ -46,26 +46,24 @@ def _poop_int_from(*args: object, **kwargs: object) -> Int:
         # int(10, 2) / int(3.5, 2) / int(True, 2) all raise TypeError there;
         # silently dropping the base would diverge from the language.
         raise MIRRORS["TypeError"]("a base applies only to text")
-    if value is None:
-        return Int(0)
-    if isinstance(value, Int):
-        return value
-    if isinstance(value, Boolean):
-        # CPython's int(True) -> 1 / int(False) -> 0 (the flag-to-number
-        # bridge). Boolean is kept out of *implicit* arithmetic, but
-        # explicit conversion is sanctioned (like str(True)).
-        return Int(1 if bool(value) else 0)
-    if isinstance(value, Float):
-        return Int(int(value._value))
-    if isinstance(value, Str):
-        if base is not None:
-            if not isinstance(base, Int):
-                raise MIRRORS["TypeError"](
-                    f"base must be int, got {type(base).__name__}"
-                )
-            return _parsed(value, base._value)
-        return _parsed(value, None)
-    raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to int")
+    if base is not None and not isinstance(base, Int):
+        raise MIRRORS["TypeError"](f"base must be int, got {type(base).__name__}")
+    match value:
+        case None:
+            return Int(0)
+        case Int():
+            return value
+        case Boolean():
+            # CPython's int(True) -> 1 / int(False) -> 0 (the flag-to-number
+            # bridge). Boolean is kept out of *implicit* arithmetic, but
+            # explicit conversion is sanctioned (like str(True)).
+            return Int(1 if bool(value) else 0)
+        case Float():
+            return Int(int(value._value))
+        case Str():
+            return _parsed(value, None if base is None else base._value)
+        case _:
+            raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to int")
 
 
 class _IntRewriter(BuiltinRewriter):

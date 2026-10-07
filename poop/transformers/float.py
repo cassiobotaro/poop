@@ -18,25 +18,29 @@ def _poop_float_from(*args: object, **kwargs: object) -> Float:
         hint="write a literal for a value",
     )
     value = args[0] if args else None
-    if value is None:
-        return Float(0.0)
-    if isinstance(value, Float):
-        return value
-    if isinstance(value, Boolean):
-        # CPython's float(True) -> 1.0 / float(False) -> 0.0.
-        return Float(1.0 if bool(value) else 0.0)
-    if isinstance(value, Int):
-        return Float(float(value._value))
-    if isinstance(value, Str):
-        try:
+    match value:
+        case None:
+            return Float(0.0)
+        case Float():
+            return value
+        case Boolean():
+            # CPython's float(True) -> 1.0 / float(False) -> 0.0.
+            return Float(1.0 if bool(value) else 0.0)
+        case Int():
             return Float(float(value._value))
-        except ValueError:
-            # `could not convert string to float: 'abc'` names Python's type,
-            # not the message the reader sent.
-            raise MIRRORS["ValueError"](
-                f"{value._value!r} is not a valid float"
-            ) from None
-    raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to float")
+        case Str():
+            try:
+                return Float(float(value._value))
+            except ValueError:
+                # `could not convert string to float: 'abc'` names Python's
+                # type, not the message the reader sent.
+                raise MIRRORS["ValueError"](
+                    f"{value._value!r} is not a valid float"
+                ) from None
+        case _:
+            raise MIRRORS["TypeError"](
+                f"cannot convert {type(value).__name__} to float"
+            )
 
 
 class _FloatRewriter(BuiltinRewriter):
