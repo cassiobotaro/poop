@@ -72,20 +72,26 @@ class _PeekMixin:
             "send #next with a default, or ask #has_next"
         )
 
-    def has_next(self) -> Boolean:
-        if self._peeked is not UNPEEKED:
-            return true
+    def _pull(self) -> Any:
+        """The next raw element, with CPython's mutation sentence reworded.
+
+        The one place `has_next`, `next` and `__next__` pull from. A dict
+        mutated mid-walk answered `dictionary changed size during iteration`
+        — a word POOP does not use for a `dict`, describing a `for` loop the
+        program did not write. POOP's own RuntimeErrors pass through
+        untouched; `StopIteration` is not one, and reaches each caller.
+        """
         try:
-            self._peeked = next(self._materialize())
+            return next(self._materialize())
         except RuntimeError as exc:
-            # The same rewording `next` and `__next__` already carry, and the
-            # one message of the three that exists so a program can *ask*
-            # instead of raising: it answered `dictionary changed size during
-            # iteration` — a word POOP does not use for a `dict`, describing a
-            # `for` loop the program did not write.
             raise reword_if_native(exc, self._iterating) from None
-        except StopIteration:
-            return false
+
+    def has_next(self) -> Boolean:
+        if self._peeked is UNPEEKED:
+            try:
+                self._peeked = self._pull()
+            except StopIteration:
+                return false
         return true
 
     def _buffered(self) -> Any:
@@ -97,12 +103,7 @@ class _PeekMixin:
         if self._peeked is not UNPEEKED:
             return self._buffered()
         try:
-            value = next(self._materialize())
-        except RuntimeError as exc:
-            # `dictionary changed size during iteration` — a word POOP does not
-            # use for a `dict`, describing a `for` loop the program did not
-            # write. POOP's own RuntimeErrors pass through untouched.
-            raise reword_if_native(exc, self._iterating) from None
+            value = self._pull()
         except StopIteration:
             if default is not MISSING:
                 return default
@@ -119,10 +120,7 @@ class _PeekMixin:
         # would be skipped by the `do`/`map`/`filter` that came after the ask.
         if self._peeked is not UNPEEKED:
             return self._buffered()
-        try:
-            return self._wrap(next(self._materialize()))
-        except RuntimeError as exc:
-            raise reword_if_native(exc, self._iterating) from None
+        return self._wrap(self._pull())
 
 
 # Cloaked as `object`, the root's own spelling: these methods are inherited by
