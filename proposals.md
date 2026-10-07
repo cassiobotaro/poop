@@ -16,57 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 15. Dead and doubled bits worth a sweep
-
-- `_opt_int` in `poop/types/_unwrap.py` has no caller in `poop/` or `tests/`
-  (one test comment mentions it); ruff does not flag unused module-level
-  functions.
-- `PoopMeta.__ne__` restates `__eq__` with `is not`, while `Object.__ne__`
-  documents itself as "the one `__ne__`" precisely so no rule is kept in two
-  copies; `to_boolean(not bool(cls == other))` keeps the rule in `__eq__`.
-- `refuse.__name__ = name; refuse.__qualname__ = name` in
-  `poop/types/exceptions.py` is dead: the loop below calls `__set_name__`,
-  whose `cloak_callable` sets both again; that loop also re-reads
-  `vars(PoopExcMeta)[_name]` for the object it just built.
-- The `is a value — it holds no state of its own` sentence is spelt twice in
-  `poop/types/object.py` (`__setattr__`, `del_attr`); the `_attr_guard`
-  docstring already warns about drift in this family.
-- `_PROTOCOL_SLOTS` in `meta.py` carries a middle column equal to
-  `native.__name__` on every row. `superclass` builds a list of bases to read
-  its head: `next((b for b in cls.__bases__ if isinstance(b, PoopMeta)), None)`.
-- `_MethodBlock`'s `MessageNotUnderstood(explain-style prefix, name=, obj=)`
-  is composed by hand at five sites across `meta.py`, `exceptions.py` and
-  `error.py`; one `does_not_understand(label, name, hint)` in `_selectors.py`
-  next to `explain` would spell the prefix once.
-- `_display_width` in `poop/errors.py` nests a two-level conditional inside
-  `sum`; a `_column_width(char)` with three early returns (or a `match` on
-  `east_asian_width`) is the rule the docstring spends a paragraph on, and
-  `sum(map(_column_width, text))` is the fold.
-- `Slice.__eq__` compares three fields through a `_field_eq` `None` dance
-  while `__hash__` already hashes the tuple; tuple equality answers the same.
-  `Range._iter` is a `for`/`yield` where `_bytes_like` and `memory_view` write
-  `map(Int, ...)`, and `Str.__iter__` could be `map(Str, self._value)`.
-  `Zip` stores `_strict` as a `Boolean` only to read it back with `bool(...)`.
-  `Dict.setdefault` takes `default: Object | None = None` and translates
-  `None` to `none`, where the sibling `get` simply defaults to `none`.
-- `poop/repl.py`: the completer's `_name_matches` and `_attr_matches` are
-  append loops sharing a `"(" if callable(val) else ""` suffix rule, the
-  second inside a `try` that wraps the whole `dir()` loop though only `eval`
-  can fail, and `text.rfind(".")` plus two slices is `text.rpartition(".")`.
-  `_meta` rebuilds its dispatch dict, with a `lambda`, on every meta-command;
-  a `_meta_help` method and `getattr(self, f"_meta_{cmd}", None)` guarded by
-  `cmd.isidentifier()` is name-based dispatch.
-- `execute(..., interactive: bool)` in `poop/executor.py` is a boolean switch
-  for what `compile` already names: `mode: Literal["exec", "single"]`, with the
-  `ast.Interactive` wrap and the `SyntaxError → ExecutionError` conversion in
-  one `_compile` helper.
-- `_alias.py` writes the slot-copy loop twice (`_fill` and inline in
-  `builtin_alias.__init__`), recomputes `_payload_slots(wrapped)` on every
-  construction though `wrapped` is fixed when the alias is built, and tells the
-  `__new__`-step story in `_endow`'s docstring and again in `__call__`.
-
-**Fix.** One commit per bullet; none changes wording or behaviour.
-
 ### 16. The suite asserts AST shape by hand and copies the call-name contract thirty-eight times
 
 - `tests/test_transformers/` has forty-one `isinstance(call.func, ast.Name)` …
