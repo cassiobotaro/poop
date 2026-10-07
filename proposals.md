@@ -16,40 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 17. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 14. The transformers spell stdlib shapes by hand
-
-- `_DictRewriter._fold_parts` in `poop/transformers/dict.py` is a run-length
-  state machine over "splat or not" with a `pending` list it flushes — the
-  `itertools.groupby(entries, key=lambda kv: kv[0] is None)` fold, where a
-  splat run extends `parts` and a pair run becomes one
-  `_pairs_call(list(chain.from_iterable(run)))`. Verified on a mixed entry list
-  to produce the same parts in the same order. `visit_Dict`'s `flat` loop is
-  `chain.from_iterable(zip(node.keys, node.values, strict=True))`. `visit_Call`
-  there tests `node.func.id == self.builtin` instead of the `is_builtin` hook
-  every other rewriter uses.
-- `VarargsTransformer` in `poop/transformers/varargs.py` builds an
-  `ast.arguments` with six empty fields and an `ast.Call` with
-  `keywords=[]`; since 3.13 every list field defaults to `[]` and every
-  optional one to `None`, and the project targets 3.14 only. `_variadics` is a
-  filter loop a comprehension writes.
-- `_poop_memoryview_from` in `poop/transformers/memory_view.py` has two
-  consecutive `if isinstance(arg, X): return MemoryView(memoryview(arg._value))`
-  with identical bodies (ruff's SIM114 merges only `if`/`elif`).
-- `_merge_bindings` in `poop/transformers/_registry.py` finds duplicates by
-  incremental `keys() & keys()`; a `Counter` over every key reports all
-  duplicates at once with the same message.
-- The `int` / `float` / `complex` converters and `_spelling` in
-  `poop/validators/no_decorator.py` are four-to-six-rung `isinstance` ladders;
-  `base.py`'s literal fold already uses `match`, and class patterns read as
-  the type table they are. `ComplexTransformer`'s literal join
-  (`isinstance(node.op, ...) and isinstance(node.left, ...) and ...`, five
-  clauses) is one `case ast.BinOp(left=ast.Constant(value=int() | float() as
-  real), op=ast.Add() | ast.Sub() as op, right=ast.Constant(value=complex()
-  as imag))`.
-
-**Fix.** As listed, one commit per bullet. Rewrites only; the transformer
-tests cover every branch.
-
 ### 15. Dead and doubled bits worth a sweep
 
 - `_opt_int` in `poop/types/_unwrap.py` has no caller in `poop/` or `tests/`
