@@ -937,3 +937,14 @@ def test_meta_explain_reports_an_allowed_construct(
     r, _ = _repl()
     r._meta(":explain noop")
     assert "noop is allowed in POOP." in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("line", [":__class__", ":_meta", ":help-me", ":nope"])
+def test_a_meta_command_reaches_only_a_meta_method(
+    line: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Dispatch is by name (`:foo` runs `_meta_foo`), so anything that is not
+    # an identifier, or names no `_meta_*` method, is an unknown command.
+    repl, _ = _repl()
+    repl._meta(line)
+    assert "unknown meta-command" in capsys.readouterr().err
