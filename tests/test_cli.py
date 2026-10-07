@@ -2,6 +2,7 @@ import io
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 from typer.testing import CliRunner
@@ -11,6 +12,19 @@ from poop.cli import app
 from tests._support import REPO_ROOT, FeedInput, SourceFile, console
 
 runner = CliRunner()
+
+
+def _run_main(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+    """`python main.py <args>` in a subprocess, the uninstalled entry point."""
+    return subprocess.run(  # noqa: S603
+        [sys.executable, str(REPO_ROOT / "main.py"), *args],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        timeout=30,
+        check=False,
+        **kwargs,
+    )
 
 
 def test_cli_runs_valid_file(source_file: SourceFile) -> None:
@@ -117,9 +131,8 @@ def test_cli_validators_only_shows_snippet_per_error(source_file: SourceFile) ->
     assert "    |     ^" in result.output
 
 
-def test_cli_validators_only_reports_parse_error(tmp_path: Path) -> None:
-    f = tmp_path / "syntax.py"
-    f.write_text("def (\n", encoding="utf-8")
+def test_cli_validators_only_reports_parse_error(source_file: SourceFile) -> None:
+    f = source_file("def (\n", "syntax.py")
     result = runner.invoke(app, [str(f), "--validators-only"])
     assert result.exit_code == 1
     assert "poop:" in result.output
@@ -140,15 +153,7 @@ def test_cli_runs_source_from_a_pipe_only_read_once() -> None:
     stdin_path = Path("/dev/stdin")
     if not stdin_path.exists():  # pragma: no cover - platform without /dev/stdin
         pytest.skip("no /dev/stdin on this platform")
-    result = subprocess.run(  # noqa: S603
-        [sys.executable, str(REPO_ROOT / "main.py"), "/dev/stdin"],
-        input='"hello from pipe".print()\n',
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        timeout=30,
-        check=False,
-    )
+    result = _run_main("/dev/stdin", input='"hello from pipe".print()\n')
     assert result.returncode == 0
     assert "hello from pipe" in result.stdout
 
@@ -158,15 +163,7 @@ def test_main_module_runs_file_via_argv(source_file: SourceFile) -> None:
     # directly (file=None default), ignoring argv and dropping into the REPL.
     # Run it as a subprocess so the wiring in main.py is exercised end to end.
     f = source_file('"hi".print()\n', "ok.py")
-    result = subprocess.run(  # noqa: S603
-        [sys.executable, str(REPO_ROOT / "main.py"), str(f)],
-        capture_output=True,
-        text=True,
-        stdin=subprocess.DEVNULL,
-        cwd=REPO_ROOT,
-        timeout=30,
-        check=False,
-    )
+    result = _run_main(str(f), stdin=subprocess.DEVNULL)
     assert result.returncode == 0
     assert "hi" in result.stdout
 

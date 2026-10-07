@@ -1,6 +1,5 @@
 import ast
 import io
-import pathlib
 import readline
 import sys
 from pathlib import Path
@@ -39,44 +38,45 @@ from tests._support import FeedInput, console
 _DEFAULT_CALLS = _explain_calls(DEFAULT_VALIDATORS)
 
 
-def _repl() -> tuple[Repl, dict[str, object]]:
-    interp = Interpreter()
-    repl = Repl(interp)
-    return repl, repl._ns
+# Named through `name=`: a module-level function called `repl` would rebind
+# the `poop.repl` module this file imports under that name.
+@pytest.fixture(name="repl")
+def _repl() -> Repl:
+    return Repl(Interpreter())
 
 
-def test_namespace_persists_across_calls() -> None:
-    repl, ns = _repl()
+def test_namespace_persists_across_calls(repl: Repl) -> None:
+    ns = repl._ns
     repl._interpreter.run_source_repl("x = 42", ns)
     repl._interpreter.run_source_repl("y = x + 1", ns)
     assert ns["y"] == Int(43)
 
 
-def test_repl_initial_namespace_contains_poop_bindings() -> None:
-    _, ns = _repl()
+def test_repl_initial_namespace_contains_poop_bindings(repl: Repl) -> None:
+    ns = repl._ns
     assert "_poop_true" in ns
     assert "_poop_false" in ns
     assert "_poop_int" in ns
 
 
-def test_parse_error_does_not_kill_repl_namespace() -> None:
-    repl, ns = _repl()
+def test_parse_error_does_not_kill_repl_namespace(repl: Repl) -> None:
+    ns = repl._ns
     repl._interpreter.run_source_repl("x = 1", ns)
     with pytest.raises(ParseError):
         repl._interpreter.run_source_repl("def :", ns)
     assert "x" in ns
 
 
-def test_validation_error_does_not_kill_repl_namespace() -> None:
-    repl, ns = _repl()
+def test_validation_error_does_not_kill_repl_namespace(repl: Repl) -> None:
+    ns = repl._ns
     repl._interpreter.run_source_repl("x = 1", ns)
     with pytest.raises(ValidationError):
         repl._interpreter.run_source_repl("if True:\n    pass", ns)
     assert "x" in ns
 
 
-def test_execution_error_does_not_kill_repl_namespace() -> None:
-    repl, ns = _repl()
+def test_execution_error_does_not_kill_repl_namespace(repl: Repl) -> None:
+    ns = repl._ns
     repl._interpreter.run_source_repl("x = 1", ns)
     with pytest.raises(ExecutionError):
         repl._interpreter.run_source_repl("y = 1 / 0", ns)
@@ -84,8 +84,8 @@ def test_execution_error_does_not_kill_repl_namespace() -> None:
     assert "y" not in ns
 
 
-def test_repl_namespace_is_independent_of_default_namespace() -> None:
-    repl, ns = _repl()
+def test_repl_namespace_is_independent_of_default_namespace(repl: Repl) -> None:
+    ns = repl._ns
     repl._interpreter.run_source_repl("sentinel_var = 99", ns)
     assert "sentinel_var" not in DEFAULT_NAMESPACE
 
@@ -142,46 +142,44 @@ def test_save_history_does_not_crash() -> None:
 # --- _displayhook ---
 
 
-def test_displayhook_stores_value_in_namespace(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    repl, ns = _repl()
+def test_displayhook_stores_value_in_namespace(repl: Repl) -> None:
+    ns = repl._ns
     repl._displayhook(42)
     assert ns["_"] == 42
 
 
-def test_displayhook_none_is_not_stored(capsys: pytest.CaptureFixture[str]) -> None:
-    repl, ns = _repl()
+def test_displayhook_none_is_not_stored(repl: Repl) -> None:
+    ns = repl._ns
     repl._displayhook(42)
     repl._displayhook(None)
     assert ns["_"] == 42
 
 
-def test_displayhook_prints_repr(capsys: pytest.CaptureFixture[str]) -> None:
-    repl, _ = _repl()
+def test_displayhook_prints_repr(
+    repl: Repl, capsys: pytest.CaptureFixture[str]
+) -> None:
     repl._displayhook("hello")
     assert "'hello'" in capsys.readouterr().out
 
 
-def test_displayhook_none_prints_nothing(capsys: pytest.CaptureFixture[str]) -> None:
-    repl, _ = _repl()
+def test_displayhook_none_prints_nothing(
+    repl: Repl, capsys: pytest.CaptureFixture[str]
+) -> None:
     repl._displayhook(None)
     assert capsys.readouterr().out == ""
 
 
 def test_displayhook_poop_none_prints_nothing(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     # `.print()` answers POOP none, which must not echo.
-    repl, _ = _repl()
     repl._displayhook(none)
     assert capsys.readouterr().out == ""
 
 
-def test_displayhook_poop_none_does_not_clobber_underscore(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    repl, ns = _repl()
+def test_displayhook_poop_none_does_not_clobber_underscore(repl: Repl) -> None:
+    ns = repl._ns
     repl._displayhook(Int(7))
     repl._displayhook(none)
     assert ns["_"] == Int(7)
@@ -191,7 +189,7 @@ def test_displayhook_poop_none_does_not_clobber_underscore(
 
 
 def test_run_exits_on_eof(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput,
 ) -> None:
     feed_input(EOFError())
     Repl(Interpreter()).run()
@@ -497,9 +495,7 @@ def test_diagnostic_colorizes_when_only_stderr_is_a_terminal(
     assert "poop: boom" in out
 
 
-def test_report_keeps_the_caret_aligned_and_plain_off_a_terminal(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_report_keeps_the_caret_aligned_and_plain_off_a_terminal() -> None:
     buf = io.StringIO()
     report(
         ValidationError("if is forbidden", 1, 0), "if x:", console(buf, terminal=False)
@@ -510,9 +506,7 @@ def test_report_keeps_the_caret_aligned_and_plain_off_a_terminal(
     assert "    | ^" in out
 
 
-def test_report_syntax_highlights_the_line_on_a_terminal(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_report_syntax_highlights_the_line_on_a_terminal() -> None:
     buf = io.StringIO()
     report(
         ValidationError("if is forbidden", 1, 0), "if x:", console(buf, terminal=True)
@@ -545,8 +539,9 @@ def test_rl_color_wraps_with_readline_markers_on_a_terminal(
 # --- meta-commands ---
 
 
-def test_meta_methods_lists_messages(capsys: pytest.CaptureFixture[str]) -> None:
-    repl, _ = _repl()
+def test_meta_methods_lists_messages(
+    repl: Repl, capsys: pytest.CaptureFixture[str]
+) -> None:
     repl._meta(':methods "abc"')
     out = capsys.readouterr().out
     assert "upper" in out
@@ -554,12 +549,13 @@ def test_meta_methods_lists_messages(capsys: pytest.CaptureFixture[str]) -> None
 
 
 def test_meta_methods_on_a_class_shows_the_class_side(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     # The class side is a documented protocol that `dir()` did not list, so
     # the REPL could not show it either — `Foo name` was reachable only by
     # already knowing it existed.
-    repl, ns = _repl()
+    ns = repl._ns
     repl._interpreter.run_source_repl("class Foo(Object):\n    pass\n", ns)
     capsys.readouterr()
     repl._meta(":methods Foo")
@@ -571,11 +567,11 @@ def test_meta_methods_on_a_class_shows_the_class_side(
 
 
 def test_meta_methods_literal_answers_poop_messages(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     # The literal must go through the pipeline: "abc" is a POOP Str,
     # not a Python str — it answers at/print/class_name.
-    repl, _ = _repl()
     repl._meta(':methods "abc"')
     out = capsys.readouterr().out
     assert "class_name" in out
@@ -583,9 +579,9 @@ def test_meta_methods_literal_answers_poop_messages(
 
 
 def test_meta_methods_hides_underscored_names(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     repl._meta(':methods "abc"')
     out = capsys.readouterr().out
     assert "__init__" not in out
@@ -593,9 +589,10 @@ def test_meta_methods_hides_underscored_names(
 
 
 def test_meta_methods_works_on_namespace_variable(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, ns = _repl()
+    ns = repl._ns
     repl._interpreter.run_source_repl("nums = [1, 2]", ns)
     repl._meta(":methods nums")
     out = capsys.readouterr().out
@@ -603,64 +600,65 @@ def test_meta_methods_works_on_namespace_variable(
 
 
 def test_meta_methods_without_arg_shows_usage(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     repl._meta(":methods")
     assert "usage" in capsys.readouterr().out
 
 
-def test_meta_methods_rejects_calls(capsys: pytest.CaptureFixture[str]) -> None:
-    repl, _ = _repl()
+def test_meta_methods_rejects_calls(
+    repl: Repl, capsys: pytest.CaptureFixture[str]
+) -> None:
     repl._meta(":methods danger()")
     err = capsys.readouterr().err
     assert "calls are not evaluated" in err
 
 
 def test_meta_methods_unknown_name_reports_error(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     repl._meta(":methods missing_thing")
     assert "poop:" in capsys.readouterr().err
 
 
-def test_meta_methods_does_not_widen_the_builtins_allow_list() -> None:
+def test_meta_methods_does_not_widen_the_builtins_allow_list(repl: Repl) -> None:
     # `:methods` evaluates on its own, and `eval` plants CPython's builtins in
     # a namespace that has none — so one `:methods 1` before the first input
     # made `OSError` (and every other builtin) reachable for the whole session.
-    repl, ns = _repl()
+    ns = repl._ns
     repl._meta(":methods 1")
     with pytest.raises(ExecutionError, match="NameError: name 'OSError'"):
         repl._interpreter.run_source_repl("OSError.print()", ns)
 
 
 def test_meta_explain_statement_uses_validator_message(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     repl._meta(":explain if")
     out = capsys.readouterr().out
     assert "if_true" in out
     assert "(line" not in out
 
 
-def test_meta_explain_builtin_call(capsys: pytest.CaptureFixture[str]) -> None:
-    repl, _ = _repl()
+def test_meta_explain_builtin_call(
+    repl: Repl, capsys: pytest.CaptureFixture[str]
+) -> None:
     repl._meta(":explain len")
     assert "obj.len()" in capsys.readouterr().out
 
 
-def test_meta_explain_fstring(capsys: pytest.CaptureFixture[str]) -> None:
-    repl, _ = _repl()
+def test_meta_explain_fstring(repl: Repl, capsys: pytest.CaptureFixture[str]) -> None:
     repl._meta(":explain fstring")
     assert "forbidden" in capsys.readouterr().out
 
 
 def test_meta_explain_unknown_lists_known_constructs(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     repl._meta(":explain banana")
     out = capsys.readouterr().out
     assert "Known constructs" in out
@@ -668,9 +666,9 @@ def test_meta_explain_unknown_lists_known_constructs(
 
 
 def test_meta_explain_unknown_does_not_claim_the_construct_is_allowed(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     repl._meta(":explain banana")
     assert "may simply be allowed" not in capsys.readouterr().out
 
@@ -688,9 +686,8 @@ def test_meta_explain_unknown_does_not_claim_the_construct_is_allowed(
     ],
 )
 def test_meta_explain_covers_banned_constructs(
-    topic: str, expected: str, capsys: pytest.CaptureFixture[str]
+    repl: Repl, topic: str, expected: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    repl, _ = _repl()
     repl._meta(f":explain {topic}")
     assert expected in capsys.readouterr().out
 
@@ -745,7 +742,7 @@ def _reported_literals() -> list[str]:
     literals and are covered by the reachability test above.
     """
     found: list[str] = []
-    for path in sorted((pathlib.Path(validators.__file__).parent).rglob("*.py")):
+    for path in sorted(Path(validators.__file__).parent.rglob("*.py")):
         if "__pycache__" in path.parts:
             continue
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
@@ -783,17 +780,17 @@ def test_every_message_a_validator_composes_is_explained() -> None:
 
 
 def test_meta_explain_without_arg_shows_usage(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     repl._meta(":explain")
     assert "usage" in capsys.readouterr().out
 
 
 def test_meta_explain_every_known_construct_produces_output(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     for construct in sorted(_DEFAULT_CALLS | set(_EXPLAIN_SNIPPETS)):
         repl._meta(f":explain {construct}")
         out = capsys.readouterr().out
@@ -804,8 +801,9 @@ def test_meta_explain_every_known_construct_produces_output(
         assert "no :explain topic" not in out, construct
 
 
-def test_meta_help_lists_commands(capsys: pytest.CaptureFixture[str]) -> None:
-    repl, _ = _repl()
+def test_meta_help_lists_commands(
+    repl: Repl, capsys: pytest.CaptureFixture[str]
+) -> None:
     repl._meta(":help")
     out = capsys.readouterr().out
     assert ":methods" in out
@@ -813,9 +811,9 @@ def test_meta_help_lists_commands(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_meta_unknown_command_suggests_help(
+    repl: Repl,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    repl, _ = _repl()
     repl._meta(":banana")
     assert ":help" in capsys.readouterr().err
 
@@ -830,7 +828,7 @@ def test_run_dispatches_meta_command(
 
 
 def test_run_meta_command_does_not_touch_buffer(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    feed_input: FeedInput,
 ) -> None:
     repl = Repl(Interpreter())
     feed_input(":help", "x = 1 + 1", "x", EOFError())
@@ -858,9 +856,9 @@ def test_setup_readline_without_readline_module_is_a_noop(
 
 
 def test_setup_readline_missing_history_file_is_ignored(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: object
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "does_not_exist")
+    monkeypatch.setattr(repl, "_HISTORY_FILE", tmp_path / "does_not_exist")
     _setup_readline({})
 
 
@@ -872,11 +870,11 @@ def test_save_history_without_readline_is_a_noop(
 
 
 def test_save_history_swallows_write_errors(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: object
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     # A history path under a missing directory makes write_history_file raise;
     # the saver must swallow it so a crash at exit is impossible.
-    monkeypatch.setattr(repl, "_HISTORY_FILE", Path(str(tmp_path)) / "nope" / "hist")
+    monkeypatch.setattr(repl, "_HISTORY_FILE", tmp_path / "nope" / "hist")
     _save_history()
 
 
@@ -934,17 +932,16 @@ def test_meta_explain_reports_an_allowed_construct(
     # If a topic's snippet trips no validator, `:explain` says so plainly rather
     # than pretending it is forbidden.
     monkeypatch.setitem(repl._EXPLAIN_SNIPPETS, "noop", "x")
-    r, _ = _repl()
+    r = Repl(Interpreter())
     r._meta(":explain noop")
     assert "noop is allowed in POOP." in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("line", [":__class__", ":_meta", ":help-me", ":nope"])
 def test_a_meta_command_reaches_only_a_meta_method(
-    line: str, capsys: pytest.CaptureFixture[str]
+    repl: Repl, line: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # Dispatch is by name (`:foo` runs `_meta_foo`), so anything that is not
     # an identifier, or names no `_meta_*` method, is an unknown command.
-    repl, _ = _repl()
     repl._meta(line)
     assert "unknown meta-command" in capsys.readouterr().err
