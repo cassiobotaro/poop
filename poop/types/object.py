@@ -177,14 +177,14 @@ class Object(metaclass=PoopMeta):
         return to_boolean(self is other)
 
     def not_identical(self, other: Object) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return false if self is other else true
+        return to_boolean(self is not other)
 
     def not_(self) -> Boolean:
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return false if bool(self) else true
+        return to_boolean(not bool(self))
 
     def assert_(self, message: Str | NoneClass | None = None) -> Self:
         # Imported here, not at module scope: `exceptions` is built on top of
@@ -376,9 +376,9 @@ class Object(metaclass=PoopMeta):
         # derived `__ne__` (a raw `bool`) cannot be used — but every rule for
         # equality lives in an `__eq__`, and restating each one here with the
         # answer flipped meant keeping two copies in step by hand.
-        from poop.types.boolean import false, true
+        from poop.types.boolean import to_boolean
 
-        return false if self == other else true
+        return to_boolean(not bool(self == other))
 
     def __hash__(self) -> int:
         # Python's own identity hash, not `id(self)`. Defining __eq__ clears

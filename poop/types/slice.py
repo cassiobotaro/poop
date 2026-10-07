@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from poop.types._argument import an_int
 from poop.types._cloak import cloak
-from poop.types.boolean import false, true
+from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -53,15 +53,12 @@ class Slice(Object):
         return Tuple(Int(start), Int(stop), Int(step))
 
     def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, Slice):
-            if (
-                _field_eq(self._start, other._start)
-                and _field_eq(self._stop, other._stop)
-                and _field_eq(self._step, other._step)
-            ):
-                return true
-            return false
-        return false
+        return to_boolean(
+            isinstance(other, Slice)
+            and _field_eq(self._start, other._start)
+            and _field_eq(self._stop, other._stop)
+            and _field_eq(self._step, other._step)
+        )
 
     def __hash__(self) -> int:
         return hash((self._start, self._stop, self._step))
