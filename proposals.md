@@ -2,10 +2,9 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 3–12 come from a Pythonic-code review of the whole package and the test
-suite, after the wording sweeps closed. Item 3 changes behaviour a
-program can observe; the rest remove duplication or hand-rolled spellings of
-things the stdlib or the codebase already has. Each was verified against the
+Items 4–12 come from a Pythonic-code review of the whole package and the test
+suite, after the wording sweeps closed. They remove duplication or hand-rolled
+spellings of things the stdlib or the codebase already has. Each was verified against the
 code at the commit that opened it; counts are from `grep`.
 
 When an item is implemented, delete its entry from this file — no `DONE`
@@ -14,22 +13,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 13. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 3. `List.at` takes a slice; `Tuple.at`, `Range.at` and `Str.at` refuse one
-
-`[1, 2, 3].at(slice(0, 2))` answers `[1, 2]`; `(1, 2, 3).at(slice(0, 2))`
-answers `tuple.at expects an int index, got a slice`, and `range` and `str`
-refuse the same way. `List.at` in `poop/types/list.py` special-cases
-`isinstance(index, Slice)` before `at_index`; its siblings go straight to
-`at_index`. Every one of the four already has a `slice` message, so the
-special case is not the only spelling of the operation on any receiver.
-
-**Fix.** Pick one answer for the family. Dropping the `List` special case is
-the smaller change and leaves `slice` as the one message that slices; lifting
-it into the sequence mixin of item 4 is the other. Either way the four
-receivers agree, and a test pins them together. While there: `at_index`'s
-refusal in `poop/types/_at.py` says `got a {type}` and so prints `got a int`,
-where `List.at_put` one screen up uses `article(...)`.
 
 ### 4. `List` and `Tuple` spell thirteen methods twice
 
