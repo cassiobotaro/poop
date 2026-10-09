@@ -2,13 +2,9 @@
 
 Open design backlog. Closing convention: see [`CONTRIBUTING.md`](CONTRIBUTING.md#closing-a-proposal).
 
-Items 1–7 come from reading [What's New in Python
-3.15](https://docs.python.org/3.15/whatsnew/3.15.html) the day the project
-moved to it. Everything 3.15 adds to the *syntax* already meets an existing
-ban — `lazy import` is a flag on the two import nodes, comprehension
-unpacking is a `Starred` inside the four comprehension nodes, and `match`
-grew unary plus in a statement `no_match` refuses whole — so the items below
-are about what 3.15 added to the *builtins* and to its own error messages.
+Item 8 was found while implementing the Python 3.15 batch (items 1–7, all
+closed): a wrapper's operator refusal exposed a pre-existing leak on the class
+side.
 
 When an item is implemented, delete its entry from this file — no `DONE`
 marker and no summary left behind. The decision and its reasoning belong in
@@ -16,25 +12,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 9. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 3. A withheld builtin answers the same `NameError` as a typo
-
-`copyright.print()`, `NotImplemented.print()`, `frozendict(…)`,
-`sentinel(…)` and now `ImportCycleError` all answer `name 'x' is not
-defined` — the sentence a misspelt variable gets. Before 3.15 the withheld
-names were ones nobody reached for; `frozendict` and `sentinel` are the first
-two a Python programmer will type on purpose, and the message does not say
-that POOP *chose* not to offer them.
-
-**Fix.** Where `poop_message` (`poop/types/_message.py`) rewords CPython's
-sentences, a `NameError` whose `.name` is in `builtins` but not in
-`_ALLOWED_BUILTINS` reads `'sentinel' is a Python builtin POOP does not offer`
-— followed by the substitute when a validator or a proposal names one
-(`frozendict` → item 1, `sentinel` → item 2), and by `try :explain` otherwise.
-`:explain <name>` for such a name should answer the same sentence instead of
-"it may simply be allowed". Derive the set from `builtins` minus the
-allow-list, not from a table — the table is what fell behind for `:explain`
-once already.
 
 ### 8. A class-side operator names `_AliasMeta`
 
