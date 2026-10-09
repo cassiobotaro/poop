@@ -55,21 +55,3 @@ sentences, a `NameError` whose `.name` is in `builtins` but not in
 "it may simply be allowed". Derive the set from `builtins` minus the
 allow-list, not from a table — the table is what fell behind for `:explain`
 once already.
-
-### 7. `Boolean.bit_invert` keeps a behaviour CPython is removing
-
-3.15 deprecates `~True` for removal in 3.16, with the warning: "This returns
-the bitwise inversion of the underlying int object and is usually not what
-you expect from negating a bool. Use the 'not' operator for boolean negation
-or ~int(x) if you really want the bitwise inversion". `Boolean.bit_invert`
-(`poop/types/boolean.py`) is that exact behaviour — `True.bit_invert()`
-answers `-2` through `_as_int()` — and because it never calls `~` on a `bool`,
-it will keep answering `-2` after 3.16 removes it.
-
-**Fix.** Refuse it in step with CPython: `bool does not understand
-#bit_invert — send #not_, or #bit_invert to int(b)`, which is CPython's own
-advice in POOP's vocabulary. Remove the method rather than warn: POOP has no
-warnings channel, and the catalog already argues that a refusal with a
-substitute teaches where a silent answer does not. The other `Boolean`
-delegations to `int` (`abs`, `bit_length`, `bit_count`, `negated`, arithmetic)
-stay — CPython keeps those.
