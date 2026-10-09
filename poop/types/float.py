@@ -1,7 +1,7 @@
 import builtins
 import math
 import operator
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import an_int, text_like
@@ -42,27 +42,24 @@ class Float(_NumericCompareMixin, Object):
     # Same reasoning as `Int.max` / `Int.min`: comparing the operands routes
     # a Boolean through the numeric mixin and a foreign operand to CPython's
     # faithful TypeError, instead of reading `other._value` and leaking it.
-    # The cast mirrors typeshed, which types the answer by the receiver even
-    # when the winning operand belongs to another rung of the tower.
+    # The answer is one of the operands, whichever rung of the tower it sits
+    # on — `(1.5).max(2)` answers `2`, an `Int` — which a cast to `Float`
+    # used to deny, mirroring typeshed.
     # `key` is keyword-only, as CPython spells it: a positional block would be
     # indistinguishable from one more operand, which is how it used to be read.
     def max(
         self,
         *others: Float | Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
-    ) -> Float:
-        return cast(
-            "Float", _minmax(builtins.max, "#max", (self, *others), key, MISSING)
-        )
+    ) -> Float | Int | Boolean:
+        return _minmax(builtins.max, "#max", (self, *others), key, MISSING)
 
     def min(
         self,
         *others: Float | Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
-    ) -> Float:
-        return cast(
-            "Float", _minmax(builtins.min, "#min", (self, *others), key, MISSING)
-        )
+    ) -> Float | Int | Boolean:
+        return _minmax(builtins.min, "#min", (self, *others), key, MISSING)
 
     def is_integer(self) -> Boolean:
         return to_boolean(self._value.is_integer())

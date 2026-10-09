@@ -12,14 +12,14 @@ slot; `_wrapping` builds a class over one that call hands over.
 """
 
 import builtins
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
 
 from poop.types._argument import a_collection
 from poop.types._at import at_key
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _minmax
-from poop.types._sentinel import MISSING
+from poop.types._sentinel import MISSING, Missing
 from poop.types._unwrap import _is_absent
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -126,20 +126,32 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin, Object):  # noqa: PLW1641 —
     # siblings, and carries the same mutation guard, worded from the receiver.
     # `d.items().do(...)` is the pair spelling, and answers `Tuple`s already.
 
-    def min(
+    @overload
+    def min(self, *, key: Callable[[Any], Any] | NoneClass | None = None) -> Object: ...
+    @overload
+    def min[D](
+        self, *, key: Callable[[Any], Any] | NoneClass | None = None, default: D
+    ) -> Object | D: ...
+    def min[D](
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = MISSING,
-    ) -> Any:
+        default: D | Missing = MISSING,
+    ) -> Object | D:
         return _minmax(builtins.min, "#min", self._data, key, default)
 
-    def max(
+    @overload
+    def max(self, *, key: Callable[[Any], Any] | NoneClass | None = None) -> Object: ...
+    @overload
+    def max[D](
+        self, *, key: Callable[[Any], Any] | NoneClass | None = None, default: D
+    ) -> Object | D: ...
+    def max[D](
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = MISSING,
-    ) -> Any:
+        default: D | Missing = MISSING,
+    ) -> Object | D:
         return _minmax(builtins.max, "#max", self._data, key, default)
 
     def len(self) -> Int:

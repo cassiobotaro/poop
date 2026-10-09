@@ -534,9 +534,9 @@ def test_min_and_max_take_key_only_by_keyword() -> None:
     # key slot. CPython spells `min(iterable, *, key, default)` for that reason.
     d = Dict()
     with pytest.raises(TypeError):
-        d.min(Int(0))  # ty: ignore[too-many-positional-arguments]
+        d.min(Int(0))  # ty: ignore[no-matching-overload]
     with pytest.raises(TypeError):
-        d.max(Int(0))  # ty: ignore[too-many-positional-arguments]
+        d.max(Int(0))  # ty: ignore[no-matching-overload]
 
 
 def test_reversed_answers_the_keys_in_reverse() -> None:

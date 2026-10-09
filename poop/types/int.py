@@ -65,8 +65,9 @@ class Int(_NumericCompareMixin, Object):
     # foreign operand, so CPython raises the faithful comparison TypeError
     # instead of leaking #_value through does_not_understand. Wrapping in a
     # tuple keeps the no-`others` case answering self, unlike `max(x)`.
-    # The cast mirrors typeshed, where `bool` is a subtype of `int` and
-    # `max(0, True)` is typed `int` though it answers `True`.
+    # `Int | Boolean`, as `Boolean.max` already says: the answer is one of
+    # the operands, and `(0).max(True)` answers `True`. A cast to `Int` used
+    # to say otherwise, mirroring typeshed's `max(0, True)`.
     # `key` is keyword-only, as CPython spells it: a positional block would be
     # indistinguishable from one more operand, and that was the bug — the block
     # was compared as a value, so a *comparable* extra argument would have
@@ -76,15 +77,15 @@ class Int(_NumericCompareMixin, Object):
         self,
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
-    ) -> Int:
-        return cast("Int", _minmax(builtins.max, "#max", (self, *others), key, MISSING))
+    ) -> Int | Boolean:
+        return _minmax(builtins.max, "#max", (self, *others), key, MISSING)
 
     def min(
         self,
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
-    ) -> Int:
-        return cast("Int", _minmax(builtins.min, "#min", (self, *others), key, MISSING))
+    ) -> Int | Boolean:
+        return _minmax(builtins.min, "#min", (self, *others), key, MISSING)
 
     def bit_count(self) -> Int:
         return Int(self._value.bit_count())

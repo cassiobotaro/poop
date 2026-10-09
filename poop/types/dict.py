@@ -1,11 +1,11 @@
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, Self, cast
+from typing import TYPE_CHECKING, Self, cast, overload
 
 from poop.types._argument import a_collection, a_pair
 from poop.types._at import no_key, nothing_to_remove
 from poop.types._cloak import cloak
 from poop.types._mapping import _MappingMixin
-from poop.types._sentinel import MISSING
+from poop.types._sentinel import MISSING, Missing
 from poop.types._unwrap import _is_absent
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.none import none
@@ -60,9 +60,11 @@ class Dict(_MappingMixin):
         self._data.update(other._data)
         return self
 
-    def pop(
-        self, key: Object, default: Object | NoneClass | Any = MISSING
-    ) -> Object | NoneClass:
+    @overload
+    def pop(self, key: Object) -> Object: ...
+    @overload
+    def pop[D](self, key: Object, default: D) -> Object | D: ...
+    def pop[D](self, key: Object, default: D | Missing = MISSING) -> Object | D:
         if default is MISSING:
             # Only the asserting form can fail: `pop(key, default)` answers the
             # default instead, which is why it is left to CPython.
@@ -107,6 +109,10 @@ class Dict(_MappingMixin):
             # Each pair is a POOP Tuple — itself a 2-element iterable, so
             # dict.update unpacks it and raises the faithful ValueError on a
             # wrong-length element.
+            # The cast stays: `a_pair` answers a collection, and only
+            # unpacking it would prove the length — which is what `dict.update`
+            # does next, with CPython's own `length 3; 2 is required` sentence
+            # for a pair that is not one.
             self._data.update(
                 cast(
                     "Iterable[tuple[Object, Object]]",

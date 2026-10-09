@@ -3,7 +3,7 @@ import operator
 from abc import abstractmethod
 from collections import deque
 from functools import reduce as functools_reduce
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, overload
 
 from poop.types._argument import a_block, a_key
 from poop.types.exceptions import MIRRORS
@@ -131,24 +131,40 @@ class _IterableMixin:
             start = next(items, Int(0))
         return functools_reduce(operator.add, items, start)
 
-    def min(
+    # `min` and `max` are each an overload pair: without a default they
+    # answer an element, with one they answer an element or it. One
+    # signature saying `default: D | Missing = MISSING` answers `T | D` for
+    # both, and ty leaves `D` unsolved when nothing was passed.
+    @overload
+    def min(self, *, key: Callable[[Any], Any] | NoneClass | None = None) -> Any: ...
+    @overload
+    def min[D](
+        self, *, key: Callable[[Any], Any] | NoneClass | None = None, default: D
+    ) -> Any | D: ...
+    def min[D](
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = MISSING,
-    ) -> Any:
+        default: D | Missing = MISSING,
+    ) -> Any | D:
         # Keyword-only, as CPython spells `min(iterable, *, key, default)` and
         # for the reason the scalar rungs settled: positionally a block is
         # indistinguishable from a value, and `xs.min(0)` — the plain reading
         # of "the smallest, or 0 if empty" — handed `0` to the key slot.
         return _minmax(builtins.min, "#min", self._iter_items(), key, default)
 
-    def max(
+    @overload
+    def max(self, *, key: Callable[[Any], Any] | NoneClass | None = None) -> Any: ...
+    @overload
+    def max[D](
+        self, *, key: Callable[[Any], Any] | NoneClass | None = None, default: D
+    ) -> Any | D: ...
+    def max[D](
         self,
         *,
         key: Callable[[Any], Any] | NoneClass | None = None,
-        default: Any = MISSING,
-    ) -> Any:
+        default: D | Missing = MISSING,
+    ) -> Any | D:
         return _minmax(builtins.max, "#max", self._iter_items(), key, default)
 
     def sorted(

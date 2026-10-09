@@ -1,5 +1,5 @@
 import builtins
-from typing import TYPE_CHECKING, Any, cast, final
+from typing import TYPE_CHECKING, Any, final
 
 from poop.types._argument import a_block, no_arguments, text_like
 from poop.types._cloak import cloak
@@ -288,20 +288,14 @@ class Boolean(_NumericCompareMixin, Object):
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int | Boolean:
-        return cast(
-            "Int | Boolean",
-            _minmax(builtins.max, "#max", (self, *others), key, MISSING),
-        )
+        return _minmax(builtins.max, "#max", (self, *others), key, MISSING)
 
     def min(
         self,
         *others: Int | Boolean,
         key: Callable[[Any], Any] | NoneClass | None = None,
     ) -> Int | Boolean:
-        return cast(
-            "Int | Boolean",
-            _minmax(builtins.min, "#min", (self, *others), key, MISSING),
-        )
+        return _minmax(builtins.min, "#min", (self, *others), key, MISSING)
 
     def _num(self, other: object) -> object:
         return other._as_int() if isinstance(other, Boolean) else other

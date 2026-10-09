@@ -1,7 +1,7 @@
 import builtins
 import re
 from string import Formatter as _Formatter
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 from poop.types._affix import affix_needle
 from poop.types._argument import (
@@ -21,7 +21,7 @@ from poop.types._message import article, no_format_spec
 from poop.types._minmax import _minmax
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
-from poop.types._sentinel import MISSING, NOT_A_COUNT
+from poop.types._sentinel import MISSING, NOT_A_COUNT, Missing
 from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -212,20 +212,32 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
             "str cannot be summed — send #join to a list of pieces instead"
         )
 
-    def min(
+    @overload
+    def min(self, *, key: Callable[[Str], Any] | NoneClass | None = None) -> Str: ...
+    @overload
+    def min[D](
+        self, *, key: Callable[[Str], Any] | NoneClass | None = None, default: D
+    ) -> Str | D: ...
+    def min[D](
         self,
         *,
         key: Callable[[Str], Any] | NoneClass | None = None,
-        default: Any = MISSING,
-    ) -> Any:
+        default: D | Missing = MISSING,
+    ) -> Str | D:
         return _minmax(builtins.min, "#min", self, key, default)
 
-    def max(
+    @overload
+    def max(self, *, key: Callable[[Str], Any] | NoneClass | None = None) -> Str: ...
+    @overload
+    def max[D](
+        self, *, key: Callable[[Str], Any] | NoneClass | None = None, default: D
+    ) -> Str | D: ...
+    def max[D](
         self,
         *,
         key: Callable[[Str], Any] | NoneClass | None = None,
-        default: Any = MISSING,
-    ) -> Any:
+        default: D | Missing = MISSING,
+    ) -> Str | D:
         return _minmax(builtins.max, "#max", self, key, default)
 
     def includes(self, char: Str) -> Boolean:

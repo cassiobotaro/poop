@@ -7,7 +7,7 @@ a module its own callers sit underneath. Its own home has no POOP imports at
 all, which is what lets all five reach it from the top of the file.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from poop.types._argument import a_key
 from poop.types._sentinel import MISSING
@@ -16,19 +16,23 @@ from poop.types.exceptions import MIRRORS
 if TYPE_CHECKING:
     # Name only — importing `none` at runtime would put this module back under
     # the callers it has to stay above.
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
+    from poop.types._sentinel import Missing
     from poop.types.none import NoneClass
 
 
-def _minmax(
-    func: Callable[..., Any],
+def _minmax[T, D](
+    func: Callable[..., T | D],
     name: str,
-    iterable: Any,
-    key: Callable[[Any], Any] | NoneClass | None,
-    default: Any,
-) -> Any:
+    iterable: Iterable[T],
+    key: Callable[[T], object] | NoneClass | None,
+    default: D | Missing,
+) -> T | D:
     """Assemble the optional `key`/`default` kwargs and call `min`/`max`.
+
+    Answers an element, or the default when one was given and the collection
+    is empty — `T | D`, which is what each caller's own overload pair says.
 
     Each caller passes only its own iterable — `Dict`, `Str` and the numeric
     rungs deliberately do not inherit the iterable mixin, and the scalars pass
@@ -50,7 +54,7 @@ def _minmax(
     # circular: _unwrap -> boolean -> _minmax
     from poop.types._unwrap import _is_absent  # noqa: PLC0415
 
-    kwargs: dict[str, Any] = {}
+    kwargs: dict[str, object] = {}
     if not _is_absent(key):
         # Guarded here rather than at five call sites: this is the one place
         # every `min`/`max` key passes through. Before it, a non-block reached
