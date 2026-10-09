@@ -72,7 +72,7 @@ def _set_like_elements(other: object) -> set[Object] | None:
     return None
 
 
-class _DictView(_IterableMixin, Object):
+class _DictView[T: Object](_IterableMixin[T], Object):
     """Base for the live Dict views (keys / values / items).
 
     Mirrors the ``_iterator_base.py`` pattern: a shared skeleton plus a
@@ -121,7 +121,7 @@ class _DictView(_IterableMixin, Object):
 cloak(_DictView, "object")
 
 
-class _SetLikeView(_DictView):
+class _SetLikeView[T: Object](_DictView[T]):
     """The set algebra and comparisons `dict_keys` and `dict_items` share.
 
     The two views differed only in what their own side is — the keys view

@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poop.parser import parse
@@ -12,6 +14,9 @@ from poop.types.map import Map
 from poop.types.none import none
 from poop.types.set import Set
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def test_empty_set() -> None:
@@ -86,7 +91,7 @@ def test_contains_dunder() -> None:
 
 def test_do_visits_all_elements() -> None:
     s = Set(Int(1), Int(2), Int(3))
-    seen: list[Int] = []
+    seen: list[Object] = []
     s.do(lambda x: seen.append(x))
     assert len(seen) == 3
 

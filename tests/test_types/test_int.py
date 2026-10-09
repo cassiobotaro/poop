@@ -776,5 +776,5 @@ def test_from_bytes_under_the_bare_builtin_name() -> None:
     # finished int a classmethod holds and answered `cannot convert int to
     # int`, a sentence with nothing in it.
     alias = IntTransformer.BINDINGS["_poop_int_cls"]
-    assert alias.from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)  # ty: ignore[unresolved-attribute]
+    assert alias.from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)
     assert Int(1).from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)

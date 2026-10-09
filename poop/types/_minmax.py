@@ -9,7 +9,7 @@ all, which is what lets all five reach it from the top of the file.
 
 from typing import TYPE_CHECKING
 
-from poop.types._argument import a_key
+from poop.types._argument import Key, a_key
 from poop.types._sentinel import MISSING
 from poop.types.exceptions import MIRRORS
 
@@ -19,14 +19,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from poop.types._sentinel import Missing
-    from poop.types.none import NoneClass
 
 
 def _minmax[T, D](
     func: Callable[..., T | D],
     name: str,
     iterable: Iterable[T],
-    key: Callable[[T], object] | NoneClass | None,
+    key: Key[T],
     default: D | Missing,
 ) -> T | D:
     """Assemble the optional `key`/`default` kwargs and call `min`/`max`.

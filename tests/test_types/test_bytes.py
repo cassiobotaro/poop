@@ -751,7 +751,7 @@ def test_ord_refuses_a_receiver_that_is_not_one_byte(data: bytes) -> None:
 
 def test_fromhex_under_the_bare_builtin_name() -> None:
     alias = BytesTransformer.BINDINGS["_poop_bytes_cls"]
-    assert alias.fromhex(Str("6162")) == Bytes(b"ab")  # ty: ignore[unresolved-attribute]
+    assert alias.fromhex(Str("6162")) == Bytes(b"ab")
 
 
 def test_fromhex_sent_to_an_instance_still_works() -> None:

@@ -79,7 +79,7 @@ def test_refusal_names_the_wrapped_class_not_the_wrapper() -> None:
     # name is true for it, and wrong for an instance that stands for exactly
     # one. Python reports `'ZeroDivisionError' object has no attribute 'zzz'`.
     with pytest.raises(MessageNotUnderstood, match="ZeroDivisionError does not"):
-        Error(ZeroDivisionError("division by zero")).zzz()  # ty: ignore[unresolved-attribute]
+        Error(ZeroDivisionError("division by zero")).zzz()
 
 
 def test_refusal_keeps_every_hint_shape() -> None:
@@ -87,9 +87,9 @@ def test_refusal_keeps_every_hint_shape() -> None:
     # selector table must still answer for an Error receiver.
     error = Error(ValueError("boom"))
     with pytest.raises(MessageNotUnderstood, match="did you mean #message"):
-        error.mesage()  # ty: ignore[unresolved-attribute]
+        error.mesage()
     with pytest.raises(MessageNotUnderstood, match="#printNl is #print here"):
-        Error(ValueError("boom")).printNl()  # ty: ignore[unresolved-attribute]
+        Error(ValueError("boom")).printNl()
 
 
 def test_explain_derives_the_label_when_none_is_given() -> None:
@@ -187,7 +187,7 @@ def test_a_class_side_message_is_refused_by_saying_so(name: str) -> None:
 def test_the_redirect_names_the_message_that_answers() -> None:
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood, match=r"send it to #kind\(\)"):
-        error.name()  # ty: ignore[unresolved-attribute]
+        error.name()
     # And the redirect is true: the kind does answer it.
     assert error.kind().name() == Str("ValueError")
 
@@ -195,7 +195,7 @@ def test_the_redirect_names_the_message_that_answers() -> None:
 def test_an_unknown_name_keeps_the_generic_refusal() -> None:
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        error.zzz()  # ty: ignore[unresolved-attribute]
+        error.zzz()
 
 
 def test_a_refusing_class_side_descriptor_is_not_redirected() -> None:
@@ -203,7 +203,7 @@ def test_a_refusing_class_side_descriptor_is_not_redirected() -> None:
     # either — pointing at `#kind()` would send the reader to another refusal.
     error = Error(MIRRORS["ValueError"]("m"))
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        error.args  # ty: ignore[unresolved-attribute]  # noqa: B018
+        error.args  # noqa: B018
 
 
 def test_no_mirror_advertises_a_name_a_caught_error_refuses() -> None:

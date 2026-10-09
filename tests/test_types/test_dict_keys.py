@@ -19,6 +19,8 @@ from poop.types.string import Str
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from poop.types.object import Object
+
 
 def _make() -> Dict:
     d = Dict()
@@ -152,7 +154,7 @@ def test_liveness() -> None:
 
 def test_iterable_mixin_do() -> None:
     keys = DictKeys(_make())
-    seen: list[Str] = []
+    seen: list[Object] = []
     keys.do(lambda k: seen.append(k))
     assert seen == [Str("a"), Str("b")]
 

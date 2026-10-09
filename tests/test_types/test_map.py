@@ -14,7 +14,8 @@ def test_map_is_lazy() -> None:
         calls.append(x._value)
         return Int(x._value * 10)
 
-    m = Map(List(Int(1), Int(2), Int(3)), block)
+    # `block` is typed over `Int`, the list's element over `Object`.
+    m = Map(List(Int(1), Int(2), Int(3)), block)  # ty: ignore[invalid-argument-type]
     assert calls == []
     list(m)
     assert calls == [1, 2, 3]

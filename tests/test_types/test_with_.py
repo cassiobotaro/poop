@@ -79,7 +79,7 @@ def test_exit_receives_arguments_it_can_be_sent_messages() -> None:
         With(lambda: cm).do(lambda _: (_ for _ in ()).throw(ValueError("boom")))
     kind, error, traceback = cm.exit_args
     assert kind is MIRRORS["ValueError"]
-    assert kind.name() == Str("ValueError")  # ty: ignore[unresolved-attribute]
+    assert kind.name() == Str("ValueError")
     assert isinstance(error, Error)
     assert error.message() == Str("boom")
     assert error.kind() is MIRRORS["ValueError"]

@@ -13,16 +13,16 @@ from poop.types._value_eq import _ValueEqMixin
 from poop.types.byte_array import ByteArray
 from poop.types.bytes_iterator import BytesIterator
 from poop.types.exceptions import MIRRORS
+from poop.types.int import Int
 from poop.types.object import Object
 from poop.types.string import Str
 
 if TYPE_CHECKING:
-    from poop.types.int import Int
     from poop.types.none import NoneClass
 
 
 class Bytes(
-    _BytesLikeMixin["Bytes"], _OrderedMixin, _ValueEqMixin, _IterableMixin, Object
+    _BytesLikeMixin["Bytes"], _OrderedMixin, _ValueEqMixin, _IterableMixin[Int], Object
 ):
     __slots__ = ("_value",)
     _value: bytes

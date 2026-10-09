@@ -158,9 +158,9 @@ def test_the_writes_are_refused_with_the_dict_hint() -> None:
         with pytest.raises(MessageNotUnderstood, match=f"does not understand #{name}"):
             getattr(_frozen(a=1), name)
     with pytest.raises(MessageNotUnderstood, match="did you mean to use a dict\\?"):
-        _frozen(a=1).update  # noqa: B018  # ty: ignore[unresolved-attribute]
+        _frozen(a=1).update  # noqa: B018
     with pytest.raises(MessageNotUnderstood, match="did you mean to use a dict\\?"):
-        _frozen(a=1).at_put  # noqa: B018  # ty: ignore[unresolved-attribute]
+        _frozen(a=1).at_put  # noqa: B018
 
 
 def test_str_and_repr() -> None:

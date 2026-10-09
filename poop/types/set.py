@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin, Object):
+class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object):
     __slots__ = ("_data",)
     _eq_attr: ClassVar[str] = "_data"
     _eq_group: ClassVar[str] = "set"

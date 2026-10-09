@@ -12,9 +12,9 @@ slot; `_wrapping` builds a class over one that call hands over.
 """
 
 import builtins
-from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
+from typing import TYPE_CHECKING, ClassVar, Self, overload
 
-from poop.types._argument import a_collection
+from poop.types._argument import Key, a_collection
 from poop.types._at import at_key
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
@@ -33,14 +33,14 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Iterable, Iterator
 
     from poop.types.boolean import Boolean
     from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
     from poop.types.none import NoneClass
 
 
-class _MappingMixin(_ValueEqMixin, _IterableMixin, Object):  # noqa: PLW1641 — each class hashes by value or not at all
+class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object):  # noqa: PLW1641 — each class hashes by value or not at all
     """A mapping, and a collection like any other.
 
     The iterable mixin's messages iterate what CPython iterates, the keys, so
@@ -127,30 +127,20 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin, Object):  # noqa: PLW1641 —
     # `d.items().do(...)` is the pair spelling, and answers `Tuple`s already.
 
     @overload
-    def min(self, *, key: Callable[[Any], Any] | NoneClass | None = None) -> Object: ...
+    def min(self, *, key: Key[Object] = None) -> Object: ...
     @overload
+    def min[D](self, *, key: Key[Object] = None, default: D) -> Object | D: ...
     def min[D](
-        self, *, key: Callable[[Any], Any] | NoneClass | None = None, default: D
-    ) -> Object | D: ...
-    def min[D](
-        self,
-        *,
-        key: Callable[[Any], Any] | NoneClass | None = None,
-        default: D | Missing = MISSING,
+        self, *, key: Key[Object] = None, default: D | Missing = MISSING
     ) -> Object | D:
         return _minmax(builtins.min, "#min", self._data, key, default)
 
     @overload
-    def max(self, *, key: Callable[[Any], Any] | NoneClass | None = None) -> Object: ...
+    def max(self, *, key: Key[Object] = None) -> Object: ...
     @overload
+    def max[D](self, *, key: Key[Object] = None, default: D) -> Object | D: ...
     def max[D](
-        self, *, key: Callable[[Any], Any] | NoneClass | None = None, default: D
-    ) -> Object | D: ...
-    def max[D](
-        self,
-        *,
-        key: Callable[[Any], Any] | NoneClass | None = None,
-        default: D | Missing = MISSING,
+        self, *, key: Key[Object] = None, default: D | Missing = MISSING
     ) -> Object | D:
         return _minmax(builtins.max, "#max", self._data, key, default)
 

@@ -741,7 +741,7 @@ def test_every_validator_is_reachable_from_explain() -> None:
         if source is None:
             return False
         try:
-            validator.validate(ast.parse(source))  # ty: ignore[unresolved-attribute]
+            validator.validate(ast.parse(source))
         except ValidationError:
             return True
         return False

@@ -4,16 +4,16 @@ from poop.types._dict_view import _DictView
 from poop.types.boolean import to_boolean
 from poop.types.dict_reverse_value_iterator import DictReverseValueIterator
 from poop.types.dict_value_iterator import DictValueIterator
+from poop.types.object import Object
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from poop.types.boolean import Boolean
-    from poop.types.object import Object
 
 
 @final
-class DictValues(_DictView, name="dict_values"):
+class DictValues(_DictView[Object], name="dict_values"):
     """Live view over a Dict's values, mirroring Python's dict_values."""
 
     __slots__ = ()

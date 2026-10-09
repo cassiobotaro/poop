@@ -1,9 +1,9 @@
 import builtins
 from collections.abc import Iterable
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
-from poop.types._argument import a_collection, an_int
+from poop.types._argument import Key, a_collection, an_int
 from poop.types._at import (
     at_index,
     no_element_at,
@@ -28,15 +28,15 @@ from poop.types.object import Object
 from poop.types.slice import Slice, _resolve_py_slice
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
     from poop.types.string import Str
 
 
-class List(_SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
+class List(
+    _SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin[Object], Object
+):
     __slots__ = ("_items",)
     _eq_attr: ClassVar[str] = "_items"
     __hash__ = None
@@ -118,7 +118,7 @@ class List(_SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin, Object)
     def sorted(
         self,
         *,
-        key: Callable[[Object], Any] | NoneClass | None = None,
+        key: Key[Object] = None,
         reverse: Boolean = false,
     ) -> List:
         # Keyword-only, as CPython spells `sorted(iterable, /, *, key, reverse)`
@@ -186,7 +186,7 @@ class List(_SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin, Object)
     def sort(
         self,
         *,
-        key: Callable[[Object], Any] | NoneClass | None = None,
+        key: Key[Object] = None,
         reverse: Boolean = false,
     ) -> NoneClass:
         # Keyword-only, mirroring `list.sort(*, key, reverse)`. See `sorted`.

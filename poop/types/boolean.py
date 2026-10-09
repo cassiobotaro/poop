@@ -1,7 +1,7 @@
 import builtins
 from typing import TYPE_CHECKING, Any, final
 
-from poop.types._argument import a_block, no_arguments, text_like
+from poop.types._argument import Key, a_block, no_arguments, text_like
 from poop.types._cloak import cloak
 from poop.types._minmax import MISSING, _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
@@ -286,14 +286,14 @@ class Boolean(_NumericCompareMixin, Object):
     def max(
         self,
         *others: Int | Boolean,
-        key: Callable[[Any], Any] | NoneClass | None = None,
+        key: Key[Int | Boolean] = None,
     ) -> Int | Boolean:
         return _minmax(builtins.max, "#max", (self, *others), key, MISSING)
 
     def min(
         self,
         *others: Int | Boolean,
-        key: Callable[[Any], Any] | NoneClass | None = None,
+        key: Key[Int | Boolean] = None,
     ) -> Int | Boolean:
         return _minmax(builtins.min, "#min", (self, *others), key, MISSING)
 

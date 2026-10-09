@@ -1,6 +1,6 @@
 import builtins
 from reprlib import recursive_repr
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._at import at_index
 from poop.types._cloak import cloak
@@ -15,8 +15,9 @@ from poop.types.slice import _resolve_py_slice
 from poop.types.tuple_iterator import TupleIterator
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Iterable
 
+    from poop.types._argument import Key
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
@@ -24,7 +25,9 @@ if TYPE_CHECKING:
     from poop.types.string import Str
 
 
-class Tuple(_SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
+class Tuple(
+    _SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin[Object], Object
+):
     __slots__ = ("_items",)
     _eq_attr: ClassVar[str] = "_items"
 
@@ -63,7 +66,7 @@ class Tuple(_SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin, Object
     def sorted(
         self,
         *,
-        key: Callable[[Object], Any] | NoneClass | None = None,
+        key: Key[Object] = None,
         reverse: Boolean = false,
     ) -> Tuple:
         # Keyword-only, as on `List.sorted` — CPython's `sorted` takes only the

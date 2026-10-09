@@ -58,7 +58,7 @@ _SEARCHES = [
 def test_includes_agrees_with_the_int_the_boolean_folds_to(
     receiver: object, flag: object, folded: Int
 ) -> None:
-    assert receiver.includes(flag) == receiver.includes(folded)  # ty: ignore[unresolved-attribute]
+    assert receiver.includes(flag) == receiver.includes(folded)
 
 
 @pytest.mark.parametrize("receiver", _SEARCHES, ids=lambda r: type(r).__name__)
@@ -66,7 +66,7 @@ def test_includes_agrees_with_the_int_the_boolean_folds_to(
 def test_count_agrees_with_the_int_the_boolean_folds_to(
     receiver: object, flag: object, folded: Int
 ) -> None:
-    assert receiver.count(flag) == receiver.count(folded)  # ty: ignore[unresolved-attribute]
+    assert receiver.count(flag) == receiver.count(folded)
 
 
 @pytest.mark.parametrize("receiver", _SEARCHES, ids=lambda r: type(r).__name__)
@@ -74,12 +74,12 @@ def test_count_agrees_with_the_int_the_boolean_folds_to(
 def test_index_agrees_with_the_int_the_boolean_folds_to(
     receiver: object, flag: object, folded: Int
 ) -> None:
-    assert receiver.index(flag) == receiver.index(folded)  # ty: ignore[unresolved-attribute]
+    assert receiver.index(flag) == receiver.index(folded)
 
 
 @pytest.mark.parametrize("receiver", _INCLUDES, ids=lambda r: type(r).__name__)
 def test_a_boolean_is_found_at_all(receiver: object) -> None:
     # The agreement assertions above hold vacuously if a receiver answers
     # "absent" for both spellings. Both values really are present.
-    assert receiver.includes(true) == true  # ty: ignore[unresolved-attribute]
-    assert receiver.includes(false) == true  # ty: ignore[unresolved-attribute]
+    assert receiver.includes(true) == true
+    assert receiver.includes(false) == true

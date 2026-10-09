@@ -73,9 +73,9 @@ def test_a_user_exception_lands_inside_the_object_tree() -> None:
 
 
 def test_mirrors_answer_the_class_side_protocol() -> None:
-    assert _ValueError.name() == Str("ValueError")  # ty: ignore[unresolved-attribute]
-    assert _KeyError.superclass() is _LookupError  # ty: ignore[unresolved-attribute]
-    assert _ValueError.superclass() is _Exception  # ty: ignore[unresolved-attribute]
+    assert _ValueError.name() == Str("ValueError")
+    assert _KeyError.superclass() is _LookupError
+    assert _ValueError.superclass() is _Exception
 
 
 def test_poop_class_of_answers_the_mirror_for_a_native() -> None:
@@ -248,7 +248,7 @@ def test_the_end_of_input_has_a_mirror() -> None:
     assert "EOFError" in MIRRORS
     assert isinstance(EOFError("x"), MIRRORS["EOFError"])
     assert not isinstance(ValueError("x"), MIRRORS["EOFError"])
-    assert MIRRORS["EOFError"].name() == Str("EOFError")  # ty: ignore[unresolved-attribute]
+    assert MIRRORS["EOFError"].name() == Str("EOFError")
 
 
 def test_the_unicode_family_is_answered_by_value_error_instead() -> None:
@@ -290,14 +290,14 @@ def test_a_name_only_one_native_carries_is_refused_only_there() -> None:
     # `obj` and `value` ride on the metaclass with the other three, so the
     # refusal asks the native before claiming a name is Python's.
     with pytest.raises(MessageNotUnderstood, match="#obj is Python's"):
-        MIRRORS["AttributeError"].obj  # ty: ignore[unresolved-attribute]  # noqa: B018
+        MIRRORS["AttributeError"].obj  # noqa: B018
     with pytest.raises(MessageNotUnderstood, match="#value is Python's"):
-        MIRRORS["StopIteration"].value  # ty: ignore[unresolved-attribute]  # noqa: B018
+        MIRRORS["StopIteration"].value  # noqa: B018
     # ValueError has neither in CPython, so neither sentence would be true.
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        MIRRORS["ValueError"].obj  # ty: ignore[unresolved-attribute]  # noqa: B018
+        MIRRORS["ValueError"].obj  # noqa: B018
     with pytest.raises(MessageNotUnderstood, match="try :methods"):
-        MIRRORS["ValueError"].value  # ty: ignore[unresolved-attribute]  # noqa: B018
+        MIRRORS["ValueError"].value  # noqa: B018
 
 
 @pytest.mark.parametrize("name", ["args", "add_note", "with_traceback"])
@@ -312,10 +312,10 @@ def test_the_class_and_the_caught_error_agree_on_a_python_attribute(name: str) -
 
 
 def test_the_class_side_messages_still_answer() -> None:
-    assert MIRRORS["ValueError"].name() == Str("ValueError")  # ty: ignore[unresolved-attribute]
-    assert MIRRORS["ValueError"].superclass() is MIRRORS["Exception"]  # ty: ignore[unresolved-attribute]
+    assert MIRRORS["ValueError"].name() == Str("ValueError")
+    assert MIRRORS["ValueError"].superclass() is MIRRORS["Exception"]
     with pytest.raises(ValueError, match="still raisable"):
-        MIRRORS["ValueError"].raise_("still raisable")  # ty: ignore[unresolved-attribute]
+        MIRRORS["ValueError"].raise_("still raisable")
 
 
 def test_mirror_names_match_the_hierarchy() -> None:

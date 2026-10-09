@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import pytest as _pytest
 
 from poop.parser import parse
@@ -15,6 +17,9 @@ from poop.types.none import none
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def test_empty_frozenset() -> None:
@@ -49,7 +54,7 @@ def test_contains_dunder() -> None:
 
 def test_do_visits_all_elements() -> None:
     fs = FrozenSet(Int(1), Int(2), Int(3))
-    seen: list[Int] = []
+    seen: list[Object] = []
     fs.do(lambda x: seen.append(x))
     assert len(seen) == 3
 

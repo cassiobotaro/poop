@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from poop.types.slice import Slice
 
 
-class Range(_IterableMixin, Object):
+class Range(_IterableMixin[Int], Object):
     __slots__ = ("_start", "_step", "_stop")
 
     def __init__(

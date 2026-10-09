@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @final
-class DictItems(_SetLikeView, name="dict_items"):
+class DictItems(_SetLikeView[Tuple], name="dict_items"):
     """Live view over a Dict's items, mirroring Python's dict_items."""
 
     __slots__ = ()

@@ -19,7 +19,8 @@ Sending a non-block split three ways, and all three were wrong:
 
 The enumeration below is derived from the signatures, so a new block-taking
 message cannot ship unguarded: `ast` walks `poop/types/` for every parameter
-annotated `Callable`, and each one is sent an `Int`.
+annotated `Callable` — or `Key`, the alias an optional `key` block is spelt
+with — and each one is sent an `Int`.
 """
 
 import ast
@@ -53,7 +54,8 @@ def _callable_parameters() -> set[tuple[str, str]]:
             for param in params:
                 if param.annotation is None:
                     continue
-                if "Callable" in ast.unparse(param.annotation):
+                annotation = ast.unparse(param.annotation)
+                if "Callable" in annotation or annotation.startswith("Key["):
                     found.add((path.name, node.name))
     return found
 

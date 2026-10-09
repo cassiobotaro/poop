@@ -35,7 +35,11 @@ _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 
 
 class ByteArray(
-    _BytesLikeMixin["ByteArray"], _OrderedMixin, _ValueEqMixin, _IterableMixin, Object
+    _BytesLikeMixin["ByteArray"],
+    _OrderedMixin,
+    _ValueEqMixin,
+    _IterableMixin[Int],
+    Object,
 ):
     __slots__ = ("_value",)
     _value: _bytearray

@@ -989,7 +989,7 @@ def test_fromhex_is_answered_by_bytearray_too() -> None:
     # `Bytes` and `ByteArray` mirror each other message for message, and this
     # was the one half-pair — for a spelling CPython supports.
     alias = ByteArrayTransformer.BINDINGS["_poop_bytearray_cls"]
-    assert alias.fromhex(Str("6162")) == ByteArray(bytearray(b"ab"))  # ty: ignore[unresolved-attribute]
+    assert alias.fromhex(Str("6162")) == ByteArray(bytearray(b"ab"))
     assert ByteArray(bytearray()).fromhex(Str("6162")) == ByteArray(bytearray(b"ab"))
 
 

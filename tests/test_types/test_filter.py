@@ -13,7 +13,8 @@ def test_filter_is_lazy() -> None:
         calls.append(x._value)
         return x._value % 2 == 0
 
-    f = Filter(List(Int(1), Int(2), Int(3)), keep_even)
+    # `keep_even` is typed over `Int`, the list's element over `Object`.
+    f = Filter(List(Int(1), Int(2), Int(3)), keep_even)  # ty: ignore[invalid-argument-type]
     assert calls == []
     list(f)
     assert calls == [1, 2, 3]

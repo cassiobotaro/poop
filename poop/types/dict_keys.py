@@ -5,16 +5,16 @@ from poop.types._dict_view import _elements, _SetLikeView
 from poop.types.boolean import to_boolean
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
+from poop.types.object import Object
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from poop.types.boolean import Boolean
-    from poop.types.object import Object
 
 
 @final
-class DictKeys(_SetLikeView, name="dict_keys"):
+class DictKeys(_SetLikeView[Object], name="dict_keys"):
     """Live view over a Dict's keys, mirroring Python's dict_keys."""
 
     __slots__ = ()

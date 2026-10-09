@@ -397,7 +397,7 @@ def test_bit_invert_is_refused_with_cpythons_advice() -> None:
     # would have kept doing so after the removal, so it is refused instead,
     # with the warning's two alternatives.
     with pytest.raises(MessageNotUnderstood) as info:
-        true.bit_invert()  # ty: ignore[unresolved-attribute]
+        true.bit_invert()
     assert str(info.value) == (
         "bool does not understand #bit_invert — did you mean #not_? "
         "the bitwise inversion is the int's — send #bit_invert to int(flag)"

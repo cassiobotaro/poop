@@ -15,6 +15,8 @@ from poop.types.string import Str
 if TYPE_CHECKING:
     import pytest
 
+    from poop.types.object import Object
+
 
 def _make() -> Dict:
     d = Dict()
@@ -100,7 +102,7 @@ def test_liveness() -> None:
 
 def test_iterable_mixin_do() -> None:
     values = DictValues(_make())
-    seen: list[Int] = []
+    seen: list[Object] = []
     values.do(lambda v: seen.append(v))
     assert seen == [Int(1), Int(2)]
 

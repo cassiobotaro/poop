@@ -22,12 +22,12 @@ def test_unknown_message_speaks_smalltalk_not_python() -> None:
     with pytest.raises(
         MessageNotUnderstood, match=re.escape("does not understand #frobnicate")
     ):
-        Int(5).frobnicate()  # ty: ignore[unresolved-attribute]
+        Int(5).frobnicate()
 
 
 def test_unknown_message_points_at_methods_when_it_has_no_hint() -> None:
     with pytest.raises(MessageNotUnderstood, match=":methods"):
-        Int(5).frobnicate()  # ty: ignore[unresolved-attribute]
+        Int(5).frobnicate()
 
 
 def test_unknown_message_suggests_a_close_match() -> None:
@@ -219,5 +219,5 @@ def test_does_not_understand_is_the_hook_a_proxy_overrides() -> None:
 
     log: list[str] = []
     proxy = _Logging(Str("hello"), log)
-    assert proxy.upper() == Str("HELLO")  # ty: ignore[unresolved-attribute]
+    assert proxy.upper() == Str("HELLO")
     assert log == ["upper"]

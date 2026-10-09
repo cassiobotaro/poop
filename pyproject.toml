@@ -54,6 +54,18 @@ show_missing = true
 # (Smalltalk semantics) instead of bool — LSP violation is by design.
 invalid-method-override = "ignore"
 
+[[tool.ty.overrides]]
+# The suite's blocks are written the way a POOP program writes them —
+# `xs.map(lambda x: x._value * 2)` over a `List` whose element is `Object` —
+# and `Object` declares neither the slot nor the operator, on purpose: a
+# collection holds any POOP value. The same stance ruff takes on the mock
+# helpers (`ANN001`–`ANN003` below): a test's block is loosely typed, so the
+# two rules a loosely typed block trips are off here and nowhere else.
+include = ["tests/**"]
+[tool.ty.overrides.rules]
+unresolved-attribute = "ignore"
+unsupported-operator = "ignore"
+
 [tool.ruff.lint]
 select = [
   # pycodestyle

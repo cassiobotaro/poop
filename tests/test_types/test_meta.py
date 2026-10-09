@@ -135,18 +135,18 @@ def test_unknown_message_to_a_class_speaks_smalltalk_too() -> None:
     # "type object 'Foo' has no attribute 'frobnicate'" until the metaclass
     # carried the hook.
     with pytest.raises(MessageNotUnderstood, match="_Dog does not understand"):
-        _Dog.frobnicate()  # ty: ignore[unresolved-attribute]
+        _Dog.frobnicate()
 
 
 def test_unknown_message_to_a_class_maps_smalltalk_selectors() -> None:
     with pytest.raises(MessageNotUnderstood, match="#printNl is #print here"):
-        _Dog.printNl()  # ty: ignore[unresolved-attribute]
+        _Dog.printNl()
 
 
 def test_a_class_gets_no_selector_hint_it_cannot_honour() -> None:
     # `size` maps to `len`, which a class does not answer — do not promise it.
     with pytest.raises(MessageNotUnderstood, match=":methods"):
-        _Dog.size()  # ty: ignore[unresolved-attribute]
+        _Dog.size()
 
 
 def test_the_metaclass_propagates_without_being_declared() -> None:
@@ -626,12 +626,12 @@ def test_each_slot_names_what_it_wanted() -> None:
 
 def test_a_bare_builtin_name_climbs_straight_to_object() -> None:
     alias = IntTransformer.BINDINGS["_poop_int_cls"]
-    assert alias.superclass().name() == Str("object")  # ty: ignore[unresolved-attribute]
+    assert alias.superclass().name() == Str("object")
 
 
 def test_the_wrapper_and_its_alias_climb_alike() -> None:
     alias = ListTransformer.BINDINGS["_poop_list_cls"]
-    assert alias.superclass() == List.superclass()  # ty: ignore[unresolved-attribute]
+    assert alias.superclass() == List.superclass()
 
 
 def test_a_subclass_of_a_builtin_still_sees_the_builtin() -> None:
@@ -660,7 +660,7 @@ def test_a_class_refuses_an_instance_message_instead_of_binding_it() -> None:
     # the wording sweep bans outright.
     text = DEFAULT_NAMESPACE["_poop_str_cls"]
     with pytest.raises(AttributeError) as info:
-        text.upper()  # ty: ignore[unresolved-attribute]
+        text.upper()
     assert str(info.value) == (
         "str does not understand #upper — #upper asks an instance; send it to one"
     )
@@ -714,7 +714,7 @@ def test_dir_lists_only_what_the_class_itself_answers() -> None:
     # answered a binding error.
     for key in ("_poop_str_cls", "_poop_list_cls", "_poop_dict_cls", "_poop_int_cls"):
         cls = DEFAULT_NAMESPACE[key]
-        for name in cls.dir():  # ty: ignore[unresolved-attribute]
+        for name in cls.dir():
             getattr(cls, str(name._value))
 
 

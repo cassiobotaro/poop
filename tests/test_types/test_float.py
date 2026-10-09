@@ -409,7 +409,7 @@ def test_an_absent_modulus_still_computes() -> None:
 def test_fromhex_under_the_bare_builtin_name() -> None:
     # The third of the three: `cannot convert float to float`.
     alias = FloatTransformer.BINDINGS["_poop_float_cls"]
-    assert alias.fromhex(Str("0x1.8p+1")) == Float(3.0)  # ty: ignore[unresolved-attribute]
+    assert alias.fromhex(Str("0x1.8p+1")) == Float(3.0)
     assert Float(1.0).fromhex(Str("0x1.8p+1")) == Float(3.0)
 
 

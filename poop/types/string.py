@@ -1,10 +1,11 @@
 import builtins
 import re
 from string import Formatter as _Formatter
-from typing import TYPE_CHECKING, Any, ClassVar, overload
+from typing import TYPE_CHECKING, ClassVar, Never, overload
 
 from poop.types._affix import affix_needle
 from poop.types._argument import (
+    Key,
     a_bound,
     a_collection,
     a_fill,
@@ -141,7 +142,7 @@ def _opt_text(chars: object, selector: str) -> str | None:
     return text_like(chars, selector, "a str", (str,))
 
 
-class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
+class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object):
     """A string, and a collection like any other.
 
     `no_map`, `no_filter`, `no_all`, `no_any` and `no_loops` each name a
@@ -204,7 +205,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def iter(self) -> StrIterator:
         return StrIterator(self)
 
-    def sum(self, start: object = None) -> Any:
+    def sum(self, start: Object | Missing = MISSING) -> Never:
         # The one mixin message a string must not answer: `sum("ab")` is a
         # TypeError in CPython, and adding the characters up would answer the
         # string back, which is `join`'s job.
@@ -213,30 +214,20 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         )
 
     @overload
-    def min(self, *, key: Callable[[Str], Any] | NoneClass | None = None) -> Str: ...
+    def min(self, *, key: Key[Str] = None) -> Str: ...
     @overload
+    def min[D](self, *, key: Key[Str] = None, default: D) -> Str | D: ...
     def min[D](
-        self, *, key: Callable[[Str], Any] | NoneClass | None = None, default: D
-    ) -> Str | D: ...
-    def min[D](
-        self,
-        *,
-        key: Callable[[Str], Any] | NoneClass | None = None,
-        default: D | Missing = MISSING,
+        self, *, key: Key[Str] = None, default: D | Missing = MISSING
     ) -> Str | D:
         return _minmax(builtins.min, "#min", self, key, default)
 
     @overload
-    def max(self, *, key: Callable[[Str], Any] | NoneClass | None = None) -> Str: ...
+    def max(self, *, key: Key[Str] = None) -> Str: ...
     @overload
+    def max[D](self, *, key: Key[Str] = None, default: D) -> Str | D: ...
     def max[D](
-        self, *, key: Callable[[Str], Any] | NoneClass | None = None, default: D
-    ) -> Str | D: ...
-    def max[D](
-        self,
-        *,
-        key: Callable[[Str], Any] | NoneClass | None = None,
-        default: D | Missing = MISSING,
+        self, *, key: Key[Str] = None, default: D | Missing = MISSING
     ) -> Str | D:
         return _minmax(builtins.max, "#max", self, key, default)
 

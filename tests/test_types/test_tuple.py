@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poop.types.boolean import false, true
@@ -8,6 +10,9 @@ from poop.types.map import Map
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def test_empty_tuple() -> None:
@@ -48,7 +53,7 @@ def test_contains_dunder() -> None:
 
 
 def test_do_iterates() -> None:
-    results: list[Int] = []
+    results: list[Object] = []
     Tuple(Int(1), Int(2), Int(3)).do(lambda x: results.append(x))
     assert results == [Int(1), Int(2), Int(3)]
 
@@ -234,7 +239,7 @@ def test_sorted_empty() -> None:
 
 def test_sorted_with_key() -> None:
     t = Tuple(Int(-3), Int(1), Int(-2))
-    result = t.sorted(key=lambda x: x.abs())  # ty: ignore[unresolved-attribute]
+    result = t.sorted(key=lambda x: x.abs())
     assert result == Tuple(Int(1), Int(-2), Int(-3))
 
 

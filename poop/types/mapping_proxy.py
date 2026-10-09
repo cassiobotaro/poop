@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 @final
-class MappingProxy(_IterableMixin, Object):
+class MappingProxy(_IterableMixin[Object], Object):
     """Read-only view over a mapping. Mirrors types.MappingProxyType."""
 
     __slots__ = ("_dict",)

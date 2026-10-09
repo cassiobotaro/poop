@@ -4,7 +4,7 @@ import operator
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from poop.types._alias import wrapped_instance
-from poop.types._argument import an_int, byte_order, byte_source
+from poop.types._argument import Key, an_int, byte_order, byte_source
 from poop.types._cloak import cloak
 from poop.types._message import article, binary_refusal
 from poop.types._minmax import _minmax
@@ -76,14 +76,14 @@ class Int(_NumericCompareMixin, Object):
     def max(
         self,
         *others: Int | Boolean,
-        key: Callable[[Any], Any] | NoneClass | None = None,
+        key: Key[Int | Boolean] = None,
     ) -> Int | Boolean:
         return _minmax(builtins.max, "#max", (self, *others), key, MISSING)
 
     def min(
         self,
         *others: Int | Boolean,
-        key: Callable[[Any], Any] | NoneClass | None = None,
+        key: Key[Int | Boolean] = None,
     ) -> Int | Boolean:
         return _minmax(builtins.min, "#min", (self, *others), key, MISSING)
 

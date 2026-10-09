@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
 
-class _Cursor[T](_PeekMixin, _IterableMixin, Object):
+class _Cursor[T: Object](_PeekMixin, _IterableMixin[T], Object):
     """What every one-shot iterator and lazy view answers alike.
 
     `_IteratorBase` and `_LazyView` restated all of it: the `name=` class
@@ -62,7 +62,7 @@ class _Cursor[T](_PeekMixin, _IterableMixin, Object):
     __repr__ = __str__
 
 
-class _IteratorBase[T](_Cursor[T]):
+class _IteratorBase[T: Object](_Cursor[T]):
     """Base for one-shot POOP iterators.
 
     Wraps a Python iterator. `next()` raises `StopIteration` on exhaustion —
@@ -107,7 +107,7 @@ class _IteratorBase[T](_Cursor[T]):
         return self._iter
 
 
-class _LazyView[T](_Cursor[T]):
+class _LazyView[T: Object](_Cursor[T]):
     """Base for the lazy views `map`, `filter`, `zip` and `enumerate`.
 
     `_IteratorBase`'s sibling under `_Cursor`, over a generator built on first

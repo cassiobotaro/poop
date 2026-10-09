@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 _memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
 
 
-class MemoryView(_ValueEqMixin, _IterableMixin, Object):
+class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
     # CPython compares memoryview equal by value to bytes/bytearray (and

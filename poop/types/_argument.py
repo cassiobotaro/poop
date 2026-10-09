@@ -20,7 +20,13 @@ from poop.types._sentinel import MISSING, Missing
 from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
+    from poop.types.none import NoneClass
     from poop.types.object import Object
+
+# The optional `key` of `sorted` / `sort` / `min` / `max`: a block over the
+# element, or absent either way a POOP program can leave it out. `a_key` is
+# what narrows one to the block.
+type Key[T] = Callable[[T], object] | NoneClass | None
 
 
 def no_arguments(

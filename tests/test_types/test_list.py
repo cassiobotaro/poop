@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poop.types._message import poop_message
@@ -9,6 +11,9 @@ from poop.types.none import none
 from poop.types.slice import Slice
 from poop.types.string import Str
 from poop.types.tuple import Tuple
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def test_empty_list() -> None:
@@ -60,7 +65,7 @@ def test_contains_dunder() -> None:
 
 
 def test_do_iterates() -> None:
-    results: list[Int] = []
+    results: list[Object] = []
     List(Int(1), Int(2), Int(3)).do(lambda x: results.append(x))
     assert results == [Int(1), Int(2), Int(3)]
 
@@ -230,7 +235,7 @@ def test_sorted_empty() -> None:
 
 def test_sorted_with_key() -> None:
     lst = List(Int(-3), Int(1), Int(-2))
-    result = lst.sorted(key=lambda x: x.abs())  # ty: ignore[unresolved-attribute]
+    result = lst.sorted(key=lambda x: x.abs())
     assert result == List(Int(1), Int(-2), Int(-3))
 
 
@@ -241,7 +246,7 @@ def test_sorted_reverse() -> None:
 
 def test_sorted_reverse_with_key() -> None:
     lst = List(Int(-3), Int(1), Int(-2))
-    result = lst.sorted(key=lambda x: x.abs(), reverse=true)  # ty: ignore[unresolved-attribute]
+    result = lst.sorted(key=lambda x: x.abs(), reverse=true)
     assert result == List(Int(-3), Int(-2), Int(1))
 
 
@@ -396,7 +401,7 @@ def test_sort_returns_none() -> None:
 
 def test_sort_with_key() -> None:
     lst = List(Int(-3), Int(1), Int(-2))
-    lst.sort(key=lambda x: x.abs())  # ty: ignore[unresolved-attribute]
+    lst.sort(key=lambda x: x.abs())
     assert lst == List(Int(1), Int(-2), Int(-3))
 
 

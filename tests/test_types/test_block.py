@@ -163,7 +163,7 @@ def test_block_on_a_class_binds_to_the_receiver() -> None:
         __slots__ = ()
 
     C.set_attr(Str("greet"), Block(lambda self: Str("hi")))
-    assert C().greet() == Str("hi")  # ty: ignore[unresolved-attribute]
+    assert C().greet() == Str("hi")
 
 
 def test_block_on_a_class_passes_further_arguments_after_the_receiver() -> None:
@@ -171,7 +171,7 @@ def test_block_on_a_class_passes_further_arguments_after_the_receiver() -> None:
         __slots__ = ()
 
     C.set_attr(Str("add"), Block(lambda self, n: n + Int(1)))
-    assert C().add(Int(4)) == Int(5)  # ty: ignore[unresolved-attribute]
+    assert C().add(Int(4)) == Int(5)
 
 
 def test_block_read_off_the_class_is_unbound() -> None:
@@ -181,7 +181,7 @@ def test_block_read_off_the_class_is_unbound() -> None:
 
     block = Block(lambda self: Str("hi"))
     C.set_attr(Str("greet"), block)
-    assert C.greet is block  # ty: ignore[unresolved-attribute]
+    assert C.greet is block
 
 
 def test_block_held_as_instance_state_is_not_bound() -> None:
@@ -193,7 +193,7 @@ def test_block_held_as_instance_state_is_not_bound() -> None:
 
     c = C()
     c.set_attr(Str("callback"), Block(lambda: Str("state")))
-    assert c.callback() == Str("state")  # ty: ignore[unresolved-attribute]
+    assert c.callback() == Str("state")
 
 
 def test_a_zero_argument_block_on_a_class_is_told_it_got_the_receiver() -> None:
@@ -205,16 +205,16 @@ def test_a_zero_argument_block_on_a_class_is_told_it_got_the_receiver() -> None:
 
     C.set_attr(Str("greet"), Block(lambda: Str("hi")))
     with pytest.raises(TypeError, match=r"block expects 0 arguments, got 1"):
-        C().greet()  # ty: ignore[unresolved-attribute]
+        C().greet()
 
 
 def test_a_bound_block_does_not_reword_a_type_error_from_its_body() -> None:
     class C(Object):
         __slots__ = ()
 
-    C.set_attr(Str("boom"), Block(lambda self: "a" + 1))  # ty: ignore[unsupported-operator]
+    C.set_attr(Str("boom"), Block(lambda self: "a" + 1))
     with pytest.raises(TypeError, match=r"can only concatenate str"):
-        C().boom()  # ty: ignore[unresolved-attribute]
+        C().boom()
 
 
 def test_a_method_read_off_an_object_is_a_block() -> None:
@@ -224,7 +224,7 @@ def test_a_method_read_off_an_object_is_a_block() -> None:
     # for a message, naming the value `function`, which is `Block`'s own
     # cloak. Same object, same message, two answers.
     assert repr(Str("abc").upper) == "<block>"
-    assert Str("abc").upper.callable() is true  # ty: ignore[unresolved-attribute]
+    assert Str("abc").upper.callable() is true
     assert Str("abc").upper() == Str("ABC")
 
 
@@ -239,7 +239,9 @@ def test_a_bound_method_still_works_as_a_block_value() -> None:
         def double(self, v: Int) -> Int:
             return v * Int(2)  # ty: ignore[invalid-return-type]
 
-    assert list(List(Int(1), Int(2)).map(C().double)) == [Int(2), Int(4)]
+    # The method is typed over `Int`, the list's element over `Object`.
+    doubled = List(Int(1), Int(2)).map(C().double)  # ty: ignore[invalid-argument-type]
+    assert list(doubled) == [Int(2), Int(4)]
 
 
 def test_a_method_keeps_cpythons_arity_wording_not_the_blocks() -> None:
@@ -270,7 +272,7 @@ def test_a_method_read_twice_is_equal_to_itself() -> None:
 
 def test_a_method_read_twice_hashes_the_same() -> None:
     text = Str("abc")
-    assert text.upper.hash() == text.upper.hash()  # ty: ignore[unresolved-attribute]
+    assert text.upper.hash() == text.upper.hash()
     assert hash(text.upper) == hash(text.upper)
 
 
@@ -306,7 +308,7 @@ def test_is_identical_still_answers_false() -> None:
     # Unchanged and honest: those really are two objects, which INFECTIONS.md
     # already documents as a deliberate disagreement for classes.
     text = Str("abc")
-    assert text.upper.is_identical(text.upper) is false  # ty: ignore[unresolved-attribute]
+    assert text.upper.is_identical(text.upper) is false
 
 
 def test_a_block_literal_keeps_identity_equality() -> None:
