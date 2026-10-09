@@ -14,10 +14,26 @@ whoever owns the operation, and nine wrappers own the same one, so it lives here
 instead of being written out nine times.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Protocol, SupportsIndex
 
 from poop.types._message import article
 from poop.types.exceptions import MIRRORS, MirrorName
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sized
+
+
+class _Indexed[T](Protocol):
+    """What `at_index` reads: a sequence CPython indexes through `__index__`.
+
+    Not `Sequence`, whose `__getitem__` is typed over `int` alone — a POOP
+    `Int` is an index without being one, as `_index.py` says — and not a
+    `Mapping`, whose lookup fails by `KeyError` rather than `IndexError`.
+    """
+
+    def __getitem__(self, index: SupportsIndex, /) -> T: ...
+
+    def __len__(self) -> int: ...
 
 
 def _size(count: int) -> str:
@@ -26,7 +42,7 @@ def _size(count: int) -> str:
     return f"it has {count} element" if count == 1 else f"it has {count} elements"
 
 
-def no_element_at(receiver: object, items: Any, index: Any) -> Exception:
+def no_element_at(receiver: object, items: Sized, index: object) -> Exception:
     """The mirrored `IndexError` for an index the receiver has no element at.
 
     Answers the exception rather than raising it, so a call site reads
@@ -39,7 +55,7 @@ def no_element_at(receiver: object, items: Any, index: Any) -> Exception:
 
 
 def no_element_equal_to(
-    receiver: object, value: Any, mirror: MirrorName = "ValueError"
+    receiver: object, value: object, mirror: MirrorName = "ValueError"
 ) -> Exception:
     """The mirrored `ValueError` for a value the receiver does not hold.
 
@@ -57,7 +73,7 @@ def no_element_equal_to(
     )
 
 
-def no_key(receiver: object, key: Any) -> Exception:
+def no_key(receiver: object, key: object) -> Exception:
     """The mirrored `KeyError` for a key the receiver does not hold."""
     return MIRRORS["KeyError"](f"{type(receiver).__name__} has no key {key!r}")
 
@@ -75,7 +91,7 @@ def nothing_to_remove(receiver: object, mirror: MirrorName = "KeyError") -> Exce
     )
 
 
-def at_index(items: Any, index: Any, receiver: object) -> Any:
+def at_index[T](items: _Indexed[T], index: SupportsIndex, receiver: object) -> T:
     """`items[index]`, with POOP's wording for the two ways it can fail.
 
     `receiver` is the POOP object the message was sent to — the same thing as
@@ -95,7 +111,7 @@ def at_index(items: Any, index: Any, receiver: object) -> Any:
         ) from None
 
 
-def at_key(data: Any, key: Any, receiver: object) -> Any:
+def at_key[K, V](data: Mapping[K, V], key: K, receiver: object) -> V:
     """`data[key]`, answering a sentence instead of the missing key's repr.
 
     An unhashable key is left to CPython: that failure is about the key, not

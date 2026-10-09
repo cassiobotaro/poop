@@ -10,13 +10,17 @@ handful of families, which is why the wording lives here rather than being
 written out once per receiver.
 """
 
-from collections.abc import Iterable
-from typing import Any
+import operator
+from collections.abc import Callable, Iterable, Sized
+from typing import TYPE_CHECKING, Literal, SupportsIndex, overload
 
 from poop.types._message import article
 from poop.types._raw import _faithful
-from poop.types._sentinel import MISSING
+from poop.types._sentinel import MISSING, Missing
 from poop.types.exceptions import MIRRORS
+
+if TYPE_CHECKING:
+    from poop.types.object import Object
 
 
 def no_arguments(
@@ -33,7 +37,7 @@ def no_arguments(
         raise MIRRORS["TypeError"](f"{cls.__name__}() takes no arguments")
 
 
-def a_class(value: object, selector: str) -> Any:
+def a_class(value: object, selector: str) -> type | tuple[type, ...]:
     """`value` when it can stand for a class, else POOP's refusal.
 
     `no_isinstance` bans `isinstance(x, T)` and names `x.is_instance(T)`, and
@@ -48,7 +52,7 @@ def a_class(value: object, selector: str) -> Any:
     )
 
 
-def a_bound(value: object, selector: str, role: str) -> Any:
+def a_bound(value: object, selector: str, role: str) -> int | None:
     """The raw `start`/`end` behind `value`, or POOP's refusal.
 
     The `start` / `end` of `find`, `index`, `count`, `startswith` and their
@@ -66,12 +70,20 @@ def a_bound(value: object, selector: str, role: str) -> Any:
     return an_int(value, selector, role, None)
 
 
+@overload
 def text_like(
+    value: object, selector: str, expected: str
+) -> str | bytes | bytearray: ...
+@overload
+def text_like[T](
+    value: object, selector: str, expected: str, kinds: tuple[type[T], ...]
+) -> T: ...
+def text_like[T](
     value: object,
     selector: str,
     expected: str,
-    kinds: tuple[type, ...] = (str, bytes, bytearray),
-) -> Any:
+    kinds: tuple[type[T], ...] | None = None,
+) -> T | str | bytes | bytearray:
     """The raw value behind a text argument, or POOP's refusal.
 
     CPython answers `center() argument 2 must be a byte string of length 1,
@@ -87,20 +99,32 @@ def text_like(
     keep straight.
     """
     raw = _faithful(value)
-    if isinstance(raw, kinds):
+    # Two spellings of the default, as ty refuses one on a generic tuple: the
+    # overload without `kinds` answers the three text kinds, and this is them.
+    if isinstance(raw, kinds if kinds is not None else (str, bytes, bytearray)):
         return raw
     raise MIRRORS["TypeError"](
         f"#{selector} expects {expected}, got {article(type(value).__name__)}"
     )
 
 
-def a_needle(
+@overload
+def a_needle(receiver: object, sub: object, selector: str, expected: str) -> str: ...
+@overload
+def a_needle[T](
     receiver: object,
     sub: object,
     selector: str,
     expected: str,
-    kinds: tuple[type, ...] = (str,),
-) -> Any:
+    kinds: tuple[type[T], ...],
+) -> T | int: ...
+def a_needle[T](
+    receiver: object,
+    sub: object,
+    selector: str,
+    expected: str,
+    kinds: tuple[type[T], ...] | None = None,
+) -> T | str | int:
     """The substring or subsequence a search looks for, or POOP's refusal.
 
     `find` / `rfind` / `index` / `rindex` / `count` keep their *text* meaning on
@@ -121,8 +145,11 @@ def a_needle(
     # circular: string imports _argument
     from poop.types.string import Str  # noqa: PLC0415
 
+    # Two spellings of the default, as in `text_like`: the overload without
+    # `kinds` answers `str`, and this is the tuple it stands for.
+    wanted = kinds if kinds is not None else (str,)
     if not isinstance(sub, Str) and callable(sub):
-        text = str in kinds
+        text = str in wanted
         sought = "substring" if text else "subsequence"
         wanted = "the text to look for" if text else "what to look for"
         raise MIRRORS["TypeError"](
@@ -134,14 +161,18 @@ def a_needle(
     # refused here rather than pass the guard and reach CPython, and the byte
     # receivers additionally take an integer (`b"ab".count(97)` is 1), which is
     # what `__index__` admits.
-    if isinstance(raw, kinds) or (bytes in kinds and hasattr(raw, "__index__")):
+    if isinstance(raw, wanted):
         return raw
+    if bytes in wanted and isinstance(raw, SupportsIndex):
+        return operator.index(raw)
     raise MIRRORS["TypeError"](
         f"#{selector} expects {expected}, got {article(type(sub).__name__)}"
     )
 
 
-def a_fill(value: object, selector: str, expected: str, kinds: tuple[type, ...]) -> Any:
+def a_fill[T: Sized](
+    value: object, selector: str, expected: str, kinds: tuple[type[T], ...]
+) -> T | None:
     """The optional fill of `center` / `ljust` / `rjust`, or POOP's refusal.
 
     `None` when the fill is absent. CPython words a wrong fill three ways, none
@@ -165,7 +196,15 @@ def a_fill(value: object, selector: str, expected: str, kinds: tuple[type, ...])
     return raw
 
 
-def bytes_like(value: object, selector: str, *, optional: bool = False) -> Any:
+@overload
+def bytes_like(value: object, selector: str) -> bytes | bytearray | memoryview: ...
+@overload
+def bytes_like(
+    value: object, selector: str, *, optional: Literal[True]
+) -> bytes | bytearray | memoryview | None: ...
+def bytes_like(
+    value: object, selector: str, *, optional: bool = False
+) -> bytes | bytearray | memoryview | None:
     """The raw bytes behind an argument, or POOP's refusal.
 
     The byte twins of everything `text_like` already guards on `Str`. CPython
@@ -189,10 +228,22 @@ def bytes_like(value: object, selector: str, *, optional: bool = False) -> Any:
     )
 
 
+@overload
+def a_block[F: Callable[..., object]](
+    value: F | Missing, selector: str, role: str = "a block", param: str = "item"
+) -> F: ...
+@overload
 def a_block(
     value: object, selector: str, role: str = "a block", param: str = "item"
-) -> Any:
+) -> Callable[..., object]: ...
+def a_block(
+    value: object, selector: str, role: str = "a block", param: str = "item"
+) -> Callable[..., object]:
     """`value`, or a refusal naming the message and the argument it wanted.
+
+    Answers the block as the caller typed it — a `Callable[[], T]` comes back
+    as one — so a message's answer keeps the block's own type through the
+    guard; anything else comes back as the bare callable it was found to be.
 
     `_require_block`'s call-site twin for the ~40 messages that take a block and
     reached the deferred call instead. Its docstring already made the argument:
@@ -229,7 +280,7 @@ def a_block(
     )
 
 
-def a_key(value: object, selector: str) -> Any:
+def a_key(value: object, selector: str) -> Callable[..., object]:
     """The optional `key` of `sorted` / `sort` / `min` / `max`, or a refusal.
 
     Absent by default, unlike every other block slot, so it cannot go through
@@ -282,7 +333,13 @@ def max_split(value: object, selector: str) -> int:
     return an_int(value, selector, "maxsplit", -1)
 
 
-def an_int(value: object, selector: str, role: str, default: Any = MISSING) -> Any:
+@overload
+def an_int(value: object, selector: str, role: str) -> int: ...
+@overload
+def an_int[D](value: object, selector: str, role: str, default: D) -> int | D: ...
+def an_int[D](
+    value: object, selector: str, role: str, default: D | Missing = MISSING
+) -> int | D:
     """The raw integer behind `value`, or POOP's refusal.
 
     `a_bound` for the integers that are not positions: a width, a length, a
@@ -293,6 +350,10 @@ def an_int(value: object, selector: str, role: str, default: Any = MISSING) -> A
 
     `default` is what an absent argument stands for. Without one the argument
     is mandatory, and `none` is refused like any other non-integer.
+
+    Answers through `operator.index`, the Pythonic spelling of "anything with
+    an `__index__`": the same objects pass, and the answer is an `int` rather
+    than whatever carried the slot.
     """
     # circular: _unwrap -> boolean -> _argument
     from poop.types._unwrap import _is_absent  # noqa: PLC0415
@@ -300,14 +361,14 @@ def an_int(value: object, selector: str, role: str, default: Any = MISSING) -> A
     if default is not MISSING and _is_absent(value):
         return default
     raw = _faithful(value)
-    if hasattr(raw, "__index__"):
-        return raw
+    if isinstance(raw, SupportsIndex):
+        return operator.index(raw)
     raise MIRRORS["TypeError"](
         f"#{selector}'s {role} must be an int, got {article(type(value).__name__)}"
     )
 
 
-def a_collection(value: object, selector: str) -> Any:
+def a_collection(value: object, selector: str) -> Iterable[Object]:
     """`value` when it can be walked, else POOP's refusal.
 
     `zip`, the set algebra, `join`, `extend`, `update` and `fromkeys` take
@@ -323,7 +384,7 @@ def a_collection(value: object, selector: str) -> Any:
     )
 
 
-def a_pair(value: object, selector: str) -> Any:
+def a_pair(value: object, selector: str) -> Iterable[Object]:
     """One entry of a collection of key/value pairs, or POOP's refusal.
 
     `d.update([1])` passes `a_collection` — it was handed one — and CPython
@@ -338,7 +399,7 @@ def a_pair(value: object, selector: str) -> Any:
     )
 
 
-def byte_source(value: object, selector: str) -> Any:
+def byte_source(value: object, selector: str) -> bytes | bytearray | memoryview:
     """What `from_bytes` reads its bytes from, or POOP's refusal.
 
     `bytes_like` for a message that also takes any iterable of ints, as
@@ -348,8 +409,9 @@ def byte_source(value: object, selector: str) -> Any:
     replaces.
     """
     raw = _faithful(value)
-    # An int is asked first: `bytes(5)` is five zero bytes, not a refusal.
-    if not hasattr(raw, "__index__"):
+    # Only a collection is read as one: `bytes(5)` is five zero bytes, not a
+    # refusal, so an int goes straight to the refusal below.
+    if isinstance(raw, Iterable):
         try:
             return bytes(raw)
         except TypeError:

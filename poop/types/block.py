@@ -230,15 +230,15 @@ class Block(Object):
     def while_true(self, body: Block) -> NoneClass:
         # Through `self()`, not `self._fn()`: a condition block of the wrong
         # arity would otherwise answer CPython's wording from here.
-        body = a_block(body, "while_true", param="")
+        run = a_block(body, "while_true", param="")
         while bool(self()):
-            body()
+            run()
         return none
 
     def while_false(self, body: Block) -> NoneClass:
-        body = a_block(body, "while_false", param="")
+        run = a_block(body, "while_false", param="")
         while not bool(self()):
-            body()
+            run()
         return none
 
     def __str__(self) -> str:

@@ -20,7 +20,6 @@ from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
 from poop.types._minmax import _minmax
 from poop.types._ordered import _OrderedMixin
-from poop.types._raw import _faithful
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import MISSING, NOT_A_COUNT
 from poop.types._unwrap import _is_absent, _opt_str, _unwrap_bool
@@ -130,7 +129,7 @@ def _template_refusal(exc: ValueError | TypeError) -> Exception:
     return MIRRORS["ValueError"](text.replace("format string", "template"))
 
 
-def _opt_text(chars: object, selector: str) -> Any:
+def _opt_text(chars: object, selector: str) -> str | None:
     """The optional `chars` of the strip family, or POOP's refusal.
 
     CPython names the message as a bare word and its own default in one breath
@@ -233,8 +232,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         # `includes` is the substitute `no_in` points at, and its own refusal
         # quoted the banned operator in its Python spelling: `'in <string>'
         # requires string as left operand, not int`.
-        operand: Any = text_like(char, "includes", "a str", (str,))
-        return to_boolean(operand in self._value)
+        return to_boolean(text_like(char, "includes", "a str", (str,)) in self._value)
 
     def __contains__(self, item: object) -> bool:
         if isinstance(item, Str):
@@ -281,8 +279,8 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     ) -> Str:
         return Str(
             self._value.replace(
-                text_like(old, "replace", "a str"),
-                text_like(new, "replace", "a str"),
+                text_like(old, "replace", "a str", (str,)),
+                text_like(new, "replace", "a str", (str,)),
                 an_int(count, "replace", "count", -1),
             )
         )
@@ -302,11 +300,15 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         )
 
     def join(self, parts: List) -> Str:
-        # Mirror CPython: unwrap each element to its underlying value and let
-        # str.join validate. Str parts join cleanly; anything else (Int,
-        # Bytes, ...) reaches str.join unwrapped and raises the faithful
-        # TypeError instead of being silently stringified via str(p).
-        pieces: list[Any] = [_faithful(p) for p in a_collection(parts, "join")]
+        # Each piece through `text_like`, as the byte twins' `join` already
+        # does: a non-`Str` part answered CPython's `sequence item 0: expected
+        # str instance, int found` — a position in a Python sequence, for a
+        # message POOP spells `#join` — where `b"-".join([b"a", "x"])` named
+        # the message. Nothing is stringified on the way: a refusal, never
+        # `str(p)`.
+        pieces = [
+            text_like(p, "join", "a str", (str,)) for p in a_collection(parts, "join")
+        ]
         return Str(self._value.join(pieces))
 
     def format(self, *args: Object, **kwargs: Object) -> Str:
@@ -529,10 +531,14 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         )
 
     def removeprefix(self, prefix: Str) -> Str:
-        return Str(self._value.removeprefix(text_like(prefix, "removeprefix", "a str")))
+        return Str(
+            self._value.removeprefix(text_like(prefix, "removeprefix", "a str", (str,)))
+        )
 
     def removesuffix(self, suffix: Str) -> Str:
-        return Str(self._value.removesuffix(text_like(suffix, "removesuffix", "a str")))
+        return Str(
+            self._value.removesuffix(text_like(suffix, "removesuffix", "a str", (str,)))
+        )
 
     def rfind(
         self,

@@ -12,7 +12,7 @@ what differs: construction, `+`, `fromhex`, `hex`, hashing, the iterator it
 hands out and, on `ByteArray`, the mutators.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from poop.types._affix import affix_needle
 from poop.types._argument import (
@@ -95,7 +95,7 @@ class _BytesLikeMixin[B: Object]:
         # reaches the native `__contains__` raw and raises the faithful TypeError,
         # rather than leaking the internal `_value` name through dispatch. A
         # Bytes/ByteArray argument keeps its subsequence-membership semantics.
-        operand: Any = a_needle(self, byte, "includes", "bytes or an int", _BYTE_KINDS)
+        operand = a_needle(self, byte, "includes", "bytes or an int", _BYTE_KINDS)
         return to_boolean(operand in self._value)
 
     def __contains__(self, item: object) -> bool:
@@ -151,9 +151,18 @@ class _BytesLikeMixin[B: Object]:
     def capitalize(self) -> B:
         return self._rewrap(self._value.capitalize())
 
+    def _fill(self, fillchar: object, selector: str) -> bytes | None:
+        """The optional fill of `center` / `ljust` / `rjust`, as `bytes`.
+
+        CPython takes a `bytearray` fill too; typeshed spells the parameter
+        `bytes` alone, and `bytes(fill)` is `fill` itself for a `bytes`.
+        """
+        fill = a_fill(fillchar, selector, "one byte", (bytes, bytearray))
+        return None if fill is None else bytes(fill)
+
     def center(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
         w = an_int(width, "center", "width")
-        fill = a_fill(fillchar, "center", "one byte", (bytes, bytearray))
+        fill = self._fill(fillchar, "center")
         return self._rewrap(
             self._value.center(w) if fill is None else self._value.center(w, fill)
         )
@@ -263,12 +272,12 @@ class _BytesLikeMixin[B: Object]:
         # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
         # the native join unwrapped and raises the faithful TypeError instead of
         # being silently dropped.
-        pieces: list[Any] = [bytes_like(p, "join") for p in a_collection(parts, "join")]
+        pieces = [bytes_like(p, "join") for p in a_collection(parts, "join")]
         return self._rewrap(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
         w = an_int(width, "ljust", "width")
-        fill = a_fill(fillchar, "ljust", "one byte", (bytes, bytearray))
+        fill = self._fill(fillchar, "ljust")
         return self._rewrap(
             self._value.ljust(w) if fill is None else self._value.ljust(w, fill)
         )
@@ -331,7 +340,7 @@ class _BytesLikeMixin[B: Object]:
 
     def rjust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
         w = an_int(width, "rjust", "width")
-        fill = a_fill(fillchar, "rjust", "one byte", (bytes, bytearray))
+        fill = self._fill(fillchar, "rjust")
         return self._rewrap(
             self._value.rjust(w) if fill is None else self._value.rjust(w, fill)
         )

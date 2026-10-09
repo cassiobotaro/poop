@@ -286,7 +286,9 @@ class Object(metaclass=PoopMeta):
         # spelt as the call this message replaces...
         from poop.types.string import Str, _template_refusal
 
-        spec_value = "" if _is_absent(spec) else text_like(spec, "format", "a str")
+        spec_value = (
+            "" if _is_absent(spec) else text_like(spec, "format", "a str", (str,))
+        )
         target = _faithful(self)
         try:
             return Str(builtins.format(target, spec_value))

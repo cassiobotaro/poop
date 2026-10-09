@@ -248,7 +248,7 @@ class Boolean(_NumericCompareMixin, Object):
 
         # Through `text_like` for the reason `Object.format` does it: a
         # non-`Str` spec answered `format() argument 2 must be str, not int`.
-        raw = "" if _is_absent(spec) else text_like(spec, "format", "a str")
+        raw = "" if _is_absent(spec) else text_like(spec, "format", "a str", (str,))
         try:
             return Str(builtins.format(bool(self), raw))
         except ValueError as exc:

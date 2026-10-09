@@ -45,7 +45,7 @@ class Bytes(
     ) -> Str:
         if _is_absent(sep):
             return Str(self._value.hex())
-        sep_value = text_like(sep, "hex", "a one-character separator")
+        sep_value = text_like(sep, "hex", "a one-character separator", (str, bytes))
         return Str(
             self._value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1))
         )

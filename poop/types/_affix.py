@@ -17,15 +17,13 @@ the sentence told them a tuple is not a tuple — CPython describing its own
 string-specific, so the rule lives here rather than in `string.py`.
 """
 
-from typing import Any
-
 from poop.types._argument import text_like
 from poop.types.tuple import Tuple
 
 
-def affix_needle(
-    affix: object, selector: str, expected: str, kinds: tuple[type, ...]
-) -> Any:
+def affix_needle[T](
+    affix: object, selector: str, expected: str, kinds: tuple[type[T], ...]
+) -> T | tuple[T, ...]:
     """The native argument behind a POOP affix, or POOP's refusal.
 
     A scalar (`Str` / `Bytes` / `ByteArray`) unwraps to its value; a `Tuple` to

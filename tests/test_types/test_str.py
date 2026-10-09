@@ -330,9 +330,10 @@ def test_join() -> None:
 
 
 def test_join_rejects_non_str_parts() -> None:
-    # CPython raises TypeError rather than silently stringifying non-str
-    # parts; POOP must not coerce Int/Bytes via str(p) into the result.
-    with pytest.raises(TypeError, match="expected str instance"):
+    # A refusal rather than a silent `str(p)` — and POOP's sentence, naming
+    # the message, where CPython's `sequence item 0: expected str instance,
+    # int found` describes a position in a Python sequence.
+    with pytest.raises(TypeError, match="#join expects a str, got an int"):
         Str("-").join(List(Int(1), Int(2)))
 
 
