@@ -1,3 +1,4 @@
+import operator
 from operator import index as _index
 from typing import TYPE_CHECKING
 
@@ -105,16 +106,28 @@ class Range(_IterableMixin, Object):
         # Python), instead of leaking the internal `_value` name through dispatch.
         return to_boolean(_searched(item) in self._range())
 
+    # `count` and `index` take the native's own two paths, as `range_count`
+    # and `range_index` do in CPython: an `int` needle is answered by
+    # arithmetic, and any other kind — a `Float`, which `range(3).count(2.0)`
+    # finds, or a foreign value, which it does not — by the equality scan
+    # `operator.countOf` / `operator.indexOf` spell. typeshed types the two
+    # methods over `int` alone, which is the arithmetic half.
     def count(self, value: Object) -> Int:
-        return Int(self._range().count(_searched(value)))
+        needle = _searched(value)
+        if isinstance(needle, int):
+            return Int(self._range().count(needle))
+        return Int(operator.countOf(self._range(), needle))
 
     def index(self, value: Object) -> Int:
         # `self`, not `self._range()`, as the receiver: the name in the message
         # is the one the reader wrote, which is why `at` passes the POOP Range
         # too. CPython answered `range.index(x): x not in range` — the method
         # as a call, with a placeholder where the value belongs.
+        needle = _searched(value)
         try:
-            return Int(self._range().index(_searched(value)))
+            if isinstance(needle, int):
+                return Int(self._range().index(needle))
+            return Int(operator.indexOf(self._range(), needle))
         except ValueError:
             raise no_element_equal_to(self, value) from None
 

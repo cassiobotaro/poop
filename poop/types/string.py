@@ -22,7 +22,7 @@ from poop.types._minmax import _minmax
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import MISSING, NOT_A_COUNT
-from poop.types._unwrap import _is_absent, _opt_str, _unwrap_bool
+from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS, PoopExcMeta
@@ -471,8 +471,8 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
         return Bytes(
             encoded(
                 self._value,
-                _opt_str(encoding, "utf-8"),
-                _opt_str(errors, "strict"),
+                _unwrap(encoding, "utf-8"),
+                _unwrap(errors, "strict"),
             )
         )
 

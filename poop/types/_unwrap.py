@@ -1,6 +1,6 @@
-from typing import Any, TypeIs, overload
+from typing import TypeIs
 
-from poop.types._raw import _faithful
+from poop.types._raw import _faithful, _Wrapped
 from poop.types.boolean import Boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.none import NoneClass
@@ -13,7 +13,7 @@ def _is_absent(value: object) -> TypeIs[NoneClass | None]:
     return value is None or isinstance(value, NoneClass)
 
 
-def _searched(value: object) -> Any:
+def _searched(value: object) -> object:
     """`_faithful`, plus the `Boolean` fold, for a value crossing into raw Python.
 
     `_faithful` reads `_value`, and `Boolean` is the one wrapper in the language
@@ -56,34 +56,19 @@ def _attr_name(name: object) -> str:
     return raw
 
 
-def _unwrap[T](value: object, default: T) -> T:
+def _unwrap[T, D](value: _Wrapped[T] | NoneClass | None, default: D) -> T | D:
+    """Optional-argument twin of `_faithful`.
+
+    An absent argument — Python's `None` and POOP's `none` alike — falls back
+    to `default`; a present one answers its payload, typed by the wrapper the
+    call site holds: a `Str | NoneClass | None` comes back as a `str`.
+    """
     if _is_absent(value):
         return default
-    # Optional-argument twin of `_faithful`: an absent argument falls back to
-    # `default`; a present one unwraps faithfully (raw value reaches Python for
-    # a TypeError rather than leaking `#_value`).
-    result: Any = _faithful(value)
-    return result
+    return _faithful(value)
 
 
 def _unwrap_bool(value: object, default: bool) -> bool:
     if _is_absent(value):
         return default
     return bool(value)
-
-
-# A typed thin alias — a readability shortcut that shares `_unwrap`'s body,
-# so Bytes / ByteArray / Str need not re-declare the same 2-line helper.
-#
-# Note on semantics: it routes through `_unwrap`, which treats Python
-# `None` and POOP `NoneClass` alike as absent — user code that passes
-# `none` is handled identically to the missing-arg case.
-
-
-@overload
-def _opt_str(value: object, default: str) -> str: ...
-@overload
-def _opt_str(value: object, default: None = None) -> str | None: ...
-def _opt_str(value: object, default: str | None = None) -> str | None:
-    """`Str | None` → `str` (with default) or `str | None` (default omitted)."""
-    return _unwrap(value, default)

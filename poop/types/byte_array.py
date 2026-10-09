@@ -147,13 +147,15 @@ class ByteArray(
         return Bytes(self._value.take_bytes(an_int(n, "take_bytes", "n", None)))
 
     def extend(self, iterable: Object) -> NoneClass:
-        raw = _faithful(a_collection(iterable, "extend"))
+        source = a_collection(iterable, "extend")
+        raw = _faithful(source)
         # Bytes are already bytes; anything else is a collection whose every
         # element must be one, and CPython answered for the first that was not
         # with `expected iterable of integers; got: 'str'`.
-        if not isinstance(raw, (bytes, _bytearray, memoryview)):
-            raw = [an_int(byte, "extend", "byte") for byte in raw]
-        self._value.extend(raw)
+        if isinstance(raw, (bytes, _bytearray, memoryview)):
+            self._value.extend(raw)
+        else:
+            self._value.extend(an_int(byte, "extend", "byte") for byte in source)
         return none
 
     def insert(self, i: Index, byte: Int) -> NoneClass:

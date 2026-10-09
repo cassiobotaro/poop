@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
 from poop.types._argument import _opt_stop, a_bound, an_int, text_like
 from poop.types._at import at_index, no_element_equal_to
@@ -88,8 +88,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # `col.includes(x)`. Unwrapped through `_faithful`, as `Bytes.includes`
         # is, so a foreign argument reaches CPython whole rather than leaking
         # the internal `_value` name through dispatch.
-        operand: Any = _faithful(byte)
-        return to_boolean(operand in self._value)
+        return to_boolean(_faithful(byte) in self._value)
 
     def __contains__(self, item: object) -> bool:
         if isinstance(item, Int):
@@ -99,8 +98,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
     def count(self, byte: Int) -> Int:
         # One argument, as CPython's `memoryview.count` takes — unlike the
         # text wrappers', which carry `start`/`end`.
-        operand: Any = _faithful(byte)
-        return Int(self._value.count(operand))
+        return Int(self._value.count(_faithful(byte)))
 
     def index(
         self,
@@ -115,11 +113,10 @@ class MemoryView(_ValueEqMixin, _IterableMixin, Object):
         # the reason it exists: CPython says `memoryview.index(x): x not found`,
         # the message written as a call with a placeholder where the value the
         # reader passed belongs.
-        operand: Any = _faithful(byte)
         try:
             return Int(
                 self._value.index(
-                    operand,
+                    _faithful(byte),
                     a_bound(start, "index", "start") or 0,
                     _opt_stop(a_bound(stop, "index", "stop"), len(self._value)),
                 )

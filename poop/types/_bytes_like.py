@@ -29,7 +29,7 @@ from poop.types._cloak import cloak
 from poop.types._codec import decoded
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
-from poop.types._unwrap import _opt_str, _unwrap_bool
+from poop.types._unwrap import _unwrap, _unwrap_bool
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
@@ -111,8 +111,8 @@ class _BytesLikeMixin[B: Object]:
         return Str(
             decoded(
                 self._value,
-                _opt_str(encoding, "utf-8"),
-                _opt_str(errors, "strict"),
+                _unwrap(encoding, "utf-8"),
+                _unwrap(errors, "strict"),
             )
         )
 

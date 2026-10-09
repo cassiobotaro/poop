@@ -44,8 +44,10 @@ class _NumericCompareMixin:  # noqa: PLW1641 — the numeric rungs hash themselv
 
     ``Int``, ``Float`` and ``Boolean`` order and compare identically once each
     supplies the raw Python number behind ``self`` via ``_order_value``: ``Int``
-    and ``Float`` return ``self._value`` (the default), ``Boolean`` folds to
-    ``1``/``0`` (``bool`` is an ``int`` subclass). ``Complex`` joins only the
+    and ``Float`` answer ``self._value``, ``Boolean`` folds to ``1``/``0``
+    (``bool`` is an ``int`` subclass). The hook is the one thing the mixin
+    needs, so it is the one thing it declares — a ``_value`` slot it does not
+    have would be a phantom ``Boolean`` inherits without carrying. ``Complex`` joins only the
     equality side of the tower — ``1 == (1+0j)`` is ``True`` — so ``__eq__`` /
     ``__ne__`` special-case it before consulting ``_num_value``. A foreign
     operand yields ``NotImplemented`` (ordering) or a plain ``false``/``true``
@@ -53,10 +55,10 @@ class _NumericCompareMixin:  # noqa: PLW1641 — the numeric rungs hash themselv
     """
 
     __slots__ = ()
-    _value: Any  # provided by Int/Float slots; Boolean overrides _order_value
 
-    def _order_value(self) -> Any:
-        return self._value
+    def _order_value(self) -> int | float:
+        """The raw Python number behind ``self``. Supplied by each rung."""
+        raise NotImplementedError
 
     def _order(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
         # circular: boolean imports _numeric_compare

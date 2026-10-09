@@ -330,7 +330,9 @@ class Int(_NumericCompareMixin, Object):
 
     # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
     # across the numeric tower live in _NumericCompareMixin, driven by
-    # _order_value() below (Int's raw value is self._value, the default).
+    # _order_value() below.
+    def _order_value(self) -> int:
+        return self._value
 
     def __hash__(self) -> int:
         return hash(self._value)
