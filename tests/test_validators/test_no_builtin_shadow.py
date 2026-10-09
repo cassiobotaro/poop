@@ -211,6 +211,7 @@ def test_the_reserved_names_are_every_spelling_a_rewriter_claims() -> None:
                 "dict",
                 "set",
                 "frozenset",
+                "frozendict",
                 "range",
                 "slice",
                 "enumerate",

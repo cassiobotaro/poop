@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, cast
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
 from poop.types._alias import builtin_alias
+from poop.types._mapping import _MappingMixin
 from poop.types._message import article
 from poop.types._raw import _faithful
 from poop.types.dict import Dict
@@ -56,7 +57,7 @@ def _poop_kwargs_from(mapping: object) -> object:
     """
     if isinstance(mapping, MappingProxy):
         mapping = mapping._dict
-    if not isinstance(mapping, Dict):
+    if not isinstance(mapping, _MappingMixin):
         return mapping
     return {_faithful(key): value for key, value in mapping._data.items()}
 
@@ -68,7 +69,7 @@ def _poop_dict_merge(*parts: Dict) -> Dict:
     """
     d = Dict()
     for part in parts:
-        if not isinstance(part, Dict):
+        if not isinstance(part, _MappingMixin):
             # The mapping twin of `_collection.spread`, and the same sentence.
             # This one was POOP's own and still wrong in two smaller ways: `**
             # -unpack` carries a stray space, and "dict display" is Python's
@@ -79,6 +80,38 @@ def _poop_dict_merge(*parts: Dict) -> Dict:
             )
         d._data.update(part._data)
     return d
+
+
+def _entries(arg: object, kind: str, kwargs: dict[str, Object]) -> dict[Object, Object]:
+    """The raw entries `dict(arg, **kwargs)` builds from, for either kind.
+
+    `kind` is the constructor the program wrote, for the refusals: `frozendict`
+    is built from exactly what `dict` is, and answers its own name.
+    """
+    data: dict[Object, Object]
+    if arg is None:
+        data = {}
+    elif isinstance(arg, _MappingMixin):
+        data = arg._data.copy()
+    elif isinstance(arg, Iterable):
+        data = {}
+        for item in cast("Iterable[Object]", arg):
+            if isinstance(item, (Tuple, List)):
+                if len(item._items) != 2:
+                    raise MIRRORS["TypeError"](
+                        f"{kind} entry must have exactly 2 elements, got {len(item._items)}"
+                    )
+                data[item._items[0]] = item._items[1]
+            else:
+                raise MIRRORS["TypeError"](
+                    f"cannot use {type(item).__qualname__} as {kind} entry"
+                )
+    else:
+        raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to {kind}")
+    # dict(a=1, b=2) / dict(mapping, a=1): keyword names become Str keys.
+    for k, v in kwargs.items():
+        data[Str(k)] = v
+    return data
 
 
 def _poop_dict_from(*args: object, **kwargs: Object) -> Dict:
@@ -92,30 +125,7 @@ def _poop_dict_from(*args: object, **kwargs: Object) -> Dict:
         # The one constructor that takes them: `dict(a=1)`.
         keywords=True,
     )
-    arg = args[0] if args else None
-    if arg is None:
-        d = Dict()
-    elif isinstance(arg, Dict):
-        d = arg.copy()
-    elif isinstance(arg, Iterable):
-        d = Dict()
-        for item in cast("Iterable[Object]", arg):
-            if isinstance(item, (Tuple, List)):
-                if len(item._items) != 2:
-                    raise MIRRORS["TypeError"](
-                        f"dict entry must have exactly 2 elements, got {len(item._items)}"
-                    )
-                d._data[item._items[0]] = item._items[1]
-            else:
-                raise MIRRORS["TypeError"](
-                    f"cannot use {type(item).__qualname__} as dict entry"
-                )
-    else:
-        raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to dict")
-    # dict(a=1, b=2) / dict(mapping, a=1): keyword names become Str keys.
-    for k, v in kwargs.items():
-        d._data[Str(k)] = v
-    return d
+    return Dict._wrapping(_entries(args[0] if args else None, "dict", kwargs))
 
 
 class _DictRewriter(BuiltinRewriter):

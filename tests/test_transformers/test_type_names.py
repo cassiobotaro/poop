@@ -19,6 +19,7 @@ from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.enumerate import Enumerate
 from poop.types.float import Float
+from poop.types.frozen_dict import FrozenDict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
@@ -52,6 +53,7 @@ def _eval(source: str) -> object:
         ("_poop_dict_cls", Dict),
         ("_poop_set_cls", Set),
         ("_poop_frozenset_cls", FrozenSet),
+        ("_poop_frozendict_cls", FrozenDict),
         ("_poop_bytes_cls", Bytes),
         ("_poop_bytearray_cls", ByteArray),
         ("_poop_memoryview_cls", MemoryView),
@@ -81,6 +83,7 @@ def test_mangled_type_binding_is_in_default_namespace(
         ("tuple", "[1, 2]", "(1, 2)"),
         ("set", "[1, 2]", "{1, 2}"),
         ("frozenset", "[1, 2]", "frozenset({1, 2})"),
+        ("frozendict", '({"a": 1})', "frozendict({'a': 1})"),
         ("int", "(4.9)", "4"),
         ("float", "(2)", "2.0"),
         ("str", "(5)", "5"),
@@ -112,6 +115,7 @@ def test_an_aliased_constructor_answers_what_the_direct_call_answers(
         ("tuple", "[1, 2]", "(1, 2)"),
         ("set", "[1, 2]", "{1, 2}"),
         ("frozenset", "[1, 2]", "frozenset({1, 2})"),
+        ("frozendict", '({"a": 1})', "frozendict({'a': 1})"),
         ("int", "(4.9)", "4"),
         ("float", "(2)", "2.0"),
         ("str", "(5)", "5"),
@@ -226,6 +230,7 @@ def test_an_alias_still_serves_as_a_type_argument_and_a_base() -> None:
         "Dict",
         "Set",
         "FrozenSet",
+        "FrozenDict",
         "Bytes",
         "ByteArray",
         "MemoryView",
@@ -275,6 +280,7 @@ def test_is_instance_lowercase_name_resolves_to_poop_type(
         (Dict, "dict"),
         (Set, "set"),
         (FrozenSet, "frozenset"),
+        (FrozenDict, "frozendict"),
         (Bytes, "bytes"),
         (ByteArray, "bytearray"),
         (MemoryView, "memoryview"),
@@ -300,6 +306,7 @@ def test_type_repr_mimics_python_builtin(type_: type, lowercase: str) -> None:
         (Dict, "dict"),
         (Set, "set"),
         (FrozenSet, "frozenset"),
+        (FrozenDict, "frozendict"),
         (Bytes, "bytes"),
         (ByteArray, "bytearray"),
         (MemoryView, "memoryview"),
@@ -399,6 +406,7 @@ def test_super_init_refuses_over_supply_the_way_the_call_does() -> None:
         ("bytes", "[65]", "b'A'"),
         ("tuple", "[1, 2]", "(1, 2)"),
         ("frozenset", "[1, 2]", "frozenset({1, 2})"),
+        ("frozendict", '({"a": 1})', "frozendict({'a': 1})"),
         # The mutable four are filled by `__init__` in CPython too, which is
         # why they agreed all along — they are here so the row stays pinned.
         ("list", "[1, 2]", "[1, 2]"),

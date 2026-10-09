@@ -6,6 +6,7 @@ import pytest
 from poop.types._selectors import CROSS_LANGUAGE_HINTS, SMALLTALK_SELECTORS, explain
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
+from poop.types.frozen_dict import FrozenDict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
@@ -119,6 +120,7 @@ def test_every_foreign_row_names_a_message_the_receiver_answers() -> None:
         "dict": Dict(),
         "tuple": Tuple(),
         "frozenset": FrozenSet(),
+        "frozendict": FrozenDict(),
     }
     for (kind, _), hint in CROSS_LANGUAGE_HINTS.items():
         match = re.search(r"#(\w+)\?", hint)

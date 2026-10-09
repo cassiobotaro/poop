@@ -19,6 +19,7 @@ from poop.types.bytes import Bytes
 from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.float import Float
+from poop.types.frozen_dict import FrozenDict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
@@ -137,6 +138,16 @@ def _(value: dict) -> Dict:
     for k, v in value.items():
         d.at_put(to_poop(k), to_poop(v))
     return d
+
+
+@to_python.register
+def _(obj: FrozenDict) -> frozendict[Any, Any]:
+    return frozendict({to_python(k): to_python(v) for k, v in obj._data.items()})
+
+
+@to_poop.register
+def _(value: frozendict) -> FrozenDict:
+    return FrozenDict._wrapping({to_poop(k): to_poop(v) for k, v in value.items()})
 
 
 @to_python.register

@@ -25,6 +25,7 @@ from poop.transformers.ellipsis import EllipsisTransformer
 from poop.transformers.enumerate import EnumerateTransformer
 from poop.transformers.exception import ExceptionTransformer
 from poop.transformers.float import FloatTransformer
+from poop.transformers.frozen_dict import FrozenDictTransformer
 from poop.transformers.frozen_set import FrozenSetTransformer
 from poop.transformers.int import IntTransformer
 from poop.transformers.list import ListTransformer
@@ -69,6 +70,9 @@ _TRANSFORMER_CLASSES: list[type[BaseTransformer]] = [
     ListTransformer,
     TupleTransformer,
     DictTransformer,
+    # After DictTransformer: its `frozendict(a, **b)` fold reuses the dict
+    # merge helpers, and every `{...}` literal is already the dict's.
+    FrozenDictTransformer,
     SetTransformer,
     FrozenSetTransformer,
     ExceptionTransformer,

@@ -77,6 +77,10 @@ CROSS_LANGUAGE_HINTS: dict[tuple[str, str], str] = {
     ("frozenset", "remove"): "did you mean to use a set?",
     ("frozenset", "discard"): "did you mean to use a set?",
     ("frozenset", "update"): "did you mean to use a set?",
+    # frozendict — CPython's one row, plus `at_put`, the message `no_subscript`
+    # names for `d[k] = v` and so the one a POOP program sends first.
+    ("frozendict", "update"): "did you mean to use a dict?",
+    ("frozendict", "at_put"): "did you mean to use a dict?",
 }
 
 

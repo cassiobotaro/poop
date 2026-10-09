@@ -5,6 +5,7 @@ from poop.types.bytes import Bytes
 from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.float import Float
+from poop.types.frozen_dict import FrozenDict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
@@ -201,3 +202,15 @@ def test_to_poop_wraps_complex() -> None:
     result = to_poop(complex(1, 2))
     assert isinstance(result, Complex)
     assert result._value == complex(1, 2)
+
+
+def test_to_python_frozen_dict() -> None:
+    result = to_python(FrozenDict._wrapping({Str("a"): Int(1)}))
+    assert result == frozendict({"a": 1})
+    assert isinstance(result, frozendict)
+
+
+def test_to_poop_frozendict() -> None:
+    result = to_poop(frozendict({"a": 1}))
+    assert isinstance(result, FrozenDict)
+    assert result.at(Str("a")) == Int(1)

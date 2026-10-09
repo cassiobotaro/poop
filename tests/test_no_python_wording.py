@@ -28,6 +28,7 @@ from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
+from poop.types.frozen_dict import FrozenDict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
@@ -459,6 +460,7 @@ def _receivers() -> dict[str, object]:
             "dict": mapping,
             "set": Set(Int(1)),
             "frozenset": FrozenSet(Int(1)),
+            "frozendict": FrozenDict._wrapping({Str("a"): Int(1)}),
             "range": Range(Int(0), Int(3)),
             "slice": Slice(Int(0), Int(2)),
             "none": none,
