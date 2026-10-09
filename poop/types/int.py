@@ -14,7 +14,7 @@ from poop.types._numeric_compare import (
 )
 from poop.types._pow import reflected_pow
 from poop.types._raw import _faithful
-from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC
+from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC, NotIntegral
 from poop.types._unwrap import _is_absent, _unwrap_bool
 from poop.types.boolean import Boolean, true
 from poop.types.complex import Complex
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 
-def _integral_value(other: object) -> Any:
+def _integral_value(other: object) -> int | NotIntegral:
     """Raw int behind an Int/Boolean operand, else the ``NOT_INTEGRAL`` sentinel.
 
     Bitwise and shift operators accept only integral operands: ``Int`` and
@@ -253,10 +253,11 @@ class Int(_NumericCompareMixin, Object):
         v = _num_value(other)
         if v is NOT_NUMERIC:
             return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
-        q, r = divmod(self._value, v)
-        if isinstance(other, Float):
-            return Tuple(Float(q), Float(r))
-        return Tuple(Int(q), Int(r))
+        # A `float` operand answers floats, as CPython's `divmod(7, 2.0)` does;
+        # the `int` operand — an `Int`, or a `Boolean` folded to 1/0 — ints.
+        if isinstance(v, float):
+            return Tuple(*map(Float, divmod(self._value, v)))
+        return Tuple(*map(Int, divmod(self._value, v)))
 
     def divmod(self, other: object) -> Tuple:
         result = self.__divmod__(other)

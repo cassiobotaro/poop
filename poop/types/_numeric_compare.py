@@ -14,7 +14,7 @@ import operator
 from typing import TYPE_CHECKING, Any
 
 from poop.types._cloak import cloak
-from poop.types._sentinel import NOT_NUMERIC
+from poop.types._sentinel import NOT_NUMERIC, NotNumeric
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
 
-def _num_value(other: object) -> Any:
+def _num_value(other: object) -> int | float | NotNumeric:
     # circular: boolean imports _numeric_compare
     from poop.types.boolean import Boolean  # noqa: PLC0415
 

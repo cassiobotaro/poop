@@ -40,5 +40,12 @@ NOT_A_COUNT: Final = Sentinel.NOT_A_COUNT
 NOT_NUMERIC: Final = Sentinel.NOT_NUMERIC
 NOT_INTEGRAL: Final = Sentinel.NOT_INTEGRAL
 
-# The type of a parameter that may be left out: `block: Block | Missing = MISSING`.
+# The members as types, so a helper that answers one says so in its signature
+# and a type checker narrows the fall-through on `is`: a parameter that may be
+# left out is `block: Block | Missing = MISSING`, and `_repeat_count` answers
+# `int | NotACount`, so the `*` after `if count is NOT_A_COUNT` sees an `int`.
 type Missing = Literal[Sentinel.MISSING]
+type Unpeeked = Literal[Sentinel.UNPEEKED]
+type NotACount = Literal[Sentinel.NOT_A_COUNT]
+type NotNumeric = Literal[Sentinel.NOT_NUMERIC]
+type NotIntegral = Literal[Sentinel.NOT_INTEGRAL]

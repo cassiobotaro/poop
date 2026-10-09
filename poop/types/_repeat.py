@@ -1,11 +1,12 @@
-from typing import Any
+import operator
+from typing import SupportsIndex
 
 from poop.types._raw import _faithful
-from poop.types._sentinel import NOT_A_COUNT
+from poop.types._sentinel import NOT_A_COUNT, NotACount
 from poop.types.boolean import Boolean
 
 
-def _repeat_count(other: object) -> Any:
+def _repeat_count(other: object) -> int | NotACount:
     """Repeat count for sequence multiplication, or `NOT_A_COUNT`.
 
     ``bool`` is an ``int`` subclass — ``"ab" * True == "ab"`` — but a POOP
@@ -38,6 +39,7 @@ def _repeat_count(other: object) -> Any:
     raw = _faithful(other)
     # `__index__`, not `isinstance(raw, int)`: CPython repeats a sequence by
     # anything with an index, and POOP's own `Index` rung is exactly that.
-    if isinstance(raw, int) or hasattr(raw, "__index__"):
-        return raw
+    # `operator.index` is the same question with an `int` for an answer.
+    if isinstance(raw, SupportsIndex):
+        return operator.index(raw)
     return NOT_A_COUNT
