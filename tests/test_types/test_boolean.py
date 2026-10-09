@@ -8,6 +8,7 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
+from poop.types.object import MessageNotUnderstood
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
@@ -390,6 +391,20 @@ def test_boolean_answers_the_index_protocol() -> None:
 # the int-side messages
 
 
+def test_bit_invert_is_refused_with_cpythons_advice() -> None:
+    # `~True` is deprecated in 3.15 and removed in 3.16: "usually not what you
+    # expect from negating a bool". The delegation answered -2 in silence and
+    # would have kept doing so after the removal, so it is refused instead,
+    # with the warning's two alternatives.
+    with pytest.raises(MessageNotUnderstood) as info:
+        true.bit_invert()  # ty: ignore[unresolved-attribute]
+    assert str(info.value) == (
+        "bool does not understand #bit_invert — did you mean #not_? "
+        "the bitwise inversion is the int's — send #bit_invert to int(flag)"
+    )
+    assert Int(1).bit_invert() == Int(-2)
+
+
 def test_the_int_side_messages_answer_what_cpython_answers() -> None:
     # `bool` computes like an `int` in CPython, and every validator naming a
     # numeric substitute (`no_abs` → `x.abs()`, `no_bin` → `x.bin()`, …) left
@@ -397,7 +412,6 @@ def test_the_int_side_messages_answer_what_cpython_answers() -> None:
     assert true.abs() == Int(1)
     assert true.bit_length() == Int(1)
     assert false.bit_count() == Int(0)
-    assert true.bit_invert() == Int(-2)
     assert true.negated() == Int(-1)
     assert true.divmod(Int(2)) == Tuple(Int(0), Int(1))
     assert true.pow(Int(2)) == Int(1)

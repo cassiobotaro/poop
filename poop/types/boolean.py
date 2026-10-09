@@ -138,8 +138,12 @@ class Boolean(_NumericCompareMixin, Object):
     def bit_count(self) -> Int:
         return self._as_int().bit_count()
 
-    def bit_invert(self) -> Int:
-        return self._as_int().bit_invert()
+    # No `bit_invert`: Python 3.15 deprecates `~True` for removal in 3.16 —
+    # "this returns the bitwise inversion of the underlying int object and is
+    # usually not what you expect from negating a bool" — and POOP has no
+    # warnings channel, so the refusal lands now, carrying CPython's own
+    # advice through the hint table in `_selectors.py`: `#not_`, or
+    # `#bit_invert` sent to `int(flag)`.
 
     def negated(self) -> Int:
         return self._as_int().negated()

@@ -81,6 +81,14 @@ CROSS_LANGUAGE_HINTS: dict[tuple[str, str], str] = {
     # names for `d[k] = v` and so the one a POOP program sends first.
     ("frozendict", "update"): "did you mean to use a dict?",
     ("frozendict", "at_put"): "did you mean to use a dict?",
+    # bool — `~True` is deprecated in 3.15 and removed in 3.16; this is the
+    # warning's advice ("use the 'not' operator for boolean negation or
+    # ~int(x) if you really want the bitwise inversion of the underlying
+    # int") in POOP's vocabulary.
+    ("bool", "bit_invert"): (
+        "did you mean #not_? the bitwise inversion is the int's — "
+        "send #bit_invert to int(flag)"
+    ),
 }
 
 
