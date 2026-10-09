@@ -90,8 +90,8 @@ def test_a_buffered_none_is_not_read_as_an_empty_buffer() -> None:
 
 
 def test_a_dict_item_iterator_wraps_a_buffered_pair() -> None:
-    # It re-wraps raw (k, v) pairs, and must do it after the buffer — a peeked
-    # pair delivered raw would be a naked Python tuple in user code.
+    # It re-wraps raw (k, v) pairs on the way into the buffer — a peeked pair
+    # delivered raw would be a naked Python tuple in user code.
     d = Dict()
     d._data[Str("a")] = Int(1)
     it = d.items().iter()

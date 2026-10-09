@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
 
-class _Cursor[T: Object](_PeekMixin, _IterableMixin[T], Object):
+class _Cursor[T: Object](_PeekMixin[T], _IterableMixin[T], Object):
     """What every one-shot iterator and lazy view answers alike.
 
     `_IteratorBase` and `_LazyView` restated all of it: the `name=` class
@@ -99,11 +99,11 @@ class _IteratorBase[T: Object](_Cursor[T]):
             # views keep `_PeekMixin`'s default: they cannot name it.
             cls._iterating = iterating or name.split("_", 1)[0]
 
-    def __init__(self, iterable: Iterable[Any]) -> None:
-        self._iter: Iterator[Any] = iter(iterable)
-        self._peeked: Any = UNPEEKED
+    def __init__(self, iterable: Iterable[T]) -> None:
+        self._iter: Iterator[T] = iter(iterable)
+        self._peeked = UNPEEKED
 
-    def _materialize(self) -> Iterator[Any]:
+    def _materialize(self) -> Iterator[T]:
         return self._iter
 
 
@@ -122,7 +122,7 @@ class _LazyView[T: Object](_Cursor[T]):
 
     def __init__(self) -> None:
         self._iter: Iterator[T] | None = None
-        self._peeked: Any = UNPEEKED
+        self._peeked = UNPEEKED
 
     def _generate(self) -> Iterator[T]:
         raise NotImplementedError

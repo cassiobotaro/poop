@@ -23,11 +23,11 @@ that can answer it structurally (`ListIterator`, `RangeIterator`, `StrIterator`)
 one.
 """
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar, overload
 
 from poop.types._cloak import cloak
 from poop.types._mutated import reword_if_native
-from poop.types._sentinel import MISSING, UNPEEKED, Missing
+from poop.types._sentinel import MISSING, UNPEEKED, Missing, Unpeeked
 from poop.types.boolean import false, true
 from poop.types.exceptions import MIRRORS
 
@@ -35,12 +35,20 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from poop.types.boolean import Boolean
+    from poop.types.object import Object
 
 
-class _PeekMixin:
-    """`has_next` / `next` over an iterator that can be looked ahead by one."""
+class _PeekMixin[T: Object]:
+    """`has_next` / `next` over an iterator that can be looked ahead by one.
+
+    Generic over the element the iterator yields, which is also what the
+    buffer holds: a concrete iterator hands `_materialize` an iterator of
+    its own element, wrapping on the way in where the raw one differs — the
+    dict item iterators, whose raw iterator yields `(k, v)` pairs.
+    """
 
     __slots__ = ("_peeked",)
+    _peeked: T | Unpeeked
 
     # What the mutation refusal calls the collection being walked. `_mutated`
     # exists so that refusal names its receiver (`dict changed while it was
@@ -52,19 +60,9 @@ class _PeekMixin:
     # mutated collection is the one behind them, and they cannot name it.
     _iterating: ClassVar[str] = "the collection"
 
-    def _materialize(self) -> Iterator[Any]:
+    def _materialize(self) -> Iterator[T]:
         """The underlying Python iterator. Supplied by the concrete class."""
         raise NotImplementedError
-
-    def _wrap(self, value: Any) -> Any:
-        """The POOP value behind a raw one from the iterator.
-
-        Identity for almost every iterator. The dict item iterators re-wrap
-        their `(k, v)` pairs as `Tuple`s, and they must do it *after* the
-        buffer rather than instead of `next`, or a peeked pair would be
-        delivered raw.
-        """
-        return value
 
     def _exhausted(self) -> Exception:
         return MIRRORS["StopIteration"](
@@ -72,8 +70,8 @@ class _PeekMixin:
             "send #next with a default, or ask #has_next"
         )
 
-    def _pull(self) -> Any:
-        """The next raw element, with CPython's mutation sentence reworded.
+    def _pull(self) -> T:
+        """The next element, with CPython's mutation sentence reworded.
 
         The one place `has_next`, `next` and `__next__` pull from. A dict
         mutated mid-walk answered `dictionary changed size during iteration`
@@ -94,16 +92,21 @@ class _PeekMixin:
                 return false
         return true
 
-    def _buffered(self) -> Any:
-        value = self._peeked
-        self._peeked = UNPEEKED
-        return self._wrap(value)
+    def _buffered(self) -> T | Unpeeked:
+        """What `has_next` parked, if anything — and the buffer emptied either way."""
+        value, self._peeked = self._peeked, UNPEEKED
+        return value
 
-    def next[D](self, default: D | Missing = MISSING) -> Any:
-        if self._peeked is not UNPEEKED:
-            return self._buffered()
+    @overload
+    def next(self) -> T: ...
+    @overload
+    def next[D](self, default: D) -> T | D: ...
+    def next[D](self, default: D | Missing = MISSING) -> T | D:
+        buffered = self._buffered()
+        if buffered is not UNPEEKED:
+            return buffered
         try:
-            value = self._pull()
+            return self._pull()
         except StopIteration:
             if default is not MISSING:
                 return default
@@ -113,14 +116,14 @@ class _PeekMixin:
             # a word naming the CPython protocol that drives `for`, the loop
             # POOP forbids, with nothing to say what went wrong.
             raise self._exhausted() from None
-        return self._wrap(value)
 
-    def __next__(self) -> Any:
+    def __next__(self) -> T:
         # Every iteration path goes through the buffer, or a peeked element
         # would be skipped by the `do`/`map`/`filter` that came after the ask.
-        if self._peeked is not UNPEEKED:
-            return self._buffered()
-        return self._wrap(self._pull())
+        buffered = self._buffered()
+        if buffered is not UNPEEKED:
+            return buffered
+        return self._pull()
 
 
 # Cloaked as `object`, the root's own spelling: these methods are inherited by
