@@ -121,6 +121,7 @@ def test_every_foreign_row_names_a_message_the_receiver_answers() -> None:
         "tuple": Tuple(),
         "frozenset": FrozenSet(),
         "frozendict": FrozenDict(),
+        "bool": true,
     }
     for (kind, _), hint in CROSS_LANGUAGE_HINTS.items():
         match = re.search(r"#(\w+)\?", hint)
