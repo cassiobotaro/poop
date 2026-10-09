@@ -79,36 +79,6 @@ sentences, a `NameError` whose `.name` is in `builtins` but not in
 allow-list, not from a table — the table is what fell behind for `:explain`
 once already.
 
-### 4. `does not understand` learns 3.15's cross-language hints
-
-3.15's `AttributeError` carries a table of names programmers bring from other
-languages (`traceback._CROSS_LANGUAGE_HINTS`): `[1].push(4)` → `Did you mean
-'.append'?`, `"a".toUpperCase()` → `'.upper'`, `{}.put("a", 1)` → `Use d[k] =
-v.`, `(1, 2).append(4)` → `Did you mean to use a 'list' object?`, and
-`frozenset.add` / `frozendict.update` → the mutable twin. POOP never sees that
-table: `__getattr__` on a wrapper routes to `explain` in
-`poop/types/_selectors.py`, whose only vocabulary table is Smalltalk's, so all
-four examples above answer `try :methods to list its messages`. The table is
-private to CPython and must not be imported; its *shape* is the one
-`SMALLTALK_SELECTORS` already has.
-
-**Fix.** A second table beside `SMALLTALK_SELECTORS`, keyed by selector and
-receiver, with POOP's own substitutes where CPython's would name a banned
-construct — `put` → `#at_put` (CPython says `d[k] = v`, which `no_subscript`
-refuses), `contains` → `#includes` (CPython says `x in list`, which `no_in`
-refuses). The immutable-receiver rows (`tuple.append`, `frozenset.add`,
-`frozendict.update` once item 1 lands) read `tuple is immutable — did you mean
-a list?`, which is a *kind* of hint `explain` has no shape for yet. Keep the
-difflib pass after both tables, as now. Pin each row the way `SMALLTALK_SELECTORS`
-is pinned.
-
-Also from 3.15, and the same function: the nested-attribute hint (`Did you
-mean '.inner.area' instead of '.area'?`), one level deep, through
-`inspect.getattr_static` so no descriptor runs — the completer in
-`poop/repl.py` already uses that call for the same reason. Worth taking only
-if it costs no new table: it is a second `dir()` pass over the receiver's
-public attributes.
-
 ### 7. `Boolean.bit_invert` keeps a behaviour CPython is removing
 
 3.15 deprecates `~True` for removal in 3.16, with the warning: "This returns
