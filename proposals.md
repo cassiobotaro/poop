@@ -109,22 +109,6 @@ mean '.inner.area' instead of '.area'?`), one level deep, through
 if it costs no new table: it is a second `dir()` pass over the receiver's
 public attributes.
 
-### 5. `ByteArray.take_bytes` — the one 3.15 method on a type POOP mirrors
-
-3.15 adds `bytearray.take_bytes(n=None, /)`: returns the first `n` bytes (all
-of them by default) as `bytes` and removes them from the receiver, without a
-copy — the replacement for `bytes(buf)` followed by `buf.clear()`.
-`ByteArray` mirrors `bytearray` message for message
-(`INFECTIONS.md` calls it a "half-pair" whenever one side is missing), and
-`bytearray(b"ab").take_bytes()` currently answers `does not understand`.
-
-**Fix.** `ByteArray.take_bytes(n=None)` answering a `Bytes`; `n` through
-`an_int`, so a wrong type reads `#take_bytes's n must be an int, got a str`.
-It is a mutator *with* a return value, so it returns the `Bytes`, not `none`
-— the "void-returning mutators answer `none`" rule does not apply. The other
-3.15 method-level changes on mirrored types need nothing: `bytes.replace`
-gained `count` as a keyword, which `_BytesLikeMixin.replace` already takes.
-
 ### 6. `Int` answers the `math.integer` messages
 
 PEP 791 moves the integer functions out of `math` into a new module,
