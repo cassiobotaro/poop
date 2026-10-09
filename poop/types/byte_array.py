@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from poop.types._index import Index
+    from poop.types.bytes import Bytes
     from poop.types.none import NoneClass
 
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
@@ -129,6 +130,21 @@ class ByteArray(
 
     def copy(self) -> ByteArray:
         return ByteArray(self._value)
+
+    def take_bytes(self, n: Int | NoneClass | None = None) -> Bytes:
+        """The first `n` bytes as a `Bytes`, removed from the receiver.
+
+        Python 3.15's `bytearray.take_bytes`: all of them by default, so
+        `buf.take_bytes()` replaces `bytes(buf)` followed by `buf.clear()`.
+        A negative `n` counts from the end, as a slice bound does, and one
+        past the size is CPython's own `IndexError` — it names no construct
+        POOP forbids. A mutator with an answer, so it returns the bytes
+        rather than `none`.
+        """
+        # circular: bytes imports byte_array
+        from poop.types.bytes import Bytes  # noqa: PLC0415
+
+        return Bytes(self._value.take_bytes(an_int(n, "take_bytes", "n", None)))
 
     def extend(self, iterable: Object) -> NoneClass:
         raw = _faithful(a_collection(iterable, "extend"))

@@ -236,6 +236,36 @@ def test_clear_returns_none() -> None:
     assert ba.clear() is none
 
 
+def test_take_bytes_removes_what_it_answers() -> None:
+    ba = ByteArray(bytearray(b"abcdef"))
+    assert ba.take_bytes(Int(2)) == Bytes(b"ab")
+    assert ba == ByteArray(bytearray(b"cdef"))
+
+
+def test_take_bytes_takes_everything_by_default() -> None:
+    # `buf.take_bytes()` is 3.15's spelling of `bytes(buf)` + `buf.clear()`.
+    ba = ByteArray(bytearray(b"hi"))
+    assert ba.take_bytes() == Bytes(b"hi")
+    assert ba.len() == Int(0)
+    assert ba.take_bytes(none) == Bytes(b"")
+
+
+def test_take_bytes_negative_counts_from_the_end() -> None:
+    ba = ByteArray(bytearray(b"abc"))
+    assert ba.take_bytes(Int(-1)) == Bytes(b"ab")
+    assert ba == ByteArray(bytearray(b"c"))
+
+
+def test_take_bytes_past_the_size_is_an_index_error() -> None:
+    with pytest.raises(IndexError, match="can't take 5 bytes outside size 2"):
+        ByteArray(bytearray(b"ab")).take_bytes(Int(5))
+
+
+def test_take_bytes_refuses_a_non_int() -> None:
+    with pytest.raises(TypeError, match="#take_bytes's n must be an int, got a str"):
+        ByteArray(bytearray(b"ab")).take_bytes(Str("x"))  # ty: ignore[invalid-argument-type]
+
+
 def test_copy_returns_new_bytearray() -> None:
     ba = ByteArray(bytearray(b"hi"))
     c = ba.copy()
