@@ -51,7 +51,7 @@ def _poop_kwargs_from(mapping: object) -> object:
     raw, so `f(**{1: 2})` still answers `keywords must be strings` — true, and
     now about a key the program actually wrote. A non-mapping argument is
     returned untouched for the same reason, so `f(**5)` answers CPython's own
-    `argument after ** must be a mapping, not int`. Values stay POOP objects;
+    `Value after ** must be a mapping, not int`. Values stay POOP objects;
     a `**kw` parameter on the other side re-wraps them into a `Dict`.
     """
     if isinstance(mapping, MappingProxy):

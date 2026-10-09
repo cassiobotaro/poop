@@ -151,7 +151,7 @@ def test_raise_carries_a_kwargs_splat(capsys: pytest.CaptureFixture[str]) -> Non
     ("splat", "expected"),
     [
         ("{1: 2}", "keywords must be strings"),
-        ("5", "argument after ** must be a mapping, not int"),
+        ("5", "Value after ** must be a mapping, not int"),
     ],
     ids=["non_str_key", "non_mapping"],
 )
