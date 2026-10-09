@@ -109,26 +109,6 @@ mean '.inner.area' instead of '.area'?`), one level deep, through
 if it costs no new table: it is a second `dir()` pass over the receiver's
 public attributes.
 
-### 6. `Int` answers the `math.integer` messages
-
-PEP 791 moves the integer functions out of `math` into a new module,
-`math.integer`: `isqrt`, `gcd`, `lcm`, `factorial`, `comb`, `perm`. POOP
-mirrors no module — `no_import`'s message is the sentence — but these were
-split out of `math` precisely because their only receiver is an integer, and
-Smalltalk's `Integer` answers `gcd:`, `lcm:`, `factorial` and `sqrtFloor` as
-messages. `Int` already answers `ceil`, `floor`, `trunc`, `round`, which are
-`math` functions CPython exposes as dunders; the six here are the ones it does
-not.
-
-**Decide:** all six, or the four Smalltalk has (`isqrt`, `gcd`, `lcm`,
-`factorial`), leaving `comb`/`perm` out as combinatorics rather than integer
-arithmetic. Arguments go through `an_int`; a negative receiver for `isqrt` /
-`factorial` answers POOP's sentence, not `math.integer`'s. The float
-counterpart is the same decision one type over: 3.15 adds `math.isnormal`,
-`issubnormal`, `fmax`, `fmin`, `signbit`; `Float` already has `max`/`min`,
-and `signbit`/`is_normal` are the two Smalltalk `Float` also answers (`sign`,
-`isFinite`).
-
 ### 7. `Boolean.bit_invert` keeps a behaviour CPython is removing
 
 3.15 deprecates `~True` for removal in 3.16, with the warning: "This returns
