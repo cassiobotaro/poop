@@ -17,29 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 8. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 1. `frozendict` is a builtin now, and POOP has no `FrozenDict`
-
-PEP 814 adds `frozendict` to the builtins: immutable, hashable when its
-contents are, not a `dict` subclass, insertion-ordered but order-blind for
-`==`. `INFECTIONS.md` opens with "every basic type has a POOP equivalent" and
-lists `frozenset` → `FrozenSet`; `frozendict` is now the half-pair. Today
-`frozendict({"a": 1})` answers `NameError: name 'frozendict' is not defined`
-(the allow-list in `poop/executor.py` withholds it), which is correct and
-teaches nothing.
-
-**Fix.** A `FrozenDict` wrapper (`poop/types/frozen_dict.py`) and a
-`FrozenDictTransformer` rewriting `frozendict(...)` the way
-`FrozenSetTransformer` rewrites `frozenset(...)`. `RESERVED_NAMES` is derived
-from the rewriters, so `no_builtin_shadow` reserves the name without a second
-list. It is the `Dict` read surface (`at`, `get`, `keys`, `values`, `items`,
-`len`, `includes`, `do`, `map`, …) without `at_put`/`update`/`pop`/`clear`,
-answers `hash`, and `|` with a `Dict` or another `FrozenDict` answers a
-`FrozenDict`, as CPython does. The dict views (`DictKeys`, `DictItems`) should
-accept it on the set-algebra side like any other collection. Decide and write
-down its relation to `MappingProxy`: a proxy is a live read-only *view* of a
-`Dict`, a `FrozenDict` is a *value* — both exist in CPython, and the catalog
-should say why POOP keeps both rather than folding one into the other.
-
 ### 2. `sentinel` is a builtin now — wrap it, or refuse it with a substitute
 
 PEP 661 adds `sentinel("MISSING")`: a unique object whose `repr` is its name
