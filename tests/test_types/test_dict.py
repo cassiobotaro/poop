@@ -440,7 +440,7 @@ def test_ior_mutates_in_place() -> None:
 def test_or_with_non_dict_returns_notimplemented() -> None:
     d = _dict_with([(1, 10)])
     with pytest.raises(TypeError):
-        _ = d | "not a dict"  # ty: ignore[unsupported-operator]
+        _ = d | "not a dict"
 
 
 def test_setdefault_without_default_uses_none() -> None:

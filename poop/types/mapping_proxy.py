@@ -13,6 +13,7 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from poop.types._mapping import _MappingMixin
     from poop.types.boolean import Boolean
     from poop.types.dict import Dict
     from poop.types.dict_items import DictItems
@@ -23,12 +24,12 @@ if TYPE_CHECKING:
 
 @final
 class MappingProxy(_IterableMixin, Object):
-    """Read-only view over a Dict. Mirrors types.MappingProxyType."""
+    """Read-only view over a mapping. Mirrors types.MappingProxyType."""
 
     __slots__ = ("_dict",)
     __hash__ = None  # type: ignore[assignment]
 
-    def __init__(self, dict_: Dict) -> None:
+    def __init__(self, dict_: _MappingMixin) -> None:
         self._dict = dict_
 
     def at(self, key: Object) -> Object:
@@ -73,16 +74,18 @@ class MappingProxy(_IterableMixin, Object):
     def __contains__(self, item: object) -> bool:
         return item in self._dict
 
-    def copy(self) -> Dict:
+    def copy(self) -> _MappingMixin:
+        # `copy` is the one read message the mixin leaves to each class: a
+        # `Dict` copies, a `FrozenDict` answers itself, as in CPython.
         return self._dict.copy()
 
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, MappingProxy):
             return to_boolean(self._dict == other._dict)
-        # circular: dict imports mapping_proxy
-        from poop.types.dict import Dict  # noqa: PLC0415
+        # circular: _mapping imports mapping_proxy
+        from poop.types._mapping import _MappingMixin  # noqa: PLC0415
 
-        if isinstance(other, Dict):
+        if isinstance(other, _MappingMixin):
             return to_boolean(self._dict == other)
         return false
 
@@ -93,12 +96,12 @@ class MappingProxy(_IterableMixin, Object):
         operand, so `proxy | 5` answered `int does not understand #_data` — a
         POOP internal — where CPython answers `unsupported operand type(s)`.
         """
-        # circular: dict imports mapping_proxy
-        from poop.types.dict import Dict  # noqa: PLC0415
+        # circular: _mapping imports mapping_proxy
+        from poop.types._mapping import _MappingMixin  # noqa: PLC0415
 
         if isinstance(other, MappingProxy):
             return other._dict._data
-        if isinstance(other, Dict):
+        if isinstance(other, _MappingMixin):
             return other._data
         return None
 

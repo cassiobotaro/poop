@@ -14,8 +14,8 @@ from poop.types.set import Set
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from poop.types._mapping import _MappingMixin
     from poop.types.boolean import Boolean
-    from poop.types.dict import Dict
 
 
 def _elements(other: object) -> set[Object]:
@@ -93,8 +93,8 @@ class _DictView(_IterableMixin, Object):
             # class_name() reads type(x).__name__ — answer the CPython name.
             cloak(cls, name)
 
-    def __init__(self, dict_: Dict) -> None:
-        self._dict: Dict = dict_
+    def __init__(self, dict_: _MappingMixin) -> None:
+        self._dict: _MappingMixin = dict_
 
     def len(self) -> Int:
         return Int(len(self._dict))
