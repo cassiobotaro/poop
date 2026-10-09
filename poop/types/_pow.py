@@ -19,7 +19,7 @@ from typing import Any
 from poop.types._unwrap import _is_absent
 
 
-def reflected_pow(receiver: Any, other: Any, modulus: Any) -> Any:
+def reflected_pow(receiver: object, other: object, modulus: object) -> Any:
     """`other.__rpow__(receiver)`, or `NotImplemented` when there is no route.
 
     `modulus` is guarded rather than forwarded: the three-argument form has no

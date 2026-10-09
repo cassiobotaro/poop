@@ -25,7 +25,7 @@ def _elements(other: object, selector: str) -> Iterable[Object]:
     return cast("Iterable[Object]", a_collection(other, selector))
 
 
-def probed(obj: Any) -> Any:
+def probed(obj: object) -> object:
     """`obj` as something a set can be *asked* about.
 
     A `Set` is unhashable, so `s.includes({1})`, `s.discard({1})` and

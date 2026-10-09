@@ -86,7 +86,7 @@ class _DictView(_IterableMixin, Object):
     __slots__ = ("_dict",)
     _repr_name: ClassVar[str] = "dict_view"
 
-    def __init_subclass__(cls, *, name: str | None = None, **kwargs: Any) -> None:
+    def __init_subclass__(cls, *, name: str | None = None, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         if name is not None:
             cls._repr_name = name

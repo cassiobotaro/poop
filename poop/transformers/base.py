@@ -1,5 +1,5 @@
 import ast
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 from poop.types.exceptions import MIRRORS
 
@@ -22,7 +22,7 @@ class BaseTransformer:
     rewriter: ClassVar[type[ast.NodeTransformer]]
     BINDINGS: ClassVar[dict[str, object]] = {}
 
-    def __init_subclass__(cls, **kwargs: Any) -> None:
+    def __init_subclass__(cls, **kwargs: object) -> None:
         # At class definition, as `CollectingValidator` checks its `visitor`:
         # otherwise a transformer that forgot one failed on the first program.
         super().__init_subclass__(**kwargs)
@@ -79,7 +79,7 @@ class BuiltinRewriter(ast.NodeTransformer):
     literal_type: ClassVar[type | None] = None
     literal_target: ClassVar[str]
 
-    def __init_subclass__(cls, **kwargs: Any) -> None:
+    def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         if "names" not in cls.__dict__:
             cls.names = frozenset({cls.builtin})

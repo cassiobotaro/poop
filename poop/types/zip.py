@@ -1,5 +1,5 @@
 import builtins
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from poop.types._argument import a_collection
 from poop.types._iterator_base import _LazyView
@@ -8,10 +8,11 @@ from poop.types.exceptions import MIRRORS
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterable, Iterator
 
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
+    from poop.types.object import Object
 
 
 def _ran_out(position: int) -> Exception:
@@ -22,7 +23,7 @@ def _ran_out(position: int) -> Exception:
     )
 
 
-def _refuse_leftovers(iterators: list[Iterator[Any]]) -> None:
+def _refuse_leftovers(iterators: list[Iterator[Object]]) -> None:
     """Refuse if any collection outlasts the first, which has just ended."""
     for position, iterator in enumerate(iterators[1:], 1):
         try:
@@ -39,16 +40,16 @@ class Zip(_LazyView[Tuple], name="zip"):
     __slots__ = ("_sources", "_strict")
 
     def __init__(
-        self, *sources: Any, strict: Boolean | NoneClass | None = None
+        self, *sources: object, strict: Boolean | NoneClass | None = None
     ) -> None:
         super().__init__()
-        for source in sources:
-            a_collection(source, "zip")
-        self._sources = sources
+        self._sources: tuple[Iterable[Object], ...] = tuple(
+            a_collection(source, "zip") for source in sources
+        )
         self._strict: bool = _unwrap_bool(strict, False)
 
     @staticmethod
-    def _gen(sources: tuple[Any, ...], strict: bool) -> Iterator[Tuple]:
+    def _gen(sources: tuple[Iterable[Object], ...], strict: bool) -> Iterator[Tuple]:
         """The lazy pairing, with the strict mismatch worded as POOP.
 
         CPython answers `zip() argument 2 is shorter than argument 1` — the

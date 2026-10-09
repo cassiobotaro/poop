@@ -32,7 +32,7 @@ from poop.types.none import none
 def _sorted(
     iterable: Any,
     key: Callable[[Any], Any] | NoneClass | None,
-    reverse: Any,
+    reverse: object,
     selector: str = "sorted",
 ) -> Any:
     """Assemble the optional `key` kwarg and call `sorted`.

@@ -104,7 +104,7 @@ class Object(metaclass=PoopMeta):
                 raise AttributeError(name)
             return self.does_not_understand(name)
 
-    def __setattr__(self, name: str, value: Any) -> None:
+    def __setattr__(self, name: str, value: object) -> None:
         """The undotted twin of `set_attr`, refused by the same sentence.
 
         Commit 4ca259f, which gave `del_attr` its refusal, quotes the
@@ -158,7 +158,7 @@ class Object(metaclass=PoopMeta):
         """
         raise MessageNotUnderstood(explain(self, name), name=name, obj=self)
 
-    def if_none(self, block: Callable[[], Any]) -> Object:
+    def if_none(self, block: Callable[[], object]) -> Object:
         from poop.types._argument import a_block
 
         # Guarded on the receiver that does *not* run it: `(5).if_none(5)` said
@@ -311,7 +311,7 @@ class Object(metaclass=PoopMeta):
             # is POOP's to write.
             raise MIRRORS["TypeError"](no_format_spec(type(self).__name__)) from None
 
-    def get_attr(self, name: Str, *default: Any) -> Any:
+    def get_attr(self, name: Str, *default: object) -> Any:
         from poop.types.block import _as_block  # circular: block imports Object
 
         # Guarded before the default is consulted: a forbidden name is refused,
@@ -323,7 +323,7 @@ class Object(metaclass=PoopMeta):
 
         return to_boolean(hasattr(self, _checked_name(symbol)))
 
-    def set_attr(self, name: Str, value: Any) -> NoneClass:
+    def set_attr(self, name: Str, value: object) -> NoneClass:
         from poop.types.none import none
 
         # Outside the `try`: `_checked_name`'s own refusals are AttributeErrors

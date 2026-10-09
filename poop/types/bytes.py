@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import an_int, text_like
@@ -33,8 +33,10 @@ class Bytes(
     def __init__(self, value: bytes | Bytes) -> None:
         self._value = value._value if isinstance(value, Bytes) else value
 
-    def _rewrap(self, raw: Any) -> Bytes:
-        return Bytes(raw)
+    def _rewrap(self, raw: bytes | bytearray) -> Bytes:
+        # `bytes(raw)` is `raw` itself for a `bytes` — which is all this
+        # receiver's payload ever answers — and the copy a `bytearray` needs.
+        return Bytes(bytes(raw))
 
     def hex(
         self,

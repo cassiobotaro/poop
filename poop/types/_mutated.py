@@ -11,8 +11,6 @@ since `RuntimeError.raise_(...)` names it — so a native one reaching an
 iteration site came from CPython.
 """
 
-from typing import Any
-
 from poop.types.exceptions import MIRRORS, PoopExcMeta
 
 
@@ -32,6 +30,6 @@ def reword_if_native(exc: RuntimeError, label: str) -> Exception:
     )
 
 
-def iterating(receiver: Any) -> str:
+def iterating(receiver: object) -> str:
     """The label for a receiver being iterated — its own cloaked name."""
     return type(receiver).__name__

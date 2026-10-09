@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import a_collection, an_int, text_like
@@ -55,7 +55,7 @@ class ByteArray(
         else:
             self._value = _bytearray(value)
 
-    def _rewrap(self, raw: Any) -> ByteArray:
+    def _rewrap(self, raw: bytes | bytearray) -> ByteArray:
         return ByteArray(raw)
 
     def at_put(self, index: Index, byte: Int) -> ByteArray:

@@ -33,7 +33,7 @@ def no_arguments(
         raise MIRRORS["TypeError"](f"{cls.__name__}() takes no arguments")
 
 
-def a_class(value: Any, selector: str) -> Any:
+def a_class(value: object, selector: str) -> Any:
     """`value` when it can stand for a class, else POOP's refusal.
 
     `no_isinstance` bans `isinstance(x, T)` and names `x.is_instance(T)`, and
@@ -48,7 +48,7 @@ def a_class(value: Any, selector: str) -> Any:
     )
 
 
-def a_bound(value: Any, selector: str, role: str) -> Any:
+def a_bound(value: object, selector: str, role: str) -> Any:
     """The raw `start`/`end` behind `value`, or POOP's refusal.
 
     The `start` / `end` of `find`, `index`, `count`, `startswith` and their
@@ -67,7 +67,7 @@ def a_bound(value: Any, selector: str, role: str) -> Any:
 
 
 def text_like(
-    value: Any,
+    value: object,
     selector: str,
     expected: str,
     kinds: tuple[type, ...] = (str, bytes, bytearray),
@@ -141,7 +141,7 @@ def a_needle(
     )
 
 
-def a_fill(value: Any, selector: str, expected: str, kinds: tuple[type, ...]) -> Any:
+def a_fill(value: object, selector: str, expected: str, kinds: tuple[type, ...]) -> Any:
     """The optional fill of `center` / `ljust` / `rjust`, or POOP's refusal.
 
     `None` when the fill is absent. CPython words a wrong fill three ways, none
@@ -165,7 +165,7 @@ def a_fill(value: Any, selector: str, expected: str, kinds: tuple[type, ...]) ->
     return raw
 
 
-def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
+def bytes_like(value: object, selector: str, *, optional: bool = False) -> Any:
     """The raw bytes behind an argument, or POOP's refusal.
 
     The byte twins of everything `text_like` already guards on `Str`. CPython
@@ -190,7 +190,7 @@ def bytes_like(value: Any, selector: str, *, optional: bool = False) -> Any:
 
 
 def a_block(
-    value: Any, selector: str, role: str = "a block", param: str = "item"
+    value: object, selector: str, role: str = "a block", param: str = "item"
 ) -> Any:
     """`value`, or a refusal naming the message and the argument it wanted.
 
@@ -229,7 +229,7 @@ def a_block(
     )
 
 
-def a_key(value: Any, selector: str) -> Any:
+def a_key(value: object, selector: str) -> Any:
     """The optional `key` of `sorted` / `sort` / `min` / `max`, or a refusal.
 
     Absent by default, unlike every other block slot, so it cannot go through
@@ -249,7 +249,7 @@ def a_key(value: Any, selector: str) -> Any:
     )
 
 
-def byte_order(value: Any, selector: str) -> str:
+def byte_order(value: object, selector: str) -> str:
     """`"big"` / `"little"`, or POOP's refusal.
 
     `to_bytes` and `from_bytes` handed the argument to CPython, which answered
@@ -271,7 +271,7 @@ def byte_order(value: Any, selector: str) -> str:
     raise MIRRORS["ValueError"](f"byte order must be 'big' or 'little', got {raw!r}")
 
 
-def max_split(value: Any, selector: str) -> int:
+def max_split(value: object, selector: str) -> int:
     """The raw `maxsplit` of `split` / `rsplit`, or POOP's refusal.
 
     CPython answered `'str' object cannot be interpreted as an integer` — no
@@ -282,7 +282,7 @@ def max_split(value: Any, selector: str) -> int:
     return an_int(value, selector, "maxsplit", -1)
 
 
-def an_int(value: Any, selector: str, role: str, default: Any = MISSING) -> Any:
+def an_int(value: object, selector: str, role: str, default: Any = MISSING) -> Any:
     """The raw integer behind `value`, or POOP's refusal.
 
     `a_bound` for the integers that are not positions: a width, a length, a
@@ -307,7 +307,7 @@ def an_int(value: Any, selector: str, role: str, default: Any = MISSING) -> Any:
     )
 
 
-def a_collection(value: Any, selector: str) -> Any:
+def a_collection(value: object, selector: str) -> Any:
     """`value` when it can be walked, else POOP's refusal.
 
     `zip`, the set algebra, `join`, `extend`, `update` and `fromkeys` take
@@ -323,7 +323,7 @@ def a_collection(value: Any, selector: str) -> Any:
     )
 
 
-def a_pair(value: Any, selector: str) -> Any:
+def a_pair(value: object, selector: str) -> Any:
     """One entry of a collection of key/value pairs, or POOP's refusal.
 
     `d.update([1])` passes `a_collection` — it was handed one — and CPython
@@ -338,7 +338,7 @@ def a_pair(value: Any, selector: str) -> Any:
     )
 
 
-def byte_source(value: Any, selector: str) -> Any:
+def byte_source(value: object, selector: str) -> Any:
     """What `from_bytes` reads its bytes from, or POOP's refusal.
 
     `bytes_like` for a message that also takes any iterable of ints, as
@@ -357,7 +357,7 @@ def byte_source(value: Any, selector: str) -> Any:
     return bytes_like(value, selector)
 
 
-def _opt_stop(bound: Any, end: int) -> int:
+def _opt_stop(bound: int | None, end: int) -> int:
     """`bound`, or the whole length when it was absent.
 
     `list.index` — unlike `str.index` — takes no `None` bound, so a missing

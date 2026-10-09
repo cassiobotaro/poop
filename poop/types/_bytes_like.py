@@ -62,7 +62,7 @@ class _BytesLikeMixin[B: Object]:
 
     _value: bytes | bytearray
 
-    def _rewrap(self, raw: Any) -> B:
+    def _rewrap(self, raw: bytes | bytearray) -> B:
         """`raw` as the receiver's own builtin kind.
 
         The builtin's, not `type(self)`: CPython answers `bytes` from a method

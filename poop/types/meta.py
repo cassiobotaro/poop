@@ -17,7 +17,7 @@ from poop.types._message import article
 from poop.types._selectors import explain, is_dunder, is_message, not_understood
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sized
 
     from poop.types.boolean import Boolean
     from poop.types.int import Int
@@ -296,7 +296,7 @@ _PROTOCOL_SLOTS: dict[str, tuple[type, str]] = {
 }
 
 
-def _adapted(slot: str, method: Any) -> Any:
+def _adapted(slot: str, method: Callable[..., object]) -> Callable[..., object]:
     """`method` with its POOP answer unwrapped for CPython's protocol.
 
     Wrapping happens where the class is built, so the wrappers in
@@ -307,7 +307,7 @@ def _adapted(slot: str, method: Any) -> Any:
     native, role = _PROTOCOL_SLOTS[slot]
 
     @wraps(method)
-    def answer(self: Any, *args: Any, **kwargs: Any) -> Any:
+    def answer(self: object, *args: object, **kwargs: object) -> Any:
         value = method(self, *args, **kwargs)
         # A native answer short-circuits, which is both the common case (every
         # wrapper in `poop/types/` is written in Python) and what keeps this
@@ -393,7 +393,7 @@ def _class_operator(selector: str, *, reflected: bool) -> Any:
     return refuse
 
 
-def _length_message(self: Any) -> Any:
+def _length_message(self: Sized) -> Int:
     """`len` for a class that declared `__len__` and no message to ask with."""
     from poop.types.int import Int
 
@@ -420,9 +420,9 @@ class PoopMeta(type):
         mcls,
         name: str,
         bases: tuple[type, ...],
-        namespace: dict[str, Any],
+        namespace: dict[str, object],
         /,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> Any:
         """Build the class, adapting the protocol slots it declares.
 
@@ -535,7 +535,7 @@ class PoopMeta(type):
         _refuse_native(cls, "mro", "superclass")
 
     @class_side_refusal
-    def raise_(cls, *args: Any, **kwargs: Any) -> Never:
+    def raise_(cls, *args: object, **kwargs: object) -> Never:
         """Refuse `raise_` on a class that is not an error.
 
         The message itself lives on `PoopExcMeta`, so every mirror and every
@@ -656,7 +656,7 @@ class PoopMeta(type):
                 _refuse_instance_side(cls, name)
             return value
 
-    def __setattr__(cls, name: str, value: Any) -> None:
+    def __setattr__(cls, name: str, value: object) -> None:
         """The undotted twin of `set_attr`, refused on the same terms.
 
         Commit 385f48b closed one spelling of this and says what for:
@@ -793,13 +793,13 @@ class PoopMeta(type):
     # first given these for, which its first pass measured short by nine.
 
     @class_side
-    def is_identical(cls, other: Any) -> Boolean:
+    def is_identical(cls, other: object) -> Boolean:
         from poop.types.boolean import to_boolean
 
         return to_boolean(cls is other)
 
     @class_side
-    def not_identical(cls, other: Any) -> Boolean:
+    def not_identical(cls, other: object) -> Boolean:
         from poop.types.boolean import to_boolean
 
         return to_boolean(cls is not other)
@@ -817,7 +817,7 @@ class PoopMeta(type):
         return to_boolean(isinstance(cls, a_class(unalias(type_), "is_instance")))
 
     @class_side
-    def if_none(cls, block: Callable[[], Any]) -> Any:
+    def if_none(cls, block: Callable[[], object]) -> Any:
         # A class is never none, so this answers the class unchanged — and the
         # block it never runs is still checked, for the reason `Object.if_none`
         # gives: otherwise the report depends on the value in hand.
@@ -827,7 +827,7 @@ class PoopMeta(type):
         return cls
 
     @class_side
-    def if_not_none(cls, block: Callable[[Any], Any]) -> Any:
+    def if_not_none(cls, block: Callable[[PoopMeta], object]) -> Any:
         from poop.types._argument import a_block
 
         return a_block(block, "if_not_none")(cls)
@@ -839,7 +839,7 @@ class PoopMeta(type):
         return cls
 
     @class_side
-    def get_attr(cls, name: Str, *default: Any) -> Any:
+    def get_attr(cls, name: Str, *default: object) -> Any:
         from poop.types.block import _as_block
 
         # Same wrap as the instance side: a class-side method answered a raw
@@ -853,7 +853,7 @@ class PoopMeta(type):
             return cls.does_not_understand(raw)
 
     @class_side
-    def set_attr(cls, name: Str, value: Any) -> NoneClass:
+    def set_attr(cls, name: Str, value: object) -> NoneClass:
         from poop.types.none import none
 
         # Name first, receiver second: a forbidden *name* is refused by name

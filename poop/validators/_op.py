@@ -1,5 +1,5 @@
 import ast
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.validators.base import CollectingValidator, ErrorCollector, collect_errors
 
@@ -21,7 +21,7 @@ class _Visitor(ErrorCollector):
         self,
         node_type: type[OpNode],
         messages: Mapping[type[ast.AST], str],
-        allow: Callable[[Any], bool],
+        allow: Callable[[OpNode], bool],
     ) -> None:
         super().__init__()
         self._node_type = node_type
@@ -54,7 +54,7 @@ class OpValidator(CollectingValidator):
     node_type: ClassVar[type[OpNode]]
     messages: ClassVar[Mapping[type[ast.AST], str]]
 
-    def allow(self, node: Any) -> bool:
+    def allow(self, node: OpNode) -> bool:
         return False
 
     def collect(self, tree: ast.Module) -> list[ValidationError]:

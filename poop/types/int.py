@@ -399,7 +399,7 @@ class Int(_NumericCompareMixin, Object):
             math.lcm(self._value, *(an_int(o, "lcm", "operand") for o in others))
         )
 
-    def _draws(self, k: Any, selector: str) -> int:
+    def _draws(self, k: object, selector: str) -> int:
         count = an_int(k, selector, "k")
         if count < 0:
             raise MIRRORS["ValueError"](

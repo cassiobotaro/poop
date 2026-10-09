@@ -40,7 +40,7 @@ class PoopExcMeta(PoopMeta):
     """Matches a POOP exception class against the native one it mirrors."""
 
     @class_side
-    def raise_(cls, *args: Any, **kwargs: Any) -> Never:
+    def raise_(cls, *args: object, **kwargs: object) -> Never:
         """Signal this error — POOP's substitute for the `raise` statement.
 
         A real class-side message, not a parse-time rewrite. `RaiseTransformer`

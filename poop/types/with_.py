@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
 from poop.types.block import _require_block
@@ -11,7 +11,18 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _protocol(cm: Any) -> tuple[Any, Any]:
+def _slot(kind: type, slot: str, verb: str) -> Callable[..., object]:
+    """`kind`'s `slot`, or the refusal naming the half of the protocol it lacks."""
+    method = getattr(kind, slot, None)
+    if method is None:
+        raise MIRRORS["TypeError"](
+            f"{kind.__name__} does not support the context manager "
+            f"protocol — it cannot be {verb}"
+        )
+    return method
+
+
+def _protocol(cm: object) -> tuple[Callable[..., object], Callable[..., object]]:
     """`cm`'s `__enter__` / `__exit__`, or CPython's own refusal.
 
     Both slots are resolved before either is called, as Python's `with` does.
@@ -25,13 +36,8 @@ def _protocol(cm: Any) -> tuple[Any, Any]:
     the protocol is missing instead, since a diagnostic that spells
     `__exit__` names the very construct `no_dunder_attribute` bans.
     """
-    for slot, verb in (("__enter__", "entered"), ("__exit__", "exited")):
-        if not hasattr(type(cm), slot):
-            raise MIRRORS["TypeError"](
-                f"{type(cm).__name__} does not support the context manager "
-                f"protocol — it cannot be {verb}"
-            )
-    return type(cm).__enter__, type(cm).__exit__
+    kind = type(cm)
+    return _slot(kind, "__enter__", "entered"), _slot(kind, "__exit__", "exited")
 
 
 class With(Object):
@@ -62,12 +68,12 @@ class With(Object):
 
     __slots__ = ("_cm_block",)
 
-    def __init__(self, cm_block: Callable[[], Any]) -> None:
-        self._cm_block: Callable[[], Any] | None = _require_block(
+    def __init__(self, cm_block: Callable[[], object]) -> None:
+        self._cm_block: Callable[[], object] | None = _require_block(
             cm_block, "the manager argument", "write With(lambda: …)"
         )
 
-    def do(self, body_block: Callable[[Any], object]) -> object:
+    def do(self, body_block: Callable[[object], object]) -> object:
         # First, before the manager block runs. `_require_block` exists for
         # this construct above all — its docstring names `With` as "the one
         # worth optimizing for" — and `__init__` applied it to the manager

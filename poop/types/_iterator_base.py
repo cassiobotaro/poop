@@ -22,7 +22,7 @@ class _Cursor[T](_PeekMixin, _IterableMixin, Object):
     __slots__ = ("_iter",)
     _repr_name: ClassVar[str] = "iterator"
 
-    def __init_subclass__(cls, *, name: str | None = None, **kwargs: Any) -> None:
+    def __init_subclass__(cls, *, name: str | None = None, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         if name is not None:
             cls._repr_name = name
@@ -85,7 +85,7 @@ class _IteratorBase[T](_Cursor[T]):
         *,
         name: str | None = None,
         iterating: str | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         super().__init_subclass__(name=name, **kwargs)
         if name is not None:

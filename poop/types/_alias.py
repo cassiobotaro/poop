@@ -85,7 +85,7 @@ def _own_init(cls: type, alias: type) -> bool:
     return any("__init__" in klass.__dict__ for klass in above)
 
 
-def _fill(made: Any, converted: Any, slots: tuple[str, ...]) -> None:
+def _fill(made: object, converted: object, slots: tuple[str, ...]) -> None:
     """Write `converted`'s payload into `made`, slot by slot.
 
     Copied, not shared: a converter is free to answer a value it was handed
@@ -97,12 +97,12 @@ def _fill(made: Any, converted: Any, slots: tuple[str, ...]) -> None:
 
 
 def _endow(
-    made: Any,
+    made: object,
     cls: type,
-    alias: Any,
+    alias: type,
     slots: tuple[str, ...],
-    args: tuple[Any, ...],
-    kwargs: dict[str, Any],
+    args: tuple[object, ...],
+    kwargs: dict[str, object],
 ) -> None:
     """Give `made` a payload before its own `__init__` runs.
 
@@ -159,9 +159,9 @@ class _AliasMeta(PoopMeta):
         mcls,
         name: str,
         bases: tuple[type, ...],
-        namespace: dict[str, Any],
+        namespace: dict[str, object],
         /,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> Any:
         """Build the class, refusing a base that has no value to give.
 
@@ -183,7 +183,7 @@ class _AliasMeta(PoopMeta):
                 )
         return super().__new__(mcls, name, bases, namespace, **kwargs)
 
-    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
+    def __call__(cls, *args: object, **kwargs: object) -> Any:
         if "_converter" in cls.__dict__:
             return cls.__dict__["_converter"](*args, **kwargs)
         alias = _alias_in(cls)
@@ -222,7 +222,7 @@ def _alias_in(cls: type) -> Any:
     )
 
 
-def wrapped_instance(cls: Any, *args: Any) -> Any:
+def wrapped_instance(cls: type, *args: object) -> Any:
     """An instance of `cls`, built by the wrapper's constructor.
 
     For POOP's own class-side constructors — `bytes.fromhex`, `int.from_bytes`,
@@ -251,7 +251,7 @@ def wrapped_instance(cls: Any, *args: Any) -> Any:
     return made
 
 
-def unalias(type_: Any) -> Any:
+def unalias(type_: object) -> Any:
     """The wrapper behind a bare builtin name, for a type-*argument* position.
 
     `(5).is_instance(int)` hands over whatever `int` resolves to, which is now
@@ -265,7 +265,7 @@ def unalias(type_: Any) -> Any:
     return getattr(type_, "__dict__", {}).get("_wrapped", type_)
 
 
-def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> type:
+def builtin_alias(wrapped: type, converter: Callable[..., object], name: str) -> type:
     """The object a bare `<name>` binds to: `wrapped` that calls `converter`.
 
     A subclass rather than a wholly separate class, so a program subclassing
@@ -278,7 +278,7 @@ def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> ty
     # Fixed when the alias is built, so read off the wrapper's MRO once.
     slots = _payload_slots(wrapped)
 
-    def __init__(self: Any, *args: Any, **kwargs: Any) -> None:
+    def __init__(self: object, *args: object, **kwargs: object) -> None:
         """`super().__init__(...)` from a subclass — and it converts.
 
         The third and last home of the convert/build gap. `no_dunder_attribute`
@@ -299,7 +299,7 @@ def builtin_alias(wrapped: type, converter: Callable[..., Any], name: str) -> ty
         # The wrapper's empty value, when it has one: `list()`, `dict()`,
         # `set()`, `tuple()` — the families whose `__new__` hands `__init__`
         # something to fill. An `int` has no empty, and CPython says so too.
-        empty: Any = wrapped()
+        empty: object = wrapped()
     except TypeError:
         empty = None
 

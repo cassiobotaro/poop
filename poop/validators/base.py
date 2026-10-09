@@ -1,5 +1,5 @@
 import ast
-from typing import Any, ClassVar, Protocol
+from typing import ClassVar, Protocol
 
 from poop.errors import ValidationError
 
@@ -47,7 +47,7 @@ class CollectingValidator:
 
     visitor: ClassVar[type[ErrorCollector]]
 
-    def __init_subclass__(cls, **kwargs: Any) -> None:
+    def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         if cls.collect is CollectingValidator.collect and not hasattr(cls, "visitor"):
             raise TypeError(

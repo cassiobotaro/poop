@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, final
 
 from poop.types._argument import a_block, no_arguments
 from poop.types._cloak import cloak
@@ -25,7 +25,7 @@ class NoneClass(Object):
     def if_none[T](self, block: Callable[[], T]) -> T:
         return a_block(block, "if_none", param="")()
 
-    def if_not_none(self, block: Callable[[Object], Any]) -> NoneClass:
+    def if_not_none(self, block: Callable[[Object], object]) -> NoneClass:
         a_block(block, "if_not_none")
         return self
 

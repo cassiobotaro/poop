@@ -205,7 +205,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin, Object):
     def iter(self) -> StrIterator:
         return StrIterator(self)
 
-    def sum(self, start: Any = None) -> Any:
+    def sum(self, start: object = None) -> Any:
         # The one mixin message a string must not answer: `sum("ab")` is a
         # TypeError in CPython, and adding the characters up would answer the
         # string back, which is `join`'s job.

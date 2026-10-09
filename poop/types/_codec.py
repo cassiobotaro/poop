@@ -18,8 +18,6 @@ three codec-independent error handlers — `backslashreplace`, `namereplace` and
 `surrogateescape` are the same machinery reached by another name.
 """
 
-from typing import Any
-
 from poop.types._argument import text_like
 from poop.types.exceptions import MIRRORS
 
@@ -47,7 +45,7 @@ def _listed(names: tuple[str, ...] | list[str]) -> str:
     return f"{', '.join(names[:-1])} and {names[-1]}"
 
 
-def encoding_name(name: Any, selector: str) -> str:
+def encoding_name(name: object, selector: str) -> str:
     """The canonical name behind `name`, or a POOP refusal.
 
     Guarded before the lookup, not after: the table is read by lowercasing the
@@ -69,7 +67,7 @@ def encoding_name(name: Any, selector: str) -> str:
     )
 
 
-def handler_name(name: Any, selector: str) -> str:
+def handler_name(name: object, selector: str) -> str:
     """The error handler behind `name`, or a POOP refusal.
 
     Checked for the same reason as the encoding: `namereplace` and
@@ -111,7 +109,7 @@ def _refusal(exc: UnicodeError, encoding: str, verb: str) -> Exception:
     )
 
 
-def encoded(text: str, encoding: Any, errors: Any) -> bytes:
+def encoded(text: str, encoding: object, errors: object) -> bytes:
     """`text` as bytes, with both arguments and the failure worded by POOP."""
     name = encoding_name(encoding, "encode")
     try:
@@ -120,7 +118,7 @@ def encoded(text: str, encoding: Any, errors: Any) -> bytes:
         raise _refusal(exc, name, "encode") from None
 
 
-def decoded(data: bytes | bytearray, encoding: Any, errors: Any) -> str:
+def decoded(data: bytes | bytearray, encoding: object, errors: object) -> str:
     """`data` as text, with both arguments and the failure worded by POOP."""
     name = encoding_name(encoding, "decode")
     try:

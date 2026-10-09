@@ -22,7 +22,7 @@ def _count(n: int) -> str:
     return f"{n} argument" if n == 1 else f"{n} arguments"
 
 
-def _require_block(value: Any, role: str, hint: str) -> Any:
+def _require_block(value: object, role: str, hint: str) -> Any:
     """`value`, or a refusal naming the argument rather than the call.
 
     Checked at the boundary, where the argument has a name, instead of at the
@@ -42,7 +42,7 @@ def _require_block(value: Any, role: str, hint: str) -> Any:
     return value
 
 
-def _as_block(value: Any) -> Any:
+def _as_block(value: object) -> Any:
     """A raw Python callable answered by `get_attr`, wrapped as a `Block`.
 
     An attribute holding state already answers a POOP object; one holding a
@@ -69,10 +69,10 @@ _BY_KEYWORD = frozenset({Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY
 class Block(Object):
     __slots__ = ("_fn",)
 
-    def __init__(self, fn: Callable[..., Any]) -> None:
+    def __init__(self, fn: Callable[..., object]) -> None:
         self._fn = fn
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+    def __call__(self, *args: object, **kwargs: object) -> Any:
         try:
             return self._fn(*args, **kwargs)
         except TypeError as exc:
@@ -100,7 +100,7 @@ class Block(Object):
                 raise MIRRORS["TypeError"](keyword_fault) from None
             raise MIRRORS["TypeError"](self._arity_message(len(args))) from None
 
-    def __get__(self, instance: Any, owner: type | None = None) -> Any:
+    def __get__(self, instance: object, owner: type | None = None) -> Any:
         """A block found on a *class* binds to the receiver, as a method does.
 
         `set_attr` on a class is sanctioned — it is refused only for POOP's
@@ -157,7 +157,7 @@ class Block(Object):
         return required, None if variadic else len(positional)
 
     def _keyword_message(
-        self, args: tuple[Any, ...], kwargs: dict[str, Any]
+        self, args: tuple[object, ...], kwargs: dict[str, object]
     ) -> str | None:
         """The refusal for a *keyword* failure, or `None` if the count is at fault.
 
@@ -266,7 +266,7 @@ class _MethodBlock(Block):
 
     __slots__ = ()
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+    def __call__(self, *args: object, **kwargs: object) -> Any:
         return self._fn(*args, **kwargs)
 
     # Equality by the pair the bound method wraps — its receiver and its

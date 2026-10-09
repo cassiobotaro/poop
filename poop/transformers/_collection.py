@@ -8,7 +8,7 @@ constructor binding, spreads included — and the converter factories.
 
 import ast
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import call_at
@@ -122,7 +122,7 @@ def make_iterable_from[T](
 
 def make_bytes_from[T: (Bytes, ByteArray)](
     poop_type: type[T],
-    build: Callable[[Any], T],
+    build: Callable[[bytes | bytearray | Iterable[int] | int], T],
     *,
     hint: str,
     copy: bool = False,
