@@ -71,7 +71,7 @@ class Bytes(
     def __add__(self, other: object) -> Bytes:
         # Both byte-likes pass: CPython concatenates `bytes + bytearray` and
         # answers bytes. Anything else -> faithful TypeError, not #_value.
-        if not isinstance(other, Bytes | ByteArray):
+        if not isinstance(other, (Bytes, ByteArray)):
             return NotImplemented
         return Bytes(self._value + other._value)
 

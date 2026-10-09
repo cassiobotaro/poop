@@ -41,7 +41,7 @@ def a_class(value: Any, selector: str) -> Any:
     a tuple of types, or a union` — the builtin it replaces, spelt as the call
     it replaces. `issubclass` said the same about itself.
     """
-    if isinstance(value, type | tuple):
+    if isinstance(value, (type, tuple)):
         return value
     raise MIRRORS["TypeError"](
         f"#{selector} expects a class, got {article(type(value).__name__)}"

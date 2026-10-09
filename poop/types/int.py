@@ -168,7 +168,7 @@ class Int(_NumericCompareMixin, Object):
         from poop.types._bridge import to_poop  # noqa: PLC0415
         from poop.types.float import Float  # noqa: PLC0415
 
-        if not isinstance(other, Int | Float):
+        if not isinstance(other, (Int, Float)):
             return NotImplemented
         # `to_poop` is the raw-to-POOP dispatch: an `int` answer is an `Int`,
         # a `float` one a `Float`, whichever operator produced it.
@@ -202,7 +202,7 @@ class Int(_NumericCompareMixin, Object):
 
         if isinstance(other, Complex):
             return NotImplemented
-        if not isinstance(other, Int | Float):
+        if not isinstance(other, (Int, Float)):
             return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
         if _is_absent(modulus):
             return to_poop(self._value**other._value)

@@ -116,7 +116,7 @@ class ByteArray(
         # circular: bytes imports byte_array
         from poop.types.bytes import Bytes  # noqa: PLC0415
 
-        if not isinstance(other, ByteArray | Bytes):
+        if not isinstance(other, (ByteArray, Bytes)):
             return NotImplemented
         return ByteArray(self._value + other._value)
 

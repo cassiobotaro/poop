@@ -32,7 +32,7 @@ def _num_value(other: object) -> Any:
     # circular: int imports _numeric_compare
     from poop.types.int import Int  # noqa: PLC0415
 
-    if isinstance(other, Int | Float):
+    if isinstance(other, (Int, Float)):
         return other._value
     if isinstance(other, Boolean):
         return 1 if other else 0

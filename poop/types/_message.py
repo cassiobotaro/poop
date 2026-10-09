@@ -130,6 +130,18 @@ def no_format_spec(kind: str) -> str:
     return f"{kind} takes no format spec — only a number, a string or bytes does"
 
 
+def describe_operand(obj: object) -> str:
+    """`an int` for a value, `the class int` for a class.
+
+    An operand that is a class names itself, as a receiver does through
+    `receiver_label`: `type(int)` is the metaclass, and `_AliasMeta` is a
+    word no program can write.
+    """
+    if isinstance(obj, type):
+        return f"the class {obj.__name__}"
+    return article(type(obj).__name__)
+
+
 def binary_refusal(receiver: str, selector: str, operand: str) -> str:
     """POOP's answer when a receiver will not take that operand for `selector`.
 

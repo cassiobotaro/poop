@@ -54,6 +54,9 @@ _FORBIDDEN = {
     "a block as a function": re.compile(r"<lambda>|positional argument"),
     "a message as a call": re.compile(r"\b\w+\(\)|\b\w+\.\w+\("),
     "a banned dunder": re.compile(r"__\w+__"),
+    # The metaclasses, and the union `type.__or__` builds: words no program
+    # can write, which a class-side operator used to answer with.
+    "a POOP internal": re.compile(r"_AliasMeta|PoopMeta|PoopExcMeta|typing\.Union"),
     "a generator": re.compile(r"\bgenerator\b|\byield\b"),
     # CPython's format-spec reports. Nothing in them is a call, a dunder or an
     # operator, so the six patterns above ran over ~17 leaking sites every time
@@ -251,6 +254,11 @@ _OPERANDS = [
     '{"a": 1}.keys()',
     '{"a": 1}.items()',
     '{"a": 1}.values()',
+    # A class is a receiver too — a bare builtin name, a mirror, a user
+    # class — and every operator on one used to name the metaclass.
+    "int",
+    "ValueError",
+    "Object",
 ]
 
 

@@ -67,7 +67,7 @@ def _set_like_elements(other: object) -> set[Object] | None:
     # circular: dict_keys imports _dict_view
     from poop.types.dict_keys import DictKeys  # noqa: PLC0415
 
-    if isinstance(other, DictKeys | DictItems | Set | FrozenSet):
+    if isinstance(other, (DictKeys, DictItems, Set, FrozenSet)):
         return _elements(other)
     return None
 

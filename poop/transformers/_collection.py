@@ -171,7 +171,7 @@ def make_bytes_from[T: (Bytes, ByteArray)](
             return build(b"")
         if not copy and isinstance(arg, poop_type):
             return arg
-        if isinstance(arg, Bytes | Int):
+        if isinstance(arg, (Bytes, Int)):
             return build(arg._value)
         if isinstance(arg, Iterable):
             return build(item._value for item in cast("Iterable[Int]", arg))

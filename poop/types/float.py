@@ -103,7 +103,7 @@ class Float(_NumericCompareMixin, Object):
         Anything else answers `NotImplemented`, so the operand's reflected
         method runs.
         """
-        if not isinstance(other, Int | Float):
+        if not isinstance(other, (Int, Float)):
             return NotImplemented
         return Float(op(self._value, other._value))
 
@@ -128,7 +128,7 @@ class Float(_NumericCompareMixin, Object):
     def __pow__(self, other: object) -> Float | Complex:
         if isinstance(other, Complex):
             return NotImplemented
-        if not isinstance(other, Int | Float):
+        if not isinstance(other, (Int, Float)):
             return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
         # circular: _bridge imports float
         from poop.types._bridge import to_poop  # noqa: PLC0415

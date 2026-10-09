@@ -336,6 +336,63 @@ def _adapted(slot: str, method: Any) -> Any:
     return answer
 
 
+# The binary operators a class can be handed, forward and reflected. A class
+# is a receiver like any other, so `int + 1` must refuse under its own name —
+# left to CPython, `type` composes `unsupported operand type(s) for +:
+# '_AliasMeta' and 'int'`, naming the metaclass, a word no program can write,
+# and `poop_message` rewrote that faithfully into `_AliasMeta does not
+# understand #+ with an int`. `|` is the one `type` answers itself, with a
+# `typing.Union` — a value for annotations, which POOP does not write, and a
+# naked native had it reached a program. It is refused with the rest; the
+# package spells its own runtime unions as tuples.
+_CLASS_SIDE_OPERATORS: dict[str, str] = {
+    "__add__": "+",
+    "__sub__": "-",
+    "__mul__": "*",
+    "__truediv__": "/",
+    "__floordiv__": "//",
+    "__mod__": "%",
+    "__pow__": "**",
+    "__lshift__": "<<",
+    "__rshift__": ">>",
+    "__and__": "&",
+    "__or__": "|",
+    "__xor__": "^",
+    "__matmul__": "@",
+}
+# The ordering comparisons have no reflected dunder of their own: `5 < int`
+# reaches `__gt__` on the class, the same slot `int > 5` does, so the
+# sentence spells the slot it reached.
+_CLASS_SIDE_COMPARISONS: dict[str, str] = {
+    "__lt__": "<",
+    "__le__": "<=",
+    "__gt__": ">",
+    "__ge__": ">=",
+}
+
+
+def _class_operator(selector: str, *, reflected: bool) -> Any:
+    """The slot refusing `selector` with the class as one of the operands."""
+
+    def refuse(cls: type, other: object, *_: object) -> Never:
+        # circular: exceptions imports meta
+        from poop.types._message import describe_operand
+        from poop.types.exceptions import MIRRORS
+
+        if reflected:
+            # `5 + int`: the value is the receiver, the class the operand.
+            receiver = type(other).__name__
+            operand = f"the class {cls.__name__}"
+        else:
+            receiver = cls.__name__
+            operand = describe_operand(other)
+        raise MIRRORS["TypeError"](
+            f"{receiver} does not understand #{selector} with {operand}"
+        )
+
+    return refuse
+
+
 def _length_message(self: Any) -> Any:
     """`len` for a class that declared `__len__` and no message to ask with."""
     from poop.types.int import Int
@@ -863,3 +920,10 @@ class PoopMeta(type):
             if _instance_only(cls, name):
                 _refuse_instance_side(cls, name)
             return cls.does_not_understand(name)
+
+
+for _dunder, _selector in _CLASS_SIDE_OPERATORS.items():
+    setattr(PoopMeta, _dunder, _class_operator(_selector, reflected=False))
+    setattr(PoopMeta, f"__r{_dunder[2:]}", _class_operator(_selector, reflected=True))
+for _dunder, _selector in _CLASS_SIDE_COMPARISONS.items():
+    setattr(PoopMeta, _dunder, _class_operator(_selector, reflected=False))

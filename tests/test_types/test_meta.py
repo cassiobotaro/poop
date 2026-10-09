@@ -796,3 +796,60 @@ def test_a_class_side_message_keeps_its_own_wording(source: str) -> None:
     prelude = "class C(Object):\n    pass\n" if source.startswith("C.") else ""
     with pytest.raises(PoopError, match="answered by every class"):
         Interpreter().run_source(prelude + source + "\n")
+
+
+# the class side refuses every binary operator under its own name
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("int | 5", "int does not understand #| with an int"),
+        ("5 | int", "int does not understand #| with the class int"),
+        # `type.__or__` builds a `typing.Union` here — a value for annotations
+        # POOP does not write, and a naked native had it reached a program.
+        ("int | str", "int does not understand #| with the class str"),
+        (
+            "ValueError | TypeError",
+            "ValueError does not understand #| with the class TypeError",
+        ),
+        ("int + 1", "int does not understand #+ with an int"),
+        ("[1] + list", "list does not understand #+ with the class list"),
+        ('"ab" * str', "str does not understand #* with the class str"),
+        ("int ** 2", "int does not understand #** with an int"),
+        ("int < 5", "int does not understand #< with an int"),
+        # No reflected slot for a comparison: `5 < int` reaches `__gt__` on
+        # the class, as `int > 5` does, and the sentence spells that slot.
+        ("5 < int", "int does not understand #> with an int"),
+        (
+            "class Foo(Object):\n    pass\nFoo | 1",
+            "Foo does not understand #| with an int",
+        ),
+    ],
+    ids=[
+        "or",
+        "reflected_or",
+        "union",
+        "exception_union",
+        "add",
+        "reflected_add",
+        "reflected_mul",
+        "pow",
+        "lt",
+        "reflected_lt",
+        "user_class",
+    ],
+)
+def test_a_class_side_operator_refuses_under_the_class_name(
+    source: str, expected: str
+) -> None:
+    # `type` composed `unsupported operand type(s) for |: '_AliasMeta' and
+    # 'int'`, naming the metaclass — a word no program can write.
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == f"TypeError: {expected}"
+
+
+def test_class_side_equality_is_still_identity() -> None:
+    assert (DEFAULT_NAMESPACE["_poop_int_cls"] == 5) is false
+    assert bool(DEFAULT_NAMESPACE["_poop_int_cls"] != 5) is True
