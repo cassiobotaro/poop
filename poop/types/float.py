@@ -191,10 +191,11 @@ class Float(_NumericCompareMixin, Object):
     __trunc__ = trunc
 
     def round(self, ndigits: Int | NoneClass | None = None) -> Int | Float:
-        # circular: _bridge imports float
-        from poop.types._bridge import to_poop  # noqa: PLC0415
-
-        return to_poop(round(self._value, an_int(ndigits, "round", "ndigits", None)))
+        # An `Int` without `ndigits`, a `Float` with one, as CPython's `round`
+        # answers — branched on the answer rather than on the argument, which
+        # is also what keeps ty from reading the pair as a `Float` alone.
+        raw = round(self._value, an_int(ndigits, "round", "ndigits", None))
+        return Int(raw) if isinstance(raw, int) else Float(raw)
 
     __round__ = round
 
