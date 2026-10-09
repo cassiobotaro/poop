@@ -3,9 +3,10 @@
 `Try.except_(ValueError, handler)` and `ValueError.raise_("msg")` used to take a
 native CPython class, the last raw primitive in POOP's own substitutes for two
 forbidden constructs. `INFECTIONS.md` justified it with "mirroring Python's full
-hierarchy (~100+ classes) is impractical"; Python 3.14 has 71 builtin
+hierarchy (~100+ classes) is impractical"; Python 3.15 has 72 builtin
 exceptions, and a language with no files and no modules cannot reach the
-`OSError` subtree. What it can reach is the table below.
+`OSError` subtree, nor `ImportCycleError`, the one 3.15 added under
+`ImportError`. What it can reach is the table below.
 
 The `Unicode*` family is reachable — `encode`/`decode` can fail on the text
 they are handed — and is deliberately *not* mirrored: `_codec.py` rewords both

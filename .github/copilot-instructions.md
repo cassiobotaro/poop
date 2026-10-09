@@ -1,6 +1,6 @@
 # POOP — Copilot Instructions
 
-POOP (**P**ython **O**bject **O**riented **P**rogramming) is a Python 3.14 interpreter infected by Smalltalk. It takes valid Python syntax and enforces a strict message-passing style by rejecting procedural constructs and rewriting literals/calls at the AST level before execution.
+POOP (**P**ython **O**bject **O**riented **P**rogramming) is a Python 3.15 interpreter infected by Smalltalk. It takes valid Python syntax and enforces a strict message-passing style by rejecting procedural constructs and rewriting literals/calls at the AST level before execution.
 
 ## Commands
 

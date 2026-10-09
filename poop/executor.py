@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 # The only Python builtins user code may reach. `exec` hands a program
 # CPython's entire builtins namespace unless the globals dict already carries
 # one, and POOP covered only the names it bans or rewrites — so `OSError`,
-# `copyright`, `NotImplemented` and 55 of Python's 71 builtin exceptions were
+# `copyright`, `NotImplemented` and 56 of Python's 72 builtin exceptions were
 # naked natives one identifier away, answering `type object 'OSError' has no
 # attribute 'print'` instead of POOP's `does not understand #print`. That
 # contradicted `poop/types/exceptions.py`, which mirrors 16 exceptions *on
@@ -55,7 +55,7 @@ _ALLOWED_BUILTINS: dict[str, object] = {
 # `examples/patterns/interpreter.py` walks a tree, and the depth follows the
 # data.
 #
-# Safe to raise on 3.14, which is worth checking rather than assuming: CPython
+# Safe to raise on 3.15, which is worth checking rather than assuming: CPython
 # guards the C stack separately and answers a catchable `RecursionError`
 # ("Stack overflow (used 8148 kB) while calling a Python object") rather than
 # crashing. So the ceiling moves and the floor underneath it holds.

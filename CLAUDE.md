@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-POOP (Python Object Oriented Programming) is a Python 3.14 interpreter infected by Smalltalk, managed with `uv`.
+POOP (Python Object Oriented Programming) is a Python 3.15 interpreter infected by Smalltalk, managed with `uv`.
 
 ## Commands
 

@@ -4,7 +4,7 @@
 
 # POOP 💩
 
-**POOP** — **P**ython **O**bject **O**riented **P**rogramming. A Python 3.14 interpreter that enforces Smalltalk-style message passing by rejecting `if`/`for`/`print`/`isinstance` and rewriting Python literals (`1`, `"hi"`, `True`, `[…]`, `{…}`) into POOP types where every operation is a message to a receiver.
+**POOP** — **P**ython **O**bject **O**riented **P**rogramming. A Python 3.15 interpreter that enforces Smalltalk-style message passing by rejecting `if`/`for`/`print`/`isinstance` and rewriting Python literals (`1`, `"hi"`, `True`, `[…]`, `{…}`) into POOP types where every operation is a message to a receiver.
 
 POOP is for **educational exploration of message-passing semantics inside the Python ecosystem**, not for production. POOP is not distributed via PyPI by design, and there are no tagged releases; clone and run it locally.
 

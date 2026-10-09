@@ -4,7 +4,7 @@ name = "poop"
 version = "0.0.0"
 description = "Python Object Oriented Programming — a Python interpreter infected by Smalltalk"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.15"
 authors = [
     { name = "Cassio Botaro", email = "cassiobotaro@gmail.com" },
 ]

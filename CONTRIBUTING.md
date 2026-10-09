@@ -8,7 +8,7 @@ By participating, you agree to abide by the [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## Getting started
 
-POOP requires Python 3.14 and [uv](https://docs.astral.sh/uv/).
+POOP requires Python 3.15 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone https://github.com/cassiobotaro/poop.git

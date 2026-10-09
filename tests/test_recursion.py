@@ -51,7 +51,7 @@ def test_the_old_ceiling_is_well_clear() -> None:
 
 
 def test_running_out_is_still_a_catchable_error() -> None:
-    # The floor under the raised ceiling: CPython 3.14 guards the C stack
+    # The floor under the raised ceiling: CPython 3.15 guards the C stack
     # separately and answers a `RecursionError` rather than crashing, which is
     # what makes raising the limit safe rather than a gamble.
     with pytest.raises(ExecutionError, match="RecursionError"):
