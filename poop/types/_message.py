@@ -23,6 +23,7 @@ so a rewording upstream degrades to the old behaviour rather than to a crash.
 upgrade that changes them fails loudly instead of silently regressing.
 """
 
+import builtins
 import re
 
 # A tuple, not the string "aeiou": `"" in "aeiou"` is True, so a nameless type
@@ -141,8 +142,44 @@ def binary_refusal(receiver: str, selector: str, operand: str) -> str:
     return f"{receiver} does not understand #{selector} with {article(operand)}"
 
 
+def withheld_builtin(name: str) -> str | None:
+    """POOP's sentence for a Python builtin the allow-list keeps out, or None.
+
+    `copyright`, `NotImplemented`, `OSError` and the rest answered `name
+    'copyright' is not defined` — the sentence a misspelt variable gets, with
+    nothing to say that POOP *chose* not to offer the name. Python 3.15 made
+    two such names ones a programmer reaches for on purpose (`frozendict` and
+    `sentinel`, both since wrapped), which is when the silence started to
+    cost. Derived from `builtins` minus the allow-list rather than tabulated:
+    the hand-kept topic list in the REPL fell behind once already.
+
+    Only the names a program can reach this way are reworded. A name a
+    validator bans never gets here — `len` is refused at parse time — so the
+    sentence does not point at `:explain`, which would have nothing to say.
+    """
+    # circular: all three import this module, directly or through the types
+    from poop.executor import _ALLOWED_BUILTINS  # noqa: PLC0415
+    from poop.transformers import RESERVED_NAMES  # noqa: PLC0415
+    from poop.types.exceptions import MIRRORS  # noqa: PLC0415
+
+    value = vars(builtins).get(name)
+    if value is None:
+        return None
+    # Allowed, rewritten to a wrapper, or mirrored: a program reaches each of
+    # these, so none is withheld — and `:explain frozendict` must not say so.
+    if name in _ALLOWED_BUILTINS or name in RESERVED_NAMES or name in MIRRORS:
+        return None
+    if isinstance(value, type) and issubclass(value, BaseException):
+        return f"{name!r} is a Python exception POOP does not mirror"
+    return f"{name!r} is a Python builtin POOP does not offer"
+
+
 def poop_message(exc: BaseException) -> str:
     """`str(exc)`, with the two CPython operator shapes reworded."""
+    if isinstance(exc, NameError) and exc.name is not None:
+        withheld = withheld_builtin(exc.name)
+        if withheld is not None:
+            return withheld
     text = str(exc)
     # Both patterns capture (selector, left, right) in that order, which is
     # why one unpacking serves them.

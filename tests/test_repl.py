@@ -629,7 +629,7 @@ def test_meta_methods_does_not_widen_the_builtins_allow_list(repl: Repl) -> None
     # made `OSError` (and every other builtin) reachable for the whole session.
     ns = repl._ns
     repl._meta(":methods 1")
-    with pytest.raises(ExecutionError, match="NameError: name 'OSError'"):
+    with pytest.raises(ExecutionError, match="NameError: 'OSError' is a Python"):
         repl._interpreter.run_source_repl("OSError.print()", ns)
 
 
@@ -663,6 +663,28 @@ def test_meta_explain_unknown_lists_known_constructs(
     out = capsys.readouterr().out
     assert "Known constructs" in out
     assert "if" in out
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("copyright", "'copyright' is a Python builtin POOP does not offer"),
+        ("OSError", "'OSError' is a Python exception POOP does not mirror"),
+    ],
+    ids=["builtin", "exception"],
+)
+def test_meta_explain_a_withheld_builtin_answers_the_executors_sentence(
+    repl: Repl,
+    capsys: pytest.CaptureFixture[str],
+    name: str,
+    expected: str,
+) -> None:
+    # No validator refuses these, so there is no topic — and "no :explain
+    # topic" would send the reader looking for a ban that is not there.
+    repl._meta(f":explain {name}")
+    out = capsys.readouterr().out
+    assert expected in out
+    assert "no :explain topic" not in out
 
 
 def test_meta_explain_unknown_does_not_claim_the_construct_is_allowed(

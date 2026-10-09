@@ -12,7 +12,13 @@ import pytest
 
 from poop.errors import PoopError
 from poop.interpreter import Interpreter
-from poop.types._message import article, binary_refusal, cannot_be_hashed, poop_message
+from poop.types._message import (
+    article,
+    binary_refusal,
+    cannot_be_hashed,
+    poop_message,
+    withheld_builtin,
+)
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
@@ -161,3 +167,61 @@ def test_a_type_error_that_is_not_about_hashing_is_re_raised() -> None:
 
     with pytest.raises(TypeError, match="something else entirely"):
         Odd().hash()
+
+
+# the withheld builtins
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("copyright", "'copyright' is a Python builtin POOP does not offer"),
+        ("NotImplemented", "'NotImplemented' is a Python builtin POOP does not offer"),
+        ("OSError", "'OSError' is a Python exception POOP does not mirror"),
+        # 3.15's one new exception, under the unreachable `ImportError`.
+        (
+            "ImportCycleError",
+            "'ImportCycleError' is a Python exception POOP does not mirror",
+        ),
+    ],
+    ids=["copyright", "NotImplemented", "OSError", "ImportCycleError"],
+)
+def test_a_withheld_builtin_says_poop_chose_not_to_offer_it(
+    name: str, expected: str
+) -> None:
+    assert withheld_builtin(name) == expected
+
+
+@pytest.mark.parametrize(
+    "name", ["super", "banana", "frozendict", "sentinel", "int", "ValueError"]
+)
+def test_only_a_withheld_builtin_is_reworded(name: str) -> None:
+    # An allowed one (`super`) never raises; a misspelt variable is not a
+    # builtin; a rewritten name (`int`, and the two 3.15 wrappers) and a
+    # mirrored exception are reached by every program — so `:explain
+    # frozendict` must not claim POOP withholds it.
+    assert withheld_builtin(name) is None
+
+
+def test_a_name_error_on_a_withheld_builtin_reads_as_a_choice() -> None:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source("copyright.print()")
+    assert info.value.message == (
+        "NameError: 'copyright' is a Python builtin POOP does not offer"
+    )
+
+
+def test_a_name_error_on_a_misspelt_variable_is_untouched() -> None:
+    with pytest.raises(PoopError, match="name 'banana' is not defined"):
+        Interpreter().run_source("banana.print()")
+
+
+def test_the_caught_path_reads_the_same_sentence(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(
+        "Try(lambda: OSError).except_(NameError, lambda e: e.print()).run()"
+    )
+    assert capsys.readouterr().out == (
+        "NameError: 'OSError' is a Python exception POOP does not mirror\n"
+    )

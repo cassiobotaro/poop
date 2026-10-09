@@ -104,8 +104,9 @@ def test_execute_compile_error_becomes_execution_error() -> None:
 def test_a_builtin_poop_does_not_own_is_out_of_reach(name: str) -> None:
     # `exec` hands a program CPython's whole builtins namespace unless the
     # globals dict carries one: `OSError.print()` used to answer a raw
-    # AttributeError from a live Python class.
-    with pytest.raises(ExecutionError, match=f"name '{name}' is not defined"):
+    # AttributeError from a live Python class. The report says POOP withheld
+    # the name, not that it is undefined — see `withheld_builtin`.
+    with pytest.raises(ExecutionError, match=f"NameError: '{name}' is a Python"):
         execute(ast.parse(f"x = {name}"), namespace={})
 
 

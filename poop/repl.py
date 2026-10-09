@@ -16,6 +16,7 @@ from rich.text import Text
 from poop.console import ERR, OUT, in_colour
 from poop.errors import ParseError, PoopError, report
 from poop.executor import confine
+from poop.types._message import withheld_builtin
 from poop.types._selectors import is_message, receiver_label
 from poop.types.boolean import Boolean
 from poop.types.complex import Complex
@@ -384,6 +385,12 @@ class Repl:
             return
         snippet = _explain_snippet(arg, self._explain_calls)
         if snippet is None:
+            # A builtin the allow-list withholds has no topic, since no
+            # validator refuses it — the executor's own sentence is the answer.
+            withheld = withheld_builtin(arg)
+            if withheld is not None:
+                _say(withheld)
+                return
             known = sorted(self._explain_calls | set(_EXPLAIN_SNIPPETS))
             # Not "it may simply be allowed": nothing here checked that, and
             # for a banned construct with no topic the guess is a flat lie.
