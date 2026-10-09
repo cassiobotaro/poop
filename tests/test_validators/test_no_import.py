@@ -30,3 +30,16 @@ def test_message_names_what_is_injected() -> None:
         NoImportValidator().validate(tree)
     assert "already in scope" in str(exc_info.value)
     assert "Try, With" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "source",
+    ["lazy import json", "lazy from os import getcwd"],
+    ids=["lazy_import", "lazy_import_from"],
+)
+def test_lazy_import_is_the_same_ban(source: str) -> None:
+    # Python 3.15's `lazy` (PEP 810) is a flag on the same two nodes, not a
+    # node of its own, so the ban needs no new case — this pins that.
+    tree = ast.parse(source)
+    with pytest.raises(ValidationError, match="import is forbidden"):
+        NoImportValidator().validate(tree)

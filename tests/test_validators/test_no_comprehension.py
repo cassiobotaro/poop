@@ -48,3 +48,21 @@ def test_nested_comprehension_inside_function_is_rejected() -> None:
     tree = ast.parse(source)
     with pytest.raises(ValidationError):
         NoComprehensionValidator().validate(tree)
+
+
+@pytest.mark.parametrize(
+    ("source", "kind"),
+    [
+        ("[*xs for xs in cols]", "list comprehension"),
+        ("{*xs for xs in cols}", "set comprehension"),
+        ("{**d for d in dicts}", "dict comprehension"),
+        ("f(*xs for xs in cols)", "generator expression"),
+    ],
+    ids=["list", "set", "dict", "generator"],
+)
+def test_unpacking_comprehension_is_the_same_ban(source: str, kind: str) -> None:
+    # Python 3.15's unpacking (PEP 798) is a `Starred` element inside the
+    # same four nodes, so the ban needs no new case — this pins that.
+    tree = ast.parse(source)
+    with pytest.raises(ValidationError, match=kind):
+        NoComprehensionValidator().validate(tree)
