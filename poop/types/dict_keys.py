@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, final
 
 from poop.types._argument import a_collection
 from poop.types._dict_view import _elements, _SetLikeView
@@ -9,6 +9,7 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Set as AbstractSet
 
     from poop.types.boolean import Boolean
 
@@ -19,7 +20,7 @@ class DictKeys(_SetLikeView[Object], name="dict_keys"):
 
     __slots__ = ()
 
-    def _own(self) -> Any:
+    def _own(self) -> AbstractSet[Object]:
         return self._dict._data.keys()
 
     def __iter__(self) -> Iterator[Object]:

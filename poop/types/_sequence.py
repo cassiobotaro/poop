@@ -13,7 +13,7 @@ the bodies worth sharing (`index`, `print`) live here as private helpers.
 """
 
 import builtins
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Self
 
 from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import no_element_equal_to
@@ -40,7 +40,10 @@ class _SequenceMixin:
     # note in `_value_eq.py`.
     __slots__ = ()
 
-    _items: Any
+    # The two payloads the mixin reads `len`, `iter`, `in`, `*` and `index`
+    # off. Not `Sequence[Object]`: the ABC declares no `*`, and repeating is
+    # one of the five things done here. Each concrete class narrows its own.
+    _items: list[Object] | tuple[Object, ...]
 
     def _rewrap(self, raw: Iterable[Object]) -> Self:
         """`raw`'s elements as the receiver's own builtin kind."""

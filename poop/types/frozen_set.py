@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object):
     __slots__ = ("_data",)
+    _data: frozenset[Object]
     _eq_attr: ClassVar[str] = "_data"
     _eq_group: ClassVar[str] = "set"
 

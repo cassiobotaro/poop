@@ -1,7 +1,7 @@
 import builtins
 import math
 import operator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, an_int, text_like
@@ -94,7 +94,7 @@ class Float(_NumericCompareMixin, Object):
 
     __abs__ = abs
 
-    def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Float:
+    def _arith(self, other: object, op: Callable[[float, int | float], float]) -> Float:
         """`self op other` against an `Int` or a `Float`.
 
         Anything else answers `NotImplemented`, so the operand's reflected

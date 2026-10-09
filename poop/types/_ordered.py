@@ -12,13 +12,15 @@ anything, in CPython as here.
 """
 
 import operator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._cloak import cloak
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from _typeshed import SupportsRichComparison
 
     from poop.types.boolean import Boolean
 
@@ -40,7 +42,11 @@ class _OrderedMixin:
         group = self._order_group
         return group is not None and group == getattr(other, "_order_group", None)
 
-    def _compare(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
+    def _compare(
+        self,
+        other: object,
+        op: Callable[[SupportsRichComparison, SupportsRichComparison], object],
+    ) -> Boolean:
         if not self._ordered_with(other):
             return NotImplemented
         attr = self._eq_attr

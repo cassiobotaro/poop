@@ -1,6 +1,6 @@
 import operator
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
@@ -13,6 +13,7 @@ from poop.types.set import Set
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Set as AbstractSet
 
     from poop.types._mapping import _MappingMixin
     from poop.types.boolean import Boolean
@@ -55,11 +56,11 @@ def _set_like_elements(other: object) -> set[Object] | None:
     is not one) or a ``Set`` / ``FrozenSet``.
 
     The imports are function-local because every one of those modules imports
-    this one. They are deliberately not the duck-typed ``_set_like`` marker
-    ``_SetAlgebraMixin`` uses: that marker makes ``_other_set`` claim the
-    operand, and a ``Set``/``FrozenSet`` must instead answer ``NotImplemented``
-    so the view's reflected operator runs — CPython's
-    ``frozenset({1}) | {2: 3}.keys()`` is a ``set``, not a ``frozenset``.
+    this one. The test is deliberately not ``_SetAlgebraMixin``'s own
+    ``_other_set``: that one makes a ``Set``/``FrozenSet`` claim the operand,
+    and here they must instead answer ``NotImplemented`` so the view's
+    reflected operator runs — CPython's ``frozenset({1}) | {2: 3}.keys()`` is
+    a ``set``, not a ``frozenset``.
     """
     # circular: dict_items imports _dict_view
     from poop.types.dict_items import DictItems  # noqa: PLC0415
@@ -136,23 +137,35 @@ class _SetLikeView[T: Object](_DictView[T]):
     # as in CPython. `dict_values` is neither, and hashes by identity.
     __hash__ = None  # type: ignore[assignment]
 
-    def _own(self) -> Any:
+    def _own(self) -> AbstractSet[Object]:
         """The receiver's own side, as something a `set` operator accepts."""
         raise NotImplementedError
 
-    def _algebra(self, other: object, op: Callable[[Any, Any], Any]) -> Set:
+    def _algebra(
+        self,
+        other: object,
+        op: Callable[[AbstractSet[Object], AbstractSet[Object]], AbstractSet[Object]],
+    ) -> Set:
         raw = _operand(other)
         if raw is None:
             return NotImplemented
         return Set(*op(self._own(), raw))
 
-    def _reflected(self, other: object, op: Callable[[Any, Any], Any]) -> Set:
+    def _reflected(
+        self,
+        other: object,
+        op: Callable[[AbstractSet[Object], AbstractSet[Object]], AbstractSet[Object]],
+    ) -> Set:
         raw = _operand(other)
         if raw is None:
             return NotImplemented
         return Set(*op(raw, self._own()))
 
-    def _compare(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
+    def _compare(
+        self,
+        other: object,
+        op: Callable[[AbstractSet[Object], AbstractSet[Object]], bool],
+    ) -> Boolean:
         raw = _set_like_elements(other)
         if raw is None:
             return NotImplemented  # foreign operand -> faithful TypeError

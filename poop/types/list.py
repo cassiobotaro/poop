@@ -38,6 +38,7 @@ class List(
     _SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin[Object], Object
 ):
     __slots__ = ("_items",)
+    _items: list[Object]
     _eq_attr: ClassVar[str] = "_items"
     __hash__ = None
 

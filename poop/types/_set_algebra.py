@@ -1,13 +1,15 @@
 import operator
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Self
 
 from poop.types._argument import a_collection
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Set as AbstractSet
 
     from poop.types.boolean import Boolean
+    from poop.types.frozen_set import FrozenSet
     from poop.types.object import Object
 
 
@@ -23,7 +25,7 @@ def _elements(other: object, selector: str) -> Iterable[Object]:
     return a_collection(other, selector)
 
 
-def probed(obj: object) -> object:
+def probed[T](obj: T) -> T | FrozenSet:
     """`obj` as something a set can be *asked* about.
 
     A `Set` is unhashable, so `s.includes({1})`, `s.discard({1})` and
@@ -36,8 +38,8 @@ def probed(obj: object) -> object:
 
     The probe compares and hashes exactly as a stored `FrozenSet` does — both
     read the raw `frozenset` behind `_data` — so a set really held inside a
-    set is found. Recognised through the `_set_like` marker `_other_set` uses,
-    and narrowed to a mutable `set`: a `FrozenSet` is already hashable and is
+    set is found. Recognised the way `_other_set` recognises an operand, and
+    narrowed to a mutable `set`: a `FrozenSet` is already hashable and is
     answered by itself.
     """
     raw = _other_set(obj)
@@ -50,15 +52,16 @@ def probed(obj: object) -> object:
     return obj
 
 
-def _other_set(other: object) -> Any:
+def _other_set(other: object) -> AbstractSet[Object] | None:
     """Return the raw ``set``/``frozenset`` backing a set-like operand.
 
-    Operands are recognised by the duck-typed ``_set_like`` marker rather than
-    ``isinstance(other, Set | FrozenSet)``, which would create the
-    Set <-> FrozenSet import cycle. Returns ``None`` for anything else.
+    Recognised as a ``_SetAlgebraMixin`` — the class both ``Set`` and
+    ``FrozenSet`` inherit the operators from, defined below in this same
+    module, so no import cycle is in play — rather than by the duck-typed
+    marker it used to carry. Returns ``None`` for anything else.
     """
-    if getattr(other, "_set_like", False):
-        return other._data  # ty: ignore[unresolved-attribute]
+    if isinstance(other, _SetAlgebraMixin):
+        return other._data
     return None
 
 
@@ -89,20 +92,29 @@ class _SetAlgebraMixin:
     # note in `_value_eq.py`.
     __slots__ = ()
 
-    _set_like: ClassVar[bool] = True
-    _data: Any
+    # What the operators read: `len` and the set algebra. Each concrete class
+    # narrows the slot to its own builtin — `set[Object]`, `frozenset[Object]`.
+    _data: AbstractSet[Object]
 
     def _rewrap(self, raw: Iterable[Object]) -> Self:
         """`raw`'s elements as the receiver's own builtin kind."""
         raise NotImplementedError
 
-    def _algebra(self, other: object, op: Callable[[Any, Any], Any]) -> Self:
+    def _algebra(
+        self,
+        other: object,
+        op: Callable[[AbstractSet[Object], AbstractSet[Object]], AbstractSet[Object]],
+    ) -> Self:
         raw = _other_set(other)
         if raw is None:
             return NotImplemented
         return self._rewrap(op(self._data, raw))
 
-    def _compare(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
+    def _compare(
+        self,
+        other: object,
+        op: Callable[[AbstractSet[Object], AbstractSet[Object]], bool],
+    ) -> Boolean:
         raw = _other_set(other)
         if raw is None:
             return NotImplemented

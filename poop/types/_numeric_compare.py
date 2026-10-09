@@ -11,7 +11,7 @@ mismatch raises CPython's faithful ``TypeError`` instead of leaking an
 """
 
 import operator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from poop.types._cloak import cloak
 from poop.types._sentinel import NOT_NUMERIC, NotNumeric
@@ -60,7 +60,9 @@ class _NumericCompareMixin:  # noqa: PLW1641 — the numeric rungs hash themselv
         """The raw Python number behind ``self``. Supplied by each rung."""
         raise NotImplementedError
 
-    def _order(self, other: object, op: Callable[[Any, Any], bool]) -> Boolean:
+    def _order(
+        self, other: object, op: Callable[[int | float, int | float], bool]
+    ) -> Boolean:
         # circular: boolean imports _numeric_compare
         from poop.types.boolean import to_boolean  # noqa: PLC0415
 

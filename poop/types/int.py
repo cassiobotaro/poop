@@ -1,7 +1,7 @@
 import builtins
 import math
 import operator
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, an_int, byte_order, byte_source
@@ -157,7 +157,9 @@ class Int(_NumericCompareMixin, Object):
 
     __abs__ = abs
 
-    def _arith(self, other: object, op: Callable[[Any, Any], Any]) -> Int | Float:
+    def _arith(
+        self, other: object, op: Callable[[int, int | float], int | float]
+    ) -> Int | Float:
         """`self op other`, an `Int` beside an `Int` and a `Float` beside a `Float`.
 
         Written once and handed the operator, as `_OrderedMixin._compare` is.

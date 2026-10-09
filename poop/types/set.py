@@ -1,5 +1,5 @@
 import operator
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from poop.types._at import no_element_equal_to, nothing_to_remove
 from poop.types._cloak import cloak
@@ -19,6 +19,7 @@ from poop.types.set_iterator import SetIterator
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+    from collections.abc import Set as AbstractSet
 
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
 
 class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object):
     __slots__ = ("_data",)
+    _data: set[Object]
     _eq_attr: ClassVar[str] = "_data"
     _eq_group: ClassVar[str] = "set"
     __hash__ = None
@@ -124,7 +126,9 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object):
     def iter(self) -> SetIterator:
         return SetIterator(self._data)
 
-    def _inplace(self, other: object, op: Callable[[Any, Any], Any]) -> Self:
+    def _inplace(
+        self, other: object, op: Callable[[set[Object], AbstractSet[Object]], object]
+    ) -> Self:
         raw = _other_set(other)
         if raw is None:
             return NotImplemented

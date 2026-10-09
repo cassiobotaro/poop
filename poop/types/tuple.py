@@ -29,6 +29,7 @@ class Tuple(
     _SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin[Object], Object
 ):
     __slots__ = ("_items",)
+    _items: tuple[Object, ...]
     _eq_attr: ClassVar[str] = "_items"
 
     def _rewrap(self, raw: Iterable[Object]) -> Tuple:
