@@ -107,7 +107,6 @@ select = [
   "RUF",
 ]
 ignore = [
-  "ANN401",
   # The configuration ClassVars of a validator (`messages`, `forbidden`) and of
   # a transformer (`rewriter`, `BINDINGS`) are annotated once on the base
   # class; ruff cannot see the inherited annotation.
@@ -127,6 +126,7 @@ quote-style = "double"
   "ANN001",
   "ANN002",
   "ANN003",
+  "ANN401",
   # private mock methods / inline staticmethods / dunders don't need return types
   "ANN202",
   "ANN204",

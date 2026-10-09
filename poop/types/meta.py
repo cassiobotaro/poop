@@ -653,7 +653,7 @@ class PoopMeta(type):
         # `Object.__getattr__` both give: a visible hook answers `Any` for
         # every name, so `Foo.frobnicate()` would type-check on every POOP
         # class and `ty` would stop catching typos across the codebase.
-        def __getattribute__(cls, name: str) -> Any:
+        def __getattribute__(cls, name: str) -> Any:  # noqa: ANN401 — hidden from ty, see above
             """A method the instance answers is refused, not bound and handed out.
 
             `type.__getattribute__` hands a plain function back unbound, so
@@ -924,7 +924,7 @@ class PoopMeta(type):
     if not TYPE_CHECKING:
         # Same reasoning as Object.__getattr__: a visible one answers Any for
         # every name and blinds `ty` to typos on every POOP class.
-        def __getattr__(cls, name: str) -> Any:
+        def __getattr__(cls, name: str) -> Any:  # noqa: ANN401 — hidden from ty, see above
             # Native on purpose, like `Object.__getattr__`: Python's own
             # attribute probe, answered before `exceptions` has finished
             # building the table a mirror would come from.

@@ -76,7 +76,7 @@ class Object(metaclass=PoopMeta):
         # starts with one. It is also what makes this terminate: `Block` holds
         # its callable in `_fn`, so wrapping that read would hand `__call__` a
         # fresh `Block` to unwrap on every call, forever.
-        def __getattribute__(self, name: str) -> Any:
+        def __getattribute__(self, name: str) -> Any:  # noqa: ANN401 — hidden from ty, see above
             value = object.__getattribute__(self, name)
             if type(value) is MethodType and not name.startswith("_"):
                 from poop.types.block import _MethodBlock
@@ -89,7 +89,7 @@ class Object(metaclass=PoopMeta):
         # every POOP object and `ty` would stop catching typos across the whole
         # codebase. Statically an unknown message is still an error; this hook
         # changes what happens when one is sent, not what is knowable before.
-        def __getattr__(self, name: str) -> Any:
+        def __getattr__(self, name: str) -> Any:  # noqa: ANN401 — hidden from ty, see above
             # Dunders never reach the hook. Python probes objects for
             # `__copy__`, `__getstate__`, `__deepcopy__` and friends, and a
             # proxy overriding does_not_understand would answer those probes
