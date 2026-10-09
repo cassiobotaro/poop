@@ -1,11 +1,11 @@
 """Counts the docs state are the counts the code has.
 
-Three numbers had drifted at once — `CLAUDE.md` said 69 validators, `README.md`
-said ~69 and 41 example programs, against 70 and 43 — and every one of them is
-derivable. A test asserting `len(DEFAULT_VALIDATORS) == 70` would only move the
-problem to a fourth place to keep in step; this reads the numbers *out of the
-Markdown* and compares them against the live registries, so the prose cannot
-fall behind without failing.
+Three numbers had drifted at once — the agent guide said 69 validators,
+`README.md` said ~69 and 41 example programs, against 70 and 43 — and every one
+of them is derivable. A test asserting `len(DEFAULT_VALIDATORS) == 70` would
+only move the problem to a fourth place to keep in step; this reads the numbers
+*out of the Markdown* and compares them against the live registries, so the
+prose cannot fall behind without failing.
 
 The same argument `test_no_python_wording.py`'s static half makes for messages
 nobody remembered to write a program for.
@@ -31,7 +31,6 @@ def _example_count() -> int:
 # patterns are deliberately narrow: a sentence rewrite that drops the number
 # fails the "found it at all" test below rather than passing vacuously.
 _CLAIMS: tuple[tuple[str, str, str], ...] = (
-    ("CLAUDE.md", r"`print`, (\d+) in all", "validators"),
     ("README.md", r"POOP runs (\d+) validators on every program", "validators"),
     ("README.md", r"ships (\d+) programs across three subfolders", "examples"),
 )
