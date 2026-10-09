@@ -48,7 +48,7 @@ def _holds_no_state(receiver: object) -> Exception:
 class Object(metaclass=PoopMeta):
     __slots__ = ()
 
-    def class_(self) -> Any:
+    def class_(self) -> type[Self]:
         """Smalltalk's `x class` — the class object itself, not its name."""
         return type(self)
 
@@ -149,7 +149,7 @@ class Object(metaclass=PoopMeta):
             # even let a program spell. This names the distinction instead.
             raise _holds_no_state(self) from None
 
-    def does_not_understand(self, name: str) -> Any:
+    def does_not_understand(self, name: str) -> object:
         """Smalltalk's `doesNotUnderstand:` — the hook for an unknown message.
 
         Override to answer the message rather than refuse it. A proxy answers a
@@ -313,7 +313,7 @@ class Object(metaclass=PoopMeta):
             # is POOP's to write.
             raise MIRRORS["TypeError"](no_format_spec(type(self).__name__)) from None
 
-    def get_attr(self, name: Str, *default: object) -> Any:
+    def get_attr(self, name: Str, *default: object) -> object:
         from poop.types.block import _as_block  # circular: block imports Object
 
         # Guarded before the default is consulted: a forbidden name is refused,

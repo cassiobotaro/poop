@@ -1,5 +1,5 @@
 import builtins
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, final
 
 from poop.types._argument import Key, a_block, no_arguments, text_like
 from poop.types._cloak import cloak
@@ -151,9 +151,7 @@ class Boolean(_NumericCompareMixin, Object):
     def divmod(self, other: object) -> Tuple:
         return self._as_int().divmod(self._num(other))
 
-    def pow(
-        self, other: object, modulus: Int | NoneClass | None = None
-    ) -> Int | Float | Complex:
+    def pow(self, other: object, modulus: Int | NoneClass | None = None) -> object:
         return self._as_int().pow(self._num(other), modulus)
 
     def round(self, ndigits: Int | NoneClass | None = None) -> Int:
@@ -300,7 +298,7 @@ class Boolean(_NumericCompareMixin, Object):
     def _num(self, other: object) -> object:
         return other._as_int() if isinstance(other, Boolean) else other
 
-    def _rev(self, other: object, op: str) -> Any:
+    def _rev(self, other: object, op: str) -> object:
         method = getattr(other, op, None)
         if method is None:
             return NotImplemented
@@ -309,37 +307,37 @@ class Boolean(_NumericCompareMixin, Object):
     def __add__(self, other: object) -> Int | Float:
         return self._as_int().__add__(self._num(other))
 
-    def __radd__(self, other: object) -> Any:
+    def __radd__(self, other: object) -> object:
         return self._rev(other, "__add__")
 
     def __sub__(self, other: object) -> Int | Float:
         return self._as_int().__sub__(self._num(other))
 
-    def __rsub__(self, other: object) -> Any:
+    def __rsub__(self, other: object) -> object:
         return self._rev(other, "__sub__")
 
     def __mul__(self, other: object) -> Int | Float:
         return self._as_int().__mul__(self._num(other))
 
-    def __rmul__(self, other: object) -> Any:
+    def __rmul__(self, other: object) -> object:
         return self._rev(other, "__mul__")
 
     def __truediv__(self, other: object) -> Float:
         return self._as_int().__truediv__(self._num(other))
 
-    def __rtruediv__(self, other: object) -> Any:
+    def __rtruediv__(self, other: object) -> object:
         return self._rev(other, "__truediv__")
 
     def __floordiv__(self, other: object) -> Int | Float:
         return self._as_int().__floordiv__(self._num(other))
 
-    def __rfloordiv__(self, other: object) -> Any:
+    def __rfloordiv__(self, other: object) -> object:
         return self._rev(other, "__floordiv__")
 
     def __mod__(self, other: object) -> Int | Float:
         return self._as_int().__mod__(self._num(other))
 
-    def __rmod__(self, other: object) -> Any:
+    def __rmod__(self, other: object) -> object:
         return self._rev(other, "__mod__")
 
     def __pow__(
@@ -347,7 +345,7 @@ class Boolean(_NumericCompareMixin, Object):
     ) -> Int | Float | Complex:
         return self._as_int().__pow__(self._num(other), modulus)
 
-    def __rpow__(self, other: object) -> Any:
+    def __rpow__(self, other: object) -> object:
         return self._rev(other, "__pow__")
 
     # Bitwise — `bool` is an `int` subclass, so `&`, `|` and `^` stay in
@@ -360,7 +358,7 @@ class Boolean(_NumericCompareMixin, Object):
             return self._bool_and(other)
         return self._as_int().__and__(other)
 
-    def __rand__(self, other: object) -> Any:
+    def __rand__(self, other: object) -> object:
         return self._rev(other, "__and__")
 
     def __or__(self, other: object) -> Boolean | Int:
@@ -368,7 +366,7 @@ class Boolean(_NumericCompareMixin, Object):
             return self._bool_or(other)
         return self._as_int().__or__(other)
 
-    def __ror__(self, other: object) -> Any:
+    def __ror__(self, other: object) -> object:
         return self._rev(other, "__or__")
 
     def __xor__(self, other: object) -> Boolean | Int:
@@ -376,7 +374,7 @@ class Boolean(_NumericCompareMixin, Object):
             return self.xor(other)
         return self._as_int().__xor__(other)
 
-    def __rxor__(self, other: object) -> Any:
+    def __rxor__(self, other: object) -> object:
         return self._rev(other, "__xor__")
 
     # Shifts, unlike the three above, have no boolean-algebra reading — there
@@ -387,13 +385,13 @@ class Boolean(_NumericCompareMixin, Object):
     def __lshift__(self, other: object) -> Int:
         return self._as_int().__lshift__(self._num(other))
 
-    def __rlshift__(self, other: object) -> Any:
+    def __rlshift__(self, other: object) -> object:
         return self._rev(other, "__lshift__")
 
     def __rshift__(self, other: object) -> Int:
         return self._as_int().__rshift__(self._num(other))
 
-    def __rrshift__(self, other: object) -> Any:
+    def __rrshift__(self, other: object) -> object:
         return self._rev(other, "__rshift__")
 
 

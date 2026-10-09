@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Never, final
+from typing import TYPE_CHECKING, Never, final
 
 from poop.types._alias import unalias
 from poop.types._argument import a_class
@@ -6,7 +6,7 @@ from poop.types._cloak import cloak
 from poop.types._message import poop_message
 from poop.types._selectors import explain, not_understood
 from poop.types.boolean import to_boolean
-from poop.types.exceptions import poop_class_of
+from poop.types.exceptions import PoopExcMeta, poop_class_of
 from poop.types.meta import class_side_named
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
@@ -41,7 +41,7 @@ class Error(Object):
         # still shows through.
         return Str(poop_message(self._exception))
 
-    def kind(self) -> Any:
+    def kind(self) -> PoopExcMeta:
         """The exception's class — the class itself, not its name.
 
         Answering a `Str` here was the same substitution `class_name()` used to
@@ -50,7 +50,7 @@ class Error(Object):
         """
         return poop_class_of(self._exception)
 
-    def class_(self) -> Any:
+    def class_(self) -> PoopExcMeta:
         """Transparent identity: answer the wrapped exception's class.
 
         An `Error` stands in for the exception it caught, so `e.class_()` and
@@ -100,7 +100,7 @@ class Error(Object):
         """
         raise self._exception
 
-    def does_not_understand(self, name: str) -> Any:
+    def does_not_understand(self, name: str) -> object:
         """Refuse under the caught exception's name, not the wrapper's.
 
         The fourth spelling of the leak `class_()`, `class_name()` and

@@ -9,7 +9,7 @@ failure — `Object.print() missing 1 required positional argument: 'self'`.
 import builtins
 from functools import wraps
 from types import FunctionType, MethodType
-from typing import TYPE_CHECKING, Any, Never
+from typing import TYPE_CHECKING, Any, Never, Protocol, Self, overload
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
@@ -26,7 +26,24 @@ if TYPE_CHECKING:
     from poop.types.string import Str
 
 
-class class_side:
+class _Message[C, **P, R](Protocol):
+    """A class-side message as written: a function over the class, with a name.
+
+    `class_side` is generic over the three things the function says — the
+    receiver it takes, the rest of its parameters and its answer — so a read
+    of `Foo.name` is typed as the bound message, and `Foo.name()` as a `Str`.
+    A `Callable` alone would lose the names `cloak_callable` rewrites, which
+    is why this is a protocol rather than `Callable[Concatenate[C, P], R]`.
+    """
+
+    __name__: str
+    __qualname__: str
+    __module__: str
+
+    def __call__(self, cls: C, /, *args: P.args, **kwargs: P.kwargs) -> R: ...
+
+
+class class_side[C, **P, R]:
     """Binds a metaclass method to the class, ahead of same-named instance ones.
 
     `Foo.print` would otherwise never reach the metaclass: looking an attribute
@@ -47,7 +64,7 @@ class class_side:
 
     __slots__ = ("_fn", "_name", "refuses")
 
-    def __init__(self, fn: FunctionType, *, refuses: bool = False) -> None:
+    def __init__(self, fn: _Message[C, P, R], *, refuses: bool = False) -> None:
         self._fn = fn
         self.refuses = refuses
         # Filled by __set_name__, which Python calls for every descriptor in a
@@ -68,7 +85,11 @@ class class_side:
         # and `__qualname__` is fixed when the class body runs.
         cloak_callable(self._fn, name)
 
-    def __get__(self, cls: type | None, metacls: type) -> Any:
+    @overload
+    def __get__(self, cls: None, metacls: type) -> Self: ...
+    @overload
+    def __get__(self, cls: C, metacls: type) -> Callable[P, R]: ...
+    def __get__(self, cls: C | None, metacls: type) -> Self | Callable[P, R]:
         if cls is None:
             return self
         method = MethodType(self._fn, cls)
@@ -98,7 +119,7 @@ class class_side:
         )
 
 
-class class_side_read_refusal(class_side):
+class class_side_read_refusal[C, **P, R](class_side[C, P, R]):
     """A class-side refusal that fires on *read* rather than on call.
 
     `mro` and `raise_` are messages: a reader writes `Foo.mro()`,
@@ -113,7 +134,11 @@ class class_side_read_refusal(class_side):
 
     __slots__ = ()
 
-    def __get__(self, cls: type | None, metacls: type) -> Any:
+    @overload
+    def __get__(self, cls: None, metacls: type) -> Self: ...
+    @overload
+    def __get__(self, cls: C, metacls: type) -> R: ...
+    def __get__(self, cls: C | None, metacls: type) -> Self | R:
         if cls is None:
             return self
         return self._fn(cls)
@@ -143,7 +168,7 @@ def _read_refusal(metacls: type, name: str) -> class_side_read_refusal | None:
     return found if isinstance(found, class_side_read_refusal) else None
 
 
-def class_side_refusal(fn: FunctionType) -> class_side:
+def class_side_refusal[C, **P, R](fn: _Message[C, P, R]) -> class_side[C, P, R]:
     """A class-side descriptor that only ever refuses.
 
     The decorator form of `class_side(fn, refuses=True)` — `@class_side(...)`
@@ -214,7 +239,7 @@ def _instance_only(cls: type, name: str) -> bool:
     return False
 
 
-def _reflected(cls: type, name: str) -> Any:
+def _reflected(cls: type, name: str) -> object:
     """`name` on `cls`, past the instance-side refusal.
 
     `get_attr` / `has_attr` are the *reflective* substitutes `no_getattr`
@@ -307,7 +332,7 @@ def _adapted(slot: str, method: Callable[..., object]) -> Callable[..., object]:
     native, role = _PROTOCOL_SLOTS[slot]
 
     @wraps(method)
-    def answer(self: object, *args: object, **kwargs: object) -> Any:
+    def answer(self: object, *args: object, **kwargs: object) -> object:
         value = method(self, *args, **kwargs)
         # A native answer short-circuits, which is both the common case (every
         # wrapper in `poop/types/` is written in Python) and what keeps this
@@ -371,7 +396,7 @@ _CLASS_SIDE_COMPARISONS: dict[str, str] = {
 }
 
 
-def _class_operator(selector: str, *, reflected: bool) -> Any:
+def _class_operator(selector: str, *, reflected: bool) -> Callable[..., Never]:
     """The slot refusing `selector` with the class as one of the operands."""
 
     def refuse(cls: type, other: object, *_: object) -> Never:
@@ -416,14 +441,15 @@ class PoopMeta(type):
     `name` or `superclass` method, and the class side must still answer.
     """
 
-    def __new__(
-        mcls,
+    # A type variable rather than `Self`, which ty refuses in a metaclass.
+    def __new__[M: PoopMeta](
+        mcls: type[M],
         name: str,
         bases: tuple[type, ...],
         namespace: dict[str, object],
         /,
         **kwargs: object,
-    ) -> Any:
+    ) -> M:
         """Build the class, adapting the protocol slots it declares.
 
         A POOP program may define `__str__`, `__repr__`, `__bool__`,
@@ -458,7 +484,7 @@ class PoopMeta(type):
         return Str(cls.__name__)
 
     @class_side
-    def superclass(cls) -> Any:
+    def superclass(cls) -> PoopMeta | NoneClass:
         from poop.types._alias import unalias
         from poop.types.none import none
 
@@ -515,7 +541,7 @@ class PoopMeta(type):
     __hash__ = type.__hash__
 
     @class_side_refusal
-    def mro(cls) -> Any:
+    def mro(cls) -> list[type]:
         """Refuse `type.mro` — `superclass` is the question POOP answers.
 
         Inherited from the metaclass, it answered a raw Python list of raw
@@ -772,7 +798,7 @@ class PoopMeta(type):
         return Str(builtins.format(cls.__name__, _unwrap(spec, "")))
 
     @class_side_refusal
-    def class_(cls) -> Any:
+    def class_(cls) -> Never:
         # Smalltalk answers the metaclass here — `Foo class` is `Foo class`.
         # POOP has none to answer with: `PoopMeta` is not itself a POOP class
         # (`type(PoopMeta)` is `type`), so handing it back would leak exactly
@@ -782,7 +808,7 @@ class PoopMeta(type):
         _refuse(cls, "class_")
 
     @class_side_refusal
-    def class_name(cls) -> Any:
+    def class_name(cls) -> Never:
         _refuse(cls, "class_name")
 
     # The rest of `Object`'s protocol, each the substitute for a construct
@@ -817,7 +843,7 @@ class PoopMeta(type):
         return to_boolean(isinstance(cls, a_class(unalias(type_), "is_instance")))
 
     @class_side
-    def if_none(cls, block: Callable[[], object]) -> Any:
+    def if_none(cls, block: Callable[[], object]) -> PoopMeta:
         # A class is never none, so this answers the class unchanged — and the
         # block it never runs is still checked, for the reason `Object.if_none`
         # gives: otherwise the report depends on the value in hand.
@@ -827,19 +853,19 @@ class PoopMeta(type):
         return cls
 
     @class_side
-    def if_not_none(cls, block: Callable[[PoopMeta], object]) -> Any:
+    def if_not_none[T](cls, block: Callable[[PoopMeta], T]) -> T:
         from poop.types._argument import a_block
 
         return a_block(block, "if_not_none")(cls)
 
     @class_side
-    def assert_(cls, message: Str | NoneClass | None = None) -> Any:
+    def assert_(cls, message: Str | NoneClass | None = None) -> PoopMeta:
         # A class is always truthy, so the assertion always holds and answers
         # the class; the failing branch `Object.assert_` has is unreachable.
         return cls
 
     @class_side
-    def get_attr(cls, name: Str, *default: object) -> Any:
+    def get_attr(cls, name: Str, *default: object) -> object:
         from poop.types.block import _as_block
 
         # Same wrap as the instance side: a class-side method answered a raw
@@ -890,7 +916,7 @@ class PoopMeta(type):
         return none
 
     @class_side
-    def does_not_understand(cls, name: str) -> Any:
+    def does_not_understand(cls, name: str) -> object:
         from poop.types.object import MessageNotUnderstood
 
         raise MessageNotUnderstood(explain(cls, name), name=name, obj=cls)

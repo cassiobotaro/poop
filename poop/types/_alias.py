@@ -51,14 +51,14 @@ explicitly: a subclass that declares its own `__init__` is built by it.
 
 from copy import copy
 from itertools import takewhile
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, overload
 
 from poop.types._cloak import cloak
 from poop.types.exceptions import MIRRORS
 from poop.types.meta import PoopMeta
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
 
 
 def _payload_slots(cls: type) -> tuple[str, ...]:
@@ -155,14 +155,15 @@ class _AliasMeta(PoopMeta):
     cannot be rebuilt, so its converter's answer is passed through.
     """
 
-    def __new__(
-        mcls,
+    # A type variable rather than `Self`, which ty refuses in a metaclass.
+    def __new__[M: _AliasMeta](  # noqa: PYI019
+        mcls: type[M],
         name: str,
         bases: tuple[type, ...],
         namespace: dict[str, object],
         /,
         **kwargs: object,
-    ) -> Any:
+    ) -> M:
         """Build the class, refusing a base that has no value to give.
 
         `bool` is the one wrapper whose values are singletons with no payload,
@@ -183,11 +184,15 @@ class _AliasMeta(PoopMeta):
                 )
         return super().__new__(mcls, name, bases, namespace, **kwargs)
 
-    def __call__(cls, *args: object, **kwargs: object) -> Any:
-        if "_converter" in cls.__dict__:
-            return cls.__dict__["_converter"](*args, **kwargs)
-        alias = _alias_in(cls)
+    def __call__(cls, *args: object, **kwargs: object) -> object:
+        # Every class `_AliasMeta` is asked about descends from an alias — it
+        # is the metaclass of the aliases and of nothing else — so the first
+        # one up the MRO is there to be found, and is `cls` itself when the
+        # bare name was called.
+        alias = next(_aliases_in(cls))
         converter = alias.__dict__["_converter"]
+        if alias is cls:
+            return converter(*args, **kwargs)
         slots = alias.__dict__["_slots"]
         if _own_init(cls, alias):
             # The `__new__` step Python has and POOP does not — `_endow` says
@@ -210,19 +215,17 @@ class _AliasMeta(PoopMeta):
         return made
 
 
-def _alias_in(cls: type) -> Any:
-    """The alias `cls` descends from, or None when it descends from none.
+def _aliases_in(cls: type) -> Iterator[type]:
+    """The aliases on `cls`'s MRO, nearest first — at most one, in practice.
 
-    Every class `_AliasMeta` is asked about has one — it is the metaclass of
-    the aliases and of nothing else. `wrapped_instance` below asks about the
-    plain wrappers too, which do not.
+    `_AliasMeta.__call__` takes the first and is always handed one;
+    `wrapped_instance` below asks about the plain wrappers too, which have
+    none, and so reads with a default.
     """
-    return next(
-        (klass for klass in cls.__mro__ if "_converter" in klass.__dict__), None
-    )
+    return (klass for klass in cls.__mro__ if "_converter" in klass.__dict__)
 
 
-def wrapped_instance(cls: type, *args: object) -> Any:
+def wrapped_instance[T](cls: type[T], *args: object) -> T:
     """An instance of `cls`, built by the wrapper's constructor.
 
     For POOP's own class-side constructors — `bytes.fromhex`, `int.from_bytes`,
@@ -243,7 +246,7 @@ def wrapped_instance(cls: type, *args: object) -> Any:
     wrapper = unalias(cls)
     if wrapper is not cls:
         return wrapper(*args)
-    alias = _alias_in(cls)
+    alias = next(_aliases_in(cls), None)
     if alias is None:
         return cls(*args)
     made = object.__new__(cls)
@@ -251,7 +254,11 @@ def wrapped_instance(cls: type, *args: object) -> Any:
     return made
 
 
-def unalias(type_: object) -> Any:
+@overload
+def unalias(type_: type) -> type: ...
+@overload
+def unalias(type_: object) -> object: ...
+def unalias(type_: object) -> object:
     """The wrapper behind a bare builtin name, for a type-*argument* position.
 
     `(5).is_instance(int)` hands over whatever `int` resolves to, which is now

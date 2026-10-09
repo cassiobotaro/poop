@@ -380,7 +380,7 @@ def test_the_class_side_answers_a_block_for_a_method() -> None:
 
 def test_the_class_side_leaves_a_poop_class_alone() -> None:
     # A class is callable but is already an object with its own protocol.
-    assert _Dog.get_attr(Str("superclass"))() is _Animal
+    assert _Dog.get_attr(Str("superclass"))() is _Animal  # ty: ignore[call-non-callable]
 
 
 def test_a_class_refuses_mro_naming_superclass() -> None:

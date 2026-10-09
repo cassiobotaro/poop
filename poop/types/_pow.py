@@ -14,13 +14,15 @@ the builtin it replaces — CPython computes `pow(2, 1+1j)` too. Completing the
 protocol here is what makes the deliberate `NotImplemented` mean what it says.
 """
 
-from typing import Any
-
 from poop.types._unwrap import _is_absent
 
 
-def reflected_pow(receiver: object, other: object, modulus: object) -> Any:
+def reflected_pow(receiver: object, other: object, modulus: object) -> object:
     """`other.__rpow__(receiver)`, or `NotImplemented` when there is no route.
+
+    Answers whatever the operand's `__rpow__` answers — `object`, as typeshed
+    types a reflected operator on an unknown operand — and so does the `pow`
+    message built on it.
 
     `modulus` is guarded rather than forwarded: the three-argument form has no
     reflected counterpart in CPython either, so a present modulus means the

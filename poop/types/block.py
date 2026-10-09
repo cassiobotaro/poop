@@ -1,6 +1,6 @@
 from functools import partial
 from inspect import Parameter, signature
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Self, cast
 
 from poop.types._argument import a_block
 from poop.types._cloak import cloak
@@ -11,7 +11,7 @@ from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
     from types import MethodType
 
     from poop.types.boolean import Boolean
@@ -22,7 +22,7 @@ def _count(n: int) -> str:
     return f"{n} argument" if n == 1 else f"{n} arguments"
 
 
-def _require_block(value: object, role: str, hint: str) -> Any:
+def _require_block(value: object, role: str, hint: str) -> Callable[..., object]:
     """`value`, or a refusal naming the argument rather than the call.
 
     Checked at the boundary, where the argument has a name, instead of at the
@@ -42,7 +42,7 @@ def _require_block(value: object, role: str, hint: str) -> Any:
     return value
 
 
-def _as_block(value: object) -> Any:
+def _as_block(value: object) -> object:
     """A raw Python callable answered by `get_attr`, wrapped as a `Block`.
 
     An attribute holding state already answers a POOP object; one holding a
@@ -66,13 +66,20 @@ _POSITIONAL = frozenset({Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYW
 _BY_KEYWORD = frozenset({Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY})
 
 
-class Block(Object):
+class Block[**P, R](Object):
+    """A lambda as an object: callable exactly as the function it wraps.
+
+    Generic over the function's parameters and answer, so a block built over
+    `lambda x: x.len()` is a `Block[[Str], Int]` to the checker and calls as
+    one. A method read off an object is a `_MethodBlock`, below.
+    """
+
     __slots__ = ("_fn",)
 
-    def __init__(self, fn: Callable[..., object]) -> None:
+    def __init__(self, fn: Callable[P, R]) -> None:
         self._fn = fn
 
-    def __call__(self, *args: object, **kwargs: object) -> Any:
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
         try:
             return self._fn(*args, **kwargs)
         except TypeError as exc:
@@ -100,7 +107,9 @@ class Block(Object):
                 raise MIRRORS["TypeError"](keyword_fault) from None
             raise MIRRORS["TypeError"](self._arity_message(len(args))) from None
 
-    def __get__(self, instance: object, owner: type | None = None) -> Any:
+    def __get__(
+        self, instance: object, owner: type | None = None
+    ) -> Self | Block[..., R]:
         """A block found on a *class* binds to the receiver, as a method does.
 
         `set_attr` on a class is sanctioned — it is refused only for POOP's
@@ -157,7 +166,7 @@ class Block(Object):
         return required, None if variadic else len(positional)
 
     def _keyword_message(
-        self, args: tuple[object, ...], kwargs: dict[str, object]
+        self, args: tuple[object, ...], kwargs: Mapping[str, object]
     ) -> str | None:
         """The refusal for a *keyword* failure, or `None` if the count is at fault.
 
@@ -227,7 +236,7 @@ class Block(Object):
             expected = f"{fewest} to {_count(most)}"
         return f"block expects {expected}, got {given}"
 
-    def while_true(self, body: Block) -> NoneClass:
+    def while_true(self, body: Callable[[], object]) -> NoneClass:
         # Through `self()`, not `self._fn()`: a condition block of the wrong
         # arity would otherwise answer CPython's wording from here.
         run = a_block(body, "while_true", param="")
@@ -235,7 +244,7 @@ class Block(Object):
             run()
         return none
 
-    def while_false(self, body: Block) -> NoneClass:
+    def while_false(self, body: Callable[[], object]) -> NoneClass:
         run = a_block(body, "while_false", param="")
         while not bool(self()):
             run()
@@ -247,7 +256,7 @@ class Block(Object):
     __repr__ = __str__
 
 
-class _MethodBlock(Block):
+class _MethodBlock[**P, R](Block[P, R]):
     """A method read off an object, wrapped so it answers messages.
 
     `Object.__getattribute__` hands one of these back for `"abc".upper`, so a
@@ -266,7 +275,7 @@ class _MethodBlock(Block):
 
     __slots__ = ()
 
-    def __call__(self, *args: object, **kwargs: object) -> Any:
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
         return self._fn(*args, **kwargs)
 
     # Equality by the pair the bound method wraps — its receiver and its
@@ -283,8 +292,8 @@ class _MethodBlock(Block):
     # `Block` itself keeps identity deliberately. It wraps a lambda, and two
     # lambdas with the same body are different blocks in Smalltalk as in
     # Python — so this lives here rather than on the base.
-    def _identity(self) -> tuple[Any, Any]:
-        # `_fn` is declared `Callable[..., Any]` on the base, and is always a
+    def _identity(self) -> tuple[object, object]:
+        # `_fn` is declared a `Callable` on the base, and is always a
         # `MethodType` here: `Object.__getattribute__` builds a `_MethodBlock`
         # only for `type(value) is MethodType`.
         method = cast("MethodType", self._fn)

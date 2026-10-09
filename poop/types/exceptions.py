@@ -29,7 +29,7 @@ Subclassing keeps it catchable by anything that caught the native, so the rule
 costs nothing; `tests/test_mirrored_raises.py` sweeps both packages for it.
 """
 
-from typing import Any, Literal, Never, cast, get_args
+from typing import TYPE_CHECKING, Literal, Never, cast, get_args
 
 from poop.types._selectors import explain, not_understood
 from poop.types.meta import PoopMeta, class_side, class_side_read_refusal
@@ -130,11 +130,19 @@ _HIERARCHY: tuple[tuple[type[BaseException], MirrorName | None], ...] = (
     (EOFError, "Exception"),
 )
 
-# Annotated as exception classes, not bare `type`: every POOP diagnostic is
-# raised through this table (`raise MIRRORS["TypeError"](...)`), so the values
-# have to be raisable to the type checker as well as at runtime.
-MIRRORS: dict[MirrorName, type[Exception]] = {}
-NATIVE_TO_POOP: dict[type[BaseException], type] = {}
+if TYPE_CHECKING:
+    # The shape of a mirror, for the checker alone: an exception class whose
+    # metaclass is `PoopExcMeta`. Every POOP diagnostic is raised through the
+    # table (`raise MIRRORS["TypeError"](...)`), so the values have to be
+    # raisable, and `e.kind().name()` sends a class-side message to one, so
+    # they have to answer the class side too. `_build` makes each one from
+    # the metaclass by hand, which is why the shape is stated here rather than
+    # by a class statement.
+    class Mirror(Exception, Object, metaclass=PoopExcMeta): ...
+
+
+MIRRORS: dict[MirrorName, type[Mirror]] = {}
+NATIVE_TO_POOP: dict[type[BaseException], type[Mirror]] = {}
 
 
 # Names a mirror inherits from `BaseException` that POOP never designed, mapped
@@ -206,7 +214,7 @@ def _refusal_for(name: str, instead: str | None) -> class_side:
             )
         return _refuse_python_attribute(cls, name, instead)
 
-    return class_side_read_refusal(cast("Any", refuse), refuses=True)
+    return class_side_read_refusal(refuse, refuses=True)
 
 
 def _build(native: type[BaseException], parent: MirrorName | None) -> None:
@@ -220,7 +228,7 @@ def _build(native: type[BaseException], parent: MirrorName | None) -> None:
     # only the bases say the result is an exception class. Every branch above
     # puts a native exception in `bases`, so the claim holds.
     mirror = cast(
-        "type[Exception]",
+        "type[Mirror]",
         PoopExcMeta(
             native.__name__,
             bases,
@@ -255,7 +263,7 @@ for _native, _parent in _HIERARCHY:
     _build(_native, _parent)
 
 
-def poop_class_of(exc: BaseException) -> Any:
+def poop_class_of(exc: BaseException) -> PoopExcMeta:
     """The POOP class answering for `exc` — its mirror, or the nearest one.
 
     A user's own exception is already a POOP class and answers for itself. An

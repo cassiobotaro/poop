@@ -1,4 +1,5 @@
 from types import MethodType
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -11,6 +12,19 @@ from poop.types.list import List
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.string import Str
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+
+def _loose(fn: Callable[..., object]) -> Block[..., object]:
+    """A block typed as taking anything, for the calls that are deliberately wrong.
+
+    `Block` is generic over its function, so a lambda of one parameter is a
+    block of one parameter to the checker — which would refuse at the call
+    the very arity mistakes these tests send on purpose.
+    """
+    return Block(fn)
 
 
 def test_block_is_callable() -> None:
@@ -96,22 +110,22 @@ def test_block_arity_mismatch_speaks_block_vocabulary() -> None:
     # positional argument but 2 were given` — the Python name of an object
     # POOP cloaks as `function`, and a calling convention a block has not.
     with pytest.raises(TypeError, match=r"^block expects 1 argument, got 2$"):
-        Block(lambda x: x)(Int(1), Int(2))
+        _loose(lambda x: x)(Int(1), Int(2))
 
 
 def test_block_arity_message_pluralises_the_expected_count() -> None:
     with pytest.raises(TypeError, match=r"^block expects 0 arguments, got 1$"):
-        Block(lambda: none)(Int(1))
+        _loose(lambda: none)(Int(1))
 
 
 def test_block_arity_message_states_a_range_for_optional_arguments() -> None:
     with pytest.raises(TypeError, match=r"^block expects 1 to 2 arguments, got 3$"):
-        Block(lambda a, b=none: a)(Int(1), Int(2), Int(3))
+        _loose(lambda a, b=none: a)(Int(1), Int(2), Int(3))
 
 
 def test_block_arity_message_states_a_floor_for_a_variadic_block() -> None:
     with pytest.raises(TypeError, match=r"^block expects at least 1 argument, got 0$"):
-        Block(lambda a, *rest: a)()
+        _loose(lambda a, *rest: a)()
 
 
 def test_block_arity_message_leaves_keywords_to_the_keyword_refusal() -> None:
@@ -122,14 +136,14 @@ def test_block_arity_message_leaves_keywords_to_the_keyword_refusal() -> None:
     with pytest.raises(
         TypeError, match=r"^block does not take a keyword argument 'y'$"
     ):
-        Block(lambda x: x)(Int(1), y=Int(2))
+        _loose(lambda x: x)(Int(1), y=Int(2))
 
 
 def test_block_arity_message_without_a_signature_states_no_count() -> None:
     # A few CPython builtins carry no signature at all, and `get_attr` wraps
     # whatever it is handed; the message must still be a block's.
     with pytest.raises(TypeError, match=r"^block does not accept 3 arguments$"):
-        Block({}.update)(Int(1), Int(2), Int(3))
+        _loose({}.update)(Int(1), Int(2), Int(3))
 
 
 def test_block_does_not_reword_a_type_error_from_its_body() -> None:
@@ -141,7 +155,7 @@ def test_block_does_not_reword_a_type_error_from_its_body() -> None:
 
 def test_block_error_is_a_poop_exception_class() -> None:
     with pytest.raises(MIRRORS["TypeError"]):
-        Block(lambda x: x)()
+        _loose(lambda x: x)()
 
 
 def test_while_true_rewords_a_wrong_arity_condition() -> None:
@@ -324,22 +338,22 @@ def test_a_block_literal_keeps_identity_equality() -> None:
 # `block expects 1 argument, got 1`. Two equal numbers and a refusal.
 def test_an_unexpected_keyword_is_named() -> None:
     with pytest.raises(MIRRORS["TypeError"], match="does not take a keyword"):
-        Block(lambda x: x)(nope=1)
+        _loose(lambda x: x)(nope=1)
 
 
 def test_an_unexpected_keyword_beside_a_positional_is_named() -> None:
     with pytest.raises(MIRRORS["TypeError"], match=r"keyword argument 'nope'"):
-        Block(lambda x, y: x)(1, nope=2)
+        _loose(lambda x, y: x)(1, nope=2)
 
 
 def test_a_keyword_that_duplicates_a_positional_is_named() -> None:
     with pytest.raises(MIRRORS["TypeError"], match="already got 'x' as a positional"):
-        Block(lambda x: x)(1, x=2)
+        _loose(lambda x: x)(1, x=2)
 
 
 def test_a_missing_keyword_only_argument_is_named() -> None:
     with pytest.raises(MIRRORS["TypeError"], match="needs a keyword argument 'k'"):
-        Block(lambda x, *, k: x)(1)
+        _loose(lambda x, *, k: x)(1)
 
 
 @pytest.mark.parametrize(
@@ -359,9 +373,9 @@ def test_no_refusal_states_two_equal_numbers(call: object) -> None:
 
 def test_the_count_message_still_counts_positionals() -> None:
     with pytest.raises(MIRRORS["TypeError"], match="expects 1 argument, got 0"):
-        Block(lambda x: x)()
+        _loose(lambda x: x)()
     with pytest.raises(MIRRORS["TypeError"], match="expects 1 argument, got 2"):
-        Block(lambda x: x)(1, 2)
+        _loose(lambda x: x)(1, 2)
 
 
 def test_a_keyword_the_block_does_take_still_works() -> None:

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 from poop.types._argument import a_class
 from poop.types._cloak import cloak
@@ -13,7 +13,19 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _exception_kind(kind: object) -> Any:
+def _exception_class(member: object) -> type[BaseException]:
+    """`member` when it is an exception class, else the refusal `except_` gives."""
+    if isinstance(member, type) and issubclass(member, BaseException):
+        return member
+    raise MIRRORS["TypeError"](
+        f"#except_ catches exception classes, and "
+        f"{getattr(member, '__name__', member)!s} is not one"
+    )
+
+
+def _exception_kind(
+    kind: object,
+) -> type[BaseException] | tuple[type[BaseException], ...]:
     """The kind `except_` will match on, checked where it was written.
 
     `except_` guarded its handler at the boundary and left the kind to
@@ -32,14 +44,9 @@ def _exception_kind(kind: object) -> Any:
     resolved = a_class(
         tuple(kind._items) if isinstance(kind, Tuple) else kind, "except_"
     )
-    members = resolved if isinstance(resolved, tuple) else (resolved,)
-    for member in members:
-        if not (isinstance(member, type) and issubclass(member, BaseException)):
-            raise MIRRORS["TypeError"](
-                f"#except_ catches exception classes, and "
-                f"{getattr(member, '__name__', member)!s} is not one"
-            )
-    return resolved
+    if isinstance(resolved, tuple):
+        return tuple(_exception_class(member) for member in resolved)
+    return _exception_class(resolved)
 
 
 class Try(Object):
@@ -61,10 +68,15 @@ class Try(Object):
     __slots__ = ("_block", "_executed", "_finally_block", "_handlers")
 
     def __init__(self, block: Callable[[], object]) -> None:
-        self._block: Callable[[], object] | None = _require_block(
+        self._block = _require_block(
             block, "the protected argument", "write Try(lambda: …)"
         )
-        self._handlers: list[tuple[type[BaseException], Callable[[Error], object]]] = []
+        self._handlers: list[
+            tuple[
+                type[BaseException] | tuple[type[BaseException], ...],
+                Callable[[Error], object],
+            ]
+        ] = []
         self._finally_block: Callable[[], object] | None = None
         self._executed = False
 
@@ -110,12 +122,9 @@ class Try(Object):
                 "Try has already been executed; create a new Try instance to retry."
             )
         self._executed = True
-        # `_block` is never None here: `__init__` refuses a non-callable, and
-        # the post-run drop below is unreachable behind the guard above.
-        block = cast("Callable[[], object]", self._block)
         result: object = none
         try:
-            result = block()
+            result = self._block()
         except BaseException as e:
             for exc_type, handler in self._handlers:
                 if isinstance(e, exc_type):
@@ -130,7 +139,10 @@ class Try(Object):
                 self._finally_block()
             # Single-use: drop the block/handler closures so the executed
             # Try no longer pins whatever they captured (re-running raises).
-            self._block = None
+            # `del` for the block, as the lazy views release theirs: the slot
+            # keeps its type instead of admitting a `None` the guard above
+            # makes unreachable.
+            del self._block
             self._handlers = []
             self._finally_block = None
         return result

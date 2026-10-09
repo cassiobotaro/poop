@@ -132,9 +132,7 @@ class Float(_NumericCompareMixin, Object):
 
         return to_poop(self._value**other._value)
 
-    def pow(
-        self, other: object, modulus: Int | NoneClass | None = None
-    ) -> Float | Complex:
+    def pow(self, other: object, modulus: Int | NoneClass | None = None) -> object:
         # The third slot exists so the message has the same shape on every
         # rung: without it `(2.0).pow(3, 5)` answered CPython's *signature*
         # error — `float.pow() takes 2 positional arguments but 3 were given`,

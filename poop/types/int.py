@@ -228,9 +228,7 @@ class Int(_NumericCompareMixin, Object):
             raise MIRRORS["ValueError"]("pow's modulus cannot be 0")
         return Int(pow(self._value, other._value, _faithful(modulus)))
 
-    def pow(
-        self, other: object, modulus: Int | NoneClass | None = None
-    ) -> Int | Float | Complex:
+    def pow(self, other: object, modulus: Int | NoneClass | None = None) -> object:
         # The reflected half is part of the operation, not an extra: `__pow__`
         # answers `NotImplemented` for a `Complex` *on purpose*, so CPython's
         # operator protocol falls through to `Complex.__rpow__`. `2 ** 1+1j`

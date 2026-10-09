@@ -31,18 +31,30 @@ then refuse.
 """
 
 from types import FunctionType
+from typing import Protocol
 
 
-def cloak_callable(fn: FunctionType, name: str) -> None:
+class Renamable(Protocol):
+    """What `cloak_callable` writes: the three names a function carries.
+
+    A plain function has all three and they are writable; a `Callable` says
+    nothing about them. The protocol states exactly the contract, so a
+    descriptor holding its function under a precise `Callable`-shaped type
+    can still hand it over.
+    """
+
+    __name__: str
+    __qualname__: str
+    __module__: str
+
+
+def cloak_callable(fn: Renamable, name: str) -> None:
     """Hide a plain function's Python identity behind `name`.
 
     For the rewriter helpers bound into `DEFAULT_NAMESPACE` under a mangled
-    `_poop_*` key. The key stays mangled — only the spelling CPython reports
-    changes, so `range(1, 2, 3, 4)` blames `range`, not `_poop_range`.
-
-    `FunctionType`, not a `Callable` protocol: only a real function carries the
-    writable `__name__` / `__qualname__` this sets, and it is what the caller
-    has already narrowed to.
+    `_poop_*` key, and for the class-side messages. The key stays mangled —
+    only the spelling CPython reports changes, so `range(1, 2, 3, 4)` blames
+    `range`, not `_poop_range`.
     """
     fn.__name__ = name
     fn.__qualname__ = name
