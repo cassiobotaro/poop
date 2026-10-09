@@ -24,6 +24,7 @@ from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
+from poop.types.sentinel import Sentinel
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -168,3 +169,15 @@ def _(obj: FrozenSet) -> frozenset[Any]:
 @to_poop.register
 def _(value: frozenset) -> FrozenSet:
     return FrozenSet(*(to_poop(v) for v in value))
+
+
+@to_python.register
+def _(obj: Sentinel) -> sentinel:
+    return sentinel(str(obj._name), repr=str(obj._repr))
+
+
+@to_poop.register
+def _(value: sentinel) -> Sentinel:
+    # A native sentinel exposes nothing but its repr, which is its name unless
+    # one was given — so the repr is the name here.
+    return Sentinel(Str(repr(value)))

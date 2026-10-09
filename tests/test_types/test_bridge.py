@@ -10,6 +10,7 @@ from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import NoneClass, none
+from poop.types.sentinel import Sentinel
 from poop.types.set import Set
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -214,3 +215,15 @@ def test_to_poop_frozendict() -> None:
     result = to_poop(frozendict({"a": 1}))
     assert isinstance(result, FrozenDict)
     assert result.at(Str("a")) == Int(1)
+
+
+def test_to_python_sentinel() -> None:
+    result = to_python(Sentinel(Str("M"), Str("<M>")))
+    assert isinstance(result, sentinel)
+    assert repr(result) == "<M>"
+
+
+def test_to_poop_sentinel() -> None:
+    result = to_poop(sentinel("M"))
+    assert isinstance(result, Sentinel)
+    assert repr(result) == "M"

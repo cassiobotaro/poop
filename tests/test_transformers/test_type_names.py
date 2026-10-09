@@ -26,6 +26,7 @@ from poop.types.list import List
 from poop.types.memory_view import MemoryView
 from poop.types.object import Object
 from poop.types.range import Range
+from poop.types.sentinel import Sentinel
 from poop.types.set import Set
 from poop.types.slice import Slice
 from poop.types.string import Str
@@ -54,6 +55,7 @@ def _eval(source: str) -> object:
         ("_poop_set_cls", Set),
         ("_poop_frozenset_cls", FrozenSet),
         ("_poop_frozendict_cls", FrozenDict),
+        ("_poop_sentinel_cls", Sentinel),
         ("_poop_bytes_cls", Bytes),
         ("_poop_bytearray_cls", ByteArray),
         ("_poop_memoryview_cls", MemoryView),
@@ -231,6 +233,7 @@ def test_an_alias_still_serves_as_a_type_argument_and_a_base() -> None:
         "Set",
         "FrozenSet",
         "FrozenDict",
+        "Sentinel",
         "Bytes",
         "ByteArray",
         "MemoryView",
@@ -281,6 +284,7 @@ def test_is_instance_lowercase_name_resolves_to_poop_type(
         (Set, "set"),
         (FrozenSet, "frozenset"),
         (FrozenDict, "frozendict"),
+        (Sentinel, "sentinel"),
         (Bytes, "bytes"),
         (ByteArray, "bytearray"),
         (MemoryView, "memoryview"),
@@ -307,6 +311,7 @@ def test_type_repr_mimics_python_builtin(type_: type, lowercase: str) -> None:
         (Set, "set"),
         (FrozenSet, "frozenset"),
         (FrozenDict, "frozendict"),
+        (Sentinel, "sentinel"),
         (Bytes, "bytes"),
         (ByteArray, "bytearray"),
         (MemoryView, "memoryview"),

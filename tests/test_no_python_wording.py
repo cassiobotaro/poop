@@ -34,6 +34,7 @@ from poop.types.int import Int
 from poop.types.list import List
 from poop.types.none import none
 from poop.types.range import Range
+from poop.types.sentinel import Sentinel
 from poop.types.set import Set
 from poop.types.slice import Slice
 from poop.types.string import Str
@@ -463,6 +464,7 @@ def _receivers() -> dict[str, object]:
             "frozendict": FrozenDict._wrapping({Str("a"): Int(1)}),
             "range": Range(Int(0), Int(3)),
             "slice": Slice(Int(0), Int(2)),
+            "sentinel": Sentinel(Str("M")),
             "none": none,
         }
     )

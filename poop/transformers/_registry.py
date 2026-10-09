@@ -34,6 +34,7 @@ from poop.transformers.none import NoneTransformer
 from poop.transformers.object import ObjectTransformer
 from poop.transformers.range import RangeTransformer
 from poop.transformers.return_ import ReturnTransformer
+from poop.transformers.sentinel import SentinelTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import StrTransformer
@@ -75,6 +76,7 @@ _TRANSFORMER_CLASSES: list[type[BaseTransformer]] = [
     FrozenDictTransformer,
     SetTransformer,
     FrozenSetTransformer,
+    SentinelTransformer,
     ExceptionTransformer,
     ClassTransformer,
     ObjectTransformer,
