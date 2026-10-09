@@ -365,6 +365,64 @@ def test_trunc_returns_self() -> None:
     assert Int(5).trunc() == Int(5)
 
 
+# the math.integer messages (PEP 791)
+
+
+def test_isqrt_floors() -> None:
+    assert Int(10).isqrt() == Int(3)
+    assert Int(0).isqrt() == Int(0)
+
+
+def test_isqrt_of_a_negative_is_refused() -> None:
+    with pytest.raises(
+        ValueError, match="#isqrt needs a non-negative receiver, got -1"
+    ):
+        Int(-1).isqrt()
+
+
+def test_factorial() -> None:
+    assert Int(5).factorial() == Int(120)
+    assert Int(0).factorial() == Int(1)
+
+
+def test_factorial_of_a_negative_is_refused() -> None:
+    with pytest.raises(ValueError, match="#factorial needs a non-negative receiver"):
+        Int(-1).factorial()
+
+
+def test_gcd_and_lcm_take_any_number_of_operands() -> None:
+    # `math.gcd(12)` is 12 and `math.gcd(4, 6, 8)` is 2; a negative operand
+    # is folded to its absolute value, and `lcm` with a zero is zero.
+    assert Int(12).gcd() == Int(12)
+    assert Int(12).gcd(Int(8)) == Int(4)
+    assert Int(4).gcd(Int(6), Int(8)) == Int(2)
+    assert Int(-4).gcd(Int(6)) == Int(2)
+    assert Int(4).lcm(Int(6), Int(8)) == Int(24)
+    assert Int(0).lcm(Int(3)) == Int(0)
+
+
+def test_gcd_refuses_a_non_int_operand() -> None:
+    with pytest.raises(TypeError, match="#gcd's operand must be an int, got a str"):
+        Int(4).gcd(Str("x"))  # ty: ignore[invalid-argument-type]
+
+
+def test_comb_and_perm() -> None:
+    assert Int(5).comb(Int(2)) == Int(10)
+    assert Int(2).comb(Int(5)) == Int(0)
+    assert Int(5).perm(Int(2)) == Int(20)
+    assert Int(2).perm(Int(5)) == Int(0)
+    # `perm` without `k` is the factorial, as in CPython.
+    assert Int(5).perm() == Int(120)
+    assert Int(5).perm(none) == Int(120)
+
+
+def test_comb_and_perm_refuse_a_negative_receiver_or_k() -> None:
+    with pytest.raises(ValueError, match="#comb needs a non-negative receiver, got -1"):
+        Int(-1).comb(Int(2))
+    with pytest.raises(ValueError, match="#perm's k must be non-negative, got -1"):
+        Int(5).perm(Int(-1))
+
+
 def test_round_returns_self() -> None:
     assert Int(5).round() == Int(5)
 

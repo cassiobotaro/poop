@@ -1,4 +1,5 @@
 import builtins
+import math
 import operator
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -364,6 +365,56 @@ class Int(_NumericCompareMixin, Object):
             raise MIRRORS["ValueError"](
                 f"{self._value} is not a character code — codes run from 0 to 1114111"
             ) from None
+
+    # Python 3.15 moved the integer functions out of `math` into
+    # `math.integer` (PEP 791) because their only receiver is an integer —
+    # which is the argument for their being messages here, as `ceil` and
+    # `floor` already are. All six, as CPython has them; Smalltalk's `Integer`
+    # answers four of them (`gcd:`, `lcm:`, `factorial`, `sqrtFloor`). The
+    # `math` names still reach the same functions, and are what `ty` knows.
+    def _non_negative(self, selector: str) -> int:
+        if self._value < 0:
+            # CPython: `isqrt() argument must be nonnegative`, `factorial()
+            # not defined for negative values`, `n must be a non-negative
+            # integer` — the message as a call, or an argument name the
+            # program never wrote.
+            raise MIRRORS["ValueError"](
+                f"#{selector} needs a non-negative receiver, got {self._value}"
+            )
+        return self._value
+
+    def isqrt(self) -> Int:
+        return Int(math.isqrt(self._non_negative("isqrt")))
+
+    def factorial(self) -> Int:
+        return Int(math.factorial(self._non_negative("factorial")))
+
+    def gcd(self, *others: Int) -> Int:
+        return Int(
+            math.gcd(self._value, *(an_int(o, "gcd", "operand") for o in others))
+        )
+
+    def lcm(self, *others: Int) -> Int:
+        return Int(
+            math.lcm(self._value, *(an_int(o, "lcm", "operand") for o in others))
+        )
+
+    def _draws(self, k: Any, selector: str) -> int:
+        count = an_int(k, selector, "k")
+        if count < 0:
+            raise MIRRORS["ValueError"](
+                f"#{selector}'s k must be non-negative, got {count}"
+            )
+        return count
+
+    def comb(self, k: Int) -> Int:
+        return Int(math.comb(self._non_negative("comb"), self._draws(k, "comb")))
+
+    def perm(self, k: Int | NoneClass | None = None) -> Int:
+        n = self._non_negative("perm")
+        if _is_absent(k):
+            return Int(math.perm(n))
+        return Int(math.perm(n, self._draws(k, "perm")))
 
     def __int__(self) -> int:
         return self._value

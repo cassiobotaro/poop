@@ -176,6 +176,24 @@ class Boolean(_NumericCompareMixin, Object):
     def chr(self) -> Str:
         return self._as_int().chr()
 
+    def isqrt(self) -> Int:
+        return self._as_int().isqrt()
+
+    def factorial(self) -> Int:
+        return self._as_int().factorial()
+
+    def gcd(self, *others: Int) -> Int:
+        return self._as_int().gcd(*others)
+
+    def lcm(self, *others: Int) -> Int:
+        return self._as_int().lcm(*others)
+
+    def comb(self, k: Int) -> Int:
+        return self._as_int().comb(k)
+
+    def perm(self, k: Int | NoneClass | None = None) -> Int:
+        return self._as_int().perm(k)
+
     def to_bytes(
         self,
         length: Int | NoneClass | None = None,

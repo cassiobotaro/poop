@@ -408,6 +408,13 @@ def test_the_int_side_messages_answer_what_cpython_answers() -> None:
     assert true.bin() == Str("0b1")
     assert true.hex() == Str("0x1")
     assert true.oct() == Str("0o1")
+    # The `math.integer` six: `math.gcd(True, 2)` is 1 in CPython.
+    assert true.isqrt() == Int(1)
+    assert true.factorial() == Int(1)
+    assert true.gcd(Int(2)) == Int(1)
+    assert true.lcm(Int(2)) == Int(2)
+    assert true.comb(Int(1)) == Int(1)
+    assert true.perm() == Int(1)
     assert true.chr() == Str("\x01")
     assert true.to_bytes() == Bytes(b"\x01")
     assert true.as_integer_ratio() == Tuple(Int(1), Int(1))
