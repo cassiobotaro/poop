@@ -17,26 +17,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 Numbering continues from the highest open item; the next one is 9. Once every
 item has been implemented and deleted, numbering starts over at 1.
 
-### 2. `sentinel` is a builtin now — wrap it, or refuse it with a substitute
-
-PEP 661 adds `sentinel("MISSING")`: a unique object whose `repr` is its name
-and whose identity survives copying. It answers the same bare `NameError` as
-item 1. Two readings, and the catalog should pick one:
-
-- **Refuse.** `sentinel(...)` is a free function, and the Smalltalk idiom for a
-  unique marker is `Object new` held in a variable — in POOP,
-  `MISSING = Object()` and `x.is_identical(MISSING)` already work. A
-  `CallNameValidator` `no_sentinel` with that substitute makes `:explain
-  sentinel` answer something, which is the rule for activating a validator.
-- **Wrap.** A `Sentinel` type whose `__repr__` is its name is twenty lines, and
-  the name-as-repr is the only thing `Object()` lacks.
-
-Recommendation: refuse. POOP keeps the one root a program can name, and a
-named marker is a class of its own (`class Missing(Object): pass`) — which
-also gives it a `class_name()`. If "wrap" wins, note that `_sentinel.py`
-already exists under `poop/types/` for an internal marker and must not be
-confused with the user-facing one.
-
 ### 3. A withheld builtin answers the same `NameError` as a typo
 
 `copyright.print()`, `NotImplemented.print()`, `frozendict(…)`,
