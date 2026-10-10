@@ -68,6 +68,19 @@ to break a circular import. Imports needed exclusively for type annotations go
 inside an `if TYPE_CHECKING:` block at the top of the module — never
 function-local, never alongside runtime imports.
 
+The function-local import is the only spelling that works for the cycles in
+`poop/types/`, and the reason is worth knowing before reaching for the other
+one. `import poop.types.boolean as _boolean` at the top of a module does
+resolve inside a cycle, but it *executes* `boolean.py` right there — and
+`boolean.py` needs `Object` as a base class the moment it runs, so if
+`object.py` imported it at the top, importing `object.py` first would run
+`boolean.py` before `Object` exists. Every hub in the package (`object`,
+`meta`, `exceptions`, `boolean`, `none`, `string`) is needed at
+class-definition time by the modules it would import, and the package
+`__init__` is empty on purpose, so any module can be the first one imported.
+A deferred import — one that runs when the method does — is therefore the
+honest spelling, and each carries a `# circular:` comment naming the edge.
+
 ### Language
 
 - `proposals.md` is written in **English**, regardless of the language used in

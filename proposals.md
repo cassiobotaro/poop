@@ -6,9 +6,9 @@ Items 12–20 come from a pass over `poop/` for shape rather than types: what re
 library function changes about the process it runs in. Each was measured or
 checked before being written down — the import-cycle idiom in 12 on Python
 3.15, the overhead in 14 with `timeit`, the redundancy in 15 by walking every
-class's MRO. Order: 12 first, since it touches the import block of most
-modules and 18 rides on it; 13, 14, 15 are independent and small; 16 and 17
-are the two front-end items; 19 is the maintainer's call; 20 is the lock.
+class's MRO. Order: 13, 14, 15 are independent and small; 16 and 17 are the two
+front-end items; 18 is independent; 19 is the maintainer's call; 20 is the
+lock.
 
 When an item is implemented, delete its entry from this file — no `DONE`
 marker and no summary left behind. The decision and its reasoning belong in
@@ -16,35 +16,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 21. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 12. One idiom for the import cycles: import the module, not the name
-
-`poop/types/` is one flat package whose modules need each other at call time
-— `Int` answers a `Str` from `hex`, a `Float` from `/`, a `Tuple` from
-`divmod`; everything answers `none` and a `Boolean`. Today that is spelt as a
-function-local import at the line that needs it: 60 carry `# noqa: PLC0415`,
-and `meta.py` and `object.py` are exempted from the rule wholesale and hold
-about 90 more. `int.py` alone imports `Str` inside four different methods. The
-hubs are `boolean` (`to_boolean`, `true`, `false`), `none`, `string` and
-`exceptions` (`MIRRORS`) — 49 of the local imports are `none` or `to_boolean`.
-
-A function-local import is Python's workaround of last resort, and the
-language has a first-resort one: bind the *module* at the top and read the
-name when it is used. Since Python 3.7 `import poop.types.boolean as _boolean`
-succeeds inside a cycle — the submodule is already in `sys.modules`, partially
-initialised, and `_boolean.to_boolean(...)` resolves at call time, after both
-modules have finished loading. Checked on 3.15 with a two-module cycle. The
-same trick is why `from poop.types.boolean import to_boolean` *cannot* go at
-the top: it reads the attribute at import time.
-
-**Fix.** For every edge that is a cycle, `import poop.types.<mod> as _<mod>`
-at the top and `_<mod>.Name` at the use; the `TYPE_CHECKING` block keeps the
-names for annotations as it does now. Then drop the two per-file `PLC0415`
-exemptions in `pyproject.toml`, so the rule is on everywhere and a new cycle
-is reported as one instead of being written as a local import. The edges that
-are *not* cycles (a leaf like `_sentinel`, `_cloak`, `_message`) stay as
-ordinary `from … import`. Where a module reaches for one hub in a dozen
-methods — `int.py` and `boolean.py` — the file gets shorter.
 
 ### 13. `cloak` is a class keyword, and the mixins share one base
 
@@ -178,8 +149,7 @@ and so on, sixteen lines under one `# noqa: A001` comment saying that the
 mirror *is* POOP's `TypeError` — and call sites read `raise
 mirrors.TypeError(…)`. `MIRRORS` stays for the two readers that are
 table-shaped: `poop_class_of` and the `_at.py` helpers that take a
-`MirrorName`. Depends on item 12 for the import style, since `exceptions` sits
-in the cycle.
+`MirrorName`.
 
 ### 19. The call-name validators are one table
 
