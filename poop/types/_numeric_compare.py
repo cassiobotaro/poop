@@ -13,7 +13,7 @@ mismatch raises CPython's faithful ``TypeError`` instead of leaking an
 import operator
 from typing import TYPE_CHECKING
 
-from poop.types._cloak import cloak
+from poop.types._mixin import _Mixin
 from poop.types._sentinel import NOT_NUMERIC, NotNumeric
 
 if TYPE_CHECKING:
@@ -39,7 +39,7 @@ def _num_value(other: object) -> int | float | NotNumeric:
     return NOT_NUMERIC
 
 
-class _NumericCompareMixin:  # noqa: PLW1641 — the numeric rungs hash themselves
+class _NumericCompareMixin(_Mixin):  # noqa: PLW1641 — the numeric rungs hash themselves
     """The comparison protocol shared by the whole numeric tower.
 
     ``Int``, ``Float`` and ``Boolean`` order and compare identically once each
@@ -96,10 +96,3 @@ class _NumericCompareMixin:  # noqa: PLW1641 — the numeric rungs hash themselv
         if v is NOT_NUMERIC:
             return false
         return to_boolean(self._order_value() == v)
-
-
-# Cloaked as `object`, the root's own spelling: these methods are inherited by
-# many wrappers, so no single builtin name is true for all of them — and left
-# alone CPython blamed `_NumericCompareMixin` in every wrong-arity message, a private name
-# `_reject_private` exists to keep out of user code.
-cloak(_NumericCompareMixin, "object")

@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from poop.types._cloak import cloak
 from poop.types.block import _require_block
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS, poop_class_of
@@ -40,7 +39,7 @@ def _protocol(cm: object) -> tuple[Callable[..., object], Callable[..., object]]
     return _slot(kind, "__enter__", "entered"), _slot(kind, "__exit__", "exited")
 
 
-class With(Object):
+class With(Object, name="With"):
     """Smalltalk-style with/as as a message-passing builder.
 
     Execution is deferred: the context manager block runs only when .do() is called.
@@ -108,8 +107,3 @@ class With(Object):
 
     def __str__(self) -> str:
         return "With"
-
-
-# Like `Try`: keep the user-facing name but drop the module, so `class_()`
-# stops leaking `<class 'poop.types.with_.With'>`.
-cloak(With)

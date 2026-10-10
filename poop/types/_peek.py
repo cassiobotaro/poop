@@ -25,7 +25,7 @@ one.
 
 from typing import TYPE_CHECKING, ClassVar, overload
 
-from poop.types._cloak import cloak
+from poop.types._mixin import _Mixin
 from poop.types._mutated import reword_if_native
 from poop.types._sentinel import MISSING, UNPEEKED, Missing, Unpeeked
 from poop.types.boolean import false, true
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from poop.types.object import Object
 
 
-class _PeekMixin[T: Object]:
+class _PeekMixin[T: Object](_Mixin):
     """`has_next` / `next` over an iterator that can be looked ahead by one.
 
     Generic over the element the iterator yields, which is also what the
@@ -124,10 +124,3 @@ class _PeekMixin[T: Object]:
         if buffered is not UNPEEKED:
             return buffered
         return self._pull()
-
-
-# Cloaked as `object`, the root's own spelling: these methods are inherited by
-# many wrappers, so no single builtin name is true for all of them — and left
-# alone CPython blamed `_PeekMixin` in every wrong-arity message, a private name
-# `_reject_private` exists to keep out of user code.
-cloak(_PeekMixin, "object")

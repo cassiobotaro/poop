@@ -1,20 +1,14 @@
 from typing import TYPE_CHECKING, ClassVar
 
-from poop.types._cloak import cloak
+from poop.types._mixin import _Mixin
 from poop.types.boolean import false, to_boolean
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
 
-class _ValueEqMixin:  # noqa: PLW1641 — each concrete class hashes by value or not at all
-    # An empty `__slots__`, because a slot-less class anywhere in an MRO
-    # restores the per-instance `__dict__` for everything below it — this
-    # mixin alone defeated the declaration on 36 of the 49 wrappers, so a
-    # `Str` accepted attached state and two equal `Str`s could carry
-    # different attributes. It cannot collide with a concrete class's own
-    # slots, which is what makes it safe on all of them.
-    __slots__ = ()
+class _ValueEqMixin(_Mixin):  # noqa: PLW1641 — each concrete class hashes by value or not at all
+    __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
 
     _eq_attr: ClassVar[str]
     # Wrappers sharing a non-None _eq_group compare equal by value across the
@@ -33,10 +27,3 @@ class _ValueEqMixin:  # noqa: PLW1641 — each concrete class hashes by value or
             attr = self._eq_attr
             return to_boolean(getattr(self, attr) == getattr(other, attr))
         return false
-
-
-# Cloaked as `object`, the root's own spelling: these methods are inherited by
-# many wrappers, so no single builtin name is true for all of them — and left
-# alone CPython blamed `_ValueEqMixin` in every wrong-arity message, a private name
-# `_reject_private` exists to keep out of user code.
-cloak(_ValueEqMixin, "object")

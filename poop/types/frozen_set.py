@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, ClassVar
 
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._set_algebra import _elements, _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -15,7 +14,9 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
 
-class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object):
+class FrozenSet(
+    _SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object, name="frozenset"
+):
     __slots__ = ("_data",)
     _data: frozenset[Object]
     _eq_attr: ClassVar[str] = "_data"
@@ -75,6 +76,3 @@ class FrozenSet(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object)
         if not self._data:
             return "frozenset()"
         return "frozenset({" + ", ".join(repr(item) for item in self._data) + "})"
-
-
-cloak(FrozenSet, "frozenset")

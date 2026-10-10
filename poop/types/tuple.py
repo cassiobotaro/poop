@@ -3,7 +3,6 @@ from reprlib import recursive_repr
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._at import at_index
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
 from poop.types._ordered import _OrderedMixin
 from poop.types._sequence import _SequenceMixin
@@ -26,7 +25,12 @@ if TYPE_CHECKING:
 
 
 class Tuple(
-    _SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin[Object], Object
+    _SequenceMixin,
+    _OrderedMixin,
+    _ValueEqMixin,
+    _IterableMixin[Object],
+    Object,
+    name="tuple",
 ):
     __slots__ = ("_items",)
     _items: tuple[Object, ...]
@@ -106,6 +110,3 @@ class Tuple(
         if len(self._items) == 1:
             return f"({self._items[0]!r},)"
         return f"({', '.join(repr(item) for item in self._items)})"
-
-
-cloak(Tuple, "tuple")

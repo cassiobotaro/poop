@@ -1,7 +1,6 @@
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self
 
-from poop.types._cloak import cloak
 from poop.types._mapping import _MappingMixin
 from poop.types.mapping_proxy import MappingProxy
 
@@ -9,7 +8,7 @@ if TYPE_CHECKING:
     from poop.types.object import Object
 
 
-class FrozenDict(_MappingMixin):
+class FrozenDict(_MappingMixin, name="frozendict"):
     """Python 3.15's `frozendict` (PEP 814): `Dict`'s read side, and a hash.
 
     Not a `Dict` subclass, as `frozendict` is not a `dict` subclass —
@@ -63,6 +62,3 @@ class FrozenDict(_MappingMixin):
         if not self._data:
             return "frozendict()"
         return "frozendict({" + self._pairs() + "})"
-
-
-cloak(FrozenDict, "frozendict")

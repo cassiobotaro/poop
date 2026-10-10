@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, an_int, text_like
-from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
 from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
@@ -30,7 +29,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class Float(_NumericCompareMixin, Object):
+class Float(_NumericCompareMixin, Object, name="float"):
     __slots__ = ("_value",)
 
     def __init__(self, value: float | Float) -> None:
@@ -217,6 +216,3 @@ class Float(_NumericCompareMixin, Object):
 
     def __str__(self) -> str:
         return str(self._value)
-
-
-cloak(Float, "float")

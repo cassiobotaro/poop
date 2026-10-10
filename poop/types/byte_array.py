@@ -8,7 +8,6 @@ from poop.types._at import (
     nothing_to_remove,
 )
 from poop.types._bytes_like import _BytesLikeMixin
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article
 from poop.types._ordered import _OrderedMixin
@@ -40,6 +39,7 @@ class ByteArray(
     _ValueEqMixin,
     _IterableMixin[Int],
     Object,
+    name="bytearray",
 ):
     __slots__ = ("_value",)
     _value: _bytearray
@@ -194,6 +194,3 @@ class ByteArray(
         """
         self._value.reverse()
         return none
-
-
-cloak(ByteArray, "bytearray")

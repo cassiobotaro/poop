@@ -2,7 +2,6 @@ import builtins
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import Key, a_block, no_arguments, text_like
-from poop.types._cloak import cloak
 from poop.types._minmax import MISSING, _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 
-class Boolean(_NumericCompareMixin, Object):
+class Boolean(_NumericCompareMixin, Object, name="bool"):
     """Base for Smalltalk-style boolean objects.
 
     Never instantiated: `__new__` answers `false`, so every boolean is one of
@@ -396,7 +395,7 @@ class Boolean(_NumericCompareMixin, Object):
 
 
 @final
-class _TrueClass(Boolean):
+class _TrueClass(Boolean, name="bool"):
     __slots__ = ()
 
     def __new__(cls, *args: object, **kwargs: object) -> Boolean:
@@ -462,7 +461,7 @@ class _TrueClass(Boolean):
 
 
 @final
-class _FalseClass(Boolean):
+class _FalseClass(Boolean, name="bool"):
     __slots__ = ()
 
     def if_true[T](self, block: Callable[[], T]) -> NoneClass:
@@ -533,11 +532,3 @@ false: Boolean = object.__new__(_FalseClass)
 def to_boolean(value: object) -> Boolean:
     """Map any Python truth value onto the POOP `Boolean` singletons."""
     return true if value else false
-
-
-cloak(Boolean, "bool")
-
-# The singleton classes answer "bool" too — class_name() and error
-# messages read type(true).__name__, not the abstract base's.
-cloak(_TrueClass, "bool")
-cloak(_FalseClass, "bool")

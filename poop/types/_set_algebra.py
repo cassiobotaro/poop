@@ -87,10 +87,7 @@ class _SetAlgebraMixin:
     never sent by name, so they are shared.
     """
 
-    # An empty `__slots__`, because a slot-less class anywhere in an MRO
-    # restores the per-instance `__dict__` for everything below it — see the
-    # note in `_value_eq.py`.
-    __slots__ = ()
+    __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
 
     # What the operators read: `len` and the set algebra. Each concrete class
     # narrows the slot to its own builtin — `set[Object]`, `frozenset[Object]`.

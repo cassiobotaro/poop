@@ -14,7 +14,7 @@ anything, in CPython as here.
 import operator
 from typing import TYPE_CHECKING, ClassVar
 
-from poop.types._cloak import cloak
+from poop.types._mixin import _Mixin
 from poop.types.boolean import to_boolean
 
 if TYPE_CHECKING:
@@ -25,10 +25,8 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
 
-class _OrderedMixin:
-    # Empty, for the reason `_ValueEqMixin` gives: one slot-less class in an
-    # MRO restores the per-instance `__dict__` for everything below it.
-    __slots__ = ()
+class _OrderedMixin(_Mixin):
+    __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
 
     _eq_attr: ClassVar[str]
     # Wrappers sharing a non-None group order against each other, as `bytes`
@@ -63,8 +61,3 @@ class _OrderedMixin:
 
     def __ge__(self, other: object) -> Boolean:
         return self._compare(other, operator.ge)
-
-
-# Cloaked as `object`, like the other shared mixins: no single builtin name is
-# true for every wrapper that inherits these.
-cloak(_OrderedMixin, "object")

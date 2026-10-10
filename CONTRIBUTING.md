@@ -164,9 +164,11 @@ Every infection follows the same pattern.
 
 ### A new type (e.g. `Foo`)
 
-1. Create `poop/types/foo.py` inheriting from `Object` (or a relevant mixin).
-   Declare `__slots__`. Methods must return POOP types — never bare Python
-   values.
+1. Create `poop/types/foo.py` inheriting from `Object` (or a relevant mixin),
+   with the builtin's name as a class keyword — `class Foo(Object,
+   name="foo")` — which is what cloaks the class under the name it answers
+   to. Declare `__slots__`. Methods must return POOP types — never bare
+   Python values.
 2. Wire dunders (`__iter__`, `__add__`, …) to public Python-named methods
    (`iter()`, `__add__` is fine to keep, but new Smalltalk-style behaviour goes
    in a public method).

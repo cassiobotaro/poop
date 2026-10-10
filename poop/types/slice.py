@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 from poop.types._argument import an_int
-from poop.types._cloak import cloak
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
     from poop.types.tuple import Tuple
 
 
-class Slice(Object):
+class Slice(Object, name="slice"):
     __slots__ = ("_start", "_step", "_stop")
 
     def __init__(
@@ -121,6 +120,3 @@ def _field_str(value: Index | None) -> str:
     integers the two spellings agree, which is why this only ever showed here.
     """
     return "None" if value is None else repr(value)
-
-
-cloak(Slice, "slice")

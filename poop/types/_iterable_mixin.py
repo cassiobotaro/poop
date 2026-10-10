@@ -5,6 +5,7 @@ from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, Any, overload
 
 from poop.types._argument import Key, a_block, a_key
+from poop.types._mixin import _Mixin
 from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
@@ -19,7 +20,6 @@ if TYPE_CHECKING:
     from poop.types.object import Object
     from poop.types.zip import Zip
 
-from poop.types._cloak import cloak
 from poop.types._minmax import _minmax
 from poop.types._mutated import iterating, reword_if_native
 from poop.types._sentinel import MISSING, Missing
@@ -59,7 +59,7 @@ def _sorted[T](
     return builtins.sorted(iterable, **kwargs)
 
 
-class _IterableMixin[T: Object]:
+class _IterableMixin[T: Object](_Mixin):
     """The collection protocol, generic over the element it yields.
 
     Each concrete receiver names its element — `Str` yields `Str`, `Bytes`
@@ -68,13 +68,7 @@ class _IterableMixin[T: Object]:
     answers one of them, rather than a function from nothing to nothing.
     """
 
-    # An empty `__slots__`, because a slot-less class anywhere in an MRO
-    # restores the per-instance `__dict__` for everything below it — this
-    # mixin alone defeated the declaration on 36 of the 49 wrappers, so a
-    # `Str` accepted attached state and two equal `Str`s could carry
-    # different attributes. It cannot collide with a concrete class's own
-    # slots, which is what makes it safe on all of them.
-    __slots__ = ()
+    __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
 
     @abstractmethod
     def __iter__(self) -> Iterator[T]: ...
@@ -202,10 +196,3 @@ class _IterableMixin[T: Object]:
         from poop.types.zip import Zip  # noqa: PLC0415
 
         return Zip(self, *others, strict=strict)
-
-
-# Cloaked as `object`, the root's own spelling: these methods are inherited by
-# many wrappers, so no single builtin name is true for all of them — and left
-# alone CPython blamed `_IterableMixin` in every wrong-arity message, a private name
-# `_reject_private` exists to keep out of user code.
-cloak(_IterableMixin, "object")

@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Never, final
 
 from poop.types._alias import unalias
 from poop.types._argument import a_class
-from poop.types._cloak import cloak
 from poop.types._message import poop_message
 from poop.types._selectors import explain, not_understood
 from poop.types.boolean import to_boolean
@@ -27,7 +26,7 @@ def _answered_by_the_class_side(kind: type, name: str) -> bool:
 
 
 @final
-class Error(Object):
+class Error(Object, name="object"):
     """Wraps a caught Python exception as a POOP object."""
 
     __slots__ = ("_exception",)
@@ -144,12 +143,3 @@ class Error(Object):
         name = self.kind().name()
         message = self.message()
         return f"{name}: {message}" if str(message) else str(name)
-
-
-# The third spelling of the same leak `class_()` and `__str__` above already
-# closed: CPython builds a wrong-arity message from the *function's* qualname,
-# so `e.message(1)` blamed `Error.message()` — the `poop.types` detail those
-# two docstrings call "a name user code can neither name nor construct".
-# `object` because an `Error` stands in for whatever it caught, so no single
-# exception name is true for the class.
-cloak(Error, "object")

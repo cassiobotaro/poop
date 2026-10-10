@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Self, cast, overload
 
 from poop.types._argument import a_collection, a_pair
 from poop.types._at import no_key, nothing_to_remove
-from poop.types._cloak import cloak
 from poop.types._mapping import _MappingMixin
 from poop.types._sentinel import MISSING, Missing
 from poop.types._unwrap import _is_absent
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
     from poop.types.object import Object
 
 
-class Dict(_MappingMixin):
+class Dict(_MappingMixin, name="dict"):
     """The mutable mapping: `_MappingMixin`'s read side plus the writes."""
 
     __slots__ = ("_data",)
@@ -132,6 +131,3 @@ class Dict(_MappingMixin):
     @recursive_repr(fillvalue="{...}")
     def __str__(self) -> str:
         return "{" + self._pairs() + "}"
-
-
-cloak(Dict, "dict")

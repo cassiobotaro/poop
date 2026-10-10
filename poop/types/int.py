@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Literal, cast
 
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, an_int, byte_order, byte_source
-from poop.types._cloak import cloak
 from poop.types._message import article, binary_refusal
 from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
@@ -47,7 +46,7 @@ def _integral_value(other: object) -> int | NotIntegral:
     return NOT_INTEGRAL
 
 
-class Int(_NumericCompareMixin, Object):
+class Int(_NumericCompareMixin, Object, name="int"):
     __slots__ = ("_value",)
 
     def __init__(self, value: int | Int) -> None:
@@ -437,6 +436,3 @@ class Int(_NumericCompareMixin, Object):
 
     def __str__(self) -> str:
         return str(self._value)
-
-
-cloak(Int, "int")

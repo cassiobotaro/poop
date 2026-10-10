@@ -3,7 +3,6 @@ from operator import index as _index
 from typing import TYPE_CHECKING
 
 from poop.types._at import at_index, no_element_equal_to
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _is_absent, _searched
 from poop.types.boolean import false, to_boolean
@@ -22,7 +21,7 @@ if TYPE_CHECKING:
     from poop.types.slice import Slice
 
 
-class Range(_IterableMixin[Int], Object):
+class Range(_IterableMixin[Int], Object, name="range"):
     __slots__ = ("_start", "_step", "_stop")
 
     def __init__(
@@ -189,6 +188,3 @@ class Range(_IterableMixin[Int], Object):
         if native.step == 1:
             return f"range({native.start}, {native.stop})"
         return f"range({native.start}, {native.stop}, {native.step})"
-
-
-cloak(Range, "range")

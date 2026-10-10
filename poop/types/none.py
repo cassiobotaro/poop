@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import a_block, no_arguments
-from poop.types._cloak import cloak
 from poop.types.boolean import false, true
 from poop.types.object import Object
 
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @final
-class NoneClass(Object):
+class NoneClass(Object, name="NoneType"):
     __slots__ = ()
 
     # CPython's answer: `type(None)() is None`. `class_()` hands the class
@@ -43,5 +42,3 @@ class NoneClass(Object):
 
 
 none: NoneClass = object.__new__(NoneClass)
-
-cloak(NoneClass, "NoneType")

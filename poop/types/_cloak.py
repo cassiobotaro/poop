@@ -77,17 +77,17 @@ def _rename_own_functions(cls: type, name: str) -> None:
             fn.__qualname__ = f"{name}.{fn.__name__}"
 
 
-def cloak(cls: type, name: str | None = None) -> None:
+def cloak(cls: type, name: str) -> None:
     """Hide `cls`'s Python identity behind the name it answers to.
 
-    `name` is the builtin's spelling; omitting it keeps the class's own name
-    and only drops the module path, which is what `Try` and `With` need — both
+    `name` is the builtin's spelling. `Try` and `With` pass their own: both
     are legitimate user-facing names, and only `poop.types.try_` leaked.
+    Applied by `Object.__init_subclass__` from the `name=` class keyword;
+    called directly only for the classes built by hand.
     """
     cls.__module__ = "builtins"
-    if name is not None:
-        cls.__name__ = name
-        # The half CPython reaches for when it composes a message about a
-        # type it was handed. Left alone it answers the internal spelling.
-        cls.__qualname__ = name
-        _rename_own_functions(cls, name)
+    cls.__name__ = name
+    # The half CPython reaches for when it composes a message about a type it
+    # was handed. Left alone it answers the internal spelling.
+    cls.__qualname__ = name
+    _rename_own_functions(cls, name)

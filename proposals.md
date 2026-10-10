@@ -6,8 +6,7 @@ Items 12–20 come from a pass over `poop/` for shape rather than types: what re
 library function changes about the process it runs in. Each was measured or
 checked before being written down — the import-cycle idiom in 12 on Python
 3.15, the overhead in 14 with `timeit`, the redundancy in 15 by walking every
-class's MRO. Order: 13, 14, 15 are independent and small; 16 and 17 are the two
-front-end items; 18 is independent; 19 is the maintainer's call; 20 is the
+class's MRO. Order: 14 is small; 16 and 17 are the two front-end items; 18 is independent; 19 is the maintainer's call; 20 is the
 lock.
 
 When an item is implemented, delete its entry from this file — no `DONE`
@@ -16,34 +15,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 21. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 13. `cloak` is a class keyword, and the mixins share one base
-
-Every wrapper module ends with `cloak(Int, "int")`: 43 trailing calls, 13 of
-them `cloak(_SomeMixin, "object")` under nine copies of the same four-line
-comment ("Cloaked as `object`, the root's own spelling: these methods are
-inherited by many wrappers…"). The cloak is part of the class's declaration —
-the name it answers to — and the package already says so for one family:
-`class BytesIterator(_IteratorBase[Int], name="bytes_iterator")` cloaks
-through `_Cursor.__init_subclass__`, and `_DictView` does the same. The rest
-of the tree spells it as a statement after the fact, which also means a new
-wrapper can be defined and the line forgotten; `tests/test_cloak.py` exists to
-catch exactly that.
-
-The mixins carry a second repeated declaration: `__slots__ = ()` with the
-same paragraph explaining that a slot-less class anywhere in an MRO restores
-`__dict__` (`_value_eq.py`, `_iterable_mixin.py`, `_sequence.py`,
-`_set_algebra.py`, `_bytes_like.py`, …).
-
-**Fix.** `PoopMeta.__new__` takes `name: str | None = None` as a class
-keyword and applies `cloak` when it is given; `Object`'s subclasses then read
-`class Int(_NumericCompareMixin, Object, name="int")` and the trailing call
-goes. `_Cursor` and `_DictView` stop redefining `__init_subclass__` for it. The
-mixins — plain classes outside the `Object` tree — descend from one `_Mixin`
-whose `__slots__ = ()` and `__init_subclass__` cloak as `object`, and whose
-docstring holds the `__dict__` paragraph once. `cloak` itself stays a
-function, since `builtin_alias` and the exception mirrors call it on classes
-they build by hand.
 
 ### 14. The protocol-slot adapter wraps only a program's classes
 

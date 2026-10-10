@@ -1,7 +1,6 @@
 import operator
 from typing import TYPE_CHECKING
 
-from poop.types._cloak import cloak
 from poop.types._message import binary_refusal
 from poop.types._numeric_compare import _num_value
 from poop.types._sentinel import NOT_NUMERIC
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
 _complex = complex  # alias to avoid shadowing by Complex class name
 
 
-class Complex(Object):
+class Complex(Object, name="complex"):
     __slots__ = ("_value",)
 
     def __init__(self, value: _complex | Complex) -> None:
@@ -136,6 +135,3 @@ class Complex(Object):
 
     def __str__(self) -> str:
         return repr(self._value)
-
-
-cloak(Complex, "complex")

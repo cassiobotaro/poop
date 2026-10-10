@@ -3,7 +3,6 @@ from inspect import Parameter, signature
 from typing import TYPE_CHECKING, Self, cast
 
 from poop.types._argument import a_block
-from poop.types._cloak import cloak
 from poop.types._message import article
 from poop.types.boolean import false, to_boolean
 from poop.types.exceptions import MIRRORS
@@ -66,7 +65,7 @@ _POSITIONAL = frozenset({Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYW
 _BY_KEYWORD = frozenset({Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY})
 
 
-class Block[**P, R](Object):
+class Block[**P, R](Object, name="function"):
     """A lambda as an object: callable exactly as the function it wraps.
 
     Generic over the function's parameters and answer, so a block built over
@@ -254,7 +253,7 @@ class Block[**P, R](Object):
         return "<block>"
 
 
-class _MethodBlock[**P, R](Block[P, R]):
+class _MethodBlock[**P, R](Block[P, R], name="function"):
     """A method read off an object, wrapped so it answers messages.
 
     `Object.__getattribute__` hands one of these back for `"abc".upper`, so a
@@ -306,11 +305,3 @@ class _MethodBlock[**P, R](Block[P, R]):
         # Consistent with __eq__ above, as CPython's bound method is: equal
         # methods must hash equally or `set`/`dict` membership contradicts `==`.
         return hash(self._identity())
-
-
-# A POOP block is a wrapped lambda, and CPython's class for a lambda is
-# `function` (`type(lambda: 0).__name__`). Answer that name so `class_()` and
-# `class_name()` mirror Python instead of leaking the `poop.types.block.Block`
-# path — the same cloak every other wrapper applies.
-cloak(Block, "function")
-cloak(_MethodBlock, "function")

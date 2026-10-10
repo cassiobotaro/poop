@@ -39,16 +39,15 @@ def _iterator_classes() -> list[type]:
     `__module__` cannot select them — the cloak sets it to `builtins` — so the
     base class itself is the mark, exactly as `PoopMeta` is in `test_cloak.py`.
 
-    Concrete means "declares its own `_repr_name`": that is what
-    `__init_subclass__(name=...)` writes, and the shared bases
-    (`_DictItemIteratorBase`) inherit the default instead, being cloaked as
-    `object` alongside the other mixins. A base has no receiver to build.
+    Concrete means "cloaked under a CPython iterator name": the shared bases
+    (`_DictItemIteratorBase`) are cloaked as `object` alongside the other
+    mixins, and a base has no receiver to build.
     """
     found: dict[int, type] = {}
     for info in pkgutil.iter_modules(poop.types.__path__):
         module = importlib.import_module(f"poop.types.{info.name}")
         for _, cls in inspect.getmembers(module, inspect.isclass):
-            concrete = cls is not _IteratorBase and "_repr_name" in vars(cls)
+            concrete = cls.__name__ != "object"
             if issubclass(cls, _IteratorBase) and concrete:
                 found[id(cls)] = cls
     return sorted(found.values(), key=lambda cls: (cls.__name__, id(cls)))

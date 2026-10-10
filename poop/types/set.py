@@ -2,7 +2,6 @@ import operator
 from typing import TYPE_CHECKING, ClassVar, Self
 
 from poop.types._at import no_element_equal_to, nothing_to_remove
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._set_algebra import (
     _elements,
@@ -25,7 +24,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object):
+class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object, name="set"):
     __slots__ = ("_data",)
     _data: set[Object]
     _eq_attr: ClassVar[str] = "_data"
@@ -156,6 +155,3 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object):
         if not self._data:
             return "set()"
         return "{" + ", ".join(repr(item) for item in self._data) + "}"
-
-
-cloak(Set, "set")

@@ -1,12 +1,11 @@
 from typing import final
 
 from poop.types._argument import no_arguments
-from poop.types._cloak import cloak
 from poop.types.object import Object
 
 
 @final
-class EllipsisClass(Object):
+class EllipsisClass(Object, name="ellipsis"):
     """POOP equivalent of Python's `...`, with singleton `ellipsis`.
 
     Like NoneClass, it carries no behaviour of its own beyond the universal
@@ -27,5 +26,3 @@ class EllipsisClass(Object):
 
 
 ellipsis: EllipsisClass = object.__new__(EllipsisClass)
-
-cloak(EllipsisClass, "ellipsis")

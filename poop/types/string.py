@@ -15,7 +15,6 @@ from poop.types._argument import (
     text_like,
 )
 from poop.types._at import at_index
-from poop.types._cloak import cloak
 from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
@@ -142,7 +141,7 @@ def _opt_text(chars: object, selector: str) -> str | None:
     return text_like(chars, selector, "a str", (str,))
 
 
-class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object):
+class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str"):
     """A string, and a collection like any other.
 
     `no_map`, `no_filter`, `no_all`, `no_any` and `no_loops` each name a
@@ -599,6 +598,3 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object):
 
     def __repr__(self) -> str:
         return repr(self._value)
-
-
-cloak(Str, "str")

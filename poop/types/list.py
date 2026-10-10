@@ -10,7 +10,6 @@ from poop.types._at import (
     no_element_equal_to,
     nothing_to_remove,
 )
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin, _sorted
 from poop.types._message import article
 from poop.types._ordered import _OrderedMixin
@@ -35,7 +34,12 @@ if TYPE_CHECKING:
 
 
 class List(
-    _SequenceMixin, _OrderedMixin, _ValueEqMixin, _IterableMixin[Object], Object
+    _SequenceMixin,
+    _OrderedMixin,
+    _ValueEqMixin,
+    _IterableMixin[Object],
+    Object,
+    name="list",
 ):
     __slots__ = ("_items",)
     _items: list[Object]
@@ -210,6 +214,3 @@ class List(
     @recursive_repr(fillvalue="[...]")
     def __str__(self) -> str:
         return f"[{', '.join(repr(item) for item in self._items)}]"
-
-
-cloak(List, "list")

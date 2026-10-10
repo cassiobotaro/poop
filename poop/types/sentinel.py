@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from poop.types._cloak import cloak
 from poop.types._unwrap import _is_absent
 from poop.types.object import Object
 
@@ -9,7 +8,7 @@ if TYPE_CHECKING:
     from poop.types.string import Str
 
 
-class Sentinel(Object):
+class Sentinel(Object, name="sentinel"):
     """Python 3.15's `sentinel` (PEP 661): a unique marker that prints as its name.
 
     What CPython answers, and so what this does: every `sentinel("MISSING")`
@@ -31,6 +30,3 @@ class Sentinel(Object):
 
     def __str__(self) -> str:
         return str(self._repr)
-
-
-cloak(Sentinel, "sentinel")

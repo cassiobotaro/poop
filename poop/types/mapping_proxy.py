@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, final
 
 from poop.types._at import at_key
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.dict_key_iterator import DictKeyIterator
@@ -23,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @final
-class MappingProxy(_IterableMixin[Object], Object):
+class MappingProxy(_IterableMixin[Object], Object, name="mappingproxy"):
     """Read-only view over a mapping. Mirrors types.MappingProxyType."""
 
     __slots__ = ("_dict",)
@@ -128,6 +127,3 @@ class MappingProxy(_IterableMixin[Object], Object):
 
     def __str__(self) -> str:
         return f"mappingproxy({self._dict})"
-
-
-cloak(MappingProxy, "mappingproxy")

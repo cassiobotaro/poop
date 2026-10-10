@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
 from poop.types._argument import _opt_stop, a_bound, an_int, text_like
 from poop.types._at import at_index, no_element_equal_to
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._raw import _faithful
 from poop.types._unwrap import _is_absent
@@ -27,7 +26,7 @@ if TYPE_CHECKING:
 _memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
 
 
-class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object):
+class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
     __slots__ = ("_value",)
     _eq_attr: ClassVar[str] = "_value"
     # CPython compares memoryview equal by value to bytes/bytearray (and
@@ -164,6 +163,3 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object):
         # buffer just to print it, a cost already refused elsewhere, so
         # this summarizes and `hex()` shows the contents on request.
         return f"<memoryview of {self._value.nbytes} bytes>"
-
-
-cloak(MemoryView, "memoryview")

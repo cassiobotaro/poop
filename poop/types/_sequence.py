@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Self
 
 from poop.types._argument import _opt_stop, a_bound
 from poop.types._at import no_element_equal_to
-from poop.types._cloak import cloak
+from poop.types._mixin import _Mixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import _unwrap, _unwrap_bool
@@ -34,11 +34,8 @@ if TYPE_CHECKING:
     from poop.types.string import Str
 
 
-class _SequenceMixin:
-    # An empty `__slots__`, because a slot-less class anywhere in an MRO
-    # restores the per-instance `__dict__` for everything below it — see the
-    # note in `_value_eq.py`.
-    __slots__ = ()
+class _SequenceMixin(_Mixin):
+    __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
 
     # The two payloads the mixin reads `len`, `iter`, `in`, `*` and `index`
     # off. Not `Sequence[Object]`: the ABC declares no `*`, and repeating is
@@ -101,6 +98,3 @@ class _SequenceMixin:
             flush=_unwrap_bool(flush, False),
         )
         return none
-
-
-cloak(_SequenceMixin, "object")

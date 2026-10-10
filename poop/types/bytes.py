@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, ClassVar
 from poop.types._alias import wrapped_instance
 from poop.types._argument import an_int, text_like
 from poop.types._bytes_like import _BytesLikeMixin
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._ordered import _OrderedMixin
 from poop.types._unwrap import (
@@ -22,7 +21,12 @@ if TYPE_CHECKING:
 
 
 class Bytes(
-    _BytesLikeMixin["Bytes"], _OrderedMixin, _ValueEqMixin, _IterableMixin[Int], Object
+    _BytesLikeMixin["Bytes"],
+    _OrderedMixin,
+    _ValueEqMixin,
+    _IterableMixin[Int],
+    Object,
+    name="bytes",
 ):
     __slots__ = ("_value",)
     _value: bytes
@@ -76,6 +80,3 @@ class Bytes(
         if not isinstance(other, (Bytes, ByteArray)):
             return NotImplemented
         return Bytes(self._value + other._value)
-
-
-cloak(Bytes, "bytes")

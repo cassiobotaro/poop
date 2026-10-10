@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, ClassVar, Self, overload
 
 from poop.types._argument import Key, a_collection
 from poop.types._at import at_key
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._minmax import _minmax
 from poop.types._sentinel import MISSING, Missing
@@ -40,7 +39,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object):  # noqa: PLW1641 — each class hashes by value or not at all
+class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object, name="dict"):  # noqa: PLW1641 — each class hashes by value or not at all
     """A mapping, and a collection like any other.
 
     The iterable mixin's messages iterate what CPython iterates, the keys, so
@@ -168,10 +167,3 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object):  # noqa: PLW
     def _pairs(self) -> str:
         """`k: v, …` — the body of both reprs."""
         return ", ".join(f"{k!r}: {v!r}" for k, v in self._data.items())
-
-
-# Cloaked as `dict`, the way `_BytesLikeMixin` is cloaked as `bytes`: the two
-# classes that inherit it are the mapping pair, and `frozendict`'s messages are
-# a subset of `dict`'s, so a wrong-arity report naming `dict.get()` is the
-# truer of the two spellings available — `object.get()` is true of neither.
-cloak(_MappingMixin, "dict")

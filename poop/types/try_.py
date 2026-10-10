@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 from poop.types._argument import a_class
-from poop.types._cloak import cloak
 from poop.types.block import _require_block
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
@@ -49,7 +48,7 @@ def _exception_kind(
     return _exception_class(resolved)
 
 
-class Try(Object):
+class Try(Object, name="Try"):
     """Smalltalk-style try/except/finally as a message-passing builder.
 
     Execution is deferred: the block runs only when .run() or .finally_() is called.
@@ -149,9 +148,3 @@ class Try(Object):
 
     def __str__(self) -> str:
         return "Try"
-
-
-# `Try` is a legitimate user-facing name, but without this cloak `class_()`
-# answers `<class 'poop.types.try_.Try'>`, leaking the internal path. Keep the
-# name, drop the module, matching every other wrapper.
-cloak(Try)

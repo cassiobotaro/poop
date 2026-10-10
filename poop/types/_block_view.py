@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from poop.types._cloak import cloak
 from poop.types._iterator_base import _LazyView
 from poop.types.exceptions import MIRRORS
 
@@ -10,7 +9,7 @@ if TYPE_CHECKING:
     from poop.types.object import Object
 
 
-class _BlockView[S: Object, T: Object](_LazyView[T]):
+class _BlockView[S: Object, T: Object](_LazyView[T], name="object"):
     """Base for the views that send a block to each element: `map`, `filter`.
 
     The two differed in one line — what the block's answer does with the
@@ -58,8 +57,3 @@ class _BlockView[S: Object, T: Object](_LazyView[T]):
         # ever stands for "already handed over".
         del self._source, self._block
         return self._gen(source, block)
-
-
-# Cloaked as `object`, as `_LazyView` is: its members are inherited by both
-# views, so neither builtin name is true for all of them.
-cloak(_BlockView, "object")

@@ -48,6 +48,21 @@ def _holds_no_state(receiver: object) -> Exception:
 class Object(metaclass=PoopMeta):
     __slots__ = ()
 
+    def __init_subclass__(cls, *, name: str | None = None, **kwargs: object) -> None:
+        """Cloak a wrapper under the builtin name it answers to.
+
+        The cloak is part of a class's declaration — the name it answers to —
+        so it is a class keyword: `class Int(_NumericCompareMixin, Object,
+        name="int")`. It used to be a statement after the class, 43 times,
+        which is also 43 chances to define a wrapper and forget the line. A
+        class a program defines passes no keyword and keeps its own name.
+        `cloak` stays a function for the classes built by hand —
+        `builtin_alias` and the exception mirrors.
+        """
+        super().__init_subclass__(**kwargs)
+        if name is not None:
+            cloak(cls, name)
+
     def class_(self) -> type[Self]:
         """Smalltalk's `x class` — the class object itself, not its name."""
         return type(self)

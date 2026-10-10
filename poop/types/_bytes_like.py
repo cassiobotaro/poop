@@ -25,8 +25,8 @@ from poop.types._argument import (
     max_split,
 )
 from poop.types._at import at_index
-from poop.types._cloak import cloak
 from poop.types._codec import decoded
+from poop.types._mixin import _Mixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import _unwrap, _unwrap_bool
@@ -55,10 +55,8 @@ if TYPE_CHECKING:
 _BYTE_KINDS = (bytes, bytearray, memoryview)
 
 
-class _BytesLikeMixin[B: Object]:
-    # Empty, like every mixin's: a slot-less class anywhere in an MRO restores
-    # the per-instance `__dict__`. `_value` is each concrete class's own slot.
-    __slots__ = ()
+class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
+    __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
 
     _value: bytes | bytearray
 
@@ -423,11 +421,3 @@ class _BytesLikeMixin[B: Object]:
 
     def __str__(self) -> str:
         return repr(self._value)
-
-
-# Cloaked as `bytes`, not `object` as the other shared mixins are: CPython
-# builds a wrong-arity message from the function's qualname, so this name is
-# what `b"a".upper(1)` blames. `bytes` is true for one receiver and close for
-# the other — the pair is already one group under that name in `_eq_group`
-# and `_order_group` — where `object` is true for neither.
-cloak(_BytesLikeMixin, "bytes")

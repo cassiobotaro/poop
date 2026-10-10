@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, Self
 
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._peek import _PeekMixin
 from poop.types._sentinel import UNPEEKED
@@ -10,24 +9,16 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
 
-class _Cursor[T: Object](_PeekMixin[T], _IterableMixin[T], Object):
+class _Cursor[T: Object](_PeekMixin[T], _IterableMixin[T], Object, name="object"):
     """What every one-shot iterator and lazy view answers alike.
 
-    `_IteratorBase` and `_LazyView` restated all of it: the `name=` class
-    keyword driving the `<name>` repr and the cloak, `__iter__`, `iter` and
-    the repr itself. They differ only in where the Python iterator comes from
-    — handed in, or built on first use — which is what each keeps.
+    `_IteratorBase` and `_LazyView` restated all of it: `__iter__`, `iter` and
+    the `<name>` repr, which reads the CPython name the `name=` class keyword
+    cloaked the class under. They differ only in where the Python iterator
+    comes from — handed in, or built on first use — which is what each keeps.
     """
 
     __slots__ = ("_iter",)
-    _repr_name: ClassVar[str] = "iterator"
-
-    def __init_subclass__(cls, *, name: str | None = None, **kwargs: object) -> None:
-        super().__init_subclass__(**kwargs)
-        if name is not None:
-            cls._repr_name = name
-            # class_name() reads type(x).__name__ — answer the CPython name.
-            cloak(cls, name)
 
     def __iter__(self) -> Iterator[T]:
         # `self`, not the raw iterator: an element parked by `has_next` would
@@ -57,10 +48,10 @@ class _Cursor[T: Object](_PeekMixin[T], _IterableMixin[T], Object):
         return self
 
     def __str__(self) -> str:
-        return f"<{self._repr_name}>"
+        return f"<{type(self).__name__}>"
 
 
-class _IteratorBase[T: Object](_Cursor[T]):
+class _IteratorBase[T: Object](_Cursor[T], name="object"):
     """Base for one-shot POOP iterators.
 
     Wraps a Python iterator. `next()` raises `StopIteration` on exhaustion —
@@ -105,7 +96,7 @@ class _IteratorBase[T: Object](_Cursor[T]):
         return self._iter
 
 
-class _LazyView[T: Object](_Cursor[T]):
+class _LazyView[T: Object](_Cursor[T], name="object"):
     """Base for the lazy views `map`, `filter`, `zip` and `enumerate`.
 
     `_IteratorBase`'s sibling under `_Cursor`, over a generator built on first
@@ -116,7 +107,6 @@ class _LazyView[T: Object](_Cursor[T]):
     """
 
     __slots__ = ()
-    _repr_name: ClassVar[str] = "view"
 
     def __init__(self) -> None:
         self._iter: Iterator[T] | None = None
@@ -129,13 +119,3 @@ class _LazyView[T: Object](_Cursor[T]):
         if self._iter is None:
             self._iter = self._generate()
         return self._iter
-
-
-# Cloaked as `object`, as the shared mixins are: `iter` and `__str__` are
-# inherited by every concrete iterator and view, so no single builtin name is true for
-# all of them — and left alone CPython blamed `_IteratorBase` in every
-# wrong-arity message, a private name `_reject_private` exists to keep out of
-# user code.
-cloak(_Cursor, "object")
-cloak(_IteratorBase, "object")
-cloak(_LazyView, "object")

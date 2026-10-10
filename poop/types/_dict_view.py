@@ -1,8 +1,7 @@
 import operator
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, cast
 
-from poop.types._cloak import cloak
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.frozen_set import FrozenSet
@@ -73,26 +72,18 @@ def _set_like_elements(other: object) -> set[Object] | None:
     return None
 
 
-class _DictView[T: Object](_IterableMixin[T], Object):
+class _DictView[T: Object](_IterableMixin[T], Object, name="object"):
     """Base for the live Dict views (keys / values / items).
 
-    Mirrors the ``_iterator_base.py`` pattern: a shared skeleton plus a
-    ``_repr_name`` ClassVar set via ``__init_subclass__(name=...)``.
-    Subclasses declare ``__slots__ = ()`` and override the
+    Mirrors the ``_iterator_base.py`` pattern: a shared skeleton, with the
+    repr reading the CPython name the ``name=`` class keyword cloaked the
+    view under. Subclasses declare ``__slots__ = ()`` and override the
     ``_repr_items()`` hook (the inner repr text differs per view), plus the
     iteration / set-algebra / comparison members that genuinely differ.
     Only the truly-identical skeleton lives here.
     """
 
     __slots__ = ("_dict",)
-    _repr_name: ClassVar[str] = "dict_view"
-
-    def __init_subclass__(cls, *, name: str | None = None, **kwargs: object) -> None:
-        super().__init_subclass__(**kwargs)
-        if name is not None:
-            cls._repr_name = name
-            # class_name() reads type(x).__name__ — answer the CPython name.
-            cloak(cls, name)
 
     def __init__(self, dict_: _MappingMixin) -> None:
         self._dict: _MappingMixin = dict_
@@ -110,17 +101,10 @@ class _DictView[T: Object](_IterableMixin[T], Object):
         raise NotImplementedError
 
     def __str__(self) -> str:
-        return f"{self._repr_name}([{self._repr_items()}])"
+        return f"{type(self).__name__}([{self._repr_items()}])"
 
 
-# Cloaked as `object`, the root's own spelling: these methods are inherited by
-# many wrappers, so no single builtin name is true for all of them — and left
-# alone CPython blamed `_DictView` in every wrong-arity message, a private name
-# `_reject_private` exists to keep out of user code.
-cloak(_DictView, "object")
-
-
-class _SetLikeView[T: Object](_DictView[T]):
+class _SetLikeView[T: Object](_DictView[T], name="object"):
     """The set algebra and comparisons `dict_keys` and `dict_items` share.
 
     The two views differed only in what their own side is — the keys view
@@ -212,6 +196,3 @@ class _SetLikeView[T: Object](_DictView[T]):
 
     def __gt__(self, other: object) -> Boolean:
         return self._compare(other, operator.gt)
-
-
-cloak(_SetLikeView, "object")
