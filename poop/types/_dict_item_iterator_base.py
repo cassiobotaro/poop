@@ -1,3 +1,4 @@
+from itertools import starmap
 from typing import TYPE_CHECKING
 
 from poop.types._iterator_base import _IteratorBase
@@ -25,4 +26,4 @@ class _DictItemIteratorBase(_IteratorBase[Tuple], name="object"):
     __slots__ = ()
 
     def __init__(self, pairs: Iterable[tuple[Object, Object]]) -> None:
-        super().__init__(Tuple(k, v) for k, v in pairs)
+        super().__init__(starmap(Tuple, pairs))

@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 
-def refuse_extra_arguments(
+def refuse_extra_arguments(  # noqa: PLR0913 — one sentence, every part of it named
     name: str,
     args: tuple[object, ...],
     kwargs: Mapping[str, object],

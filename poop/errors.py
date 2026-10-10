@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from itertools import starmap
 from typing import TYPE_CHECKING
 
 from rich.syntax import Syntax
@@ -137,7 +138,7 @@ def _column_width(char: str) -> int:
     """The columns one character takes: a combining mark none, a wide one two."""
     if unicodedata.combining(char):
         return 0
-    if unicodedata.east_asian_width(char) in ("W", "F"):
+    if unicodedata.east_asian_width(char) in {"W", "F"}:
         return 2
     return 1
 
@@ -248,9 +249,7 @@ def render_error(exc: PoopError, source: str | None) -> Text:
     colour; elsewhere `format_error`'s plain string is printed instead, so
     pipes and `NO_COLOR` are unaffected.
     """
-    return Text.assemble(
-        *(_styled(t, style) for t, style in _error_segments(exc, source))
-    )
+    return Text.assemble(*starmap(_styled, _error_segments(exc, source)))
 
 
 def report(exc: PoopError, source: str | None, console: Console) -> None:

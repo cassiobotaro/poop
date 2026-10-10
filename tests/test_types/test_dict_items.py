@@ -95,7 +95,7 @@ def test_or_returns_set() -> None:
         Tuple(Str("b"), Int(2)),
         Tuple(Str("c"), Int(3)),
     }
-    assert {x for x in result._data} == expected
+    assert set(result._data) == expected
 
 
 def test_and_returns_set() -> None:
@@ -180,7 +180,7 @@ def test_unhashable() -> None:
 def test_reflected_or() -> None:
     items = DictItems(_make())
     result = Set(Tuple(Str("c"), Int(3))) | items
-    assert {x for x in result._data} == {
+    assert set(result._data) == {
         Tuple(Str("a"), Int(1)),
         Tuple(Str("b"), Int(2)),
         Tuple(Str("c"), Int(3)),

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-def _poop_sentinel_from(name: object, /, *, repr: object = None) -> Sentinel:
+def _poop_sentinel_from(name: object, /, *, repr: object = None) -> Sentinel:  # noqa: A002 — CPython's own keyword
     """`sentinel(name, /, *, repr=None)`, CPython's own signature.
 
     The keyword is spelt `repr` because that is what a program writes —

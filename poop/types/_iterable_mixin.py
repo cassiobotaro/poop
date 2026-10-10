@@ -142,7 +142,7 @@ class _IterableMixin[T: Object](_Mixin):
         # follow, so the sum is added up the way `builtins.sum` adds.
         total: Any = next(items, Int(0)) if start is MISSING else start
         for item in items:
-            total = total + item
+            total += item
         return total
 
     # `min` and `max` are each an overload pair: without a default they

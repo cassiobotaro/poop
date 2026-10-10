@@ -33,7 +33,7 @@ def test_str_descending() -> None:
 def test_str_round_trips_through_the_python_spelling() -> None:
     # Printing the raw slots showed `range(0, 2)` for a range yielding 0, 1, 2:
     # a spelling that, read back, is a different sequence.
-    assert str(_range(0, 2)) == str(range(0, 3))
+    assert str(_range(0, 2)) == str(range(3))
     assert str(Range(Int(0), Int(4), Int(2))) == str(range(0, 5, 2))
 
 

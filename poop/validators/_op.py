@@ -54,7 +54,7 @@ class OpValidator(CollectingValidator):
     node_type: ClassVar[type[OpNode]]
     messages: ClassVar[Mapping[type[ast.AST], str]]
 
-    def allow(self, node: OpNode) -> bool:
+    def allow(self, node: OpNode) -> bool:  # noqa: ARG002 — the hook's signature
         return False
 
     def collect(self, tree: ast.Module) -> list[ValidationError]:

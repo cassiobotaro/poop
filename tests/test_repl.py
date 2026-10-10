@@ -6,8 +6,7 @@ from pathlib import Path
 
 import pytest
 
-import poop.repl as repl
-import poop.validators as validators
+from poop import repl, validators
 from poop.errors import ExecutionError, ParseError, ValidationError, report
 from poop.interpreter import Interpreter
 from poop.repl import (

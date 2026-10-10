@@ -38,11 +38,11 @@ from poop.transformers.sentinel import SentinelTransformer
 from poop.transformers.set import SetTransformer
 from poop.transformers.slice import SliceTransformer
 from poop.transformers.string import StrTransformer
-from poop.transformers.try_ import NAMESPACE as _try_namespace
+from poop.transformers.try_ import NAMESPACE as _TRY_NAMESPACE
 from poop.transformers.tuple import TupleTransformer
 from poop.transformers.unpack import UnpackTransformer
 from poop.transformers.varargs import VarargsTransformer
-from poop.transformers.with_ import NAMESPACE as _with_namespace
+from poop.transformers.with_ import NAMESPACE as _WITH_NAMESPACE
 from poop.transformers.zip import ZipTransformer
 from poop.types._cloak import cloak_callable
 
@@ -103,8 +103,8 @@ _spread_namespace: dict[str, object] = {"_poop_spread": _spread}
 
 _BINDING_SOURCES: list[dict[str, object]] = [
     *(cls.BINDINGS for cls in _TRANSFORMER_CLASSES),
-    _try_namespace,
-    _with_namespace,
+    _TRY_NAMESPACE,
+    _WITH_NAMESPACE,
     _spread_namespace,
 ]
 

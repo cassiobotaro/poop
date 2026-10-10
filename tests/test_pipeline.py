@@ -116,8 +116,7 @@ def test_no_duplicate_bindings_across_transformers() -> None:
             continue
         mod = importlib.import_module(f"poop.transformers.{mod_info.name}")
         ns = getattr(mod, "NAMESPACE", None) or {}
-        for name in ns:
-            declarations.append((name, f"NAMESPACE in {mod_info.name}"))
+        declarations.extend((name, f"NAMESPACE in {mod_info.name}") for name in ns)
         for attr_name in dir(mod):
             attr = getattr(mod, attr_name)
             if (
@@ -125,10 +124,10 @@ def test_no_duplicate_bindings_across_transformers() -> None:
                 and attr_name.endswith("Transformer")
                 and attr.__module__ == mod.__name__
             ):
-                for name in getattr(attr, "BINDINGS", {}) or {}:
-                    declarations.append(
-                        (name, f"{attr_name}.BINDINGS in {mod_info.name}")
-                    )
+                declarations.extend(
+                    (name, f"{attr_name}.BINDINGS in {mod_info.name}")
+                    for name in getattr(attr, "BINDINGS", {}) or {}
+                )
 
     counts = Counter(name for name, _ in declarations)
     duplicates = {name: count for name, count in counts.items() if count > 1}

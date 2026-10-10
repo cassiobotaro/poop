@@ -43,7 +43,7 @@ class _Message[C, **P, R](Protocol):
     def __call__(self, cls: C, /, *args: P.args, **kwargs: P.kwargs) -> R: ...
 
 
-class class_side[C, **P, R]:
+class class_side[C, **P, R]:  # noqa: N801 — read as a word at `@class_side`
     """Binds a metaclass method to the class, ahead of same-named instance ones.
 
     `Foo.print` would otherwise never reach the metaclass: looking an attribute
@@ -119,7 +119,7 @@ class class_side[C, **P, R]:
         )
 
 
-class class_side_read_refusal[C, **P, R](class_side[C, P, R]):
+class class_side_read_refusal[C, **P, R](class_side[C, P, R]):  # noqa: N801 — as `class_side`
     """A class-side refusal that fires on *read* rather than on call.
 
     `mro` and `raise_` are messages: a reader writes `Foo.mro()`,
@@ -572,7 +572,7 @@ class PoopMeta(type):
         _refuse_native(cls, "mro", "superclass")
 
     @class_side_refusal
-    def raise_(cls, *args: object, **kwargs: object) -> Never:
+    def raise_(cls, *args: object, **kwargs: object) -> Never:  # noqa: ARG002 — refuses whatever it is handed
         """Refuse `raise_` on a class that is not an error.
 
         The message itself lives on `PoopExcMeta`, so every mirror and every
@@ -870,7 +870,7 @@ class PoopMeta(type):
         return a_block(block, "if_not_none")(cls)
 
     @class_side
-    def assert_(cls, message: Str | NoneClass | None = None) -> PoopMeta:
+    def assert_(cls, message: Str | NoneClass | None = None) -> PoopMeta:  # noqa: ARG002 — a class always holds
         # A class is always truthy, so the assertion always holds and answers
         # the class; the failing branch `Object.assert_` has is unreachable.
         return cls

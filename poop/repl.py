@@ -402,7 +402,7 @@ class Repl(code.InteractiveConsole):
                 # `_is_safe_expr` already guaranteed an eval-mode expression, so
                 # the transformed body is always an `Expr`; this guards a future
                 # transformer that could inject a statement ahead of it.
-                raise SyntaxError("not an expression")
+                raise SyntaxError("not an expression")  # noqa: TRY004, TRY301 — the except below reports it as any other
             compiled = compile(ast.Expression(stmt.value), "<methods>", "eval")
             obj = eval(compiled, self._ns)  # noqa: S307
         except Exception as exc:  # noqa: BLE001

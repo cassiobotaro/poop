@@ -323,7 +323,7 @@ def byte_order(value: object, selector: str) -> str:
     # TypeError about the argument's kind, a misspelt one a ValueError about
     # its value. Only the sentences change.
     raw = text_like(value, selector, "a str", (str,))
-    if raw in ("big", "little"):
+    if raw in {"big", "little"}:
         return raw
     raise mirrors.ValueError(f"byte order must be 'big' or 'little', got {raw!r}")
 

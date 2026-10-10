@@ -86,12 +86,12 @@ def to_poop(value: object) -> object:
 
 
 @to_python.register
-def _(obj: NoneClass) -> None:
+def _(obj: NoneClass) -> None:  # noqa: ARG001 — dispatch on the type alone
     return None
 
 
 @_to_poop.register
-def _(value: None) -> NoneClass:
+def _(value: None) -> NoneClass:  # noqa: ARG001 — dispatch on the type alone
     return none
 
 

@@ -105,12 +105,41 @@ select = [
   "TC",
   # ruff-specific, including RUF100, which keeps every `noqa` honest
   "RUF",
+  # perflint, flake8-pie, flake8-return, flake8-use-pathlib, flake8-comprehensions,
+  # refurb: the package passed them clean the day they went on
+  "PERF",
+  "PIE",
+  "RET",
+  "PTH",
+  "C4",
+  "FURB",
+  # flake8-unused-arguments, tryceratops, flake8-builtins, pep8-naming and
+  # pylint: each intentional site below carries a `noqa` and the reason
+  "ARG",
+  "TRY",
+  "A",
+  "N",
+  "PL",
 ]
 ignore = [
   # The configuration ClassVars of a validator (`messages`, `forbidden`) and of
   # a transformer (`rewriter`, `BINDINGS`) are annotated once on the base
   # class; ruff cannot see the inherited annotation.
   "RUF012",
+  # A message named for the builtin it replaces — `abs`, `round`, `reversed`,
+  # `format` — shadows it by design: that is the substitute `no_abs` names.
+  "A003",
+  # `ast.NodeVisitor` dispatches on `visit_<NodeName>`, CPython's own spelling.
+  "N802",
+  "N815",
+  # `MessageNotUnderstood` is Smalltalk's name for the error, and `Mirror` is
+  # the shape of a mirrored class, not an error of its own.
+  "N818",
+  # POOP composes every diagnostic at the raise site: the wording *is* the
+  # work, and a sentence lives where the failure it describes does.
+  "TRY003",
+  # `len(args) > 2` reads as itself; a constant named for the count would not.
+  "PLR2004",
 ]
 
 [tool.ruff.format]
@@ -120,6 +149,18 @@ quote-style = "double"
 "tests/*" = [
   # use of assert detected
   "S101",
+  # a test's lambdas, mocks and helpers take arguments they ignore, wrap a
+  # call to spell a block, compare a value with itself to test `==`, name a
+  # test after the `Try` it is about, and raise a native with a sentence
+  "ARG001",
+  "ARG002",
+  "ARG005",
+  "PLW0108",
+  "PLR0124",
+  "N802",
+  "TRY003",
+  # `sentinel` as a local: the value under test, not the 3.15 builtin
+  "A001",
   # `match=` patterns are prose; an unescaped `.` matches itself too
   "RUF043",
   # mock helpers in tests deliberately use loose annotations

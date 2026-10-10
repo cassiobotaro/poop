@@ -96,7 +96,7 @@ def _fill(made: object, converted: object, slots: tuple[str, ...]) -> None:
         setattr(made, slot, copy(getattr(converted, slot)))
 
 
-def _endow(
+def _endow(  # noqa: PLR0913, PLR0917 — the `__new__` step, spelt out
     made: object,
     cls: type,
     alias: type,
@@ -285,7 +285,7 @@ def builtin_alias(wrapped: type, converter: Callable[..., object], name: str) ->
     # Fixed when the alias is built, so read off the wrapper's MRO once.
     slots = _payload_slots(wrapped)
 
-    def __init__(self: object, *args: object, **kwargs: object) -> None:
+    def __init__(self: object, *args: object, **kwargs: object) -> None:  # noqa: N807 — installed as the alias's
         """`super().__init__(...)` from a subclass — and it converts.
 
         The third and last home of the convert/build gap. `no_dunder_attribute`

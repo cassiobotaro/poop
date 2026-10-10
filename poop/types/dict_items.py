@@ -1,3 +1,4 @@
+from itertools import starmap
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import a_collection
@@ -21,7 +22,7 @@ class DictItems(_SetLikeView[Tuple], name="dict_items"):
     __slots__ = ()
 
     def __iter__(self) -> Iterator[Tuple]:
-        return (Tuple(k, v) for k, v in self._dict._data.items())
+        return starmap(Tuple, self._dict._data.items())
 
     def iter(self) -> DictItemIterator:
         return DictItemIterator(self._dict._data.items())
@@ -53,7 +54,7 @@ class DictItems(_SetLikeView[Tuple], name="dict_items"):
         # 2-tuples: `dict.items() ^ {99}` keeps the 99, so non-pair elements
         # must survive `|`/`^` rather than be dropped. Only the *own* side is
         # built from pairs.
-        return {Tuple(k, v) for k, v in self._dict._data.items()}
+        return set(starmap(Tuple, self._dict._data.items()))
 
     def _repr_items(self) -> str:
         return ", ".join(f"({k!r}, {v!r})" for k, v in self._dict._data.items())

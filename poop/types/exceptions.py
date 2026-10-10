@@ -42,7 +42,7 @@ class PoopExcMeta(PoopMeta):
     """Matches a POOP exception class against the native one it mirrors."""
 
     @class_side
-    def raise_(cls, *args: object, **kwargs: object) -> Never:
+    def raise_(cls, *args: object, **kwargs: object) -> Never:  # noqa: N805 — a class-side message
         """Signal this error — POOP's substitute for the `raise` statement.
 
         A real class-side message, not a parse-time rewrite. `RaiseTransformer`
@@ -62,7 +62,7 @@ class PoopExcMeta(PoopMeta):
         """
         raise cls(*args, **kwargs)
 
-    def __instancecheck__(cls, obj: object) -> bool:
+    def __instancecheck__(cls, obj: object) -> bool:  # noqa: N805 — a metaclass method
         # `_native` is read from the class's own __dict__, never inherited: a
         # user's `class MyError(Exception)` would otherwise inherit the root's
         # `_native = Exception` and catch every exception in the program —

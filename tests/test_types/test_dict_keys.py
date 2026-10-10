@@ -95,7 +95,7 @@ def test_or_returns_set() -> None:
     other = Set(Str("c"))
     result = keys | other
     assert isinstance(result, Set)
-    assert {x for x in result._data} == {Str("a"), Str("b"), Str("c")}
+    assert set(result._data) == {Str("a"), Str("b"), Str("c")}
 
 
 def test_and_returns_set() -> None:

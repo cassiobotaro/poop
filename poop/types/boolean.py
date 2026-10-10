@@ -447,7 +447,7 @@ class _TrueClass(Boolean, name="bool"):
     def _bool_and(self, other: Boolean) -> Boolean:
         return other
 
-    def _bool_or(self, other: Boolean) -> Boolean:
+    def _bool_or(self, other: Boolean) -> Boolean:  # noqa: ARG002 — true | x is true
         return self
 
     def __bool__(self) -> bool:
@@ -509,7 +509,7 @@ class _FalseClass(Boolean, name="bool"):
     def eqv(self, other: Boolean) -> Boolean:
         return other.not_()
 
-    def _bool_and(self, other: Boolean) -> Boolean:
+    def _bool_and(self, other: Boolean) -> Boolean:  # noqa: ARG002 — false & x is false
         return self
 
     def _bool_or(self, other: Boolean) -> Boolean:
