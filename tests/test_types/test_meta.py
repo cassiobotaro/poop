@@ -866,8 +866,10 @@ def test_class_side_equality_is_still_identity() -> None:
 # sets it on the four cycle-guarded `__str__`s too.)
 
 
-def _adapter_built(fn: object) -> bool:
-    return getattr(fn, "__code__").co_name == "answer"  # noqa: B009
+def _adapter_built(slot: object) -> bool:
+    # `__hash__ = None` is a slot too, on the unhashable wrappers.
+    code = getattr(slot, "__code__", None)
+    return code is not None and code.co_name == "answer"
 
 
 @pytest.mark.parametrize("slot", sorted(_PROTOCOL_SLOTS))
