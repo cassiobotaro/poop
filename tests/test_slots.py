@@ -14,6 +14,7 @@ reopen it for a third of the language at once.
 
 import pytest
 
+from poop.types.exceptions import PoopExcMeta
 from tests.test_cloak import _classes
 
 
@@ -26,9 +27,15 @@ def test_class_declares_slots(index: int, cls: type) -> None:
     assert "__slots__" in vars(cls), f"{cls.__name__} declares no __slots__"
 
 
+# The mirrors are left out of the `__dict__` sweep: a native exception carries
+# one by CPython's own design (`BaseException` keeps its notes and traceback
+# state there), and a mirror subclasses its native twin on purpose.
+_VALUES = [cls for cls in _classes() if not isinstance(cls, PoopExcMeta)]
+
+
 @pytest.mark.parametrize(
     ("index", "cls"),
-    list(enumerate(_classes())),
+    list(enumerate(_VALUES)),
     ids=lambda arg: arg.__name__ if isinstance(arg, type) else str(arg),
 )
 def test_instances_carry_no_dict(index: int, cls: type) -> None:

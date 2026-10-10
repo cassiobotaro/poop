@@ -37,9 +37,9 @@ def _holds_no_state(receiver: object) -> Exception:
     `no_dunder_attribute` bans, and two copies of the replacement drift.
     """
     # circular: exceptions imports object
-    from poop.types.exceptions import MIRRORS
+    from poop.types import mirrors
 
-    return MIRRORS["AttributeError"](
+    return mirrors.AttributeError(
         f"{type(receiver).__name__} is a value — it holds no state of its "
         "own; only an object of a class you defined can be given one"
     )
@@ -215,16 +215,16 @@ class Object(metaclass=PoopMeta):
     def assert_(self, message: Str | NoneClass | None = None) -> Self:
         # Imported here, not at module scope: `exceptions` is built on top of
         # `Object`, so the dependency only runs one way at import time.
+        from poop.types import mirrors
         from poop.types._unwrap import _is_absent
-        from poop.types.exceptions import MIRRORS
 
         if bool(self):
             return self
         if _is_absent(message):
-            raise MIRRORS["AssertionError"]
+            raise mirrors.AssertionError
         # `assert x, msg` takes any object as the message in CPython, so an
         # unwrappable one goes through raw rather than leaking #_value.
-        raise MIRRORS["AssertionError"](_faithful(message))
+        raise mirrors.AssertionError(_faithful(message))
 
     def class_name(self) -> Str:
         # `x class name` in Smalltalk: the name is the class's to answer, not
@@ -232,7 +232,7 @@ class Object(metaclass=PoopMeta):
         return self.class_().name()
 
     def hash(self) -> Int:
-        from poop.types.exceptions import MIRRORS
+        from poop.types import mirrors
         from poop.types.int import Int
 
         try:
@@ -246,7 +246,7 @@ class Object(metaclass=PoopMeta):
             reworded = cannot_be_hashed(exc)
             if reworded is None:
                 raise
-            raise MIRRORS["TypeError"](reworded) from None
+            raise mirrors.TypeError(reworded) from None
 
     def callable(self) -> Boolean:
         from poop.types.boolean import to_boolean
@@ -292,9 +292,9 @@ class Object(metaclass=PoopMeta):
         return List(*(Str(name) for name in builtins.dir(self) if is_message(name)))
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
+        from poop.types import mirrors
         from poop.types._argument import text_like
         from poop.types._unwrap import _is_absent
-        from poop.types.exceptions import MIRRORS
 
         # Two leaks in one method. A non-`Str` spec answered `format()
         # argument 2 must be str, not int` — the builtin `no_format` bans,
@@ -326,7 +326,7 @@ class Object(metaclass=PoopMeta):
             # naming the dunder: `unsupported format string passed to
             # list.__format__`. CPython refuses these too — only the sentence
             # is POOP's to write.
-            raise MIRRORS["TypeError"](no_format_spec(type(self).__name__)) from None
+            raise mirrors.TypeError(no_format_spec(type(self).__name__)) from None
 
     def get_attr(self, name: Str, *default: object) -> object:
         from poop.types.block import _as_block  # circular: block imports Object
@@ -350,7 +350,7 @@ class Object(metaclass=PoopMeta):
         return none
 
     def del_attr(self, name: Str) -> NoneClass:
-        from poop.types.exceptions import MIRRORS
+        from poop.types import mirrors
         from poop.types.none import none
 
         # Outside the `try`, as in `set_attr`: `_checked_name`'s own refusals
@@ -366,7 +366,7 @@ class Object(metaclass=PoopMeta):
             # program spell. `set_attr` needs only the second, since a
             # receiver with a `__dict__` never fails there.
             if builtins.hasattr(self, "__dict__"):
-                raise MIRRORS["AttributeError"](
+                raise mirrors.AttributeError(
                     f"{type(self).__name__} has no attribute {raw!r} to remove"
                 ) from None
             raise _holds_no_state(self) from None

@@ -1,11 +1,11 @@
 import operator
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._message import binary_refusal
 from poop.types._numeric_compare import _num_value
 from poop.types._sentinel import NOT_NUMERIC
 from poop.types.boolean import Boolean, false, to_boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -107,7 +107,7 @@ class Complex(Object, name="complex"):
         # `complex(1, 1).pow(2)` answered `complex does not understand #pow`.
         result = self.__pow__(other)
         if result is NotImplemented:
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 binary_refusal("complex", "pow", type(other).__name__)
             )
         return result

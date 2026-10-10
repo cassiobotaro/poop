@@ -108,13 +108,13 @@ class class_side[C, **P, R]:
     def __set__(self, cls: type, value: object) -> None:
         # Imported here, not at module scope: `exceptions` builds its classes
         # through `PoopMeta`, so the dependency only runs one way at import.
-        from poop.types.exceptions import MIRRORS
+        from poop.types import mirrors
 
         # A sentence, not the bare name: `AttributeError: name` read as if the
         # *word* `name` were the problem, and both spellings of the mistake —
         # `Foo.name = 5` and the sanctioned `Foo.set_attr("name", 5)` — landed
         # on it. `_reject_private` (`_attr_guard.py`) is the model.
-        raise MIRRORS["AttributeError"](
+        raise mirrors.AttributeError(
             f"#{self._name} is answered by every class — it cannot be rebound"
         )
 
@@ -196,10 +196,10 @@ def _reject_builtin(cls: type) -> None:
     be forged either — `__module__` is a dunder, so `no_dunder_attribute`
     refuses the literal spelling and `_reject_dunder` the computed one.
     """
-    from poop.types.exceptions import MIRRORS
+    from poop.types import mirrors
 
     if cls.__module__ == "builtins":
-        raise MIRRORS["AttributeError"](
+        raise mirrors.AttributeError(
             f"{cls.__name__} is a POOP builtin — its messages cannot be "
             "changed; only a class you defined can be"
         )
@@ -346,13 +346,13 @@ def _adapted(slot: str, method: Callable[..., object]) -> Callable[..., object]:
         if isinstance(raw, native):
             return raw
 
-        from poop.types.exceptions import MIRRORS
+        from poop.types import mirrors
 
         # Named by the role, never by the slot: a message spelling `__str__`
         # names the construct `no_dunder_attribute` bans — and CPython's own
         # sentence for this was `__str__ returned non-string (type str)`,
         # which calls `str` the thing that is not a `str`.
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{type(self).__name__}'s {role} must be "
             f"{article(native.__name__)}, got {article(type(value).__name__)}"
         )
@@ -400,8 +400,8 @@ def _class_operator(selector: str, *, reflected: bool) -> Callable[..., Never]:
 
     def refuse(cls: type, other: object, *_: object) -> Never:
         # circular: exceptions imports meta
+        from poop.types import mirrors
         from poop.types._message import describe_operand
-        from poop.types.exceptions import MIRRORS
 
         if reflected:
             # `5 + int`: the value is the receiver, the class the operand.
@@ -410,7 +410,7 @@ def _class_operator(selector: str, *, reflected: bool) -> Callable[..., Never]:
         else:
             receiver = cls.__name__
             operand = describe_operand(other)
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{receiver} does not understand #{selector} with {operand}"
         )
 

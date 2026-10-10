@@ -4,9 +4,9 @@ from collections import deque
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, Any, overload
 
+from poop.types import mirrors
 from poop.types._argument import Key, a_block, a_key
 from poop.types._mixin import _Mixin
-from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
@@ -125,7 +125,7 @@ class _IterableMixin[T: Object](_Mixin):
             # Named separately: `#reduce expects a block, got nothing` would be
             # true and unhelpful for `xs.reduce()`, where the initial value is
             # what is missing first.
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 "#reduce expects an initial value and a block, got nothing — "
                 "write .reduce(start, lambda a, b: …)"
             )

@@ -18,8 +18,8 @@ three codec-independent error handlers — `backslashreplace`, `namereplace` and
 `surrogateescape` are the same machinery reached by another name.
 """
 
+from poop.types import mirrors
 from poop.types._argument import text_like
-from poop.types.exceptions import MIRRORS
 
 # Canonical spelling -> what a program may write for it. CPython normalises far
 # more aggressively (`UTF_8`, `u8`); POOP takes the spellings a reader would
@@ -62,7 +62,7 @@ def encoding_name(name: object, selector: str) -> str:
     canonical = _CANONICAL.get(raw.lower().replace("_", "-"))
     if canonical is not None:
         return canonical
-    raise MIRRORS["ValueError"](
+    raise mirrors.ValueError(
         f"unknown encoding {raw!r} — POOP encodes {_listed(list(_ENCODINGS))}"
     )
 
@@ -82,7 +82,7 @@ def handler_name(name: object, selector: str) -> str:
     raw = text_like(name, selector, "a str", (str,))
     if raw in _HANDLERS:
         return raw
-    raise MIRRORS["ValueError"](
+    raise mirrors.ValueError(
         f"unknown error handler {raw!r} — POOP handles {_listed(_HANDLERS)}"
     )
 
@@ -104,9 +104,7 @@ def _refusal(exc: UnicodeError, encoding: str, verb: str) -> Exception:
     start = getattr(exc, "start", 0)
     subject = getattr(exc, "object", "")[start : start + 1]
     shown = f"byte 0x{subject[0]:02x}" if isinstance(subject, bytes) else repr(subject)
-    return MIRRORS["ValueError"](
-        f"{encoding} cannot {verb} {shown} at position {start}"
-    )
+    return mirrors.ValueError(f"{encoding} cannot {verb} {shown} at position {start}")
 
 
 def encoded(text: str, encoding: object, errors: object) -> bytes:

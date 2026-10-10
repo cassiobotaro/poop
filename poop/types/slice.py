@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._argument import an_int
 from poop.types.boolean import to_boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
@@ -95,7 +95,7 @@ def _resolve_py_slice(
     # the receiver that would have said which message was sent.
     for bound in (resolved.start, resolved.stop, resolved.step):
         if bound is not None and not hasattr(bound, "__index__"):
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 f"slice bounds must be int, got a {type(bound).__name__}"
             )
     return resolved

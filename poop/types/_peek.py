@@ -25,11 +25,11 @@ one.
 
 from typing import TYPE_CHECKING, ClassVar, overload
 
+from poop.types import mirrors
 from poop.types._mixin import _Mixin
 from poop.types._mutated import reword_if_native
 from poop.types._sentinel import MISSING, UNPEEKED, Missing, Unpeeked
 from poop.types.boolean import false, true
-from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -65,7 +65,7 @@ class _PeekMixin[T: Object](_Mixin):
         raise NotImplementedError
 
     def _exhausted(self) -> Exception:
-        return MIRRORS["StopIteration"](
+        return mirrors.StopIteration(
             f"{type(self).__name__} is exhausted — "
             "send #next with a default, or ask #has_next"
         )

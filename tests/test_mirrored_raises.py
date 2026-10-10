@@ -87,18 +87,16 @@ def _raised_name(node: ast.Raise) -> str | None:
 
 
 def _mirror_key(node: ast.Raise) -> str | None:
-    """The `MIRRORS[...]` key raised, if the raise goes through the table."""
+    """The mirror raised — `mirrors.TypeError` — if the raise names one."""
     exc = node.exc
     if isinstance(exc, ast.Call):
         exc = exc.func
     if (
-        isinstance(exc, ast.Subscript)
+        isinstance(exc, ast.Attribute)
         and isinstance(exc.value, ast.Name)
-        and exc.value.id == "MIRRORS"
-        and isinstance(exc.slice, ast.Constant)
-        and isinstance(exc.slice.value, str)
+        and exc.value.id == "mirrors"
     ):
-        return exc.slice.value
+        return exc.attr
     return None
 
 
@@ -111,13 +109,13 @@ def test_no_native_exception_class_is_raised() -> None:
         and not _is_abstract_stub(node)
     ]
     assert offenders == [], (
-        "raise MIRRORS[...] instead — a POOP diagnostic on a native class "
+        "raise mirrors.<Name> instead — a POOP diagnostic on a native class "
         "labels POOP's own advice with Python's vocabulary"
     )
 
 
-def test_every_mirror_key_raised_exists() -> None:
-    """A typo in the key would otherwise surface as a KeyError at runtime."""
+def test_every_mirror_raised_exists() -> None:
+    """Every `mirrors.<Name>` raised is a mirror — ty reads the module too."""
     keys = [
         (path.relative_to(REPO_ROOT), node.lineno, key)
         for path, node, _ in _raises()

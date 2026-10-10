@@ -53,8 +53,8 @@ from copy import copy
 from itertools import takewhile
 from typing import TYPE_CHECKING, overload
 
+from poop.types import mirrors
 from poop.types._cloak import cloak
-from poop.types.exceptions import MIRRORS
 from poop.types.meta import PoopMeta
 
 if TYPE_CHECKING:
@@ -128,7 +128,7 @@ def _endow(
         return
     empty = alias.__dict__["_empty"]
     if empty is None:
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"this {cls.__name__} was built without its value — "
             "a class built on a builtin must pass one up from its constructor"
         )
@@ -178,7 +178,7 @@ class _AliasMeta(PoopMeta):
         for base in bases:
             wrapped = base.__dict__.get("_wrapped")
             if wrapped is not None and not _payload_slots(wrapped):
-                raise MIRRORS["TypeError"](
+                raise mirrors.TypeError(
                     f"{base.__name__} cannot be subclassed — "
                     "its values are the whole class"
                 )

@@ -1,7 +1,7 @@
 import ast
 from typing import TYPE_CHECKING, ClassVar, Protocol
 
-from poop.types.exceptions import MIRRORS
+from poop.types import mirrors
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -27,7 +27,7 @@ class BaseTransformer:
         # otherwise a transformer that forgot one failed on the first program.
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, "rewriter"):
-            raise MIRRORS["TypeError"](f"{cls.__name__} sets no `rewriter`")
+            raise mirrors.TypeError(f"{cls.__name__} sets no `rewriter`")
 
     def transform(self, tree: ast.Module) -> ast.Module:
         tree = self.rewriter().visit(tree)

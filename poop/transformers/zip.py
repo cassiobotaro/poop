@@ -1,8 +1,8 @@
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.types import mirrors
 from poop.types._alias import builtin_alias
 from poop.types._unwrap import _is_absent
 from poop.types.boolean import Boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.zip import Zip
 
 
@@ -12,7 +12,7 @@ def _poop_zip(*sources: object, **kwargs: object) -> Zip:
     # here — only the keyword half applies, and `strict` is the single real one.
     unexpected = next((name for name in kwargs if name != "strict"), None)
     if unexpected is not None:
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"zip takes no keyword argument {unexpected!r} — "
             "it is built from collections and an optional strict"
         )
@@ -22,7 +22,7 @@ def _poop_zip(*sources: object, **kwargs: object) -> Zip:
         return Zip(*sources, strict=None)
     if isinstance(strict, Boolean):
         return Zip(*sources, strict=strict)
-    raise MIRRORS["TypeError"](f"strict must be bool, got {type(strict).__qualname__}")
+    raise mirrors.TypeError(f"strict must be bool, got {type(strict).__qualname__}")
 
 
 class _ZipRewriter(BuiltinRewriter):

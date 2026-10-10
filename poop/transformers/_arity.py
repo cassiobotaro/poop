@@ -33,7 +33,7 @@ one constructor over.
 
 from typing import TYPE_CHECKING
 
-from poop.types.exceptions import MIRRORS
+from poop.types import mirrors
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -58,7 +58,7 @@ def refuse_extra_arguments(
     marks the one constructor that legitimately takes them — `dict(a=1)`.
     """
     if kwargs and not keywords:
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{name} takes no keyword arguments — it is built from {built_from}"
         )
     if len(args) > most:
@@ -66,10 +66,10 @@ def refuse_extra_arguments(
         # `got 1 arguments` reachable — no other converter can be over its
         # limit by exactly one argument.
         given = f"{len(args)} argument" + ("" if len(args) == 1 else "s")
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{name} is built from {built_from}, got {given} — {hint}"
         )
     if not args and not empty:
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{name} is built from {built_from}, got nothing — {hint}"
         )

@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
+from poop.types import mirrors
 from poop.types._argument import _opt_stop, a_bound, an_int, text_like
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._iterable_mixin import _IterableMixin
@@ -8,7 +9,6 @@ from poop.types._unwrap import _is_absent
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.memory_view_iterator import MemoryViewIterator
 from poop.types.object import Object
@@ -58,7 +58,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
         try:
             return super().hash()
         except ValueError:
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 "a memoryview over a bytearray cannot be hashed — "
                 "the bytes behind it can still change"
             ) from None

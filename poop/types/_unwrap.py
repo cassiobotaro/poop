@@ -1,8 +1,8 @@
 from typing import TypeIs
 
+from poop.types import mirrors
 from poop.types._raw import _faithful, _Wrapped
 from poop.types.boolean import Boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.none import NoneClass
 
 
@@ -50,7 +50,7 @@ def _attr_name(name: object) -> str:
     """
     raw = _faithful(name)
     if not isinstance(raw, str):
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"attribute name must be string, not {type(name).__name__!r}"
         )
     return raw

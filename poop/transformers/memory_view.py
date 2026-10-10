@@ -1,9 +1,9 @@
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.types import mirrors
 from poop.types._alias import builtin_alias
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
-from poop.types.exceptions import MIRRORS
 from poop.types.memory_view import MemoryView
 
 
@@ -19,7 +19,7 @@ def _poop_memoryview_from(*args: object, **kwargs: object) -> MemoryView:
     arg = args[0] if args else None
     if isinstance(arg, (Bytes, ByteArray)):
         return MemoryView(memoryview(arg._value))
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"memoryview: a bytes-like object is required, not {type(arg).__qualname__}"
     )
 

@@ -3,6 +3,7 @@ import re
 from string import Formatter as _Formatter
 from typing import TYPE_CHECKING, ClassVar, Never, overload
 
+from poop.types import mirrors
 from poop.types._affix import affix_needle
 from poop.types._argument import (
     Key,
@@ -25,7 +26,7 @@ from poop.types._sentinel import MISSING, NOT_A_COUNT, Missing
 from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
-from poop.types.exceptions import MIRRORS, PoopExcMeta
+from poop.types.exceptions import PoopExcMeta
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
@@ -71,7 +72,7 @@ def _reject_field_access(template: str) -> None:
     """
     for _, field, spec, _ in _Formatter().parse(template):
         if field and ("." in field or "[" in field):
-            raise MIRRORS["ValueError"](
+            raise mirrors.ValueError(
                 f"{{{field}}} is forbidden — a format field reaching an "
                 "attribute or an item bypasses obj.get_attr(...) / obj.at(...); "
                 "send the message and format the answer"
@@ -114,19 +115,17 @@ def _template_refusal(exc: ValueError | TypeError) -> Exception:
     match = _UNKNOWN_CODE.match(text)
     if match is not None:
         code, kind = match.groups()
-        return MIRRORS["ValueError"](
-            f"{article(kind)} cannot be formatted with {code!r}"
-        )
+        return mirrors.ValueError(f"{article(kind)} cannot be formatted with {code!r}")
     match = _BAD_SPEC.match(text)
     if match is not None:
         spec, kind = match.groups()
-        return MIRRORS["ValueError"](
+        return mirrors.ValueError(
             f"{spec!r} is not a format spec {article(kind)} understands"
         )
     match = _NO_SPEC.match(text)
     if match is not None:
-        return MIRRORS["TypeError"](no_format_spec(match.group(1)))
-    return MIRRORS["ValueError"](text.replace("format string", "template"))
+        return mirrors.TypeError(no_format_spec(match.group(1)))
+    return mirrors.ValueError(text.replace("format string", "template"))
 
 
 def _opt_text(chars: object, selector: str) -> str | None:
@@ -172,7 +171,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
             # CPython answers `ord() expected a character, but string of
             # length 3 found` — the builtin spelled as the call this message
             # substitutes.
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 f"#ord expects a single character, got {len(self._value)}"
             ) from None
 
@@ -184,7 +183,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
             # condition and the *line* the reader never asked for. A pipe
             # rather than a terminal is enough to reach it — it is what
             # `examples/basics/greet.py` answered when its stdin was closed.
-            raise MIRRORS["EOFError"]("there is no more input to read") from None
+            raise mirrors.EOFError("there is no more input to read") from None
 
     def at(self, index: Index) -> Str:
         return Str(at_index(self._value, index, self))
@@ -208,7 +207,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         # The one mixin message a string must not answer: `sum("ab")` is a
         # TypeError in CPython, and adding the characters up would answer the
         # string back, which is `join`'s job.
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             "str cannot be summed — send #join to a list of pieces instead"
         )
 
@@ -332,7 +331,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         except KeyError as exc:
             # A bare repr with nothing to say a lookup failed — the shape
             # `_at.py` was written to close for a missing dict key.
-            raise MIRRORS["KeyError"](
+            raise mirrors.KeyError(
                 f"the template asks for {exc.args[0]!r}, "
                 f"which no argument named{_offered(named)}"
             ) from None
@@ -340,7 +339,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
             # `Replacement index 0 out of range for positional args tuple`
             # describes Python's calling convention, for a message whose
             # arguments POOP does not describe that way.
-            raise MIRRORS["IndexError"](
+            raise mirrors.IndexError(
                 f"the template asks for more than the {len(positional)} "
                 f"{'value' if len(positional) == 1 else 'values'} it was given"
             ) from None

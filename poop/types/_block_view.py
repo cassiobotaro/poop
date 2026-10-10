@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._iterator_base import _LazyView
-from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
@@ -42,7 +42,7 @@ class _BlockView[S: Object, T: Object](_LazyView[T], name="object"):
         try:
             return block(item)
         except StopIteration:
-            raise MIRRORS["RuntimeError"](
+            raise mirrors.RuntimeError(
                 "a block ran off the end of an iterator — ask #has_next before #next"
             ) from None
 

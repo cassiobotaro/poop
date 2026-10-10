@@ -5,13 +5,14 @@ a word POOP uses — the receiver prints as a `dict` — and "during iteration"
 describes a `for` loop the program did not write. It wrote `#do`.
 
 Only a *native* `RuntimeError` is reworded. POOP raises its own through
-`MIRRORS["RuntimeError"]` (the block-ran-off-the-end message in `Map`/`Filter`,
+`mirrors.RuntimeError` (the block-ran-off-the-end message in `Map`/`Filter`,
 `Try`'s already-executed refusal), and user code can only raise the mirror too,
 since `RuntimeError.raise_(...)` names it — so a native one reaching an
 iteration site came from CPython.
 """
 
-from poop.types.exceptions import MIRRORS, PoopExcMeta
+from poop.types import mirrors
+from poop.types.exceptions import PoopExcMeta
 
 
 def reword_if_native(exc: RuntimeError, label: str) -> Exception:
@@ -19,12 +20,12 @@ def reword_if_native(exc: RuntimeError, label: str) -> Exception:
 
     The test is on `type(exc)`, not `isinstance`: `PoopExcMeta` makes a mirror
     match its native twin on purpose — that is how `except_(RuntimeError, h)`
-    catches a raw one — so `isinstance(exc, MIRRORS["RuntimeError"])` is true
+    catches a raw one — so `isinstance(exc, mirrors.RuntimeError)` is true
     of *every* RuntimeError and would have reworded POOP's own messages.
     """
     if isinstance(type(exc), PoopExcMeta):
         return exc
-    return MIRRORS["RuntimeError"](
+    return mirrors.RuntimeError(
         f"{label} changed while it was being iterated — "
         "finish the iteration before adding or removing elements"
     )

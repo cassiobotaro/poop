@@ -9,9 +9,9 @@ all, which is what lets all five reach it from the top of the file.
 
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._argument import Key, a_key
 from poop.types._sentinel import MISSING
-from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
     # Name only — importing `none` at runtime would put this module back under
@@ -69,7 +69,7 @@ def _minmax[T, D](
     # same `except` and reported as an empty collection it says nothing about.
     result = func(iterable, default=MISSING, **kwargs)
     if result is MISSING:
-        raise MIRRORS["ValueError"](
+        raise mirrors.ValueError(
             f"{name} of an empty collection is undefined — send it a default instead"
         )
     return result

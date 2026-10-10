@@ -3,6 +3,7 @@ import math
 import operator
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, an_int, text_like
 from poop.types._message import binary_refusal
@@ -16,7 +17,6 @@ from poop.types._sentinel import MISSING, NOT_NUMERIC
 from poop.types._unwrap import _is_absent
 from poop.types.boolean import to_boolean
 from poop.types.complex import Complex
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.object import Object
 from poop.types.string import Str
@@ -142,7 +142,7 @@ class Float(_NumericCompareMixin, Object, name="float"):
         # In `pow`, not `__pow__`: the operator never carries a third operand
         # (`a ** b % m` is two operations, and the builtin `pow` is banned).
         if not _is_absent(modulus):
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 "pow's modulus is only defined when both operands are ints"
             )
         # See `Int.pow`: `__pow__` answers `NotImplemented` for a `Complex` so
@@ -152,7 +152,7 @@ class Float(_NumericCompareMixin, Object, name="float"):
         if result is NotImplemented:
             result = reflected_pow(self, other, None)
         if result is NotImplemented:
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 binary_refusal("float", "pow", type(other).__name__)
             )
         return result
@@ -167,7 +167,7 @@ class Float(_NumericCompareMixin, Object, name="float"):
     def divmod(self, other: object) -> Tuple:
         result = self.__divmod__(other)
         if result is NotImplemented:
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 binary_refusal("float", "divmod", type(other).__name__)
             )
         return result

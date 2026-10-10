@@ -20,13 +20,15 @@ code, never a Python `except` clause — so a metaclass `__instancecheck__` is
 enough for a POOP class to match its native twin. The mirrors subclass that twin
 so they stay raisable, which is what `raise_` depends on.
 
-`MIRRORS` is also how POOP raises its *own* diagnostics. A wrapper composing a
-POOP message used to carry it on a native class — POOP's advice labelled with
-Python's vocabulary — and nothing stopped the next one from doing the same. The
-rule is now one line: inside `poop/types/` and `poop/transformers/`, a failure a
-program can reach is raised as `MIRRORS[...]`, never as the bare builtin.
-Subclassing keeps it catchable by anything that caught the native, so the rule
-costs nothing; `tests/test_mirrored_raises.py` sweeps both packages for it.
+The mirrors are also how POOP raises its *own* diagnostics. A wrapper
+composing a POOP message used to carry it on a native class — POOP's advice
+labelled with Python's vocabulary — and nothing stopped the next one from doing
+the same. The rule is now one line: inside `poop/types/` and
+`poop/transformers/`, a failure a program can reach is raised as
+`mirrors.TypeError(...)` — each mirror under its own name in `mirrors.py` —
+never as the bare builtin. Subclassing keeps it catchable by anything that
+caught the native, so the rule costs nothing; `tests/test_mirrored_raises.py`
+sweeps both packages for it.
 """
 
 from typing import TYPE_CHECKING, Literal, Never, cast, get_args
@@ -74,10 +76,10 @@ class PoopExcMeta(PoopMeta):
         return isinstance(obj, native)
 
 
-# The keys `MIRRORS` answers, spelt out so a type checker can hold them: 115
-# raises go through `MIRRORS["..."]`, and as a `dict[str, …]` a mistyped key
-# passed every check and failed as a `KeyError` on the error path itself — the
-# least-exercised code there is. `test_mirror_names_match_the_hierarchy` keeps
+# The keys `MIRRORS` answers, spelt out so a type checker can hold them: the
+# table-shaped readers (`poop_class_of`, the `_at.py` helpers) look a mirror up
+# by name, and as a `dict[str, …]` a mistyped key passed every check and failed
+# as a `KeyError` on the error path itself — the least-exercised code there is. `test_mirror_names_match_the_hierarchy` keeps
 # this from becoming a second list to keep in step with `_HIERARCHY` by hand.
 type MirrorName = Literal[
     "Exception",

@@ -1,10 +1,10 @@
 import builtins
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._argument import a_collection
 from poop.types._iterator_base import _LazyView
 from poop.types._unwrap import _unwrap_bool
-from poop.types.exceptions import MIRRORS
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def _ran_out(position: int) -> Exception:
     """The mirrored refusal for a collection that ended before the first one."""
-    return MIRRORS["ValueError"](
+    return mirrors.ValueError(
         f"zip is strict: collection {position + 1} ran out while "
         "collection 1 still had elements"
     )
@@ -30,7 +30,7 @@ def _refuse_leftovers(iterators: list[Iterator[Object]]) -> None:
             next(iterator)
         except StopIteration:
             continue
-        raise MIRRORS["ValueError"](
+        raise mirrors.ValueError(
             f"zip is strict: collection {position + 1} still had elements "
             "when collection 1 ran out"
         )

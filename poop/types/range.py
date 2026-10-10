@@ -2,11 +2,11 @@ import operator
 from operator import index as _index
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._unwrap import _is_absent, _searched
 from poop.types.boolean import false, to_boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.object import Object
 from poop.types.range_iterator import RangeIterator
@@ -40,7 +40,7 @@ class Range(_IterableMixin[Int], Object, name="range"):
         else:
             resolved = step
         if _index(resolved) == 0:
-            raise MIRRORS["ValueError"]("step must not be zero")
+            raise mirrors.ValueError("step must not be zero")
         # Normalized to Int, as CPython does: `range(True, 5).start` is `1`,
         # not `True`. (A `slice`, by contrast, keeps what it was given.)
         self._start = Int(_index(start))

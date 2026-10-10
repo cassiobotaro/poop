@@ -14,10 +14,10 @@ import operator
 from collections.abc import Callable, Iterable, Sized
 from typing import TYPE_CHECKING, Literal, SupportsIndex, overload
 
+from poop.types import mirrors
 from poop.types._message import article
 from poop.types._raw import _faithful
 from poop.types._sentinel import MISSING, Missing
-from poop.types.exceptions import MIRRORS
 
 if TYPE_CHECKING:
     from poop.types.none import NoneClass
@@ -40,7 +40,7 @@ def no_arguments(
     arguments`.
     """
     if args or kwargs:
-        raise MIRRORS["TypeError"](f"{cls.__name__}() takes no arguments")
+        raise mirrors.TypeError(f"{cls.__name__}() takes no arguments")
 
 
 def a_class(value: object, selector: str) -> type | tuple[type, ...]:
@@ -53,7 +53,7 @@ def a_class(value: object, selector: str) -> type | tuple[type, ...]:
     """
     if isinstance(value, (type, tuple)):
         return value
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector} expects a class, got {article(type(value).__name__)}"
     )
 
@@ -109,7 +109,7 @@ def text_like[T](
     # overload without `kinds` answers the three text kinds, and this is them.
     if isinstance(raw, kinds if kinds is not None else (str, bytes, bytearray)):
         return raw
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector} expects {expected}, got {article(type(value).__name__)}"
     )
 
@@ -158,7 +158,7 @@ def a_needle[T](
         text = str in wanted
         sought = "substring" if text else "subsequence"
         wanted = "the text to look for" if text else "what to look for"
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{type(receiver).__name__}'s #{selector} searches for a {sought} — "
             f"it takes {wanted}, not a block"
         )
@@ -171,7 +171,7 @@ def a_needle[T](
         return raw
     if bytes in wanted and isinstance(raw, SupportsIndex):
         return operator.index(raw)
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector} expects {expected}, got {article(type(sub).__name__)}"
     )
 
@@ -195,7 +195,7 @@ def a_fill[T: Sized](
         return None
     raw = text_like(value, selector, expected, kinds)
     if len(raw) != 1:
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"#{selector} expects {expected}, "
             f"got {article(type(value).__name__)} of length {len(raw)}"
         )
@@ -229,7 +229,7 @@ def bytes_like(
     raw = _faithful(value)
     if isinstance(raw, (bytes, bytearray, memoryview)):
         return raw
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector} expects bytes, got {article(type(value).__name__)}"
     )
 
@@ -281,7 +281,7 @@ def a_block(
     # write, for a class that does not answer `#map`, checkable in one line and
     # the opposite of what the refusal just said.
     got = "nothing" if value is MISSING else article(type(value).__name__)
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector} expects {role}, got {got} — write .{selector}({spelt})"
     )
 
@@ -300,7 +300,7 @@ def a_key(value: object, selector: str) -> Callable[..., object]:
     """
     if callable(value):
         return value
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector}'s key must be a block, got {article(type(value).__name__)} — "
         f"write .{selector}(key=lambda item: …)"
     )
@@ -325,7 +325,7 @@ def byte_order(value: object, selector: str) -> str:
     raw = text_like(value, selector, "a str", (str,))
     if raw in ("big", "little"):
         return raw
-    raise MIRRORS["ValueError"](f"byte order must be 'big' or 'little', got {raw!r}")
+    raise mirrors.ValueError(f"byte order must be 'big' or 'little', got {raw!r}")
 
 
 def max_split(value: object, selector: str) -> int:
@@ -369,7 +369,7 @@ def an_int[D](
     raw = _faithful(value)
     if isinstance(raw, SupportsIndex):
         return operator.index(raw)
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector}'s {role} must be an int, got {article(type(value).__name__)}"
     )
 
@@ -385,7 +385,7 @@ def a_collection(value: object, selector: str) -> Iterable[Object]:
     """
     if isinstance(value, Iterable):
         return value
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector} expects a collection, got {article(type(value).__name__)}"
     )
 
@@ -399,7 +399,7 @@ def a_pair(value: object, selector: str) -> Iterable[Object]:
     """
     if isinstance(value, Iterable):
         return value
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#{selector} expects key/value pairs, "
         f"got {article(type(value).__name__)} among them"
     )

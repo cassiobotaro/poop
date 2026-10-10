@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import call_at
+from poop.types import mirrors
 from poop.types._message import article
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.range import Range
 from poop.types.string import Str
@@ -44,7 +44,7 @@ def spread(value: object, kind: str) -> object:
     if isinstance(value, Iterable):
         return value
 
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"a {kind} literal can only spread a collection, "
         f"got {article(type(value).__qualname__)}"
     )
@@ -113,7 +113,7 @@ def make_iterable_from[T](
         # Both names come off the cloak, never a literal: a hand-written
         # "List" would say `cannot convert int to List`, half the sentence
         # in POOP's vocabulary and half in the wrapper's.
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"cannot convert {type(arg).__qualname__} to {poop_type.__name__}"
         )
 
@@ -163,10 +163,10 @@ def make_bytes_from[T: (Bytes, ByteArray)](
         codec = cast("tuple[Str, ...]", args[1:])
         if isinstance(arg, Str):
             if not codec:
-                raise MIRRORS["TypeError"]("string argument without an encoding")
+                raise mirrors.TypeError("string argument without an encoding")
             return build(arg.encode(*codec)._value)
         if codec:
-            raise MIRRORS["TypeError"]("encoding without a string argument")
+            raise mirrors.TypeError("encoding without a string argument")
         if arg is None:
             return build(b"")
         if not copy and isinstance(arg, poop_type):
@@ -175,6 +175,6 @@ def make_bytes_from[T: (Bytes, ByteArray)](
             return build(arg._value)
         if isinstance(arg, Iterable):
             return build(item._value for item in cast("Iterable[Int]", arg))
-        raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to {name}")
+        raise mirrors.TypeError(f"cannot convert {type(arg).__qualname__} to {name}")
 
     return _from

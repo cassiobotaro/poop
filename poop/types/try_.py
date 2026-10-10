@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._argument import a_class
 from poop.types.block import _require_block
 from poop.types.error import Error
-from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
 from poop.types.tuple import Tuple
@@ -16,7 +16,7 @@ def _exception_class(member: object) -> type[BaseException]:
     """`member` when it is an exception class, else the refusal `except_` gives."""
     if isinstance(member, type) and issubclass(member, BaseException):
         return member
-    raise MIRRORS["TypeError"](
+    raise mirrors.TypeError(
         f"#except_ catches exception classes, and "
         f"{getattr(member, '__name__', member)!s} is not one"
     )
@@ -117,7 +117,7 @@ class Try(Object, name="Try"):
 
     def _execute(self) -> object:
         if self._executed:
-            raise MIRRORS["RuntimeError"](
+            raise mirrors.RuntimeError(
                 "Try has already been executed; create a new Try instance to retry."
             )
         self._executed = True

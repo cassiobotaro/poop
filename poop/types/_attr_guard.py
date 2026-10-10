@@ -35,14 +35,14 @@ def _reject_dunder(name: str) -> None:
     did exactly that until both receivers shared this one.
     """
     # circular: exceptions -> meta -> _attr_guard
-    from poop.types.exceptions import MIRRORS  # noqa: PLC0415
+    from poop.types import mirrors  # noqa: PLC0415
 
     # circular: no_dunder_attribute -> types -> object -> _attr_guard
     from poop.validators.no_dunder_attribute import dunder_message  # noqa: PLC0415
 
     message = dunder_message(name, allow_init=False)
     if message is not None:
-        raise MIRRORS["AttributeError"](message.lstrip("."))
+        raise mirrors.AttributeError(message.lstrip("."))
 
 
 def _reject_private(name: str) -> None:
@@ -57,10 +57,10 @@ def _reject_private(name: str) -> None:
     honours only by etiquette.
     """
     # circular: exceptions -> meta -> _attr_guard
-    from poop.types.exceptions import MIRRORS  # noqa: PLC0415
+    from poop.types import mirrors  # noqa: PLC0415
 
     if name.startswith("_") and not is_dunder(name):
-        raise MIRRORS["AttributeError"](
+        raise mirrors.AttributeError(
             f"{name} is private — POOP objects do not expose their internals"
         )
 

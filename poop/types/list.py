@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, ClassVar, Self
 
+from poop.types import mirrors
 from poop.types._argument import Key, a_collection, an_int
 from poop.types._at import (
     at_index,
@@ -19,7 +20,6 @@ from poop.types._sequence import _SequenceMixin
 from poop.types._unwrap import _is_absent
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, to_boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.list_iterator import ListIterator
 from poop.types.none import none
@@ -79,7 +79,7 @@ class List(
         except TypeError:
             # `list indices must be integers or slices, not str` — `indices`
             # names the subscripting this message replaces.
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 f"{type(self).__name__}.at_put expects an int index, "
                 f"got {article(type(index).__name__)}"
             ) from None

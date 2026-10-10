@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types.block import _require_block
 from poop.types.error import Error
-from poop.types.exceptions import MIRRORS, poop_class_of
+from poop.types.exceptions import poop_class_of
 from poop.types.none import none
 from poop.types.object import Object
 
@@ -14,7 +15,7 @@ def _slot(kind: type, slot: str, verb: str) -> Callable[..., object]:
     """`kind`'s `slot`, or the refusal naming the half of the protocol it lacks."""
     method = getattr(kind, slot, None)
     if method is None:
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{kind.__name__} does not support the context manager "
             f"protocol — it cannot be {verb}"
         )
@@ -83,7 +84,7 @@ class With(Object, name="With"):
         # to use it — the ordering `_protocol` argues for one step up.
         _require_block(body_block, "the body argument", "write .do(lambda resource: …)")
         if self._cm_block is None:
-            raise MIRRORS["RuntimeError"](
+            raise mirrors.RuntimeError(
                 "With has already run; create a new With instance to run again."
             )
         cm = self._cm_block()

@@ -2,10 +2,10 @@ import ast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
+from poop.types import mirrors
 from poop.types._alias import builtin_alias
 from poop.types._message import article
 from poop.types.complex import Complex
-from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -41,20 +41,20 @@ def _poop_complex_from(*args: object, **kwargs: object) -> Complex:
                 try:
                     return Complex(complex(real._value))
                 except ValueError:
-                    raise MIRRORS["ValueError"](
+                    raise mirrors.ValueError(
                         f"{real._value!r} is not a valid complex"
                     ) from None
             case _:
-                raise MIRRORS["TypeError"](
+                raise mirrors.TypeError(
                     f"cannot convert {type(real).__qualname__} to complex"
                 )
     if not isinstance(real, (Int, Float)):
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"complex's real part must be int or float, "
             f"got {article(type(real).__qualname__)}"
         )
     if not isinstance(imag, (Int, Float)):
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"complex's imaginary part must be int or float, "
             f"got {article(type(imag).__qualname__)}"
         )

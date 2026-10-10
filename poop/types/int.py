@@ -3,6 +3,7 @@ import math
 import operator
 from typing import TYPE_CHECKING, Literal, cast
 
+from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, an_int, byte_order, byte_source
 from poop.types._message import article, binary_refusal
@@ -17,7 +18,6 @@ from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC, NotIntegral
 from poop.types._unwrap import _is_absent, _unwrap_bool
 from poop.types.boolean import Boolean, true
 from poop.types.complex import Complex
-from poop.types.exceptions import MIRRORS
 from poop.types.object import Object
 
 if TYPE_CHECKING:
@@ -210,21 +210,21 @@ class Int(_NumericCompareMixin, Object, name="int"):
         if _is_absent(modulus):
             return to_poop(self._value**other._value)
         if isinstance(other, Float):
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 "pow's modulus is only defined when both operands are ints"
             )
         # Guarded here because CPython's three-operand form names all three —
         # `unsupported operand type(s) for ** or pow(): 'int', 'int', 'str'` —
         # a shape no rewording of the binary message would reach.
         if not isinstance(modulus, Int):
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 f"pow's modulus must be an int, got {article(type(modulus).__name__)}"
             )
         # The third way a modulus can be wrong, and the one left to CPython:
         # `pow() 3rd argument cannot be 0` names the builtin `no_pow` forbids,
         # spelt as the call this message substitutes.
         if modulus._value == 0:
-            raise MIRRORS["ValueError"]("pow's modulus cannot be 0")
+            raise mirrors.ValueError("pow's modulus cannot be 0")
         return Int(pow(self._value, other._value, _faithful(modulus)))
 
     def pow(self, other: object, modulus: Int | NoneClass | None = None) -> object:
@@ -239,9 +239,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
         if result is NotImplemented:
             result = reflected_pow(self, other, modulus)
         if result is NotImplemented:
-            raise MIRRORS["TypeError"](
-                binary_refusal("int", "pow", type(other).__name__)
-            )
+            raise mirrors.TypeError(binary_refusal("int", "pow", type(other).__name__))
         return result
 
     def __divmod__(self, other: object) -> Tuple:
@@ -263,7 +261,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
     def divmod(self, other: object) -> Tuple:
         result = self.__divmod__(other)
         if result is NotImplemented:
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 binary_refusal("int", "divmod", type(other).__name__)
             )
         return result
@@ -366,7 +364,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
         except ValueError:
             # CPython answers `chr() arg not in range(0x110000)` — the builtin
             # `no_chr` forbids, spelled as a call, with the bound in hex.
-            raise MIRRORS["ValueError"](
+            raise mirrors.ValueError(
                 f"{self._value} is not a character code — codes run from 0 to 1114111"
             ) from None
 
@@ -382,7 +380,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
             # not defined for negative values`, `n must be a non-negative
             # integer` — the message as a call, or an argument name the
             # program never wrote.
-            raise MIRRORS["ValueError"](
+            raise mirrors.ValueError(
                 f"#{selector} needs a non-negative receiver, got {self._value}"
             )
         return self._value
@@ -406,7 +404,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
     def _draws(self, k: object, selector: str) -> int:
         count = an_int(k, selector, "k")
         if count < 0:
-            raise MIRRORS["ValueError"](
+            raise mirrors.ValueError(
                 f"#{selector}'s k must be non-negative, got {count}"
             )
         return count

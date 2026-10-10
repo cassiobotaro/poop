@@ -1,8 +1,8 @@
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.types import mirrors
 from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -34,13 +34,11 @@ def _poop_float_from(*args: object, **kwargs: object) -> Float:
             except ValueError:
                 # `could not convert string to float: 'abc'` names Python's
                 # type, not the message the reader sent.
-                raise MIRRORS["ValueError"](
+                raise mirrors.ValueError(
                     f"{value._value!r} is not a valid float"
                 ) from None
         case _:
-            raise MIRRORS["TypeError"](
-                f"cannot convert {type(value).__name__} to float"
-            )
+            raise mirrors.TypeError(f"cannot convert {type(value).__name__} to float")
 
 
 class _FloatRewriter(BuiltinRewriter):

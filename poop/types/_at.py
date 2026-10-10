@@ -16,6 +16,7 @@ instead of being written out nine times.
 
 from typing import TYPE_CHECKING, Protocol, SupportsIndex
 
+from poop.types import mirrors
 from poop.types._message import article
 from poop.types.exceptions import MIRRORS, MirrorName
 
@@ -49,7 +50,7 @@ def no_element_at(receiver: object, items: Sized, index: object) -> Exception:
     `raise no_element_at(...) from None` — the `from None` is the point, and it
     has to be written where the original is caught.
     """
-    return MIRRORS["IndexError"](
+    return mirrors.IndexError(
         f"{type(receiver).__name__} has no element at {index} — {_size(len(items))}"
     )
 
@@ -75,7 +76,7 @@ def no_element_equal_to(
 
 def no_key(receiver: object, key: object) -> Exception:
     """The mirrored `KeyError` for a key the receiver does not hold."""
-    return MIRRORS["KeyError"](f"{type(receiver).__name__} has no key {key!r}")
+    return mirrors.KeyError(f"{type(receiver).__name__} has no key {key!r}")
 
 
 def nothing_to_remove(receiver: object, mirror: MirrorName = "KeyError") -> Exception:
@@ -105,7 +106,7 @@ def at_index[T](items: _Indexed[T], index: SupportsIndex, receiver: object) -> T
         raise no_element_at(receiver, items, index) from None
     except TypeError:
         # The only TypeError a sequence lookup raises: the index is not one.
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{type(receiver).__name__}.at expects an int index, "
             f"got {article(type(index).__name__)}"
         ) from None

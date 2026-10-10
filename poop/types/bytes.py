@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import an_int, text_like
 from poop.types._bytes_like import _BytesLikeMixin
@@ -11,7 +12,6 @@ from poop.types._unwrap import (
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.byte_array import ByteArray
 from poop.types.bytes_iterator import BytesIterator
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.object import Object
 from poop.types.string import Str
@@ -64,7 +64,7 @@ class Bytes(
                 cls, bytes.fromhex(text_like(s, "fromhex", "a str"))
             )
         except ValueError:
-            raise MIRRORS["ValueError"](
+            raise mirrors.ValueError(
                 f"{s!r} is not hexadecimal — #fromhex reads pairs of hex digits"
             ) from None
 

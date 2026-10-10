@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, ClassVar
 
+from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import a_collection, an_int, text_like
 from poop.types._at import (
@@ -17,7 +18,6 @@ from poop.types._unwrap import (
 )
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.byte_array_iterator import ByteArrayIterator
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
@@ -71,7 +71,7 @@ class ByteArray(
         except IndexError:
             raise no_element_at(self, self._value, index) from None
         except TypeError:
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 f"{type(self).__name__}.at_put expects an int index, "
                 f"got {article(type(index).__name__)}"
             ) from None
@@ -91,7 +91,7 @@ class ByteArray(
                 cls, bytearray.fromhex(text_like(s, "fromhex", "a str"))
             )
         except ValueError:
-            raise MIRRORS["ValueError"](
+            raise mirrors.ValueError(
                 f"{s!r} is not hexadecimal — #fromhex reads pairs of hex digits"
             ) from None
 

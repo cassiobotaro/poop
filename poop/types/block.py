@@ -2,10 +2,10 @@ from functools import partial
 from inspect import Parameter, signature
 from typing import TYPE_CHECKING, Self, cast
 
+from poop.types import mirrors
 from poop.types._argument import a_block
 from poop.types._message import article
 from poop.types.boolean import false, to_boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.none import none
 from poop.types.object import Object
 
@@ -35,7 +35,7 @@ def _require_block(value: object, role: str, hint: str) -> Callable[..., object]
     written rather than after a deferred block has had side effects.
     """
     if not callable(value):
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"{role} must be a block, got {article(type(value).__name__)} — {hint}"
         )
     return value
@@ -103,8 +103,8 @@ class Block[**P, R](Object, name="function"):
             # sentence unrepresentable.
             keyword_fault = self._keyword_message(args, kwargs)
             if keyword_fault is not None:
-                raise MIRRORS["TypeError"](keyword_fault) from None
-            raise MIRRORS["TypeError"](self._arity_message(len(args))) from None
+                raise mirrors.TypeError(keyword_fault) from None
+            raise mirrors.TypeError(self._arity_message(len(args))) from None
 
     def __get__(
         self, instance: object, owner: type | None = None

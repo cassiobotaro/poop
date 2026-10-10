@@ -1,8 +1,8 @@
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.types import mirrors
 from poop.types._alias import builtin_alias
 from poop.types.boolean import Boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.string import Str
@@ -20,12 +20,12 @@ def _parsed(value: Str, base: int | None) -> Int:
     text would have made `int("abc")` answer the base's error.
     """
     if base is not None and base != 0 and not 2 <= base <= 36:
-        raise MIRRORS["ValueError"]("int base must be 0, or between 2 and 36")
+        raise mirrors.ValueError("int base must be 0, or between 2 and 36")
     try:
         return Int(int(value._value, 10 if base is None else base))
     except ValueError:
         in_base = "" if base is None else f" in base {base}"
-        raise MIRRORS["ValueError"](
+        raise mirrors.ValueError(
             f"{value._value!r} is not a valid int{in_base}"
         ) from None
 
@@ -45,9 +45,9 @@ def _poop_int_from(*args: object, **kwargs: object) -> Int:
         # Mirror CPython: a base is meaningful only when parsing a string.
         # int(10, 2) / int(3.5, 2) / int(True, 2) all raise TypeError there;
         # silently dropping the base would diverge from the language.
-        raise MIRRORS["TypeError"]("a base applies only to text")
+        raise mirrors.TypeError("a base applies only to text")
     if base is not None and not isinstance(base, Int):
-        raise MIRRORS["TypeError"](f"base must be int, got {type(base).__name__}")
+        raise mirrors.TypeError(f"base must be int, got {type(base).__name__}")
     match value:
         case None:
             return Int(0)
@@ -63,7 +63,7 @@ def _poop_int_from(*args: object, **kwargs: object) -> Int:
         case Str():
             return _parsed(value, None if base is None else base._value)
         case _:
-            raise MIRRORS["TypeError"](f"cannot convert {type(value).__name__} to int")
+            raise mirrors.TypeError(f"cannot convert {type(value).__name__} to int")
 
 
 class _IntRewriter(BuiltinRewriter):

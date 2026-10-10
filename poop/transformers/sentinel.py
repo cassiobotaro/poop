@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.types import mirrors
 from poop.types._alias import builtin_alias
 from poop.types._message import article
 from poop.types._unwrap import _is_absent
-from poop.types.exceptions import MIRRORS
 from poop.types.sentinel import Sentinel
 from poop.types.string import Str
 
@@ -23,7 +23,7 @@ def _poop_sentinel_from(name: object, /, *, repr: object = None) -> Sentinel:
     str or None, not int` — the builtin spelt as a call.
     """
     if not isinstance(name, Str):
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"sentinel's name must be a str, got {article(type(name).__name__)}"
         )
     display: Str | NoneClass | None
@@ -32,7 +32,7 @@ def _poop_sentinel_from(name: object, /, *, repr: object = None) -> Sentinel:
     elif isinstance(repr, Str):
         display = repr
     else:
-        raise MIRRORS["TypeError"](
+        raise mirrors.TypeError(
             f"sentinel's repr must be a str, got {article(type(repr).__name__)}"
         )
     return Sentinel(name, display)

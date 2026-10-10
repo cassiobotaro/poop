@@ -141,6 +141,9 @@ quote-style = "double"
 # typer reads `main`'s annotations at runtime to build the CLI, so `Path` is
 # a runtime import there, annotation or not.
 "poop/cli.py" = ["TC003"]
+# Each name there *is* POOP's `TypeError`, `ValueError`, …: the builtin's name,
+# shadowed on purpose, so `raise mirrors.TypeError(...)` reads as what it is.
+"poop/types/mirrors.py" = ["A001"]
 "examples/**/*.py" = [
   # names injected at runtime by the POOP interpreter namespace
   "F821",

@@ -6,8 +6,7 @@ Items 12–20 come from a pass over `poop/` for shape rather than types: what re
 library function changes about the process it runs in. Each was measured or
 checked before being written down — the import-cycle idiom in 12 on Python
 3.15, the overhead in 14 with `timeit`, the redundancy in 15 by walking every
-class's MRO. Order: 18 is independent; 19 is the maintainer's call; 20 is the
-lock.
+class's MRO. Order: 19 is the maintainer's call; 20 is the lock.
 
 When an item is implemented, delete its entry from this file — no `DONE`
 marker and no summary left behind. The decision and its reasoning belong in
@@ -15,25 +14,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 21. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 18. The mirrors under their own names
-
-`raise MIRRORS["TypeError"](…)` appears 120 times — 71 `TypeError`, 22
-`ValueError`, six each of `RuntimeError` and `AttributeError`, and a handful of
-others. A string key into a module-level dict is how a registry is read, not
-how an exception is raised, and the spelling costs something at every site: the
-key is a `Literal` the checker verifies but the reader cannot complete, and
-`exceptions.py` itself needs `cast("MirrorName", native.__name__)` to write
-into the same table. The mirrors are classes with fixed names, built once at
-import; nothing about them is dynamic after that.
-
-**Fix.** A `poop/types/mirrors.py` that binds each mirror under its own name
-after `exceptions` has built the table — `TypeError = MIRRORS["TypeError"]`
-and so on, sixteen lines under one `# noqa: A001` comment saying that the
-mirror *is* POOP's `TypeError` — and call sites read `raise
-mirrors.TypeError(…)`. `MIRRORS` stays for the two readers that are
-table-shaped: `poop_class_of` and the `_at.py` helpers that take a
-`MirrorName`.
 
 ### 19. The call-name validators are one table
 

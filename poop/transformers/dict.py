@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter, call_at
+from poop.types import mirrors
 from poop.types._alias import builtin_alias
 from poop.types._mapping import _MappingMixin
 from poop.types._message import article
 from poop.types._raw import _faithful
 from poop.types.dict import Dict
-from poop.types.exceptions import MIRRORS
 from poop.types.list import List
 from poop.types.mapping_proxy import MappingProxy
 from poop.types.string import Str
@@ -74,7 +74,7 @@ def _poop_dict_merge(*parts: Dict) -> Dict:
             # This one was POOP's own and still wrong in two smaller ways: `**
             # -unpack` carries a stray space, and "dict display" is Python's
             # grammar vocabulary for a construct POOP calls a literal.
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 f"a dict literal can only spread a mapping, "
                 f"got {article(type(part).__qualname__)}"
             )
@@ -98,16 +98,16 @@ def _entries(arg: object, kind: str, kwargs: dict[str, Object]) -> dict[Object, 
         for item in cast("Iterable[Object]", arg):
             if isinstance(item, (Tuple, List)):
                 if len(item._items) != 2:
-                    raise MIRRORS["TypeError"](
+                    raise mirrors.TypeError(
                         f"{kind} entry must have exactly 2 elements, got {len(item._items)}"
                     )
                 data[item._items[0]] = item._items[1]
             else:
-                raise MIRRORS["TypeError"](
+                raise mirrors.TypeError(
                     f"cannot use {type(item).__qualname__} as {kind} entry"
                 )
     else:
-        raise MIRRORS["TypeError"](f"cannot convert {type(arg).__qualname__} to {kind}")
+        raise mirrors.TypeError(f"cannot convert {type(arg).__qualname__} to {kind}")
     # dict(a=1, b=2) / dict(mapping, a=1): keyword names become Str keys.
     for k, v in kwargs.items():
         data[Str(k)] = v

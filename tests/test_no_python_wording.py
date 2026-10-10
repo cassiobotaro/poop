@@ -354,7 +354,7 @@ def test_the_sweep_would_catch_a_regression() -> None:
 # The list above is opt-in by program, so a leak survives simply by not being
 # on it — which is how three of these accumulated. The POOP-authored half is
 # statically checkable: walk the packages for the string literals handed to a
-# `MIRRORS[...]` call and run the same patterns over them. That catches a new
+# `mirrors.<Name>` call and run the same patterns over them. That catches a new
 # `complex()` the day it is written, without anyone remembering to add a
 # program. The same argument `tests/test_mirrored_raises.py` makes for the
 # *class* half of the rule.
@@ -372,7 +372,7 @@ _EXEMPT: tuple[str, ...] = (
 
 
 def _mirror_messages() -> list[tuple[pathlib.Path, int, str]]:
-    """Every string literal handed to a `MIRRORS[...]` call, with its site."""
+    """Every string literal handed to a `mirrors.<Name>` call, with its site."""
     found: list[tuple[pathlib.Path, int, str]] = []
     for package in SWEPT_PACKAGES:
         for path in sorted(package.rglob("*.py")):
@@ -391,9 +391,9 @@ def _mirror_messages() -> list[tuple[pathlib.Path, int, str]]:
 
 def _is_mirror(func: ast.expr) -> bool:
     return (
-        isinstance(func, ast.Subscript)
+        isinstance(func, ast.Attribute)
         and isinstance(func.value, ast.Name)
-        and func.value.id == "MIRRORS"
+        and func.value.id == "mirrors"
     )
 
 

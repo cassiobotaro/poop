@@ -14,6 +14,7 @@ hands out and, on `ByteArray`, the mutators.
 
 from typing import TYPE_CHECKING
 
+from poop.types import mirrors
 from poop.types._affix import affix_needle
 from poop.types._argument import (
     a_bound,
@@ -31,7 +32,6 @@ from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
 from poop.types._unwrap import _unwrap, _unwrap_bool
 from poop.types.boolean import to_boolean
-from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.object import Object
@@ -128,7 +128,7 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
             # CPython answers `ord() expected a character, but string of
             # length 2 found`: the builtin as a call, and `string` for a
             # receiver that prints as bytes.
-            raise MIRRORS["TypeError"](
+            raise mirrors.TypeError(
                 f"#ord expects a single byte, got {len(self._value)}"
             ) from None
 
