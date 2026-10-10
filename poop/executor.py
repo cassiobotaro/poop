@@ -2,6 +2,7 @@ import ast
 import builtins
 import sys
 import traceback
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Literal
 
 from poop.errors import ExecutionError
@@ -9,6 +10,7 @@ from poop.types._message import poop_message, too_deep
 from poop.types.exceptions import poop_class_of
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from types import CodeType
 
 # The only Python builtins user code may reach. `exec` hands a program
@@ -61,6 +63,28 @@ _ALLOWED_BUILTINS: dict[str, object] = {
 # crashing. So the ceiling moves and the floor underneath it holds.
 _FRAMES_PER_SEND = 6
 _RECURSION_LIMIT = 1000 * _FRAMES_PER_SEND
+
+
+@contextmanager
+def _recursion_budget() -> Iterator[None]:
+    """The raised limit for the duration of one program, then the old one back.
+
+    Raised, not set: a caller that has already asked for more keeps it. The
+    REPL runs through `execute` per input, so each input runs under the
+    budget and the prompt returns to the process's own. A library function
+    that changed the interpreter's limit for good was the kind of side effect
+    a test suite inherits without knowing — every test after the first POOP
+    program, and pytest itself, used to run at the raised limit.
+    """
+    previous = sys.getrecursionlimit()
+    if previous >= _RECURSION_LIMIT:
+        yield
+        return
+    sys.setrecursionlimit(_RECURSION_LIMIT)
+    try:
+        yield
+    finally:
+        sys.setrecursionlimit(previous)
 
 
 def _user_lineno(exc: BaseException, filename: str) -> int | None:
@@ -148,12 +172,9 @@ def execute(
     code = _compile(tree, filename, mode)
     ns: dict[str, object] = namespace if namespace is not None else {}
     confine(ns)
-    # Raised, not set: a caller that has already asked for more keeps it. The
-    # REPL runs through here too, so both front ends get the same ceiling.
-    if sys.getrecursionlimit() < _RECURSION_LIMIT:
-        sys.setrecursionlimit(_RECURSION_LIMIT)
     try:
-        exec(code, ns)  # noqa: S102
+        with _recursion_budget():
+            exec(code, ns)  # noqa: S102
     except RecursionError as exc:
         # Reworded here rather than in `_describe`, which every failure passes
         # through: this one is about the *interpreter's* budget, not about

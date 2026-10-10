@@ -13,9 +13,12 @@ out of its own way, and two of them are `_MethodBlock.__call__` — the
 ceiling with the price unrecorded until now.
 """
 
+import sys
+
 import pytest
 
 from poop.errors import ExecutionError
+from poop.executor import _RECURSION_LIMIT
 from poop.interpreter import Interpreter
 
 _COUNTER = """class Counter(Object):
@@ -100,3 +103,22 @@ def test_the_loop_substitutes_have_no_ceiling_at_all() -> None:
         "\n"
         "C().init().run().print()\n"
     )
+
+
+def test_execute_puts_the_recursion_limit_back() -> None:
+    # The budget is raised for the duration of one program and no longer: a
+    # library function that left the process-wide limit raised was a side
+    # effect every later test — and pytest itself — ran under.
+    before = sys.getrecursionlimit()
+    Interpreter().run_source("x = 1\n")
+    assert sys.getrecursionlimit() == before
+
+
+def test_execute_keeps_a_limit_a_caller_raised_higher() -> None:
+    before = sys.getrecursionlimit()
+    sys.setrecursionlimit(_RECURSION_LIMIT + 1)
+    try:
+        Interpreter().run_source("x = 1\n")
+        assert sys.getrecursionlimit() == _RECURSION_LIMIT + 1
+    finally:
+        sys.setrecursionlimit(before)

@@ -6,7 +6,7 @@ Items 12–20 come from a pass over `poop/` for shape rather than types: what re
 library function changes about the process it runs in. Each was measured or
 checked before being written down — the import-cycle idiom in 12 on Python
 3.15, the overhead in 14 with `timeit`, the redundancy in 15 by walking every
-class's MRO. Order: 17 is a front-end item; 18 is independent; 19 is the maintainer's call; 20 is the
+class's MRO. Order: 18 is independent; 19 is the maintainer's call; 20 is the
 lock.
 
 When an item is implemented, delete its entry from this file — no `DONE`
@@ -15,23 +15,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 21. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 17. `execute` does not leave the recursion limit raised
-
-`executor.execute` calls `sys.setrecursionlimit(6000)` when the current limit
-is lower, and never restores it — "raised, not set", the comment says, so a
-caller that asked for more keeps it. A library function that changes
-process-wide interpreter state as a side effect of running a program is the
-kind of thing Python spells as a context manager; the test suite imports
-`execute` and so runs the rest of its own tests, and pytest itself, at the
-raised limit after the first POOP program.
-
-**Fix.** A `_recursion_budget()` context manager in `executor.py` that raises
-the limit for the duration of `exec` and puts the previous value back, used
-around the one `exec` call. The REPL already goes through `execute` per input,
-so each input runs under the budget and the prompt returns to the process's
-own. The "keeps a higher limit" rule holds within the block: the manager only
-raises, never lowers.
 
 ### 18. The mirrors under their own names
 
