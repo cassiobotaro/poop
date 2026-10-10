@@ -64,7 +64,5 @@ class FrozenDict(_MappingMixin):
             return "frozendict()"
         return "frozendict({" + self._pairs() + "})"
 
-    __repr__ = __str__
-
 
 cloak(FrozenDict, "frozendict")

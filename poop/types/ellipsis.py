@@ -25,8 +25,6 @@ class EllipsisClass(Object):
     def __str__(self) -> str:
         return "Ellipsis"
 
-    __repr__ = __str__
-
 
 ellipsis: EllipsisClass = object.__new__(EllipsisClass)
 

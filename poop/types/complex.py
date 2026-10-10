@@ -137,7 +137,5 @@ class Complex(Object):
     def __str__(self) -> str:
         return repr(self._value)
 
-    __repr__ = __str__
-
 
 cloak(Complex, "complex")

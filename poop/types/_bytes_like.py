@@ -424,8 +424,6 @@ class _BytesLikeMixin[B: Object]:
     def __str__(self) -> str:
         return repr(self._value)
 
-    __repr__ = __str__
-
 
 # Cloaked as `bytes`, not `object` as the other shared mixins are: CPython
 # builds a wrong-arity message from the function's qualname, so this name is

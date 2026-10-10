@@ -165,7 +165,5 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object):
         # this summarizes and `hex()` shows the contents on request.
         return f"<memoryview of {self._value.nbytes} bytes>"
 
-    __repr__ = __str__
-
 
 cloak(MemoryView, "memoryview")

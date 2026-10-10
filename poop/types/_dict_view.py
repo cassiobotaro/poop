@@ -112,8 +112,6 @@ class _DictView[T: Object](_IterableMixin[T], Object):
     def __str__(self) -> str:
         return f"{self._repr_name}([{self._repr_items()}])"
 
-    __repr__ = __str__
-
 
 # Cloaked as `object`, the root's own spelling: these methods are inherited by
 # many wrappers, so no single builtin name is true for all of them — and left

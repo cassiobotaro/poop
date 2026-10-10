@@ -133,7 +133,5 @@ class Dict(_MappingMixin):
     def __str__(self) -> str:
         return "{" + self._pairs() + "}"
 
-    __repr__ = __str__
-
 
 cloak(Dict, "dict")

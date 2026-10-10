@@ -59,8 +59,6 @@ class _Cursor[T: Object](_PeekMixin[T], _IterableMixin[T], Object):
     def __str__(self) -> str:
         return f"<{self._repr_name}>"
 
-    __repr__ = __str__
-
 
 class _IteratorBase[T: Object](_Cursor[T]):
     """Base for one-shot POOP iterators.

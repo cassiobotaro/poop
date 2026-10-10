@@ -129,7 +129,5 @@ class MappingProxy(_IterableMixin[Object], Object):
     def __str__(self) -> str:
         return f"mappingproxy({self._dict})"
 
-    __repr__ = __str__
-
 
 cloak(MappingProxy, "mappingproxy")

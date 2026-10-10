@@ -253,8 +253,6 @@ class Block[**P, R](Object):
     def __str__(self) -> str:
         return "<block>"
 
-    __repr__ = __str__
-
 
 class _MethodBlock[**P, R](Block[P, R]):
     """A method read off an object, wrapped so it answers messages.

@@ -107,7 +107,5 @@ class Tuple(
             return f"({self._items[0]!r},)"
         return f"({', '.join(repr(item) for item in self._items)})"
 
-    __repr__ = __str__
-
 
 cloak(Tuple, "tuple")

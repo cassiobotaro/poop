@@ -109,8 +109,6 @@ class With(Object):
     def __str__(self) -> str:
         return "With"
 
-    __repr__ = __str__
-
 
 # Like `Try`: keep the user-facing name but drop the module, so `class_()`
 # stops leaking `<class 'poop.types.with_.With'>`.

@@ -190,7 +190,5 @@ class Range(_IterableMixin[Int], Object):
             return f"range({native.start}, {native.stop})"
         return f"range({native.start}, {native.stop}, {native.step})"
 
-    __repr__ = __str__
-
 
 cloak(Range, "range")

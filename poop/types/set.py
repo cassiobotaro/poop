@@ -157,7 +157,5 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object):
             return "set()"
         return "{" + ", ".join(repr(item) for item in self._data) + "}"
 
-    __repr__ = __str__
-
 
 cloak(Set, "set")

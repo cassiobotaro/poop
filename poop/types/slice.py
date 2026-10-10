@@ -73,8 +73,6 @@ class Slice(Object):
             f"{_field_str(self._step)})"
         )
 
-    __repr__ = __str__
-
 
 def _resolve_py_slice(
     start_or_slice: Index | Slice | NoneClass | None,

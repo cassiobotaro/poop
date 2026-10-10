@@ -32,7 +32,5 @@ class Sentinel(Object):
     def __str__(self) -> str:
         return str(self._repr)
 
-    __repr__ = __str__
-
 
 cloak(Sentinel, "sentinel")

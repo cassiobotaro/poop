@@ -218,7 +218,5 @@ class Float(_NumericCompareMixin, Object):
     def __str__(self) -> str:
         return str(self._value)
 
-    __repr__ = __str__
-
 
 cloak(Float, "float")

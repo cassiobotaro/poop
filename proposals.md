@@ -74,21 +74,6 @@ short-circuit was checking at run time, class by class, call by call. One
 test per slot that a library wrapper's slot is the function written in its
 module, not a wrapper around it.
 
-### 15. `__repr__ = __str__` is already `Object`'s answer
-
-Twenty-two classes end their body with `__repr__ = __str__` — `Int`, `Float`,
-`List`, `Dict`, `Set`, `Range`, `Slice`, `Try`, `With`, `NoneClass`, the
-iterator base, … — and `Object.__repr__` is `return str(self)`. Walking every
-class in `poop/types/` and asking what `__repr__` would resolve to without
-the alias answers `Object.__repr__` for all twenty-two; the four classes whose
-`__repr__` differs from `__str__` — `Object` itself, `Str`, `Boolean` and
-`ByteArray` — define a real one and are unaffected. The alias is also what forces `_adapted` to wrap
-each class's `__repr__` separately from its `__str__`, since both land in the
-namespace.
-
-**Fix.** Delete the twenty-two lines. Behaviour is identical: `repr(x)`
-reaches `Object.__repr__`, which calls the class's own `__str__`.
-
 ### 16. The REPL is a `code.InteractiveConsole`
 
 `Repl.run` (`repl.py`) re-implements the loop `code.InteractiveConsole`
