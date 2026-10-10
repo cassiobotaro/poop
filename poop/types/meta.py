@@ -324,10 +324,9 @@ _PROTOCOL_SLOTS: dict[str, tuple[type, str]] = {
 def _adapted(slot: str, method: Callable[..., object]) -> Callable[..., object]:
     """`method` with its POOP answer unwrapped for CPython's protocol.
 
-    Wrapping happens where the class is built, so the wrappers in
-    `poop/types/` — which are written in Python and already answer natives —
-    pass through untouched: `to_python` is identity for a value that is
-    already one.
+    Applied to a program's classes only — `PoopMeta.__new__` says how it
+    tells them apart — so the wrappers in `poop/types/`, which answer natives
+    already, keep the slot they wrote.
     """
     native, role = _PROTOCOL_SLOTS[slot]
 
@@ -464,15 +463,27 @@ class PoopMeta(type):
         for the builtin, and a slot that raises nothing and answers nothing
         is the quiet member of the same family.
 
+        Only a *program's* class is adapted. The library's own wrappers are
+        written in Python and already answer natives, which the adapter used
+        to find out at run time, class by class, call by call: every
+        `hash(x)`, `str(x)`, `len(x)` or `bool(x)` on a POOP value paid a
+        Python frame, an `isinstance` and a `functools.wraps` indirection to
+        learn the answer was native all along — and `hash` is on the path of
+        every `Dict` and `Set` operation. The two populations are told apart
+        where the class is built: the executor binds `__name__` to
+        `"__poop__"`, so a class a program defines arrives with that as its
+        `__module__`, and a library class with `poop.types.…`.
+
         The four parameters are positional-only: a class keyword is passed
         through here on its way to `__init_subclass__`, and
         `class ListIterator(..., name="list_iterator")` would otherwise
         collide with this signature's own `name`.
         """
-        for slot in _PROTOCOL_SLOTS:
-            method = namespace.get(slot)
-            if callable(method):
-                namespace[slot] = _adapted(slot, method)
+        if namespace.get("__module__") == "__poop__":
+            for slot in _PROTOCOL_SLOTS:
+                method = namespace.get(slot)
+                if callable(method):
+                    namespace[slot] = _adapted(slot, method)
         if callable(namespace.get("__len__")) and "len" not in namespace:
             namespace["len"] = _length_message
         return super().__new__(mcls, name, bases, namespace, **kwargs)

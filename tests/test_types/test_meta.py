@@ -12,10 +12,11 @@ from poop.types.boolean import Boolean, false, true
 from poop.types.exceptions import MIRRORS, PoopExcMeta
 from poop.types.int import Int
 from poop.types.list import List
-from poop.types.meta import PoopMeta, class_side
+from poop.types.meta import _PROTOCOL_SLOTS, PoopMeta, class_side
 from poop.types.none import none
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
+from tests.test_cloak import _classes
 
 
 class _Animal(Object):
@@ -853,3 +854,34 @@ def test_a_class_side_operator_refuses_under_the_class_name(
 def test_class_side_equality_is_still_identity() -> None:
     assert (DEFAULT_NAMESPACE["_poop_int_cls"] == 5) is false
     assert bool(DEFAULT_NAMESPACE["_poop_int_cls"] != 5) is True
+
+
+# --- the adapter wraps a program's classes and leaves the library's alone ---
+#
+# Every wrapper in `poop/types/` already answers a native from these slots,
+# and the adapter used to find that out on every call. `_adapted` builds its
+# wrapper as a function named `answer` under `functools.wraps`, which copies
+# the slot's `__name__` but not its code — so the code object's own name is
+# what tells the two apart. (`__wrapped__` would not: `reprlib.recursive_repr`
+# sets it on the four cycle-guarded `__str__`s too.)
+
+
+def _adapter_built(fn: object) -> bool:
+    return getattr(fn, "__code__").co_name == "answer"  # noqa: B009
+
+
+@pytest.mark.parametrize("slot", sorted(_PROTOCOL_SLOTS))
+def test_a_library_wrappers_slot_is_the_function_written_in_its_module(
+    slot: str,
+) -> None:
+    owners = [cls for cls in _classes() if slot in vars(cls)]
+    assert owners, f"no wrapper declares {slot}"
+    for cls in owners:
+        assert not _adapter_built(vars(cls)[slot]), cls.__name__
+
+
+@pytest.mark.parametrize("slot", sorted(_PROTOCOL_SLOTS))
+def test_a_programs_slot_is_adapted(slot: str) -> None:
+    namespace: dict[str, object] = {"__module__": "__poop__", slot: lambda self: none}
+    made = PoopMeta("P", (Object,), namespace)
+    assert _adapter_built(vars(made)[slot])

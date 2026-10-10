@@ -6,7 +6,7 @@ Items 12–20 come from a pass over `poop/` for shape rather than types: what re
 library function changes about the process it runs in. Each was measured or
 checked before being written down — the import-cycle idiom in 12 on Python
 3.15, the overhead in 14 with `timeit`, the redundancy in 15 by walking every
-class's MRO. Order: 14 is small; 16 and 17 are the two front-end items; 18 is independent; 19 is the maintainer's call; 20 is the
+class's MRO. Order: 16 and 17 are the two front-end items; 18 is independent; 19 is the maintainer's call; 20 is the
 lock.
 
 When an item is implemented, delete its entry from this file — no `DONE`
@@ -15,35 +15,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 21. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 14. The protocol-slot adapter wraps only a program's classes
-
-`PoopMeta.__new__` wraps `__str__`, `__repr__`, `__bool__`, `__hash__` and
-`__len__` in `_adapted` so a *program's* class can answer a `Str` or an `Int`
-from them and CPython still receives a native. Its docstring says the library's
-own wrappers "pass through untouched" — true of the value, not of the call:
-every one of the 49 wrappers' five slots is wrapped too, and each `hash(x)`,
-`str(x)`, `len(x)` or `bool(x)` on a POOP value pays a Python-level frame, an
-`isinstance`, and a `functools.wraps` indirection to learn it was native all
-along. Measured on `Int(1)`, 500k calls each:
-
-| call | through `_adapted` | the slot itself |
-|---|---|---|
-| `hash(x)` | 0.29 s | 0.15 s |
-| `str(x)` | 0.35 s | 0.19 s |
-
-`hash` is on the path of every `Dict` and `Set` operation, `bool` of every
-`if_true`, `len` of every `len()`. The two populations are already
-distinguishable at class-creation time: the executor binds `__name__` to
-`"__poop__"`, so a class a program defines arrives with
-`namespace["__module__"] == "__poop__"`, and a library class with
-`"poop.types.…"`.
-
-**Fix.** Adapt the slots only when the namespace's `__module__` is
-`"__poop__"`. The library's wrappers already answer natives, which is what the
-short-circuit was checking at run time, class by class, call by call. One
-test per slot that a library wrapper's slot is the function written in its
-module, not a wrapper around it.
 
 ### 16. The REPL is a `code.InteractiveConsole`
 
