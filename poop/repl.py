@@ -1,5 +1,6 @@
 import ast
 import atexit
+import code
 import codeop
 import importlib
 import inspect
@@ -29,6 +30,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
     from types import ModuleType
 
+    from rich.console import Console
+
     from poop.interpreter import Interpreter
     from poop.validators import Validator
 
@@ -48,10 +51,6 @@ _readline = _optional_readline()
 _HISTORY_FILE = Path.home() / ".poop_history"
 _HISTORY_MAX = 1000
 
-# Module names for the shared pair, so a test can swap the REPL's own.
-_OUT = OUT
-_ERR = ERR
-
 # readline needs \001/\002 non-printing markers to measure prompt width, which
 # rich does not emit — so the prompt keeps manual ANSI, gated on rich's own
 # stdout detection so it still respects a non-tty stdout and NO_COLOR.
@@ -70,24 +69,11 @@ def _value_text(value: object) -> Text:
     return Text(repr(value))
 
 
-def _print_value(value: object) -> None:
-    _OUT.print(_value_text(value), soft_wrap=True, highlight=False)
-
-
-def _rl_color(text: str, *codes: str) -> str:
+def _rl_color(console: Console, text: str, *codes: str) -> str:
     """Color a readline prompt (stdout-bound), keeping readline width markers."""
-    if not in_colour(_OUT):
+    if not in_colour(console):
         return text
     return f"\001{''.join(codes)}\002{text}\001{_RESET}\002"
-
-
-def _error(message: str) -> None:
-    """Report a REPL diagnostic: `poop:`-prefixed, red, on stderr.
-
-    Every diagnostic the REPL emits shares that contract, so it lives in
-    one place — a new call site cannot forget the prefix or the stream.
-    """
-    _ERR.print(Text(f"poop: {message}", style="red"), soft_wrap=True, highlight=False)
 
 
 _SAFE_AST_NODES: tuple[type[ast.AST], ...] = (
@@ -217,25 +203,22 @@ def _readline_input(prompt: str, indent: str) -> str:
         readline.set_pre_input_hook(None)
 
 
-def _say(text: str = "") -> None:
-    """Write REPL output on stdout, as typed: no markup, no highlighting.
-
-    The REPL wrote through `_OUT` for values and headers and through bare
-    `print` for usage lines, `:help` and `:explain` — two paths to one stream,
-    and only one of them the console that decides colour per destination.
-    """
-    _OUT.print(text, soft_wrap=True, highlight=False, markup=False)
-
-
 @contextmanager
-def _displaying_through(hook: Callable[[object], None]) -> Iterator[None]:
-    """Route expression results through `hook` for the duration."""
-    original = sys.displayhook
-    sys.displayhook = hook
+def _displaying_through(
+    hook: Callable[[object], None], ps1: str, ps2: str
+) -> Iterator[None]:
+    """Route expression results through `hook`, under POOP's prompts, for the duration.
+
+    `sys.ps1` / `sys.ps2` are where `code.InteractiveConsole.interact` reads
+    its prompts from, and `sys.displayhook` is how an expression statement
+    echoes — all three process-wide, so all three are put back.
+    """
+    original = sys.displayhook, getattr(sys, "ps1", None), getattr(sys, "ps2", None)
+    sys.displayhook, sys.ps1, sys.ps2 = hook, ps1, ps2
     try:
         yield
     finally:
-        sys.displayhook = original
+        sys.displayhook, sys.ps1, sys.ps2 = original
 
 
 def _explain_calls(validators: Iterable[Validator]) -> frozenset[str]:
@@ -316,9 +299,26 @@ def _explain_snippet(construct: str, calls: frozenset[str]) -> str | None:
     return _EXPLAIN_SNIPPETS.get(construct)
 
 
-class Repl:
-    def __init__(self, interpreter: Interpreter) -> None:
+class Repl(code.InteractiveConsole):
+    """The POOP REPL: `code.InteractiveConsole` with the pipeline in `runsource`.
+
+    The console ships the loop — accumulate lines, compile, ask for more on
+    an incomplete statement, reset on a syntax error, switch the prompt,
+    swallow Ctrl-C, end on Ctrl-D — and has an override point for each thing
+    that is POOP's: `raw_input` for the prompt, the auto-indent, the meta
+    commands and the byte-order mark; `runsource` for the pipeline, the
+    per-input filename and the error report; `write` for the console's own
+    few words, on stderr through `err`. The two consoles are constructor
+    parameters, so a test hands its own in rather than patching the module.
+    """
+
+    def __init__(
+        self, interpreter: Interpreter, *, out: Console = OUT, err: Console = ERR
+    ) -> None:
+        super().__init__()
         self._interpreter = interpreter
+        self._out = out
+        self._err = err
         self._ns: dict[str, object] = interpreter.new_namespace()
         # Before anything evaluates against it: `:methods` and the completer
         # `eval` on their own, and an unconfined namespace would be handed
@@ -335,6 +335,41 @@ class Repl:
         self._leading_mark = True
         _setup_readline(self._ns)
 
+    # --- the three sinks ---
+
+    def _say(self, text: str = "") -> None:
+        """Write REPL output on stdout, as typed: no markup, no highlighting.
+
+        The REPL wrote through the console for values and headers and through
+        bare `print` for usage lines, `:help` and `:explain` — two paths to
+        one stream, and only one of them the console that decides colour per
+        destination.
+        """
+        self._out.print(text, soft_wrap=True, highlight=False, markup=False)
+
+    def _error(self, message: str) -> None:
+        """Report a REPL diagnostic: `poop:`-prefixed, red, on stderr.
+
+        Every diagnostic the REPL emits shares that contract, so it lives in
+        one place — a new call site cannot forget the prefix or the stream.
+        """
+        self._err.print(
+            Text(f"poop: {message}", style="red"), soft_wrap=True, highlight=False
+        )
+
+    def _print_value(self, value: object) -> None:
+        self._out.print(_value_text(value), soft_wrap=True, highlight=False)
+
+    def write(self, data: str) -> None:
+        """The console's own words — the newline after Ctrl-D, `KeyboardInterrupt`.
+
+        On stderr, as `code.InteractiveConsole` writes them, through the
+        console that decides colour for that stream.
+        """
+        self._err.print(data, end="", soft_wrap=True, highlight=False, markup=False)
+
+    # --- meta-commands ---
+
     def _meta(self, line: str) -> None:
         cmd, _, arg = line[1:].strip().partition(" ")
         # Name-based dispatch, as `cmd.Cmd` does with `do_*`: `:foo` runs
@@ -342,19 +377,21 @@ class Repl:
         # reaching any other attribute.
         command = getattr(self, f"_meta_{cmd}", None) if cmd.isidentifier() else None
         if command is None:
-            _error(f"unknown meta-command :{cmd} — try :help")
+            self._error(f"unknown meta-command :{cmd} — try :help")
             return
         command(arg.strip())
 
     def _meta_help(self, _arg: str) -> None:
-        _say(_META_HELP)
+        self._say(_META_HELP)
 
     def _meta_methods(self, arg: str) -> None:
         if not arg:
-            _say("usage: :methods <expr>")
+            self._say("usage: :methods <expr>")
             return
         if not _is_safe_expr(arg):
-            _error(":methods takes a variable or literal — calls are not evaluated")
+            self._error(
+                ":methods takes a variable or literal — calls are not evaluated"
+            )
             return
         try:
             # Run the expression through the pipeline so literals become
@@ -366,22 +403,22 @@ class Repl:
                 # the transformed body is always an `Expr`; this guards a future
                 # transformer that could inject a statement ahead of it.
                 raise SyntaxError("not an expression")
-            code = compile(ast.Expression(stmt.value), "<methods>", "eval")
-            obj = eval(code, self._ns)  # noqa: S307
+            compiled = compile(ast.Expression(stmt.value), "<methods>", "eval")
+            obj = eval(compiled, self._ns)  # noqa: S307
         except Exception as exc:  # noqa: BLE001
-            _error(str(exc))
+            self._error(str(exc))
             return
         names = sorted(n for n in dir(obj) if is_message(n))
         header = f"{receiver_label(obj)} understands {len(names)} messages:"
-        _OUT.print(Text(header, style="dim"), soft_wrap=True, highlight=False)
+        self._out.print(Text(header, style="dim"), soft_wrap=True, highlight=False)
         # rich lays the messages out in as many columns as the terminal is wide
         # (a single column when the width is unknown, e.g. a pipe), replacing a
         # hand-rolled textwrap.fill that always assumed 80.
-        _OUT.print(Columns(names, padding=(0, 2), column_first=True))
+        self._out.print(Columns(names, padding=(0, 2), column_first=True))
 
     def _meta_explain(self, arg: str) -> None:
         if not arg:
-            _say("usage: :explain <construct>")
+            self._say("usage: :explain <construct>")
             return
         snippet = _explain_snippet(arg, self._explain_calls)
         if snippet is None:
@@ -389,20 +426,22 @@ class Repl:
             # validator refuses it — the executor's own sentence is the answer.
             withheld = withheld_builtin(arg)
             if withheld is not None:
-                _say(withheld)
+                self._say(withheld)
                 return
             known = sorted(self._explain_calls | set(_EXPLAIN_SNIPPETS))
             # Not "it may simply be allowed": nothing here checked that, and
             # for a banned construct with no topic the guess is a flat lie.
-            _say(f"poop: no :explain topic for {arg!r}.\nKnown constructs:")
-            _say(textwrap.fill("  ".join(known), width=80))
+            self._say(f"poop: no :explain topic for {arg!r}.\nKnown constructs:")
+            self._say(textwrap.fill("  ".join(known), width=80))
             return
         errors = self._interpreter.validate_all(snippet, "<explain>")
         if not errors:
-            _OUT.print(Text(f"{arg} is allowed in POOP.", style="green"))
+            self._out.print(Text(f"{arg} is allowed in POOP.", style="green"))
             return
         for err in errors:
-            _say(err.message)
+            self._say(err.message)
+
+    # --- the console's override points ---
 
     def _displayhook(self, value: object) -> None:
         # POOP's `none` (NoneClass) is the answer of every void message,
@@ -412,67 +451,65 @@ class Repl:
         if value is None or isinstance(value, NoneClass):
             return
         self._ns["_"] = value
-        _print_value(value)
+        self._print_value(value)
+
+    def raw_input(self, prompt: str = "") -> str:
+        """One line, under POOP's prompt — or a meta-command, run on the spot.
+
+        The auto-indent follows the buffer the console keeps; a `:` line at
+        the top level is dispatched here and the console is handed an empty
+        line to push, which `runsource` lets through without running.
+        """
+        line = _readline_input(prompt, _indent_for(self.buffer))
+        if self._leading_mark:
+            self._leading_mark = False
+            line = line.removeprefix("\ufeff")
+        if not self.buffer and line.lstrip().startswith(":"):
+            self._meta(line.lstrip())
+            return ""
+        return line
+
+    def runsource(
+        self, source: str, filename: str = "<input>", symbol: str = "single"
+    ) -> bool:
+        """The pipeline on a complete input; `True` while the input is incomplete.
+
+        `codeop` decides completeness, as the console's own does; the
+        difference is what runs afterwards and how its failures are reported
+        — through `report`, which carries the source gutter and caret.
+        """
+        try:
+            compiled = codeop.compile_command(source, filename, symbol)
+        except SyntaxError as exc:
+            report(ParseError.from_syntax_error(exc), source, self._err)
+            return False
+        if compiled is None:
+            return True
+        if not source.strip():
+            return False
+        self._input_no += 1
+        try:
+            self._interpreter.run_source_repl(
+                source, self._ns, filename=f"<repl-{self._input_no}>"
+            )
+        except PoopError as exc:
+            # Through `report`, like the syntax error above, rather than
+            # `_error`: it carries the source gutter and caret the plain sink
+            # cannot, highlighted on a tty.
+            report(exc, source, self._err)
+        return False
 
     def run(self) -> None:
-        _OUT.print(
+        self._out.print(
             Text.assemble(
                 ("POOP 💩", "bold magenta"),
                 "  — Python infected by Smalltalk. ",
                 ("Ctrl+D to exit.", "dim"),
             )
         )
-        buffer: list[str] = []
-        with _displaying_through(self._displayhook):
-            while True:
-                try:
-                    indent = _indent_for(buffer)
-                    prompt = (
-                        _rl_color("...", _DIM) + " "
-                        if buffer
-                        else _rl_color(">>>", _CYAN) + " "
-                    )
-                    line = _readline_input(prompt, indent)
-                except EOFError:
-                    _say()
-                    break
-                except KeyboardInterrupt:
-                    _say()
-                    buffer = []
-                    continue
-
-                if self._leading_mark:
-                    self._leading_mark = False
-                    line = line.removeprefix("\ufeff")
-
-                if not buffer and line.lstrip().startswith(":"):
-                    self._meta(line.lstrip())
-                    continue
-
-                buffer.append(line)
-                source = "\n".join(buffer)
-
-                try:
-                    result = codeop.compile_command(source)
-                except SyntaxError as exc:
-                    report(ParseError.from_syntax_error(exc), source, _ERR)
-                    buffer = []
-                    continue
-
-                if result is None:
-                    continue
-
-                buffer = []
-                if not source.strip():
-                    continue
-
-                self._input_no += 1
-                try:
-                    self._interpreter.run_source_repl(
-                        source, self._ns, filename=f"<repl-{self._input_no}>"
-                    )
-                except PoopError as exc:
-                    # Through `report`, like the syntax error above, rather
-                    # than _error(): it carries the source gutter and caret
-                    # the plain sink cannot, highlighted on a tty.
-                    report(exc, source, _ERR)
+        ps1 = _rl_color(self._out, ">>>", _CYAN) + " "
+        ps2 = _rl_color(self._out, "...", _DIM) + " "
+        with _displaying_through(self._displayhook, ps1, ps2):
+            # Both messages empty: the banner is printed above, styled, and
+            # the console's exit line names a class no POOP user has met.
+            self.interact(banner="", exitmsg="")

@@ -6,7 +6,7 @@ Items 12–20 come from a pass over `poop/` for shape rather than types: what re
 library function changes about the process it runs in. Each was measured or
 checked before being written down — the import-cycle idiom in 12 on Python
 3.15, the overhead in 14 with `timeit`, the redundancy in 15 by walking every
-class's MRO. Order: 16 and 17 are the two front-end items; 18 is independent; 19 is the maintainer's call; 20 is the
+class's MRO. Order: 17 is a front-end item; 18 is independent; 19 is the maintainer's call; 20 is the
 lock.
 
 When an item is implemented, delete its entry from this file — no `DONE`
@@ -15,32 +15,6 @@ marker and no summary left behind. The decision and its reasoning belong in
 
 Numbering continues from the highest open item; the next one is 21. Once every
 item has been implemented and deleted, numbering starts over at 1.
-
-### 16. The REPL is a `code.InteractiveConsole`
-
-`Repl.run` (`repl.py`) re-implements the loop `code.InteractiveConsole`
-ships: accumulate lines in a buffer, hand them to `codeop.compile_command`,
-loop on `None` for an incomplete statement, reset on `SyntaxError`, switch the
-prompt between `>>>` and `...`, swallow `KeyboardInterrupt` and end on
-`EOFError`. Sixty lines of `run` plus `_indent_for`, `_readline_input` and the
-`_leading_mark` flag are that loop; what is POOP's is the pipeline in
-`run_source_repl`, the per-input filename, the `:meta` commands, the coloured
-prompt, the auto-indent and the display hook. `InteractiveConsole` has an
-override point for each: `raw_input` (prompt, indent hook, meta dispatch,
-byte-order mark), `runsource` (the pipeline, the filename, the error report),
-`write` (stderr through `_ERR`), and `sys.ps1` / `sys.ps2` for the prompts.
-
-The module also keeps `_OUT = OUT` and `_ERR = ERR` as module globals "so a
-test can swap the REPL's own", and `tests/test_repl.py` does so with
-`monkeypatch.setattr("poop.repl._OUT", …)` five times. A seam that is a module
-global is a seam every test shares; the Pythonic one is a constructor
-parameter.
-
-**Fix.** `class Repl(code.InteractiveConsole)` with the four overrides;
-`Repl(interpreter, *, out: Console = OUT, err: Console = ERR)` and the
-module-level `_print_value` / `_error` / `_say` become methods writing to
-`self._out` / `self._err`. The tests pass consoles in instead of patching the
-module. `_PoopCompleter` and the readline setup are untouched.
 
 ### 17. `execute` does not leave the recursion limit raised
 
