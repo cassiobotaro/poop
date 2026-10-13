@@ -1,3 +1,4 @@
+from annotationlib import Format
 from functools import partial
 from inspect import Parameter, signature
 from typing import TYPE_CHECKING, Self, cast
@@ -145,9 +146,21 @@ class Block[**P, R](Object, name="function"):
 
         A handful of CPython's own builtins carry no signature, and `get_attr`
         can hand one to `_as_block`.
+
+        `FORWARDREF` because, since PEP 649 (Python 3.14), `signature`
+        evaluates the callee's annotations, and `poop/types/` declares most of
+        its own under `TYPE_CHECKING` — so a block made from a wrapper's
+        classmethod (`int.get_attr("from_bytes")`) leaked
+        `NameError: name 'Bytes' is not defined` from the arity check in place
+        of the arity sentence. Only `kind`, `default` and `name` are read here,
+        never the annotation, and a forward reference costs nothing.
         """
         try:
-            return list(signature(self._fn).parameters.values())
+            return list(
+                signature(
+                    self._fn, annotation_format=Format.FORWARDREF
+                ).parameters.values()
+            )
         except TypeError, ValueError:
             return None
 
@@ -265,9 +278,9 @@ class _MethodBlock[**P, R](Block[P, R], name="function"):
     arity refusal stays CPython's, because `cloak` has already worded that one
     for a message (`str.upper() takes 1 positional argument but 2 were
     given`), and `Block`'s rewording would replace the message's own name with
-    the word `block`. Skipping the rewrite also keeps `inspect.signature` out
-    of the failure path — it evaluates a wrapper's annotations, and half of
-    `poop/types/` declares names under `TYPE_CHECKING` only.
+    the word `block`. That is the whole reason; `_params` reads a signature
+    without evaluating its annotations, so the rewording would be safe here
+    too, and is declined on wording alone.
     """
 
     __slots__ = ()

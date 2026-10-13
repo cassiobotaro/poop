@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poop import Interpreter
+from poop.errors import PoopError
 from poop.types._argument import a_key
 from poop.types.block import Block
 from poop.types.boolean import false, true
@@ -391,3 +393,55 @@ def test_a_key_that_is_already_a_block_passes_through() -> None:
     # else -> the refusal. Only the first and last had coverage.
     block = Block(lambda x: x)
     assert a_key(block, "sorted") is block
+
+
+# Since PEP 649 (Python 3.14) `inspect.signature` evaluates the callee's
+# annotations, and `poop/types/` declares most of its own under `TYPE_CHECKING`.
+# A block made from a wrapper's classmethod — the one path `_as_block` takes
+# into `_params` — leaked `NameError: name 'Bytes' is not defined` in place of
+# the arity sentence. `_params` reads the signature with `FORWARDREF` now.
+_INTERPRETER_NAMES = ("Bytes", "Iterable", "NoneClass", "Callable")
+
+
+def _program_failure(source: str) -> str:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    return str(info.value)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        'f = int.get_attr("from_bytes")\nf()',
+        'f = dict.get_attr("fromkeys")\nf()',
+    ],
+    ids=["from_bytes", "fromkeys"],
+)
+def test_a_wrapper_classmethod_fetched_by_name_refuses_arity_as_a_block(
+    source: str,
+) -> None:
+    message = _program_failure(source)
+    assert "TypeError: block expects 1 to 2 arguments, got 0" in message
+    assert "NameError" not in message
+
+
+def test_a_wrapper_classmethod_fetched_by_name_refuses_a_keyword_as_a_block() -> None:
+    message = _program_failure('f = int.get_attr("from_bytes")\nf(b"\\x01", nope=1)')
+    assert "TypeError: block does not take a keyword argument 'nope'" in message
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        'int.get_attr("from_bytes")()',
+        'dict.get_attr("fromkeys")()',
+        'bytes.get_attr("fromhex")()',
+        'float.get_attr("fromhex")()',
+        'int.get_attr("from_bytes")(b"", nope=1)',
+    ],
+)
+def test_no_interpreter_name_reaches_the_program(source: str) -> None:
+    message = _program_failure(source)
+    assert "TypeError" in message
+    for name in _INTERPRETER_NAMES:
+        assert name not in message
