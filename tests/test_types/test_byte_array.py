@@ -5,6 +5,7 @@ import pytest
 from poop.parser import parse
 from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
 from poop.transformers.bytes import BytesTransformer
+from poop.transformers.float import _poop_float_from
 from poop.transformers.int import IntTransformer
 from poop.types.boolean import false, true
 from poop.types.byte_array import ByteArray
@@ -264,6 +265,51 @@ def test_take_bytes_past_the_size_is_an_index_error() -> None:
 def test_take_bytes_refuses_a_non_int() -> None:
     with pytest.raises(TypeError, match="#take_bytes's n must be an int, got a str"):
         ByteArray(bytearray(b"ab")).take_bytes(Str("x"))  # ty: ignore[invalid-argument-type]
+
+
+def test_resize_grows_with_zero_bytes_and_answers_none() -> None:
+    # Python 3.15's `bytearray.resize`.
+    ba = ByteArray(bytearray(b"ab"))
+    assert ba.resize(Int(4)) is none
+    assert ba == ByteArray(bytearray(b"ab\x00\x00"))
+    assert str(ba) == "bytearray(b'ab\\x00\\x00')"
+
+
+def test_resize_shrinks_by_dropping_the_tail() -> None:
+    ba = ByteArray(bytearray(b"ab"))
+    ba.resize(Int(1))
+    assert ba == ByteArray(bytearray(b"a"))
+
+
+def test_resize_to_zero_empties_the_receiver() -> None:
+    ba = ByteArray(bytearray(b"ab"))
+    ba.resize(Int(0))
+    assert ba.len() == Int(0)
+
+
+def test_resize_folds_a_boolean_to_its_integer() -> None:
+    ba = ByteArray(bytearray(b"ab"))
+    ba.resize(true)
+    assert ba == ByteArray(bytearray(b"a"))
+
+
+@pytest.mark.parametrize(
+    ("size", "got"),
+    [
+        pytest.param(Str("a"), "a str", id="str"),
+        pytest.param(_poop_float_from(Int(2)), "a float", id="float"),
+    ],
+)
+def test_resize_refuses_a_non_int_size(size: Any, got: str) -> None:
+    with pytest.raises(TypeError, match=f"#resize's size must be an int, got {got}"):
+        ByteArray(bytearray(b"ab")).resize(size)
+
+
+def test_resize_to_a_negative_size_is_cpython_value_error_and_changes_nothing() -> None:
+    ba = ByteArray(bytearray(b"ab"))
+    with pytest.raises(ValueError, match="Can only resize to positive sizes, got -1"):
+        ba.resize(Int(-1))
+    assert ba == ByteArray(bytearray(b"ab"))
 
 
 def test_copy_returns_new_bytearray() -> None:

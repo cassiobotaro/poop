@@ -150,6 +150,18 @@ class ByteArray(
 
         return Bytes(self._value.take_bytes(an_int(n, "take_bytes", "n", None)))
 
+    def resize(self, size: Index) -> NoneClass:
+        """Python 3.15's `bytearray.resize`: the receiver's length becomes `size`.
+
+        Growing appends zero bytes, shrinking drops the tail, in place. A void
+        mutator, so it answers `none`. A negative size is CPython's own
+        `ValueError` (`Can only resize to positive sizes, got -1`), which names
+        no construct POOP forbids and leaves the receiver as it was; the type
+        of the size is `an_int`'s to refuse, as every other integer argument.
+        """
+        self._value.resize(an_int(size, "resize", "size"))
+        return none
+
     def extend(self, iterable: Object) -> NoneClass:
         source = a_collection(iterable, "extend")
         raw = _faithful(source)
