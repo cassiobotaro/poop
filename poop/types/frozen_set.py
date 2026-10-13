@@ -20,7 +20,7 @@ class FrozenSet(
     __slots__ = ("_data",)
     _data: frozenset[Object]
     _eq_attr: ClassVar[str] = "_data"
-    _eq_group: ClassVar[str] = "set"
+    _eq_group: ClassVar[str | None] = "set"
 
     def __init__(self, *elements: Object) -> None:
         self._data: frozenset[Object] = frozenset(elements)

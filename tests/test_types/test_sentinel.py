@@ -39,7 +39,7 @@ def test_every_marker_is_distinct() -> None:
 def test_prints_as_its_name() -> None:
     assert str(Sentinel(Str("MISSING"))) == "MISSING"
     assert repr(Sentinel(Str("MISSING"))) == "MISSING"
-    assert Sentinel(Str("")).print  # an empty name is CPython's too
+    assert str(Sentinel(Str(""))) == ""  # an empty name is CPython's too
 
 
 def test_the_repr_keyword_wins_over_the_name() -> None:

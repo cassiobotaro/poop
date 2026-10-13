@@ -10,7 +10,7 @@ from poop.types._message import poop_message, too_deep
 from poop.types.exceptions import poop_class_of
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
     from types import CodeType
 
 # The only Python builtins user code may reach. `exec` hands a program
@@ -66,7 +66,7 @@ _RECURSION_LIMIT = 1000 * _FRAMES_PER_SEND
 
 
 @contextmanager
-def _recursion_budget() -> Iterator[None]:
+def _recursion_budget() -> Generator[None]:
     """The raised limit for the duration of one program, then the old one back.
 
     Raised, not set: a caller that has already asked for more keeps it. The

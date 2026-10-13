@@ -139,7 +139,9 @@ class Block[**P, R](Object, name="function"):
         """
         if instance is None:
             return self
-        return Block(partial(self, instance))
+        # The receiver is the block's first argument — that is what `__get__`
+        # means — and the cast says so where `P` cannot name one positional.
+        return Block(partial(cast("Callable[..., R]", self), instance))
 
     def _params(self) -> list[Parameter] | None:
         """The block's parameters, or `None` when CPython cannot introspect it.

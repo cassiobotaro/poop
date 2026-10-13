@@ -28,7 +28,7 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object, name=
     __slots__ = ("_data",)
     _data: set[Object]
     _eq_attr: ClassVar[str] = "_data"
-    _eq_group: ClassVar[str] = "set"
+    _eq_group: ClassVar[str | None] = "set"
     __hash__ = None
 
     def __init__(self, *elements: Object) -> None:

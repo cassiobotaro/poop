@@ -52,7 +52,7 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object, name="dict"):
     _eq_attr: ClassVar[str] = "_data"
     # `dict == frozendict` is True by value in CPython, both ways, as `set ==
     # frozenset` is; the group is what lets `_ValueEqMixin` say so.
-    _eq_group: ClassVar[str] = "mapping"
+    _eq_group: ClassVar[str | None] = "mapping"
 
     @classmethod
     def _wrapping(cls, data: dict[Object, Object]) -> Self:

@@ -32,7 +32,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
     # CPython compares memoryview equal by value to bytes/bytearray (and
     # other memoryviews): `memoryview(b"abc") == b"abc"` is True. Share the
     # "bytes" group so the same holds in POOP.
-    _eq_group: ClassVar[str] = "bytes"
+    _eq_group: ClassVar[str | None] = "bytes"
 
     def __init__(self, value: _memoryview | MemoryView) -> None:
         self._value = value._value if isinstance(value, MemoryView) else value

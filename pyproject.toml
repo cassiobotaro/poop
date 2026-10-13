@@ -10,7 +10,7 @@ authors = [
 ]
 dependencies = [
     "rich>=15.0.0",
-    "typer>=0.27.1",
+    "typer>=0.27.3",
 ]
 
 [project.scripts]
@@ -24,10 +24,10 @@ include = ["poop*"]
 
 [dependency-groups]
 dev = [
-    "prek>=0.4.13",
+    "prek>=0.5.5",
     "pytest-cov>=7.1.0",
-    "ruff>=0.16.2",
-    "ty>=0.0.70",
+    "ruff>=0.17.0",
+    "ty>=0.0.87",
 ]
 
 [tool.pytest.ini_options]

@@ -1,5 +1,5 @@
 import ast
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
@@ -19,7 +19,7 @@ app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
 
 
 @contextmanager
-def _poop_errors(source: str | None = None) -> Iterator[None]:
+def _poop_errors(source: str | None = None) -> Generator[None]:
     try:
         yield
     except PoopError as exc:

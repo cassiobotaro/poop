@@ -69,8 +69,12 @@ class ParseError(PoopError):
 class ValidationError(PoopError):
     """Raised when a validator rejects the AST."""
 
-    lineno: int
-    col_offset: int
+    # Narrower than `PoopError`'s `int | None` on purpose: a parse error may
+    # have no position, but a validator always has a node, so this class
+    # guarantees one. ty reads a narrowed writable attribute as unsound; here
+    # it is the documented contract.
+    lineno: int  # ty: ignore[invalid-mutable-override]
+    col_offset: int  # ty: ignore[invalid-mutable-override]
 
     def __init__(self, message: str, lineno: int, col_offset: int) -> None:
         super().__init__(message, lineno, col_offset)

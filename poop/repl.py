@@ -27,7 +27,7 @@ from poop.types.none import NoneClass
 from poop.types.string import Str
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Callable, Generator, Iterable
     from types import ModuleType
 
     from rich.console import Console
@@ -206,7 +206,7 @@ def _readline_input(prompt: str, indent: str) -> str:
 @contextmanager
 def _displaying_through(
     hook: Callable[[object], None], ps1: str, ps2: str
-) -> Iterator[None]:
+) -> Generator[None]:
     """Route expression results through `hook`, under POOP's prompts, for the duration.
 
     `sys.ps1` / `sys.ps2` are where `code.InteractiveConsole.interact` reads

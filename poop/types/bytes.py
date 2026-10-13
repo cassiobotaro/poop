@@ -31,8 +31,8 @@ class Bytes(
     __slots__ = ("_value",)
     _value: bytes
     _eq_attr: ClassVar[str] = "_value"
-    _eq_group: ClassVar[str] = "bytes"
-    _order_group: ClassVar[str] = "bytes"
+    _eq_group: ClassVar[str | None] = "bytes"
+    _order_group: ClassVar[str | None] = "bytes"
 
     def __init__(self, value: bytes | Bytes) -> None:
         self._value = value._value if isinstance(value, Bytes) else value

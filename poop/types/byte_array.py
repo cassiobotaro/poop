@@ -44,8 +44,8 @@ class ByteArray(
     __slots__ = ("_value",)
     _value: _bytearray
     _eq_attr: ClassVar[str] = "_value"
-    _eq_group: ClassVar[str] = "bytes"
-    _order_group: ClassVar[str] = "bytes"
+    _eq_group: ClassVar[str | None] = "bytes"
+    _order_group: ClassVar[str | None] = "bytes"
     __hash__ = None
 
     def __init__(
