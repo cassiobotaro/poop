@@ -8,15 +8,10 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.15", "3.15t"]
-        experimental: [false]
-        include:
-          - python-version: "3.16"
-            experimental: true
     steps:
       - uses: actions/checkout@v7
 
