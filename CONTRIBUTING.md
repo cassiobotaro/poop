@@ -238,8 +238,13 @@ GitHub Releases page.
 - Verify expected values against actual language semantics before assuming the
   implementation is wrong (e.g. ascii repr quoting, inclusive vs exclusive
   bounds, `__radd__` requirements for `builtins.sum`).
-- `examples/` is excluded from `ty` and from ruff `F821` because example files
-  rely on names injected at runtime (`True` → POOP boolean, etc.).
+- `examples/` is excluded from `ty`, and ruff skips `F821`, `ANN`, `PLW0108` and
+  `ARG005` there, because example files are POOP programs rather than Python
+  modules: they rely on names injected at runtime (`True` → POOP boolean,
+  etc.), carry no Python annotations, spell every block as a `lambda` (the
+  twin of Smalltalk's `[...]`, which ruff would inline into the bare-method
+  spelling `INFECTIONS.md` keeps unidiomatic), and a `With.do` body may ignore
+  the manager it is handed.
 - `uv run pytest` enforces a 95% coverage floor (`--cov-fail-under=95` in
   `addopts`) — a run whose tests all pass still exits non-zero below it.
 - To measure coverage of a single module in isolation, override the project-wide

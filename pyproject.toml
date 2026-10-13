@@ -190,4 +190,10 @@ quote-style = "double"
   "F821",
   # POOP programs are not annotated with Python types
   "ANN",
+  # a `lambda` is POOP's block literal, the twin of Smalltalk's `[...]`; the
+  # "inlined" spelling ruff proposes (`"Fizz".print`) is the bare-method one
+  # INFECTIONS.md keeps unidiomatic on purpose
+  "PLW0108",
+  # a `With.do` body is handed the manager by contract, whether it reads it
+  "ARG005",
 ]

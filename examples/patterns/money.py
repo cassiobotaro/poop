@@ -53,7 +53,7 @@ class Money:
         base = self._cents // parts
         remainder = self._cents % parts
         return list(
-            range(0, parts).map(
+            range(parts).map(
                 lambda i: Money(
                     (i < remainder).if_true_if_false(lambda: base + 1, lambda: base),
                     self._currency,
