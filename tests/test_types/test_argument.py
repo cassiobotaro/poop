@@ -12,6 +12,7 @@ from poop.errors import PoopError
 from poop.types.boolean import true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
+from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.float import Float
 from poop.types.int import Int
@@ -197,3 +198,32 @@ def test_an_operator_declines_a_scalar_where_a_message_refuses_one(
     # An operator's refusal is the operator's sentence, not `a_collection`'s —
     # and not `'int' object is not iterable`.
     assert f"TypeError: {wanted}" in _failure(source)
+
+
+# `a_number`: Python 3.14's `from_number` constructors take a number and
+# refuse everything else. CPython says `must be real number, not str` — no
+# call, dunder or operator in it, so the sweep's patterns cannot see it leak.
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('float.from_number("3")', "a real number, got a str"),
+        ("float.from_number(1j)", "a real number, got a complex"),
+        ("float.from_number([1])", "a real number, got a list"),
+        ('complex.from_number("1")', "a number, got a str"),
+        ("complex.from_number([1])", "a number, got a list"),
+    ],
+)
+def test_a_number_argument_names_its_message_and_its_rung(
+    source: str, expected: str
+) -> None:
+    assert _failure(source) == f"TypeError: #from_number expects {expected} (line 1)"
+
+
+def test_the_guarded_numbers_still_answer() -> None:
+    assert Float.from_number(Int(3)) == Float(3.0)
+    assert Float.from_number(true) == Float(1.0)
+    assert Float.from_number(Float(2.5)) == Float(2.5)
+    assert Complex.from_number(Int(3)) == Complex(3 + 0j)
+    assert Complex.from_number(true) == Complex(1 + 0j)
+    assert Complex.from_number(Float(2.5)) == Complex(2.5 + 0j)
+    assert Complex.from_number(Complex(1j)) == Complex(1j)

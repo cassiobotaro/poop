@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from poop.types import mirrors
 from poop.types._alias import wrapped_instance
-from poop.types._argument import Key, an_int, text_like
+from poop.types._argument import Key, a_number, an_int, text_like
 from poop.types._message import binary_refusal
 from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
@@ -81,6 +81,16 @@ class Float(_NumericCompareMixin, Object, name="float"):
         return wrapped_instance(
             cls, float.fromhex(text_like(s, "fromhex", "a str", (str,)))
         )
+
+    @classmethod
+    def from_number(cls, x: Int | Float | Boolean) -> Float:
+        """Python 3.14's `float.from_number`: a number, and only a number.
+
+        `float(x)` also reads text; this is the constructor that refuses it.
+        Through `wrapped_instance`, as `fromhex` is, so `class Money(float)`
+        answers a `Money` as CPython's does.
+        """
+        return wrapped_instance(cls, float(a_number(x, "from_number", real=True)))
 
     def real(self) -> Float:
         return self

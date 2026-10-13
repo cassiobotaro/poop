@@ -2,6 +2,8 @@ import operator
 from typing import TYPE_CHECKING
 
 from poop.types import mirrors
+from poop.types._alias import wrapped_instance
+from poop.types._argument import a_number
 from poop.types._message import binary_refusal
 from poop.types._numeric_compare import _num_value
 from poop.types._sentinel import NOT_NUMERIC
@@ -13,6 +15,7 @@ if TYPE_CHECKING:
     from types import NotImplementedType
 
     from poop.types.float import Float
+    from poop.types.int import Int
 
 _complex = complex  # alias to avoid shadowing by Complex class name
 
@@ -34,6 +37,15 @@ class Complex(Object, name="complex"):
         from poop.types.float import Float  # noqa: PLC0415
 
         return Float(self._value.imag)
+
+    @classmethod
+    def from_number(cls, x: Int | Float | Complex | Boolean) -> Complex:
+        """Python 3.14's `complex.from_number`: a number, and only a number.
+
+        `complex(x)` also reads text; this is the constructor that refuses it.
+        The `Float` twin takes the real rungs; this one takes a complex too.
+        """
+        return wrapped_instance(cls, _complex(a_number(x, "from_number", real=False)))
 
     def conjugate(self) -> Complex:
         return Complex(self._value.conjugate())

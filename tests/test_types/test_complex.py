@@ -463,3 +463,38 @@ def test_pow_answers_what_the_operator_answers() -> None:
 def test_pow_refuses_a_foreign_operand() -> None:
     with pytest.raises(TypeError, match=r"complex does not understand #pow with a str"):
         Complex(complex(1, 1)).pow("x")
+
+
+# --- from_number (Python 3.14) ---
+
+
+def test_from_number_converts_a_float() -> None:
+    result = Complex.from_number(Float(2.5))
+    assert isinstance(result, Complex)
+    assert str(result) == "(2.5+0j)"
+
+
+def test_from_number_answers_a_complex_unchanged() -> None:
+    assert Complex.from_number(Complex(1j)) == Complex(1j)
+
+
+def test_from_number_folds_a_boolean_to_its_integer() -> None:
+    assert str(Complex.from_number(true)) == "(1+0j)"
+
+
+def test_from_number_converts_an_int() -> None:
+    assert Complex.from_number(Int(3)) == Complex(3 + 0j)
+
+
+@pytest.mark.parametrize(
+    ("value", "got"),
+    [
+        pytest.param(Str("1"), "a str", id="str"),
+        pytest.param(Dict(), "a dict", id="dict"),
+    ],
+)
+def test_from_number_refuses_a_non_number_in_poop_wording(
+    value: object, got: str
+) -> None:
+    with pytest.raises(TypeError, match=f"#from_number expects a number, got {got}"):
+        Complex.from_number(value)  # ty: ignore[invalid-argument-type]

@@ -374,6 +374,38 @@ def an_int[D](
     )
 
 
+@overload
+def a_number(value: object, selector: str, *, real: Literal[True]) -> int | float: ...
+@overload
+def a_number(
+    value: object, selector: str, *, real: Literal[False]
+) -> int | float | complex: ...
+def a_number(value: object, selector: str, *, real: bool) -> int | float | complex:
+    """The native number behind `value`, or POOP's refusal.
+
+    For `float.from_number` and `complex.from_number`, Python 3.14's "convert
+    a number, and only a number" constructors. CPython refuses the rest with
+    `must be real number, not str` — a sentence with no call, dunder or
+    operator in it, which is the shape the wording sweep's patterns cannot see,
+    so the guard is here rather than a reworded catch.
+
+    `real` is which rung the receiver is: a `float` takes an int, a bool or a
+    float; a `complex` takes those and a complex. A `Boolean` folds to its
+    integer, as `_searched` already does for it — it is the one wrapper with
+    no payload of its own.
+    """
+    # circular: _unwrap -> boolean -> _argument
+    from poop.types._unwrap import _searched  # noqa: PLC0415
+
+    raw = _searched(value)
+    if isinstance(raw, int | float) or (not real and isinstance(raw, complex)):
+        return raw
+    raise mirrors.TypeError(
+        f"#{selector} expects a {'real ' if real else ''}number, "
+        f"got {article(type(value).__name__)}"
+    )
+
+
 def a_collection(value: object, selector: str) -> Iterable[Object]:
     """`value` when it can be walked, else POOP's refusal.
 

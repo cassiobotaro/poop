@@ -1,8 +1,11 @@
+import contextlib
+import io
 import math
 from typing import Any
 
 import pytest
 
+from poop import Interpreter
 from poop.transformers.complex import _poop_complex_from
 from poop.transformers.float import FloatTransformer, _poop_float_from
 from poop.transformers.int import _poop_int_from
@@ -419,3 +422,59 @@ def test_fromhex_names_the_message_like_its_byte_twins() -> None:
     # `ByteArray.fromhex` already answered `#fromhex expects a str, got an int`.
     with pytest.raises(TypeError, match="#fromhex expects a str"):
         Float.fromhex(Int(5))  # ty: ignore[invalid-argument-type]
+
+
+# --- from_number (Python 3.14) ---
+
+
+def test_from_number_converts_an_int() -> None:
+    result = Float.from_number(Int(3))
+    assert isinstance(result, Float)
+    assert str(result) == "3.0"
+
+
+def test_from_number_folds_a_boolean_to_its_integer() -> None:
+    assert str(Float.from_number(true)) == "1.0"
+    assert str(Float.from_number(false)) == "0.0"
+
+
+def test_from_number_answers_a_float_unchanged() -> None:
+    assert Float.from_number(Float(2.5)) == Float(2.5)
+
+
+def test_from_number_on_a_subclass_answers_the_subclass() -> None:
+    # CPython: `class Money(float)`, `Money.from_number(3)` is a `Money`.
+    source = (
+        "class Money(float):\n    pass\nMoney.from_number(3).class_name().print()\n"
+    )
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        Interpreter().run_source(source)
+    assert buf.getvalue() == "Money\n"
+
+
+@pytest.mark.parametrize(
+    ("value", "got"),
+    [
+        pytest.param(Str("3"), "a str", id="str"),
+        pytest.param(Complex(1j), "a complex", id="complex"),
+        pytest.param(List(Int(1)), "a list", id="list"),
+        pytest.param(none, "a NoneType", id="none"),
+    ],
+)
+def test_from_number_refuses_a_non_real_in_poop_wording(value: Any, got: str) -> None:
+    with pytest.raises(
+        TypeError, match=f"#from_number expects a real number, got {got}"
+    ):
+        Float.from_number(value)
+
+
+def test_from_number_refusal_is_catchable_by_its_mirror() -> None:
+    source = (
+        'Try(lambda: float.from_number("x"))'
+        '.except_(TypeError, lambda e: "caught".print()).run()\n'
+    )
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        Interpreter().run_source(source)
+    assert buf.getvalue() == "caught\n"

@@ -1024,6 +1024,8 @@ Every builtin-substitute method mirrors the **full** Python signature of the met
 |---|---|---|---|
 | `Int` | `to_bytes` | `to_bytes(length=Int(1), byteorder=Str("big"), signed=false)` | `signed` is keyword-only, like `int.to_bytes` |
 | `Int` | `from_bytes` | `from_bytes(bytes, byteorder=Str("big"), signed=false)` | classmethod; `signed` keyword-only |
+| `Float` | `from_number` | `from_number(x)` | classmethod (Python 3.14); `x` an int, bool or float, refused otherwise by `a_number` |
+| `Complex` | `from_number` | `from_number(x)` | classmethod (Python 3.14); `x` an int, bool, float or complex |
 | `List`, `Tuple` | `index` | `index(obj, start=none, stop=none)` | optional search bounds; either may be given alone, as in Python |
 | `MemoryView` | `tobytes` | `tobytes(order=Str("C"))` | `order` ∈ `{"C", "F", "A"}` |
 | `MemoryView` | `hex` | `hex(sep=none, bytes_per_sep=Int(1))` | mirrors `Bytes.hex`; the one message that shows the contents |
@@ -1188,6 +1190,8 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 | `ast.UnaryOp(USub, Constant(float))` | `_poop_float(-n)` — collapsed negative literal |
 | `ast.Call` with `float(x)` | `_poop_float_from(x)` |
 
+**`Float` answers Python 3.14's `from_number`** (`poop/types/float.py`). `float(x)` reads a number *or* text; `float.from_number(x)` is the constructor 3.14 added for a number and nothing else, and it is a classmethod, so `float.from_number(3)` answers `3.0`, `float.from_number(True)` answers `1.0` (the boolean rung folds to its integer, as everywhere), and `class Money(float)` answers a `Money` from `Money.from_number(3)` through `wrapped_instance`, as `fromhex` already does. The refusal is the guard's, not CPython's: `must be real number, not str` carries no call, no dunder and no operator, the shape the wording sweep's patterns cannot see, so `a_number` (`poop/types/_argument.py`) checks the argument first and `float.from_number("3")` answers `#from_number expects a real number, got a str`; a complex is refused the same way, since `float`'s rung is the real one.
+
 ### Ellipsis — `poop/transformers/ellipsis.py`
 
 | AST node | Replacement |
@@ -1282,6 +1286,8 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 | `ast.Constant(value=complex)` | `_poop_complex_literal(v)` |
 | `ast.BinOp` combining real + imaginary literal | collapsed into `_poop_complex_literal(r+ij)` |
 | `ast.Call` with `complex(r, i)` | `_poop_complex_from(r, i)` |
+
+**`Complex` answers Python 3.14's `from_number`** (`poop/types/complex.py`), the twin of `Float`'s: `complex.from_number(2.5)` answers `(2.5+0j)`, `complex.from_number(1j)` answers `1j` unchanged, and `complex.from_number(True)` answers `(1+0j)`. It shares `a_number` with `Float`, with the `real` flag off, so the one difference between the two constructors is the word in the sentence: `complex.from_number("1")` answers `#from_number expects a number, got a str`.
 
 ### ByteArray — `poop/transformers/byte_array.py`
 
