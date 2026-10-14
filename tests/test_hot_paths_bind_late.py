@@ -80,6 +80,9 @@ def _hot_operations() -> dict[str, Callable[[], object]]:
         "obj.print()": lambda: a.print(),
         "int == int": lambda: int_alias == int_alias,
         "obj.repr()": lambda: xs.repr(),
+        # The two paths `Object`'s former hooks sat on.
+        "Int(3)": lambda: Int(3),
+        '"ab"._value': lambda: s._value,
     }
 
 
