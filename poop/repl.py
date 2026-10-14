@@ -99,7 +99,10 @@ def _is_safe_expr(expr: str) -> bool:
 
 def _completion(name: str, value: object) -> str:
     """`name` as Tab completes it: with a `(` when it is called."""
-    return f"{name}(" if callable(value) else name
+    # `getattr_static` answers the class-dict entry: a `message` descriptor
+    # (or a `classmethod`), neither callable itself. `__func__` is the
+    # function behind both, the convention `classmethod` set.
+    return f"{name}(" if callable(getattr(value, "__func__", value)) else name
 
 
 class _PoopCompleter:
