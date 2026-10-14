@@ -553,3 +553,23 @@ def test_an_object_writing_its_own_slot_still_works() -> None:
         "        return self._v\n"
         "C().init(7).v().print()\n"
     )
+
+
+# `get_attr` takes one optional default, as `getattr` does. `*default` let a
+# third argument reach the builtin, which refused it as `getattr expected at
+# most 3 arguments, got 4` — the call `no_getattr` bans, named by its
+# substitute.
+
+
+def test_get_attr_answers_the_default_for_a_missing_name() -> None:
+    assert Int(5).get_attr(Str("nope"), Int(7)) == Int(7)
+
+
+def test_get_attr_refuses_two_defaults_without_naming_getattr() -> None:
+    with pytest.raises(TypeError) as info:
+        Int(5).get_attr(Str("nope"), Int(1), Int(2))  # ty: ignore[too-many-positional-arguments]
+    message = str(info.value)
+    assert message == (
+        "object.get_attr() takes from 2 to 3 positional arguments but 4 were given"
+    )
+    assert "getattr" not in message

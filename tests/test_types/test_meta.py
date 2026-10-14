@@ -887,3 +887,16 @@ def test_a_programs_slot_is_adapted(slot: str) -> None:
     namespace: dict[str, object] = {"__module__": "__poop__", slot: lambda self: none}
     made = PoopMeta("P", (Object,), namespace)
     assert _adapter_built(vars(made)[slot])
+
+
+# The class side's `get_attr` takes one optional default too: `*default`
+# answered the first of several and ignored the rest in silence.
+
+
+def test_a_class_get_attr_refuses_two_defaults() -> None:
+    alias = IntTransformer.BINDINGS["_poop_int_cls"]
+    with pytest.raises(TypeError) as info:
+        alias.get_attr(Str("nope"), Int(1), Int(2))
+    assert str(info.value) == (
+        "get_attr() takes from 2 to 3 positional arguments but 4 were given"
+    )

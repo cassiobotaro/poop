@@ -16,6 +16,7 @@ from poop.types._cloak import cloak_callable
 from poop.types._descriptor import instance_only, message, messages_in
 from poop.types._message import article
 from poop.types._selectors import explain, is_dunder, is_message, not_understood
+from poop.types._sentinel import MISSING
 
 # circular: every module below is built through `PoopMeta`, so none can be
 # imported eagerly here; each resolves on first use, inside a method body.
@@ -835,15 +836,18 @@ class PoopMeta(type):
         return cls
 
     @class_side
-    def get_attr(cls, name: Str, *default: object) -> object:
+    def get_attr(cls, name: Str, default: object = MISSING) -> object:
         # Same wrap as the instance side: a class-side method answered a raw
-        # Python function, which understands no message.
+        # Python function, which understands no message. One optional
+        # default, as on the instance side: `*default` silently ignored a
+        # third argument here while the instance side leaked `getattr`'s
+        # refusal of it.
         raw = _checked_name(name)
         try:
             return _as_block(_reflected(cls, raw))
         except AttributeError:
-            if default:
-                return default[0]
+            if default is not MISSING:
+                return default
             return cls.does_not_understand(raw)
 
     @class_side

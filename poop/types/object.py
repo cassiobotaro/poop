@@ -6,6 +6,7 @@ from poop.types._cloak import cloak
 from poop.types._message import cannot_be_hashed, holds_no_state, no_format_spec
 from poop.types._raw import _faithful
 from poop.types._selectors import explain, is_dunder, is_message
+from poop.types._sentinel import MISSING
 from poop.types.meta import PoopMeta
 
 # circular: every module below imports `Object` (or `PoopMeta`, which this
@@ -214,10 +215,16 @@ class Object(metaclass=PoopMeta):
             # is POOP's to write.
             raise mirrors.TypeError(no_format_spec(type(self).__name__)) from None
 
-    def get_attr(self, name: Str, *default: object) -> object:
+    def get_attr(self, name: Str, default: object = MISSING) -> object:
         # Guarded before the default is consulted: a forbidden name is refused,
-        # not quietly answered with a fallback.
-        return _as_block(builtins.getattr(self, _checked_name(name), *default))
+        # not quietly answered with a fallback. One optional default, as
+        # `getattr` takes one: `*default` forwarded a third argument to the
+        # builtin, which refused it in its own words (`getattr expected at
+        # most 3 arguments, got 4`), naming the call `no_getattr` bans.
+        raw = _checked_name(name)
+        if default is MISSING:
+            return _as_block(builtins.getattr(self, raw))
+        return _as_block(builtins.getattr(self, raw, default))
 
     def has_attr(self, symbol: Str) -> Boolean:
         return to_boolean(hasattr(self, _checked_name(symbol)))
