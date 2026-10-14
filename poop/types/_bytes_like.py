@@ -8,8 +8,8 @@ classes, four methods each. CPython shares the same code between the two
 
 Each concrete class supplies `_rewrap`, which turns a raw result back into its
 own kind — a `Bytes` answers a `Bytes`, a `ByteArray` a `ByteArray` — and keeps
-what differs: construction, `+`, `fromhex`, `hex`, hashing, the iterator it
-hands out and, on `ByteArray`, the mutators.
+what differs: construction, `+`, `fromhex`, hashing, the iterator it hands
+out and, on `ByteArray`, the mutators.
 """
 
 from typing import TYPE_CHECKING
@@ -24,13 +24,14 @@ from poop.types._argument import (
     an_int,
     bytes_like,
     max_split,
+    text_like,
 )
 from poop.types._at import at_index
 from poop.types._codec import decoded
 from poop.types._mixin import _Mixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
-from poop.types._unwrap import _unwrap, _unwrap_bool
+from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
 from poop.types.list import List
@@ -57,6 +58,25 @@ if TYPE_CHECKING:
 _BYTE_KINDS = (bytes, bytearray, memoryview)
 
 
+def hex_of(
+    value: bytes | bytearray | memoryview,
+    sep: Str | Bytes | NoneClass | None,
+    bytes_per_sep: Int | NoneClass | None,
+) -> Str:
+    """`value.hex(sep, bytes_per_sep)`, the separator guarded in POOP's words.
+
+    One body for the three receivers that answer `hex`: the two byte wrappers
+    through the mixin, `MemoryView` by calling this. Three copies had drifted —
+    `bytearray` passed no kinds to the guard and then converted a `bytearray`
+    separator, so it accepted what `bytes` refused and what CPython refuses on
+    both (`sep must be str or bytes`).
+    """
+    if _is_absent(sep):
+        return Str(value.hex())
+    sep_value = text_like(sep, "hex", "a one-character separator", (str, bytes))
+    return Str(value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1)))
+
+
 class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
     __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
 
@@ -78,6 +98,13 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
 
     def at(self, index: Index) -> Int:
         return Int(at_index(self._value, index, self))
+
+    def hex(
+        self,
+        sep: Str | Bytes | NoneClass | None = None,
+        bytes_per_sep: Int | NoneClass | None = None,
+    ) -> Str:
+        return hex_of(self._value, sep, bytes_per_sep)
 
     def slice(
         self,

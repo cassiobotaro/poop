@@ -1,4 +1,5 @@
 import builtins
+import operator
 from abc import abstractmethod
 from collections import deque
 from functools import reduce as functools_reduce
@@ -148,9 +149,11 @@ class _IterableMixin[T: Object](_Mixin):
         # is a `Float` — and `Object` declares no `+` for a checker to
         # follow, so the sum is added up the way `builtins.sum` adds.
         total: Any = next(items, Int(0)) if start is MISSING else start
-        for item in items:
-            total += item
-        return total
+        # The binary `+`, never `+=`: an in-place add on a `List` extends it,
+        # so `[a, b].sum()` answered `a` itself and left it holding `b`'s
+        # elements, and `xs.sum(acc)` grew `acc`. `builtins.sum` adds with
+        # `PyNumber_Add` and leaves its operands alone; so does this.
+        return functools_reduce(operator.add, items, total)
 
     # `min` and `max` are each an overload pair: without a default they
     # answer an element, with one they answer an element or it. One

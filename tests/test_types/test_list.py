@@ -684,3 +684,24 @@ def test_a_boolean_still_repeats_as_one_or_zero() -> None:
 def test_an_integer_still_repeats() -> None:
     assert List(Int(1)) * Int(3) == List(Int(1), Int(1), Int(1))
     assert Int(3) * List(Int(1)) == List(Int(1), Int(1), Int(1))
+
+
+# `sum` adds with the binary `+`, as `builtins.sum` does: the running total
+# used to be built with `+=`, which on a `List` extends in place, so the first
+# element (or the `start`) came back mutated and *was* the answer.
+
+
+def test_sum_leaves_the_first_element_alone() -> None:
+    a = List(Int(1))
+    b = List(Int(2))
+    total = List(a, b).sum()
+    assert a == List(Int(1))
+    assert total == List(Int(1), Int(2))
+    assert total is not a
+
+
+def test_sum_leaves_the_start_alone() -> None:
+    acc = List(Int(0))
+    total = List(List(Int(1)), List(Int(2))).sum(acc)
+    assert acc == List(Int(0))
+    assert total == List(Int(0), Int(1), Int(2))

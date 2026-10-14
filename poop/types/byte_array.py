@@ -21,7 +21,6 @@ from poop.types.byte_array_iterator import ByteArrayIterator
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
-from poop.types.string import Str
 
 # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
 # answers bytearray. Anything else -> faithful TypeError, not #_value.
@@ -33,6 +32,7 @@ if TYPE_CHECKING:
 
     from poop.types._index import Index
     from poop.types.none import NoneClass
+    from poop.types.string import Str
 
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
 
@@ -98,22 +98,6 @@ class ByteArray(
             raise mirrors.ValueError(
                 f"{s!r} is not hexadecimal — #fromhex reads pairs of hex digits"
             ) from None
-
-    def hex(
-        self,
-        sep: Str | ByteArray | NoneClass | None = None,
-        bytes_per_sep: Int | NoneClass | None = None,
-    ) -> Str:
-        if _is_absent(sep):
-            return Str(self._value.hex())
-        raw = text_like(sep, "hex", "a one-character separator")
-        # CPython's hex() takes str or bytes, not bytearray, so a ByteArray
-        # separator is converted — but nothing else is, or a List of Ints
-        # would be silently coerced where CPython raises.
-        sep_value = bytes(raw) if isinstance(raw, _bytearray) else raw
-        return Str(
-            self._value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1))
-        )
 
     def iter(self) -> ByteArrayIterator:
         return ByteArrayIterator(self)

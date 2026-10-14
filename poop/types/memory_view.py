@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
 from poop.types import mirrors
-from poop.types._argument import _opt_stop, a_bound, an_int, text_like
+from poop.types._argument import _opt_stop, a_bound, text_like
 from poop.types._at import at_index, no_element_equal_to
+from poop.types._bytes_like import hex_of
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._raw import _faithful
 from poop.types._unwrap import _is_absent
@@ -14,7 +15,6 @@ from poop.types.list import List
 from poop.types.memory_view_iterator import MemoryViewIterator
 from poop.types.object import Object
 from poop.types.slice import _resolve_py_slice
-from poop.types.string import Str
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
+    from poop.types.string import Str
 
 _memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
 
@@ -131,12 +132,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
     ) -> Str:
         # The one message that shows the contents: `__str__` summarizes, and
         # `tobytes` copies the whole buffer to show any of it.
-        if _is_absent(sep):
-            return Str(self._value.hex())
-        sep_value = text_like(sep, "hex", "a one-character separator", (str, bytes))
-        return Str(
-            self._value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1))
-        )
+        return hex_of(self._value, sep, bytes_per_sep)
 
     def __iter__(self) -> Iterator[Int]:
         return (Int(b) for b in self._value)

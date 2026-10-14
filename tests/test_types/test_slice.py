@@ -1,5 +1,7 @@
 from typing import Any
 
+import pytest
+
 from poop.types.boolean import false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -268,3 +270,29 @@ def test_a_boolean_component_indexes_like_one() -> None:
 
 def test_indices_accepts_a_boolean_length() -> None:
     assert Slice(Int(0), Int(2)).indices(true) == Tuple(Int(0), Int(1), Int(1))
+
+
+# --- a Slice and bounds together are refused, not silently halved ---
+
+_MIXED = r"#slice takes a slice or bounds, not both — write \.slice\(slice\(1, 3\)\) or \.slice\(1, 3\)"
+
+
+def test_list_slice_with_slice_object_alone() -> None:
+    xs = List(Int(0), Int(1), Int(2), Int(3), Int(4))
+    assert xs.slice(Slice(Int(1), Int(3))) == List(Int(1), Int(2))
+
+
+def test_list_slice_with_bounds_alone() -> None:
+    xs = List(Int(0), Int(1), Int(2), Int(3), Int(4))
+    assert xs.slice(Int(1), Int(3)) == List(Int(1), Int(2))
+
+
+def test_list_slice_refuses_a_slice_and_a_stop() -> None:
+    xs = List(Int(0), Int(1), Int(2), Int(3), Int(4))
+    with pytest.raises(TypeError, match=_MIXED):
+        xs.slice(Slice(Int(1), Int(3)), Int(4))
+
+
+def test_str_slice_refuses_a_slice_and_a_step() -> None:
+    with pytest.raises(TypeError, match=_MIXED):
+        Str("abcde").slice(Slice(Int(1), Int(3)), step=Int(2))

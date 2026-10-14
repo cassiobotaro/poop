@@ -1105,3 +1105,25 @@ def test_translate_keeps_cpythons_refusal_for_a_short_table() -> None:
     assert _failure('bytearray(b"abc").translate(b"short")') == (
         "ValueError: translation table must be 256 characters long (line 1)"
     )
+
+
+# `hex` has one body on the mixin: the `bytearray` copy had drifted to accept a
+# `bytearray` separator that `bytes` refused and that CPython refuses on both.
+
+
+def test_hex_accepts_a_bytes_separator() -> None:
+    assert ByteArray(bytearray(b"ab")).hex(Bytes(b":")) == Str("61:62")
+
+
+def test_hex_refuses_a_bytearray_separator() -> None:
+    with pytest.raises(
+        TypeError, match="#hex expects a one-character separator, got a bytearray"
+    ):
+        ByteArray(bytearray(b"ab")).hex(ByteArray(bytearray(b":")))  # ty: ignore[invalid-argument-type]
+
+
+def test_bytes_hex_refuses_a_bytearray_separator_too() -> None:
+    with pytest.raises(
+        TypeError, match="#hex expects a one-character separator, got a bytearray"
+    ):
+        Bytes(b"ab").hex(ByteArray(bytearray(b":")))  # ty: ignore[invalid-argument-type]

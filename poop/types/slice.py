@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from poop.types import mirrors
 from poop.types._argument import an_int
+from poop.types._unwrap import _is_absent
 from poop.types.boolean import to_boolean
 from poop.types.int import Int
 from poop.types.none import NoneClass, none
@@ -85,6 +86,13 @@ def _resolve_py_slice(
     whose `slice` methods otherwise repeated this branch verbatim.
     """
     if isinstance(start_or_slice, Slice):
+        # Refused, not ignored: `xs.slice(slice(1, 3), 4)` used to answer the
+        # slice alone, dropping the `4` without a word.
+        if not (_is_absent(stop) and _is_absent(step)):
+            raise mirrors.TypeError(
+                "#slice takes a slice or bounds, not both — "
+                "write .slice(slice(1, 3)) or .slice(1, 3)"
+            )
         resolved = start_or_slice._py_slice()
     else:
         resolved = Slice(start_or_slice, stop, step)._py_slice()

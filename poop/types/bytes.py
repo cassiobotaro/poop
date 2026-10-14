@@ -2,22 +2,18 @@ from typing import TYPE_CHECKING, ClassVar
 
 from poop.types import mirrors
 from poop.types._alias import wrapped_instance
-from poop.types._argument import an_int, text_like
+from poop.types._argument import text_like
 from poop.types._bytes_like import _BytesLikeMixin
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._ordered import _OrderedMixin
-from poop.types._unwrap import (
-    _is_absent,
-)
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.byte_array import ByteArray
 from poop.types.bytes_iterator import BytesIterator
 from poop.types.int import Int
 from poop.types.object import Object
-from poop.types.string import Str
 
 if TYPE_CHECKING:
-    from poop.types.none import NoneClass
+    from poop.types.string import Str
 
 
 class Bytes(
@@ -41,18 +37,6 @@ class Bytes(
         # `bytes(raw)` is `raw` itself for a `bytes` — which is all this
         # receiver's payload ever answers — and the copy a `bytearray` needs.
         return Bytes(bytes(raw))
-
-    def hex(
-        self,
-        sep: Str | Bytes | NoneClass | None = None,
-        bytes_per_sep: Int | NoneClass | None = None,
-    ) -> Str:
-        if _is_absent(sep):
-            return Str(self._value.hex())
-        sep_value = text_like(sep, "hex", "a one-character separator", (str, bytes))
-        return Str(
-            self._value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1))
-        )
 
     @classmethod
     def fromhex(cls, s: Str) -> Bytes:
