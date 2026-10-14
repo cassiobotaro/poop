@@ -65,23 +65,39 @@ A failed hook means the commit did **not** happen — fix the issue and create a
 
 ### Imports
 
-All imports live at the top of the module. Use a function-local `import` only
-to break a circular import. Imports needed exclusively for type annotations go
-inside an `if TYPE_CHECKING:` block at the top of the module — never
-function-local, never alongside runtime imports.
+All imports live at the top of the module. A circular import is broken by a
+module-level **lazy import** (PEP 810, Python 3.15):
 
-The function-local import is the only spelling that works for the cycles in
-`poop/types/`, and the reason is worth knowing before reaching for the other
-one. `import poop.types.boolean as _boolean` at the top of a module does
-resolve inside a cycle, but it *executes* `boolean.py` right there — and
-`boolean.py` needs `Object` as a base class the moment it runs, so if
-`object.py` imported it at the top, importing `object.py` first would run
-`boolean.py` before `Object` exists. Every hub in the package (`object`,
-`meta`, `exceptions`, `boolean`, `none`, `string`) is needed at
-class-definition time by the modules it would import, and the package
-`__init__` is empty on purpose, so any module can be the first one imported.
-A deferred import — one that runs when the method does — is therefore the
-honest spelling, and each carries a `# circular:` comment naming the edge.
+```python
+# circular: float imports int
+lazy from poop.types.float import Float
+```
+
+The import runs on the first *use* of the name, inside a method body, when
+both modules exist; after that the name is a plain module global. Every lazy
+import carries a `# circular:` comment naming the edge it breaks — a lazy
+import with no cycle to break should be an eager one. A function-local import
+is never written (ruff's `PLC0415` refuses it, with no exemptions), and
+`tests/test_no_local_imports.py` runs every example program under an import
+recorder to catch one that ruff cannot see.
+
+Imports needed exclusively for type annotations go inside an
+`if TYPE_CHECKING:` block at the top of the module — never function-local,
+never alongside runtime imports. A name needed at runtime *and* in annotations
+is one lazy import, not a lazy import plus a `TYPE_CHECKING` copy: the lazy
+name resolves in annotations too, through `annotationlib`.
+
+Why the hubs cannot simply import eagerly is worth knowing. `import
+poop.types.boolean` at the top of `object.py` would *execute* `boolean.py`
+right there — and `boolean.py` needs `Object` as a base class the moment it
+runs, so importing `object.py` first would run `boolean.py` before `Object`
+exists. Every hub in the package (`object`, `meta`, `exceptions`, `boolean`,
+`none`, `string`, `block`) is needed at class-definition time by the modules
+it would import, and the package `__init__` is empty on purpose, so any module
+can be the first one imported. A deferred import is therefore the honest
+spelling; before 3.15 the only one available was function-local, which cost a
+Python-level import on every call (~215 ns against ~30 ns for the resolved
+lazy name) and was written 272 times.
 
 ### Language
 
