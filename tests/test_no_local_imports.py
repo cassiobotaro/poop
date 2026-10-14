@@ -1,19 +1,24 @@
-"""No function-local import fires on the paths every program runs.
+"""No function-local import fires anywhere a program can take the interpreter.
 
-`poop/types/_late.py` says which sites bind late and why; this is the test that
-keeps them so. It records every import whose caller is a function under
-`poop/` while the hot operations run, and expects none — a regression names
-the file and line that reintroduced one. Timing is deliberately not asserted:
-CI timing is noise, and the measurement that justified the change is recorded
-in the change's design document.
+A cycle in `poop/types` is broken by a module-level `lazy from` import (PEP
+810), resolved on first use and a plain global after that; a function-local
+import is never written, and ruff's `PLC0415` says so statically. This is the
+dynamic half: it records every import whose caller is a function under `poop/`
+while the hot operations run, and again while every example program runs, and
+expects none — a regression names the file and line that reintroduced one, and
+catches the import ruff cannot see, fired through `exec`, a transformer or a
+path it does not walk. Timing is deliberately not asserted: CI timing is noise,
+and each change's measurement is recorded in its design document.
 """
 
 import builtins
 import contextlib
 import io
+import pathlib
 import sys
 from typing import TYPE_CHECKING
 
+from poop import Interpreter
 from poop.transformers.int import IntTransformer
 from poop.types._argument import an_int
 from poop.types.boolean import true
@@ -90,7 +95,7 @@ def test_the_hot_paths_fire_no_local_import() -> None:
     operations = _hot_operations()
     with contextlib.redirect_stdout(io.StringIO()):
         for run in operations.values():
-            run()  # warm-up: the late getters pay their one import here
+            run()  # warm-up: the lazy imports resolve here, once
         with _recording_imports() as fired:
             for run in operations.values():
                 for _ in range(3):
@@ -120,3 +125,27 @@ def test_every_hot_operation_still_runs() -> None:
     with contextlib.redirect_stdout(io.StringIO()):
         for run in _hot_operations().values():
             run()
+
+
+def _example_programs() -> list[tuple[str, str]]:
+    """Every program under `examples/` that does not wait on `input`."""
+    root = pathlib.Path(__file__).resolve().parent.parent / "examples"
+    return [
+        (str(path.relative_to(root)), path.read_text())
+        for path in sorted(root.rglob("*.py"))
+        if "input(" not in path.read_text()
+    ]
+
+
+def test_no_example_fires_a_local_import() -> None:
+    programs = _example_programs()
+    assert len(programs) > 30
+    with contextlib.redirect_stdout(io.StringIO()):
+        for _, source in programs:
+            Interpreter().run_source(source)  # warm-up: every lazy edge resolves
+        with _recording_imports() as fired:
+            for _, source in programs:
+                Interpreter().run_source(source)
+    assert fired == [], "\n".join(
+        f"{f}:{line}  {fn}" for f, line, fn in sorted(set(fired))
+    )
