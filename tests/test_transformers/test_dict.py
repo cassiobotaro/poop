@@ -2,6 +2,7 @@ from functools import partial
 
 import pytest
 
+from poop.errors import PoopError
 from poop.interpreter import Interpreter
 from poop.transformers.dict import (
     DictTransformer,
@@ -105,9 +106,8 @@ def test_dict_splat_via_interpreter() -> None:
 
 
 def test_dict_call_double_splat_copies_mapping() -> None:
-    # `dict(**other)` must not reach the bare `_poop_dict` class — Python's
-    # `**` unpacking demands raw str keys but a POOP Dict carries Str keys,
-    # so the splat is folded into a `_poop_dict_merge` instead.
+    # `dict(**other)` is a call like any other: `VarargsTransformer` unwraps
+    # the splat's `Str` keys for CPython's `**`, as it does at every call site.
     Interpreter().run_source(
         'other = {"a": 1, "b": 2}\n'
         "d = dict(**other)\n"
@@ -195,3 +195,34 @@ def test_dict_merge_rejects_non_dict_part() -> None:
     # "dict display", Python's grammar word for what POOP calls a literal.
     with pytest.raises(TypeError, match="a dict literal can only spread a mapping"):
         _poop_dict_merge(Dict(), Int(1))  # ty: ignore[invalid-argument-type]
+
+
+# `dict(a, k=v, **b)` goes through the one `**` mechanism every call does. The
+# parse-time fold it used to get diverged from CPython on exactly the two
+# inputs CPython refuses.
+
+
+def test_dict_call_with_a_splat_is_rewritten_as_any_call(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source('b = {"y": 2}\ndict({"x": 1}, **b).print()')
+    assert capsys.readouterr().out.strip() == "{'x': 1, 'y': 2}"
+
+
+def test_dict_call_refuses_a_keyword_given_twice() -> None:
+    with pytest.raises(
+        PoopError, match=r"dict\(\) got multiple values for keyword argument 'x'"
+    ):
+        Interpreter().run_source('dict({"a": 0}, x=1, **{"x": 2})')
+
+
+def test_dict_call_refuses_a_non_string_key_in_a_splat() -> None:
+    with pytest.raises(PoopError, match="keywords must be strings"):
+        Interpreter().run_source("dict(**{1: 2})")
+
+
+def test_a_display_with_a_splat_still_merges(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source('b = {"y": 2}\n{"x": 1, **b}.print()')
+    assert capsys.readouterr().out.strip() == "{'x': 1, 'y': 2}"

@@ -87,17 +87,14 @@ class BuiltinRewriter(ast.NodeTransformer):
     def is_builtin(self, name: str) -> bool:
         return name in self.names
 
-    def call_args(self, node: ast.Call) -> list[ast.expr]:
-        """The converter's positional arguments; a hook for `slice`."""
-        return [self.visit(arg) for arg in node.args]
-
     def visit_Call(self, node: ast.Call) -> ast.AST:
         if isinstance(node.func, ast.Name) and self.is_builtin(node.func.id):
             keywords = [
                 ast.keyword(arg=kw.arg, value=self.visit(kw.value))
                 for kw in node.keywords
             ]
-            return call_at(self.call_target, self.call_args(node), node, keywords)
+            args = [self.visit(arg) for arg in node.args]
+            return call_at(self.call_target, args, node, keywords)
         self.generic_visit(node)
         return node
 

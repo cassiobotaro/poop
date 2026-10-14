@@ -23,8 +23,19 @@ _rewritten = partial(rewritten, VarargsTransformer())
             "def f(**kw):\n    kw = _poop_dict_from_kwargs(kw)\n    return kw",
         ),
         ("def f(a, b):\n    return a", "def f(a, b):\n    return a"),
+        # After the docstring, where CPython reads it; the prologue used to
+        # push it to the second statement.
+        (
+            'def f(*args):\n    """doc"""\n    return args',
+            'def f(*args):\n    """doc"""\n    args = _poop_tuple_from(args)\n    return args',
+        ),
     ],
-    ids=["vararg_gets_tuple_prologue", "kwarg_gets_dict_prologue", "no_variadics"],
+    ids=[
+        "vararg_gets_tuple_prologue",
+        "kwarg_gets_dict_prologue",
+        "no_variadics",
+        "prologue_follows_the_docstring",
+    ],
 )
 def test_def_prologue(source: str, expected: str) -> None:
     assert _rewritten(source) == expected

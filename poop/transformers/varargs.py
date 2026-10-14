@@ -53,10 +53,9 @@ class _VarargsRewriter(ast.NodeTransformer):
             A().m(**d)      # TypeError: keywords must be strings
 
         — because `**` demands raw `str` keys and a POOP `Dict` carries `Str`.
-        `DictTransformer` had already met the constraint for `dict(**other)`
-        and worked around it there; this generalises the same fix to every
-        call. It has to run after that transformer, which the declaration
-        order in `_registry.py` guarantees.
+        One mechanism for every call, `dict(**other)` included: that call used
+        to be folded into a merge by `DictTransformer`, a second path that
+        diverged from CPython on a non-string key and on a duplicated keyword.
         """
         self.generic_visit(node)
         for kw in node.keywords:
@@ -66,7 +65,11 @@ class _VarargsRewriter(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         self.generic_visit(node)
-        node.body[:0] = [
+        # After the docstring, which `StrTransformer` leaves where CPython
+        # reads it; spliced at `body[:0]` the prologue pushed it to the second
+        # statement, where it is a bare string built on every call.
+        at = 1 if ast.get_docstring(node, clean=False) is not None else 0
+        node.body[at:at] = [
             _rebind(name, helper, node) for name, helper in _variadics(node.args)
         ]
         return node

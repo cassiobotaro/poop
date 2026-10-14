@@ -22,11 +22,8 @@ _rewritten = partial(rewritten, FrozenDictTransformer())
         ("frozendict()", "_poop_frozendict_from()"),
         ("frozendict(a=1)", "_poop_frozendict_from(a=1)"),
         ("x.frozendict()", "x.frozendict()"),
-        # The `**` fold is the dict's, frozen by one more call around it.
-        (
-            "frozendict(d, **e)",
-            "_poop_frozendict_from(_poop_dict_merge(_poop_dict_from(d), e))",
-        ),
+        # A `**` splat is any call's: `VarargsTransformer` unwraps its keys.
+        ("frozendict(d, **e)", "_poop_frozendict_from(d, **e)"),
         # The literal is a dict's, and stays one here.
         ("{'a': 1}", "{'a': 1}"),
     ],

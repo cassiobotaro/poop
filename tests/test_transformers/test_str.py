@@ -30,6 +30,23 @@ _rewritten = partial(rewritten, StrTransformer())
         ),
         ('str(b"x", "utf-8")', "_poop_str_from(b'x', _poop_str('utf-8'))"),
         ("x.str()", "x.str()"),
+        # A docstring is left as the raw constant CPython reads as one; wrapped
+        # it was an expression statement evaluated on every call.
+        (
+            'def m(self):\n    """A method."""\n    return "x"',
+            'def m(self):\n    """A method."""\n    return _poop_str(\'x\')',
+        ),
+        (
+            'class A:\n    """A class."""\n\n    def m(self):\n        return "x"',
+            'class A:\n    """A class."""\n\n    def m(self):\n        return _poop_str(\'x\')',
+        ),
+        # Never the module's: at the REPL a lone string is an expression to
+        # evaluate, and `:methods "abc"` asks what the *value* answers.
+        ('"""abc"""', "_poop_str('abc')"),
+        (
+            'def m(self):\n    x = 1\n    "not a docstring"',
+            "def m(self):\n    x = 1\n    _poop_str('not a docstring')",
+        ),
     ],
     ids=[
         "literal",
@@ -38,6 +55,10 @@ _rewritten = partial(rewritten, StrTransformer())
         "call_with_keyword_reaches_the_converter",
         "call_with_two_positional_args_reaches_the_converter",
         "method_named_str",
+        "method_docstring_stays",
+        "class_docstring_stays",
+        "a_module_first_string_is_wrapped",
+        "a_later_bare_string_is_wrapped",
     ],
 )
 def test_str_rewrite(source: str, expected: str) -> None:

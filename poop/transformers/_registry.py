@@ -50,8 +50,8 @@ if TYPE_CHECKING:
     from poop.transformers.base import BaseTransformer, Transformer
 
 # Declaration order is load-bearing: every transformer runs on the tree
-# the previous ones already rewrote (e.g. SliceTransformer relies on
-# NoneTransformer having run). This single list drives both the pipeline
+# the previous ones already rewrote (e.g. FrozenDictTransformer relies on
+# DictTransformer having run). This single list drives both the pipeline
 # order and the binding merge below, so a new transformer can never be
 # wired into one and forgotten in the other.
 _TRANSFORMER_CLASSES: list[type[BaseTransformer]] = [

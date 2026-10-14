@@ -1,4 +1,3 @@
-import ast
 from collections.abc import Iterable
 from itertools import batched, chain, groupby
 from typing import TYPE_CHECKING, cast
@@ -17,6 +16,8 @@ from poop.types.string import Str
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
+    import ast
+
     from poop.types.object import Object
 
 
@@ -42,11 +43,11 @@ def _poop_kwargs_from(mapping: object) -> object:
     """The inverse of `_poop_dict_from_kwargs`, for a `f(**d)` call site.
 
     CPython's `**` demands raw `str` keys, and a POOP `Dict` carries `Str`
-    ones — the constraint the `dict(**other)` branch below already works
-    around. Every other splat position was covered (`f(*xs)` by `Tuple` being
+    ones. Every other splat position was covered (`f(*xs)` by `Tuple` being
     iterable, `def m(**kw)` by the varargs prologue, `{**a, **b}` by the merge
     helper); this was the one left, and it failed in Python's words about a
-    POOP object: `TypeError: keywords must be strings`.
+    POOP object: `TypeError: keywords must be strings`. `dict(**other)` goes
+    through here too, as any call does.
 
     Keys unwrap through the faithful idiom: a non-`Str` key reaches CPython
     raw, so `f(**{1: 2})` still answers `keywords must be strings` — true, and
@@ -128,45 +129,14 @@ def _poop_dict_from(*args: object, **kwargs: Object) -> Dict:
     return Dict._wrapping(_entries(args[0] if args else None, "dict", kwargs))
 
 
+def _pairs_call(flat: list[ast.expr], ref: ast.AST) -> ast.expr:
+    return call_at("_poop_dict_from_pairs", flat, ref)
+
+
 class _DictRewriter(BuiltinRewriter):
     builtin = "dict"
     call_target = "_poop_dict_from"
     name_target = "_poop_dict_cls"
-
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        # A `**x` splat (kw.arg is None) cannot reach the bare `_poop_dict`
-        # class: Python's `**` unpacking demands raw `str` keys, but a POOP
-        # Dict carries `Str` keys, so `_poop_dict(**other)` raises
-        # "keywords must be strings". Fold the call into a `_poop_dict_merge`
-        # instead — the same machinery a `{**a, 'k': v}` display uses — so
-        # `dict(other, x=1, **more)` merges left to right like CPython.
-        if (
-            isinstance(node.func, ast.Name)
-            and self.is_builtin(node.func.id)
-            and len(node.args) <= 1
-            and any(kw.arg is None for kw in node.keywords)
-        ):
-            # A positional arg may be a mapping or an iterable of pairs;
-            # normalise it through `_poop_dict_from` so `_poop_dict_merge`
-            # always sees a Dict part.
-            parts: list[ast.expr] = [
-                call_at("_poop_dict_from", [self.visit(arg)], arg) for arg in node.args
-            ]
-            # A named keyword is a plain pair; `**x` (kw.arg is None) is a
-            # splat. The StrTransformer has already run, so wrap the keyword
-            # name in `_poop_str` ourselves to give the merged Dict a `Str`
-            # key (matching `_poop_dict_from`'s kwargs handling).
-            entries: list[tuple[ast.expr | None, ast.expr]] = [
-                (None, self.visit(kw.value))
-                if kw.arg is None
-                else (
-                    call_at("_poop_str", [ast.Constant(value=kw.arg)], kw.value),
-                    self.visit(kw.value),
-                )
-                for kw in node.keywords
-            ]
-            return self._merge_call([*parts, *self._fold_parts(entries, node)], node)
-        return super().visit_Call(node)
 
     def _fold_parts(
         self, entries: Iterable[tuple[ast.expr | None, ast.expr]], ref: ast.AST
@@ -175,8 +145,13 @@ class _DictRewriter(BuiltinRewriter):
 
         A `None` key marks a `**x` splat, which stays `x` whole; each run of
         plain pairs between splats becomes one `_poop_dict_from_pairs(...)`.
-        Shared by the `dict(a, **b)` call path and the `{**a, 'k': v}` display
-        path so both fold identically.
+
+        The display's alone. A `dict(a, k=v, **b)` call used to be folded
+        here too, from before every `**x` at a call site was unwrapped by
+        `VarargsTransformer`; with that in place the fold was a second
+        mechanism for one construct, and one that diverged from CPython —
+        `dict(**{1: 2})` passed, and `dict(a, x=1, **{"x": 2})` answered
+        `x: 2` where CPython refuses the duplicate.
         """
         parts: list[ast.expr] = []
         for is_splat, run in groupby(entries, key=lambda entry: entry[0] is None):
@@ -184,16 +159,8 @@ class _DictRewriter(BuiltinRewriter):
                 parts.extend(value for _, value in run)
             else:
                 pairs = cast("Iterable[tuple[ast.expr, ast.expr]]", run)
-                parts.append(self._pairs_call(list(chain.from_iterable(pairs)), ref))
+                parts.append(_pairs_call(list(chain.from_iterable(pairs)), ref))
         return parts
-
-    @staticmethod
-    def _merge_call(parts: list[ast.expr], ref: ast.AST) -> ast.expr:
-        return call_at("_poop_dict_merge", parts, ref)
-
-    @staticmethod
-    def _pairs_call(flat: list[ast.expr], ref: ast.AST) -> ast.expr:
-        return call_at("_poop_dict_from_pairs", flat, ref)
 
     def visit_Dict(self, node: ast.Dict) -> ast.AST:
         self.generic_visit(node)
@@ -201,11 +168,11 @@ class _DictRewriter(BuiltinRewriter):
         if all(k is not None for k in node.keys):
             # No splat: one `_poop_dict_from_pairs`, without a merge around it.
             pairs = cast("list[tuple[ast.expr, ast.expr]]", entries)
-            return self._pairs_call(list(chain.from_iterable(pairs)), node)
+            return _pairs_call(list(chain.from_iterable(pairs)), node)
         # A `**x` entry (key is None) makes this a merge: each run of plain
         # pairs becomes a _poop_dict_from_pairs(...), each **x stays as x,
         # and _poop_dict_merge folds them left to right.
-        return self._merge_call(self._fold_parts(entries, node), node)
+        return call_at("_poop_dict_merge", self._fold_parts(entries, node), node)
 
 
 class DictTransformer(BaseTransformer):

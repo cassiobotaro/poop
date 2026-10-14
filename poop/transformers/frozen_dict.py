@@ -1,14 +1,12 @@
 from typing import TYPE_CHECKING
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import BaseTransformer, call_at
-from poop.transformers.dict import _DictRewriter, _entries
+from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.transformers.dict import _entries
 from poop.types._alias import builtin_alias
 from poop.types.frozen_dict import FrozenDict
 
 if TYPE_CHECKING:
-    import ast
-
     from poop.types.object import Object
 
 
@@ -31,28 +29,12 @@ def _poop_frozendict_from(*args: object, **kwargs: Object) -> FrozenDict:
     return FrozenDict._wrapping(_entries(arg, "frozendict", kwargs))
 
 
-class _FrozenDictRewriter(_DictRewriter):
-    """`_DictRewriter`'s call rewrite, answering a frozen dict.
-
-    The `**x` fold is inherited whole: `frozendict(a, **b)` merges through
-    `_poop_dict_merge` exactly as `dict(a, **b)` does, and the merged `Dict`
-    is frozen by one more call around it. The literal is not this rewriter's
-    — `{...}` is a dict — so `visit_Dict` is the base class's pass-through.
-    """
+class _FrozenDictRewriter(BuiltinRewriter):
+    """`frozendict(...)` to its converter; the literal is a dict's, not this one's."""
 
     builtin = "frozendict"
     call_target = "_poop_frozendict_from"
     name_target = "_poop_frozendict_cls"
-
-    def visit_Dict(self, node: ast.Dict) -> ast.AST:
-        self.generic_visit(node)
-        return node
-
-    @staticmethod
-    def _merge_call(parts: list[ast.expr], ref: ast.AST) -> ast.expr:
-        return call_at(
-            "_poop_frozendict_from", [call_at("_poop_dict_merge", parts, ref)], ref
-        )
 
 
 class FrozenDictTransformer(BaseTransformer):

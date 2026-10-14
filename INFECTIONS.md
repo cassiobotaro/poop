@@ -1158,6 +1158,8 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 
 `obj.slice(start, stop, step=None)` is also accepted directly on every sequence type. Both forms are equivalent at runtime.
 
+CPython's one-argument rule — `slice(stop)` is `slice(None, stop, None)` — is applied by the converter, on the values the call received, not by the rewriter on the expressions written: a starred argument is one expression carrying any number of values, so `slice(*xs)` with `xs = (1, 5)` used to be folded into `slice(None, 1, 5)`. And `obj.slice(s, stop)` — a `Slice` followed by a bound — is refused (`#slice takes a slice or bounds, not both — write .slice(slice(1, 3)) or .slice(1, 3)`) rather than answering the slice and dropping the bound in silence.
+
 `Slice` is a first-class immutable POOP type (`poop/types/slice.py`) — hashable, comparable with `==`/`!=`, and reusable across collections.
 
 | Method | Returns | Notes |
@@ -1232,7 +1234,10 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 | AST node | Replacement |
 |---|---|
 | `ast.Constant(value=str)` | `_poop_str(s)` |
+| the docstring of a class or function | left as it is — CPython stores it as `__doc__`; wrapped, it was an expression statement built on every call |
 | `ast.Call` with `str(...)` | `_poop_str_from(...)`, whatever the arity |
+
+A module's first string is *not* a docstring here: the REPL runs each input as a module, so `"abc"` at the prompt is a value to echo and `:methods "abc"` asks what that value answers. `VarargsTransformer` inserts its `*args`/`**kwargs` prologue after the docstring for the same reason the docstring is kept.
 
 **The superclass ladder steps over the alias.** An alias's one base is the wrapper it stands for, and `cloak` gives both the builtin's name — so climbing from a bare builtin name met a rung that is not there: `int.superclass()` answered a class calling itself `int`, `int.superclass().is_identical(int)` denied it, and `object` was two steps up instead of one. `(5).class_().superclass()` answered `object` correctly all along, so the phantom appeared only under the name a program writes. `PoopMeta.superclass` skips a base that `unalias` maps to the receiver — the same "the pair is one class" decision `__eq__` makes below. A program's own `class Stack(list)` is unaffected: its superclass *is* `list`, the name it wrote.
 
@@ -1294,6 +1299,9 @@ The `Name` row is not redundant: `...` and `Ellipsis` are two spellings of the s
 |---|---|
 | `ast.Dict` (no unpacking) | `_poop_dict_from_pairs(k1, v1, k2, v2, …)` |
 | `ast.Call` with `dict(...)` | `_poop_dict_from(x)` — `x` must be `Dict` or iterable of 2-element `Tuple`/`List` pairs |
+| `ast.Dict` with `**x` | `_poop_dict_merge(…)` — each run of pairs a `_poop_dict_from_pairs`, each `**x` itself |
+
+`dict(a, k=v, **b)` is not folded: a `**` splat at a call site is unwrapped by `VarargsTransformer` for every call alike, so the call answers what any call answers — `keywords must be strings` for `dict(**{1: 2})`, `dict() got multiple values for keyword argument 'x'` for `dict(a, x=1, **{"x": 2})` — where the parse-time fold it used to get accepted both.
 
 ### Complex — `poop/transformers/complex.py`
 

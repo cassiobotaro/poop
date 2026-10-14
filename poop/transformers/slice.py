@@ -1,4 +1,3 @@
-import ast
 from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
@@ -26,6 +25,14 @@ def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
         hint="write slice(stop) or slice(start, stop, step)",
         empty=False,
     )
+    # CPython's one-argument `slice(stop)` means `slice(None, stop, None)`: the
+    # lone argument is the stop, not the start. Counted here, on the values the
+    # call received, and not on the expressions written: the rewriter used to
+    # insert the `None` when it saw one argument node, and a starred argument
+    # is one node carrying any number of values, so `slice(*xs)` with `xs =
+    # (1, 5)` was folded into `slice(None, 1, 5)`.
+    if len(args) == 1:
+        args = (None, *args)
     return Slice(*cast("tuple[Index | NoneClass | None, ...]", args))
 
 
@@ -33,18 +40,6 @@ class _SliceRewriter(BuiltinRewriter):
     builtin = "slice"
     call_target = "_poop_slice_from"
     name_target = "_poop_slice"
-
-    def call_args(self, node: ast.Call) -> list[ast.expr]:
-        args = super().call_args(node)
-        # CPython's one-argument `slice(stop)` means `slice(None, stop, None)` —
-        # the lone argument is the stop, not the start. Slice(...) binds
-        # positionals as (start, stop, step), so a bare `slice(x)` would wrongly
-        # make x the start; inject the implicit None start to mirror the builtin
-        # (NoneTransformer has already run, so a raw `None` constant reaches
-        # Slice, whose _coerce maps it to None).
-        if len(args) == 1 and not node.keywords:
-            args.insert(0, ast.Constant(value=None))
-        return args
 
 
 class SliceTransformer(BaseTransformer):
