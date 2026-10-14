@@ -13,7 +13,6 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
-    from types import MethodType
 
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
@@ -306,11 +305,12 @@ class _MethodBlock[**P, R](Block[P, R], name="function"):
     # lambdas with the same body are different blocks in Smalltalk as in
     # Python — so this lives here rather than on the base.
     def _identity(self) -> tuple[object, object]:
-        # `_fn` is declared a `Callable` on the base, and is always a
-        # `MethodType` here: `Object.__getattribute__` builds a `_MethodBlock`
-        # only for `type(value) is MethodType`.
-        method = cast("MethodType", self._fn)
-        return (method.__self__, method.__func__)
+        # A bound method is its receiver and its function; a `staticmethod`'s
+        # function, which the `message` descriptor also wraps here, is its own
+        # identity — so two reads of `str.maketrans` are equal and
+        # `str.maketrans == bytes.maketrans` is not.
+        fn = self._fn
+        return (getattr(fn, "__self__", None), getattr(fn, "__func__", fn))
 
     def __eq__(self, other: object) -> Boolean:
         if not isinstance(other, _MethodBlock):

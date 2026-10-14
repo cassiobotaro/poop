@@ -445,3 +445,68 @@ def test_no_interpreter_name_reaches_the_program(source: str) -> None:
     assert "TypeError" in message
     for name in _INTERPRETER_NAMES:
         assert name not in message
+
+
+# --- method-blocks: a static or class method read off a wrapper is a block
+# from either side. Each scenario in openspec/specs/method-blocks/spec.md is
+# pinned here, through the interpreter, since the class-side read goes
+# through `PoopMeta.__getattribute__`.
+
+
+def _program_output(source: str, capsys: pytest.CaptureFixture[str]) -> str:
+    Interpreter().run_source(source + "\n")
+    return capsys.readouterr().out.rstrip("\n")
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "str.maketrans.print()",
+        '"".maketrans.print()',
+        "int.from_bytes.print()",
+        "(5).from_bytes.print()",
+    ],
+)
+def test_a_static_or_class_method_reads_as_a_block_from_either_side(
+    source: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # `get_attr` of the same name answered `<block>` while the written read
+    # answered CPython's `'function' object has no attribute 'print'`.
+    assert _program_output(source, capsys) == "<block>"
+
+
+def test_a_static_method_read_off_a_byte_class_is_callable(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert _program_output("bytes.maketrans.callable().print()", capsys) == "True"
+
+
+def test_two_reads_of_a_static_or_class_method_are_equal(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert _program_output("(str.maketrans == str.maketrans).print()", capsys) == "True"
+    assert (
+        _program_output("(int.from_bytes == int.from_bytes).print()", capsys) == "True"
+    )
+    assert (
+        _program_output("(str.maketrans == bytes.maketrans).print()", capsys) == "False"
+    )
+    assert hash(Str.maketrans) == hash(Str.maketrans)
+
+
+def test_the_block_calls_as_the_method_did(capsys: pytest.CaptureFixture[str]) -> None:
+    assert _program_output('str.maketrans("a", "b").print()', capsys) == "{97: 98}"
+    assert _program_output('int.from_bytes(b"\\x05").print()', capsys) == "5"
+
+
+def test_a_wrong_call_keeps_the_methods_arity_sentence() -> None:
+    assert _program_failure("str.maketrans()") == (
+        "TypeError: str.maketrans() missing 1 required positional argument: 'x' (line 1)"
+    )
+
+
+def test_an_instance_method_read_off_the_class_is_still_refused() -> None:
+    assert _program_failure("str.upper()") == (
+        "AttributeError: str does not understand #upper — "
+        "#upper asks an instance; send it to one (line 1)"
+    )

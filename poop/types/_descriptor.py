@@ -9,9 +9,13 @@ a non-data descriptor installed where the class is built (`PoopMeta.__new__`,
 and `_Mixin.__init_subclass__` for the shared mixins, which are not `PoopMeta`
 classes). A `_`-name or a dunder is never a message and now resolves at C
 speed; a public read binds through the original entry and wraps the result
-in a `_MethodBlock` exactly when the hook would have — when what came back is
-a `MethodType`, so a `staticmethod`, a `property` and a plain value stay
-native, as before.
+in a `_MethodBlock` whenever it is a method: a bound method (an instance
+method off an instance, a `classmethod` off either side) or a `staticmethod`'s
+function off either side. The one read left raw is a plain instance method
+off the class, which `PoopMeta.__getattribute__` refuses by testing for a
+`FunctionType` — the hook left `staticmethod`s raw too, so `str.maketrans.print()`
+answered CPython's `'function' object has no attribute 'print'` while
+`str.get_attr("maketrans")` answered `<block>`.
 
 Non-data on purpose, like `Block.__get__`: consulted for a class attribute,
 skipped for a name found in an instance's `__dict__`, so a block a user class
@@ -40,13 +44,16 @@ type _Entry = FunctionType | classmethod[Any, Any, Any] | staticmethod[Any, Any]
 # circular: block imports Object, which imports meta, which imports this.
 # `block.py` installs `_MethodBlock` here the moment it exists; the getter is
 # the fallback for a public method read before `block` has loaded.
-_method_block: Callable[[], Callable[[MethodType], object]] = late(
+# A bound method, or a `staticmethod`'s plain function: both are methods a
+# program reads off an object, and both wrap.
+type _Method = MethodType | FunctionType
+_method_block: Callable[[], Callable[[_Method], object]] = late(
     "poop.types.block", "_MethodBlock"
 )
-_METHOD_BLOCK: Callable[[MethodType], object] | None = None
+_METHOD_BLOCK: Callable[[_Method], object] | None = None
 
 
-def install_method_block(wrap: Callable[[MethodType], object]) -> None:
+def install_method_block(wrap: Callable[[_Method], object]) -> None:
     """Called once by `poop/types/block.py`; see `_METHOD_BLOCK`."""
     global _METHOD_BLOCK  # noqa: PLW0603 — the one write, at import time
     _METHOD_BLOCK = wrap
@@ -63,9 +70,11 @@ class message:  # noqa: N801 — read as a word, like `class_side`
 
     def __get__(self, instance: object, owner: type | None = None) -> Any:  # noqa: ANN401 — a bound method of any shape
         bound = self._entry.__get__(instance, owner)
-        if instance is not None and type(bound) is MethodType:
+        if type(bound) is MethodType or isinstance(self._entry, staticmethod):
             wrap = _METHOD_BLOCK
-            return (wrap if wrap is not None else _method_block())(bound)
+            return (wrap if wrap is not None else _method_block())(
+                cast("_Method", bound)
+            )
         return bound
 
 

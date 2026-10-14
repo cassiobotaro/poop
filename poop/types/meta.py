@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Never, Protocol, Self, overload
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
-from poop.types._descriptor import instance_only, messages_in
+from poop.types._descriptor import instance_only, message, messages_in
 from poop.types._late import late
 from poop.types._message import article
 from poop.types._selectors import explain, is_dunder, is_message, not_understood
@@ -261,7 +261,18 @@ def _reflected(cls: type, name: str) -> object:
     two read past it. Raises `AttributeError` when there is nothing there, as
     `getattr` does, but never consults `__getattr__` — the callers decide what
     a missing name means.
+
+    Past the `message` descriptor too: a reflective read answers what the
+    class body wrote, bound to the class (a classmethod's bound method, a
+    staticmethod's function), and `get_attr` wraps that in a `Block` with
+    POOP's arity wording, which `block-arity` specs. The descriptor's own
+    `_MethodBlock` is for the *written* read, `int.from_bytes`, and keeps the
+    method's cloaked sentence.
     """
+    for klass in type.__getattribute__(cls, "__mro__"):
+        entry = vars(klass).get(name)
+        if isinstance(entry, message):
+            return entry._entry.__get__(None, cls)
     return type.__getattribute__(cls, name)
 
 

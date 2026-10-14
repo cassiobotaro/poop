@@ -8,8 +8,6 @@ the second to `poop_message`. This pins that neither hook comes back and that
 every read answers what it answered.
 """
 
-from types import FunctionType
-
 import pytest
 
 from poop.types._descriptor import message
@@ -48,10 +46,7 @@ def test_every_public_method_read_off_a_value_is_a_block() -> None:
             if not isinstance(entry, message):
                 continue
             value = getattr(receiver, name)
-            if isinstance(entry._entry, staticmethod):
-                assert isinstance(value, FunctionType), name
-            else:
-                assert isinstance(value, _MethodBlock), (type(receiver).__name__, name)
+            assert isinstance(value, _MethodBlock), (type(receiver).__name__, name)
 
 
 def test_a_classmethod_read_off_an_instance_still_wraps() -> None:
@@ -59,8 +54,12 @@ def test_a_classmethod_read_off_an_instance_still_wraps() -> None:
     assert repr(Int(5).from_bytes) == "<block>"
 
 
-def test_a_staticmethod_read_off_an_instance_stays_native_as_before() -> None:
-    assert isinstance(Str("").maketrans, FunctionType)
+def test_a_staticmethod_read_off_an_instance_is_a_block_too() -> None:
+    # Parity with the old hook left a `staticmethod` as CPython's raw function
+    # (`"".maketrans.print()` leaked `'function' object has no attribute
+    # 'print'`); `method-blocks` closed that hole from both sides.
+    assert isinstance(Str("").maketrans, _MethodBlock)
+    assert isinstance(Str.maketrans, _MethodBlock)
 
 
 def test_a_user_class_method_is_a_block_and_super_still_binds() -> None:
