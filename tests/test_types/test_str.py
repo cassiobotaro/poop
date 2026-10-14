@@ -2,6 +2,8 @@ from typing import Any
 
 import pytest
 
+from poop import Interpreter
+from poop.errors import PoopError
 from poop.transformers.float import _poop_float_from
 from poop.transformers.int import _poop_int_from
 from poop.types.boolean import false, true
@@ -9,8 +11,10 @@ from poop.types.bytes import Bytes
 from poop.types.dict import Dict
 from poop.types.exceptions import MIRRORS
 from poop.types.float import Float
+from poop.types.frozen_dict import FrozenDict
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.mapping_proxy import MappingProxy
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -1043,3 +1047,149 @@ def test_replace_names_its_count() -> None:
         Str("abc").replace(Str("a"), Str("b"), wrong)
     assert Str("aa").replace(Str("a"), Str("b"), none) == Str("bb")
     assert Str("aa").replace(Str("a"), Str("b"), Int(1)) == Str("ba")
+
+
+# --- format_map, maketrans and translate: the last three names a mechanical
+# diff of `str`'s public methods against `Str` found missing. Each scenario in
+# openspec/specs/str-type/spec.md is pinned here.
+
+
+def _run(source: str, capsys: pytest.CaptureFixture[str]) -> str:
+    Interpreter().run_source(source + "\n")
+    return capsys.readouterr().out.rstrip("\n")
+
+
+def _failure(source: str) -> str:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    return str(info.value)
+
+
+def test_format_map_fills_named_fields_from_a_mapping(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert _run('"{a}-{b}".format_map({"a": 1, "b": 2}).print()', capsys) == "1-2"
+    assert _run('"{x:.2f}".format_map({"x": 1.5}).print()', capsys) == "1.50"
+
+
+def test_format_map_takes_every_poop_mapping() -> None:
+    table = Dict()
+    table.at_put(Str("a"), Int(1))
+    assert Str("{a}").format_map(table) == Str("1")
+    assert Str("{a}").format_map(FrozenDict._wrapping({Str("a"): Int(1)})) == Str("1")
+    assert Str("{a}").format_map(MappingProxy(table)) == Str("1")
+
+
+def test_format_map_keeps_the_field_access_ban() -> None:
+    # The same refusal `format` gives for `"{0.__class__}".format(1)`.
+    with pytest.raises(ValueError, match="is forbidden — a format field") as info:
+        Str("{a.__class__}").format_map(Dict())
+    with pytest.raises(ValueError) as twin:
+        Str("{0.__class__}").format(Int(1))
+    assert str(info.value).replace("{a.", "{0.") == str(twin.value)
+
+
+def test_format_map_words_a_missing_name_as_format_does() -> None:
+    assert _failure('"{a}".format_map({})').startswith(
+        "KeyError: the template asks for 'a', which no argument named"
+    )
+    assert _failure('"{a}".format_map({"b": 1, "c": 2})') == (
+        "KeyError: the template asks for 'a', which no argument named: b, c (line 1)"
+    )
+
+
+@pytest.mark.parametrize(
+    ("source", "got"),
+    [('"{a}".format_map(5)', "an int"), ('"{a}".format_map([1])', "a list")],
+)
+def test_format_map_refuses_a_non_mapping_in_poops_words(source: str, got: str) -> None:
+    assert (
+        _failure(source)
+        == f"TypeError: #format_map expects a mapping, got {got} (line 1)"
+    )
+
+
+def test_format_map_keeps_cpythons_sentence_for_a_positional_field() -> None:
+    # `Format string contains positional fields` names nothing POOP forbids.
+    assert _failure('"{0}".format_map({"a": 1})') == (
+        "ValueError: Format string contains positional fields (line 1)"
+    )
+
+
+def test_maketrans_maps_two_strings_position_by_position(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert _run('str.maketrans("abc", "xyz").print()', capsys) == (
+        "{97: 120, 98: 121, 99: 122}"
+    )
+
+
+def test_maketrans_third_string_deletes(capsys: pytest.CaptureFixture[str]) -> None:
+    assert _run('str.maketrans("a", "b", "c").print()', capsys) == "{97: 98, 99: None}"
+
+
+def test_maketrans_one_mapping_converts_character_keys(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert _run('str.maketrans({"a": "x", 98: None}).print()', capsys) == (
+        "{97: 'x', 98: None}"
+    )
+
+
+def test_maketrans_is_static_so_an_instance_answers_it_too() -> None:
+    # CPython's is a staticmethod: `"".maketrans("a", "b")` works there.
+    table = Str("").maketrans(Str("a"), Str("b"))
+    assert table.is_instance(Dict) == true
+    assert table.at(Int(97)) == Int(98)
+
+
+def test_maketrans_answers_poop_values() -> None:
+    table = Str.maketrans(Str("a"), Str("b"), Str("c"))
+    assert table.at(Int(99)) is none
+
+
+def test_maketrans_keeps_cpythons_value_refusals() -> None:
+    # Neither sentence names a construct POOP forbids.
+    assert _failure('str.maketrans("ab", "xyz")') == (
+        "ValueError: the first two maketrans arguments must have equal length (line 1)"
+    )
+    assert _failure('str.maketrans({"ab": "x"})') == (
+        "ValueError: string keys in translatetable must be of length 1 (line 1)"
+    )
+
+
+def test_maketrans_refuses_a_single_non_mapping_in_poops_words() -> None:
+    # CPython: `if you give only one argument to maketrans it must be a dict`,
+    # the message spelt as a call.
+    assert _failure("str.maketrans(5)") == (
+        "TypeError: #maketrans expects a mapping, got an int (line 1)"
+    )
+    assert _failure('str.maketrans("a", 5)') == (
+        "TypeError: #maketrans expects a str, got an int (line 1)"
+    )
+    assert _failure('str.maketrans("a", "b", 5)') == (
+        "TypeError: #maketrans expects a str, got an int (line 1)"
+    )
+
+
+def test_translate_reads_a_maketrans_table(capsys: pytest.CaptureFixture[str]) -> None:
+    assert _run('"abc".translate(str.maketrans("abc", "xyz")).print()', capsys) == "xyz"
+
+
+def test_translate_deletes_on_none_and_leaves_a_miss(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert _run('"a-b".translate({45: None}).print()', capsys) == "ab"
+    assert _run('"abc".translate({97: 120}).print()', capsys) == "xbc"
+
+
+def test_translate_refuses_a_non_table_in_poops_words() -> None:
+    assert _failure('"abc".translate(5)') == (
+        "TypeError: #translate expects a mapping or a sequence, got an int (line 1)"
+    )
+
+
+def test_translate_keeps_cpythons_sentence_for_a_mapped_value() -> None:
+    assert _failure('"abc".translate({97: 5.5})') == (
+        "TypeError: character mapping must return integer, None or str (line 1)"
+    )

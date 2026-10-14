@@ -15,8 +15,10 @@ from poop.types.bytes import Bytes
 from poop.types.complex import Complex
 from poop.types.dict import Dict
 from poop.types.float import Float
+from poop.types.frozen_dict import FrozenDict
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.mapping_proxy import MappingProxy
 from poop.types.none import none
 from poop.types.set import Set
 from poop.types.slice import Slice
@@ -227,3 +229,45 @@ def test_the_guarded_numbers_still_answer() -> None:
     assert Complex.from_number(true) == Complex(1 + 0j)
     assert Complex.from_number(Float(2.5)) == Complex(2.5 + 0j)
     assert Complex.from_number(Complex(1j)) == Complex(1j)
+
+
+# `a_mapping` and `translation_table`: `format_map`, the one-argument
+# `maketrans` and `Str.translate` read their argument by key, and CPython's
+# refusal for anything else is `'int' object is not subscriptable` — the
+# protocol `no_subscript` bans, about an argument the program never
+# subscripted.
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('"{a}".format_map(5)', "#format_map expects a mapping, got an int"),
+        ('"{a}".format_map([1])', "#format_map expects a mapping, got a list"),
+        ("str.maketrans(5)", "#maketrans expects a mapping, got an int"),
+        ('str.maketrans("ab")', "#maketrans expects a mapping, got a str"),
+        (
+            '"abc".translate(5)',
+            "#translate expects a mapping or a sequence, got an int",
+        ),
+        (
+            '"abc".translate(2.5)',
+            "#translate expects a mapping or a sequence, got a float",
+        ),
+    ],
+)
+def test_a_mapping_argument_names_its_message(source: str, expected: str) -> None:
+    assert _failure(source) == f"TypeError: {expected} (line 1)"
+
+
+def test_the_guarded_mappings_still_answer() -> None:
+    table = Dict()
+    table.at_put(Int(97), Int(120))
+    frozen = FrozenDict._wrapping({Int(97): Int(120)})
+    assert Str("abc").translate(table) == Str("xbc")
+    assert Str("abc").translate(frozen) == Str("xbc")
+    assert Str("abc").translate(MappingProxy(table)) == Str("xbc")
+    # A sequence is a table too: CPython reads positions as ordinals.
+    assert Str("abc").translate(List(*([Str("z")] * 100))) == Str("zzz")
+    assert Str("abc").translate(Tuple(*([Int(122)] * 100))) == Str("zzz")
+    assert Str("abc").translate(Str("z") * Int(100)) == Str("zzz")
+    assert Str("{a}").format_map(
+        MappingProxy(FrozenDict._wrapping({Str("a"): Int(1)}))
+    ) == Str("1")

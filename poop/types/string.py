@@ -1,7 +1,7 @@
 import builtins
 import re
 from string import Formatter as _Formatter
-from typing import TYPE_CHECKING, ClassVar, Never, overload
+from typing import TYPE_CHECKING, ClassVar, Never, cast, overload
 
 from poop.types import mirrors
 from poop.types._affix import affix_needle
@@ -10,10 +10,12 @@ from poop.types._argument import (
     a_bound,
     a_collection,
     a_fill,
+    a_mapping,
     a_needle,
     an_int,
     max_split,
     text_like,
+    translation_table,
 )
 from poop.types._at import at_index
 from poop.types._codec import encoded
@@ -35,13 +37,18 @@ from poop.types.str_iterator import StrIterator
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable, Collection, Iterator
 
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.bytes import Bytes
+    from poop.types.dict import Dict
+    from poop.types.frozen_dict import FrozenDict
+    from poop.types.mapping_proxy import MappingProxy
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
+
+    type PoopMapping = Dict | FrozenDict | MappingProxy
 
 
 # `Unknown format code 'd' for object of type 'str'`.
@@ -81,9 +88,15 @@ def _reject_field_access(template: str) -> None:
             _reject_field_access(spec)
 
 
-def _offered(named: dict[str, object]) -> str:
-    """`: a, b` — the names a template could have used, or nothing."""
-    return f": {', '.join(sorted(named))}" if named else " it"
+def _offered(named: Collection[object]) -> str:
+    """`: a, b` — the names a template could have used, or nothing.
+
+    The keys alone, so a `format_map` mapping passes as a `format` keyword
+    dict does. `str`, not `repr`, so a name reads as the template spells it;
+    the sort is over the spellings because such a mapping may carry keys that
+    are not strings.
+    """
+    return f": {', '.join(sorted(str(k) for k in named))}" if named else " it"
 
 
 def _template_refusal(exc: ValueError | TypeError) -> Exception:
@@ -323,11 +336,40 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
 
         positional = [to_python(a) for a in args]
         named = {k: to_python(v) for k, v in kwargs.items()}
+        return self._fill_template(
+            lambda: self._value.format(*positional, **named), len(positional), named
+        )
+
+    def format_map(self, mapping: PoopMapping) -> Str:
+        """`str.format_map`: the template filled from one mapping.
+
+        The message-shaped spelling of `format(**d)`, and the one that takes a
+        mapping whose keys are not all names. The same engine as `format`,
+        inside the same guard and rewordings; only the source of the named
+        values differs. A positional field (`{0}`) keeps CPython's `Format
+        string contains positional fields`, which names nothing POOP forbids.
+        """
+        named = a_mapping(mapping, "format_map")
+        return self._fill_template(lambda: self._value.format_map(named), 0, named)
+
+    def _fill_template(
+        self,
+        fill: Callable[[], str],
+        positional: int,
+        named: Collection[object],
+    ) -> Str:
+        """Run `fill`, the template engine, behind `format`'s guard and wording.
+
+        `format` and `format_map` share every failure a template can raise, so
+        the guard and the four rewordings are written once here. `positional`
+        is how many values the template could have indexed, `named` which
+        names it could have used — both only for the sentences.
+        """
         try:
             # Inside the guard: the unmatched-brace errors are raised by the
-            # template parser this runs, not by `format` below.
+            # template parser this runs, not by `fill` below.
             _reject_field_access(self._value)
-            return Str(self._value.format(*positional, **named))
+            return Str(fill())
         except KeyError as exc:
             # A bare repr with nothing to say a lookup failed — the shape
             # `_at.py` was written to close for a missing dict key.
@@ -340,8 +382,8 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
             # describes Python's calling convention, for a message whose
             # arguments POOP does not describe that way.
             raise mirrors.IndexError(
-                f"the template asks for more than the {len(positional)} "
-                f"{'value' if len(positional) == 1 else 'values'} it was given"
+                f"the template asks for more than the {positional} "
+                f"{'value' if positional == 1 else 'values'} it was given"
             ) from None
         except ValueError as exc:
             raise _template_refusal(exc) from None
@@ -354,6 +396,56 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
             # `Object.format` has composed POOP's sentence for this since it
             # was written; both now compose it from `no_format_spec`.
             raise _template_refusal(exc) from None
+
+    @staticmethod
+    def maketrans(
+        x: PoopMapping | Str,
+        y: Str | NoneClass | None = None,
+        z: Str | NoneClass | None = None,
+    ) -> Dict:
+        """`str.maketrans`: the table `translate` reads, as a `Dict`.
+
+        Static, as CPython's is, so `str.maketrans(...)` and `"".maketrans(...)`
+        both answer. One argument is a mapping of characters or ordinals;
+        two or three are strings mapped position by position, the third to
+        `none`. The value-level refusals (`the first two maketrans arguments
+        must have equal length`, `string keys in translatetable must be of
+        length 1`) are CPython's: neither names a construct POOP forbids. The
+        type-level one does (`if you give only one argument to maketrans it
+        must be a dict`), and `a_mapping` words it.
+        """
+        # circular: _bridge imports string
+        from poop.types._bridge import to_poop  # noqa: PLC0415
+
+        if _is_absent(y):
+            # The keys are CPython's to check (`keys in translate table must be
+            # strings or integers`); the cast says what passes that check.
+            table = str.maketrans(
+                cast("dict[str | int, object]", a_mapping(x, "maketrans"))
+            )
+        else:
+            frm = text_like(x, "maketrans", "a str", (str,))
+            to = text_like(y, "maketrans", "a str", (str,))
+            if _is_absent(z):
+                table = str.maketrans(frm, to)
+            else:
+                table = str.maketrans(
+                    frm, to, text_like(z, "maketrans", "a str", (str,))
+                )
+        # `to_poop`'s `dict` overload is declared over `dict[object, object]`,
+        # which a `dict[int, int]` is not (keys are invariant); the cast
+        # restates what the registration answers for any raw dict.
+        return cast("Dict", to_poop(table))
+
+    def translate(self, table: PoopMapping | List | Tuple | Str) -> Str:
+        """`str.translate`: each character looked up by ordinal in `table`.
+
+        A hit of `none` deletes the character, a miss leaves it. The table
+        crosses to Python in `translation_table`, since a `Dict` holds `Int`
+        keys and CPython reads raw ordinals. A mapped value of the wrong kind
+        keeps CPython's `character mapping must return integer, None or str`.
+        """
+        return Str(self._value.translate(translation_table(table, "translate")))
 
     def _search(
         self,

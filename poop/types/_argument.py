@@ -11,8 +11,8 @@ written out once per receiver.
 """
 
 import operator
-from collections.abc import Callable, Iterable, Sized
-from typing import TYPE_CHECKING, Literal, SupportsIndex, overload
+from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
+from typing import TYPE_CHECKING, Literal, SupportsIndex, cast, overload
 
 from poop.types import mirrors
 from poop.types._message import article
@@ -402,6 +402,74 @@ def a_number(value: object, selector: str, *, real: bool) -> int | float | compl
         return raw
     raise mirrors.TypeError(
         f"#{selector} expects a {'real ' if real else ''}number, "
+        f"got {article(type(value).__name__)}"
+    )
+
+
+def a_mapping(value: object, selector: str) -> dict[object, object]:
+    """The raw `dict` behind a POOP mapping, or POOP's refusal.
+
+    `format_map` and the one-argument `maketrans` take a mapping, and CPython
+    refuses anything else in two sentences that both name what POOP has no
+    word for: `'int' object is not subscriptable` is the protocol `no_subscript`
+    bans, and `if you give only one argument to maketrans it must be a dict` is
+    the message spelt as a call. A `Dict`, a `FrozenDict` or a `MappingProxy`
+    is a mapping; nothing else can be, since a POOP program cannot define
+    `__getitem__`.
+
+    Answers the crossing as well as the guard: a `Dict` holds `Int` keys, and
+    `Int(97) != 97` by the numeric tower's own rule, so CPython would look every
+    ordinal up and miss. Each key and value crosses through `to_python`, as
+    `_bridge.py` does for a whole `Dict`.
+    """
+    # circular: _bridge, _mapping and mapping_proxy all import _argument
+    from poop.types._bridge import to_python  # noqa: PLC0415
+    from poop.types._mapping import _MappingMixin  # noqa: PLC0415
+    from poop.types.mapping_proxy import MappingProxy  # noqa: PLC0415
+
+    mapping = value._dict if isinstance(value, MappingProxy) else value
+    if isinstance(mapping, _MappingMixin):
+        return {to_python(k): to_python(v) for k, v in mapping._data.items()}
+    raise mirrors.TypeError(
+        f"#{selector} expects a mapping, got {article(type(value).__name__)}"
+    )
+
+
+# What `str.translate` reads: a lookup by ordinal answering a character, an
+# ordinal or `None`. The casts below say so for the values, which CPython
+# checks itself (`character mapping must return integer, None or str`).
+type TranslationTable = Mapping[int, str | int | None] | Sequence[str | int | None]
+
+
+def translation_table(value: object, selector: str) -> TranslationTable:
+    """A `Str.translate` table crossed to Python, or POOP's refusal.
+
+    CPython looks each character's ordinal up in whatever `table` is, so a
+    mapping and a sequence (`"abc".translate(["x", "y"])` reads positions) both
+    serve, and anything else answered `'int' object is not subscriptable` —
+    the protocol `no_subscript` bans, about an argument the program never
+    subscripted. A `Str` is a sequence too, and crosses as its own text.
+
+    Elements cross like `a_mapping`'s values: a `List` of `Int` would otherwise
+    reach `str.translate` as wrappers, which it refuses as neither integer,
+    `None` nor `str`.
+    """
+    # circular: _bridge, _mapping, mapping_proxy and string all import _argument
+    from poop.types._bridge import to_python  # noqa: PLC0415
+    from poop.types._mapping import _MappingMixin  # noqa: PLC0415
+    from poop.types.list import List  # noqa: PLC0415
+    from poop.types.mapping_proxy import MappingProxy  # noqa: PLC0415
+    from poop.types.string import Str  # noqa: PLC0415
+    from poop.types.tuple import Tuple  # noqa: PLC0415
+
+    if isinstance(value, (_MappingMixin, MappingProxy)):
+        return cast("dict[int, str | int | None]", a_mapping(value, selector))
+    if isinstance(value, Str):
+        return value._value
+    if isinstance(value, (List, Tuple)):
+        return cast("list[str | int | None]", [to_python(item) for item in value])
+    raise mirrors.TypeError(
+        f"#{selector} expects a mapping or a sequence, "
         f"got {article(type(value).__name__)}"
     )
 
