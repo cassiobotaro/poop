@@ -31,32 +31,22 @@ it — and is what binding goes through.
 from types import FunctionType, MethodType
 from typing import TYPE_CHECKING, Any, cast
 
-from poop.types._late import late
 from poop.types._selectors import is_message
 
+# circular: block imports Object, which imports meta, which imports this.
+# Resolved on the first message a program sends, a plain global after that.
+lazy from poop.types.block import _MethodBlock
+
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Mapping
 
 # What a class body may write for a public method: the function, or the
 # `classmethod`/`staticmethod` around one. All three bind through `__get__`.
 type _Entry = FunctionType | classmethod[Any, Any, Any] | staticmethod[Any, Any]
 
-# circular: block imports Object, which imports meta, which imports this.
-# `block.py` installs `_MethodBlock` here the moment it exists; the getter is
-# the fallback for a public method read before `block` has loaded.
 # A bound method, or a `staticmethod`'s plain function: both are methods a
 # program reads off an object, and both wrap.
 type _Method = MethodType | FunctionType
-_method_block: Callable[[], Callable[[_Method], object]] = late(
-    "poop.types.block", "_MethodBlock"
-)
-_METHOD_BLOCK: Callable[[_Method], object] | None = None
-
-
-def install_method_block(wrap: Callable[[_Method], object]) -> None:
-    """Called once by `poop/types/block.py`; see `_METHOD_BLOCK`."""
-    global _METHOD_BLOCK  # noqa: PLW0603 — the one write, at import time
-    _METHOD_BLOCK = wrap
 
 
 class message:  # noqa: N801 — read as a word, like `class_side`
@@ -71,10 +61,7 @@ class message:  # noqa: N801 — read as a word, like `class_side`
     def __get__(self, instance: object, owner: type | None = None) -> Any:  # noqa: ANN401 — a bound method of any shape
         bound = self._entry.__get__(instance, owner)
         if type(bound) is MethodType or isinstance(self._entry, staticmethod):
-            wrap = _METHOD_BLOCK
-            return (wrap if wrap is not None else _method_block())(
-                cast("_Method", bound)
-            )
+            return _MethodBlock(cast("_Method", bound))
         return bound
 
 

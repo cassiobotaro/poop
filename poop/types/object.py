@@ -3,32 +3,31 @@ from typing import TYPE_CHECKING, Any, Self
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak
-from poop.types._late import late
 from poop.types._message import cannot_be_hashed, holds_no_state, no_format_spec
 from poop.types._raw import _faithful
 from poop.types._selectors import explain, is_dunder, is_message
 from poop.types.meta import PoopMeta
 
+# circular: every module below imports `Object` (or `PoopMeta`, which this
+# module imports eagerly) at class-definition time, so none can be imported
+# eagerly here. A lazy import resolves on first use, inside a method body,
+# when both sides exist; after that the name is a plain global.
+lazy from poop.types import mirrors
+lazy from poop.types._alias import unalias
+lazy from poop.types._argument import a_block, a_class, text_like
+lazy from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
+lazy from poop.types.block import _as_block
+lazy from poop.types.boolean import false, to_boolean, true
+lazy from poop.types.int import Int
+lazy from poop.types.list import List
+lazy from poop.types.none import none
+lazy from poop.types.string import Str, _template_refusal
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from poop.types.boolean import Boolean
-    from poop.types.int import Int
-    from poop.types.list import List
     from poop.types.none import NoneClass
-    from poop.types.string import Str
-
-# circular: block, string, none and _unwrap all import Object. Bound late, not
-# imported per call: `__getattribute__` runs on every message a program sends
-# and `print` on every line it shows (see `_late.py`).
-_str: Callable[[], type[Str]] = late("poop.types.string", "Str")
-_none: Callable[[], NoneClass] = late("poop.types.none", "none")
-_unwrap: Callable[[], Callable[[object, str], str]] = late(
-    "poop.types._unwrap", "_unwrap"
-)
-_unwrap_bool: Callable[[], Callable[[object, bool], bool]] = late(
-    "poop.types._unwrap", "_unwrap_bool"
-)
 
 
 class MessageNotUnderstood(AttributeError):
@@ -50,9 +49,6 @@ def _holds_no_state(receiver: object) -> Exception:
     executor and `Error.message()` read; a `__setattr__` on `Object` used to
     do it and ran on every object construction in the language.
     """
-    # circular: exceptions imports object
-    from poop.types import mirrors
-
     return mirrors.AttributeError(holds_no_state(type(receiver).__name__))
 
 
@@ -109,8 +105,6 @@ class Object(metaclass=PoopMeta):
         raise MessageNotUnderstood(explain(self, name), name=name, obj=self)
 
     def if_none(self, block: Callable[[], object]) -> Object:
-        from poop.types._argument import a_block
-
         # Guarded on the receiver that does *not* run it: `(5).if_none(5)` said
         # nothing while `None.if_none(5)` leaked, so whether a wrong argument
         # was reported depended on the value in hand.
@@ -118,41 +112,24 @@ class Object(metaclass=PoopMeta):
         return self
 
     def if_not_none[T](self, block: Callable[[Object], T]) -> T:
-        from poop.types._argument import a_block
-
         return a_block(block, "if_not_none")(self)
 
     def is_none(self) -> Boolean:
-        from poop.types.boolean import false
-
         return false
 
     def not_none(self) -> Boolean:
-        from poop.types.boolean import true
-
         return true
 
     def is_identical(self, other: Object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         return to_boolean(self is other)
 
     def not_identical(self, other: Object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         return to_boolean(self is not other)
 
     def not_(self) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         return to_boolean(not bool(self))
 
     def assert_(self, message: Str | NoneClass | None = None) -> Self:
-        # Imported here, not at module scope: `exceptions` is built on top of
-        # `Object`, so the dependency only runs one way at import time.
-        from poop.types import mirrors
-        from poop.types._unwrap import _is_absent
-
         if bool(self):
             return self
         if _is_absent(message):
@@ -167,9 +144,6 @@ class Object(metaclass=PoopMeta):
         return self.class_().name()
 
     def hash(self) -> Int:
-        from poop.types import mirrors
-        from poop.types.int import Int
-
         try:
             return Int(hash(self))
         except TypeError as exc:
@@ -184,37 +158,24 @@ class Object(metaclass=PoopMeta):
             raise mirrors.TypeError(reworded) from None
 
     def callable(self) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         return to_boolean(builtins.callable(self))
 
     def is_instance(self, type_: type) -> Boolean:
         # `unalias` because a bare `int` resolves to the alias that makes a
         # *call* mean conversion, and an `Int` is not an instance of it.
-        from poop.types._alias import unalias
-        from poop.types._argument import a_class
-        from poop.types.boolean import to_boolean
-
         return to_boolean(isinstance(self, a_class(unalias(type_), "is_instance")))
 
     @classmethod
     def is_subclass(cls, other: type) -> Boolean:
-        from poop.types._alias import unalias
-        from poop.types._argument import a_class
-        from poop.types.boolean import to_boolean
-
         return to_boolean(issubclass(cls, a_class(unalias(other), "is_subclass")))
 
     def repr(self) -> Str:
-        return _str()(builtins.repr(self))
+        return Str(builtins.repr(self))
 
     def ascii(self) -> Str:
-        return _str()(builtins.ascii(self))
+        return Str(builtins.ascii(self))
 
     def dir(self) -> List:
-        from poop.types.list import List
-        from poop.types.string import Str
-
         # Filter every `_`-prefixed name — dunders (banned by
         # no_dunder_attribute) and privates, including the mangled `_poop_*`
         # bindings — so the introspection substitute never surfaces what the
@@ -223,15 +184,9 @@ class Object(metaclass=PoopMeta):
         return List(*(Str(name) for name in builtins.dir(self) if is_message(name)))
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
-        from poop.types import mirrors
-        from poop.types._argument import text_like
-        from poop.types._unwrap import _is_absent
-
         # Two leaks in one method. A non-`Str` spec answered `format()
         # argument 2 must be str, not int` — the builtin `no_format` bans,
         # spelt as the call this message replaces...
-        from poop.types.string import Str, _template_refusal
-
         spec_value = (
             "" if _is_absent(spec) else text_like(spec, "format", "a str", (str,))
         )
@@ -260,20 +215,14 @@ class Object(metaclass=PoopMeta):
             raise mirrors.TypeError(no_format_spec(type(self).__name__)) from None
 
     def get_attr(self, name: Str, *default: object) -> object:
-        from poop.types.block import _as_block  # circular: block imports Object
-
         # Guarded before the default is consulted: a forbidden name is refused,
         # not quietly answered with a fallback.
         return _as_block(builtins.getattr(self, _checked_name(name), *default))
 
     def has_attr(self, symbol: Str) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         return to_boolean(hasattr(self, _checked_name(symbol)))
 
     def set_attr(self, name: Str, value: object) -> NoneClass:
-        from poop.types.none import none
-
         # Outside the `try`: `_checked_name`'s own refusals are AttributeErrors
         # too, and each already carries the sentence it wants to be read by.
         raw = _checked_name(name)
@@ -287,9 +236,6 @@ class Object(metaclass=PoopMeta):
         return none
 
     def del_attr(self, name: Str) -> NoneClass:
-        from poop.types import mirrors
-        from poop.types.none import none
-
         # Outside the `try`, as in `set_attr`: `_checked_name`'s own refusals
         # are AttributeErrors too and already carry their sentence.
         raw = _checked_name(name)
@@ -314,10 +260,10 @@ class Object(metaclass=PoopMeta):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        end_value = _unwrap()(end, "\n")
-        flush_value = _unwrap_bool()(flush, False)
+        end_value = _unwrap(end, "\n")
+        flush_value = _unwrap_bool(flush, False)
         builtins.print(str(self), end=end_value, flush=flush_value)  # noqa: T201
-        return _none()
+        return none
 
     def __str__(self) -> str:
         return f"<{self.class_name()}>"
@@ -326,8 +272,6 @@ class Object(metaclass=PoopMeta):
         return str(self)
 
     def __eq__(self, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         return to_boolean(self is other)
 
     def __ne__(self, other: object) -> Boolean:
@@ -335,8 +279,6 @@ class Object(metaclass=PoopMeta):
         # derived `__ne__` (a raw `bool`) cannot be used — but every rule for
         # equality lives in an `__eq__`, and restating each one here with the
         # answer flipped meant keeping two copies in step by hand.
-        from poop.types.boolean import to_boolean
-
         return to_boolean(not bool(self == other))
 
     def __hash__(self) -> int:

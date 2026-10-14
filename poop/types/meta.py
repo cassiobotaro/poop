@@ -14,27 +14,30 @@ from typing import TYPE_CHECKING, Any, Never, Protocol, Self, overload
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
 from poop.types._descriptor import instance_only, message, messages_in
-from poop.types._late import late
 from poop.types._message import article
 from poop.types._selectors import explain, is_dunder, is_message, not_understood
+
+# circular: every module below is built through `PoopMeta`, so none can be
+# imported eagerly here; each resolves on first use, inside a method body.
+lazy from poop.types import mirrors
+lazy from poop.types._alias import unalias
+lazy from poop.types._argument import a_block, a_class
+lazy from poop.types._bridge import to_python
+lazy from poop.types._message import describe_operand
+lazy from poop.types._unwrap import _unwrap, _unwrap_bool
+lazy from poop.types.block import _as_block, _MethodBlock
+lazy from poop.types.boolean import false, to_boolean, true
+lazy from poop.types.int import Int
+lazy from poop.types.list import List
+lazy from poop.types.none import none
+lazy from poop.types.object import MessageNotUnderstood
+lazy from poop.types.string import Str
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sized
 
     from poop.types.boolean import Boolean
-    from poop.types.int import Int
-    from poop.types.list import List
     from poop.types.none import NoneClass
-    from poop.types.string import Str
-
-# circular: _alias and boolean are built on classes this metaclass makes. Bound
-# late: `__eq__` runs on every `class_() == int` and every dict keyed by class.
-_unalias: Callable[[], Callable[[object], object]] = late(
-    "poop.types._alias", "unalias"
-)
-_to_boolean: Callable[[], Callable[[object], Boolean]] = late(
-    "poop.types.boolean", "to_boolean"
-)
 
 
 class _Message[C, **P, R](Protocol):
@@ -112,15 +115,9 @@ class class_side[C, **P, R]:  # noqa: N801 — read as a word at `@class_side`
         # instance side: a `functools.partial` here leaked as
         # `'functools.partial' object has no attribute 'print'` for
         # `int.name.print()`, and two reads of `Foo.name` compared unequal.
-        from poop.types.block import _MethodBlock  # circular: block imports Object
-
         return _MethodBlock(method)
 
     def __set__(self, cls: type, value: object) -> None:
-        # Imported here, not at module scope: `exceptions` builds its classes
-        # through `PoopMeta`, so the dependency only runs one way at import.
-        from poop.types import mirrors
-
         # A sentence, not the bare name: `AttributeError: name` read as if the
         # *word* `name` were the problem, and both spellings of the mistake —
         # `Foo.name = 5` and the sanctioned `Foo.set_attr("name", 5)` — landed
@@ -207,8 +204,6 @@ def _reject_builtin(cls: type) -> None:
     be forged either — `__module__` is a dunder, so `no_dunder_attribute`
     refuses the literal spelling and `_reject_dunder` the computed one.
     """
-    from poop.types import mirrors
-
     if cls.__module__ == "builtins":
         raise mirrors.AttributeError(
             f"{cls.__name__} is a POOP builtin — its messages cannot be "
@@ -223,8 +218,6 @@ def _refuse(cls: type, name: str) -> Never:
     `#class_` with "did you mean #class_name?", which is refused here too —
     sending the reader from one refusal to another.
     """
-    from poop.types.object import MessageNotUnderstood
-
     raise MessageNotUnderstood(
         not_understood(
             cls.__name__,
@@ -291,8 +284,6 @@ def _refuse_instance_side(cls: type, name: str) -> Never:
     The sentence is the shape `_refuse` and `_refuse_native` already use, so
     the whole family reads like `class_` instead of like a binding failure.
     """
-    from poop.types.object import MessageNotUnderstood
-
     raise MessageNotUnderstood(
         not_understood(
             cls.__name__,
@@ -312,8 +303,6 @@ def _refuse_native(cls: type, name: str, instead: str) -> Never:
     designed, so `_refuse`'s wording ("asks an instance about its class") says
     nothing true about it.
     """
-    from poop.types.object import MessageNotUnderstood
-
     raise MessageNotUnderstood(
         not_understood(
             cls.__name__,
@@ -362,13 +351,9 @@ def _adapted(slot: str, method: Callable[..., object]) -> Callable[..., object]:
         if isinstance(value, native):
             return value
 
-        from poop.types._bridge import to_python
-
         raw = to_python(value)
         if isinstance(raw, native):
             return raw
-
-        from poop.types import mirrors
 
         # Named by the role, never by the slot: a message spelling `__str__`
         # names the construct `no_dunder_attribute` bans — and CPython's own
@@ -421,10 +406,6 @@ def _class_operator(selector: str, *, reflected: bool) -> Callable[..., Never]:
     """The slot refusing `selector` with the class as one of the operands."""
 
     def refuse(cls: type, other: object, *_: object) -> Never:
-        # circular: exceptions imports meta
-        from poop.types import mirrors
-        from poop.types._message import describe_operand
-
         if reflected:
             # `5 + int`: the value is the receiver, the class the operand.
             receiver = type(other).__name__
@@ -441,8 +422,6 @@ def _class_operator(selector: str, *, reflected: bool) -> Callable[..., Never]:
 
 def _length_message(self: Sized) -> Int:
     """`len` for a class that declared `__len__` and no message to ask with."""
-    from poop.types.int import Int
-
     return Int(builtins.len(self))
 
 
@@ -516,15 +495,10 @@ class PoopMeta(type):
 
     @class_side
     def name(cls) -> Str:
-        from poop.types.string import Str
-
         return Str(cls.__name__)
 
     @class_side
     def superclass(cls) -> PoopMeta | NoneClass:
-        from poop.types._alias import unalias
-        from poop.types.none import none
-
         # Smalltalk answers nil for Object superclass, which is also how the
         # raw Python `object` at the root stays out of reach.
         first = next((b for b in cls.__bases__ if isinstance(b, PoopMeta)), None)
@@ -558,12 +532,12 @@ class PoopMeta(type):
         that both call themselves `int`. `is_identical` deliberately does not
         follow: it asks identity, and those really are two objects.
         """
-        return _to_boolean()(_unalias()(cls) is _unalias()(other))
+        return to_boolean(unalias(cls) is unalias(other))
 
     def __ne__(cls, other: object) -> Boolean:
         # The rule lives in `__eq__` alone, as `Object.__ne__` keeps it: a
         # second copy with the answer flipped is one to keep in step by hand.
-        return _to_boolean()(not bool(cls == other))
+        return to_boolean(not bool(cls == other))
 
     # Defining `__eq__` sets `__hash__` to None, which would make every POOP
     # class unhashable — `NATIVE_TO_POOP` keys on classes, and so does every
@@ -603,8 +577,6 @@ class PoopMeta(type):
         `A() takes no arguments`, which the parse-time rewrite produced for any
         capitalized receiver it saw.
         """
-        from poop.types.object import MessageNotUnderstood
-
         raise MessageNotUnderstood(
             f"{cls.__name__} cannot be raised — "
             "only a class descending from Exception can",
@@ -614,8 +586,6 @@ class PoopMeta(type):
 
     @class_side
     def has_attr(cls, name: Str) -> Boolean:
-        from poop.types.boolean import false, true
-
         raw = _checked_name(name)
         try:
             _reflected(cls, raw)
@@ -631,41 +601,29 @@ class PoopMeta(type):
 
     @class_side
     def hash(cls) -> Int:
-        from poop.types.int import Int
-
         return Int(builtins.hash(cls))
 
     @class_side
     def is_none(cls) -> Boolean:
-        from poop.types.boolean import false
-
         return false
 
     @class_side
     def not_none(cls) -> Boolean:
-        from poop.types.boolean import true
-
         return true
 
     @class_side
     def not_(cls) -> Boolean:
-        from poop.types.boolean import false
-
         # A class is always truthy, so this is constant — but it has to exist:
         # `not x` is banned and `x.not_()` is the substitute.
         return false
 
     @class_side
     def callable(cls) -> Boolean:
-        from poop.types.boolean import true
-
         # Always true: calling a class is how you build an instance.
         return true
 
     @class_side
     def repr(cls) -> Str:
-        from poop.types.string import Str
-
         # The class's name, matching `print` and Smalltalk's `Foo printString`.
         # `builtins.repr(cls)` would answer `<class 'builtins.Foo'>`, putting
         # Python's vocabulary inside a POOP message's answer.
@@ -673,8 +631,6 @@ class PoopMeta(type):
 
     @class_side
     def ascii(cls) -> Str:
-        from poop.types.string import Str
-
         # Same text as `repr`, with any non-ASCII escaped — a class name is an
         # identifier, and Python 3 lets those hold non-ASCII.
         escaped = cls.__name__.encode("ascii", "backslashreplace")
@@ -814,9 +770,6 @@ class PoopMeta(type):
 
     @class_side
     def dir(cls) -> List:
-        from poop.types.list import List
-        from poop.types.string import Str
-
         # Mirror `Object.dir`: hide every `_`-prefixed name so the class side
         # never leaks dunders or the mangled `_poop_*` internals. `is_message`
         # is the one copy of that rule, shared with `Object.dir` and the REPL.
@@ -824,9 +777,6 @@ class PoopMeta(type):
 
     @class_side
     def format(cls, spec: Str | NoneClass | None = None) -> Str:
-        from poop.types._unwrap import _unwrap
-        from poop.types.string import Str
-
         return Str(builtins.format(cls.__name__, _unwrap(spec, "")))
 
     @class_side_refusal
@@ -852,22 +802,14 @@ class PoopMeta(type):
 
     @class_side
     def is_identical(cls, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         return to_boolean(cls is other)
 
     @class_side
     def not_identical(cls, other: object) -> Boolean:
-        from poop.types.boolean import to_boolean
-
         return to_boolean(cls is not other)
 
     @class_side
     def is_instance(cls, type_: type) -> Boolean:
-        from poop.types._alias import unalias
-        from poop.types._argument import a_class
-        from poop.types.boolean import to_boolean
-
         # A class is an instance of its metaclass, not of its own bases, so
         # `Foo.is_instance(Object)` is `false` — `Foo.is_subclass(Object)` is
         # the "descends from" question. `unalias` for the reason
@@ -879,15 +821,11 @@ class PoopMeta(type):
         # A class is never none, so this answers the class unchanged — and the
         # block it never runs is still checked, for the reason `Object.if_none`
         # gives: otherwise the report depends on the value in hand.
-        from poop.types._argument import a_block
-
         a_block(block, "if_none", param="")
         return cls
 
     @class_side
     def if_not_none[T](cls, block: Callable[[PoopMeta], T]) -> T:
-        from poop.types._argument import a_block
-
         return a_block(block, "if_not_none")(cls)
 
     @class_side
@@ -898,8 +836,6 @@ class PoopMeta(type):
 
     @class_side
     def get_attr(cls, name: Str, *default: object) -> object:
-        from poop.types.block import _as_block
-
         # Same wrap as the instance side: a class-side method answered a raw
         # Python function, which understands no message.
         raw = _checked_name(name)
@@ -912,8 +848,6 @@ class PoopMeta(type):
 
     @class_side
     def set_attr(cls, name: Str, value: object) -> NoneClass:
-        from poop.types.none import none
-
         # Name first, receiver second: a forbidden *name* is refused by name
         # on every receiver, so `str.set_attr("__dict__", …)` still answers
         # the dunder ban rather than the builtin one.
@@ -924,8 +858,6 @@ class PoopMeta(type):
 
     @class_side
     def del_attr(cls, name: Str) -> NoneClass:
-        from poop.types.none import none
-
         raw = _checked_name(name)
         _reject_builtin(cls)
         builtins.delattr(cls, raw)
@@ -937,9 +869,6 @@ class PoopMeta(type):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        from poop.types._unwrap import _unwrap, _unwrap_bool
-        from poop.types.none import none
-
         builtins.print(  # noqa: T201 — the language's own #print
             cls.__name__,
             end=_unwrap(end, "\n"),
@@ -949,8 +878,6 @@ class PoopMeta(type):
 
     @class_side
     def does_not_understand(cls, name: str) -> object:
-        from poop.types.object import MessageNotUnderstood
-
         raise MessageNotUnderstood(explain(cls, name), name=name, obj=cls)
 
     if not TYPE_CHECKING:
