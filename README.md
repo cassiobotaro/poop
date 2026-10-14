@@ -175,6 +175,6 @@ Annotations (`x: int`, `def f(x: int) -> str:`) are not evaluated at runtime in 
 
 - [`MIGRATION.md`](MIGRATION.md) — full Python → POOP recipe book
 - [`INFECTIONS.md`](INFECTIONS.md) — every validator / transformer / type, with rationale
-- [`proposals.md`](proposals.md) — open design backlog
+- [`openspec/changes/`](openspec/changes/) — open design backlog, one OpenSpec change per theme; closed ones in its `archive/`
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev setup, atomic-commit conventions, versioning
 - [Issues](https://github.com/cassiobotaro/poop/issues) — bugs and feature requests

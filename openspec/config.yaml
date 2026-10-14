@@ -1,32 +1,33 @@
 schema: spec-driven
 
-# Project context (optional)
-# Add only constraints that should guide OpenSpec artifacts and workflows.
-# Include constraints an agent cannot infer by reading the code.
-# Keep general project documentation and discoverable codebase facts out.
-# Example:
-#   context: |
-#     Designs and tasks must cover Windows, macOS, and Linux
-#     Write all artifacts in Spanish
+# Constraints an agent cannot infer from the code. Pointers, not copies: the
+# documents named here are the source and change on their own schedule.
+context: |
+  POOP is a Python 3.15 interpreter infected by Smalltalk: every operation is a
+  message sent to an object. The design principles that decide what is in or
+  out of the language live in INFECTIONS.md, section "Principles"; read them
+  before proposing a validator, transformer or type. AGENTS.md and
+  CONTRIBUTING.md hold the contributor rules.
+  Every OpenSpec artifact, like every repository document, is written in
+  English, whatever language the conversation uses.
+  README.md and INFECTIONS.md are updated in the same commit as the code they
+  describe; INFECTIONS.md records the reasoning behind a decision, the specs
+  under openspec/specs/ record the observable behavior.
+  Granularity: one change per theme, one task per finding. An audit with
+  twenty findings is one change with twenty tasks, not twenty changes.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always state what is out of scope
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
-
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+rules:
+  specs:
+    - >-
+      Name a capability after the catalogue section it belongs to, flat layout,
+      kebab-case: "<builtin>-type" for a wrapper type (float-type, matching
+      "### Float" in INFECTIONS.md), "<name>-validator" for a validator
+      (no-len-validator, matching "### no_len"), "<name>-transformer" for a
+      transformer, and a plain noun for a cross-cutting behavior (block-arity).
+    - >-
+      Quote the exact sentence POOP answers in each THEN; the wording is the
+      behavior.
+  proposal:
+    - >-
+      State what is out of scope and why, so a deliberate omission is not read
+      as an oversight.

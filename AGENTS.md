@@ -49,5 +49,7 @@ never `--amend`.
 - Run every snippet you add to a doc. `tests/test_doc_counts.py` reads the
   validator and example counts out of `README.md`; keep those sentences in
   shape.
-- `proposals.md` is English only. Implemented items are deleted, never
-  marked done.
+- The backlog is the set of active changes under `openspec/changes/`; work
+  starts as one (`/opsx:propose`), one change per theme with one task per
+  finding. Artifacts are English only. An implemented change is archived
+  (`/opsx:archive`), never left active.

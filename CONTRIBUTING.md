@@ -29,7 +29,8 @@ The pipeline is `parse → validate → transform → execute(namespace)`. Sourc
 - `poop/interpreter.py` — orchestrates the full pipeline
 
 Reference catalog of validators, transformers, and types:
-[`INFECTIONS.md`](INFECTIONS.md). Open backlog: [`proposals.md`](proposals.md).
+[`INFECTIONS.md`](INFECTIONS.md). Open backlog: the active changes under
+[`openspec/changes/`](openspec/changes/); closed ones are in its `archive/`.
 
 ## Workflow
 
@@ -44,8 +45,9 @@ separate commits in dependency order.
 ### Confirm scope before multi-part plans
 
 Open work that spans more than ~3 files or introduces a public-API change
-deserves a quick alignment in `proposals.md` or via an issue. The maintainer may
-want only a subset implemented.
+deserves a quick alignment first: an OpenSpec change (`/opsx:propose`, which
+writes its proposal, design and tasks for review) or an issue. The maintainer
+may want only a subset implemented, which is what the task list is for.
 
 ### Pre-commit hooks
 
@@ -83,8 +85,9 @@ honest spelling, and each carries a `# circular:` comment naming the edge.
 
 ### Language
 
-- `proposals.md` is written in **English**, regardless of the language used in
-  the conversation that produced the entry.
+- OpenSpec artifacts under `openspec/` (proposals, designs, specs, tasks) are
+  written in **English**, regardless of the language used in the conversation
+  that produced them.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `INFECTIONS.md`, and `README.md` are
   also English.
 - Code comments are in English.
@@ -181,21 +184,27 @@ Methods follow Python names, not Smalltalk names: `map`, not `collect`;
 `filter`, not `select`. The exception is `do` (from Smalltalk `do:`) used for
 iteration — `for` is a keyword, `for_each` is a Java/JS idiom.
 
-## Closing a proposal
+## Closing a change
 
-When `proposals.md` item N is implemented:
+The backlog is the set of active changes under `openspec/changes/`. One change
+per theme, one task per finding: an audit with twenty findings is one change
+with twenty checkboxes in its `tasks.md`, not twenty changes. A change that
+alters observable behavior carries delta specs; one that only touches tooling,
+typing or docs declares `skip_specs: true`.
 
-1. Implement in atomic commits as described above.
-2. Delete the entry from `proposals.md` — no `DONE` marker, no summary. The
-   remaining items keep their numbers; new items continue from the highest.
-   Once the backlog is empty, numbering starts over at 1.
-3. Update `INFECTIONS.md` if the proposal touched validators, transformers, or
-   types.
-4. Final commit message: `docs: close proposal N — <one-line decision>`.
+When a change is implemented:
 
-Code, tests and docs cite commits, not proposal numbers: a closed entry is
-deleted and numbering restarts once the backlog empties, so a number names
-nothing a reader can look up.
+1. Work through its tasks in atomic commits as described above
+   (`/opsx:apply`), ticking each task as it lands.
+2. Update `INFECTIONS.md` in the same commit as the code when the change
+   touched validators, transformers, or types; the catalogue holds the *why*,
+   the specs hold the *what*.
+3. Archive it (`/opsx:archive`): delta specs sync into `openspec/specs/`, and
+   the change moves to `openspec/changes/archive/<date>-<name>/`.
+4. Commit the archive: `chore(openspec): archive <name>`.
+
+Code, tests and docs cite commits, not change names: the git log is the
+changelog, and the archive is the record of how a decision was reached.
 
 ## Pull requests
 
@@ -210,7 +219,8 @@ nothing a reader can look up.
   - For UI-facing changes (none today, but in the future): manual smoke test
 - The description should explain **why**, not just **what**. The diff already
   shows what.
-- Reference the relevant `proposals.md` item if the PR closes one.
+- Reference the OpenSpec change (`openspec/changes/<name>/`) if the PR
+  implements one.
 
 ## Versioning
 
