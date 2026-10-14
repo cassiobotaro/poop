@@ -2,6 +2,8 @@ from typing import Any
 
 import pytest
 
+from poop import Interpreter
+from poop.errors import PoopError
 from poop.parser import parse
 from poop.transformers.bytes import BytesTransformer
 from poop.types.boolean import false, true
@@ -848,3 +850,84 @@ def test_replace_names_its_count(kind: Any) -> None:
     with pytest.raises(TypeError, match="^#replace's count must be an int, got a str$"):
         kind(b"abc").replace(Bytes(b"a"), Bytes(b"b"), Str("x"))
     assert kind(b"aa").replace(Bytes(b"a"), Bytes(b"b"), Int(1)) == kind(b"ba")
+
+
+# --- maketrans and translate: the two names a mechanical diff of `bytes`'s
+# public methods against `Bytes` found missing. Each scenario in
+# openspec/specs/bytes-type/spec.md is pinned here.
+
+
+def _failure(source: str) -> str:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    return str(info.value)
+
+
+def test_maketrans_answers_a_256_byte_table() -> None:
+    alias = BytesTransformer.BINDINGS["_poop_bytes_cls"]
+    table = alias.maketrans(Bytes(b"ab"), Bytes(b"xy"))
+    assert table.len() == Int(256)
+    assert table.slice(Int(0), Int(4)) == Bytes(b"\x00\x01\x02\x03")
+    assert table.at(Int(97)) == Int(120)
+    assert str(table.slice(Int(0), Int(4))) == r"b'\x00\x01\x02\x03'"
+
+
+def test_maketrans_is_static_so_an_instance_answers_it_too() -> None:
+    assert Bytes(b"").maketrans(Bytes(b"a"), Bytes(b"b")).at(Int(97)) == Int(98)
+
+
+def test_maketrans_takes_a_bytearray_argument() -> None:
+    table = Bytes.maketrans(ByteArray(bytearray(b"a")), ByteArray(bytearray(b"b")))
+    assert table.at(Int(97)) == Int(98)
+
+
+def test_maketrans_keeps_cpythons_refusal_for_unequal_lengths() -> None:
+    assert _failure('bytes.maketrans(b"a", b"xy")') == (
+        "ValueError: maketrans arguments must have same length (line 1)"
+    )
+
+
+def test_maketrans_refuses_a_str_in_poops_words() -> None:
+    # CPython: `a bytes-like object is required, not 'str'`, the sentence
+    # `bytes_like` exists to replace.
+    assert _failure('bytes.maketrans("a", b"x")') == (
+        "TypeError: #maketrans expects bytes, got a str (line 1)"
+    )
+    assert _failure('bytes.maketrans(b"a", "x")') == (
+        "TypeError: #maketrans expects bytes, got a str (line 1)"
+    )
+
+
+def test_translate_maps_through_a_maketrans_table() -> None:
+    table = Bytes.maketrans(Bytes(b"ab"), Bytes(b"xy"))
+    assert Bytes(b"abc").translate(table) == Bytes(b"xyc")
+    assert str(Bytes(b"abc").translate(table)) == "b'xyc'"
+
+
+def test_translate_deletes_with_no_table() -> None:
+    assert Bytes(b"abc").translate(none, Bytes(b"b")) == Bytes(b"ac")
+    assert Bytes(b"abc").translate(None, Bytes(b"b")) == Bytes(b"ac")
+
+
+def test_translate_maps_and_deletes_together() -> None:
+    table = Bytes.maketrans(Bytes(b"ab"), Bytes(b"xy"))
+    assert Bytes(b"abc").translate(table, delete=Bytes(b"c")) == Bytes(b"xy")
+
+
+def test_translate_without_arguments_beyond_the_table_deletes_nothing() -> None:
+    assert Bytes(b"abc").translate(none) == Bytes(b"abc")
+
+
+def test_translate_keeps_cpythons_refusal_for_a_short_table() -> None:
+    assert _failure('b"abc".translate(b"short")') == (
+        "ValueError: translation table must be 256 characters long (line 1)"
+    )
+
+
+def test_translate_refuses_a_non_bytes_table_in_poops_words() -> None:
+    assert _failure('b"abc".translate(5)') == (
+        "TypeError: #translate expects bytes, got an int (line 1)"
+    )
+    assert _failure('b"abc".translate(None, 5)') == (
+        "TypeError: #translate expects bytes, got an int (line 1)"
+    )

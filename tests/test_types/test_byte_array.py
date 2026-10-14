@@ -2,6 +2,8 @@ from typing import Any
 
 import pytest
 
+from poop import Interpreter
+from poop.errors import PoopError
 from poop.parser import parse
 from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
 from poop.transformers.bytes import BytesTransformer
@@ -1062,3 +1064,44 @@ def test_ordering_against_a_foreign_operand_still_raises() -> None:
     ):
         with pytest.raises(TypeError):
             op()
+
+
+# --- maketrans and translate, the `bytearray` half of the pair. Each scenario
+# in openspec/specs/bytearray-type/spec.md is pinned here.
+
+
+def _failure(source: str) -> str:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    return str(info.value)
+
+
+def test_maketrans_answers_bytes_not_bytearray() -> None:
+    # CPython's `bytearray.maketrans` answers `bytes`, which is why the message
+    # lives on the mixin rather than per class like `fromhex`.
+    alias = ByteArrayTransformer.BINDINGS["_poop_bytearray_cls"]
+    table = alias.maketrans(Bytes(b"ab"), Bytes(b"xy"))
+    assert table.class_name() == Str("bytes")
+    assert table == Bytes.maketrans(Bytes(b"ab"), Bytes(b"xy"))
+    assert ByteArray(bytearray()).maketrans(Bytes(b"a"), Bytes(b"b")).class_name() == (
+        Str("bytes")
+    )
+
+
+def test_translate_answers_a_new_bytearray() -> None:
+    receiver = ByteArray(bytearray(b"abc"))
+    answer = receiver.translate(Bytes.maketrans(Bytes(b"ab"), Bytes(b"xy")))
+    assert answer == ByteArray(bytearray(b"xyc"))
+    assert str(answer) == "bytearray(b'xyc')"
+    assert str(receiver) == "bytearray(b'abc')"
+
+
+def test_translate_deletes_with_no_table() -> None:
+    answer = ByteArray(bytearray(b"abc")).translate(none, Bytes(b"b"))
+    assert str(answer) == "bytearray(b'ac')"
+
+
+def test_translate_keeps_cpythons_refusal_for_a_short_table() -> None:
+    assert _failure('bytearray(b"abc").translate(b"short")') == (
+        "ValueError: translation table must be 256 characters long (line 1)"
+    )

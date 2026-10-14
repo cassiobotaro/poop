@@ -283,6 +283,25 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
     def lower(self) -> B:
         return self._rewrap(self._value.lower())
 
+    @staticmethod
+    def maketrans(frm: BytesLike, to: BytesLike) -> Bytes:
+        """`bytes.maketrans`: the 256-byte table `translate` reads.
+
+        Static, as CPython's is, and answering `bytes` from both classes —
+        `bytearray.maketrans(b"a", b"b")` is a `bytes` in CPython — which is
+        why it lives here rather than once per class like `fromhex`. Unequal
+        lengths keep CPython's `maketrans arguments must have same length`,
+        which names no construct POOP forbids; a `str` argument reached
+        `a bytes-like object is required, not 'str'`, and `bytes_like` words
+        it.
+        """
+        # circular: bytes imports _bytes_like
+        from poop.types.bytes import Bytes  # noqa: PLC0415
+
+        return Bytes(
+            bytes.maketrans(bytes_like(frm, "maketrans"), bytes_like(to, "maketrans"))
+        )
+
     def lstrip(self, chars: BytesLike | NoneClass | None = None) -> B:
         return self._rewrap(
             self._value.lstrip(bytes_like(chars, "lstrip", optional=True))
@@ -412,6 +431,27 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
 
     def title(self) -> B:
         return self._rewrap(self._value.title())
+
+    def translate(
+        self,
+        table: BytesLike | NoneClass | None,
+        delete: BytesLike | NoneClass | None = None,
+    ) -> B:
+        """`bytes.translate`: every byte through `table`, minus `delete`.
+
+        `table` may be `none`, which deletes without mapping; `delete` is
+        empty by default. A table that is not 256 bytes long keeps CPython's
+        `translation table must be 256 characters long`.
+        """
+        deleted = bytes_like(delete, "translate", optional=True)
+        # `bytes(deleted)`, as `_fill` does: typeshed spells `bytearray`'s
+        # `delete` as `bytes` alone, and the copy is free for a `bytes`.
+        return self._rewrap(
+            self._value.translate(
+                bytes_like(table, "translate", optional=True),
+                b"" if deleted is None else bytes(deleted),
+            )
+        )
 
     def upper(self) -> B:
         return self._rewrap(self._value.upper())
