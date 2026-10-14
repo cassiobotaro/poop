@@ -215,13 +215,27 @@ def _displaying_through(
     `sys.ps1` / `sys.ps2` are where `code.InteractiveConsole.interact` reads
     its prompts from, and `sys.displayhook` is how an expression statement
     echoes — all three process-wide, so all three are put back.
+
+    Put back *as found*: the two prompts do not exist outside an interactive
+    interpreter, and `hasattr(sys, "ps1")` is how a library asks whether it
+    is in one. Restoring them by assignment left `sys.ps1 = None` behind,
+    so every process that had run a REPL answered yes from then on.
     """
-    original = sys.displayhook, getattr(sys, "ps1", None), getattr(sys, "ps2", None)
-    sys.displayhook, sys.ps1, sys.ps2 = hook, ps1, ps2
+    original_hook = sys.displayhook
+    prompts = {"ps1": ps1, "ps2": ps2}
+    found = {name: vars(sys)[name] for name in prompts if name in vars(sys)}
+    sys.displayhook = hook
+    for name, prompt in prompts.items():
+        setattr(sys, name, prompt)
     try:
         yield
     finally:
-        sys.displayhook, sys.ps1, sys.ps2 = original
+        sys.displayhook = original_hook
+        for name in prompts:
+            if name in found:
+                setattr(sys, name, found[name])
+            else:
+                delattr(sys, name)
 
 
 def _explain_calls(validators: Iterable[Validator]) -> frozenset[str]:

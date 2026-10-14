@@ -21,8 +21,11 @@ class _Visitor(ErrorCollector):
         # Parameters bind names inside the body, so a `_poop_`-prefixed
         # parameter (def or lambda) reopens a reserved identifier exactly
         # like a reference does. A bare `lambda _poop_x: 1` never mentions
-        # the name in its body, so visit_Name alone would miss it.
+        # the name in its body, so visit_Name alone would miss it. Then on
+        # into the annotation: `x: _poop_int` is a reference like any other,
+        # and without the descent it was the one position left unchecked.
         self._reject(node.arg, node)
+        self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> None:
         self._reject(node.id, node)

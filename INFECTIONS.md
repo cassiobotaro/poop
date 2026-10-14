@@ -637,6 +637,7 @@ The only names POOP injects (`Try`, `With`) are already in scope and need no imp
 |---|---|
 | `ast.Name` with `id` starting in `_poop_` | mangled identifier reserved for the runtime — rewriters target it, user code must not |
 | `ast.Attribute` with `attr` starting in `_poop_` | same — keeps the runtime helpers reachable for the rewritten AST but invisible to handwritten code |
+| `ast.arg`, `ast.FunctionDef`, `ast.ClassDef` naming one | a binding is a reference too; the parameter's annotation is walked as well, so `x: _poop_int` is refused like `-> _poop_int` |
 
 Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` under a `_poop_*` key (`_poop_int`, `_poop_list_cls`, `_poop_object`, …) so the rewritten AST resolves them at runtime. This validator stops user code from referencing the same names directly, preserving the abstraction that POOP types pass as their Python builtin counterparts.
 

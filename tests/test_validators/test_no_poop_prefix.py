@@ -74,3 +74,21 @@ def test_poop_prefixed_vararg_and_kwarg_raise() -> None:
     dstar = ast.parse("class C:\n    def m(self, **_poop_kw):\n        return 1")
     with pytest.raises(ValidationError, match="_poop_kw is forbidden"):
         NoPoopPrefixValidator().validate(dstar)
+
+
+# A parameter annotation is a reference like any other: `visit_arg` reported
+# the parameter's name and never descended, so `x: _poop_int` was the one
+# position a reserved name slipped through.
+
+
+def test_poop_prefixed_parameter_annotation_raises() -> None:
+    tree = ast.parse("class A:\n    def m(self, x: _poop_int):\n        return x")
+    with pytest.raises(ValidationError, match="_poop_int is forbidden") as info:
+        NoPoopPrefixValidator().validate(tree)
+    assert (info.value.lineno, info.value.col_offset) == (2, 19)
+
+
+def test_poop_prefixed_lambda_parameter_still_raises() -> None:
+    tree = ast.parse("f = lambda _poop_x: 1")
+    with pytest.raises(ValidationError, match="_poop_x is forbidden"):
+        NoPoopPrefixValidator().validate(tree)

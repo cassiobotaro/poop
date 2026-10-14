@@ -13,6 +13,7 @@ from poop.repl import (
     _CYAN,
     _EXPLAIN_SNIPPETS,
     Repl,
+    _displaying_through,
     _explain_calls,
     _explain_snippet,
     _indent_for,
@@ -957,3 +958,28 @@ def test_a_meta_command_reaches_only_a_meta_method(
     # an identifier, or names no `_meta_*` method, is an unknown command.
     repl._meta(line)
     assert "unknown meta-command" in capsys.readouterr().err
+
+
+# The prompts are put back as found: absent when they were absent, so a
+# library asking `hasattr(sys, "ps1")` is answered as before the session.
+
+
+def test_prompts_absent_before_are_absent_after(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delattr(sys, "ps1", raising=False)
+    monkeypatch.delattr(sys, "ps2", raising=False)
+    hook = sys.displayhook
+    with _displaying_through(print, "> ", ". "):
+        assert (sys.ps1, sys.ps2) == ("> ", ". ")
+    assert not hasattr(sys, "ps1")
+    assert not hasattr(sys, "ps2")
+    assert sys.displayhook is hook
+
+
+def test_prompts_present_before_are_restored(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "ps1", "P> ", raising=False)
+    monkeypatch.setattr(sys, "ps2", "P. ", raising=False)
+    with _displaying_through(print, "> ", ". "):
+        pass
+    assert (sys.ps1, sys.ps2) == ("P> ", "P. ")
