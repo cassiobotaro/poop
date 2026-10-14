@@ -8,11 +8,20 @@ any numeric-tower operand (``Int``, ``Float`` or ``Boolean``), or the
 ``NotImplemented`` (ordering) or a plain ``false``/``true`` (equality), so a
 mismatch raises CPython's faithful ``TypeError`` instead of leaking an
 ``AttributeError`` from a missing ``other._value``.
+
+``_num_value`` reads the number through the hook the mixin below declares,
+``_order_value``, rather than importing the three rungs and testing them in
+order: every rung inherits the mixin, so one ``isinstance`` on it is the whole
+test. This runs on every comparison between numbers, and the three local
+imports it used to make were a third of the cost (see ``_late.py``); the two
+names it still needs from ``boolean`` and ``complex`` bind late for the same
+reason.
 """
 
 import operator
 from typing import TYPE_CHECKING
 
+from poop.types._late import late
 from poop.types._mixin import _Mixin
 from poop.types._sentinel import NOT_NUMERIC, NotNumeric
 
@@ -20,22 +29,19 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from poop.types.boolean import Boolean
+    from poop.types.complex import Complex
+
+# circular: boolean inherits this module's mixin, complex imports boolean
+_to_boolean: Callable[[], Callable[[object], Boolean]] = late(
+    "poop.types.boolean", "to_boolean"
+)
+_false: Callable[[], Boolean] = late("poop.types.boolean", "false")
+_complex: Callable[[], type[Complex]] = late("poop.types.complex", "Complex")
 
 
 def _num_value(other: object) -> int | float | NotNumeric:
-    # circular: boolean imports _numeric_compare
-    from poop.types.boolean import Boolean  # noqa: PLC0415
-
-    # circular: float imports _numeric_compare
-    from poop.types.float import Float  # noqa: PLC0415
-
-    # circular: int imports _numeric_compare
-    from poop.types.int import Int  # noqa: PLC0415
-
-    if isinstance(other, (Int, Float)):
-        return other._value
-    if isinstance(other, Boolean):
-        return 1 if other else 0
+    if isinstance(other, _NumericCompareMixin):
+        return other._order_value()
     return NOT_NUMERIC
 
 
@@ -63,13 +69,10 @@ class _NumericCompareMixin(_Mixin):  # noqa: PLW1641 — the numeric rungs hash 
     def _order(
         self, other: object, op: Callable[[int | float, int | float], bool]
     ) -> Boolean:
-        # circular: boolean imports _numeric_compare
-        from poop.types.boolean import to_boolean  # noqa: PLC0415
-
         v = _num_value(other)
         if v is NOT_NUMERIC:
             return NotImplemented
-        return to_boolean(op(self._order_value(), v))
+        return _to_boolean()(op(self._order_value(), v))
 
     def __lt__(self, other: object) -> Boolean:
         return self._order(other, operator.lt)
@@ -84,15 +87,11 @@ class _NumericCompareMixin(_Mixin):  # noqa: PLW1641 — the numeric rungs hash 
         return self._order(other, operator.ge)
 
     def __eq__(self, other: object) -> Boolean:
-        # circular: boolean imports _numeric_compare
-        from poop.types.boolean import false, to_boolean  # noqa: PLC0415
-
-        # circular: complex -> boolean -> _numeric_compare
-        from poop.types.complex import Complex  # noqa: PLC0415
-
-        if isinstance(other, Complex):
-            return to_boolean(self._order_value() == other._value)
         v = _num_value(other)
         if v is NOT_NUMERIC:
-            return false
-        return to_boolean(self._order_value() == v)
+            # The tower first, `Complex` only on the miss: `Int == Int` is the
+            # common case and never needs the class this binds.
+            if isinstance(other, _complex()):
+                return _to_boolean()(self._order_value() == other._value)
+            return _false()
+        return _to_boolean()(self._order_value() == v)

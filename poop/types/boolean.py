@@ -2,6 +2,7 @@ import builtins
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import Key, a_block, no_arguments, text_like
+from poop.types._late import late
 from poop.types._minmax import MISSING, _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
@@ -16,6 +17,8 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
     from poop.types.string import Str
     from poop.types.tuple import Tuple
+
+_int: Callable[[], type[Int]] = late("poop.types.int", "Int")
 
 
 class Boolean(_NumericCompareMixin, Object, name="bool"):
@@ -113,10 +116,9 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
     # Int's arithmetic; the reflected ops compute ``other <op> int(self)`` so
     # ``3 - True`` reuses ``Int.__sub__``.
     def _as_int(self) -> Int:
-        # circular: int imports boolean
-        from poop.types.int import Int  # noqa: PLC0415
-
-        return Int(1) if self else Int(0)
+        # circular: int imports boolean — bound late, this is every operator
+        # a Boolean takes part in
+        return _int()(1) if self else _int()(0)
 
     # The int-side *messages*, delegated through the same fold the operators
     # use. Everything that makes `bool` an `int` in CPython was re-supplied by
