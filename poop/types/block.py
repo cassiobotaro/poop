@@ -8,7 +8,7 @@ from poop.types._argument import a_block
 from poop.types._message import article
 from poop.types.boolean import false, to_boolean
 from poop.types.none import none
-from poop.types.object import Object
+from poop.types.object import Object, _install_method_block
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -320,3 +320,10 @@ class _MethodBlock[**P, R](Block[P, R], name="function"):
         # Consistent with __eq__ above, as CPython's bound method is: equal
         # methods must hash equally or `set`/`dict` membership contradicts `==`.
         return hash(self._identity())
+
+
+# `Object.__getattribute__` wraps every public method it hands out in a
+# `_MethodBlock`, and cannot import this module at its own top (this one
+# imports `Object`). Installed here, once, so that path reads a module global
+# rather than importing or calling a getter per message send.
+_install_method_block(_MethodBlock)

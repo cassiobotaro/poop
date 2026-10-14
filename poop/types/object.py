@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Self
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak
+from poop.types._late import late
 from poop.types._message import cannot_be_hashed, no_format_spec
 from poop.types._raw import _faithful
 from poop.types._selectors import explain, is_dunder, is_message
@@ -17,6 +18,35 @@ if TYPE_CHECKING:
     from poop.types.list import List
     from poop.types.none import NoneClass
     from poop.types.string import Str
+
+# circular: block, string, none and _unwrap all import Object. Bound late, not
+# imported per call: `__getattribute__` runs on every message a program sends
+# and `print` on every line it shows (see `_late.py`).
+_method_block: Callable[[], Callable[[MethodType], object]] = late(
+    "poop.types.block", "_MethodBlock"
+)
+# The one site where even the cached getter showed: a message send is the
+# unit of the language, and the ~50 ns it costs was the difference between a
+# 3 % and a 10 % gain on `(5).abs()`. `block.py` installs the class here the
+# moment it exists, so the hot path reads a module global; the getter stays as
+# the fallback for a public method read before `block` has loaded.
+_METHOD_BLOCK: Callable[[MethodType], object] | None = None
+
+
+def _install_method_block(wrap: Callable[[MethodType], object]) -> None:
+    """Called once by `poop/types/block.py`; see `_METHOD_BLOCK`."""
+    global _METHOD_BLOCK  # noqa: PLW0603 — the one write, at import time
+    _METHOD_BLOCK = wrap
+
+
+_str: Callable[[], type[Str]] = late("poop.types.string", "Str")
+_none: Callable[[], NoneClass] = late("poop.types.none", "none")
+_unwrap: Callable[[], Callable[[object, str], str]] = late(
+    "poop.types._unwrap", "_unwrap"
+)
+_unwrap_bool: Callable[[], Callable[[object, bool], bool]] = late(
+    "poop.types._unwrap", "_unwrap_bool"
+)
 
 
 class MessageNotUnderstood(AttributeError):
@@ -94,9 +124,11 @@ class Object(metaclass=PoopMeta):
         def __getattribute__(self, name: str) -> Any:  # noqa: ANN401 — hidden from ty, see above
             value = object.__getattribute__(self, name)
             if type(value) is MethodType and not name.startswith("_"):
-                from poop.types.block import _MethodBlock
-
-                return _MethodBlock(value)
+                # circular: block imports Object — installed as a global by
+                # `block.py`, since this is every message a program sends
+                # (see `_METHOD_BLOCK` and `_late.py`)
+                wrap = _METHOD_BLOCK
+                return (wrap if wrap is not None else _method_block())(value)
             return value
 
         # Hidden from the type checker deliberately. A visible __getattr__
@@ -271,14 +303,10 @@ class Object(metaclass=PoopMeta):
         return to_boolean(issubclass(cls, a_class(unalias(other), "is_subclass")))
 
     def repr(self) -> Str:
-        from poop.types.string import Str
-
-        return Str(builtins.repr(self))
+        return _str()(builtins.repr(self))
 
     def ascii(self) -> Str:
-        from poop.types.string import Str
-
-        return Str(builtins.ascii(self))
+        return _str()(builtins.ascii(self))
 
     def dir(self) -> List:
         from poop.types.list import List
@@ -377,13 +405,10 @@ class Object(metaclass=PoopMeta):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        from poop.types._unwrap import _unwrap, _unwrap_bool
-        from poop.types.none import none
-
-        end_value = _unwrap(end, "\n")
-        flush_value = _unwrap_bool(flush, False)
+        end_value = _unwrap()(end, "\n")
+        flush_value = _unwrap_bool()(flush, False)
         builtins.print(str(self), end=end_value, flush=flush_value)  # noqa: T201
-        return none
+        return _none()
 
     def __str__(self) -> str:
         return f"<{self.class_name()}>"

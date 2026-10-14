@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Never, Protocol, Self, overload
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
+from poop.types._late import late
 from poop.types._message import article
 from poop.types._selectors import explain, is_dunder, is_message, not_understood
 
@@ -24,6 +25,15 @@ if TYPE_CHECKING:
     from poop.types.list import List
     from poop.types.none import NoneClass
     from poop.types.string import Str
+
+# circular: _alias and boolean are built on classes this metaclass makes. Bound
+# late: `__eq__` runs on every `class_() == int` and every dict keyed by class.
+_unalias: Callable[[], Callable[[object], object]] = late(
+    "poop.types._alias", "unalias"
+)
+_to_boolean: Callable[[], Callable[[object], Boolean]] = late(
+    "poop.types.boolean", "to_boolean"
+)
 
 
 class _Message[C, **P, R](Protocol):
@@ -532,17 +542,12 @@ class PoopMeta(type):
         that both call themselves `int`. `is_identical` deliberately does not
         follow: it asks identity, and those really are two objects.
         """
-        from poop.types._alias import unalias
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(unalias(cls) is unalias(other))
+        return _to_boolean()(_unalias()(cls) is _unalias()(other))
 
     def __ne__(cls, other: object) -> Boolean:
         # The rule lives in `__eq__` alone, as `Object.__ne__` keeps it: a
         # second copy with the answer flipped is one to keep in step by hand.
-        from poop.types.boolean import to_boolean
-
-        return to_boolean(not bool(cls == other))
+        return _to_boolean()(not bool(cls == other))
 
     # Defining `__eq__` sets `__hash__` to None, which would make every POOP
     # class unhashable — `NATIVE_TO_POOP` keys on classes, and so does every

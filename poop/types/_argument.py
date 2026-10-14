@@ -15,6 +15,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 from typing import TYPE_CHECKING, Literal, SupportsIndex, cast, overload
 
 from poop.types import mirrors
+from poop.types._late import late
 from poop.types._message import article
 from poop.types._raw import _faithful
 from poop.types._sentinel import MISSING, Missing
@@ -22,6 +23,15 @@ from poop.types._sentinel import MISSING, Missing
 if TYPE_CHECKING:
     from poop.types.none import NoneClass
     from poop.types.object import Object
+
+# circular: _unwrap -> boolean -> _argument. Bound late rather than imported in
+# each guard: these run on every optional argument a message takes.
+_absent: Callable[[], Callable[[object], bool]] = late(
+    "poop.types._unwrap", "_is_absent"
+)
+_searched: Callable[[], Callable[[object], object]] = late(
+    "poop.types._unwrap", "_searched"
+)
 
 # The optional `key` of `sorted` / `sort` / `min` / `max`: a block over the
 # element, or absent either way a POOP program can leave it out. `a_key` is
@@ -188,10 +198,7 @@ def a_fill[T: Sized](
     object of length 2` — the message spelt as a call. `Str` reached all of
     them unguarded, and the byte twins guarded the type but not the length.
     """
-    # circular: _unwrap -> boolean -> _argument
-    from poop.types._unwrap import _is_absent  # noqa: PLC0415
-
-    if _is_absent(value):
+    if _absent()(value):
         return None
     raw = text_like(value, selector, expected, kinds)
     if len(raw) != 1:
@@ -219,12 +226,9 @@ def bytes_like(
     substitute, and one the wording sweep could not see: it carries no call, no
     dunder and no operator.
     """
-    # circular: _unwrap -> boolean -> _argument
-    from poop.types._unwrap import _is_absent  # noqa: PLC0415
-
     # `optional` for the strip family, whose argument is genuinely absent by
     # default — CPython's own `strip arg must be None or str` names that case.
-    if optional and _is_absent(value):
+    if optional and _absent()(value):
         return None
     raw = _faithful(value)
     if isinstance(raw, (bytes, bytearray, memoryview)):
@@ -314,10 +318,7 @@ def byte_order(value: object, selector: str) -> str:
     as a call. The two valid spellings are named here rather than left to the
     conversion, so a typo (`"Big"`) is refused by the message that takes it.
     """
-    # circular: _unwrap -> boolean -> _argument
-    from poop.types._unwrap import _is_absent  # noqa: PLC0415
-
-    if _is_absent(value):
+    if _absent()(value):
         return "big"
     # Two failures, two classes, as CPython has them: a non-string is a
     # TypeError about the argument's kind, a misspelt one a ValueError about
@@ -361,10 +362,7 @@ def an_int[D](
     an `__index__`": the same objects pass, and the answer is an `int` rather
     than whatever carried the slot.
     """
-    # circular: _unwrap -> boolean -> _argument
-    from poop.types._unwrap import _is_absent  # noqa: PLC0415
-
-    if default is not MISSING and _is_absent(value):
+    if default is not MISSING and _absent()(value):
         return default
     raw = _faithful(value)
     if isinstance(raw, SupportsIndex):
@@ -394,10 +392,7 @@ def a_number(value: object, selector: str, *, real: bool) -> int | float | compl
     integer, as `_searched` already does for it — it is the one wrapper with
     no payload of its own.
     """
-    # circular: _unwrap -> boolean -> _argument
-    from poop.types._unwrap import _searched  # noqa: PLC0415
-
-    raw = _searched(value)
+    raw = _searched()(value)
     if isinstance(raw, int | float) or (not real and isinstance(raw, complex)):
         return raw
     raise mirrors.TypeError(

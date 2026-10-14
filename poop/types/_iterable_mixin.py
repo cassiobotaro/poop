@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, overload
 
 from poop.types import mirrors
 from poop.types._argument import Key, a_block, a_key
+from poop.types._late import late
 from poop.types._mixin import _Mixin
 
 if TYPE_CHECKING:
@@ -27,6 +28,11 @@ from poop.types._unwrap import _is_absent
 from poop.types.boolean import false, to_boolean
 from poop.types.int import Int
 from poop.types.none import none
+
+# circular: map and filter import this mixin. Bound late: `map` and `filter`
+# are the collection protocol's two most-sent messages.
+_map: Callable[[], type[Map]] = late("poop.types.map", "Map")
+_filter: Callable[[], type[Filter]] = late("poop.types.filter", "Filter")
 
 
 def _sorted[T](
@@ -89,19 +95,13 @@ class _IterableMixin[T: Object](_Mixin):
         return none
 
     def map[R: Object](self, block: Callable[[T], R] | Missing = MISSING) -> Map[T, R]:
-        # circular: map imports _iterable_mixin
-        from poop.types.map import Map  # noqa: PLC0415
-
         # Eagerly, though the view is lazy: this is the half no wording change
         # reaches. A `Map` built over a non-block simply fails later, somewhere
         # else entirely — or never, if the view is never walked.
-        return Map(self, a_block(block, "map"))
+        return _map()(self, a_block(block, "map"))
 
     def filter(self, block: Callable[[T], object] | Missing = MISSING) -> Filter[T]:
-        # circular: filter imports _iterable_mixin
-        from poop.types.filter import Filter  # noqa: PLC0415
-
-        return Filter(self, a_block(block, "filter"))
+        return _filter()(self, a_block(block, "filter"))
 
     def filter_false(
         self, block: Callable[[T], object] | Missing = MISSING
