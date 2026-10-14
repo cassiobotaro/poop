@@ -6,20 +6,35 @@ from typing import TYPE_CHECKING, Any, overload
 
 from poop.types import mirrors
 from poop.types._argument import Key, a_block, a_key
-from poop.types._late import late
 from poop.types._mixin import _Mixin
+
+# circular: enumerate imports _iterable_mixin
+lazy from poop.types.enumerate import Enumerate
+
+# circular: filter imports _iterable_mixin
+lazy from poop.types.filter import Filter
+
+# `no_sorted` forbids `sorted(col)` and names `col.sorted()`, and the
+# message existed on `List` and `Tuple` only — so `{2, 1}.sorted()`,
+# the ordinary way to look at an unordered collection in order, was
+# banned with nowhere to go. A `List`, as CPython's `sorted` always
+# answers a `list` whatever it was handed; `Tuple` overrides to keep
+# its own type, which can hold an order.
+# circular: list imports _iterable_mixin
+lazy from poop.types.list import List
+
+# circular: map imports _iterable_mixin
+lazy from poop.types.map import Map
+
+# circular: zip imports _iterable_mixin
+lazy from poop.types.zip import Zip
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
 
     from poop.types.boolean import Boolean
-    from poop.types.enumerate import Enumerate
-    from poop.types.filter import Filter
-    from poop.types.list import List
-    from poop.types.map import Map
     from poop.types.none import NoneClass
     from poop.types.object import Object
-    from poop.types.zip import Zip
 
 from poop.types._minmax import _minmax
 from poop.types._mutated import iterating, reword_if_native
@@ -28,11 +43,6 @@ from poop.types._unwrap import _is_absent
 from poop.types.boolean import false, to_boolean
 from poop.types.int import Int
 from poop.types.none import none
-
-# circular: map and filter import this mixin. Bound late: `map` and `filter`
-# are the collection protocol's two most-sent messages.
-_map: Callable[[], type[Map]] = late("poop.types.map", "Map")
-_filter: Callable[[], type[Filter]] = late("poop.types.filter", "Filter")
 
 
 def _sorted[T](
@@ -98,17 +108,14 @@ class _IterableMixin[T: Object](_Mixin):
         # Eagerly, though the view is lazy: this is the half no wording change
         # reaches. A `Map` built over a non-block simply fails later, somewhere
         # else entirely — or never, if the view is never walked.
-        return _map()(self, a_block(block, "map"))
+        return Map(self, a_block(block, "map"))
 
     def filter(self, block: Callable[[T], object] | Missing = MISSING) -> Filter[T]:
-        return _filter()(self, a_block(block, "filter"))
+        return Filter(self, a_block(block, "filter"))
 
     def filter_false(
         self, block: Callable[[T], object] | Missing = MISSING
     ) -> Filter[T]:
-        # circular: filter imports _iterable_mixin
-        from poop.types.filter import Filter  # noqa: PLC0415
-
         block = a_block(block, "filter_false")
         return Filter(self, lambda x: not bool(block(x)))
 
@@ -168,15 +175,6 @@ class _IterableMixin[T: Object](_Mixin):
         return _minmax(builtins.max, "#max", self._iter_items(), key, default)
 
     def sorted(self, *, key: Key[T] = None, reverse: Boolean = false) -> List:
-        # `no_sorted` forbids `sorted(col)` and names `col.sorted()`, and the
-        # message existed on `List` and `Tuple` only — so `{2, 1}.sorted()`,
-        # the ordinary way to look at an unordered collection in order, was
-        # banned with nowhere to go. A `List`, as CPython's `sorted` always
-        # answers a `list` whatever it was handed; `Tuple` overrides to keep
-        # its own type, which can hold an order.
-        # circular: list imports _iterable_mixin
-        from poop.types.list import List  # noqa: PLC0415
-
         return List(*_sorted(self._iter_items(), key, reverse))
 
     def all(self, block: Callable[[T], object] | Missing = MISSING) -> Boolean:
@@ -186,13 +184,7 @@ class _IterableMixin[T: Object](_Mixin):
         return to_boolean(builtins.any(map(a_block(block, "any"), self._iter_items())))
 
     def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:
-        # circular: enumerate imports _iterable_mixin
-        from poop.types.enumerate import Enumerate  # noqa: PLC0415
-
         return Enumerate(self, start)
 
     def zip(self, *others: Object, strict: Boolean | NoneClass | None = None) -> Zip:
-        # circular: zip imports _iterable_mixin
-        from poop.types.zip import Zip  # noqa: PLC0415
-
         return Zip(self, *others, strict=strict)

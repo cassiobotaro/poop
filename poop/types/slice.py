@@ -7,10 +7,12 @@ from poop.types.int import Int
 from poop.types.none import NoneClass, none
 from poop.types.object import Object
 
+# circular: tuple imports slice
+lazy from poop.types.tuple import Tuple
+
 if TYPE_CHECKING:
     from poop.types._index import Index
     from poop.types.boolean import Boolean
-    from poop.types.tuple import Tuple
 
 
 class Slice(Object, name="slice"):
@@ -43,9 +45,6 @@ class Slice(Object, name="slice"):
         return slice(self._start, self._stop, self._step)
 
     def indices(self, length: Index) -> Tuple:
-        # circular: tuple imports slice
-        from poop.types.tuple import Tuple  # noqa: PLC0415
-
         start, stop, step = self._py_slice().indices(
             an_int(length, "indices", "length")
         )

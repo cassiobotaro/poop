@@ -15,23 +15,27 @@ from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 from typing import TYPE_CHECKING, Literal, SupportsIndex, cast, overload
 
 from poop.types import mirrors
-from poop.types._late import late
 from poop.types._message import article
 from poop.types._raw import _faithful
 from poop.types._sentinel import MISSING, Missing
+
+# circular: _bridge, _mapping and mapping_proxy all import _argument
+lazy from poop.types._bridge import to_python
+lazy from poop.types._mapping import _MappingMixin
+
+# circular: _unwrap -> boolean -> _argument
+lazy from poop.types._unwrap import _is_absent, _searched
+lazy from poop.types.list import List
+lazy from poop.types.mapping_proxy import MappingProxy
+
+# circular: string imports _argument
+lazy from poop.types.string import Str
+lazy from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from poop.types.none import NoneClass
     from poop.types.object import Object
 
-# circular: _unwrap -> boolean -> _argument. Bound late rather than imported in
-# each guard: these run on every optional argument a message takes.
-_absent: Callable[[], Callable[[object], bool]] = late(
-    "poop.types._unwrap", "_is_absent"
-)
-_searched: Callable[[], Callable[[object], object]] = late(
-    "poop.types._unwrap", "_searched"
-)
 
 # The optional `key` of `sorted` / `sort` / `min` / `max`: a block over the
 # element, or absent either way a POOP program can leave it out. `a_key` is
@@ -158,9 +162,6 @@ def a_needle[T](
     CPython's rule (`b"ab".count(97)` is 1), so `expected` carries what this
     receiver takes.
     """
-    # circular: string imports _argument
-    from poop.types.string import Str  # noqa: PLC0415
-
     # Two spellings of the default, as in `text_like`: the overload without
     # `kinds` answers `str`, and this is the tuple it stands for.
     wanted = kinds if kinds is not None else (str,)
@@ -198,7 +199,7 @@ def a_fill[T: Sized](
     object of length 2` — the message spelt as a call. `Str` reached all of
     them unguarded, and the byte twins guarded the type but not the length.
     """
-    if _absent()(value):
+    if _is_absent(value):
         return None
     raw = text_like(value, selector, expected, kinds)
     if len(raw) != 1:
@@ -228,7 +229,7 @@ def bytes_like(
     """
     # `optional` for the strip family, whose argument is genuinely absent by
     # default — CPython's own `strip arg must be None or str` names that case.
-    if optional and _absent()(value):
+    if optional and _is_absent(value):
         return None
     raw = _faithful(value)
     if isinstance(raw, (bytes, bytearray, memoryview)):
@@ -318,7 +319,7 @@ def byte_order(value: object, selector: str) -> str:
     as a call. The two valid spellings are named here rather than left to the
     conversion, so a typo (`"Big"`) is refused by the message that takes it.
     """
-    if _absent()(value):
+    if _is_absent(value):
         return "big"
     # Two failures, two classes, as CPython has them: a non-string is a
     # TypeError about the argument's kind, a misspelt one a ValueError about
@@ -362,7 +363,7 @@ def an_int[D](
     an `__index__`": the same objects pass, and the answer is an `int` rather
     than whatever carried the slot.
     """
-    if default is not MISSING and _absent()(value):
+    if default is not MISSING and _is_absent(value):
         return default
     raw = _faithful(value)
     if isinstance(raw, SupportsIndex):
@@ -392,7 +393,7 @@ def a_number(value: object, selector: str, *, real: bool) -> int | float | compl
     integer, as `_searched` already does for it — it is the one wrapper with
     no payload of its own.
     """
-    raw = _searched()(value)
+    raw = _searched(value)
     if isinstance(raw, int | float) or (not real and isinstance(raw, complex)):
         return raw
     raise mirrors.TypeError(
@@ -417,11 +418,6 @@ def a_mapping(value: object, selector: str) -> dict[object, object]:
     ordinal up and miss. Each key and value crosses through `to_python`, as
     `_bridge.py` does for a whole `Dict`.
     """
-    # circular: _bridge, _mapping and mapping_proxy all import _argument
-    from poop.types._bridge import to_python  # noqa: PLC0415
-    from poop.types._mapping import _MappingMixin  # noqa: PLC0415
-    from poop.types.mapping_proxy import MappingProxy  # noqa: PLC0415
-
     mapping = value._dict if isinstance(value, MappingProxy) else value
     if isinstance(mapping, _MappingMixin):
         return {to_python(k): to_python(v) for k, v in mapping._data.items()}
@@ -449,14 +445,6 @@ def translation_table(value: object, selector: str) -> TranslationTable:
     reach `str.translate` as wrappers, which it refuses as neither integer,
     `None` nor `str`.
     """
-    # circular: _bridge, _mapping, mapping_proxy and string all import _argument
-    from poop.types._bridge import to_python  # noqa: PLC0415
-    from poop.types._mapping import _MappingMixin  # noqa: PLC0415
-    from poop.types.list import List  # noqa: PLC0415
-    from poop.types.mapping_proxy import MappingProxy  # noqa: PLC0415
-    from poop.types.string import Str  # noqa: PLC0415
-    from poop.types.tuple import Tuple  # noqa: PLC0415
-
     if isinstance(value, (_MappingMixin, MappingProxy)):
         return cast("dict[int, str | int | None]", a_mapping(value, selector))
     if isinstance(value, Str):

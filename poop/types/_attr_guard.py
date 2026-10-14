@@ -15,6 +15,15 @@ the function that needs it.
 
 from poop.types._selectors import is_dunder
 
+# circular: exceptions -> meta -> _attr_guard
+lazy from poop.types import mirrors
+
+# circular: _unwrap -> boolean -> object -> _attr_guard
+lazy from poop.types._unwrap import _attr_name
+
+# circular: no_dunder_attribute -> types -> object -> _attr_guard
+lazy from poop.validators.no_dunder_attribute import dunder_message
+
 
 def _reject_dunder(name: str) -> None:
     """The runtime half of `no_dunder_attribute`, for instances and classes.
@@ -34,12 +43,6 @@ def _reject_dunder(name: str) -> None:
     this guard and the exemption with it, so `str.get_attr("__init__")(s, "x")`
     did exactly that until both receivers shared this one.
     """
-    # circular: exceptions -> meta -> _attr_guard
-    from poop.types import mirrors  # noqa: PLC0415
-
-    # circular: no_dunder_attribute -> types -> object -> _attr_guard
-    from poop.validators.no_dunder_attribute import dunder_message  # noqa: PLC0415
-
     message = dunder_message(name, allow_init=False)
     if message is not None:
         raise mirrors.AttributeError(message.lstrip("."))
@@ -56,9 +59,6 @@ def _reject_private(name: str) -> None:
     `_reject_dunder`; this covers the single-underscore convention Python
     honours only by etiquette.
     """
-    # circular: exceptions -> meta -> _attr_guard
-    from poop.types import mirrors  # noqa: PLC0415
-
     if name.startswith("_") and not is_dunder(name):
         raise mirrors.AttributeError(
             f"{name} is private — POOP objects do not expose their internals"
@@ -73,9 +73,6 @@ def _checked_name(name: object) -> str:
     `#_value` out of the substitute `no_getattr` points at. One copy, because
     two had already drifted apart (see `_reject_dunder`).
     """
-    # circular: _unwrap -> boolean -> object -> _attr_guard
-    from poop.types._unwrap import _attr_name  # noqa: PLC0415
-
     raw = _attr_name(name)
     _reject_dunder(raw)
     _reject_private(raw)

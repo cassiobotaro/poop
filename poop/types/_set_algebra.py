@@ -4,12 +4,15 @@ from typing import TYPE_CHECKING, Self
 from poop.types._argument import a_collection
 from poop.types.boolean import to_boolean
 
+# Function-local: `frozen_set` imports this module.
+# circular: frozen_set imports _set_algebra
+lazy from poop.types.frozen_set import FrozenSet
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
     from collections.abc import Set as AbstractSet
 
     from poop.types.boolean import Boolean
-    from poop.types.frozen_set import FrozenSet
     from poop.types.object import Object
 
 
@@ -44,10 +47,6 @@ def probed[T](obj: T) -> T | FrozenSet:
     """
     raw = _other_set(obj)
     if isinstance(raw, set):
-        # Function-local: `frozen_set` imports this module.
-        # circular: frozen_set imports _set_algebra
-        from poop.types.frozen_set import FrozenSet  # noqa: PLC0415
-
         return FrozenSet(*raw)
     return obj
 

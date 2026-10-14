@@ -23,11 +23,15 @@ from poop.types.none import none
 from poop.types.object import Object
 from poop.types.string import Str
 
+# Both byte-likes pass: CPython concatenates `bytearray + bytes` and
+# answers bytearray. Anything else -> faithful TypeError, not #_value.
+# circular: bytes imports byte_array
+lazy from poop.types.bytes import Bytes
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from poop.types._index import Index
-    from poop.types.bytes import Bytes
     from poop.types.none import NoneClass
 
 _bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
@@ -115,11 +119,6 @@ class ByteArray(
         return ByteArrayIterator(self)
 
     def __add__(self, other: object) -> ByteArray:
-        # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
-        # answers bytearray. Anything else -> faithful TypeError, not #_value.
-        # circular: bytes imports byte_array
-        from poop.types.bytes import Bytes  # noqa: PLC0415
-
         if not isinstance(other, (ByteArray, Bytes)):
             return NotImplemented
         return ByteArray(self._value + other._value)
@@ -145,9 +144,6 @@ class ByteArray(
         POOP forbids. A mutator with an answer, so it returns the bytes
         rather than `none`.
         """
-        # circular: bytes imports byte_array
-        from poop.types.bytes import Bytes  # noqa: PLC0415
-
         return Bytes(self._value.take_bytes(an_int(n, "take_bytes", "n", None)))
 
     def resize(self, size: Index) -> NoneClass:

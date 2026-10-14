@@ -10,11 +10,13 @@ from poop.types._sentinel import NOT_NUMERIC
 from poop.types.boolean import Boolean, false, to_boolean
 from poop.types.object import Object
 
+# circular: float imports complex
+lazy from poop.types.float import Float
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import NotImplementedType
 
-    from poop.types.float import Float
     from poop.types.int import Int
 
 _complex = complex  # alias to avoid shadowing by Complex class name
@@ -27,15 +29,9 @@ class Complex(Object, name="complex"):
         self._value = value._value if isinstance(value, Complex) else value
 
     def real(self) -> Float:
-        # circular: float imports complex
-        from poop.types.float import Float  # noqa: PLC0415
-
         return Float(self._value.real)
 
     def imag(self) -> Float:
-        # circular: float imports complex
-        from poop.types.float import Float  # noqa: PLC0415
-
         return Float(self._value.imag)
 
     @classmethod
@@ -51,9 +47,6 @@ class Complex(Object, name="complex"):
         return Complex(self._value.conjugate())
 
     def __abs__(self) -> Float:
-        # circular: float imports complex
-        from poop.types.float import Float  # noqa: PLC0415
-
         return Float(abs(self._value))
 
     def abs(self) -> Float:

@@ -13,30 +13,25 @@ mismatch raises CPython's faithful ``TypeError`` instead of leaking an
 ``_order_value``, rather than importing the three rungs and testing them in
 order: every rung inherits the mixin, so one ``isinstance`` on it is the whole
 test. This runs on every comparison between numbers, and the three local
-imports it used to make were a third of the cost (see ``_late.py``); the two
-names it still needs from ``boolean`` and ``complex`` bind late for the same
-reason.
+imports it used to make were a third of the cost; the two names it still
+needs from ``boolean`` and ``complex`` are lazy imports, resolved on first use
+and plain globals after that.
 """
 
 import operator
 from typing import TYPE_CHECKING
 
-from poop.types._late import late
 from poop.types._mixin import _Mixin
 from poop.types._sentinel import NOT_NUMERIC, NotNumeric
+
+# circular: boolean inherits this module's mixin, complex imports boolean
+lazy from poop.types.boolean import false, to_boolean
+lazy from poop.types.complex import Complex
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from poop.types.boolean import Boolean
-    from poop.types.complex import Complex
-
-# circular: boolean inherits this module's mixin, complex imports boolean
-_to_boolean: Callable[[], Callable[[object], Boolean]] = late(
-    "poop.types.boolean", "to_boolean"
-)
-_false: Callable[[], Boolean] = late("poop.types.boolean", "false")
-_complex: Callable[[], type[Complex]] = late("poop.types.complex", "Complex")
 
 
 def _num_value(other: object) -> int | float | NotNumeric:
@@ -72,7 +67,7 @@ class _NumericCompareMixin(_Mixin):  # noqa: PLW1641 — the numeric rungs hash 
         v = _num_value(other)
         if v is NOT_NUMERIC:
             return NotImplemented
-        return _to_boolean()(op(self._order_value(), v))
+        return to_boolean(op(self._order_value(), v))
 
     def __lt__(self, other: object) -> Boolean:
         return self._order(other, operator.lt)
@@ -91,7 +86,7 @@ class _NumericCompareMixin(_Mixin):  # noqa: PLW1641 — the numeric rungs hash 
         if v is NOT_NUMERIC:
             # The tower first, `Complex` only on the miss: `Int == Int` is the
             # common case and never needs the class this binds.
-            if isinstance(other, _complex()):
-                return _to_boolean()(self._order_value() == other._value)
-            return _false()
-        return _to_boolean()(self._order_value() == v)
+            if isinstance(other, Complex):
+                return to_boolean(self._order_value() == other._value)
+            return false
+        return to_boolean(self._order_value() == v)

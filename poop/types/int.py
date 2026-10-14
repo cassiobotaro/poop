@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Literal, cast
 from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, an_int, byte_order, byte_source
-from poop.types._late import late
 from poop.types._message import article, binary_refusal
 from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
@@ -21,23 +20,23 @@ from poop.types.boolean import Boolean, true
 from poop.types.complex import Complex
 from poop.types.object import Object
 
+# circular: float imports int, and _bridge imports both
+lazy from poop.types._bridge import to_poop
+
+# circular: bytes imports int
+lazy from poop.types.bytes import Bytes
+lazy from poop.types.float import Float
+
+# circular: string imports int
+lazy from poop.types.string import Str
+
+# circular: tuple imports int
+lazy from poop.types.tuple import Tuple
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from poop.types.bytes import Bytes
-    from poop.types.float import Float
     from poop.types.none import NoneClass
-    from poop.types.string import Str
-    from poop.types.tuple import Tuple
-
-# circular: float imports int, and _bridge imports both. Bound late rather than
-# imported per call: `_arith` runs on every arithmetic operator (see `_late.py`).
-_float: Callable[[], type[Float]] = late("poop.types.float", "Float")
-# `to_poop`'s own overloads answer `Int`/`Float`/`Complex` for these natives;
-# the getter restates the three the power of two numbers can be.
-_to_poop: Callable[[], Callable[[int | float | complex], Int | Float | Complex]] = late(
-    "poop.types._bridge", "to_poop"
-)
 
 
 def _integral_value(other: object) -> int | NotIntegral:
@@ -121,9 +120,6 @@ class Int(_NumericCompareMixin, Object, name="int"):
         return self
 
     def as_integer_ratio(self) -> Tuple:
-        # circular: tuple imports int
-        from poop.types.tuple import Tuple  # noqa: PLC0415
-
         return Tuple(self, Int(1))
 
     def to_bytes(
@@ -133,9 +129,6 @@ class Int(_NumericCompareMixin, Object, name="int"):
         *,
         signed: Boolean | NoneClass | None = None,
     ) -> Bytes:
-        # circular: bytes imports int
-        from poop.types.bytes import Bytes  # noqa: PLC0415
-
         return Bytes(
             self._value.to_bytes(
                 an_int(length, "to_bytes", "length", 1),
@@ -176,15 +169,13 @@ class Int(_NumericCompareMixin, Object, name="int"):
         reflected method runs — `Str`/`Bytes` repeat for `*`, `Boolean` and
         `Complex` for the rest.
         """
-        # circular: float imports int — bound late, this runs on every operator
-        float_ = _float()
-        if not isinstance(other, (Int, float_)):
+        if not isinstance(other, (Int, Float)):
             return NotImplemented
         # An `int` answer is an `Int`, a `float` one a `Float`, whichever
         # operator produced it. Branched here rather than through `to_poop`:
         # ty reads `int | float` as `float` and would answer `Float` alone.
         raw = op(self._value, other._value)
-        return Int(raw) if isinstance(raw, int) else float_(raw)
+        return Int(raw) if isinstance(raw, int) else Float(raw)
 
     def __add__(self, other: object) -> Int | Float:
         return self._arith(other, operator.add)
@@ -208,14 +199,12 @@ class Int(_NumericCompareMixin, Object, name="int"):
     def __pow__(
         self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
-        # circular: float imports int, and _bridge imports both — bound late
-        float_ = _float()
         if isinstance(other, Complex):
             return NotImplemented
-        if not isinstance(other, (Int, float_)):
+        if not isinstance(other, (Int, Float)):
             return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
         if _is_absent(modulus):
-            return _to_poop()(self._value**other._value)
+            return to_poop(self._value**other._value)
         if not isinstance(other, Int):
             raise mirrors.TypeError(
                 "pow's modulus is only defined when both operands are ints"
@@ -250,12 +239,6 @@ class Int(_NumericCompareMixin, Object, name="int"):
         return result
 
     def __divmod__(self, other: object) -> Tuple:
-        # circular: float imports int
-        from poop.types.float import Float  # noqa: PLC0415
-
-        # circular: tuple imports int
-        from poop.types.tuple import Tuple  # noqa: PLC0415
-
         v = _num_value(other)
         if v is NOT_NUMERIC:
             return NotImplemented  # let other.__rdivmod__ run / faithful TypeError
@@ -345,27 +328,15 @@ class Int(_NumericCompareMixin, Object, name="int"):
         return hash(self._value)
 
     def bin(self) -> Str:
-        # circular: string imports int
-        from poop.types.string import Str  # noqa: PLC0415
-
         return Str(bin(self._value))
 
     def hex(self) -> Str:
-        # circular: string imports int
-        from poop.types.string import Str  # noqa: PLC0415
-
         return Str(hex(self._value))
 
     def oct(self) -> Str:
-        # circular: string imports int
-        from poop.types.string import Str  # noqa: PLC0415
-
         return Str(oct(self._value))
 
     def chr(self) -> Str:
-        # circular: string imports int
-        from poop.types.string import Str  # noqa: PLC0415
-
         try:
             return Str(chr(self._value))
         except ValueError:

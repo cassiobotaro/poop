@@ -95,13 +95,14 @@ select = [
   "BLE",
   # flake8-print — the language's own `print` is the one sanctioned call
   "T20",
-  # import-outside-top-level: CONTRIBUTING.md allows a function-local import
-  # only to break a cycle, so each one says which (`# noqa: PLC0415`)
+  # import-outside-top-level: a cycle is broken by a module-level `lazy from`
+  # (PEP 810) with a `# circular:` comment naming the edge, never by a
+  # function-local import — CONTRIBUTING.md, Imports
   "PLC0415",
   # eq-without-hash: defining `__eq__` clears `__hash__`
   "PLW1641",
   # flake8-type-checking: CONTRIBUTING.md puts annotation-only imports inside
-  # `if TYPE_CHECKING:`
+  # `if TYPE_CHECKING:`; a name also needed at runtime is a `lazy from` instead
   "TC",
   # ruff-specific, including RUF100, which keeps every `noqa` honest
   "RUF",
@@ -175,10 +176,6 @@ quote-style = "double"
   # binding to 0.0.0.0 in ipaddress predicate tests is intentional
   "S104",
 ]
-# The root of the type tree: every POOP type these name imports them first, so
-# each of their imports of the package is necessarily lazy.
-"poop/types/meta.py" = ["PLC0415"]
-"poop/types/object.py" = ["PLC0415"]
 # typer reads `main`'s annotations at runtime to build the CLI, so `Path` is
 # a runtime import there, annotation or not.
 "poop/cli.py" = ["TC003"]

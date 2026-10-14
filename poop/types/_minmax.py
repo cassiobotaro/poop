@@ -13,6 +13,11 @@ from poop.types import mirrors
 from poop.types._argument import Key, a_key
 from poop.types._sentinel import MISSING
 
+# Imported here, not at the top: this module is imported by `int.py`, and
+# `_unwrap` reaches `none.py` -> `object.py`, which sits above it.
+# circular: _unwrap -> boolean -> _minmax
+lazy from poop.types._unwrap import _is_absent
+
 if TYPE_CHECKING:
     # Name only — importing `none` at runtime would put this module back under
     # the callers it has to stay above.
@@ -48,11 +53,6 @@ def _minmax[T, D](
     refusal. Read off `func.__name__` it would spell `min`, the free function
     `no_min` forbids two lines earlier in the same program.
     """
-    # Imported here, not at the top: this module is imported by `int.py`, and
-    # `_unwrap` reaches `none.py` -> `object.py`, which sits above it.
-    # circular: _unwrap -> boolean -> _minmax
-    from poop.types._unwrap import _is_absent  # noqa: PLC0415
-
     kwargs: dict[str, object] = {}
     if not _is_absent(key):
         # Guarded here rather than at five call sites: this is the one place

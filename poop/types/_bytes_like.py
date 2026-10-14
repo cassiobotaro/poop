@@ -39,13 +39,15 @@ from poop.types.slice import _resolve_py_slice
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
+# circular: bytes imports _bytes_like
+lazy from poop.types.bytes import Bytes
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
     from poop.types._index import Index
     from poop.types.boolean import Boolean
     from poop.types.byte_array import ByteArray
-    from poop.types.bytes import Bytes
     from poop.types.none import NoneClass
     from poop.types.slice import Slice
 
@@ -295,9 +297,6 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
         `a bytes-like object is required, not 'str'`, and `bytes_like` words
         it.
         """
-        # circular: bytes imports _bytes_like
-        from poop.types.bytes import Bytes  # noqa: PLC0415
-
         return Bytes(
             bytes.maketrans(bytes_like(frm, "maketrans"), bytes_like(to, "maketrans"))
         )

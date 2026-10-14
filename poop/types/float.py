@@ -22,6 +22,9 @@ from poop.types.object import Object
 from poop.types.string import Str
 from poop.types.tuple import Tuple
 
+# circular: _bridge imports float
+lazy from poop.types._bridge import to_poop
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -136,9 +139,6 @@ class Float(_NumericCompareMixin, Object, name="float"):
             return NotImplemented
         if not isinstance(other, (Int, Float)):
             return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
-        # circular: _bridge imports float
-        from poop.types._bridge import to_poop  # noqa: PLC0415
-
         return to_poop(self._value**other._value)
 
     def pow(self, other: object, modulus: Int | NoneClass | None = None) -> object:

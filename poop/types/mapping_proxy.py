@@ -9,12 +9,16 @@ from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
 
+# circular: _mapping imports mapping_proxy
+lazy from poop.types._mapping import _MappingMixin
+
+# circular: dict imports mapping_proxy
+lazy from poop.types.dict import Dict
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from poop.types._mapping import _MappingMixin
     from poop.types.boolean import Boolean
-    from poop.types.dict import Dict
     from poop.types.dict_items import DictItems
     from poop.types.dict_keys import DictKeys
     from poop.types.dict_values import DictValues
@@ -81,9 +85,6 @@ class MappingProxy(_IterableMixin[Object], Object, name="mappingproxy"):
     def __eq__(self, other: object) -> Boolean:
         if isinstance(other, MappingProxy):
             return to_boolean(self._dict == other._dict)
-        # circular: _mapping imports mapping_proxy
-        from poop.types._mapping import _MappingMixin  # noqa: PLC0415
-
         if isinstance(other, _MappingMixin):
             return to_boolean(self._dict == other)
         return false
@@ -95,9 +96,6 @@ class MappingProxy(_IterableMixin[Object], Object, name="mappingproxy"):
         operand, so `proxy | 5` answered `int does not understand #_data` — a
         POOP internal — where CPython answers `unsupported operand type(s)`.
         """
-        # circular: _mapping imports mapping_proxy
-        from poop.types._mapping import _MappingMixin  # noqa: PLC0415
-
         if isinstance(other, MappingProxy):
             return other._dict._data
         if isinstance(other, _MappingMixin):
@@ -105,21 +103,12 @@ class MappingProxy(_IterableMixin[Object], Object, name="mappingproxy"):
         return None
 
     def __or__(self, other: object) -> Dict:
-        # circular: dict imports mapping_proxy
-        from poop.types.dict import Dict  # noqa: PLC0415
-
         other_data = self._merge_data(other)
         if other_data is None:
             return NotImplemented  # foreign operand -> faithful TypeError
         return Dict._wrapping(self._dict._data | other_data)
 
     def __ror__(self, other: object) -> Dict:
-        # CPython: ``dict | mappingproxy`` yields a ``dict`` ({**left, **right}).
-        # ``Dict.__or__`` returns NotImplemented for a non-Dict right operand,
-        # so Python falls back to this reflected form with ``other`` on the left.
-        # circular: dict imports mapping_proxy
-        from poop.types.dict import Dict  # noqa: PLC0415
-
         other_data = self._merge_data(other)
         if other_data is None:
             return NotImplemented

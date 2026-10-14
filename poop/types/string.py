@@ -36,12 +36,22 @@ from poop.types.slice import _resolve_py_slice
 from poop.types.str_iterator import StrIterator
 from poop.types.tuple import Tuple
 
+# CPython's str.format template substitution. Overrides the
+# inherited Object.format(spec); f-strings are forbidden, so this
+# is POOP's documented template-formatting surface. The rare
+# "apply a spec to a string" case stays expressible as
+# "{:^10}".format(s).
+# circular: _bridge imports string
+lazy from poop.types._bridge import to_poop, to_python
+
+# circular: bytes imports string
+lazy from poop.types.bytes import Bytes
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Iterator
 
     from poop.types._index import Index
     from poop.types.boolean import Boolean
-    from poop.types.bytes import Bytes
     from poop.types.dict import Dict
     from poop.types.frozen_dict import FrozenDict
     from poop.types.mapping_proxy import MappingProxy
@@ -326,14 +336,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         return Str(self._value.join(pieces))
 
     def format(self, *args: Object, **kwargs: Object) -> Str:
-        # CPython's str.format template substitution. Overrides the
-        # inherited Object.format(spec); f-strings are forbidden, so this
-        # is POOP's documented template-formatting surface. The rare
-        # "apply a spec to a string" case stays expressible as
-        # "{:^10}".format(s).
-        # circular: _bridge imports string
-        from poop.types._bridge import to_python  # noqa: PLC0415
-
         positional = [to_python(a) for a in args]
         named = {k: to_python(v) for k, v in kwargs.items()}
         return self._fill_template(
@@ -414,9 +416,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         type-level one does (`if you give only one argument to maketrans it
         must be a dict`), and `a_mapping` words it.
         """
-        # circular: _bridge imports string
-        from poop.types._bridge import to_poop  # noqa: PLC0415
-
         if _is_absent(y):
             # The keys are CPython's to check (`keys in translate table must be
             # strings or integers`); the cast says what passes that check.
@@ -555,9 +554,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         encoding: Str | NoneClass | None = None,
         errors: Str | NoneClass | None = None,
     ) -> Bytes:
-        # circular: bytes imports string
-        from poop.types.bytes import Bytes  # noqa: PLC0415
-
         return Bytes(
             encoded(
                 self._value,

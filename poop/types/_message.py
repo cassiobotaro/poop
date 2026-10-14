@@ -26,6 +26,11 @@ upgrade that changes them fails loudly instead of silently regressing.
 import builtins
 import re
 
+# circular: all three import this module, directly or through the types
+lazy from poop.executor import _ALLOWED_BUILTINS
+lazy from poop.transformers import RESERVED_NAMES
+lazy from poop.types.exceptions import MIRRORS
+
 # A tuple, not the string "aeiou": `"" in "aeiou"` is True, so a nameless type
 # answered `an ` — the empty string is a substring of every string.
 _VOWELS = ("a", "e", "i", "o", "u")
@@ -192,11 +197,6 @@ def withheld_builtin(name: str) -> str | None:
     validator bans never gets here — `len` is refused at parse time — so the
     sentence does not point at `:explain`, which would have nothing to say.
     """
-    # circular: all three import this module, directly or through the types
-    from poop.executor import _ALLOWED_BUILTINS  # noqa: PLC0415
-    from poop.transformers import RESERVED_NAMES  # noqa: PLC0415
-    from poop.types.exceptions import MIRRORS  # noqa: PLC0415
-
     value = vars(builtins).get(name)
     if value is None:
         return None

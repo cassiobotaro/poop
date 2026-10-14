@@ -10,6 +10,12 @@ from poop.types.mapping_proxy import MappingProxy
 from poop.types.object import Object
 from poop.types.set import Set
 
+# circular: dict_items imports _dict_view
+lazy from poop.types.dict_items import DictItems
+
+# circular: dict_keys imports _dict_view
+lazy from poop.types.dict_keys import DictKeys
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Set as AbstractSet
@@ -61,12 +67,6 @@ def _set_like_elements(other: object) -> set[Object] | None:
     reflected operator runs — CPython's ``frozenset({1}) | {2: 3}.keys()`` is
     a ``set``, not a ``frozenset``.
     """
-    # circular: dict_items imports _dict_view
-    from poop.types.dict_items import DictItems  # noqa: PLC0415
-
-    # circular: dict_keys imports _dict_view
-    from poop.types.dict_keys import DictKeys  # noqa: PLC0415
-
     if isinstance(other, (DictKeys, DictItems, Set, FrozenSet)):
         return _elements(other)
     return None

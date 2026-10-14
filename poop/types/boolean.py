@@ -2,10 +2,28 @@ import builtins
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import Key, a_block, no_arguments, text_like
-from poop.types._late import late
 from poop.types._minmax import MISSING, _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
+
+# `bool(self)`, not `_as_int()`, unlike every message around it:
+# `format(True, "")` is `'True'` and `format(1, "")` is `'1'`, so
+# folding first would change `True.format()` — the one spelling that
+# worked — from `True` to `1`. `Object.format` reads `_value`, which a
+# Boolean has no slot for, so it fell through to `object.__format__`
+# and refused every non-empty spec while `"{:>6}".format(True)`, which
+# routes through `to_python`, answered `'     1'`.
+# circular: _unwrap imports boolean
+lazy from poop.types._unwrap import _is_absent
+
+# circular: int imports boolean
+lazy from poop.types.int import Int
+
+# circular: none imports boolean
+lazy from poop.types.none import none
+
+# circular: string imports boolean
+lazy from poop.types.string import Str, _template_refusal
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -13,12 +31,8 @@ if TYPE_CHECKING:
     from poop.types.bytes import Bytes
     from poop.types.complex import Complex
     from poop.types.float import Float
-    from poop.types.int import Int
     from poop.types.none import NoneClass
-    from poop.types.string import Str
     from poop.types.tuple import Tuple
-
-_int: Callable[[], type[Int]] = late("poop.types.int", "Int")
 
 
 class Boolean(_NumericCompareMixin, Object, name="bool"):
@@ -118,7 +132,7 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
     def _as_int(self) -> Int:
         # circular: int imports boolean — bound late, this is every operator
         # a Boolean takes part in
-        return _int()(1) if self else _int()(0)
+        return Int(1) if self else Int(0)
 
     # The int-side *messages*, delegated through the same fold the operators
     # use. Everything that makes `bool` an `int` in CPython was re-supplied by
@@ -226,25 +240,9 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
         runs this one through `cls`, so `bool.from_bytes(b"\\x05", "big")` is
         `True` — the answer is the receiver's kind here, not the fold's.
         """
-        # circular: int imports boolean
-        from poop.types.int import Int  # noqa: PLC0415
-
         return to_boolean(bool(Int.from_bytes(b, byteorder, signed=signed)))
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
-        # `bool(self)`, not `_as_int()`, unlike every message around it:
-        # `format(True, "")` is `'True'` and `format(1, "")` is `'1'`, so
-        # folding first would change `True.format()` — the one spelling that
-        # worked — from `True` to `1`. `Object.format` reads `_value`, which a
-        # Boolean has no slot for, so it fell through to `object.__format__`
-        # and refused every non-empty spec while `"{:>6}".format(True)`, which
-        # routes through `to_python`, answered `'     1'`.
-        # circular: _unwrap imports boolean
-        from poop.types._unwrap import _is_absent  # noqa: PLC0415
-
-        # circular: string imports boolean
-        from poop.types.string import Str, _template_refusal  # noqa: PLC0415
-
         # Through `text_like` for the reason `Object.format` does it: a
         # non-`Str` spec answered `format() argument 2 must be str, not int`.
         raw = "" if _is_absent(spec) else text_like(spec, "format", "a str", (str,))
@@ -408,9 +406,6 @@ class _TrueClass(Boolean, name="bool"):
         return a_block(block, "if_true", param="")()
 
     def if_false[T](self, block: Callable[[], T]) -> NoneClass:
-        # circular: none imports boolean
-        from poop.types.none import none  # noqa: PLC0415
-
         a_block(block, "if_false", param="")
         return none
 
@@ -467,9 +462,6 @@ class _FalseClass(Boolean, name="bool"):
     __slots__ = ()
 
     def if_true[T](self, block: Callable[[], T]) -> NoneClass:
-        # circular: none imports boolean
-        from poop.types.none import none  # noqa: PLC0415
-
         # Guarded on the branch that does *not* run, which is the whole point:
         # `False.if_true(5)` used to say nothing at all, so whether a wrong
         # argument was reported depended on the receiver's value.
