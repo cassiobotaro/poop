@@ -432,10 +432,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
                 table = str.maketrans(
                     frm, to, text_like(z, "maketrans", "a str", (str,))
                 )
-        # `to_poop`'s `dict` overload is declared over `dict[object, object]`,
-        # which a `dict[int, int]` is not (keys are invariant); the cast
-        # restates what the registration answers for any raw dict.
-        return cast("Dict", to_poop(table))
+        return to_poop(table)
 
     def translate(self, table: PoopMapping | List | Tuple | Str) -> Str:
         """`str.translate`: each character looked up by ordinal in `table`.
