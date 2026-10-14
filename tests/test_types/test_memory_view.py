@@ -3,6 +3,7 @@ from typing import Any
 
 import pytest
 
+from poop import Interpreter
 from poop.parser import parse
 from poop.transformers.byte_array import ByteArrayTransformer, _poop_bytearray_from
 from poop.transformers.bytes import BytesTransformer
@@ -280,3 +281,60 @@ def test_tobytes_guards_its_order() -> None:
     with pytest.raises(TypeError, match="^#tobytes expects a str, got an int$"):
         MemoryView(memoryview(b"ab")).tobytes(wrong)
     assert MemoryView(memoryview(b"ab")).tobytes(Str("C")) == Bytes(b"ab")
+
+
+# --- tolist and readonly: the two memoryview names with content that the
+# surface diff left after the buffer-protocol attributes were declined. Each
+# scenario in openspec/specs/memoryview-type/spec.md is pinned here.
+
+
+def _run(source: str, capsys: pytest.CaptureFixture[str]) -> str:
+    Interpreter().run_source(source + "\n")
+    return capsys.readouterr().out.rstrip("\n")
+
+
+def test_tolist_answers_a_list_of_ints(capsys: pytest.CaptureFixture[str]) -> None:
+    answer = _mv(b"ab").tolist()
+    assert answer == List(Int(97), Int(98))
+    assert str(answer) == "[97, 98]"
+    assert answer.class_name() == Str("list")
+    # A `List` prints its elements joined by a space.
+    assert _run('memoryview(b"ab").tolist().print()', capsys) == "97 98"
+
+
+def test_tolist_over_a_bytearray() -> None:
+    answer = MemoryView(memoryview(bytearray(b"hi"))).tolist()
+    assert str(answer) == "[104, 105]"
+
+
+def test_tolist_of_a_slice_lists_only_its_own_bytes() -> None:
+    assert str(_mv(b"abc").slice(Int(1)).tolist()) == "[98, 99]"
+
+
+def test_tolist_of_an_empty_view() -> None:
+    answer = _mv(b"").tolist()
+    assert str(answer) == "[]"
+    assert answer.len() == Int(0)
+
+
+def test_readonly_is_true_over_bytes(capsys: pytest.CaptureFixture[str]) -> None:
+    assert _mv(b"ab").readonly() is true
+    assert _run('memoryview(b"ab").readonly().print()', capsys) == "True"
+
+
+def test_readonly_is_false_over_a_bytearray(capsys: pytest.CaptureFixture[str]) -> None:
+    assert MemoryView(memoryview(bytearray(b"ab"))).readonly() is false
+    assert _run('memoryview(bytearray(b"ab")).readonly().print()', capsys) == "False"
+
+
+def test_readonly_of_a_slice_follows_the_view_it_came_from() -> None:
+    assert MemoryView(memoryview(bytearray(b"abc"))).slice(Int(1)).readonly() is false
+    assert _mv(b"abc").slice(Int(1)).readonly() is true
+
+
+def test_readonly_uncalled_is_the_message_not_the_answer(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # CPython's `readonly` is an attribute; POOP's is a message, like `real`
+    # and `Range.start`, so the bare name is the block and not a Boolean.
+    assert _run('memoryview(b"ab").readonly.print()', capsys) == "<block>"

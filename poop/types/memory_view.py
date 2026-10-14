@@ -10,6 +10,7 @@ from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes
 from poop.types.int import Int
+from poop.types.list import List
 from poop.types.memory_view_iterator import MemoryViewIterator
 from poop.types.object import Object
 from poop.types.slice import _resolve_py_slice
@@ -153,6 +154,21 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
     def tobytes(self, order: Str | NoneClass | None = None) -> Bytes:
         raw = "C" if _is_absent(order) else text_like(order, "tobytes", "a str", (str,))
         return Bytes(self._value.tobytes(cast("Literal['C', 'F', 'A']", raw)))
+
+    def tolist(self) -> List:
+        # `memoryview.tolist`: the bytes as a `List` of `Int`, one per byte —
+        # what `__iter__` already yields, materialized. The other way to see
+        # the contents besides `hex` and `tobytes`, and the one that answers a
+        # collection the iterable protocol can keep working on.
+        return List(*(Int(b) for b in self._value))
+
+    def readonly(self) -> Boolean:
+        # `memoryview.readonly` is an attribute in CPython; here it is a
+        # message, by the rule that made `real`, `imag` and `Range.start`
+        # methods ("Python's numeric accessors are messages too"). `true` over
+        # `bytes`, `false` over a `bytearray` — the question `hash` answers in
+        # prose when it refuses a view whose bytes can still change.
+        return to_boolean(self._value.readonly)
 
     def __str__(self) -> str:
         # CPython prints `<memory at 0x70cb7ab59240>`: the raw pointer
