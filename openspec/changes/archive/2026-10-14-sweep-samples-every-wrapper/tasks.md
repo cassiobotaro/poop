@@ -1,0 +1,15 @@
+# Tasks
+
+## 1. The sweep samples every wrapper
+
+- [x] 1.1 In `tests/test_no_python_wording.py`, extend `_receivers()` with one live value per unsampled wrapper, built the way a program would: `memoryview` over `b"ab"` and `memoryview(bytearray)` over `bytearray(b"ab")`, `mappingproxy` (`MappingProxy(d)` over the sampled dict), `dict_keys`/`dict_values`/`dict_items` (`d.keys()` etc.), the iterators `list_iterator`, `tuple_iterator`, `str_iterator`, `bytes_iterator`, `bytearray_iterator`, `memory_iterator`, `set_iterator`, `frozenset_iterator`, `range_iterator`, `dict_keyiterator`, `dict_valueiterator`, `dict_itemiterator`, `dict_reversekeyiterator`, `dict_reversevalueiterator`, `dict_reverseitemiterator` (each from the sampled collection's `iter()` or the view's `reversed()`), `enumerate` and `zip` (`xs.enumerate()`, `xs.zip(xs)`), `map` and `filter` (`xs.map(lambda x: x)`, `xs.filter(lambda x: x)`), `block` (`Block(lambda x: x)`), `ellipsis` (the `ellipsis` singleton) and `error` (`Error(mirrors.ValueError("boom"))`); keep the docstring's "one live value per wrapper" true and update the comment block above the sweep (its 114-site count becomes "the day it was written" history); verify `uv run pytest tests/test_no_python_wording.py -q` passes and `test_the_sweep_actually_sends_messages`'s count grows by roughly 560.
+- [x] 1.2 Add `test_every_wrapper_has_a_sweep_sample` to the same file: import every module under `poop.types`, collect each public class that is an instance of `PoopMeta` and is not an alias (no `_converter` in its own `__dict__`), and assert that for every such class some sample in `_receivers()` is an instance of it or of a subclass, except the named exemptions `Try`, `With` and the exception mirrors (the classes under `poop.types.mirrors` / `PoopExcMeta`), each exemption with a one-line reason in the test; verify the test passes, and that deleting the `memoryview` sample makes it fail naming `memoryview`.
+- [x] 1.3 In `INFECTIONS.md`, extend the Principles bullet "The wording rule is swept mechanically, not program by program" with one sentence: the receiver list covers every wrapper a program can hold, is checked by its own test against the classes under `poop/types`, and the fifteen receivers added in this change were clean when first swept; verify the bullet still reads as one paragraph and `grep -c "one live value per wrapper" tests/test_no_python_wording.py` is 1.
+
+## 2. Integration
+
+- [x] 2.1 Run the full gate, `uv run ruff check && uv run ruff format --check && uv run ty check poop/ tests/ && uv run pytest`, and `openspec validate "sweep-samples-every-wrapper" --strict`; verify every step exits 0 and coverage stays at or above 95%. If the widened sweep reports a leak on a new receiver, do not fix it here: record it and open a change under the type it belongs to.
+
+## Workflow follow-up
+
+- One commit for group 1 (`test: the wording sweep samples every wrapper`), test and `INFECTIONS.md` together; push, check CI; archive with `/opsx:archive` (no delta specs to sync); commit the archive.
