@@ -58,7 +58,9 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object, name="dict"):
     def _wrapping(cls, data: dict[Object, Object]) -> Self:
         """A `cls` over `data`, a raw dict this call hands over."""
         wrapped = cls()
-        wrapped._data = data
+        # The slot is the concrete class's (`Dict`, `FrozenDict`), not the
+        # mixin's; ty reads `Self` as the mixin and sees no slot for it.
+        wrapped._data = data  # ty: ignore[missing-slot]
         return wrapped
 
     def at(self, key: Object) -> Object:

@@ -1,11 +1,10 @@
 import builtins
-from types import MethodType
 from typing import TYPE_CHECKING, Any, Self
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak
 from poop.types._late import late
-from poop.types._message import cannot_be_hashed, no_format_spec
+from poop.types._message import cannot_be_hashed, holds_no_state, no_format_spec
 from poop.types._raw import _faithful
 from poop.types._selectors import explain, is_dunder, is_message
 from poop.types.meta import PoopMeta
@@ -22,23 +21,6 @@ if TYPE_CHECKING:
 # circular: block, string, none and _unwrap all import Object. Bound late, not
 # imported per call: `__getattribute__` runs on every message a program sends
 # and `print` on every line it shows (see `_late.py`).
-_method_block: Callable[[], Callable[[MethodType], object]] = late(
-    "poop.types.block", "_MethodBlock"
-)
-# The one site where even the cached getter showed: a message send is the
-# unit of the language, and the ~50 ns it costs was the difference between a
-# 3 % and a 10 % gain on `(5).abs()`. `block.py` installs the class here the
-# moment it exists, so the hot path reads a module global; the getter stays as
-# the fallback for a public method read before `block` has loaded.
-_METHOD_BLOCK: Callable[[MethodType], object] | None = None
-
-
-def _install_method_block(wrap: Callable[[MethodType], object]) -> None:
-    """Called once by `poop/types/block.py`; see `_METHOD_BLOCK`."""
-    global _METHOD_BLOCK  # noqa: PLW0603 — the one write, at import time
-    _METHOD_BLOCK = wrap
-
-
 _str: Callable[[], type[Str]] = late("poop.types.string", "Str")
 _none: Callable[[], NoneClass] = late("poop.types.none", "none")
 _unwrap: Callable[[], Callable[[object, str], str]] = late(
@@ -61,18 +43,17 @@ class MessageNotUnderstood(AttributeError):
 
 
 def _holds_no_state(receiver: object) -> Exception:
-    """The refusal for attaching state to a value, for `__setattr__` and `del_attr`.
+    """The refusal for attaching state to a value, for `set_attr` and `del_attr`.
 
-    One sentence for both: CPython names `__dict__` in each, a dunder
-    `no_dunder_attribute` bans, and two copies of the replacement drift.
+    The plain assignment (`"abc".x = 5`) answers the same sentence through
+    `poop_message`, which rewords the native `no __dict__` report where the
+    executor and `Error.message()` read; a `__setattr__` on `Object` used to
+    do it and ran on every object construction in the language.
     """
     # circular: exceptions imports object
     from poop.types import mirrors
 
-    return mirrors.AttributeError(
-        f"{type(receiver).__name__} is a value — it holds no state of its "
-        "own; only an object of a class you defined can be given one"
-    )
+    return mirrors.AttributeError(holds_no_state(type(receiver).__name__))
 
 
 class Object(metaclass=PoopMeta):
@@ -98,39 +79,6 @@ class Object(metaclass=PoopMeta):
         return type(self)
 
     if not TYPE_CHECKING:
-        # A method read off an object is a block, whichever way it was read.
-        #
-        # `_as_block` states the rule and was wired into `get_attr` only —
-        # the spelling almost nobody writes. The one everybody writes stayed
-        # native, so `"abc".get_attr("upper").print()` answered `<block>` while
-        # `"abc".upper.print()` answered `'function' object has no attribute
-        # 'print'`: CPython's word for a message, naming the value `function`,
-        # which is `Block`'s own cloak — the report described it as exactly the
-        # kind of thing a block is and then refused what every block answers.
-        # `real` and `imag` make it likelier still, being attributes in Python
-        # and messages here, so `(1 + 2j).real` is a correct Python reflex.
-        #
-        # `type(value) is MethodType` rather than `isinstance`: this runs on
-        # every attribute read in the language, including `poop/types/`'s own
-        # `self._value`, so the common path must be one identity check. A
-        # `classmethod`, `staticmethod` or `property` never arrives here as a
-        # `MethodType` bound to an instance, so each keeps answering as before.
-        #
-        # `_`-prefixed names are left alone, which `is_message` already calls
-        # the boundary of the message surface — a name a program may send never
-        # starts with one. It is also what makes this terminate: `Block` holds
-        # its callable in `_fn`, so wrapping that read would hand `__call__` a
-        # fresh `Block` to unwrap on every call, forever.
-        def __getattribute__(self, name: str) -> Any:  # noqa: ANN401 — hidden from ty, see above
-            value = object.__getattribute__(self, name)
-            if type(value) is MethodType and not name.startswith("_"):
-                # circular: block imports Object — installed as a global by
-                # `block.py`, since this is every message a program sends
-                # (see `_METHOD_BLOCK` and `_late.py`)
-                wrap = _METHOD_BLOCK
-                return (wrap if wrap is not None else _method_block())(value)
-            return value
-
         # Hidden from the type checker deliberately. A visible __getattr__
         # answers Any for every name, so `xs.frobnicate()` would type-check on
         # every POOP object and `ty` would stop catching typos across the whole
@@ -150,51 +98,6 @@ class Object(metaclass=PoopMeta):
             if is_dunder(name):
                 raise AttributeError(name)
             return self.does_not_understand(name)
-
-    def __setattr__(self, name: str, value: object) -> None:
-        """The undotted twin of `set_attr`, refused by the same sentence.
-
-        Commit 4ca259f, which gave `del_attr` its refusal, quotes the
-        sentence it closed:
-        `"abc".del_attr("zzz")` answered `'str' object has no attribute 'zzz'
-        and no __dict__ for setting new attributes`, "naming the dunder
-        `_reject_dunder` will not even let a program spell". `set_attr` and
-        `del_attr` composed POOP's sentence for it; the assignment did not:
-
-            "abc".set_attr("x", 5)   # str is a value — it holds no state of
-                                     #   its own; only an object of a class you
-                                     #   defined can be given one
-            "abc".x = 5              # 'str' object has no attribute 'x' and no
-                                     #   __dict__ for setting new attributes
-
-        Every value receiver leaked it — 15 of them — and the leak carried three
-        things at once: a dunder, the quoted CPython class spelling `'str'
-        object`, and advice about a `__dict__` the reader cannot inspect because
-        `no_dunder_attribute` refuses the name. It is also the *more* natural
-        first attempt: a reader coming from Python writes `obj.x = 5` before
-        they know `set_attr` exists, so the leaked sentence was the first thing
-        the `__slots__` decision ever said to them.
-
-        The cost is bounded in a way `__getattribute__`'s is not: a wrapper
-        writes its payload once in `__init__` and never again, so this runs on
-        user-class stores and nothing else hot.
-
-        Out of scope deliberately: `C()._p = 5` on a user class succeeds while
-        `C().set_attr("_p", 5)` is refused as private. That pair should *not* be
-        levelled — `self._balance = balance` inside a method is how a POOP
-        object holds its own state, and nothing at the assignment site can tell
-        the object writing its own slot from a caller reaching into someone
-        else's. `set_attr` is reflection and can refuse; the assignment cannot.
-        """
-
-        try:
-            object.__setattr__(self, name, value)
-        except AttributeError:
-            # Every wrapper declares `__slots__`, so a value object holds no
-            # attached state — and CPython says so by naming `__dict__`, a
-            # dunder `no_dunder_attribute` bans and `_reject_dunder` will not
-            # even let a program spell. This names the distinction instead.
-            raise _holds_no_state(self) from None
 
     def does_not_understand(self, name: str) -> object:
         """Smalltalk's `doesNotUnderstand:` — the hook for an unknown message.
@@ -374,7 +277,13 @@ class Object(metaclass=PoopMeta):
         # Outside the `try`: `_checked_name`'s own refusals are AttributeErrors
         # too, and each already carries the sentence it wants to be read by.
         raw = _checked_name(name)
-        builtins.setattr(self, raw, value)
+        try:
+            builtins.setattr(self, raw, value)
+        except AttributeError:
+            # A value declares `__slots__` and holds no attached state;
+            # `set_attr` composes the sentence itself, as `del_attr` does,
+            # since no `__setattr__` on `Object` rewords it any more.
+            raise _holds_no_state(self) from None
         return none
 
     def del_attr(self, name: Str) -> NoneClass:

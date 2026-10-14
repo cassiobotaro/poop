@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING, Self, cast
 
 from poop.types import mirrors
 from poop.types._argument import a_block
+from poop.types._descriptor import install_method_block
 from poop.types._message import article
 from poop.types.boolean import false, to_boolean
 from poop.types.none import none
-from poop.types.object import Object, _install_method_block
+from poop.types.object import Object
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -322,8 +323,8 @@ class _MethodBlock[**P, R](Block[P, R], name="function"):
         return hash(self._identity())
 
 
-# `Object.__getattribute__` wraps every public method it hands out in a
+# The `message` descriptor wraps every public method it hands out in a
 # `_MethodBlock`, and cannot import this module at its own top (this one
 # imports `Object`). Installed here, once, so that path reads a module global
 # rather than importing or calling a getter per message send.
-_install_method_block(_MethodBlock)
+install_method_block(_MethodBlock)

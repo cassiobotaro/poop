@@ -19,6 +19,7 @@ two receivers share a truer name.
 """
 
 from poop.types._cloak import cloak
+from poop.types._descriptor import messages_in
 from poop.types.meta import PoopMeta
 
 
@@ -33,4 +34,8 @@ class _Mixin:
             super().__init_subclass__(**kwargs)
             return
         super().__init_subclass__(**kwargs)
+        # A mixin is not a `PoopMeta` class, so `PoopMeta.__new__` never saw
+        # its body: its public methods become `message`s here.
+        for method, wrapped in messages_in(vars(cls)).items():
+            setattr(cls, method, wrapped)
         cloak(cls, name or "object")

@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Never, Protocol, Self, overload
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
+from poop.types._descriptor import instance_only, messages_in
 from poop.types._late import late
 from poop.types._message import article
 from poop.types._selectors import explain, is_dunder, is_message, not_understood
@@ -245,7 +246,7 @@ def _instance_only(cls: type, name: str) -> bool:
     """
     for klass in type.__getattribute__(cls, "__mro__"):
         if name in vars(klass):
-            return type(vars(klass)[name]) is FunctionType
+            return instance_only(vars(klass)[name])
     return False
 
 
@@ -496,6 +497,10 @@ class PoopMeta(type):
                     namespace[slot] = _adapted(slot, method)
         if callable(namespace.get("__len__")) and "len" not in namespace:
             namespace["len"] = _length_message
+        # Every public method becomes a `message` descriptor, so a method read
+        # off an instance answers a `_MethodBlock` without an
+        # `Object.__getattribute__` running on every attribute read.
+        namespace.update(messages_in(namespace))
         return super().__new__(mcls, name, bases, namespace, **kwargs)
 
     @class_side

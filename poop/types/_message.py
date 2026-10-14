@@ -58,6 +58,29 @@ def article(name: str) -> str:
 # through while the two storage sites answered a richer one.
 _UNHASHABLE = re.compile(r"^unhashable type: '(.+?)'$")
 
+# `'str' object has no attribute 'x' and no __dict__ for setting new
+# attributes` — what CPython says for `"abc".x = 5`, every wrapper declaring
+# `__slots__`. It names a dunder `no_dunder_attribute` bans and advises about
+# a `__dict__` the reader cannot inspect. `Object.__setattr__` used to catch
+# it, a Python frame on every object construction in the language (every
+# wrapper writes its payload in `__init__`); the sentence is reworded here
+# instead, where `executor._describe` and `Error.message()` both read.
+_NO_STATE = re.compile(
+    r"^'(.+?)' object has no attribute '.+?' and no __dict__ for setting new attributes$"
+)
+
+
+def holds_no_state(class_name: str) -> str:
+    """The refusal for attaching state to a value.
+
+    One sentence for `set_attr`, `del_attr` and the plain assignment: two
+    copies of the replacement drift, and the native one names `__dict__`.
+    """
+    return (
+        f"{class_name} is a value — it holds no state of its own; "
+        "only an object of a class you defined can be given one"
+    )
+
 
 def cannot_be_hashed(exc: TypeError) -> str | None:
     """POOP's wording for `unhashable type: 'list'`, or `None` if unmatched.
@@ -193,6 +216,10 @@ def poop_message(exc: BaseException) -> str:
         if withheld is not None:
             return withheld
     text = str(exc)
+    if isinstance(exc, AttributeError):
+        stateless = _NO_STATE.match(text)
+        if stateless is not None:
+            return holds_no_state(stateless.group(1))
     # Both patterns capture (selector, left, right) in that order, which is
     # why one unpacking serves them.
     match = _ARITHMETIC.match(text) or _COMPARISON.match(text)
