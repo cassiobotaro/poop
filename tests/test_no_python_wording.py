@@ -11,13 +11,18 @@ any of them, which is how the ten proposals accumulated in the first place.
 """
 
 import ast
+import importlib
+import inspect
 import pathlib
+import pkgutil
 import re
 
 import pytest
 
+import poop.types
 from poop import Interpreter
 from poop.errors import PoopError
+from poop.types import mirrors
 from poop.types._message import poop_message
 from poop.types._selectors import is_message
 from poop.types.block import Block
@@ -26,19 +31,27 @@ from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.complex import Complex
 from poop.types.dict import Dict
-from poop.types.exceptions import MIRRORS
+from poop.types.ellipsis import ellipsis
+from poop.types.error import Error
+from poop.types.exceptions import MIRRORS, PoopExcMeta
 from poop.types.float import Float
 from poop.types.frozen_dict import FrozenDict
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
 from poop.types.list import List
+from poop.types.mapping_proxy import MappingProxy
+from poop.types.memory_view import MemoryView
+from poop.types.meta import PoopMeta
 from poop.types.none import none
+from poop.types.object import Object
 from poop.types.range import Range
 from poop.types.sentinel import Sentinel
 from poop.types.set import Set
 from poop.types.slice import Slice
 from poop.types.string import Str
+from poop.types.try_ import Try
 from poop.types.tuple import Tuple
+from poop.types.with_ import With
 from tests._support import REPO_ROOT, SWEPT_PACKAGES
 
 # Each pattern names a construct POOP does not have. `indices` and `index out
@@ -444,6 +457,13 @@ def test_no_poop_authored_message_names_a_forbidden_construct(
 # wrong-typed arguments, checked with the same patterns. It found 47 distinct
 # leaks across 114 receiver/message sites the day it was written, and it keeps
 # finding the next one without anyone remembering to add a program.
+#
+# "Every wrapper" was a promise the sample list did not keep: it held the
+# seventeen values a program *writes*, and none of the ones a program only
+# *receives* — a view, an iterator, a lazy `map`, a caught error. Fifteen
+# receivers and some 560 messages went unswept until the list was checked
+# against `poop/types` itself (`test_every_wrapper_has_a_sweep_sample`); all
+# fifteen were clean the day they were added, which is the point of checking.
 
 _SAMPLES: dict[str, object] = {}
 
@@ -455,6 +475,7 @@ def _receivers() -> dict[str, object]:
 
     mapping = Dict()
     mapping.at_put(Str("a"), Int(1))
+    xs = List(Int(1), Int(2))
     _SAMPLES.update(
         {
             "int": Int(5),
@@ -464,7 +485,7 @@ def _receivers() -> dict[str, object]:
             "str": Str("abc"),
             "bytes": Bytes(b"ab"),
             "bytearray": ByteArray(bytearray(b"ab")),
-            "list": List(Int(1), Int(2)),
+            "list": xs,
             "tuple": Tuple(Int(1), Int(2)),
             "dict": mapping,
             "set": Set(Int(1)),
@@ -474,9 +495,88 @@ def _receivers() -> dict[str, object]:
             "slice": Slice(Int(0), Int(2)),
             "sentinel": Sentinel(Str("M")),
             "none": none,
+            "ellipsis": ellipsis,
+            # Two views, since `hash` and `readonly` answer differently over
+            # bytes that can change.
+            "memoryview": MemoryView(memoryview(b"ab")),
+            "memoryview(bytearray)": MemoryView(memoryview(bytearray(b"ab"))),
+            "mappingproxy": MappingProxy(mapping),
+            "dict_keys": mapping.keys(),
+            "dict_values": mapping.values(),
+            "dict_items": mapping.items(),
+            # One iterator of each kind the language hands out. They are
+            # stateful, but a wrong-typed argument never advances one.
+            "list_iterator": xs.iter(),
+            "tuple_iterator": Tuple(Int(1)).iter(),
+            "str_iterator": Str("ab").iter(),
+            "bytes_iterator": Bytes(b"ab").iter(),
+            "bytearray_iterator": ByteArray(bytearray(b"ab")).iter(),
+            "memory_iterator": MemoryView(memoryview(b"ab")).iter(),
+            "set_iterator": Set(Int(1)).iter(),
+            "frozenset_iterator": FrozenSet(Int(1)).iter(),
+            "range_iterator": Range(Int(0), Int(3)).iter(),
+            "dict_keyiterator": mapping.iter(),
+            "dict_valueiterator": mapping.values().iter(),
+            "dict_itemiterator": mapping.items().iter(),
+            "dict_reversekeyiterator": mapping.reversed(),
+            "dict_reversevalueiterator": mapping.values().reversed(),
+            "dict_reverseitemiterator": mapping.items().reversed(),
+            "enumerate": xs.enumerate(),
+            "zip": xs.zip(xs),
+            "map": xs.map(lambda x: x),
+            "filter": xs.filter(lambda x: x),
+            "block": Block(lambda x: x),
+            "error": Error(mirrors.ValueError("boom")),
         }
     )
     return _SAMPLES
+
+
+# The wrappers a program never holds a value of, and so the sweep cannot
+# sample: `Try` and `With` run the blocks they are built from, and their
+# refusals are pinned in `test_try_.py` / `test_with_.py`; the exception
+# mirrors are classes a program raises or catches, met at runtime only as the
+# `Error` that *is* sampled.
+_UNSAMPLED: frozenset[type] = frozenset({Try, With})
+
+
+def _wrapper_classes() -> dict[type, str]:
+    """Every public wrapper class defined under `poop.types`, by first name.
+
+    A wrapper is a `PoopMeta` class a program can hold a value of: not an
+    alias (those carry `_converter` and are the bare builtin *names*), not a
+    mirror (`PoopExcMeta`), not a private mixin. `__module__` is cloaked to
+    `builtins` on every wrapper, so the walk reads the modules' namespaces
+    rather than asking a class where it came from.
+    """
+    found: dict[type, str] = {}
+    for module in pkgutil.iter_modules(poop.types.__path__):
+        namespace = vars(importlib.import_module(f"poop.types.{module.name}"))
+        for name, cls in namespace.items():
+            if (
+                inspect.isclass(cls)
+                and isinstance(cls, PoopMeta)
+                and not isinstance(cls, PoopExcMeta)
+                and issubclass(cls, Object)
+                and not name.startswith("_")
+                and "_converter" not in cls.__dict__
+            ):
+                found.setdefault(cls, f"{module.name}.{name}")
+    return found
+
+
+def test_every_wrapper_has_a_sweep_sample() -> None:
+    """The sample list is checked against `poop/types`, not maintained by eye."""
+    sampled = tuple(type(value) for value in _receivers().values())
+    unsampled = sorted(
+        label
+        for cls, label in _wrapper_classes().items()
+        if cls not in _UNSAMPLED and not any(issubclass(s, cls) for s in sampled)
+    )
+    assert unsampled == [], f"no sweep sample for {unsampled}"
+    # The exemptions are real classes, not stale names.
+    assert all(cls in _wrapper_classes() for cls in _UNSAMPLED)
+    assert all(type(cls) is PoopExcMeta for cls in MIRRORS.values())
 
 
 def _wrong_arguments() -> list[object]:
@@ -542,4 +642,6 @@ def test_the_sweep_actually_sends_messages() -> None:
         for name in dir(receiver)
         if is_message(name) and name not in _UNSENDABLE
     )
-    assert sendable > 500
+    # Over a thousand since the receivers a program only *receives* joined;
+    # the 500 the first list cleared would not notice losing them again.
+    assert sendable > 1000
