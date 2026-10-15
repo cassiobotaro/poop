@@ -1,11 +1,10 @@
-# Spec Delta
+# class-side Specification
 
 ## Purpose
-
 The messages every class answers as an object — `print`, `format`,
 `del_attr` and the rest — worded as the instance side words them.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Class-side del_attr words both refusals
 `Klass.del_attr(name)` SHALL refuse an absent name with `<Klass> has no
@@ -30,7 +29,7 @@ code with the sentences the instance side answers.
 
 #### Scenario: An unknown code
 - **WHEN** a program runs `A.format("d")`
-- **THEN** a `ValueError` is raised whose message is the one `"x".format("d")` answers for the same code
+- **THEN** a `ValueError` is raised reading `a str cannot be formatted with 'd'`
 
 ### Requirement: Class-side print checks end in POOP's words
 `Klass.print(end=…)` SHALL refuse a non-`Str` `end` as the instance side

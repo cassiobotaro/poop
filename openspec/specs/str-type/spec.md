@@ -109,3 +109,15 @@ the wrong kind, which names no construct POOP forbids.
 #### Scenario: A mapped value of the wrong kind
 - **WHEN** a program sends `"abc".translate({97: 5.5})`
 - **THEN** a `TypeError` is raised whose message reads `character mapping must return integer, None or str`
+
+### Requirement: index and rindex miss in the family's words
+`index` and `rindex` on a `Str` SHALL refuse an absent substring with the
+sentence every sequence's `index` uses, never `substring not found`.
+
+#### Scenario: index misses
+- **WHEN** a program runs `"ab".index("z")`
+- **THEN** a `ValueError` is raised reading `str has no element equal to 'z'`
+
+#### Scenario: rindex misses
+- **WHEN** a program runs `"ab".rindex("z")`
+- **THEN** a `ValueError` is raised reading `str has no element equal to 'z'`

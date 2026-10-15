@@ -90,3 +90,15 @@ refuse any other, as `Bytes.hex` does and as CPython's `bytearray.hex` does.
 #### Scenario: The same refusal on bytes
 - **WHEN** a program runs `b"ab".hex(bytearray(b":"))`
 - **THEN** a `TypeError` is raised whose message reads `#hex expects a one-character separator, got a bytearray`
+
+### Requirement: at_put blames the argument at fault
+`at_put(index, byte)` on a `ByteArray` SHALL refuse a non-int `byte` by
+naming the byte, and a non-int `index` by naming the index.
+
+#### Scenario: A str byte
+- **WHEN** a program runs `bytearray(b"a").at_put(0, "x")`
+- **THEN** a `TypeError` is raised reading `#at_put's byte must be an int, got a str`
+
+#### Scenario: A float index
+- **WHEN** a program runs `bytearray(b"a").at_put(1.5, 1)`
+- **THEN** a `TypeError` is raised reading `bytearray.at_put expects an int index, got a float`
