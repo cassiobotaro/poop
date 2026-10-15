@@ -299,6 +299,7 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "type_alias": "type X = int",
     "type_params": "class C[T]:\n    pass",
     "class_keyword": "class C(metaclass=M):\n    pass",
+    "dunder_def": "class C:\n    def __getattr__(self, name):\n        pass",
     "dunder": "x.__dict__",
     "private": "x._value",
     # A bare mention, not `@property`: the decorator is the one position

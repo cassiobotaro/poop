@@ -696,6 +696,7 @@ def test_meta_explain_unknown_does_not_claim_the_construct_is_allowed(
         ("type_alias", "type aliases are forbidden"),
         ("type_params", "drop the [T]"),
         ("class_keyword", "built from its bases alone"),
+        ("dunder_def", "does_not_understand"),
         ("delattr", "del_attr"),
         ("__import__", "forbidden"),
     ],

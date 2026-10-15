@@ -266,4 +266,5 @@ Some Python has no POOP translation at all, and looking for one is the wrong mov
 | `exec` / `eval` / `compile`, `globals` / `locals` / `vars`, `breakpoint`, `exit` | Interpreter escape hatches. |
 | `class X[T]`, `def m[T]()`, `type X = int` | POOP has no static types. Drop the parameter; the runtime types are POOP's own. |
 | `class X(metaclass=M)`, `class X(foo=1)` | A class is built from its bases alone. A parent that must configure its subclasses answers a class-side message instead. |
+| `def __getattr__(self, name)`, `__getattribute__`, `__init_subclass__`, `__set_name__` | Python's lookup, creation and descriptor protocols. `def does_not_understand(self, name)` is the one hook: it receives the selector as a `Str` and its answer is the message's. |
 

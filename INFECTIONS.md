@@ -240,6 +240,16 @@ which is the naked-native symptom the allow-list was introduced to end, reproduc
 
 Nothing read `ClassDef.keywords`. `metaclass=type` happened to be refused — `no_type` bans the name — and every other keyword reached `type.__new__`. The sentence names the keyword as written so a program that meant to configure a subclass sees the thing to remove; what it wanted is a class-side message on the parent, which `PoopMeta` already answers.
 
+### No dunder definition — `poop/validators/no_dunder_def.py`
+
+| AST node | Condition | Reason | Substitute |
+|---|---|---|---|
+| `ast.FunctionDef` in an `ast.ClassDef` body | named `__getattribute__`, `__getattr__`, `__setattr__`, `__delattr__`, `__dir__` | Python's lookup protocol; defining one rewires every message sent to the instance | `does_not_understand(self, name)` for the messages a class does not answer; `set_attr`, `del_attr`, `dir` already exist |
+| the same | named `__new__`, `__init_subclass__`, `__class_getitem__`, `__subclasshook__` | class creation; CPython calls them with raw arguments | a class is built from its bases alone |
+| the same | named `__set_name__`, `__get__`, `__set__`, `__delete__` | the descriptor protocol; CPython hands `__set_name__` a raw `str` and `__get__` a raw `None` | a POOP object is reached by messages, not by descriptors |
+
+*Reading* a dunder is `no_dunder_attribute`'s and a bare dunder *name* is `no_dunder_name`'s, but a class body could still *define* one with no validator looking, and `def __getattribute__(self, name): return 1` silently answered `1` for every message. The operator and protocol slots stay legal — *A user class can satisfy the protocol slots it is allowed to define*, below, lists them and says how `PoopMeta.__new__` adapts the five CPython reads itself — so this is a deny-list of the three protocols a POOP program has no business in, rather than an allow-list that would refuse every operator nobody thought to enumerate.
+
 ### No `type` alias — `poop/validators/no_type_alias.py`
 
 | Construct | Reason |

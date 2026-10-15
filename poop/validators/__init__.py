@@ -19,6 +19,7 @@ from poop.validators.no_del import NoDelValidator
 from poop.validators.no_dir import NoDirValidator
 from poop.validators.no_divmod import NoDivmodValidator
 from poop.validators.no_dunder_attribute import NoDunderAttributeValidator
+from poop.validators.no_dunder_def import NoDunderDefValidator
 from poop.validators.no_dunder_name import NoDunderNameValidator
 from poop.validators.no_exec import NoExecValidator
 from poop.validators.no_exit import NoExitValidator
@@ -102,9 +103,10 @@ DEFAULT_VALIDATORS: list[Validator] = [
     # After NoDecoratorValidator, whose allowance it scopes: the three
     # decorators stay legal on a `@`, and nowhere else.
     NoClassMachineryValidator(),
-    # The rest of the class statement, beside the decorator and machinery
-    # rules it extends.
+    # The rest of the class statement: its keywords and the dunders its body
+    # may not define, beside the decorator and machinery rules they extend.
     NoClassKeywordValidator(),
+    NoDunderDefValidator(),
     NoMatchValidator(),
     NoFstringValidator(),
     NoLenValidator(),
