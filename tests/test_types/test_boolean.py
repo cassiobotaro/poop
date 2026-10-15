@@ -1,5 +1,7 @@
 import pytest
 
+from poop.errors import ExecutionError
+from poop.interpreter import Interpreter
 from poop.types.boolean import Boolean, false, to_boolean, true
 from poop.types.boolean import false as false2
 from poop.types.boolean import true as true2
@@ -517,3 +519,51 @@ def test_the_base_answers_false_as_bool_does() -> None:
 def test_the_classes_take_no_arguments(cls: type) -> None:
     with pytest.raises(TypeError, match=r"^bool\(\) takes no arguments$"):
         cls(1)
+
+
+# The one `bool`: both singletons answer the same class, equal to the bare
+# name, with `int` as its superclass — CPython's `type(True) is bool`.
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("(True.class_() == bool).print()", "True"),
+        ("(True.class_() == False.class_()).print()", "True"),
+        ("True.class_().superclass().name().print()", "object"),
+        ("True.class_()().print()", "False"),
+        ("True.xor(False).print()", "True"),
+        ("True.eqv(True).print()", "True"),
+        ("False.xor(False).print()", "False"),
+        ("False.eqv(True).print()", "False"),
+    ],
+    ids=["bool", "same", "ladder", "called", "xor", "eqv", "xor_false", "eqv_false"],
+)
+def test_class_and_the_algebra_pair(
+    source: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out.strip() == expected
+
+
+def test_class_answers_boolean_itself() -> None:
+    assert true.class_() is Boolean
+    assert false.class_() is Boolean
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("False.xor(5)", "#xor expects a bool, got an int"),
+        ('True.eqv("abc")', "#eqv expects a bool, got a str"),
+        ("True.xor(None)", "#xor expects a bool, got a NoneType"),
+    ],
+    ids=["xor_int", "eqv_str", "xor_none"],
+)
+def test_xor_and_eqv_refuse_a_non_boolean(source: str, expected: str) -> None:
+    # `False.xor(5)` answered `5` — an int from a boolean message — and
+    # `True.eqv("abc")` answered `abc`: the two value-taking messages on the
+    # receiver guarded nothing.
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == f"TypeError: {expected}"

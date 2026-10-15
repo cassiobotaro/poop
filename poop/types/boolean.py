@@ -1,7 +1,7 @@
 import builtins
 from typing import TYPE_CHECKING, final
 
-from poop.types._argument import Key, a_block, no_arguments, text_like
+from poop.types._argument import Key, a_block, a_boolean, no_arguments, text_like
 from poop.types._minmax import _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types._sentinel import MISSING
@@ -49,6 +49,17 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
     def __new__(cls, *args: object, **kwargs: object) -> Boolean:  # noqa: PYI034
         no_arguments(cls, args, kwargs)
         return false
+
+    def class_(self) -> type[Boolean]:
+        # The one `bool`, for both singletons. `Object.class_` answers
+        # `type(self)`, which is `_TrueClass` or `_FalseClass` — two classes
+        # both called `bool`, neither equal to the bare name, with a second
+        # `bool` rung on the ladder above each. `PoopMeta.__eq__`'s own
+        # argument applies: `True.class_() == bool` was `False` for a program
+        # that is right, about two objects that both call themselves `bool`.
+        # CPython's `type(True) is bool`; `Boolean()` answers `false` as
+        # `bool()` does, so `True.class_()()` stays consistent with it.
+        return Boolean
 
     # `bool` is an `int` subclass, so a Boolean folds to 1/0 for the numeric
     # tower's comparison protocol (ordering + equality) shared via
@@ -436,10 +447,10 @@ class _TrueClass(Boolean, name="bool"):
         return false
 
     def xor(self, other: Boolean) -> Boolean:
-        return other.not_()
+        return a_boolean(other, "xor").not_()
 
     def eqv(self, other: Boolean) -> Boolean:
-        return other
+        return a_boolean(other, "eqv")
 
     def _bool_and(self, other: Boolean) -> Boolean:
         return other
@@ -498,10 +509,10 @@ class _FalseClass(Boolean, name="bool"):
         return true
 
     def xor(self, other: Boolean) -> Boolean:
-        return other
+        return a_boolean(other, "xor")
 
     def eqv(self, other: Boolean) -> Boolean:
-        return other.not_()
+        return a_boolean(other, "eqv").not_()
 
     def _bool_and(self, other: Boolean) -> Boolean:  # noqa: ARG002 — false & x is false
         return self

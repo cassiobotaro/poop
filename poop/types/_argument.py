@@ -25,6 +25,7 @@ lazy from poop.types._mapping import _MappingMixin
 
 # circular: _unwrap -> boolean -> _argument
 lazy from poop.types._unwrap import _is_absent, _searched
+lazy from poop.types.boolean import Boolean
 lazy from poop.types.list import List
 lazy from poop.types.mapping_proxy import MappingProxy
 
@@ -288,6 +289,22 @@ def a_block(
     got = "nothing" if value is MISSING else article(type(value).__name__)
     raise mirrors.TypeError(
         f"#{selector} expects {role}, got {got} — write .{selector}({spelt})"
+    )
+
+
+def a_boolean(value: object, selector: str) -> Boolean:
+    """`value` as the `Boolean` a boolean-algebra message takes, or a refusal.
+
+    `xor` and `eqv` are the two Smalltalk messages on `Boolean` that take a
+    value rather than a block, and the only two that guarded nothing:
+    `False.xor(5)` answered `5` — an int from a boolean message — and
+    `True.eqv("abc")` answered `abc`. Folding through truthiness was the
+    alternative, and would have accepted silently what `and_`/`or_` refuse.
+    """
+    if isinstance(value, Boolean):
+        return value
+    raise mirrors.TypeError(
+        f"#{selector} expects a bool, got {article(type(value).__name__)}"
     )
 
 

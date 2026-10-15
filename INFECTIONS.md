@@ -997,6 +997,8 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 | `&` / `\|` (eager) | `__and__(other)` / `__or__(other)` |
 | `assert:` | `assert_(message)` (on `Object`, not just `Boolean`) | raises `AssertionError(message)` if `bool(self)` is falsy; returns `self` otherwise |
 
+**Both singletons answer the one `bool`, and the algebra pair takes a `Boolean`.** `Object.class_` answers `type(self)`, which for the two singletons is `_TrueClass` or `_FalseClass` — two classes both called `bool`, neither equal to the bare name, with a second `bool` rung on the ladder above each; `PoopMeta.__eq__`'s own argument applied verbatim (`True.class_() == bool` was `False` for a program that is right). `Boolean.class_` answers `Boolean`, whose `superclass()` is `object` — the two rungs of the tower are separate classes here, so `bool` sits beside `int`, not under it — and `Boolean()` answers `false` as `bool()` does, so `True.class_()()` stays consistent with CPython's `type(True)()`. `xor` and `eqv`, the two messages on the receiver that take a value rather than a block, guarded nothing: `False.xor(5)` answered `5` and `True.eqv("abc")` answered `abc`. `a_boolean` refuses in the `a_block` shape (`#xor expects a bool, got an int`); folding through truthiness was the alternative and would have accepted in silence what `and_`/`or_` refuse.
+
 ### Block — `poop/types/block.py` + `poop/transformers/block.py`
 
 `Block` is a first-class object wrapping a callable. In Smalltalk, `[...]` syntax creates a block; in POOP every `lambda` expression is automatically rewritten to `Block(lambda: ...)` by the transformer. This makes `lambda` the idiomatic block literal — the `Block(...)` wrapper is transparent to the programmer.
