@@ -264,4 +264,5 @@ Some Python has no POOP translation at all, and looking for one is the wrong mov
 | `import anything` | POOP is the language, not the library — it mirrors no stdlib module. The only injected names are `Try` and `With`. |
 | `async def` / `await` | Nothing can drive a coroutine. |
 | `exec` / `eval` / `compile`, `globals` / `locals` / `vars`, `breakpoint`, `exit` | Interpreter escape hatches. |
+| `class X[T]`, `def m[T]()`, `type X = int` | POOP has no static types. Drop the parameter; the runtime types are POOP's own. |
 

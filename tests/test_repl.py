@@ -694,6 +694,7 @@ def test_meta_explain_unknown_does_not_claim_the_construct_is_allowed(
         ("unary_minus", "negated"),
         ("unary_plus", "write the value directly"),
         ("type_alias", "type aliases are forbidden"),
+        ("type_params", "drop the [T]"),
         ("delattr", "del_attr"),
         ("__import__", "forbidden"),
     ],

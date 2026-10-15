@@ -297,6 +297,7 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "unary_minus": "-x",
     "unary_plus": "+x",
     "type_alias": "type X = int",
+    "type_params": "class C[T]:\n    pass",
     "dunder": "x.__dict__",
     "private": "x._value",
     # A bare mention, not `@property`: the decorator is the one position

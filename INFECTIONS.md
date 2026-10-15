@@ -237,6 +237,9 @@ which is the naked-native symptom the allow-list was introduced to end, reproduc
 | Construct | Reason |
 |---|---|
 | `type X = int` | Creates an alias for a Python builtin type — incompatible with POOP runtime types |
+| `class X[T]`, `def m[T](self)`, `type X[T] = …` — a PEP 695 type parameter | POOP has no static types; the parameter is named as written (`drop the [T]`, `[*Ts]`, `[**P]`) |
+
+A type parameter went unvalidated and answered two different leaks: `class X[T]:` reached CPython's generic-class intrinsic, which imports `typing` through a builtin the allow-list withholds, and died with an internal `KeyError: '__import__'`; `def m[T](self): return T` handed the program a raw `typing.TypeVar`, answering `'typing.TypeVar' object has no attribute 'print'`. Both are the naked-native symptom the allow-list exists to end, from syntax no validator read. The sentence names the parameter the way the program wrote it so a reader sees what to drop.
 
 ### No `match/case` — `poop/validators/no_match.py`
 
