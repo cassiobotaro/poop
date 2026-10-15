@@ -96,7 +96,7 @@ POOP runs 73 validators on every program. Grouped by theme:
 **Side-channels.**
 - `exec` / `breakpoint` / `exit` — interpreter escape hatches forbidden
 - `__builtins__` / `__loader__` / `__spec__` / `__name__` — dunder *globals* are raw Python natives (and `__builtins__` is mutable), so bare dunder names are banned alongside dunder attributes
-- `obj._value` / `obj._items` — a leading underscore is another object's own state → `obj.get_attr(name)`, which refuses it *by saying so*. `self`, `cls` and the enclosing class by name stay legal: reaching your own state is not reaching into anything
+- `obj._value` / `obj._items` — a leading underscore is another object's own state; only `self`, `cls` and the enclosing class by name reach it, so send the object a message that answers it. `obj.get_attr("_x")` refuses too, *by saying so*
 
 **No library.** POOP is the language, not the library — it mirrors no stdlib module.
 - `import` — if Python needs an import to reach something, POOP does not offer it. There is no `math`, no `json`, no `os`.

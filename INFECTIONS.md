@@ -670,7 +670,7 @@ Every type wrapper (`Int`, `List`, `Object`, …) lives in `DEFAULT_NAMESPACE` u
 
 | AST node | Condition | Reason | Substitute |
 |---|---|---|---|
-| `ast.Attribute` | `attr` starts with a single `_` | reaching into another object's state, past every message it offers | `obj.get_attr(name)` |
+| `ast.Attribute` | `attr` starts with a single `_` | reaching into another object's state, past every message it offers | send the object a message that answers it; `get_attr` refuses a private name too |
 
 The twin of `no_poop_prefix` one underscore in. That validator reserves the mangled runtime names; this reserves the single-underscore internals every wrapper declares in `__slots__` — and those were the ones a program could actually reach. Two spellings of the act were already guarded and the third, the one a reader would type, was not:
 
@@ -682,7 +682,7 @@ The twin of `no_poop_prefix` one underscore in. That validator reserves the mang
 
 That contradicts the first principle twice: "no naked Python primitive ever reaches runtime" was handing one out on request, and what came back answered nothing in CPython's own vocabulary — the sentence `does_not_understand` exists to replace, reachable from a two-token expression. The blind spot was visible in the code working around it: `_selectors.is_message` records that the REPL completer used to *offer* `x._value` and calls it "the encapsulation leak taught by the tool meant to teach the language" — the completer stopped offering the spelling and the spelling kept working; `examples/patterns/memento.py` shows `saved = editor._content` as the procedural Python POOP exists to prevent, in its own comment.
 
-Three receivers stay legal, because an object reaching its own state is not reaching into anything: `self`, `cls`, and the enclosing class by its own name. The last is not hypothetical — it is one site, `Transaction._commit` in `examples/patterns/execute_around.py`, where a `@staticmethod` has neither `self` nor `cls` to write. A sweep over `examples/` reports no other case, so the rule costs one allowance and no rewrites. Dunders belong to `no_dunder_attribute`, which says something more specific about each of them, and `_poop_*` to `no_poop_prefix`; refusing them here too would answer two sentences for one spelling.
+The sentence names what to send a message to — `send other a message that answers it` — rather than `obj.get_attr(name)`, which it pointed at for a while: `_reject_private` refuses `get_attr` for a private name by design, so the validator was sending the reader to a refusal. Three receivers stay legal, because an object reaching its own state is not reaching into anything: `self`, `cls`, and the enclosing class by its own name. The last is not hypothetical — it is one site, `Transaction._commit` in `examples/patterns/execute_around.py`, where a `@staticmethod` has neither `self` nor `cls` to write. A sweep over `examples/` reports no other case, so the rule costs one allowance and no rewrites. Dunders belong to `no_dunder_attribute`, which says something more specific about each of them, and `_poop_*` to `no_poop_prefix`; refusing them here too would answer two sentences for one spelling.
 
 ### No namespace shadow — `poop/validators/no_namespace_shadow.py`
 

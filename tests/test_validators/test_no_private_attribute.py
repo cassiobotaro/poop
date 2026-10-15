@@ -33,10 +33,22 @@ def test_a_private_attribute_is_refused(source: str) -> None:
         Interpreter().run_source(source + "\n")
 
 
-def test_the_refusal_names_the_substitute() -> None:
-    errors = _errors('"abc"._value\n')
-    assert len(errors) == 1
-    assert "obj.get_attr(name)" in str(errors[0])
+def test_the_refusal_names_a_substitute_the_runtime_honours() -> None:
+    # It used to point at `obj.get_attr(name)`, which `_reject_private`
+    # refuses for exactly this name: a validator sending the reader to a
+    # refusal.
+    (error,) = _errors(
+        "class P:\n    def same(self, other):\n        return other._x\n"
+    )
+    assert error.message == (
+        "._x is forbidden — a leading underscore is an object's own state; "
+        "only self and cls reach it, so send other a message that answers it"
+    )
+
+
+def test_a_literal_receiver_is_the_object() -> None:
+    (error,) = _errors('"abc"._value\n')
+    assert error.message.endswith("so send the object a message that answers it")
 
 
 @pytest.mark.parametrize(

@@ -1,4 +1,4 @@
-"""`obj._value` is reaching into an object; `obj.get_attr(name)` says so.
+"""`obj._value` is reaching into an object; only `self` and `cls` may.
 
 The two *guarded* spellings of reaching into an object were already closed.
 The third — the one a reader would actually type — was open, and what it
@@ -53,11 +53,19 @@ if TYPE_CHECKING:
 _OWN = frozenset({"self", "cls"})
 
 
-def private_message(name: str) -> str:
-    """The rejection for a private attribute read or written by name."""
+def private_message(name: str, receiver: str) -> str:
+    """The rejection for a private attribute read or written by name.
+
+    `receiver` is the expression the attribute was read off, as written, so
+    the sentence names what to send a message to. It used to point at
+    `obj.get_attr(name)` — the substitute `_reject_private` refuses for a
+    private name, by design, with the sentence quoted in this module's
+    docstring: a validator sending the reader to a refusal.
+    """
     return (
         f".{name} is forbidden — a leading underscore is an object's own "
-        f"state; use obj.get_attr(name) to ask for it by name"
+        f"state; only self and cls reach it, so send {receiver} a message "
+        f"that answers it"
     )
 
 
@@ -85,7 +93,10 @@ class _Visitor(ErrorCollector):
             receiver.id in _OWN or receiver.id in self._own_classes
         )
         if _is_private(node.attr) and not named:
-            self.report(private_message(node.attr), node)
+            # The receiver by name when it has one; a literal or a call is
+            # "the object", since `send "abc" a message` reads as source.
+            spelt = receiver.id if isinstance(receiver, ast.Name) else "the object"
+            self.report(private_message(node.attr, spelt), node)
         self.generic_visit(node)
 
 
