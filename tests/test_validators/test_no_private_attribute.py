@@ -10,7 +10,7 @@ import pytest
 from poop.errors import PoopError, ValidationError
 from poop.interpreter import Interpreter
 from poop.validators.no_private_attribute import NoPrivateAttributeValidator
-from tests._support import REPO_ROOT
+from tests._support import EXAMPLE_FILES
 
 
 def _errors(source: str) -> list[ValidationError]:
@@ -108,10 +108,9 @@ def test_every_occurrence_is_reported() -> None:
 
 def test_the_examples_corpus_is_clean() -> None:
     # The sweep the proposal promised: one allowance, no rewrites.
-    root = REPO_ROOT / "examples"
     offenders = [
         path.name
-        for path in sorted(root.rglob("*.py"))
+        for path in EXAMPLE_FILES
         if any(
             "leading underscore" in str(error)
             for error in _errors(path.read_text(encoding="utf-8"))

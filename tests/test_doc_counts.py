@@ -16,7 +16,7 @@ import re
 import pytest
 
 from poop.validators import DEFAULT_VALIDATORS
-from tests._support import REPO_ROOT
+from tests._support import EXAMPLE_FILES, REPO_ROOT
 
 
 def _validator_count() -> int:
@@ -24,7 +24,7 @@ def _validator_count() -> int:
 
 
 def _example_count() -> int:
-    return len(list((REPO_ROOT / "examples").rglob("*.py")))
+    return len(EXAMPLE_FILES)
 
 
 # (file, pattern capturing one number, what the number must equal). The
@@ -65,6 +65,6 @@ def test_the_readme_lists_every_example_it_ships() -> None:
     """
     text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     listed = re.findall(r"^- \[`([a-z0-9_]+\.py)`\]", text, flags=re.MULTILINE)
-    on_disk = {path.name for path in (REPO_ROOT / "examples").rglob("*.py")}
+    on_disk = {path.name for path in EXAMPLE_FILES}
     assert set(listed) == on_disk
     assert len(listed) == len(on_disk), "an example is listed twice"

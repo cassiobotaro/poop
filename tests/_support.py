@@ -22,6 +22,17 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # The packages whose POOP-authored messages the static sweeps read.
 SWEPT_PACKAGES = (REPO_ROOT / "poop" / "types", REPO_ROOT / "poop" / "transformers")
 
+# The example corpus, discovered once: four modules walked `examples/` on
+# their own, and a fifth was about to. A test parametrised over it names each
+# case by `example_id`, the path under `examples/`.
+EXAMPLES_DIR = REPO_ROOT / "examples"
+EXAMPLE_FILES: tuple[Path, ...] = tuple(sorted(EXAMPLES_DIR.rglob("*.py")))
+
+
+def example_id(path: Path) -> str:
+    """`basics/hello_world.py` — the parametrize id for an example."""
+    return str(path.relative_to(EXAMPLES_DIR))
+
 
 def transform(transformer: Transformer, source: str) -> ast.Module:
     """`source` parsed and run through one transformer."""

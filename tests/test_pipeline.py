@@ -23,13 +23,10 @@ from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.base import BaseTransformer
 from poop.transformers.try_ import NAMESPACE as TRY_NAMESPACE
 from poop.transformers.with_ import NAMESPACE as WITH_NAMESPACE
-from tests._support import REPO_ROOT
+from tests._support import EXAMPLE_FILES, example_id
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-EXAMPLES_DIR = REPO_ROOT / "examples"
-EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.py"))
 
 TRANSFORMERS_WITH_BINDINGS = sorted(
     (cls for cls in BaseTransformer.__subclasses__() if cls.BINDINGS),
@@ -42,9 +39,7 @@ NAMESPACE_ONLY_MODULES: list[tuple[str, dict[str, object]]] = [
 ]
 
 
-@pytest.mark.parametrize(
-    "example", EXAMPLE_FILES, ids=lambda p: str(p.relative_to(EXAMPLES_DIR))
-)
+@pytest.mark.parametrize("example", EXAMPLE_FILES, ids=example_id)
 def test_example_runs_through_full_pipeline(
     example: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

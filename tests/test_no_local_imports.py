@@ -14,7 +14,6 @@ and each change's measurement is recorded in its design document.
 import builtins
 import contextlib
 import io
-import pathlib
 import sys
 from typing import TYPE_CHECKING
 
@@ -27,6 +26,7 @@ from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.string import Str
+from tests._support import EXAMPLE_FILES, example_id
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Mapping, Sequence
@@ -129,10 +129,9 @@ def test_every_hot_operation_still_runs() -> None:
 
 def _example_programs() -> list[tuple[str, str]]:
     """Every program under `examples/` that does not wait on `input`."""
-    root = pathlib.Path(__file__).resolve().parent.parent / "examples"
     return [
-        (str(path.relative_to(root)), path.read_text())
-        for path in sorted(root.rglob("*.py"))
+        (example_id(path), path.read_text())
+        for path in EXAMPLE_FILES
         if "input(" not in path.read_text()
     ]
 
