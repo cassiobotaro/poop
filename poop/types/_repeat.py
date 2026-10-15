@@ -3,15 +3,14 @@ from typing import SupportsIndex
 
 from poop.types._raw import _faithful
 from poop.types._sentinel import NOT_A_COUNT, NotACount
-from poop.types.boolean import Boolean
 
 
 def _repeat_count(other: object) -> int | NotACount:
     """Repeat count for sequence multiplication, or `NOT_A_COUNT`.
 
-    ``bool`` is an ``int`` subclass — ``"ab" * True == "ab"`` — but a POOP
-    ``Boolean`` has no ``_value`` slot, so fold it explicitly. That half is what
-    this helper is really for and is unchanged.
+    ``bool`` is an ``int`` subclass — ``"ab" * True == "ab"`` — and a POOP
+    ``Boolean`` has no ``_value`` slot, so ``_faithful`` hands it over whole and
+    its ``__index__`` folds it to 1/0 below, with every other index.
 
     The other half used to unwrap anything at all and hand it to the wrapped
     sequence's ``__mul__``, "so [it] raises CPython's faithful ``can't multiply
@@ -34,8 +33,6 @@ def _repeat_count(other: object) -> int | NotACount:
     Five wrappers answer ``*`` (``Str``, ``List``, ``Tuple``, ``Bytes``,
     ``ByteArray``) against fourteen operand kinds — 95 sites, one operator.
     """
-    if isinstance(other, Boolean):
-        return int(bool(other))
     raw = _faithful(other)
     # `__index__`, not `isinstance(raw, int)`: CPython repeats a sequence by
     # anything with an index, and POOP's own `Index` rung is exactly that.

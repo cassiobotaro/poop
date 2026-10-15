@@ -37,32 +37,32 @@ def test_bindings_contains_poop_range() -> None:
 def test_poop_range_stop_only() -> None:
     iv = _poop_range(Int(5))
     assert isinstance(iv, Range)
-    assert list(iv._iter()) == [Int(0), Int(1), Int(2), Int(3), Int(4)]
+    assert list(iv) == [Int(0), Int(1), Int(2), Int(3), Int(4)]
 
 
 def test_poop_range_start_stop() -> None:
     iv = _poop_range(Int(2), Int(5))
-    assert list(iv._iter()) == [Int(2), Int(3), Int(4)]
+    assert list(iv) == [Int(2), Int(3), Int(4)]
 
 
 def test_poop_range_start_stop_step() -> None:
     iv = _poop_range(Int(1), Int(10), Int(2))
-    assert list(iv._iter()) == [Int(1), Int(3), Int(5), Int(7), Int(9)]
+    assert list(iv) == [Int(1), Int(3), Int(5), Int(7), Int(9)]
 
 
 def test_poop_range_empty() -> None:
     iv = _poop_range(Int(0))
-    assert list(iv._iter()) == []
+    assert list(iv) == []
 
 
 def test_poop_range_negative_step() -> None:
     iv = _poop_range(Int(10), Int(0), Int(-1))
-    assert list(iv._iter()) == [Int(i) for i in range(10, 0, -1)]
+    assert list(iv) == [Int(i) for i in range(10, 0, -1)]
 
 
 def test_poop_range_negative_step_with_stride() -> None:
     iv = _poop_range(Int(10), Int(0), Int(-2))
-    assert list(iv._iter()) == [Int(i) for i in range(10, 0, -2)]
+    assert list(iv) == [Int(i) for i in range(10, 0, -2)]
 
 
 def test_poop_range_refuses_a_float_rather_than_truncating_it() -> None:
@@ -93,4 +93,4 @@ def test_poop_range_still_admits_the_boolean_rung() -> None:
     # Admitting `bool` is exactly what `index` is for: CPython's
     # `range(True, 5)` is `range(1, 5)`.
     admitted = _poop_range(true, Int(5))
-    assert list(admitted._iter()) == [Int(i) for i in range(1, 5)]
+    assert list(admitted) == [Int(i) for i in range(1, 5)]

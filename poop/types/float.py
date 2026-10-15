@@ -16,7 +16,6 @@ from poop.types._pow import reflected_pow
 from poop.types._sentinel import MISSING, NOT_NUMERIC
 from poop.types._unwrap import _is_absent
 from poop.types.boolean import to_boolean
-from poop.types.complex import Complex
 from poop.types.int import Int
 from poop.types.object import Object
 from poop.types.string import Str
@@ -29,6 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from poop.types.boolean import Boolean
+    from poop.types.complex import Complex
     from poop.types.none import NoneClass
 
 
@@ -135,10 +135,8 @@ class Float(_NumericCompareMixin, Object, name="float"):
         return self._arith(other, operator.mod)
 
     def __pow__(self, other: object) -> Float | Complex:
-        if isinstance(other, Complex):
-            return NotImplemented
         if not isinstance(other, (Int, Float)):
-            return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
+            return NotImplemented  # let other.__rpow__ run (Boolean, Complex)
         return to_poop(self._value**other._value)
 
     def pow(self, other: object, modulus: Int | NoneClass | None = None) -> object:

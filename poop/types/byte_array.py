@@ -32,8 +32,6 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
     from poop.types.string import Str
 
-_bytearray = bytearray  # alias to avoid shadowing by ByteArray class name
-
 
 class ByteArray(
     _BytesLikeMixin["ByteArray"],
@@ -44,7 +42,7 @@ class ByteArray(
     name="bytearray",
 ):
     __slots__ = ("_value",)
-    _value: _bytearray
+    _value: bytearray
     _eq_attr: ClassVar[str] = "_value"
     _eq_group: ClassVar[str | None] = "bytes"
     _order_group: ClassVar[str | None] = "bytes"
@@ -52,14 +50,14 @@ class ByteArray(
 
     def __init__(
         self,
-        value: _bytearray | bytes | ByteArray | Iterable[int] | None = None,
+        value: bytearray | bytes | ByteArray | Iterable[int] | None = None,
     ) -> None:
         if value is None:
-            self._value = _bytearray()
+            self._value = bytearray()
         elif isinstance(value, ByteArray):
-            self._value = _bytearray(value._value)
+            self._value = bytearray(value._value)
         else:
-            self._value = _bytearray(value)
+            self._value = bytearray(value)
 
     def _rewrap(self, raw: bytes | bytearray) -> ByteArray:
         return ByteArray(raw)
@@ -96,6 +94,8 @@ class ByteArray(
         # answers bytearray. Anything else -> faithful TypeError, not #_value.
 
     def __add__(self, other: object) -> ByteArray:
+        # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
+        # answers bytearray. Anything else -> faithful TypeError, not #_value.
         if not isinstance(other, (ByteArray, Bytes)):
             return NotImplemented
         return ByteArray(self._value + other._value)
@@ -141,7 +141,7 @@ class ByteArray(
         # Bytes are already bytes; anything else is a collection whose every
         # element must be one, and CPython answered for the first that was not
         # with `expected iterable of integers; got: 'str'`.
-        if isinstance(raw, (bytes, _bytearray, memoryview)):
+        if isinstance(raw, (bytes, bytearray, memoryview)):
             self._value.extend(raw)
         else:
             self._value.extend(an_int(byte, "extend", "byte") for byte in source)

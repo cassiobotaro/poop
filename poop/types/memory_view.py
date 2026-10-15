@@ -25,8 +25,6 @@ if TYPE_CHECKING:
     from poop.types.slice import Slice
     from poop.types.string import Str
 
-_memoryview = memoryview  # alias to avoid shadowing by MemoryView class name
-
 
 class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
     __slots__ = ("_value",)
@@ -36,7 +34,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
     # "bytes" group so the same holds in POOP.
     _eq_group: ClassVar[str | None] = "bytes"
 
-    def __init__(self, value: _memoryview | MemoryView) -> None:
+    def __init__(self, value: memoryview | MemoryView) -> None:
         self._value = value._value if isinstance(value, MemoryView) else value
 
     def __hash__(self) -> int:

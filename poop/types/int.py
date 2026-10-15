@@ -17,7 +17,6 @@ from poop.types._raw import _faithful
 from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC, NotIntegral
 from poop.types._unwrap import _is_absent, _unwrap_bool
 from poop.types.boolean import Boolean, true
-from poop.types.complex import Complex
 from poop.types.object import Object
 
 # circular: float imports int, and _bridge imports both
@@ -36,6 +35,7 @@ lazy from poop.types.tuple import Tuple
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from poop.types.complex import Complex
     from poop.types.none import NoneClass
 
 
@@ -198,10 +198,8 @@ class Int(_NumericCompareMixin, Object, name="int"):
     def __pow__(
         self, other: object, modulus: Int | NoneClass | None = None
     ) -> Int | Float | Complex:
-        if isinstance(other, Complex):
-            return NotImplemented
         if not isinstance(other, (Int, Float)):
-            return NotImplemented  # let other.__rpow__ run (e.g. Boolean)
+            return NotImplemented  # let other.__rpow__ run (Boolean, Complex)
         if _is_absent(modulus):
             return to_poop(self._value**other._value)
         if not isinstance(other, Int):

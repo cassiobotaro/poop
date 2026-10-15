@@ -18,13 +18,11 @@ if TYPE_CHECKING:
 
     from poop.types.int import Int
 
-_complex = complex  # alias to avoid shadowing by Complex class name
-
 
 class Complex(Object, name="complex"):
     __slots__ = ("_value",)
 
-    def __init__(self, value: _complex | Complex) -> None:
+    def __init__(self, value: complex | Complex) -> None:
         self._value = value._value if isinstance(value, Complex) else value
 
     def real(self) -> Float:
@@ -40,7 +38,7 @@ class Complex(Object, name="complex"):
         `complex(x)` also reads text; this is the constructor that refuses it.
         The `Float` twin takes the real rungs; this one takes a complex too.
         """
-        return wrapped_instance(cls, _complex(a_number(x, "from_number", real=False)))
+        return wrapped_instance(cls, complex(a_number(x, "from_number", real=False)))
 
     def conjugate(self) -> Complex:
         return Complex(self._value.conjugate())
@@ -51,18 +49,18 @@ class Complex(Object, name="complex"):
     def abs(self) -> Float:
         return self.__abs__()
 
-    def _coerce(self, other: object) -> _complex | None:
+    def _coerce(self, other: object) -> complex | None:
         if isinstance(other, Complex):
             return other._value
         # The rest of the tower's coercion: an `Int`, a `Float`, or a Boolean
         # folded in as 1/0 — `True + (1+2j)`, `(1+2j) ** True` all coerce.
         value = _num_value(other)
-        return None if value is NOT_NUMERIC else _complex(value)
+        return None if value is NOT_NUMERIC else complex(value)
 
     def _arith(
         self,
         other: object,
-        op: Callable[[_complex, _complex], _complex],
+        op: Callable[[complex, complex], complex],
         *,
         reflected: bool = False,
     ) -> Complex | NotImplementedType:

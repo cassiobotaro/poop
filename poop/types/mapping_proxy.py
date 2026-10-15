@@ -48,7 +48,7 @@ class MappingProxy(_IterableMixin[Object], Object, name="mappingproxy"):
     """Read-only view over a mapping. Mirrors types.MappingProxyType."""
 
     __slots__ = ("_dict",)
-    __hash__ = None  # type: ignore[assignment]
+    __hash__ = None
 
     def __init__(self, dict_: _MappingMixin) -> None:
         self._dict = dict_

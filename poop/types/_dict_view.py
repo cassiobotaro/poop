@@ -118,7 +118,7 @@ class _SetLikeView[T: Object](_DictView[T], name="object"):
     __slots__ = ()
     # Set-like and compared by contents, which change under it: unhashable,
     # as in CPython. `dict_values` is neither, and hashes by identity.
-    __hash__ = None  # type: ignore[assignment]
+    __hash__ = None
 
     def _isdisjoint(self, other: object) -> Boolean:
         """`isdisjoint`'s one body; each view keeps the `def` for its qualname."""
