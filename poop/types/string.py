@@ -1,12 +1,11 @@
 import builtins
 import re
 from string import Formatter as _Formatter
-from typing import TYPE_CHECKING, ClassVar, Never, cast, overload
+from typing import TYPE_CHECKING, ClassVar, Never, cast
 
 from poop.types import mirrors
 from poop.types._affix import affix_needle
 from poop.types._argument import (
-    Key,
     a_bound,
     a_collection,
     a_fill,
@@ -21,7 +20,6 @@ from poop.types._at import at_index, no_element_equal_to
 from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
-from poop.types._minmax import _minmax
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import MISSING, NOT_A_COUNT, Missing
@@ -228,24 +226,6 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         raise mirrors.TypeError(
             "str cannot be summed — send #join to a list of pieces instead"
         )
-
-    @overload
-    def min(self, *, key: Key[Str] = None) -> Str: ...
-    @overload
-    def min[D](self, *, key: Key[Str] = None, default: D) -> Str | D: ...
-    def min[D](
-        self, *, key: Key[Str] = None, default: D | Missing = MISSING
-    ) -> Str | D:
-        return _minmax(builtins.min, "#min", self, key, default)
-
-    @overload
-    def max(self, *, key: Key[Str] = None) -> Str: ...
-    @overload
-    def max[D](self, *, key: Key[Str] = None, default: D) -> Str | D: ...
-    def max[D](
-        self, *, key: Key[Str] = None, default: D | Missing = MISSING
-    ) -> Str | D:
-        return _minmax(builtins.max, "#max", self, key, default)
 
     def includes(self, char: Str) -> Boolean:
         # `includes` is the substitute `no_in` points at, and its own refusal

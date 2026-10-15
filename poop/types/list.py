@@ -110,18 +110,6 @@ class List(
     def includes(self, obj: Object) -> Boolean:
         return to_boolean(obj in self)
 
-    def sorted(
-        self,
-        *,
-        key: Key[Object] = None,
-        reverse: Boolean = false,
-    ) -> List:
-        # Keyword-only, as CPython spells `sorted(iterable, /, *, key, reverse)`
-        # and for the reason `min`/`max` settled: positionally a block is
-        # indistinguishable from any other value, so `xs.sorted(f)` and
-        # `xs.sorted(reverse_flag)` read the same to the receiver.
-        return List(*_sorted(self._items, key, reverse))
-
     def reversed(self) -> List:
         return List(*builtins.reversed(self._items))
 

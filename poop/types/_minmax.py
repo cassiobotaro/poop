@@ -1,10 +1,10 @@
 """The shared body behind every `min` / `max` message.
 
-Lived in `_iterable_mixin` while only the mixin, `Dict` and `Str` sent it. The
-scalar rungs need it too — `Int.max` and `Float.max` take the same `key` their
-builtin does — and `_iterable_mixin` imports `Int`, so the helper cannot stay in
-a module its own callers sit underneath. Its own home has no POOP imports at
-all, which is what lets all five reach it from the top of the file.
+Lived in `_iterable_mixin` while only the mixin sent it. The scalar rungs need
+it too — `Int.max` and `Float.max` take the same `key` their builtin does — and
+`_iterable_mixin` imports `Int`, so the helper cannot stay in a module its own
+callers sit underneath. Its own home has no POOP imports at all, which is what
+lets all four reach it from the top of the file.
 """
 
 from typing import TYPE_CHECKING
@@ -34,10 +34,11 @@ def _minmax[T, D](
     Answers an element, or the default when one was given and the collection
     is empty — `T | D`, which is what each caller's own overload pair says.
 
-    Each caller passes only its own iterable — `Dict`, `Str` and the numeric
-    rungs deliberately do not inherit the iterable mixin, and the scalars pass
-    the tuple of their operands, which is the single-iterable form CPython's
-    `max((a, b), key=f)` already means.
+    Each caller passes only its own iterable: the mixin its `_iter_items()`
+    — `Str` and `Dict` inherit it, and once spelt the same body with the
+    iterator written by hand — and the scalar rungs the tuple of their
+    operands, which is the single-iterable form CPython's `max((a, b),
+    key=f)` already means.
 
     `key=None` would work at runtime but matches no `min`/`max` overload, so an
     absent one is omitted rather than passed through. "Absent" is `_is_absent`,
