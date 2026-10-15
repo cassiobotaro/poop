@@ -211,6 +211,7 @@ d.includes("key")
 x is None
 x is not None
 x is y
+y = f(x) if x is not None else d
 ```
 
 ```python
@@ -218,9 +219,10 @@ x is y
 x.is_none()
 x.not_none()
 x.is_identical(y)
+y = x.if_not_none_if_none(lambda x: f(x), lambda: d)
 ```
 
-> `is` is forbidden by the `no_is` validator. For `None` checks use `.is_none()` / `.not_none()`; for arbitrary identity use `.is_identical(other)` / `.not_identical(other)`.
+> `is` is forbidden by the `no_is` validator. For `None` checks use `.is_none()` / `.not_none()`; for arbitrary identity use `.is_identical(other)` / `.not_identical(other)`. The two-branch form is `if_none_if_not_none(none_block, present_block)` or its twin `if_not_none_if_none`; chaining `.if_not_none(…).if_none(…)` tests the first block's *answer*, not `x`.
 
 ## Raise / try / except
 

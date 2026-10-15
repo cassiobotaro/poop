@@ -1,11 +1,12 @@
 """
-Safe config lookup — `if_none`/`if_not_none` chain
+Safe config lookup — the paired null test, and a chained fallback
 
 `Dict.get(missing_key)` returns `none` (Smalltalk's `nil`), not a
-KeyError. Combined with `if_not_none(block)` (executes only when the
-value is present) and `if_none(block)` (executes only when absent),
-nested optional access becomes a flat chain. Each step keeps the same
-shape: object responds to messages, even when "object" is `none`.
+KeyError. `if_not_none_if_none(present_block, none_block)` branches on
+it in one message — the present block receives the value, the other
+runs when it is absent — and `if_none(block)` alone gives a fallback to
+whatever a block answered. Each step keeps the same shape: object
+responds to messages, even when "object" is `none`.
 
 Compare with the procedural Python version:
 
@@ -34,10 +35,9 @@ class ConfigReader:
         self._config = config
 
     def database_host(self, default):
-        return (
-            self._config.get("database")
-            .if_not_none(lambda db: db.get("host"))
-            .if_none(lambda: default)
+        return self._config.get("database").if_not_none_if_none(
+            lambda db: db.get("host").if_none(lambda: default),
+            lambda: default,
         )
 
 

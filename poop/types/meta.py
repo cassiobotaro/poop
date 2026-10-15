@@ -31,7 +31,7 @@ lazy from poop.types.boolean import false, to_boolean, true
 lazy from poop.types.int import Int
 lazy from poop.types.list import List
 lazy from poop.types.none import none
-lazy from poop.types.object import MessageNotUnderstood
+lazy from poop.types.object import _PAIR, _PAIR_SWAPPED, MessageNotUnderstood
 lazy from poop.types.string import Str, _template_refusal
 
 if TYPE_CHECKING:
@@ -853,6 +853,22 @@ class PoopMeta(type):
     @class_side
     def if_not_none[T](cls, block: Callable[[PoopMeta], T]) -> T:
         return a_block(block, "if_not_none")(cls)
+
+    # A class is an object, and never none: the paired tests run the present
+    # block with the class, checking both as `Object`'s do.
+    @class_side
+    def if_none_if_not_none[T](
+        cls, none_block: Callable[[], object], present_block: Callable[[PoopMeta], T]
+    ) -> T:
+        a_block(none_block, "if_none_if_not_none", spelt=_PAIR)
+        return a_block(present_block, "if_none_if_not_none", spelt=_PAIR)(cls)
+
+    @class_side
+    def if_not_none_if_none[T](
+        cls, present_block: Callable[[PoopMeta], T], none_block: Callable[[], object]
+    ) -> T:
+        a_block(none_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)
+        return a_block(present_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)(cls)
 
     @class_side
     def assert_(cls, message: Str | NoneClass | None = None) -> PoopMeta:  # noqa: ARG002 — a class always holds

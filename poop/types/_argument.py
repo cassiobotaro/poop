@@ -242,14 +242,26 @@ def bytes_like(
 
 @overload
 def a_block[F: Callable[..., object]](
-    value: F | Missing, selector: str, role: str = "a block", param: str = "item"
+    value: F | Missing,
+    selector: str,
+    role: str = "a block",
+    param: str = "item",
+    spelt: str | None = None,
 ) -> F: ...
 @overload
 def a_block(
-    value: object, selector: str, role: str = "a block", param: str = "item"
+    value: object,
+    selector: str,
+    role: str = "a block",
+    param: str = "item",
+    spelt: str | None = None,
 ) -> Callable[..., object]: ...
 def a_block(
-    value: object, selector: str, role: str = "a block", param: str = "item"
+    value: object,
+    selector: str,
+    role: str = "a block",
+    param: str = "item",
+    spelt: str | None = None,
 ) -> Callable[..., object]:
     """`value`, or a refusal naming the message and the argument it wanted.
 
@@ -277,8 +289,11 @@ def a_block(
     if callable(value):
         return value
     # `lambda: …` for a zero-argument block, not `lambda : …` — the branch
-    # family and the `if_none` pair take no parameter at all.
-    spelt = f"lambda {param}: …" if param else "lambda: …"
+    # family and the `if_none` pair take no parameter at all. `spelt` is the
+    # whole argument list for a message taking two blocks, so the hint shows
+    # both.
+    if spelt is None:
+        spelt = f"lambda {param}: …" if param else "lambda: …"
     # `nothing` for an argument that was never passed. Without it, a missing
     # block fell through to CPython's call machinery, which builds its sentence
     # from the *function's* qualname — and the mixins are cloaked as `object`,

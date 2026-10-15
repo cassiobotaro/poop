@@ -591,3 +591,70 @@ def test_print_checks_end_and_sep_in_poops_words(source: str, expected: str) -> 
     with pytest.raises(PoopError) as info:
         Interpreter().run_source(source)
     assert info.value.message == f"TypeError: {expected}"
+
+
+# The paired null test — Smalltalk's `ifNil:ifNotNil:`, the shape `Boolean`
+# has as `if_true_if_false`. Chaining cannot express it: `x.if_not_none(…)
+# .if_none(…)` sends the second message to the first block's answer.
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('(5).if_none_if_not_none(lambda: "absent", lambda x: x + 1).print()', "6"),
+        ('(5).if_none_if_not_none(lambda: "absent", lambda x: None).print()', "None"),
+        ('(5).if_not_none_if_none(lambda x: x + 1, lambda: "absent").print()', "6"),
+        (
+            'int.if_none_if_not_none(lambda: "absent", lambda k: k.name()).print()',
+            "int",
+        ),
+        (
+            'int.if_not_none_if_none(lambda k: k.name(), lambda: "absent").print()',
+            "int",
+        ),
+    ],
+    ids=["present", "present_answers_none", "swapped", "class", "class_swapped"],
+)
+def test_the_paired_null_test_on_a_present_value(
+    source: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out.strip() == expected
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            "(5).if_none_if_not_none(5, lambda x: x)",
+            "#if_none_if_not_none expects a block, got an int — "
+            "write .if_none_if_not_none(lambda: …, lambda x: …)",
+        ),
+        (
+            "(5).if_not_none_if_none(lambda x: x, 5)",
+            "#if_not_none_if_none expects a block, got an int — "
+            "write .if_not_none_if_none(lambda x: …, lambda: …)",
+        ),
+        (
+            "int.if_none_if_not_none(5, lambda k: k)",
+            "#if_none_if_not_none expects a block, got an int — "
+            "write .if_none_if_not_none(lambda: …, lambda x: …)",
+        ),
+    ],
+    ids=["none_block", "swapped_none_block", "class"],
+)
+def test_the_branch_not_taken_is_still_checked(source: str, expected: str) -> None:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == f"TypeError: {expected}"
+
+
+def test_the_chained_form_runs_on_the_blocks_answer(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The gap the pair closes: a present value whose block answers `none`
+    # fires the absent branch when chained.
+    Interpreter().run_source(
+        '(5).if_not_none(lambda x: None).if_none(lambda: "ran").print()'
+    )
+    assert capsys.readouterr().out == "ran\n"

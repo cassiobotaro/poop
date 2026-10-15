@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, final
 
 from poop.types._argument import a_block, no_arguments
 from poop.types.boolean import false, true
-from poop.types.object import Object
+from poop.types.object import _PAIR, _PAIR_SWAPPED, Object
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -27,6 +27,18 @@ class NoneClass(Object, name="NoneType"):
     def if_not_none(self, block: Callable[[Object], object]) -> NoneClass:
         a_block(block, "if_not_none")
         return self
+
+    def if_none_if_not_none[T](
+        self, none_block: Callable[[], T], present_block: Callable[[Object], object]
+    ) -> T:
+        a_block(present_block, "if_none_if_not_none", spelt=_PAIR)
+        return a_block(none_block, "if_none_if_not_none", spelt=_PAIR)()
+
+    def if_not_none_if_none[T](
+        self, present_block: Callable[[Object], object], none_block: Callable[[], T]
+    ) -> T:
+        a_block(present_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)
+        return a_block(none_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)()
 
     def is_none(self) -> Boolean:
         return true

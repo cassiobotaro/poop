@@ -53,6 +53,11 @@ def _holds_no_state(receiver: object) -> Exception:
     return mirrors.AttributeError(holds_no_state(type(receiver).__name__))
 
 
+# How the two paired null tests are spelt in their refusals.
+_PAIR = "lambda: …, lambda x: …"
+_PAIR_SWAPPED = "lambda x: …, lambda: …"
+
+
 class Object(metaclass=PoopMeta):
     __slots__ = ()
 
@@ -119,6 +124,24 @@ class Object(metaclass=PoopMeta):
 
     def if_not_none[T](self, block: Callable[[Object], T]) -> T:
         return a_block(block, "if_not_none")(self)
+
+    # Smalltalk's `ifNil:ifNotNil:`, the paired form `Boolean` already has as
+    # `if_true_if_false`. Not expressible by chaining: `x.if_not_none(…)
+    # .if_none(…)` sends the second message to the first block's *answer*, so
+    # a present value whose block legitimately answers `none` ran the absent
+    # branch too. Both blocks are checked on every receiver, for the reason
+    # `if_none` gives.
+    def if_none_if_not_none[T](
+        self, none_block: Callable[[], object], present_block: Callable[[Object], T]
+    ) -> T:
+        a_block(none_block, "if_none_if_not_none", spelt=_PAIR)
+        return a_block(present_block, "if_none_if_not_none", spelt=_PAIR)(self)
+
+    def if_not_none_if_none[T](
+        self, present_block: Callable[[Object], T], none_block: Callable[[], object]
+    ) -> T:
+        a_block(none_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)
+        return a_block(present_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)(self)
 
     def is_none(self) -> Boolean:
         return false

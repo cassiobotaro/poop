@@ -965,6 +965,10 @@ Three implementation constraints, each load-bearing:
 | `not_none()` | `true` | `false` |
 | `if_none(block)` | does not execute | executes block |
 | `if_not_none(block)` | executes passing `self` | does not execute |
+| `if_none_if_not_none(none_block, present_block)` | runs `present_block` with `self` | runs `none_block` |
+| `if_not_none_if_none(present_block, none_block)` | runs `present_block` with `self` | runs `none_block` |
+
+The paired form is Smalltalk's `ifNil:ifNotNil:`, and the shape `Boolean` already has as `if_true_if_false`. Chaining cannot express it: `x.if_not_none(…).if_none(…)` sends the second message to the first block's *answer*, so a present value whose block legitimately answers `none` ran the absent branch as well — `(5).if_not_none(lambda x: None).if_none(lambda: "ran")` printed `ran`. Both blocks are checked on every receiver, as the single forms check theirs, and the refusal spells both lambdas. The class side answers the pair too, a class being an object that is never none.
 
 `__bool__` returns `False`. `__str__` returns `"None"`.
 

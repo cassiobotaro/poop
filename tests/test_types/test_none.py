@@ -1,5 +1,7 @@
 import pytest
 
+from poop.errors import PoopError
+from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
 from poop.types.none import NoneClass, none
 from poop.types.none import none as none2
@@ -74,3 +76,33 @@ def test_the_class_answers_the_one_none() -> None:
 def test_the_class_takes_no_arguments() -> None:
     with pytest.raises(TypeError, match=r"^NoneType\(\) takes no arguments$"):
         NoneClass(1)
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            'None.if_none_if_not_none(lambda: "absent", lambda x: x + 1).print()',
+            "absent",
+        ),
+        (
+            'None.if_not_none_if_none(lambda x: x + 1, lambda: "absent").print()',
+            "absent",
+        ),
+    ],
+    ids=["pair", "swapped"],
+)
+def test_none_runs_the_none_branch_of_the_paired_test(
+    source: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out.strip() == expected
+
+
+def test_the_present_block_is_checked_on_none_too() -> None:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source("None.if_none_if_not_none(lambda: 1, 5)")
+    assert info.value.message == (
+        "TypeError: #if_none_if_not_none expects a block, got an int — "
+        "write .if_none_if_not_none(lambda: …, lambda x: …)"
+    )
