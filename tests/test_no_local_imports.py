@@ -17,6 +17,8 @@ import io
 import sys
 from typing import TYPE_CHECKING
 
+import pytest
+
 from poop import Interpreter
 from poop.transformers.int import IntTransformer
 from poop.types._argument import an_int
@@ -30,6 +32,7 @@ from tests._support import EXAMPLE_FILES, example_id
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Mapping, Sequence
+    from pathlib import Path
     from types import ModuleType
 
 
@@ -127,24 +130,39 @@ def test_every_hot_operation_still_runs() -> None:
             run()
 
 
-def _example_programs() -> list[tuple[str, str]]:
-    """Every program under `examples/` that does not wait on `input`."""
-    return [
-        (example_id(path), path.read_text())
-        for path in EXAMPLE_FILES
-        if "input(" not in path.read_text()
-    ]
+# Every program under `examples/` that does not wait on `input`.
+_EXAMPLES = [path for path in EXAMPLE_FILES if "input(" not in path.read_text()]
 
 
-def test_no_example_fires_a_local_import() -> None:
-    programs = _example_programs()
-    assert len(programs) > 30
+@pytest.fixture(scope="module")
+def warm_interpreter() -> None:
+    """Every lazy edge resolved, once, before any example is recorded.
+
+    A `lazy from` import fires on first use and is a plain global after
+    that, so the first program to touch a module would be blamed for an
+    import that is the language's own. The warm-up ran inside the one test
+    that held every program; as a module fixture it runs once for all the
+    cases below, and the recorded pass is one case per program, so a
+    failure names the program that reintroduced the import.
+    """
     with contextlib.redirect_stdout(io.StringIO()):
-        for _, source in programs:
-            Interpreter().run_source(source)  # warm-up: every lazy edge resolves
-        with _recording_imports() as fired:
-            for _, source in programs:
-                Interpreter().run_source(source)
+        for path in _EXAMPLES:
+            Interpreter().run_source(path.read_text())
+
+
+def test_the_corpus_is_not_empty() -> None:
+    """Guard against the parametrize below silently skipping every example."""
+    assert len(_EXAMPLES) > 30
+
+
+@pytest.mark.parametrize("example", _EXAMPLES, ids=example_id)
+@pytest.mark.usefixtures("warm_interpreter")
+def test_no_example_fires_a_local_import(example: Path) -> None:
+    with (
+        contextlib.redirect_stdout(io.StringIO()),
+        _recording_imports() as fired,
+    ):
+        Interpreter().run_source(example.read_text())
     assert fired == [], "\n".join(
         f"{f}:{line}  {fn}" for f, line, fn in sorted(set(fired))
     )
