@@ -1,14 +1,6 @@
-from typing import TYPE_CHECKING
-
 from poop.transformers import RESERVED_NAMES
 from poop.types.exceptions import MIRRORS
-from poop.validators.base import CollectingValidator, collect_errors
-from poop.validators.no_namespace_shadow import _Visitor
-
-if TYPE_CHECKING:
-    import ast
-
-    from poop.errors import ValidationError
+from poop.validators._shadow import ShadowValidator
 
 # The names the type transformers rewrite to mangled `_poop_*` globals.
 # Rebinding one (an assignment, a class name, or a def/lambda parameter)
@@ -27,24 +19,20 @@ if TYPE_CHECKING:
 # Derived from the rewriters (`RESERVED_NAMES`), not tabulated here: a table
 # is a second list, and a new rewriter must not be addable without its
 # reservation following it.
-_MESSAGE = "{name!r} is a POOP builtin name; it cannot be rebound"
 
 
-class NoBuiltinShadowValidator(CollectingValidator):
-    def __init__(self) -> None:
-        # The exception mirrors belong here for the same reason the names
-        # above do: `ExceptionTransformer` rewrites every `ast.Name` matching
-        # one, Store included. Both sides of the hazard were live —
-        # `ValueError = 5` clobbered the mirror globally, while a parameter or
-        # class *name* (neither of which is an `ast.Name`) kept its spelling
-        # and left every read of it in the body resolving to the mirror, so
-        # `def hold(self, ValueError): return ValueError` answered the class
-        # and never saw its argument.
-        #
-        # Derived from MIRRORS rather than tabulated, for the reason the
-        # rewriters' names are: a new mirror must not be addable without the
-        # reservation following it.
-        self._protected: frozenset[str] = RESERVED_NAMES | frozenset(MIRRORS)
-
-    def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(self._protected, _MESSAGE), tree)
+class NoBuiltinShadowValidator(ShadowValidator):
+    # The exception mirrors belong here for the same reason the names above
+    # do: `ExceptionTransformer` rewrites every `ast.Name` matching one, Store
+    # included. Both sides of the hazard were live — `ValueError = 5`
+    # clobbered the mirror globally, while a parameter or class *name*
+    # (neither of which is an `ast.Name`) kept its spelling and left every
+    # read of it in the body resolving to the mirror, so `def hold(self,
+    # ValueError): return ValueError` answered the class and never saw its
+    # argument.
+    #
+    # Derived from MIRRORS rather than tabulated, for the reason the
+    # rewriters' names are: a new mirror must not be addable without the
+    # reservation following it.
+    protected = RESERVED_NAMES | frozenset(MIRRORS)
+    message = "{name!r} is a POOP builtin name; it cannot be rebound"

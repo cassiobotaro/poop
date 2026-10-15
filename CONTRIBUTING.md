@@ -149,11 +149,13 @@ Every infection follows the same pattern.
 
 ### A new validator (e.g. `no_foo`)
 
-1. Create `poop/validators/no_foo.py`. Subclass one of the three shapes when
+1. Create `poop/validators/no_foo.py`. Subclass one of the four shapes when
    it fits, setting its class attributes — `CallNameValidator` (`forbidden`,
    `message`) for a builtin name, `NodeValidator` (`messages`) for a node
-   type, `OpValidator` (`node_type`, `messages`) for an operator. Otherwise
-   subclass `CollectingValidator` (`poop/validators/base.py`) and set
+   type, `OpValidator` (`node_type`, `messages`) for an operator,
+   `ShadowValidator` (`protected`, `message`) for a name a program must not
+   rebind. Otherwise subclass `CollectingValidator`
+   (`poop/validators/base.py`) and set
    `visitor` to an `ErrorCollector`, or override `collect()` when the visitor
    needs arguments — never `validate()`, which the base derives by raising the
    first collected error. Collecting is the primitive because
