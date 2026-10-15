@@ -1,11 +1,19 @@
+import builtins
 from typing import TYPE_CHECKING, Never, final
 
 from poop.types._alias import unalias
 from poop.types._argument import a_class
 from poop.types._message import poop_message
-from poop.types._selectors import explain, not_understood
+from poop.types._selectors import explain, is_message, not_understood
+from poop.types.block import _as_block
 from poop.types.boolean import to_boolean
-from poop.types.exceptions import PoopExcMeta, poop_class_of
+from poop.types.exceptions import (
+    _PYTHON_ATTRIBUTES,
+    PoopExcMeta,
+    _refuse_python_attribute,
+    poop_class_of,
+)
+from poop.types.list import List
 from poop.types.meta import class_side_named
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
@@ -99,6 +107,43 @@ class Error(Object, name="object"):
         """
         raise self._exception
 
+    def _state(self) -> dict[str, object]:
+        """The public state a program's own exception class stored on the instance.
+
+        A mirror carries no state of its own (`__slots__ = ()`), so this is
+        empty for every builtin kind; a `class Field(Exception)` whose
+        `__init__` wrote `self.code` fills it, and that is exactly what a
+        handler reading `e.code` was refused. `is_message` keeps the rule
+        `dir` applies everywhere: a private or dunder name is not forwarded.
+        """
+        return {
+            name: value
+            for name, value in vars(self._exception).items()
+            if is_message(name)
+        }
+
+    def dir(self) -> List:
+        # The wrapper's messages and the exception's forwarded state, as one
+        # listing: `Object.dir` reads `builtins.dir(self)`, which cannot see
+        # what `does_not_understand` answers.
+        names = sorted(
+            {*(n for n in builtins.dir(self) if is_message(n)), *self._state()}
+        )
+        return List(*(Str(name) for name in names))
+
+    def __eq__(self, other: object) -> Boolean:
+        # Two wrappers over one exception are one error: `Try` builds a fresh
+        # `Error` per handler, so the error `raise_` re-signals compared
+        # unequal to the one first caught — while its docstring sells exactly
+        # that identity surviving. The shape `_MethodBlock` uses for a bound
+        # method: equal by what is wrapped, never by the wrapper.
+        return to_boolean(
+            isinstance(other, Error) and self._exception is other._exception
+        )
+
+    def __hash__(self) -> int:
+        return hash(self._exception)
+
     def does_not_understand(self, name: Str) -> object:
         """Refuse under the caught exception's name, not the wrapper's.
 
@@ -119,8 +164,19 @@ class Error(Object, name="object"):
         and had nothing for this one.
         """
         raw = str(name)
+        # Forwarded before any refusal: the state a program's class attached
+        # is the one thing about the exception the wrapper did not know.
+        state = self._state()
+        if raw in state:
+            return _as_block(state[raw])
         kind = self.kind()
         label = str(kind.name())
+        # A `BaseException` native the class side already refuses by name —
+        # worded the same here, where the reader was told "a caught error
+        # answers #message" and then handed the generic sentence by the error.
+        native = getattr(kind, "_native", None)
+        if raw in _PYTHON_ATTRIBUTES and native is not None and hasattr(native, raw):
+            _refuse_python_attribute(kind, raw, _PYTHON_ATTRIBUTES[raw])
         # `vars` down the metaclass MRO rather than `hasattr`: asking the class
         # is what raises here for a refusing descriptor, and a refusal is not an
         # answer. Only a real class-side message earns the redirect.

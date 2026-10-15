@@ -1,5 +1,7 @@
 import pytest
 
+from poop.errors import ExecutionError
+from poop.interpreter import Interpreter
 from poop.types._selectors import explain
 from poop.types.boolean import false, true
 from poop.types.error import Error
@@ -201,9 +203,10 @@ def test_an_unknown_name_keeps_the_generic_refusal() -> None:
 
 def test_a_refusing_class_side_descriptor_is_not_redirected() -> None:
     # `args` is a `class_side_read_refusal`, so the class does not answer it
-    # either — pointing at `#kind()` would send the reader to another refusal.
+    # either — pointing at `#kind()` would send the reader to another refusal;
+    # the error words it as the class does, naming the message that answers.
     error = Error(MIRRORS["ValueError"]("m"))
-    with pytest.raises(MessageNotUnderstood, match="try :methods"):
+    with pytest.raises(MessageNotUnderstood, match="a caught error answers #message"):
         error.args  # noqa: B018
 
 
@@ -220,3 +223,71 @@ def test_no_mirror_advertises_a_name_a_caught_error_refuses() -> None:
                 getattr(error, name)
             except MessageNotUnderstood:
                 pytest.fail(f"{kind}.dir() lists #{name}, which a caught error refuses")
+
+
+# The state a program's own exception class stored, and identity across a
+# re-raise.
+
+_FIELD = (
+    "class Field(Exception):\n"
+    "    def __init__(self, code):\n"
+    "        self.code = code\n"
+    '        super().__init__("code")\n'
+)
+
+
+@pytest.mark.parametrize(
+    ("handler", "expected"),
+    [
+        ("lambda e: e.code.print()", "7"),
+        ('lambda e: e.has_attr("code").print()', "True"),
+        ('lambda e: e.dir().includes("code").print()', "True"),
+        ('lambda e: e.get_attr("code").print()', "7"),
+    ],
+    ids=["read", "has_attr", "dir", "get_attr"],
+)
+def test_a_caught_error_forwards_the_exceptions_own_state(
+    handler: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(
+        f"{_FIELD}Try(lambda: Field.raise_(code=7)).except_(Field, {handler}).run()"
+    )
+    assert capsys.readouterr().out.strip() == expected
+
+
+def test_a_native_method_is_still_refused_on_a_caught_user_error() -> None:
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(
+            f"{_FIELD}Try(lambda: Field.raise_(code=7))"
+            ".except_(Field, lambda e: e.add_note).run()"
+        )
+    assert info.value.message == (
+        "AttributeError: Field does not understand #add_note — "
+        "#add_note is Python's; POOP does not offer it"
+    )
+
+
+def test_a_private_name_stored_on_the_exception_is_not_forwarded() -> None:
+    exc = MIRRORS["ValueError"]("m")
+    exc.__dict__["_secret"] = 1
+    with pytest.raises(MessageNotUnderstood):
+        Error(exc)._secret  # noqa: B018
+
+
+def test_errors_wrapping_one_exception_are_one_error() -> None:
+    exc = MIRRORS["ValueError"]("m")
+    assert Error(exc) == Error(exc)
+    assert Error(exc).hash() == Error(exc).hash()
+    assert (Error(exc) == Error(MIRRORS["ValueError"]("m"))) is false
+
+
+def test_the_re_raised_error_equals_the_one_first_caught(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(
+        'e1 = Try(lambda: ValueError.raise_("x")).except_(ValueError, lambda e: e).run()\n'
+        "Try(lambda: e1.raise_()).except_(ValueError, lambda e: (e == e1).print()).run()\n"
+        "Try(lambda: e1.raise_())"
+        ".except_(ValueError, lambda e: (e.hash() == e1.hash()).print()).run()"
+    )
+    assert capsys.readouterr().out == "True\nTrue\n"
