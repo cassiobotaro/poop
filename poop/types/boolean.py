@@ -67,9 +67,6 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
     def _order_value(self) -> int:
         return int(bool(self))
 
-    def __repr__(self) -> str:
-        return str(self)
-
     def if_true[T](self, block: Callable[[], T]) -> T | NoneClass:
         raise NotImplementedError
 
@@ -425,16 +422,16 @@ class _TrueClass(Boolean, name="bool"):
         true_block: Callable[[], T],
         false_block: Callable[[], T],
     ) -> T:
-        a_block(false_block, "if_true_if_false", role="a block", param="")
-        return a_block(true_block, "if_true_if_false", role="a block", param="")()
+        a_block(false_block, "if_true_if_false", param="")
+        return a_block(true_block, "if_true_if_false", param="")()
 
     def if_false_if_true[T](
         self,
         false_block: Callable[[], T],
         true_block: Callable[[], T],
     ) -> T:
-        a_block(false_block, "if_false_if_true", role="a block", param="")
-        return a_block(true_block, "if_false_if_true", role="a block", param="")()
+        a_block(false_block, "if_false_if_true", param="")
+        return a_block(true_block, "if_false_if_true", param="")()
 
     def and_(self, block: Callable[[], Boolean]) -> Boolean:
         return a_block(block, "and_", param="")()
@@ -487,16 +484,16 @@ class _FalseClass(Boolean, name="bool"):
         true_block: Callable[[], T],
         false_block: Callable[[], T],
     ) -> T:
-        a_block(true_block, "if_true_if_false", role="a block", param="")
-        return a_block(false_block, "if_true_if_false", role="a block", param="")()
+        a_block(true_block, "if_true_if_false", param="")
+        return a_block(false_block, "if_true_if_false", param="")()
 
     def if_false_if_true[T](
         self,
         false_block: Callable[[], T],
         true_block: Callable[[], T],
     ) -> T:
-        a_block(true_block, "if_false_if_true", role="a block", param="")
-        return a_block(false_block, "if_false_if_true", role="a block", param="")()
+        a_block(true_block, "if_false_if_true", param="")
+        return a_block(false_block, "if_false_if_true", param="")()
 
     def and_(self, block: Callable[[], Boolean]) -> Boolean:
         a_block(block, "and_", param="")

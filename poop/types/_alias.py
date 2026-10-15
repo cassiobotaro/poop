@@ -96,11 +96,10 @@ def _fill(made: object, converted: object, slots: tuple[str, ...]) -> None:
         setattr(made, slot, copy(getattr(converted, slot)))
 
 
-def _endow(  # noqa: PLR0913, PLR0917 — the `__new__` step, spelt out
+def _endow(
     made: object,
     cls: type,
     alias: type,
-    slots: tuple[str, ...],
     args: tuple[object, ...],
     kwargs: dict[str, object],
 ) -> None:
@@ -123,6 +122,9 @@ def _endow(  # noqa: PLR0913, PLR0917 — the `__new__` step, spelt out
     (an `int` has no empty), the object cannot be built at all, which is what
     CPython answers there too.
     """
+    # Read off the alias like `_converter` and `_empty` beside it, rather
+    # than handed in: three facts about one alias, found one way.
+    slots = alias.__dict__["_slots"]
     if len(args) == 1 and not kwargs:
         _fill(made, alias.__dict__["_converter"](*args), slots)
         return
@@ -193,7 +195,6 @@ class _AliasMeta(PoopMeta):
         converter = alias.__dict__["_converter"]
         if alias is cls:
             return converter(*args, **kwargs)
-        slots = alias.__dict__["_slots"]
         if _own_init(cls, alias):
             # The `__new__` step Python has and POOP does not — `_endow` says
             # why, and why one positional argument converts while any other
@@ -203,7 +204,7 @@ class _AliasMeta(PoopMeta):
             # not, `Boolean`, cannot be subclassed at all — `__new__` above
             # refuses it where CPython refuses it.
             made = object.__new__(cls)
-            _endow(made, cls, alias, slots, args, kwargs)
+            _endow(made, cls, alias, args, kwargs)
             made.__init__(*args, **kwargs)
             return made
         converted = converter(*args, **kwargs)
@@ -211,7 +212,7 @@ class _AliasMeta(PoopMeta):
         # written slot by slot, so the wrapper's own `__init__` must not run
         # over it — and no wrapper defines `__new__`.
         made = object.__new__(cls)
-        _fill(made, converted, slots)
+        _fill(made, converted, alias.__dict__["_slots"])
         return made
 
 

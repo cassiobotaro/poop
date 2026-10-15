@@ -69,7 +69,7 @@ class With(Object, name="With"):
         With(lambda: lock).do(lambda _: critical_section())
     """
 
-    __slots__ = ("_cm_block",)
+    __slots__ = ("_cm_block", "_done")
 
     def __init__(
         self, cm_block: Callable[[], object] | Missing = MISSING, /, *extra: object
@@ -85,9 +85,10 @@ class With(Object, name="With"):
             raise mirrors.TypeError(
                 f"With takes one block, got {given} — write With(lambda: …)"
             )
-        self._cm_block: Callable[[], object] | None = _require_block(
+        self._cm_block = _require_block(
             cm_block, "the manager argument", "write With(lambda: …)"
         )
+        self._done = False
 
     def do(self, body_block: Callable[[object], object]) -> object:
         # First, before the manager block runs. `_require_block` exists for
@@ -99,14 +100,17 @@ class With(Object, name="With"):
         # manager was acquired and released for a program that was never going
         # to use it — the ordering `_protocol` argues for one step up.
         _require_block(body_block, "the body argument", "write .do(lambda resource: …)")
-        if self._cm_block is None:
+        if self._done:
             raise mirrors.RuntimeError(
                 "With has already run; create a new With instance to run again."
             )
+        self._done = True
         cm = self._cm_block()
         # Single-use: drop the context-manager block so the executed With no
         # longer pins whatever its closure captured (re-running raises).
-        self._cm_block = None
+        # `del` plus the flag, as `Try` spells it: the slot keeps its type
+        # instead of admitting a `None` the guard above makes unreachable.
+        del self._cm_block
         enter, exit_ = _protocol(cm)
         value = enter(cm)
         try:
