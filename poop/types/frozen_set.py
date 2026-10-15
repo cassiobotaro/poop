@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, ClassVar
 
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._set_algebra import _elements, _SetAlgebraMixin
+from poop.types._set_algebra import _SetAlgebraMixin
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.frozen_set_iterator import FrozenSetIterator
@@ -37,31 +37,25 @@ class FrozenSet(
         return self
 
     def union(self, *others: Object) -> FrozenSet:
-        return FrozenSet(*self._data.union(*(_elements(o, "union") for o in others)))
+        return self._combined("union", others)
 
     def intersection(self, *others: Object) -> FrozenSet:
-        return FrozenSet(
-            *self._data.intersection(*(_elements(o, "intersection") for o in others))
-        )
+        return self._combined("intersection", others)
 
     def difference(self, *others: Object) -> FrozenSet:
-        return FrozenSet(
-            *self._data.difference(*(_elements(o, "difference") for o in others))
-        )
+        return self._combined("difference", others)
 
     def symmetric_difference(self, other: Object) -> FrozenSet:
-        return FrozenSet(
-            *self._data.symmetric_difference(_elements(other, "symmetric_difference"))
-        )
+        return self._combined("symmetric_difference", (other,))
 
     def isdisjoint(self, other: Object) -> Boolean:
-        return to_boolean(self._data.isdisjoint(_elements(other, "isdisjoint")))
+        return self._asks("isdisjoint", other)
 
     def issubset(self, other: Object) -> Boolean:
-        return to_boolean(self._data.issubset(_elements(other, "issubset")))
+        return self._asks("issubset", other)
 
     def issuperset(self, other: Object) -> Boolean:
-        return to_boolean(self._data.issuperset(_elements(other, "issuperset")))
+        return self._asks("issuperset", other)
 
     def _rewrap(self, raw: Iterable[Object]) -> FrozenSet:
         return FrozenSet(*raw)

@@ -1,8 +1,7 @@
 from itertools import starmap
 from typing import TYPE_CHECKING, final
 
-from poop.types._argument import a_collection
-from poop.types._dict_view import _elements, _SetLikeView
+from poop.types._dict_view import _SetLikeView
 from poop.types.boolean import to_boolean
 from poop.types.dict_item_iterator import DictItemIterator
 from poop.types.dict_reverse_item_iterator import DictReverseItemIterator
@@ -45,9 +44,7 @@ class DictItems(_SetLikeView[Tuple], name="dict_items"):
         return k in self._dict._data and bool(self._dict._data[k] == v)
 
     def isdisjoint(self, other: object) -> Boolean:
-        return to_boolean(
-            self._own().isdisjoint(_elements(a_collection(other, "isdisjoint")))
-        )
+        return self._isdisjoint(other)
 
     def _own(self) -> set[Object]:
         # Mirroring CPython, an operand's members are *not* required to be

@@ -2,6 +2,7 @@ import operator
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, cast
 
+from poop.types._argument import a_collection
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, to_boolean
 from poop.types.frozen_set import FrozenSet
@@ -110,14 +111,21 @@ class _SetLikeView[T: Object](_DictView[T], name="object"):
     The two views differed only in what their own side is — the keys view
     itself, or a set of `Tuple` pairs — and spelled every operator twice over
     that difference. `_own` is that difference; everything else is written
-    once. `isdisjoint` stays on each class: it is a message, and a wrong-arity
-    report names the function's owner.
+    once. `isdisjoint` keeps a one-line `def` on each class — it is a message,
+    and a wrong-arity report names the function's owner — over the one body
+    `_isdisjoint` holds here.
     """
 
     __slots__ = ()
     # Set-like and compared by contents, which change under it: unhashable,
     # as in CPython. `dict_values` is neither, and hashes by identity.
     __hash__ = None  # type: ignore[assignment]
+
+    def _isdisjoint(self, other: object) -> Boolean:
+        """`isdisjoint`'s one body; each view keeps the `def` for its qualname."""
+        return to_boolean(
+            self._own().isdisjoint(_elements(a_collection(other, "isdisjoint")))
+        )
 
     def _own(self) -> AbstractSet[Object]:
         """The receiver's own side, as something a `set` operator accepts."""

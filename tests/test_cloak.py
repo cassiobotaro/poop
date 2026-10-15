@@ -196,3 +196,43 @@ def test_no_public_member_is_a_property(index: int, cls: type) -> None:
     for name, attr in vars(cls).items():
         if not name.startswith("_"):
             assert not isinstance(attr, property), f"{cls.__qualname__}.{name}"
+
+
+# Every shared mixin is cloaked too: `_Mixin.__init_subclass__` names one
+# `object` unless the class keyword says better, so no wrong-arity sentence
+# can blame a `_SomethingMixin`. `_SetAlgebraMixin` used to sit outside
+# `_Mixin` and was the one left uncloaked.
+
+
+def _mixins() -> list[type]:
+    from poop.types._mixin import _Mixin  # noqa: PLC0415 — a test's local
+
+    found: dict[int, type] = {}
+    for info in pkgutil.iter_modules(poop.types.__path__):
+        module = importlib.import_module(f"poop.types.{info.name}")
+        for _, cls in inspect.getmembers(module, inspect.isclass):
+            if (
+                issubclass(cls, _Mixin)
+                and cls is not _Mixin
+                and not isinstance(cls, PoopMeta)
+            ):
+                found[id(cls)] = cls
+    return sorted(found.values(), key=lambda cls: (cls.__qualname__, id(cls)))
+
+
+@pytest.mark.parametrize(
+    ("index", "cls"),
+    list(enumerate(_mixins())),
+    ids=lambda arg: arg.__name__ if isinstance(arg, type) else str(arg),
+)
+def test_every_mixin_is_cloaked(index: int, cls: type) -> None:
+    assert cls.__module__ == "builtins"
+    assert not cls.__name__.startswith("_")
+    assert cls.__qualname__ == cls.__name__
+
+
+def test_the_mixin_sweep_reaches_the_set_algebra() -> None:
+    from poop.types._set_algebra import _SetAlgebraMixin  # noqa: PLC0415 — a test's local
+
+    assert _SetAlgebraMixin in _mixins()
+    assert _SetAlgebraMixin.__name__ == "object"

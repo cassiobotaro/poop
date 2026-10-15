@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, final
 
-from poop.types._argument import a_collection
-from poop.types._dict_view import _elements, _SetLikeView
+from poop.types._dict_view import _SetLikeView
 from poop.types.boolean import to_boolean
 from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
@@ -41,9 +40,7 @@ class DictKeys(_SetLikeView[Object], name="dict_keys"):
         return item in self._dict._data
 
     def isdisjoint(self, other: object) -> Boolean:
-        return to_boolean(
-            self._own().isdisjoint(_elements(a_collection(other, "isdisjoint")))
-        )
+        return self._isdisjoint(other)
 
     def _repr_items(self) -> str:
         return ", ".join(repr(k) for k in self._dict._data)

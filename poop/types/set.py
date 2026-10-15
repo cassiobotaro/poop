@@ -65,22 +65,16 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object, name=
             raise nothing_to_remove(self) from None
 
     def union(self, *others: Object) -> Set:
-        return Set(*self._data.union(*(_elements(o, "union") for o in others)))
+        return self._combined("union", others)
 
     def intersection(self, *others: Object) -> Set:
-        return Set(
-            *self._data.intersection(*(_elements(o, "intersection") for o in others))
-        )
+        return self._combined("intersection", others)
 
     def difference(self, *others: Object) -> Set:
-        return Set(
-            *self._data.difference(*(_elements(o, "difference") for o in others))
-        )
+        return self._combined("difference", others)
 
     def symmetric_difference(self, other: Object) -> Set:
-        return Set(
-            *self._data.symmetric_difference(_elements(other, "symmetric_difference"))
-        )
+        return self._combined("symmetric_difference", (other,))
 
     def update(self, *others: Object) -> NoneClass:
         self._data.update(*(_elements(o, "update") for o in others))
@@ -105,13 +99,13 @@ class Set(_SetAlgebraMixin, _ValueEqMixin, _IterableMixin[Object], Object, name=
         return none
 
     def isdisjoint(self, other: Object) -> Boolean:
-        return to_boolean(self._data.isdisjoint(_elements(other, "isdisjoint")))
+        return self._asks("isdisjoint", other)
 
     def issubset(self, other: Object) -> Boolean:
-        return to_boolean(self._data.issubset(_elements(other, "issubset")))
+        return self._asks("issubset", other)
 
     def issuperset(self, other: Object) -> Boolean:
-        return to_boolean(self._data.issuperset(_elements(other, "issuperset")))
+        return self._asks("issuperset", other)
 
     def includes(self, obj: Object) -> Boolean:
         return to_boolean(obj in self)

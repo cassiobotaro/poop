@@ -2,6 +2,7 @@ import operator
 from typing import TYPE_CHECKING, Self
 
 from poop.types._argument import a_collection
+from poop.types._mixin import _Mixin
 from poop.types.boolean import to_boolean
 
 # Function-local: `frozen_set` imports this module.
@@ -64,7 +65,7 @@ def _other_set(other: object) -> AbstractSet[Object] | None:
     return None
 
 
-class _SetAlgebraMixin:
+class _SetAlgebraMixin(_Mixin):
     """Shared ``&``/``|``/``-``/``^`` operators for ``Set`` and ``FrozenSet``.
 
     CPython lets ``set`` and ``frozenset`` mix freely under these operators, and
@@ -79,11 +80,13 @@ class _SetAlgebraMixin:
     ``set`` subclass, and so does POOP; ``_BytesLikeMixin._rewrap`` states the
     same rule for the bytes pair.
 
-    The *messages* (``union``, ``isdisjoint``, ...) stay on each class rather
-    than here: a wrong-arity call is reported under the function's
-    ``__qualname__``, and a function shared by both classes can carry only one
-    of ``set.isdisjoint`` and ``frozenset.isdisjoint``. The dunders below are
-    never sent by name, so they are shared.
+    The *messages* (``union``, ``isdisjoint``, ...) keep a one-line ``def`` on
+    each class rather than living here: a wrong-arity call is reported under
+    the function's ``__qualname__``, and a function shared by both classes can
+    carry only one of ``set.isdisjoint`` and ``frozenset.isdisjoint``. Their
+    bodies are ``_combined`` and ``_asks`` below, written once — the pattern
+    ``_sequence.py`` states. The dunders are never sent by name, so they are
+    shared outright.
     """
 
     __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
@@ -95,6 +98,15 @@ class _SetAlgebraMixin:
     def _rewrap(self, raw: Iterable[Object]) -> Self:
         """`raw`'s elements as the receiver's own builtin kind."""
         raise NotImplementedError
+
+    def _combined(self, name: str, others: tuple[object, ...]) -> Self:
+        """`self._data.<name>(*others)` as the receiver's own kind, operands guarded."""
+        method = getattr(self._data, name)
+        return self._rewrap(method(*(_elements(o, name) for o in others)))
+
+    def _asks(self, name: str, other: object) -> Boolean:
+        """`self._data.<name>(other)` as a `Boolean`, the operand guarded."""
+        return to_boolean(getattr(self._data, name)(_elements(other, name)))
 
     def _algebra(
         self,
