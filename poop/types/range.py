@@ -159,6 +159,18 @@ class Range(_IterableMixin[Int], Object, name="range"):
     def len(self) -> Int:
         return Int(len(self._range()))
 
+    # The two protocol slots every other collection wires. Without `__len__`
+    # the `Object` default held and `range(0)` was truthy — `range(0).not_()`
+    # answered `False` and `assert_` passed on it — where `[]`, `""`, `set()`
+    # and `b""` all read as empty. `__contains__` is what CPython's `in`
+    # reads and what `includes` answers, folding a `Boolean` as the searches
+    # above do.
+    def __len__(self) -> int:
+        return len(self._range())
+
+    def __contains__(self, item: object) -> bool:
+        return _searched(item) in self._range()
+
     def __eq__(self, other: object) -> Boolean:
         # Mirror Python's `range` value equality: two ranges are equal when
         # they produce the same sequence. POOP's inclusive upper bound is an

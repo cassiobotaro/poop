@@ -2,6 +2,8 @@ from typing import Any
 
 import pytest
 
+from poop.errors import ExecutionError
+from poop.interpreter import Interpreter
 from poop.types.boolean import Boolean, false, true
 from poop.types.int import Int
 from poop.types.list import List
@@ -412,3 +414,40 @@ def test_a_foreign_value_still_answers_rather_than_raising() -> None:
     assert rng.count(Str("a")) == Int(0)
     with pytest.raises(ValueError, match="no element equal to"):
         rng.index(Str("a"))
+
+
+# Truthiness and membership: the two protocol slots every other collection
+# wires. `Range` had only the `len` message, so `Object`'s default held and an
+# empty range was truthy.
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("range(0).not_().print()", "True"),
+        ("range(5, 2).not_().print()", "True"),
+        ("range(3).not_().print()", "False"),
+        ("range(0, 10, 2).includes(4).print()", "True"),
+        ("range(2).includes(True).print()", "True"),
+        ("range(0).includes(0).print()", "False"),
+        ("range(0, 10, 2).includes(5).print()", "False"),
+    ],
+    ids=["empty", "empty_descending", "full", "held", "boolean", "none_held", "absent"],
+)
+def test_truthiness_and_membership(
+    source: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out.strip() == expected
+
+
+def test_assert_fails_on_an_empty_range() -> None:
+    with pytest.raises(ExecutionError, match="AssertionError: empty"):
+        Interpreter().run_source('range(0).assert_("empty")')
+
+
+def test_len_and_contains_are_wired() -> None:
+    assert len(Range(Int(0), Int(2))) == 3
+    assert Int(1) in Range(Int(0), Int(2))
+    assert true in Range(Int(0), Int(2))
+    assert Int(7) not in Range(Int(0), Int(2))

@@ -1118,6 +1118,8 @@ Both inherit `_IterableMixin` so chains like `col.map(f).filter(g).sum()` keep i
 
 **A sliced `Range` is a `Range`**, as `range(10)[1:3]` is `range(1, 3)` in CPython and as `reversed()` already answered. Wrapping the selected elements in a `List` allocated one `Int` per member of the *result*, so `range(1000000000000).slice(0, 3)` — three elements in Python — materialized a trillion. The exclusive stop is shifted back by `sign` to round-trip through the constructor's inclusive convention, the same encoding `reversed()` undoes.
 
+**An empty range is falsy and `includes` is membership.** Every other collection wires `__len__`, so an empty one reads as empty; `Range` had only the `len` message, and `Object`'s default held — `range(0).not_()` answered `False` and `range(0).assert_("empty")` passed, where `[]`, `""`, `set()` and `b""` all refuse. `__len__` and `__contains__` are wired now, the second folding a `Boolean` as the three searches already do.
+
 ### Object.print — `poop/types/object.py`
 
 All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to support `sep`.
