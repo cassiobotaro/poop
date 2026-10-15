@@ -1,10 +1,9 @@
 import operator
 from typing import TYPE_CHECKING
 
-from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import a_number
-from poop.types._message import binary_refusal
+from poop.types._message import answered
 from poop.types._numeric_compare import _num_value
 from poop.types._sentinel import NOT_NUMERIC
 from poop.types.boolean import Boolean, false, to_boolean
@@ -110,12 +109,7 @@ class Complex(Object, name="complex"):
         # `Complex` wrapped `__abs__` and `__neg__` as `abs()` and `negated()`
         # but never this one — so `complex(1, 1) ** 2` computed and
         # `complex(1, 1).pow(2)` answered `complex does not understand #pow`.
-        result = self.__pow__(other)
-        if result is NotImplemented:
-            raise mirrors.TypeError(
-                binary_refusal("complex", "pow", type(other).__name__)
-            )
-        return result
+        return answered(self.__pow__(other), "complex", "pow", other)
 
     def negated(self) -> Complex:
         return Complex(-self._value)

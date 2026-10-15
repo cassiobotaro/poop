@@ -542,12 +542,20 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
     def casefold(self) -> Str:
         return Str(self._value.casefold())
 
+    def _pad(
+        self,
+        method: Callable[..., str],
+        selector: str,
+        width: Int,
+        fillchar: Str | NoneClass | None,
+    ) -> Str:
+        """`center` and its two siblings: one guarded call to the native method."""
+        w = an_int(width, selector, "width")
+        fill = a_fill(fillchar, selector, "one character", (str,))
+        return Str(method(w) if fill is None else method(w, fill))
+
     def center(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        w = an_int(width, "center", "width")
-        fill = a_fill(fillchar, "center", "one character", (str,))
-        return Str(
-            self._value.center(w) if fill is None else self._value.center(w, fill)
-        )
+        return self._pad(self._value.center, "center", width, fillchar)
 
     def encode(
         self,
@@ -584,14 +592,10 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         return to_boolean(self._value.istitle())
 
     def ljust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        w = an_int(width, "ljust", "width")
-        fill = a_fill(fillchar, "ljust", "one character", (str,))
-        return Str(self._value.ljust(w) if fill is None else self._value.ljust(w, fill))
+        return self._pad(self._value.ljust, "ljust", width, fillchar)
 
     def rjust(self, width: Int, fillchar: Str | NoneClass | None = None) -> Str:
-        w = an_int(width, "rjust", "width")
-        fill = a_fill(fillchar, "rjust", "one character", (str,))
-        return Str(self._value.rjust(w) if fill is None else self._value.rjust(w, fill))
+        return self._pad(self._value.rjust, "rjust", width, fillchar)
 
     def zfill(self, width: Int) -> Str:
         return Str(self._value.zfill(an_int(width, "zfill", "width")))

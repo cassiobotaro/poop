@@ -311,7 +311,7 @@ def a_key(value: object, selector: str) -> Callable[..., object]:
     )
 
 
-def byte_order(value: object, selector: str) -> str:
+def byte_order(value: object, selector: str) -> Literal["big", "little"]:
     """`"big"` / `"little"`, or POOP's refusal.
 
     `to_bytes` and `from_bytes` handed the argument to CPython, which answered
@@ -325,7 +325,7 @@ def byte_order(value: object, selector: str) -> str:
     # TypeError about the argument's kind, a misspelt one a ValueError about
     # its value. Only the sentences change.
     raw = text_like(value, selector, "a str", (str,))
-    if raw in {"big", "little"}:
+    if raw == "big" or raw == "little":  # noqa: PLR1714 — two literals, so ty narrows the answer to them
         return raw
     raise mirrors.ValueError(f"byte order must be 'big' or 'little', got {raw!r}")
 

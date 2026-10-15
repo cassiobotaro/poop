@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, a_number, an_int, text_like
-from poop.types._message import binary_refusal
+from poop.types._message import answered
 from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
     _num_value,
@@ -161,11 +161,7 @@ class Float(_NumericCompareMixin, Object, name="float"):
         result = self.__pow__(other)
         if result is NotImplemented:
             result = reflected_pow(self, other, None)
-        if result is NotImplemented:
-            raise mirrors.TypeError(
-                binary_refusal("float", "pow", type(other).__name__)
-            )
-        return result
+        return answered(result, "float", "pow", other)
 
     def __divmod__(self, other: object) -> Tuple:
         v = _num_value(other)
@@ -175,12 +171,7 @@ class Float(_NumericCompareMixin, Object, name="float"):
         return Tuple(Float(q), Float(r))
 
     def divmod(self, other: object) -> Tuple:
-        result = self.__divmod__(other)
-        if result is NotImplemented:
-            raise mirrors.TypeError(
-                binary_refusal("float", "divmod", type(other).__name__)
-            )
-        return result
+        return answered(self.__divmod__(other), "float", "divmod", other)
 
     def ceil(self) -> Int:
         return Int(math.ceil(self._value))

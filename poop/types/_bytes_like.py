@@ -187,12 +187,20 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
         fill = a_fill(fillchar, selector, "one byte", (bytes, bytearray))
         return None if fill is None else bytes(fill)
 
+    def _pad(
+        self,
+        method: Callable[..., bytes | bytearray],
+        selector: str,
+        width: Int,
+        fillchar: object,
+    ) -> B:
+        """`center` and its two siblings: one guarded call to the native method."""
+        w = an_int(width, selector, "width")
+        fill = self._fill(fillchar, selector)
+        return self._rewrap(method(w) if fill is None else method(w, fill))
+
     def center(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        w = an_int(width, "center", "width")
-        fill = self._fill(fillchar, "center")
-        return self._rewrap(
-            self._value.center(w) if fill is None else self._value.center(w, fill)
-        )
+        return self._pad(self._value.center, "center", width, fillchar)
 
     def _search(
         self,
@@ -303,11 +311,7 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
         return self._rewrap(self._value.join(pieces))
 
     def ljust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        w = an_int(width, "ljust", "width")
-        fill = self._fill(fillchar, "ljust")
-        return self._rewrap(
-            self._value.ljust(w) if fill is None else self._value.ljust(w, fill)
-        )
+        return self._pad(self._value.ljust, "ljust", width, fillchar)
 
     def lower(self) -> B:
         return self._rewrap(self._value.lower())
@@ -382,11 +386,7 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
         return self._search(self._value.rindex, "rindex", sub, start, end)
 
     def rjust(self, width: Int, fillchar: BytesLike | NoneClass | None = None) -> B:
-        w = an_int(width, "rjust", "width")
-        fill = self._fill(fillchar, "rjust")
-        return self._rewrap(
-            self._value.rjust(w) if fill is None else self._value.rjust(w, fill)
-        )
+        return self._pad(self._value.rjust, "rjust", width, fillchar)
 
     def rpartition(self, sep: BytesLike) -> Tuple:
         return Tuple(

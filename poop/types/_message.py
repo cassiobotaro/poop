@@ -25,10 +25,12 @@ upgrade that changes them fails loudly instead of silently regressing.
 
 import builtins
 import re
+from typing import TYPE_CHECKING
 
-# circular: all three import this module, directly or through the types
+# circular: all four import this module, directly or through the types
 lazy from poop.executor import _ALLOWED_BUILTINS
 lazy from poop.transformers import RESERVED_NAMES
+lazy from poop.types import mirrors
 lazy from poop.types.exceptions import MIRRORS
 
 # A tuple, not the string "aeiou": `"" in "aeiou"` is True, so a nameless type
@@ -46,6 +48,9 @@ _ARITHMETIC = re.compile(
 _COMPARISON = re.compile(
     r"^'(.+?)' not supported between instances of '(.+?)' and '(.+?)'$"
 )
+
+if TYPE_CHECKING:
+    from types import NotImplementedType
 
 
 # CPython names some operators by the builtin that also reaches them. POOP has
@@ -180,6 +185,25 @@ def binary_refusal(receiver: str, selector: str, operand: str) -> str:
     is the spelling in the program.
     """
     return f"{receiver} does not understand #{selector} with {article(operand)}"
+
+
+def answered[T](
+    result: T | NotImplementedType, receiver: str, selector: str, other: object
+) -> T:
+    """`result`, or the operator's refusal when it is `NotImplemented`.
+
+    A message that mirrors an operator (`pow`, `divmod`) calls the dunder and
+    completes the protocol CPython would: when both sides decline, CPython
+    composes `unsupported operand type(s)` and `poop_message` rewords it into
+    `binary_refusal`'s sentence. The message has no CPython to fall back on,
+    so it raises the same sentence itself — five receivers did, each with the
+    same four lines.
+    """
+    if result is NotImplemented:
+        raise mirrors.TypeError(
+            binary_refusal(receiver, selector, type(other).__name__)
+        )
+    return result
 
 
 def withheld_builtin(name: str) -> str | None:

@@ -1,12 +1,12 @@
 import builtins
 import math
 import operator
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, cast
 
 from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import Key, an_int, byte_order, byte_source
-from poop.types._message import article, binary_refusal
+from poop.types._message import answered, article
 from poop.types._minmax import _minmax
 from poop.types._numeric_compare import (
     _num_value,
@@ -48,11 +48,10 @@ def _integral_value(other: object) -> int | NotIntegral:
     ``NotImplemented`` and CPython raises its faithful ``TypeError`` instead of
     leaking an ``AttributeError`` from a missing ``other._value``.
     """
-    if isinstance(other, Int):
-        return other._value
-    if isinstance(other, Boolean):
-        return 1 if other else 0
-    return NOT_INTEGRAL
+    # `_num_value` already folds the tower — a `Boolean` to 1/0, an `Int` to
+    # its payload — so the question left is whether what came back is an int.
+    value = _num_value(other)
+    return value if isinstance(value, int) else NOT_INTEGRAL
 
 
 class Int(_NumericCompareMixin, Object, name="int"):
@@ -132,7 +131,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
         return Bytes(
             self._value.to_bytes(
                 an_int(length, "to_bytes", "length", 1),
-                cast("Literal['little', 'big']", byte_order(byteorder, "to_bytes")),
+                byte_order(byteorder, "to_bytes"),
                 signed=_unwrap_bool(signed, False),
             )
         )
@@ -149,7 +148,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
             cls,
             int.from_bytes(
                 byte_source(b, "from_bytes"),
-                cast("Literal['little', 'big']", byte_order(byteorder, "from_bytes")),
+                byte_order(byteorder, "from_bytes"),
                 signed=_unwrap_bool(signed, False),
             ),
         )
@@ -234,9 +233,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
         result = self.__pow__(other, modulus)
         if result is NotImplemented:
             result = reflected_pow(self, other, modulus)
-        if result is NotImplemented:
-            raise mirrors.TypeError(binary_refusal("int", "pow", type(other).__name__))
-        return result
+        return answered(result, "int", "pow", other)
 
     def __divmod__(self, other: object) -> Tuple:
         v = _num_value(other)
@@ -249,12 +246,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
         return Tuple(*map(Int, divmod(self._value, v)))
 
     def divmod(self, other: object) -> Tuple:
-        result = self.__divmod__(other)
-        if result is NotImplemented:
-            raise mirrors.TypeError(
-                binary_refusal("int", "divmod", type(other).__name__)
-            )
-        return result
+        return answered(self.__divmod__(other), "int", "divmod", other)
 
     def _bitwise(
         self, other: object, op: Callable[[int, int], int], *, reflected: bool = False
