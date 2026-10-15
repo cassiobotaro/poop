@@ -1423,6 +1423,8 @@ A module's first string is *not* a docstring here: the REPL runs each input as a
 
 **Why both `FrozenDict` and `MappingProxy`.** CPython has both, for different jobs: a `mappingproxy` is a live read-only *view* of a mapping that may change under it (a class's `__dict__`, a view's `.mapping`), and a `frozendict` is a *value* — which is why one hashes and the other cannot. Folding one into the other would lose either the liveness or the hash. The proxy now wraps any mapping, as `types.MappingProxyType` does, and the views take any mapping, so neither needed a second copy of anything.
 
+**`sentinel` can be subclassed here where CPython refuses it** (`type 'sentinel' is not an acceptable base type`); `_AliasMeta.__new__` refuses only the payload-less bases, and a `Sentinel` carries its name. Recorded rather than closed: nothing relies on either answer, and a program that subclasses it gets a working sentinel.
+
 ### Range — `poop/transformers/range.py`
 
 | AST node | Replacement |
