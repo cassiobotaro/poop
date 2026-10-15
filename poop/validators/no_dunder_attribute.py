@@ -33,7 +33,11 @@ _DICT_REASON = (
 
 
 def dunder_message(
-    name: str, *, dotted: bool = True, allow_init: bool | None = None
+    name: str,
+    *,
+    dotted: bool = True,
+    allow_init: bool | None = None,
+    scope: str = "global",
 ) -> str | None:
     """The rejection for `name`, or None when it is not a forbidden dunder.
 
@@ -41,7 +45,10 @@ def dunder_message(
     exactly what this validator closes, and a computed name puts that spelling
     beyond any validator's reach — so the two halves of one ban must say one
     thing. `no_dunder_name` reads it too, with `dotted=False`: a dunder
-    *global* (`__builtins__`) is the same ban one node type over.
+    *global* (`__builtins__`) is the same ban one node type over. `scope` is
+    what an undotted name is — the sentence said `dunder globals` of every
+    bare name, and a class-body `__slots__ = ("a",)` is a class attribute,
+    not a global.
 
     `allow_init` controls the `__init__` carve-out, which used to ride on
     `dotted` — one flag standing for two unrelated questions ("how do I spell
@@ -63,7 +70,9 @@ def dunder_message(
     substitute = _SUBSTITUTES.get(name)
     if substitute is not None:
         return f"{label} is forbidden — use {substitute} instead"
-    kind = "dunders are Python's protocol" if dotted else "dunder globals are Python's"
+    kind = (
+        "dunders are Python's protocol" if dotted else f"dunder {scope}s are Python's"
+    )
     return f"{label} is forbidden — {kind}, not POOP's message surface"
 
 

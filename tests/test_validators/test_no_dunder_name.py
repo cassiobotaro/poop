@@ -22,6 +22,23 @@ def test_dunder_globals_are_rejected(name: str) -> None:
         _validate(f"{name}.print()")
 
 
+@pytest.mark.parametrize(
+    ("source", "scope"),
+    [
+        ('class X:\n    __slots__ = ("a",)', "class attribute"),
+        ("def f():\n    __slots__ = 1", "local"),
+        ("f = lambda: __slots__", "local"),
+        ("class X:\n    def m(self):\n        __slots__ = 1", "local"),
+        ("__slots__ = 1", "global"),
+    ],
+    ids=["class-body", "function", "lambda", "method", "module"],
+)
+def test_the_label_follows_the_scope(source: str, scope: str) -> None:
+    # `__slots__ = ("a",)` in a class body used to be refused as a *global*.
+    with pytest.raises(ValidationError, match=f"dunder {scope}s are Python's"):
+        _validate(source)
+
+
 def test_a_dunder_with_a_substitute_names_it() -> None:
     # Shared with the attribute half, so both say one thing.
     with pytest.raises(ValidationError, match=re.escape("Klass.name()")):

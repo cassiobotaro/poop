@@ -534,7 +534,7 @@ Any `__dunder__` in `ast.Attribute` position is rejected, `__init__` excepted. `
 | `.__contains__(x)` | `col.includes(x)` |
 | `.__abs__()` | `n.abs()` |
 | `.__hash__()` | `obj.hash()` |
-| anything else dunder-shaped | none — it is Python's protocol, not POOP's message surface |
+| anything else dunder-shaped | none — it is Python's protocol, not POOP's message surface; the sentence names the scope (`dunder globals`, `dunder class attributes`, `dunder locals`), since a class-body `__slots__ = ("a",)` is no global |
 
 **A rule, not a list.** The obvious four (`__dict__`, `__class__`, `__mro__`, `__bases__`) were already incomplete before the ban was written: nobody had listed `__name__`. Enumerating invites the next omission.
 
@@ -610,20 +610,20 @@ It is `setdefault`, not assignment: the REPL reuses one namespace across inputs.
 
 | Call | Reason |
 |---|---|
-| `exit()` | process control — no POOP equivalent |
+| `exit()` | process control — POOP offers no substitute |
 | `quit()` | same |
 
 ### No `breakpoint` — `poop/validators/no_breakpoint.py`
 
 | Call | Reason |
 |---|---|
-| `breakpoint()` | Python-specific debugging — no POOP equivalent |
+| `breakpoint()` | Python-specific debugging — POOP offers no substitute |
 
 ### No `help` — `poop/validators/no_help.py`
 
 | Call | Reason |
 |---|---|
-| `help(obj)` | interactive escape hatch (opens the Python pager) exposing wrapper internals — no POOP equivalent |
+| `help(obj)` | interactive escape hatch (opens the Python pager) exposing wrapper internals — POOP offers no substitute |
 
 ### No `input` — `poop/validators/no_input.py`
 
@@ -637,7 +637,7 @@ Symmetric to `Object.print()` — the receiver is what gets shown. Scoped to `St
 
 | Call | Reason |
 |---|---|
-| `open(path, ...)` | POOP has no file I/O |
+| `open(path, ...)` | POOP offers no substitute; it has no file I/O |
 
 A **definitive ban**, and now a substitute-less one. It was always listed as definitive on the grounds that POOP has no file-object abstraction, but it used to point at `Path.read_text()` / `write_text()` for the common cases. Dropping the `pathlib` mirror took that recipe with it: POOP no longer touches the filesystem at all. A program's only channels are `"prompt".input()` and `Object.print()`.
 
