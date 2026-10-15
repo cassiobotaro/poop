@@ -60,3 +60,51 @@ def test_ordinary_names_are_untouched() -> None:
 def test_the_leak_is_closed_end_to_end() -> None:
     with pytest.raises(ValidationError, match="only as a decorator"):
         Interpreter().run_source("property.print()")
+
+
+def _errors(source: str) -> list[ValidationError]:
+    return NoClassMachineryValidator().collect(ast.parse(source))
+
+
+_IN_METHOD = "class C(P):\n    def m(self):\n        return {expr}"
+
+
+def test_super_inside_a_lambda_is_refused() -> None:
+    # A lambda owns no class cell, so CPython answered `RuntimeError: super():
+    # no arguments` at run time — about a cell the block cannot be given.
+    (error,) = _errors(_IN_METHOD.format(expr="(lambda: super().m())()"))
+    assert error.message == (
+        "super() inside a lambda is forbidden — send it from the method and "
+        "hand the block its answer"
+    )
+    assert error.lineno == 3
+
+
+def test_super_directly_in_a_method_passes() -> None:
+    assert _errors(_IN_METHOD.format(expr="super().m()")) == []
+
+
+def test_super_in_a_method_called_from_a_lambda_passes() -> None:
+    # The block receives the method's answer; `super()` itself sits in a def.
+    assert _errors(_IN_METHOD.format(expr="(lambda x: x)(super().m())")) == []
+
+
+def test_a_value_returned_from_init_is_refused() -> None:
+    (error,) = _errors("class C:\n    def __init__(self):\n        return 5")
+    assert error.message == (
+        "return with a value in __init__ is forbidden — __init__ builds the "
+        "receiver and answers nothing"
+    )
+    assert error.lineno == 3
+
+
+def test_a_bare_return_in_init_passes() -> None:
+    assert _errors("class C:\n    def __init__(self):\n        return") == []
+
+
+def test_a_return_in_a_def_nested_in_init_passes() -> None:
+    source = (
+        "class C:\n    def __init__(self):\n        def inner():\n"
+        "            return 5\n        self.f = inner"
+    )
+    assert _errors(source) == []

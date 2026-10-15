@@ -222,6 +222,8 @@ This validator owns the `@` position only. `no_class_machinery`, immediately bel
 |---|---|---|---|
 | `ast.Name` `staticmethod` / `classmethod` / `property` | not a `decorator_list` entry | class-definition machinery is not an object | use it as a decorator |
 | `ast.Name` `super` | not the callee of an `ast.Call` | the allowance is the call, not the name | `super().method(...)` |
+| `super()` | the nearest enclosing function is a `lambda` | a lambda owns no class cell, so CPython answers `RuntimeError: super(): no arguments` | send it from the method and hand the block its answer |
+| `ast.Return` with a value | directly in an `__init__` body | CPython answers `__init__() should return None`, about a dunder | `__init__` builds the receiver and answers nothing |
 
 `_ALLOWED_BUILTINS` admits six names. Two are dunders — `__build_class__` and `__name__` — and `no_dunder_name` already refuses them as a bare `ast.Name`. The other four had no guard outside the positions they were argued for, and answered Python rather than POOP:
 
@@ -231,6 +233,8 @@ This validator owns the `@` position only. `no_class_machinery`, immediately bel
 which is the naked-native symptom the allow-list was introduced to end, reproduced word for word — see *Builtins allow-list* below, whose own argument this completes. The scope is not new: *Explicitly allowed* already reads "Only a bare `ast.Name` among the three is accepted: `@property(...)` is refused even though `@property` is not, because a called decorator is a runtime operation, which is the distinction the allowance rests on." `no_decorator` made that real for `@`; nothing made it real anywhere else, so `p = property` and `property(getter)` both passed.
 
 `property(getter)` is refused here for the reason `@property(...)` is refused there — one distinction, applied in both positions. `super` keeps the call position instead, because a call is exactly what its allowance is for.
+
+Two more positions are refused by what *encloses* them. `(lambda: super().m())()` inside a method — the shape POOP pushes a reader towards — has no `__class__` cell to read, since a lambda owns none, and CPython answered a `RuntimeError` at run time about a cell the block cannot be given; the validator reads the enclosing functions off a stack and refuses the call under a `lambda`. `return 5` directly in `__init__` answered `TypeError: __init__() should return None, not 'int'`; the return transformer skips `__init__` precisely because CPython checks that slot itself, so nothing else looked at it.
 
 ### No class keyword — `poop/validators/no_class_keyword.py`
 
