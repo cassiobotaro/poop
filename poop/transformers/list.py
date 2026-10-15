@@ -1,23 +1,19 @@
 import ast
 
-from poop.transformers._collection import make_iterable_from, wrap_elts
-from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.transformers._collection import LiteralRewriter, make_iterable_from
+from poop.transformers.base import BaseTransformer
 from poop.types._alias import builtin_alias
 from poop.types.list import List
 
 _poop_list_from = make_iterable_from(List, copy=True)
 
 
-class _ListRewriter(BuiltinRewriter):
+class _ListRewriter(LiteralRewriter):
     builtin = "list"
     call_target = "_poop_list_from"
     name_target = "_poop_list_cls"
-
-    def visit_List(self, node: ast.List) -> ast.AST:
-        self.generic_visit(node)
-        if not isinstance(node.ctx, ast.Load):
-            return node
-        return wrap_elts(node, "_poop_list")
+    literal_node = ast.List
+    literal_target = "_poop_list"
 
 
 class ListTransformer(BaseTransformer):

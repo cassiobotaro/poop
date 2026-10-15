@@ -1,24 +1,19 @@
-from typing import TYPE_CHECKING
+import ast
 
-from poop.transformers._collection import make_iterable_from, wrap_elts
-from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.transformers._collection import LiteralRewriter, make_iterable_from
+from poop.transformers.base import BaseTransformer
 from poop.types._alias import builtin_alias
 from poop.types.set import Set
-
-if TYPE_CHECKING:
-    import ast
 
 _poop_set_from = make_iterable_from(Set, copy=True)
 
 
-class _SetRewriter(BuiltinRewriter):
+class _SetRewriter(LiteralRewriter):
     builtin = "set"
     call_target = "_poop_set_from"
     name_target = "_poop_set_cls"
-
-    def visit_Set(self, node: ast.Set) -> ast.AST:
-        self.generic_visit(node)
-        return wrap_elts(node, "_poop_set")
+    literal_node = ast.Set
+    literal_target = "_poop_set"
 
 
 class SetTransformer(BaseTransformer):

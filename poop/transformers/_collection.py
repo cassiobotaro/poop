@@ -8,10 +8,10 @@ constructor binding, spreads included — and the converter factories.
 
 import ast
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from poop.transformers._arity import refuse_extra_arguments
-from poop.transformers.base import call_at
+from poop.transformers.base import BuiltinRewriter, call_at
 from poop.types import mirrors
 from poop.types._message import article
 from poop.types.byte_array import ByteArray
@@ -65,16 +65,35 @@ def _spread_elts(elts: list[ast.expr], kind: str) -> list[ast.expr]:
     ]
 
 
-def wrap_elts(node: ast.List | ast.Tuple | ast.Set, target: str) -> ast.Call:
-    return call_at(target, _spread_elts(node.elts, _LITERAL_KIND[type(node)]), node)
+class LiteralRewriter(BuiltinRewriter):
+    """A `BuiltinRewriter` that also owns a bracketed literal.
 
+    `[a, b]`, `(a, b)` and `{a, b}` each become a call of the POOP class
+    with the elements as arguments, spreads routed through `spread` under the
+    literal's own name — the one sentence `[*5]` must answer with, since the
+    reader wrote brackets and never a constructor. The three rewriters each
+    carried this body as a `visit_List`/`visit_Tuple`/`visit_Set`, identical
+    but for the node and the binding, and a table beside them repeated which
+    builtin each node spells. One `visit` and two attributes say it once.
 
-# What the reader wrote, for `spread`'s sentence — never the converter's name.
-_LITERAL_KIND: dict[type[ast.AST], str] = {
-    ast.List: "list",
-    ast.Tuple: "tuple",
-    ast.Set: "set",
-}
+    Only a `Load` literal is wrapped: `[a, b] = pair` is an unpacking target,
+    which `UnpackTransformer` owns. A set literal has no context at all and is
+    always a value.
+    """
+
+    literal_node: ClassVar[type[ast.List | ast.Tuple | ast.Set]]
+    literal_target: ClassVar[str]
+
+    def visit(self, node: ast.AST) -> ast.AST:
+        if type(node) is not self.literal_node:
+            return super().visit(node)
+        self.generic_visit(node)
+        literal = cast("ast.List | ast.Tuple | ast.Set", node)
+        if not isinstance(getattr(literal, "ctx", ast.Load()), ast.Load):
+            return literal
+        return call_at(
+            self.literal_target, _spread_elts(literal.elts, self.builtin), literal
+        )
 
 
 def make_iterable_from[T](

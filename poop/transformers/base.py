@@ -102,7 +102,9 @@ class BuiltinRewriter(ast.NodeTransformer):
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
-        if "names" not in cls.__dict__:
+        # An intermediate such as `LiteralRewriter` names no builtin; only a
+        # concrete rewriter earns a reservation.
+        if "names" not in cls.__dict__ and hasattr(cls, "builtin"):
             cls.names = frozenset({cls.builtin})
 
     def is_builtin(self, name: str) -> bool:
