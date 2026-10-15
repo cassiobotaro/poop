@@ -17,7 +17,13 @@ class _ValueEqMixin(_Mixin):  # noqa: PLW1641 — each concrete class hashes by 
     _eq_group: ClassVar[str | None] = None
 
     def _eq_comparable(self, other: object) -> bool:
-        if isinstance(other, type(self)):
+        # Either way round: CPython calls the *right* operand's `__eq__` first
+        # when its class is a subclass of the left's, so a program's `class
+        # Name(str)` compared against a `Str` ran this with the base on the
+        # other side, answered `false` — not `NotImplemented` — and that was
+        # final. `Name("a") == "a"` was `False` both ways and a dict keyed by
+        # one was never found by the other, where CPython answers by value.
+        if isinstance(other, type(self)) or isinstance(self, type(other)):
             return True
         group = self._eq_group
         return group is not None and group == getattr(other, "_eq_group", None)

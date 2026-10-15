@@ -1,5 +1,8 @@
 from typing import ClassVar
 
+import pytest
+
+from poop.interpreter import Interpreter
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import false, true
 from poop.types.object import Object
@@ -58,3 +61,36 @@ def test_eq_attr_is_configurable_per_subclass() -> None:
 
     assert _ItemsWrapper((1, 2)).__eq__(_ItemsWrapper((1, 2))) is true
     assert _ItemsWrapper((1, 2)).__eq__(_ItemsWrapper((1, 3))) is false
+
+
+# A program's subclass of a wrapper: CPython calls the right operand's `__eq__`
+# first when its class is a subclass of the left's, so the subclass's test ran
+# with the base on the other side and answered `false` — final, not
+# `NotImplemented` — in both operand orders.
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('class Name(str):\n    pass\n(Name("a") == "a").print()', "True"),
+        ('class Name(str):\n    pass\n("a" == Name("a")).print()', "True"),
+        ("class Stack(list):\n    pass\n(Stack([1]) == [1]).print()", "True"),
+        ('class Name(str):\n    pass\n{Name("a"): 1}.at("a").print()', "1"),
+        ('class Name(str):\n    pass\n(Name("a") == "b").print()', "False"),
+    ],
+    ids=["subclass_left", "subclass_right", "list_subclass", "dict_lookup", "unequal"],
+)
+def test_a_subclass_of_a_wrapper_equals_the_wrapper_by_value(
+    source: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out.strip() == expected
+
+
+def test_a_subclass_instance_compares_equal_from_either_side() -> None:
+    class _Sub(_Wrapper):
+        pass
+
+    assert _Wrapper(1).__eq__(_Sub(1)) is true
+    assert _Sub(1).__eq__(_Wrapper(1)) is true
+    assert _Sub(1).__eq__(_Wrapper(2)) is false
