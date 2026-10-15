@@ -2,7 +2,7 @@ import io
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from typer.testing import CliRunner
@@ -10,6 +10,9 @@ from typer.testing import CliRunner
 from poop import cli
 from poop.cli import app
 from tests._support import REPO_ROOT, FeedInput, SourceFile, console
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 runner = CliRunner()
 
@@ -54,31 +57,39 @@ def test_cli_exits_with_error_on_invalid_code(source_file: SourceFile) -> None:
     assert "poop:" in result.output
 
 
-def test_cli_missing_file_shows_clean_diagnostic(tmp_path: Path) -> None:
-    # An unreadable path is a user mistake, not a traceback.
-    missing = tmp_path / "nope.py"
-    result = runner.invoke(app, [str(missing)])
-    assert result.exit_code == 1
-    assert "poop: cannot read" in result.output
-    assert "Traceback" not in result.output
+def _missing(tmp_path: Path) -> Path:
+    return tmp_path / "nope.py"
 
 
-def test_cli_directory_argument_shows_clean_diagnostic(tmp_path: Path) -> None:
-    result = runner.invoke(app, [str(tmp_path)])
-    assert result.exit_code == 1
-    assert "poop: cannot read" in result.output
-    assert "Traceback" not in result.output
+def _directory(tmp_path: Path) -> Path:
+    return tmp_path
 
 
-def test_cli_non_utf8_file_shows_clean_diagnostic(tmp_path: Path) -> None:
-    # A non-UTF-8 source raises UnicodeDecodeError (a ValueError, not an
-    # OSError), which must still yield a clean `poop:` diagnostic rather than
-    # leaking a traceback.
+def _non_utf8(tmp_path: Path) -> Path:
+    # Raises UnicodeDecodeError (a ValueError, not an OSError), which must
+    # still yield a clean `poop:` diagnostic rather than leaking a traceback.
     f = tmp_path / "latin1.py"
     f.write_bytes(b'x = "caf\xe9".print()\n')
-    result = runner.invoke(app, [str(f)])
+    return f
+
+
+@pytest.mark.parametrize(
+    ("make_path", "reason"),
+    [
+        (_missing, "No such file or directory"),
+        (_directory, "Is a directory"),
+        (_non_utf8, "invalid continuation byte"),
+    ],
+    ids=["missing-file", "directory", "non-utf8"],
+)
+def test_cli_an_unreadable_source_shows_a_clean_diagnostic(
+    make_path: Callable[[Path], Path], reason: str, tmp_path: Path
+) -> None:
+    # An unreadable path is a user mistake, not a traceback.
+    result = runner.invoke(app, [str(make_path(tmp_path))])
     assert result.exit_code == 1
     assert "poop: cannot read" in result.output
+    assert reason in result.output
     assert "Traceback" not in result.output
 
 

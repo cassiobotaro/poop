@@ -91,32 +91,29 @@ def test_repl_namespace_is_independent_of_default_namespace(repl: Repl) -> None:
 # --- _indent_for ---
 
 
-def test_indent_for_empty_buffer() -> None:
-    assert _indent_for([]) == ""
-
-
-def test_indent_for_plain_line_no_indent() -> None:
-    assert _indent_for(["x = 1"]) == ""
-
-
-def test_indent_for_colon_adds_four_spaces() -> None:
-    assert _indent_for(["class Foo:"]) == "    "
-
-
-def test_indent_for_nested_colon_adds_four_more() -> None:
-    assert _indent_for(["    def m(self):"]) == "        "
-
-
-def test_indent_for_indented_non_colon_preserves_indent() -> None:
-    assert _indent_for(["    x = 1"]) == "    "
-
-
-def test_indent_for_colon_with_trailing_whitespace() -> None:
-    assert _indent_for(["class Foo:   "]) == "    "
-
-
-def test_indent_for_uses_only_last_buffer_line() -> None:
-    assert _indent_for(["class Foo:", "    pass"]) == "    "
+@pytest.mark.parametrize(
+    ("buffer", "indent"),
+    [
+        ([], ""),
+        (["x = 1"], ""),
+        (["class Foo:"], "    "),
+        (["    def m(self):"], "        "),
+        (["    x = 1"], "    "),
+        (["class Foo:   "], "    "),
+        (["class Foo:", "    pass"], "    "),
+    ],
+    ids=[
+        "empty-buffer",
+        "plain-line",
+        "colon-adds-four",
+        "nested-colon-adds-four-more",
+        "indented-non-colon-keeps-indent",
+        "colon-with-trailing-whitespace",
+        "only-the-last-line-counts",
+    ],
+)
+def test_indent_for(buffer: list[str], indent: str) -> None:
+    assert _indent_for(buffer) == indent
 
 
 # --- _setup_readline ---
@@ -186,28 +183,28 @@ def test_displayhook_poop_none_does_not_clobber_underscore(repl: Repl) -> None:
 # --- run() integration ---
 
 
-def test_run_exits_on_eof(
-    feed_input: FeedInput,
-) -> None:
+def test_run_exits_on_eof(repl: Repl, feed_input: FeedInput) -> None:
     feed_input(EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
 
 
 def test_run_ctrl_c_clears_buffer_and_continues(
-    feed_input: FeedInput,
+    repl: Repl, feed_input: FeedInput
 ) -> None:
     feed_input(KeyboardInterrupt(), EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
 
 
-def test_run_restores_displayhook_after_exit(feed_input: FeedInput) -> None:
+def test_run_restores_displayhook_after_exit(repl: Repl, feed_input: FeedInput) -> None:
     original = sys.displayhook
     feed_input(EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
     assert sys.displayhook is original
 
 
-def test_run_restores_displayhook_on_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_run_restores_displayhook_on_exception(
+    repl: Repl, monkeypatch: pytest.MonkeyPatch
+) -> None:
     original = sys.displayhook
 
     def _bad_input(_prompt: str) -> str:
@@ -215,79 +212,80 @@ def test_run_restores_displayhook_on_exception(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setattr("builtins.input", _bad_input)
     with pytest.raises(RuntimeError):
-        Repl(Interpreter()).run()
+        repl.run()
     assert sys.displayhook is original
 
 
-def test_run_stores_last_result_in_underscore(feed_input: FeedInput) -> None:
-    repl = Repl(Interpreter())
+def test_run_stores_last_result_in_underscore(
+    repl: Repl, feed_input: FeedInput
+) -> None:
     feed_input("1 + 1", EOFError())
     repl.run()
     assert repl._ns.get("_") == Int(2)
 
 
 def test_run_strips_a_byte_order_mark_from_the_first_line(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # `poop <file>` decodes with `utf-8-sig`; the piped path reads line by line
     # through `input()`, which does not strip the mark, so a BOM-prefixed
     # program answered `invalid non-printable character U+FEFF`.
     feed_input('\ufeff"hi".print()', EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
     out = capsys.readouterr()
     assert "hi" in out.out
     assert "U+FEFF" not in out.err
 
 
 def test_run_spends_the_mark_only_on_the_first_line(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # A mark is only a mark at the head of the stream; later in the session
     # U+FEFF is an ordinary invalid character and still says so.
     feed_input("x = 1", "\ufeffx.print()", EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
     assert "U+FEFF" in capsys.readouterr().err
 
 
 def test_run_poop_error_printed_to_stderr(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     feed_input("if True:\n    pass\n", "", EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
     assert "poop:" in capsys.readouterr().err
 
 
 def test_run_poop_error_shows_the_source_line_and_caret(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # The REPL holds the source; it used to cite a line that had scrolled away.
     feed_input("print(x)", EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
     err = capsys.readouterr().err
     assert "  1 | print(x)" in err
     assert "    | ^" in err
 
 
 def test_run_poop_error_does_not_repeat_the_position(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     feed_input("print(x)", EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
     assert "(line 1, col 0)" not in capsys.readouterr().err
 
 
 def test_run_runtime_error_shows_the_source_line(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     feed_input("1 / 0", EOFError())
-    Repl(Interpreter()).run()
+    repl.run()
     err = capsys.readouterr().err
     assert "ZeroDivisionError" in err
     assert "  1 | 1 / 0" in err
 
 
 def test_run_error_line_refers_to_the_current_input_not_an_earlier_one(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # A method defined in one input raises when called from a later, multi-line
     # input. The deepest traceback frame is the method's `raise`, whose line
@@ -304,7 +302,7 @@ def test_run_error_line_refers_to_the_current_input_not_an_earlier_one(
         ")",
         EOFError(),
     )
-    Repl(Interpreter()).run()
+    repl.run()
     err = capsys.readouterr().err
     assert "ValueError: boom" in err
     assert "  3 |     + Foo().bar()" in err
@@ -427,24 +425,20 @@ def test_poop_completer_attr_allows_literal() -> None:
 # --- colorized output (rich, one console per stream) ---
 
 
-def test_value_text_int_is_yellow() -> None:
-    text = _value_text(Int(1))
-    assert text.plain == "1"
-    assert text.style == "yellow"
-
-
-def test_value_text_str_uses_quoted_repr() -> None:
-    text = _value_text(Str("hello"))
-    assert text.plain == "'hello'"
-    assert text.style == "green"
-
-
-def test_value_text_bool_is_blue() -> None:
-    assert _value_text(true).style == "blue"
-
-
-def test_value_text_other_is_unstyled() -> None:
-    assert _value_text(object()).style == ""
+@pytest.mark.parametrize(
+    ("value", "plain", "style"),
+    [
+        (Int(1), "1", "yellow"),
+        (Str("hello"), "'hello'", "green"),
+        (true, "True", "blue"),
+        (none, "None", ""),
+    ],
+    ids=["int-is-yellow", "str-is-quoted-green", "bool-is-blue", "other-is-unstyled"],
+)
+def test_value_text(value: object, plain: str, style: str) -> None:
+    text = _value_text(value)
+    assert text.plain == plain
+    assert text.style == style
 
 
 def test_print_value_emits_ansi_on_a_terminal() -> None:
@@ -835,18 +829,16 @@ def test_meta_unknown_command_suggests_help(
 
 
 def test_run_dispatches_meta_command(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    repl = Repl(Interpreter())
     feed_input(":explain if", EOFError())
     repl.run()
     assert "if_true" in capsys.readouterr().out
 
 
 def test_run_meta_command_does_not_touch_buffer(
-    feed_input: FeedInput,
+    repl: Repl, feed_input: FeedInput
 ) -> None:
-    repl = Repl(Interpreter())
     feed_input(":help", "x = 1 + 1", "x", EOFError())
     repl.run()
     assert repl._ns.get("x") == Int(2)
@@ -928,12 +920,11 @@ def test_readline_input_pre_hook_inserts_indent(
 
 
 def test_run_syntax_error_clears_buffer_and_continues(
-    feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # A definitive syntax error (not an incomplete line) is reported and the
     # buffer reset, so the next line starts fresh rather than re-parsing junk.
     feed_input(")", "x = 1 + 1", "x", EOFError())
-    repl = Repl(Interpreter())
     repl.run()
     assert "poop:" in capsys.readouterr().err
     assert repl._ns.get("x") == Int(2)
@@ -943,13 +934,12 @@ def test_run_syntax_error_clears_buffer_and_continues(
 
 
 def test_meta_explain_reports_an_allowed_construct(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    repl: Repl, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # If a topic's snippet trips no validator, `:explain` says so plainly rather
     # than pretending it is forbidden.
-    monkeypatch.setitem(repl._EXPLAIN_SNIPPETS, "noop", "x")
-    r = Repl(Interpreter())
-    r._meta(":explain noop")
+    monkeypatch.setitem(_EXPLAIN_SNIPPETS, "noop", "x")
+    repl._meta(":explain noop")
     assert "noop is allowed in POOP." in capsys.readouterr().out
 
 
