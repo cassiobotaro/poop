@@ -189,10 +189,7 @@ def _(obj: Dict) -> dict[object, object]:
 
 @_to_poop.register
 def _(value: dict) -> Dict:
-    d = Dict()
-    for k, v in value.items():
-        d.at_put(to_poop(k), to_poop(v))
-    return d
+    return Dict._wrapping({to_poop(k): to_poop(v) for k, v in value.items()})
 
 
 @to_python.register

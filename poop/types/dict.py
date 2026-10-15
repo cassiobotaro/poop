@@ -6,7 +6,7 @@ from poop.types._at import no_key, nothing_to_remove
 from poop.types._mapping import _MappingMixin
 from poop.types._sentinel import MISSING, Missing
 from poop.types._unwrap import _is_absent
-from poop.types.mapping_proxy import MappingProxy
+from poop.types.mapping_proxy import _mapping_data
 from poop.types.none import none
 from poop.types.string import Str
 from poop.types.tuple import Tuple
@@ -51,12 +51,10 @@ class Dict(_MappingMixin, name="dict"):
         # MappingProxy's reflected ``__ror__``, rebind the name to a fresh
         # Dict, and silently leave any alias pointing at the unchanged
         # original. Unwrap the proxy here, as ``__eq__`` already does.
-        if isinstance(other, MappingProxy):
-            self._data.update(other._dict._data)
-            return self
-        if not isinstance(other, _MappingMixin):
+        other_data = _mapping_data(other)
+        if other_data is None:
             return NotImplemented
-        self._data.update(other._data)
+        self._data.update(other_data)
         return self
 
     @overload
@@ -100,10 +98,9 @@ class Dict(_MappingMixin, name="dict"):
         # answers, decided by which spelling the reader reached for. An absent
         # mapping is `_is_absent`, the test every other optional argument in
         # the language uses.
-        if isinstance(other, _MappingMixin):
-            self._data.update(other._data)
-        elif isinstance(other, MappingProxy):
-            self._data.update(other._dict._data)
+        other_data = _mapping_data(other)
+        if other_data is not None:
+            self._data.update(other_data)
         elif not _is_absent(other):
             # Each pair is a POOP Tuple — itself a 2-element iterable, so
             # dict.update unpacks it and raises the faithful ValueError on a

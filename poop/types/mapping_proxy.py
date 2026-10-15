@@ -3,8 +3,6 @@ from typing import TYPE_CHECKING, final
 from poop.types._at import at_key
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types.boolean import false, to_boolean
-from poop.types.dict_key_iterator import DictKeyIterator
-from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
 from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
@@ -20,9 +18,29 @@ if TYPE_CHECKING:
 
     from poop.types.boolean import Boolean
     from poop.types.dict_items import DictItems
+    from poop.types.dict_key_iterator import DictKeyIterator
     from poop.types.dict_keys import DictKeys
+    from poop.types.dict_reverse_key_iterator import DictReverseKeyIterator
     from poop.types.dict_values import DictValues
     from poop.types.none import NoneClass
+
+
+def _mapping_data(other: object) -> dict[Object, Object] | None:
+    """The raw dict behind a mapping operand, or `None` when it is not one.
+
+    A `MappingProxy` stands for the mapping it wraps; a `Dict` or `FrozenDict`
+    is one. Six sites asked the two questions in a row — the two `__eq__`s,
+    `Dict.__ior__`, `Dict.update`, `FrozenDict.__or__` and the proxy's own
+    merge — and a seventh would have been the one to leave the proxy out.
+    Without the `None` an `else` branch reached `other._data` on any operand,
+    so `proxy | 5` answered `int does not understand #_data`, a POOP internal,
+    where CPython answers `unsupported operand type(s)`.
+    """
+    if isinstance(other, MappingProxy):
+        other = other._dict
+    if isinstance(other, _MappingMixin):
+        return other._data
+    return None
 
 
 @final
@@ -67,10 +85,10 @@ class MappingProxy(_IterableMixin[Object], Object, name="mappingproxy"):
         return iter(self._dict)
 
     def iter(self) -> DictKeyIterator:
-        return DictKeyIterator(self._dict._data)
+        return self._dict.iter()
 
     def reversed(self) -> DictReverseKeyIterator:
-        return DictReverseKeyIterator(reversed(self._dict._data))
+        return self._dict.reversed()
 
     __reversed__ = reversed
 
@@ -83,33 +101,19 @@ class MappingProxy(_IterableMixin[Object], Object, name="mappingproxy"):
         return self._dict.copy()
 
     def __eq__(self, other: object) -> Boolean:
-        if isinstance(other, MappingProxy):
-            return to_boolean(self._dict == other._dict)
-        if isinstance(other, _MappingMixin):
-            return to_boolean(self._dict == other)
-        return false
-
-    def _merge_data(self, other: object) -> dict[Object, Object] | None:
-        """The operand's mapping, or None when it is not one.
-
-        Without the None case the `else` branch reached `other._data` on any
-        operand, so `proxy | 5` answered `int does not understand #_data` — a
-        POOP internal — where CPython answers `unsupported operand type(s)`.
-        """
-        if isinstance(other, MappingProxy):
-            return other._dict._data
-        if isinstance(other, _MappingMixin):
-            return other._data
-        return None
+        other_data = _mapping_data(other)
+        if other_data is None:
+            return false
+        return to_boolean(self._dict._data == other_data)
 
     def __or__(self, other: object) -> Dict:
-        other_data = self._merge_data(other)
+        other_data = _mapping_data(other)
         if other_data is None:
             return NotImplemented  # foreign operand -> faithful TypeError
         return Dict._wrapping(self._dict._data | other_data)
 
     def __ror__(self, other: object) -> Dict:
-        other_data = self._merge_data(other)
+        other_data = _mapping_data(other)
         if other_data is None:
             return NotImplemented
         return Dict._wrapping(other_data | self._dict._data)

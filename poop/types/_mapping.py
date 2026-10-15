@@ -27,7 +27,7 @@ from poop.types.dict_key_iterator import DictKeyIterator
 from poop.types.dict_keys import DictKeys
 from poop.types.dict_values import DictValues
 from poop.types.int import Int
-from poop.types.mapping_proxy import MappingProxy
+from poop.types.mapping_proxy import _mapping_data
 from poop.types.none import none
 from poop.types.object import Object
 
@@ -85,8 +85,7 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object, name="dict"):
         # (being a real value, not NotImplemented) suppress MappingProxy's
         # reflected __eq__. Unwrap the proxy here so the comparison stays
         # symmetric.
-        if isinstance(other, MappingProxy):
-            return to_boolean(self._data == other._dict._data)
+        #
         # Any mapping (incl. OrderedDict/DefaultDict subclasses, and the
         # frozen kind) compares by its underlying data. _ValueEqMixin's
         # ``isinstance(other, type(self))`` is asymmetric for subclasses —
@@ -94,8 +93,9 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object, name="dict"):
         # dispatch makes both directions false). The ``_data`` comparison
         # keeps CPython's semantics, including the order-sensitive
         # ``OrderedDict == OrderedDict``.
-        if isinstance(other, _MappingMixin):
-            return to_boolean(self._data == other._data)
+        other_data = _mapping_data(other)
+        if other_data is not None:
+            return to_boolean(self._data == other_data)
         return super().__eq__(other)
 
     @classmethod

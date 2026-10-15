@@ -2,7 +2,7 @@ from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self
 
 from poop.types._mapping import _MappingMixin
-from poop.types.mapping_proxy import MappingProxy
+from poop.types.mapping_proxy import _mapping_data
 
 if TYPE_CHECKING:
     from poop.types.object import Object
@@ -49,11 +49,10 @@ class FrozenDict(_MappingMixin, name="frozendict"):
         return hash(frozenset((k, hash(v)) for k, v in self._data.items()))
 
     def __or__(self, other: object) -> FrozenDict:
-        if isinstance(other, MappingProxy):
-            return FrozenDict._wrapping(self._data | other._dict._data)
-        if not isinstance(other, _MappingMixin):
+        other_data = _mapping_data(other)
+        if other_data is None:
             return NotImplemented
-        return FrozenDict._wrapping(self._data | other._data)
+        return FrozenDict._wrapping(self._data | other_data)
 
     # A frozen dict cannot hold itself, but a `Dict` it holds can hold it —
     # the same cycle `Dict.__str__` guards against, one level further out.
