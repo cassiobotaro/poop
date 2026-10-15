@@ -1,4 +1,5 @@
 import ast
+from typing import ClassVar
 
 from poop.transformers.base import BaseTransformer, name_at
 from poop.types.exceptions import MIRRORS
@@ -9,8 +10,18 @@ _BINDINGS: dict[str, object] = {
 
 
 class _ExceptionRewriter(ast.NodeTransformer):
+    # Every mirror name, rewritten in every position, Store included — so
+    # `RESERVED_NAMES` derives the reservation from here, as it does from the
+    # `BuiltinRewriter`s and `_EllipsisRewriter`. Both sides of the hazard
+    # were live when the validator kept its own union: `ValueError = 5`
+    # clobbered the mirror globally, while a parameter or class *name*
+    # (neither an `ast.Name`) kept its spelling and left every read in the
+    # body resolving to the mirror, so `def hold(self, ValueError): return
+    # ValueError` answered the class and never saw its argument.
+    names: ClassVar[frozenset[str]] = frozenset(MIRRORS)
+
     def visit_Name(self, node: ast.Name) -> ast.AST:
-        if node.id in MIRRORS:
+        if node.id in self.names:
             return name_at(f"_poop_{node.id}", node, node.ctx)
         return node
 

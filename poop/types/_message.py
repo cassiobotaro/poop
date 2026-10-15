@@ -27,11 +27,10 @@ import builtins
 import re
 from typing import TYPE_CHECKING
 
-# circular: all four import this module, directly or through the types
+# circular: all three import this module, directly or through the types
 lazy from poop.executor import _ALLOWED_BUILTINS
 lazy from poop.transformers import RESERVED_NAMES
 lazy from poop.types import mirrors
-lazy from poop.types.exceptions import MIRRORS
 
 # A tuple, not the string "aeiou": `"" in "aeiou"` is True, so a nameless type
 # answered `an ` — the empty string is a substring of every string.
@@ -224,9 +223,10 @@ def withheld_builtin(name: str) -> str | None:
     if name not in vars(builtins):
         return None
     value = vars(builtins)[name]
-    # Allowed, rewritten to a wrapper, or mirrored: a program reaches each of
-    # these, so none is withheld — and `:explain frozendict` must not say so.
-    if name in _ALLOWED_BUILTINS or name in RESERVED_NAMES or name in MIRRORS:
+    # Allowed, or rewritten to a wrapper or a mirror (both reserved): a program
+    # reaches each of these, so none is withheld — and `:explain frozendict`
+    # must not say so.
+    if name in _ALLOWED_BUILTINS or name in RESERVED_NAMES:
         return None
     if isinstance(value, type) and issubclass(value, BaseException):
         return f"{name!r} is a Python exception POOP does not mirror"

@@ -218,10 +218,14 @@ def test_the_reserved_names_are_every_spelling_a_rewriter_claims() -> None:
                 "enumerate",
                 "zip",
                 "Ellipsis",
+                *MIRRORS,
             }
         )
         == RESERVED_NAMES
     )
+    # The mirrors come from `_ExceptionRewriter.names`, not from a union the
+    # validator kept by hand: a new mirror is reserved the day it is added.
+    assert "ValueError" in RESERVED_NAMES
 
 
 @pytest.mark.parametrize("name", sorted(RESERVED_NAMES))
