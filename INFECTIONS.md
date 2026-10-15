@@ -1419,6 +1419,8 @@ A module's first string is *not* a docstring here: the REPL runs each input as a
 |---|---|
 | `ast.Call` with `range(stop)` / `range(start, stop)` / `range(start, stop, step)` | `_poop_range(...)` → `Range` |
 
+**The converter refuses a non-int argument by its role.** It kept CPython's `'float' object cannot be interpreted as an integer` on purpose, as the docstring once argued — the very sentence `an_int` replaced on every other integer argument in the language, and the one `tests/test_no_python_wording.py` lists as forbidden; constructors sit outside that sweep, which is why it survived. Each position is named now, as CPython's own signature names them: `#range's stop must be an int, got a str`, `#range's step must be an int, got a float`; a lone argument is the stop. The boolean rung still passes.
+
 ### Raise — the class-side `raise_` (`poop/types/exceptions.py`)
 
 `raise_` is a **message**, answered by `PoopExcMeta` — so every mirror, and every user class descending from one, carries it, and nothing else does. `no_raise` forbids the `raise` statement and names `ExcType.raise_('msg')`; that spelling used to be a parse-time rewrite (`RaiseTransformer` matched a literal uppercase `ast.Name` followed by `.raise_(...)` and produced `_poop_raise(ExcType, ...)`), which meant three things:

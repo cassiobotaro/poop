@@ -65,19 +65,26 @@ def test_poop_range_negative_step_with_stride() -> None:
     assert list(iv) == [Int(i) for i in range(10, 0, -2)]
 
 
-def test_poop_range_refuses_a_float_rather_than_truncating_it() -> None:
-    # `int(3.5)` is 3, so the converter silently answered `range(0, 3)` for a
-    # bound the program never wrote; `index` refuses, in CPython's words and
-    # naming the wrapper by the builtin it stands for.
-    bad: list[tuple[Any, ...]] = [
-        (Float(3.5),),
-        (Int(1), Float(9.0)),
-        (Int(1), Int(9), Float(2.0)),
-    ]
-    for args in bad:
-        with pytest.raises(TypeError) as info:
-            _poop_range(*args)
-        assert str(info.value) == "'float' object cannot be interpreted as an integer"
+@pytest.mark.parametrize(
+    ("args", "role"),
+    [
+        ((Float(3.5),), "stop"),
+        ((Int(1), Float(9.0)), "stop"),
+        ((Int(1), Int(9), Float(2.0)), "step"),
+        ((Float(1.0), Int(9)), "start"),
+    ],
+    ids=["lone_stop", "stop", "step", "start"],
+)
+def test_poop_range_refuses_a_float_by_its_role(
+    args: tuple[Any, ...], role: str
+) -> None:
+    # `int(3.5)` is 3, so the converter once silently answered `range(0, 3)`
+    # for a bound the program never wrote; then it kept CPython's `'float'
+    # object cannot be interpreted as an integer`, the sentence `an_int`
+    # replaced everywhere else. Each argument is refused by its role now.
+    with pytest.raises(TypeError) as info:
+        _poop_range(*args)
+    assert str(info.value) == f"#range's {role} must be an int, got a float"
 
 
 def test_poop_range_refuses_text_without_naming_int() -> None:
@@ -86,7 +93,7 @@ def test_poop_range_refuses_text_without_naming_int() -> None:
     # number` — a call, for something the program spelt `range`.
     with pytest.raises(TypeError) as info:
         _poop_range(Str("3"))
-    assert str(info.value) == "'str' object cannot be interpreted as an integer"
+    assert str(info.value) == "#range's stop must be an int, got a str"
 
 
 def test_poop_range_still_admits_the_boolean_rung() -> None:

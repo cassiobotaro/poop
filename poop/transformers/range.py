@@ -1,30 +1,23 @@
-from operator import index as _index
-from typing import TYPE_CHECKING, cast
-
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
+from poop.types._argument import an_int
 from poop.types.int import Int
 from poop.types.range import Range
-
-if TYPE_CHECKING:
-    from poop.types._index import Index
 
 
 def _poop_range(*args: object, **kwargs: object) -> Range:
     """`range(stop)` / `range(start, stop[, step])`, read by index.
 
-    `_index`, not `int`: `Range.__init__` already takes the index rung of the
-    tower for this reason, and the converter in front of it read `int(...)`
-    instead — which *truncates* where `index` refuses, so `range(3.5)` answered
-    `range(0, 3)` and `range(1, 10, 2.0)` a step of 2, silently running over a
-    different sequence than the program describes. It also refused the
-    non-numeric cases in `int`'s vocabulary (`int() argument must be a string,
-    a bytes-like object or a real number`), naming a call for something the
-    program spelt `range`. `index` answers `'float' object cannot be
-    interpreted as an integer`, which is CPython's own and, through the cloak,
-    names the wrapper by the builtin it stands for. The boolean rung still
-    passes, since admitting it is exactly what `index` is for.
+    `an_int`, not `int`: the converter once read `int(...)`, which *truncates*
+    where an index refuses, so `range(3.5)` answered `range(0, 3)` and
+    `range(1, 10, 2.0)` a step of 2 — silently running over a different
+    sequence than the program describes. It then read `operator.index` and
+    kept CPython's `'float' object cannot be interpreted as an integer`, the
+    very sentence `an_int` replaced on every other integer argument in the
+    language; now each argument is refused by its role (`#range's stop must
+    be an int, got a str`). The boolean rung still passes, since admitting it
+    is exactly what an index is for.
     """
     refuse_extra_arguments(
         "range",
@@ -35,10 +28,12 @@ def _poop_range(*args: object, **kwargs: object) -> Range:
         hint="write range(stop) or range(start, stop, step)",
         empty=False,
     )
-    # `*args: object` is what the guard above needs to count; `_index` refuses
-    # anything outside the index rung at runtime, which is the check that
-    # matters and the one this converter exists for.
-    values = [_index(cast("Index", arg)) for arg in args]
+    # The role each position plays, so a refusal names it as CPython's own
+    # signature does: a lone argument is the stop.
+    roles = ("stop",) if len(args) == 1 else ("start", "stop", "step")
+    values = [
+        an_int(arg, "range", role) for arg, role in zip(args, roles, strict=False)
+    ]
     # CPython's three shapes, normalised to (start, stop, step) once: `Range`
     # takes an inclusive stop, so the exclusive one moves back one step's
     # sign — the arithmetic `Range._from_native` states. A zero step keeps
