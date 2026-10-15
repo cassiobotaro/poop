@@ -119,9 +119,33 @@ class _IterableMixin[T: Object](_Mixin):
         block = a_block(block, "filter_false")
         return Filter(self, lambda x: not bool(block(x)))
 
-    def find(self, block: Callable[[T], object] | Missing = MISSING) -> T | NoneClass:
+    @overload
+    def find(
+        self, block: Callable[[T], object] | Missing = MISSING
+    ) -> T | NoneClass: ...
+    @overload
+    def find[D](
+        self, block: Callable[[T], object] | Missing = MISSING, *, default: D
+    ) -> T | D: ...
+    def find[D](
+        self,
+        block: Callable[[T], object] | Missing = MISSING,
+        *extra: object,
+        default: D | Missing = MISSING,
+    ) -> T | D | NoneClass:
+        # Smalltalk's `detect:ifNone:`, in the shape `next`, `min` and `max`
+        # already take: without a default a miss and a match that *is* `none`
+        # were the same answer. Keyword-only, as theirs is; a second
+        # positional argument is refused by name rather than read as the
+        # block's wrong arity.
+        if extra:
+            raise mirrors.TypeError(
+                "#find takes a block and an optional default= — "
+                "write .find(lambda x: …, default=…)"
+            )
         block = a_block(block, "find")
-        return next((item for item in self._iter_items() if block(item)), none)
+        absent = none if default is MISSING else default
+        return next((item for item in self._iter_items() if block(item)), absent)
 
     def reduce[R](
         self,

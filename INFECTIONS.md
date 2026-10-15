@@ -1038,7 +1038,7 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 | `collect:` | `map(block)` | returns `Map` (lazy); materialize via `list(...)`/`tuple(...)`/etc. |
 | `select:` | `filter(block)` | returns `Filter` (lazy); same materialization |
 | `reject:` | `filter_false(block)` | returns `Filter` (lazy) with the predicate inverted |
-| `detect:` | `find(block)` | first element satisfying block, or POOP `none` |
+| `detect:` / `detect:ifNone:` | `find(block, default=…)` | first element satisfying block, or `default` — POOP `none` when none is given |
 | `inject:into:` | `reduce(init, block)` | fold with required initial value; returns accumulated result |
 | — | `sum(start=...)` | sum of elements; `Int(0)` for empty; optional `start` mirrors Python `sum(it, start)` |
 | — | `min(key=None, default=...)` | smallest element; mirrors Python `min` |
@@ -1047,6 +1047,8 @@ No validator bans `...`: with the literal transformed, `pass` and `...` are both
 | — | `any(block)` | `true` if block holds for at least one element |
 | — | `enumerate(start=Int(0))` | returns an `Enumerate` of `Tuple(Int(i), item)` pairs |
 | — | `zip(*others, strict=false)` | returns a `Zip` of `Tuple(...)` |
+
+`find` takes a keyword-only `default`, in the shape `next`, `min` and `max` already take: without one a miss and a match that *is* `none` were the same answer, so `[None, 1].find(lambda x: x.is_none())` could not be told from `[].find(...)`. A second positional argument is refused by name (`#find takes a block and an optional default= — write .find(lambda x: …, default=…)`) rather than read as the block's wrong arity.
 
 `map`/`filter`/`filter_false` are **lazy** — they return `Map`/`Filter` iterators (same family as `Enumerate`/`Zip`) regardless of the receiver's type, mirroring Python's `map`/`filter` builtins. The block runs only as the result is consumed. To materialize, pass the lazy result to a constructor: `list(col.map(f))`, `tuple(col.filter(g))`, `set(col.map(f))`, `bytes(col.map(g))`. Methods that consume the iterator (`do`, `sum`, `min`, `max`, `find`, `reduce`, `all`, `any`) work on `Map`/`Filter` directly without materialization.
 

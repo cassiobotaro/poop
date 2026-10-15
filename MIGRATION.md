@@ -150,6 +150,20 @@ biggest = xs.max()
 
 > Same pattern for `getattr`/`setattr`/`hasattr`/`dir`/`format`/`hash`/`callable`/`ascii` → `x.get_attr(name)`, `x.set_attr(name, val)`, `x.has_attr(name)`, `x.dir()`, `x.format(spec)`, `x.hash()`, `x.callable()`, `x.ascii()`. `id(x)` has no method form: it answered CPython's address, which POOP has no business handing out — use `a.is_identical(b)`, the identity *question* it existed to enable. For `type(x)` use `x.class_name()` — or better, polymorphism instead of type dispatch.
 
+### First match, with a fallback
+
+```python
+# Python
+first = next((x for x in xs if p(x)), d)
+```
+
+```python
+# POOP
+first = xs.find(lambda x: p(x), default=d)
+```
+
+> Without `default=`, a miss answers `none` — which a matching `none` would too.
+
 ## Operators that look procedural
 
 ```python

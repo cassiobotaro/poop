@@ -705,3 +705,28 @@ def test_sum_leaves_the_start_alone() -> None:
     total = List(List(Int(1)), List(Int(2))).sum(acc)
     assert acc == List(Int(0))
     assert total == List(Int(0), Int(1), Int(2))
+
+
+# `find` with a default — Smalltalk's `detect:ifNone:`, in the shape `next`,
+# `min` and `max` take: a miss and a match that *is* `none` were one answer.
+
+
+def test_find_answers_the_default_on_a_miss() -> None:
+    assert List(Int(1), Int(2)).find(lambda x: x > Int(5), default=Int(0)) == Int(0)
+
+
+def test_find_answers_a_matching_none_rather_than_the_default() -> None:
+    found = List(none, Int(1)).find(lambda x: x.is_none(), default=Str("missing"))
+    assert found is none
+
+
+def test_find_without_a_default_still_answers_none_on_a_miss() -> None:
+    assert List(Int(1)).find(lambda x: x > Int(5)) is none
+
+
+def test_find_refuses_a_positional_default() -> None:
+    with pytest.raises(TypeError) as info:
+        List(Int(1)).find(lambda x: x, Int(0))  # ty: ignore[no-matching-overload]
+    assert str(info.value) == (
+        "#find takes a block and an optional default= — write .find(lambda x: …, default=…)"
+    )
