@@ -66,8 +66,12 @@ class ByteArray(
         # `indexing` words both failures as `at` does — CPython's own names
         # the subscripting `no_subscript` bans (`bytearray indices must be
         # integers or slices, not str`).
+        # The value first, by its own name: `indexing` reads every
+        # `TypeError` as a wrong *index*, and CPython raises one for a wrong
+        # value too, so `at_put(0, "x")` blamed the index it was not given.
+        raw = an_int(byte, "at_put", "byte")
         with indexing(self, self._value, index, "at_put"):
-            self._value[index] = _faithful(byte)
+            self._value[index] = raw
         return self
 
     @classmethod

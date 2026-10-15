@@ -5,8 +5,7 @@ from poop.types._argument import _opt_stop, a_bound, text_like
 from poop.types._at import at_index, no_element_equal_to
 from poop.types._bytes_like import hex_of
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._raw import _faithful
-from poop.types._unwrap import _is_absent
+from poop.types._unwrap import _is_absent, _searched
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
 from poop.types.bytes import Bytes
@@ -84,11 +83,13 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
 
     def includes(self, byte: Int) -> Boolean:
         # `98 in memoryview(b"ab")` is True in CPython and `no_in` names
-        # `col.includes(x)`. Unwrapped through `_faithful`, so a foreign
-        # argument (List, Set, …) reaches CPython whole and is answered by its
-        # equality scan rather than leaking the internal `_value` name through
-        # dispatch.
-        return to_boolean(_faithful(byte) in self._value)
+        # `col.includes(x)`. Unwrapped through `_searched`, as `Range` does:
+        # a foreign argument (List, Set, …) reaches CPython whole and is
+        # answered by its equality scan, and a `Boolean` — which carries no
+        # `_value` — folds to its int, since a memoryview holds raw ints too
+        # and `includes(True)` answered `False` on `b"\x01"` where every
+        # sibling answers `True`.
+        return to_boolean(_searched(byte) in self._value)
 
     def __contains__(self, item: object) -> bool:
         if isinstance(item, Int):
@@ -98,7 +99,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
     def count(self, byte: Int) -> Int:
         # One argument, as CPython's `memoryview.count` takes — unlike the
         # text wrappers', which carry `start`/`end`.
-        return Int(self._value.count(_faithful(byte)))
+        return Int(self._value.count(_searched(byte)))
 
     def index(
         self,
@@ -116,7 +117,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
         try:
             return Int(
                 self._value.index(
-                    _faithful(byte),
+                    _searched(byte),
                     a_bound(start, "index", "start") or 0,
                     _opt_stop(a_bound(stop, "index", "stop"), len(self._value)),
                 )

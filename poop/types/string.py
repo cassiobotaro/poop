@@ -17,7 +17,7 @@ from poop.types._argument import (
     text_like,
     translation_table,
 )
-from poop.types._at import at_index
+from poop.types._at import at_index, no_element_equal_to
 from poop.types._codec import encoded
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
@@ -456,13 +456,19 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         The bound method rather than a name to `getattr`, so a misspelt
         selector cannot reach the wrong native method.
         """
-        return Int(
-            method(
-                a_needle(self, sub, selector, "a str"),
-                a_bound(start, selector, "start"),
-                a_bound(end, selector, "end"),
+        try:
+            return Int(
+                method(
+                    a_needle(self, sub, selector, "a str"),
+                    a_bound(start, selector, "start"),
+                    a_bound(end, selector, "end"),
+                )
             )
-        )
+        except ValueError:
+            # Only `index` and `rindex` raise: CPython's `substring not found`
+            # / `subsection not found` names neither the receiver nor the
+            # value, where every other sequence's `index` names both.
+            raise no_element_equal_to(self, sub) from None
 
     def _affix(
         self,

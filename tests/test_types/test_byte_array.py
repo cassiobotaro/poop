@@ -1127,3 +1127,23 @@ def test_bytes_hex_refuses_a_bytearray_separator_too() -> None:
         TypeError, match="#hex expects a one-character separator, got a bytearray"
     ):
         Bytes(b"ab").hex(ByteArray(bytearray(b":")))  # ty: ignore[invalid-argument-type]
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('bytearray(b"a").at_put(0, "x")', "#at_put's byte must be an int, got a str"),
+        (
+            'bytearray(b"a").at_put(1.5, 1)',
+            "bytearray.at_put expects an int index, got a float",
+        ),
+    ],
+    ids=["value", "index"],
+)
+def test_at_put_blames_the_argument_at_fault(source: str, expected: str) -> None:
+    # `indexing` reads every `TypeError` as a wrong index, and CPython raises
+    # one for a wrong value too — so `at_put(0, "x")` said `expects an int
+    # index, got an int`, blaming the index it was not given.
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == f"TypeError: {expected}"

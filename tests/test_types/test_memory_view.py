@@ -338,3 +338,25 @@ def test_readonly_uncalled_is_the_message_not_the_answer(
     # CPython's `readonly` is an attribute; POOP's is a message, like `real`
     # and `Range.start`, so the bare name is the block and not a Boolean.
     assert _run('memoryview(b"ab").readonly.print()', capsys) == "<block>"
+
+
+# A `Boolean` needle folds to its int, as `Range`'s searches fold it: a
+# memoryview holds raw ints too, and `includes(True)` answered `False` on
+# `b"\x01"` where `bytes`, `bytearray` and every sibling answer `True`.
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('memoryview(b"\\x01").includes(True).print()', "True"),
+        ('memoryview(b"\\x01\\x01").count(True).print()', "2"),
+        ('memoryview(b"\\x00\\x01").index(True).print()', "1"),
+        ('memoryview(b"\\x01").includes(False).print()', "False"),
+    ],
+    ids=["includes", "count", "index", "absent"],
+)
+def test_a_boolean_needle_is_found(
+    source: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out.strip() == expected

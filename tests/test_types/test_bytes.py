@@ -931,3 +931,21 @@ def test_translate_refuses_a_non_bytes_table_in_poops_words() -> None:
     assert _failure('b"abc".translate(None, 5)') == (
         "TypeError: #translate expects bytes, got an int (line 1)"
     )
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('b"ab".index(b"z")', "bytes has no element equal to b'z'"),
+        ('b"ab".rindex(b"z")', "bytes has no element equal to b'z'"),
+        ('bytearray(b"ab").rindex(b"z")', "bytearray has no element equal to b'z'"),
+        ('bytearray(b"ab").index(99)', "bytearray has no element equal to 99"),
+    ],
+    ids=["index", "rindex", "bytearray_rindex", "int_needle"],
+)
+def test_index_misses_in_the_familys_words(source: str, expected: str) -> None:
+    # CPython's `subsection not found` names neither the receiver nor the
+    # value; every other sequence's `index` names both.
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == f"ValueError: {expected}"

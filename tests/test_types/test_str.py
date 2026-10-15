@@ -1193,3 +1193,24 @@ def test_translate_keeps_cpythons_sentence_for_a_mapped_value() -> None:
     assert _failure('"abc".translate({97: 5.5})') == (
         "TypeError: character mapping must return integer, None or str (line 1)"
     )
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('"ab".index("z")', "str has no element equal to 'z'"),
+        ('"ab".rindex("z")', "str has no element equal to 'z'"),
+        ('"ab".index("a", 1)', "str has no element equal to 'a'"),
+    ],
+    ids=["index", "rindex", "bounded"],
+)
+def test_index_misses_in_the_familys_words(source: str, expected: str) -> None:
+    # CPython's `substring not found` names neither the receiver nor the
+    # value; every other sequence's `index` names both.
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == f"ValueError: {expected}"
+
+
+def test_find_still_answers_minus_one_on_a_miss() -> None:
+    assert Str("ab").find(Str("z")) == Int(-1)
