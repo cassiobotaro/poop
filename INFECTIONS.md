@@ -1308,8 +1308,8 @@ A module's first string is *not* a docstring here: the REPL runs each input as a
 
 | AST node | Replacement |
 |---|---|
-| `ast.Constant(value=complex)` | `_poop_complex_literal(v)` |
-| `ast.BinOp` combining real + imaginary literal | collapsed into `_poop_complex_literal(r+ij)` |
+| `ast.Constant(value=complex)` | `_poop_complex(v)` |
+| `ast.BinOp` combining real + imaginary literal | collapsed into `_poop_complex(r+ij)` |
 | `ast.Call` with `complex(r, i)` | `_poop_complex_from(r, i)` |
 
 **`Complex` answers Python 3.14's `from_number`** (`poop/types/complex.py`), the twin of `Float`'s: `complex.from_number(2.5)` answers `(2.5+0j)`, `complex.from_number(1j)` answers `1j` unchanged, and `complex.from_number(True)` answers `(1+0j)`. It shares `a_number` with `Float`, with the `real` flag off, so the one difference between the two constructors is the word in the sentence: `complex.from_number("1")` answers `#from_number expects a number, got a str`.

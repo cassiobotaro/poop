@@ -20,7 +20,6 @@ class _ByteArrayRewriter(BuiltinRewriter):
 class ByteArrayTransformer(BaseTransformer):
     rewriter = _ByteArrayRewriter
     BINDINGS = {
-        "_poop_bytearray": ByteArray,
         "_poop_bytearray_cls": builtin_alias(
             ByteArray, _poop_bytearray_from, "bytearray"
         ),

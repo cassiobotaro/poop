@@ -21,7 +21,6 @@ class _FrozenSetRewriter(BuiltinRewriter):
 class FrozenSetTransformer(BaseTransformer):
     rewriter = _FrozenSetRewriter
     BINDINGS = {
-        "_poop_frozenset": FrozenSet,
         "_poop_frozenset_cls": builtin_alias(
             FrozenSet, _poop_frozenset_from, "frozenset"
         ),

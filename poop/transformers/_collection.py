@@ -17,7 +17,6 @@ from poop.types._message import article
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.int import Int
-from poop.types.range import Range
 from poop.types.string import Str
 
 if TYPE_CHECKING:
@@ -78,13 +77,6 @@ _LITERAL_KIND: dict[type[ast.AST], str] = {
 }
 
 
-def make_constructor[T](poop_type: type[T]) -> Callable[..., T]:
-    def _constructor(*elements: Object) -> T:
-        return poop_type(*elements)
-
-    return _constructor
-
-
 def make_iterable_from[T](
     poop_type: type[T], *, copy: bool = False
 ) -> Callable[..., T]:
@@ -106,8 +98,6 @@ def make_iterable_from[T](
             if copy:
                 return poop_type(*cast("Iterable[Object]", arg))
             return arg
-        if isinstance(arg, Range):
-            return poop_type(*arg._iter())
         if isinstance(arg, Iterable):
             return poop_type(*cast("Iterable[Object]", arg))
         # Both names come off the cloak, never a literal: a hand-written

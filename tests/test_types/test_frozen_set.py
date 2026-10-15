@@ -5,7 +5,7 @@ import pytest as _pytest
 from poop.parser import parse
 from poop.transformers.frozen_set import FrozenSetTransformer, _poop_frozenset_from
 from poop.transformers.int import IntTransformer
-from poop.transformers.set import SetTransformer, _poop_set
+from poop.transformers.set import SetTransformer
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.frozen_set import FrozenSet
@@ -171,7 +171,7 @@ def test_transformer_frozenset_call() -> None:
     tree = FrozenSetTransformer().transform(tree)
     ns: dict[str, object] = {
         "_poop_frozenset_from": _poop_frozenset_from,
-        "_poop_set": _poop_set,
+        "_poop_set": Set,
         "_poop_int": _Int,
     }
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102

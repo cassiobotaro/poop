@@ -33,7 +33,6 @@ class _MemoryViewRewriter(BuiltinRewriter):
 class MemoryViewTransformer(BaseTransformer):
     rewriter = _MemoryViewRewriter
     BINDINGS = {
-        "_poop_memoryview": MemoryView,
         "_poop_memoryview_cls": builtin_alias(
             MemoryView, _poop_memoryview_from, "memoryview"
         ),

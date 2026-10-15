@@ -178,7 +178,6 @@ class _DictRewriter(BuiltinRewriter):
 class DictTransformer(BaseTransformer):
     rewriter = _DictRewriter
     BINDINGS = {
-        "_poop_dict": Dict,
         "_poop_dict_cls": builtin_alias(Dict, _poop_dict_from, "dict"),
         "_poop_dict_from_pairs": _poop_dict_from_pairs,
         "_poop_dict_from": _poop_dict_from,

@@ -11,10 +11,6 @@ from poop.types.int import Int
 from poop.types.string import Str
 
 
-def _poop_complex_literal(value: complex) -> Complex:
-    return Complex(value)
-
-
 def _poop_complex_from(*args: object, **kwargs: object) -> Complex:
     refuse_extra_arguments(
         "complex",
@@ -66,7 +62,7 @@ class _ComplexRewriter(BuiltinRewriter):
     call_target = "_poop_complex_from"
     name_target = "_poop_complex_cls"
     literal_type = complex
-    literal_target = "_poop_complex_literal"
+    literal_target = "_poop_complex"
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         # Fold `r ± ij` literal patterns (e.g. 1+2j, 3.0-1j) into a single Complex.
@@ -79,9 +75,7 @@ class _ComplexRewriter(BuiltinRewriter):
             ):
                 sign = -1 if isinstance(op, ast.Sub) else 1
                 combined = complex(real, sign * imag.imag)
-                return call_at(
-                    "_poop_complex_literal", [ast.Constant(value=combined)], node
-                )
+                return call_at("_poop_complex", [ast.Constant(value=combined)], node)
         return self.generic_visit(node)
 
 
@@ -90,6 +84,5 @@ class ComplexTransformer(BaseTransformer):
     BINDINGS = {
         "_poop_complex": Complex,
         "_poop_complex_cls": builtin_alias(Complex, _poop_complex_from, "complex"),
-        "_poop_complex_literal": _poop_complex_literal,
         "_poop_complex_from": _poop_complex_from,
     }

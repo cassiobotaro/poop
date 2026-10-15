@@ -4,7 +4,7 @@ import pytest
 
 from poop.parser import parse
 from poop.transformers.int import IntTransformer
-from poop.transformers.set import SetTransformer, _poop_set
+from poop.transformers.set import SetTransformer
 from poop.types.boolean import false, true
 from poop.types.frozen_set import FrozenSet
 from poop.types.int import Int
@@ -202,7 +202,7 @@ def test_transformer_literal() -> None:
     tree = parse("s = {1, 2, 3}")
     tree = IntTransformer().transform(tree)
     tree = SetTransformer().transform(tree)
-    ns: dict[str, object] = {"_poop_set": _poop_set, "_poop_int": _Int}
+    ns: dict[str, object] = {"_poop_set": Set, "_poop_int": _Int}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
     result = ns["s"]
     assert isinstance(result, Set)

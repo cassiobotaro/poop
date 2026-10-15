@@ -1,15 +1,10 @@
 import ast
 
-from poop.transformers._collection import (
-    make_constructor,
-    make_iterable_from,
-    wrap_elts,
-)
+from poop.transformers._collection import make_iterable_from, wrap_elts
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.list import List
 
-_poop_list = make_constructor(List)
 _poop_list_from = make_iterable_from(List, copy=True)
 
 
@@ -28,7 +23,9 @@ class _ListRewriter(BuiltinRewriter):
 class ListTransformer(BaseTransformer):
     rewriter = _ListRewriter
     BINDINGS = {
-        "_poop_list": _poop_list,
+        # The class itself: its `__init__` is variadic, which is the shape a
+        # literal's elements arrive in.
+        "_poop_list": List,
         "_poop_list_from": _poop_list_from,
         "_poop_list_cls": builtin_alias(List, _poop_list_from, "list"),
     }

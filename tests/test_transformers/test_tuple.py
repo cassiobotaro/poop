@@ -2,7 +2,7 @@ from functools import partial
 
 import pytest
 
-from poop.transformers.tuple import TupleTransformer, _poop_tuple, _poop_tuple_from
+from poop.transformers.tuple import TupleTransformer, _poop_tuple_from
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -46,9 +46,8 @@ def test_bindings_contain_tuple_from() -> None:
     assert TupleTransformer.BINDINGS["_poop_tuple_from"] is _poop_tuple_from
 
 
-def test_poop_tuple_factory() -> None:
-    result = _poop_tuple(Int(1), Int(2))
-    assert result == Tuple(Int(1), Int(2))
+def test_bindings_contains_the_tuple_class() -> None:
+    assert TupleTransformer.BINDINGS["_poop_tuple"] is Tuple
 
 
 # _poop_tuple_from factory tests

@@ -40,7 +40,6 @@ class _FrozenDictRewriter(BuiltinRewriter):
 class FrozenDictTransformer(BaseTransformer):
     rewriter = _FrozenDictRewriter
     BINDINGS = {
-        "_poop_frozendict": FrozenDict,
         "_poop_frozendict_cls": builtin_alias(
             FrozenDict, _poop_frozendict_from, "frozendict"
         ),

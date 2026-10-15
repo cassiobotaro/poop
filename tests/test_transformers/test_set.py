@@ -2,7 +2,7 @@ from functools import partial
 
 import pytest
 
-from poop.transformers.set import SetTransformer, _poop_set, _poop_set_from
+from poop.transformers.set import SetTransformer, _poop_set_from
 from poop.types.int import Int
 from poop.types.list import List
 from poop.types.range import Range
@@ -28,16 +28,11 @@ def test_set_rewrite(source: str, expected: str) -> None:
 
 
 def test_bindings_contains_poop_set() -> None:
-    assert "_poop_set" in SetTransformer.BINDINGS
+    assert SetTransformer.BINDINGS["_poop_set"] is Set
 
 
 def test_bindings_contains_poop_set_from() -> None:
     assert SetTransformer.BINDINGS["_poop_set_from"] is _poop_set_from
-
-
-def test_poop_set_factory() -> None:
-    result = _poop_set(Int(1), Int(2))
-    assert isinstance(result, Set)
 
 
 # _poop_set_from factory tests

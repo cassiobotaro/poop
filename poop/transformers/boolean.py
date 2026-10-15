@@ -43,6 +43,5 @@ class BooleanTransformer(BaseTransformer):
         "_poop_true": true,
         "_poop_false": false,
         "_poop_bool_from": _poop_bool_from,
-        "_poop_boolean": Boolean,
         "_poop_bool_cls": builtin_alias(Boolean, _poop_bool_from, "bool"),
     }

@@ -6,7 +6,6 @@ from poop.parser import parse
 from poop.transformers.complex import (
     ComplexTransformer,
     _poop_complex_from,
-    _poop_complex_literal,
 )
 from poop.transformers.int import IntTransformer
 from poop.types.boolean import false, true
@@ -256,7 +255,7 @@ def test_assert_on_zero_complex_raises() -> None:
 def test_transformer_j_literal() -> None:
     tree = parse("c = 2j")
     tree = ComplexTransformer().transform(tree)
-    ns: dict[str, object] = {"_poop_complex_literal": _poop_complex_literal}
+    ns: dict[str, object] = {"_poop_complex": Complex}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
     result = ns["c"]
     assert isinstance(result, Complex)
@@ -266,7 +265,7 @@ def test_transformer_j_literal() -> None:
 def test_transformer_negative_j_literal() -> None:
     tree = parse("c = -2j")
     tree = ComplexTransformer().transform(tree)
-    ns: dict[str, object] = {"_poop_complex_literal": _poop_complex_literal}
+    ns: dict[str, object] = {"_poop_complex": Complex}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
     result = ns["c"]
     assert isinstance(result, Complex)
@@ -276,7 +275,7 @@ def test_transformer_negative_j_literal() -> None:
 def test_transformer_binop_literal() -> None:
     tree = parse("c = 1+2j")
     tree = ComplexTransformer().transform(tree)
-    ns: dict[str, object] = {"_poop_complex_literal": _poop_complex_literal}
+    ns: dict[str, object] = {"_poop_complex": Complex}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
     result = ns["c"]
     assert isinstance(result, Complex)
@@ -286,7 +285,7 @@ def test_transformer_binop_literal() -> None:
 def test_transformer_binop_sub_literal() -> None:
     tree = parse("c = 3-1j")
     tree = ComplexTransformer().transform(tree)
-    ns: dict[str, object] = {"_poop_complex_literal": _poop_complex_literal}
+    ns: dict[str, object] = {"_poop_complex": Complex}
     exec(compile(tree, "<test>", "exec"), ns)  # noqa: S102
     result = ns["c"]
     assert isinstance(result, Complex)

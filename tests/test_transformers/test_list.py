@@ -4,7 +4,7 @@ import pytest
 
 from poop.errors import PoopError
 from poop.interpreter import Interpreter
-from poop.transformers.list import ListTransformer, _poop_list, _poop_list_from
+from poop.transformers.list import ListTransformer, _poop_list_from
 from poop.types.bytes import Bytes
 from poop.types.int import Int
 from poop.types.list import List
@@ -42,17 +42,13 @@ def test_list_rewrite(source: str, expected: str) -> None:
 
 
 def test_bindings_contains_poop_list() -> None:
-    assert "_poop_list" in ListTransformer.BINDINGS
+    # The class itself: a literal's elements arrive as its variadic `__init__`
+    # takes them, so no closure stands in between.
+    assert ListTransformer.BINDINGS["_poop_list"] is List
 
 
 def test_bindings_contains_poop_list_from() -> None:
     assert ListTransformer.BINDINGS["_poop_list_from"] is _poop_list_from
-
-
-def test_poop_list_factory() -> None:
-    lst = _poop_list(Int(1), Int(2), Int(3))
-    assert isinstance(lst, List)
-    assert lst == List(Int(1), Int(2), Int(3))
 
 
 # _poop_list_from factory tests

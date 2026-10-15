@@ -47,7 +47,6 @@ class _SentinelRewriter(BuiltinRewriter):
 class SentinelTransformer(BaseTransformer):
     rewriter = _SentinelRewriter
     BINDINGS = {
-        "_poop_sentinel": Sentinel,
         "_poop_sentinel_cls": builtin_alias(Sentinel, _poop_sentinel_from, "sentinel"),
         "_poop_sentinel_from": _poop_sentinel_from,
     }

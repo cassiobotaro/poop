@@ -1,10 +1,6 @@
 from typing import TYPE_CHECKING
 
-from poop.transformers._collection import (
-    make_constructor,
-    make_iterable_from,
-    wrap_elts,
-)
+from poop.transformers._collection import make_iterable_from, wrap_elts
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
 from poop.types._alias import builtin_alias
 from poop.types.set import Set
@@ -12,7 +8,6 @@ from poop.types.set import Set
 if TYPE_CHECKING:
     import ast
 
-_poop_set = make_constructor(Set)
 _poop_set_from = make_iterable_from(Set, copy=True)
 
 
@@ -29,7 +24,9 @@ class _SetRewriter(BuiltinRewriter):
 class SetTransformer(BaseTransformer):
     rewriter = _SetRewriter
     BINDINGS = {
-        "_poop_set": _poop_set,
+        # The class itself: its `__init__` is variadic, which is the shape a
+        # literal's elements arrive in.
+        "_poop_set": Set,
         "_poop_set_from": _poop_set_from,
         "_poop_set_cls": builtin_alias(Set, _poop_set_from, "set"),
     }
