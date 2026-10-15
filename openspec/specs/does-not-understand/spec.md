@@ -1,12 +1,11 @@
-# Spec Delta
+# does-not-understand Specification
 
 ## Purpose
-
 The hint a `does not understand` refusal carries: the POOP spelling of a
 Smalltalk selector, the substitute for a foreign-language name, or the
 nearest message.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Common Smalltalk collection selectors are mapped
 A refusal of `first`, `last`, `isEmpty`, `notEmpty`, `removeFirst`,
@@ -32,7 +31,7 @@ message or spelling that answers it.
 - **THEN** an `AttributeError` is raised reading `dict does not understand #atIfAbsent — Smalltalk's #atIfAbsent is #get here`
 
 ### Requirement: A lazy view says how to materialise
-A refusal of `len`, `at`, `reversed`, `includes` or `sorted` on a `map`,
+A refusal of `len`, `at`, `reversed`, `includes`, `count` or `index` on a `map`,
 `filter`, `zip` or `enumerate` SHALL say the view is lazy and name
 `list(...)`.
 

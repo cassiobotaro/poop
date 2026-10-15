@@ -26,8 +26,9 @@ lazy `map` is sent `len`.
   `asArray`, `asSet`, `timesRepeat`, `toDo`, `ifNilIfNotNil`; a row may
   carry a *spelling* (`#first is .at(0) here`) where the twin is not a
   message name. The lazy views (`map`, `filter`, `zip`, `enumerate`) gain
-  cross-language rows for `len`, `at`, `reversed`, `includes`, `sorted`
-  pointing at materialising with `list(...)`.
+  cross-language rows for `len`, `at`, `reversed`, `includes`, `count`,
+  `index` pointing at materialising with `list(...)` (`sorted` the views
+  already answer, through the mixin).
 
 Out of scope, and why: `times_repeat`/`to_do` as messages — `INFECTIONS.md`'s
 "Python names" principle makes `range(n).do(…)` the spelling, so they are
