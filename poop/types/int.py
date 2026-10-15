@@ -13,7 +13,6 @@ from poop.types._numeric_compare import (
     _NumericCompareMixin,
 )
 from poop.types._pow import reflected_pow
-from poop.types._raw import _faithful
 from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC, NotIntegral
 from poop.types._unwrap import _is_absent, _unwrap_bool
 from poop.types.boolean import Boolean, true
@@ -196,7 +195,7 @@ class Int(_NumericCompareMixin, Object, name="int"):
         return self._arith(other, operator.mod)
 
     def __pow__(
-        self, other: object, modulus: Int | NoneClass | None = None
+        self, other: object, modulus: Int | Boolean | NoneClass | None = None
     ) -> Int | Float | Complex:
         if not isinstance(other, (Int, Float)):
             return NotImplemented  # let other.__rpow__ run (Boolean, Complex)
@@ -209,18 +208,23 @@ class Int(_NumericCompareMixin, Object, name="int"):
         # Guarded here because CPython's three-operand form names all three —
         # `unsupported operand type(s) for ** or pow(): 'int', 'int', 'str'` —
         # a shape no rewording of the binary message would reach.
-        if not isinstance(modulus, Int):
+        # Both rungs of the index tower, as every index-taking message admits:
+        # CPython's `pow(2, 3, True)` is `0`.
+        if not isinstance(modulus, (Int, Boolean)):
             raise mirrors.TypeError(
                 f"pow's modulus must be an int, got {article(type(modulus).__name__)}"
             )
+        raw_modulus = operator.index(modulus)
         # The third way a modulus can be wrong, and the one left to CPython:
         # `pow() 3rd argument cannot be 0` names the builtin `no_pow` forbids,
         # spelt as the call this message substitutes.
-        if modulus._value == 0:
+        if raw_modulus == 0:
             raise mirrors.ValueError("pow's modulus cannot be 0")
-        return Int(pow(self._value, other._value, _faithful(modulus)))
+        return Int(pow(self._value, other._value, raw_modulus))
 
-    def pow(self, other: object, modulus: Int | NoneClass | None = None) -> object:
+    def pow(
+        self, other: object, modulus: Int | Boolean | NoneClass | None = None
+    ) -> object:
         # The reflected half is part of the operation, not an extra: `__pow__`
         # answers `NotImplemented` for a `Complex` *on purpose*, so CPython's
         # operator protocol falls through to `Complex.__rpow__`. `2 ** 1+1j`

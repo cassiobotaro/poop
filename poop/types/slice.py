@@ -46,10 +46,30 @@ class Slice(Object, name="slice"):
         return slice(self._start, self._stop, self._step)
 
     def indices(self, length: Index) -> Tuple:
-        start, stop, step = self._py_slice().indices(
+        # Through the checked slice: CPython's `indices` answered `slice
+        # indices must be integers or None or have an __index__ method` for a
+        # non-int bound, the exact sentence `_resolve_py_slice` was written to
+        # replace one message over.
+        start, stop, step = self._checked_py_slice().indices(
             an_int(length, "indices", "length")
         )
         return Tuple(Int(start), Int(stop), Int(step))
+
+    def _checked_py_slice(self) -> slice:
+        """`_py_slice`, with each bound confirmed to be an index.
+
+        Checked here rather than left to the sequence, which answers `slice
+        indices must be integers or None or have an __index__ method` —
+        naming subscripting and a dunder POOP bans in the same breath, one
+        step after the receiver that would have said which message was sent.
+        """
+        resolved = self._py_slice()
+        for bound in (resolved.start, resolved.stop, resolved.step):
+            if bound is not None and not hasattr(bound, "__index__"):
+                raise mirrors.TypeError(
+                    f"slice bounds must be int, got a {type(bound).__name__}"
+                )
+        return resolved
 
     def _fields(self) -> tuple[Index | None, Index | None, Index | None]:
         return (self._start, self._stop, self._step)
@@ -93,19 +113,8 @@ def _resolve_py_slice(
                 "#slice takes a slice or bounds, not both — "
                 "write .slice(slice(1, 3)) or .slice(1, 3)"
             )
-        resolved = start_or_slice._py_slice()
-    else:
-        resolved = Slice(start_or_slice, stop, step)._py_slice()
-    # Checked here rather than left to the sequence, which answers `slice
-    # indices must be integers or None or have an __index__ method` — naming
-    # subscripting and a dunder POOP bans in the same breath, one step after
-    # the receiver that would have said which message was sent.
-    for bound in (resolved.start, resolved.stop, resolved.step):
-        if bound is not None and not hasattr(bound, "__index__"):
-            raise mirrors.TypeError(
-                f"slice bounds must be int, got a {type(bound).__name__}"
-            )
-    return resolved
+        return start_or_slice._checked_py_slice()
+    return Slice(start_or_slice, stop, step)._checked_py_slice()
 
 
 def _coerce(value: Index | NoneClass | None) -> Index | None:

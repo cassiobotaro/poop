@@ -778,3 +778,14 @@ def test_from_bytes_under_the_bare_builtin_name() -> None:
     alias = IntTransformer.BINDINGS["_poop_int_cls"]
     assert alias.from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)
     assert Int(1).from_bytes(Bytes(b"\x01\x02"), Str("big")) == Int(258)
+
+
+def test_pow_admits_a_boolean_modulus() -> None:
+    # Both rungs of the index tower, as every index-taking message admits:
+    # CPython's `pow(2, 3, True)` is `0`.
+    assert Int(2).pow(Int(3), true) == Int(0)
+
+
+def test_pow_with_a_false_modulus_is_a_zero_modulus() -> None:
+    with pytest.raises(ValueError, match="pow's modulus cannot be 0"):
+        Int(2).pow(Int(3), false)

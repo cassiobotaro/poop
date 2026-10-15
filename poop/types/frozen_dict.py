@@ -1,7 +1,9 @@
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, Self
 
+from poop.types import mirrors
 from poop.types._mapping import _MappingMixin
+from poop.types._message import article
 from poop.types.mapping_proxy import _mapping_data
 
 if TYPE_CHECKING:
@@ -46,7 +48,19 @@ class FrozenDict(_MappingMixin, name="frozendict"):
         # naming a tuple the program never wrote, where `hash(value)` raises
         # CPython's own `unhashable type: 'list'` — the sentence `Object.hash`
         # and the error report reword.
-        return hash(frozenset((k, hash(v)) for k, v in self._data.items()))
+        # Each value hashed by name here, not left to `Object.hash`'s
+        # rewording: that one said the *value* "has no place as a set element
+        # or a dict key", and a frozendict value is a legal place for a list.
+        hashed = []
+        for key, value in self._data.items():
+            try:
+                hashed.append((key, hash(value)))
+            except TypeError:
+                raise mirrors.TypeError(
+                    f"frozendict cannot be hashed — it holds "
+                    f"{article(type(value).__name__)}, which cannot be"
+                ) from None
+        return hash(frozenset(hashed))
 
     def __or__(self, other: object) -> FrozenDict:
         other_data = _mapping_data(other)

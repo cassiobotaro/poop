@@ -2,6 +2,8 @@ from typing import Any
 
 import pytest
 
+from poop.errors import ExecutionError
+from poop.interpreter import Interpreter
 from poop.types.boolean import false, true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
@@ -296,3 +298,12 @@ def test_list_slice_refuses_a_slice_and_a_stop() -> None:
 def test_str_slice_refuses_a_slice_and_a_step() -> None:
     with pytest.raises(TypeError, match=_MIXED):
         Str("abcde").slice(Slice(Int(1), Int(3)), step=Int(2))
+
+
+def test_indices_refuses_a_non_int_bound_as_slicing_does() -> None:
+    # CPython's `indices` answered `slice indices must be integers or None or
+    # have an __index__ method` — the sentence `_resolve_py_slice` was written
+    # to replace one message over.
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source("slice(1.5).indices(3)")
+    assert info.value.message == "TypeError: slice bounds must be int, got a float"

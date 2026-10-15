@@ -114,10 +114,14 @@ def test_an_unhashable_value_refuses_the_hash_in_poops_words() -> None:
     # `hash(frozendict(a=[1]))` is `unhashable type: 'list'`, the bare
     # sentence `Object.hash` rewords; CPython's set-element sentence about a
     # `(key, value)` tuple the program never wrote must not appear.
+    # Nor `Object.hash`'s own rewording, which says the *list* "has no place
+    # as a set element or a dict key" — a frozendict value is a legal place.
     fd = FrozenDict._wrapping({Str("a"): List(Int(1))})
-    with pytest.raises(TypeError, match="list cannot be hashed") as info:
+    with pytest.raises(TypeError) as info:
         fd.hash()
-    assert "tuple" not in str(info.value)
+    assert str(info.value) == (
+        "frozendict cannot be hashed — it holds a list, which cannot be"
+    )
 
 
 def test_or_answers_a_frozen_dict_from_any_mapping() -> None:
