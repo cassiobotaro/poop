@@ -573,3 +573,21 @@ def test_get_attr_refuses_two_defaults_without_naming_getattr() -> None:
         "object.get_attr() takes from 2 to 3 positional arguments but 4 were given"
     )
     assert "getattr" not in message
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("(5).print(end=5)", "#print's end must be a str, got an int"),
+        ('"x".print(5)', "#print's end must be a str, got an int"),
+        ("[1].print(sep=5)", "#print's sep must be a str, got an int"),
+        ('ValueError("x").print(end=[])', "#print's end must be a str, got a list"),
+    ],
+    ids=["end", "positional_end", "sep", "exception_end"],
+)
+def test_print_checks_end_and_sep_in_poops_words(source: str, expected: str) -> None:
+    # `_unwrap` passed anything through to `builtins.print`, which answered
+    # `end must be None or a string, not int` — no receiver, no message.
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == f"TypeError: {expected}"

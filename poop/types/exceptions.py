@@ -41,7 +41,8 @@ from poop.types.meta import PoopMeta, class_side, class_side_read_refusal
 from poop.types.object import MessageNotUnderstood, Object
 
 # circular: each module below imports exceptions
-lazy from poop.types._unwrap import _unwrap, _unwrap_bool
+lazy from poop.types._argument import a_text
+lazy from poop.types._unwrap import _unwrap_bool
 lazy from poop.types.none import none
 lazy from poop.types.string import Str
 
@@ -280,7 +281,9 @@ def _print(
     # `Object.print` on the described form rather than on `str(self)`, which
     # is the bare message and has to stay so.
     builtins.print(  # noqa: T201
-        describe(self), end=_unwrap(end, "\n"), flush=_unwrap_bool(flush, False)
+        describe(self),
+        end=a_text(end, "print", "end", "\n"),
+        flush=_unwrap_bool(flush, False),
     )
     return none
 

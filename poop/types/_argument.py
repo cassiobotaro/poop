@@ -292,6 +292,25 @@ def a_block(
     )
 
 
+def a_text(value: object, selector: str, role: str, default: str) -> str:
+    """The raw `str` behind an optional text keyword, or POOP's refusal.
+
+    `print`'s `end` and `sep` went to `builtins.print` through `_unwrap`,
+    which passes anything through, so a wrong one answered CPython's `end
+    must be None or a string, not int` — no receiver, no message, from the
+    most-sent message in the language. The wording sweep could not see it:
+    `print` was listed as unsendable. Worded as `an_int` words its roles.
+    """
+    if _is_absent(value):
+        return default
+    raw = _faithful(value)
+    if isinstance(raw, str):
+        return raw
+    raise mirrors.TypeError(
+        f"#{selector}'s {role} must be a str, got {article(type(value).__name__)}"
+    )
+
+
 def a_boolean(value: object, selector: str) -> Boolean:
     """`value` as the `Boolean` a boolean-algebra message takes, or a refusal.
 

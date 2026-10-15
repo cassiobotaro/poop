@@ -11,8 +11,10 @@ any of them, which is how the ten proposals accumulated in the first place.
 """
 
 import ast
+import contextlib
 import importlib
 import inspect
+import io
 import pathlib
 import pkgutil
 import re
@@ -597,16 +599,20 @@ _ARITY = re.compile(
 )
 
 # Messages that must not be *sent* by the sweep: they block, exit, or mutate
-# the shared sample in a way later cases would read.
-_UNSENDABLE = frozenset(
-    {"input", "print", "does_not_understand", "while_true", "while_false"}
-)
+# the shared sample in a way later cases would read. `print` is sent, with
+# stdout redirected: listing it here hid `end must be None or a string, not
+# int` on the most-sent message in the language.
+_UNSENDABLE = frozenset({"input", "does_not_understand", "while_true", "while_false"})
 
 
 def _sweep_failures() -> list[tuple[str, str, str]]:
     """(receiver, message, text) for every leak the wrong-argument sweep finds."""
     found: dict[tuple[str, str], tuple[str, str, str]] = {}
-    for label, receiver in _receivers().items():
+    # A class is a receiver too — `A.format(5)` and `A.del_attr(...)` answered
+    # CPython where the instance side answered POOP — but only here: the
+    # samples are shared with sweeps that read instance-side descriptors.
+    receivers = {**_receivers(), "class": Int}
+    for label, receiver in receivers.items():
         for name in sorted(dir(receiver)):
             if not is_message(name) or name in _UNSENDABLE:
                 continue
@@ -616,7 +622,8 @@ def _sweep_failures() -> list[tuple[str, str, str]]:
             for bad in _wrong_arguments():
                 for args in ((bad,), (bad, bad)):
                     try:
-                        message(*args)
+                        with contextlib.redirect_stdout(io.StringIO()):
+                            message(*args)
                     except BaseException as exc:  # noqa: BLE001
                         text = poop_message(exc)
                         if _ARITY.search(text) or any(f in text for f in _EXEMPT):

@@ -900,3 +900,43 @@ def test_a_class_get_attr_refuses_two_defaults() -> None:
     assert str(info.value) == (
         "get_attr() takes from 2 to 3 positional arguments but 4 were given"
     )
+
+
+# Class-side `del_attr`, `format` and `print`, worded as the instance side.
+
+_A = "class A:\n    pass\n"
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('A.del_attr("nope")', "AttributeError: A has no attribute 'nope' to remove"),
+        (
+            'A.del_attr("name")',
+            "AttributeError: #name is answered by every class — it cannot be rebound",
+        ),
+        (
+            'A.del_attr("print")',
+            "AttributeError: #print is answered by every class — it cannot be rebound",
+        ),
+        ("A.format(5)", "TypeError: #format expects a str, got an int"),
+        ("A.print(end=5)", "TypeError: #print's end must be a str, got an int"),
+    ],
+    ids=["absent", "class_side_name", "class_side_print", "format_spec", "print_end"],
+)
+def test_class_side_refusals_are_worded(source: str, expected: str) -> None:
+    # `del_attr("nope")` answered `type object 'A' has no attribute 'nope'`,
+    # `del_attr("name")` the bare slot name `__delete__`, `format(5)` the
+    # call `format() argument 2 must be str, not int`, and `print(end=5)`
+    # `end must be None or a string, not int`.
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(_A + source)
+    assert info.value.message == expected
+
+
+def test_class_side_format_refuses_an_unknown_code_in_poops_words() -> None:
+    # CPython's `Unknown format code 'd' for object of type 'str'`, reworded
+    # by `_template_refusal` as the instance side's `format` rewords it.
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(_A + 'A.format("d")')
+    assert info.value.message == "ValueError: a str cannot be formatted with 'd'"

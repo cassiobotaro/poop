@@ -15,8 +15,8 @@ from poop.types.meta import PoopMeta
 # when both sides exist; after that the name is a plain global.
 lazy from poop.types import mirrors
 lazy from poop.types._alias import unalias
-lazy from poop.types._argument import a_block, a_class, text_like
-lazy from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
+lazy from poop.types._argument import a_block, a_class, a_text, text_like
+lazy from poop.types._unwrap import _is_absent, _unwrap_bool
 lazy from poop.types.block import _as_block
 lazy from poop.types.boolean import false, to_boolean, true
 lazy from poop.types.int import Int
@@ -272,7 +272,7 @@ class Object(metaclass=PoopMeta):
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:
-        end_value = _unwrap(end, "\n")
+        end_value = a_text(end, "print", "end", "\n")
         flush_value = _unwrap_bool(flush, False)
         builtins.print(str(self), end=end_value, flush=flush_value)  # noqa: T201
         return none

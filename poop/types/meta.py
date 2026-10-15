@@ -22,17 +22,17 @@ from poop.types._sentinel import MISSING
 # imported eagerly here; each resolves on first use, inside a method body.
 lazy from poop.types import mirrors
 lazy from poop.types._alias import unalias
-lazy from poop.types._argument import a_block, a_class
+lazy from poop.types._argument import a_block, a_class, a_text, text_like
 lazy from poop.types._bridge import to_python
 lazy from poop.types._message import describe_operand
-lazy from poop.types._unwrap import _unwrap, _unwrap_bool
+lazy from poop.types._unwrap import _is_absent, _unwrap_bool
 lazy from poop.types.block import _as_block, _MethodBlock
 lazy from poop.types.boolean import false, to_boolean, true
 lazy from poop.types.int import Int
 lazy from poop.types.list import List
 lazy from poop.types.none import none
 lazy from poop.types.object import MessageNotUnderstood
-lazy from poop.types.string import Str
+lazy from poop.types.string import Str, _template_refusal
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sized
@@ -123,9 +123,13 @@ class class_side[C, **P, R]:  # noqa: N801 — read as a word at `@class_side`
         # *word* `name` were the problem, and both spellings of the mistake —
         # `Foo.name = 5` and the sanctioned `Foo.set_attr("name", 5)` — landed
         # on it. `_reject_private` (`_attr_guard.py`) is the model.
-        raise mirrors.AttributeError(
-            f"#{self._name} is answered by every class — it cannot be rebound"
-        )
+        raise _rebound(self._name)
+
+    def __delete__(self, cls: type) -> None:
+        # The same sentence: without this, `type.__delattr__` on a data
+        # descriptor with no `__delete__` answered the bare slot name
+        # (`AttributeError: __delete__`) to `Foo.del_attr("name")`.
+        raise _rebound(self._name)
 
 
 class class_side_read_refusal[C, **P, R](class_side[C, P, R]):  # noqa: N801 — as `class_side`
@@ -151,6 +155,13 @@ class class_side_read_refusal[C, **P, R](class_side[C, P, R]):  # noqa: N801 —
         if cls is None:
             return self
         return self._fn(cls)
+
+
+def _rebound(name: str) -> Exception:
+    """The refusal for assigning to or removing a message every class answers."""
+    return mirrors.AttributeError(
+        f"#{name} is answered by every class — it cannot be rebound"
+    )
 
 
 def _own_entry(cls: type, name: str) -> object | None:
@@ -782,7 +793,17 @@ class PoopMeta(type):
 
     @class_side
     def format(cls, spec: Str | NoneClass | None = None) -> Str:
-        return Str(builtins.format(cls.__name__, _unwrap(spec, "")))
+        # As `Object.format` guards both: a non-`Str` spec answered `format()
+        # argument 2 must be str, not int` — the builtin `no_format` bans,
+        # spelt as a call — and an unknown code `Unknown format code 'd' for
+        # object of type 'str'`, naming a type the program never wrote.
+        spec_value = (
+            "" if _is_absent(spec) else text_like(spec, "format", "a str", (str,))
+        )
+        try:
+            return Str(builtins.format(cls.__name__, spec_value))
+        except ValueError as exc:
+            raise _template_refusal(exc) from None
 
     @class_side_refusal
     def class_(cls) -> Never:
@@ -868,7 +889,20 @@ class PoopMeta(type):
     def del_attr(cls, name: Str) -> NoneClass:
         raw = _checked_name(name)
         _reject_builtin(cls)
-        builtins.delattr(cls, raw)
+        # A class-side message first, by its own sentence: `__delete__`
+        # raises an `AttributeError` too, and the clause below would reword
+        # it as an absence.
+        if class_side_named(type(cls), raw) is not None:
+            raise _rebound(raw)
+        try:
+            builtins.delattr(cls, raw)
+        except AttributeError:
+            # Worded as `Object.del_attr` words it: CPython's `type object
+            # 'A' has no attribute 'nope'` names the class by a phrase no
+            # program writes.
+            raise mirrors.AttributeError(
+                f"{cls.__name__} has no attribute {raw!r} to remove"
+            ) from None
         return none
 
     @class_side
@@ -879,7 +913,7 @@ class PoopMeta(type):
     ) -> NoneClass:
         builtins.print(  # noqa: T201 — the language's own #print
             cls.__name__,
-            end=_unwrap(end, "\n"),
+            end=a_text(end, "print", "end", "\n"),
             flush=_unwrap_bool(flush, False),
         )
         return none

@@ -908,6 +908,8 @@ Three constraints, each load-bearing:
 
 `Object superclass` answers `none`, mirroring Smalltalk's `nil` — which is also what keeps the raw Python `object` at the root out of reach.
 
+**The class side words `del_attr`, `format` and `print` as the instance side does.** `A.del_attr("nope")` answered CPython's `type object 'A' has no attribute 'nope'`, and `A.del_attr("name")` the bare slot name `__delete__` — `class_side` defined `__set__` but no `__delete__`, so `type.__delattr__` on a data descriptor reported the slot it could not find. `A.format(5)` answered `format() argument 2 must be str, not int`, the call `no_format` bans, and `A.format("d")` the `Unknown format code` sentence `_template_refusal` exists to reword; `A.print(end=5)` answered `end must be None or a string, not int`. Each now goes through the helper its instance twin uses (`text_like`, `_template_refusal`, `a_text`), `__delete__` refuses with `__set__`'s sentence through one `_rebound`, and `del_attr` asks `class_side_named` first so that refusal is not reworded as an absence. The wording sweep now samples a class as a receiver, which is what would have found all four.
+
 ### Object — `poop/types/object.py`
 
 Concrete root of all POOP types. **`__ne__` is written once, here**: a POOP `==` answers a `Boolean`, so Python's derived `__ne__` (a raw `bool`) cannot be used, and `Object.__ne__` negates whatever `==` answers. Every comparison rule lives in its class's `__eq__` alone; the eleven wrappers that used to restate theirs with the answer flipped kept two copies of each rule in step by hand. `PoopMeta.__ne__` is the one other, for classes.
@@ -1136,6 +1138,8 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 `"".print()` prints a blank line.
 
 **A container that holds itself prints the ellipsis, it does not exhaust the stack.** `List`, `Tuple` and `Dict` build their displayed form from `repr` of each element, so `xs.append(xs)` made `xs.print()` recurse until CPython gave up — a `RecursionError` about POOP's internals, raised by a program that only asked to see its data. All three carry `reprlib.recursive_repr` with the fill value CPython uses for that container (`[...]`, `(...)`, `{...}`), so `[1, [...]]`, `([(...)],)` and `{'a': {...}}` come back exactly as Python prints them. `Set` and `FrozenSet` need no guard: reaching a cycle through one would mean holding something unhashable.
+
+**`end` and `sep` are checked in POOP's words.** Both went to `builtins.print` through `_unwrap`, which passes anything through, so `x.print(end=5)` and `[1].print(sep=5)` answered `end must be None or a string, not int` — no receiver, no message, from the most-sent message in the language. The wording sweep could not see it because `print` was listed as unsendable; it is sent now, with stdout redirected, and `a_text` words the two keywords as `an_int` words its roles: `#print's end must be a str, got an int`.
 
 ### Error — `poop/types/error.py`
 

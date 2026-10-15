@@ -15,12 +15,12 @@ the bodies worth sharing (`index`, `print`) live here as private helpers.
 import builtins
 from typing import TYPE_CHECKING, Self
 
-from poop.types._argument import _opt_stop, a_bound
+from poop.types._argument import _opt_stop, a_bound, a_text
 from poop.types._at import no_element_equal_to
 from poop.types._mixin import _Mixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
-from poop.types._unwrap import _unwrap, _unwrap_bool
+from poop.types._unwrap import _unwrap_bool
 from poop.types.int import Int
 from poop.types.none import none
 
@@ -93,8 +93,8 @@ class _SequenceMixin(_Mixin):
     ) -> NoneClass:
         builtins.print(  # noqa: T201 — the language's own #print
             *[str(item) for item in self._items],
-            sep=_unwrap(sep, " "),
-            end=_unwrap(end, "\n"),
+            sep=a_text(sep, "print", "sep", " "),
+            end=a_text(end, "print", "end", "\n"),
             flush=_unwrap_bool(flush, False),
         )
         return none
