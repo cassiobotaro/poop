@@ -852,7 +852,7 @@ class PoopMeta(type):
         except AttributeError:
             if default is not MISSING:
                 return default
-            return cls.does_not_understand(raw)
+            return cls.does_not_understand(Str(raw))
 
     @class_side
     def set_attr(cls, name: Str, value: object) -> NoneClass:
@@ -885,8 +885,9 @@ class PoopMeta(type):
         return none
 
     @class_side
-    def does_not_understand(cls, name: str) -> object:
-        raise MessageNotUnderstood(explain(cls, name), name=name, obj=cls)
+    def does_not_understand(cls, name: Str) -> object:
+        raw = str(name)
+        raise MessageNotUnderstood(explain(cls, raw), name=raw, obj=cls)
 
     if not TYPE_CHECKING:
         # Same reasoning as Object.__getattr__: a visible one answers Any for
@@ -912,7 +913,7 @@ class PoopMeta(type):
                 refusal.__get__(cls, type(cls))
             if _instance_only(cls, name):
                 _refuse_instance_side(cls, name)
-            return cls.does_not_understand(name)
+            return cls.does_not_understand(Str(name))
 
 
 def _install_class_side_operators() -> None:

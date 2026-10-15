@@ -94,16 +94,21 @@ class Object(metaclass=PoopMeta):
             # table it would consult may not hold this name yet.
             if is_dunder(name):
                 raise AttributeError(name)
-            return self.does_not_understand(name)
+            # A `Str`, not the raw name CPython handed over: the hook is the
+            # one documented place a program receives a selector, and a hook
+            # that answered the name it was asked answered `'str' object has
+            # no attribute 'print'` — a native from the sanctioned override.
+            return self.does_not_understand(Str(name))
 
-    def does_not_understand(self, name: str) -> object:
+    def does_not_understand(self, name: Str) -> object:
         """Smalltalk's `doesNotUnderstand:` — the hook for an unknown message.
 
         Override to answer the message rather than refuse it. A proxy answers a
         callable, which is also the only way to reach the arguments: attribute
         lookup runs before the call, so nothing here has seen them yet.
         """
-        raise MessageNotUnderstood(explain(self, name), name=name, obj=self)
+        raw = str(name)
+        raise MessageNotUnderstood(explain(self, raw), name=raw, obj=self)
 
     def if_none(self, block: Callable[[], object]) -> Object:
         # Guarded on the receiver that does *not* run it: `(5).if_none(5)` said

@@ -194,7 +194,7 @@ def test_dunder_probes_never_reach_the_hook() -> None:
     class _Spy(Object):
         __slots__ = ()
 
-        def does_not_understand(self, name: str) -> object:
+        def does_not_understand(self, name: Str) -> object:
             raise AssertionError(f"the hook saw dunder {name!r}")
 
     copy.copy(_Spy())
@@ -210,10 +210,10 @@ def test_does_not_understand_is_the_hook_a_proxy_overrides() -> None:
             self._target = target
             self._log = log
 
-        def does_not_understand(self, name: str) -> object:
+        def does_not_understand(self, name: Str) -> object:
             def forward(*args: object) -> object:
-                self._log.append(name)
-                return getattr(self._target, name)(*args)
+                self._log.append(str(name))
+                return getattr(self._target, str(name))(*args)
 
             return forward
 
@@ -221,3 +221,18 @@ def test_does_not_understand_is_the_hook_a_proxy_overrides() -> None:
     proxy = _Logging(Str("hello"), log)
     assert proxy.upper() == Str("HELLO")
     assert log == ["upper"]
+
+
+def test_the_hook_receives_the_selector_as_a_str() -> None:
+    # The sanctioned override is the one place a program is handed a selector,
+    # and it was handed CPython's raw `str`: a hook that answered the name it
+    # was asked answered `'str' object has no attribute 'print'`.
+    class _Echo(Object):
+        __slots__ = ()
+
+        def does_not_understand(self, name: Str) -> object:
+            return name
+
+    assert isinstance(_Echo().foo, Str)
+    assert _Echo().foo.upper() == Str("FOO")
+    assert _Echo().get_x.startswith(Str("get_")) is true

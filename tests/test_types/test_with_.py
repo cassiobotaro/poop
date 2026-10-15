@@ -212,7 +212,7 @@ def test_with_reads_the_protocol_off_the_type_not_the_instance() -> None:
     class _Forger(Object):
         __slots__ = ()
 
-        def does_not_understand(self, name: str):
+        def does_not_understand(self, name: Str):
             return lambda *args: None
 
     with pytest.raises(TypeError, match="it cannot be entered"):

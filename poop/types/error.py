@@ -99,7 +99,7 @@ class Error(Object, name="object"):
         """
         raise self._exception
 
-    def does_not_understand(self, name: str) -> object:
+    def does_not_understand(self, name: Str) -> object:
         """Refuse under the caught exception's name, not the wrapper's.
 
         The fourth spelling of the leak `class_()`, `class_name()` and
@@ -118,20 +118,19 @@ class Error(Object, name="object"):
         words the opposite direction (`#upper asks an instance; send it to one`)
         and had nothing for this one.
         """
+        raw = str(name)
         kind = self.kind()
         label = str(kind.name())
         # `vars` down the metaclass MRO rather than `hasattr`: asking the class
         # is what raises here for a refusing descriptor, and a refusal is not an
         # answer. Only a real class-side message earns the redirect.
-        if _answered_by_the_class_side(kind, name):
+        if _answered_by_the_class_side(kind, raw):
             raise MessageNotUnderstood(
-                not_understood(
-                    label, name, f"#{name} asks a class; send it to #kind()"
-                ),
-                name=name,
+                not_understood(label, raw, f"#{raw} asks a class; send it to #kind()"),
+                name=raw,
                 obj=self,
             )
-        raise MessageNotUnderstood(explain(self, name, label), name=name, obj=self)
+        raise MessageNotUnderstood(explain(self, raw, label), name=raw, obj=self)
 
     def __str__(self) -> str:
         # Built on the identity `class_()` already answers, not on the wrapper:
