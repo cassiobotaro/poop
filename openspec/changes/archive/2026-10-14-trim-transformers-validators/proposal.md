@@ -10,11 +10,13 @@ already give. None of it changes what a program observes.
 
 ## What Changes
 
-- **Seven bindings go from `BINDINGS`**: `_poop_boolean`, `_poop_complex`,
-  `_poop_bytearray`, `_poop_memoryview`, `_poop_frozenset`, `_poop_sentinel`
+- **Seven bindings go from `BINDINGS`**: `_poop_boolean`, `_poop_bytearray`,
+  `_poop_memoryview`, `_poop_frozenset`, `_poop_frozendict`, `_poop_sentinel`
   and `_poop_dict`. No rewrite emits them (each class is reached through its
   `_cls` alias), nothing in `poop/` or `tests/` reads them, and the REPL
-  completer hides `_poop_*` names.
+  completer hides `_poop_*` names. `_poop_complex` was on the first list and
+  stays: it becomes the literal target below, as `_poop_int` is for `int`;
+  `_poop_frozendict`, found by the namespace test, takes its place.
 - **`make_constructor` is deleted** from `_collection.py`; `_poop_list`,
   `_poop_tuple` and `_poop_set` bind the class, whose `__init__` is already
   variadic. **`_poop_complex_literal` is deleted**; `literal_target` points at
