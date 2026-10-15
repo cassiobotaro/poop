@@ -171,7 +171,8 @@ def test_raise_re_raises_the_very_exception_that_was_caught() -> None:
 
 def test_raise_keeps_the_notes_a_new_exception_would_drop() -> None:
     original = MIRRORS["ValueError"]("boom")
-    original.add_note("context worth keeping")
+    # Through `BaseException`: the instance side refuses `add_note` by name.
+    BaseException.add_note(original, "context worth keeping")
     with pytest.raises(ValueError) as caught:
         Error(original).raise_()
     assert caught.value.__notes__ == ["context worth keeping"]

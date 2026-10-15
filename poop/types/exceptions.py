@@ -31,11 +31,19 @@ caught the native, so the rule costs nothing; `tests/test_mirrored_raises.py`
 sweeps both packages for it.
 """
 
+import builtins
 from typing import TYPE_CHECKING, Literal, Never, cast, get_args
 
-from poop.types._selectors import explain, not_understood
+from poop.types._cloak import cloak, cloak_callable
+from poop.types._message import poop_message
+from poop.types._selectors import explain, is_dunder, is_message, not_understood
 from poop.types.meta import PoopMeta, class_side, class_side_read_refusal
 from poop.types.object import MessageNotUnderstood, Object
+
+# circular: each module below imports exceptions
+lazy from poop.types._unwrap import _unwrap, _unwrap_bool
+lazy from poop.types.none import none
+lazy from poop.types.string import Str
 
 
 class PoopExcMeta(PoopMeta):
@@ -133,6 +141,11 @@ _HIERARCHY: tuple[tuple[type[BaseException], MirrorName | None], ...] = (
 )
 
 if TYPE_CHECKING:
+    from types import FunctionType
+
+    from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
+
     # The shape of a mirror, for the checker alone: an exception class whose
     # metaclass is `PoopExcMeta`. Every POOP diagnostic is raised through the
     # table (`raise MIRRORS["TypeError"](...)`), so the values have to be
@@ -219,6 +232,116 @@ def _refusal_for(name: str, instead: str | None) -> class_side:
     return class_side_read_refusal(refuse, refuses=True)
 
 
+def describe(exc: BaseException) -> str:
+    """`<Kind>: <message>`, or the bare kind when the message is empty.
+
+    The one composition of an exception's displayed form: the executor's
+    uncaught report, a caught `Error`'s `__str__` and an exception instance a
+    program built all show the same text. The kind is `poop_class_of`'s, so it
+    is always one a program can write and always the one a handler is given.
+    """
+    name = poop_class_of(exc).__name__
+    message = poop_message(exc)
+    return f"{name}: {message}" if message else name
+
+
+# The instance side of the root mirror. An exception a program *built* —
+# `ValueError("x")`, or an instance of its own `class Field(Exception)` — is a
+# POOP object by descent and answered none of what a *caught* `Error` answers:
+# no `message`, no `kind`, and `raise_()` refused as a class-side message, so
+# a pre-built exception could not be raised at all. Meanwhile `args`,
+# `add_note` and `with_traceback` resolved through `BaseException` and
+# answered natives, the refusals in `_PYTHON_ATTRIBUTES` being installed on
+# the metaclass, which instance lookup never consults.
+#
+# `__str__` is left to `Exception.__str__` on purpose: it is what
+# `poop_message` reads, what CPython's own traceback prints, and what a
+# program's `__str__` override replaces. `print` and `__repr__` compose the
+# displayed form from it instead, through `describe`.
+
+
+def _message(self: BaseException) -> Str:
+    return Str(poop_message(self))
+
+
+def _kind(self: BaseException) -> PoopExcMeta:
+    return poop_class_of(self)
+
+
+def _raise(self: BaseException) -> Never:
+    raise self
+
+
+def _print(
+    self: BaseException,
+    end: Str | NoneClass | None = None,
+    flush: Boolean | NoneClass | None = None,
+) -> NoneClass:
+    # `Object.print` on the described form rather than on `str(self)`, which
+    # is the bare message and has to stay so.
+    builtins.print(  # noqa: T201
+        describe(self), end=_unwrap(end, "\n"), flush=_unwrap_bool(flush, False)
+    )
+    return none
+
+
+def _repr(self: BaseException) -> str:
+    return describe(self)
+
+
+def _is_refused_native(self: BaseException, name: str) -> bool:
+    """Whether `name` is a `BaseException` attribute this instance refuses."""
+    native = getattr(type(self), "_native", None)
+    return name in _PYTHON_ATTRIBUTES and native is not None and hasattr(native, name)
+
+
+def _getattribute(self: BaseException, name: str) -> object:
+    if _is_refused_native(self, name):
+        _refuse_python_attribute(type(self), name, _PYTHON_ATTRIBUTES[name])
+    return Object.__getattribute__(self, name)
+
+
+def _getattr(self: BaseException, name: str) -> object:
+    # `Object.__getattr__`, re-asking first: the refusal above is an
+    # `AttributeError`, so Python answers it by calling this hook, which would
+    # otherwise replace the sentence with the generic near-miss one — the
+    # detour `PoopMeta.__getattr__` documents. The dunder probe is refused on
+    # the mirror rather than natively, since the table is built by the time an
+    # instance exists.
+    if _is_refused_native(self, name):
+        _refuse_python_attribute(type(self), name, _PYTHON_ATTRIBUTES[name])
+    if is_dunder(name):
+        raise MIRRORS["AttributeError"](name)
+    return cast("Object", self).does_not_understand(Str(name))
+
+
+def _dir(self: BaseException) -> list[str]:
+    # What `Object.dir` lists, minus the names the guard above refuses:
+    # advertising `args` and then refusing it was the class side's bug.
+    return [
+        name
+        for name in object.__dir__(self)
+        if not (is_message(name) and name in _PYTHON_ATTRIBUTES)
+    ]
+
+
+_INSTANCE_SIDE: dict[str, object] = {
+    "message": _message,
+    "kind": _kind,
+    "raise_": _raise,
+    "print": _print,
+    "__repr__": _repr,
+    "__getattribute__": _getattribute,
+    "__getattr__": _getattr,
+    "__dir__": _dir,
+}
+
+# Under the message each answers: a wrong-arity call is reported from the
+# function's name, and `cloak` below prefixes it with the class's.
+for _key, _fn in _INSTANCE_SIDE.items():
+    cloak_callable(cast("FunctionType", _fn), _key)
+
+
 def _build(native: type[BaseException], parent: MirrorName | None) -> None:
     # The root also inherits Object, so a user's `class MyError(Exception)`
     # lands inside the Object tree and answers print()/class_name() — before
@@ -244,9 +367,14 @@ def _build(native: type[BaseException], parent: MirrorName | None) -> None:
                 # 'b'"`. The missing key's own repr is the message's to
                 # compose, not the exception class's to add.
                 "__str__": Exception.__str__,
+                **(_INSTANCE_SIDE if parent is None else {}),
             },
         ),
     )
+    # The mirrors are built by hand rather than through `Object.__init_subclass__`'s
+    # `name=` keyword, so the cloak that names a class's own functions after it
+    # is applied here; it only has anything to rename on the root.
+    cloak(mirror, native.__name__)
     MIRRORS[cast("MirrorName", native.__name__)] = mirror
     NATIVE_TO_POOP[native] = mirror
 

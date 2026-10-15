@@ -6,8 +6,8 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING, Literal
 
 from poop.errors import ExecutionError
-from poop.types._message import poop_message, too_deep
-from poop.types.exceptions import poop_class_of
+from poop.types._message import too_deep
+from poop.types.exceptions import describe
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -123,9 +123,7 @@ def _describe(exc: BaseException) -> str:
     answered ``AttributeError``: one failure under two names, which is the
     disagreement already closed for the ``Unicode*`` family.
     """
-    name = poop_class_of(exc).__name__
-    message = poop_message(exc)
-    return f"{name}: {message}" if message else name
+    return describe(exc)
 
 
 def confine(namespace: dict[str, object]) -> None:

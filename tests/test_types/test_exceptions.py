@@ -323,3 +323,94 @@ def test_mirror_names_match_the_hierarchy() -> None:
     # literal and the table it describes from drifting apart.
     assert set(MIRROR_NAMES) == set(MIRRORS)
     assert len(MIRROR_NAMES) == len(MIRRORS)
+
+
+# The instance side: an exception a program *built* is a whole POOP object.
+
+
+def test_a_built_exception_answers_message_and_kind() -> None:
+    e = MIRRORS["ValueError"]("x")
+    assert e.message() == Str("x")
+    assert e.kind() is MIRRORS["ValueError"]
+    assert e.kind().name() == Str("ValueError")
+
+
+def test_a_built_exception_can_be_raised_later(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(
+        'Try(lambda: ValueError("x").raise_())'
+        ".except_(ValueError, lambda e: e.message().print()).run()"
+    )
+    assert capsys.readouterr().out == "x\n"
+
+
+def test_a_user_subclass_with_a_field_is_raised_and_caught(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(
+        "class Field(Exception):\n"
+        "    def __init__(self, code):\n"
+        "        self.code = code\n"
+        '        super().__init__("code")\n'
+        "Try(lambda: Field(7).raise_())"
+        ".except_(Field, lambda e: e.kind().name().print()).run()"
+    )
+    assert capsys.readouterr().out == "Field\n"
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('ValueError("x").print()', "ValueError: x"),
+        ("ValueError().print()", "ValueError"),
+        ('ValueError("x").repr().print()', "ValueError: x"),
+        # A sequence's `print` writes `str` of each element, and an
+        # exception's `str` is its bare message; its displayed form is the
+        # sequence's `repr`'s to show.
+        ('[ValueError("x")].repr().print()', "[ValueError: x]"),
+    ],
+    ids=["print", "empty_message", "repr", "nested"],
+)
+def test_a_built_exception_prints_as_a_caught_one_does(
+    source: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out.strip() == expected
+
+
+def test_str_of_a_built_exception_stays_the_bare_message() -> None:
+    # `poop_message`, CPython's traceback and a program's own `__str__`
+    # override all read `str(exc)`; the displayed form is `print`'s.
+    assert str(MIRRORS["ValueError"]("x")) == "x"
+
+
+@pytest.mark.parametrize(
+    ("name", "tail"),
+    [
+        ("args", "a caught error answers #message"),
+        ("add_note", "POOP does not offer it"),
+        ("with_traceback", "POOP does not offer it"),
+    ],
+)
+def test_a_built_exception_refuses_the_baseexception_natives(
+    name: str, tail: str
+) -> None:
+    with pytest.raises(MessageNotUnderstood) as exc_info:
+        getattr(MIRRORS["ValueError"]("x"), name)
+    assert str(exc_info.value) == (
+        f"ValueError does not understand #{name} — #{name} is Python's; {tail}"
+    )
+
+
+def test_a_name_only_one_native_carries_is_refused_only_there_on_instances() -> None:
+    with pytest.raises(MessageNotUnderstood, match="Python's"):
+        MIRRORS["AttributeError"]("x").obj  # noqa: B018 — the read is the message
+    with pytest.raises(MessageNotUnderstood, match="try :methods"):
+        MIRRORS["ValueError"]("x").obj  # noqa: B018
+
+
+def test_a_built_exception_does_not_advertise_a_refused_name() -> None:
+    listed = {str(name) for name in MIRRORS["ValueError"]("x").dir()}
+    assert {"message", "kind", "raise_", "print"} <= listed
+    assert not ({"args", "add_note", "with_traceback"} & listed)
