@@ -265,4 +265,5 @@ Some Python has no POOP translation at all, and looking for one is the wrong mov
 | `async def` / `await` | Nothing can drive a coroutine. |
 | `exec` / `eval` / `compile`, `globals` / `locals` / `vars`, `breakpoint`, `exit` | Interpreter escape hatches. |
 | `class X[T]`, `def m[T]()`, `type X = int` | POOP has no static types. Drop the parameter; the runtime types are POOP's own. |
+| `class X(metaclass=M)`, `class X(foo=1)` | A class is built from its bases alone. A parent that must configure its subclasses answers a class-side message instead. |
 

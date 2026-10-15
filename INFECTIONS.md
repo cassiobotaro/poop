@@ -232,6 +232,14 @@ which is the naked-native symptom the allow-list was introduced to end, reproduc
 
 `property(getter)` is refused here for the reason `@property(...)` is refused there — one distinction, applied in both positions. `super` keeps the call position instead, because a call is exactly what its allowance is for.
 
+### No class keyword — `poop/validators/no_class_keyword.py`
+
+| AST node | Reason | Substitute |
+|---|---|---|
+| an `ast.keyword` on `ast.ClassDef` — `class X(foo=1)`, `class X(metaclass=M)`, `class X(**opts)` | a keyword here is CPython's class-creation machinery, and every spelling answered it: `X.__init_subclass__() takes no keyword arguments`, `metaclass conflict: …` | a class is built from its bases alone |
+
+Nothing read `ClassDef.keywords`. `metaclass=type` happened to be refused — `no_type` bans the name — and every other keyword reached `type.__new__`. The sentence names the keyword as written so a program that meant to configure a subclass sees the thing to remove; what it wanted is a class-side message on the parent, which `PoopMeta` already answers.
+
 ### No `type` alias — `poop/validators/no_type_alias.py`
 
 | Construct | Reason |
