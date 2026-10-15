@@ -3,6 +3,8 @@ import re
 
 import pytest
 
+from poop.errors import ExecutionError
+from poop.interpreter import Interpreter
 from poop.types._selectors import CROSS_LANGUAGE_HINTS, SMALLTALK_SELECTORS, explain
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
@@ -48,12 +50,57 @@ def test_smalltalk_selector_maps_to_the_poop_message() -> None:
 
 def test_smalltalk_selector_table_only_maps_to_messages_that_exist() -> None:
     # A table pointing at a message POOP does not have would be worse than no
-    # table: it would teach a name that fails on the next line.
-    probes: list[object] = [List(Int(1)), Int(1), Str("a"), true, none]
-    for selector, poop_name in SMALLTALK_SELECTORS.items():
-        assert any(hasattr(p, poop_name) for p in probes), (
-            f"#{selector} maps to #{poop_name}, which no POOP type answers"
+    # table: it would teach a name that fails on the next line. A spelling
+    # row names the message it relies on, or `None` when it relies on none.
+    probes: list[object] = [List(Int(1)), Int(1), Str("a"), true, none, Dict()]
+    for selector, row in SMALLTALK_SELECTORS.items():
+        needs = row if isinstance(row, str) else row[1]
+        assert needs is None or any(hasattr(p, needs) for p in probes), (
+            f"#{selector} relies on #{needs}, which no POOP type answers"
         )
+
+
+@pytest.mark.parametrize(
+    ("receiver", "name", "hint"),
+    [
+        (List(Int(1)), "first", "Smalltalk's #first is .at(0) here"),
+        (List(Int(1)), "last", "Smalltalk's #last is .at(-1) here"),
+        (List(Int(1)), "isEmpty", "Smalltalk's #isEmpty is #len here"),
+        (List(Int(1)), "add", "Smalltalk's #add is #append here"),
+        (List(Int(1)), "removeFirst", "Smalltalk's #removeFirst is .pop(0) here"),
+        (List(Int(1)), "asSet", "Smalltalk's #asSet is set(...) here"),
+        (
+            List(Int(1)),
+            "detectIfNone",
+            "Smalltalk's #detectIfNone is .find(lambda x: …, default=…) here",
+        ),
+        (
+            Int(3),
+            "timesRepeat",
+            "Smalltalk's #timesRepeat is range(n).do(lambda i: …) here",
+        ),
+        (Int(3), "toDo", "Smalltalk's #toDo is range(a, b).do(lambda i: …) here"),
+        (Dict(), "atIfAbsent", "Smalltalk's #atIfAbsent is #get here"),
+        (Dict(), "keysAndValuesDo", "Smalltalk's #keysAndValuesDo is #items here"),
+        (
+            none,
+            "ifNilIfNotNil",
+            "Smalltalk's #ifNilIfNotNil is #if_none_if_not_none here",
+        ),
+    ],
+    ids=lambda a: a if isinstance(a, str) and not a.startswith("Smalltalk") else None,
+)
+def test_a_collection_selector_names_its_twin(
+    receiver: object, name: str, hint: str
+) -> None:
+    assert explain(receiver, name) == (
+        f"{type(receiver).__name__} does not understand #{name} — {hint}"
+    )
+
+
+def test_a_spelling_row_is_ignored_when_the_receiver_lacks_what_it_needs() -> None:
+    # `first` is `.at(0)`, and an int has no `at` — do not promise one.
+    assert "Smalltalk" not in explain(Int(5), "first")
 
 
 def test_smalltalk_selector_is_ignored_when_the_receiver_lacks_the_target() -> None:
@@ -236,3 +283,39 @@ def test_the_hook_receives_the_selector_as_a_str() -> None:
     assert isinstance(_Echo().foo, Str)
     assert _Echo().foo.upper() == Str("FOO")
     assert _Echo().get_x.startswith(Str("get_")) is true
+
+
+# the lazy views
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            "[1, 2].map(lambda x: x).len()",
+            "map does not understand #len — a map is lazy; materialize it with list(...) first",
+        ),
+        (
+            "[1, 2].filter(lambda x: x).at(0)",
+            "filter does not understand #at — a filter is lazy; materialize it with list(...) first",
+        ),
+        (
+            "[1].zip([2]).reversed()",
+            "zip does not understand #reversed — a zip is lazy; materialize it with list(...) first",
+        ),
+        (
+            "[1].enumerate().includes(1)",
+            "enumerate does not understand #includes — an enumerate is lazy; "
+            "materialize it with list(...) first",
+        ),
+    ],
+    ids=["map_len", "filter_at", "zip_reversed", "enumerate_includes"],
+)
+def test_a_lazy_view_says_how_to_materialize(source: str, expected: str) -> None:
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == f"AttributeError: {expected}"
+
+
+def test_a_lazy_view_still_answers_what_it_consumes() -> None:
+    assert List(Int(2), Int(1)).map(lambda x: x).sorted() == List(Int(1), Int(2))

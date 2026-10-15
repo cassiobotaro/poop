@@ -17,13 +17,35 @@ import difflib
 import inspect
 from types import MemberDescriptorType
 
+from poop.types._message import article
+
 # Smalltalk drops its colons at POOP's call sites (`xs.collect(...)`), so the
-# keys are what actually lands in `__getattr__`.
-SMALLTALK_SELECTORS: dict[str, str] = {
+# keys are what actually lands in `__getattr__`. A row is either the POOP
+# *message* that answers the selector, shown as `#name` and only when the
+# receiver has it, or a `(spelling, needs)` pair for a selector whose twin is
+# not one message — `first` is `.at(0)`, `timesRepeat:` is a `range` loop —
+# shown as written, when the receiver answers `needs` (or always, for
+# `None`). The table stopped at seventeen rows and the most common
+# collection selectors (`first`, `isEmpty`, `detect:ifNone:`) fell through to
+# difflib, which answered `[1].as_set()` with `did you mean #assert_?`.
+type SelectorRow = str | tuple[str, str | None]
+
+SMALLTALK_SELECTORS: dict[str, SelectorRow] = {
+    "add": "append",
+    "addAll": "extend",
+    "allSatisfy": "all",
+    "anySatisfy": "any",
+    "asArray": ("list(...)", None),
+    "asSet": ("set(...)", None),
     "asSortedCollection": "sorted",
+    "atIfAbsent": "get",
+    "atIfAbsentPut": "setdefault",
     "collect": "map",
+    "copyFrom": "slice",
     "detect": "find",
+    "detectIfNone": (".find(lambda x: …, default=…)", "find"),
     "displayNl": "print",
+    "first": (".at(0)", "at"),
     "ifFalse": "if_false",
     "ifNil": "if_none",
     "ifNilIfNotNil": "if_none_if_not_none",
@@ -32,14 +54,38 @@ SMALLTALK_SELECTORS: dict[str, str] = {
     "ifTrue": "if_true",
     "ifTrueIfFalse": "if_true_if_false",
     "inject": "reduce",
+    "isEmpty": "len",
     "isNil": "is_none",
+    "keysAndValuesDo": "items",
+    "last": (".at(-1)", "at"),
+    "notEmpty": "len",
     "notNil": "not_none",
     "printNl": "print",
     "reject": "filter",
+    "removeFirst": (".pop(0)", "pop"),
+    "removeKey": "pop",
+    "removeLast": "pop",
     "reverse": "reversed",
     "select": "filter",
     "size": "len",
+    "timesRepeat": ("range(n).do(lambda i: …)", None),
+    "toDo": ("range(a, b).do(lambda i: …)", None),
 }
+
+
+def _smalltalk_hint(obj: object, name: str) -> str | None:
+    """The Smalltalk row for `name`, if the receiver can honour it."""
+    row = SMALLTALK_SELECTORS.get(name)
+    if row is None:
+        return None
+    if isinstance(row, str):
+        spelling, needs = f"#{row}", row
+    else:
+        spelling, needs = row
+    if needs is not None and not hasattr(obj, needs):
+        return None
+    return f"Smalltalk's #{name} is {spelling} here"
+
 
 # Names programmers bring from JavaScript, Java, Ruby and C#, keyed by the
 # receiver's builtin name — the table Python 3.15 added to `AttributeError`
@@ -57,7 +103,8 @@ CROSS_LANGUAGE_HINTS: dict[tuple[str, str], str] = {
     ("list", "concat"): "did you mean #extend?",
     ("list", "addAll"): "did you mean #extend?",
     ("list", "contains"): "did you mean #includes?",
-    ("list", "add"): "did you mean to use a set?",
+    # CPython's `("list", "add")` row — `use a set?` — is the Smalltalk table's
+    # `add` → `append` here, consulted first.
     # str — JavaScript
     ("str", "toUpperCase"): "did you mean #upper?",
     ("str", "toLowerCase"): "did you mean #lower?",
@@ -91,6 +138,18 @@ CROSS_LANGUAGE_HINTS: dict[tuple[str, str], str] = {
         "did you mean #not_? the bitwise inversion is the int's — "
         "send #bit_invert to int(flag)"
     ),
+    # The lazy views: `map`, `filter`, `zip` and `enumerate` answer the
+    # consuming messages (`do`, `sum`, `find`, `sorted`, …) and not the
+    # sequence ones, and `xs.map(f).len()` answered `try :methods` — true
+    # and useless. One sentence names what to do.
+    **{
+        (
+            view,
+            selector,
+        ): f"{article(view)} is lazy; materialize it with list(...) first"
+        for view in ("map", "filter", "zip", "enumerate")
+        for selector in ("len", "at", "reversed", "includes", "count", "index")
+    },
 }
 
 
@@ -148,9 +207,9 @@ def explain(obj: object, name: str, label: str | None = None) -> str:
     """
     if label is None:
         label = receiver_label(obj)
-    poop_name = SMALLTALK_SELECTORS.get(name)
-    if poop_name is not None and hasattr(obj, poop_name):
-        return not_understood(label, name, f"Smalltalk's #{name} is #{poop_name} here")
+    smalltalk = _smalltalk_hint(obj, name)
+    if smalltalk is not None:
+        return not_understood(label, name, smalltalk)
     foreign = _cross_language_hint(obj, name)
     if foreign is not None:
         return not_understood(label, name, foreign)
