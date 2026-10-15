@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from poop.types import mirrors
 from poop.types._argument import a_class
+from poop.types._sentinel import MISSING
 from poop.types.block import _require_block
 from poop.types.error import Error
 from poop.types.none import none
@@ -10,6 +11,8 @@ from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from poop.types._sentinel import Missing
 
 
 def _exception_class(member: object) -> type[BaseException]:
@@ -66,7 +69,20 @@ class Try(Object, name="Try"):
 
     __slots__ = ("_block", "_executed", "_finally_block", "_handlers")
 
-    def __init__(self, block: Callable[[], object]) -> None:
+    def __init__(
+        self, block: Callable[[], object] | Missing = MISSING, /, *extra: object
+    ) -> None:
+        # Counted here, in POOP's words, as every builtin constructor counts
+        # through its converter: `Try` is bound as a class, so `Try()` and
+        # `Try(a, b)` reached CPython's call machinery and answered
+        # `Try.__init__() missing 1 required positional argument` — a dunder
+        # and a phrase the wording sweep bans, from the one construct a
+        # program is invited to spell.
+        if block is MISSING or extra:
+            given = "nothing" if block is MISSING else f"{len(extra) + 1} arguments"
+            raise mirrors.TypeError(
+                f"Try takes one block, got {given} — write Try(lambda: …)"
+            )
         self._block = _require_block(
             block, "the protected argument", "write Try(lambda: …)"
         )

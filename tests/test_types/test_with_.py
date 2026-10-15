@@ -270,3 +270,21 @@ def test_with_checks_the_body_before_entering() -> None:
     with pytest.raises(TypeError, match="the body argument must be a block"):
         With(lambda: _Managed()).do(Int(5))  # ty: ignore[invalid-argument-type]
     assert log == []
+
+
+@pytest.mark.parametrize(
+    ("args", "given"),
+    [((), "nothing"), ((lambda: 1, lambda: 2), "2 arguments")],
+    ids=["none", "two"],
+)
+def test_with_counts_its_arguments_in_poops_words(
+    args: tuple[object, ...], given: str
+) -> None:
+    # Bound as a class, `With()` reached CPython's call machinery and answered
+    # `With.__init__() missing 1 required positional argument: ...` — a dunder
+    # and a phrase the wording sweep bans.
+    with pytest.raises(TypeError) as info:
+        With(*args)  # ty: ignore[invalid-argument-type]
+    assert (
+        str(info.value) == f"With takes one block, got {given} — write With(lambda: …)"
+    )

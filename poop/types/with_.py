@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from poop.types import mirrors
+from poop.types._sentinel import MISSING
 from poop.types.block import _require_block
 from poop.types.error import Error
 from poop.types.exceptions import poop_class_of
@@ -9,6 +10,8 @@ from poop.types.object import Object
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from poop.types._sentinel import Missing
 
 
 def _slot(kind: type, slot: str, verb: str) -> Callable[..., object]:
@@ -68,7 +71,20 @@ class With(Object, name="With"):
 
     __slots__ = ("_cm_block",)
 
-    def __init__(self, cm_block: Callable[[], object]) -> None:
+    def __init__(
+        self, cm_block: Callable[[], object] | Missing = MISSING, /, *extra: object
+    ) -> None:
+        # Counted here, in POOP's words, as every builtin constructor counts
+        # through its converter: `With` is bound as a class, so `With()` and
+        # `With(a, b)` reached CPython's call machinery and answered
+        # `With.__init__() missing 1 required positional argument` — a dunder
+        # and a phrase the wording sweep bans, from the one construct a
+        # program is invited to spell.
+        if cm_block is MISSING or extra:
+            given = "nothing" if cm_block is MISSING else f"{len(extra) + 1} arguments"
+            raise mirrors.TypeError(
+                f"With takes one block, got {given} — write With(lambda: …)"
+            )
         self._cm_block: Callable[[], object] | None = _require_block(
             cm_block, "the manager argument", "write With(lambda: …)"
         )

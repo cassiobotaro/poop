@@ -276,3 +276,19 @@ def test_try_catches_either_of_a_tuple_of_kinds() -> None:
 def test_try_refuses_a_tuple_holding_something_that_is_not_a_class() -> None:
     with pytest.raises(TypeError, match="#except_ catches exception classes"):
         Try(lambda: none).except_(Tuple(Int(5)), lambda e: none)  # ty: ignore[invalid-argument-type]
+
+
+@pytest.mark.parametrize(
+    ("args", "given"),
+    [((), "nothing"), ((lambda: 1, lambda: 2), "2 arguments")],
+    ids=["none", "two"],
+)
+def test_try_counts_its_arguments_in_poops_words(
+    args: tuple[object, ...], given: str
+) -> None:
+    # Bound as a class, `Try()` reached CPython's call machinery and answered
+    # `Try.__init__() missing 1 required positional argument: ...` — a dunder
+    # and a phrase the wording sweep bans.
+    with pytest.raises(TypeError) as info:
+        Try(*args)  # ty: ignore[invalid-argument-type]
+    assert str(info.value) == f"Try takes one block, got {given} — write Try(lambda: …)"

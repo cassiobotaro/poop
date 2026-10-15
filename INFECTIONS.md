@@ -1162,6 +1162,8 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 `Try` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/try_.py` — namespace-only, no AST rewrite.
 
+**`Try()` counts its argument in POOP's words.** Bound as a class rather than through a converter, `Try()` and `Try(a, b)` reached CPython's call machinery and answered `Try.__init__() missing 1 required positional argument: 'block'` — a dunder and a phrase the wording sweep bans, from one of the two names a program is invited to spell. The constructor takes `block` positionally with a sentinel default and counts the rest: `Try takes one block, got nothing — write Try(lambda: …)`, `got 2 arguments` for the other shape, the converters' phrasing.
+
 ### With — `poop/types/with_.py`
 
 `With(Object)` implements the context manager protocol as a message-passing builder. The context manager block is executed lazily — only when `.do()` is called. A `With` is single-use: `.do()` releases its captured block once it runs, so re-invoking `.do()` raises `RuntimeError` rather than re-running — mirroring `Try`'s single-use semantics and avoiding retaining the closure (and anything it captured) past execution.
@@ -1183,6 +1185,8 @@ The context manager object must implement Python's `__enter__`/`__exit__` protoc
 > **Tradeoff**: context managers must implement Python's native protocol (`__enter__`/`__exit__`). POOP cannot redefine resource acquisition semantics without reimplementing every standard context manager (files, locks, etc.), which is impractical.
 
 `With` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/with_.py` — namespace-only, no AST rewrite.
+
+**`With()` counts its argument in POOP's words**, for the reason `Try` does: `With takes one block, got nothing — write With(lambda: …)`.
 
 ### Slice — `poop/types/slice.py` + `poop/transformers/slice.py`
 
