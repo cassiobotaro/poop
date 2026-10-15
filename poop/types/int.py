@@ -81,16 +81,16 @@ class Int(_NumericCompareMixin, Object, name="int"):
     # refuses it alongside multiple positional arguments too.
     def max(
         self,
-        *others: Int | Boolean,
-        key: Key[Int | Boolean] = None,
-    ) -> Int | Boolean:
+        *others: Int | Float | Boolean,
+        key: Key[Int | Float | Boolean] = None,
+    ) -> Int | Float | Boolean:
         return _minmax(builtins.max, "#max", (self, *others), key, MISSING)
 
     def min(
         self,
-        *others: Int | Boolean,
-        key: Key[Int | Boolean] = None,
-    ) -> Int | Boolean:
+        *others: Int | Float | Boolean,
+        key: Key[Int | Float | Boolean] = None,
+    ) -> Int | Float | Boolean:
         return _minmax(builtins.min, "#min", (self, *others), key, MISSING)
 
     def bit_count(self) -> Int:

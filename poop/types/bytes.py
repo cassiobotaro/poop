@@ -1,9 +1,6 @@
 from typing import TYPE_CHECKING, ClassVar
 
-from poop.types import mirrors
-from poop.types._alias import wrapped_instance
-from poop.types._argument import text_like
-from poop.types._bytes_like import _BytesLikeMixin
+from poop.types._bytes_like import _BytesLikeMixin, _from_hex
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._ordered import _OrderedMixin
 from poop.types._value_eq import _ValueEqMixin
@@ -40,17 +37,7 @@ class Bytes(
 
     @classmethod
     def fromhex(cls, s: Str) -> Bytes:
-        # CPython answers `non-hexadecimal number found in fromhex() arg at
-        # position 0` — the message spelt as a call, with an argument index
-        # for a message that takes exactly one.
-        try:
-            return wrapped_instance(
-                cls, bytes.fromhex(text_like(s, "fromhex", "a str"))
-            )
-        except ValueError:
-            raise mirrors.ValueError(
-                f"{s!r} is not hexadecimal — #fromhex reads pairs of hex digits"
-            ) from None
+        return _from_hex(cls, bytes, s)
 
     def iter(self) -> BytesIterator:
         return BytesIterator(self)

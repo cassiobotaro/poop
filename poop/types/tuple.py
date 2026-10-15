@@ -87,7 +87,7 @@ class Tuple(
     def index(
         self,
         obj: Object,
-        start: Int | NoneClass | None = None,
+        start: Index | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
         return self._index_of(obj, start, stop)

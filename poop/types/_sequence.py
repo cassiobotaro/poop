@@ -66,7 +66,7 @@ class _SequenceMixin(_Mixin):
     def _index_of(
         self,
         obj: Object,
-        start: Int | NoneClass | None,
+        start: Index | NoneClass | None,
         stop: Index | NoneClass | None,
     ) -> Int:
         # No branching on which bound was given: `stop` alone was dropped on

@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from poop.types import mirrors
 from poop.types._affix import affix_needle
+from poop.types._alias import wrapped_instance
 from poop.types._argument import (
     a_bound,
     a_collection,
@@ -75,6 +76,23 @@ def hex_of(
         return Str(value.hex())
     sep_value = text_like(sep, "hex", "a one-character separator", (str, bytes))
     return Str(value.hex(sep_value, an_int(bytes_per_sep, "hex", "bytes_per_sep", 1)))
+
+
+def _from_hex[B](cls: type[B], native: type[bytes | bytearray], s: object) -> B:
+    """`cls` built from `s`'s hex digits, or POOP's refusal.
+
+    The one body behind `bytes.fromhex` and `bytearray.fromhex`: each is a
+    class-side message, so it cannot sit on the mixin as an instance one, and
+    the two spelt the same `try` twice. CPython answers `non-hexadecimal
+    number found in fromhex() arg at position 0` — the message spelt as a
+    call, with an argument index for a message that takes exactly one.
+    """
+    try:
+        return wrapped_instance(cls, native.fromhex(text_like(s, "fromhex", "a str")))
+    except ValueError:
+        raise mirrors.ValueError(
+            f"{s!r} is not hexadecimal — #fromhex reads pairs of hex digits"
+        ) from None
 
 
 class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):

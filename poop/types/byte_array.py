@@ -1,15 +1,13 @@
 from typing import TYPE_CHECKING, ClassVar
 
-from poop.types import mirrors
-from poop.types._alias import wrapped_instance
-from poop.types._argument import a_collection, an_int, text_like
+from poop.types._argument import a_collection, an_int
 from poop.types._at import (
     indexing,
     no_element_at,
     no_element_equal_to,
     nothing_to_remove,
 )
-from poop.types._bytes_like import _BytesLikeMixin
+from poop.types._bytes_like import _BytesLikeMixin, _from_hex
 from poop.types._iterable_mixin import _IterableMixin
 from poop.types._ordered import _OrderedMixin
 from poop.types._unwrap import (
@@ -83,19 +81,10 @@ class ByteArray(
         answered while `bytearray.fromhex(…)` answered `bytearray does not
         understand #fromhex`, for a spelling CPython supports.
         """
-        try:
-            return wrapped_instance(
-                cls, bytearray.fromhex(text_like(s, "fromhex", "a str"))
-            )
-        except ValueError:
-            raise mirrors.ValueError(
-                f"{s!r} is not hexadecimal — #fromhex reads pairs of hex digits"
-            ) from None
+        return _from_hex(cls, bytearray, s)
 
     def iter(self) -> ByteArrayIterator:
         return ByteArrayIterator(self)
-        # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
-        # answers bytearray. Anything else -> faithful TypeError, not #_value.
 
     def __add__(self, other: object) -> ByteArray:
         # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
