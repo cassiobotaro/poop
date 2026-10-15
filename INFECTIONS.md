@@ -1210,6 +1210,8 @@ CPython's one-argument rule — `slice(stop)` is `slice(None, stop, None)` — i
 
 > `Range.slice` returns `List` (not `Range`) because reconstructing a valid closed interval from sliced `Int` POOP values would require unpacking assumptions about the underlying range step.
 
+**A bare `slice` is an alias, not the class.** Every other constructor binds a bare name to a `builtin_alias` whose call converts — *A subclass of a builtin constructs the way the builtin does*, below — and `slice` was the one that bound `Slice` itself, so the convert/build gap closed for twelve constructors stayed open here: `s = slice; s(5)` and `class S(slice): pass; S(5)` built through `Slice.__init__`, where the lone argument is the *start*, and silently answered `slice(5, None, None)` for the spelling that answers `slice(None, 5, None)` when called by name. `_poop_slice_cls` is the alias now, and a rebound name refuses four arguments with the literal's own sentence.
+
 ## Active transformers
 
 ### Int — `poop/transformers/int.py`

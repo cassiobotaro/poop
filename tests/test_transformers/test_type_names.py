@@ -65,7 +65,7 @@ def _eval(source: str) -> object:
         ("_poop_zip_cls", Zip),
         ("_poop_block", Block),
         ("_poop_object", Object),
-        ("_poop_slice", Slice),
+        ("_poop_slice_cls", Slice),
     ],
 )
 def test_mangled_type_binding_is_in_default_namespace(

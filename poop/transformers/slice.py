@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
 from poop.transformers.base import BaseTransformer, BuiltinRewriter
+from poop.types._alias import builtin_alias
 from poop.types.slice import Slice
 
 if TYPE_CHECKING:
@@ -39,12 +40,17 @@ def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
 class _SliceRewriter(BuiltinRewriter):
     builtin = "slice"
     call_target = "_poop_slice_from"
-    name_target = "_poop_slice"
+    # The alias, as every sibling constructor binds: a bare `slice` used to
+    # name the class itself, so `s = slice; s(5)` and `class S(slice)` built
+    # through `Slice.__init__` — where the lone argument is the *start* — and
+    # silently answered `slice(5, None, None)` for the spelling that answers
+    # `slice(None, 5, None)` when called by name.
+    name_target = "_poop_slice_cls"
 
 
 class SliceTransformer(BaseTransformer):
     rewriter = _SliceRewriter
     BINDINGS = {
-        "_poop_slice": Slice,
+        "_poop_slice_cls": builtin_alias(Slice, _poop_slice_from, "slice"),
         "_poop_slice_from": _poop_slice_from,
     }
