@@ -49,8 +49,9 @@ class _NumericCompareMixin(_Mixin):  # noqa: PLW1641 — the numeric rungs hash 
     (``bool`` is an ``int`` subclass). The hook is the one thing the mixin
     needs, so it is the one thing it declares — a ``_value`` slot it does not
     have would be a phantom ``Boolean`` inherits without carrying. ``Complex`` joins only the
-    equality side of the tower — ``1 == (1+0j)`` is ``True`` — so ``__eq__`` /
-    ``__ne__`` special-case it before consulting ``_num_value``. A foreign
+    equality side of the tower — ``1 == (1+0j)`` is ``True`` — so ``__eq__``
+    special-cases it before consulting ``_num_value``; ``__ne__`` is
+    ``Object``'s, and flips that answer. A foreign
     operand yields ``NotImplemented`` (ordering) or a plain ``false``/``true``
     (equality) for CPython's faithful ``TypeError`` / result.
     """

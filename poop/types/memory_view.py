@@ -86,9 +86,10 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
 
     def includes(self, byte: Int) -> Boolean:
         # `98 in memoryview(b"ab")` is True in CPython and `no_in` names
-        # `col.includes(x)`. Unwrapped through `_faithful`, as `Bytes.includes`
-        # is, so a foreign argument reaches CPython whole rather than leaking
-        # the internal `_value` name through dispatch.
+        # `col.includes(x)`. Unwrapped through `_faithful`, so a foreign
+        # argument (List, Set, …) reaches CPython whole and is answered by its
+        # equality scan rather than leaking the internal `_value` name through
+        # dispatch.
         return to_boolean(_faithful(byte) in self._value)
 
     def __contains__(self, item: object) -> bool:

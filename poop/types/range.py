@@ -98,9 +98,9 @@ class Range(_IterableMixin[Int], Object, name="range"):
     # refusal naming the value), so `Int` never described what these accept, and
     # it excluded the other rung of the index tower the fold below now folds.
     def includes(self, item: Object) -> Boolean:
-        # getattr-unwrap: a non-`_value` argument (List, Set, …) reaches
-        # range.__contains__ raw, which answers False by equality scan (as in
-        # Python), instead of leaking the internal `_value` name through dispatch.
+        # A foreign value (List, Set, …) reaches `range.__contains__` whole
+        # and is answered by its equality scan, as in Python, instead of
+        # leaking the internal `_value` name through dispatch.
         return to_boolean(_searched(item) in self._range())
 
     # `count` and `index` take the native's own two paths, as `range_count`

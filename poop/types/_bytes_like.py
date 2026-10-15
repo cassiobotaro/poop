@@ -118,10 +118,10 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
     # `| Int`: CPython searches for a subsequence *or* a byte value, and the
     # guard admits both — the annotation used to say only one of them.
     def includes(self, byte: BytesLike | Int) -> Boolean:
-        # getattr-unwrap (as in join): a non-`_value` argument (List, Set, …)
-        # reaches the native `__contains__` raw and raises the faithful TypeError,
-        # rather than leaking the internal `_value` name through dispatch. A
-        # Bytes/ByteArray argument keeps its subsequence-membership semantics.
+        # `a_needle` admits a byte-like or an int and refuses anything else
+        # (List, Set, …) in `includes`'s name, so the internal `_value` never
+        # shows through dispatch. A Bytes/ByteArray argument keeps its
+        # subsequence-membership semantics.
         operand = a_needle(self, byte, "includes", "bytes or an int", _BYTE_KINDS)
         return to_boolean(operand in self._value)
 
@@ -302,11 +302,9 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
         return to_boolean(self._value.isupper())
 
     def join(self, parts: List) -> B:
-        # Mirror CPython: unwrap each element to its underlying value and let
-        # the native join validate. Bytes-like POOP wrappers (Bytes/ByteArray/
-        # MemoryView) join cleanly; anything else (Str, Int, ...) reaches
-        # the native join unwrapped and raises the faithful TypeError instead of
-        # being silently dropped.
+        # `bytes_like` unwraps each byte-like element (Bytes/ByteArray/
+        # MemoryView) for the native join and refuses anything else (Str,
+        # Int, ...) in `join`'s name, where CPython names a `sequence item`.
         pieces = [bytes_like(p, "join") for p in a_collection(parts, "join")]
         return self._rewrap(self._value.join(pieces))
 

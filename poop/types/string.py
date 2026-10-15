@@ -36,11 +36,6 @@ from poop.types.slice import _resolve_py_slice
 from poop.types.str_iterator import StrIterator
 from poop.types.tuple import Tuple
 
-# CPython's str.format template substitution. Overrides the
-# inherited Object.format(spec); f-strings are forbidden, so this
-# is POOP's documented template-formatting surface. The rare
-# "apply a spec to a string" case stays expressible as
-# "{:^10}".format(s).
 # circular: _bridge imports string
 lazy from poop.types._bridge import to_poop, to_python
 
@@ -335,6 +330,11 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         ]
         return Str(self._value.join(pieces))
 
+    # CPython's str.format template substitution. Overrides the
+    # inherited Object.format(spec); f-strings are forbidden, so this
+    # is POOP's documented template-formatting surface. The rare
+    # "apply a spec to a string" case stays expressible as
+    # "{:^10}".format(s).
     def format(self, *args: Object, **kwargs: Object) -> Str:
         positional = [to_python(a) for a in args]
         named = {k: to_python(v) for k, v in kwargs.items()}

@@ -13,14 +13,10 @@ from poop.types import mirrors
 from poop.types._argument import Key, a_key
 from poop.types._sentinel import MISSING
 
-# Imported here, not at the top: this module is imported by `int.py`, and
-# `_unwrap` reaches `none.py` -> `object.py`, which sits above it.
 # circular: _unwrap -> boolean -> _minmax
 lazy from poop.types._unwrap import _is_absent
 
 if TYPE_CHECKING:
-    # Name only — importing `none` at runtime would put this module back under
-    # the callers it has to stay above.
     from collections.abc import Callable, Iterable
 
     from poop.types._sentinel import Missing

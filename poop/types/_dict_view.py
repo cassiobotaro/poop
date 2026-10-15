@@ -32,9 +32,9 @@ def _elements(other: object) -> set[Object]:
     ``isdisjoint`` — ``{"a": 1}.keys() | ["a", "c"]`` is valid — so the operand
     is only iterated, never asked for an internal slot. Every POOP collection
     is Python-iterable, so the cast states what the runtime already
-    guarantees, and a non-iterable operand raises the faithful ``TypeError``
-    from ``set(other)`` (``'int' object is not iterable``) — the same path
-    ``_SetAlgebraMixin._elements`` documents for the set *method* forms.
+    guarantees; a non-iterable operand never reaches here, declined by
+    ``_operand`` for an operator and refused by ``a_collection`` for
+    ``isdisjoint`` — the same split ``_set_algebra`` keeps for the set forms.
     """
     return set(cast("Iterable[Object]", other))
 
@@ -61,9 +61,8 @@ def _set_like_elements(other: object) -> set[Object] | None:
     narrower question. Set-like means the two set-like views (``dict_values``
     is not one) or a ``Set`` / ``FrozenSet``.
 
-    The imports are function-local because every one of those modules imports
-    this one. The test is deliberately not ``_SetAlgebraMixin``'s own
-    ``_other_set``: that one makes a ``Set``/``FrozenSet`` claim the operand,
+    The test is deliberately not ``_set_algebra``'s own ``_other_set``: that
+    one makes a ``Set``/``FrozenSet`` claim the operand,
     and here they must instead answer ``NotImplemented`` so the view's
     reflected operator runs — CPython's ``frozenset({1}) | {2: 3}.keys()`` is
     a ``set``, not a ``frozenset``.

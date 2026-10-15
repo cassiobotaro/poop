@@ -22,8 +22,6 @@ from poop.types.int import Int
 from poop.types.none import none
 from poop.types.object import Object
 
-# Both byte-likes pass: CPython concatenates `bytearray + bytes` and
-# answers bytearray. Anything else -> faithful TypeError, not #_value.
 # circular: bytes imports byte_array
 lazy from poop.types.bytes import Bytes
 
@@ -94,6 +92,8 @@ class ByteArray(
 
     def iter(self) -> ByteArrayIterator:
         return ByteArrayIterator(self)
+        # Both byte-likes pass: CPython concatenates `bytearray + bytes` and
+        # answers bytearray. Anything else -> faithful TypeError, not #_value.
 
     def __add__(self, other: object) -> ByteArray:
         if not isinstance(other, (ByteArray, Bytes)):

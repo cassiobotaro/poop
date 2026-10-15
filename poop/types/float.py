@@ -200,9 +200,9 @@ class Float(_NumericCompareMixin, Object, name="float"):
     def __int__(self) -> int:
         return int(self._value)
 
-    # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
-    # across the numeric tower live in _NumericCompareMixin, driven by
-    # _order_value() below.
+    # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__) across
+    # the numeric tower live in _NumericCompareMixin, driven by _order_value()
+    # below. __ne__ is Object's, flipping whatever __eq__ answers.
     def _order_value(self) -> float:
         return self._value
 

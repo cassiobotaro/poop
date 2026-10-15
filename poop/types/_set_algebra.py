@@ -5,7 +5,6 @@ from poop.types._argument import a_collection
 from poop.types._mixin import _Mixin
 from poop.types.boolean import to_boolean
 
-# Function-local: `frozen_set` imports this module.
 # circular: frozen_set imports _set_algebra
 lazy from poop.types.frozen_set import FrozenSet
 

@@ -6,13 +6,6 @@ from poop.types._minmax import MISSING, _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
 from poop.types.object import Object
 
-# `bool(self)`, not `_as_int()`, unlike every message around it:
-# `format(True, "")` is `'True'` and `format(1, "")` is `'1'`, so
-# folding first would change `True.format()` — the one spelling that
-# worked — from `True` to `1`. `Object.format` reads `_value`, which a
-# Boolean has no slot for, so it fell through to `object.__format__`
-# and refused every non-empty spec while `"{:>6}".format(True)`, which
-# routes through `to_python`, answered `'     1'`.
 # circular: _unwrap imports boolean
 lazy from poop.types._unwrap import _is_absent
 
@@ -118,9 +111,10 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
         # "b". Without this the whole Boolean rung was unusable as an index.
         return 1 if self else 0
 
-    # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__/__ne__)
-    # against the numeric tower live in _NumericCompareMixin; _order_value()
-    # above folds a Boolean to 1/0 so it compares as `bool`'s int subclass does.
+    # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__) against
+    # the numeric tower live in _NumericCompareMixin; _order_value() above
+    # folds a Boolean to 1/0 so it compares as `bool`'s int subclass does.
+    # __ne__ is Object's, flipping whatever __eq__ answers.
 
     # Arithmetic — `bool` is an `int` subclass in CPython, so a Boolean acts
     # as 1/0 in numeric expressions (`True + 1 == 2`, `sum([True, True]) == 2`).
@@ -130,8 +124,6 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
     # Int's arithmetic; the reflected ops compute ``other <op> int(self)`` so
     # ``3 - True`` reuses ``Int.__sub__``.
     def _as_int(self) -> Int:
-        # circular: int imports boolean — bound late, this is every operator
-        # a Boolean takes part in
         return Int(1) if self else Int(0)
 
     # The int-side *messages*, delegated through the same fold the operators
@@ -242,6 +234,13 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
         """
         return to_boolean(bool(Int.from_bytes(b, byteorder, signed=signed)))
 
+    # `bool(self)`, not `_as_int()`, unlike every message around it:
+    # `format(True, "")` is `'True'` and `format(1, "")` is `'1'`, so
+    # folding first would change `True.format()` — the one spelling that
+    # worked — from `True` to `1`. `Object.format` reads `_value`, which a
+    # Boolean has no slot for, so it fell through to `object.__format__`
+    # and refused every non-empty spec while `"{:>6}".format(True)`, which
+    # routes through `to_python`, answered `'     1'`.
     def format(self, spec: Str | NoneClass | None = None) -> Str:
         # Through `text_like` for the reason `Object.format` does it: a
         # non-`Str` spec answered `format() argument 2 must be str, not int`.

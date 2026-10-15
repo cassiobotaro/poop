@@ -8,7 +8,7 @@ and each class keeps what really differs — `Dict` its mutators and `|=`,
 `FrozenDict` its hash, and each its own `|` and repr.
 
 Every message reads `_data`, the raw `dict` the concrete class declares as its
-slot; `_wrapping` builds a class over one that call hands over.
+slot; `_wrapping` builds an instance over one a call hands over.
 """
 
 import builtins
