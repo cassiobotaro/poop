@@ -153,22 +153,29 @@ class class_side_read_refusal[C, **P, R](class_side[C, P, R]):  # noqa: N801 —
         return self._fn(cls)
 
 
+def _own_entry(cls: type, name: str) -> object | None:
+    """The entry for `name` in the first MRO dict that holds it, or `None`.
+
+    Read off the dicts rather than through `getattr`, which is what the
+    `__getattribute__` below intercepts and what a refusing descriptor
+    answers by raising. First in the MRO wins, as attribute lookup itself
+    resolves. Three readers asked this one question with three loops.
+    """
+    for klass in type.__getattribute__(cls, "__mro__"):
+        if name in vars(klass):
+            return vars(klass)[name]
+    return None
+
+
 def class_side_named(metacls: type, name: str) -> class_side | None:
     """The `class_side` descriptor answering `name` down the metaclass MRO.
 
-    Read off the MRO's dicts rather than through `getattr`: a refusing
-    descriptor raises when asked, which is the very lookup that lost the
-    refusal in the first place, and would look identical to a message
-    otherwise.
+    A refusing descriptor raises when asked through `getattr`, which is the
+    very lookup that lost the refusal in the first place, and would look
+    identical to a message otherwise; `_own_entry` reads the dicts.
     """
-    return next(
-        (
-            attr
-            for klass in metacls.__mro__
-            if isinstance(attr := vars(klass).get(name), class_side)
-        ),
-        None,
-    )
+    entry = _own_entry(metacls, name)
+    return entry if isinstance(entry, class_side) else None
 
 
 def _read_refusal(metacls: type, name: str) -> class_side_read_refusal | None:
@@ -238,10 +245,8 @@ def _instance_only(cls: type, name: str) -> bool:
     `staticmethod`, `property` or `class_side` descriptor is not a
     `FunctionType` here, so each keeps answering class-side as before.
     """
-    for klass in type.__getattribute__(cls, "__mro__"):
-        if name in vars(klass):
-            return instance_only(vars(klass)[name])
-    return False
+    entry = _own_entry(cls, name)
+    return entry is not None and instance_only(entry)
 
 
 def _reflected(cls: type, name: str) -> object:
@@ -263,10 +268,9 @@ def _reflected(cls: type, name: str) -> object:
     `_MethodBlock` is for the *written* read, `int.from_bytes`, and keeps the
     method's cloaked sentence.
     """
-    for klass in type.__getattribute__(cls, "__mro__"):
-        entry = vars(klass).get(name)
-        if isinstance(entry, message):
-            return entry._entry.__get__(None, cls)
+    entry = _own_entry(cls, name)
+    if isinstance(entry, message):
+        return entry._entry.__get__(None, cls)
     return type.__getattribute__(cls, name)
 
 

@@ -14,6 +14,7 @@ whoever owns the operation, and nine wrappers own the same one, so it lives here
 instead of being written out nine times.
 """
 
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Protocol, SupportsIndex
 
 from poop.types import mirrors
@@ -21,7 +22,7 @@ from poop.types._message import article
 from poop.types.exceptions import MIRRORS, MirrorName
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sized
+    from collections.abc import Generator, Mapping, Sized
 
 
 class _Indexed[T](Protocol):
@@ -92,8 +93,16 @@ def nothing_to_remove(receiver: object, mirror: MirrorName = "KeyError") -> Exce
     )
 
 
-def at_index[T](items: _Indexed[T], index: SupportsIndex, receiver: object) -> T:
-    """`items[index]`, with POOP's wording for the two ways it can fail.
+@contextmanager
+def indexing(
+    receiver: object, items: Sized, index: object, selector: str = "at"
+) -> Generator[None]:
+    """POOP's wording for the two ways indexing `items` at `index` can fail.
+
+    One `with` around the read or the write: `at_index`, `List.at_put` and
+    `ByteArray.at_put` each spelt the same two `except` clauses, differing in
+    the selector the sentence names. A `from None` raised inside the generator
+    propagates out of `__exit__` exactly as the inline clauses did.
 
     `receiver` is the POOP object the message was sent to — the same thing as
     `items` for most wrappers, but a `Range` materializes its sequence first,
@@ -101,15 +110,23 @@ def at_index[T](items: _Indexed[T], index: SupportsIndex, receiver: object) -> T
     a `Range`, or vice versa.
     """
     try:
-        return items[index]
+        yield
     except IndexError:
         raise no_element_at(receiver, items, index) from None
     except TypeError:
         # The only TypeError a sequence lookup raises: the index is not one.
+        # CPython's own says `list indices must be integers or slices, not
+        # str` — `indices` naming the subscripting this message replaces.
         raise mirrors.TypeError(
-            f"{type(receiver).__name__}.at expects an int index, "
+            f"{type(receiver).__name__}.{selector} expects an int index, "
             f"got {article(type(index).__name__)}"
         ) from None
+
+
+def at_index[T](items: _Indexed[T], index: SupportsIndex, receiver: object) -> T:
+    """`items[index]`, with POOP's wording for the two ways it can fail."""
+    with indexing(receiver, items, index):
+        return items[index]
 
 
 def at_key[K, V](data: Mapping[K, V], key: K, receiver: object) -> V:

@@ -84,5 +84,8 @@ class Zip(_LazyView[Tuple], name="zip"):
 
     def _generate(self) -> Iterator[Tuple]:
         sources = self._sources
-        self._sources = ()
+        # `del`, as `Enumerate` and `_BlockView` release theirs: the slot keeps
+        # its type instead of admitting an empty tuple that only ever stands
+        # for "already handed over".
+        del self._sources
         return self._gen(sources, self._strict)

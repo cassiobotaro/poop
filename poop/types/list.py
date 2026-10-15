@@ -3,16 +3,15 @@ from collections.abc import Iterable
 from reprlib import recursive_repr
 from typing import TYPE_CHECKING, ClassVar, Self
 
-from poop.types import mirrors
 from poop.types._argument import Key, a_collection, an_int
 from poop.types._at import (
     at_index,
+    indexing,
     no_element_at,
     no_element_equal_to,
     nothing_to_remove,
 )
 from poop.types._iterable_mixin import _IterableMixin, _sorted
-from poop.types._message import article
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
 from poop.types._sentinel import NOT_A_COUNT
@@ -72,17 +71,8 @@ class List(
         reachable from the same slip — a bad position, and a position that is
         not one.
         """
-        try:
+        with indexing(self, self._items, index, "at_put"):
             self._items[index] = obj
-        except IndexError:
-            raise no_element_at(self, self._items, index) from None
-        except TypeError:
-            # `list indices must be integers or slices, not str` — `indices`
-            # names the subscripting this message replaces.
-            raise mirrors.TypeError(
-                f"{type(self).__name__}.at_put expects an int index, "
-                f"got {article(type(index).__name__)}"
-            ) from None
         return self
 
     def slice(

@@ -109,9 +109,7 @@ def _resolve_py_slice(
 
 
 def _coerce(value: Index | NoneClass | None) -> Index | None:
-    if value is None or isinstance(value, NoneClass):
-        return None
-    return value
+    return None if _is_absent(value) else value
 
 
 def _field_str(value: Index | None) -> str:

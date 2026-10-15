@@ -4,13 +4,13 @@ from poop.types import mirrors
 from poop.types._alias import wrapped_instance
 from poop.types._argument import a_collection, an_int, text_like
 from poop.types._at import (
+    indexing,
     no_element_at,
     no_element_equal_to,
     nothing_to_remove,
 )
 from poop.types._bytes_like import _BytesLikeMixin
 from poop.types._iterable_mixin import _IterableMixin
-from poop.types._message import article
 from poop.types._ordered import _OrderedMixin
 from poop.types._unwrap import (
     _faithful,
@@ -67,18 +67,11 @@ class ByteArray(
         return ByteArray(raw)
 
     def at_put(self, index: Index, byte: Int) -> ByteArray:
-        # CPython answers `bytearray indices must be integers or slices, not
-        # str` — `indices` naming the subscripting `no_subscript` bans, from
-        # the message that replaces it. `at` already routes through `_at`.
-        try:
+        # `indexing` words both failures as `at` does — CPython's own names
+        # the subscripting `no_subscript` bans (`bytearray indices must be
+        # integers or slices, not str`).
+        with indexing(self, self._value, index, "at_put"):
             self._value[index] = _faithful(byte)
-        except IndexError:
-            raise no_element_at(self, self._value, index) from None
-        except TypeError:
-            raise mirrors.TypeError(
-                f"{type(self).__name__}.at_put expects an int index, "
-                f"got {article(type(index).__name__)}"
-            ) from None
         return self
 
     @classmethod

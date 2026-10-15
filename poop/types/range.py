@@ -34,18 +34,16 @@ class Range(_IterableMixin[Int], Object, name="range"):
         # tower (`range(True, 5)` is `range(1, 5)` in CPython) and answers
         # CPython's own TypeError for anything else, where reading the slot
         # leaked `#_value`.
-        resolved: Index
-        if _is_absent(step):
-            resolved = Int(1 if _index(start) <= _index(stop) else -1)
-        else:
-            resolved = step
-        if _index(resolved) == 0:
+        first, last = _index(start), _index(stop)
+        sign = 1 if first <= last else -1
+        raw_step = sign if _is_absent(step) else _index(step)
+        if raw_step == 0:
             raise mirrors.ValueError("step must not be zero")
         # Normalized to Int, as CPython does: `range(True, 5).start` is `1`,
         # not `True`. (A `slice`, by contrast, keeps what it was given.)
-        self._start = Int(_index(start))
-        self._stop = Int(_index(stop))
-        self._step: Int = Int(_index(resolved))
+        self._start = Int(first)
+        self._stop = Int(last)
+        self._step: Int = Int(raw_step)
 
     def _range(self) -> range:
         start, stop, step = self._start._value, self._stop._value, self._step._value
