@@ -1,13 +1,19 @@
 import builtins
 import operator
-from abc import abstractmethod
 from collections import deque
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, Any, overload
 
 from poop.types import mirrors
 from poop.types._argument import Key, a_block, a_key
+from poop.types._minmax import _minmax
 from poop.types._mixin import _Mixin
+from poop.types._mutated import iterating, reword_if_native
+from poop.types._sentinel import MISSING, Missing
+from poop.types._unwrap import _is_absent
+from poop.types.boolean import false, to_boolean
+from poop.types.int import Int
+from poop.types.none import none
 
 # circular: enumerate imports _iterable_mixin
 lazy from poop.types.enumerate import Enumerate
@@ -36,14 +42,6 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
     from poop.types.object import Object
-
-from poop.types._minmax import _minmax
-from poop.types._mutated import iterating, reword_if_native
-from poop.types._sentinel import MISSING, Missing
-from poop.types._unwrap import _is_absent
-from poop.types.boolean import false, to_boolean
-from poop.types.int import Int
-from poop.types.none import none
 
 
 def _sorted[T](
@@ -87,8 +85,9 @@ class _IterableMixin[T: Object](_Mixin):
 
     __slots__ = ()  # empty, as `_Mixin` says every mixin's must be
 
-    @abstractmethod
-    def __iter__(self) -> Iterator[T]: ...
+    def __iter__(self) -> Iterator[T]:
+        """Supplied by each collection; the mixin only consumes it."""
+        raise NotImplementedError
 
     def _iter_items(self) -> Iterator[T]:
         return iter(self)

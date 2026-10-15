@@ -221,9 +221,9 @@ def withheld_builtin(name: str) -> str | None:
     validator bans never gets here — `len` is refused at parse time — so the
     sentence does not point at `:explain`, which would have nothing to say.
     """
-    value = vars(builtins).get(name)
-    if value is None:
+    if name not in vars(builtins):
         return None
+    value = vars(builtins)[name]
     # Allowed, rewritten to a wrapper, or mirrored: a program reaches each of
     # these, so none is withheld — and `:explain frozendict` must not say so.
     if name in _ALLOWED_BUILTINS or name in RESERVED_NAMES or name in MIRRORS:

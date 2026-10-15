@@ -39,6 +39,12 @@ def test_float_conversion() -> None:
     assert float(Float(2.5)) == pytest.approx(2.5)
 
 
+def test_int_payload_is_normalised_to_float() -> None:
+    held = Float(1)
+    assert str(held) == "1.0"
+    assert isinstance(held._value, float)
+
+
 def test_bool_nonzero_is_true() -> None:
     assert bool(Float(1.0)) is True
 

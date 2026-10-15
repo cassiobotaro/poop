@@ -2,8 +2,9 @@ import builtins
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import Key, a_block, no_arguments, text_like
-from poop.types._minmax import MISSING, _minmax
+from poop.types._minmax import _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
+from poop.types._sentinel import MISSING
 from poop.types.object import Object
 
 # circular: _unwrap imports boolean
@@ -232,7 +233,7 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
         runs this one through `cls`, so `bool.from_bytes(b"\\x05", "big")` is
         `True` — the answer is the receiver's kind here, not the fold's.
         """
-        return to_boolean(bool(Int.from_bytes(b, byteorder, signed=signed)))
+        return to_boolean(Int.from_bytes(b, byteorder, signed=signed))
 
     # `bool(self)`, not `_as_int()`, unlike every message around it:
     # `format(True, "")` is `'True'` and `format(1, "")` is `'1'`, so

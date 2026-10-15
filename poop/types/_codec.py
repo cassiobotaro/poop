@@ -87,7 +87,9 @@ def handler_name(name: object, selector: str) -> str:
     )
 
 
-def _refusal(exc: UnicodeError, encoding: str, verb: str) -> Exception:
+def _refusal(
+    exc: UnicodeEncodeError | UnicodeDecodeError, encoding: str, verb: str
+) -> Exception:
     """POOP's sentence for text the named encoding cannot carry.
 
     CPython answers `'ascii' codec can't encode character '\\xe9' in position
@@ -101,8 +103,8 @@ def _refusal(exc: UnicodeError, encoding: str, verb: str) -> Exception:
     A `ValueError`, which is what `UnicodeError` is in CPython's tree too, so
     `except_(ValueError, …)` catches exactly what it caught before.
     """
-    start = getattr(exc, "start", 0)
-    subject = getattr(exc, "object", "")[start : start + 1]
+    start = exc.start
+    subject = exc.object[start : start + 1]
     shown = f"byte 0x{subject[0]:02x}" if isinstance(subject, bytes) else repr(subject)
     return mirrors.ValueError(f"{encoding} cannot {verb} {shown} at position {start}")
 

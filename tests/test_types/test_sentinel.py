@@ -11,8 +11,7 @@ import pytest
 
 from poop import Interpreter
 from poop.errors import ExecutionError
-from poop.types._sentinel import MISSING, NOT_A_COUNT
-from poop.types._sentinel import Sentinel as _Marker
+from poop.types._sentinel import MISSING, NOT_A_COUNT, _Marker
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.int import Int

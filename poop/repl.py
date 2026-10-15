@@ -60,13 +60,15 @@ _CYAN = "\x1b[36m"
 
 
 def _value_text(value: object) -> Text:
-    if isinstance(value, Boolean):
-        return Text(repr(value), style="blue")
-    if isinstance(value, (Int, Float, Complex)):
-        return Text(repr(value), style="yellow")
-    if isinstance(value, Str):
-        return Text(repr(value._value), style="green")
-    return Text(repr(value))
+    match value:
+        case Boolean():
+            return Text(repr(value), style="blue")
+        case Int() | Float() | Complex():
+            return Text(repr(value), style="yellow")
+        case Str():
+            return Text(repr(value._value), style="green")
+        case _:
+            return Text(repr(value))
 
 
 def _rl_color(console: Console, text: str, *codes: str) -> str:

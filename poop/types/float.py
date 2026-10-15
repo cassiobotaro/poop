@@ -36,7 +36,7 @@ class Float(_NumericCompareMixin, Object, name="float"):
     __slots__ = ("_value",)
 
     def __init__(self, value: float | Float) -> None:
-        self._value = value._value if isinstance(value, Float) else value
+        self._value = value._value if isinstance(value, Float) else float(value)
 
     def negated(self) -> Float:
         return Float(-self._value)
@@ -74,6 +74,8 @@ class Float(_NumericCompareMixin, Object, name="float"):
         return self
 
     def hex(self) -> Str:
+        # `float(...)` for the checker alone: `__init__` already normalised the
+        # slot, but a `float` annotation admits `int`, which has no `hex`.
         return Str(float(self._value).hex())
 
     @classmethod

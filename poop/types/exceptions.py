@@ -251,18 +251,24 @@ def _build(native: type[BaseException], parent: MirrorName | None) -> None:
     NATIVE_TO_POOP[native] = mirror
 
 
-for _name, _instead in _PYTHON_ATTRIBUTES.items():
-    _refusal = _refusal_for(_name, _instead)
-    # `__set_name__` is only called for descriptors written in a class body, and
-    # these are installed after `PoopExcMeta` is built — so it is called here:
-    # it names the function through `cloak_callable` and fills `_name`, which
-    # `__set__` reads when it refuses a rebind.
-    _refusal.__set_name__(PoopExcMeta, _name)
-    setattr(PoopExcMeta, _name, _refusal)
+def _install_refusals() -> None:
+    for name, instead in _PYTHON_ATTRIBUTES.items():
+        refusal = _refusal_for(name, instead)
+        # `__set_name__` is only called for descriptors written in a class body,
+        # and these are installed after `PoopExcMeta` is built — so it is called
+        # here: it names the function through `cloak_callable` and fills
+        # `_name`, which `__set__` reads when it refuses a rebind.
+        refusal.__set_name__(PoopExcMeta, name)
+        setattr(PoopExcMeta, name, refusal)
 
 
-for _native, _parent in _HIERARCHY:
-    _build(_native, _parent)
+def _build_mirrors() -> None:
+    for native, parent in _HIERARCHY:
+        _build(native, parent)
+
+
+_install_refusals()
+_build_mirrors()
 
 
 def poop_class_of(exc: BaseException) -> PoopExcMeta:

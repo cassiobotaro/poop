@@ -7,10 +7,10 @@ spell `_list[type[...]]` throughout. A submodule's own namespace shadows
 nothing.
 """
 
-from collections import Counter as _Counter
-from itertools import chain as _chain
-from keyword import iskeyword as _iskeyword
-from types import FunctionType as _FunctionType
+from collections import Counter
+from itertools import chain
+from keyword import iskeyword
+from types import FunctionType
 from typing import TYPE_CHECKING
 
 from poop.transformers._collection import spread as _spread
@@ -127,7 +127,7 @@ def _spelling(key: str) -> str:
     stem = key.removeprefix("_poop_")
     for suffix in _HELPER_SUFFIXES:
         stem = stem.removesuffix(suffix)
-    return f"{stem}_" if _iskeyword(stem) else stem
+    return f"{stem}_" if iskeyword(stem) else stem
 
 
 def _merge_bindings(sources: list[dict[str, object]]) -> dict[str, object]:
@@ -145,14 +145,14 @@ def _merge_bindings(sources: list[dict[str, object]]) -> dict[str, object]:
     answering `make_iterable_from.<locals>._from()`. Class bindings need
     nothing here; `cloak` already covers them at their definition.
     """
-    counts = _Counter(key for src in sources for key in src)
+    counts = Counter(key for src in sources for key in src)
     if dup := sorted(key for key, n in counts.items() if n > 1):
         raise RuntimeError(
             f"poop.transformers: duplicate bindings across sources: {dup}"
         )
     namespace: dict[str, object] = {k: v for src in sources for k, v in src.items()}
     for key, value in namespace.items():
-        if isinstance(value, _FunctionType):
+        if isinstance(value, FunctionType):
             cloak_callable(value, _spelling(key))
     return namespace
 
@@ -164,7 +164,7 @@ DEFAULT_NAMESPACE: dict[str, object] = _merge_bindings(_BINDING_SOURCES)
 # them. Derived from the rewriters, as `DEFAULT_NAMESPACE` is from the
 # bindings, so a new rewriter cannot ship without its reservation.
 RESERVED_NAMES: frozenset[str] = frozenset(
-    _chain.from_iterable(
+    chain.from_iterable(
         getattr(cls.rewriter, "names", ()) for cls in _TRANSFORMER_CLASSES
     )
 )

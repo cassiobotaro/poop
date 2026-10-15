@@ -915,8 +915,12 @@ class PoopMeta(type):
             return cls.does_not_understand(name)
 
 
-for _dunder, _selector in _CLASS_SIDE_OPERATORS.items():
-    setattr(PoopMeta, _dunder, _class_operator(_selector, reflected=False))
-    setattr(PoopMeta, f"__r{_dunder[2:]}", _class_operator(_selector, reflected=True))
-for _dunder, _selector in _CLASS_SIDE_COMPARISONS.items():
-    setattr(PoopMeta, _dunder, _class_operator(_selector, reflected=False))
+def _install_class_side_operators() -> None:
+    for dunder, selector in _CLASS_SIDE_OPERATORS.items():
+        setattr(PoopMeta, dunder, _class_operator(selector, reflected=False))
+        setattr(PoopMeta, f"__r{dunder[2:]}", _class_operator(selector, reflected=True))
+    for dunder, selector in _CLASS_SIDE_COMPARISONS.items():
+        setattr(PoopMeta, dunder, _class_operator(selector, reflected=False))
+
+
+_install_class_side_operators()

@@ -37,6 +37,17 @@ def _write(console: Console, text: str) -> None:
     console.print(text, soft_wrap=True, highlight=False, markup=False)
 
 
+def _unreadable(file: Path, reason: str | None) -> typer.Exit:
+    """The exit for a source file that cannot be read, its cause already worded.
+
+    An unreadable path (missing file, a directory, no permission) or a
+    non-UTF-8 file is an ordinary user mistake; keep the one-line `poop:`
+    style instead of leaking a rich-formatted traceback through typer.
+    """
+    _write(ERR, f"poop: cannot read '{file}': {reason}")
+    return typer.Exit(1)
+
+
 def _read_source(file: Path) -> str:
     try:
         # `utf-8-sig`, not `utf-8`: an editor's byte-order mark would otherwise
@@ -45,15 +56,11 @@ def _read_source(file: Path) -> str:
         # invisible in every editor, from a file `python3` runs. CPython's own
         # loader strips it; the codec is identical to `utf-8` otherwise.
         return file.read_text(encoding="utf-8-sig")
-    except (OSError, UnicodeDecodeError) as exc:
-        # An unreadable path (missing file, a directory, no permission) or a
-        # non-UTF-8 file is an ordinary user mistake; keep the one-line
-        # `poop:` style instead of leaking a rich-formatted traceback through
-        # typer. A decode error is not an OSError, and words its cause as
-        # `reason` rather than `strerror`.
-        reason = exc.strerror if isinstance(exc, OSError) else exc.reason
-        _write(ERR, f"poop: cannot read '{file}': {reason}")
-        raise typer.Exit(1) from exc
+    except OSError as exc:
+        raise _unreadable(file, exc.strerror) from exc
+    except UnicodeDecodeError as exc:
+        # Not an OSError, and it words its cause as `reason`, not `strerror`.
+        raise _unreadable(file, exc.reason) from exc
 
 
 @app.command()

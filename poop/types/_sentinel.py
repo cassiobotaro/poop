@@ -16,7 +16,7 @@ from enum import Enum, auto
 from typing import Final, Literal
 
 
-class Sentinel(Enum):
+class _Marker(Enum):
     # An argument the caller did not pass: the block slot of `do` / `map` /
     # `reduce`, the `default` of `min` / `max` / `next`, the `start` of `sum`.
     MISSING = auto()
@@ -34,18 +34,18 @@ class Sentinel(Enum):
         return f"<{self.name.lower()}>"
 
 
-MISSING: Final = Sentinel.MISSING
-UNPEEKED: Final = Sentinel.UNPEEKED
-NOT_A_COUNT: Final = Sentinel.NOT_A_COUNT
-NOT_NUMERIC: Final = Sentinel.NOT_NUMERIC
-NOT_INTEGRAL: Final = Sentinel.NOT_INTEGRAL
+MISSING: Final = _Marker.MISSING
+UNPEEKED: Final = _Marker.UNPEEKED
+NOT_A_COUNT: Final = _Marker.NOT_A_COUNT
+NOT_NUMERIC: Final = _Marker.NOT_NUMERIC
+NOT_INTEGRAL: Final = _Marker.NOT_INTEGRAL
 
 # The members as types, so a helper that answers one says so in its signature
 # and a type checker narrows the fall-through on `is`: a parameter that may be
 # left out is `block: Block | Missing = MISSING`, and `_repeat_count` answers
 # `int | NotACount`, so the `*` after `if count is NOT_A_COUNT` sees an `int`.
-type Missing = Literal[Sentinel.MISSING]
-type Unpeeked = Literal[Sentinel.UNPEEKED]
-type NotACount = Literal[Sentinel.NOT_A_COUNT]
-type NotNumeric = Literal[Sentinel.NOT_NUMERIC]
-type NotIntegral = Literal[Sentinel.NOT_INTEGRAL]
+type Missing = Literal[_Marker.MISSING]
+type Unpeeked = Literal[_Marker.UNPEEKED]
+type NotACount = Literal[_Marker.NOT_A_COUNT]
+type NotNumeric = Literal[_Marker.NOT_NUMERIC]
+type NotIntegral = Literal[_Marker.NOT_INTEGRAL]
