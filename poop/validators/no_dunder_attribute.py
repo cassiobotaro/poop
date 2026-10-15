@@ -77,11 +77,10 @@ def _is_super_call(node: ast.expr) -> bool:
     That is the hazard `_reject_dunder` already describes word for word
     — it closed the `get_attr` path and left this, the shorter one, open.
     """
-    return (
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "super"
-    )
+    match node:
+        case ast.Call(func=ast.Name(id="super")):
+            return True
+    return False
 
 
 class _Visitor(ErrorCollector):

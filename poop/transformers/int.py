@@ -47,7 +47,7 @@ def _poop_int_from(*args: object, **kwargs: object) -> Int:
         # silently dropping the base would diverge from the language.
         raise mirrors.TypeError("a base applies only to text")
     if base is not None and not isinstance(base, Int):
-        raise mirrors.TypeError(f"base must be int, got {type(base).__name__}")
+        raise mirrors.TypeError(f"base must be int, got {type(base).__qualname__}")
     match value:
         case None:
             return Int(0)
@@ -63,7 +63,7 @@ def _poop_int_from(*args: object, **kwargs: object) -> Int:
         case Str():
             return _parsed(value, None if base is None else base._value)
         case _:
-            raise mirrors.TypeError(f"cannot convert {type(value).__name__} to int")
+            raise mirrors.TypeError(f"cannot convert {type(value).__qualname__} to int")
 
 
 class _IntRewriter(BuiltinRewriter):

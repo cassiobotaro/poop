@@ -1,23 +1,6 @@
 import ast
-import copy
 
-from poop.transformers.base import BaseTransformer, call_at
-
-
-def _rebind(target_value: ast.expr) -> ast.Assign:
-    """`<t> = _poop_list_from(<t>)` for a starred rest-target `<t>`."""
-    store = copy.deepcopy(target_value)  # outermost Store, inner Load
-    load = copy.deepcopy(target_value)
-    # A starred rest-target is always a single assignable (Name/Attribute;
-    # Subscript is rejected by no_subscript) — all of which carry `ctx`.
-    if isinstance(load, (ast.Name, ast.Attribute, ast.Subscript, ast.Starred)):
-        load.ctx = ast.Load()
-    return ast.copy_location(
-        ast.Assign(
-            targets=[store], value=call_at("_poop_list_from", [load], target_value)
-        ),
-        target_value,
-    )
+from poop.transformers.base import BaseTransformer, rebind
 
 
 class _UnpackRewriter(ast.NodeTransformer):
@@ -44,7 +27,7 @@ class _UnpackRewriter(ast.NodeTransformer):
         ]
         if not starred:
             return node
-        return [node, *(_rebind(t) for t in starred)]
+        return [node, *(rebind(t, "_poop_list_from") for t in starred)]
 
 
 class UnpackTransformer(BaseTransformer):

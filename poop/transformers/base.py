@@ -1,4 +1,5 @@
 import ast
+import copy
 from typing import TYPE_CHECKING, ClassVar, Protocol
 
 from poop.types import mirrors
@@ -57,6 +58,26 @@ def call_at(
     )
 
 
+def rebind(target: ast.expr, helper: str) -> ast.Assign:
+    """`<target> = <helper>(<target>)`, positioned where `target` was.
+
+    A variadic parameter (`varargs.py`) and a starred rest-target
+    (`unpack.py`) are both rebound to the POOP collection their raw value
+    converts to; each module built the same `ast.Assign` by hand. A `Name`
+    or an `Attribute` carries a context, set to `Store` on the left and
+    `Load` on the right; anything else is copied as it came.
+    """
+    store = copy.deepcopy(target)
+    load = copy.deepcopy(target)
+    if isinstance(store, (ast.Name, ast.Attribute)):
+        store.ctx = ast.Store()
+    if isinstance(load, (ast.Name, ast.Attribute)):
+        load.ctx = ast.Load()
+    return ast.copy_location(
+        ast.Assign(targets=[store], value=call_at(helper, [load], target)), target
+    )
+
+
 class BuiltinRewriter(ast.NodeTransformer):
     """Routes `<builtin>(...)` to its converter and a bare `<builtin>` to its class.
 
@@ -88,13 +109,14 @@ class BuiltinRewriter(ast.NodeTransformer):
         return name in self.names
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
-        if isinstance(node.func, ast.Name) and self.is_builtin(node.func.id):
-            keywords = [
-                ast.keyword(arg=kw.arg, value=self.visit(kw.value))
-                for kw in node.keywords
-            ]
-            args = [self.visit(arg) for arg in node.args]
-            return call_at(self.call_target, args, node, keywords)
+        match node:
+            case ast.Call(func=ast.Name(id=name)) if self.is_builtin(name):
+                keywords = [
+                    ast.keyword(arg=kw.arg, value=self.visit(kw.value))
+                    for kw in node.keywords
+                ]
+                args = [self.visit(arg) for arg in node.args]
+                return call_at(self.call_target, args, node, keywords)
         self.generic_visit(node)
         return node
 

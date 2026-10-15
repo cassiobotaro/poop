@@ -38,7 +38,9 @@ def _poop_float_from(*args: object, **kwargs: object) -> Float:
                     f"{value._value!r} is not a valid float"
                 ) from None
         case _:
-            raise mirrors.TypeError(f"cannot convert {type(value).__name__} to float")
+            raise mirrors.TypeError(
+                f"cannot convert {type(value).__qualname__} to float"
+            )
 
 
 class _FloatRewriter(BuiltinRewriter):

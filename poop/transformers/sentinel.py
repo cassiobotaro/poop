@@ -24,7 +24,7 @@ def _poop_sentinel_from(name: object, /, *, repr: object = None) -> Sentinel:  #
     """
     if not isinstance(name, Str):
         raise mirrors.TypeError(
-            f"sentinel's name must be a str, got {article(type(name).__name__)}"
+            f"sentinel's name must be a str, got {article(type(name).__qualname__)}"
         )
     display: Str | NoneClass | None
     if _is_absent(repr):
@@ -33,7 +33,7 @@ def _poop_sentinel_from(name: object, /, *, repr: object = None) -> Sentinel:  #
         display = repr
     else:
         raise mirrors.TypeError(
-            f"sentinel's repr must be a str, got {article(type(repr).__name__)}"
+            f"sentinel's repr must be a str, got {article(type(repr).__qualname__)}"
         )
     return Sentinel(name, display)
 

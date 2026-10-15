@@ -1,6 +1,6 @@
 import ast
 
-from poop.transformers.base import BaseTransformer, call_at, name_at
+from poop.transformers.base import BaseTransformer, call_at, name_at, rebind
 
 # Each variadic parameter and the helper that converts it — stated once for
 # both `def` (a prologue) and `lambda` (a wrapping call).
@@ -14,17 +14,6 @@ def _variadics(args: ast.arguments) -> list[tuple[str, str]]:
         for slot, helper in _CONVERTERS
         if (param := getattr(args, slot)) is not None
     ]
-
-
-def _rebind(name: str, helper: str, node: ast.AST) -> ast.Assign:
-    """`<name> = <helper>(<name>)` — convert a variadic parameter to POOP."""
-    return ast.copy_location(
-        ast.Assign(
-            targets=[name_at(name, node, ast.Store())],
-            value=call_at(helper, [name_at(name, node)], node),
-        ),
-        node,
-    )
 
 
 class _VarargsRewriter(ast.NodeTransformer):
@@ -70,7 +59,8 @@ class _VarargsRewriter(ast.NodeTransformer):
         # statement, where it is a bare string built on every call.
         at = 1 if ast.get_docstring(node, clean=False) is not None else 0
         node.body[at:at] = [
-            _rebind(name, helper, node) for name, helper in _variadics(node.args)
+            rebind(name_at(name, node, ast.Store()), helper)
+            for name, helper in _variadics(node.args)
         ]
         return node
 

@@ -38,16 +38,22 @@ def _poop_range(*args: object, **kwargs: object) -> Range:
     # `*args: object` is what the guard above needs to count; `_index` refuses
     # anything outside the index rung at runtime, which is the check that
     # matters and the one this converter exists for.
-    stop_or_start = cast("Index", args[0])
-    stop = cast("Index | None", args[1] if len(args) > 1 else None)
-    step = cast("Index | None", args[2] if len(args) > 2 else None)
-    if stop is None:
-        return Range(Int(0), Int(_index(stop_or_start) - 1), Int(1))
-    if step is None:
-        return Range(Int(_index(stop_or_start)), Int(_index(stop) - 1), Int(1))
-    step_value = _index(step)
-    sign = 1 if step_value > 0 else -1
-    return Range(Int(_index(stop_or_start)), Int(_index(stop) - sign), Int(step_value))
+    values = [_index(cast("Index", arg)) for arg in args]
+    # CPython's three shapes, normalised to (start, stop, step) once: `Range`
+    # takes an inclusive stop, so the exclusive one moves back one step's
+    # sign — the arithmetic `Range._from_native` states. A zero step keeps
+    # its sign as `-1` here and is refused where every zero step is, in
+    # `Range.__init__`, with POOP's sentence rather than CPython's
+    # `range() arg 3 must not be zero`.
+    match values:
+        case [stop]:
+            start, step = 0, 1
+        case [start, stop]:
+            step = 1
+        case [start, stop, step]:
+            pass
+    sign = 1 if step > 0 else -1
+    return Range(Int(start), Int(stop - sign), Int(step))
 
 
 class _RangeRewriter(BuiltinRewriter):

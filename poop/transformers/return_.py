@@ -27,8 +27,8 @@ class _ReturnRewriter(ast.NodeTransformer):
         for stmt in node.body:
             if isinstance(stmt, ast.Return) and stmt.value is None:
                 stmt.value = name_at("_poop_none", stmt)
-        last = node.body[-1] if node.body else None
-        if not isinstance(last, (ast.Return, ast.Raise)):
+        # A parsed body is never empty, so the last statement always exists.
+        if not isinstance(node.body[-1], (ast.Return, ast.Raise)):
             node.body.append(
                 ast.copy_location(ast.Return(value=name_at("_poop_none", node)), node)
             )
