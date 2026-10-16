@@ -16,11 +16,20 @@ dependencies = [
 [project.scripts]
 poop = "poop.cli:entry_point"
 
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
+
 [tool.uv]
 package = true
 
-[tool.setuptools.packages.find]
-include = ["poop*"]
+[tool.uv.build-backend]
+# A flat layout: the package sits at the repository root, not under `src/`.
+module-name = "poop"
+module-root = ""
+# The backend reads the tree, not the index: an editor's or an agent's local
+# settings under `poop/.claude/` are git-ignored and were shipped anyway.
+source-exclude = ["**/.claude/**"]
 
 [dependency-groups]
 dev = [
@@ -38,6 +47,8 @@ strict_parametrization_ids = true
 [tool.coverage.run]
 branch = true
 source = ["poop"]
+# `python -m poop` runs only in a subprocess, where coverage does not follow.
+omit = ["poop/__main__.py"]
 
 [tool.coverage.report]
 exclude_lines = [

@@ -20,9 +20,9 @@ runner = CliRunner()
 
 
 def _run_main(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
-    """`python main.py <args>` in a subprocess, the uninstalled entry point."""
+    """`python -m poop <args>` in a subprocess, the module entry point."""
     return subprocess.run(  # noqa: S603
-        [sys.executable, str(REPO_ROOT / "main.py"), *args],
+        [sys.executable, "-m", "poop", *args],
         capture_output=True,
         text=True,
         cwd=REPO_ROOT,
@@ -296,13 +296,19 @@ def test_a_mode_flag_needs_a_source(
 
 
 def test_main_module_runs_file_via_argv(source_file: SourceFile) -> None:
-    # Regression: `python main.py <file>` used to call the command function
+    # Regression: the root `main.py` once called the command function
     # directly (file=None default), ignoring argv and dropping into the REPL.
-    # Run it as a subprocess so the wiring in main.py is exercised end to end.
+    # A subprocess, so `poop/__main__.py`'s wiring is exercised end to end.
     f = source_file('"hi".print()\n', "ok.py")
     result = _run_main(str(f), stdin=subprocess.DEVNULL)
     assert result.returncode == 0
     assert "hi" in result.stdout
+
+
+def test_main_module_runs_an_example() -> None:
+    result = _run_main("examples/basics/hello_world.py", stdin=subprocess.DEVNULL)
+    assert result.returncode == 0
+    assert result.stdout == "Hello, World!\n"
 
 
 def test_an_error_is_syntax_highlighted_on_a_terminal(

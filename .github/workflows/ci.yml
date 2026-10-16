@@ -15,12 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v10
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
 
-      - run: uv sync --dev
+      - run: uv sync --locked --dev
 
       - run: uv run ruff check
       - run: uv run ruff format --check

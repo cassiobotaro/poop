@@ -17,6 +17,8 @@ uv sync --dev
 prek install                        # enable git hooks
 uv run pytest                       # run the test suite
 uv run poop examples/basics/hello_world.py # run an example
+uv run python -m poop examples/basics/hello_world.py # the same, as a module
+uv build                            # sdist and wheel under dist/ (uv_build)
 ```
 
 The pipeline is `parse → validate → transform → execute(namespace)`. Source files:
