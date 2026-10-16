@@ -18,6 +18,20 @@ if TYPE_CHECKING:
 
 runner = CliRunner()
 
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _plain(text: str) -> str:
+    """`text` without colour codes.
+
+    typer forces a colour terminal under `GITHUB_ACTIONS` and highlights
+    `--flags` and quoted words inside its own usage errors, so a sentence
+    asserted as one substring was split by escape codes on CI and nowhere
+    else. POOP's own diagnostics go through its consoles, which only colour
+    a real terminal, and need no stripping.
+    """
+    return _ANSI.sub("", text)
+
 
 def _run_main(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
     """`python -m poop <args>` in a subprocess, the module entry point."""
@@ -213,7 +227,7 @@ def test_cli_format_json_needs_validators_only(source_file: SourceFile) -> None:
     f = source_file('"x".print()\n', "ok.py")
     result = runner.invoke(app, [str(f), "--format", "json"])
     assert result.exit_code == 2
-    assert "--format json needs --validators-only" in result.stderr
+    assert "--format json needs --validators-only" in _plain(result.stderr)
 
 
 def test_cli_transformers_only_dumps_ast(source_file: SourceFile) -> None:
@@ -291,7 +305,7 @@ def test_a_mode_flag_needs_a_source(
     feed_input(EOFError())
     result = runner.invoke(app, [flag])
     assert result.exit_code == 2
-    assert f"{flag} needs a file or piped input" in result.stderr
+    assert f"{flag} needs a file or piped input" in _plain(result.stderr)
     assert "POOP" not in result.stdout
 
 
@@ -364,5 +378,5 @@ def test_the_two_only_flags_cannot_be_combined(source_file: SourceFile) -> None:
     f = source_file("x = 1\n")
     result = runner.invoke(app, [str(f), "--validators-only", "--transformers-only"])
     assert result.exit_code == 2
-    assert "cannot be combined" in result.stderr
+    assert "cannot be combined" in _plain(result.stderr)
     assert result.stdout == ""
