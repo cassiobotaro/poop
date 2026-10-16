@@ -29,8 +29,22 @@ Run it:
 
 ```bash
 poop hello.py            # run a file
-poop                     # interactive REPL (Ctrl+D to exit)
+poop -c '"hi".print()'   # run a one-liner
+cat hello.py | poop      # a pipe runs as a program, as `python3 < hello.py` does
+poop                     # interactive REPL on a terminal (Ctrl+D to exit)
+poop --version
 ```
+
+Diagnostics go to stderr, prefixed `poop:`; program output goes to stdout.
+The exit code says what went wrong:
+
+| Exit | Meaning |
+|---|---|
+| 0 | the program ran |
+| 1 | the source could not be read |
+| 2 | the source is not Python, or the command line is wrong |
+| 3 | a validator refused the program |
+| 4 | the program failed while running |
 
 Inside the REPL, colon-prefixed meta-commands help you explore,
 Smalltalk-browser style:

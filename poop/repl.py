@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from rich.columns import Columns
 from rich.text import Text
 
-from poop.console import ERR, OUT, in_colour
+from poop.console import ERR, OUT, error_line, in_colour
 from poop.errors import ParseError, PoopError, report
 from poop.executor import confine
 from poop.types._message import withheld_builtin
@@ -375,9 +375,7 @@ class Repl(code.InteractiveConsole):
         Every diagnostic the REPL emits shares that contract, so it lives in
         one place — a new call site cannot forget the prefix or the stream.
         """
-        self._err.print(
-            Text(f"poop: {message}", style="red"), soft_wrap=True, highlight=False
-        )
+        error_line(self._err, f"poop: {message}")
 
     def _print_value(self, value: object) -> None:
         self._out.print(_value_text(value), soft_wrap=True, highlight=False)
@@ -408,7 +406,7 @@ class Repl(code.InteractiveConsole):
 
     def _meta_methods(self, arg: str) -> None:
         if not arg:
-            self._say("usage: :methods <expr>")
+            self._error("usage: :methods <expr>")
             return
         if not _is_safe_expr(arg):
             self._error(
@@ -440,7 +438,7 @@ class Repl(code.InteractiveConsole):
 
     def _meta_explain(self, arg: str) -> None:
         if not arg:
-            self._say("usage: :explain <construct>")
+            self._error("usage: :explain <construct>")
             return
         snippet = _explain_snippet(arg, self._explain_calls)
         if snippet is None:
@@ -453,7 +451,10 @@ class Repl(code.InteractiveConsole):
             known = sorted(self._explain_calls | set(_EXPLAIN_SNIPPETS))
             # Not "it may simply be allowed": nothing here checked that, and
             # for a banned construct with no topic the guess is a flat lie.
-            self._say(f"poop: no :explain topic for {arg!r}.\nKnown constructs:")
+            # The sentence is a diagnostic and goes where they all go; the
+            # listing is an answer and stays on stdout.
+            self._error(f"no :explain topic for {arg!r}.")
+            self._say("Known constructs:")
             self._say(textwrap.fill("  ".join(known), width=80))
             return
         errors = self._interpreter.validate_all(snippet, "<explain>")

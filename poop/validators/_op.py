@@ -58,4 +58,6 @@ class OpValidator(CollectingValidator):
         return False
 
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(self.node_type, self.messages, self.allow), tree)
+        return collect_errors(
+            _Visitor(self.node_type, self.messages, self.allow), tree, self.name
+        )

@@ -589,7 +589,9 @@ def test_meta_methods_without_arg_shows_usage(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     repl._meta(":methods")
-    assert "usage" in capsys.readouterr().out
+    out = capsys.readouterr()
+    assert "poop: usage: :methods <expr>" in out.err
+    assert out.out == ""
 
 
 def test_meta_methods_rejects_calls(
@@ -645,9 +647,11 @@ def test_meta_explain_unknown_lists_known_constructs(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     repl._meta(":explain banana")
-    out = capsys.readouterr().out
-    assert "Known constructs" in out
-    assert "if" in out
+    out = capsys.readouterr()
+    # The sentence is a diagnostic, the listing an answer: one per stream.
+    assert "poop: no :explain topic for 'banana'." in out.err
+    assert out.out.startswith("Known constructs:")
+    assert "if" in out.out
 
 
 @pytest.mark.parametrize(
@@ -794,7 +798,9 @@ def test_meta_explain_without_arg_shows_usage(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     repl._meta(":explain")
-    assert "usage" in capsys.readouterr().out
+    out = capsys.readouterr()
+    assert "poop: usage: :explain <construct>" in out.err
+    assert out.out == ""
 
 
 def test_meta_explain_every_known_construct_produces_output(

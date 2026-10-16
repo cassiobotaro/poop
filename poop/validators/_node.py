@@ -34,4 +34,4 @@ class NodeValidator(CollectingValidator):
     messages: ClassVar[Mapping[type[ast.AST], str]]
 
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(self.messages), tree)
+        return collect_errors(_Visitor(self.messages), tree, self.name)

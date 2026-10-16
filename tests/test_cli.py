@@ -1,7 +1,8 @@
 import io
+import json
+import re
 import subprocess
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -13,6 +14,7 @@ from tests._support import REPO_ROOT, FeedInput, SourceFile, console
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
 
 runner = CliRunner()
 
@@ -34,7 +36,8 @@ def test_cli_runs_valid_file(source_file: SourceFile) -> None:
     f = source_file('"hi".print()\n', "ok.py")
     result = runner.invoke(app, [str(f)])
     assert result.exit_code == 0
-    assert "hi\n" in result.output
+    assert result.stdout == "hi\n"
+    assert result.stderr == ""
 
 
 def test_cli_runs_a_file_its_editor_gave_a_byte_order_mark(tmp_path: Path) -> None:
@@ -47,14 +50,30 @@ def test_cli_runs_a_file_its_editor_gave_a_byte_order_mark(tmp_path: Path) -> No
     f.write_bytes(b"\xef\xbb\xbf" + b'"hi".print()\n')
     result = runner.invoke(app, [str(f)])
     assert result.exit_code == 0
-    assert "hi\n" in result.output
+    assert result.stdout == "hi\n"
+    assert result.stderr == ""
 
 
-def test_cli_exits_with_error_on_invalid_code(source_file: SourceFile) -> None:
-    f = source_file("print('x')\n", "bad.py")
-    result = runner.invoke(app, [str(f)])
-    assert result.exit_code == 1
-    assert "poop:" in result.output
+@pytest.mark.parametrize(
+    ("source", "code"),
+    [
+        (None, 1),
+        ("x = (\n", 2),
+        ("print(1)\n", 3),
+        ("(1).at(0)\n", 4),
+    ],
+    ids=["unreadable", "parse", "validation", "execution"],
+)
+def test_cli_exit_codes_tell_the_failure_kinds_apart(
+    source: str | None, code: int, source_file: SourceFile, tmp_path: Path
+) -> None:
+    # Every failure used to exit 1, so CI could not tell a refused program
+    # from one that crashed. `None` is a file that was never written.
+    path = tmp_path / "nope.py" if source is None else source_file(source)
+    result = runner.invoke(app, [str(path)])
+    assert result.exit_code == code
+    assert "poop:" in result.stderr
+    assert result.stdout == ""
 
 
 def _missing(tmp_path: Path) -> Path:
@@ -88,65 +107,113 @@ def test_cli_an_unreadable_source_shows_a_clean_diagnostic(
     # An unreadable path is a user mistake, not a traceback.
     result = runner.invoke(app, [str(make_path(tmp_path))])
     assert result.exit_code == 1
-    assert "poop: cannot read" in result.output
-    assert reason in result.output
-    assert "Traceback" not in result.output
+    assert "poop: cannot read" in result.stderr
+    assert reason in result.stderr
+    assert "Traceback" not in result.stderr
+    assert result.stdout == ""
 
 
 def test_cli_error_shows_source_line_with_caret(source_file: SourceFile) -> None:
     f = source_file("x = 1\ny = len(x)\n", "bad.py")
     result = runner.invoke(app, [str(f)])
-    assert result.exit_code == 1
-    assert "  2 | y = len(x)" in result.output
-    assert "    |     ^" in result.output
+    assert result.exit_code == 3
+    assert "  2 | y = len(x)" in result.stderr
+    assert "    |     ^" in result.stderr
+    assert result.stdout == ""
 
 
 def test_cli_caret_column_matches_offset(source_file: SourceFile) -> None:
     f = source_file("if x:\n    pass\n", "bad.py")
     result = runner.invoke(app, [str(f)])
-    assert result.exit_code == 1
-    assert "  1 | if x:" in result.output
-    assert "    | ^" in result.output
+    assert result.exit_code == 3
+    assert "  1 | if x:" in result.stderr
+    assert "    | ^" in result.stderr
+    assert result.stdout == ""
 
 
 def test_cli_runtime_error_shows_line_without_caret(source_file: SourceFile) -> None:
     f = source_file("x = 1\ny = x / 0\n", "boom.py")
     result = runner.invoke(app, [str(f)])
-    assert result.exit_code == 1
-    assert "  2 | y = x / 0" in result.output
-    assert "^" not in result.output
+    assert result.exit_code == 4
+    assert "  2 | y = x / 0" in result.stderr
+    assert "^" not in result.stderr
+    assert result.stdout == ""
 
 
 def test_cli_validators_only_no_errors(source_file: SourceFile) -> None:
     f = source_file('"hi".print()\n', "ok.py")
     result = runner.invoke(app, [str(f), "--validators-only"])
     assert result.exit_code == 0
-    assert "No validation errors." in result.output
+    assert result.stdout == "No validation errors.\n"
+    assert result.stderr == ""
 
 
 def test_cli_validators_only_reports_all_errors(source_file: SourceFile) -> None:
     f = source_file("if x:\n    print(x)\n", "bad.py")
     result = runner.invoke(app, [str(f), "--validators-only"])
-    assert result.exit_code == 1
+    assert result.exit_code == 3
     # Both if and print should be reported
-    assert "if" in result.output
-    assert "print" in result.output
+    assert "if" in result.stderr
+    assert "print" in result.stderr
+    assert result.stdout == ""
 
 
 def test_cli_validators_only_shows_snippet_per_error(source_file: SourceFile) -> None:
     f = source_file("if x:\n    print(x)\n", "bad.py")
     result = runner.invoke(app, [str(f), "--validators-only"])
-    assert result.exit_code == 1
-    assert "  1 | if x:" in result.output
-    assert "  2 |     print(x)" in result.output
-    assert "    |     ^" in result.output
+    assert result.exit_code == 3
+    assert "  1 | if x:" in result.stderr
+    assert "  2 |     print(x)" in result.stderr
+    assert "    |     ^" in result.stderr
+    assert result.stdout == ""
 
 
 def test_cli_validators_only_reports_parse_error(source_file: SourceFile) -> None:
     f = source_file("def (\n", "syntax.py")
     result = runner.invoke(app, [str(f), "--validators-only"])
-    assert result.exit_code == 1
-    assert "poop:" in result.output
+    assert result.exit_code == 2
+    assert "poop:" in result.stderr
+    assert result.stdout == ""
+
+
+def test_cli_validators_only_json_reports_errors_as_data(
+    source_file: SourceFile,
+) -> None:
+    f = source_file("print(1)\nx = len([])\n", "bad.py")
+    result = runner.invoke(app, [str(f), "--validators-only", "--format", "json"])
+    assert result.exit_code == 3
+    assert json.loads(result.stdout) == [
+        {
+            "line": 1,
+            "col": 0,
+            "message": "print() is forbidden — use obj.print() instead",
+            "validator": "no_print",
+        },
+        {
+            "line": 2,
+            "col": 4,
+            "message": "len() is forbidden — use obj.len() instead",
+            "validator": "no_len",
+        },
+    ]
+    assert result.stderr == ""
+
+
+def test_cli_validators_only_json_on_a_clean_file_is_an_empty_array(
+    source_file: SourceFile,
+) -> None:
+    f = source_file('"x".print()\n', "ok.py")
+    result = runner.invoke(app, [str(f), "--validators-only", "--format", "json"])
+    assert result.exit_code == 0
+    assert result.stdout == "[]\n"
+    assert result.stderr == ""
+
+
+def test_cli_format_json_needs_validators_only(source_file: SourceFile) -> None:
+    f = source_file('"x".print()\n', "ok.py")
+    result = runner.invoke(app, [str(f), "--format", "json"])
+    assert result.exit_code == 2
+    assert "--format json needs --validators-only" in result.stderr
 
 
 def test_cli_transformers_only_dumps_ast(source_file: SourceFile) -> None:
@@ -156,17 +223,76 @@ def test_cli_transformers_only_dumps_ast(source_file: SourceFile) -> None:
     assert "_poop_str" in result.output
 
 
-def test_cli_runs_source_from_a_pipe_only_read_once() -> None:
-    # Regression: the CLI read the file once for error formatting and then a
-    # second time to execute it. A pipe yields its bytes only once, so the
-    # executing read came back empty and the program ran as if blank —
-    # printing nothing and exiting 0 instead of running the piped program.
-    stdin_path = Path("/dev/stdin")
-    if not stdin_path.exists():  # pragma: no cover - platform without /dev/stdin
-        pytest.skip("no /dev/stdin on this platform")
-    result = _run_main("/dev/stdin", input='"hello from pipe".print()\n')
+def test_cli_a_pipe_runs_as_a_program() -> None:
+    # `python3 < file` runs the file; `poop` used to answer a banner and a
+    # prompt on stdout between the program's own lines. A subprocess, so
+    # stdin really is a pipe. The source is read once: a second read of a
+    # pipe yields nothing, which once ran the program as if blank.
+    result = _run_main(input='"hello from pipe".print()\n')
     assert result.returncode == 0
-    assert "hello from pipe" in result.stdout
+    assert result.stdout == "hello from pipe\n"
+    assert result.stderr == ""
+
+
+def test_cli_a_piped_program_runs_in_process() -> None:
+    # `CliRunner` hands the command a pipe, which is the non-tty case itself.
+    result = runner.invoke(app, [], input='"x".print()\n')
+    assert result.exit_code == 0
+    assert result.stdout == "x\n"
+    assert result.stderr == ""
+
+
+def test_cli_a_dash_reads_standard_input_in_process() -> None:
+    result = runner.invoke(app, ["-"], input='\ufeff"y".print()\n')
+    assert result.exit_code == 0
+    assert result.stdout == "y\n"
+
+
+def test_cli_a_dash_is_standard_input() -> None:
+    result = _run_main("-", input='"from dash".print()\n')
+    assert result.returncode == 0
+    assert result.stdout == "from dash\n"
+
+
+def test_cli_a_piped_program_spends_its_byte_order_mark() -> None:
+    result = _run_main(input='\ufeff"hi".print()\n')
+    assert result.returncode == 0
+    assert result.stdout == "hi\n"
+
+
+def test_cli_inline_code_runs_as_a_program() -> None:
+    result = runner.invoke(app, ["-c", '"abc".len().print()'])
+    assert result.exit_code == 0
+    assert result.stdout == "3\n"
+    assert result.stderr == ""
+
+
+def test_cli_inline_code_reports_with_a_gutter() -> None:
+    # An error in `-c` code reports the same gutter a file gets.
+    result = runner.invoke(app, ["-c", "print(1)"])
+    assert result.exit_code == 3
+    assert "  1 | print(1)" in result.stderr
+
+
+def test_cli_version_prints_the_installed_version() -> None:
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0
+    assert re.fullmatch(r"poop \d+\.\d+.*\n", result.stdout)
+    assert result.stderr == ""
+
+
+@pytest.mark.parametrize("flag", ["--validators-only", "--transformers-only"])
+def test_a_mode_flag_needs_a_source(
+    flag: str, monkeypatch: pytest.MonkeyPatch, feed_input: FeedInput
+) -> None:
+    # On a terminal with nothing to run, the flag used to start the REPL and
+    # say nothing about being ignored.
+    monkeypatch.setattr(cli, "_stdin_is_a_terminal", lambda: True)
+    feed_input(EOFError())
+    result = runner.invoke(app, [flag])
+    assert result.exit_code == 2
+    assert f"{flag} needs a file or piped input" in result.stderr
+    assert "POOP" not in result.stdout
 
 
 def test_main_module_runs_file_via_argv(source_file: SourceFile) -> None:
@@ -188,18 +314,23 @@ def test_an_error_is_syntax_highlighted_on_a_terminal(
     monkeypatch.setattr(cli, "ERR", console(buf))
     f = source_file("if x:\n    pass\n", "bad.py")
     result = runner.invoke(app, [str(f)])
-    assert result.exit_code == 1
+    assert result.exit_code == 3
     out = buf.getvalue()
     assert "\x1b[" in out
     assert "poop: if statements are forbidden" in out
 
 
-def test_cli_no_file_starts_the_repl(feed_input: FeedInput) -> None:
-    # `poop` with no argument drops into the REPL; an immediate EOF exits it 0.
+def test_cli_no_file_on_a_terminal_starts_the_repl(
+    feed_input: FeedInput, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # `poop` with no argument and an interactive stdin drops into the REPL;
+    # an immediate EOF exits it 0. `CliRunner` pipes stdin, so the terminal
+    # is declared.
+    monkeypatch.setattr(cli, "_stdin_is_a_terminal", lambda: True)
     feed_input(EOFError())
     result = runner.invoke(app, [])
     assert result.exit_code == 0
-    assert "POOP" in result.output
+    assert "POOP" in result.stdout
 
 
 def test_cli_transformers_only_colorizes_on_a_terminal(
@@ -227,4 +358,5 @@ def test_the_two_only_flags_cannot_be_combined(source_file: SourceFile) -> None:
     f = source_file("x = 1\n")
     result = runner.invoke(app, [str(f), "--validators-only", "--transformers-only"])
     assert result.exit_code == 2
-    assert "cannot be combined" in result.output
+    assert "cannot be combined" in result.stderr
+    assert result.stdout == ""

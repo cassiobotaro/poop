@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from rich.syntax import Syntax
 from rich.text import Text
 
-from poop.console import in_colour
+from poop.console import error_line, in_colour
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -75,6 +75,12 @@ class ValidationError(PoopError):
     # it is the documented contract.
     lineno: int  # ty: ignore[invalid-mutable-override]
     col_offset: int  # ty: ignore[invalid-mutable-override]
+
+    # The validator that refused, by module name (`no_print`) — the identifier
+    # `--format json` hands an editor. Stamped by `collect_errors`, the one
+    # place every validator's errors pass through; an error built by hand
+    # has none.
+    validator: str | None = None
 
     def __init__(self, message: str, lineno: int, col_offset: int) -> None:
         super().__init__(message, lineno, col_offset)
@@ -265,7 +271,9 @@ def report(exc: PoopError, source: str | None, console: Console) -> None:
     The CLI and the REPL each carried this choice, one through `typer.echo`
     and one through the console, and only the rendering was shared.
     """
-    if in_colour(console):
+    if _error_location(exc, source) is None:
+        error_line(console, format_error(exc, source))
+    elif in_colour(console):
         console.print(render_error(exc, source), soft_wrap=True)
     else:
         console.print(

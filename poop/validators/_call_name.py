@@ -41,4 +41,4 @@ class CallNameValidator(CollectingValidator):
     message: ClassVar[str]
 
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(_Visitor(self.forbidden, self.message), tree)
+        return collect_errors(_Visitor(self.forbidden, self.message), tree, self.name)

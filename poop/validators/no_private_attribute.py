@@ -106,4 +106,4 @@ class NoPrivateAttributeValidator(CollectingValidator):
         own = frozenset(
             node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
         )
-        return collect_errors(_Visitor(own), tree)
+        return collect_errors(_Visitor(own), tree, self.name)

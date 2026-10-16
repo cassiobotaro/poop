@@ -1,3 +1,5 @@
+import io
+
 import pytest
 
 from poop.errors import (
@@ -8,8 +10,10 @@ from poop.errors import (
     _display_width,
     format_error,
     render_error,
+    report,
 )
 from poop.interpreter import Interpreter
+from tests._support import console
 
 
 def test_format_error_draws_gutter_and_caret() -> None:
@@ -169,3 +173,14 @@ def test_display_width_counts_columns_not_characters() -> None:
 def test_a_tab_still_expands_to_its_stop() -> None:
     # The conversion this one was added beside must keep working.
     assert _caret_column("\tx = 1", 1) == 8
+
+
+def test_report_without_a_location_is_one_red_line() -> None:
+    # No line to quote, so no gutter: the one-line form, through the same
+    # writer the CLI's `cannot read` and the REPL's `_error` use.
+    buf = io.StringIO()
+    report(ExecutionError("boom"), None, console(buf, terminal=True))
+    out = buf.getvalue()
+    assert "\x1b[" in out
+    assert "poop: boom" in out
+    assert "|" not in out

@@ -54,8 +54,13 @@ class CollectingValidator:
                 f"{cls.__name__} sets no `visitor` and overrides no `collect`"
             )
 
+    @property
+    def name(self) -> str:
+        """The validator's module name — `no_print` — as `--format json` reports it."""
+        return type(self).__module__.rsplit(".", 1)[-1]
+
     def collect(self, tree: ast.Module) -> list[ValidationError]:
-        return collect_errors(self.visitor(), tree)
+        return collect_errors(self.visitor(), tree, self.name)
 
     def validate(self, tree: ast.Module) -> None:
         errors = self.collect(tree)
@@ -63,12 +68,17 @@ class CollectingValidator:
             raise errors[0]
 
 
-def collect_errors(visitor: ErrorCollector, tree: ast.Module) -> list[ValidationError]:
-    """Run `visitor` over `tree` and hand back what it recorded.
+def collect_errors(
+    visitor: ErrorCollector, tree: ast.Module, validator: str
+) -> list[ValidationError]:
+    """Run `visitor` over `tree` and hand back what it recorded, as `validator`'s.
 
     Every `collect` implementation is the same three-step dance — build the
     visitor, walk the tree, read `errors` back off it. Naming it once keeps the
-    visitor contract (rejections land in `.errors`) in a single place.
+    visitor contract (rejections land in `.errors`) in a single place, and
+    makes it the one place each error learns which validator it came from.
     """
     visitor.visit(tree)
+    for error in visitor.errors:
+        error.validator = validator
     return visitor.errors
