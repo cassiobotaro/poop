@@ -55,6 +55,11 @@ Smalltalk-browser style:
 >>> :help                # list the meta-commands
 ```
 
+The REPL keeps `_` as the last result, completes names and messages on
+Tab (`"abc".up<Tab>`), and remembers your history in `~/.poop_history`.
+A pipe never reaches the REPL: `cat prog.py | poop` runs the program, and
+`poop -c` is the one-liner.
+
 ## The ten essentials
 
 | Python | POOP |

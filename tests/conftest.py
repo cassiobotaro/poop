@@ -11,6 +11,7 @@ import pytest
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from poop.repl import Repl
     from tests._support import FeedInput, SourceFile
 
 
@@ -34,6 +35,17 @@ def feed_input(monkeypatch: pytest.MonkeyPatch) -> FeedInput:
         monkeypatch.setattr("builtins.input", _input)
 
     return _feed
+
+
+# Named through `name=`: a module-level function called `repl` would rebind
+# the `poop.repl` module a test file imports under that name.
+@pytest.fixture(name="repl")
+def _repl(tmp_path: Path) -> Repl:
+    """A REPL whose history lives under `tmp_path`, not in the developer's home."""
+    from poop.interpreter import Interpreter  # noqa: PLC0415 — a fixture's own import
+    from poop.repl import Repl  # noqa: PLC0415
+
+    return Repl(Interpreter(), history=tmp_path / "history")
 
 
 @pytest.fixture

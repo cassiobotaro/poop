@@ -5,7 +5,6 @@ import codeop
 import importlib
 import inspect
 import sys
-import textwrap
 from contextlib import contextmanager, suppress
 from functools import cache
 from pathlib import Path
@@ -154,7 +153,20 @@ class _PoopCompleter:
         )
 
 
-def _setup_readline(namespace: dict[str, object]) -> None:
+def _history_for(history: Path | None) -> Path | None:
+    """The history file a session keeps, or `None` for no readline at all.
+
+    The default is the user's `~/.poop_history` — on a terminal. The REPL
+    used to read and write it unconditionally, so every test that built a
+    `Repl` rewrote the developer's own history, and a `Repl` on a pipe set
+    up completion nobody could press Tab for.
+    """
+    if history is not None:
+        return history
+    return _HISTORY_FILE if sys.stdin.isatty() else None
+
+
+def _setup_readline(namespace: dict[str, object], history: Path) -> None:
     if _readline is None:
         return
 
@@ -163,25 +175,26 @@ def _setup_readline(namespace: dict[str, object]) -> None:
     _readline.set_completer_delims(" \t\n`!@#$^&*()-=+[{]}\\|;:'\",<>/?")
 
     with suppress(FileNotFoundError):
-        _readline.read_history_file(_HISTORY_FILE)
+        _readline.read_history_file(history)
 
     _readline.set_history_length(_HISTORY_MAX)
-    _register_history_saver()
+    _register_history_saver(history)
 
 
 @cache
-def _register_history_saver() -> None:
-    # Once per process: atexit registrations are never removed, so each Repl
-    # registering its own would leak another callback into the global registry.
-    atexit.register(_save_history)
+def _register_history_saver(history: Path) -> None:
+    # Once per process and path: atexit registrations are never removed, so
+    # each Repl registering its own would leak another callback into the
+    # global registry.
+    atexit.register(_save_history, history)
 
 
-def _save_history() -> None:
+def _save_history(history: Path) -> None:
     if _readline is None:
         return
     # Runs at exit, where an unwritable history file must not become a crash.
     with suppress(Exception):
-        _readline.write_history_file(_HISTORY_FILE)
+        _readline.write_history_file(history)
 
 
 def _indent_for(buffer: list[str]) -> str:
@@ -312,7 +325,11 @@ _META_HELP = """\
                     variable or literal — calls are not evaluated)
 :explain <name>     why a construct is forbidden and what to use instead
                     (e.g. :explain if, :explain len, :explain fstring)
-:help               show this help"""
+:help               show this help
+
+_                   the last result — the value the previous line answered
+Tab                 complete a name, or the messages after a dot
+history             kept in ~/.poop_history across sessions (Up to recall)"""
 
 
 def _explain_snippet(construct: str, calls: frozenset[str]) -> str | None:
@@ -330,12 +347,18 @@ class Repl(code.InteractiveConsole):
     that is POOP's: `raw_input` for the prompt, the auto-indent, the meta
     commands and the byte-order mark; `runsource` for the pipeline, the
     per-input filename and the error report; `write` for the console's own
-    few words, on stderr through `err`. The two consoles are constructor
-    parameters, so a test hands its own in rather than patching the module.
+    few words, on stderr through `err`. The two consoles and the history
+    file are constructor parameters, so a test hands its own in rather than
+    patching the module — or rewriting the developer's `~/.poop_history`.
     """
 
     def __init__(
-        self, interpreter: Interpreter, *, out: Console = OUT, err: Console = ERR
+        self,
+        interpreter: Interpreter,
+        *,
+        out: Console = OUT,
+        err: Console = ERR,
+        history: Path | None = None,
     ) -> None:
         super().__init__()
         self._interpreter = interpreter
@@ -355,7 +378,9 @@ class Repl(code.InteractiveConsole):
         # file path used to. A mark is only a mark at the head of the stream,
         # so this is spent once.
         self._leading_mark = True
-        _setup_readline(self._ns)
+        history = _history_for(history)
+        if history is not None:
+            _setup_readline(self._ns, history)
 
     # --- the three sinks ---
 
@@ -432,8 +457,9 @@ class Repl(code.InteractiveConsole):
         header = f"{receiver_label(obj)} understands {len(names)} messages:"
         self._out.print(Text(header, style="dim"), soft_wrap=True, highlight=False)
         # rich lays the messages out in as many columns as the terminal is wide
-        # (a single column when the width is unknown, e.g. a pipe), replacing a
-        # hand-rolled textwrap.fill that always assumed 80.
+        # (80 when the width is unknown, e.g. a pipe), replacing a hand-rolled
+        # textwrap.fill that always assumed 80. `:explain`'s listing is laid
+        # out the same way.
         self._out.print(Columns(names, padding=(0, 2), column_first=True))
 
     def _meta_explain(self, arg: str) -> None:
@@ -455,7 +481,7 @@ class Repl(code.InteractiveConsole):
             # listing is an answer and stays on stdout.
             self._error(f"no :explain topic for {arg!r}.")
             self._say("Known constructs:")
-            self._say(textwrap.fill("  ".join(known), width=80))
+            self._out.print(Columns(known, padding=(0, 2), column_first=True))
             return
         errors = self._interpreter.validate_all(snippet, "<explain>")
         if not errors:

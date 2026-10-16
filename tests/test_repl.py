@@ -36,13 +36,6 @@ from tests._support import FeedInput, console
 _DEFAULT_CALLS = _explain_calls(DEFAULT_VALIDATORS)
 
 
-# Named through `name=`: a module-level function called `repl` would rebind
-# the `poop.repl` module this file imports under that name.
-@pytest.fixture(name="repl")
-def _repl() -> Repl:
-    return Repl(Interpreter())
-
-
 def test_namespace_persists_across_calls(repl: Repl) -> None:
     ns = repl._ns
     repl._interpreter.run_source_repl("x = 42", ns)
@@ -119,19 +112,53 @@ def test_indent_for(buffer: list[str], indent: str) -> None:
 # --- _setup_readline ---
 
 
-def test_setup_readline_does_not_crash() -> None:
-    _setup_readline({})
+def test_setup_readline_does_not_crash(tmp_path: Path) -> None:
+    _setup_readline({}, tmp_path / "history")
 
 
-def test_setup_readline_with_nonempty_namespace_does_not_crash() -> None:
-    _setup_readline({"x": 1, "_poop_true": True})
+def test_setup_readline_with_nonempty_namespace_does_not_crash(
+    tmp_path: Path,
+) -> None:
+    _setup_readline({"x": 1, "_poop_true": True}, tmp_path / "history")
+
+
+def test_no_readline_when_stdin_is_not_a_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A `Repl` on a pipe used to read `~/.poop_history` and register a saver
+    # for it — every test that built one rewrote the developer's history.
+    calls: list[object] = []
+    monkeypatch.setattr(repl, "_setup_readline", lambda *a: calls.append(a))
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+    Repl(Interpreter())
+    assert calls == []
+
+
+def test_the_default_history_is_the_home_file_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[object] = []
+    monkeypatch.setattr(repl, "_setup_readline", lambda ns, h: calls.append(h))
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    Repl(Interpreter())
+    assert calls == [Path.home() / ".poop_history"]
+
+
+def test_a_given_history_is_used_whatever_stdin_is(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    calls: list[object] = []
+    monkeypatch.setattr(repl, "_setup_readline", lambda ns, h: calls.append(h))
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+    Repl(Interpreter(), history=tmp_path / "h")
+    assert calls == [tmp_path / "h"]
 
 
 # --- _save_history ---
 
 
-def test_save_history_does_not_crash() -> None:
-    _save_history()
+def test_save_history_does_not_crash(tmp_path: Path) -> None:
+    _save_history(tmp_path / "history")
 
 
 # --- _displayhook ---
@@ -826,6 +853,20 @@ def test_meta_help_lists_commands(
     assert ":explain" in out
 
 
+def test_meta_help_names_the_affordances(
+    repl: Repl, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # `_`, Tab completion and the history file existed and were documented
+    # nowhere a user could find them.
+    repl._meta(":help")
+    out = capsys.readouterr().out
+    assert "_  " in out
+    assert "last result" in out
+    assert "Tab" in out
+    assert "complete" in out
+    assert "history" in out
+
+
 def test_meta_unknown_command_suggests_help(
     repl: Repl,
     capsys: pytest.CaptureFixture[str],
@@ -866,30 +907,24 @@ def test_setup_readline_without_readline_module_is_a_noop(
 ) -> None:
     # A build without readline must degrade quietly.
     monkeypatch.setattr("poop.repl._readline", None)
-    _setup_readline({})
+    _setup_readline({}, Path("unused"))
 
 
-def test_setup_readline_missing_history_file_is_ignored(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setattr(repl, "_HISTORY_FILE", tmp_path / "does_not_exist")
-    _setup_readline({})
+def test_setup_readline_missing_history_file_is_ignored(tmp_path: Path) -> None:
+    _setup_readline({}, tmp_path / "does_not_exist")
 
 
 def test_save_history_without_readline_is_a_noop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr("poop.repl._readline", None)
-    _save_history()
+    _save_history(Path("unused"))
 
 
-def test_save_history_swallows_write_errors(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_save_history_swallows_write_errors(tmp_path: Path) -> None:
     # A history path under a missing directory makes write_history_file raise;
     # the saver must swallow it so a crash at exit is impossible.
-    monkeypatch.setattr(repl, "_HISTORY_FILE", tmp_path / "nope" / "hist")
-    _save_history()
+    _save_history(tmp_path / "nope" / "hist")
 
 
 def test_readline_input_without_readline_falls_back_to_input(
