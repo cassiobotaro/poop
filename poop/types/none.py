@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, final
 
 from poop.types._argument import a_block, no_arguments
+from poop.types._sentinel import MISSING, Missing
 from poop.types.boolean import false, true
 from poop.types.object import _PAIR, _PAIR_SWAPPED, Object
 
@@ -21,21 +22,27 @@ class NoneClass(Object, name="NoneType"):
         no_arguments(cls, args, kwargs)
         return none
 
-    def if_none[T](self, block: Callable[[], T]) -> T:
+    def if_none[T](self, block: Callable[[], T] | Missing = MISSING) -> T:
         return a_block(block, "if_none", param="")()
 
-    def if_not_none(self, block: Callable[[Object], object]) -> NoneClass:
+    def if_not_none(
+        self, block: Callable[[Object], object] | Missing = MISSING
+    ) -> NoneClass:
         a_block(block, "if_not_none")
         return self
 
     def if_none_if_not_none[T](
-        self, none_block: Callable[[], T], present_block: Callable[[Object], object]
+        self,
+        none_block: Callable[[], T] | Missing = MISSING,
+        present_block: Callable[[Object], object] | Missing = MISSING,
     ) -> T:
         a_block(present_block, "if_none_if_not_none", spelt=_PAIR)
         return a_block(none_block, "if_none_if_not_none", spelt=_PAIR)()
 
     def if_not_none_if_none[T](
-        self, present_block: Callable[[Object], object], none_block: Callable[[], T]
+        self,
+        present_block: Callable[[Object], object] | Missing = MISSING,
+        none_block: Callable[[], T] | Missing = MISSING,
     ) -> T:
         a_block(present_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)
         return a_block(none_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)()

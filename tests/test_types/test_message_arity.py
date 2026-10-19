@@ -183,3 +183,57 @@ def test_a_caught_error_names_its_exceptions_class(handler: str, expected: str) 
         f".except_(ValueError, lambda e: {handler}).run()"
     )
     assert _refusal(source) == f"TypeError: {expected}"
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            "True.if_true()",
+            "#if_true expects a block, got nothing — write .if_true(lambda: …)",
+        ),
+        ("True.and_()", "#and_ expects a block, got nothing — write .and_(lambda: …)"),
+        (
+            "None.if_none()",
+            "#if_none expects a block, got nothing — write .if_none(lambda: …)",
+        ),
+        (
+            "(5).if_none_if_not_none()",
+            "#if_none_if_not_none expects a block, got nothing — "
+            "write .if_none_if_not_none(lambda: …, lambda x: …)",
+        ),
+        (
+            "(lambda: True).while_true()",
+            "#while_true expects a block, got nothing — write .while_true(lambda: …)",
+        ),
+    ],
+    ids=["a-boolean", "and_", "none", "an-object", "a-block"],
+)
+def test_a_missing_block_in_the_branch_family_is_refused_with_the_hint(
+    source: str, expected: str
+) -> None:
+    # The substitutes for `if`, `and`/`or` and `while` answered CPython's
+    # `bool.if_true() missing 1 required positional argument: 'block'`, while
+    # `[1].map()` already answered the hint. They take `MISSING` defaults now.
+    assert _refusal(source) == f"TypeError: {expected}"
+
+
+def test_a_missing_second_block_runs_neither() -> None:
+    # Both slots are checked before either block runs.
+    assert _refusal('True.if_true_if_false(lambda: "ran".print())').startswith(
+        "TypeError: #if_true_if_false expects a block, got nothing"
+    )
+
+
+@pytest.mark.parametrize(
+    ("source", "selector"),
+    [
+        ("True.if_false_if_true(5, 5)", "if_false_if_true"),
+        ("True.if_true_if_false(lambda: 1)", "if_true_if_false"),
+    ],
+    ids=["non-block", "missing"],
+)
+def test_a_boolean_pair_hints_both_blocks(source: str, selector: str) -> None:
+    # It showed one (`.if_true_if_false(lambda: …)`) for a message taking two,
+    # where the null pairs already show both.
+    assert _refusal(source).endswith(f"— write .{selector}(lambda: …, lambda: …)")

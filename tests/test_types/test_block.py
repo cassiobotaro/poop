@@ -510,3 +510,17 @@ def test_an_instance_method_read_off_the_class_is_still_refused() -> None:
         "AttributeError: str does not understand #upper — "
         "#upper asks an instance; send it to one (line 1)"
     )
+
+
+@pytest.mark.parametrize(
+    "source", ['True.get_attr("if_true")()', 'True.get_attr("if_true")(lambda: 1, 2)']
+)
+def test_a_branch_message_fetched_by_name_names_no_interpreter_class(
+    source: str,
+) -> None:
+    # `block-arity`'s rule for a block made by `get_attr`: whatever the arity
+    # sentence, it carries none of the interpreter's own names. The branch
+    # family's `MISSING` defaults change its parameters, not that.
+    message = _program_failure(source)
+    for internal in ("Missing", "MISSING", "Callable", "Boolean", "_TrueClass"):
+        assert internal not in message, message
