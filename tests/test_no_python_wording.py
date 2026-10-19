@@ -246,7 +246,6 @@ _FAILING = [
     'KeyError("outer").raise_from(ValueError)',
     'KeyError("outer").raise_from()',
     'KeyError("outer").raise_from(ValueError("a"), ValueError("b"))',
-    'ValueError("x").raise_(1)',
     "With(5).do(lambda x: x)",
     # A receiver that cannot be entered, and one that can be entered but never
     # exited: CPython names the missing dunder in both.
@@ -603,8 +602,9 @@ def _wrong_arguments() -> list[object]:
 #
 # The shape is exempt; the name inside it is not. CPython names the class that
 # *defines* the method, so the callee must be one CPython would name: the
-# class itself for a class receiver; for an instance, its own class, `object`
-# for a message `Object` defines, or the wrapper a program's subclass extends.
+# class itself for a class receiver; for an instance, the class it answers to
+# `class_()`, `object` for a message `Object` defines, or the wrapper a
+# program's subclass extends.
 # The oracle reads those off the receiver, independently of how
 # `_MethodBlock` chooses — skipping the name is how `[1].map(1, 2)` blamed
 # `object.map()` and `int.hash(1)` a bare `hash()` while this sweep passed.
@@ -627,19 +627,26 @@ def _callees_cpython_would_name(receiver: object, name: str) -> set[str]:
     """The classes an arity sentence for `receiver.name(...)` may name."""
     if isinstance(receiver, type):
         return {receiver.__name__}
-    names = {type(receiver).__name__}
+    # The class the receiver says it is, not its type's name: a caught error
+    # is cloaked as `object` and answers `class_()` with its exception's class,
+    # and reading the type let `object.message()` pass for a `ValueError`.
+    names = {receiver.class_().__name__}
     if name in vars(Object):
         names.add("object")
-    wrapper = next(
-        (
-            cls
-            for cls in type(receiver).__mro__
-            if isinstance(cls, PoopMeta) and cls.__module__ == "builtins"
-        ),
-        None,
-    )
-    if wrapper is not None:
-        names.add(wrapper.__name__)
+    # Only for a program's subclass, whose own type is no wrapper: for a
+    # wrapper, the nearest wrapper is itself, and a caught error's is `Error`,
+    # cloaked as `object` — the very name this oracle must refuse it.
+    if type(receiver).__module__ != "builtins":
+        wrapper = next(
+            (
+                cls
+                for cls in type(receiver).__mro__
+                if isinstance(cls, PoopMeta) and cls.__module__ == "builtins"
+            ),
+            None,
+        )
+        if wrapper is not None:
+            names.add(wrapper.__name__)
     return names
 
 

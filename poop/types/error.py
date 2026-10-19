@@ -1,12 +1,11 @@
 import builtins
 from typing import TYPE_CHECKING, Never, final
 
-from poop.types import mirrors
 from poop.types._alias import unalias
 from poop.types._argument import a_class
 from poop.types._message import poop_message
 from poop.types._selectors import explain, is_message, not_understood
-from poop.types.block import _as_block, _count
+from poop.types.block import _as_block
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import (
     _PYTHON_ATTRIBUTES,
@@ -120,7 +119,7 @@ class Error(Object, name="object"):
             return none
         return _linked(exception.__context__)
 
-    def raise_(self, *extra: object) -> Never:
+    def raise_(self) -> Never:
         """Signal this error again — POOP's substitute for a bare `raise`.
 
         `raise_` is a *class-side* message, so `e.raise_()` used to answer
@@ -134,14 +133,7 @@ class Error(Object, name="object"):
         identity, its notes and its traceback survive — which is what a handler
         that logs and rethrows actually wants, and what Python's bare `raise`
         does.
-
-        An argument is refused in POOP's words: CPython counted the receiver
-        as one (`object.raise_() takes 1 positional argument`).
         """
-        if extra:
-            raise mirrors.TypeError(
-                f"#raise_ takes no argument on a caught error, got {_count(len(extra))}"
-            )
         raise self._exception
 
     def _state(self) -> dict[str, object]:

@@ -297,14 +297,7 @@ def _kind(self: BaseException) -> PoopExcMeta:
     return poop_class_of(self)
 
 
-def _raise(self: BaseException, *extra: object) -> Never:
-    # Counted here: CPython's `Exception.raise_() takes 1 positional argument
-    # but 2 were given` names the receiver as an argument POOP never spells.
-    if extra:
-        raise MIRRORS["TypeError"](
-            f"#raise_ takes no argument once the exception is built, "
-            f"got {_count(len(extra))}"
-        )
+def _raise(self: BaseException) -> Never:
     raise self
 
 

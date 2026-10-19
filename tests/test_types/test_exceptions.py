@@ -475,10 +475,10 @@ def test_raise_from_refuses_anything_but_one_exception_or_none(
     )
 
 
-def test_raise_on_a_built_exception_refuses_an_argument_in_poops_words() -> None:
+def test_raise_on_a_built_exception_refuses_an_argument_in_cpythons_shape() -> None:
+    # No hint to give, so CPython's sentence, with the exception's class named.
     with pytest.raises(ExecutionError) as info:
         Interpreter().run_source('ValueError("x").raise_(1)\n')
     assert info.value.message == (
-        "TypeError: #raise_ takes no argument once the exception is built, "
-        "got 1 argument"
+        "TypeError: ValueError.raise_() takes 1 positional argument but 2 were given"
     )

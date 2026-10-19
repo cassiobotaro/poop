@@ -11,6 +11,11 @@ from poop.types.meta import PoopMeta
 from poop.types.none import none
 from poop.types.object import Object
 
+# circular: error imports block, and exceptions imports object, which block
+# imports. Read only when a failing call is being reworded.
+lazy from poop.types.error import Error
+lazy from poop.types.exceptions import poop_class_of
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
@@ -316,6 +321,10 @@ def _cpython_name(method: Renamable, read_off: type | None) -> str:
         or (isinstance(owner, PoopMeta) and not _is_wrapper(owner))
     ):
         return qualname
+    # A caught error is cloaked as `object` and answers to its exception's
+    # class (`e.class_name()` is `ValueError`), so that is the class to name.
+    if isinstance(receiver, Error):
+        return f"{poop_class_of(receiver._exception).__name__}.{name}"
     wrapper = next((cls for cls in mro if _is_wrapper(cls)), None)
     return qualname if wrapper is None else f"{wrapper.__name__}.{name}"
 

@@ -162,3 +162,24 @@ def test_a_function_with_no_receiver_and_no_class_keeps_its_name() -> None:
     with pytest.raises(TypeError) as info:
         _MethodBlock(lone)(1)  # ty: ignore[too-many-positional-arguments]
     assert str(info.value) == "str.lone() takes 0 positional arguments but 1 was given"
+
+
+@pytest.mark.parametrize(
+    ("handler", "expected"),
+    [
+        (
+            "e.message(1)",
+            "ValueError.message() takes 1 positional argument but 2 were given",
+        ),
+        ("e.repr(1)", "object.repr() takes 1 positional argument but 2 were given"),
+    ],
+    ids=["its-own-message", "a-message-object-defines"],
+)
+def test_a_caught_error_names_its_exceptions_class(handler: str, expected: str) -> None:
+    # `Error` is cloaked as `object`, and `e.message(1)` blamed `object.message()`
+    # for an error whose `class_name()` is `ValueError`.
+    source = (
+        'Try(lambda: ValueError.raise_("x"))'
+        f".except_(ValueError, lambda e: {handler}).run()"
+    )
+    assert _refusal(source) == f"TypeError: {expected}"

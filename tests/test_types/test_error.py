@@ -377,12 +377,12 @@ def test_a_cause_is_the_error_a_handler_was_given() -> None:
     assert Error(outer).cause() == Error(caught)
 
 
-def test_raise_on_a_caught_error_refuses_an_argument_in_poops_words() -> None:
+def test_raise_on_a_caught_error_refuses_an_argument_in_cpythons_shape() -> None:
     with pytest.raises(ExecutionError) as info:
         Interpreter().run_source(
             'Try(lambda: ValueError.raise_("x"))'
             ".except_(ValueError, lambda e: e.raise_(1)).run()\n"
         )
     assert info.value.message == (
-        "TypeError: #raise_ takes no argument on a caught error, got 1 argument"
+        "TypeError: ValueError.raise_() takes 1 positional argument but 2 were given"
     )
