@@ -926,6 +926,7 @@ class PoopMeta(type):
     @class_side
     def print(
         cls,
+        *,
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:

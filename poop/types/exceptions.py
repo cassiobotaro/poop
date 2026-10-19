@@ -346,6 +346,7 @@ def _raise_from(self: BaseException, *causes: object) -> Never:
 
 def _print(
     self: BaseException,
+    *,
     end: Str | NoneClass | None = None,
     flush: Boolean | NoneClass | None = None,
 ) -> NoneClass:

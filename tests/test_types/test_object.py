@@ -579,17 +579,41 @@ def test_get_attr_refuses_two_defaults_without_naming_getattr() -> None:
     ("source", "expected"),
     [
         ("(5).print(end=5)", "#print's end must be a str, got an int"),
-        ('"x".print(5)', "#print's end must be a str, got an int"),
         ("[1].print(sep=5)", "#print's sep must be a str, got an int"),
         ('ValueError("x").print(end=[])', "#print's end must be a str, got a list"),
     ],
-    ids=["end", "positional_end", "sep", "exception_end"],
+    ids=["end", "sep", "exception_end"],
 )
 def test_print_checks_end_and_sep_in_poops_words(source: str, expected: str) -> None:
     # `_unwrap` passed anything through to `builtins.print`, which answered
     # `end must be None or a string, not int` — no receiver, no message.
     with pytest.raises(PoopError) as info:
         Interpreter().run_source(source)
+    assert info.value.message == f"TypeError: {expected}"
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('"x".print(5)', "object.print() takes 1 positional argument but 2 were given"),
+        (
+            '(5).print("x", end="")',
+            "object.print() takes 1 positional argument but 2 positional "
+            "arguments (and 1 keyword-only argument) were given",
+        ),
+        ("[1].print(5)", "list.print() takes 1 positional argument but 2 were given"),
+        ("int.print(5)", "int.print() takes 1 positional argument but 2 were given"),
+    ],
+    ids=["str", "with_end", "list", "class"],
+)
+def test_print_takes_end_sep_and_flush_by_keyword_only(
+    source: str, expected: str
+) -> None:
+    # As CPython's `print`: a positional `end` used to be read as one, so
+    # `(5).print("x")` printed `5x` and `(5).print("x", end="")` answered
+    # `object.print() got multiple values for argument 'end'`.
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
     assert info.value.message == f"TypeError: {expected}"
 
 

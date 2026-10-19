@@ -292,6 +292,7 @@ class Object(metaclass=PoopMeta):
 
     def print(
         self,
+        *,
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
     ) -> NoneClass:

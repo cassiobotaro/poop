@@ -97,6 +97,7 @@ class Tuple(
 
     def print(
         self,
+        *,
         sep: Str | NoneClass | None = None,
         end: Str | NoneClass | None = None,
         flush: Boolean | NoneClass | None = None,
