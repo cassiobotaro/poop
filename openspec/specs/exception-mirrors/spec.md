@@ -88,9 +88,10 @@ is not an exception and an exception class, naming what it takes.
 - **THEN** a `TypeError` is raised reading `#raise_from takes an exception or None, got 2 arguments`
 
 ### Requirement: raise_ on a built exception takes no argument
-`raise_()` on an exception instance SHALL refuse any argument with a
-sentence of POOP's, never CPython's `positional argument` wording.
+`raise_()` on an exception instance SHALL refuse any argument with CPython's
+wrong-arity sentence, naming the exception's class as CPython would. The
+sentence has no hint to give, so POOP does not reword it.
 
 #### Scenario: One argument
 - **WHEN** a program runs `ValueError("x").raise_(1)`
-- **THEN** a `TypeError` is raised reading `#raise_ takes no argument once the exception is built, got 1 argument`
+- **THEN** a `TypeError` is raised reading `ValueError.raise_() takes 1 positional argument but 2 were given`

@@ -64,9 +64,10 @@ was suppressed by `raise_from`.
 - **THEN** it prints `True`
 
 ### Requirement: raise_ on a caught error takes no argument
-`raise_()` on a caught error SHALL refuse any argument with a sentence of
-POOP's, never CPython's `positional argument` wording.
+`raise_()` on a caught error SHALL refuse any argument with CPython's
+wrong-arity sentence, naming the class of the exception the error wraps.
+The sentence has no hint to give, so POOP does not reword it.
 
 #### Scenario: One argument
 - **WHEN** a handler for `ValueError` runs `e.raise_(1)`
-- **THEN** a `TypeError` is raised reading `#raise_ takes no argument on a caught error, got 1 argument`
+- **THEN** a `TypeError` is raised reading `ValueError.raise_() takes 1 positional argument but 2 were given`
