@@ -45,4 +45,4 @@ answer `none` as before.
 
 #### Scenario: default is keyword-only
 - **WHEN** a program sends `find(lambda x: x, 0)` to `[1]`
-- **THEN** a `TypeError` is raised reading `#find takes a block and an optional default= — write .find(lambda x: …, default=…)`
+- **THEN** a `TypeError` is raised reading `#find takes a block and an optional default= — write .find(lambda item: …, default=…)`

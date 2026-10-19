@@ -22,4 +22,4 @@ express by chaining.
 
 #### Scenario: The branch not taken is still checked
 - **WHEN** a program sends `if_none_if_not_none(lambda: 1, 5)` to `None`
-- **THEN** a `TypeError` is raised reading `#if_none_if_not_none expects a block, got an int — write .if_none_if_not_none(lambda: …, lambda x: …)`
+- **THEN** a `TypeError` is raised reading `#if_none_if_not_none expects a block, got an int — write .if_none_if_not_none(lambda: …, lambda value: …)`

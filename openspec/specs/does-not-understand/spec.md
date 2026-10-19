@@ -24,7 +24,15 @@ message or spelling that answers it.
 
 #### Scenario: A loop selector on an int
 - **WHEN** a program sends `timesRepeat(lambda: 1)` to `(3)`
-- **THEN** an `AttributeError` is raised reading `int does not understand #timesRepeat — Smalltalk's #timesRepeat is range(n).do(lambda i: …) here`
+- **THEN** an `AttributeError` is raised reading `int does not understand #timesRepeat — Smalltalk's #timesRepeat is range(n).do(lambda item: …) here`
+
+#### Scenario: A range selector with bounds
+- **WHEN** a program sends `toDo(3, lambda i: i)` to `(1)`
+- **THEN** an `AttributeError` is raised reading `int does not understand #toDo — Smalltalk's #toDo is range(a, b).do(lambda item: …) here`
+
+#### Scenario: A search selector
+- **WHEN** a program sends `detectIfNone(1, 2)` to `[1]`
+- **THEN** an `AttributeError` is raised reading `list does not understand #detectIfNone — Smalltalk's #detectIfNone is .find(lambda item: …, default=…) here`
 
 #### Scenario: A dict selector
 - **WHEN** a program sends `atIfAbsent(1, 2)` to `{}`

@@ -90,8 +90,26 @@ object does.
 
 #### Scenario: Both arguments are checked on the receiver that runs neither
 - **WHEN** a program sends `if_none_if_not_none(5, lambda x: x)` to `(5)`
-- **THEN** a `TypeError` is raised reading `#if_none_if_not_none expects a block, got an int — write .if_none_if_not_none(lambda: …, lambda x: …)`
+- **THEN** a `TypeError` is raised reading `#if_none_if_not_none expects a block, got an int — write .if_none_if_not_none(lambda: …, lambda value: …)`
 
 #### Scenario: A class is an object
 - **WHEN** a program prints `int.if_none_if_not_none(lambda: "absent", lambda k: k.name())`
 - **THEN** it prints `int`
+
+### Requirement: The null tests hint the receiver's value as value
+A refusal from `if_not_none` or either null pair, on `None` and on every
+object, SHALL name the block's argument `value` in its hint, as `else_`
+names the value it hands on, since the argument is the receiver's own value
+and not an element of a collection.
+
+#### Scenario: if_not_none on an object
+- **WHEN** a program runs `(5).if_not_none(5)`
+- **THEN** a `TypeError` is raised reading `#if_not_none expects a block, got an int — write .if_not_none(lambda value: …)`
+
+#### Scenario: if_not_none on None
+- **WHEN** a program runs `None.if_not_none(5)`
+- **THEN** a `TypeError` is raised reading `#if_not_none expects a block, got an int — write .if_not_none(lambda value: …)`
+
+#### Scenario: The swapped pair
+- **WHEN** a program runs `(5).if_not_none_if_none(5, lambda: 1)`
+- **THEN** a `TypeError` is raised reading `#if_not_none_if_none expects a block, got an int — write .if_not_none_if_none(lambda value: …, lambda: …)`

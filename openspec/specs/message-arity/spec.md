@@ -108,7 +108,7 @@ non-block, showing every block the message takes.
 
 #### Scenario: A null pair on an object
 - **WHEN** a program runs `(5).if_none_if_not_none()`
-- **THEN** a `TypeError` is raised reading `#if_none_if_not_none expects a block, got nothing — write .if_none_if_not_none(lambda: …, lambda x: …)`
+- **THEN** a `TypeError` is raised reading `#if_none_if_not_none expects a block, got nothing — write .if_none_if_not_none(lambda: …, lambda value: …)`
 
 #### Scenario: while_true with nothing
 - **WHEN** a program runs `(lambda: True).while_true()`
