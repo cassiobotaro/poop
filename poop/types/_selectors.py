@@ -43,7 +43,7 @@ SMALLTALK_SELECTORS: dict[str, SelectorRow] = {
     "collect": "map",
     "copyFrom": "slice",
     "detect": "find",
-    "detectIfNone": (".find(lambda x: …, default=…)", "find"),
+    "detectIfNone": (".find(lambda item: …, default=…)", "find"),
     "displayNl": "print",
     "first": (".at(0)", "at"),
     "ifFalse": "if_false",
@@ -68,8 +68,8 @@ SMALLTALK_SELECTORS: dict[str, SelectorRow] = {
     "reverse": "reversed",
     "select": "filter",
     "size": "len",
-    "timesRepeat": ("range(n).do(lambda i: …)", None),
-    "toDo": ("range(a, b).do(lambda i: …)", None),
+    "timesRepeat": ("range(n).do(lambda item: …)", None),
+    "toDo": ("range(a, b).do(lambda item: …)", None),
 }
 
 

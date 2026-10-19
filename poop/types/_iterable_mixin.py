@@ -141,7 +141,7 @@ class _IterableMixin[T: Object](_Mixin):
         if extra:
             raise mirrors.TypeError(
                 "#find takes a block and an optional default= — "
-                "write .find(lambda x: …, default=…)"
+                "write .find(lambda item: …, default=…)"
             )
         block = a_block(block, "find")
         absent = none if default is MISSING else default

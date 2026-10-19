@@ -72,14 +72,14 @@ def test_smalltalk_selector_table_only_maps_to_messages_that_exist() -> None:
         (
             List(Int(1)),
             "detectIfNone",
-            "Smalltalk's #detectIfNone is .find(lambda x: …, default=…) here",
+            "Smalltalk's #detectIfNone is .find(lambda item: …, default=…) here",
         ),
         (
             Int(3),
             "timesRepeat",
-            "Smalltalk's #timesRepeat is range(n).do(lambda i: …) here",
+            "Smalltalk's #timesRepeat is range(n).do(lambda item: …) here",
         ),
-        (Int(3), "toDo", "Smalltalk's #toDo is range(a, b).do(lambda i: …) here"),
+        (Int(3), "toDo", "Smalltalk's #toDo is range(a, b).do(lambda item: …) here"),
         (Dict(), "atIfAbsent", "Smalltalk's #atIfAbsent is #get here"),
         (Dict(), "keysAndValuesDo", "Smalltalk's #keysAndValuesDo is #items here"),
         (
@@ -319,3 +319,29 @@ def test_a_lazy_view_says_how_to_materialize(source: str, expected: str) -> None
 
 def test_a_lazy_view_still_answers_what_it_consumes() -> None:
     assert List(Int(2), Int(1)).map(lambda x: x).sorted() == List(Int(1), Int(2))
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            "(1).toDo(3, lambda i: i)",
+            "int does not understand #toDo — "
+            "Smalltalk's #toDo is range(a, b).do(lambda item: …) here",
+        ),
+        (
+            "[1].detectIfNone(1, 2)",
+            "list does not understand #detectIfNone — "
+            "Smalltalk's #detectIfNone is .find(lambda item: …, default=…) here",
+        ),
+    ],
+    ids=["toDo", "detectIfNone"],
+)
+def test_a_smalltalk_hint_names_a_collection_element_item(
+    source: str, expected: str
+) -> None:
+    # `item`, as every other hint names an element of a collection; these
+    # said `i` for a range element and `x` for the one `find` searches.
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(source + "\n")
+    assert info.value.message == f"AttributeError: {expected}"

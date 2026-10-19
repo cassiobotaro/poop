@@ -728,5 +728,5 @@ def test_find_refuses_a_positional_default() -> None:
     with pytest.raises(TypeError) as info:
         List(Int(1)).find(lambda x: x, Int(0))  # ty: ignore[no-matching-overload]
     assert str(info.value) == (
-        "#find takes a block and an optional default= — write .find(lambda x: …, default=…)"
+        "#find takes a block and an optional default= — write .find(lambda item: …, default=…)"
     )
