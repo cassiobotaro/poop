@@ -600,6 +600,14 @@ def _wrong_arguments() -> list[object]:
 # CPython's wrong-arity report is the one shape deliberately left to it:
 # `_cloak`'s docstring says so, and it only renames the callee. Everything
 # else is POOP's to word.
+#
+# The shape is exempt; the name inside it is not. CPython names the class that
+# *defines* the method, so the callee must be one CPython would name: the
+# class itself for a class receiver; for an instance, its own class, `object`
+# for a message `Object` defines, or the wrapper a program's subclass extends.
+# The oracle reads those off the receiver, independently of how
+# `_MethodBlock` chooses — skipping the name is how `[1].map(1, 2)` blamed
+# `object.map()` and `int.hash(1)` a bare `hash()` while this sweep passed.
 _ARITY = re.compile(
     r"(takes|missing|got) .*(positional argument|argument)|"
     r"takes no arguments|"
@@ -611,6 +619,37 @@ _ARITY = re.compile(
 # stdout redirected: listing it here hid `end must be None or a string, not
 # int` on the most-sent message in the language.
 _UNSENDABLE = frozenset({"input", "does_not_understand", "while_true", "while_false"})
+
+_CALLEE = re.compile(r"^(?:(?P<cls>[\w.]+)\.)?(?P<name>\w+)\(\) ")
+
+
+def _callees_cpython_would_name(receiver: object, name: str) -> set[str]:
+    """The classes an arity sentence for `receiver.name(...)` may name."""
+    if isinstance(receiver, type):
+        return {receiver.__name__}
+    names = {type(receiver).__name__}
+    if name in vars(Object):
+        names.add("object")
+    wrapper = next(
+        (
+            cls
+            for cls in type(receiver).__mro__
+            if isinstance(cls, PoopMeta) and cls.__module__ == "builtins"
+        ),
+        None,
+    )
+    if wrapper is not None:
+        names.add(wrapper.__name__)
+    return names
+
+
+def _misnamed(receiver: object, name: str, text: str) -> str | None:
+    """The class an arity sentence names, when CPython would not name it."""
+    found = _CALLEE.match(text)
+    if found is None:
+        return None
+    named = found["cls"] or "(no class)"
+    return None if named in _callees_cpython_would_name(receiver, name) else named
 
 
 def _sweep_failures() -> list[tuple[str, str, str]]:
@@ -628,22 +667,29 @@ def _sweep_failures() -> list[tuple[str, str, str]]:
             if not callable(message):
                 continue
             for bad in _wrong_arguments():
-                for args in ((bad,), (bad, bad)):
+                # Six as well: over-supplying is the one arity failure no
+                # sentinel default catches, so every message reaches CPython.
+                for args in ((bad,), (bad, bad), (bad,) * 6):
                     try:
                         with contextlib.redirect_stdout(io.StringIO()):
                             message(*args)
                     except BaseException as exc:  # noqa: BLE001
-                        text = poop_message(exc)
-                        if _ARITY.search(text) or any(f in text for f in _EXEMPT):
-                            continue
-                        named = [
-                            construct
-                            for construct, pattern in _FORBIDDEN.items()
-                            if pattern.search(text)
-                        ]
-                        if named:
-                            found.setdefault((label, name), (label, name, text))
+                        leak = _leak(receiver, name, poop_message(exc))
+                        if leak is not None:
+                            found.setdefault((label, name), (label, name, leak))
     return sorted(found.values())
+
+
+def _leak(receiver: object, name: str, text: str) -> str | None:
+    """What a failure's text gets wrong, or None when it is POOP's to answer."""
+    if _ARITY.search(text):
+        wrong = _misnamed(receiver, name, text)
+        return None if wrong is None else f"names {wrong}: {text}"
+    if any(f in text for f in _EXEMPT):
+        return None
+    if any(pattern.search(text) for pattern in _FORBIDDEN.values()):
+        return text
+    return None
 
 
 def test_no_message_leaks_pythons_wording_when_sent_wrong() -> None:

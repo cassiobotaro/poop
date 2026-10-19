@@ -113,21 +113,15 @@ def test_no_class_answers_a_private_name() -> None:
         # constructor call fell through to the class binding when the converter
         # could not take its arity. It reaches the converter now and is refused
         # in POOP's words — see `test_transformers/test_constructor_arity.py`.
-        # Inherited from a mixin, which owns no builtin name of its own: cloaked
-        # as `object`, the root's spelling, rather than as a private one.
-        #
-        # `[1, 2].map()` used to sit here too. The cloak's own
-        # justification is "it only renames the callee", and that holds where
-        # the rename is true — `object` is a name a program can write, and
-        # `object` does not answer `#map`. The block slots carry a sentinel
-        # default now, so a missing block is refused by the receiver rather
-        # than by CPython's call machinery. The two below keep the exemption:
-        # they are over-supplied rather than under-supplied, which no default
-        # can catch.
-        ("[1].iter().next(1, 2)", "object.next()"),
-        ('{"a": 1}.keys().len(1)', "object.len()"),
+        # Inherited from a mixin, which owns no builtin name of its own. The
+        # mixin is cloaked as `object`, and these used to blame `object.next()`
+        # — a name a program can write, for a class that does not answer
+        # `#next`. `_MethodBlock` names the receiver's builtin at the call,
+        # which is what CPython names for a type that defines its own method.
+        ("[1].iter().next(1, 2)", "list_iterator.next()"),
+        ('{"a": 1}.keys().len(1)', "dict_keys.len()"),
         # Owned by `_IteratorBase`, which was left uncloaked and blamed itself.
-        ("[1].iter().iter(1)", "object.iter()"),
+        ("[1].iter().iter(1)", "list_iterator.iter()"),
         # `range`, `int`, `float`, `bool` and `enumerate` used to sit here for
         # the same reason `dict` did: the cloak made CPython's arity message
         # name `range()` instead of `_poop_range()`. All five (and `zip`,
@@ -147,9 +141,9 @@ def test_arity_errors_name_no_internal_spelling(source: str, expected: str) -> N
 @pytest.mark.parametrize(
     ("source", "expected"),
     [
-        ("Foo.name(5)", "name()"),
-        ("Foo.print(1, 2, 3)", "print()"),
-        ("Foo.has_attr()", "has_attr()"),
+        ("Foo.name(5)", "Foo.name()"),
+        ("Foo.print(1, 2, 3)", "Foo.print()"),
+        ("Foo.has_attr()", "Foo.has_attr()"),
     ],
 )
 def test_class_side_arity_errors_name_no_internal_spelling(
@@ -159,7 +153,9 @@ def test_class_side_arity_errors_name_no_internal_spelling(
     # descriptor keeps its function in `_fn` and `PoopMeta` is never cloaked at
     # all — so the class side, a documented user-facing surface, answered
     # `PoopMeta.name() takes 1 positional argument but 2 were given`. `PoopMeta`
-    # is a name a program cannot write and cannot reach.
+    # is a name a program cannot write and cannot reach. The cloak gave the
+    # bare message name; `_MethodBlock` adds the class at the call, as
+    # CPython's `int.mro(1)` names `int`.
     with pytest.raises(ExecutionError) as caught:
         Interpreter().run_source(f"class Foo(Object):\n    pass\n{source}\n")
     message = str(caught.value)

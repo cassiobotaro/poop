@@ -95,9 +95,11 @@ class class_side[C, **P, R]:  # noqa: N801 — read as a word at `@class_side`
         # so the class side, a documented user-facing surface, still composed
         # its wrong-arity errors from POOP's internal vocabulary:
         # `PoopMeta.name() takes 1 positional argument but 2 were given`, a
-        # name a program cannot write and cannot reach. Answering `Foo.print()`
-        # instead is not available here: one function is shared by every class,
-        # and `__qualname__` is fixed when the class body runs.
+        # name a program cannot write and cannot reach. `Foo.print()` cannot be
+        # named here, since one function is shared by every class and
+        # `__qualname__` is fixed when the class body runs; `_MethodBlock`
+        # names it at the call instead, where the class is in hand
+        # (`_cpython_name`), so `int.hash(1)` blames `int.hash()`.
         cloak_callable(self._fn, name)
 
     @overload

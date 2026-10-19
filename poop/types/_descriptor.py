@@ -60,8 +60,13 @@ class message:  # noqa: N801 — read as a word, like `class_side`
 
     def __get__(self, instance: object, owner: type | None = None) -> Any:  # noqa: ANN401 — a bound method of any shape
         bound = self._entry.__get__(instance, owner)
-        if type(bound) is MethodType or isinstance(self._entry, staticmethod):
-            return _MethodBlock(cast("_Method", bound))
+        if type(bound) is MethodType:
+            return _MethodBlock(bound)
+        if isinstance(self._entry, staticmethod):
+            # No receiver to name in an arity sentence: hand over the class
+            # it was read through instead.
+            read_off = owner if owner is not None else type(instance)
+            return _MethodBlock(cast("_Method", bound), read_off)
         return bound
 
 

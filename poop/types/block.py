@@ -7,12 +7,14 @@ from poop.types import mirrors
 from poop.types._argument import a_block
 from poop.types._message import article
 from poop.types.boolean import false, to_boolean
+from poop.types.meta import PoopMeta
 from poop.types.none import none
 from poop.types.object import Object
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
+    from poop.types._cloak import Renamable
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 
@@ -267,6 +269,57 @@ class Block[**P, R](Object, name="function"):
         return "<block>"
 
 
+def _is_wrapper(cls: type) -> bool:
+    """Whether `cls` is a builtin's wrapper, rather than a mixin or a program's class.
+
+    The test `_wrapper_classes` in the wording sweep applies: a wrapper is a
+    `PoopMeta` class cloaked into `builtins`. A shared mixin is no `PoopMeta`
+    class, and a program's class lives in its own module.
+    """
+    return isinstance(cls, PoopMeta) and cls.__module__ == "builtins"
+
+
+def _cpython_name(method: Renamable, read_off: type | None) -> str:
+    """The `<class>.<message>` CPython would name for a call to `method`.
+
+    CPython names the class that *defines* the method: `object` for one
+    inherited from `object`, `list` for `class Stack(list)`'s `append`,
+    `bytearray` and `frozendict` for their own, and the class a class-side
+    method was read off (`int.mro()`). The cloak froze the definer's name,
+    which is right only where POOP's definer is one CPython would name — a
+    shared mixin is cloaked as `object`, `ByteArray` reuses `Bytes`'s
+    functions and `FrozenDict` `Dict`'s, and a class-side function is shared
+    by every class. So the name is chosen here, with the receiver in hand.
+
+    A `staticmethod`'s function has no receiver; `read_off` is the class the
+    `message` descriptor read it through, and stands in for one, so
+    `bytearray.maketrans` names `bytearray` although `Bytes` defines it.
+    """
+    qualname = method.__qualname__
+    name = method.__name__
+    receiver = getattr(method, "__self__", None)
+    if receiver is None:
+        if read_off is None:
+            return qualname
+        mro = read_off.__mro__
+    elif isinstance(receiver, type):
+        return f"{receiver.__name__}.{name}"
+    else:
+        mro = type(receiver).__mro__
+    owner = next((cls for cls in mro if name in vars(cls)), None)
+    # The root's own messages already name `object`, as CPython does for a
+    # method inherited from it; compared by identity, since the mixins are
+    # cloaked with the same name. A program's own class names itself.
+    if (
+        owner is None
+        or owner is Object
+        or (isinstance(owner, PoopMeta) and not _is_wrapper(owner))
+    ):
+        return qualname
+    wrapper = next((cls for cls in mro if _is_wrapper(cls)), None)
+    return qualname if wrapper is None else f"{wrapper.__name__}.{name}"
+
+
 class _MethodBlock[**P, R](Block[P, R], name="function"):
     """A method read off an object, wrapped so it answers messages.
 
@@ -276,18 +329,43 @@ class _MethodBlock[**P, R](Block[P, R], name="function"):
     `get_attr`, the spelling almost nobody writes.
 
     It answers everything a `Block` answers and calls like a *method*: the
-    arity refusal stays CPython's, because `cloak` has already worded that one
-    for a message (`str.upper() takes 1 positional argument but 2 were
-    given`), and `Block`'s rewording would replace the message's own name with
-    the word `block`. That is the whole reason; `_params` reads a signature
-    without evaluating its annotations, so the rewording would be safe here
-    too, and is declined on wording alone.
+    arity refusal stays CPython's (`str.upper() takes 1 positional argument
+    but 2 were given`), and `Block`'s rewording would replace the message's
+    own name with the word `block`. That is the whole reason; `_params` reads
+    a signature without evaluating its annotations, so the rewording would be
+    safe here too, and is declined on wording alone.
+
+    What it does change is the *class* in that sentence, to the one CPython
+    would name (`_cpython_name`): `[1].map(1, 2)` blamed `object.map()`, a
+    class that does not answer `#map`, and `int.hash(1)` blamed a bare
+    `hash()`. Only a binding failure is renamed — one raised before the
+    method's body runs, so no frame lies below this one — and a `TypeError`
+    the body raises passes through untouched, whatever its text.
     """
 
-    __slots__ = ()
+    __slots__ = ("_read_off",)
+
+    def __init__(self, fn: Callable[P, R], read_off: type | None = None) -> None:
+        super().__init__(fn)
+        # The class a `staticmethod` was read through; `_cpython_name` names it.
+        self._read_off = read_off
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
-        return self._fn(*args, **kwargs)
+        try:
+            return self._fn(*args, **kwargs)
+        except TypeError as exc:
+            fn = cast("Renamable", self._fn)
+            frozen = f"{fn.__qualname__}()"
+            text = str(exc)
+            traceback = exc.__traceback__
+            if traceback is None or traceback.tb_next is not None:
+                raise
+            if not text.startswith(frozen):
+                raise
+            named = f"{_cpython_name(fn, self._read_off)}()"
+            if named == frozen:
+                raise
+            raise mirrors.TypeError(named + text.removeprefix(frozen)) from None
 
     # Equality by the pair the bound method wraps — its receiver and its
     # underlying function — which is exactly what CPython's bound method

@@ -897,8 +897,10 @@ def test_a_class_get_attr_refuses_two_defaults() -> None:
     alias = IntTransformer.BINDINGS["_poop_int_cls"]
     with pytest.raises(TypeError) as info:
         alias.get_attr(Str("nope"), Int(1), Int(2))
+    # Named after the class, as CPython's `int.mro(1)` is: the class-side
+    # function is shared by every class and was cloaked to the bare name.
     assert str(info.value) == (
-        "get_attr() takes from 2 to 3 positional arguments but 4 were given"
+        "int.get_attr() takes from 2 to 3 positional arguments but 4 were given"
     )
 
 
