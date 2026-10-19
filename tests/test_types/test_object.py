@@ -652,17 +652,17 @@ def test_the_paired_null_test_on_a_present_value(
         (
             "(5).if_none_if_not_none(5, lambda x: x)",
             "#if_none_if_not_none expects a block, got an int — "
-            "write .if_none_if_not_none(lambda: …, lambda x: …)",
+            "write .if_none_if_not_none(lambda: …, lambda value: …)",
         ),
         (
             "(5).if_not_none_if_none(lambda x: x, 5)",
             "#if_not_none_if_none expects a block, got an int — "
-            "write .if_not_none_if_none(lambda x: …, lambda: …)",
+            "write .if_not_none_if_none(lambda value: …, lambda: …)",
         ),
         (
             "int.if_none_if_not_none(5, lambda k: k)",
             "#if_none_if_not_none expects a block, got an int — "
-            "write .if_none_if_not_none(lambda: …, lambda x: …)",
+            "write .if_none_if_not_none(lambda: …, lambda value: …)",
         ),
     ],
     ids=["none_block", "swapped_none_block", "class"],
@@ -682,3 +682,33 @@ def test_the_chained_form_runs_on_the_blocks_answer(
         '(5).if_not_none(lambda x: None).if_none(lambda: "ran").print()'
     )
     assert capsys.readouterr().out == "ran\n"
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            "(5).if_not_none(5)",
+            "#if_not_none expects a block, got an int — write .if_not_none(lambda value: …)",
+        ),
+        (
+            "None.if_not_none(5)",
+            "#if_not_none expects a block, got an int — write .if_not_none(lambda value: …)",
+        ),
+        (
+            "(5).if_not_none_if_none(5, lambda: 1)",
+            "#if_not_none_if_none expects a block, got an int — "
+            "write .if_not_none_if_none(lambda value: …, lambda: …)",
+        ),
+    ],
+    ids=["object", "none", "swapped_pair"],
+)
+def test_the_null_tests_hint_the_receivers_value_as_value(
+    source: str, expected: str
+) -> None:
+    # The argument is the receiver's own value, not an element of a
+    # collection: `value`, as `else_` names the value it hands on. It was
+    # `item` here and `x` in the pairs, two names for one role.
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    assert info.value.message == f"TypeError: {expected}"

@@ -28,7 +28,7 @@ class NoneClass(Object, name="NoneType"):
     def if_not_none(
         self, block: Callable[[Object], object] | Missing = MISSING
     ) -> NoneClass:
-        a_block(block, "if_not_none")
+        a_block(block, "if_not_none", param="value")
         return self
 
     def if_none_if_not_none[T](

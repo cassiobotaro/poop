@@ -54,8 +54,8 @@ def _holds_no_state(receiver: object) -> Exception:
 
 
 # How the two paired null tests are spelt in their refusals.
-_PAIR = "lambda: …, lambda x: …"
-_PAIR_SWAPPED = "lambda x: …, lambda: …"
+_PAIR = "lambda: …, lambda value: …"
+_PAIR_SWAPPED = "lambda value: …, lambda: …"
 
 
 class Object(metaclass=PoopMeta):
@@ -123,7 +123,7 @@ class Object(metaclass=PoopMeta):
         return self
 
     def if_not_none[T](self, block: Callable[[Object], T] | Missing = MISSING) -> T:
-        return a_block(block, "if_not_none")(self)
+        return a_block(block, "if_not_none", param="value")(self)
 
     # Smalltalk's `ifNil:ifNotNil:`, the paired form `Boolean` already has as
     # `if_true_if_false`. Not expressible by chaining: `x.if_not_none(…)

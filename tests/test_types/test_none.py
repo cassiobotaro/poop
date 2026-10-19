@@ -104,5 +104,5 @@ def test_the_present_block_is_checked_on_none_too() -> None:
         Interpreter().run_source("None.if_none_if_not_none(lambda: 1, 5)")
     assert info.value.message == (
         "TypeError: #if_none_if_not_none expects a block, got an int — "
-        "write .if_none_if_not_none(lambda: …, lambda x: …)"
+        "write .if_none_if_not_none(lambda: …, lambda value: …)"
     )

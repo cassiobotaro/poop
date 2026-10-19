@@ -200,7 +200,7 @@ def test_a_caught_error_names_its_exceptions_class(handler: str, expected: str) 
         (
             "(5).if_none_if_not_none()",
             "#if_none_if_not_none expects a block, got nothing — "
-            "write .if_none_if_not_none(lambda: …, lambda x: …)",
+            "write .if_none_if_not_none(lambda: …, lambda value: …)",
         ),
         (
             "(lambda: True).while_true()",
