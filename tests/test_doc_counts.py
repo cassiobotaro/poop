@@ -32,7 +32,11 @@ def _example_count() -> int:
 # fails the "found it at all" test below rather than passing vacuously.
 _CLAIMS: tuple[tuple[str, str, str], ...] = (
     ("README.md", r"POOP runs (\d+) validators on every program", "validators"),
-    ("README.md", r"ships (\d+) programs across three subfolders", "examples"),
+    (
+        "examples/README.md",
+        r"ships (\d+) programs across three subfolders",
+        "examples",
+    ),
 )
 
 _ACTUAL = {"validators": _validator_count, "examples": _example_count}
@@ -57,13 +61,13 @@ def test_a_documented_count_matches_the_code(
     )
 
 
-def test_the_readme_lists_every_example_it_ships() -> None:
+def test_the_examples_readme_lists_every_example_it_ships() -> None:
     """The prose count and the bullet list below it must agree too.
 
     The list was right while the sentence above it was two behind, which is
     what made the drift invisible to a reader skimming either one.
     """
-    text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    text = (REPO_ROOT / "examples" / "README.md").read_text(encoding="utf-8")
     listed = re.findall(r"^- \[`([a-z0-9_]+\.py)`\]", text, flags=re.MULTILINE)
     on_disk = {path.name for path in EXAMPLE_FILES}
     assert set(listed) == on_disk

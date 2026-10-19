@@ -284,3 +284,4 @@ Some Python has no POOP translation at all, and looking for one is the wrong mov
 | `class X(metaclass=M)`, `class X(foo=1)` | A class is built from its bases alone. A parent that must configure its subclasses answers a class-side message instead. |
 | `def __getattr__(self, name)`, `__getattribute__`, `__init_subclass__`, `__set_name__` | Python's lookup, creation and descriptor protocols. `def does_not_understand(self, name)` is the one hook: it receives the selector as a `Str` and its answer is the message's. |
 
+| `x: int`, `def f(x: int) -> str` | Not refused, but misleading: every literal becomes a POOP type, so a variable annotated `int` holds POOP's own integer at runtime. Leave annotations out. |

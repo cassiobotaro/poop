@@ -4,61 +4,54 @@
 
 # POOP 💩
 
-**POOP** — **P**ython **O**bject **O**riented **P**rogramming. A Python 3.15 interpreter that enforces Smalltalk-style message passing by rejecting `if`/`for`/`print`/`isinstance` and rewriting Python literals (`1`, `"hi"`, `True`, `[…]`, `{…}`) into POOP types where every operation is a message to a receiver.
+**P**ython **O**bject **O**riented **P**rogramming: Python 3.15, infected by Smalltalk.
 
-POOP is for **educational exploration of message-passing semantics inside the Python ecosystem**, not for production. POOP is not distributed via PyPI by design, and there are no tagged releases; clone and run it locally.
-
-## Install
-
-```bash
-git clone https://github.com/cassiobotaro/poop.git
-cd poop
-uv sync
-uv run poop examples/basics/hello_world.py
-```
-
-Contributor / development setup lives in [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-## Hello, POOP
+In POOP there is no `if`, no `for`, no `print()`. Every literal is an object, and every operation is a message sent to one. `True` decides for itself, a list walks itself, a string prints itself.
 
 ```python
 "Hello, World!".print()
 ```
 
-Run it:
+POOP runs 73 validators on every program, and each one that refuses tells you what to write instead:
+
+```console
+$ poop loop.py
+poop: for loops are forbidden — use col.do(block) instead
+  1 | for i in range(3):
+    | ^
+```
+
+POOP is a playground for exploring message passing without leaving Python, not a production tool. It is not on PyPI and has no releases: clone it and play.
+
+## Try it
 
 ```bash
-poop hello.py            # run a file
-poop -c '"hi".print()'   # run a one-liner
-cat hello.py | poop      # a pipe runs as a program, as `python3 < hello.py` does
-poop                     # interactive REPL on a terminal (Ctrl+D to exit)
-poop --version
+git clone https://github.com/cassiobotaro/poop.git
+cd poop
+uv sync
+uv run poop examples/basics/fizzbuzz.py
 ```
 
-Diagnostics go to stderr, prefixed `poop:`; program output goes to stdout.
-The exit code says what went wrong:
+Run `uv run poop` with no arguments for the REPL. `:methods "abc"` lists what an object understands, and `:explain if` says why a construct is gone and what replaces it.
 
-| Exit | Meaning |
-|---|---|
-| 0 | the program ran |
-| 1 | the source could not be read |
-| 2 | the source is not Python, or the command line is wrong |
-| 3 | a validator refused the program |
-| 4 | the program failed while running |
+## FizzBuzz, the POOP way
 
-Inside the REPL, colon-prefixed meta-commands help you explore,
-Smalltalk-browser style:
-
+```python
+range(1, 16).do(
+    lambda i: (i % 15 == 0).if_true_if_false(
+        lambda: "FizzBuzz".print(),
+        lambda: (i % 3 == 0).if_true_if_false(
+            lambda: "Fizz".print(),
+            lambda: (i % 5 == 0).if_true_if_false(
+                lambda: "Buzz".print(),
+                lambda: i.print(),
+            ),
+        ),
+    )
+)
 ```
->>> :methods "abc"       # the messages an object understands
->>> :explain if          # why a construct is forbidden + the substitute
->>> :help                # list the meta-commands
-```
 
-The REPL keeps `_` as the last result, completes names and messages on
-Tab (`"abc".up<Tab>`), and remembers your history in `~/.poop_history`.
-A pipe never reaches the REPL: `cat prog.py | poop` runs the program, and
-`poop -c` is the one-liner.
+The range is asked to `do` something for each number. Each comparison answers a Boolean, and the Boolean picks which block to run.
 
 ## The ten essentials
 
@@ -75,126 +68,14 @@ A pipe never reaches the REPL: `cat prog.py | poop` runs the program, and
 | `x and y` / `x or y` | `x.and_(lambda: y)` / `x.or_(lambda: y)` |
 | `-x` | `x.negated()` |
 
-Full Python → POOP recipe book: [`MIGRATION.md`](MIGRATION.md). Design rationale: [`INFECTIONS.md`](INFECTIONS.md).
-
-## What's banned (and what to use instead)
-
-POOP runs 73 validators on every program. Grouped by theme:
-
-**Control flow** — messages on a Boolean, not statements.
-- `if` / `else` / ternary → `cond.if_true(lambda: …)` / `cond.if_true_if_false(lambda: …, lambda: …)`
-- `for` / `while` / `match` → `col.do(…)` / `(lambda: cond).while_true(…)` / polymorphism
-- `with` / `try` / `raise` / `assert` → `With(lambda: cm()).do(…)` / `Try(lambda: …).except_(ExcType, lambda e: …).run()` / `ValueError.raise_("msg")` / `obj.assert_("msg")`
-
-**Free functions** — call as a method on the receiver.
-- `print` / `len` / `abs` / `hash` / `round` / `pow` / `divmod` / `min` / `max` / `sum` / `sorted` / `reversed` → `x.print()`, `x.len()`, `x.abs()`, `x.hash()`, …
-- `map` / `filter` → `col.map(lambda x: …)` / `col.filter(lambda x: …)`
-- `ascii` / `bin` / `chr` / `repr` / `format` → corresponding methods on `Int` / `Str`
-- `input` → `"prompt".input()` (`open` is banned outright — POOP has no file I/O)
-- `iter(col)` → `col.iter()` returns an iterator; `it.next()` advances it and `it.has_next()` asks whether it can, so `(lambda: it.has_next()).while_true(…)` walks it without running off the end
-
-**Introspection** — call the method on the receiver, or use polymorphism.
-- `isinstance(x, T)` / `issubclass(C, P)` → `x.is_instance(T)` / `C.is_subclass(P)`
-- `callable(x)` / `dir(x)` → `x.callable()` / `x.dir()`; `id(x)` → `a.is_identical(b)` (POOP answers the identity *question*, never an address)
-- `hasattr(x, n)` / `getattr(x, n)` / `setattr(x, n, v)` → `x.has_attr(n)` / `x.get_attr(n)` / `x.set_attr(n, v)`
-- `type(x)` / `x.__class__` / `xs.__len__()` → `x.class_()` / `x.class_name()` / `xs.len()` — dunder attribute access is banned outright
-
-**Operator sugar** — methods on the receiver.
-- `x[i]` / `x[a:b]` → `x.at(i)` / `x.slice(a, b)`
-- `not x` / `x and y` / `x or y` → `x.not_()` / `x.and_(lambda: y)` / `x.or_(lambda: y)`
-- `-x` / `+x` / `~x` → `x.negated()` / drop the `+` / `x.bit_invert()`
-- `x is None` / `x in y` → `x.is_none()` / `y.includes(x)` (identity via `x.is_identical(y)`)
-
-**Syntax shortcuts that hide behaviour.**
-- comprehensions (`[x for x in …]`, `{…}`, generator exprs) → explicit `.map` / `.filter` / `.do`
-- top-level `def` (free functions) → define as a method inside a class
-- `yield` / walrus `:=` / `del` / `global` → out of scope
-- `@decorator` → send the message; only `@staticmethod` / `@classmethod` / `@property` are allowed, being class-definition machinery rather than runtime operations
-- `class X[T]` / `type X = int` / `class X(metaclass=M)` / `def __getattr__` → a class is built from its bases and its own methods; POOP has no static types, no class keywords, and the lookup, creation and descriptor dunders cannot be defined (`does_not_understand(self, name)` is the hook for messages a class does not answer)
-
-**Side-channels.**
-- `exec` / `breakpoint` / `exit` — interpreter escape hatches forbidden
-- `__builtins__` / `__loader__` / `__spec__` / `__name__` — dunder *globals* are raw Python natives (and `__builtins__` is mutable), so bare dunder names are banned alongside dunder attributes
-- `obj._value` / `obj._items` — a leading underscore is another object's own state; only `self`, `cls` and the enclosing class by name reach it, so send the object a message that answers it. `obj.get_attr("_x")` refuses too, *by saying so*
-
-**No library.** POOP is the language, not the library — it mirrors no stdlib module.
-- `import` — if Python needs an import to reach something, POOP does not offer it. There is no `math`, no `json`, no `os`.
-- The only names injected are `Try` and `With` — the two constructs replacing `try`/`except` and `with`, which are Python keywords rather than modules.
-- Python's builtins are not there either: user code runs against an allow-list (`super`, `classmethod`, `staticmethod`, `property`, plus what the `class` statement needs), so `OSError`, `copyright` and the rest answer `NameError` rather than handing back a live Python object.
-- `async def` / `await` follow from this: `asyncio` was the only way to drive a coroutine, so async has no substitute and is banned outright. So is `open` — there is no file I/O; a program talks through `"prompt".input()` and `obj.print()`.
-
-The full catalog with one row per validator and the substitute recipe lives in [`INFECTIONS.md`](INFECTIONS.md).
-
 ## Learn by example
 
-[`examples/`](examples/) ships 44 programs across three subfolders, grouped by what they teach.
-
-**Language basics** ([`examples/basics/`](examples/basics/))
-- [`hello_world.py`](examples/basics/hello_world.py) — the smallest POOP program
-- [`greet.py`](examples/basics/greet.py) — string input + concatenation
-- [`fizzbuzz.py`](examples/basics/fizzbuzz.py) — control flow via `if_true_if_false`
-- [`leap_year.py`](examples/basics/leap_year.py) — `and_` / `or_` / `not_`
-- [`collatz.py`](examples/basics/collatz.py) — while-style recursion
-- [`grades.py`](examples/basics/grades.py) — collection processing
-- [`string_iteration.py`](examples/basics/string_iteration.py) — a string is a collection too
-- [`slicing.py`](examples/basics/slicing.py) — `Slice` as a reusable value object
-- [`bank_account.py`](examples/basics/bank_account.py) — encapsulation
-
-**Idiomatic POOP** ([`examples/idiomatic/`](examples/idiomatic/))
-- [`pipeline.py`](examples/idiomatic/pipeline.py) — `filter` / `filter_false` / `map` / `do` chain
-- [`safe_config.py`](examples/idiomatic/safe_config.py) — `if_none` / `if_not_none` cascade
-- [`common_interests.py`](examples/idiomatic/common_interests.py) — set operations
-- [`statistics.py`](examples/idiomatic/statistics.py) — number aggregation
-- [`rpn_calculator.py`](examples/idiomatic/rpn_calculator.py) — stack as a POOP `List`
-- [`roman_numerals.py`](examples/idiomatic/roman_numerals.py) — string mapping
-- [`managed_resource.py`](examples/idiomatic/managed_resource.py) — `With` and the `__exit__` protocol
-
-**Classic OO patterns** (Sandi Metz / GoF) ([`examples/patterns/`](examples/patterns/))
-
-*Creational*
-- [`abstract_factory.py`](examples/patterns/abstract_factory.py) — Abstract Factory
-- [`builder.py`](examples/patterns/builder.py) — Builder
-- [`factory_method.py`](examples/patterns/factory_method.py) — Factory Method
-- [`prototype.py`](examples/patterns/prototype.py) — Prototype (cloning a configured example)
-- [`singleton.py`](examples/patterns/singleton.py) — Singleton (class-side cached instance)
-
-*Structural*
-- [`adapter.py`](examples/patterns/adapter.py) — Adapter
-- [`bridge.py`](examples/patterns/bridge.py) — Bridge
-- [`tree.py`](examples/patterns/tree.py) — Composite (replacing `isinstance`)
-- [`decorators.py`](examples/patterns/decorators.py) — Decorator (composition by delegation)
-- [`facade.py`](examples/patterns/facade.py) — Facade
-- [`flyweight.py`](examples/patterns/flyweight.py) — Flyweight (shared intrinsic state)
-- [`proxy.py`](examples/patterns/proxy.py) — Proxy (lazy-loading virtual proxy)
-
-*Behavioral*
-- [`chain_of_responsibility.py`](examples/patterns/chain_of_responsibility.py) — Chain of Responsibility
-- [`command.py`](examples/patterns/command.py) — Command (with undo)
-- [`interpreter.py`](examples/patterns/interpreter.py) — Interpreter
-- [`iterator.py`](examples/patterns/iterator.py) — Iterator
-- [`mediator.py`](examples/patterns/mediator.py) — Mediator
-- [`memento.py`](examples/patterns/memento.py) — Memento
-- [`observer.py`](examples/patterns/observer.py) — Observer
-- [`door.py`](examples/patterns/door.py) — State
-- [`discounts.py`](examples/patterns/discounts.py) — Strategy
-- [`template_method.py`](examples/patterns/template_method.py) — Template Method
-- [`visitor.py`](examples/patterns/visitor.py) — Visitor
-
-*Other OO patterns (Fowler / Beck / Evans / Metz)*
-- [`null_customer.py`](examples/patterns/null_customer.py) — Null Object
-- [`payroll.py`](examples/patterns/payroll.py) — polymorphism replacing `if employee.type == ...`
-- [`specification.py`](examples/patterns/specification.py) — Specification (composable rules replacing `and`/`or`/`not`)
-- [`money.py`](examples/patterns/money.py) — Money value object
-- [`execute_around.py`](examples/patterns/execute_around.py) — Execute Around Method
-
-## Type annotations
-
-Annotations (`x: int`, `def f(x: int) -> str:`) are not evaluated at runtime in Python and do not cause errors in POOP programs, but they are misleading: POOP transforms every literal to its own types (`Int`, `Str`, …), so a variable annotated as `int` holds an `Int` at runtime. Avoid annotations in POOP code. `type X = int` is explicitly banned by the validator pipeline.
+[`examples/`](examples/) goes from hello world to the whole Gang of Four catalogue: Composite in place of `isinstance`, State in place of `if`, Null Object in place of `None` checks.
 
 ## Where to next
 
-- [`MIGRATION.md`](MIGRATION.md) — full Python → POOP recipe book
-- [`INFECTIONS.md`](INFECTIONS.md) — every validator / transformer / type, with rationale
-- [`openspec/changes/`](openspec/changes/) — open design backlog, one OpenSpec change per theme; closed ones in its `archive/`
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev setup, atomic-commit conventions, versioning
-- [Issues](https://github.com/cassiobotaro/poop/issues) — bugs and feature requests
+- [`examples/`](examples/): every example program, grouped by what it teaches
+- [`MIGRATION.md`](MIGRATION.md): the Python → POOP recipe book
+- [`INFECTIONS.md`](INFECTIONS.md): every ban, rewrite and type, and why each exists
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): dev setup and conventions
+- [Issues](https://github.com/cassiobotaro/poop/issues): bugs and ideas
