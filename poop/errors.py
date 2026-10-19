@@ -23,6 +23,9 @@ class PoopError(Exception):
 
     lineno: int | None = None
     col_offset: int | None = None
+    # The exception chain under a run-time failure, one sentence per link;
+    # empty for every other kind of error.
+    chain: tuple[str, ...] = ()
 
     def __init__(
         self, message: str, lineno: int | None = None, col_offset: int | None = None
@@ -100,8 +103,11 @@ class TransformError(PoopError):
 class ExecutionError(PoopError):
     """Raised when exec() raises during evaluation."""
 
-    def __init__(self, message: str, lineno: int | None = None) -> None:
+    def __init__(
+        self, message: str, lineno: int | None = None, chain: tuple[str, ...] = ()
+    ) -> None:
         super().__init__(message, lineno)
+        self.chain = chain
 
 
 # Python's tokenizer ends a line only on \n, \r\n or \r, so those are the breaks
@@ -214,9 +220,12 @@ def _error_segments(exc: PoopError, source: str | None) -> list[tuple[str, str]]
     suffix that `__str__` appends is dropped as repetition; with no line to
     point at, that suffix is the only clue and stays.
     """
+    # The chain goes last, under the line it explains: the source line and
+    # caret belong to the final exception, the only one with a location.
+    links = [(f"\n  {link}", "red") for link in exc.chain]
     location = _error_location(exc, source)
     if location is None:
-        return [(f"poop: {exc}", "red")]
+        return [(f"poop: {exc}", "red"), *links]
     lineno, line = location
     segments = [
         (f"poop: {exc.message}\n", "red"),
@@ -228,7 +237,7 @@ def _error_segments(exc: PoopError, source: str | None) -> list[tuple[str, str]]
             (f"\n{_caret_gutter(lineno)}", "dim"),
             (" " * _caret_column(line, exc.col_offset) + "^", "red"),
         ]
-    return segments
+    return segments + links
 
 
 def format_error(exc: PoopError, source: str | None) -> str:

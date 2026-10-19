@@ -13,6 +13,7 @@ from poop.errors import (
     report,
 )
 from poop.interpreter import Interpreter
+from poop.types.exceptions import describe_chain
 from tests._support import console
 
 
@@ -50,6 +51,55 @@ def test_format_error_execution_error_draws_no_caret() -> None:
     # ExecutionError carries no col_offset: a line, but no column to point at.
     out = format_error(ExecutionError("KeyError: 'zzz'", 1), "d.at('zzz')")
     assert out == "poop: KeyError: 'zzz'\n  1 | d.at('zzz')"
+
+
+def test_format_error_lists_the_chain_after_the_source_line() -> None:
+    error = ExecutionError("KeyError: 'outer'", 1, ("caused by ValueError: inner",))
+    assert format_error(error, "x.go()") == (
+        "poop: KeyError: 'outer'\n  1 | x.go()\n  caused by ValueError: inner"
+    )
+
+
+def test_format_error_lists_the_chain_without_a_source_line() -> None:
+    error = ExecutionError("KeyError: 'outer'", None, ("while handling ValueError: a",))
+    assert format_error(error, None) == (
+        "poop: KeyError: 'outer'\n  while handling ValueError: a"
+    )
+
+
+def test_render_error_styles_the_chain_red() -> None:
+    error = ExecutionError("KeyError: 'outer'", 1, ("caused by ValueError: inner",))
+    text = render_error(error, "x.go()")
+    assert text.plain.endswith("\n  caused by ValueError: inner")
+    last = text.spans[-1]
+    assert (text.plain[last.start : last.end], last.style) == (
+        "\n  caused by ValueError: inner",
+        "red",
+    )
+
+
+def test_describe_chain_follows_the_cause_then_the_unsuppressed_context() -> None:
+    first, second, third = ValueError("a"), KeyError("b"), IndexError("c")
+    third.__cause__ = second
+    second.__context__ = first
+    assert describe_chain(third) == [
+        "caused by KeyError: 'b'",
+        "while handling ValueError: a",
+    ]
+
+
+def test_describe_chain_stops_at_a_suppressed_context() -> None:
+    outer, inner = KeyError("b"), ValueError("a")
+    outer.__context__ = inner
+    outer.__suppress_context__ = True
+    assert describe_chain(outer) == []
+
+
+def test_describe_chain_stops_at_a_cycle() -> None:
+    # A handler can link two exceptions to each other; the walk must end.
+    a, b = ValueError("a"), KeyError("b")
+    a.__cause__, b.__cause__ = b, a
+    assert describe_chain(a) == ["caused by KeyError: 'b'"]
 
 
 def test_format_error_transform_error_keeps_its_own_suffix() -> None:

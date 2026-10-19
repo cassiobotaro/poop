@@ -248,6 +248,32 @@ def describe(exc: BaseException) -> str:
     return f"{name}: {message}" if message else name
 
 
+def describe_chain(exc: BaseException) -> list[str]:
+    """The links an uncaught report lists under `exc`, nearest first.
+
+    CPython's rule for which link a traceback prints: the explicit cause when
+    there is one, else the context unless it was suppressed — which every
+    failure POOP composes is, by its `raise … from None`, so CPython's own
+    exception never appears behind POOP's sentence. `Error.context` answers
+    by the same rule. A handler can link two exceptions to each other, so the
+    walk stops at one it has already seen.
+    """
+    links: list[str] = []
+    seen = {id(exc)}
+    while True:
+        if exc.__cause__ is not None:
+            label, link = "caused by", exc.__cause__
+        elif exc.__context__ is not None and not exc.__suppress_context__:
+            label, link = "while handling", exc.__context__
+        else:
+            return links
+        if id(link) in seen:
+            return links
+        seen.add(id(link))
+        links.append(f"{label} {describe(link)}")
+        exc = link
+
+
 # The instance side of the root mirror. An exception a program *built* —
 # `ValueError("x")`, or an instance of its own `class Field(Exception)` — is a
 # POOP object by descent and answered none of what a *caught* `Error` answers:

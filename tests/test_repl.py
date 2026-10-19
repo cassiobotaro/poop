@@ -301,6 +301,21 @@ def test_run_poop_error_does_not_repeat_the_position(
     assert "(line 1, col 0)" not in capsys.readouterr().err
 
 
+def test_run_runtime_error_lists_the_chain(
+    repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The REPL reports through the CLI's renderer, so it gets the chain too.
+    feed_input(
+        'Try(lambda: 1 / 0).except_(ZeroDivisionError, lambda e: KeyError.raise_("x")).run()',
+        EOFError(),
+    )
+    repl.run()
+    assert (
+        "  while handling ZeroDivisionError: division by zero"
+        in capsys.readouterr().err
+    )
+
+
 def test_run_runtime_error_shows_the_source_line(
     repl: Repl, feed_input: FeedInput, capsys: pytest.CaptureFixture[str]
 ) -> None:

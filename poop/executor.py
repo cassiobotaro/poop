@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Literal
 
 from poop.errors import ExecutionError
 from poop.types._message import too_deep
-from poop.types.exceptions import describe
+from poop.types.exceptions import describe, describe_chain
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -178,7 +178,11 @@ def execute(
         # through: this one is about the *interpreter's* budget, not about
         # anything the program's own objects said.
         raise ExecutionError(
-            f"RecursionError: {too_deep()}", _user_lineno(exc, filename)
+            f"RecursionError: {too_deep()}",
+            _user_lineno(exc, filename),
+            tuple(describe_chain(exc)),
         ) from exc
     except Exception as exc:
-        raise ExecutionError(_describe(exc), _user_lineno(exc, filename)) from exc
+        raise ExecutionError(
+            _describe(exc), _user_lineno(exc, filename), tuple(describe_chain(exc))
+        ) from exc

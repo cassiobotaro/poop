@@ -154,6 +154,50 @@ def test_cli_runtime_error_shows_line_without_caret(source_file: SourceFile) -> 
     assert result.stdout == ""
 
 
+_RAISES_IN_A_HANDLER = (
+    "Try(lambda: 1 / 0).except_(ZeroDivisionError, lambda e: {}).run()\n"
+)
+
+
+@pytest.mark.parametrize(
+    ("handler", "chain"),
+    [
+        (
+            'KeyError.raise_("outer")',
+            ["  while handling ZeroDivisionError: division by zero"],
+        ),
+        (
+            'KeyError("outer").raise_from(e)',
+            ["  caused by ZeroDivisionError: division by zero"],
+        ),
+        ('KeyError("outer").raise_from(None)', []),
+    ],
+    ids=["context", "cause", "suppressed"],
+)
+def test_cli_runtime_error_lists_the_chain_under_the_line(
+    source_file: SourceFile, handler: str, chain: list[str]
+) -> None:
+    source = _RAISES_IN_A_HANDLER.format(handler)
+    result = runner.invoke(app, [str(source_file(source))])
+    assert result.exit_code == 4
+    assert _plain(result.stderr).splitlines() == [
+        "poop: KeyError: outer",
+        f"  1 | {source.rstrip()}",
+        *chain,
+    ]
+
+
+def test_cli_an_error_poop_composed_shows_no_chain(source_file: SourceFile) -> None:
+    # Every POOP sentence is raised `from None` over CPython's own exception;
+    # the report must not list that native as a link.
+    result = runner.invoke(app, [str(source_file("[1].at(5)\n"))])
+    assert result.exit_code == 4
+    assert _plain(result.stderr).splitlines() == [
+        "poop: IndexError: list has no element at 5 — it has 1 element",
+        "  1 | [1].at(5)",
+    ]
+
+
 def test_cli_validators_only_no_errors(source_file: SourceFile) -> None:
     f = source_file('"hi".print()\n', "ok.py")
     result = runner.invoke(app, [str(f), "--validators-only"])
