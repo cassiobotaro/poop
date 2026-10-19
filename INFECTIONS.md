@@ -1164,17 +1164,20 @@ All POOP objects inherit `print()` from `Object`. `List` and `Tuple` override to
 
 ### Try — `poop/types/try_.py`
 
-`Try(Object)` implements deferred try/except/finally as a message-passing builder. The block is executed lazily — only when `.run()` or `.finally_()` is called.
+`Try(Object)` implements deferred try/except/else/finally as a message-passing builder. The block is executed lazily — only when `.run()` or `.finally_()` is called.
 
 | Message | Method | Behavior |
 |---|---|---|
 | `[block] on: ExcType do: handler` | `Try(block).except_(ExcType, handler)` | registers a handler; chainable |
+| *(Python's `else`)* | `Try(block).else_(block)` | runs only when nothing was raised, with the protected value; chainable |
 | `[block] ensure: finallyBlock` | `Try(block).finally_(block)` | sets finally block **and** executes; answers the protected block's value |
 | *(terminal)* | `.run()` | executes without finally block; answers the protected block's value |
 
 `.run()` and `.finally_()` answer the protected block's value, or the matching handler's value when one fires — like every other POOP block, and like Smalltalk's `on:do:`. This is what makes `try: return f() except: return default` expressible; without it `no_try` would ban a construct with no substitute. Both are terminal, so builder chaining is unaffected: `.except_()` is the chainable message. The cleanup block's own value is discarded, mirroring Smalltalk's `ensure:`.
 
 `exc_type` is a POOP exception class (see *PoopExcMeta* below). Unhandled exceptions are always re-raised. Multiple `.except_()` calls are matched in order.
+
+**`else_` is Python's `else` clause, and it hands the value on.** `no_try` banned `try … else` along with the rest of the statement while `Try` answered `else_` with `Try does not understand #else_`, a ban without a substitute. In Python the `try` assigns a name and the `else` reads it; a lambda cannot assign, so the block receives the protected block's value instead, and its own value is what `run()` and `finally_()` answer: `Try(lambda: int("21")).except_(ValueError, lambda e: -1).else_(lambda n: n * 2).run()` is `42`, and `-1` for `"x"`. The ordering is Python's because the implementation *is* Python's `else` branch: a handler never catches what the `else_` block raises, and the cleanup runs after it either way. One `else_` per `Try`, as Python allows one `else`: a second answers `Try already has an else clause — send #else_ once` rather than dropping the first in silence. A non-block is refused where it was written (`the else clause must be a block, got an int — write .else_(lambda value: …)`); a block of the wrong arity is reported when it is called, as every handler's is.
 
 `Try` is exposed in `DEFAULT_NAMESPACE` via the `NAMESPACE` dict in `poop/transformers/try_.py` — namespace-only, no AST rewrite.
 

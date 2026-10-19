@@ -239,6 +239,9 @@ _FAILING = [
     "With(lambda: 1, lambda: 2)",
     "Try(5).run()",
     "Try(lambda: 1).except_(Exception, 5)",
+    "Try(lambda: 1).else_(5)",
+    "Try(lambda: 1).else_()",
+    "Try(lambda: 1).else_(lambda n: n).else_(lambda n: n)",
     "With(5).do(lambda x: x)",
     # A receiver that cannot be entered, and one that can be entered but never
     # exited: CPython names the missing dunder in both.

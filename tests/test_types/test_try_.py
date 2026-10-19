@@ -3,6 +3,8 @@ import weakref
 
 import pytest
 
+from poop.errors import PoopError
+from poop.interpreter import Interpreter
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
@@ -292,3 +294,102 @@ def test_try_counts_its_arguments_in_poops_words(
     with pytest.raises(TypeError) as info:
         Try(*args)  # ty: ignore[invalid-argument-type]
     assert str(info.value) == f"Try takes one block, got {given} — write Try(lambda: …)"
+
+
+def _program(source: str, capsys: pytest.CaptureFixture[str]) -> str:
+    Interpreter().run_source(source)
+    return capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"), [('"21"', "42\n"), ('"x"', "-1\n")], ids=["ok", "raises"]
+)
+def test_try_else_answers_in_place_of_the_protected_value(
+    text: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = (
+        f"Try(lambda: int({text})).except_(ValueError, lambda e: -1)"
+        ".else_(lambda n: n * 2).run().print()\n"
+    )
+    assert _program(source, capsys) == expected
+
+
+def test_try_else_answers_through_finally(capsys: pytest.CaptureFixture[str]) -> None:
+    source = (
+        'Try(lambda: 1).else_(lambda n: n + 1).finally_(lambda: "done".print())'
+        ".print()\n"
+    )
+    assert _program(source, capsys) == "done\n2\n"
+
+
+def test_try_else_is_not_caught_by_the_handlers(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        'Try(lambda: 1).except_(ValueError, lambda e: "caught".print())'
+        '.else_(lambda n: ValueError.raise_("late")).run()\n'
+    )
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == "ValueError: late"
+    assert "caught" not in capsys.readouterr().out
+
+
+def test_try_cleanup_runs_after_a_failing_else(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        'Try(lambda: 1).else_(lambda n: ValueError.raise_("late"))'
+        '.finally_(lambda: "cleanup".print())\n'
+    )
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert info.value.message == "ValueError: late"
+    assert capsys.readouterr().out == "cleanup\n"
+
+
+def test_try_else_does_not_run_when_the_block_raises() -> None:
+    ran: list[object] = []
+    Try(lambda: _raise(ValueError("x"))).except_(ValueError, lambda e: 0).else_(
+        lambda v: ran.append(v)
+    ).run()
+    assert ran == []
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            "Try(lambda: 1).else_(5)",
+            "the else clause must be a block, got an int — write .else_(lambda value: …)",
+        ),
+        (
+            "Try(lambda: 1).else_()",
+            "the else clause must be a block, got nothing — write .else_(lambda value: …)",
+        ),
+        (
+            "Try(lambda: 1).else_(lambda n: n).else_(lambda n: n)",
+            "Try already has an else clause — send #else_ once",
+        ),
+        ("Try(lambda: 1).else_(lambda: 2).run()", "block expects 0 arguments, got 1"),
+    ],
+    ids=["not-a-block", "nothing", "second", "arity"],
+)
+def test_try_else_refusals(source: str, expected: str) -> None:
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source + "\n")
+    assert info.value.message == f"TypeError: {expected}"
+
+
+def test_try_else_after_run_does_not_retain_block() -> None:
+    def register_post_run() -> tuple[Try, weakref.ref[_Captured]]:
+        t = Try(lambda: None)
+        t.run()
+        captured = _Captured()
+        t.else_(lambda v: captured)
+        return t, weakref.ref(captured)
+
+    t, ref = register_post_run()
+    gc.collect()
+    assert ref() is None
+    assert t._else_block is None

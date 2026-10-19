@@ -59,15 +59,17 @@ class Try(Object, name="Try"):
 
     `.run()` and `.finally_()` answer the protected block's value, or the
     matching handler's when one fires — like every other POOP block, and like
-    Smalltalk's `on:do:`. Both are terminal; `.except_()` is what chains.
+    Smalltalk's `on:do:`. Both are terminal; `.except_()` and `.else_()` are
+    what chain.
 
     Usage:
         Try(lambda: risky()).except_(ValueError, lambda e: e.message().print()).run()
         Try(lambda: risky()).except_(ValueError, handler).finally_(lambda: cleanup())
         value = Try(lambda: int(text)).except_(ValueError, lambda e: -1).run()
+        doubled = Try(lambda: int(text)).else_(lambda n: n * 2).run()
     """
 
-    __slots__ = ("_block", "_executed", "_finally_block", "_handlers")
+    __slots__ = ("_block", "_else_block", "_executed", "_finally_block", "_handlers")
 
     def __init__(
         self, block: Callable[[], object] | Missing = MISSING, /, *extra: object
@@ -92,6 +94,7 @@ class Try(Object, name="Try"):
                 Callable[[Error], object],
             ]
         ] = []
+        self._else_block: Callable[[object], object] | None = None
         self._finally_block: Callable[[], object] | None = None
         self._executed = False
 
@@ -112,6 +115,31 @@ class Try(Object, name="Try"):
         # on a Try that can never consume it again.
         if not self._executed:
             self._handlers.append((kind, handler))
+        return self
+
+    def else_(self, block: Callable[[object], object] | Missing = MISSING) -> Try:
+        """Python's `else` clause: run `block` only when nothing was raised.
+
+        It receives the protected block's value and answers in its place,
+        because a lambda cannot assign: in Python the `try` stores a name and
+        the `else` reads it, and here the value is the only thing to hand on.
+        Like Python's, it sits outside the handlers and before the cleanup.
+        """
+        hint = "write .else_(lambda value: …)"
+        # `nothing` rather than CPython's `missing 1 required positional
+        # argument`, which `_require_block` alone cannot say: it words the
+        # argument's type, and an absent one has none.
+        if block is MISSING:
+            raise mirrors.TypeError(
+                f"the else clause must be a block, got nothing — {hint}"
+            )
+        _require_block(block, "the else clause", hint)
+        # One `else`, as Python allows: replacing the first would drop a block
+        # in silence, which is what `_require_block` exists to prevent.
+        if self._else_block is not None:
+            raise mirrors.TypeError("Try already has an else clause — send #else_ once")
+        if not self._executed:
+            self._else_block = block
         return self
 
     def finally_(self, block: Callable[[], object] | None = None) -> object:
@@ -147,6 +175,11 @@ class Try(Object, name="Try"):
                     break
             else:
                 raise
+        else:
+            # Python's own `else` clause: outside the handlers above, before
+            # the cleanup below, which is exactly the ordering `else_` needs.
+            if self._else_block is not None:
+                result = self._else_block(result)
         finally:
             # The cleanup block's own value is discarded, mirroring
             # Smalltalk's `ensure:` — it answers the protected block's value.
@@ -159,6 +192,7 @@ class Try(Object, name="Try"):
             # makes unreachable.
             del self._block
             self._handlers = []
+            self._else_block = None
             self._finally_block = None
         return result
 
