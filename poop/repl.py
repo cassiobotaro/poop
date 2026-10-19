@@ -278,7 +278,8 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "def": "def f():\n    pass",
     "assert": "assert x",
     "raise": "raise ValueError(x)",
-    "try": "try:\n    pass\nexcept Exception:\n    pass",
+    "try": "try:\n    pass\nexcept Exception:\n    pass\n"
+    "try:\n    pass\nexcept* Exception:\n    pass",
     "with": "with x:\n    pass",
     "not": "not x",
     "and": "x and y",
