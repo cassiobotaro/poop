@@ -291,3 +291,98 @@ def test_the_re_raised_error_equals_the_one_first_caught(
         ".except_(ValueError, lambda e: (e.hash() == e1.hash()).print()).run()"
     )
     assert capsys.readouterr().out == "True\nTrue\n"
+
+
+# The chain: `cause()` and `context()`
+
+
+def _nested(inner_handler: str, outer_handler: str) -> str:
+    """A program whose `ZeroDivisionError` handler raises, caught one level out."""
+    return (
+        "Try(lambda: Try(lambda: 1 / 0)\n"
+        f"    .except_(ZeroDivisionError, lambda e: {inner_handler}).run()\n"
+        f").except_(KeyError, lambda e: {outer_handler}).run()\n"
+    )
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (
+            _nested('KeyError("outer").raise_from(e)', "e.cause().message().print()"),
+            "division by zero",
+        ),
+        (
+            _nested(
+                'KeyError("outer").raise_from(e)', "e.cause().kind().name().print()"
+            ),
+            "ZeroDivisionError",
+        ),
+        (
+            'Try(lambda: ValueError.raise_("x"))'
+            ".except_(ValueError, lambda e: e.cause().is_none().print()).run()\n",
+            "True",
+        ),
+        (
+            _nested('KeyError.raise_("outer")', "e.context().kind().name().print()"),
+            "ZeroDivisionError",
+        ),
+        (
+            _nested(
+                'KeyError("outer").raise_from(ValueError("inner"))',
+                "e.context().is_none().print()",
+            ),
+            "True",
+        ),
+        (
+            _nested(
+                'KeyError("outer").raise_from(None)', "e.cause().is_none().print()"
+            ),
+            "True",
+        ),
+        (
+            _nested(
+                'KeyError("outer").raise_from(None)', "e.context().is_none().print()"
+            ),
+            "True",
+        ),
+        (
+            "Try(lambda: [1].at(5))"
+            ".except_(IndexError, lambda e: e.context().is_none().print()).run()\n",
+            "True",
+        ),
+    ],
+    ids=[
+        "cause-message",
+        "cause-kind",
+        "no-cause",
+        "context",
+        "context-suppressed-by-a-cause",
+        "from-none-cause",
+        "from-none-context",
+        "composed-error-has-no-context",
+    ],
+)
+def test_a_caught_error_answers_its_chain(
+    source: str, expected: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out == expected + "\n"
+
+
+def test_a_cause_is_the_error_a_handler_was_given() -> None:
+    caught = ValueError("inner")
+    outer = KeyError("outer")
+    outer.__cause__ = caught
+    assert Error(outer).cause() == Error(caught)
+
+
+def test_raise_on_a_caught_error_refuses_an_argument_in_poops_words() -> None:
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(
+            'Try(lambda: ValueError.raise_("x"))'
+            ".except_(ValueError, lambda e: e.raise_(1)).run()\n"
+        )
+    assert info.value.message == (
+        "TypeError: #raise_ takes no argument on a caught error, got 1 argument"
+    )

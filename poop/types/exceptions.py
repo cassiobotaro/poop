@@ -35,7 +35,7 @@ import builtins
 from typing import TYPE_CHECKING, Literal, Never, cast, get_args
 
 from poop.types._cloak import cloak, cloak_callable
-from poop.types._message import poop_message
+from poop.types._message import describe_operand, poop_message
 from poop.types._selectors import explain, is_dunder, is_message, not_understood
 from poop.types.meta import PoopMeta, class_side, class_side_read_refusal
 from poop.types.object import MessageNotUnderstood, Object
@@ -43,6 +43,8 @@ from poop.types.object import MessageNotUnderstood, Object
 # circular: each module below imports exceptions
 lazy from poop.types._argument import a_text
 lazy from poop.types._unwrap import _unwrap_bool
+lazy from poop.types.block import _count
+lazy from poop.types.error import Error
 lazy from poop.types.none import none
 lazy from poop.types.string import Str
 
@@ -269,8 +271,51 @@ def _kind(self: BaseException) -> PoopExcMeta:
     return poop_class_of(self)
 
 
-def _raise(self: BaseException) -> Never:
+def _raise(self: BaseException, *extra: object) -> Never:
+    # Counted here: CPython's `Exception.raise_() takes 1 positional argument
+    # but 2 were given` names the receiver as an argument POOP never spells.
+    if extra:
+        raise MIRRORS["TypeError"](
+            f"#raise_ takes no argument once the exception is built, "
+            f"got {_count(len(extra))}"
+        )
     raise self
+
+
+def _cause_of(causes: tuple[object, ...]) -> BaseException | None:
+    """The native cause `raise_from` was handed, or POOP's refusal.
+
+    Resolved before anything is raised, so a wrong cause is reported instead
+    of being raised past. A caught `Error` stands for the exception it wraps,
+    a built instance for itself, and `None` (POOP's `none`) for Python's
+    `None`, which is how `raise X from None` suppresses the context. An
+    exception *class* is
+    refused although CPython would instantiate it: a cause is something that
+    happened, and a class has not.
+    """
+    if len(causes) == 1:
+        (cause,) = causes
+        if isinstance(cause, Error):
+            return cause._exception
+        if isinstance(cause, BaseException):
+            return cause
+        if cause is none:
+            return None
+        got = describe_operand(cause)
+    else:
+        got = "nothing" if not causes else _count(len(causes))
+    raise MIRRORS["TypeError"](f"#raise_from takes an exception or None, got {got}")
+
+
+def _raise_from(self: BaseException, *causes: object) -> Never:
+    """`raise X from Y`, sent to `X`: signal this exception with a cause.
+
+    A keyword on the class-side `raise_` was the alternative, and it would
+    have taken a name away from the keywords that carry a program's own
+    exception fields (`Field.raise_(code=7)`). Sent to the instance, it
+    reads in Python's order.
+    """
+    raise self from _cause_of(causes)
 
 
 def _print(
@@ -332,6 +377,7 @@ _INSTANCE_SIDE: dict[str, object] = {
     "message": _message,
     "kind": _kind,
     "raise_": _raise,
+    "raise_from": _raise_from,
     "print": _print,
     "__repr__": _repr,
     "__getattribute__": _getattribute,

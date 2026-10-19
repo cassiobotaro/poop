@@ -414,3 +414,71 @@ def test_a_built_exception_does_not_advertise_a_refused_name() -> None:
     listed = {str(name) for name in MIRRORS["ValueError"]("x").dir()}
     assert {"message", "kind", "raise_", "print"} <= listed
     assert not ({"args", "add_note", "with_traceback"} & listed)
+
+
+# `raise_from`: `raise X from Y`, sent to the built `X`
+
+
+def _outer(source: str) -> BaseException:
+    """The exception a program let escape, as CPython left it."""
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(source)
+    escaped = info.value.__cause__
+    assert escaped is not None
+    return escaped
+
+
+def test_raise_from_a_caught_error_sets_its_exception_as_the_cause() -> None:
+    escaped = _outer(
+        "Try(lambda: 1 / 0).except_(\n"
+        '    ZeroDivisionError, lambda e: KeyError("outer").raise_from(e)\n'
+        ").run()\n"
+    )
+    assert isinstance(escaped, KeyError)
+    assert isinstance(escaped.__cause__, ZeroDivisionError)
+
+
+def test_raise_from_a_built_exception_uses_it_as_it_is() -> None:
+    escaped = _outer('KeyError("outer").raise_from(ValueError("inner"))\n')
+    assert isinstance(escaped.__cause__, ValueError)
+    assert str(escaped.__cause__) == "inner"
+    assert escaped.__suppress_context__
+
+
+def test_raise_from_none_suppresses_the_context() -> None:
+    escaped = _outer(
+        "Try(lambda: 1 / 0).except_(\n"
+        '    ZeroDivisionError, lambda e: KeyError("outer").raise_from(None)\n'
+        ").run()\n"
+    )
+    assert escaped.__cause__ is None
+    assert escaped.__suppress_context__
+
+
+@pytest.mark.parametrize(
+    ("arguments", "got"),
+    [
+        ("5", "an int"),
+        ("ValueError", "the class ValueError"),
+        ("", "nothing"),
+        ('ValueError("a"), ValueError("b")', "2 arguments"),
+    ],
+    ids=["value", "class", "nothing", "two"],
+)
+def test_raise_from_refuses_anything_but_one_exception_or_none(
+    arguments: str, got: str
+) -> None:
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source(f'KeyError("outer").raise_from({arguments})\n')
+    assert info.value.message == (
+        f"TypeError: #raise_from takes an exception or None, got {got}"
+    )
+
+
+def test_raise_on_a_built_exception_refuses_an_argument_in_poops_words() -> None:
+    with pytest.raises(ExecutionError) as info:
+        Interpreter().run_source('ValueError("x").raise_(1)\n')
+    assert info.value.message == (
+        "TypeError: #raise_ takes no argument once the exception is built, "
+        "got 1 argument"
+    )

@@ -1,11 +1,12 @@
 import builtins
 from typing import TYPE_CHECKING, Never, final
 
+from poop.types import mirrors
 from poop.types._alias import unalias
 from poop.types._argument import a_class
 from poop.types._message import poop_message
 from poop.types._selectors import explain, is_message, not_understood
-from poop.types.block import _as_block
+from poop.types.block import _as_block, _count
 from poop.types.boolean import to_boolean
 from poop.types.exceptions import (
     _PYTHON_ATTRIBUTES,
@@ -15,11 +16,13 @@ from poop.types.exceptions import (
 )
 from poop.types.list import List
 from poop.types.meta import class_side_named
+from poop.types.none import none
 from poop.types.object import MessageNotUnderstood, Object
 from poop.types.string import Str
 
 if TYPE_CHECKING:
     from poop.types.boolean import Boolean
+    from poop.types.none import NoneClass
 
 
 def _answered_by_the_class_side(kind: type, name: str) -> bool:
@@ -31,6 +34,10 @@ def _answered_by_the_class_side(kind: type, name: str) -> bool:
     """
     found = class_side_named(type(kind), name)
     return found is not None and not found.refuses
+
+
+def _linked(exception: BaseException | None) -> Error | NoneClass:
+    return none if exception is None else Error(exception)
 
 
 @final
@@ -90,7 +97,30 @@ class Error(Object, name="object"):
             issubclass(self.kind(), a_class(unalias(type_), "is_instance"))
         )
 
-    def raise_(self) -> Never:
+    def cause(self) -> Error | NoneClass:
+        """The error this one was raised from — `__cause__`, as a message.
+
+        `none` when it was raised from nothing, or from `None`.
+        """
+        return _linked(self._exception.__cause__)
+
+    def context(self) -> Error | NoneClass:
+        """The error being handled when this one was raised — `__context__`.
+
+        `none` when the context was suppressed, which the raw dunder does not
+        say: POOP composes its own failures with `raise … from None` while
+        CPython's native exception is still being handled, so `__context__`
+        would hand a handler CPython's wording (`list index out of range`)
+        for almost every error POOP composes. Suppressed is also what the
+        uncaught report leaves out, so a handler and the terminal see one
+        chain.
+        """
+        exception = self._exception
+        if exception.__suppress_context__:
+            return none
+        return _linked(exception.__context__)
+
+    def raise_(self, *extra: object) -> Never:
         """Signal this error again — POOP's substitute for a bare `raise`.
 
         `raise_` is a *class-side* message, so `e.raise_()` used to answer
@@ -104,7 +134,14 @@ class Error(Object, name="object"):
         identity, its notes and its traceback survive — which is what a handler
         that logs and rethrows actually wants, and what Python's bare `raise`
         does.
+
+        An argument is refused in POOP's words: CPython counted the receiver
+        as one (`object.raise_() takes 1 positional argument`).
         """
+        if extra:
+            raise mirrors.TypeError(
+                f"#raise_ takes no argument on a caught error, got {_count(len(extra))}"
+            )
         raise self._exception
 
     def _state(self) -> dict[str, object]:

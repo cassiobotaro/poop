@@ -242,6 +242,11 @@ _FAILING = [
     "Try(lambda: 1).else_(5)",
     "Try(lambda: 1).else_()",
     "Try(lambda: 1).else_(lambda n: n).else_(lambda n: n)",
+    'KeyError("outer").raise_from(5)',
+    'KeyError("outer").raise_from(ValueError)',
+    'KeyError("outer").raise_from()',
+    'KeyError("outer").raise_from(ValueError("a"), ValueError("b"))',
+    'ValueError("x").raise_(1)',
     "With(5).do(lambda x: x)",
     # A receiver that cannot be entered, and one that can be entered but never
     # exited: CPython names the missing dunder in both.
