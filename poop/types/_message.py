@@ -112,7 +112,7 @@ def cannot_be_hashed(exc: TypeError) -> str | None:
     spellings in one line, and dropping the second loses the word a reader
     searching for this failure will actually have.
     """
-    match = _UNHASHABLE.match(str(exc))
+    match = _UNHASHABLE.prefixmatch(str(exc))
     if match is None:
         return None
     kind = match.group(1)
@@ -241,12 +241,12 @@ def poop_message(exc: BaseException) -> str:
             return withheld
     text = str(exc)
     if isinstance(exc, AttributeError):
-        stateless = _NO_STATE.match(text)
+        stateless = _NO_STATE.prefixmatch(text)
         if stateless is not None:
             return holds_no_state(stateless.group(1))
     # Both patterns capture (selector, left, right) in that order, which is
     # why one unpacking serves them.
-    match = _ARITHMETIC.match(text) or _COMPARISON.match(text)
+    match = _ARITHMETIC.prefixmatch(text) or _COMPARISON.prefixmatch(text)
     if match is None:
         return text
     selector, receiver, operand = match.groups()

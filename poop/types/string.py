@@ -128,17 +128,17 @@ def _template_refusal(exc: ValueError | TypeError) -> Exception:
     if isinstance(type(exc), PoopExcMeta):
         return exc
     text = str(exc)
-    match = _UNKNOWN_CODE.match(text)
+    match = _UNKNOWN_CODE.prefixmatch(text)
     if match is not None:
         code, kind = match.groups()
         return mirrors.ValueError(f"{article(kind)} cannot be formatted with {code!r}")
-    match = _BAD_SPEC.match(text)
+    match = _BAD_SPEC.prefixmatch(text)
     if match is not None:
         spec, kind = match.groups()
         return mirrors.ValueError(
             f"{spec!r} is not a format spec {article(kind)} understands"
         )
-    match = _NO_SPEC.match(text)
+    match = _NO_SPEC.prefixmatch(text)
     if match is not None:
         return mirrors.TypeError(no_format_spec(match.group(1)))
     return mirrors.ValueError(text.replace("format string", "template"))
