@@ -22,7 +22,7 @@ import operator
 from typing import TYPE_CHECKING
 
 from poop.types._mixin import _Mixin
-from poop.types._sentinel import NOT_NUMERIC, NotNumeric
+from poop.types._sentinel import NOT_NUMERIC
 
 # circular: boolean inherits this module's mixin, complex imports boolean
 lazy from poop.types.boolean import false, to_boolean
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from poop.types.boolean import Boolean
 
 
-def _num_value(other: object) -> int | float | NotNumeric:
+def _num_value(other: object) -> int | float | NOT_NUMERIC:
     if isinstance(other, _NumericCompareMixin):
         return other._order_value()
     return NOT_NUMERIC

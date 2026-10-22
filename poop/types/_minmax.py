@@ -19,15 +19,13 @@ lazy from poop.types._unwrap import _is_absent
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from poop.types._sentinel import Missing
-
 
 def _minmax[T, D](
     func: Callable[..., T | D],
     name: str,
     iterable: Iterable[T],
     key: Key[T],
-    default: D | Missing,
+    default: D | MISSING,
 ) -> T | D:
     """Assemble the optional `key`/`default` kwargs and call `min`/`max`.
 

@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Literal, SupportsIndex, cast, overload
 from poop.types import mirrors
 from poop.types._message import article
 from poop.types._raw import _faithful
-from poop.types._sentinel import MISSING, Missing
+from poop.types._sentinel import MISSING
 
 # circular: _bridge, _mapping and mapping_proxy all import _argument
 lazy from poop.types._bridge import to_python
@@ -242,7 +242,7 @@ def bytes_like(
 
 @overload
 def a_block[F: Callable[..., object]](
-    value: F | Missing,
+    value: F | MISSING,
     selector: str,
     role: str = "a block",
     param: str = "item",
@@ -397,7 +397,7 @@ def an_int(value: object, selector: str, role: str) -> int: ...
 @overload
 def an_int[D](value: object, selector: str, role: str, default: D) -> int | D: ...
 def an_int[D](
-    value: object, selector: str, role: str, default: D | Missing = MISSING
+    value: object, selector: str, role: str, default: D | MISSING = MISSING
 ) -> int | D:
     """The raw integer behind `value`, or POOP's refusal.
 

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Self, cast
 from poop.types import mirrors
 from poop.types._argument import a_block
 from poop.types._message import article
-from poop.types._sentinel import MISSING, Missing
+from poop.types._sentinel import MISSING
 from poop.types.boolean import false, to_boolean
 from poop.types.meta import PoopMeta
 from poop.types.none import none
@@ -257,7 +257,7 @@ class Block[**P, R](Object, name="function"):
             expected = f"{fewest} to {_count(most)}"
         return f"block expects {expected}, got {given}"
 
-    def while_true(self, body: Callable[[], object] | Missing = MISSING) -> NoneClass:
+    def while_true(self, body: Callable[[], object] | MISSING = MISSING) -> NoneClass:
         # Through `self()`, not `self._fn()`: a condition block of the wrong
         # arity would otherwise answer CPython's wording from here.
         run = a_block(body, "while_true", param="")
@@ -265,7 +265,7 @@ class Block[**P, R](Object, name="function"):
             run()
         return none
 
-    def while_false(self, body: Callable[[], object] | Missing = MISSING) -> NoneClass:
+    def while_false(self, body: Callable[[], object] | MISSING = MISSING) -> NoneClass:
         run = a_block(body, "while_false", param="")
         while not bool(self()):
             run()

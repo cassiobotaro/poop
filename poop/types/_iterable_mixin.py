@@ -9,7 +9,7 @@ from poop.types._argument import Key, a_block, a_key
 from poop.types._minmax import _minmax
 from poop.types._mixin import _Mixin
 from poop.types._mutated import iterating, reword_if_native
-from poop.types._sentinel import MISSING, Missing
+from poop.types._sentinel import MISSING
 from poop.types._unwrap import _is_absent
 from poop.types.boolean import false, to_boolean
 from poop.types.int import Int
@@ -92,7 +92,7 @@ class _IterableMixin[T: Object](_Mixin):
     def _iter_items(self) -> Iterator[T]:
         return iter(self)
 
-    def do(self, block: Callable[[T], object] | Missing = MISSING) -> NoneClass:
+    def do(self, block: Callable[[T], object] | MISSING = MISSING) -> NoneClass:
         block = a_block(block, "do")
         # The one place every collection's iteration is driven to exhaustion,
         # so it is where a mutation mid-iteration surfaces: CPython's
@@ -104,34 +104,34 @@ class _IterableMixin[T: Object](_Mixin):
             raise reword_if_native(exc, iterating(self)) from None
         return none
 
-    def map[R: Object](self, block: Callable[[T], R] | Missing = MISSING) -> Map[T, R]:
+    def map[R: Object](self, block: Callable[[T], R] | MISSING = MISSING) -> Map[T, R]:
         # Eagerly, though the view is lazy: this is the half no wording change
         # reaches. A `Map` built over a non-block simply fails later, somewhere
         # else entirely — or never, if the view is never walked.
         return Map(self, a_block(block, "map"))
 
-    def filter(self, block: Callable[[T], object] | Missing = MISSING) -> Filter[T]:
+    def filter(self, block: Callable[[T], object] | MISSING = MISSING) -> Filter[T]:
         return Filter(self, a_block(block, "filter"))
 
     def filter_false(
-        self, block: Callable[[T], object] | Missing = MISSING
+        self, block: Callable[[T], object] | MISSING = MISSING
     ) -> Filter[T]:
         block = a_block(block, "filter_false")
         return Filter(self, lambda x: not bool(block(x)))
 
     @overload
     def find(
-        self, block: Callable[[T], object] | Missing = MISSING
+        self, block: Callable[[T], object] | MISSING = MISSING
     ) -> T | NoneClass: ...
     @overload
     def find[D](
-        self, block: Callable[[T], object] | Missing = MISSING, *, default: D
+        self, block: Callable[[T], object] | MISSING = MISSING, *, default: D
     ) -> T | D: ...
     def find[D](
         self,
-        block: Callable[[T], object] | Missing = MISSING,
+        block: Callable[[T], object] | MISSING = MISSING,
         *extra: object,
-        default: D | Missing = MISSING,
+        default: D | MISSING = MISSING,
     ) -> T | D | NoneClass:
         # Smalltalk's `detect:ifNone:`, in the shape `next`, `min` and `max`
         # already take: without a default a miss and a match that *is* `none`
@@ -149,8 +149,8 @@ class _IterableMixin[T: Object](_Mixin):
 
     def reduce[R](
         self,
-        init: R | Missing = MISSING,
-        block: Callable[[R, T], R] | Missing = MISSING,
+        init: R | MISSING = MISSING,
+        block: Callable[[R, T], R] | MISSING = MISSING,
     ) -> R:
         if init is MISSING:
             # Named separately: `#reduce expects a block, got nothing` would be
@@ -163,7 +163,7 @@ class _IterableMixin[T: Object](_Mixin):
         block = a_block(block, "reduce", param="a, b")
         return functools_reduce(block, self._iter_items(), init)
 
-    def sum(self, start: Object | Missing = MISSING) -> Object:
+    def sum(self, start: Object | MISSING = MISSING) -> Object:
         items = self._iter_items()
         # The first element, not `Int(0)`, when there is one: a collection
         # of `Str`s or `List`s sums without a start that matches its kind.
@@ -180,13 +180,13 @@ class _IterableMixin[T: Object](_Mixin):
 
     # `min` and `max` are each an overload pair: without a default they
     # answer an element, with one they answer an element or it. One
-    # signature saying `default: D | Missing = MISSING` answers `T | D` for
+    # signature saying `default: D | MISSING = MISSING` answers `T | D` for
     # both, and ty leaves `D` unsolved when nothing was passed.
     @overload
     def min(self, *, key: Key[T] = None) -> T: ...
     @overload
     def min[D](self, *, key: Key[T] = None, default: D) -> T | D: ...
-    def min[D](self, *, key: Key[T] = None, default: D | Missing = MISSING) -> T | D:
+    def min[D](self, *, key: Key[T] = None, default: D | MISSING = MISSING) -> T | D:
         # Keyword-only, as CPython spells `min(iterable, *, key, default)` and
         # for the reason the scalar rungs settled: positionally a block is
         # indistinguishable from a value, and `xs.min(0)` — the plain reading
@@ -197,16 +197,16 @@ class _IterableMixin[T: Object](_Mixin):
     def max(self, *, key: Key[T] = None) -> T: ...
     @overload
     def max[D](self, *, key: Key[T] = None, default: D) -> T | D: ...
-    def max[D](self, *, key: Key[T] = None, default: D | Missing = MISSING) -> T | D:
+    def max[D](self, *, key: Key[T] = None, default: D | MISSING = MISSING) -> T | D:
         return _minmax(builtins.max, "#max", self._iter_items(), key, default)
 
     def sorted(self, *, key: Key[T] = None, reverse: Boolean = false) -> List:
         return List(*_sorted(self._iter_items(), key, reverse))
 
-    def all(self, block: Callable[[T], object] | Missing = MISSING) -> Boolean:
+    def all(self, block: Callable[[T], object] | MISSING = MISSING) -> Boolean:
         return to_boolean(builtins.all(map(a_block(block, "all"), self._iter_items())))
 
-    def any(self, block: Callable[[T], object] | Missing = MISSING) -> Boolean:
+    def any(self, block: Callable[[T], object] | MISSING = MISSING) -> Boolean:
         return to_boolean(builtins.any(map(a_block(block, "any"), self._iter_items())))
 
     def enumerate(self, start: Int | NoneClass | None = None) -> Enumerate:

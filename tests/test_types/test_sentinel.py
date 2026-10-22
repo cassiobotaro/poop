@@ -11,7 +11,13 @@ import pytest
 
 from poop import Interpreter
 from poop.errors import ExecutionError
-from poop.types._sentinel import MISSING, NOT_A_COUNT, _Marker
+from poop.types._sentinel import (
+    MISSING,
+    NOT_A_COUNT,
+    NOT_INTEGRAL,
+    NOT_NUMERIC,
+    UNPEEKED,
+)
 from poop.types.boolean import false, true
 from poop.types.dict import Dict
 from poop.types.int import Int
@@ -22,14 +28,15 @@ from poop.types.string import Str
 
 
 def test_a_marker_names_itself_rather_than_an_address() -> None:
-    assert repr(MISSING) == "<missing>"
-    assert repr(NOT_A_COUNT) == "<not_a_count>"
+    assert repr(MISSING) == "MISSING"
+    assert repr(NOT_A_COUNT) == "NOT_A_COUNT"
 
 
 def test_every_marker_is_distinct() -> None:
-    # One enum, but distinct members: "argument not given" must never be read
+    # Five sentinels, five objects: "argument not given" must never be read
     # as "not a repeat count" or "nothing buffered".
-    assert len(set(_Marker)) == len(_Marker.__members__)
+    markers = (MISSING, UNPEEKED, NOT_A_COUNT, NOT_NUMERIC, NOT_INTEGRAL)
+    assert len(set(markers)) == len(markers)
 
 
 # the builtin

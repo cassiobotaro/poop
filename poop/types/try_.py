@@ -12,8 +12,6 @@ from poop.types.tuple import Tuple
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from poop.types._sentinel import Missing
-
 
 def _exception_class(member: object) -> type[BaseException]:
     """`member` when it is an exception class, else the refusal `except_` gives."""
@@ -72,7 +70,7 @@ class Try(Object, name="Try"):
     __slots__ = ("_block", "_else_block", "_executed", "_finally_block", "_handlers")
 
     def __init__(
-        self, block: Callable[[], object] | Missing = MISSING, /, *extra: object
+        self, block: Callable[[], object] | MISSING = MISSING, /, *extra: object
     ) -> None:
         # Counted here, in POOP's words, as every builtin constructor counts
         # through its converter: `Try` is bound as a class, so `Try()` and
@@ -117,7 +115,7 @@ class Try(Object, name="Try"):
             self._handlers.append((kind, handler))
         return self
 
-    def else_(self, block: Callable[[object], object] | Missing = MISSING) -> Try:
+    def else_(self, block: Callable[[object], object] | MISSING = MISSING) -> Try:
         """Python's `else` clause: run `block` only when nothing was raised.
 
         It receives the protected block's value and answers in its place,

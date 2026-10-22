@@ -7,45 +7,28 @@ of them, three meaning the same thing — "argument not given" — and imported
 side by side into `_iterable_mixin`, so which one a parameter defaulted to
 depended on which helper its author had been reading.
 
-Members of one `Enum` instead: identity still drives every test (`x is
-MISSING`), a type checker narrows on it, and the repr names the marker rather
-than printing an address.
+Python 3.15's `sentinel` (PEP 661) instead, one per marker: identity still
+drives every test (`x is MISSING`), the repr is the name, and the marker *is*
+its own type in an annotation — `block: Block | MISSING = MISSING` — which a
+type checker narrows on `is`, so the branch after `if x is MISSING` sees the
+other operand. The markers were an `Enum` built to imitate exactly that, with
+a `Literal[...]` alias per member for the annotations; the builtin gives all
+three properties natively, and the aliases went with the enum.
+
+Declared bare, without `Final`: a `Final` annotation hides the sentinel's type
+from the checker, and the union stops narrowing. The module's leading
+underscore is the guard against rebinding, as it was for the enum.
 """
 
-from enum import Enum, auto
-from typing import Final, Literal
-
-
-class _Marker(Enum):
-    # An argument the caller did not pass: the block slot of `do` / `map` /
-    # `reduce`, the `default` of `min` / `max` / `next`, the `start` of `sum`.
-    MISSING = auto()
-    # Nothing buffered by `has_next` — distinct from a buffered `none`, which an
-    # iterator yielding POOP's `none` must be able to park.
-    UNPEEKED = auto()
-    # An operand that is no repeat count, so `*` answers `NotImplemented`.
-    NOT_A_COUNT = auto()
-    # An operand outside the numeric tower, for the comparisons and arithmetic.
-    NOT_NUMERIC = auto()
-    # An operand the bitwise and shift operators cannot take.
-    NOT_INTEGRAL = auto()
-
-    def __repr__(self) -> str:
-        return f"<{self.name.lower()}>"
-
-
-MISSING: Final = _Marker.MISSING
-UNPEEKED: Final = _Marker.UNPEEKED
-NOT_A_COUNT: Final = _Marker.NOT_A_COUNT
-NOT_NUMERIC: Final = _Marker.NOT_NUMERIC
-NOT_INTEGRAL: Final = _Marker.NOT_INTEGRAL
-
-# The members as types, so a helper that answers one says so in its signature
-# and a type checker narrows the fall-through on `is`: a parameter that may be
-# left out is `block: Block | Missing = MISSING`, and `_repeat_count` answers
-# `int | NotACount`, so the `*` after `if count is NOT_A_COUNT` sees an `int`.
-type Missing = Literal[_Marker.MISSING]
-type Unpeeked = Literal[_Marker.UNPEEKED]
-type NotACount = Literal[_Marker.NOT_A_COUNT]
-type NotNumeric = Literal[_Marker.NOT_NUMERIC]
-type NotIntegral = Literal[_Marker.NOT_INTEGRAL]
+# An argument the caller did not pass: the block slot of `do` / `map` /
+# `reduce`, the `default` of `min` / `max` / `next`, the `start` of `sum`.
+MISSING = sentinel("MISSING")
+# Nothing buffered by `has_next` — distinct from a buffered `none`, which an
+# iterator yielding POOP's `none` must be able to park.
+UNPEEKED = sentinel("UNPEEKED")
+# An operand that is no repeat count, so `*` answers `NotImplemented`.
+NOT_A_COUNT = sentinel("NOT_A_COUNT")
+# An operand outside the numeric tower, for the comparisons and arithmetic.
+NOT_NUMERIC = sentinel("NOT_NUMERIC")
+# An operand the bitwise and shift operators cannot take.
+NOT_INTEGRAL = sentinel("NOT_INTEGRAL")

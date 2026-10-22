@@ -22,7 +22,7 @@ from poop.types._iterable_mixin import _IterableMixin
 from poop.types._message import article, no_format_spec
 from poop.types._ordered import _OrderedMixin
 from poop.types._repeat import _repeat_count
-from poop.types._sentinel import MISSING, NOT_A_COUNT, Missing
+from poop.types._sentinel import MISSING, NOT_A_COUNT
 from poop.types._unwrap import _is_absent, _unwrap, _unwrap_bool
 from poop.types._value_eq import _ValueEqMixin
 from poop.types.boolean import to_boolean
@@ -219,7 +219,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
     def iter(self) -> StrIterator:
         return StrIterator(self)
 
-    def sum(self, start: Object | Missing = MISSING) -> Never:  # noqa: ARG002 — refuses either way
+    def sum(self, start: Object | MISSING = MISSING) -> Never:  # noqa: ARG002 — refuses either way
         # The one mixin message a string must not answer: `sum("ab")` is a
         # TypeError in CPython, and adding the characters up would answer the
         # string back, which is `join`'s job.

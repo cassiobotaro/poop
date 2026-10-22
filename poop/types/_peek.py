@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, ClassVar, overload
 from poop.types import mirrors
 from poop.types._mixin import _Mixin
 from poop.types._mutated import reword_if_native
-from poop.types._sentinel import MISSING, UNPEEKED, Missing, Unpeeked
+from poop.types._sentinel import MISSING, UNPEEKED
 from poop.types.boolean import false, true
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class _PeekMixin[T: Object](_Mixin):
     """
 
     __slots__ = ("_peeked",)
-    _peeked: T | Unpeeked
+    _peeked: T | UNPEEKED
 
     # What the mutation refusal calls the collection being walked. `_mutated`
     # exists so that refusal names its receiver (`dict changed while it was
@@ -92,7 +92,7 @@ class _PeekMixin[T: Object](_Mixin):
                 return false
         return true
 
-    def _buffered(self) -> T | Unpeeked:
+    def _buffered(self) -> T | UNPEEKED:
         """What `has_next` parked, if anything — and the buffer emptied either way."""
         value, self._peeked = self._peeked, UNPEEKED
         return value
@@ -101,7 +101,7 @@ class _PeekMixin[T: Object](_Mixin):
     def next(self) -> T: ...
     @overload
     def next[D](self, default: D) -> T | D: ...
-    def next[D](self, default: D | Missing = MISSING) -> T | D:
+    def next[D](self, default: D | MISSING = MISSING) -> T | D:
         buffered = self._buffered()
         if buffered is not UNPEEKED:
             return buffered

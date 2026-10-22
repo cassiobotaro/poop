@@ -13,7 +13,7 @@ from poop.types._numeric_compare import (
     _NumericCompareMixin,
 )
 from poop.types._pow import reflected_pow
-from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC, NotIntegral
+from poop.types._sentinel import MISSING, NOT_INTEGRAL, NOT_NUMERIC
 from poop.types._unwrap import _is_absent, _unwrap_bool
 from poop.types.boolean import Boolean, true
 from poop.types.object import Object
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
 
-def _integral_value(other: object) -> int | NotIntegral:
+def _integral_value(other: object) -> int | NOT_INTEGRAL:
     """Raw int behind an Int/Boolean operand, else the ``NOT_INTEGRAL`` sentinel.
 
     Bitwise and shift operators accept only integral operands: ``Int`` and

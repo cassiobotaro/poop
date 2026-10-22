@@ -2,10 +2,10 @@ import operator
 from typing import SupportsIndex
 
 from poop.types._raw import _faithful
-from poop.types._sentinel import NOT_A_COUNT, NotACount
+from poop.types._sentinel import NOT_A_COUNT
 
 
-def _repeat_count(other: object) -> int | NotACount:
+def _repeat_count(other: object) -> int | NOT_A_COUNT:
     """Repeat count for sequence multiplication, or `NOT_A_COUNT`.
 
     ``bool`` is an ``int`` subclass — ``"ab" * True == "ab"`` — and a POOP

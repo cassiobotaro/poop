@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, final
 from poop.types._argument import Key, a_block, a_boolean, no_arguments, text_like
 from poop.types._minmax import _minmax
 from poop.types._numeric_compare import _NumericCompareMixin
-from poop.types._sentinel import MISSING, Missing
+from poop.types._sentinel import MISSING
 from poop.types.object import Object
 
 # circular: _unwrap imports boolean
@@ -72,30 +72,30 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
     def _order_value(self) -> int:
         return int(bool(self))
 
-    def if_true[T](self, block: Callable[[], T] | Missing = MISSING) -> T | NoneClass:
+    def if_true[T](self, block: Callable[[], T] | MISSING = MISSING) -> T | NoneClass:
         raise NotImplementedError
 
-    def if_false[T](self, block: Callable[[], T] | Missing = MISSING) -> T | NoneClass:
+    def if_false[T](self, block: Callable[[], T] | MISSING = MISSING) -> T | NoneClass:
         raise NotImplementedError
 
     def if_true_if_false[T](
         self,
-        true_block: Callable[[], T] | Missing = MISSING,
-        false_block: Callable[[], T] | Missing = MISSING,
+        true_block: Callable[[], T] | MISSING = MISSING,
+        false_block: Callable[[], T] | MISSING = MISSING,
     ) -> T:
         raise NotImplementedError
 
     def if_false_if_true[T](
         self,
-        false_block: Callable[[], T] | Missing = MISSING,
-        true_block: Callable[[], T] | Missing = MISSING,
+        false_block: Callable[[], T] | MISSING = MISSING,
+        true_block: Callable[[], T] | MISSING = MISSING,
     ) -> T:
         raise NotImplementedError
 
-    def and_(self, block: Callable[[], Boolean] | Missing = MISSING) -> Boolean:
+    def and_(self, block: Callable[[], Boolean] | MISSING = MISSING) -> Boolean:
         raise NotImplementedError
 
-    def or_(self, block: Callable[[], Boolean] | Missing = MISSING) -> Boolean:
+    def or_(self, block: Callable[[], Boolean] | MISSING = MISSING) -> Boolean:
         raise NotImplementedError
 
     def not_(self) -> Boolean:
@@ -415,33 +415,33 @@ class _TrueClass(Boolean, name="bool"):
         no_arguments(cls, args, kwargs)
         return true
 
-    def if_true[T](self, block: Callable[[], T] | Missing = MISSING) -> T:
+    def if_true[T](self, block: Callable[[], T] | MISSING = MISSING) -> T:
         return a_block(block, "if_true", param="")()
 
-    def if_false[T](self, block: Callable[[], T] | Missing = MISSING) -> NoneClass:
+    def if_false[T](self, block: Callable[[], T] | MISSING = MISSING) -> NoneClass:
         a_block(block, "if_false", param="")
         return none
 
     def if_true_if_false[T](
         self,
-        true_block: Callable[[], T] | Missing = MISSING,
-        false_block: Callable[[], T] | Missing = MISSING,
+        true_block: Callable[[], T] | MISSING = MISSING,
+        false_block: Callable[[], T] | MISSING = MISSING,
     ) -> T:
         a_block(false_block, "if_true_if_false", spelt=_BOTH)
         return a_block(true_block, "if_true_if_false", spelt=_BOTH)()
 
     def if_false_if_true[T](
         self,
-        false_block: Callable[[], T] | Missing = MISSING,
-        true_block: Callable[[], T] | Missing = MISSING,
+        false_block: Callable[[], T] | MISSING = MISSING,
+        true_block: Callable[[], T] | MISSING = MISSING,
     ) -> T:
         a_block(false_block, "if_false_if_true", spelt=_BOTH)
         return a_block(true_block, "if_false_if_true", spelt=_BOTH)()
 
-    def and_(self, block: Callable[[], Boolean] | Missing = MISSING) -> Boolean:
+    def and_(self, block: Callable[[], Boolean] | MISSING = MISSING) -> Boolean:
         return a_block(block, "and_", param="")()
 
-    def or_(self, block: Callable[[], Boolean] | Missing = MISSING) -> Boolean:
+    def or_(self, block: Callable[[], Boolean] | MISSING = MISSING) -> Boolean:
         a_block(block, "or_", param="")
         return self
 
@@ -474,37 +474,37 @@ class _TrueClass(Boolean, name="bool"):
 class _FalseClass(Boolean, name="bool"):
     __slots__ = ()
 
-    def if_true[T](self, block: Callable[[], T] | Missing = MISSING) -> NoneClass:
+    def if_true[T](self, block: Callable[[], T] | MISSING = MISSING) -> NoneClass:
         # Guarded on the branch that does *not* run, which is the whole point:
         # `False.if_true(5)` used to say nothing at all, so whether a wrong
         # argument was reported depended on the receiver's value.
         a_block(block, "if_true", param="")
         return none
 
-    def if_false[T](self, block: Callable[[], T] | Missing = MISSING) -> T:
+    def if_false[T](self, block: Callable[[], T] | MISSING = MISSING) -> T:
         return a_block(block, "if_false", param="")()
 
     def if_true_if_false[T](
         self,
-        true_block: Callable[[], T] | Missing = MISSING,
-        false_block: Callable[[], T] | Missing = MISSING,
+        true_block: Callable[[], T] | MISSING = MISSING,
+        false_block: Callable[[], T] | MISSING = MISSING,
     ) -> T:
         a_block(true_block, "if_true_if_false", spelt=_BOTH)
         return a_block(false_block, "if_true_if_false", spelt=_BOTH)()
 
     def if_false_if_true[T](
         self,
-        false_block: Callable[[], T] | Missing = MISSING,
-        true_block: Callable[[], T] | Missing = MISSING,
+        false_block: Callable[[], T] | MISSING = MISSING,
+        true_block: Callable[[], T] | MISSING = MISSING,
     ) -> T:
         a_block(true_block, "if_false_if_true", spelt=_BOTH)
         return a_block(false_block, "if_false_if_true", spelt=_BOTH)()
 
-    def and_(self, block: Callable[[], Boolean] | Missing = MISSING) -> Boolean:
+    def and_(self, block: Callable[[], Boolean] | MISSING = MISSING) -> Boolean:
         a_block(block, "and_", param="")
         return self
 
-    def or_(self, block: Callable[[], Boolean] | Missing = MISSING) -> Boolean:
+    def or_(self, block: Callable[[], Boolean] | MISSING = MISSING) -> Boolean:
         return a_block(block, "or_", param="")()
 
     def not_(self) -> Boolean:

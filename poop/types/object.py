@@ -6,7 +6,7 @@ from poop.types._cloak import cloak
 from poop.types._message import cannot_be_hashed, holds_no_state, no_format_spec
 from poop.types._raw import _faithful
 from poop.types._selectors import explain, is_dunder, is_message
-from poop.types._sentinel import MISSING, Missing
+from poop.types._sentinel import MISSING
 from poop.types.meta import PoopMeta
 
 # circular: every module below imports `Object` (or `PoopMeta`, which this
@@ -115,14 +115,14 @@ class Object(metaclass=PoopMeta):
         raw = str(name)
         raise MessageNotUnderstood(explain(self, raw), name=raw, obj=self)
 
-    def if_none(self, block: Callable[[], object] | Missing = MISSING) -> Object:
+    def if_none(self, block: Callable[[], object] | MISSING = MISSING) -> Object:
         # Guarded on the receiver that does *not* run it: `(5).if_none(5)` said
         # nothing while `None.if_none(5)` leaked, so whether a wrong argument
         # was reported depended on the value in hand.
         a_block(block, "if_none", param="")
         return self
 
-    def if_not_none[T](self, block: Callable[[Object], T] | Missing = MISSING) -> T:
+    def if_not_none[T](self, block: Callable[[Object], T] | MISSING = MISSING) -> T:
         return a_block(block, "if_not_none", param="value")(self)
 
     # Smalltalk's `ifNil:ifNotNil:`, the paired form `Boolean` already has as
@@ -133,16 +133,16 @@ class Object(metaclass=PoopMeta):
     # `if_none` gives.
     def if_none_if_not_none[T](
         self,
-        none_block: Callable[[], object] | Missing = MISSING,
-        present_block: Callable[[Object], T] | Missing = MISSING,
+        none_block: Callable[[], object] | MISSING = MISSING,
+        present_block: Callable[[Object], T] | MISSING = MISSING,
     ) -> T:
         a_block(none_block, "if_none_if_not_none", spelt=_PAIR)
         return a_block(present_block, "if_none_if_not_none", spelt=_PAIR)(self)
 
     def if_not_none_if_none[T](
         self,
-        present_block: Callable[[Object], T] | Missing = MISSING,
-        none_block: Callable[[], object] | Missing = MISSING,
+        present_block: Callable[[Object], T] | MISSING = MISSING,
+        none_block: Callable[[], object] | MISSING = MISSING,
     ) -> T:
         a_block(none_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)
         return a_block(present_block, "if_not_none_if_none", spelt=_PAIR_SWAPPED)(self)

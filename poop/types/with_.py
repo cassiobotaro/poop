@@ -11,8 +11,6 @@ from poop.types.object import Object
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from poop.types._sentinel import Missing
-
 
 def _slot(kind: type, slot: str, verb: str) -> Callable[..., object]:
     """`kind`'s `slot`, or the refusal naming the half of the protocol it lacks."""
@@ -72,7 +70,7 @@ class With(Object, name="With"):
     __slots__ = ("_cm_block", "_done")
 
     def __init__(
-        self, cm_block: Callable[[], object] | Missing = MISSING, /, *extra: object
+        self, cm_block: Callable[[], object] | MISSING = MISSING, /, *extra: object
     ) -> None:
         # Counted here, in POOP's words, as every builtin constructor counts
         # through its converter: `With` is bound as a class, so `With()` and
