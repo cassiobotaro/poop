@@ -69,9 +69,7 @@ def _payload_slots(cls: type) -> tuple[str, ...]:
     declarations rather than tabulated here, so a new wrapper is covered by
     having `__slots__` at all, which every one of them must.
     """
-    return tuple(
-        slot for klass in cls.__mro__ for slot in getattr(klass, "__slots__", ())
-    )
+    return tuple(*getattr(klass, "__slots__", ()) for klass in cls.__mro__)
 
 
 def _own_init(cls: type, alias: type) -> bool:

@@ -263,9 +263,7 @@ def _explain_calls(validators: Iterable[Validator]) -> frozenset[str]:
     may simply be allowed" about a banned name. Read off the interpreter the
     REPL was handed, so an injected set explains its own bans.
     """
-    return frozenset(
-        name for validator in validators for name in getattr(validator, "forbidden", ())
-    )
+    return frozenset(*getattr(validator, "forbidden", ()) for validator in validators)
 
 
 # Forbidden statements and operators need a minimal valid snippet.

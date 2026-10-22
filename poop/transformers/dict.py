@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from itertools import batched, chain, groupby
+from itertools import batched, groupby
 from typing import TYPE_CHECKING, cast
 
 from poop.transformers._arity import refuse_extra_arguments
@@ -159,7 +159,7 @@ class _DictRewriter(BuiltinRewriter):
                 parts.extend(value for _, value in run)
             else:
                 pairs = cast("Iterable[tuple[ast.expr, ast.expr]]", run)
-                parts.append(_pairs_call(list(chain.from_iterable(pairs)), ref))
+                parts.append(_pairs_call([*pair for pair in pairs], ref))
         return parts
 
     def visit_Dict(self, node: ast.Dict) -> ast.AST:
@@ -168,7 +168,7 @@ class _DictRewriter(BuiltinRewriter):
         if all(k is not None for k in node.keys):
             # No splat: one `_poop_dict_from_pairs`, without a merge around it.
             pairs = cast("list[tuple[ast.expr, ast.expr]]", entries)
-            return _pairs_call(list(chain.from_iterable(pairs)), node)
+            return _pairs_call([*pair for pair in pairs], node)
         # A `**x` entry (key is None) makes this a merge: each run of plain
         # pairs becomes a _poop_dict_from_pairs(...), each **x stays as x,
         # and _poop_dict_merge folds them left to right.
