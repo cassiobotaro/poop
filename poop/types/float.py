@@ -66,6 +66,28 @@ class Float(_NumericCompareMixin, Object, name="float"):
     def is_integer(self) -> Boolean:
         return to_boolean(self._value.is_integer())
 
+    # The `math` predicates whose only receiver is a float, as `Int` answers
+    # the `math.integer` six: CPython's names, `math`'s answers. Three are
+    # Python 3.15's (`isnormal`, `issubnormal`, `signbit`); `isnan`, `isinf`
+    # and `isfinite` are the same decision — INFECTIONS.md, Float.
+    def isnan(self) -> Boolean:
+        return to_boolean(math.isnan(self._value))
+
+    def isinf(self) -> Boolean:
+        return to_boolean(math.isinf(self._value))
+
+    def isfinite(self) -> Boolean:
+        return to_boolean(math.isfinite(self._value))
+
+    def isnormal(self) -> Boolean:
+        return to_boolean(math.isnormal(self._value))
+
+    def issubnormal(self) -> Boolean:
+        return to_boolean(math.issubnormal(self._value))
+
+    def signbit(self) -> Boolean:
+        return to_boolean(math.signbit(self._value))
+
     def as_integer_ratio(self) -> Tuple:
         n, d = self._value.as_integer_ratio()
         return Tuple(Int(n), Int(d))

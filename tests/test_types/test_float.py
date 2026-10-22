@@ -261,6 +261,42 @@ def test_is_integer_false() -> None:
     assert Float(3.5).is_integer() is false
 
 
+@pytest.mark.parametrize(
+    ("value", "message", "answer"),
+    [
+        (float("nan"), "isnan", true),
+        (1.5, "isnan", false),
+        (float("inf"), "isinf", true),
+        (1.5, "isinf", false),
+        (1.5, "isfinite", true),
+        (float("-inf"), "isfinite", false),
+        (1.0, "isnormal", true),
+        (0.0, "isnormal", false),
+        (5e-324, "issubnormal", true),
+        (1.0, "issubnormal", false),
+        (-2.5, "signbit", true),
+        (-0.0, "signbit", true),
+        (0.0, "signbit", false),
+    ],
+    ids=lambda x: x if isinstance(x, str) else repr(x),
+)
+def test_math_predicates(value: float, message: str, answer: object) -> None:
+    # The six single-receiver `math` predicates, each a Boolean with `math`'s
+    # answer: `-0.0` sets the sign bit where `< 0` is False, and `5e-324` is
+    # the smallest subnormal.
+    assert getattr(Float(value), message)() is answer
+
+
+def test_math_predicates_end_to_end() -> None:
+    # The literal path: `-0.0` is a collapsed negative literal and `5e-324`
+    # a float constant, both reaching `Float` through the transformer.
+    source = "(-0.0).signbit().print()\n(5e-324).issubnormal().print()\n"
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        Interpreter().run_source(source)
+    assert buf.getvalue() == "True\nTrue\n"
+
+
 def test_floordiv() -> None:
     assert (Float(7.0) // Float(2.0))._value == pytest.approx(3.0)
 
