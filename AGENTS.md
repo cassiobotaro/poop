@@ -19,10 +19,15 @@ uv run poop examples/basics/hello_world.py # run a program; `poop` alone is the 
 A failed hook means the commit did not happen: fix and create a new commit,
 never `--amend`.
 
+One concern per commit (one validator, one type, one fix), split in dependency
+order. Subjects follow `type(scope): ...`, e.g. `feat(types): ...`,
+`chore(openspec): ...`.
+
 ## Before you change anything
 
-- Confirm scope with the user before a multi-part plan. They may want a subset
-  (e.g. `dir` as a method but `help` as a function).
+- Confirm scope with the user before work that spans more than ~3 files or
+  changes the public API: propose an OpenSpec change first. They may want a
+  subset (e.g. `dir` as a method but `help` as a function).
 - New features must be transparent to the end user: lambda transformers,
   `__call__` or syntactic sugar, never an internal name like `Block()`.
 - POOP is the language, not the library. No stdlib mirrors, no file I/O, no
@@ -49,7 +54,10 @@ never `--amend`.
 - Run every snippet you add to a doc. `tests/test_doc_counts.py` reads the
   validator count out of `README.md` and the example count and list out of
   `examples/README.md`; keep those sentences in shape.
-- The backlog is the set of active changes under `openspec/changes/`; work
-  starts as one (`/opsx:propose`), one change per theme with one task per
-  finding. Artifacts are English only. An implemented change is archived
-  (`/opsx:archive`), never left active.
+- Every file in `examples/` carries its Smalltalk equivalent in the docstring.
+- Dates and copyright notices use the actual current year, not the one you
+  assume.
+- Work starts as an OpenSpec change (`/opsx:propose`) and ends archived
+  (`/opsx:archive`); artifacts in English. The `/opsx:*` commands are Claude
+  Code commands; elsewhere, use the `openspec` CLI. Process in
+  `CONTRIBUTING.md`, *Closing a change*.
