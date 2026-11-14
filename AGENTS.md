@@ -57,7 +57,7 @@ order. Subjects follow `type(scope): ...`, e.g. `feat(types): ...`,
 - Every file in `examples/` carries its Smalltalk equivalent in the docstring.
 - Dates and copyright notices use the actual current year, not the one you
   assume.
-- Work starts as an OpenSpec change (`/opsx:propose`) and ends archived
-  (`/opsx:archive`); artifacts in English. The `/opsx:*` commands are Claude
-  Code commands; elsewhere, use the `openspec` CLI. Process in
-  `CONTRIBUTING.md`, *Closing a change*.
+- Work starts as an OpenSpec change (`/openspec-propose`) and ends archived
+  (`/openspec-archive-change`); artifacts in English. Those are skills in
+  `.agents/skills/`; where skills are not available, use the `openspec` CLI.
+  Process in `CONTRIBUTING.md`, *Closing a change*.

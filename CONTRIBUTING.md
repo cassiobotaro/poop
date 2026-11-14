@@ -47,7 +47,7 @@ separate commits in dependency order.
 ### Confirm scope before multi-part plans
 
 Open work that spans more than ~3 files or introduces a public-API change
-deserves a quick alignment first: an OpenSpec change (`/opsx:propose`, which
+deserves a quick alignment first: an OpenSpec change (`/openspec-propose`, which
 writes its proposal, design and tasks for review) or an issue. The maintainer
 may want only a subset implemented, which is what the task list is for.
 
@@ -215,12 +215,13 @@ typing or docs declares `skip_specs: true`.
 When a change is implemented:
 
 1. Work through its tasks in atomic commits as described above
-   (`/opsx:apply`), ticking each task as it lands.
+   (`/openspec-apply-change`), ticking each task as it lands.
 2. Update `INFECTIONS.md` in the same commit as the code when the change
    touched validators, transformers, or types; the catalogue holds the *why*,
    the specs hold the *what*.
-3. Archive it (`/opsx:archive`): delta specs sync into `openspec/specs/`, and
-   the change moves to `openspec/changes/archive/<date>-<name>/`.
+3. Archive it (`/openspec-archive-change`): delta specs sync into
+   `openspec/specs/`, and the change moves to
+   `openspec/changes/archive/<date>-<name>/`.
 4. Commit the archive: `chore(openspec): archive <name>`.
 
 Code, tests and docs cite commits, not change names: the git log is the
