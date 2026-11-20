@@ -33,7 +33,7 @@ source-exclude = ["**/.claude/**"]
 
 [dependency-groups]
 dev = [
-    "prek>=0.5.5",
+    "prek>=0.5.10",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.0",
     "ty>=0.0.87",
