@@ -176,7 +176,11 @@ class _IterableMixin[T: Object](_Mixin):
         # so `[a, b].sum()` answered `a` itself and left it holding `b`'s
         # elements, and `xs.sum(acc)` grew `acc`. `builtins.sum` adds with
         # `PyNumber_Add` and leaves its operands alone; so does this.
-        return functools_reduce(operator.add, items, total)
+        # Bound to `Any` as `total` is: returned directly, the `Object` this
+        # method answers is what a checker solves `reduce` for, and
+        # `operator.add` has no overload over a type that declares no `+`.
+        result: Any = functools_reduce(operator.add, items, total)
+        return result
 
     # `min` and `max` are each an overload pair: without a default they
     # answer an element, with one they answer an element or it. One
