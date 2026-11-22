@@ -53,7 +53,7 @@ class PoopExcMeta(PoopMeta):
     """Matches a POOP exception class against the native one it mirrors."""
 
     @class_side
-    def raise_(cls, *args: object, **kwargs: object) -> Never:  # noqa: N805 — a class-side message
+    def raise_(cls, /, *args: object, **kwargs: object) -> Never:  # noqa: N805 — a class-side message
         """Signal this error — POOP's substitute for the `raise` statement.
 
         A real class-side message, not a parse-time rewrite. `RaiseTransformer`
@@ -69,7 +69,9 @@ class PoopExcMeta(PoopMeta):
 
         Everything the rewrite bought is kept: this is an expression, so it
         still works inside a `lambda`, and `**kwargs` still ride along to an
-        exception whose fields arrive by keyword.
+        exception whose fields arrive by keyword. The receiver is
+        positional-only so that every keyword is the exception's, a field
+        named `cls` included.
         """
         raise cls(*args, **kwargs)
 

@@ -238,6 +238,37 @@ def test_raise_carries_keyword_arguments() -> None:
     )
 
 
+def test_raise_keeps_no_keyword_for_itself(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # `cls` is the name the class-side message gives its own receiver, which
+    # is the one keyword it could take away from a program's exception.
+    Interpreter().run_source(
+        "class Tagged(Exception):\n"
+        "    def __init__(self, cls):\n"
+        "        self.cls = cls\n"
+        'Try(lambda: Tagged.raise_(cls="x")).except_(\n'
+        "    Tagged, lambda e: e.cls.print()\n"
+        ").run()\n"
+    )
+    assert capsys.readouterr().out.strip() == "x"
+
+
+def test_a_class_that_is_not_an_error_refuses_any_keyword(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(
+        "class Plain(Object):\n"
+        "    pass\n"
+        'Try(lambda: Plain.raise_(cls="x")).except_(\n'
+        "    Exception, lambda e: e.message().print()\n"
+        ").run()\n"
+    )
+    assert capsys.readouterr().out.strip() == (
+        "Plain cannot be raised — only a class descending from Exception can"
+    )
+
+
 def test_the_end_of_input_has_a_mirror() -> None:
     """`Str.input` is the one message that reads from outside the program.
 

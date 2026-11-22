@@ -585,7 +585,7 @@ class PoopMeta(type):
         _refuse_native(cls, "mro", "superclass")
 
     @class_side_refusal
-    def raise_(cls, *args: object, **kwargs: object) -> Never:  # noqa: ARG002 — refuses whatever it is handed
+    def raise_(cls, /, *args: object, **kwargs: object) -> Never:  # noqa: ARG002 — refuses whatever it is handed
         """Refuse `raise_` on a class that is not an error.
 
         The message itself lives on `PoopExcMeta`, so every mirror and every
@@ -593,7 +593,8 @@ class PoopMeta(type):
         Without this twin the non-exception case reported the *constructor* of
         a class the program never asked to build: `A.raise_("x")` answered
         `A() takes no arguments`, which the parse-time rewrite produced for any
-        capitalized receiver it saw.
+        capitalized receiver it saw. Positional-only like its twin, so a
+        keyword named `cls` is refused with this sentence too.
         """
         raise MessageNotUnderstood(
             f"{cls.__name__} cannot be raised — "
