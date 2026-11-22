@@ -61,8 +61,9 @@ def test_a_class_answers_its_name() -> None:
 
 
 def test_a_class_answers_its_superclass_as_a_class_not_a_name() -> None:
-    assert _Dog.superclass() is _Animal
-    assert _Dog.superclass().name() == Str("_Animal")
+    superclass = _Dog.superclass()
+    assert superclass is _Animal
+    assert superclass.name() == Str("_Animal")
 
 
 def test_the_root_answers_none_for_superclass() -> None:
