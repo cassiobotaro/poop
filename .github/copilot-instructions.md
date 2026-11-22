@@ -69,7 +69,7 @@ source → parse → validate → transform → execute(namespace)
 
 **Singletons.** `true`, `false`, and `none` are unique objects. Identity checks rely on this — there is exactly one instance of each.
 
-**`ty` type-checking suppression.** `invalid-method-override` is globally ignored in `pyproject.toml` because POOP deliberately overrides `__eq__`/`__ne__`/`__lt__` etc. to return `Boolean` (a Smalltalk-style type) instead of `bool`, violating LSP by design.
+**`ty` type-checking suppression.** `incompatible-method-override` is globally ignored in `pyproject.toml` because POOP deliberately overrides `__eq__`/`__ne__`/`__lt__` etc. to return `Boolean` (a Smalltalk-style type) instead of `bool`, violating LSP by design.
 
 **`examples/` is excluded from linters and `ty`.** Files there use names injected at runtime (`true`, `false`, `none`, POOP type constructors) that aren't resolvable statically.
 

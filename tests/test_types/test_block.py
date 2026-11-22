@@ -253,7 +253,7 @@ def test_a_bound_method_still_works_as_a_block_value() -> None:
         __slots__ = ()
 
         def double(self, v: Int) -> Int:
-            return v * Int(2)  # ty: ignore[invalid-return-type]
+            return v * Int(2)  # ty: ignore[invalid-explicit-return]
 
     # The method is typed over `Int`, the list's element over `Object`.
     doubled = List(Int(1), Int(2)).map(C().double)  # ty: ignore[invalid-argument-type]
@@ -369,7 +369,7 @@ def test_a_missing_keyword_only_argument_is_named() -> None:
 def test_no_refusal_states_two_equal_numbers(call: object) -> None:
     # The shape the item is named for must be unrepresentable.
     with pytest.raises(MIRRORS["TypeError"]) as info:
-        call(Block(lambda x: x))  # ty: ignore[call-non-callable]
+        call(Block(lambda x: x))  # ty: ignore[not-callable]
     assert "expects 1 argument, got 1" not in str(info.value)
 
 

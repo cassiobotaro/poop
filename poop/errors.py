@@ -76,8 +76,8 @@ class ValidationError(PoopError):
     # have no position, but a validator always has a node, so this class
     # guarantees one. ty reads a narrowed writable attribute as unsound; here
     # it is the documented contract.
-    lineno: int  # ty: ignore[invalid-mutable-override]
-    col_offset: int  # ty: ignore[invalid-mutable-override]
+    lineno: int  # ty: ignore[incompatible-mutable-override]
+    col_offset: int  # ty: ignore[incompatible-mutable-override]
 
     # The validator that refused, by module name (`no_print`) — the identifier
     # `--format json` hands an editor. Stamped by `collect_errors`, the one

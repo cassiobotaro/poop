@@ -257,7 +257,7 @@ def test_del_attr_removes_attribute() -> None:
         data: Int
 
     obj = Container()
-    obj.data = Int(7)  # type: ignore[unresolved-attribute]
+    obj.data = Int(7)  # type: ignore[missing-attribute]
     result = obj.del_attr(Str("data"))
     assert not hasattr(obj, "data")
     assert result is none

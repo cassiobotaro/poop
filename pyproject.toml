@@ -36,7 +36,7 @@ dev = [
     "prek>=0.5.11",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.6",
-    "ty>=0.0.87",
+    "ty>=0.0.107",
 ]
 
 [tool.pytest.ini_options]
@@ -63,7 +63,7 @@ show_missing = true
 [tool.ty.rules]
 # POOP intentionally overrides __eq__/__ne__/__lt__ etc. to return Boolean
 # (Smalltalk semantics) instead of bool — LSP violation is by design.
-invalid-method-override = "ignore"
+incompatible-method-override = "ignore"
 
 [[tool.ty.overrides]]
 # The suite's blocks are written the way a POOP program writes them —
@@ -74,7 +74,7 @@ invalid-method-override = "ignore"
 # two rules a loosely typed block trips are off here and nowhere else.
 include = ["tests/**"]
 [tool.ty.overrides.rules]
-unresolved-attribute = "ignore"
+missing-attribute = "ignore"
 unsupported-operator = "ignore"
 
 [tool.ruff.lint]

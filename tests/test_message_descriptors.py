@@ -97,7 +97,7 @@ def test_the_class_side_still_refuses_an_instance_method() -> None:
 
 def test_the_assignment_refusal_reads_the_same_words_both_ways() -> None:
     try:
-        Str("abc").x = 5  # type: ignore[unresolved-attribute]
+        Str("abc").x = 5  # type: ignore[missing-attribute]
     except AttributeError as exc:
         assigned = poop_message(exc)
     with pytest.raises(AttributeError) as info:
