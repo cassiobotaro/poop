@@ -46,7 +46,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ### Value types and equality
 
-- [ ] 3.23 Numeric equality follows CPython's numeric tower (846-850)
+- [x] 3.23 Numeric equality follows CPython's numeric tower (846-850)
 - [ ] 3.24 `Boolean` stays outside `Int` and answers the int side (44, 852, 1016, `arch:2026-10-15-fix-wrapper-equality-and-errors`)
 - [ ] 3.25 Comparison rules live in `__eq__`, symmetric across subclasses (923, 933, same archive)
 - [x] 3.26 No `id`: identity is a question (927, 339-343)
