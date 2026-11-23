@@ -1,6 +1,6 @@
 # Migration Recipes — Python → POOP
 
-Quick translations of common Python idioms to POOP source code. For the full reference of which Python constructs are forbidden and why, see [`INFECTIONS.md`](INFECTIONS.md). For end-to-end programs, see [`examples/`](examples).
+Quick translations of common Python idioms to POOP source code. Every forbidden construct and its substitute is listed under [*Banned constructs*](#banned-constructs), what each type answers under [*Type reference*](#type-reference), and why each rule exists in the decision log, [`doc/adr/`](doc/adr/). For end-to-end programs, see [`examples/`](examples).
 
 > Every snippet pair shows the Python form you would normally write and the POOP form the validators and transformers force you to write instead. Snippets are valid as POOP source — primitive literals like `0`, `"hi"`, `True` are wrapped to POOP types by transformers at parse time, so methods like `.at(0)` and `.print()` work directly on Python literals without any manual wrapping.
 
@@ -182,7 +182,7 @@ q, r = a.divmod(b)
 y = x.round(2)
 ```
 
-> Binary operators (`+`, `-`, `*`, `/`, `**`, `==`, `<`, …) stay native — the asymmetry is intentional, see `INFECTIONS.md` § "Binary infix operators".
+> Binary operators (`+`, `-`, `*`, `/`, `**`, `==`, `<`, …) stay native — the asymmetry is intentional, see [ADR 27](doc/adr/0027-binary-operators-stay-unary-ones-go-chained-comparison-is-allowed-on-ergonomics.md).
 
 ## Subscripting and slicing
 
