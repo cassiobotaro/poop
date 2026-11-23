@@ -42,7 +42,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [x] 3.19 One `is_message` predicate serves every discovery surface (519-527)
 - [x] 3.20 A class may not define lookup, creation or descriptor dunders (253-261, `arch:2026-10-15-close-raw-python-leaks`)
 - [x] 3.21 Class machinery is accepted only where it was argued for (215-243, 820-826)
-- [ ] 3.22 A class is built from its bases alone (245-251, 263-270)
+- [x] 3.22 A class is built from its bases alone (245-251, 263-270)
 
 ### Value types and equality
 
