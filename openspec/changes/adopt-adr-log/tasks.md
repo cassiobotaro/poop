@@ -7,8 +7,8 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ## 1. Inventory and open questions
 
-- [ ] 1.1 Write `openspec/changes/adopt-adr-log/inventory.md`: every ADR in group 3 with its source, its date per design decision 3 (`git log -S` for `INFECTIONS.md` paragraphs, archive prefix for `arch:` decisions) and its resulting number from `0002` in date order; verify every `###` heading of `INFECTIONS.md` appears either in the inventory or in the "reference only" list of task 4.1.
-- [ ] 1.2 Resolve the three passages that may be stale before extracting them, by running POOP: line 1254 (`Range.slice` answers `List`) against line 1139; line 1037 (a bare method attribute is a leak) against the `message` descriptor; lines 964-966 (`is_instance` takes raw classes) against the class side. Record each answer in `inventory.md`; the ADR states the current behaviour and the stale sentence is not carried over.
+- [x] 1.1 Write `openspec/changes/adopt-adr-log/inventory.md`: every ADR in group 3 with its source, its date per design decision 3 (`git log -S` for `INFECTIONS.md` paragraphs, archive prefix for `arch:` decisions) and its resulting number from `0002` in date order; verify every `###` heading of `INFECTIONS.md` appears either in the inventory or in the "reference only" list of task 4.1.
+- [x] 1.2 Resolve the three passages that may be stale before extracting them, by running POOP: line 1254 (`Range.slice` answers `List`) against line 1139; line 1037 (a bare method attribute is a leak) against the `message` descriptor; lines 964-966 (`is_instance` takes raw classes) against the class side. Record each answer in `inventory.md`; the ADR states the current behaviour and the stale sentence is not carried over.
 
 ## 2. Open the log
 
