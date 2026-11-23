@@ -427,3 +427,254 @@ Every construct a validator refuses, and what to write instead. A row whose righ
 | `ast.Subscript` (a bare `ast.Slice` or an `ast.Tuple` containing one (extended slices like `obj[i:j, k:l]`), `ast.Load`) | `obj.slice(start, stop)` | `no_subscript` |
 | `ast.Subscript` (a slice under `ast.Store`) | `obj.at_put(index, value)`, one element at a time | `no_subscript` |
 | `ast.ListComp` / `ast.SetComp` / `ast.DictComp` / `ast.GeneratorExp` | `col.map(block)`, `col.filter(block)` | `no_comprehension` |
+
+## Type reference
+
+What each type answers, message by message. The reasoning behind each choice is in [`doc/adr/`](doc/adr/).
+
+### The class side (`PoopMeta`)
+
+| Smalltalk message | Method | Behavior |
+|---|---|---|
+| `Foo name` | `Foo.name()` | the class's name as `Str` |
+| `Foo superclass` | `Foo.superclass()` | the superclass **object**, or `none` at the root |
+| `Foo respondsTo: #m` | `Foo.has_attr(name)` | `Boolean`; spelled as the instance side, per `CONTRIBUTING`'s naming rule |
+| `Foo printNl` | `Foo.print()` | prints the class's name |
+| `Foo doesNotUnderstand: #m` | `Foo.does_not_understand(name)` | same hook as `Object`'s |
+| `Foo hash` | `Foo.hash()` | `Int` |
+| `Foo isNil` / `Foo notNil` | `Foo.is_none()` / `Foo.not_none()` | always `false` / `true` |
+| `Foo not` | `Foo.not_()` | always `false` — a class is truthy |
+| `Foo printString` | `Foo.repr()` / `Foo.ascii()` | the class's name, matching `print` |
+| — | `Foo.callable()` | always `true` |
+| — | `Foo.dir()` / `Foo.format(spec)` | `List` of `Str` / `Str` |
+| `x class` | `x.class_()` | the class object itself; `class_name()` is now `x.class_().name()` |
+
+### `object`
+
+`does_not_understand`, Smalltalk's `doesNotUnderstand:`:
+
+| Smalltalk message | Method | Behavior |
+|---|---|---|
+| `isNil` | `is_none()` | always `false` for Object |
+| `notNil` | `not_none()` | always `true` for Object |
+| `not` | `not_()` | `false if bool(self) else true` |
+| `class` | `class_name()` | `type(self).__name__` as `Str` |
+| `perform:` | `get_attr(name)` | `getattr` with optional default |
+| — | `dir()` | sorted `List` of `Str` attribute names (`builtins.dir(self)`) |
+
+### `None`
+
+| Method | `Object` | `NoneClass` |
+|---|---|---|
+| `is_none()` | `false` | `true` |
+| `not_none()` | `true` | `false` |
+| `if_none(block)` | does not execute | executes block |
+| `if_not_none(block)` | executes passing `self` | does not execute |
+| `if_none_if_not_none(none_block, present_block)` | runs `present_block` with `self` | runs `none_block` |
+| `if_not_none_if_none(present_block, none_block)` | runs `present_block` with `self` | runs `none_block` |
+
+### `bool`
+
+| Smalltalk message | Method |
+|---|---|
+| `ifTrue:` / `ifFalse:` | `if_true(block)` / `if_false(block)` |
+| `ifTrue:ifFalse:` / `ifFalse:ifTrue:` | `if_true_if_false(t, f)` / `if_false_if_true(f, t)` |
+| `and:` / `or:` (lazy) | `and_(block)` / `or_(block)` |
+| `not` / `xor:` / `eqv:` | `not_()` / `xor(other)` / `eqv(other)` |
+| `&` / `\|` (eager) | `__and__(other)` / `__or__(other)` |
+| `assert:` | `assert_(message)` (on `Object`, not just `Boolean`) | raises `AssertionError(message)` if `bool(self)` is falsy; returns `self` otherwise |
+
+### Blocks
+
+| Smalltalk message | POOP idiom |
+|---|---|
+| `[cond] whileTrue: [body]` | `(lambda: cond).while_true(lambda: body)` |
+| `[cond] whileFalse: [body]` | `(lambda: cond).while_false(lambda: body)` |
+| `[block] value` | `(lambda: expr)()` |
+| `[block] value: arg` | `(lambda x: expr)(arg)` |
+
+### Collection methods
+
+| Smalltalk message | POOP method | Behavior |
+|---|---|---|
+| `do:` | `do(block)` | visits each element; returns `none` (substitute for `for` loop) |
+| `collect:` | `map(block)` | returns `Map` (lazy); materialize via `list(...)`/`tuple(...)`/etc. |
+| `select:` | `filter(block)` | returns `Filter` (lazy); same materialization |
+| `reject:` | `filter_false(block)` | returns `Filter` (lazy) with the predicate inverted |
+| `detect:` / `detect:ifNone:` | `find(block, default=…)` | first element satisfying block, or `default` — POOP `none` when none is given |
+| `inject:into:` | `reduce(init, block)` | fold with required initial value; returns accumulated result |
+| — | `sum(start=...)` | sum of elements; `Int(0)` for empty; optional `start` mirrors Python `sum(it, start)` |
+| — | `min(key=None, default=...)` | smallest element; mirrors Python `min` |
+| — | `max(key=None, default=...)` | largest element; mirrors Python `max` |
+| — | `all(block)` | `true` if block holds for every element |
+| — | `any(block)` | `true` if block holds for at least one element |
+| — | `enumerate(start=Int(0))` | returns an `Enumerate` of `Tuple(Int(i), item)` pairs |
+| — | `zip(*others, strict=false)` | returns a `Zip` of `Tuple(...)` |
+
+### Builtin-mirroring signatures
+
+| Type | Method | Signature | Notes |
+|---|---|---|---|
+| `Int` | `to_bytes` | `to_bytes(length=Int(1), byteorder=Str("big"), signed=false)` | `signed` is keyword-only, like `int.to_bytes` |
+| `Int` | `from_bytes` | `from_bytes(bytes, byteorder=Str("big"), signed=false)` | classmethod; `signed` keyword-only |
+| `Float` | `from_number` | `from_number(x)` | classmethod (Python 3.14); `x` an int, bool or float, refused otherwise by `a_number` |
+| `Complex` | `from_number` | `from_number(x)` | classmethod (Python 3.14); `x` an int, bool, float or complex |
+| `ByteArray` | `resize` | `resize(size)` | Python 3.15; in place, answers `none`; a negative size is CPython's `ValueError` |
+| `Str` | `format_map` | `format_map(mapping)` | `mapping` a `Dict`, `FrozenDict` or `MappingProxy`, refused otherwise by `a_mapping`; a positional field keeps CPython's `ValueError` |
+| `Str` | `maketrans` | `maketrans(x, y=none, z=none)` | staticmethod; one mapping, or two equal-length strings and an optional third to delete; answers a `Dict` |
+| `Str` | `translate` | `translate(table)` | `table` a mapping or a `List`/`Tuple`/`Str`, crossed to Python by `translation_table`; a `none` value deletes |
+| `Bytes`, `ByteArray` | `maketrans` | `maketrans(frm, to)` | staticmethod; answers `bytes` on both, as CPython does |
+| `Bytes`, `ByteArray` | `translate` | `translate(table, delete=b"")` | `table` may be `none`; a table not 256 bytes long is CPython's `ValueError` |
+| `List`, `Tuple` | `index` | `index(obj, start=none, stop=none)` | optional search bounds; either may be given alone, as in Python |
+| `MemoryView` | `tobytes` | `tobytes(order=Str("C"))` | `order` ∈ `{"C", "F", "A"}` |
+| `MemoryView` | `hex` | `hex(sep=none, bytes_per_sep=Int(1))` | mirrors `Bytes.hex`; the one message that shows the contents |
+| `MemoryView` | `tolist` | `tolist()` | a `List` of `Int`, one per byte; takes no argument, as `memoryview.tolist` does |
+| `MemoryView` | `readonly` | `readonly()` | a `Boolean`: `true` over `bytes`, `false` over `bytearray`; a method, where CPython has an attribute |
+| `Set`, `FrozenSet` | `union`, `intersection`, `difference` | `(*others)` | each operand may be **any iterable** (`List`/`Tuple`/…), not only another set |
+| `Set`, `FrozenSet` | `symmetric_difference`, `isdisjoint`, `issubset`, `issuperset` | `(other)` | operand may be any iterable |
+| `Set` | `update`, `intersection_update`, `difference_update` | `(*others)` | in-place; operands may be any iterable |
+| `Set` | `symmetric_difference_update` | `(other)` | in-place; operand may be any iterable |
+| `Dict` | `update` | `update(other=none, **pairs)` | `other` is a `Dict`, a `MappingProxy`, or an iterable of 2-element `(key, value)` pairs — a wrong-length element raises the faithful `ValueError`; both halves are optional, as in `dict.update([E], **F)`, and a keyword wins over the same key in the mapping |
+
+### `range`
+
+| POOP method | Behavior |
+|---|---|
+| `do(block)` | see collection iterable methods above |
+| `map(block)` | transforms → `Map` (lazy) |
+| `filter(block)` | filters → `Filter` (lazy) |
+| `filter_false(block)` | filters inverse → `Filter` (lazy) |
+| `find(block)` | first satisfying, or POOP `none` |
+| `iter()` | returns a one-shot `RangeIterator` |
+| `len()` | returns `Int` |
+| `at(index)` | returns the value at `index` as `Int` |
+| `slice(start, stop, step=None)` | slice → `Range` |
+| `slice(slice_obj)` | slice via `Slice` value object → `Range` |
+| `reversed()` | returns reversed `Range` |
+| `includes(value)` | `true` if `value` is in the range |
+| `count(value)` | number of occurrences (always `0` or `1`) |
+| `index(value)` | position of `value`, or raises `ValueError` (`range has no element equal to 9`) |
+| `start()` / `stop()` / `step()` | the underlying `Int` bounds |
+
+### `slice`
+
+| Method | Returns | Notes |
+|---|---|---|
+| `Slice(start, stop)` | `Slice` | Two-arg constructor |
+| `Slice(start, stop, step)` | `Slice` | Three-arg constructor |
+| `.start()` | `Int` | |
+| `.stop()` | `Int` | |
+| `.step()` | `Int \| NoneClass` | POOP `none` when not set |
+| `.indices(length)` | `Tuple(Int, Int, Int)` | Normalised start/stop/step for a sequence of the given length; mirrors Python's `slice.indices()` |
+
+| Type | Returns |
+|---|---|
+| `Str` | `Str` |
+| `List` | `List` |
+| `Tuple` | `Tuple` |
+| `Bytes` | `Bytes` |
+| `ByteArray` | `ByteArray` |
+| `Range` | `Range` |
+
+### Dict views
+
+| View | iter | set ops | comparison | mapping |
+|---|---|---|---|---|
+| `DictKeys` | `DictKeyIterator` | `\|`, `&`, `-`, `^` → `Set`; `isdisjoint` | `__eq__`, `__le__`, `__lt__`, `__ge__`, `__gt__` (set semantics) | `mapping()` → `MappingProxy` |
+| `DictValues` | `DictValueIterator` | none (values may be unhashable) | inherits `Object` identity and hash (Python parity) | `mapping()` |
+| `DictItems` | `DictItemIterator` (yields `Tuple(k, v)`) | `\|`, `&`, `-`, `^` → `Set` of `Tuple`; `isdisjoint` | full set semantics like `DictKeys` | `mapping()` |
+
+### Printing
+
+| Message | Behavior |
+|---|---|
+| `obj.print()` | prints `str(obj)` followed by `\n`; returns `None` |
+| `obj.print(end="")` | controls the terminator |
+| `obj.print(flush=True)` | forces buffer flush |
+| `list.print(sep=", ")` | `List`/`Tuple`: joins elements with `sep` (default `" "`) |
+
+### `Error`
+
+| Method | Behavior |
+|---|---|
+| `message()` | returns exception message as `Str` |
+| `kind()` | returns the POOP exception class; `kind().name()` for the name as `Str` |
+| `cause()` | the error this one was raised from (`raise_from`), or `none` |
+| `context()` | the error being handled when this one was raised, or `none` when there was none or it was suppressed |
+
+### `Try`
+
+| Message | Method | Behavior |
+|---|---|---|
+| `[block] on: ExcType do: handler` | `Try(block).except_(ExcType, handler)` | registers a handler; chainable |
+| *(Python's `else`)* | `Try(block).else_(block)` | runs only when nothing was raised, with the protected value; chainable |
+| `[block] ensure: finallyBlock` | `Try(block).finally_(block)` | sets finally block **and** executes; answers the protected block's value |
+| *(terminal)* | `.run()` | executes without finally block; answers the protected block's value |
+
+### `With`
+
+| Message | Method | Behavior |
+|---|---|---|
+| `[block] value: aResource` | `With(lambda: cm).do(lambda resource: body)` | acquires resource via `__enter__`, runs body, calls `__exit__`; answers the body's value |
+
+### Builtins a program may call
+
+| Allowed | Why |
+|---|---|
+| `__build_class__` | what the `class` statement itself calls |
+| `__name__` | read while creating a class |
+| `super` | already the documented allowance — without it inheritance breaks entirely |
+| `classmethod` / `staticmethod` / `property` | class-definition machinery with no message-passing substitute, by the same argument as `super`; `examples/patterns/` uses the first two |
+
+## Rewrites
+
+What the transformers turn source into before it runs, so that no bare Python value reaches the program.
+
+| Python | AST node | Replacement |
+|---|---|---|
+| `int` | `ast.Constant(value=int)` (except `bool`) | `_poop_int(n)` |
+| `int` | `ast.UnaryOp(USub, Constant(int))` | `_poop_int(-n)` — collapsed negative literal |
+| `int` | `ast.Call` with `int(x)` or `int(s, base)` | `_poop_int_from(x)` / `_poop_int_from(s, base)` |
+| `float` | `ast.Constant(value=float)` | `_poop_float(n)` |
+| `float` | `ast.UnaryOp(USub, Constant(float))` | `_poop_float(-n)` — collapsed negative literal |
+| `float` | `ast.Call` with `float(x)` | `_poop_float_from(x)` |
+| `Ellipsis` | `ast.Constant(value=Ellipsis)` | `_poop_ellipsis` |
+| `Ellipsis` | `ast.Name(id="Ellipsis")` | `_poop_ellipsis` |
+| `bool` | `ast.Constant(value=True)` | `_poop_true` |
+| `bool` | `ast.Constant(value=False)` | `_poop_false` |
+| `bool` | `ast.Call` with `bool(x)` | `_poop_bool_from(x)` |
+| `None` | `ast.Constant(value=None)` | `_poop_none` |
+| `str` | `ast.Constant(value=str)` | `_poop_str(s)` |
+| `str` | the docstring of a class or function | left as it is — CPython stores it as `__doc__`; wrapped, it was an expression statement built on every call |
+| `str` | `ast.Call` with `str(...)` | `_poop_str_from(...)`, whatever the arity |
+| `bytes` | `ast.Constant(value=bytes)` | `_poop_bytes(b)` |
+| `bytes` | `ast.Call` with `bytes(x)` or `bytes(s, enc)` | `_poop_bytes_from(x)` / `_poop_bytes_from(s, enc)` |
+| `list` | `ast.List` (Load context) | `_poop_list(*elts)` |
+| `list` | `ast.Call` with `list(...)` | `_poop_list_from(x)` |
+| `tuple` | `ast.Tuple` (Load context) | `_poop_tuple(*elts)` |
+| `tuple` | `ast.Call` with `tuple(...)` | `_poop_tuple_from(x)` |
+| `set` | `ast.Set` | `_poop_set(*elts)` |
+| `set` | `ast.Call` with `set(...)` | `_poop_set_from(x)` |
+| `dict` | `ast.Dict` (no unpacking) | `_poop_dict_from_pairs(k1, v1, k2, v2, …)` |
+| `dict` | `ast.Call` with `dict(...)` | `_poop_dict_from(x)` — `x` must be `Dict` or iterable of 2-element `Tuple`/`List` pairs |
+| `dict` | `ast.Dict` with `**x` | `_poop_dict_merge(…)` — each run of pairs a `_poop_dict_from_pairs`, each `**x` itself |
+| `complex` | `ast.Constant(value=complex)` | `_poop_complex(v)` |
+| `complex` | `ast.BinOp` combining real + imaginary literal | collapsed into `_poop_complex(r+ij)` |
+| `complex` | `ast.Call` with `complex(r, i)` | `_poop_complex_from(r, i)` |
+| `bytearray` | `ast.Call` with `bytearray(...)` | `_poop_bytearray_from(x)` |
+| `memoryview` | `ast.Call` with `memoryview(...)` | `_poop_memoryview_from(x)` |
+| `frozenset` | `ast.Call` with `frozenset(...)` | `_poop_frozenset_from(x)` |
+| `frozendict` | `ast.Call` with `frozendict(...)` | `_poop_frozendict_from(x)` |
+| `frozendict` | `ast.Call` with `frozendict(a, **b)` | `_poop_frozendict_from(_poop_dict_merge(...))` — the dict's fold, frozen |
+| `sentinel` | `ast.Call` with `sentinel(name, repr=...)` | `_poop_sentinel_from(name, repr=...)` |
+| `sentinel` | `ast.Name` `sentinel` | `_poop_sentinel_cls` — the alias, for `x.is_instance(sentinel)` and `class Marker(sentinel)` |
+| `range` | `ast.Call` with `range(stop)` / `range(start, stop)` / `range(start, stop, step)` | `_poop_range(...)` → `Range` |
+
+### Classes
+
+| Pattern | Replacement |
+|---|---|
+| `class Foo:` | `class Foo(_poop_object):` |
+| `class Foo(object):` | `class Foo(_poop_object):` |
+| `class Foo(Object):` | `class Foo(_poop_object):` — backwards-compat for explicit Smalltalk-style declarations |
+| `class Foo(Bar):` | unchanged — already has a base |
