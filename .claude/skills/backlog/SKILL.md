@@ -9,8 +9,8 @@ One change per theme, one task per finding.
 2. Pick a change with the user. Discuss trade-offs before implementing, and
    confirm scope: which tasks, in which order. They may want only a subset.
 3. `/openspec-apply-change <name>`: work the tasks in atomic commits, ticking
-   each as it lands, with `INFECTIONS.md` and `README.md` updated in the same
-   commit as the code. Run the full gate before each commit:
+   each as it lands, with `README.md` and `MIGRATION.md` updated, and an ADR
+   in `doc/adr/` written for any decision, in the same commit as the code. Run the full gate before each commit:
    `uv run ruff check && uv run ruff format --check && uv run ty check poop/ tests/ && uv run pytest`.
 4. `/openspec-archive-change <name>` once every task is done: delta specs sync
    into `openspec/specs/`, the change moves to `openspec/changes/archive/`,

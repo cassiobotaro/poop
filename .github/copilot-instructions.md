@@ -39,7 +39,7 @@ source → parse → validate → transform → execute(namespace)
 2. Raise `ValidationError(message, lineno=node.lineno, col_offset=node.col_offset)` from the visitor (the factories do this for you).
 3. Register the validator instance in `DEFAULT_VALIDATORS` in `poop/validators/__init__.py`.
 4. Add a test file `tests/test_validators/test_no_<thing>.py`.
-5. Document the infection in `INFECTIONS.md`.
+5. Add its row to *Banned constructs* in `MIGRATION.md`, and an ADR in `doc/adr/` when it makes a decision of its own.
 
 **Rule**: only activate a validator when the substitute already exists. No blocking without an alternative.
 
