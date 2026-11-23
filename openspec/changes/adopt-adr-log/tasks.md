@@ -119,7 +119,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ## 4. `MIGRATION.md`
 
-- [ ] 4.1 Add *Banned constructs*: one row per ban from every validator table (`Python | POOP substitute | validator`), definitive bans linking ADR 3.4; verify every validator in `DEFAULT_VALIDATORS` has at least one row, and list in `inventory.md` the sections that were reference only.
+- [x] 4.1 Add *Banned constructs*: one row per ban from every validator table (`Python | POOP substitute | validator`), definitive bans linking ADR 3.4; verify every validator in `DEFAULT_VALIDATORS` has at least one row, and list in `inventory.md` the sections that were reference only.
 - [ ] 4.2 Add *Type reference*: the API tables (PoopMeta, Object, NoneClass, Boolean, Block, collection methods, builtin-mirroring signatures, Range, Slice, Error, Object.print, the transformer rewrite tables) moved without rationale; verify every snippet added runs under `uv run poop`.
 - [ ] 4.3 Repoint the intro sentence and the line-185 § link to the new section and ADR 3.45.
 
