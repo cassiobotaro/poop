@@ -19,7 +19,7 @@ skill in the Nygard format of design decision 1 and checked against the
 ### Principles (lines 9-57)
 
 - [x] 3.1 Everything is an object; every operation is a message
-- [ ] 3.2 Message aesthetics decides whether a construct is infected
+- [x] 3.2 Message aesthetics decides whether a construct is infected
 - [ ] 3.3 Methods use Python names, not Smalltalk's (with `do`, `reduce`, and the single-receiver `math` functions of `arch:2026-10-22-float-answers-315-math`)
 - [ ] 3.4 A validator is activated only with its substitute; definitive bans (with `try/except*`, lines 107-109, and `import`/`open`/`async`/`input`, lines 131-160, 634-663)
 - [ ] 3.5 Every type represents itself through `__str__`, and a displayed value reads back as itself (line 48)
