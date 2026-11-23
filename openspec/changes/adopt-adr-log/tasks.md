@@ -100,7 +100,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 - [x] 3.57 `Object` is the implicit base of every class (1473-1486)
 - [x] 3.58 Native-demanding protocol slots are adapted at class build (1323)
-- [ ] 3.59 A builtin subclass constructs as the builtin does; a class refuses binary operators (1319-1337, 1256)
+- [x] 3.59 A builtin subclass constructs as the builtin does; a class refuses binary operators (1319-1337, 1256)
 
 ### Executor and performance
 
