@@ -24,7 +24,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [ ] 3.4 A validator is activated only with its substitute; definitive bans (with `try/except*`, lines 107-109, and `import`/`open`/`async`/`input`, lines 131-160, 634-663)
 - [ ] 3.5 Every type represents itself through `__str__`, and a displayed value reads back as itself (line 48)
 - [ ] 3.6 `__slots__` on every POOP class, mixins included
-- [ ] 3.7 Every literal is transformed (with the docstring rule, lines 1309-1317, `arch:2026-10-14-fix-behaviour-leaks`)
+- [x] 3.7 Every literal is transformed (with the docstring rule, lines 1309-1317, `arch:2026-10-14-fix-behaviour-leaks`)
 - [ ] 3.8 Every basic type has a POOP wrapper
 - [ ] 3.9 POOP methods answer POOP types (with `return none`, `*args` and unpacking, lines 985-991)
 - [ ] 3.10 Void mutators answer `none`
