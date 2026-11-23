@@ -21,7 +21,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [x] 3.1 Everything is an object; every operation is a message
 - [x] 3.2 Message aesthetics decides whether a construct is infected
 - [x] 3.3 Methods use Python names, not Smalltalk's (with `do`, `reduce`, and the single-receiver `math` functions of `arch:2026-10-22-float-answers-315-math`)
-- [ ] 3.4 A validator is activated only with its substitute; definitive bans (with `try/except*`, lines 107-109, and `import`/`open`/`async`/`input`, lines 131-160, 634-663)
+- [x] 3.4 A validator is activated only with its substitute; definitive bans (with `try/except*`, lines 107-109, and `import`/`open`/`async`/`input`, lines 131-160, 634-663)
 - [ ] 3.5 Every type represents itself through `__str__`, and a displayed value reads back as itself (line 48)
 - [ ] 3.6 `__slots__` on every POOP class, mixins included
 - [x] 3.7 Every literal is transformed (with the docstring rule, lines 1309-1317, `arch:2026-10-14-fix-behaviour-leaks`)
