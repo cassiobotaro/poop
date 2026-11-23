@@ -111,7 +111,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 - [ ] 3.62 The uncaught report shows the chain, nearest first, by CPython's rule (50)
 - [x] 3.63 A source file is read the way CPython reads it (54)
-- [ ] 3.64 `:explain` covers every message a validator composes (56)
+- [x] 3.64 `:explain` covers every message a validator composes (56)
 
 ### This change
 
