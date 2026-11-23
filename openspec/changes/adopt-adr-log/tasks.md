@@ -51,7 +51,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [x] 3.25 Comparison rules live in `__eq__`, symmetric across subclasses (923, 933, same archive)
 - [x] 3.26 No `id`: identity is a question (927, 339-343)
 - [x] 3.27 `Range` stores an inclusive bound, decoded in one place, and reads its bounds by index (42, 561, 1139-1141; per 1.2)
-- [ ] 3.28 `FrozenDict` and `MappingProxy` are both kept (1438, 1451)
+- [x] 3.28 `FrozenDict` and `MappingProxy` are both kept (1438, 1451)
 - [ ] 3.29 Python 3.15's `sentinel` is wrapped faithfully (1449-1453, `arch:2026-10-22-adopt-315-idioms`)
 
 ### Exceptions
