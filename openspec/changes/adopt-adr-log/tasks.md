@@ -115,7 +115,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ### This change
 
-- [ ] 3.65 Decisions live in `doc/adr/`, replacing `INFECTIONS.md`, dated the day it lands: *Context* names `INFECTIONS.md`'s three jobs and decision 4 of `arch:2026-10-14-backlog-to-openspec`, which it reverses; *Decision* is the log, the `MIGRATION.md` reference and the OpenSpec rule of design decision 6. Written after group 4, before 5.1.
+- [x] 3.65 Decisions live in `doc/adr/`, replacing `INFECTIONS.md`, dated the day it lands: *Context* names `INFECTIONS.md`'s three jobs and decision 4 of `arch:2026-10-14-backlog-to-openspec`, which it reverses; *Decision* is the log, the `MIGRATION.md` reference and the OpenSpec rule of design decision 6. Written after group 4, before 5.1.
 
 ## 4. `MIGRATION.md`
 

@@ -4,7 +4,7 @@ Working list for `adopt-adr-log`, deleted in task 8.1. Number, date (design deci
 
 | ADR | Date | Task | Title |
 |---|---|---|---|
-| 1 | commit day | 2.1 | Record architecture decisions |
+| 1 | 2026-11-23 | 2.1 | Record architecture decisions |
 | 2 | 2026-04-21 | 3.7 | Every literal is transformed |
 | 3 | 2026-04-21 | 3.8 | Every basic type has a POOP wrapper |
 | 4 | 2026-04-21 | 3.9 | POOP methods answer POOP types |
@@ -69,7 +69,7 @@ Working list for `adopt-adr-log`, deleted in task 8.1. Number, date (design deci
 | 63 | 2026-10-15 | 3.33 | Built exceptions have a POOP instance side |
 | 64 | 2026-10-15 | 3.60 | A non-tty stdin is a program, not a REPL |
 | 65 | 2026-10-19 | 3.62 | The uncaught report shows the chain, nearest first, by CPython's rule |
-| 66 | commit day | 3.65 | Decisions live in `doc/adr/`, replacing `INFECTIONS.md` |
+| 66 | 2026-11-23 | 3.65 | Decisions live in `doc/adr/`, replacing `INFECTIONS.md` |
 
 ## Sections
 
