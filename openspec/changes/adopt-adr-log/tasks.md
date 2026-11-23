@@ -85,7 +85,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ### Strings and bytes
 
-- [ ] 3.50 Text codecs are limited to four encodings, constructors included (40, 1339, 864)
+- [x] 3.50 Text codecs are limited to four encodings, constructors included (40, 1339, 864)
 - [ ] 3.51 `Bytes` and `ByteArray` share a mixin cloaked as `bytes` (1403-1409, 565, 127)
 - [ ] 3.52 `MemoryView` is a one-dimensional byte view that answers `index` and `count` (46, 1419-1421)
 
