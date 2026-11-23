@@ -75,7 +75,7 @@ The range is asked to `do` something for each number. Each comparison answers a 
 ## Where to next
 
 - [`examples/`](examples/): every example program, grouped by what it teaches
-- [`MIGRATION.md`](MIGRATION.md): the Python → POOP recipe book
-- [`INFECTIONS.md`](INFECTIONS.md): every ban, rewrite and type, and why each exists
+- [`MIGRATION.md`](MIGRATION.md): the Python → POOP recipe book, with every ban, rewrite and type
+- [`doc/adr/`](doc/adr/): the decision log, why each of them exists
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): dev setup and conventions
 - [Issues](https://github.com/cassiobotaro/poop/issues): bugs and ideas
