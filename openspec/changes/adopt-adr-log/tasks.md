@@ -71,7 +71,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [ ] 3.39 A diagnostic never names a banned construct; operator errors are reworded by a pinned regex (30, 796-804, 587-588)
 - [ ] 3.40 Arity refusals keep CPython's sentence and name POOP's class (34, 1031, `arch:2026-10-19-arity-names-the-receiver`, `arch:2026-10-19-arity-refusals-teach`)
 - [x] 3.41 `does_not_understand` answers with layered hints (935-951)
-- [ ] 3.42 Wrong kinds are refused in POOP's words, wrong values in CPython's (563-565, 1341, 1405)
+- [x] 3.42 Wrong kinds are refused in POOP's words, wrong values in CPython's (563-565, 1341, 1405)
 
 ### Blocks and messages
 
