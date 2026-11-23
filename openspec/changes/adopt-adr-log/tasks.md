@@ -28,7 +28,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [x] 3.8 Every basic type has a POOP wrapper
 - [x] 3.9 POOP methods answer POOP types (with `return none`, `*args` and unpacking, lines 985-991)
 - [ ] 3.10 Void mutators answer `none`
-- [ ] 3.11 `true`, `false` and `none` are singletons
+- [x] 3.11 `true`, `false` and `none` are singletons
 - [ ] 3.12 Constructor builtins are intercepted, not banned
 - [ ] 3.13 Dunders are exposed as plain methods
 - [ ] 3.14 Wrappers are mangled and cloaked as builtins (with reserved names derived from registries, lines 693-714)
