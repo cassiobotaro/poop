@@ -64,7 +64,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [x] 3.35 POOP raises a reachable failure only through a mirror, and the report names it (52, 882)
 - [x] 3.36 `Try` answers values and `else_` receives the value; it checks both arguments where written (38, 1179-1198)
 - [x] 3.37 `With` keeps the native protocol and passes POOP values; it checks both arguments where written (38, 1200-1222)
-- [ ] 3.38 The recursion limit is sized by frames per send (860)
+- [x] 3.38 The recursion limit is sized by frames per send (860)
 
 ### Diagnostics
 
