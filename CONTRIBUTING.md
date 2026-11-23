@@ -30,8 +30,9 @@ The pipeline is `parse → validate → transform → execute(namespace)`. Sourc
 - `poop/executor.py` — compiles and executes AST in an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
 
-Reference catalog of validators, transformers, and types:
-[`INFECTIONS.md`](INFECTIONS.md). Open backlog: the active changes under
+Why the language is the way it is: the decision log in
+[`doc/adr/`](doc/adr/). What is banned, what to write instead, and what each
+type answers: [`MIGRATION.md`](MIGRATION.md). Open backlog: the active changes under
 [`openspec/changes/`](openspec/changes/); closed ones are in its `archive/`.
 
 ## Workflow
@@ -106,8 +107,8 @@ lazy name) and was written 272 times.
 - OpenSpec artifacts under `openspec/` (proposals, designs, specs, tasks) are
   written in **English**, regardless of the language used in the conversation
   that produced them.
-- `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `INFECTIONS.md`, and `README.md` are
-  also English.
+- `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `MIGRATION.md`, `README.md` and the
+  ADRs in `doc/adr/` are also English.
 - Code comments are in English.
 
 ### Examples must have a Smalltalk version
@@ -169,8 +170,9 @@ Every infection follows the same pattern.
    allowed, plain code passes) is covered by the shared parametrised
    `tests/test_validators/test_call_name.py`, so its own test file holds only
    what is specific to it.
-4. Add an entry to `INFECTIONS.md` with a `Substitute` column pointing to the
-   POOP equivalent. **Activate a validator only when the substitute exists** —
+4. Add a row to *Banned constructs* in `MIGRATION.md` naming the POOP
+   equivalent, and an ADR in `doc/adr/` when the ban makes a decision of its
+   own. **Activate a validator only when the substitute exists** —
    blocking without offering an alternative breaks code without teaching.
 
 ### A new transformer (e.g. `foo`)
@@ -183,7 +185,8 @@ Every infection follows the same pattern.
    sometimes load-bearing (`SliceTransformer` after `NoneTransformer`) —
    comment the reason when it is.
 3. Add tests under `tests/test_transformers/test_foo.py`.
-4. Add an entry to `INFECTIONS.md`.
+4. Add its rows to `MIGRATION.md` (*Rewrites* for a transformer, *Type
+   reference* for a type), and an ADR for any decision it makes.
 
 ### A new type (e.g. `Foo`)
 
@@ -196,7 +199,8 @@ Every infection follows the same pattern.
    (`iter()`, `__add__` is fine to keep, but new Smalltalk-style behaviour goes
    in a public method).
 3. Add tests under `tests/test_types/test_foo.py`.
-4. Add an entry to `INFECTIONS.md`.
+4. Add its rows to `MIGRATION.md` (*Rewrites* for a transformer, *Type
+   reference* for a type), and an ADR for any decision it makes.
 
 ### Method naming
 
@@ -216,9 +220,11 @@ When a change is implemented:
 
 1. Work through its tasks in atomic commits as described above
    (`/openspec-apply-change`), ticking each task as it lands.
-2. Update `INFECTIONS.md` in the same commit as the code when the change
-   touched validators, transformers, or types; the catalogue holds the *why*,
-   the specs hold the *what*.
+2. In the same commit as the code, write the ADR for any decision the change
+   makes (`doc/adr/`, next number, `Accepted`; mark the ADR it replaces
+   `Superseded by`), and update `MIGRATION.md` when it touched validators,
+   transformers or types. The ADRs hold the *why*, `MIGRATION.md` the
+   reference, the specs the *what*.
 3. Archive it (`/openspec-archive-change`): delta specs sync into
    `openspec/specs/`, and the change moves to
    `openspec/changes/archive/<date>-<name>/`.
@@ -273,8 +279,9 @@ GitHub Releases page.
   `ARG005` there, because example files are POOP programs rather than Python
   modules: they rely on names injected at runtime (`True` → POOP boolean,
   etc.), carry no Python annotations, spell every block as a `lambda` (the
-  twin of Smalltalk's `[...]`, which ruff would inline into the bare-method
-  spelling `INFECTIONS.md` keeps unidiomatic), and a `With.do` body may ignore
+  twin of Smalltalk's `[...]`, see
+  [ADR 28](doc/adr/0028-every-lambda-is-a-block-loops-are-messages-to-blocks.md),
+  which ruff would inline into the bare-method spelling), and a `With.do` body may ignore
   the manager it is handed.
 - `uv run pytest` enforces a 95% coverage floor (`--cov-fail-under=95` in
   `addopts`) — a run whose tests all pass still exits non-zero below it.

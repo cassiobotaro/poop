@@ -129,7 +129,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ## 6. Contributor documents
 
-- [ ] 6.1 `CONTRIBUTING.md`: the catalogue pointer (line ~33), Language, the four "Add an entry to `INFECTIONS.md`" steps (a row in the `MIGRATION.md` table, an ADR when there is a decision) and *Closing a change* step 2.
+- [x] 6.1 `CONTRIBUTING.md`: the catalogue pointer (line ~33), Language, the four "Add an entry to `INFECTIONS.md`" steps (a row in the `MIGRATION.md` table, an ADR when there is a decision) and *Closing a change* step 2.
 - [ ] 6.2 `AGENTS.md`: the docs bullet ("Update `README.md` and `INFECTIONS.md` …") and any other mention.
 - [ ] 6.3 `README.md` "Where to next": `doc/adr/` and the `MIGRATION.md` reference; verify `uv run pytest tests/test_doc_counts.py -q` passes.
 - [ ] 6.4 `.github/copilot-instructions.md` step 5 and `.claude/skills/backlog/SKILL.md` step 3.
