@@ -104,7 +104,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ### Executor and performance
 
-- [ ] 3.60 A non-tty stdin is a program, not a REPL (`arch:2026-10-15-cli-repl-streams`)
+- [x] 3.60 A non-tty stdin is a program, not a REPL (`arch:2026-10-15-cli-repl-streams`)
 - [x] 3.61 Lazy imports break cycles; performance is guarded structurally (931, 913, `arch:2026-10-14-lazy-imports`, `arch:2026-10-14-hot-path-imports`, `arch:2026-10-14-object-hooks-off-the-hot-path`)
 
 ### Reporting and the REPL
