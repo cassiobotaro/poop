@@ -36,7 +36,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ### Namespace and encapsulation
 
-- [ ] 3.16 Programs are confined to a builtins allow-list (582-599)
+- [x] 3.16 Programs are confined to a builtins allow-list (582-599)
 - [x] 3.17 Dunder access is banned by rule, at runtime too; `__init__` only on a `super()` receiver (529-580)
 - [x] 3.18 Single-underscore internals are unreachable (675-691, 557)
 - [x] 3.19 One `is_message` predicate serves every discovery surface (519-527)
