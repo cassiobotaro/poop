@@ -92,7 +92,7 @@ skill in the Nygard format of design decision 1 and checked against the
 ### Iteration and collections
 
 - [x] 3.53 `map` and `filter` answer lazy, one-shot views (727-749, 1063, 1106-1115, 480-482)
-- [ ] 3.54 Every iterator answers `has_next` by buffering one element (478-480)
+- [x] 3.54 Every iterator answers `has_next` by buffering one element (478-480)
 - [x] 3.55 `Str` and `Dict` join the iterable mixin; subscripts follow the AST context (1065-1071, 768-772, 783-794)
 - [ ] 3.56 Sets and views copy CPython's method/operator asymmetry (496-498, 1102-1104)
 
