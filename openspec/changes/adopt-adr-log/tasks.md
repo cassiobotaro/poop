@@ -57,7 +57,7 @@ skill in the Nygard format of design decision 1 and checked against the
 ### Exceptions
 
 - [x] 3.30 Only the exceptions POOP can reach are mirrored (856-864)
-- [ ] 3.31 Mirrors match through `__instancecheck__`, with no translation layer (866-872)
+- [x] 3.31 Mirrors match through `__instancecheck__`, with no translation layer (866-872)
 - [ ] 3.32 `raise_` is a class-side message, `raise_from` an instance one (872, 880, 1463-1471, `arch:2026-11-22-bump-ty`, `arch:2026-10-19-complete-exception-protocol`)
 - [ ] 3.33 Built exceptions have a POOP instance side (876, `arch:2026-10-15-close-raw-python-leaks`)
 - [x] 3.34 `Error` wraps a caught exception and honours suppression (1162-1177, `arch:2026-10-19-complete-exception-protocol`)
