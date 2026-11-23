@@ -78,7 +78,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [x] 3.43 Every `lambda` is a `Block`; loops are messages to blocks (1018-1022, 1039)
 - [x] 3.44 `and_` and `or_` take blocks (118-125)
 - [x] 3.45 Binary operators stay, unary ones go; chained comparison is allowed on ergonomics (816-844, 129)
-- [ ] 3.46 The `message` descriptor is installed at class build; method blocks wrap on the bound result; a method is a block whichever way it is read (32, 929, 1033, `arch:2026-10-14-object-hooks-off-the-hot-path`, `arch:2026-10-14-method-blocks`; per 1.2)
+- [x] 3.46 The `message` descriptor is installed at class build; method blocks wrap on the bound result; a method is a block whichever way it is read (32, 929, 1033, `arch:2026-10-14-object-hooks-off-the-hot-path`, `arch:2026-10-14-method-blocks`; per 1.2)
 - [x] 3.47 The class side is data descriptors on a `type` metaclass and refuses instance messages (36, 884-917, 964-966; per 1.2)
 - [x] 3.48 Substitutes mirror the full builtin signature; accessors are methods (1073-1104, 382-398, 429, 559, 774, 1156, 1272, 1421)
 - [x] 3.49 `Str.format` is the only template surface (278-289, 444-452, 1341, `arch:2026-10-14-text-mirrors-complete`)
