@@ -75,7 +75,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ### Blocks and messages
 
-- [ ] 3.43 Every `lambda` is a `Block`; loops are messages to blocks (1018-1022, 1039)
+- [x] 3.43 Every `lambda` is a `Block`; loops are messages to blocks (1018-1022, 1039)
 - [x] 3.44 `and_` and `or_` take blocks (118-125)
 - [x] 3.45 Binary operators stay, unary ones go; chained comparison is allowed on ergonomics (816-844, 129)
 - [ ] 3.46 The `message` descriptor is installed at class build; method blocks wrap on the bound result; a method is a block whichever way it is read (32, 929, 1033, `arch:2026-10-14-object-hooks-off-the-hot-path`, `arch:2026-10-14-method-blocks`; per 1.2)
