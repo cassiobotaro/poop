@@ -125,7 +125,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ## 5. OpenSpec configuration
 
-- [ ] 5.1 In `openspec/config.yaml`, rewrite `context` and `rules.specs` and add `rules.design` as design decision 6 states; verify `openspec instructions design --change adopt-adr-log --json` returns the ADR rule and `openspec instructions specs --change adopt-adr-log --json` no longer names `INFECTIONS.md`.
+- [x] 5.1 In `openspec/config.yaml`, rewrite `context` and `rules.specs` and add `rules.design` as design decision 6 states; verify `openspec instructions design --change adopt-adr-log --json` returns the ADR rule and `openspec instructions specs --change adopt-adr-log --json` no longer names `INFECTIONS.md`.
 
 ## 6. Contributor documents
 
