@@ -26,7 +26,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [ ] 3.6 `__slots__` on every POOP class, mixins included
 - [x] 3.7 Every literal is transformed (with the docstring rule, lines 1309-1317, `arch:2026-10-14-fix-behaviour-leaks`)
 - [x] 3.8 Every basic type has a POOP wrapper
-- [ ] 3.9 POOP methods answer POOP types (with `return none`, `*args` and unpacking, lines 985-991)
+- [x] 3.9 POOP methods answer POOP types (with `return none`, `*args` and unpacking, lines 985-991)
 - [ ] 3.10 Void mutators answer `none`
 - [ ] 3.11 `true`, `false` and `none` are singletons
 - [ ] 3.12 Constructor builtins are intercepted, not banned
