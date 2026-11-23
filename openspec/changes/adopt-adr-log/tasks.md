@@ -12,7 +12,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ## 2. Open the log
 
-- [ ] 2.1 Add `.adr-dir` (`doc/adr`) and `doc/adr/0001-record-architecture-decisions.md`, the adr-tools seed verbatim, dated the commit day. Why POOP replaces `INFECTIONS.md` is the last ADR (3.65), dated the day it lands, so the log stays in date order.
+- [x] 2.1 Add `.adr-dir` (`doc/adr`) and `doc/adr/0001-record-architecture-decisions.md`, the adr-tools seed verbatim, dated the commit day. Why POOP replaces `INFECTIONS.md` is the last ADR (3.65), dated the day it lands, so the log stays in date order.
 
 ## 3. Retroactive ADRs
 
