@@ -27,12 +27,12 @@ one directory, one decision per file, indexed by number and title.
 ## What Changes
 
 - **New `doc/adr/` log and `.adr-dir`.** `0001-record-architecture-decisions.md`
-  opens the log, then one ADR per real decision (a choice with a genuine
+  (the adr-tools seed) opens the log, then one ADR per real decision (a choice with a genuine
   alternative that someone would need the reasoning to avoid undoing),
   extracted from `INFECTIONS.md` (*Principles*, *Explicitly allowed*, and the
   decisions inside the validator, type and transformer sections) and from the
-  `Decisions` sections of the archived `design.md` files. About 60
-  records after merging near-duplicates. Retroactive records carry the date the decision was originally made
+  `Decisions` sections of the archived `design.md` files. About 65
+  records after merging near-duplicates; the last records this change. Retroactive records carry the date the decision was originally made
   and status `Accepted`.
 - **`MIGRATION.md` absorbs the reference.** A *Banned constructs* section with
   one row per ban (construct → substitute, no rationale), and a *Type

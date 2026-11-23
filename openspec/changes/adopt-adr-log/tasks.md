@@ -12,7 +12,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 ## 2. Open the log
 
-- [ ] 2.1 Add `.adr-dir` (`doc/adr`) and `doc/adr/0001-record-architecture-decisions.md`, dated the commit day: *Context* names `INFECTIONS.md`'s three jobs and decision 4 of `arch:2026-10-14-backlog-to-openspec`, which this log replaces; *Decision* is the Nygard log plus the OpenSpec rule of design decision 6; status `Accepted`.
+- [ ] 2.1 Add `.adr-dir` (`doc/adr`) and `doc/adr/0001-record-architecture-decisions.md`, the adr-tools seed verbatim, dated the commit day. Why POOP replaces `INFECTIONS.md` is the last ADR (3.65), dated the day it lands, so the log stays in date order.
 
 ## 3. Retroactive ADRs
 
@@ -22,7 +22,7 @@ skill in the Nygard format of design decision 1 and checked against the
 - [ ] 3.2 Message aesthetics decides whether a construct is infected
 - [ ] 3.3 Methods use Python names, not Smalltalk's (with `do`, `reduce`, and the single-receiver `math` functions of `arch:2026-10-22-float-answers-315-math`)
 - [ ] 3.4 A validator is activated only with its substitute; definitive bans (with `try/except*`, lines 107-109, and `import`/`open`/`async`/`input`, lines 131-160, 634-663)
-- [ ] 3.5 Every type represents itself through `__str__`
+- [ ] 3.5 Every type represents itself through `__str__`, and a displayed value reads back as itself (line 48)
 - [ ] 3.6 `__slots__` on every POOP class, mixins included
 - [ ] 3.7 Every literal is transformed (with the docstring rule, lines 1309-1317, `arch:2026-10-14-fix-behaviour-leaks`)
 - [ ] 3.8 Every basic type has a POOP wrapper
@@ -47,10 +47,10 @@ skill in the Nygard format of design decision 1 and checked against the
 ### Value types and equality
 
 - [ ] 3.23 Numeric equality follows CPython's numeric tower (846-850)
-- [ ] 3.24 `Boolean` stays outside `Int` and answers the int side (852, 1016, `arch:2026-10-15-fix-wrapper-equality-and-errors`)
+- [ ] 3.24 `Boolean` stays outside `Int` and answers the int side (44, 852, 1016, `arch:2026-10-15-fix-wrapper-equality-and-errors`)
 - [ ] 3.25 Comparison rules live in `__eq__`, symmetric across subclasses (923, 933, same archive)
 - [ ] 3.26 No `id`: identity is a question (927, 339-343)
-- [ ] 3.27 `Range` stores an inclusive bound, decoded in one place (561, 1139-1141; per 1.2)
+- [ ] 3.27 `Range` stores an inclusive bound, decoded in one place, and reads its bounds by index (42, 561, 1139-1141; per 1.2)
 - [ ] 3.28 `FrozenDict` and `MappingProxy` are both kept (1438, 1451)
 - [ ] 3.29 Python 3.15's `sentinel` is wrapped faithfully (1449-1453, `arch:2026-10-22-adopt-315-idioms`)
 
@@ -61,15 +61,15 @@ skill in the Nygard format of design decision 1 and checked against the
 - [ ] 3.32 `raise_` is a class-side message, `raise_from` an instance one (872, 880, 1463-1471, `arch:2026-11-22-bump-ty`, `arch:2026-10-19-complete-exception-protocol`)
 - [ ] 3.33 Built exceptions have a POOP instance side (876, `arch:2026-10-15-close-raw-python-leaks`)
 - [ ] 3.34 `Error` wraps a caught exception and honours suppression (1162-1177, `arch:2026-10-19-complete-exception-protocol`)
-- [ ] 3.35 POOP raises a reachable failure only through a mirror (882)
-- [ ] 3.36 `Try` answers values and `else_` receives the value (1179-1198)
-- [ ] 3.37 `With` keeps the native protocol and passes POOP values (1200-1222)
+- [ ] 3.35 POOP raises a reachable failure only through a mirror, and the report names it (52, 882)
+- [ ] 3.36 `Try` answers values and `else_` receives the value; it checks both arguments where written (38, 1179-1198)
+- [ ] 3.37 `With` keeps the native protocol and passes POOP values; it checks both arguments where written (38, 1200-1222)
 - [ ] 3.38 The recursion limit is sized by frames per send (860)
 
 ### Diagnostics
 
-- [ ] 3.39 A diagnostic never names a banned construct; operator errors are reworded by a pinned regex (796-804, 587-588)
-- [ ] 3.40 Arity refusals keep CPython's sentence and name POOP's class (1031, `arch:2026-10-19-arity-names-the-receiver`, `arch:2026-10-19-arity-refusals-teach`)
+- [ ] 3.39 A diagnostic never names a banned construct; operator errors are reworded by a pinned regex (30, 796-804, 587-588)
+- [ ] 3.40 Arity refusals keep CPython's sentence and name POOP's class (34, 1031, `arch:2026-10-19-arity-names-the-receiver`, `arch:2026-10-19-arity-refusals-teach`)
 - [ ] 3.41 `does_not_understand` answers with layered hints (935-951)
 - [ ] 3.42 Wrong kinds are refused in POOP's words, wrong values in CPython's (563-565, 1341, 1405)
 
@@ -78,16 +78,16 @@ skill in the Nygard format of design decision 1 and checked against the
 - [ ] 3.43 Every `lambda` is a `Block`; loops are messages to blocks (1018-1022, 1039)
 - [ ] 3.44 `and_` and `or_` take blocks (118-125)
 - [ ] 3.45 Binary operators stay, unary ones go; chained comparison is allowed on ergonomics (816-844, 129)
-- [ ] 3.46 The `message` descriptor is installed at class build; method blocks wrap on the bound result (929, 1033, `arch:2026-10-14-object-hooks-off-the-hot-path`, `arch:2026-10-14-method-blocks`; per 1.2)
-- [ ] 3.47 The class side is data descriptors on a `type` metaclass (884-917, 964-966; per 1.2)
+- [ ] 3.46 The `message` descriptor is installed at class build; method blocks wrap on the bound result; a method is a block whichever way it is read (32, 929, 1033, `arch:2026-10-14-object-hooks-off-the-hot-path`, `arch:2026-10-14-method-blocks`; per 1.2)
+- [ ] 3.47 The class side is data descriptors on a `type` metaclass and refuses instance messages (36, 884-917, 964-966; per 1.2)
 - [ ] 3.48 Substitutes mirror the full builtin signature; accessors are methods (1073-1104, 382-398, 429, 559, 774, 1156, 1272, 1421)
 - [ ] 3.49 `Str.format` is the only template surface (278-289, 444-452, 1341, `arch:2026-10-14-text-mirrors-complete`)
 
 ### Strings and bytes
 
-- [ ] 3.50 Text codecs are limited to four encodings (1339, 864)
+- [ ] 3.50 Text codecs are limited to four encodings, constructors included (40, 1339, 864)
 - [ ] 3.51 `Bytes` and `ByteArray` share a mixin cloaked as `bytes` (1403-1409, 565, 127)
-- [ ] 3.52 `MemoryView` is a one-dimensional byte view (1419-1421)
+- [ ] 3.52 `MemoryView` is a one-dimensional byte view that answers `index` and `count` (46, 1419-1421)
 
 ### Iteration and collections
 
@@ -106,6 +106,16 @@ skill in the Nygard format of design decision 1 and checked against the
 
 - [ ] 3.60 A non-tty stdin is a program, not a REPL (`arch:2026-10-15-cli-repl-streams`)
 - [ ] 3.61 Lazy imports break cycles; performance is guarded structurally (931, 913, `arch:2026-10-14-lazy-imports`, `arch:2026-10-14-hot-path-imports`, `arch:2026-10-14-object-hooks-off-the-hot-path`)
+
+### Reporting and the REPL
+
+- [ ] 3.62 The uncaught report shows the chain, nearest first, by CPython's rule (50)
+- [ ] 3.63 A source file is read the way CPython reads it (54)
+- [ ] 3.64 `:explain` covers every message a validator composes (56)
+
+### This change
+
+- [ ] 3.65 Decisions live in `doc/adr/`, replacing `INFECTIONS.md`, dated the day it lands: *Context* names `INFECTIONS.md`'s three jobs and decision 4 of `arch:2026-10-14-backlog-to-openspec`, which it reverses; *Decision* is the log, the `MIGRATION.md` reference and the OpenSpec rule of design decision 6. Written after group 4, before 5.1.
 
 ## 4. `MIGRATION.md`
 

@@ -64,9 +64,10 @@ user: a theme record would be edited as decisions inside it changed, which is
 the maintenance cost this change removes.
 
 **3. Retroactive records are numbered in the order the decisions were made,
-and dated when they were made.** `0001` is *Record architecture decisions*,
-dated the day it is committed. The retroactive ADRs follow from `0002` in
-date order (ties broken by theme, then by position in the source). The date
+and dated when they were made.** `0001` is adr-tools' seed, *Record
+architecture decisions*, verbatim and dated the day it is committed; the
+record of why POOP replaces `INFECTIONS.md` is the last one, dated the day
+it lands. The retroactive ADRs follow from `0002` in date order (ties broken by theme, then by position in the source). The date
 of a decision extracted from an archived change is that archive's date
 prefix. The date of a decision extracted from `INFECTIONS.md` is the date of
 the commit that introduced its paragraph:
