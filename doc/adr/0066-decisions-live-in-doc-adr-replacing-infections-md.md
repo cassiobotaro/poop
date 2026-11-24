@@ -16,7 +16,7 @@ The other record of decisions, the `design.md` of each archived OpenSpec change,
 
 ## Decision
 
-We will record each decision as an ADR in `doc/adr/`, in the format of ADR 1: one decision per file, immutable once accepted, and a changed mind recorded as a new ADR that supersedes the old one. ADRs 2 to 65 are the decisions already made, extracted from `INFECTIONS.md` and the archived `design.md` files, numbered and dated in the order they were made.
+We will record each decision as an ADR in `doc/adr/`, in the format of ADR 1: one decision per file, immutable once accepted, and a changed mind recorded as a new ADR that supersedes the old one. ADRs 2 to 65 and 67 to 70 are the decisions already made, extracted from `INFECTIONS.md` and the archived `design.md` files. ADRs 2 to 65 are numbered in the order the decisions were made; 67 to 70 were found after this record was written and are numbered after it, each dated when its decision was made.
 
 The reference moves to `MIGRATION.md`: *Banned constructs* (one row per ban, with its substitute), *Type reference* and *Rewrites*, as tables without rationale. The specs under `openspec/specs/` keep recording observable behaviour.
 
