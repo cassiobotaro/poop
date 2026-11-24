@@ -121,7 +121,7 @@ skill in the Nygard format of design decision 1 and checked against the
 
 Numbered after 66 because a number is never backfilled; dated when each decision was made.
 
-- [ ] 3.66 Single-receiver `math` functions are messages of their type (1270, 1284, `arch:2026-10-22-float-answers-315-math`)
+- [x] 3.66 Single-receiver `math` functions are messages of their type (1270, 1284, `arch:2026-10-22-float-answers-315-math`)
 - [ ] 3.67 A `def` is a method only as a direct statement of a class body (82)
 - [ ] 3.68 A constructor call is read by its converter at run time, never folded at parse time (1230, 1385)
 - [ ] 3.69 `...` is a transformed literal, not a banned one (1001)
