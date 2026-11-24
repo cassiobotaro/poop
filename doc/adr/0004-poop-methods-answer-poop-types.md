@@ -17,7 +17,7 @@ Native values also enter through paths no method writes:
 - A void function answers raw `NoneType`.
 - CPython's `UNPACK_EX` builds the rest-collection of `c, *rest = xs` as a raw `list`.
 - A variadic parameter receives a raw `tuple` or `dict`.
-- Python's `**` demands raw `str` keys and a POOP `Dict` holds `Str`. A splat therefore answered CPython's own words about a POOP object: `A().m(**{"a": 1})` raised `TypeError: keywords must be strings`. Three of the four splat positions already worked (`f(*xs)` because a `Tuple` is iterable, `def m(**kw)` by the variadic prologue, `{**a, **b}` through `_poop_dict_merge`), and `DictTransformer` had already met the same constraint for `dict(**other)`. Only the general call was left.
+- Python's `**` demands raw `str` keys and a POOP `Dict` holds `Str`. A splat therefore answered CPython's own words about a POOP object: `A().m(**{"a": 1})` raised `TypeError: keywords must be strings`. Three of the four splat positions already worked (`f(*xs)` because a `Tuple` is iterable, `def m(**kw)` by the variadic prologue, `{**a, **b}` through `_poop_dict_merge`). `DictTransformer` had already met the same constraint for `dict(**other)`. Only the general call was left.
 
 ## Decision
 
@@ -29,7 +29,7 @@ Transformers keep the implicit paths on the POOP side:
 
 - `ReturnTransformer` (`poop/transformers/return_.py`) turns a bare `return` into `return _poop_none`, and appends `return _poop_none` to a function body that does not end in `return` or `raise`.
 - `VarargsTransformer` (`poop/transformers/varargs.py`) gives a method with `*args` / `**kwargs` a prologue (`args = _poop_tuple_from(args)`, `kw = _poop_dict_from_kwargs(kw)`), so `args` is a POOP `Tuple` and `kw` a POOP `Dict` with `Str` keys. A variadic lambda wraps its body in a nested lambda that receives the converted values.
-- `VarargsTransformer` also wraps each call-site `**d` as `**_poop_kwargs_from(d)`, the inverse of `_poop_dict_from_kwargs`: keys unwrap, values stay POOP objects, and a `**kw` parameter on the far side re-wraps them into a `Dict` unchanged.
+- `VarargsTransformer` also wraps each call-site `**d` as `**_poop_kwargs_from(d)`, the inverse of `_poop_dict_from_kwargs`. Keys unwrap and values stay POOP objects, and a `**kw` parameter on the far side re-wraps them into a `Dict` unchanged.
 - `UnpackTransformer` (`poop/transformers/unpack.py`) appends `target = _poop_list_from(target)` after each assignment with a `*target`, one per starred name, including nested (`a, (b, *inner) = …`) and attribute (`a, *self.rest = …`) targets.
 
 ## Consequences

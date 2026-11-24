@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-POOP types declare `__slots__` so that their instance variables are fixed. One slot-less class anywhere in an MRO restores the per-instance `__dict__` for everything below it, and the shared mixins `_ValueEqMixin`, `_IterableMixin` and `_SetAlgebraMixin` had none. The declaration was therefore defeated on 36 of the 49 POOP classes. `"abc".set_attr("x", 1)` succeeded, giving two equal `Str`s different attributes, while `(5).set_attr("x", 1)` refused: one message meaning two things on two rungs of the same tower.
+POOP types declare `__slots__` so that their instance variables are fixed. One slot-less class anywhere in an MRO restores the per-instance `__dict__` for everything below it, and the shared mixins `_ValueEqMixin`, `_IterableMixin` and `_SetAlgebraMixin` had none. The declaration was therefore defeated on 36 of the 49 POOP classes. `"abc".set_attr("x", 1)` succeeded, giving two equal `Str`s different attributes, while `(5).set_attr("x", 1)` refused. One message meant two things on two rungs of the same tower.
 
 Closing it dropped a `Str` from 56 to 40 bytes, the same as an `Int`, and 100 000 of them from 14.2 MB to 9.4 MB.
 

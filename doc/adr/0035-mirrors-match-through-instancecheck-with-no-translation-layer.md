@@ -10,11 +10,11 @@ Accepted
 
 POOP mirrors the exceptions a program can reach (ADR 34), so that `Try.except_(ValueError, h)` and `ValueError.raise_("msg")` take a POOP class instead of a raw primitive. A POOP class must then match the native exception CPython raises, its twin, without a layer that converts one into the other.
 
-The handler is POOP's own code. `Try._execute()` catches `except BaseException` and then matches with `isinstance()`; no Python `except` clause ever does the matching. That is what makes mirroring affordable: a metaclass `__instancecheck__` is enough for a POOP class to match its native twin.
+The handler is POOP's own code. `Try._execute()` catches `except BaseException` and then matches with `isinstance()`; no Python `except` clause ever does the matching. That makes mirroring affordable, because a metaclass `__instancecheck__` is enough for a POOP class to match its native twin.
 
 Two failure modes constrain how the twin is found:
 
-- If the native class were inherited, a user's `class MyError(Exception)` would inherit the root's `_native = Exception` and catch every exception in the program, silently and totally. The obvious alternative, an `__init_subclass__` setting `_native = cls`, recurses forever.
+- If the native class were inherited, a user's `class MyError(Exception)` would inherit the root's `_native = Exception` and silently catch every exception in the program. The obvious alternative, an `__init_subclass__` setting `_native = cls`, recurses forever.
 - Before the root inherited `Object`, `class MyError(Exception)` sat outside the Object tree entirely.
 
 ## Decision

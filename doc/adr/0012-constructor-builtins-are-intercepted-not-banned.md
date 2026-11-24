@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-POOP has no free functions (ADR 6), and a call such as `len(x)` is replaced by a message (ADR 7). `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` and the other type builtins are written the same way, but they are class constructors: they are object instantiation and fit the OO model. Called as Python spells them, they would still answer native values (ADR 3).
+POOP has no free functions (ADR 6), and a call such as `len(x)` is replaced by a message (ADR 7). `int()`, `float()`, `bool()`, `str()`, `bytes()`, `list()`, `tuple()`, `set()`, `dict()` and the other type builtins are written the same way, but they are class constructors, which instantiate objects and fit the OO model. Called as Python spells them, they would still answer native values (ADR 3).
 
 ## Decision
 

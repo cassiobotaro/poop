@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Every wrapper declares its state in `__slots__` under single-underscore names (`_value`, `_items`, `_data`, `_fn`), and those hold raw Python values. `no_poop_prefix` reserved the mangled runtime names (ADR 14), but the single-underscore internals were the ones a program could actually reach. Two spellings of the act were guarded and the third, the one a reader would type, was not:
+Every wrapper declares its state in `__slots__` under single-underscore names (`_value`, `_items`, `_data`, `_fn`), and those hold raw Python values. `no_poop_prefix` reserved the mangled runtime names (ADR 14), but the single-underscore internals were the ones a program could reach. Two spellings of the act were guarded and the third, the one a reader would type, was not:
 
 ```
 "abc".get_attr("_value")   # _value is private — POOP objects do not expose their internals
@@ -16,9 +16,9 @@ Every wrapper declares its state in `__slots__` under single-underscore names (`
 "abc"._value.print()       # 'str' object has no attribute 'print'
 ```
 
-That handed a naked Python primitive out on request, against ADR 2, and what came back answered in CPython's vocabulary, the sentence `does_not_understand` exists to replace, from a two-token expression. The REPL completer had once offered `x._value`; it stopped offering the spelling and the spelling kept working. `examples/patterns/memento.py` shows `saved = editor._content` as the procedural Python POOP exists to prevent, in its own comment.
+That handed a naked Python primitive out on request, against ADR 2. What came back from a two-token expression answered in CPython's vocabulary, the sentence `does_not_understand` exists to replace. The REPL completer had once offered `x._value`; it stopped offering the spelling and the spelling kept working. `examples/patterns/memento.py` shows `saved = editor._content` as the procedural Python POOP exists to prevent, in its own comment.
 
-The runtime guard had its own gaps. `Object` and the class side (`PoopMeta`) kept two copies of it, and the class side's kept the `super().__init__` carve-out the instance side had closed, so `str.get_attr("__init__")(s, "ZAP")` re-ran the constructor on a live `Str` and stranded the entry a `Dict` held under it. `has_attr` once skipped the guard entirely.
+The runtime guard had its own gaps. `Object` and the class side (`PoopMeta`) kept two copies of it. The class side's copy kept the `super().__init__` carve-out the instance side had closed, so `str.get_attr("__init__")(s, "ZAP")` re-ran the constructor on a live `Str` and stranded the entry a `Dict` held under it. `has_attr` once skipped the guard entirely.
 
 ## Decision
 

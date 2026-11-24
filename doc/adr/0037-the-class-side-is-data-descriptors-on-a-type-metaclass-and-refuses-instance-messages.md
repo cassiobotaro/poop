@@ -10,7 +10,7 @@ Accepted
 
 Classes are objects and answer messages, as in Smalltalk. In Python they did not: `Foo.print()` answered `Object.print() missing 1 required positional argument: 'self'`, which is Python failing to bind a method, not POOP refusing a message. The bans then contradicted themselves: `hash(Foo)` answers "use `obj.hash()` instead" while `Foo.hash()` answered a binding error, naming a substitute that did not exist on that receiver.
 
-A metaclass cannot simply define those messages. Attribute lookup on a class searches the class's own MRO before the metaclass, so a plain `PoopMeta.print` would never be reached: `Object.print` would win and answer the unbound function. Only a data descriptor is consulted first.
+A metaclass cannot simply define those messages. Attribute lookup on a class searches the class's own MRO before the metaclass, so a plain `PoopMeta.print` would never be reached. `Object.print` would win and answer the unbound function. Only a data descriptor is consulted first.
 
 The first fix covered `Object`'s protocol only. The wrapper's own messages still bound badly from the class: `str.upper()` answered `str.upper() missing 1 required positional argument: 'self'`, naming `self`, a receiver POOP never spells, and "positional argument", which the wording sweep bans outright. 64 of the 90 names `str.dir()` listed answered that, 32 of 58 on `list`, 30 of 57 on `dict`.
 
@@ -22,7 +22,7 @@ Smalltalk's `Foo class` answers the metaclass. `PoopMeta` is not itself a POOP c
 
 ## Decision
 
-`PoopMeta` (`poop/types/meta.py`) derives from `type`, not `ABCMeta`. Nothing declares it: `ClassTransformer` routes every user class through `Object`, and a metaclass is inherited.
+`PoopMeta` (`poop/types/meta.py`) derives from `type`, not `ABCMeta`. Nothing declares it, because `ClassTransformer` routes every user class through `Object`, and a metaclass is inherited.
 
 Every class-side message is a `class_side` data descriptor, and all of `Object`'s protocol is answered class-side, each message by its own descriptor: `name`, `superclass`, `has_attr`, `print`, `does_not_understand`, `hash`, `is_none` / `not_none`, `not_`, `repr` / `ascii`, `callable`, `dir`, `format`, `is_identical` / `not_identical`, `is_instance`, `get_attr` / `set_attr` / `del_attr` (dunder guard included), `assert_`, and `if_none` / `if_not_none`. `Foo.superclass()` answers the superclass object, and `Object superclass` answers `none`, mirroring Smalltalk's `nil`, which keeps the raw Python `object` at the root out of reach.
 
@@ -30,7 +30,7 @@ A class is an object answering this class side. `int.name()` answers `int` and `
 
 The class side refuses:
 
-- An instance message. `PoopMeta.__getattribute__` refuses a plain `FunctionType` found on the class's own MRO with `#upper asks an instance; send it to one`. It is narrow on purpose: `staticmethod.__get__` answers the wrapped function and would otherwise look identical. `get_attr` / `has_attr` read past the refusal through `_reflected`, because asking a class for a method by name is reflection.
+- An instance message. `PoopMeta.__getattribute__` refuses a plain `FunctionType` found on the class's own MRO with `#upper asks an instance; send it to one`. It is narrow on purpose, because `staticmethod.__get__` answers the wrapped function and would otherwise look identical. `get_attr` / `has_attr` read past the refusal through `_reflected`, because asking a class for a method by name is reflection.
 - `Foo.class_()` and `Foo.class_name()`, which name `#name` instead.
 - Rebinding. The descriptor owns assignment and deletion: `Foo.name = 5` and `Foo.set_attr("name", 5)` answer `#name is answered by every class — it cannot be rebound`, and `__delete__` refuses with the same sentence through one `_rebound`.
 
@@ -38,7 +38,7 @@ The class side refuses:
 
 The class side words `del_attr`, `format` and `print` through the helpers their instance twins use (`text_like`, `_template_refusal`, `a_text`).
 
-`Foo new` is not provided: `Foo()` already builds an instance and is not forbidden, so a `new` message would be Smalltalk parity rather than a substitute for anything.
+`Foo new` is not provided. `Foo()` already builds an instance and is not forbidden, so a `new` message would be Smalltalk parity rather than a substitute for anything.
 
 ## Consequences
 

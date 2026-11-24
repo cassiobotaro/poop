@@ -8,9 +8,9 @@ Accepted
 
 ## Context
 
-Reading a dunder is `no_dunder_attribute`'s concern and a bare dunder name is `no_dunder_name`'s, but a class body could still define one with no validator looking. `def __getattribute__(self, name): return 1` silently answered `1` for every message sent to the instance. The `2026-10-15-close-raw-python-leaks` change found this among six doors that still reached raw Python from inside a program.
+Reading a dunder is `no_dunder_attribute`'s concern and a bare dunder name is `no_dunder_name`'s, but a class body could still define one with no validator looking. `def __getattribute__(self, name): return 1` silently answered `1` for every message sent to the instance. The `2026-10-15-close-raw-python-leaks` change found this among six leaks that still reached raw Python from inside a program.
 
-A user class is allowed to define the operator and protocol slots (`__init__`, `__str__`, `__repr__`, `__bool__`, `__hash__`, `__len__`, `__call__`, the comparisons, every operator slot, `__enter__` / `__exit__`), and `PoopMeta.__new__` adapts the CPython reads among them itself. An allow-list was the alternative and was rejected: it would refuse every operator slot nobody thought to enumerate (there are forty), and the cost of missing one is a legal program refused. The cost of missing a deny-list entry is one more leak, which the wording sweep catches.
+A user class is allowed to define the operator and protocol slots (`__init__`, `__str__`, `__repr__`, `__bool__`, `__hash__`, `__len__`, `__call__`, the comparisons, every operator slot, `__enter__` / `__exit__`), and `PoopMeta.__new__` adapts the CPython reads among them itself. An allow-list was the alternative and was rejected. It would refuse every operator slot nobody thought to enumerate (there are forty), and the cost of missing one is a legal program refused. The cost of missing a deny-list entry is one more leak, which the wording sweep catches.
 
 ## Decision
 
@@ -24,4 +24,4 @@ Each row carries its own sentence, so `__getattr__` is refused by name with its 
 
 ## Consequences
 
-The operator and protocol slots stay legal, so this is a deny-list of three protocols rather than an allow-list. No example defined `__getattr__` (`grep -rn "__getattr__" examples/` was empty), and the refusal names the substitute for a program that did. The validator's test parametrises over `dir(object)` and asserts each name is either refused, in the documented legal set, or absent from the language, and `tests/test_no_python_wording.py` sweeps a user class against every dunder it can spell.
+The operator and protocol slots stay legal, so this is a deny-list of three protocols rather than an allow-list. No example defined `__getattr__` (`grep -rn "__getattr__" examples/` was empty), and the refusal names the substitute for a program that did. The validator's test parametrises over `dir(object)` and asserts each name is either refused, in the documented legal set, or absent from the language. `tests/test_no_python_wording.py` sweeps a user class against every dunder it can spell.

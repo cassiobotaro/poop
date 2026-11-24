@@ -10,7 +10,7 @@ Accepted
 
 POOP mirrors the exceptions a program can reach (ADR 34), and a mirror matches its native twin (ADR 35). Two paths still put a class a program cannot spell in front of the reader.
 
-A wrapper composing a POOP message used to carry it on a native class: POOP's advice labelled with Python's vocabulary, and nothing stopping the next wrapper from doing the same.
+A wrapper composing a POOP message used to carry it on a native class. That labelled POOP's advice with Python's vocabulary, and nothing stopped the next wrapper from doing the same.
 
 The uncaught report read `type(exc).__name__` in `_describe` (`poop/executor.py`), so every unknown selector in the language, the most-printed diagnostic there is, reported `MessageNotUnderstood`. That is POOP's own class and is outside `MIRRORS`, so it is unspellable (`NameError: name 'MessageNotUnderstood' is not defined`), while `except_(AttributeError, …)` caught it and `e.class_().name()` answered `AttributeError`. One failure had two names, a disagreement already closed for the `Unicode*` family.
 

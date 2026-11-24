@@ -12,9 +12,9 @@ Accepted
 
 - `__str__ returned non-string (type str)`;
 - `__bool__ should return bool, returned bool`;
-- a `__hash__` refusal that printed `__poop__.P`, the module marker `_reject_builtin` uses to tell a user's class from a builtin, which no program should ever see.
+- a `__hash__` refusal that printed `__poop__.P`, the module marker `_reject_builtin` uses to tell a user's class from a builtin, which no program should see.
 
-`__len__` was the quiet member of the family: defining it raised nothing and did nothing, because `len` is how POOP asks and nothing supplied it.
+`__len__` failed in silence. Defining it raised nothing and did nothing, because `len` is how POOP asks and nothing supplied it.
 
 The wrappers in `poop/types/` answer these slots with natives already, and the package runs `bool(x)` during its own import.
 

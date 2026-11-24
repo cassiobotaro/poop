@@ -16,7 +16,7 @@ The language keeps the two classes interchangeable, and places that treated them
 
 ## Decision
 
-`_BytesLikeMixin` (`poop/types/_bytes_like.py`) holds every message `Bytes` and `ByteArray` answer alike. Each class supplies `_rewrap`, which turns a raw result back into its own builtin kind, and keeps what really differs: construction, `+`, `fromhex`, `hex` (a `ByteArray` separator is converted for `bytearray.hex`), hashing, its iterator and, on `ByteArray`, the mutators.
+`_BytesLikeMixin` (`poop/types/_bytes_like.py`) holds every message `Bytes` and `ByteArray` answer alike. Each class supplies `_rewrap`, which turns a raw result back into its own builtin kind, and keeps what differs: construction, `+`, `fromhex`, `hex` (a `ByteArray` separator is converted for `bytearray.hex`), hashing, its iterator and, on `ByteArray`, the mutators.
 
 The mixin is cloaked as `bytes`, so `bytearray(b"a").upper(1)` reads `bytes.upper() takes 1 positional argument…`.
 
@@ -24,6 +24,6 @@ The pair is one kind wherever an operand is checked. The four ordering dunders o
 
 ## Consequences
 
-A message added to the pair is written once. A genuinely foreign operand to an ordering dunder still answers the faithful `TypeError`.
+A message added to the pair is written once. A foreign operand to an ordering dunder still answers the faithful `TypeError`.
 
-The cloak is only right where one name is close for both receivers. `List` and `Tuple` share less and share it differently: `_SequenceMixin` (`poop/types/_sequence.py`) holds the dunders the two spell identically (`__len__`, `__iter__`, `__contains__`, `__mul__`, `__rmul__`) and the bodies of `index` and `print` as private helpers, while the *messages* stay on each class as one-line `def`s, so `tuple.index()` stays `tuple.index()` in a wrong-arity report. `Set` and `FrozenSet` follow the same rule under `_SetAlgebraMixin`. Within one class a family follows it too: `find`, `index`, `count`, `rfind` and `rindex` stay five one-line `def`s on `Str` and on `_BytesLikeMixin`, each handing its native bound method to `_search`, and `startswith`/`endswith` hand theirs to `_affix`.
+The cloak is only right where one name is close for both receivers. `List` and `Tuple` share less and share it differently: `_SequenceMixin` (`poop/types/_sequence.py`) holds the dunders the two spell identically (`__len__`, `__iter__`, `__contains__`, `__mul__`, `__rmul__`) and the bodies of `index` and `print` as private helpers. The *messages* stay on each class as one-line `def`s, so `tuple.index()` stays `tuple.index()` in a wrong-arity report. `Set` and `FrozenSet` follow the same rule under `_SetAlgebraMixin`. Within one class a family follows it too: `find`, `index`, `count`, `rfind` and `rindex` stay five one-line `def`s on `Str` and on `_BytesLikeMixin`, each handing its native bound method to `_search`, and `startswith`/`endswith` hand theirs to `_affix`.

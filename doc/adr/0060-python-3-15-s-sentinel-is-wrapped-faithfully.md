@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Python 3.15 made `sentinel` (PEP 661) a builtin. Refusing it was on the table: `MISSING = Object()` already works in POOP, and `sentinel(...)` looks like a free function. But the rule is to follow CPython, and CPython made it a builtin.
+Python 3.15 made `sentinel` (PEP 661) a builtin. Refusing it was considered, since `MISSING = Object()` already works in POOP, and `sentinel(...)` looks like a free function. But the rule is to follow CPython, and CPython made it a builtin.
 
 Two halves of the PEP have no surface in POOP: `copy`/pickle preserving identity, since neither exists here, and `|` building a type union (`int | MISSING`), which belongs to annotations POOP programs do not write.
 

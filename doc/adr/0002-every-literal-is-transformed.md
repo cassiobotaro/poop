@@ -10,13 +10,13 @@ Accepted
 
 Python source is full of literals: `1`, `3.14`, `"hello"`, `True`, `False`, `None`, `...`, `[1, 2]`, `(1, 2)`, `{1, 2}`, `{k: v}`, `b"..."`, `1+2j`. Left alone, each of them reaches runtime as a naked Python primitive, which is not a POOP object.
 
-One kind of string literal is not a value in the program. `StrTransformer` first wrapped every `ast.Constant` whose value is a `str`, docstrings included, so the docstring of a class or function became an expression statement that built a `Str` on every call. The `2026-10-14-fix-behaviour-leaks` change found this and left the docstring as a raw constant, so CPython stores it as `__doc__`. It considered exempting the module docstring as well and did not: the REPL runs each input as a module, so `"abc"` at the prompt and `:methods "abc"` would have evaluated a raw Python `str`. `tests/test_repl.py` found that on the first run. A POOP program cannot read a module docstring anyway.
+One kind of string literal is not a value in the program. `StrTransformer` first wrapped every `ast.Constant` whose value is a `str`, docstrings included, so the docstring of a class or function became an expression statement that built a `Str` on every call. The `2026-10-14-fix-behaviour-leaks` change found this and left the docstring as a raw constant, so CPython stores it as `__doc__`. It considered exempting the module docstring as well and did not. The REPL runs each input as a module, so `"abc"` at the prompt and `:methods "abc"` would have evaluated a raw Python `str`. `tests/test_repl.py` found that on the first run. A POOP program cannot read a module docstring anyway.
 
 ## Decision
 
 A transformer rewrites every literal in Python source into its POOP equivalent before execution, so no naked Python primitive ever reaches runtime. Each wrapper type has its own transformer in `poop/transformers/` (for strings, `ast.Constant(value=str)` becomes `_poop_str(s)` in `poop/transformers/string.py`). The wrappers themselves are ADR 3.
 
-The one exception is the docstring of a class or function: its first string statement is left as it is. Only that first statement is exempt; a later bare string in the same body is still a `Str`. A module's first string is not treated as a docstring and is wrapped like any other.
+The one exception is the docstring of a class or function. Its first string statement is left as it is. Only that first statement is exempt; a later bare string in the same body is still a `Str`. A module's first string is not treated as a docstring and is wrapped like any other.
 
 ## Consequences
 

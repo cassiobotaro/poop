@@ -25,4 +25,4 @@ POOP reads and reports a program's own file as CPython does (`poop/cli.py`, `poo
 
 A file with a byte-order mark runs under POOP as it does under `python3`.
 
-The caret lands under the reported column in a tab-indented file. Expanding the tabs also removes the terminal's own tab stops from the picture: those start at the gutter, not at the file's column 0.
+The caret lands under the reported column in a tab-indented file. Expanding the tabs also keeps the terminal's own tab stops out of the measure, since those start at the gutter, not at the file's column 0.

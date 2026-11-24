@@ -8,9 +8,9 @@ Accepted
 
 ## Context
 
-A `class` statement can carry more than its bases, and the extra parts reached CPython's class-creation machinery without a validator reading them. Nothing read `ClassDef.keywords`. `metaclass=type` happened to be refused, because `no_type` bans the name, and every other keyword reached `type.__new__`, answering CPython's sentences: `X.__init_subclass__() takes no keyword arguments`, `metaclass conflict: …`.
+A `class` statement can carry more than its bases, and the extra parts reached CPython's class-creation machinery without a validator reading them. Nothing read `ClassDef.keywords`. `metaclass=type` happened to be refused, because `no_type` bans the name. Every other keyword reached `type.__new__` and answered CPython's sentences: `X.__init_subclass__() takes no keyword arguments`, `metaclass conflict: …`.
 
-PEP 695 type parameters went unvalidated and answered two different leaks. `class X[T]:` reached CPython's generic-class intrinsic, which imports `typing` through a builtin the allow-list withholds, and died with an internal `KeyError: '__import__'`. `def m[T](self): return T` handed the program a raw `typing.TypeVar`, answering `'typing.TypeVar' object has no attribute 'print'`. Both are the naked-native symptom the allow-list exists to end. A `type X = int` alias creates an alias for a Python builtin type, which is incompatible with POOP's runtime types. The `2026-10-15-close-raw-python-leaks` change closed the keyword and type-parameter doors.
+PEP 695 type parameters went unvalidated and answered two different leaks. `class X[T]:` reached CPython's generic-class intrinsic, which imports `typing` through a builtin the allow-list withholds, and died with an internal `KeyError: '__import__'`. `def m[T](self): return T` handed the program a raw `typing.TypeVar`, which answered `'typing.TypeVar' object has no attribute 'print'`. Both are the naked-native symptom the allow-list exists to end. A `type X = int` alias creates an alias for a Python builtin type, which is incompatible with POOP's runtime types. The `2026-10-15-close-raw-python-leaks` change closed the keyword and type-parameter leaks.
 
 ## Decision
 

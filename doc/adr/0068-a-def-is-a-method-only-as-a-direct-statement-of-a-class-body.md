@@ -14,9 +14,9 @@ Smalltalk has blocks, not named local functions.
 
 ## Decision
 
-A function is a method only when it is a **direct** statement of a class body. The validator registers each `ClassDef`'s direct-body `def`s as methods and rejects every other `FunctionDef`/`AsyncFunctionDef`, module level and method-nested alike.
+A function is a method only when it is a direct statement of a class body. The validator registers each `ClassDef`'s direct-body `def`s as methods and rejects every other `FunctionDef`/`AsyncFunctionDef`, module level and method-nested alike.
 
 ## Consequences
 
-- A local helper inside a method is written as a **lambda**: it is the sanctioned receiver-less callable, invoked as `block()` (ADR 28).
+- A local helper inside a method is written as a lambda: it is the sanctioned receiver-less callable, invoked as `block()` (ADR 28).
 - The rule no longer depends on how deep a `def` sits, only on what its parent is.

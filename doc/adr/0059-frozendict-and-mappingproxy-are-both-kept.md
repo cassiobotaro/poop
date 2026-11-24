@@ -16,7 +16,7 @@ CPython has both, for different jobs. A `mappingproxy` is a live read-only *view
 
 POOP keeps both. `FrozenDict` (`poop/types/frozen_dict.py`) is `Dict`'s read side plus a hash, and every edge is CPython's:
 
-- It is not a `dict` subclass (`fd.is_instance(dict)` is false): it is a sibling of `Dict` under `_MappingMixin`, the mapping twin of `_BytesLikeMixin`.
+- It is not a `dict` subclass (`fd.is_instance(dict)` is false). It is a sibling of `Dict` under `_MappingMixin`, the mapping twin of `_BytesLikeMixin`.
 - Equality ignores insertion order and crosses the kinds both ways (`frozendict(a=1) == {"a": 1}`), which `_ValueEqMixin`'s `"mapping"` group states once for both. The hash is order-blind like the equality.
 - `copy` answers the receiver, and `frozendict(fd)` answers `fd` itself. `fd | d` is a `FrozenDict` and `d | fd` a `Dict`, the left operand's kind. Every site that asked `isinstance(x, Dict)` asks for the mixin, so `**fd`, `{**fd}`, `dict(fd)`, `d.update(fd)` and `d |= fd` all take it.
 - Its views are the dict's: `fd.keys()` is a `dict_keys` whose `mapping()` is a `mappingproxy(frozendict(...))`.
@@ -26,4 +26,4 @@ The proxy wraps any mapping, as `types.MappingProxyType` does, and the views tak
 
 ## Consequences
 
-Neither type needed a second copy of anything: the mixin carries the shared read side, and the proxy and views accept a `FrozenDict` as they accept a `Dict`.
+Neither type needed a second copy of anything. The mixin carries the shared read side, and the proxy and views accept a `FrozenDict` as they accept a `Dict`.

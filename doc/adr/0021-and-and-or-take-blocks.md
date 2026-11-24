@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-`x and y` and `x or y` look like operators, so `no_and_or` (`poop/validators/no_and_or.py`) bans `ast.BoolOp` with `ast.And` and with `ast.Or`. The substitute has to keep what Python's `and`/`or` do: the right-hand side is evaluated only if it is needed.
+`x and y` and `x or y` look like operators, so `no_and_or` (`poop/validators/no_and_or.py`) bans `ast.BoolOp` with `ast.And` and with `ast.Or`. The substitute has to keep what Python's `and`/`or` do, which is to evaluate the right-hand side only if it is needed.
 
 ## Decision
 

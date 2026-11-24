@@ -10,7 +10,7 @@ Accepted
 
 Every literal is transformed (ADR 2), `...` included: it becomes POOP's `Ellipsis`, a singleton like `none` (ADR 5).
 
-POOP's own examples declare no abstract methods at all: the base class simply omits the message and lets polymorphism supply it.
+POOP's own examples declare no abstract methods. The base class omits the message and lets polymorphism supply it.
 
 ## Decision
 

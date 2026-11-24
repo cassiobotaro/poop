@@ -12,7 +12,7 @@ An exception a program builds, `ValueError("x")` or an instance of its own `clas
 
 Meanwhile `args`, `add_note` and `with_traceback` resolved through `BaseException` and answered natives (`'tuple' object has no attribute 'print'`). The refusals in `_PYTHON_ATTRIBUTES` were installed on the metaclass, which instance lookup never consults.
 
-The `2026-10-15-close-raw-python-leaks` change considered making the mirror constructor answer an `Error`. It was rejected: `class Field(Exception)` then could not store fields on `self`. `Error` keeps wrapping a *caught* exception, and a program never holds an `Error` it built, so the two surfaces do not collide.
+The `2026-10-15-close-raw-python-leaks` change considered making the mirror constructor answer an `Error`. It was rejected because `class Field(Exception)` then could not store fields on `self`. `Error` keeps wrapping a *caught* exception, and a program never holds an `Error` it built, so the two surfaces do not collide.
 
 ## Decision
 

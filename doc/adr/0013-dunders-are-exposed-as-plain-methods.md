@@ -16,4 +16,4 @@ Every relevant dunder on a POOP type gets an alias under the Python name without
 
 ## Consequences
 
-The substitutes for builtins such as `len`, `abs` and `hash` carry the names a Python reader already knows. The dunder itself stays on the type, because CPython's protocols call it, and it keeps answering a native value where Python requires one; the named alias answers a POOP type, as ADR 4 requires.
+The substitutes for builtins such as `len`, `abs` and `hash` carry the names a Python reader already knows. The dunder itself stays on the type, because CPython's protocols call it, and it keeps answering a native value where Python requires one. The named alias answers a POOP type, as ADR 4 requires.

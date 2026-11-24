@@ -10,15 +10,15 @@ Accepted
 
 `no_raise` forbids the `raise` statement and names `ExcType.raise_('msg')`. That spelling used to be a parse-time rewrite: `RaiseTransformer` matched a literal uppercase `ast.Name` followed by `.raise_(...)` and produced `_poop_raise(ExcType, ...)`. This had three effects.
 
-- Only that spelling worked. `err = ValueError; err.raise_("boom")`, `d.at("e").raise_("boom")` and `e.kind().raise_(e.message())` all answered `ValueError does not understand #raise_`, untrue of the object, since nothing defined `raise_` anywhere. The third mattered most: `Try` swallows an exception as soon as a handler matches and `raise` is banned, so there was no way to re-raise, or to raise a class a program computed.
+- Only that spelling worked. `err = ValueError; err.raise_("boom")`, `d.at("e").raise_("boom")` and `e.kind().raise_(e.message())` all answered `ValueError does not understand #raise_`, untrue of the object, since nothing defined `raise_` anywhere. The third mattered most, because `Try` swallows an exception as soon as a handler matches and `raise` is banned, so there was no way to re-raise, or to raise a class a program computed.
 - The substitute was invisible. `dir()` on an exception class did not list `raise_`, so `:methods` could not show what `no_raise` points at.
 - Any capitalized receiver was assumed raisable. `class A(Object)` then `A.raise_("x")` answered `A() takes no arguments`, the constructor of a class the program never asked to build.
 
-The rewrite also constrained `ExceptionTransformer` to run after `RaiseTransformer`: rewriting `ValueError` to `_poop_ValueError` first left a name starting with an underscore, silently stopping `raise_` from being recognised.
+The rewrite also constrained `ExceptionTransformer` to run after `RaiseTransformer`: rewriting `ValueError` to `_poop_ValueError` first left a name starting with an underscore, and `raise_` then silently went unrecognised.
 
-What the rewrite bought had to be kept. `raise_` is an expression, so it works inside a `lambda`, which was the reason for `_poop_raise`. `**kwargs` ride along: `raise` being a statement, `raise_` is the only way to signal an error, and an exception whose fields arrive by keyword must be raisable. The receiver parameter, though, took a keyword for itself: `Tagged.raise_(cls="x")` answered `Tagged.raise_() got multiple values for argument 'cls'`, a parameter the program never wrote (found by `ty` 0.0.106 in the `2026-11-22-bump-ty` change).
+What the rewrite bought had to be kept. `raise_` is an expression, so it works inside a `lambda`, which was the reason for `_poop_raise`. `**kwargs` ride along. Since `raise` is a statement, `raise_` is the only way to signal an error, and an exception whose fields arrive by keyword must be raisable. The receiver parameter, though, took a keyword for itself: `Tagged.raise_(cls="x")` answered `Tagged.raise_() got multiple values for argument 'cls'`, a parameter the program never wrote (found by `ty` 0.0.106 in the `2026-11-22-bump-ty` change).
 
-`no_raise` banned the `from` clause with the rest of the statement and nothing replaced it. A keyword on the class-side `raise_` (`KeyError.raise_("outer", from_=e)`) was the alternative and was rejected: that message hands its keywords to the exception's own fields (`Field.raise_(code=7)`), and a cause keyword would take a name away from every program's exception class, besides reading poorly (`2026-10-19-complete-exception-protocol`).
+`no_raise` banned the `from` clause with the rest of the statement and nothing replaced it. A keyword on the class-side `raise_` (`KeyError.raise_("outer", from_=e)`) was the alternative and was rejected, because that message hands its keywords to the exception's own fields (`Field.raise_(code=7)`), and a cause keyword would take a name away from every program's exception class, besides reading poorly (`2026-10-19-complete-exception-protocol`).
 
 ## Decision
 

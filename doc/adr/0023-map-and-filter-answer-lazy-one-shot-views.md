@@ -22,7 +22,7 @@ Python's own `map` and `filter` are one-shot, as its `zip` is: `list(z)` twice o
 - Both views inherit `_IterableMixin`, so the consuming messages (`do`, `sum`, `min`, `max`, `find`, `reduce`, `all`, `any`) work on them directly, and `col.map(f).filter(g).sum()` iterates once through the source.
 - Both are one-shot. `__iter__` answers `self`, and `_materialize` builds the internal generator once and drops the source and the block with it, so a consumed view answers nothing on a second pass, by `.next()`, by `.do()`, or by a chained view.
 - A `StopIteration` raised by the block is caught inside the generator and answers `a block ran off the end of an iterator — ask #has_next before #next`.
-- `Map` and `Filter` are internal: they have no transformer and are not bound in `DEFAULT_NAMESPACE`. `_BlockView` (`poop/types/_block_view.py`) owns their slots, constructor, `_generate` and the guarded block call, and each supplies a one-line generator.
+- `Map` and `Filter` are internal. They have no transformer and are not bound in `DEFAULT_NAMESPACE`. `_BlockView` (`poop/types/_block_view.py`) owns their slots, constructor, `_generate` and the guarded block call, and each supplies a one-line generator.
 
 ## Consequences
 

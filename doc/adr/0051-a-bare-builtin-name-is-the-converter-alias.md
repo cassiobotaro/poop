@@ -16,7 +16,7 @@ Every converter transformer has two rewrites. `visit_Call` sends `list(x)` to th
 
 The spelling is not exotic. A constructor is an object, so `[list, set].at(0)([1, 2])` and `lambda c: c([1, 2])` are the same program, and passing a converter as a block is ordinary where iteration is `map`/`filter`.
 
-The class cannot simply be the converter: `poop/types/` builds its values by calling these classes directly (`Str(...)`, `List(*elements)`), which is the other meaning. The bare name still has to be a class, because that is what it is otherwise for: `(5).is_instance(int)`, `class Stack(list)`, `int.name()`. For the type-argument case, an `__instancecheck__` delegating to the wrapped class (the shape `PoopExcMeta` uses for the mirrors) was considered and cannot work: the alias is a subclass, and while `PoopMeta` derived from `ABCMeta`, `ABCMeta`'s subclass walk came straight back to it until the stack gave out.
+The class itself cannot be the converter, because `poop/types/` builds its values by calling these classes directly (`Str(...)`, `List(*elements)`), which is the other meaning. The bare name still has to be a class, because that is what it is otherwise for: `(5).is_instance(int)`, `class Stack(list)`, `int.name()`. For the type-argument case, an `__instancecheck__` delegating to the wrapped class (the shape `PoopExcMeta` uses for the mirrors) was considered and cannot work. The alias is a subclass, and while `PoopMeta` derived from `ABCMeta`, `ABCMeta`'s subclass walk came straight back to it until the stack gave out.
 
 ## Decision
 
@@ -26,7 +26,7 @@ Each bare builtin name binds a `_poop_<name>_cls` alias (`poop/types/_alias.py`)
 
 ## Consequences
 
-A converter reached through a name, a collection or a block converts exactly as the direct call does.
+A converter reached through a name, a collection or a block converts as the direct call does.
 
 The alias and the wrapper are two objects that both call themselves by the builtin's name. Every place that compares, climbs or constructs classes has to treat the pair as one class; ADR 53 records the places where that was done.
 

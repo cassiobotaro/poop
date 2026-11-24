@@ -8,13 +8,13 @@ Accepted
 
 ## Context
 
-`no_iter` bans `iter(col)` and `next(it)` and names `col.iter()` and `it.next()` as their substitutes. Exhaustion surfaces as `StopIteration`, and the native one carries no message, so `_describe` degraded to the bare class name: a word naming the CPython protocol that drives `for`, the loop POOP forbids, with nothing to say what went wrong.
+`no_iter` bans `iter(col)` and `next(it)` and names `col.iter()` and `it.next()` as their substitutes. Exhaustion surfaces as `StopIteration`, and the native one carries no message, so `_describe` degraded to the bare class name. That word names the CPython protocol that drives `for`, the loop POOP forbids, and says nothing about what went wrong.
 
 `examples/patterns/iterator.py` teaches a cursor protocol, which needs a way to test exhaustion without an exception. A one-shot Python iterator cannot be peeked, so answering `has_next` costs a buffered element, and for `Map`/`Filter` that pulls the user's block one step ahead of where it runs. The alternative, `has_next` only where it is structurally cheap (`ListIterator`, `RangeIterator`, `StrIterator`), leaves a protocol half the iterators answer, which is the opposite of having one.
 
 Two more gaps sat on the same family:
 
-- `iter` was defined per class rather than on a shared base. `Map`, `Filter`, `Enumerate` and `Zip` answered `col.iter()` and the fifteen concrete iterators refused it (`list_iterator does not understand #iter — did you mean #filter?`), which ordinary chaining reaches, since `Dict.reversed()` and the three view `reversed()`s answer a concrete iterator. The four that answered are why every per-iterator test happened to pass.
+- `iter` was defined per class rather than on a shared base. `Map`, `Filter`, `Enumerate` and `Zip` answered `col.iter()` and the fifteen concrete iterators refused it (`list_iterator does not understand #iter — did you mean #filter?`). Ordinary chaining reaches that refusal, since `Dict.reversed()` and the three view `reversed()`s answer a concrete iterator. The four that answered are why every per-iterator test happened to pass.
 - `Map` and `Filter` are Python generators, so a `StopIteration` raised by the user's block hit PEP 479 and surfaced as `generator raised StopIteration`, a report about a construct POOP does not have and `no_yield` bans.
 
 ## Decision
@@ -32,6 +32,6 @@ Every collection's `.iter()` answers a specialized one-shot iterator that mirror
 - Exhaustion is testable without an exception: `(lambda: it.has_next()).while_true(lambda: it.next().print())`.
 - A program that never asks `has_next` is unaffected; one that asks has opted into the lookahead, including running a `Map`/`Filter` block one element early.
 - A peeked element is not skipped by a `do` or `map` sent after the ask.
-- What PEP 479 protects against stays protected: letting the `StopIteration` through would end the view early and answer a quietly truncated collection.
+- What PEP 479 protects against stays protected. Letting the `StopIteration` through would end the view early and answer a quietly truncated collection.
 - The consuming messages (`find`, `reduce`, `min`, …) drain a one-shot iterator, as in Python; the lazy ones (`map`, `filter`, `enumerate`, `zip`) answer a fresh view over the remainder.
 - `tests/test_iterator_protocol.py` sweeps the iterator family rather than asserting per iterator.

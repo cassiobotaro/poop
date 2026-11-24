@@ -24,8 +24,8 @@ A program runs against an allow-list of builtins, `_ALLOWED_BUILTINS` in `poop/e
 
 ## Consequences
 
-- The allow-list is a rule where the validators are a list: it closes the whole class of escapes, including names nobody enumerated.
+- The allow-list is a rule where the validators are a list. It closes the whole class of escapes, including names nobody enumerated.
 - `no_dunder_name` and the builtin-call bans remain as the teaching half, refusing a program before it runs rather than at runtime.
 - A misspelt variable keeps CPython's `name 'banana' is not defined`.
-- The withheld-name sentence points at no substitute: a name a validator bans never gets here (`x = len` is refused at parse time), so what is left is exactly the set with nothing to point at.
+- The withheld-name sentence points at no substitute, because a name a validator bans never gets here (`x = len` is refused at parse time), so what is left is exactly the set with nothing to point at.
 - Deriving the set from `builtins` keeps it current where a hand-kept list would fall behind, as the REPL's `:explain` topic list once did.
