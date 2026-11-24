@@ -25,8 +25,10 @@ if TYPE_CHECKING:
 # validator can only close the names someone thought to enumerate.
 #
 # Everything here is language machinery with no message-passing substitute —
-# the argument `INFECTIONS.md` already makes for `super`. `__build_class__` is
-# what the `class` statement calls; `__name__` is read while creating one.
+# the argument ADR 18 makes for `super`
+# (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`).
+# `__build_class__` is what the `class` statement calls; `__name__` is read
+# while creating one.
 _ALLOWED_BUILTINS: dict[str, object] = {
     "__build_class__": builtins.__build_class__,
     "__name__": "__poop__",
@@ -43,9 +45,9 @@ _ALLOWED_BUILTINS: dict[str, object] = {
 # twice (reading `self.count` and reading the branch message), and the branch
 # method itself.
 #
-# `INFECTIONS.md` says why that matters: `RecursionError` is mirrored because
-# "recursion is POOP's substitute for every loop, which makes it the most
-# reachable of the lot". Nothing had ever adjusted the budget it runs against,
+# ADR 34 says why that matters (`doc/adr/0034-only-the-exceptions-poop-can-reach-are-mirrored.md`):
+# `RecursionError` is mirrored because recursion is POOP's substitute for
+# every loop, which makes it the most reachable failure. Nothing had ever adjusted the budget it runs against,
 # so a self-sending message ran 164 levels deep where the same recursion written
 # as a Python function runs 998 — both under CPython's default limit of 1000.
 #

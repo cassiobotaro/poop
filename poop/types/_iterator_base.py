@@ -28,10 +28,10 @@ class _Cursor[T: Object](_PeekMixin[T], _IterableMixin[T], Object, name="object"
     def iter(self) -> Self:
         """The iterator itself, as `iter(it) is it` in Python.
 
-        `_IterableMixin` gives every iterator the collection protocol — the
-        paragraph in `INFECTIONS.md` that says so lists `do`, `map`, `filter`,
-        `find`, `reduce`, `sum`, `min`, `max`, `all`, `any`, `enumerate`, `zip`
-        — and `iter` was the one message of it defined per class instead of on
+        `_IterableMixin` gives every iterator the collection protocol (ADR 30,
+        `doc/adr/0030-every-iterator-answers-has-next-by-buffering-one-element.md`)
+        — `do`, `map`, `filter`, `find`, `reduce`, `sum`, `min`, `max`, `all`,
+        `any`, `enumerate`, `zip` — and `iter` was the one message of it defined per class instead of on
         a shared base, so the concrete iterators were the half of the family
         that never got one. `Map`, `Filter`, `Enumerate` and `Zip` answer it
         already, and answer `self`, which is the mirror of `iter(zip(...)) is

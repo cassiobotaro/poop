@@ -51,8 +51,9 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
         writable memoryview object` — a `ValueError`, not a `TypeError`, so that
         rewrite never sees it, and the only sentence in the language that says
         *object* where POOP says receiver. "Writable" is a buffer-protocol word
-        that `INFECTIONS.md` keeps out deliberately, so the reason is given in
-        terms of what the reader wrote instead.
+        that POOP keeps out deliberately (ADR 50,
+        `doc/adr/0050-memoryview-is-a-one-dimensional-byte-view-that-answers-index-and-count.md`),
+        so the reason is given in terms of what the reader wrote instead.
         """
         try:
             return super().hash()

@@ -200,7 +200,7 @@ quote-style = "double"
   "ANN",
   # a `lambda` is POOP's block literal, the twin of Smalltalk's `[...]`; the
   # "inlined" spelling ruff proposes (`"Fizz".print`) is the bare-method one
-  # INFECTIONS.md keeps unidiomatic on purpose
+  # (doc/adr/0028-every-lambda-is-a-block-loops-are-messages-to-blocks.md)
   "PLW0108",
   # a `With.do` body is handed the manager by contract, whether it reads it
   "ARG005",

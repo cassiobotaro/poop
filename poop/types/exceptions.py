@@ -2,8 +2,8 @@
 
 `Try.except_(ValueError, handler)` and `ValueError.raise_("msg")` used to take a
 native CPython class, the last raw primitive in POOP's own substitutes for two
-forbidden constructs. `INFECTIONS.md` justified it with "mirroring Python's full
-hierarchy (~100+ classes) is impractical"; Python 3.15 has 72 builtin
+forbidden constructs. It was justified with "mirroring Python's full hierarchy
+(~100+ classes) is impractical"; Python 3.15 has 72 builtin
 exceptions, and a language with no files and no modules cannot reach the
 `OSError` subtree, nor `ImportCycleError`, the one 3.15 added under
 `ImportError`. What it can reach is the table below.
@@ -168,9 +168,10 @@ NATIVE_TO_POOP: dict[type[BaseException], type[Mirror]] = {}
 # Names a mirror inherits from `BaseException` that POOP never designed, mapped
 # to the message a reader wanted instead — `None` where there is none.
 #
-# `PoopMeta` already refuses `type.mro` for exactly this reason, and
-# `INFECTIONS.md` describes it as "unreachable by reading and reachable by
-# typing". These are worse: `dir` *did* list them, so `:methods
+# `PoopMeta` already refuses `type.mro` for exactly this reason: it was
+# unreachable by reading and reachable by typing (ADR 33,
+# `doc/adr/0033-dunder-access-is-banned-by-rule-at-runtime-too-init-only-on-a-super-receiver.md`).
+# These are worse: `dir` *did* list them, so `:methods
 # ValueError` advertised them, and what they answered said they were not POOP's
 # — `args` a raw Python tuple, `with_traceback` a raw method descriptor, and
 # `add_note` a refusal naming `BaseException` and a `'str' object` no program

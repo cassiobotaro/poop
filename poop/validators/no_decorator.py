@@ -2,7 +2,9 @@ import ast
 
 from poop.validators.base import CollectingValidator, ErrorCollector
 
-# The three `INFECTIONS.md` reasons about and allows: "class-definition
+# The three ADR 18 reasons about and allows
+# (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`):
+# "class-definition
 # decorators, not runtime operations on values". They are also exactly the
 # three non-machinery entries in `_ALLOWED_BUILTINS`, so the intended surface
 # was already written down twice — and checked nowhere.

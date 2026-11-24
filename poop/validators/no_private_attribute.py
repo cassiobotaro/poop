@@ -9,8 +9,8 @@ answered was a naked Python primitive:
     "abc"._value               # 'abc', a Python str
     "abc"._value.print()       # 'str' object has no attribute 'print'
 
-That contradicts the language's first principle twice over. `INFECTIONS.md`
-says "no naked Python primitive ever reaches runtime" and "Python native types
+That contradicts the language's first principle twice over. ADR 2 and ADR 3
+(`doc/adr/`) say "no naked Python primitive ever reaches runtime" and "Python native types
 must not leak into POOP code"; the second line hands one out on request. And
 the object that comes back answers nothing, in CPython's vocabulary — `'str'
 object has no attribute 'print'` is precisely the sentence

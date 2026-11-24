@@ -32,7 +32,9 @@ class _Visitor(ErrorCollector):
     """Keeps the machinery allowance to the position it was argued for.
 
     `_ALLOWED_BUILTINS` admits these four as "language machinery with no
-    message-passing substitute", and INFECTIONS.md scopes each one: `super` so
+    message-passing substitute", and ADR 18
+    (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`)
+    scopes each one: `super` so
     inheritance works, the other three as decorators — "class-definition
     decorators, not runtime operations on values". `no_decorator` made the
     decorator half real. Everywhere else they stayed reachable as plain names,
@@ -44,9 +46,9 @@ class _Visitor(ErrorCollector):
     which is the naked-native symptom the allow-list was introduced to end.
     One position stays open per name, and it is the one the allowance was
     granted for: a `decorator_list` entry for the three, the callee of a
-    `Call` for `super`. The split is INFECTIONS.md's own — "`@property(...)`
-    is refused even though `@property` is not, because a called decorator is a
-    runtime operation, which is the distinction the allowance rests on" — so
+    `Call` for `super`. The split is ADR 18's own: `@property(...)` is refused
+    even though `@property` is not, because a called decorator is a runtime
+    operation, which is the distinction the allowance rests on — so
     `property(getter)` is refused here for the reason `@property(...)` is
     refused there, and `staticmethod` never earns a call position either.
 

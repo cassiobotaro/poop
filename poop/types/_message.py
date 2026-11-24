@@ -125,9 +125,10 @@ def cannot_be_hashed(exc: TypeError) -> str | None:
 def too_deep() -> str:
     """POOP's wording for a recursion that ran out of room.
 
-    `INFECTIONS.md` says why this one matters more here than in Python:
-    `RecursionError` is mirrored because "recursion is POOP's substitute for
-    every loop, which makes it the most reachable of the lot". CPython's
+    ADR 34 says why this one matters more here than in Python
+    (`doc/adr/0034-only-the-exceptions-poop-can-reach-are-mirrored.md`):
+    `RecursionError` is mirrored because recursion is POOP's substitute for
+    every loop, which makes it the most reachable failure. CPython's
     sentence names no receiver, offers no substitute, and — the part that
     actually misleads — states a limit measured in Python frames, six of which
     go to one POOP message send.

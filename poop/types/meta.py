@@ -290,7 +290,9 @@ def _reflected(cls: type, name: str) -> object:
 def _refuse_instance_side(cls: type, name: str) -> Never:
     """Refuse a method the *instance* answers, reached through the class.
 
-    `class_side` exists to remove one failure — `INFECTIONS.md`: "the bans
+    `class_side` exists to remove one failure — ADR 37,
+    `doc/adr/0037-the-class-side-is-data-descriptors-on-a-type-metaclass-and-refuses-instance-messages.md`:
+    "the bans
     contradicted themselves: `hash(Foo)` answers 'use `obj.hash()` instead'
     while `Foo.hash()` answered a binding error, naming a substitute that did
     not exist on that receiver". It removed it for `Object`'s protocol; the

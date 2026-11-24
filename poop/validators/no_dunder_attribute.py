@@ -4,9 +4,10 @@ from poop.types._selectors import is_dunder
 from poop.validators.base import CollectingValidator, ErrorCollector
 
 # `super().__init__(...)` is an `ast.Attribute` with a dunder attr, and
-# INFECTIONS.md allows `super` explicitly — "without it, subclasses cannot
-# extend parent behaviour — inheritance breaks entirely. There is no
-# message-passing substitute." A blanket rule would contradict that.
+# ADR 18 allows `super` explicitly
+# (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`):
+# without it, subclasses cannot extend parent behaviour and inheritance
+# breaks, and there is no message-passing substitute. A blanket rule would contradict that.
 _ALLOWED = frozenset({"__init__"})
 
 # Named substitutes, so the message teaches rather than only refuses. The rule

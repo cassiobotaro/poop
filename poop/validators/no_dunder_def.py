@@ -3,8 +3,8 @@ import ast
 from poop.validators.base import CollectingValidator, ErrorCollector
 
 # Each dunder a user class must not define, with the sentence that refuses it.
-# A deny-list rather than an allow-list: the slots INFECTIONS.md says a class
-# *may* define — `__init__`, `__str__`, `__repr__`, `__bool__`, `__hash__`,
+# A deny-list rather than an allow-list: the slots ADR 17 says a class *may*
+# define (`doc/adr/0017-a-class-may-not-define-lookup-creation-or-descriptor-dunders.md`) — `__init__`, `__str__`, `__repr__`, `__bool__`, `__hash__`,
 # `__len__`, `__call__`, `__iter__`, `__next__`, `__enter__`, `__exit__`, the
 # comparisons and some forty operator slots — are the long list, and missing
 # one there refuses a legal program, where missing one here leaves a leak the
@@ -39,8 +39,8 @@ class _Visitor(ErrorCollector):
     dunder name, but a class body could still *define* `__getattribute__` and
     rewire every message sent to its instances, or `__set_name__` and be handed
     a raw `str` by CPython, with no validator looking. The operator and
-    protocol slots stay legal: INFECTIONS.md lists them as the ones a class
-    may satisfy, and `PoopMeta.__new__` adapts the five CPython reads itself.
+    protocol slots stay legal: ADR 17 lists them as the ones a class may
+    define, and `PoopMeta.__new__` adapts the five CPython reads itself.
     """
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:

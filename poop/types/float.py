@@ -69,7 +69,8 @@ class Float(_NumericCompareMixin, Object, name="float"):
     # The `math` predicates whose only receiver is a float, as `Int` answers
     # the `math.integer` six: CPython's names, `math`'s answers. Three are
     # Python 3.15's (`isnormal`, `issubnormal`, `signbit`); `isnan`, `isinf`
-    # and `isfinite` are the same decision — INFECTIONS.md, Float.
+    # and `isfinite` are the same decision — ADR 8,
+    # `doc/adr/0008-methods-use-python-names-not-smalltalk-names.md`.
     def isnan(self) -> Boolean:
         return to_boolean(math.isnan(self._value))
 
