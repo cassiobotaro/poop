@@ -51,7 +51,8 @@ def test_every_deny_list_row_is_refused(name: str) -> None:
     assert error.lineno == 2
 
 
-# The slots INFECTIONS.md documents as the ones a class may satisfy.
+# The slots ADR 17 documents as the ones a class may define
+# (`doc/adr/0017-a-class-may-not-define-lookup-creation-or-descriptor-dunders.md`).
 _LEGAL = (
     "__init__",
     "__str__",

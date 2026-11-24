@@ -48,8 +48,9 @@ def test_the_ban_is_a_rule_not_a_list() -> None:
 
 
 def test_init_is_carved_out_for_super() -> None:
-    # INFECTIONS.md allows `super` explicitly — without it inheritance breaks
-    # entirely, and there is no message-passing substitute.
+    # ADR 18 allows `super` explicitly
+    # (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`):
+    # without it inheritance breaks, and there is no message-passing substitute.
     _validate("class C:\n    def __init__(self):\n        super().__init__()\n")
 
 

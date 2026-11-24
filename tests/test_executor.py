@@ -122,7 +122,8 @@ def test_the_class_statement_still_works() -> None:
 @pytest.mark.parametrize("name", ["super", "classmethod", "staticmethod", "property"])
 def test_class_machinery_stays_reachable(name: str) -> None:
     # Class-definition machinery with no message-passing substitute — the
-    # argument INFECTIONS.md already makes for `super`.
+    # argument ADR 18 makes for `super`
+    # (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`).
     ns: dict[str, object] = {}
     execute(ast.parse(f"x = {name}"), namespace=ns)
     assert ns["x"] is getattr(builtins, name)

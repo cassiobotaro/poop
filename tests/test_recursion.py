@@ -1,7 +1,8 @@
 """Recursion is POOP's substitute for a loop, so its ceiling is POOP's problem.
 
-`INFECTIONS.md` mirrors `RecursionError` because "recursion is POOP's substitute
-for every loop, which makes it the most reachable of the lot". The class was
+POOP mirrors `RecursionError` because recursion is POOP's substitute for every
+loop, which makes it the most reachable failure (ADR 34,
+`doc/adr/0034-only-the-exceptions-poop-can-reach-are-mirrored.md`). The class was
 mirrored, the failure was catchable, and the budget it ran against had never
 been looked at: one POOP message send is six Python frames, so a self-sending
 message ran 164 levels deep where the same recursion written as a Python

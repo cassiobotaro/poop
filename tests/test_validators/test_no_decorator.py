@@ -1,6 +1,7 @@
 """`@` applies an arbitrary expression, which no validator used to check.
 
-`INFECTIONS.md` reasons about `staticmethod`, `classmethod` and `property` —
+ADR 18 (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`)
+reasons about `staticmethod`, `classmethod` and `property` —
 "class-definition decorators, not runtime operations on values" — and allows
 them. The boundary was written down twice (there, and in `_ALLOWED_BUILTINS`)
 and enforced nowhere, so a plain block silently replaced a method.

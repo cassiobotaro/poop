@@ -24,9 +24,10 @@ def _validate(source: str) -> None:
     ],
 )
 def test_the_three_decorators_are_refused_outside_a_decorator(source: str) -> None:
-    # `_ALLOWED_BUILTINS` admits them as class-definition machinery, and
-    # INFECTIONS.md scopes that to `@`: "a called decorator is a runtime
-    # operation, which is the distinction the allowance rests on". Reachable
+    # `_ALLOWED_BUILTINS` admits them as class-definition machinery, and ADR 18
+    # (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`)
+    # scopes that to `@`: a called decorator is a runtime operation, which is
+    # the distinction the allowance rests on. Reachable
     # as plain names they answered Python — `type object 'property' has no
     # attribute 'print'` — the naked-native symptom the allow-list ended.
     with pytest.raises(ValidationError, match="only as a decorator"):

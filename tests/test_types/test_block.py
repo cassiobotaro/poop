@@ -321,7 +321,8 @@ def test_a_registry_stops_registering_the_same_method_twice() -> None:
 
 
 def test_is_identical_still_answers_false() -> None:
-    # Unchanged and honest: those really are two objects, which INFECTIONS.md
+    # Unchanged and honest: those really are two objects, which ADR 53
+    # (`doc/adr/0053-a-builtin-subclass-constructs-as-the-builtin-does-a-class-refuses-binary-operators.md`)
     # already documents as a deliberate disagreement for classes.
     text = Str("abc")
     assert text.upper.is_identical(text.upper) is false

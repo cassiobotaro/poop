@@ -137,7 +137,7 @@ skill in the Nygard format of design decision 1 and checked against the
 ## 7. Citations in code
 
 - [x] 7.1 Repoint the `INFECTIONS.md` citations in `poop/` and `pyproject.toml` to the ADR path (design decision 7); verify `uv run ruff check` passes.
-- [ ] 7.2 Same for `tests/`; verify `uv run pytest -q` passes.
+- [x] 7.2 Same for `tests/`; verify `uv run pytest -q` passes.
 
 ## 8. Retire `INFECTIONS.md`
 

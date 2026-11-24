@@ -1,6 +1,6 @@
 """A validator's Substitute must actually answer on the receiver it names.
 
-`INFECTIONS.md` gives every ban a Substitute column, and the bans' own messages
+`MIGRATION.md` gives every ban its substitute, and the bans' own messages
 repeat it — "blocking without offering an alternative breaks code without
 teaching", as `CONTRIBUTING.md` puts it. Nothing read those columns back.
 
