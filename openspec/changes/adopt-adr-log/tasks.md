@@ -132,7 +132,7 @@ Numbered after 66 because a number is never backfilled; dated when each decision
 - [x] 4.2 Add *Type reference*: the API tables (PoopMeta, Object, NoneClass, Boolean, Block, collection methods, builtin-mirroring signatures, Range, Slice, Error, Object.print, the transformer rewrite tables) moved without rationale; verify every snippet added runs under `uv run poop`.
 - [x] 4.3 Repoint the intro sentence and the line-185 § link to the new section and ADR 3.45.
 
-- [ ] 4.4 Add the reference notes the 8.1 check found would be lost (`ord` on bytes, the `zip`/`enumerate` rewrites and their eager refusal, strict `zip` numbering, `MappingProxy`'s surface, `Ellipsis` names, the printing edges, `Slice`'s surface, the `math` messages, `bytearray.translate`, `Complex.from_number`), and respell `Slice(start, stop)` as `slice(start, stop)`.
+- [x] 4.4 Add the reference notes the 8.1 check found would be lost (`ord` on bytes, the `zip`/`enumerate` rewrites and their eager refusal, strict `zip` numbering, `MappingProxy`'s surface, `Ellipsis` names, the printing edges, `Slice`'s surface, the `math` messages, `bytearray.translate`, `Complex.from_number`), and respell `Slice(start, stop)` as `slice(start, stop)`.
 
 ## 5. OpenSpec configuration
 

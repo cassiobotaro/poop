@@ -356,7 +356,7 @@ Every construct a validator refuses, and what to write instead. A row whose righ
 | `hex(n)` | `n.hex()` | `no_bin` |
 | `oct(n)` | `n.oct()` | `no_bin` |
 | `chr(n)` | `n.chr()` | `no_chr` |
-| `ord(c)` | `c.ord()` | `no_chr` |
+| `ord(c)` | `c.ord()`, on a `str`, `bytes` or `bytearray` of length one | `no_chr` |
 | `divmod(a, b)` | `a.divmod(b)` | `no_divmod` |
 | `pow(a, b)` | `a.pow(b)` | `no_pow` |
 | `getattr(x, name)` | `x.get_attr(name)` | `no_getattr` |
@@ -508,8 +508,8 @@ What each type answers, message by message. The reasoning behind each choice is 
 | — | `max(key=None, default=...)` | largest element; mirrors Python `max` |
 | — | `all(block)` | `true` if block holds for every element |
 | — | `any(block)` | `true` if block holds for at least one element |
-| — | `enumerate(start=Int(0))` | returns an `Enumerate` of `Tuple(Int(i), item)` pairs |
-| — | `zip(*others, strict=false)` | returns a `Zip` of `Tuple(...)` |
+| — | `enumerate(start=Int(0))` | returns an `Enumerate` of `Tuple(Int(i), item)` pairs; a source that is not a collection is refused on construction |
+| — | `zip(*others, strict=false)` | returns a `Zip` of `Tuple(...)`; a source that is not a collection is refused on construction; a strict mismatch numbers collections, the receiver being 1, so `a.zip(b)` and `zip(a, b)` report the same position |
 
 ### Builtin-mirroring signatures
 
@@ -518,13 +518,13 @@ What each type answers, message by message. The reasoning behind each choice is 
 | `Int` | `to_bytes` | `to_bytes(length=Int(1), byteorder=Str("big"), signed=false)` | `signed` is keyword-only, like `int.to_bytes` |
 | `Int` | `from_bytes` | `from_bytes(bytes, byteorder=Str("big"), signed=false)` | classmethod; `signed` keyword-only |
 | `Float` | `from_number` | `from_number(x)` | classmethod (Python 3.14); `x` an int, bool or float, refused otherwise by `a_number` |
-| `Complex` | `from_number` | `from_number(x)` | classmethod (Python 3.14); `x` an int, bool, float or complex |
+| `Complex` | `from_number` | `from_number(x)` | classmethod (Python 3.14); `x` an int, bool, float or complex; `complex.from_number(1j)` answers `1j` unchanged |
 | `ByteArray` | `resize` | `resize(size)` | Python 3.15; in place, answers `none`; a negative size is CPython's `ValueError` |
 | `Str` | `format_map` | `format_map(mapping)` | `mapping` a `Dict`, `FrozenDict` or `MappingProxy`, refused otherwise by `a_mapping`; a positional field keeps CPython's `ValueError` |
 | `Str` | `maketrans` | `maketrans(x, y=none, z=none)` | staticmethod; one mapping, or two equal-length strings and an optional third to delete; answers a `Dict` |
 | `Str` | `translate` | `translate(table)` | `table` a mapping or a `List`/`Tuple`/`Str`, crossed to Python by `translation_table`; a `none` value deletes |
 | `Bytes`, `ByteArray` | `maketrans` | `maketrans(frm, to)` | staticmethod; answers `bytes` on both, as CPython does |
-| `Bytes`, `ByteArray` | `translate` | `translate(table, delete=b"")` | `table` may be `none`; a table not 256 bytes long is CPython's `ValueError` |
+| `Bytes`, `ByteArray` | `translate` | `translate(table, delete=b"")` | `table` may be `none`; a table not 256 bytes long is CPython's `ValueError`; `delete` applies before the mapping; a `bytearray` answers a new `bytearray` and is left untouched |
 | `List`, `Tuple` | `index` | `index(obj, start=none, stop=none)` | optional search bounds; either may be given alone, as in Python |
 | `MemoryView` | `tobytes` | `tobytes(order=Str("C"))` | `order` ∈ `{"C", "F", "A"}` |
 | `MemoryView` | `hex` | `hex(sep=none, bytes_per_sep=Int(1))` | mirrors `Bytes.hex`; the one message that shows the contents |
@@ -535,6 +535,10 @@ What each type answers, message by message. The reasoning behind each choice is 
 | `Set` | `update`, `intersection_update`, `difference_update` | `(*others)` | in-place; operands may be any iterable |
 | `Set` | `symmetric_difference_update` | `(other)` | in-place; operand may be any iterable |
 | `Dict` | `update` | `update(other=none, **pairs)` | `other` is a `Dict`, a `MappingProxy`, or an iterable of 2-element `(key, value)` pairs — a wrong-length element raises the faithful `ValueError`; both halves are optional, as in `dict.update([E], **F)`, and a keyword wins over the same key in the mapping |
+| `Int` | `gcd`, `lcm` | `gcd(*others)`, `lcm(*others)` | any number of operands: `(12).gcd()` is 12, `(4).gcd(6, 8)` is 2 |
+| `Int` | `comb`, `perm` | `comb(k)`, `perm(k=none)` | `(2).comb(5)` is 0; `(5).perm()` is the factorial |
+| `Int` | `isqrt`, `factorial` | `isqrt()`, `factorial()` | a negative receiver is refused; `Boolean` answers all six through its int side |
+| `Float` | `isnan`, `isinf`, `isfinite`, `isnormal`, `issubnormal`, `signbit` | no arguments | `math`'s answer as a `Boolean`: `(-0.0).signbit()` is `True` |
 
 ### `range`
 
@@ -560,12 +564,14 @@ What each type answers, message by message. The reasoning behind each choice is 
 
 | Method | Returns | Notes |
 |---|---|---|
-| `Slice(start, stop)` | `Slice` | Two-arg constructor |
-| `Slice(start, stop, step)` | `Slice` | Three-arg constructor |
+| `slice(start, stop)` | `Slice` | Two-arg constructor |
+| `slice(start, stop, step)` | `Slice` | Three-arg constructor |
 | `.start()` | `Int` | |
 | `.stop()` | `Int` | |
 | `.step()` | `Int \| NoneClass` | POOP `none` when not set |
 | `.indices(length)` | `Tuple(Int, Int, Int)` | Normalised start/stop/step for a sequence of the given length; mirrors Python's `slice.indices()` |
+
+A slice is immutable, hashable, comparable with `==`/`!=`, and reusable across collections. `obj.slice(s, stop)`, a slice followed by a bound, is refused. What `obj.slice(...)` answers, by receiver:
 
 | Type | Returns |
 |---|---|
@@ -584,6 +590,14 @@ What each type answers, message by message. The reasoning behind each choice is 
 | `DictValues` | `DictValueIterator` | none (values may be unhashable) | inherits `Object` identity and hash (Python parity) | `mapping()` |
 | `DictItems` | `DictItemIterator` (yields `Tuple(k, v)`) | `\|`, `&`, `-`, `^` → `Set` of `Tuple`; `isdisjoint` | full set semantics like `DictKeys` | `mapping()` |
 
+### `MappingProxy`
+
+`view.mapping()` on the three dict views answers a read-only `MappingProxy` over the dict, as `types.MappingProxyType` does. It answers the read messages (`at`, `get`, `keys`, `values`, `items`, `len`, `includes`, `iter`, `copy`, `reversed`, and `|` answering a `Dict`) and no mutator. It equals a `Dict` or `MappingProxy` with the same items and is unhashable.
+
+### `Ellipsis`
+
+`...` prints as `Ellipsis` and `class_name()` answers `ellipsis`, as `str(...)` and `type(...).__name__` do in CPython.
+
 ### Printing
 
 | Message | Behavior |
@@ -592,6 +606,8 @@ What each type answers, message by message. The reasoning behind each choice is 
 | `obj.print(end="")` | controls the terminator |
 | `obj.print(flush=True)` | forces buffer flush |
 | `list.print(sep=", ")` | `List`/`Tuple`: joins elements with `sep` (default `" "`) |
+| `"".print()` | prints a blank line |
+| a container that holds itself | shows `[...]`, `(...)` or `{...}` where it recurs, as CPython does: `[1, [...]]` |
 
 ### `Error`
 
@@ -669,6 +685,8 @@ What the transformers turn source into before it runs, so that no bare Python va
 | `sentinel` | `ast.Call` with `sentinel(name, repr=...)` | `_poop_sentinel_from(name, repr=...)` |
 | `sentinel` | `ast.Name` `sentinel` | `_poop_sentinel_cls` — the alias, for `x.is_instance(sentinel)` and `class Marker(sentinel)` |
 | `range` | `ast.Call` with `range(stop)` / `range(start, stop)` / `range(start, stop, step)` | `_poop_range(...)` → `Range` |
+| `zip` | `ast.Call` with `zip(a, b, ...)` | `_poop_zip(...)`, a lazy `Zip` |
+| `enumerate` | `ast.Call` with `enumerate(col)` / `enumerate(col, start)` | `_poop_enumerate(...)`, a lazy `Enumerate` |
 
 ### Classes
 
