@@ -1,6 +1,6 @@
 # Migration Recipes — Python → POOP
 
-Quick translations of common Python idioms to POOP source code. Every forbidden construct and its substitute is listed under [*Banned constructs*](#banned-constructs), what each type answers under [*Type reference*](#type-reference), and why each rule exists in the decision log, [`doc/adr/`](doc/adr/). For end-to-end programs, see [`examples/`](examples).
+Quick translations of common Python idioms to POOP source code. [*Banned constructs*](#banned-constructs) lists every forbidden construct and its substitute, and [*Type reference*](#type-reference) lists what each type answers. The decision log, [`doc/adr/`](doc/adr/), records why each rule exists. For end-to-end programs, see [`examples/`](examples).
 
 > Every snippet pair shows the Python form you would normally write and the POOP form the validators and transformers force you to write instead. Snippets are valid as POOP source — primitive literals like `0`, `"hi"`, `True` are wrapped to POOP types by transformers at parse time, so methods like `.at(0)` and `.print()` work directly on Python literals without any manual wrapping.
 
@@ -182,7 +182,7 @@ q, r = a.divmod(b)
 y = x.round(2)
 ```
 
-> Binary operators (`+`, `-`, `*`, `/`, `**`, `==`, `<`, …) stay native — the asymmetry is intentional, see [ADR 27](doc/adr/0027-binary-operators-stay-unary-ones-go-chained-comparison-is-allowed-on-ergonomics.md).
+> Binary operators (`+`, `-`, `*`, `/`, `**`, `==`, `<`, …) stay native. The asymmetry is intentional; see [ADR 27](doc/adr/0027-binary-operators-stay-unary-ones-go-chained-comparison-is-allowed-on-ergonomics.md).
 
 ## Subscripting and slicing
 
@@ -288,7 +288,7 @@ Some Python has no POOP translation at all, and looking for one is the wrong mov
 
 ## Banned constructs
 
-Every construct a validator refuses, and what to write instead. A row whose right-hand cell gives a reason rather than code is a ban with no substitute; [ADR 9](doc/adr/0009-a-validator-is-activated-only-with-its-substitute-except-definitive-bans.md) says which bans are definitive and why.
+This table lists every construct a validator refuses and what to write instead. A row whose right-hand cell gives a reason rather than code is a ban with no substitute. [ADR 9](doc/adr/0009-a-validator-is-activated-only-with-its-substitute-except-definitive-bans.md) says which bans are definitive and why.
 
 | Python | POOP instead, or why there is none | Validator |
 |---|---|---|
@@ -430,7 +430,7 @@ Every construct a validator refuses, and what to write instead. A row whose righ
 
 ## Type reference
 
-What each type answers, message by message. The reasoning behind each choice is in [`doc/adr/`](doc/adr/).
+These tables list what each type answers, message by message. The reasoning behind each choice is in [`doc/adr/`](doc/adr/).
 
 ### The class side (`PoopMeta`)
 
@@ -644,7 +644,7 @@ A slice is immutable, hashable, comparable with `==`/`!=`, and reusable across c
 
 ## Rewrites
 
-What the transformers turn source into before it runs, so that no bare Python value reaches the program.
+The transformers rewrite the source before it runs, so that no bare Python value reaches the program.
 
 | Python | AST node | Replacement |
 |---|---|---|

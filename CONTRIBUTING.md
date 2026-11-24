@@ -30,9 +30,9 @@ The pipeline is `parse → validate → transform → execute(namespace)`. Sourc
 - `poop/executor.py` — compiles and executes AST in an injectable namespace
 - `poop/interpreter.py` — orchestrates the full pipeline
 
-Why the language is the way it is: the decision log in
-[`doc/adr/`](doc/adr/). What is banned, what to write instead, and what each
-type answers: [`MIGRATION.md`](MIGRATION.md). Open backlog: the active changes under
+The decision log in [`doc/adr/`](doc/adr/) records why the language is the way
+it is. [`MIGRATION.md`](MIGRATION.md) lists what is banned, what to write
+instead, and what each type answers. Open backlog: the active changes under
 [`openspec/changes/`](openspec/changes/); closed ones are in its `archive/`.
 
 ## Workflow
@@ -222,8 +222,8 @@ When a change is implemented:
    (`/openspec-apply-change`), ticking each task as it lands.
 2. In the same commit as the code, write the ADR for any decision the change
    makes (`doc/adr/`, next number, `Accepted`; mark the ADR it replaces
-   `Superseded by`), and update `MIGRATION.md` when it touched validators,
-   transformers or types. The ADRs hold the *why*, `MIGRATION.md` the
+   `Superseded by`). Update `MIGRATION.md` in that commit when the change
+   touched validators, transformers or types. The ADRs hold the *why*, `MIGRATION.md` the
    reference, the specs the *what*.
 3. Archive it (`/openspec-archive-change`): delta specs sync into
    `openspec/specs/`, and the change moves to
@@ -279,9 +279,9 @@ GitHub Releases page.
   `ARG005` there, because example files are POOP programs rather than Python
   modules: they rely on names injected at runtime (`True` → POOP boolean,
   etc.), carry no Python annotations, spell every block as a `lambda` (the
-  twin of Smalltalk's `[...]`, see
-  [ADR 28](doc/adr/0028-every-lambda-is-a-block-loops-are-messages-to-blocks.md),
-  which ruff would inline into the bare-method spelling), and a `With.do` body may ignore
+  twin of Smalltalk's `[...]`, which ruff would inline into the bare-method
+  spelling; see
+  [ADR 28](doc/adr/0028-every-lambda-is-a-block-loops-are-messages-to-blocks.md)), and a `With.do` body may ignore
   the manager it is handed.
 - `uv run pytest` enforces a 95% coverage floor (`--cov-fail-under=95` in
   `addopts`) — a run whose tests all pass still exits non-zero below it.
