@@ -117,11 +117,22 @@ skill in the Nygard format of design decision 1 and checked against the
 
 - [x] 3.65 Decisions live in `doc/adr/`, replacing `INFECTIONS.md`, dated the day it lands: *Context* names `INFECTIONS.md`'s three jobs and decision 4 of `arch:2026-10-14-backlog-to-openspec`, which it reverses; *Decision* is the log, the `MIGRATION.md` reference and the OpenSpec rule of design decision 6. Written after group 4, before 5.1.
 
+### Found by the 8.1 section check
+
+Numbered after 66 because a number is never backfilled; dated when each decision was made.
+
+- [ ] 3.66 Single-receiver `math` functions are messages of their type (1270, 1284, `arch:2026-10-22-float-answers-315-math`)
+- [ ] 3.67 A `def` is a method only as a direct statement of a class body (82)
+- [ ] 3.68 A constructor call is read by its converter at run time, never folded at parse time (1230, 1385)
+- [ ] 3.69 `...` is a transformed literal, not a banned one (1001)
+
 ## 4. `MIGRATION.md`
 
 - [x] 4.1 Add *Banned constructs*: one row per ban from every validator table (`Python | POOP substitute | validator`), definitive bans linking ADR 3.4; verify every validator in `DEFAULT_VALIDATORS` has at least one row, and list in `inventory.md` the sections that were reference only.
 - [x] 4.2 Add *Type reference*: the API tables (PoopMeta, Object, NoneClass, Boolean, Block, collection methods, builtin-mirroring signatures, Range, Slice, Error, Object.print, the transformer rewrite tables) moved without rationale; verify every snippet added runs under `uv run poop`.
 - [x] 4.3 Repoint the intro sentence and the line-185 § link to the new section and ADR 3.45.
+
+- [ ] 4.4 Add the reference notes the 8.1 check found would be lost (`ord` on bytes, the `zip`/`enumerate` rewrites and their eager refusal, strict `zip` numbering, `MappingProxy`'s surface, `Ellipsis` names, the printing edges, `Slice`'s surface, the `math` messages, `bytearray.translate`, `Complex.from_number`), and respell `Slice(start, stop)` as `slice(start, stop)`.
 
 ## 5. OpenSpec configuration
 

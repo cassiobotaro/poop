@@ -70,6 +70,10 @@ Working list for `adopt-adr-log`, deleted in task 8.1. Number, date (design deci
 | 64 | 2026-10-15 | 3.60 | A non-tty stdin is a program, not a REPL |
 | 65 | 2026-10-19 | 3.62 | The uncaught report shows the chain, nearest first, by CPython's rule |
 | 66 | 2026-11-23 | 3.65 | Decisions live in `doc/adr/`, replacing `INFECTIONS.md` |
+| 67 | 2026-10-09 | 3.66 | Single-receiver `math` functions are messages of their type |
+| 68 | 2026-07-17 | 3.67 | A `def` is a method only as a direct statement of a class body |
+| 69 | 2026-10-14 | 3.68 | A constructor call is read by its converter at run time |
+| 70 | 2026-07-15 | 3.69 | `...` is a transformed literal, not a banned one |
 
 ## Sections
 
