@@ -152,7 +152,7 @@ Numbered after 66 because a number is never backfilled; dated when each decision
 
 ## 8. Retire `INFECTIONS.md`
 
-- [ ] 8.1 Diff the `INFECTIONS.md` section list against `inventory.md` plus `MIGRATION.md`; then `git rm INFECTIONS.md`, delete `inventory.md`, and verify `git grep -n INFECTIONS -- ':!openspec/changes/archive' ':!openspec/changes/adopt-adr-log' ':!doc/adr'` prints nothing.
+- [x] 8.1 Diff the `INFECTIONS.md` section list against `inventory.md` plus `MIGRATION.md`; then `git rm INFECTIONS.md`, delete `inventory.md`, and verify `git grep -n INFECTIONS -- ':!openspec/changes/archive' ':!openspec/changes/adopt-adr-log' ':!doc/adr'` prints nothing.
 - [ ] 8.2 Full gate: `uv run ruff check && uv run ruff format --check && uv run ty check poop/ tests/ && uv run pytest` (read pytest's summary line) and `openspec validate adopt-adr-log --strict`.
 
 ## Workflow follow-up
