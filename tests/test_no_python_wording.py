@@ -32,6 +32,7 @@ from poop.types.boolean import true
 from poop.types.byte_array import ByteArray
 from poop.types.bytes import Bytes
 from poop.types.complex import Complex
+from poop.types.coroutine import Coroutine
 from poop.types.dict import Dict
 from poop.types.ellipsis import ellipsis
 from poop.types.error import Error
@@ -540,9 +541,25 @@ def _receivers() -> dict[str, object]:
             "filter": xs.filter(lambda x: x),
             "block": Block(lambda x: x),
             "error": Error(mirrors.ValueError("boom")),
+            "coroutine": _closed_coroutine(),
         }
     )
     return _SAMPLES
+
+
+async def _nothing() -> None:
+    pass
+
+
+def _closed_coroutine() -> Coroutine:
+    """A coroutine the sweep can hold without one ever being awaited.
+
+    Closed at once: CPython warns about a coroutine collected unawaited, and a
+    closed one is finished, not forgotten.
+    """
+    raw = _nothing()
+    raw.close()
+    return Coroutine._of(raw)
 
 
 # The wrappers a program never holds a value of, and so the sweep cannot

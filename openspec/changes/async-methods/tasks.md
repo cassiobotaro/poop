@@ -20,7 +20,7 @@
 
 ## 4. Coroutine
 
-- [ ] 4.1 Add `poop/types/coroutine.py` with `Coroutine` (design, decision 2) and its tests for the `coroutine-type` spec, building it directly from a raw coroutine. Verify: `uv run pytest tests/test_types/test_coroutine.py` exits 0.
+- [x] 4.1 Add `poop/types/coroutine.py` with `Coroutine` (design, decision 2) and its tests for the `coroutine-type` spec, building it directly from a raw coroutine. Verify: `uv run pytest tests/test_types/test_coroutine.py` exits 0.
 - [ ] 4.2 In `PoopMeta.__new__`, replace every coroutine function in the class namespace with its wrapping function (design, decision 1). Test that a send, `super().m()`, `get_attr("m")` and an `async def __call__` each answer a `Coroutine`, and that an async method's class still prints its own methods with `dir()`. Verify: `uv run pytest tests/test_types/test_coroutine.py tests/test_message_descriptors.py` exits 0.
 - [ ] 4.3 Run a recursive async method in `tests/test_recursion.py`, at the depth its synchronous tests use, and record in the ADR of 1.2 whether ADR 61's sizing holds for an awaited send. Verify: the test passes, or the ADR names the factor and a test pins it.
 
