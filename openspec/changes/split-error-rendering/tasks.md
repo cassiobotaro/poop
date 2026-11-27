@@ -11,7 +11,7 @@
 
 ## 3. Integration
 
-- [ ] 3.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check` and `uv run ty check poop/ tests/`. Run `printf 'print(1)\n' | uv run poop -` and `uv run poop examples/basics/hello_world.py`. Verify: every command exits as expected (0 for the gate and the example, 3 for the refused program), and the refused program prints its source line and caret on stderr.
+- [x] 3.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check` and `uv run ty check poop/ tests/`. Run `printf 'print(1)\n' | uv run poop -` and `uv run poop examples/basics/hello_world.py`. Verify: every command exits as expected (0 for the gate and the example, 3 for the refused program), and the refused program prints its source line and caret on stderr.
 
 ## Workflow follow-up
 
