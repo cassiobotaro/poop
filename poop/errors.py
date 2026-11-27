@@ -37,8 +37,8 @@ class PoopError(Exception):
     UTF-8 bytes, which is what `_caret_column` converts from.
     """
 
-    # What the CLI exits with. A subclass inherits its parent's code, so an error
-    # with no code of its own still exits as a failure.
+    # What the CLI exits with. `FAILED` on the base, so a class that declares no
+    # code of its own still exits as a failure.
     exit_code: ClassVar[ExitCode] = ExitCode.FAILED
     lineno: int | None = None
     col_offset: int | None = None

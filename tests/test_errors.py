@@ -252,7 +252,6 @@ def test_report_without_a_location_is_one_red_line() -> None:
 def test_an_error_and_its_subclass_carry_the_same_exit_code(
     kind: type[PoopError], code: ExitCode
 ) -> None:
-    # A subclass is never registered anywhere: the code is inherited.
     sub = type("Sub", (kind,), {})
     assert kind.exit_code == code
     assert sub.exit_code == code
