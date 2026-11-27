@@ -55,9 +55,9 @@ class ParseError(PoopError):
     def from_syntax_error(cls, exc: SyntaxError) -> ParseError:
         """The parser's failure, keeping the position CPython already found.
 
-        `str(exc)` flattened it into the text — `'(' was never closed (bad.py,
-        line 2)` — so the one error a newcomer hits first was the one reported
-        without the source line and caret every other error gets.
+        `str(exc)` would flatten it into the text — `'(' was never closed
+        (bad.py, line 2)` — and the error a newcomer hits first would lose the
+        source line and caret every other error gets.
 
         `SyntaxError.offset` counts *characters* from 1; `col_offset` is
         `ast`'s 0-based UTF-8 byte offset, so `x = "éé" +* 2` is 11 to one and
@@ -140,12 +140,12 @@ def _error_location(exc: PoopError, source: str | None) -> tuple[int, str] | Non
 def _quoted(line: str) -> str:
     """The source line as it is printed, with tabs already expanded.
 
-    A tab is one character and eight columns, so quoting it raw put the caret
-    in the indentation of every tab-indented file — and the terminal expanded
-    those tabs from the start of the *printed* line, which begins with the
-    gutter, so its stops did not even land where the file's do. Expanding here
-    leaves no tab for the terminal to interpret; `_caret_column` measures the
-    same expansion, so the two cannot disagree.
+    A tab is one character and eight columns, so quoting it raw would put the
+    caret in the indentation of every tab-indented file — and the terminal
+    would expand those tabs from the start of the *printed* line, which begins
+    with the gutter, so its stops would not land where the file's do.
+    Expanding here leaves no tab for the terminal to interpret; `_caret_column`
+    measures the same expansion, so the two cannot disagree.
     """
     return line.expandtabs()
 
@@ -164,14 +164,14 @@ def _display_width(text: str) -> int:
 
     The third conversion in the same family as the two below, and the same
     argument: a tab is one character wide to `len` and eight to the reader, and
-    a CJK ideograph is one character wide to `len` and **two**. `len` measured
-    the first correctly only because `_quoted` had already expanded it.
+    a CJK ideograph is one character wide to `len` and **two**. `len` measures
+    the first correctly only because `_quoted` has already expanded it.
 
     Wide and full-width characters count two, combining marks count zero — the
     two cases Unicode gives a stable answer for. A decomposed `á` is `a` plus
     U+0301: legal Python source, visually identical to the precomposed form,
-    and two characters to `len`, so the caret used to run *past* its target
-    there while it fell short on CJK and emoji.
+    and two characters to `len`, so a caret measured by `len` would run *past*
+    its target there, as it would fall short on CJK and emoji.
 
     Grapheme clusters are where this stops, deliberately. A ZWJ emoji family is
     seven code points and one column, flag sequences are two and two, and
@@ -184,7 +184,7 @@ def _display_width(text: str) -> int:
 def _caret_column(line: str, col: int) -> int:
     # Three conversions, in this order. ast reports col_offset as a UTF-8 *byte*
     # offset while the gutter prints characters, so a non-ASCII character
-    # earlier on the line pushed the caret one column right per extra byte;
+    # earlier on the line would push the caret one column right per extra byte;
     # then the prefix is expanded like the quoted line, since a tab is one
     # character wide to `len` and eight to the reader; then it is measured in
     # the columns a terminal actually spends on it, since the caret line is
@@ -213,7 +213,7 @@ def _error_segments(exc: PoopError, source: str | None) -> list[tuple[str, str]]
 
     `poop:` and the message, the numbered gutter quoting the offending line,
     and a caret under the column. `format_error` keeps the texts and
-    `render_error` the styles; the layout used to be written in both, by hand.
+    `render_error` the styles, so the two cannot disagree on the layout.
 
     The position is stated once. With the source line in view, the gutter
     carries the line number and the caret the column, so the `(line N, col M)`
@@ -244,10 +244,10 @@ def format_error(exc: PoopError, source: str | None) -> str:
     """Render an error, with the offending source line and a caret under it.
 
     Shared by the CLI and the REPL so one program reports the same way on both
-    surfaces. The REPL used to print the bare message, citing a line and column
-    that pointed into a buffer already scrolled away — while holding the source
-    in hand. This is the plain-text form; `render_error` is the coloured,
-    syntax-highlighted form a terminal gets.
+    surfaces. The REPL needs the quote as much as the CLI: a bare message would
+    cite a line and column in a buffer already scrolled away. This is the
+    plain-text form; `render_error` is the coloured, syntax-highlighted form a
+    terminal gets.
     """
     return "".join(text for text, _ in _error_segments(exc, source))
 
@@ -277,8 +277,6 @@ def report(exc: PoopError, source: str | None, console: Console) -> None:
     A colour terminal gets the syntax-highlighted `render_error`; a pipe or
     `NO_COLOR` gets `format_error`'s plain text, with rich's markup and
     highlighting off so a `[` in the source is printed rather than parsed.
-    The CLI and the REPL each carried this choice, one through `typer.echo`
-    and one through the console, and only the rendering was shared.
     """
     if _error_location(exc, source) is None:
         error_line(console, format_error(exc, source))

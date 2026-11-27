@@ -22,10 +22,9 @@ def error_line(console: Console, text: str) -> None:
     """One diagnostic line on `console`: red on a colour terminal, plain elsewhere.
 
     The CLI's `cannot read` line, the REPL's `_error` and the location-less
-    error report each decided the colour on their own, and one of them did
-    not: the `cannot read` line went through a plain `print` and stayed
-    uncoloured on a terminal where every other diagnostic was red. The
-    console already knows whether it is a terminal, so the style is applied
-    here and rich drops it where it does not belong.
+    error report all come through here, so none decides the colour on its
+    own and none stays uncoloured on a terminal where the others are red.
+    The console already knows whether it is a terminal, so the style is
+    applied here and rich drops it where it does not belong.
     """
     console.print(Text(text, style="red"), soft_wrap=True, highlight=False)

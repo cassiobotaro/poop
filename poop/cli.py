@@ -58,8 +58,9 @@ def _write(console: Console, text: str) -> None:
     """One line on `console`, as typed: no markup, no highlighting, no wrap.
 
     Every line the CLI writes goes through one of the two consoles, so the
-    `NO_COLOR` / pipe decision is rich's for each stream — not rich's for the
-    errors and click's for the line after them.
+    `NO_COLOR` / pipe decision is rich's for each stream; a `typer.echo` here
+    would leave this line to click's detection and the errors around it to
+    rich's.
     """
     console.print(text, soft_wrap=True, highlight=False, markup=False)
 
@@ -95,10 +96,10 @@ def _source_from(file: Path | None, code: str | None) -> tuple[str, str] | None:
 
     In this order: a path, `-` for standard input, `-c`, and a standard
     input that is not a terminal — which runs as a program, with no banner
-    and no prompt, as `python3 < file` does. A program piped into `poop`
-    used to get the REPL, whose banner and prompts landed on stdout between
-    its own lines. Only an interactive stdin with nothing else to run is
-    the REPL.
+    and no prompt, as `python3 < file` does, so no banner or prompt lands on
+    stdout between the program's own lines. Only an interactive stdin with
+    nothing else to run is the REPL
+    (`doc/adr/0064-a-non-tty-stdin-is-a-program-not-a-repl.md`).
     """
     if file is not None and file != Path("-"):
         return _read_source(file), str(file)
@@ -219,7 +220,8 @@ def main(  # noqa: PLR0913, PLR0917 — typer reads the command line off this si
 
     program = _source_from(file, code)
     if program is None:
-        # A mode flag with nothing to run used to start the REPL in silence.
+        # A mode flag with nothing to run is a usage error: the REPL would
+        # start and ignore it.
         for flag, wanted in (
             ("--validators-only", validators_only),
             ("--transformers-only", transformers_only),

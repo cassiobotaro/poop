@@ -36,8 +36,7 @@ if TYPE_CHECKING:
 
 
 # Imported once, here: a build without it (Windows ships none) gets a REPL
-# with no completion or history rather than one that fails. Each of the three
-# functions using it used to repeat the guarded import.
+# with no completion or history rather than one that fails.
 def _optional_readline() -> ModuleType | None:
     try:
         return importlib.import_module("readline")
@@ -139,13 +138,11 @@ class _PoopCompleter:
             names = dir(obj)
         except Exception:  # noqa: BLE001
             return []
-        # `getattr_static`: reading the attribute off the *type* was already
-        # required, because `getattr(obj, name)` runs a `property` getter and
-        # pressing Tab then executed program code. Going through `getattr` at
-        # all stopped working when the class side started refusing instance
-        # messages — `getattr(Int, "abs", None)` answers the default, so every
-        # message lost its `(`. This resolves no descriptor at all, which is
-        # what "off the type" meant in the first place.
+        # `getattr_static`, not `getattr`: `getattr(obj, name)` runs a
+        # `property` getter, so pressing Tab would execute program code, and
+        # the class side refuses instance messages — `getattr(Int, "abs",
+        # None)` answers the default, so every message would lose its `(`.
+        # This resolves no descriptor at all.
         return sorted(
             f"{expr}.{_completion(name, inspect.getattr_static(obj, name, None))}"
             for name in names
@@ -156,10 +153,10 @@ class _PoopCompleter:
 def _history_for(history: Path | None) -> Path | None:
     """The history file a session keeps, or `None` for no readline at all.
 
-    The default is the user's `~/.poop_history` — on a terminal. The REPL
-    used to read and write it unconditionally, so every test that built a
-    `Repl` rewrote the developer's own history, and a `Repl` on a pipe set
-    up completion nobody could press Tab for.
+    The default is the user's `~/.poop_history` — on a terminal. Off one,
+    every test that builds a `Repl` would rewrite the developer's own
+    history, and a `Repl` on a pipe would set up completion nobody can press
+    Tab for.
     """
     if history is not None:
         return history
@@ -233,8 +230,9 @@ def _displaying_through(
 
     Put back *as found*: the two prompts do not exist outside an interactive
     interpreter, and `hasattr(sys, "ps1")` is how a library asks whether it
-    is in one. Restoring them by assignment left `sys.ps1 = None` behind,
-    so every process that had run a REPL answered yes from then on.
+    is in one. Restoring them by assignment would leave `sys.ps1 = None`
+    behind, and every process that had run a REPL would answer yes from then
+    on.
     """
     original_hook = sys.displayhook
     prompts = {"ps1": ps1, "ps2": ps2}
@@ -258,10 +256,10 @@ def _explain_calls(validators: Iterable[Validator]) -> frozenset[str]:
 
     The explanation is the validator's own message, so the two can never
     drift apart. The topic list is derived from the same validators for the
-    same reason: hand-maintained, it fell two names behind (`delattr`,
-    `__import__`), and a missing topic does not fail quietly — it answers "it
-    may simply be allowed" about a banned name. Read off the interpreter the
-    REPL was handed, so an injected set explains its own bans.
+    same reason: hand-maintained, it would fall behind, and a missing topic
+    does not fail quietly — it answers "it may simply be allowed" about a
+    banned name. Read off the interpreter the REPL was handed, so an injected
+    set explains its own bans.
     """
     return frozenset(*getattr(validator, "forbidden", ()) for validator in validators)
 
@@ -297,11 +295,11 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "decorator": "class C:\n    @twice\n    def m():\n        pass",
     "match": "match x:\n    case _:\n        pass",
     "fstring": 'f"{x}"',
-    # All four messages `no_subscript` composes. The snippet was `x[0]` alone,
-    # a *load*, so a reader who wrote `xs[0] = 9`, was told to use
-    # `obj.at_put(key, value)` and typed `:explain subscript` to learn more was
-    # shown the reading substitute — the one a writer must never be handed. `validate_all` collects every error and
-    # `_meta_explain` prints them all, so listing the spellings is the change.
+    # All four messages `no_subscript` composes. A load alone would show a
+    # reader who wrote `xs[0] = 9`, was told to use `obj.at_put(key, value)`
+    # and typed `:explain subscript` to learn more the reading substitute —
+    # the one a writer must never be handed. `validate_all` collects every
+    # error and `_meta_explain` prints them all, so each spelling is listed.
     "subscript": "x[0]\nx[0] = 1\nx[1:2]\nx[1:2] = y",
     "import": "import os",
     "invert": "~x",
@@ -372,10 +370,10 @@ class Repl(code.InteractiveConsole):
         self._input_no = 0
         # The stdin path's half of `utf-8-sig`. `poop <file>` decodes with the
         # codec that strips a byte-order mark; a piped program is read line by
-        # line through `input()`, which does not, so `printf '\xef\xbb\xbf…' |
-        # poop` answered the same `invalid non-printable character U+FEFF` the
-        # file path used to. A mark is only a mark at the head of the stream,
-        # so this is spent once.
+        # line through `input()`, which does not, so without this `printf
+        # '\xef\xbb\xbf…' | poop` would answer `invalid non-printable character
+        # U+FEFF` about a program `poop <file>` runs. A mark is only a mark at
+        # the head of the stream, so this is spent once.
         self._leading_mark = True
         history = _history_for(history)
         if history is not None:
@@ -386,10 +384,9 @@ class Repl(code.InteractiveConsole):
     def _say(self, text: str = "") -> None:
         """Write REPL output on stdout, as typed: no markup, no highlighting.
 
-        The REPL wrote through the console for values and headers and through
-        bare `print` for usage lines, `:help` and `:explain` — two paths to
-        one stream, and only one of them the console that decides colour per
-        destination.
+        Usage lines, `:help` and `:explain` reach stdout through the same
+        console as values and headers, the one that decides colour per
+        destination; a bare `print` would bypass it.
         """
         self._out.print(text, soft_wrap=True, highlight=False, markup=False)
 
@@ -456,9 +453,8 @@ class Repl(code.InteractiveConsole):
         header = f"{receiver_label(obj)} understands {len(names)} messages:"
         self._out.print(Text(header, style="dim"), soft_wrap=True, highlight=False)
         # rich lays the messages out in as many columns as the terminal is wide
-        # (80 when the width is unknown, e.g. a pipe), replacing a hand-rolled
-        # textwrap.fill that always assumed 80. `:explain`'s listing is laid
-        # out the same way.
+        # (80 when the width is unknown, e.g. a pipe). `:explain`'s listing is
+        # laid out the same way.
         self._out.print(Columns(names, padding=(0, 2), column_first=True))
 
     def _meta_explain(self, arg: str) -> None:

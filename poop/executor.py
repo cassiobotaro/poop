@@ -15,14 +15,14 @@ if TYPE_CHECKING:
 
 # The only Python builtins user code may reach. `exec` hands a program
 # CPython's entire builtins namespace unless the globals dict already carries
-# one, and POOP covered only the names it bans or rewrites — so `OSError`,
-# `copyright`, `NotImplemented` and 56 of Python's 72 builtin exceptions were
-# naked natives one identifier away, answering `type object 'OSError' has no
-# attribute 'print'` instead of POOP's `does not understand #print`. That
-# contradicted `poop/types/exceptions.py`, which mirrors 16 exceptions *on
-# purpose*: "a language with no I/O and no codecs cannot reach the OSError
-# subtree". An allow-list closes the whole class of escapes at once, where a
-# validator can only close the names someone thought to enumerate.
+# one, and POOP covers only the names it bans or rewrites — so without this
+# `OSError`, `copyright` and `NotImplemented` would be naked natives one
+# identifier away, answering `type object 'OSError' has no attribute 'print'`
+# instead of POOP's `does not understand #print`, against
+# `poop/types/exceptions.py`, which mirrors only the exceptions a program can
+# reach. An allow-list closes the whole class of escapes at once, where a
+# validator can only close the names someone thought to enumerate
+# (`doc/adr/0040-programs-are-confined-to-a-builtins-allow-list.md`).
 #
 # Everything here is language machinery with no message-passing substitute —
 # the argument ADR 18 makes for `super`
@@ -47,9 +47,10 @@ _ALLOWED_BUILTINS: dict[str, object] = {
 #
 # ADR 34 says why that matters (`doc/adr/0034-only-the-exceptions-poop-can-reach-are-mirrored.md`):
 # `RecursionError` is mirrored because recursion is POOP's substitute for
-# every loop, which makes it the most reachable failure. Nothing had ever adjusted the budget it runs against,
-# so a self-sending message ran 164 levels deep where the same recursion written
-# as a Python function runs 998 — both under CPython's default limit of 1000.
+# every loop, which makes it the most reachable failure. Under CPython's
+# default limit of 1000, a self-sending message runs 164 levels deep where the
+# same recursion written as a Python function runs 998
+# (`doc/adr/0061-the-recursion-limit-is-sized-by-frames-per-send.md`).
 #
 # Six thousand buys a POOP program roughly the thousand levels a Python program
 # already gets, which is the honest target: a language should not be an order of
@@ -74,9 +75,9 @@ def _recursion_budget() -> Generator[None]:
     Raised, not set: a caller that has already asked for more keeps it. The
     REPL runs through `execute` per input, so each input runs under the
     budget and the prompt returns to the process's own. A library function
-    that changed the interpreter's limit for good was the kind of side effect
-    a test suite inherits without knowing — every test after the first POOP
-    program, and pytest itself, used to run at the raised limit.
+    that changed the interpreter's limit for good would be a side effect a
+    test suite inherits without knowing: every test after the first POOP
+    program, and pytest itself, would run at the raised limit.
     """
     previous = sys.getrecursionlimit()
     if previous >= _RECURSION_LIMIT:
@@ -119,11 +120,10 @@ def _describe(exc: BaseException) -> str:
 
     The name is ``poop_class_of``'s, not ``type(exc)``'s, so the class in the
     report is always one a program can write and always the class a handler is
-    given. Reading the raw type named ``MessageNotUnderstood`` — POOP's own
+    given. The raw type would name ``MessageNotUnderstood`` — POOP's own
     class, outside ``MIRRORS`` — for every unknown selector in the language,
-    while ``except_(AttributeError, …)`` caught it and ``e.class_().name()``
-    answered ``AttributeError``: one failure under two names, which is the
-    disagreement already closed for the ``Unicode*`` family.
+    while ``except_(AttributeError, …)`` catches it and ``e.class_().name()``
+    answers ``AttributeError``: one failure under two names.
     """
     return describe(exc)
 

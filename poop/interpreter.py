@@ -22,8 +22,9 @@ class Interpreter:
         namespace: dict[str, object] | None = None,
     ) -> None:
         # Copies, not the lists themselves: `validators` hands its list out, and
-        # handing out `DEFAULT_VALIDATORS` let one interpreter's `append` rewrite
-        # the registry of every interpreter built after it, the REPL's included.
+        # handing out `DEFAULT_VALIDATORS` would let one interpreter's `append`
+        # rewrite the registry of every interpreter built after it, the REPL's
+        # included.
         self._validators: list[Validator] = list(
             validators if validators is not None else DEFAULT_VALIDATORS
         )
@@ -51,10 +52,11 @@ class Interpreter:
     ) -> list[ValidationError]:
         """Every rejection in the file, in source order.
 
-        `validate` stops at the first error per validator, which reported one
-        `if` out of three and emitted in DEFAULT_VALIDATORS order — so errors
-        on lines 2, 3, 4, 5 came back as 3, 5, 2, 4. Collecting reports every
-        occurrence; sorting puts them in the order they are read in.
+        `validate` stops at the first error per validator and emits in
+        DEFAULT_VALIDATORS order, so it reports one `if` out of three, and
+        errors on lines 2, 3, 4, 5 come back from it as 3, 5, 2, 4. Collecting
+        reports every occurrence; sorting puts them in the order they are read
+        in.
         """
         tree: ast.Module = parse(source, filename=filename)
         return sorted(
