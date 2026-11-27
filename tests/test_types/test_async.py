@@ -156,3 +156,19 @@ def test_gather_refuses_what_cannot_be_awaited() -> None:
     with _no_unawaited_warning():
         refusal = _refusal("Async.gather(Page().answer(), 5)")
     assert re.search(r"TypeError: #gather expects coroutines, got an int", refusal)
+
+
+def test_run_takes_an_awaited_try(capsys: pytest.CaptureFixture[str]) -> None:
+    source = (
+        'Async.run(Try(lambda: Page().fails()).except_(ValueError, lambda e: "caught"))'
+        ".print()"
+    )
+    assert _program(source, capsys) == "caught\n"
+
+
+def test_gather_takes_an_awaited_try(capsys: pytest.CaptureFixture[str]) -> None:
+    body = (
+        "Async.gather(self.answer(), Try(lambda: self.fails()).except_("
+        "ValueError, lambda e: 0)).await_().repr().print()"
+    )
+    assert _program(_in_main(body), capsys) == "[42, 0]\n"

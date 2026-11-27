@@ -20,8 +20,8 @@ docs. "The gate" in a task below means all of these pass:
 
 ## 3. Async.run and Async.gather accept an awaited Try
 
-- [ ] 3.1 Add tests for both `async-type` scenarios in `tests/test_types/test_async.py`. Verify: they pass on `main`, since the behavior exists, and they fail if `Try.__await__` is removed locally. Restore it.
-- [ ] 3.2 Add one sentence to `README.md` after the `Feed` example saying `Async.run` and `Async.gather` take an awaited `Try` too, with a runnable snippet, and name both in `MIGRATION.md`'s `.await_()` row of the *Try* table. Run the snippet with `uv run poop`. Verify: it prints what the README says, and `uv run pytest tests/test_doc_counts.py` passes.
+- [x] 3.1 Add tests for both `async-type` scenarios in `tests/test_types/test_async.py`. Verify: they pass on `main`, since the behavior exists, and they fail if `Try.__await__` is removed locally. Restore it.
+- [x] 3.2 Add one sentence to `README.md` after the `Feed` example saying `Async.run` and `Async.gather` take an awaited `Try` too, with a runnable snippet, and name both in `MIGRATION.md`'s `.await_()` row of the *Try* table. Run the snippet with `uv run poop`. Verify: it prints what the README says, and `uv run pytest tests/test_doc_counts.py` passes.
 
 ## 4. Close
 

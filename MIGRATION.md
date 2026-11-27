@@ -666,9 +666,9 @@ A slice is immutable, hashable, comparable with `==`/`!=`, and reusable across c
 | *(Python's `else`)* | `Try(block).else_(block)` | runs only when nothing was raised, with the protected value; chainable |
 | `[block] ensure: finallyBlock` | `Try(block).finally_(block)` | sets finally block **and** executes; answers the protected block's value |
 | *(terminal)* | `.run()` | executes without finally block; answers the protected block's value |
-| *(terminal, in an async method)* | `.await_()` | awaits the block's coroutine inside the guard; a handler or `else_` may answer a value or a coroutine, which is awaited; answers the protected block's value |
+| *(terminal, in an async method)* | `.await_()` | awaits the block's coroutine inside the guard; a handler or `else_` may answer a value or a coroutine, which is awaited; answers the protected block's value. `Async.run(try_)` and `Async.gather(…, try_)` await a `Try` the same way |
 
-`.run()` and `.finally_()` refuse a block that answers a coroutine: its failure would be raised only when awaited, after the guard is over.
+`.run()` and `.finally_()` refuse a block that answers a coroutine: its failure would be raised only when awaited, after the guard is over. A block that answers a `Try` it never ran is refused as a forgotten `.run()`.
 
 ### `With`
 

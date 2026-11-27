@@ -111,6 +111,12 @@ $ poop feed.py
 cached
 ```
 
+An awaited `Try` is accepted wherever a coroutine is, so `Async.run` and `Async.gather` take one too. Added to `feed.py`, this line prints `cached` a second time:
+
+```python
+Async.run(Try(lambda: Feed().latest()).except_(ValueError, lambda e: "cached")).print()
+```
+
 `Async.timeout(delay)` is a deadline, entered with `AsyncWith`. A body that outlasts it fails with `TimeoutError`:
 
 ```python
