@@ -36,7 +36,7 @@
 
 ## 7. Integration
 
-- [ ] 7.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check`, `uv run ty check poop/ tests/`, and every example; `tests/test_no_python_wording.py` and `tests/test_examples_docstring.py` are part of the suite and cover the new sentences and the new example. Verify: each command exits 0.
+- [x] 7.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check`, `uv run ty check poop/ tests/`, and every example; `tests/test_no_python_wording.py` and `tests/test_examples_docstring.py` are part of the suite and cover the new sentences and the new example. Verify: each command exits 0.
 
 ## Workflow follow-up
 
