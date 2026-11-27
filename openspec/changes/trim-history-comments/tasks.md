@@ -16,9 +16,9 @@ task below means all of these pass:
 
 ## 1. Rule first
 
-- [ ] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated 2026-11-26, status Accepted, titled for the decision (a comment states why the code is as it is; the history of a change lives in its commit and its ADR). Run the `unslop` skill on it. Verify: the file is named `NNNN-<slug>.md` with the next number, and `git grep -n "Date: 2026-11-26"` lists it.
-- [ ] 1.2 Add a *Comments* subsection to `CONTRIBUTING.md` under *Conventions*, between *Imports* and *Language*. It states the rule in two or three sentences and links the ADR from 1.1. Run the `unslop` skill on the new prose, and commit 1.1 and 1.2 separately. Verify: `grep -n "^### Comments" CONTRIBUTING.md` sits between the two headings, and the link resolves to the file from 1.1.
-- [ ] 1.3 Write `openspec/changes/trim-history-comments/ast_unchanged.py`. For every `poop/**/*.py` that differs from `main`, it parses both versions, drops each module, class and function docstring that is not the body's only statement, compares `ast.dump`, and prints each file that differs. Exit 1 if any file differs. Verify: on a scratch edit that changes a comment it prints nothing, and on a scratch edit that changes a token it prints that file. Revert both scratch edits.
+- [x] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated 2026-11-26, status Accepted, titled for the decision (a comment states why the code is as it is; the history of a change lives in its commit and its ADR). Run the `unslop` skill on it. Verify: the file is named `NNNN-<slug>.md` with the next number, and `git grep -n "Date: 2026-11-26"` lists it.
+- [x] 1.2 Add a *Comments* subsection to `CONTRIBUTING.md` under *Conventions*, between *Imports* and *Language*. It states the rule in two or three sentences and links the ADR from 1.1. Run the `unslop` skill on the new prose, and commit 1.1 and 1.2 separately. Verify: `grep -n "^### Comments" CONTRIBUTING.md` sits between the two headings, and the link resolves to the file from 1.1.
+- [x] 1.3 Write `openspec/changes/trim-history-comments/ast_unchanged.py`. For every `poop/**/*.py` that differs from `main`, it parses both versions, drops each module, class and function docstring that is not the body's only statement, compares `ast.dump`, and prints each file that differs. Exit 1 if any file differs. Verify: on a scratch edit that changes a comment it prints nothing, and on a scratch edit that changes a token it prints that file. Revert both scratch edits.
 
 ## 2. Core
 
