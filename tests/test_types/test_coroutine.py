@@ -77,3 +77,12 @@ def test_a_second_await_fails_as_cpython_does() -> None:
 def test_a_program_cannot_construct_one() -> None:
     with pytest.raises(mirrors.TypeError, match="cannot create 'coroutine' instances"):
         Coroutine()
+
+
+def test_a_coroutine_awaited_as_a_temporary_runs() -> None:
+    # `await obj.fetch()` holds no name for the coroutine: it is collected as
+    # soon as its iterator is handed over, before the raw coroutine starts.
+    async def main() -> object:
+        return await Coroutine._of(_ok())
+
+    assert str(asyncio.run(main())) == "ok"
