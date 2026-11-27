@@ -1,4 +1,6 @@
 import io
+import subprocess
+import sys
 
 import pytest
 
@@ -211,3 +213,19 @@ def test_report_without_a_location_is_one_red_line() -> None:
     assert "\x1b[" in out
     assert "poop: boom" in out
     assert "|" not in out
+
+
+def test_importing_poop_loads_no_rich() -> None:
+    # In a fresh interpreter: this one has loaded rich through pytest already.
+    probe = (
+        "import poop, sys; "
+        "print(sorted(m for m in sys.modules if m == 'rich' or m.startswith('rich.')))"
+    )
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-I", "-c", probe],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    )
+    assert result.stdout == "[]\n"
