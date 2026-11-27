@@ -62,7 +62,7 @@ given coroutines concurrently and answers a `List` of their values in the
 order given. The first failure SHALL propagate, as CPython's does.
 
 #### Scenario: Values in order
-- **WHEN** `a` answers `1` after `Async.sleep(0.02)`, `b` answers `2` after `Async.sleep(0.01)`, and an async method prints `Async.gather(obj.a(), obj.b()).await_()`
+- **WHEN** `a` answers `1` after `Async.sleep(0.02)`, `b` answers `2` after `Async.sleep(0.01)`, and an async method runs `Async.gather(obj.a(), obj.b()).await_().repr().print()`
 - **THEN** it prints `[1, 2]`
 
 #### Scenario: Concurrently
@@ -70,7 +70,7 @@ order given. The first failure SHALL propagate, as CPython's does.
 - **THEN** the gather completes in well under 0.3 seconds
 
 #### Scenario: A mapped collection is gathered
-- **WHEN** an async method prints `Async.gather(*[1, 2].map(lambda n: obj.double(n))).await_()` with `double` answering `n * 2`
+- **WHEN** an async method runs `Async.gather(*[1, 2].map(lambda n: obj.double(n))).await_().repr().print()` with `double` answering `n * 2`
 - **THEN** it prints `[2, 4]`
 
 #### Scenario: A value that cannot be awaited

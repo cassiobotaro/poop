@@ -1,0 +1,69 @@
+import asyncio
+from inspect import isawaitable
+from typing import TYPE_CHECKING, Never, cast, final
+
+from poop.types import mirrors
+from poop.types._bridge import to_python
+from poop.types._message import describe_operand
+from poop.types.coroutine import Coroutine
+from poop.types.float import Float
+from poop.types.int import Int
+from poop.types.list import List
+from poop.types.none import none
+from poop.types.object import Object
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
+
+
+def _awaitable(value: object, selector: str, expected: str) -> Awaitable[Object]:
+    """`value`, or the refusal naming the message it was handed to."""
+    if not isawaitable(value):
+        raise mirrors.TypeError(
+            f"#{selector} expects {expected}, got {describe_operand(value)}"
+        )
+    return value
+
+
+async def _sleep(delay: float, result: object) -> object:
+    return await asyncio.sleep(delay, result)
+
+
+async def _gather(awaitables: tuple[Awaitable[Object], ...]) -> List:
+    return List(*await asyncio.gather(*awaitables))
+
+
+@final
+class Async(Object, name="Async"):
+    """Runs and combines coroutines: Smalltalk's `Processor`, as a class.
+
+    Named after the keyword, as `Try` and `With` are, and holding only what
+    running a coroutine needs
+    (`doc/adr/0077-async-runs-coroutines-named-after-the-keyword-not-the-module.md`).
+    Each message checks its arguments' kinds when it is sent, before any
+    coroutine exists, so a wrong kind fails on the line that wrote it.
+    """
+
+    __slots__ = ()
+
+    def __new__(cls, *_args: object, **_kwargs: object) -> Never:
+        raise mirrors.TypeError(
+            "Async has no instances — send run, sleep or gather to the class"
+        )
+
+    @staticmethod
+    def run(coroutine: Awaitable[object]) -> object:
+        return asyncio.run(_awaitable(coroutine, "run", "a coroutine"))
+
+    @staticmethod
+    def sleep(delay: Int | Float, result: object = none) -> Coroutine:
+        if not isinstance(delay, (Int, Float)):
+            raise mirrors.TypeError(
+                f"#sleep expects a number, got {describe_operand(delay)}"
+            )
+        return Coroutine._of(_sleep(cast("float", to_python(delay)), result))
+
+    @staticmethod
+    def gather(*coroutines: Awaitable[Object]) -> Coroutine:
+        awaitables = tuple(_awaitable(c, "gather", "coroutines") for c in coroutines)
+        return Coroutine._of(_gather(awaitables))

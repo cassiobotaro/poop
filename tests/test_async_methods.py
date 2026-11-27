@@ -6,11 +6,12 @@ from typing import Any
 
 import pytest
 
+from poop.errors import ValidationError
 from poop.executor import execute
 from poop.interpreter import Interpreter
 
 _PROGRAM = """
-class P:
+class P(Object):
     async def falls_off(self):
         x = 1
 
@@ -33,24 +34,53 @@ def _p() -> Any:
     return _namespace(_PROGRAM)["P"]()
 
 
-def _await(method: str, *args: object, **kwargs: object) -> object:
-    return asyncio.run(getattr(_p(), method)(*args, **kwargs))
+def _printed(line: str, capsys: pytest.CaptureFixture[str]) -> str:
+    Interpreter().run_source(f"{_PROGRAM}\n{line}\n")
+    return capsys.readouterr().out
 
 
-def test_falling_off_the_end_answers_none() -> None:
-    assert _await("falls_off").is_none()
+def test_sending_runs_nothing_and_awaiting_runs_the_body(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        "class Page(Object):\n"
+        "    async def fetch(self):\n"
+        '        "ran".print()\n'
+        "c = Page().fetch()\n"
+        '"sent".print()\n'
+        "Async.run(c)\n"
+    )
+    Interpreter().run_source(source)
+    assert capsys.readouterr().out == "sent\nran\n"
 
 
-def test_a_bare_return_answers_none() -> None:
-    assert _await("bare").is_none()
+def test_an_async_def_outside_a_class_is_refused() -> None:
+    with pytest.raises(
+        ValidationError,
+        match=re.escape(
+            "free async functions are forbidden — define methods inside a class "
+            "(use a lambda for a local block)"
+        ),
+    ):
+        Interpreter().run_source("async def f():\n    pass\n")
 
 
-def test_variadic_positionals_are_a_poop_tuple() -> None:
-    assert str(_await("count", 1, 2)) == "2"
+def test_falling_off_the_end_answers_none(capsys: pytest.CaptureFixture[str]) -> None:
+    assert _printed("Async.run(P().falls_off()).is_none().print()", capsys) == "True\n"
 
 
-def test_variadic_keywords_are_a_poop_dict() -> None:
-    assert str(_await("keys", a=1)) == "1"
+def test_a_bare_return_answers_none(capsys: pytest.CaptureFixture[str]) -> None:
+    assert _printed("Async.run(P().bare()).is_none().print()", capsys) == "True\n"
+
+
+def test_variadic_positionals_are_a_poop_tuple(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert _printed("Async.run(P().count(1, 2)).print()", capsys) == "2\n"
+
+
+def test_variadic_keywords_are_a_poop_dict(capsys: pytest.CaptureFixture[str]) -> None:
+    assert _printed("Async.run(P().keys(a=1)).print()", capsys) == "1\n"
 
 
 def test_a_docstring_stays_a_docstring() -> None:

@@ -18,9 +18,9 @@ def test_merge_bindings_rejects_a_duplicate_key_across_sources() -> None:
         _merge_bindings([{"a": 1}, {"a": 2}])
 
 
-def test_default_namespace_exposes_only_try_and_with_to_user_code() -> None:
+def test_default_namespace_exposes_only_try_with_and_async_to_user_code() -> None:
     user_facing = {k for k in DEFAULT_NAMESPACE if not k.startswith("_poop_")}
-    assert user_facing == {"Try", "With"}
+    assert user_facing == {"Try", "With", "Async"}
 
 
 # Every mangled key is one some rewrite emits — a binding nothing reaches is

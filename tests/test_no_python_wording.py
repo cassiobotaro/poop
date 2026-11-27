@@ -27,6 +27,7 @@ from poop.errors import PoopError
 from poop.types import mirrors
 from poop.types._message import poop_message
 from poop.types._selectors import is_message
+from poop.types.async_ import Async
 from poop.types.block import Block
 from poop.types.boolean import true
 from poop.types.byte_array import ByteArray
@@ -566,8 +567,9 @@ def _closed_coroutine() -> Coroutine:
 # sample: `Try` and `With` run the blocks they are built from, and their
 # refusals are pinned in `test_try_.py` / `test_with_.py`; the exception
 # mirrors are classes a program raises or catches, met at runtime only as the
-# `Error` that *is* sampled.
-_UNSAMPLED: frozenset[type] = frozenset({Try, With})
+# `Error` that *is* sampled. `Async` has no instances at all: its messages are
+# read off the class, and their refusals are pinned in `test_async.py`.
+_UNSAMPLED: frozenset[type] = frozenset({Try, With, Async})
 
 
 def _wrapper_classes() -> dict[type, str]:
