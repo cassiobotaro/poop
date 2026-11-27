@@ -11,7 +11,7 @@
 
 ## 3. Integration
 
-- [ ] 3.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check` and `uv run ty check poop/ tests/`. Also run `uv run poop nope.py; echo $?` and `printf 'print(1)\n' | uv run poop -; echo $?`. Verify: every command exits 0, and the two runs print `1` and `3`.
+- [x] 3.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check` and `uv run ty check poop/ tests/`. Also run `uv run poop nope.py; echo $?` and `printf 'print(1)\n' | uv run poop -; echo $?`. Verify: every command exits 0, and the two runs print `1` and `3`.
 
 ## Workflow follow-up
 
