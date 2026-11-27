@@ -68,7 +68,9 @@ class _StrRewriter(BuiltinRewriter):
     literal_type = str
     literal_target = "_poop_str"
 
-    def _keeping_docstring(self, node: ast.ClassDef | ast.FunctionDef) -> ast.AST:
+    def _keeping_docstring(
+        self, node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> ast.AST:
         """Rewrite the body, leaving a docstring as the raw constant it is.
 
         A docstring is a string literal, so `visit_Constant` would wrap it like
@@ -91,7 +93,7 @@ class _StrRewriter(BuiltinRewriter):
         return node
 
     visit_ClassDef = _keeping_docstring
-    visit_FunctionDef = _keeping_docstring
+    visit_FunctionDef = visit_AsyncFunctionDef = _keeping_docstring
 
 
 class StrTransformer(BaseTransformer):

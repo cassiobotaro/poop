@@ -19,7 +19,7 @@ class _ReturnRewriter(ast.NodeTransformer):
     appended trailing return is unreachable when the body already returns.
     """
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+    def _visit_def(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> ast.AST:
         # Process nested functions/classes first.
         self.generic_visit(node)
         if node.name == "__init__":
@@ -33,6 +33,8 @@ class _ReturnRewriter(ast.NodeTransformer):
                 ast.copy_location(ast.Return(value=name_at("_poop_none", node)), node)
             )
         return node
+
+    visit_FunctionDef = visit_AsyncFunctionDef = _visit_def
 
 
 class ReturnTransformer(BaseTransformer):

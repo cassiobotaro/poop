@@ -16,7 +16,7 @@
 
 ## 3. Async methods through the transformers
 
-- [ ] 3.1 Alias `visit_AsyncFunctionDef` in `ReturnTransformer`, `VarargsTransformer` and `StrTransformer`, and add tests for the *Falling off the end*, *Variadic arguments* and *A docstring stays a docstring* scenarios of `async-methods`, driving the method by awaiting it with a bare `asyncio.run` in the test until `Async` exists. Verify: `uv run pytest tests/ -k "return_ or varargs or string"` exits 0.
+- [x] 3.1 Alias `visit_AsyncFunctionDef` in `ReturnTransformer`, `VarargsTransformer` and `StrTransformer`, and add tests for the *Falling off the end*, *Variadic arguments* and *A docstring stays a docstring* scenarios of `async-methods`, driving the method by awaiting it with a bare `asyncio.run` in the test until `Async` exists. Verify: `uv run pytest tests/ -k "return_ or varargs or string"` exits 0.
 
 ## 4. Coroutine
 

@@ -48,7 +48,7 @@ class _VarargsRewriter(ast.NodeTransformer):
                 kw.value = call_at("_poop_kwargs_from", [kw.value], kw.value)
         return node
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+    def _visit_def(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> ast.AST:
         self.generic_visit(node)
         # After the docstring, which `StrTransformer` leaves where CPython
         # reads it; spliced at `body[:0]` the prologue would push it to the
@@ -59,6 +59,8 @@ class _VarargsRewriter(ast.NodeTransformer):
             for name, helper in _variadics(node.args)
         ]
         return node
+
+    visit_FunctionDef = visit_AsyncFunctionDef = _visit_def
 
     def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
         self.generic_visit(node)
