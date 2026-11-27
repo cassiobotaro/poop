@@ -30,8 +30,9 @@ order. Subjects follow `type(scope): ...`, e.g. `feat(types): ...`,
   subset (e.g. `dir` as a method but `help` as a function).
 - New features must be transparent to the end user: lambda transformers,
   `__call__` or syntactic sugar, never an internal name like `Block()`.
-- POOP is the language, not the library. No stdlib mirrors, no file I/O, no
-  async. Builtins outside `_ALLOWED_BUILTINS` (`poop/executor.py`) answering
+- POOP is the language, not the library. No stdlib mirrors and no file I/O;
+  async methods run through `Async` alone, and no other part of `asyncio` is
+  exposed. Builtins outside `_ALLOWED_BUILTINS` (`poop/executor.py`) answering
   `NameError` is intended. Do not add any of these back without discussion.
 - How to add a validator, transformer or type, including why validators
   collect instead of raise and why transformer order matters, is in
@@ -40,11 +41,11 @@ order. Subjects follow `type(scope): ...`, e.g. `feat(types): ...`,
 
 ## Names user code can reach
 
-- `DEFAULT_NAMESPACE` (`poop/transformers/_registry.py`) exposes exactly two
-  user-facing names, `Try` and `With`. Everything else is a mangled `_poop_*`
-  binding reached only through transformer rewrites.
-- Injected names keep Python's casing: `Try` and `With` are classes, so
-  PascalCase. Wrapper names like `Int` or `List` are never reachable.
+- `DEFAULT_NAMESPACE` (`poop/transformers/_registry.py`) exposes exactly three
+  user-facing names, `Try`, `With` and `Async`. Everything else is a mangled
+  `_poop_*` binding reached only through transformer rewrites.
+- Injected names keep Python's casing: `Try`, `With` and `Async` are classes,
+  so PascalCase. Wrapper names like `Int` or `List` are never reachable.
 - The root class is spelled `object` or `Object`; both rewrite to
   `_poop_object` and both answer `object` to `.name()`.
 

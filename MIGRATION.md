@@ -21,6 +21,8 @@ A one-line summary of the most common substitutions. The sections below walk thr
 | `x[a:b]` | `x.slice(a, b)` |
 | `x and y` | `x.and_(lambda: y)` |
 | `x or y` | `x.or_(lambda: y)` |
+| `await x` | `x.await_()` |
+| `asyncio.run(main())` | `Async.run(obj.main())` |
 
 ## Control flow
 
@@ -270,6 +272,38 @@ With(lambda: lock).do(lambda _: critical_section())
 
 > `With` takes a *factory lambda*, not the cm directly — entry is deferred until `do()` runs.
 
+## Async methods (`async def` / `await`)
+
+```python
+# Python
+import asyncio
+
+class Page:
+    async def fetch(self, n):
+        await asyncio.sleep(0.01)
+        return n * 2
+
+    async def main(self):
+        return await asyncio.gather(self.fetch(1), self.fetch(2))
+
+print(asyncio.run(Page().main()))
+```
+
+```python
+# POOP
+class Page(Object):
+    async def fetch(self, n):
+        Async.sleep(0.01).await_()
+        return n * 2
+
+    async def main(self):
+        return Async.gather(*[1, 2].map(lambda n: self.fetch(n))).await_()
+
+Async.run(Page().main()).repr().print()
+```
+
+> `async def` is a method only in a class body. `x.await_()` is rewritten to `await x`, so it is sent only directly inside an async method: a block cannot await, so it answers the coroutine and the method awaits that answer, as in `flag.if_true_if_false(lambda: self.a(), lambda: self.b()).await_()`.
+
 ## What has no recipe
 
 Some Python has no POOP translation at all, and looking for one is the wrong move — these are bans by design, not gaps waiting to be filled.
@@ -277,7 +311,7 @@ Some Python has no POOP translation at all, and looking for one is the wrong mov
 | Python | Why there is no POOP form |
 |---|---|
 | `open(...)`, `pathlib`, `io` | POOP has no file I/O. A program's only channels are `"prompt".input()` and `obj.print()`. |
-| `import anything` | POOP is the language, not the library — it mirrors no stdlib module. The only injected names are `Try` and `With`. |
+| `import anything` | POOP is the language, not the library — it mirrors no stdlib module. The only injected names are `Try`, `With` and `Async`. |
 | `exec` / `eval` / `compile`, `globals` / `locals` / `vars`, `breakpoint`, `exit` | Interpreter escape hatches. |
 | `class X[T]`, `def m[T]()`, `type X = int` | POOP has no static types. Drop the parameter; the runtime types are POOP's own. |
 | `class X(metaclass=M)`, `class X(foo=1)` | A class is built from its bases alone. A parent that must configure its subclasses answers a class-side message instead. |
@@ -635,6 +669,16 @@ A slice is immutable, hashable, comparable with `==`/`!=`, and reusable across c
 | Message | Method | Behavior |
 |---|---|---|
 | `[block] value: aResource` | `With(lambda: cm).do(lambda resource: body)` | acquires resource via `__enter__`, runs body, calls `__exit__`; answers the body's value |
+
+### `Async`
+
+| Message | Method | Behavior |
+|---|---|---|
+| *(Python's `asyncio.run`)* | `Async.run(coroutine)` | runs the coroutine on a new event loop; answers its value |
+| `(Delay forSeconds: n) wait` | `Async.sleep(delay, result=none)` | a coroutine that suspends for `delay` seconds and answers `result` |
+| *(Python's `asyncio.gather`)* | `Async.gather(*coroutines)` | a coroutine that runs them concurrently and answers a `List` of their values, in order |
+
+`Async` has no instances. Sending an async method answers a `coroutine`, which prints as `<coroutine>` and is awaited once with `.await_()`.
 
 ### Builtins a program may call
 

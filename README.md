@@ -68,6 +68,28 @@ The range is asked to `do` something for each number. Each comparison answers a 
 | `x and y` / `x or y` | `x.and_(lambda: y)` / `x.or_(lambda: y)` |
 | `-x` | `x.negated()` |
 
+## Async methods
+
+An `async def` in a class body is a method, `x.await_()` awaits, and `Async` runs the coroutine:
+
+```python
+class Page(Object):
+    async def fetch(self, n):
+        Async.sleep(0.01).await_()
+        return n * 2
+
+    async def main(self):
+        return Async.gather(self.fetch(1), self.fetch(2)).await_()
+
+
+Async.run(Page().main()).repr().print()
+```
+
+```console
+$ poop pages.py
+[2, 4]
+```
+
 ## Learn by example
 
 [`examples/`](examples/) goes from hello world to the whole Gang of Four catalogue: Composite in place of `isinstance`, State in place of `if`, Null Object in place of `None` checks.
