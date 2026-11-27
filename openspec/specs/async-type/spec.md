@@ -16,7 +16,7 @@ to be instantiated.
 
 #### Scenario: Instantiating it
 - **WHEN** a program runs `Async()`
-- **THEN** a `TypeError` is raised reading `Async has no instances — send run, sleep or gather to the class`
+- **THEN** a `TypeError` is raised reading `Async has no instances — send run, sleep, gather or timeout to the class`
 
 #### Scenario: Shadowing it
 - **WHEN** a program contains `Async = 1`
@@ -76,3 +76,12 @@ order given. The first failure SHALL propagate, as CPython's does.
 #### Scenario: A value that cannot be awaited
 - **WHEN** a program runs `Async.gather(obj.a(), 5)`
 - **THEN** a `TypeError` is raised reading `#gather expects coroutines, got an int`
+
+### Requirement: Async.timeout answers a Timeout
+`Async.timeout(delay)` SHALL answer a `Timeout` for `delay` seconds, where
+`delay` is an `int`, a `float` or `None`. Its behaviour is the
+`timeout-type` capability's.
+
+#### Scenario: Its class
+- **WHEN** a program prints `Async.timeout(1).class_().name()`
+- **THEN** it prints `Timeout`
