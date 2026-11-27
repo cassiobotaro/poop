@@ -46,7 +46,11 @@ def test_with_without_as_raises_validation_error() -> None:
 
 
 def test_async_with_raises_validation_error() -> None:
-    source = "async def f():\n    async with lock:\n        pass"
-    tree = ast.parse(source)
-    with pytest.raises(ValidationError, match="async with"):
-        NoWithValidator().validate(tree)
+    source = (
+        "class P:\n    async def m(self):\n        async with cm:\n            pass"
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        NoWithValidator().validate(ast.parse(source))
+    assert exc_info.value.message == (
+        "async with is forbidden — POOP enters no asynchronous context manager"
+    )

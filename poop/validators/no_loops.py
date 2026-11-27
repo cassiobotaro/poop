@@ -9,5 +9,5 @@ class NoLoopsValidator(NodeValidator):
         ast.While: "while loops are forbidden — use (lambda: cond).while_true(lambda: body) or (lambda: cond).while_false(lambda: body) instead",
         # Reachable at module level (ast.parse accepts it there) and inside
         # an `async def`, where no_async reports the root cause first.
-        ast.AsyncFor: "async for loops are forbidden — async has no substitute in POOP; see the async def ban",
+        ast.AsyncFor: "async for loops are forbidden — no POOP value is an asynchronous iterator",
     }

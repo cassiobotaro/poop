@@ -295,7 +295,7 @@ This table lists every construct a validator refuses and what to write instead. 
 | `ast.IfExp` | Ternary expression `x if cond else y`; use `x.if_true(block)` / `x.if_false(block)` | `no_if` |
 | `ast.For` | Loop looks procedural; use `col.do(block)`, `col.map(block)`, recursion | `no_loops` |
 | `ast.While` | use `(lambda: cond).while_true(lambda: body)` | `no_loops` |
-| `ast.AsyncFor` | Async variant; async has no substitute in POOP (see `no_async`) | `no_loops` |
+| `ast.AsyncFor` | none — no POOP value is an asynchronous iterator | `no_loops` |
 | `ast.FunctionDef` (direct parent is not a `ClassDef`) | Free function is not a message to any object | `no_free_functions` |
 | `ast.AsyncFunctionDef` (direct parent is not a `ClassDef`) | Async variant | `no_free_functions` |
 | `print(...)` | `obj.print()` | `no_print` |
@@ -304,7 +304,7 @@ This table lists every construct a validator refuses and what to write instead. 
 | `ast.Try` | `Try(block).except_(ExcType, handler).run()` | `no_try` |
 | `ast.TryStar` | none — a definitive ban | `no_try` |
 | `ast.With` | `With(lambda: cm()).do(lambda resource: body)` | `no_with` |
-| `ast.AsyncWith` | none — a definitive ban | `no_with` |
+| `ast.AsyncWith` | none — POOP enters no asynchronous context manager | `no_with` |
 | `ast.BoolOp` with `ast.And` | `x.and_(lambda: y)` | `no_and_or` |
 | `ast.BoolOp` with `ast.Or` | `x.or_(lambda: y)` | `no_and_or` |
 | `ast.Await` | `x.await_()`, inside an async method | `no_async` |

@@ -40,10 +40,14 @@ def test_nested_for_inside_function_is_rejected() -> None:
 
 
 def test_async_for_loop_raises_validation_error() -> None:
-    source = "async def foo():\n    async for i in aiter():\n        pass"
-    tree = ast.parse(source)
-    with pytest.raises(ValidationError, match="async for loops"):
-        NoLoopsValidator().validate(tree)
+    source = (
+        "class P:\n    async def m(self):\n        async for i in xs:\n            pass"
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        NoLoopsValidator().validate(ast.parse(source))
+    assert exc_info.value.message == (
+        "async for loops are forbidden — no POOP value is an asynchronous iterator"
+    )
 
 
 def test_error_message_suggests_do_block() -> None:
