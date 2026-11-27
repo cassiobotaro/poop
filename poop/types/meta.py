@@ -9,8 +9,9 @@ binding failure — `Object.print() missing 1 required positional argument:
 
 import builtins
 from functools import wraps
+from inspect import iscoroutinefunction
 from types import FunctionType, MethodType
-from typing import TYPE_CHECKING, Any, Never, Protocol, Self, overload
+from typing import TYPE_CHECKING, Any, Never, Protocol, Self, cast, overload
 
 from poop.types._attr_guard import _checked_name
 from poop.types._cloak import cloak_callable
@@ -29,6 +30,7 @@ lazy from poop.types._message import describe_operand
 lazy from poop.types._unwrap import _is_absent, _unwrap_bool
 lazy from poop.types.block import _as_block, _MethodBlock
 lazy from poop.types.boolean import false, to_boolean, true
+lazy from poop.types.coroutine import Coroutine
 lazy from poop.types.int import Int
 lazy from poop.types.list import List
 lazy from poop.types.none import none
@@ -350,6 +352,31 @@ _PROTOCOL_SLOTS: dict[str, tuple[type, str]] = {
 }
 
 
+def _answering_a_coroutine(entry: object) -> object:
+    """`entry` with an async function in it made to answer a `Coroutine`.
+
+    A synchronous function in place of the async one, so every way of
+    reaching the method answers the POOP value: a send through its `message`,
+    `super().m()` and `get_attr`, which read the class body's entry, and an
+    `async def __call__`, which Python calls without a descriptor
+    (`doc/adr/0076-an-async-method-answers-a-coroutine-wrapped-where-the-class-is-built.md`).
+    The raw coroutine is still made by the method's own function, so CPython's
+    "never awaited" warning names the method.
+    """
+    if isinstance(entry, (staticmethod, classmethod)):
+        inner = cast("Callable[..., Any]", _answering_a_coroutine(entry.__func__))
+        return entry if inner is entry.__func__ else type(entry)(inner)
+    if not iscoroutinefunction(entry):
+        return entry
+    function = cast("Callable[..., Any]", entry)
+
+    @wraps(function)
+    def send(*args: object, **kwargs: object) -> Coroutine:
+        return Coroutine._of(function(*args, **kwargs))
+
+    return send
+
+
 def _adapted(slot: str, method: Callable[..., object]) -> Callable[..., object]:
     """`method` with its POOP answer unwrapped for CPython's protocol.
 
@@ -498,6 +525,8 @@ class PoopMeta(type):
         collide with this signature's own `name`.
         """
         if namespace.get("__module__") == "__poop__":
+            for key, entry in namespace.items():
+                namespace[key] = _answering_a_coroutine(entry)
             for slot in _PROTOCOL_SLOTS:
                 method = namespace.get(slot)
                 if callable(method):

@@ -1,6 +1,10 @@
 """An `async def` in a class body, awaited: the transformers treat it as a `def`."""
 
 import asyncio
+import re
+from typing import Any
+
+import pytest
 
 from poop.executor import execute
 from poop.interpreter import Interpreter
@@ -25,11 +29,8 @@ class P:
 """
 
 
-def _p() -> object:
-    interpreter = Interpreter()
-    namespace = interpreter.new_namespace()
-    execute(interpreter.transform_source(_PROGRAM), namespace=namespace)
-    return namespace["P"]()
+def _p() -> Any:
+    return _namespace(_PROGRAM)["P"]()
 
 
 def _await(method: str, *args: object, **kwargs: object) -> object:
@@ -55,3 +56,99 @@ def test_variadic_keywords_are_a_poop_dict() -> None:
 def test_a_docstring_stays_a_docstring() -> None:
     method = type(_p()).__dict__["documented"]
     assert method.__func__.__doc__ == "the docstring"
+
+
+_REACHED = """
+class Base(Object):
+    async def fetch(self):
+        "fetched".print()
+        return "base"
+
+    @staticmethod
+    async def shared():
+        return "shared"
+
+class Page(Base):
+    async def fetch(self):
+        return super().fetch()
+
+    async def __call__(self):
+        return "called"
+"""
+
+
+def _namespace(source: str) -> dict[str, Any]:
+    interpreter = Interpreter()
+    namespace = interpreter.new_namespace()
+    execute(interpreter.transform_source(source), namespace=namespace)
+    return namespace
+
+
+def _class_name(value: Any) -> str:
+    return str(value.class_().name())
+
+
+def _drained(coroutine: Any) -> Any:
+    return asyncio.run(coroutine)
+
+
+def test_every_way_of_reaching_an_async_method_answers_a_coroutine() -> None:
+    namespace = _namespace(_REACHED)
+    page = namespace["Page"]()
+    base = namespace["Base"]
+    reached = [
+        page.fetch(),
+        page.get_attr("fetch")(),
+        page(),
+        base.shared(),
+    ]
+    assert [_class_name(c) for c in reached] == ["coroutine"] * 4
+    # Both reads of `Page.fetch` answer the coroutine `super().fetch()` made.
+    for coroutine in reached[:2]:
+        _drained(_drained(coroutine))
+    for coroutine in reached[2:]:
+        _drained(coroutine)
+
+
+def test_super_answers_a_coroutine_the_method_awaits(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    page = _namespace(_REACHED)["Page"]()
+    inner = _drained(page.fetch())
+    assert _class_name(inner) == "coroutine"
+    assert capsys.readouterr().out == ""
+    assert str(_drained(inner)) == "base"
+
+
+def test_sending_runs_nothing(capsys: pytest.CaptureFixture[str]) -> None:
+    base = _namespace(_REACHED)["Base"]()
+    coroutine = base.fetch()
+    assert capsys.readouterr().out == ""
+    _drained(coroutine)
+    assert capsys.readouterr().out == "fetched\n"
+
+
+def test_an_async_method_is_listed_by_dir() -> None:
+    page = _namespace(_REACHED)["Page"]()
+    assert "fetch" in [str(name) for name in page.dir()]
+
+
+def test_a_wrong_count_names_the_method() -> None:
+    page = _namespace(_REACHED)["Page"]()
+    with pytest.raises(
+        TypeError,
+        match=re.escape("Page.fetch() takes 1 positional argument but 2 were given"),
+    ):
+        page.fetch(1)
+
+
+def test_a_forgotten_await_warns_as_cpython_does() -> None:
+    with pytest.warns(
+        RuntimeWarning, match=re.escape("coroutine 'Page.fetch' was never awaited")
+    ):
+        Interpreter().run_source(
+            "class Page(Object):\n"
+            "    async def fetch(self):\n"
+            "        pass\n"
+            "Page().fetch()\n"
+        )
