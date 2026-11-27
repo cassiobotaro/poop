@@ -99,6 +99,10 @@ class Base(Object):
     async def shared():
         return "shared"
 
+    @property
+    async def total(self):
+        return 41
+
 class Page(Base):
     async def fetch(self):
         return super().fetch()
@@ -132,13 +136,56 @@ def test_every_way_of_reaching_an_async_method_answers_a_coroutine() -> None:
         page.get_attr("fetch")(),
         page(),
         base.shared(),
+        page.total,
     ]
-    assert [_class_name(c) for c in reached] == ["coroutine"] * 4
+    assert [_class_name(c) for c in reached] == ["coroutine"] * 5
     # Both reads of `Page.fetch` answer the coroutine `super().fetch()` made.
     for coroutine in reached[:2]:
         _drained(_drained(coroutine))
     for coroutine in reached[2:]:
         _drained(coroutine)
+
+
+_PROPERTY = """
+class Cart(Object):
+    @property
+    async def total(self):
+        "ran".print()
+        return 41
+
+    async def main(self):
+        (self.total.await_() + 1).print()
+
+cart = Cart()
+"""
+
+
+def test_reading_an_async_property_runs_nothing(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(f"{_PROPERTY}\nc = cart.total\nc.print()\nAsync.run(c)\n")
+    assert capsys.readouterr().out == "<coroutine>\nran\n"
+
+
+def test_an_async_property_hides_the_raw_coroutine() -> None:
+    cart = _namespace(_PROPERTY)["cart"]
+    coroutine = cart.total
+    with pytest.raises(
+        AttributeError,
+        match=re.escape(
+            "coroutine does not understand #cr_frame — try :methods to list its "
+            "messages"
+        ),
+    ):
+        coroutine.cr_frame  # noqa: B018 — the read is the refusal under test
+    _drained(coroutine)
+
+
+def test_awaiting_an_async_property_answers_the_getter_s_value(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(f"{_PROPERTY}\nAsync.run(cart.main())\n")
+    assert capsys.readouterr().out == "ran\n42\n"
 
 
 def test_super_answers_a_coroutine_the_method_awaits(

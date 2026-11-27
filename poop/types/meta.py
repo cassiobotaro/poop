@@ -357,8 +357,9 @@ def _answering_a_coroutine(entry: object) -> object:
 
     A synchronous function in place of the async one, so every way of
     reaching the method answers the POOP value: a send through its `message`,
-    `super().m()` and `get_attr`, which read the class body's entry, and an
-    `async def __call__`, which Python calls without a descriptor
+    `super().m()` and `get_attr`, which read the class body's entry, an
+    `async def __call__`, which Python calls without a descriptor, and an
+    `@property` getter, read without a send
     (`doc/adr/0076-an-async-method-answers-a-coroutine-wrapped-where-the-class-is-built.md`).
     The raw coroutine is still made by the method's own function, so CPython's
     "never awaited" warning names the method.
@@ -366,6 +367,11 @@ def _answering_a_coroutine(entry: object) -> object:
     if isinstance(entry, (staticmethod, classmethod)):
         inner = cast("Callable[..., Any]", _answering_a_coroutine(entry.__func__))
         return entry if inner is entry.__func__ else type(entry)(inner)
+    # Only the getter: `no_decorator` admits a bare `@property` alone, so a
+    # program cannot attach a setter or a deleter to make async.
+    if isinstance(entry, property) and entry.fget is not None:
+        getter = cast("Callable[..., Any]", _answering_a_coroutine(entry.fget))
+        return entry if getter is entry.fget else entry.getter(getter)
     if not iscoroutinefunction(entry):
         return entry
     function = cast("Callable[..., Any]", entry)
