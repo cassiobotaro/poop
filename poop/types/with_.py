@@ -13,19 +13,27 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _slot(kind: type, slot: str, verb: str) -> Callable[..., object]:
+def _slot(kind: type, slot: str, protocol: str, verb: str) -> Callable[..., object]:
     """`kind`'s `slot`, or the refusal naming the half of the protocol it lacks."""
     method = getattr(kind, slot, None)
     if method is None:
         raise mirrors.TypeError(
-            f"{kind.__name__} does not support the context manager "
+            f"{kind.__name__} does not support the {protocol} "
             f"protocol — it cannot be {verb}"
         )
     return method
 
 
-def _protocol(cm: object) -> tuple[Callable[..., object], Callable[..., object]]:
-    """`cm`'s `__enter__` / `__exit__`, or CPython's own refusal.
+def protocol_of(
+    cm: object,
+    slots: tuple[str, str] = ("__enter__", "__exit__"),
+    protocol: str = "context manager",
+) -> tuple[Callable[..., object], Callable[..., object]]:
+    """`cm`'s enter and exit `slots`, or the refusal naming the missing half.
+
+    `With` asks for `__enter__` / `__exit__`, and `AsyncWith` for
+    `__aenter__` / `__aexit__` with `protocol` worded "asynchronous context
+    manager".
 
     Both slots are resolved before either is called, as Python's `with` does.
     Entering first and reaching for `__exit__` only afterwards would run the
@@ -39,7 +47,11 @@ def _protocol(cm: object) -> tuple[Callable[..., object], Callable[..., object]]
     `__exit__` names the very construct `no_dunder_attribute` bans.
     """
     kind = type(cm)
-    return _slot(kind, "__enter__", "entered"), _slot(kind, "__exit__", "exited")
+    enter, exit_ = slots
+    return (
+        _slot(kind, enter, protocol, "entered"),
+        _slot(kind, exit_, protocol, "exited"),
+    )
 
 
 class With(Object, name="With"):
@@ -94,7 +106,7 @@ class With(Object, name="With"):
         # answer the very sentence quoted there as the thing being avoided,
         # `'int' object is not callable`, and answer it *after* `enter(cm)`, so
         # the manager would be acquired and released for a program that is
-        # never going to use it — the ordering `_protocol` argues for one step
+        # never going to use it — the ordering `protocol_of` argues for one step
         # up.
         _require_block(body_block, "the body argument", "write .do(lambda resource: …)")
         if self._done:
@@ -108,7 +120,7 @@ class With(Object, name="With"):
         # `del` plus the flag, as `Try` spells it: the slot keeps its type
         # instead of admitting a `None` the guard above makes unreachable.
         del self._cm_block
-        enter, exit_ = _protocol(cm)
+        enter, exit_ = protocol_of(cm)
         value = enter(cm)
         try:
             result = body_block(value)

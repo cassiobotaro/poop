@@ -256,7 +256,7 @@ def test_with_refuses_a_body_argument_that_is_not_a_block() -> None:
 
 
 def test_with_checks_the_body_before_entering() -> None:
-    # The ordering `_protocol` argues for, one step up: the manager was
+    # The ordering `protocol_of` argues for, one step up: the manager was
     # acquired *and released* for a program that was never going to use it.
     log: list[str] = []
 

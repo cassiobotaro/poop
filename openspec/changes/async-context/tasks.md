@@ -16,7 +16,7 @@
 
 ## 4. AsyncWith
 
-- [ ] 4.1 Generalise `_protocol` to take its slot pair and wording (design, decision 1). Verify: the existing `With` tests pass unchanged with `uv run pytest tests/test_types -k with`.
+- [x] 4.1 Generalise `_protocol` to take its slot pair and wording (design, decision 1). Verify: the existing `With` tests pass unchanged with `uv run pytest tests/test_types -k with`.
 - [ ] 4.2 Add `poop/types/async_with.py` with `AsyncWith` (design, decision 2) and `poop/transformers/async_with.py` with its `NAMESPACE`, added to `_BINDING_SOURCES`. Test every scenario of `async-with-type`, using a user class with `async def __aenter__`/`__aexit__` as the manager. Verify: `uv run pytest tests/test_types/test_async_with.py` exits 0.
 - [ ] 4.3 Reword the `async with` row of `no_with.py` to the `no-with-validator` delta and its `MIGRATION.md` row; update `AGENTS.md` and `CONTRIBUTING.md` to four user-facing names. Verify: `uv run pytest tests/ -k no_with` exits 0.
 
