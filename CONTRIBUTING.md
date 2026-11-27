@@ -102,6 +102,16 @@ spelling; before 3.15 the only one available was function-local, which cost a
 Python-level import on every call (~215 ns against ~30 ns for the resolved
 lazy name) and was written 272 times.
 
+### Comments
+
+A comment or docstring under `poop/` says why the code is written the way it
+is today, in the present tense. The bug a line fixed and what the code did
+before belong in the commit message, and a decision with a real alternative
+belongs in an ADR, which the comment can cite by path. Keep a rejected
+alternative only when a reader might write it again, and say why it fails
+today. Test docstrings may name the regression they pin. See
+[ADR 71](doc/adr/0071-a-comment-states-the-current-reason-history-lives-in-the-commit.md).
+
 ### Language
 
 - OpenSpec artifacts under `openspec/` (proposals, designs, specs, tasks) are
