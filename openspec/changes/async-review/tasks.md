@@ -25,8 +25,8 @@ Each numbered group is one commit, a `fix(types): ...` with its tests and docs.
 
 ## 4. Close
 
-- [ ] 4.1 Run every program in `examples/` that uses `Async` or `AsyncWith` (`examples/idiomatic/concurrent_fetch.py`, `examples/idiomatic/deadline.py`), and rerun the 25 probe programs from the review's scratchpad if they are still there. Verify: the examples print what their docstrings say, and the probes `u1`, `t2`, `t3` and `u3` give the new answers.
-- [ ] 4.2 Run `openspec validate async-review --strict`. Verify: it exits 0.
+- [x] 4.1 Run every program in `examples/` that uses `Async` or `AsyncWith` (`examples/idiomatic/concurrent_fetch.py`, `examples/idiomatic/deadline.py`), and rerun the 25 probe programs from the review's scratchpad if they are still there. Verify: the examples print what their docstrings say, and the probes `u1`, `t2`, `t3` and `u3` give the new answers.
+- [x] 4.2 Run `openspec validate async-review --strict`. Verify: it exits 0.
 
 ## Workflow follow-up
 
