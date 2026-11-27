@@ -2,20 +2,13 @@
 
 ## Why
 
-Three small findings from a review of the package. Two of them are worth a
+Three small findings from a review of the package. One of them is worth a
 change:
 
 - `executor._describe` only returns `describe(exc)` (`poop/types/exceptions.py`).
   It adds a frame on every reported failure and a second name for one
   function. Its 15-line docstring explains reasoning that belongs to
   `describe`, and four comments point readers at the alias.
-- `BaseTransformer.__init_subclass__` (`poop/transformers/base.py`) raises
-  `mirrors.TypeError`, POOP's user-facing mirror, when a contributor defines a
-  transformer with no `rewriter`. The rule in `poop/types/exceptions.py`
-  sends through the mirrors only "a failure a program can reach". A program
-  cannot define a transformer, so this is a developer error. `CollectingValidator`
-  raises the native `TypeError` for the same mistake. The mirror is also the
-  module's only reason to import `poop.types`.
 
 ## What Changes
 
@@ -25,13 +18,9 @@ change:
   that name `_describe` (`executor.py`, `types/_message.py`, `types/error.py`,
   `tests/test_no_python_wording.py`, `tests/test_types/test_iterator_base.py`)
   name `describe` instead.
-- **`BaseTransformer` raises the native `TypeError`**, as `CollectingValidator`
-  does, and `transformers/base.py` drops its `poop.types.mirrors` import.
-  `tests/test_transformers/test_base.py` asserts that the class raised is
-  exactly `TypeError`.
 
 No behaviour of the language changes. `describe` is what every report already
-goes through, and no program can reach the transformer check.
+goes through.
 
 ## Capabilities
 
@@ -45,17 +34,20 @@ goes through, and no program can reach the transformer check.
 
 - Edited: `poop/executor.py`, `poop/types/exceptions.py`,
   `poop/types/_message.py`, `poop/types/error.py`,
-  `poop/transformers/base.py`, `tests/test_no_python_wording.py`,
-  `tests/test_types/test_iterator_base.py`,
-  `tests/test_transformers/test_base.py`.
-- No ADR. Neither item makes a new decision. The first removes an alias, and
-  the second applies the rule `exceptions.py` already states.
+  `tests/test_no_python_wording.py`, `tests/test_types/test_iterator_base.py`.
+- No ADR. Removing an alias makes no decision.
 
 ## Out of scope
 
-The third finding, and one half of the second, are left as they are after a
-closer look:
+The other findings are left as they are after a closer look:
 
+- **A native `TypeError` from `BaseTransformer.__init_subclass__`.** It was
+  implemented and reverted. `tests/test_mirrored_raises.py` requires every
+  `raise` in `poop/types` and `poop/transformers` to use a mirror, with
+  exemptions listed by function name. Exempting `__init_subclass__` would
+  also exempt `Object.__init_subclass__`, which a program's classes reach,
+  and moving the check into a named helper only to exempt it would bend the
+  code to the test. The mirror stays, as the sweep intends.
 - **Renaming `BINDINGS` to `bindings`.** Upper case is the usual spelling for
   a class-level constant, and `BINDINGS` is one: a dict fixed at class
   definition. `rewriter` is a class, read as a type. The rename would touch
