@@ -31,7 +31,7 @@ source → parse → validate → transform → execute(namespace)
 - **`poop/executor.py`** — compiles and `exec()`s the transformed AST with an injectable namespace
 - **`poop/interpreter.py`** — orchestrates: accepts optional custom validators/transformers/namespace
 
-`DEFAULT_VALIDATORS` and `DEFAULT_TRANSFORMERS` are registered lists in `poop/validators/__init__.py` and `poop/transformers/__init__.py`. New infections must be added to these lists to take effect.
+`DEFAULT_VALIDATORS` and `DEFAULT_TRANSFORMERS` are registered tuples in `poop/validators/__init__.py` and `poop/transformers/__init__.py`. New infections must be added to these tuples to take effect.
 
 ## Adding a Validator
 

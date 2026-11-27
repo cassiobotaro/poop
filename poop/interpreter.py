@@ -9,6 +9,7 @@ from poop.validators import DEFAULT_VALIDATORS
 
 if TYPE_CHECKING:
     import ast
+    from collections.abc import Mapping, Sequence
 
     from poop.transformers import Transformer
     from poop.validators import Validator
@@ -17,26 +18,25 @@ if TYPE_CHECKING:
 class Interpreter:
     def __init__(
         self,
-        validators: list[Validator] | None = None,
-        transformers: list[Transformer] | None = None,
-        namespace: dict[str, object] | None = None,
+        validators: Sequence[Validator] | None = None,
+        transformers: Sequence[Transformer] | None = None,
+        namespace: Mapping[str, object] | None = None,
     ) -> None:
-        # Copies, not the lists themselves: `validators` hands its list out, and
-        # handing out `DEFAULT_VALIDATORS` would let one interpreter's `append`
-        # rewrite the registry of every interpreter built after it, the REPL's
-        # included.
-        self._validators: list[Validator] = list(
+        # Tuples of what the caller passed, not the sequences themselves: a
+        # caller's list can change after this, and `validators` hands the
+        # tuple out, which no one outside can change either.
+        self._validators: tuple[Validator, ...] = tuple(
             validators if validators is not None else DEFAULT_VALIDATORS
         )
-        self._transformers: list[Transformer] = list(
+        self._transformers: tuple[Transformer, ...] = tuple(
             transformers if transformers is not None else DEFAULT_TRANSFORMERS
         )
-        self._namespace: dict[str, object] = (
+        self._namespace: Mapping[str, object] = (
             namespace if namespace is not None else DEFAULT_NAMESPACE
         )
 
     @property
-    def validators(self) -> list[Validator]:
+    def validators(self) -> tuple[Validator, ...]:
         return self._validators
 
     def new_namespace(self) -> dict[str, object]:

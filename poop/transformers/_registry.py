@@ -8,7 +8,7 @@ the package's annotations would have to reach the three builtins under aliases
 
 from collections import Counter
 from keyword import iskeyword
-from types import FunctionType
+from types import FunctionType, MappingProxyType
 from typing import TYPE_CHECKING
 
 from poop.transformers._collection import spread as _spread
@@ -45,14 +45,16 @@ from poop.transformers.zip import ZipTransformer
 from poop.types._cloak import cloak_callable
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from poop.transformers.base import BaseTransformer, Transformer
 
 # Declaration order is load-bearing: every transformer runs on the tree
 # the previous ones already rewrote (e.g. FrozenDictTransformer relies on
-# DictTransformer having run). This single list drives both the pipeline
+# DictTransformer having run). This single tuple drives both the pipeline
 # order and the binding merge below, so a new transformer can never be
 # wired into one and forgotten in the other.
-_TRANSFORMER_CLASSES: list[type[BaseTransformer]] = [
+_TRANSFORMER_CLASSES: tuple[type[BaseTransformer], ...] = (
     BooleanTransformer,
     NoneTransformer,
     EllipsisTransformer,
@@ -83,9 +85,11 @@ _TRANSFORMER_CLASSES: list[type[BaseTransformer]] = [
     VarargsTransformer,
     UnpackTransformer,
     SliceTransformer,
-]
+)
 
-DEFAULT_TRANSFORMERS: list[Transformer] = [cls() for cls in _TRANSFORMER_CLASSES]
+DEFAULT_TRANSFORMERS: tuple[Transformer, ...] = tuple(
+    cls() for cls in _TRANSFORMER_CLASSES
+)
 
 # Bindings sourced from class-based transformers (PascalCase types
 # rewritten into POOP equivalents at parse time) and from
@@ -155,7 +159,9 @@ def _merge_bindings(sources: list[dict[str, object]]) -> dict[str, object]:
     return namespace
 
 
-DEFAULT_NAMESPACE: dict[str, object] = _merge_bindings(_BINDING_SOURCES)
+DEFAULT_NAMESPACE: Mapping[str, object] = MappingProxyType(
+    _merge_bindings(_BINDING_SOURCES)
+)
 
 # The names the rewriters claim in every position, Store included: rebinding
 # one retargets the interpreter's internals, so `no_builtin_shadow` reserves

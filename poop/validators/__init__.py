@@ -73,7 +73,7 @@ from poop.validators.no_walrus import NoWalrusValidator
 from poop.validators.no_with import NoWithValidator
 from poop.validators.no_yield import NoYieldValidator
 
-DEFAULT_VALIDATORS: list[Validator] = [
+DEFAULT_VALIDATORS: tuple[Validator, ...] = (
     NoIfValidator(),
     # Ahead of the async-flavoured symptom checks (no_loops' AsyncFor,
     # no_with's AsyncWith, no_free_functions' async branch) so the root
@@ -155,6 +155,6 @@ DEFAULT_VALIDATORS: list[Validator] = [
     NoPrivateAttributeValidator(),
     NoNamespaceShadowValidator(),
     NoBuiltinShadowValidator(),
-]
+)
 
 __all__ = ["DEFAULT_VALIDATORS", "Validator"]

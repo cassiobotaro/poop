@@ -10,11 +10,13 @@ from poop.errors import (
     TransformError,
     ValidationError,
 )
+from poop.transformers import DEFAULT_NAMESPACE
 from poop.transformers.boolean import BooleanTransformer
 from poop.types.boolean import Boolean
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.tuple import Tuple
+from poop.validators import DEFAULT_VALIDATORS
 
 
 def test_valid_code_runs_successfully() -> None:
@@ -50,9 +52,18 @@ def test_custom_validators_replace_defaults() -> None:
     Interpreter(validators=[]).run_source("if True:\n    pass")
 
 
-def test_an_interpreter_does_not_share_the_default_registry() -> None:
-    Interpreter().validators.clear()
-    assert Interpreter().validators
+def test_an_interpreter_hands_out_validators_no_caller_can_change() -> None:
+    assert isinstance(Interpreter().validators, tuple)
+    given = list(DEFAULT_VALIDATORS)
+    interp = Interpreter(validators=given)
+    given.clear()
+    assert interp.validators == DEFAULT_VALIDATORS
+
+
+def test_the_default_namespace_is_read_only() -> None:
+    with pytest.raises(TypeError):
+        # The checker refuses the assignment too; this pins the run-time refusal.
+        DEFAULT_NAMESPACE["Try"] = None  # ty: ignore[invalid-assignment]
 
 
 def test_transformer_failure_raises_transform_error() -> None:
