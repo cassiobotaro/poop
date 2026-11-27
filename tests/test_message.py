@@ -177,7 +177,10 @@ def test_a_type_error_that_is_not_about_hashing_is_re_raised() -> None:
     [
         ("copyright", "'copyright' is a Python builtin POOP does not offer"),
         ("NotImplemented", "'NotImplemented' is a Python builtin POOP does not offer"),
-        ("PermissionError", "'PermissionError' is a Python exception POOP does not mirror"),
+        (
+            "PermissionError",
+            "'PermissionError' is a Python exception POOP does not mirror",
+        ),
         # 3.15's one new exception, under the unreachable `ImportError`.
         (
             "ImportCycleError",

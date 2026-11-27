@@ -659,7 +659,9 @@ def test_meta_methods_does_not_widen_the_builtins_allow_list(repl: Repl) -> None
     # made `PermissionError` (and every other builtin) reachable for the whole session.
     ns = repl._ns
     repl._meta(":methods 1")
-    with pytest.raises(ExecutionError, match="NameError: 'PermissionError' is a Python"):
+    with pytest.raises(
+        ExecutionError, match="NameError: 'PermissionError' is a Python"
+    ):
         repl._interpreter.run_source_repl("PermissionError.print()", ns)
 
 
@@ -701,7 +703,10 @@ def test_meta_explain_unknown_lists_known_constructs(
     ("name", "expected"),
     [
         ("copyright", "'copyright' is a Python builtin POOP does not offer"),
-        ("PermissionError", "'PermissionError' is a Python exception POOP does not mirror"),
+        (
+            "PermissionError",
+            "'PermissionError' is a Python exception POOP does not mirror",
+        ),
     ],
     ids=["builtin", "exception"],
 )

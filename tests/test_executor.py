@@ -100,7 +100,8 @@ def test_execute_compile_error_becomes_execution_error() -> None:
 
 
 @pytest.mark.parametrize(
-    "name", ["PermissionError", "BaseException", "KeyboardInterrupt", "copyright", "open"]
+    "name",
+    ["PermissionError", "BaseException", "KeyboardInterrupt", "copyright", "open"],
 )
 def test_a_builtin_poop_does_not_own_is_out_of_reach(name: str) -> None:
     # `exec` hands a program CPython's whole builtins namespace unless the
