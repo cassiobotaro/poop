@@ -2,6 +2,8 @@ import contextlib
 
 import pytest
 
+from poop.errors import PoopError
+from poop.interpreter import Interpreter
 from poop.types.error import Error
 from poop.types.exceptions import MIRRORS
 from poop.types.int import Int
@@ -288,3 +290,26 @@ def test_with_counts_its_arguments_in_poops_words(
     assert (
         str(info.value) == f"With takes one block, got {given} — write With(lambda: …)"
     )
+
+
+def test_with_refuses_a_body_answering_a_coroutine_after_exiting(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        "class Page(Object):\n"
+        "    async def fetch(self):\n"
+        "        return 1\n"
+        "class Cm(Object):\n"
+        "    def __enter__(self):\n"
+        "        return self\n"
+        "    def __exit__(self, kind, error, traceback):\n"
+        '        "exit".print()\n'
+        "With(lambda: Cm()).do(lambda r: Page().fetch())\n"
+    )
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert capsys.readouterr().out == "exit\n"
+    assert (
+        "TypeError: the With body answered a coroutine, which would run after the "
+        "manager exits — use AsyncWith with an asynchronous context manager"
+    ) in str(info.value)

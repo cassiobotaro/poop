@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from poop.types import mirrors
 from poop.types._sentinel import MISSING
 from poop.types.block import _require_block
+from poop.types.coroutine import refuse_awaitable
 from poop.types.error import Error
 from poop.types.exceptions import poop_class_of
 from poop.types.none import none
@@ -120,6 +121,11 @@ class With(Object, name="With"):
             return none
         else:
             exit_(cm, none, none, none)
+        refuse_awaitable(
+            result,
+            "the With body answered a coroutine, which would run after the "
+            "manager exits — use AsyncWith with an asynchronous context manager",
+        )
         return result
 
     def __str__(self) -> str:

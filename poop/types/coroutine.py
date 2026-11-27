@@ -1,3 +1,4 @@
+from inspect import isawaitable
 from typing import TYPE_CHECKING, Never, Self, final
 
 from poop.types import mirrors
@@ -33,3 +34,17 @@ class Coroutine(Object, name="coroutine"):
 
     def __await__(self) -> Generator[object, None, object]:
         return self._raw.__await__()
+
+
+def refuse_awaitable(value: object, sentence: str) -> None:
+    """Refuse `value` with `sentence` when it can be awaited, after closing it.
+
+    For the synchronous forms, `Try.run` and `With.do`, whose guard would be
+    over before the coroutine ran. Closed first, so the refusal is not
+    followed by a warning that the coroutine was never awaited.
+    """
+    if not isawaitable(value):
+        return
+    if isinstance(value, Coroutine):
+        value._raw.close()
+    raise mirrors.TypeError(sentence)

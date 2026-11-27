@@ -6,6 +6,8 @@ Date: 2026-04-23
 
 Accepted
 
+Amended by [80. AsyncWith and an awaited Try run at the await; the synchronous forms refuse a coroutine](0080-asyncwith-and-an-awaited-try-run-at-the-await-the-synchronous-forms-refuse-a-coroutine.md)
+
 ## Context
 
 `no_with` bans the `with` statement, and its substitute has to acquire and release a resource. POOP cannot redefine resource acquisition semantics without reimplementing every standard context manager (files, locks, etc.), which is impractical.

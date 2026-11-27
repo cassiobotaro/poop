@@ -393,3 +393,43 @@ def test_try_else_after_run_does_not_retain_block() -> None:
     gc.collect()
     assert ref() is None
     assert t._else_block is None
+
+
+_FETCH = "class Page(Object):\n    async def fetch(self):\n        return 1\n"
+
+
+@pytest.mark.parametrize(
+    ("terminal", "remedy"),
+    [
+        (".run()", "send .await_() to the Try instead of .run()"),
+        (
+            ".finally_(lambda: 1)",
+            "an awaited Try has no cleanup clause; use AsyncWith for one",
+        ),
+    ],
+    ids=["run", "finally_"],
+)
+def test_a_synchronous_try_refuses_a_block_answering_a_coroutine(
+    terminal: str, remedy: str
+) -> None:
+    # Its failure would be raised only when awaited, after the guard is over.
+    # The coroutine is closed, so no "never awaited" warning follows.
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(f"{_FETCH}Try(lambda: Page().fetch()){terminal}\n")
+    assert (
+        "TypeError: the Try block answered a coroutine, which raises only when "
+        f"awaited — {remedy}"
+    ) in str(info.value)
+
+
+def test_the_refusal_is_not_caught_by_the_try_s_own_handler(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(PoopError):
+        _program(
+            f"{_FETCH}Try(lambda: Page().fetch()).except_(\n"
+            '    TypeError, lambda e: "caught".print()\n'
+            ").run()\n",
+            capsys,
+        )
+    assert capsys.readouterr().out == ""

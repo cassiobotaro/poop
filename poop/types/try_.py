@@ -4,6 +4,7 @@ from poop.types import mirrors
 from poop.types._argument import a_class
 from poop.types._sentinel import MISSING
 from poop.types.block import _require_block
+from poop.types.coroutine import refuse_awaitable
 from poop.types.error import Error
 from poop.types.none import none
 from poop.types.object import Object
@@ -148,12 +149,17 @@ class Try(Object, name="Try"):
         # `block` here would leak it on the already-dead Try.
         if not self._executed:
             self._finally_block = block
-        return self._execute()
+        return self._execute(
+            "an awaited Try has no cleanup clause; use AsyncWith for one"
+        )
 
     def run(self) -> object:
-        return self._execute()
+        return self._execute("send .await_() to the Try instead of .run()")
 
-    def _execute(self) -> object:
+    def _execute(self, if_awaitable: str) -> object:
+        """Run the guard; `if_awaitable` is the remedy named if the block
+        answers a coroutine, which would raise only after the guard is over.
+        """
         if self._executed:
             raise mirrors.RuntimeError(
                 "Try has already been executed; create a new Try instance to retry."
@@ -170,6 +176,13 @@ class Try(Object, name="Try"):
             else:
                 raise
         else:
+            # Outside the handlers, so a refusal is not caught by a handler
+            # for `TypeError`.
+            refuse_awaitable(
+                result,
+                "the Try block answered a coroutine, which raises only when "
+                f"awaited — {if_awaitable}",
+            )
             # Python's own `else` clause: outside the handlers above, before
             # the cleanup below, which is exactly the ordering `else_` needs.
             if self._else_block is not None:

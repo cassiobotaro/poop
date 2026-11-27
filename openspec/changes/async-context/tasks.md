@@ -2,7 +2,7 @@
 
 ## 1. Decisions
 
-- [ ] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated the day it is written, status Accepted. It records that `AsyncWith` and an awaited `Try` defer their run to the await, that a handler or `else_` of an awaited `Try` may answer a value or a coroutine while its block must answer a coroutine, and that `Try.run`, `Try.finally_` and `With.do` refuse a coroutine rather than lose its failure or body. It extends ADRs 26 and 54. Run the `unslop` skill on it. Verify: the filename carries the next number, ADRs 26 and 54 are untouched, and the record cites no change name.
+- [x] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated the day it is written, status Accepted. It records that `AsyncWith` and an awaited `Try` defer their run to the await, that a handler or `else_` of an awaited `Try` may answer a value or a coroutine while its block must answer a coroutine, and that `Try.run`, `Try.finally_` and `With.do` refuse a coroutine rather than lose its failure or body. It extends ADRs 26 and 54. Run the `unslop` skill on it. Verify: the filename carries the next number, ADRs 26 and 54 are untouched, and the record cites no change name.
 - [x] 1.2 Write the ADR that `TimeoutError` is mirrored under `OSError`, which is mirrored only as its parent, following CPython's tree over a flatter one; it extends ADR 34. Run `unslop`. Verify as in 1.1.
 
 ## 2. Mirrors
@@ -11,7 +11,7 @@
 
 ## 3. The synchronous forms refuse a coroutine; the awaited Try
 
-- [ ] 3.1 In `Try._execute` and `With.do`, refuse and close an awaitable answer (design, decision 4), and test the *run and finally_ refuse a block that answers a coroutine* requirement of `try-type` and the `with-type` delta. Add the rows to `MIGRATION.md`. Verify: `uv run pytest tests/test_types -k "try or with"` exits 0.
+- [x] 3.1 In `Try._execute` and `With.do`, refuse and close an awaitable answer (design, decision 4), and test the *run and finally_ refuse a block that answers a coroutine* requirement of `try-type` and the `with-type` delta. Add the rows to `MIGRATION.md`. Verify: `uv run pytest tests/test_types -k "try or with"` exits 0.
 - [ ] 3.2 Add `Try.__await__` (design, decision 3) and test every scenario of the *awaited Try* requirements except *A timeout is caught*, which task 5.1 adds. Parametrise the existing `else_` and handler tests to run through `run()` and through an awaited `Try`. Document the awaited `Try` in `README.md` and `MIGRATION.md` and run each snippet. Verify: `uv run pytest tests/test_types -k try` exits 0.
 
 ## 4. AsyncWith

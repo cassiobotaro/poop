@@ -667,11 +667,15 @@ A slice is immutable, hashable, comparable with `==`/`!=`, and reusable across c
 | `[block] ensure: finallyBlock` | `Try(block).finally_(block)` | sets finally block **and** executes; answers the protected block's value |
 | *(terminal)* | `.run()` | executes without finally block; answers the protected block's value |
 
+`.run()` and `.finally_()` refuse a block that answers a coroutine: its failure would be raised only when awaited, after the guard is over.
+
 ### `With`
 
 | Message | Method | Behavior |
 |---|---|---|
 | `[block] value: aResource` | `With(lambda: cm).do(lambda resource: body)` | acquires resource via `__enter__`, runs body, calls `__exit__`; answers the body's value |
+
+`.do()` refuses a body that answers a coroutine, which would run after the manager exits; `AsyncWith` guards an awaiting body.
 
 ### `Async`
 

@@ -6,6 +6,8 @@ Date: 2026-08-11
 
 Accepted
 
+Amended by [80. AsyncWith and an awaited Try run at the await; the synchronous forms refuse a coroutine](0080-asyncwith-and-an-awaited-try-run-at-the-await-the-synchronous-forms-refuse-a-coroutine.md)
+
 ## Context
 
 `no_try` bans the `try` statement, and `Try` (`poop/types/try_.py`) is its substitute: a message-passing builder for try/except/else/finally whose block runs lazily, only when `.run()` or `.finally_()` is sent. Without a value from those messages, `try: return f() except: return default` is not expressible, and `no_try` would ban a construct with no substitute.
