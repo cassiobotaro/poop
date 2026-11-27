@@ -177,14 +177,14 @@ def test_a_type_error_that_is_not_about_hashing_is_re_raised() -> None:
     [
         ("copyright", "'copyright' is a Python builtin POOP does not offer"),
         ("NotImplemented", "'NotImplemented' is a Python builtin POOP does not offer"),
-        ("OSError", "'OSError' is a Python exception POOP does not mirror"),
+        ("PermissionError", "'PermissionError' is a Python exception POOP does not mirror"),
         # 3.15's one new exception, under the unreachable `ImportError`.
         (
             "ImportCycleError",
             "'ImportCycleError' is a Python exception POOP does not mirror",
         ),
     ],
-    ids=["copyright", "NotImplemented", "OSError", "ImportCycleError"],
+    ids=["copyright", "NotImplemented", "PermissionError", "ImportCycleError"],
 )
 def test_a_withheld_builtin_says_poop_chose_not_to_offer_it(
     name: str, expected: str
@@ -220,8 +220,8 @@ def test_the_caught_path_reads_the_same_sentence(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     Interpreter().run_source(
-        "Try(lambda: OSError).except_(NameError, lambda e: e.print()).run()"
+        "Try(lambda: PermissionError).except_(NameError, lambda e: e.print()).run()"
     )
     assert capsys.readouterr().out == (
-        "NameError: 'OSError' is a Python exception POOP does not mirror\n"
+        "NameError: 'PermissionError' is a Python exception POOP does not mirror\n"
     )

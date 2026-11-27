@@ -513,3 +513,29 @@ def test_raise_on_a_built_exception_refuses_an_argument_in_cpythons_shape() -> N
     assert info.value.message == (
         "TypeError: ValueError.raise_() takes 1 positional argument but 2 were given"
     )
+
+
+def test_timeout_error_is_raised_and_reported() -> None:
+    with pytest.raises(ExecutionError, match="TimeoutError: slow"):
+        Interpreter().run_source('TimeoutError.raise_("slow")')
+
+
+def test_timeout_error_sits_under_os_error_as_in_cpython(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(
+        "TimeoutError.is_subclass(Exception).print()\n"
+        "TimeoutError.superclass().name().print()\n"
+        'Try(lambda: TimeoutError.raise_("x")).except_(\n'
+        "    OSError, lambda e: e.kind().name().print()\n"
+        ").run()\n"
+    )
+    assert capsys.readouterr().out == "True\nOSError\nTimeoutError\n"
+
+
+def test_os_error_refuses_the_attributes_cpython_adds_to_it() -> None:
+    with pytest.raises(
+        ExecutionError,
+        match="OSError does not understand #errno — #errno is Python's; POOP does not offer it",
+    ):
+        Interpreter().run_source("OSError.errno")

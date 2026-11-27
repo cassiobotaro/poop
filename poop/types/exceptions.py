@@ -4,8 +4,9 @@
 class, not a native CPython one, so POOP's own substitutes for two forbidden
 constructs hand a program no raw primitive. Python 3.15 has 72 builtin
 exceptions, and a language with no files and no modules cannot reach the
-`OSError` subtree, nor `ImportCycleError`, the one 3.15 added under
-`ImportError`. What it can reach is the table below
+`OSError` subtree, save `TimeoutError`, which `Async.timeout` raises and
+which brings `OSError` along as its parent, nor `ImportCycleError`, the one
+3.15 added under `ImportError`. What it can reach is the table below
 (`doc/adr/0034-only-the-exceptions-poop-can-reach-are-mirrored.md`).
 
 The `Unicode*` family is reachable — `encode`/`decode` can fail on the text
@@ -109,6 +110,8 @@ type MirrorName = Literal[
     "AssertionError",
     "StopIteration",
     "EOFError",
+    "OSError",
+    "TimeoutError",
 ]
 MIRROR_NAMES: tuple[MirrorName, ...] = get_args(MirrorName.__value__)
 
@@ -139,6 +142,12 @@ _HIERARCHY: tuple[tuple[type[BaseException], MirrorName | None], ...] = (
     # program can write, and `except_(Exception, …)` would report the kind as
     # `Exception`.
     (EOFError, "Exception"),
+    # Mirrored only as `TimeoutError`'s parent, so `except_(OSError, …)`
+    # catches a timeout as CPython's tree says it does. Nothing else in POOP
+    # raises an `OSError`
+    # (`doc/adr/0079-timeout-error-is-mirrored-under-an-os-error-kept-only-as-its-parent.md`).
+    (OSError, "Exception"),
+    (TimeoutError, "OSError"),
 )
 
 if TYPE_CHECKING:
@@ -176,13 +185,19 @@ NATIVE_TO_POOP: dict[type[BaseException], type[Mirror]] = {}
 #
 # Every one of them is an attribute of an exception *instance* in CPython, which
 # is why none means anything on the class — including `obj` and `value`, which
-# only two natives carry and which are therefore installed only where they exist.
+# only two natives carry, and the five `OSError` adds, all of them installed only
+# where they exist.
 _PYTHON_ATTRIBUTES: dict[str, str | None] = {
     "args": "message",
     "add_note": None,
     "with_traceback": None,
     "obj": None,
     "value": None,
+    "errno": None,
+    "strerror": None,
+    "filename": None,
+    "filename2": None,
+    "characters_written": None,
 }
 
 

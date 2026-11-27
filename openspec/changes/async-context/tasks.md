@@ -3,11 +3,11 @@
 ## 1. Decisions
 
 - [ ] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated the day it is written, status Accepted. It records that `AsyncWith` and an awaited `Try` defer their run to the await, that a handler or `else_` of an awaited `Try` may answer a value or a coroutine while its block must answer a coroutine, and that `Try.run`, `Try.finally_` and `With.do` refuse a coroutine rather than lose its failure or body. It extends ADRs 26 and 54. Run the `unslop` skill on it. Verify: the filename carries the next number, ADRs 26 and 54 are untouched, and the record cites no change name.
-- [ ] 1.2 Write the ADR that `TimeoutError` is mirrored under `OSError`, which is mirrored only as its parent, following CPython's tree over a flatter one; it extends ADR 34. Run `unslop`. Verify as in 1.1.
+- [x] 1.2 Write the ADR that `TimeoutError` is mirrored under `OSError`, which is mirrored only as its parent, following CPython's tree over a flatter one; it extends ADR 34. Run `unslop`. Verify as in 1.1.
 
 ## 2. Mirrors
 
-- [ ] 2.1 Add `OSError` and `TimeoutError` to `_HIERARCHY`, `MirrorName` and `mirrors.py` (design, decision 6), and test the `exception-mirrors` delta's *Raised and reported* and *OSError's parent* scenarios. Verify: `uv run pytest tests/test_mirrored_raises.py tests/test_types -k "mirror or exception"` exits 0.
+- [x] 2.1 Add `OSError` and `TimeoutError` to `_HIERARCHY`, `MirrorName` and `mirrors.py` (design, decision 6), and test the `exception-mirrors` delta's *Raised and reported* and *OSError's parent* scenarios. Verify: `uv run pytest tests/test_mirrored_raises.py tests/test_types -k "mirror or exception"` exits 0.
 
 ## 3. The synchronous forms refuse a coroutine; the awaited Try
 

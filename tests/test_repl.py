@@ -656,11 +656,11 @@ def test_meta_methods_unknown_name_reports_error(
 def test_meta_methods_does_not_widen_the_builtins_allow_list(repl: Repl) -> None:
     # `:methods` evaluates on its own, and `eval` plants CPython's builtins in
     # a namespace that has none — so one `:methods 1` before the first input
-    # made `OSError` (and every other builtin) reachable for the whole session.
+    # made `PermissionError` (and every other builtin) reachable for the whole session.
     ns = repl._ns
     repl._meta(":methods 1")
-    with pytest.raises(ExecutionError, match="NameError: 'OSError' is a Python"):
-        repl._interpreter.run_source_repl("OSError.print()", ns)
+    with pytest.raises(ExecutionError, match="NameError: 'PermissionError' is a Python"):
+        repl._interpreter.run_source_repl("PermissionError.print()", ns)
 
 
 def test_meta_explain_statement_uses_validator_message(
@@ -701,7 +701,7 @@ def test_meta_explain_unknown_lists_known_constructs(
     ("name", "expected"),
     [
         ("copyright", "'copyright' is a Python builtin POOP does not offer"),
-        ("OSError", "'OSError' is a Python exception POOP does not mirror"),
+        ("PermissionError", "'PermissionError' is a Python exception POOP does not mirror"),
     ],
     ids=["builtin", "exception"],
 )
