@@ -1,5 +1,3 @@
-import warnings
-from inspect import CORO_CREATED, getcoroutinestate
 from typing import TYPE_CHECKING, Never, Self, final
 
 from poop.types import mirrors
@@ -20,7 +18,7 @@ class Coroutine(Object, name="coroutine"):
     (`doc/adr/0076-an-async-method-answers-a-coroutine-wrapped-where-the-class-is-built.md`).
     """
 
-    __slots__ = ("_awaited", "_raw")
+    __slots__ = ("_raw",)
 
     def __new__(cls, *_args: object, **_kwargs: object) -> Never:
         # CPython's own refusal for `type(coro)()`: only an async method makes
@@ -31,32 +29,7 @@ class Coroutine(Object, name="coroutine"):
     def _of(cls, raw: _Raw[object, object, object]) -> Self:
         coroutine = object.__new__(cls)
         coroutine._raw = raw
-        coroutine._awaited = False
         return coroutine
 
     def __await__(self) -> Generator[object, None, object]:
-        # Flagged here, not read off the raw coroutine's state: in
-        # `await obj.fetch()` nothing else holds this object once the
-        # iterator below is handed over, so it is collected while the raw
-        # coroutine has not started yet and would read as never awaited.
-        self._awaited = True
         return self._raw.__await__()
-
-    def __del__(self) -> None:
-        # CPython's own "never awaited" warning cannot be emitted for a
-        # program's coroutine: it imports through the builtins of the frame it
-        # was collected in, and a program's builtins hold no `__import__`
-        # (`_ALLOWED_BUILTINS`, `poop/executor.py`), so it would print
-        # `KeyError: '__import__'` instead. The same warning is raised here,
-        # from library code, and the coroutine closed so CPython does not try.
-        raw = self._raw
-        if self._awaited or getcoroutinestate(raw) != CORO_CREATED:
-            return
-        code = raw.cr_code
-        raw.close()
-        warnings.warn_explicit(
-            f"coroutine '{raw.__qualname__}' was never awaited",
-            RuntimeWarning,
-            code.co_filename,
-            code.co_firstlineno,
-        )

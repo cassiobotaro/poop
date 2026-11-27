@@ -3,8 +3,9 @@ import builtins
 
 import pytest
 
-from poop.errors import ExecutionError
+from poop.errors import ExecutionError, PoopError
 from poop.executor import execute
+from poop.interpreter import Interpreter
 
 # User code sees only the builtins allow-list, so a test naming a Python
 # builtin has to hand it over itself — as a POOP program would reach one, by
@@ -134,3 +135,11 @@ def test_a_supplied_builtins_is_left_alone() -> None:
     ns: dict[str, object] = {"__builtins__": {"marker": 1}}
     execute(ast.parse("x = 1"), namespace=ns)
     assert ns["__builtins__"] == {"marker": 1}
+
+
+def test_a_program_cannot_reach_import_by_any_spelling() -> None:
+    # `__import__` is in the allow-list for CPython's own imports from a
+    # program's frame; each spelling a program could write is refused first.
+    for source in ('__import__("os")', "import os", 'x.get_attr("__import__")'):
+        with pytest.raises(PoopError):
+            Interpreter().run_source(f"x = 1\n{source}\n")

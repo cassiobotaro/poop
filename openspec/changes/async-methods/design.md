@@ -49,10 +49,10 @@ What the code does today, read for this design:
    puts a test on every send, the cost ADR 41 measured at +81% on the
    central operation, and it misses `super().m()` and `async def __call__`,
    which never pass through a `message`.
-   Found while implementing: CPython's own "never awaited" warning cannot be
-   emitted for a program's coroutine, since it imports through the frame's
-   builtins and a program's hold no `__import__`. `Coroutine.__del__` emits
-   the same warning from library code and closes the raw coroutine.
+   Found while implementing: CPython's own "never awaited" warning imports
+   through the builtins of the program's frame, which held no `__import__`.
+   `__import__` joins `_ALLOWED_BUILTINS`, unreachable by any spelling a
+   program can write, so CPython emits the warning itself (ADR 78).
 
 2. **`Coroutine` holds the raw coroutine in a slot and defines `__await__`
    only.** It is cloaked as `coroutine` and prints as `<coroutine>`, the

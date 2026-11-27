@@ -28,9 +28,14 @@ if TYPE_CHECKING:
 # the argument ADR 18 makes for `super`
 # (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`).
 # `__build_class__` is what the `class` statement calls; `__name__` is read
-# while creating one.
+# while creating one. `__import__` is how CPython itself imports from a
+# program's frame: the warning for a coroutine collected unawaited goes
+# through it, and without it CPython prints `KeyError: '__import__'` in the
+# warning's place. No program can reach it: `import` is refused by
+# `no_import`, the bare name by `no_dunder_name`, a dunder read by ADR 33.
 _ALLOWED_BUILTINS: dict[str, object] = {
     "__build_class__": builtins.__build_class__,
+    "__import__": builtins.__import__,
     "__name__": "__poop__",
     "super": builtins.super,
     "classmethod": builtins.classmethod,

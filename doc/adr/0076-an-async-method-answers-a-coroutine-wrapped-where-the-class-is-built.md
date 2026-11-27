@@ -6,6 +6,8 @@ Date: 2026-11-27
 
 Accepted
 
+Amended by [78. A program's builtins hold __import__ for CPython's own imports](0078-a-program-s-builtins-hold-import-for-cpython-s-own-imports.md)
+
 ## Context
 
 Sending an async method runs none of its body. CPython answers a coroutine object, and the body runs when that object is awaited. A program holds the coroutine between the send and the await, so it is a value the program can send messages to.

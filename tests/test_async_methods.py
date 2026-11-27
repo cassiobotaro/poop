@@ -1,6 +1,7 @@
 """An `async def` in a class body, awaited: the transformers treat it as a `def`."""
 
 import asyncio
+import gc
 import re
 from typing import Any
 
@@ -182,3 +183,21 @@ def test_a_forgotten_await_warns_as_cpython_does() -> None:
             "        pass\n"
             "Page().fetch()\n"
         )
+
+
+def test_a_forgotten_await_held_in_a_cycle_still_warns_as_cpython_does() -> None:
+    # The refusal's traceback holds the coroutine in a reference cycle, so the
+    # collector finalizes it, from the program's frame. CPython's warning
+    # imports through that frame's builtins.
+    with pytest.warns(
+        RuntimeWarning, match=re.escape("coroutine 'Page.fetch' was never awaited")
+    ):
+        Interpreter().run_source(
+            "class Page(Object):\n"
+            "    async def fetch(self):\n"
+            "        pass\n"
+            "Try(lambda: Async.gather(Page().fetch(), 5)).except_(\n"
+            "    TypeError, lambda e: e\n"
+            ").run()\n"
+        )
+        gc.collect()

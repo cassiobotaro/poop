@@ -6,6 +6,8 @@ Date: 2026-07-25
 
 Accepted
 
+Amended by [78. A program's builtins hold __import__ for CPython's own imports](0078-a-program-s-builtins-hold-import-for-cpython-s-own-imports.md)
+
 ## Context
 
 Validators and transformers cover the names someone thought to enumerate; `exec` hands a program everything else in CPython's builtins namespace. `OSError`, `BaseException`, `KeyboardInterrupt`, `copyright`, `NotImplemented` and `open`, with 56 of Python's 72 builtin exceptions among them, were naked natives one identifier away, answering `type object 'OSError' has no attribute 'print'` instead of `does not understand #print`. That contradicted `poop/types/exceptions.py`, which mirrors 17 exceptions on purpose: "a language with no files and no modules cannot reach the `OSError` subtree" (ADR 34).
