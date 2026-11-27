@@ -539,3 +539,38 @@ def test_os_error_refuses_the_attributes_cpython_adds_to_it() -> None:
         match="OSError does not understand #errno — #errno is Python's; POOP does not offer it",
     ):
         Interpreter().run_source("OSError.errno")
+
+
+def test_cancelled_error_is_a_root_outside_exception(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(
+        "CancelledError.is_subclass(Exception).print()\nCancelledError.name().print()\n"
+    )
+    assert capsys.readouterr().out == "False\nCancelledError\n"
+
+
+def test_an_exception_handler_does_not_catch_a_cancellation() -> None:
+    with pytest.raises(ExecutionError, match="CancelledError"):
+        Interpreter().run_source(
+            "Try(lambda: CancelledError.raise_()).except_(\n"
+            '    Exception, lambda e: "caught".print()\n'
+            ").run()\n"
+        )
+
+
+def test_a_cancellation_is_named_as_a_cause(capsys: pytest.CaptureFixture[str]) -> None:
+    Interpreter().run_source(
+        "Try(lambda: TimeoutError().raise_from(CancelledError())).except_(\n"
+        "    TimeoutError, lambda e: e.cause().kind().name().print()\n"
+        ").run()\n"
+    )
+    assert capsys.readouterr().out == "CancelledError\n"
+
+
+@pytest.mark.parametrize("root", ["Exception", "CancelledError"])
+def test_each_root_names_its_own_instance_side(root: MirrorName) -> None:
+    # `cloak` renames a class's own functions in place, so two roots sharing
+    # them would both be named after the last one cloaked.
+    message = vars(MIRRORS[root])["message"]
+    assert getattr(message, "__func__", message).__qualname__ == f"{root}.message"

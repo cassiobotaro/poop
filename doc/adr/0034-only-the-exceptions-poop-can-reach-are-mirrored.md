@@ -8,6 +8,8 @@ Accepted
 
 Amended by [79. TimeoutError is mirrored under an OSError kept only as its parent](0079-timeout-error-is-mirrored-under-an-os-error-kept-only-as-its-parent.md)
 
+Amended by [81. CancelledError is mirrored as a second root](0081-cancellederror-is-mirrored-as-a-second-root.md)
+
 ## Context
 
 `Try.except_` and `raise_` need exception classes a program can name. Python 3.15 has 72 builtin exceptions; the one it added, `ImportCycleError`, sits under `ImportError`. A language with no files and no modules can never raise the `OSError` or `ImportError` subtrees.

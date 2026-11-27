@@ -1,4 +1,5 @@
 import ast
+import asyncio
 import builtins
 import sys
 import traceback
@@ -171,7 +172,10 @@ def execute(
             _user_lineno(exc, filename),
             tuple(describe_chain(exc)),
         ) from exc
-    except Exception as exc:
+    # `CancelledError` derives from `BaseException`, as `KeyboardInterrupt`
+    # does, but a program raises it, and it is mirrored: it is reported, where
+    # an interrupt is left to stop the interpreter.
+    except (Exception, asyncio.CancelledError) as exc:
         raise ExecutionError(
             describe(exc), _user_lineno(exc, filename), tuple(describe_chain(exc))
         ) from exc

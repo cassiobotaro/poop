@@ -31,6 +31,8 @@ program wants, would be uncatchable where it fires.
   The body receives the `Timeout`, which answers `expired()`.
 - **`TimeoutError` and `OSError` are mirrored**, `TimeoutError` under
   `OSError` as in CPython's tree. `OSError` is mirrored only as its parent.
+  `CancelledError` is mirrored as a second root, under `BaseException` as in
+  CPython, since it is the cause of an expired timeout.
 - **`no_with` names `AsyncWith`** as the substitute for `async with`.
 - **Two ADRs**: the asynchronous forms defer their run to the await and the
   synchronous ones refuse a coroutine (extending ADRs 26 and 54); and
@@ -81,8 +83,8 @@ is archived first.
 - **A synchronous manager around an awaiting body**, which Python allows as
   `with lock: await x`. `With` refuses such a body and names `AsyncWith`; a
   program gives its manager `__aenter__`/`__aexit__` instead.
-- **`CancelledError`.** `Async.timeout` converts the cancellation it causes
-  into `TimeoutError` before a program sees it, and no other path to cancel
-  a coroutine is reachable.
+- **Cancelling a coroutine.** No message cancels one. `CancelledError` is
+  mirrored, found while implementing, because it reaches a program as the
+  cause of an expired timeout (ADR 81).
 - **The rest of the `OSError` subtree.** POOP has no I/O; only the parent
   `TimeoutError` needs is mirrored (ADR 34).

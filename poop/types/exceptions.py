@@ -31,7 +31,9 @@ caught the native, so the rule costs nothing; `tests/test_mirrored_raises.py`
 sweeps both packages for it.
 """
 
+import asyncio
 import builtins
+from types import FunctionType
 from typing import TYPE_CHECKING, Literal, Never, cast, get_args
 
 from poop.types._cloak import cloak, cloak_callable
@@ -112,6 +114,7 @@ type MirrorName = Literal[
     "EOFError",
     "OSError",
     "TimeoutError",
+    "CancelledError",
 ]
 MIRROR_NAMES: tuple[MirrorName, ...] = get_args(MirrorName.__value__)
 
@@ -148,11 +151,15 @@ _HIERARCHY: tuple[tuple[type[BaseException], MirrorName | None], ...] = (
     # (`doc/adr/0079-timeout-error-is-mirrored-under-an-os-error-kept-only-as-its-parent.md`).
     (OSError, "Exception"),
     (TimeoutError, "OSError"),
+    # The second root: CPython derives it from `BaseException`, not
+    # `Exception`, so `except_(Exception, …)` does not catch a cancellation.
+    # `Async.timeout` raises its `TimeoutError` from one, which is how it
+    # reaches a program, as the cause of the timeout
+    # (`doc/adr/0081-cancellederror-is-mirrored-as-a-second-root.md`).
+    (asyncio.CancelledError, None),
 )
 
 if TYPE_CHECKING:
-    from types import FunctionType
-
     from poop.types.boolean import Boolean
     from poop.types.none import NoneClass
 
@@ -429,11 +436,34 @@ for _key, _fn in _INSTANCE_SIDE.items():
     cloak_callable(cast("FunctionType", _fn), _key)
 
 
+def _instance_side() -> dict[str, object]:
+    """A copy of each instance-side function, for one root.
+
+    `cloak` renames a class's own functions in place, so two roots sharing
+    the functions would leave both named after whichever was cloaked last.
+    """
+    copies: dict[str, object] = {}
+    for key, fn in _INSTANCE_SIDE.items():
+        original = cast("FunctionType", fn)
+        copy = FunctionType(
+            original.__code__,
+            original.__globals__,
+            original.__name__,
+            original.__defaults__,
+            original.__closure__,
+        )
+        copy.__kwdefaults__ = original.__kwdefaults__
+        copy.__qualname__ = original.__qualname__
+        copy.__doc__ = original.__doc__
+        copies[key] = copy
+    return copies
+
+
 def _build(native: type[BaseException], parent: MirrorName | None) -> None:
-    # The root also inherits Object, so a user's `class MyError(Exception)`
+    # A root also inherits Object, so a user's `class MyError(Exception)`
     # lands inside the Object tree and answers print()/class_name().
     bases: tuple[type, ...] = (
-        (MIRRORS[parent], native) if parent is not None else (Exception, Object)
+        (MIRRORS[parent], native) if parent is not None else (native, Object)
     )
     # Cast, not a wider annotation: a metaclass call answers `PoopExcMeta`, and
     # only the bases say the result is an exception class. Every branch above
@@ -453,7 +483,7 @@ def _build(native: type[BaseException], parent: MirrorName | None) -> None:
                 # 'b'"`. The missing key's own repr is the message's to
                 # compose, not the exception class's to add.
                 "__str__": Exception.__str__,
-                **(_INSTANCE_SIDE if parent is None else {}),
+                **(_instance_side() if parent is None else {}),
             },
         ),
     )
