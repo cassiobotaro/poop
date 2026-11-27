@@ -401,7 +401,7 @@ _FETCH = "class Page(Object):\n    async def fetch(self):\n        return 1\n"
 @pytest.mark.parametrize(
     ("terminal", "remedy"),
     [
-        (".run()", "send .await_() to the Try instead of .run()"),
+        (".run()", "send #await_ to the Try instead of #run"),
         (
             ".finally_(lambda: 1)",
             "an awaited Try has no cleanup clause; use AsyncWith for one",
@@ -536,7 +536,7 @@ def test_an_awaited_try_refuses_a_block_that_does_not_await() -> None:
     with pytest.raises(PoopError) as info:
         Interpreter().run_source(source)
     assert (
-        "TypeError: the Try block must answer a coroutine, got an int — use .run() "
+        "TypeError: the Try block must answer a coroutine, got an int — use #run "
         "for a block that does not await"
     ) in str(info.value)
 

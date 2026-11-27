@@ -31,7 +31,7 @@ An awaited `Try` SHALL refuse a block that answers no coroutine, naming
 
 #### Scenario: A block that does not await
 - **WHEN** an async method runs `Try(lambda: 1).await_()`
-- **THEN** a `TypeError` is raised reading `the Try block must answer a coroutine, got an int — use .run() for a block that does not await`
+- **THEN** a `TypeError` is raised reading `the Try block must answer a coroutine, got an int — use #run for a block that does not await`
 
 #### Scenario: Awaited after run
 - **WHEN** a `Try` was already run and an async method sends it `.await_()`
@@ -45,7 +45,7 @@ warning follows the refusal.
 
 #### Scenario: run
 - **WHEN** a program runs `Try(lambda: obj.fetch()).run()`
-- **THEN** a `TypeError` is raised reading `the Try block answered a coroutine, which raises only when awaited — send .await_() to the Try instead of .run()`
+- **THEN** a `TypeError` is raised reading `the Try block answered a coroutine, which raises only when awaited — send #await_ to the Try instead of #run`
 
 #### Scenario: finally_
 - **WHEN** a program runs `Try(lambda: obj.fetch()).finally_(lambda: 1)`

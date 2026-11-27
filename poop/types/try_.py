@@ -156,7 +156,7 @@ class Try(Object, name="Try"):
         )
 
     def run(self) -> object:
-        return self._execute("send .await_() to the Try instead of .run()")
+        return self._execute("send #await_ to the Try instead of #run")
 
     def _execute(self, if_awaitable: str) -> object:
         """Run the guard; `if_awaitable` is the remedy named if the block
@@ -242,7 +242,7 @@ class Try(Object, name="Try"):
             if refused:
                 raise mirrors.TypeError(
                     "the Try block must answer a coroutine, got "
-                    f"{describe_operand(result)} — use .run() for a block that "
+                    f"{describe_operand(result)} — use #run for a block that "
                     "does not await"
                 )
             if self._else_block is not None:
