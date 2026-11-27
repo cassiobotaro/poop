@@ -12,7 +12,7 @@
 ## 3. The synchronous forms refuse a coroutine; the awaited Try
 
 - [x] 3.1 In `Try._execute` and `With.do`, refuse and close an awaitable answer (design, decision 4), and test the *run and finally_ refuse a block that answers a coroutine* requirement of `try-type` and the `with-type` delta. Add the rows to `MIGRATION.md`. Verify: `uv run pytest tests/test_types -k "try or with"` exits 0.
-- [ ] 3.2 Add `Try.__await__` (design, decision 3) and test every scenario of the *awaited Try* requirements except *A timeout is caught*, which task 5.1 adds. Parametrise the existing `else_` and handler tests to run through `run()` and through an awaited `Try`. Document the awaited `Try` in `README.md` and `MIGRATION.md` and run each snippet. Verify: `uv run pytest tests/test_types -k try` exits 0.
+- [x] 3.2 Add `Try.__await__` (design, decision 3) and test every scenario of the *awaited Try* requirements except *A timeout is caught*, which task 5.1 adds. Parametrise the existing `else_` and handler tests to run through `run()` and through an awaited `Try`. Document the awaited `Try` in `README.md` and `MIGRATION.md` and run each snippet. Verify: `uv run pytest tests/test_types -k try` exits 0.
 
 ## 4. AsyncWith
 

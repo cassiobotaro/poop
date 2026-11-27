@@ -433,3 +433,126 @@ def test_the_refusal_is_not_caught_by_the_try_s_own_handler(
             capsys,
         )
     assert capsys.readouterr().out == ""
+
+
+_PAGE = """
+class Page(Object):
+    def value(self, n):
+        return n
+
+    def fails(self, text):
+        ValueError.raise_(text)
+
+    async def async_value(self, n):
+        return n
+
+    async def async_fails(self, text):
+        ValueError.raise_(text)
+
+    async def fallback(self):
+        return "cached"
+"""
+
+
+def _guarded(guard: str, *, awaited: bool) -> str:
+    """`guard` as a program: run, or awaited inside an async method.
+
+    `{v}` and `{f}` in `guard` name the succeeding and failing messages,
+    synchronous for `run()` and async for the awaited form.
+    """
+    if awaited:
+        body = guard.format(v="self.async_value", f="self.async_fails")
+        return (
+            f"{_PAGE}class Main(Page):\n"
+            "    async def main(self):\n"
+            f"        {body}.await_().print()\n"
+            "Async.run(Main().main())\n"
+        )
+    body = guard.format(v="Page().value", f="Page().fails")
+    return f"{_PAGE}{body}.run().print()\n"
+
+
+@pytest.mark.parametrize("awaited", [False, True], ids=["run", "awaited"])
+@pytest.mark.parametrize(
+    ("guard", "expected"),
+    [
+        ("Try(lambda: {v}(1))", "1\n"),
+        (
+            'Try(lambda: {f}("x")).except_(ValueError, lambda e: e.message())',
+            "x\n",
+        ),
+        (
+            'Try(lambda: {f}("x")).except_((KeyError, ValueError), lambda e: "both")',
+            "both\n",
+        ),
+        (
+            'Try(lambda: {f}("x")).except_(Exception, lambda e: "first")'
+            '.except_(ValueError, lambda e: "second")',
+            "first\n",
+        ),
+        ("Try(lambda: {v}(2)).else_(lambda n: n * 10)", "20\n"),
+        (
+            'Try(lambda: {f}("x")).except_(ValueError, lambda e: -1)'
+            ".else_(lambda n: n * 10)",
+            "-1\n",
+        ),
+    ],
+    ids=["value", "handler", "tuple", "first-match", "else", "else-skipped"],
+)
+def test_run_and_await_guard_alike(
+    guard: str, expected: str, *, awaited: bool, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert _program(_guarded(guard, awaited=awaited), capsys) == expected
+
+
+@pytest.mark.parametrize("awaited", [False, True], ids=["run", "awaited"])
+def test_run_and_await_propagate_an_unhandled_failure_alike(*, awaited: bool) -> None:
+    guard = 'Try(lambda: {f}("late")).except_(KeyError, lambda e: e)'
+    with pytest.raises(PoopError, match="ValueError: late"):
+        Interpreter().run_source(_guarded(guard, awaited=awaited))
+
+
+def test_an_awaited_try_awaits_a_handler_answering_a_coroutine(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    guard = 'Try(lambda: {f}("x")).except_(ValueError, lambda e: self.fallback())'
+    assert _program(_guarded(guard, awaited=True), capsys) == "cached\n"
+
+
+def test_an_awaited_try_awaits_an_else_answering_a_coroutine(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    guard = "Try(lambda: {v}(2)).else_(lambda n: self.async_value(n * 10))"
+    assert _program(_guarded(guard, awaited=True), capsys) == "20\n"
+
+
+def test_an_awaited_try_refuses_a_block_that_does_not_await() -> None:
+    source = (
+        "class Main(Object):\n"
+        "    async def main(self):\n"
+        "        Try(lambda: 1).await_()\n"
+        "Async.run(Main().main())\n"
+    )
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert (
+        "TypeError: the Try block must answer a coroutine, got an int — use .run() "
+        "for a block that does not await"
+    ) in str(info.value)
+
+
+def test_a_try_already_run_refuses_to_be_awaited() -> None:
+    source = (
+        f"{_PAGE}"
+        "t = Try(lambda: 1)\n"
+        "t.run()\n"
+        "class Main(Object):\n"
+        "    async def main(self):\n"
+        "        t.await_()\n"
+        "Async.run(Main().main())\n"
+    )
+    with pytest.raises(
+        PoopError,
+        match="Try has already been executed; create a new Try instance to retry.",
+    ):
+        Interpreter().run_source(source)

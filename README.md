@@ -90,6 +90,27 @@ $ poop pages.py
 [2, 4]
 ```
 
+A `Try` guards an await when it is awaited itself. Its block answers the coroutine, and a handler may answer a value or another coroutine:
+
+```python
+class Feed(Object):
+    async def latest(self):
+        ValueError.raise_("offline")
+
+    async def main(self):
+        return (
+            Try(lambda: self.latest()).except_(ValueError, lambda e: "cached").await_()
+        )
+
+
+Async.run(Feed().main()).print()
+```
+
+```console
+$ poop feed.py
+cached
+```
+
 ## Learn by example
 
 [`examples/`](examples/) goes from hello world to the whole Gang of Four catalogue: Composite in place of `isinstance`, State in place of `if`, Null Object in place of `None` checks.

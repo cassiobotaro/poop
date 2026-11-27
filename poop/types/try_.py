@@ -1,7 +1,9 @@
-from typing import TYPE_CHECKING
+from inspect import isawaitable
+from typing import TYPE_CHECKING, cast
 
 from poop.types import mirrors
 from poop.types._argument import a_class
+from poop.types._message import describe_operand
 from poop.types._sentinel import MISSING
 from poop.types.block import _require_block
 from poop.types.coroutine import refuse_awaitable
@@ -11,7 +13,7 @@ from poop.types.object import Object
 from poop.types.tuple import Tuple
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Awaitable, Callable, Generator
 
 
 def _exception_class(member: object) -> type[BaseException]:
@@ -203,5 +205,61 @@ class Try(Object, name="Try"):
             self._finally_block = None
         return result
 
+    def __await__(self) -> Generator[object, None, object]:
+        return self._execute_async().__await__()
+
+    async def _execute_async(self) -> object:
+        """`_execute` for an awaited `Try`: the block's coroutine is awaited
+        inside the guard, and a handler's or `else_`'s is awaited too.
+
+        The control flow is `_execute`'s, written a second time rather than
+        threaded through it: a synchronous `_execute` that could answer a
+        coroutine would change what `run()` answers
+        (`doc/adr/0080-asyncwith-and-an-awaited-try-run-at-the-await-the-synchronous-forms-refuse-a-coroutine.md`).
+        """
+        if self._executed:
+            raise mirrors.RuntimeError(
+                "Try has already been executed; create a new Try instance to retry."
+            )
+        self._executed = True
+        result: object = none
+        refused = False
+        try:
+            result = self._block()
+            if isawaitable(result):
+                result = await cast("Awaitable[object]", result)
+            else:
+                refused = True
+        except BaseException as e:
+            for exc_type, handler in self._handlers:
+                if isinstance(e, exc_type):
+                    result = await _settled(handler(Error(e)))
+                    break
+            else:
+                raise
+        else:
+            # Outside the handlers, as in `_execute`.
+            if refused:
+                raise mirrors.TypeError(
+                    "the Try block must answer a coroutine, got "
+                    f"{describe_operand(result)} — use .run() for a block that "
+                    "does not await"
+                )
+            if self._else_block is not None:
+                result = await _settled(self._else_block(result))
+        finally:
+            del self._block
+            self._handlers = []
+            self._else_block = None
+        return result
+
     def __str__(self) -> str:
         return "Try"
+
+
+async def _settled(answer: object) -> object:
+    """`answer`, awaited first when it can be: a handler or `else_` of an
+    awaited `Try` may answer a value or a coroutine."""
+    if isawaitable(answer):
+        return await answer
+    return answer
