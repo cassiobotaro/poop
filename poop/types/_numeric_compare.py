@@ -12,10 +12,10 @@ mismatch raises CPython's faithful ``TypeError`` instead of leaking an
 ``_num_value`` reads the number through the hook the mixin below declares,
 ``_order_value``, rather than importing the three rungs and testing them in
 order: every rung inherits the mixin, so one ``isinstance`` on it is the whole
-test. This runs on every comparison between numbers, and the three local
-imports it used to make were a third of the cost; the two names it still
-needs from ``boolean`` and ``complex`` are lazy imports, resolved on first use
-and plain globals after that.
+test. This runs on every comparison between numbers, where three local
+imports would be a third of the cost; the two names it needs from
+``boolean`` and ``complex`` are lazy imports, resolved on first use and plain
+globals after that.
 """
 
 import operator

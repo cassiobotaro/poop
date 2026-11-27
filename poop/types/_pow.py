@@ -1,17 +1,16 @@
 """The reflected half of `pow`, shared by `Int.pow` and `Float.pow`.
 
-`no_pow` forbids `pow(a, b)` and names `a.pow(b)`. Both wrappers called their
-own `__pow__` and turned a `NotImplemented` into a refusal — but `__pow__`
-answers `NotImplemented` for a `Complex` *on purpose*, so that CPython's
-operator protocol falls through to `Complex.__rpow__`. The operator did
-exactly that; the message never got there:
+`no_pow` forbids `pow(a, b)` and names `a.pow(b)`. `__pow__` answers
+`NotImplemented` for a `Complex` *on purpose*, so that CPython's operator
+protocol falls through to `Complex.__rpow__`. A message that turned that
+`NotImplemented` into a refusal would be narrower than the operator POOP still
+allows *and* than the builtin it replaces, so the message completes the
+protocol here and both spellings answer the same:
 
     (2 ** complex(1, 1))    ->  (1.5384778027279442+1.2779225526272695j)
-    (2).pow(complex(1, 1))  ->  TypeError: int does not understand #** …
+    (2).pow(complex(1, 1))  ->  (1.5384778027279442+1.2779225526272695j)
 
-So the substitute was narrower than the operator POOP still allows *and* than
-the builtin it replaces — CPython computes `pow(2, 1+1j)` too. Completing the
-protocol here is what makes the deliberate `NotImplemented` mean what it says.
+`doc/adr/0039-substitutes-mirror-the-full-builtin-signature-accessors-are-methods.md`.
 """
 
 from poop.types._unwrap import _is_absent

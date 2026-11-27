@@ -103,10 +103,9 @@ class Complex(Object, name="complex"):
         return self._arith(other, operator.pow, reflected=True)
 
     def pow(self, other: object) -> Complex:
-        # `no_pow` names `a.pow(b)` as the substitute for the builtin, and
-        # `Complex` wrapped `__abs__` and `__neg__` as `abs()` and `negated()`
-        # but never this one — so `complex(1, 1) ** 2` computed and
-        # `complex(1, 1).pow(2)` answered `complex does not understand #pow`.
+        # `no_pow` names `a.pow(b)` as the substitute for the builtin, so
+        # `Complex` answers it as it answers `abs()` and `negated()`:
+        # `complex(1, 1).pow(2)` computes what `complex(1, 1) ** 2` does.
         return answered(self.__pow__(other), "complex", "pow", other)
 
     def negated(self) -> Complex:

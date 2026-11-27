@@ -45,10 +45,10 @@ class Float(_NumericCompareMixin, Object, name="float"):
     # a Boolean through the numeric mixin and a foreign operand to CPython's
     # faithful TypeError, instead of reading `other._value` and leaking it.
     # The answer is one of the operands, whichever rung of the tower it sits
-    # on — `(1.5).max(2)` answers `2`, an `Int` — which a cast to `Float`
-    # used to deny, mirroring typeshed.
+    # on — `(1.5).max(2)` answers `2`, an `Int` — which a cast to `Float`,
+    # mirroring typeshed, would deny.
     # `key` is keyword-only, as CPython spells it: a positional block would be
-    # indistinguishable from one more operand, which is how it used to be read.
+    # indistinguishable from one more operand.
     def max(
         self,
         *others: Float | Int | Boolean,
@@ -104,8 +104,8 @@ class Float(_NumericCompareMixin, Object, name="float"):
     @classmethod
     def fromhex(cls, s: Str) -> Float:
         # `bad argument type for built-in operation` names neither the
-        # receiver, the message nor the argument. The two byte twins already
-        # answered `#fromhex expects a str, got an int`.
+        # receiver, the message nor the argument. The two byte twins answer
+        # `#fromhex expects a str, got an int`, and so does this one.
         return wrapped_instance(
             cls, float.fromhex(text_like(s, "fromhex", "a str", (str,)))
         )
@@ -166,11 +166,11 @@ class Float(_NumericCompareMixin, Object, name="float"):
 
     def pow(self, other: object, modulus: Int | NoneClass | None = None) -> object:
         # The third slot exists so the message has the same shape on every
-        # rung: without it `(2.0).pow(3, 5)` answered CPython's *signature*
+        # rung: without it `(2.0).pow(3, 5)` would answer CPython's *signature*
         # error — `float.pow() takes 2 positional arguments but 3 were given`,
-        # naming a message as a call — while `(2).pow(3.0, 5)` one line away
-        # answered the operation. CPython refuses the float form too, but as
-        # an operation, so the refusal is `Int.__pow__`'s own sentence.
+        # naming a message as a call — while `(2).pow(3.0, 5)` answers the
+        # operation. CPython refuses the float form too, but as an operation,
+        # so the refusal is `Int.__pow__`'s own sentence.
         #
         # In `pow`, not `__pow__`: the operator never carries a third operand
         # (`a ** b % m` is two operations, and the builtin `pow` is banned).

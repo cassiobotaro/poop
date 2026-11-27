@@ -1,10 +1,10 @@
 """The shared body behind every `min` / `max` message.
 
-Lived in `_iterable_mixin` while only the mixin sent it. The scalar rungs need
-it too — `Int.max` and `Float.max` take the same `key` their builtin does — and
-`_iterable_mixin` imports `Int`, so the helper cannot stay in a module its own
-callers sit underneath. Its own home has no POOP imports at all, which is what
-lets all four reach it from the top of the file.
+Not in `_iterable_mixin`: the scalar rungs need it too — `Int.max` and
+`Float.max` take the same `key` their builtin does — and `_iterable_mixin`
+imports `Int`, so the helper cannot live in a module its own callers sit
+underneath. Its own home has no POOP imports at all, which is what lets all
+four reach it from the top of the file.
 """
 
 from typing import TYPE_CHECKING
@@ -33,15 +33,14 @@ def _minmax[T, D](
     is empty — `T | D`, which is what each caller's own overload pair says.
 
     Each caller passes only its own iterable: the mixin its `_iter_items()`
-    — `Str` and `Dict` inherit it, and once spelt the same body with the
-    iterator written by hand — and the scalar rungs the tuple of their
+    — `Str` and `Dict` inherit it — and the scalar rungs the tuple of their
     operands, which is the single-iterable form CPython's `max((a, b),
     key=f)` already means.
 
     `key=None` would work at runtime but matches no `min`/`max` overload, so an
     absent one is omitted rather than passed through. "Absent" is `_is_absent`,
-    not `is None`: POOP's `None` is a `NoneClass` instance, so the raw identity
-    test read the language's own null as a comparison block and answered
+    not `is None`: POOP's `None` is a `NoneClass` instance, so a raw identity
+    test would read the language's own null as a comparison block and answer
     `'NoneType' object is not callable`.
 
     `name` is the message — `#min` or `#max` — for the empty-collection
@@ -50,9 +49,9 @@ def _minmax[T, D](
     """
     kwargs: dict[str, object] = {}
     if not _is_absent(key):
-        # Guarded here rather than at five call sites: this is the one place
-        # every `min`/`max` key passes through. Before it, a non-block reached
-        # CPython's sort and answered `'int' object is not callable` — true of
+        # Guarded here rather than at each call site: this is the one place
+        # every `min`/`max` key passes through. Unguarded, a non-block reaches
+        # CPython's sort and answers `'int' object is not callable` — true of
         # every POOP object, and silent about what was expected.
         kwargs["key"] = a_key(key, name.lstrip("#"))
     if default is not MISSING:

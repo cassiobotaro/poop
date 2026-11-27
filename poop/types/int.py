@@ -71,14 +71,14 @@ class Int(_NumericCompareMixin, Object, name="int"):
     # foreign operand, so CPython raises the faithful comparison TypeError
     # instead of leaking #_value through does_not_understand. Wrapping in a
     # tuple keeps the no-`others` case answering self, unlike `max(x)`.
-    # `Int | Boolean`, as `Boolean.max` already says: the answer is one of
-    # the operands, and `(0).max(True)` answers `True`. A cast to `Int` used
-    # to say otherwise, mirroring typeshed's `max(0, True)`.
+    # `Int | Boolean`, as `Boolean.max` says: the answer is one of the
+    # operands, and `(0).max(True)` answers `True`. A cast to `Int`, mirroring
+    # typeshed's `max(0, True)`, would deny that.
     # `key` is keyword-only, as CPython spells it: a positional block would be
-    # indistinguishable from one more operand, and that was the bug — the block
-    # was compared as a value, so a *comparable* extra argument would have
-    # answered a plausible wrong number in silence. `default` stays out; CPython
-    # refuses it alongside multiple positional arguments too.
+    # indistinguishable from one more operand and compared as a value, so a
+    # *comparable* extra argument would answer a plausible wrong number in
+    # silence. `default` stays out; CPython refuses it alongside multiple
+    # positional arguments too.
     def max(
         self,
         *others: Int | Float | Boolean,
@@ -226,12 +226,12 @@ class Int(_NumericCompareMixin, Object, name="int"):
         self, other: object, modulus: Int | Boolean | NoneClass | None = None
     ) -> object:
         # The reflected half is part of the operation, not an extra: `__pow__`
-        # answers `NotImplemented` for a `Complex` *on purpose*, so CPython's
-        # operator protocol falls through to `Complex.__rpow__`. `2 ** 1+1j`
-        # did exactly that while `(2).pow(complex(1, 1))` refused — the
-        # substitute narrower than both the operator POOP still allows and the
-        # builtin it replaces. `modulus` is guarded because the three-argument
-        # form has no reflected counterpart in CPython either.
+        # answers `NotImplemented` for a `Complex` *on purpose*, so `pow` falls
+        # through to `Complex.__rpow__` as the `**` operator does, and computes
+        # what the operator and the builtin it replaces compute
+        # (`doc/adr/0039-substitutes-mirror-the-full-builtin-signature-accessors-are-methods.md`).
+        # `modulus` is guarded because the three-argument form has no
+        # reflected counterpart in CPython either.
         result = self.__pow__(other, modulus)
         if result is NotImplemented:
             result = reflected_pow(self, other, modulus)
@@ -395,10 +395,10 @@ class Int(_NumericCompareMixin, Object, name="int"):
 
     def __index__(self) -> int:
         # Python's index protocol, so an `Int` *is* an index: `xs.at(i)` hands
-        # the wrapper straight to CPython instead of unwrapping `i._value` by
-        # hand, which leaked `#_value` for a foreign index and refused a
-        # Boolean one. Answering a native is required — CPython demands an
-        # `int` here, like `__len__` and `__bool__`.
+        # the wrapper straight to CPython. Unwrapping `i._value` by hand would
+        # leak `#_value` for a foreign index and refuse a Boolean one.
+        # Answering a native is required — CPython demands an `int` here, like
+        # `__len__` and `__bool__`.
         return self._value
 
     def __bool__(self) -> bool:
