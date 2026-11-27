@@ -6,7 +6,7 @@
 
 ## 2. Integration
 
-- [ ] 2.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check` and `uv run ty check poop/ tests/`. Run `printf '(1).at(0)\n' | uv run poop -`. Verify: every gate command exits 0, and the program exits 4 with its `poop: ` report unchanged from before the change.
+- [x] 2.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check` and `uv run ty check poop/ tests/`. Run `printf '(1).at(0)\n' | uv run poop -`. Verify: every gate command exits 0, and the program exits 4 with its `poop: ` report unchanged from before the change.
 
 ## Workflow follow-up
 
