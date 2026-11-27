@@ -103,7 +103,7 @@ _FORBIDDEN = {
 
 # Programs whose failure a reader is meant to understand. Kept as source, not
 # as calls into the types, so the assertion covers the whole path — including
-# `_describe`, which is where the operator translation runs.
+# `describe`, which is where the operator translation runs.
 _FAILING = [
     '"abc".at(10)',
     '"abc".at("x")',

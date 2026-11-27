@@ -100,7 +100,7 @@ def test_protocol_message_consumes_iterator() -> None:
 
 
 def test_exhaustion_carries_a_sentence_naming_the_iterator() -> None:
-    # The native StopIteration carries no message at all, so `_describe`
+    # The native StopIteration carries no message at all, so `describe`
     # degraded to the bare class name: a word naming the CPython protocol
     # that drives `for`, with nothing to say what went wrong.
     it = List(Int(1)).iter()

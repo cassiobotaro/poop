@@ -237,6 +237,10 @@ def _refusal_for(name: str, instead: str | None) -> class_side:
 def describe(exc: BaseException) -> str:
     """`<Kind>: <message>`, or the bare kind when the message is empty.
 
+    `str(exc)` alone drops the class: a missing key would render as the bare
+    `'zzz'`, with nothing to say a lookup failed, and a learner could not tell
+    which class escaped a `Try`.
+
     The one composition of an exception's displayed form: the executor's
     uncaught report, a caught `Error`'s `__str__` and an exception instance a
     program built all show the same text. The kind is `poop_class_of`'s, so it

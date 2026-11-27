@@ -217,7 +217,7 @@ class Error(Object, name="object"):
         # `Error` is a `poop.types` detail user code can neither name nor
         # construct, so it does not print itself — the same argument `class_()`
         # makes above. An empty message degrades
-        # to the bare class name rather than a dangling colon, as `_describe`
+        # to the bare class name rather than a dangling colon, as `describe`
         # does for the same reason.
         name = self.kind().name()
         message = self.message()

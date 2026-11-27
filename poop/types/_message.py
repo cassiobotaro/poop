@@ -71,7 +71,7 @@ _UNHASHABLE = re.compile(r"^unhashable type: '(.+?)'$")
 # attributes` — what CPython says for `"abc".x = 5`, every wrapper declaring
 # `__slots__`. It names a dunder `no_dunder_attribute` bans and advises about
 # a `__dict__` the reader cannot inspect. Reworded here, where
-# `executor._describe` and `Error.message()` both read, rather than in an
+# `exceptions.describe` and `Error.message()` both read, rather than in an
 # `Object.__setattr__`, which would add a Python frame to every object
 # construction in the language (every wrapper writes its payload in
 # `__init__`).

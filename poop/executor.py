@@ -110,24 +110,6 @@ def _user_lineno(exc: BaseException, filename: str) -> int | None:
     return user_lines[-1] if user_lines else None
 
 
-def _describe(exc: BaseException) -> str:
-    """Exception text for the error message, class name included.
-
-    ``str(exc)`` alone drops the type: a missing key renders as the bare
-    ``'zzz'``, with nothing to say a lookup failed, and a learner cannot tell
-    which class escaped a ``Try``. An empty message degrades to the bare name
-    rather than a dangling colon.
-
-    The name is ``poop_class_of``'s, not ``type(exc)``'s, so the class in the
-    report is always one a program can write and always the class a handler is
-    given. The raw type would name ``MessageNotUnderstood`` — POOP's own
-    class, outside ``MIRRORS`` — for every unknown selector in the language,
-    while ``except_(AttributeError, …)`` catches it and ``e.class_().name()``
-    answers ``AttributeError``: one failure under two names.
-    """
-    return describe(exc)
-
-
 def confine(namespace: dict[str, object]) -> None:
     """Bind the builtins allow-list in `namespace`, unless one is already there.
 
@@ -176,7 +158,7 @@ def execute(
         with _recursion_budget():
             exec(code, ns)  # noqa: S102
     except RecursionError as exc:
-        # Reworded here rather than in `_describe`, which every failure passes
+        # Reworded here rather than in `describe`, which every failure passes
         # through: this one is about the *interpreter's* budget, not about
         # anything the program's own objects said.
         raise ExecutionError(
@@ -186,5 +168,5 @@ def execute(
         ) from exc
     except Exception as exc:
         raise ExecutionError(
-            _describe(exc), _user_lineno(exc, filename), tuple(describe_chain(exc))
+            describe(exc), _user_lineno(exc, filename), tuple(describe_chain(exc))
         ) from exc
