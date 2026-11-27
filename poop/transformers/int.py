@@ -17,7 +17,7 @@ def _parsed(value: Str, base: int | None) -> Int:
 
     The base is checked here rather than read back out of CPython's message:
     that message says `base` too, so telling the two failures apart by their
-    text would have made `int("abc")` answer the base's error.
+    text would make `int("abc")` answer the base's error.
     """
     if base is not None and base != 0 and not 2 <= base <= 36:
         raise mirrors.ValueError("int base must be 0, or between 2 and 36")

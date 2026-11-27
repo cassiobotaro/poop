@@ -43,15 +43,15 @@ def _poop_kwargs_from(mapping: object) -> object:
     """The inverse of `_poop_dict_from_kwargs`, for a `f(**d)` call site.
 
     CPython's `**` demands raw `str` keys, and a POOP `Dict` carries `Str`
-    ones. Every other splat position was covered (`f(*xs)` by `Tuple` being
-    iterable, `def m(**kw)` by the varargs prologue, `{**a, **b}` by the merge
-    helper); this was the one left, and it failed in Python's words about a
-    POOP object: `TypeError: keywords must be strings`. `dict(**other)` goes
+    ones; handed over as it is, it fails in Python's words about a POOP
+    object, `keywords must be strings`. The other splat positions need no
+    conversion back (`f(*xs)` by `Tuple` being iterable, `def m(**kw)` by the
+    varargs prologue, `{**a, **b}` by the merge helper). `dict(**other)` goes
     through here too, as any call does.
 
     Keys unwrap through the faithful idiom: a non-`Str` key reaches CPython
-    raw, so `f(**{1: 2})` still answers `keywords must be strings` — true, and
-    now about a key the program actually wrote. A non-mapping argument is
+    raw, so `f(**{1: 2})` answers `keywords must be strings` — true, and
+    about a key the program actually wrote. A non-mapping argument is
     returned untouched for the same reason, so `f(**5)` answers CPython's own
     `Value after ** must be a mapping, not int`. Values stay POOP objects;
     a `**kw` parameter on the other side re-wraps them into a `Dict`.
@@ -71,10 +71,9 @@ def _poop_dict_merge(*parts: Dict) -> Dict:
     d = Dict()
     for part in parts:
         if not isinstance(part, _MappingMixin):
-            # The mapping twin of `_collection.spread`, and the same sentence.
-            # This one was POOP's own and still wrong in two smaller ways: `**
-            # -unpack` carries a stray space, and "dict display" is Python's
-            # grammar vocabulary for a construct POOP calls a literal.
+            # The mapping twin of `_collection.spread`, and the same sentence:
+            # "literal", POOP's word for what Python's grammar calls a dict
+            # display.
             raise mirrors.TypeError(
                 f"a dict literal can only spread a mapping, "
                 f"got {article(type(part).__qualname__)}"
@@ -146,12 +145,11 @@ class _DictRewriter(BuiltinRewriter):
         A `None` key marks a `**x` splat, which stays `x` whole; each run of
         plain pairs between splats becomes one `_poop_dict_from_pairs(...)`.
 
-        The display's alone. A `dict(a, k=v, **b)` call used to be folded
-        here too, from before every `**x` at a call site was unwrapped by
-        `VarargsTransformer`; with that in place the fold was a second
-        mechanism for one construct, and one that diverged from CPython —
-        `dict(**{1: 2})` passed, and `dict(a, x=1, **{"x": 2})` answered
-        `x: 2` where CPython refuses the duplicate.
+        The display's alone. A `dict(a, k=v, **b)` call is not folded: it is
+        read by its converter, and its `**x` is unwrapped by
+        `VarargsTransformer` as at any call site, so it refuses what CPython
+        refuses
+        (`doc/adr/0069-a-constructor-call-is-read-by-its-converter-at-run-time.md`).
         """
         parts: list[ast.expr] = []
         for is_splat, run in groupby(entries, key=lambda entry: entry[0] is None):

@@ -25,7 +25,7 @@ class BaseTransformer:
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         # At class definition, as `CollectingValidator` checks its `visitor`:
-        # otherwise a transformer that forgot one failed on the first program.
+        # otherwise a transformer that forgets one fails on the first program.
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, "rewriter"):
             raise mirrors.TypeError(f"{cls.__name__} sets no `rewriter`")
@@ -49,8 +49,7 @@ def call_at(
 ) -> ast.Call:
     """`target(*args, **keywords)`, positioned where `node` was.
 
-    Every rewrite in this package replaces one node with a call to a binding,
-    and each spelt out `copy_location(Call(func=Name(...), ...), node)` by hand.
+    Every rewrite in this package replaces one node with a call to a binding.
     """
     return ast.copy_location(
         ast.Call(func=name_at(target, node), args=list(args), keywords=list(keywords)),
@@ -63,7 +62,7 @@ def rebind(target: ast.expr, helper: str) -> ast.Assign:
 
     A variadic parameter (`varargs.py`) and a starred rest-target
     (`unpack.py`) are both rebound to the POOP collection their raw value
-    converts to; each module built the same `ast.Assign` by hand. A `Name`
+    converts to. A `Name`
     or an `Attribute` carries a context, set to `Store` on the left and
     `Load` on the right; anything else is copied as it came.
     """

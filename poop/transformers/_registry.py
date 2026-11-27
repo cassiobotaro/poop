@@ -2,9 +2,8 @@
 
 Lives here rather than in the package `__init__`: importing the submodules
 `dict`, `list` and `object` binds those names in the *package* namespace, so
-the registry used to open by re-importing the three builtins under aliases and
-spell `_list[type[...]]` throughout. A submodule's own namespace shadows
-nothing.
+the package's annotations would have to reach the three builtins under aliases
+(`_list[type[...]]`). A submodule's own namespace shadows nothing.
 """
 
 from collections import Counter
@@ -138,11 +137,11 @@ def _merge_bindings(sources: list[dict[str, object]]) -> dict[str, object]:
 
     Every function binding is also cloaked on the way through. The key stays
     mangled — `no_poop_prefix` reserves it — but CPython builds a wrong-arity
-    message from the callee's `__qualname__`, so `range(1, 2, 3, 4)` blamed
-    `_poop_range()`: the interpreter naming a spelling it then refuses if the
-    reader types it back. The factory-built collection helpers were worse,
-    answering `make_iterable_from.<locals>._from()`. Class bindings need
-    nothing here; `cloak` already covers them at their definition.
+    message from the callee's `__qualname__`, which would name `_poop_range()`,
+    a spelling the interpreter refuses if the reader types it back, or, for a
+    factory-built collection helper, `make_iterable_from.<locals>._from()`.
+    Class bindings need nothing here; `cloak` already covers them at their
+    definition.
     """
     counts = Counter(*src for src in sources)
     if dup := sorted(key for key, n in counts.items() if n > 1):

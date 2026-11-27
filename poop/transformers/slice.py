@@ -11,10 +11,9 @@ if TYPE_CHECKING:
 
 
 def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
-    """`slice(...)`, guarded. `Slice(...)` *is* the call, so unlike its
-    siblings this one had no factory at all — and the
-    refusal that leaked was the sharpest of the eight, naming `__init__`, a
-    dunder `no_dunder_attribute` refuses, from a construct the program spelled
+    """`slice(...)`, guarded. Without this factory the call would reach
+    `Slice(...)` itself, whose refusal names `__init__`, a dunder
+    `no_dunder_attribute` refuses, from a construct the program spelled
     without a dunder anywhere.
     """
     refuse_extra_arguments(
@@ -28,10 +27,10 @@ def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
     )
     # CPython's one-argument `slice(stop)` means `slice(None, stop, None)`: the
     # lone argument is the stop, not the start. Counted here, on the values the
-    # call received, and not on the expressions written: the rewriter used to
-    # insert the `None` when it saw one argument node, and a starred argument
-    # is one node carrying any number of values, so `slice(*xs)` with `xs =
-    # (1, 5)` was folded into `slice(None, 1, 5)`.
+    # call received, and not on the expressions written: a starred argument is
+    # one node carrying any number of values, so `slice(*xs)` with `xs = (1,
+    # 5)` is `slice(1, 5)`
+    # (`doc/adr/0069-a-constructor-call-is-read-by-its-converter-at-run-time.md`).
     if len(args) == 1:
         args = (None, *args)
     return Slice(*cast("tuple[Index | NoneClass | None, ...]", args))
@@ -40,10 +39,10 @@ def _poop_slice_from(*args: object, **kwargs: object) -> Slice:
 class _SliceRewriter(BuiltinRewriter):
     builtin = "slice"
     call_target = "_poop_slice_from"
-    # The alias, as every sibling constructor binds: a bare `slice` used to
-    # name the class itself, so `s = slice; s(5)` and `class S(slice)` built
-    # through `Slice.__init__` — where the lone argument is the *start* — and
-    # silently answered `slice(5, None, None)` for the spelling that answers
+    # The alias, as every sibling constructor binds: a bare `slice` naming the
+    # class itself would build `s = slice; s(5)` and `class S(slice)` through
+    # `Slice.__init__` — where the lone argument is the *start* — and silently
+    # answer `slice(5, None, None)` for the spelling that answers
     # `slice(None, 5, None)` when called by name.
     name_target = "_poop_slice_cls"
 

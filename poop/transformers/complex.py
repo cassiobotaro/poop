@@ -32,8 +32,8 @@ def _poop_complex_from(*args: object, **kwargs: object) -> Complex:
                 return Complex(complex(real._value, 0))
             case Str():
                 # `complex() arg is a malformed string` names the builtin as a
-                # call; `int` and `float` were reworded to `'zz' is not a valid
-                # int` and this was left on CPython's phrasing, in POOP's voice.
+                # call; reworded as `int` and `float` are (`'zz' is not a valid
+                # int`).
                 try:
                     return Complex(complex(real._value))
                 except ValueError:

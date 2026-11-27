@@ -26,25 +26,21 @@ class _VarargsRewriter(ast.NodeTransformer):
     the first body statements; for lambdas (no statement body), wrap the
     expression in a nested lambda that receives the converted values.
 
-    The **call site** is the other end of that round trip, and it needed the
+    The **call site** is the other end of that round trip, and it needs the
     conversion run the other way — see `visit_Call`.
     """
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
         """Unwrap a `**d` splat's keys so CPython's `**` accepts them.
 
-        Three of the four splat positions already worked: `f(*xs)` because a
-        POOP `Tuple` is iterable, `def m(**kw)` by the prologue above, and
-        `{**a, **b}` through `_poop_dict_merge`. The call site was the one
-        left, and it failed in Python's own words about a POOP object —
-
-            d = {"a": 1}
-            A().m(**d)      # TypeError: keywords must be strings
-
-        — because `**` demands raw `str` keys and a POOP `Dict` carries `Str`.
-        One mechanism for every call, `dict(**other)` included: that call used
-        to be folded into a merge by `DictTransformer`, a second path that
-        diverged from CPython on a non-string key and on a duplicated keyword.
+        `**` demands raw `str` keys and a POOP `Dict` carries `Str`, so an
+        unconverted `A().m(**d)` fails in Python's own words about a POOP
+        object, `keywords must be strings`. The other three splat positions
+        need nothing here: `f(*xs)` works because a POOP `Tuple` is iterable,
+        `def m(**kw)` by the prologue above, and `{**a, **b}` through
+        `_poop_dict_merge`. One mechanism for every call, `dict(**other)`
+        included
+        (`doc/adr/0069-a-constructor-call-is-read-by-its-converter-at-run-time.md`).
         """
         self.generic_visit(node)
         for kw in node.keywords:
@@ -55,8 +51,8 @@ class _VarargsRewriter(ast.NodeTransformer):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         self.generic_visit(node)
         # After the docstring, which `StrTransformer` leaves where CPython
-        # reads it; spliced at `body[:0]` the prologue pushed it to the second
-        # statement, where it is a bare string built on every call.
+        # reads it; spliced at `body[:0]` the prologue would push it to the
+        # second statement, where it is a bare string built on every call.
         at = 1 if ast.get_docstring(node, clean=False) is not None else 0
         node.body[at:at] = [
             rebind(name_at(name, node, ast.Store()), helper)

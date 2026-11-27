@@ -1,34 +1,21 @@
 """The shared refusal for a constructor call the converter cannot take.
 
-Every builtin-constructor rewriter used to guard its `visit_Call` on the arity
-it could handle (`not node.keywords and len(node.args) <= 1`) and let anything
-else fall through to `visit_Name`, which renames the bare builtin to the
-*class* binding. The class constructor is variadic — `List(*elements)` — so
-one name meant "convert" at one arity and "build from these elements" at
-another, and only the first matches Python:
+Every `<builtin>(...)` reaches its converter whatever its arity, and the
+converter refuses in POOP's vocabulary. A rewriter that guarded `visit_Call` on
+the arity it can handle (`not node.keywords and len(node.args) <= 1`) and let
+anything else fall through to `visit_Name` would send the call to the *class*
+binding. The class constructor is variadic — `List(*elements)` — so one name
+would mean "convert" at one arity and "build from these elements" at another:
+`list(1, 2)` would build a list where CPython answers `list expected at most 1
+argument`. `list(a, b)` is a plausible slip for `[a, b]`, and CPython exists to
+catch it. A scalar wrapper reached that way would report a bad call against
+`__init__` — a dunder `no_dunder_attribute` bans outright — from a construct
+the program spelled without a dunder anywhere.
 
-    list(1, 2).print()   ->  1 2      CPython: list expected at most 1 argument
-    set(1, 2).print()    ->  {1, 2}   CPython: set expected at most 1 argument
-
-`list(a, b)` is a plausible slip for `[a, b]`, and CPython exists to catch it.
-The scalar wrappers fell through the same way, and there the answer was right
-but the report named `__init__` — a dunder `no_dunder_attribute` bans outright
-— from a construct the program spelled without a dunder anywhere:
-
-    str(b"ab", "utf-8")  ->  str.__init__() takes 2 positional arguments but 3 …
-
-So the call path is complete now: every `<builtin>(...)` reaches the converter
-whatever its arity, and the converter refuses in POOP's vocabulary.
-
-That claim was written when ten of the eighteen constructors used this and was
-made true for the other eight afterwards — `float`, `bool`, `int`, `range`,
-`enumerate`, `zip`, `object` and `slice` all reached CPython's call machinery,
-each naming the builtin spelt as a *call* and saying "positional argument".
-Three needed more than the arity: `object` takes none at all, `zip`
-legitimately takes any number of iterables so only its `strict` keyword is
-real, and `slice` had no factory in front of the class, which is why its
-refusal named `__init__` — the same dunder this module was written to remove
-one constructor over.
+Three constructors need more than the arity: `object` takes no argument at all,
+`zip` legitimately takes any number of iterables so only its `strict` keyword
+is real, and `slice` needs a factory in front of the class, whose refusal would
+name `__init__` too.
 """
 
 from typing import TYPE_CHECKING
@@ -62,9 +49,8 @@ def refuse_extra_arguments(  # noqa: PLR0913 — one sentence, every part of it 
             f"{name} takes no keyword arguments — it is built from {built_from}"
         )
     if len(args) > most:
-        # Pluralised since `object` joined the list with `most=0`, which makes
-        # `got 1 arguments` reachable — no other converter can be over its
-        # limit by exactly one argument.
+        # Pluralised for `object`'s `most=0`, the one limit a single argument
+        # is over: without it the refusal would read `got 1 arguments`.
         given = f"{len(args)} argument" + ("" if len(args) == 1 else "s")
         raise mirrors.TypeError(
             f"{name} is built from {built_from}, got {given} — {hint}"

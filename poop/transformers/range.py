@@ -9,15 +9,15 @@ from poop.types.range import Range
 def _poop_range(*args: object, **kwargs: object) -> Range:
     """`range(stop)` / `range(start, stop[, step])`, read by index.
 
-    `an_int`, not `int`: the converter once read `int(...)`, which *truncates*
-    where an index refuses, so `range(3.5)` answered `range(0, 3)` and
-    `range(1, 10, 2.0)` a step of 2 — silently running over a different
-    sequence than the program describes. It then read `operator.index` and
-    kept CPython's `'float' object cannot be interpreted as an integer`, the
-    very sentence `an_int` replaced on every other integer argument in the
-    language; now each argument is refused by its role (`#range's stop must
-    be an int, got a str`). The boolean rung still passes, since admitting it
-    is exactly what an index is for.
+    `an_int`, not `int`: `int(...)` *truncates* where an index refuses, so
+    `range(3.5)` would run over a different sequence than the program
+    describes. `an_int`, not `operator.index` either, whose refusal is
+    CPython's `'float' object cannot be interpreted as an integer`: each
+    argument is refused by its role (`#range's stop must be an int, got a
+    str`), as every other integer argument in the language is
+    (`doc/adr/0048-range-stores-an-inclusive-bound-decoded-in-one-place-and-reads-its-bounds-by-index.md`).
+    The boolean rung still passes, since admitting it is exactly what an
+    index is for.
     """
     refuse_extra_arguments(
         "range",

@@ -26,19 +26,14 @@ if TYPE_CHECKING:
 def spread(value: object, kind: str) -> object:
     """`value`, or a refusal naming the literal the reader actually wrote.
 
-    `[*5]`, `(*5,)` and `{*5}` are literals with a spread, and all three
-    answered in terms of a constructor call the program never wrote:
+    `[*5]`, `(*5,)` and `{*5}` are literals with a spread. CPython's own
+    refusal, `list() argument after * must be an iterable, not int`, names
+    `list()`: a message spelt as a call, which the wording sweep bans, and a
+    construct absent from the source, since the reader wrote brackets — and
+    `[*5]` is not even routed through the `list` converter.
 
-        [*5]     # list() argument after * must be an iterable, not int
-
-    `list()` is a message spelt as a call, which the wording sweep bans; it
-    names a construct absent from the source, since the reader wrote brackets;
-    and `[*5]` is not even routed through the `list` converter, so the name was
-    doubly not the one that ran.
-
-    The block form was already right and is the target this copies: `f(*5)`
-    answers `<block> argument after * must be an iterable, not int`, naming the
-    receiver in POOP's own spelling.
+    The block form is the model: `f(*5)` answers `<block> argument after *
+    must be an iterable, not int`, naming the receiver in POOP's own spelling.
     """
     if isinstance(value, Iterable):
         return value
@@ -71,10 +66,7 @@ class LiteralRewriter(BuiltinRewriter):
     `[a, b]`, `(a, b)` and `{a, b}` each become a call of the POOP class
     with the elements as arguments, spreads routed through `spread` under the
     literal's own name — the one sentence `[*5]` must answer with, since the
-    reader wrote brackets and never a constructor. The three rewriters each
-    carried this body as a `visit_List`/`visit_Tuple`/`visit_Set`, identical
-    but for the node and the binding, and a table beside them repeated which
-    builtin each node spells. One `visit` and two attributes say it once.
+    reader wrote brackets and never a constructor.
 
     Only a `Load` literal is wrapped: `[a, b] = pair` is an unpacking target,
     which `UnpackTransformer` owns. A set literal has no context at all and is
@@ -139,17 +131,13 @@ def make_bytes_from[T: (Bytes, ByteArray)](
     """The converter for `bytes(...)` or `bytearray(...)`: the two mirror each
     other message for message, constructor included.
 
-    The text form delegates to `Str.encode`, the guarded codec surface. Reaching
-    into `arg._value` and calling `str.encode` here was the one argument in the
-    language `_codec.py` never saw: `bytes("ab", "rot13")` answered `'rot13' is
-    not a text encoding; use codecs.encode() to handle arbitrary codecs`,
-    sending the reader to a module `no_import` forbids; `bytes("é", "ascii")`
-    leaked CPython's codec report; and `bytes("ab", 5)` was silently *ignored*,
-    falling back to utf-8. The encoding is required, as CPython requires it:
-    without one there is no answer, only a guess about what the text means as
-    bytes. `bytearray` once took no text at all — `most=1` refused legal
-    Python, and the one-argument spelling fell through to iterating the text,
-    answering `'str' object cannot be interpreted as an integer`.
+    The text form delegates to `Str.encode`, the guarded codec surface, so the
+    encoding and the error handler pass the checks `_codec.py` makes on any
+    text; calling `str.encode` on `arg._value` here would go around them
+    (`doc/adr/0046-text-codecs-are-limited-to-four-encodings-constructors-included.md`).
+    The encoding is required, as CPython requires it: without one there is no
+    answer, only a guess about what the text means as bytes. `bytearray` takes
+    the same text form as `bytes`.
 
     `build` makes the receiver from whatever its own builtin accepts, so a byte
     out of range is refused in that builtin's words (`bytes must be in

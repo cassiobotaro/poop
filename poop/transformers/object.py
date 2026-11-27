@@ -7,8 +7,8 @@ def _poop_object_from(*args: object, **kwargs: object) -> Object:
     """`object(...)` / `Object(...)`, guarded in call position only.
 
     The root is bound as the *class*, because `class Foo(Object)` needs a name,
-    so a call fell through to CPython: `object(5)` answered `object() takes no
-    arguments` — a message spelt as a call, which the wording sweep bans. The
+    so without this factory a call reaches CPython, whose `object() takes no
+    arguments` is a message spelt as a call, which the wording sweep bans. The
     name position is untouched, which is what keeps the base list working.
 
     `most=0`: the root really is built from nothing, so both halves of the
@@ -44,13 +44,9 @@ class _ObjectRewriter(BuiltinRewriter):
 class ObjectTransformer(BaseTransformer):
     """Rewrites `object` and `Object` to POOP's root class.
 
-    `ClassTransformer` used to rewrite both in a base list, so
-    `class Foo(object)` worked while a bare `object` resolved to CPython's
-    class and a bare `Object` was a `NameError` — the capital name was
-    accepted in exactly one syntactic position, for a name bound nowhere.
-    Every other lowercase builtin has had a `Name`-position rewrite all along;
-    `object` joined them first, and `Object` joins here so the POOP spelling
-    resolves everywhere the Python one does.
+    Both are rewritten in every position, as every other lowercase builtin
+    is, so the POOP spelling resolves everywhere the Python one does: a base
+    list, a bare name, a call.
 
     Binds only the call-position factory: `ClassTransformer` already binds
     `_poop_object` for the implicit base, and the namespace build rejects a

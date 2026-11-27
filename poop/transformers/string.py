@@ -17,10 +17,9 @@ def _poop_str_from(*args: object, **kwargs: object) -> Str:
     """`str()`, `str(x)` and the decoding form `str(bytes, encoding, errors)`.
 
     The two-argument form is CPython's and answers `"ab"` for
-    `str(b"ab", "utf-8")`; the converter used to take one argument, so that
-    call fell through to the class and reported `str.__init__() takes 2
-    positional arguments but 3 were given` — a valid Python call, refused by
-    a message naming a dunder the program never wrote.
+    `str(b"ab", "utf-8")`. The converter takes it rather than leaving the call
+    to the class, whose refusal would name `str.__init__()`, a dunder the
+    program never wrote, for a valid Python call.
     """
     refuse_extra_arguments(
         "str",
@@ -72,16 +71,16 @@ class _StrRewriter(BuiltinRewriter):
     def _keeping_docstring(self, node: ast.ClassDef | ast.FunctionDef) -> ast.AST:
         """Rewrite the body, leaving a docstring as the raw constant it is.
 
-        A docstring is a string literal, so `visit_Constant` wrapped it like
+        A docstring is a string literal, so `visit_Constant` would wrap it like
         any other — into `_poop_str('…')`, an expression statement that is no
         longer a docstring to CPython and is evaluated on every call of the
-        method it opened. Only the position CPython reads as the docstring is
+        method it opens. Only the position CPython reads as the docstring is
         exempt; a bare string anywhere else is still a `Str`.
 
         A class and a function only, never the module: a module's first
         statement is not a docstring to POOP but an expression — the REPL
         evaluates `"abc"` typed at the prompt, and `:methods "abc"` lists what
-        the value answers — and left raw it would have been a Python `str`.
+        the value answers — and left raw it would be a Python `str`.
         """
         if ast.get_docstring(node, clean=False) is None:
             return self.generic_visit(node)

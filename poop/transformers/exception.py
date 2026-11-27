@@ -12,12 +12,12 @@ _BINDINGS: dict[str, object] = {
 class _ExceptionRewriter(ast.NodeTransformer):
     # Every mirror name, rewritten in every position, Store included — so
     # `RESERVED_NAMES` derives the reservation from here, as it does from the
-    # `BuiltinRewriter`s and `_EllipsisRewriter`. Both sides of the hazard
-    # were live when the validator kept its own union: `ValueError = 5`
-    # clobbered the mirror globally, while a parameter or class *name*
-    # (neither an `ast.Name`) kept its spelling and left every read in the
-    # body resolving to the mirror, so `def hold(self, ValueError): return
-    # ValueError` answered the class and never saw its argument.
+    # `BuiltinRewriter`s and `_EllipsisRewriter`. Unreserved, the hazard cuts
+    # both ways: `ValueError = 5` would clobber the mirror globally, while a
+    # parameter or class *name* (neither an `ast.Name`) keeps its spelling and
+    # leaves every read in the body resolving to the mirror, so `def
+    # hold(self, ValueError): return ValueError` would answer the class and
+    # never see its argument.
     names: ClassVar[frozenset[str]] = frozenset(MIRRORS)
 
     def visit_Name(self, node: ast.Name) -> ast.AST:
@@ -39,10 +39,9 @@ class ExceptionTransformer(BaseTransformer):
     being rewritten to a mangled name. Same shape the Ellipsis transformer
     uses.
 
-    `raise_` needs no ordering constraint any more: it is a class-side message
-    on `PoopExcMeta`, so the mirror this rewrites to answers it. The rule that
-    `ExceptionTransformer` must run after `RaiseTransformer` existed only
-    because that rewrite matched on the name's *spelling*.
+    `raise_` puts no ordering constraint on this transformer: it is a
+    class-side message on `PoopExcMeta`, so the mirror this rewrites to
+    answers it.
     """
 
     rewriter = _ExceptionRewriter
