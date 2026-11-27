@@ -54,6 +54,7 @@ from poop.types.sentinel import Sentinel
 from poop.types.set import Set
 from poop.types.slice import Slice
 from poop.types.string import Str
+from poop.types.timeout import Timeout
 from poop.types.try_ import Try
 from poop.types.tuple import Tuple
 from poop.types.with_ import With
@@ -544,6 +545,8 @@ def _receivers() -> dict[str, object]:
             "block": Block(lambda x: x),
             "error": Error(mirrors.ValueError("boom")),
             "coroutine": _closed_coroutine(),
+            # Not entered: entering needs a running event loop.
+            "Timeout": Timeout._of(1.0),
         }
     )
     return _SAMPLES

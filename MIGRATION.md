@@ -693,6 +693,7 @@ The body must answer a coroutine; `With` is for a body that does not await. `__a
 | *(Python's `asyncio.run`)* | `Async.run(coroutine)` | runs the coroutine on a new event loop; answers its value |
 | `(Delay forSeconds: n) wait` | `Async.sleep(delay, result=none)` | a coroutine that suspends for `delay` seconds and answers `result` |
 | *(Python's `asyncio.gather`)* | `Async.gather(*coroutines)` | a coroutine that runs them concurrently and answers a `List` of their values, in order |
+| `[block] valueWithin: d onTimeout: [...]` | `Async.timeout(delay)` | a `Timeout`, entered with `AsyncWith`; fails a body that outlasts `delay` seconds with `TimeoutError`, raised from a `CancelledError`; the body receives the `Timeout`, which answers `expired()` |
 
 `Async` has no instances. Sending an async method answers a `coroutine`, which prints as `<coroutine>` and is awaited once with `.await_()`.
 

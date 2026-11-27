@@ -59,7 +59,7 @@ def test_async_is_named_async(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_async_has_no_instances() -> None:
     assert (
-        "TypeError: Async has no instances — send run, sleep or gather to the class"
+        "TypeError: Async has no instances — send run, sleep, gather or timeout to the class"
         in (_refusal("Async()"))
     )
 

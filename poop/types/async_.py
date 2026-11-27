@@ -9,8 +9,9 @@ from poop.types.coroutine import Coroutine
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
-from poop.types.none import none
+from poop.types.none import NoneClass, none
 from poop.types.object import Object
+from poop.types.timeout import Timeout
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
@@ -48,7 +49,7 @@ class Async(Object, name="Async"):
 
     def __new__(cls, *_args: object, **_kwargs: object) -> Never:
         raise mirrors.TypeError(
-            "Async has no instances — send run, sleep or gather to the class"
+            "Async has no instances — send run, sleep, gather or timeout to the class"
         )
 
     @staticmethod
@@ -67,3 +68,13 @@ class Async(Object, name="Async"):
     def gather(*coroutines: Awaitable[Object]) -> Coroutine:
         awaitables = tuple(_awaitable(c, "gather", "coroutines") for c in coroutines)
         return Coroutine._of(_gather(awaitables))
+
+    @staticmethod
+    def timeout(delay: Int | Float | NoneClass) -> Timeout:
+        if delay is none:
+            return Timeout._of(None)
+        if not isinstance(delay, (Int, Float)):
+            raise mirrors.TypeError(
+                f"#timeout expects a number or None, got {describe_operand(delay)}"
+            )
+        return Timeout._of(cast("float", to_python(delay)))

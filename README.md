@@ -111,6 +111,26 @@ $ poop feed.py
 cached
 ```
 
+`Async.timeout(delay)` is a deadline, entered with `AsyncWith`. A body that outlasts it fails with `TimeoutError`:
+
+```python
+class Feed(Object):
+    async def slow(self):
+        return Async.sleep(1, "fresh").await_()
+
+    async def main(self):
+        deadline = AsyncWith(lambda: Async.timeout(0.05)).do(lambda t: self.slow())
+        return Try(lambda: deadline).except_(TimeoutError, lambda e: "late").await_()
+
+
+Async.run(Feed().main()).print()
+```
+
+```console
+$ poop deadline.py
+late
+```
+
 ## Learn by example
 
 [`examples/`](examples/) goes from hello world to the whole Gang of Four catalogue: Composite in place of `isinstance`, State in place of `if`, Null Object in place of `None` checks.
