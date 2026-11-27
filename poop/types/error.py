@@ -57,8 +57,8 @@ class Error(Object, name="object"):
     def kind(self) -> PoopExcMeta:
         """The exception's class — the class itself, not its name.
 
-        Not a `Str`: a name standing in for a class is the substitution
-        `class_()` does not make either, and POOP has class objects to answer
+        Not a `Str`: `class_()` answers a class rather than a name standing in
+        for one, and so does this, since POOP has class objects to answer
         with.
         """
         return poop_class_of(self._exception)

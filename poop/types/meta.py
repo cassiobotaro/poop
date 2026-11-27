@@ -3,7 +3,8 @@
 Smalltalk's "everything is an object" includes classes: `Foo name`, `Foo
 superclass` are ordinary messages to an ordinary object. Without this, POOP's
 thesis would hold for instances only, and `Foo.print()` would answer a Python
-binding failure —`Object.print() missing 1 required positional argument: 'self'`.
+binding failure — `Object.print() missing 1 required positional argument:
+'self'`.
 """
 
 import builtins
