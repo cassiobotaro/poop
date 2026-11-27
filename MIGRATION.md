@@ -278,6 +278,7 @@ With(lambda: lock).do(lambda _: critical_section())
 # Python
 import asyncio
 
+
 class Page:
     async def fetch(self, n):
         await asyncio.sleep(0.01)
@@ -285,6 +286,7 @@ class Page:
 
     async def main(self):
         return await asyncio.gather(self.fetch(1), self.fetch(2))
+
 
 print(asyncio.run(Page().main()))
 ```
@@ -298,6 +300,7 @@ class Page(Object):
 
     async def main(self):
         return Async.gather(*[1, 2].map(lambda n: self.fetch(n))).await_()
+
 
 Async.run(Page().main()).repr().print()
 ```
