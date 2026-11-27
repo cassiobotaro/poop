@@ -27,7 +27,7 @@
 
 ## 6. Integration
 
-- [ ] 6.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check`, `uv run ty check poop/ tests/`, and every example. Verify: each command exits 0.
+- [x] 6.1 Run the full gate: `uv run pytest` (95% floor, summary line read), `uv run ruff check`, `uv run ruff format --check`, `uv run ty check poop/ tests/`, and every example. Verify: each command exits 0.
 
 ## Workflow follow-up
 
