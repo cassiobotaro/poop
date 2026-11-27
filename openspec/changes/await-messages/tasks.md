@@ -25,7 +25,7 @@ docs. "The gate" in a task below means all of these pass:
 
 ## 4. Close
 
-- [ ] 4.1 Run `openspec validate await-messages --strict` and the two async examples (`examples/idiomatic/concurrent_fetch.py`, `examples/idiomatic/deadline.py`). Verify: validate exits 0 and the examples print what their docstrings say.
+- [x] 4.1 Run `openspec validate await-messages --strict` and the two async examples (`examples/idiomatic/concurrent_fetch.py`, `examples/idiomatic/deadline.py`). Verify: validate exits 0 and the examples print what their docstrings say.
 
 ## Workflow follow-up
 
