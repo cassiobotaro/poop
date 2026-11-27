@@ -43,12 +43,14 @@ ADR 76 already says every way of reaching an async method answers a
 reason to make one. Only `fget` can be async: `no_decorator` accepts only a
 bare `@property`, so a program has no way to attach a setter.
 
-**`Async.run` checks for a running loop itself.** Once it knows a loop is
-running, it closes the coroutine and raises the `RuntimeError` mirror with
-CPython's sentence, `asyncio.run() cannot be called from a running event
-loop`, quoted word for word. The alternative is to catch `RuntimeError` from
-`asyncio.run`, but that cannot tell asyncio's refusal apart from a
-`RuntimeError` the coroutine's own body raises.
+**`Async.run` checks for a running loop itself.** When one is running, it
+closes the coroutine and still calls `asyncio.run`, which refuses in its own
+words, `asyncio.run() cannot be called from a running event loop`, before it
+touches its argument. The alternative of catching `RuntimeError` from
+`asyncio.run` cannot tell asyncio's refusal from one the coroutine's own body
+raises. Raising a copy of the sentence from POOP was tried during
+implementation: `tests/test_no_python_wording.py` refuses `asyncio.run()` in
+a POOP-authored message, and a copy could drift from CPython.
 
 **`Async.gather` validates first and closes on refusal.** The arguments are
 already created when `gather` receives them. On a refusal, it closes every
@@ -69,10 +71,9 @@ The new sentence is added to that test's samples.
 
 ## Risks / Trade-offs
 
-- [CPython rewords the running-loop sentence in a future release] →
-  `Async.run` raises its own copy of the sentence, so the spec's quote keeps
-  passing and the copy can drift from CPython. Only the "Run inside run"
-  test would show the difference, by comparing with `asyncio.run` directly.
+- [A future CPython touches its argument before refusing] → The "Run
+  inside run" test would then fail on the recorded warning, not pass
+  silently.
 - [A subclass that overrides an async property with a sync one, or the
   reverse] → Each class body is wrapped on its own, so each override
   answers what its own getter is. This is no different from methods today.
