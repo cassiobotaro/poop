@@ -11,9 +11,10 @@ import typer
 from rich.syntax import Syntax
 
 from poop.console import ERR, OUT, error_line, in_colour
-from poop.errors import ExitCode, PoopError, ValidationError, report
+from poop.errors import ExitCode, PoopError, ValidationError
 from poop.interpreter import Interpreter
 from poop.repl import Repl
+from poop.report import report
 
 if TYPE_CHECKING:
     from rich.console import Console

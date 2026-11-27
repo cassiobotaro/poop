@@ -14,8 +14,9 @@ from rich.columns import Columns
 from rich.text import Text
 
 from poop.console import ERR, OUT, error_line, in_colour
-from poop.errors import ParseError, PoopError, report
+from poop.errors import ParseError, PoopError
 from poop.executor import confine
+from poop.report import report
 from poop.types._message import withheld_builtin
 from poop.types._selectors import is_message, receiver_label
 from poop.types.boolean import Boolean

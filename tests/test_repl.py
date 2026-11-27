@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from poop import repl, validators
-from poop.errors import ExecutionError, ParseError, ValidationError, report
+from poop.errors import ExecutionError, ParseError, ValidationError
 from poop.interpreter import Interpreter
 from poop.repl import (
     _CYAN,
@@ -25,6 +25,7 @@ from poop.repl import (
     _setup_readline,
     _value_text,
 )
+from poop.report import report
 from poop.transformers import DEFAULT_NAMESPACE
 from poop.types.boolean import true
 from poop.types.int import Int
