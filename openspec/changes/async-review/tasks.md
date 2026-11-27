@@ -15,8 +15,8 @@ Each numbered group is one commit, a `fix(types): ...` with its tests and docs.
 
 ## 2. A refusal from Async leaves no coroutine unawaited
 
-- [ ] 2.1 In `tests/test_types/test_async.py`, add tests for both scenarios of the `async-type` delta. Each one runs the program under `warnings.catch_warnings(record=True)` with `simplefilter("always")` and `gc.collect()`, then asserts the quoted sentence and that no recorded `RuntimeWarning` names the coroutine. Verify: both fail on `main` because the warning is recorded.
-- [ ] 2.2 In `poop/types/async_.py`, `run` checks for a running loop first. If one is running, it closes the handed `Coroutine` and raises `mirrors.RuntimeError("asyncio.run() cannot be called from a running event loop")`. `gather` closes every `Coroutine` it was handed before raising its refusal. Share the close with `refuse_awaitable` (`poop/types/coroutine.py`) rather than writing `_raw.close()` a second time. Verify: the 2.1 tests pass, the existing "Run inside run" test still passes, and so does the gate.
+- [x] 2.1 In `tests/test_types/test_async.py`, add tests for both scenarios of the `async-type` delta. Each one runs the program under `warnings.catch_warnings(record=True)` with `simplefilter("always")` and `gc.collect()`, then asserts the quoted sentence and that no recorded `RuntimeWarning` names the coroutine. Verify: both fail on `main` because the warning is recorded.
+- [x] 2.2 In `poop/types/async_.py`, `run` checks for a running loop first. If one is running, it closes the handed `Coroutine` and raises `mirrors.RuntimeError("asyncio.run() cannot be called from a running event loop")`. `gather` closes every `Coroutine` it was handed before raising its refusal. Share the close with `refuse_awaitable` (`poop/types/coroutine.py`) rather than writing `_raw.close()` a second time. Verify: the 2.1 tests pass, the existing "Run inside run" test still passes, and so does the gate.
 
 ## 3. A manager slot that cannot be awaited is refused in POOP's words
 

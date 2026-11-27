@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Never, cast, final
 from poop.types import mirrors
 from poop.types._bridge import to_python
 from poop.types._message import describe_operand
-from poop.types.coroutine import Coroutine
+from poop.types.coroutine import Coroutine, discard
 from poop.types.float import Float
 from poop.types.int import Int
 from poop.types.list import List
@@ -24,6 +24,14 @@ def _awaitable(value: object, selector: str, expected: str) -> Awaitable[Object]
             f"#{selector} expects {expected}, got {describe_operand(value)}"
         )
     return value
+
+
+def _loop_is_running() -> bool:
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return False
+    return True
 
 
 async def _sleep(delay: float, result: object) -> object:
@@ -54,7 +62,12 @@ class Async(Object, name="Async"):
 
     @staticmethod
     def run(coroutine: Awaitable[object]) -> object:
-        return asyncio.run(_awaitable(coroutine, "run", "a coroutine"))
+        awaitable = _awaitable(coroutine, "run", "a coroutine")
+        # Inside a running loop `asyncio.run` refuses, in CPython's words,
+        # before it touches its argument, and leaves that argument unawaited.
+        if _loop_is_running():
+            discard(awaitable)
+        return asyncio.run(awaitable)
 
     @staticmethod
     def sleep(delay: Int | Float, result: object = none) -> Coroutine:
@@ -66,7 +79,14 @@ class Async(Object, name="Async"):
 
     @staticmethod
     def gather(*coroutines: Awaitable[Object]) -> Coroutine:
-        awaitables = tuple(_awaitable(c, "gather", "coroutines") for c in coroutines)
+        try:
+            awaitables = tuple(
+                _awaitable(c, "gather", "coroutines") for c in coroutines
+            )
+        except mirrors.TypeError:
+            for coroutine in coroutines:
+                discard(coroutine)
+            raise
         return Coroutine._of(_gather(awaitables))
 
     @staticmethod

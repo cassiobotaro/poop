@@ -1,11 +1,17 @@
+import contextlib
 import gc
 import re
 import time
+import warnings
+from typing import TYPE_CHECKING
 
 import pytest
 
 from poop.errors import ExecutionError, ValidationError
 from poop.interpreter import Interpreter
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 _PAGE = """
 class Page(Object):
@@ -47,6 +53,18 @@ def _in_main(body: str) -> str:
     )
 
 
+@contextlib.contextmanager
+def _no_unawaited_warning() -> Generator[None]:
+    """Fail if a coroutine handed to a refused send warns that it was never
+    awaited. The refusal's traceback holds the coroutine in a cycle, so it is
+    collected here rather than in whichever test runs next."""
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        yield
+        gc.collect()
+    assert [str(w.message) for w in caught if w.category is RuntimeWarning] == []
+
+
 def _refusal(source: str) -> str:
     with pytest.raises(ExecutionError) as exc_info:
         Interpreter().run_source(_PAGE + source)
@@ -77,17 +95,13 @@ def test_run_refuses_what_cannot_be_awaited() -> None:
     assert "TypeError: #run expects a coroutine, got an int" in _refusal("Async.run(5)")
 
 
-# The refused send leaves the coroutine it was handed unawaited, and CPython
-# warns about it, as it does for the same refusal in Python.
-@pytest.mark.filterwarnings("ignore:coroutine 'Page.answer' was never awaited")
 def test_run_inside_run_fails_as_cpython_does() -> None:
+    with _no_unawaited_warning():
+        refusal = _refusal(_in_main("Async.run(self.answer())"))
     assert (
         "RuntimeError: asyncio.run() cannot be called from a running event loop"
-        in _refusal(_in_main("Async.run(self.answer())"))
+        in refusal
     )
-    # The traceback holds the coroutine in a cycle: collected here, under the
-    # filter, rather than in whichever test runs next.
-    gc.collect()
 
 
 def test_sleep_answers_none_by_default(capsys: pytest.CaptureFixture[str]) -> None:
@@ -138,12 +152,7 @@ def test_gather_propagates_the_first_failure() -> None:
     )
 
 
-# The refused send leaves the coroutine it was handed unawaited, and CPython
-# warns about it, as it does for the same refusal in Python.
-@pytest.mark.filterwarnings("ignore:coroutine 'Page.answer' was never awaited")
 def test_gather_refuses_what_cannot_be_awaited() -> None:
-    assert re.search(
-        r"TypeError: #gather expects coroutines, got an int",
-        _refusal("Async.gather(Page().answer(), 5)"),
-    )
-    gc.collect()
+    with _no_unawaited_warning():
+        refusal = _refusal("Async.gather(Page().answer(), 5)")
+    assert re.search(r"TypeError: #gather expects coroutines, got an int", refusal)

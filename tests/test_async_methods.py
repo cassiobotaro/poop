@@ -233,9 +233,10 @@ def test_a_forgotten_await_warns_as_cpython_does() -> None:
 
 
 def test_a_forgotten_await_held_in_a_cycle_still_warns_as_cpython_does() -> None:
-    # The refusal's traceback holds the coroutine in a reference cycle, so the
-    # collector finalizes it, from the program's frame. CPython's warning
-    # imports through that frame's builtins.
+    # The caught failure's traceback holds the method's frame, and with it the
+    # coroutine in its local, in a reference cycle, so the collector finalizes
+    # it, from the program's frame. CPython's warning imports through that
+    # frame's builtins.
     with pytest.warns(
         RuntimeWarning, match=re.escape("coroutine 'Page.fetch' was never awaited")
     ):
@@ -243,8 +244,12 @@ def test_a_forgotten_await_held_in_a_cycle_still_warns_as_cpython_does() -> None
             "class Page(Object):\n"
             "    async def fetch(self):\n"
             "        pass\n"
-            "Try(lambda: Async.gather(Page().fetch(), 5)).except_(\n"
-            "    TypeError, lambda e: e\n"
+            "class Box(Object):\n"
+            "    def hold(self):\n"
+            "        c = Page().fetch()\n"
+            "        return 1 / 0\n"
+            "Try(lambda: Box().hold()).except_(\n"
+            "    ZeroDivisionError, lambda e: e\n"
             ").run()\n"
         )
         gc.collect()

@@ -36,15 +36,25 @@ class Coroutine(Object, name="coroutine"):
         return self._raw.__await__()
 
 
+def discard(value: object) -> None:
+    """Close `value` when it is a `Coroutine` a refused send was handed, so
+    the refusal is not followed by a warning that it was never awaited.
+
+    Any other value is left alone: an awaitable that is not a `Coroutine`,
+    such as an unexecuted `Try`, holds no coroutine yet.
+    """
+    if isinstance(value, Coroutine):
+        value._raw.close()
+
+
 def refuse_awaitable(value: object, sentence: str) -> None:
-    """Refuse `value` with `sentence` when it can be awaited, after closing it.
+    """Refuse `value` with `sentence` when it can be awaited, after
+    discarding it.
 
     For the synchronous forms, `Try.run` and `With.do`, whose guard would be
-    over before the coroutine ran. Closed first, so the refusal is not
-    followed by a warning that the coroutine was never awaited.
+    over before the coroutine ran.
     """
     if not isawaitable(value):
         return
-    if isinstance(value, Coroutine):
-        value._raw.close()
+    discard(value)
     raise mirrors.TypeError(sentence)
