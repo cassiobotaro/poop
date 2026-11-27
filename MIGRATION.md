@@ -314,7 +314,7 @@ Some Python has no POOP translation at all, and looking for one is the wrong mov
 | Python | Why there is no POOP form |
 |---|---|
 | `open(...)`, `pathlib`, `io` | POOP has no file I/O. A program's only channels are `"prompt".input()` and `obj.print()`. |
-| `import anything` | POOP is the language, not the library — it mirrors no stdlib module. The only injected names are `Try`, `With` and `Async`. |
+| `import anything` | POOP is the language, not the library — it mirrors no stdlib module. The only injected names are `Try`, `With`, `Async` and `AsyncWith`. |
 | `exec` / `eval` / `compile`, `globals` / `locals` / `vars`, `breakpoint`, `exit` | Interpreter escape hatches. |
 | `class X[T]`, `def m[T]()`, `type X = int` | POOP has no static types. Drop the parameter; the runtime types are POOP's own. |
 | `class X(metaclass=M)`, `class X(foo=1)` | A class is built from its bases alone. A parent that must configure its subclasses answers a class-side message instead. |
@@ -341,7 +341,7 @@ This table lists every construct a validator refuses and what to write instead. 
 | `ast.Try` | `Try(block).except_(ExcType, handler).run()` | `no_try` |
 | `ast.TryStar` | none — a definitive ban | `no_try` |
 | `ast.With` | `With(lambda: cm()).do(lambda resource: body)` | `no_with` |
-| `ast.AsyncWith` | none — POOP enters no asynchronous context manager | `no_with` |
+| `ast.AsyncWith` | `AsyncWith(lambda: cm()).do(lambda resource: coroutine).await_()` | `no_with` |
 | `ast.BoolOp` with `ast.And` | `x.and_(lambda: y)` | `no_and_or` |
 | `ast.BoolOp` with `ast.Or` | `x.or_(lambda: y)` | `no_and_or` |
 | `ast.Await` | `x.await_()`, inside an async method | `no_async` |
@@ -677,6 +677,14 @@ A slice is immutable, hashable, comparable with `==`/`!=`, and reusable across c
 | `[block] value: aResource` | `With(lambda: cm).do(lambda resource: body)` | acquires resource via `__enter__`, runs body, calls `__exit__`; answers the body's value |
 
 `.do()` refuses a body that answers a coroutine, which would run after the manager exits; `AsyncWith` guards an awaiting body.
+
+### `AsyncWith`
+
+| Message | Method | Behavior |
+|---|---|---|
+| *(Python's `async with`)* | `AsyncWith(lambda: cm).do(lambda resource: coroutine)` | answers a coroutine; awaiting it enters via `__aenter__`, awaits the body's coroutine, calls `__aexit__`; answers the body's value |
+
+The body must answer a coroutine; `With` is for a body that does not await. `__aexit__` receives what `__exit__` receives in `With`.
 
 ### `Async`
 

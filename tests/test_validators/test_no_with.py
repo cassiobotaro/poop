@@ -52,5 +52,6 @@ def test_async_with_raises_validation_error() -> None:
     with pytest.raises(ValidationError) as exc_info:
         NoWithValidator().validate(ast.parse(source))
     assert exc_info.value.message == (
-        "async with is forbidden — POOP enters no asynchronous context manager"
+        "async with is forbidden — use "
+        "AsyncWith(lambda: cm).do(lambda resource: …).await_() instead"
     )

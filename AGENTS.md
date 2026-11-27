@@ -41,11 +41,11 @@ order. Subjects follow `type(scope): ...`, e.g. `feat(types): ...`,
 
 ## Names user code can reach
 
-- `DEFAULT_NAMESPACE` (`poop/transformers/_registry.py`) exposes exactly three
-  user-facing names, `Try`, `With` and `Async`. Everything else is a mangled
-  `_poop_*` binding reached only through transformer rewrites.
-- Injected names keep Python's casing: `Try`, `With` and `Async` are classes,
-  so PascalCase. Wrapper names like `Int` or `List` are never reachable.
+- `DEFAULT_NAMESPACE` (`poop/transformers/_registry.py`) exposes exactly four
+  user-facing names, `Try`, `With`, `Async` and `AsyncWith`. Everything else is
+  a mangled `_poop_*` binding reached only through transformer rewrites.
+- Injected names keep Python's casing: `Try`, `With`, `Async` and `AsyncWith`
+  are classes, so PascalCase. Wrapper names like `Int` or `List` are never reachable.
 - The root class is spelled `object` or `Object`; both rewrite to
   `_poop_object` and both answer `object` to `.name()`.
 

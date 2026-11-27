@@ -8,5 +8,5 @@ class NoWithValidator(NodeValidator):
         ast.With: "with is forbidden — use With(lambda: cm()).do(lambda resource: body) instead",
         # Reachable at module level (ast.parse accepts it there) and inside
         # an `async def`, where no_async reports the root cause first.
-        ast.AsyncWith: "async with is forbidden — POOP enters no asynchronous context manager",
+        ast.AsyncWith: "async with is forbidden — use AsyncWith(lambda: cm).do(lambda resource: …).await_() instead",
     }
