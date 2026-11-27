@@ -115,3 +115,30 @@ def test_a_free_function_is_not_a_class_body() -> None:
 def test_validate_raises_the_first() -> None:
     with pytest.raises(ValidationError, match="defining __new__"):
         NoDunderDefValidator().validate(ast.parse(_class_defining("__new__")))
+
+
+@pytest.mark.parametrize("name", ["__str__", "__init__", "__eq__", "__len__"])
+def test_an_async_dunder_python_does_not_await_is_refused(name: str) -> None:
+    source = f"class P:\n    async def {name}(self, *args):\n        return 1"
+    assert [e.message for e in _errors(source)] == [
+        f"async def {name} is forbidden — Python calls {name} without awaiting "
+        "it; only __call__, __aenter__ and __aexit__ may be async"
+    ]
+
+
+def test_the_three_dunders_that_may_be_async_pass() -> None:
+    source = (
+        "class P:\n"
+        "    async def __call__(self):\n        pass\n"
+        "    async def __aenter__(self):\n        pass\n"
+        "    async def __aexit__(self, *args):\n        pass\n"
+        "    async def fetch(self):\n        pass\n"
+    )
+    assert _errors(source) == []
+
+
+def test_an_async_lookup_dunder_reports_the_lookup_refusal_only() -> None:
+    source = "class P:\n    async def __getattr__(self, name):\n        pass"
+    assert [e.message for e in _errors(source)] == [
+        "defining __getattr__ is forbidden — define does_not_understand(self, name) instead"
+    ]

@@ -31,9 +31,20 @@ _REFUSED: dict[str, str] = {
     "__delete__": _DESCRIPTOR,
 }
 
+# The dunders Python awaits when it calls them: `obj()` answers whatever
+# `__call__` answers, and `AsyncWith` awaits the other two. Every other slot is
+# called without an await, so an async one would hand Python a coroutine where
+# it expects a `str`, a `bool` or `None`.
+_MAY_BE_ASYNC = frozenset({"__call__", "__aenter__", "__aexit__"})
+
+
+def _is_dunder(name: str) -> bool:
+    return len(name) > 4 and name.startswith("__") and name.endswith("__")
+
 
 class _Visitor(ErrorCollector):
-    """Refuses a `def` of a lookup, creation or descriptor dunder in a class body.
+    """Refuses a `def` of a lookup, creation or descriptor dunder in a class body,
+    and an `async def` of a dunder Python calls without awaiting.
 
     `no_dunder_attribute` bans *reading* a dunder and `no_dunder_name` a bare
     dunder name, but neither stops a class body from *defining*
@@ -51,6 +62,15 @@ class _Visitor(ErrorCollector):
                 ):
                     self.report(
                         f"defining {name} is forbidden — {_REFUSED[name]}", stmt
+                    )
+                case ast.AsyncFunctionDef(name=name) if (
+                    _is_dunder(name) and name not in _MAY_BE_ASYNC
+                ):
+                    self.report(
+                        f"async def {name} is forbidden — Python calls {name} "
+                        "without awaiting it; only __call__, __aenter__ and "
+                        "__aexit__ may be async",
+                        stmt,
                     )
         self.generic_visit(node)
 

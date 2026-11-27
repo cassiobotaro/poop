@@ -332,6 +332,7 @@ This table lists every construct a validator refuses and what to write instead. 
 | `ast.FunctionDef` in an `ast.ClassDef` body (named `__getattribute__`, `__getattr__`, `__setattr__`, `__delattr__`, `__dir__`) | `does_not_understand(self, name)` for the messages a class does not answer; `set_attr`, `del_attr`, `dir` already exist | `no_dunder_def` |
 | `ast.FunctionDef` in an `ast.ClassDef` body (named `__new__`, `__init_subclass__`, `__class_getitem__`, `__subclasshook__`) | a class is built from its bases alone | `no_dunder_def` |
 | `ast.FunctionDef` in an `ast.ClassDef` body (named `__set_name__`, `__get__`, `__set__`, `__delete__`) | a POOP object is reached by messages, not by descriptors | `no_dunder_def` |
+| `ast.AsyncFunctionDef` in an `ast.ClassDef` body (a dunder other than `__call__`, `__aenter__`, `__aexit__`) | define it with `def`: Python calls it without awaiting it | `no_dunder_def` |
 | `type X = int` | Creates an alias for a Python builtin type — incompatible with POOP runtime types | `no_type_alias` |
 | `class X[T]`, `def m[T](self)`, `type X[T] = …` — a PEP 695 type parameter | POOP has no static types; the parameter is named as written (`drop the [T]`, `[*Ts]`, `[**P]`) | `no_type_alias` |
 | `ast.Match` | polymorphism + `if_true(block)`/`if_false(block)` | `no_match` |
