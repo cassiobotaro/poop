@@ -1,6 +1,6 @@
 # Examples
 
-Every program here runs with `uv run poop <path>`. POOP ships 44 programs across three subfolders, grouped by what they teach.
+Every program here runs with `uv run poop <path>`. POOP ships 45 programs across three subfolders, grouped by what they teach.
 
 **Language basics** ([`basics/`](basics/))
 - [`hello_world.py`](basics/hello_world.py) — the smallest POOP program
@@ -21,6 +21,7 @@ Every program here runs with `uv run poop <path>`. POOP ships 44 programs across
 - [`rpn_calculator.py`](idiomatic/rpn_calculator.py) — stack as a POOP `List`
 - [`roman_numerals.py`](idiomatic/roman_numerals.py) — string mapping
 - [`managed_resource.py`](idiomatic/managed_resource.py) — `With` and the `__exit__` protocol
+- [`concurrent_fetch.py`](idiomatic/concurrent_fetch.py) — async methods, `await_()` and `Async.gather`
 
 **Classic OO patterns** (Sandi Metz / GoF) ([`patterns/`](patterns/))
 

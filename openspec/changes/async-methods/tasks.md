@@ -32,7 +32,7 @@
 
 - [x] 6.1 Add `poop/types/async_.py` with `Async` (design, decision 5) and `poop/transformers/async_.py` with its `NAMESPACE`, and add it to `_BINDING_SOURCES`. Test every scenario of the `async-type` spec and the last one of `async-methods`, replacing the bare `asyncio.run` of task 3.1 with `Async.run`. Verify: `uv run pytest tests/test_types/test_async.py` exits 0 and `uv run poop -` on `Async = 1` fails validation.
 - [x] 6.2 Update `AGENTS.md` ("no async" and "exactly two user-facing names", now three: `Try`, `With`, `Async`) and `CONTRIBUTING.md` where it says the same. Add an *Async methods* section to `README.md` and the `asyncio.run` → `Async.run` row to `MIGRATION.md`'s substitute table; run every snippet added. Verify: each snippet runs with `uv run poop` and prints what the doc says.
-- [ ] 6.3 Add `examples/idiomatic/concurrent_fetch.py`, a class whose async methods are gathered, with its Smalltalk equivalent in the docstring (`(Delay forSeconds: 1) wait` for `Async.sleep`, `fork` and a `Semaphore` for `gather`). List it in `examples/README.md` and raise the count to 45. Verify: `uv run poop examples/idiomatic/concurrent_fetch.py` runs and `uv run pytest tests/test_doc_counts.py` exits 0.
+- [x] 6.3 Add `examples/idiomatic/concurrent_fetch.py`, a class whose async methods are gathered, with its Smalltalk equivalent in the docstring (`(Delay forSeconds: 1) wait` for `Async.sleep`, `fork` and a `Semaphore` for `gather`). List it in `examples/README.md` and raise the count to 45. Verify: `uv run poop examples/idiomatic/concurrent_fetch.py` runs and `uv run pytest tests/test_doc_counts.py` exits 0.
 
 ## 7. Integration
 
