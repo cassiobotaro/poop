@@ -23,7 +23,7 @@
 ## 5. Timeout
 
 - [x] 5.1 Add `poop/types/timeout.py` with `Timeout` (design, decision 5) and `Async.timeout`, and reword `Async()`'s refusal to the `async-type` delta. Test every scenario of `timeout-type` and the `async-type` delta, the *A timeout is caught* scenario of `try-type`, and the *Caught by its parent* scenario of `exception-mirrors`. Document `Async.timeout` in `README.md` and run the snippet. Verify: `uv run pytest tests/test_types -k "timeout or async"` exits 0.
-- [ ] 5.2 Add `examples/idiomatic/deadline.py`, a fetch guarded by `Async.timeout` inside an awaited `Try` and an `AsyncWith` over a user manager, with its Smalltalk equivalent in the docstring (Pharo's `[ … ] valueWithin: 1 second onTimeout: [ … ]` and `ensure:`). List it in `examples/README.md` and raise the count to 46. Verify: `uv run poop examples/idiomatic/deadline.py` runs and `uv run pytest tests/test_doc_counts.py tests/test_examples_docstring.py` exits 0.
+- [x] 5.2 Add `examples/idiomatic/deadline.py`, a fetch guarded by `Async.timeout` inside an awaited `Try` and an `AsyncWith` over a user manager, with its Smalltalk equivalent in the docstring (Pharo's `[ … ] valueWithin: 1 second onTimeout: [ … ]` and `ensure:`). List it in `examples/README.md` and raise the count to 46. Verify: `uv run poop examples/idiomatic/deadline.py` runs and `uv run pytest tests/test_doc_counts.py tests/test_examples_docstring.py` exits 0.
 
 ## 6. Integration
 
