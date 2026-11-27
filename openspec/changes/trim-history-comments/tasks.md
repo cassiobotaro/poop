@@ -22,28 +22,36 @@ task below means all of these pass:
 
 ## 2. Core
 
-- [ ] 2.1 Sweep `poop/cli.py`, `poop/errors.py`, `poop/executor.py`, `poop/interpreter.py`, `poop/parser.py`, `poop/console.py` and `poop/repl.py`. Verify: the gate.
+- [x] 2.1 Sweep `poop/cli.py`, `poop/errors.py`, `poop/executor.py`, `poop/interpreter.py`, `poop/parser.py`, `poop/console.py` and `poop/repl.py`. Verify: the gate.
 
 ## 3. Transformers
 
-- [ ] 3.1 Sweep every module under `poop/transformers/`. The current hits are in `slice.py`, `string.py`, `object.py`, `dict.py`, `_registry.py`, `_collection.py` and `_arity.py`, but read every file. Verify: the gate.
+- [x] 3.1 Sweep every module under `poop/transformers/`. The current hits are in `slice.py`, `string.py`, `object.py`, `dict.py`, `_registry.py`, `_collection.py` and `_arity.py`, but read every file. Verify: the gate.
 
 ## 4. Validators
 
-- [ ] 4.1 Sweep every module under `poop/validators/`. The current hits are in `no_private_attribute.py`, `no_try.py`, `no_id.py`, `no_dunder_name.py`, `no_dunder_def.py`, `no_dunder_attribute.py` and `base.py`. Verify: the gate.
+- [x] 4.1 Sweep every module under `poop/validators/`. The current hits are in `no_private_attribute.py`, `no_try.py`, `no_id.py`, `no_dunder_name.py`, `no_dunder_def.py`, `no_dunder_attribute.py` and `base.py`. Verify: the gate.
 
 ## 5. Types
 
-- [ ] 5.1 Sweep the hubs: `poop/types/object.py`, `meta.py`, `exceptions.py`, `error.py`, `mirrors.py`, `boolean.py`, `none.py`, `block.py` and `string.py`. Verify: the gate.
-- [ ] 5.2 Sweep the numbers: `int.py`, `float.py`, `complex.py`, `_numeric_compare.py`, `_pow.py` and `_minmax.py`. Verify: the gate.
-- [ ] 5.3 Sweep the collections and their iterators: `list.py`, `tuple.py`, `set.py`, `frozen_set.py`, `dict.py`, `frozen_dict.py`, `mapping_proxy.py`, `range.py`, `slice.py`, every `*_iterator.py`, `dict_items.py`, `dict_keys.py`, `dict_values.py`, `enumerate.py`, `zip.py`, `map.py` and `filter.py`. Verify: the gate.
-- [ ] 5.4 Sweep the binary types: `bytes.py`, `byte_array.py` and `memory_view.py`. Verify: the gate.
-- [ ] 5.5 Sweep `try_.py`, `with_.py`, `sentinel.py`, `ellipsis.py` and every remaining `_`-prefixed helper module under `poop/types/`. Verify: the gate, and `git ls-files 'poop/types/*.py'` lists no file that 5.1–5.5 did not name or cover.
+- [x] 5.1 Sweep the hubs: `poop/types/object.py`, `meta.py`, `exceptions.py`, `error.py`, `mirrors.py`, `boolean.py`, `none.py`, `block.py` and `string.py`. Verify: the gate.
+- [x] 5.2 Sweep the numbers: `int.py`, `float.py`, `complex.py`, `_numeric_compare.py`, `_pow.py` and `_minmax.py`. Verify: the gate.
+- [x] 5.3 Sweep the collections and their iterators: `list.py`, `tuple.py`, `set.py`, `frozen_set.py`, `dict.py`, `frozen_dict.py`, `mapping_proxy.py`, `range.py`, `slice.py`, every `*_iterator.py`, `dict_items.py`, `dict_keys.py`, `dict_values.py`, `enumerate.py`, `zip.py`, `map.py` and `filter.py`. Verify: the gate.
+- [x] 5.4 Sweep the binary types: `bytes.py`, `byte_array.py` and `memory_view.py`. Verify: the gate.
+- [x] 5.5 Sweep `try_.py`, `with_.py`, `sentinel.py`, `ellipsis.py` and every remaining `_`-prefixed helper module under `poop/types/`. Verify: the gate, and `git ls-files 'poop/types/*.py'` lists no file that 5.1–5.5 did not name or cover.
 
 ## 6. Integration
 
-- [ ] 6.1 Run `git grep -niE "used to|no longer|previously" -- 'poop/*.py'` across the whole package, and confirm each remaining hit is current reasoning. Run the gate once more on the final tree. Record the before and after counts of comment and docstring lines in the archive commit body. Verify: every listed hit is justified in that body.
+- [x] 6.1 Run `git grep -niE "used to|no longer|previously" -- 'poop/*.py'` across the whole package, and confirm each remaining hit is current reasoning. Run the gate once more on the final tree. Record the before and after counts of comment and docstring lines in the archive commit body. Verify: every listed hit is justified in that body.
 
 ## Workflow follow-up
 
 - Archive with the `openspec-archive-change` skill (CONTRIBUTING.md, *Closing a change*). Then delete `ast_unchanged.py`, or keep it in the archive as the record of how the gate was run.
+
+## Result
+
+- Before (`90f4053c`): 1,827 comment lines, 3,506 docstring lines, 16,730 lines in all.
+- After: 1,804 comment lines, 3,386 docstring lines, 16,589 lines in all.
+- `git grep -niE "used to|no longer|previously" -- 'poop/*.py'` comes back empty. The one remaining "no longer", in `transformers/string.py` `_keeping_docstring`, wraps across two lines and describes what wrapping a docstring would do today.
+- `_bytes_like.py` and `_codec.py` were swept with 5.4 and the collection helpers (`_dict_view`, `_iterator_base`, `_sequence`, …) with 5.3, rather than with 5.5.
+- Follow-up, not done here: `types/_alias.py` cites ADR 0051 for not using an `__instancecheck__` on the alias, but the reason that ADR gives (`ABCMeta.__subclasscheck__` recursing) stopped holding when `PoopMeta` moved to `type` (`62dd58e9`). Either the delegating `__instancecheck__` now works, or the ADR needs a successor with the current reason.
