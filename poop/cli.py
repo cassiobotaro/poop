@@ -11,14 +11,7 @@ import typer
 from rich.syntax import Syntax
 
 from poop.console import ERR, OUT, error_line, in_colour
-from poop.errors import (
-    ExecutionError,
-    ParseError,
-    PoopError,
-    TransformError,
-    ValidationError,
-    report,
-)
+from poop.errors import ExitCode, PoopError, ValidationError, report
 from poop.interpreter import Interpreter
 from poop.repl import Repl
 
@@ -27,23 +20,6 @@ if TYPE_CHECKING:
 
 app = typer.Typer(name="poop", help="Python interpreter infected by Smalltalk")
 
-# One exit code per failure kind, so a script can branch on it. 1 is the
-# unreadable file (`_unreadable`); 2 is shared with typer's usage errors on
-# purpose — a parse error and a bad flag both say "this is not a program";
-# a transform error is the interpreter failing while running the program,
-# and exits as a run-time failure does.
-UNREADABLE = 1
-EXIT_CODES: dict[type[PoopError], int] = {
-    ParseError: 2,
-    ValidationError: 3,
-    TransformError: 4,
-    ExecutionError: 4,
-}
-
-
-def exit_code(exc: PoopError) -> int:
-    return EXIT_CODES[type(exc)]
-
 
 @contextmanager
 def _poop_errors(source: str | None = None) -> Generator[None]:
@@ -51,7 +27,7 @@ def _poop_errors(source: str | None = None) -> Generator[None]:
         yield
     except PoopError as exc:
         report(exc, source, ERR)
-        raise typer.Exit(exit_code(exc)) from exc
+        raise typer.Exit(exc.exit_code) from exc
 
 
 def _write(console: Console, text: str) -> None:
@@ -73,7 +49,7 @@ def _unreadable(file: Path, reason: str | None) -> typer.Exit:
     style instead of leaking a rich-formatted traceback through typer.
     """
     error_line(ERR, f"poop: cannot read '{file}': {reason}")
-    return typer.Exit(UNREADABLE)
+    return typer.Exit(ExitCode.UNREADABLE)
 
 
 def _stdin_is_a_terminal() -> bool:
@@ -161,7 +137,7 @@ def _validators_only(
         for err in errors:
             report(err, source, ERR)
     if errors:
-        raise typer.Exit(exit_code(errors[0]))
+        raise typer.Exit(errors[0].exit_code)
 
 
 def _transformers_only(interpreter: Interpreter, source: str, filename: str) -> None:

@@ -7,7 +7,7 @@
 ## 2. Implementation
 
 - [x] 2.1 In `poop/errors.py`, add `ExitCode(IntEnum)` with `UNREADABLE = 1`, `NOT_A_PROGRAM = 2`, `REFUSED = 3` and `FAILED = 4`. Add `exit_code: ClassVar[ExitCode] = ExitCode.FAILED` on `PoopError`, and override it with `NOT_A_PROGRAM` on `ParseError` and `REFUSED` on `ValidationError`. `TransformError` and `ExecutionError` keep the inherited `FAILED`, set explicitly on each so that a reader of the class sees it. In `tests/test_errors.py`, add a test that each of the four classes, and a subclass of each defined in the test, answers the expected `exit_code`. Verify: `uv run pytest tests/test_errors.py` exits 0 with its summary line read.
-- [ ] 2.2 In `poop/cli.py`, replace `exit_code(exc)` and `exit_code(errors[0])` with `exc.exit_code` and `errors[0].exit_code`, exit `_unreadable` with `ExitCode.UNREADABLE`, and remove `UNREADABLE`, `EXIT_CODES` and `exit_code()`. Move the comment that explains which failures share a code onto `ExitCode`. Verify: `git grep -nE "EXIT_CODES|UNREADABLE\b|exit_code\(" -- poop tests` is empty, and `uv run pytest tests/test_cli.py` exits 0, including `test_cli_exit_codes_tell_the_failure_kinds_apart`.
+- [x] 2.2 In `poop/cli.py`, replace `exit_code(exc)` and `exit_code(errors[0])` with `exc.exit_code` and `errors[0].exit_code`, exit `_unreadable` with `ExitCode.UNREADABLE`, and remove `UNREADABLE`, `EXIT_CODES` and `exit_code()`. Move the comment that explains which failures share a code onto `ExitCode`. Verify: `git grep -nE "EXIT_CODES|UNREADABLE\b|exit_code\(" -- poop tests` is empty, and `uv run pytest tests/test_cli.py` exits 0, including `test_cli_exit_codes_tell_the_failure_kinds_apart`.
 
 ## 3. Integration
 
