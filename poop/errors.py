@@ -1,7 +1,8 @@
 import re
 import unicodedata
+from enum import IntEnum
 from itertools import starmap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from rich.syntax import Syntax
 from rich.text import Text
@@ -10,6 +11,21 @@ from poop.console import error_line, in_colour
 
 if TYPE_CHECKING:
     from rich.console import Console
+
+
+class ExitCode(IntEnum):
+    """The process exit code for each kind of failure, so a script can branch on it.
+
+    Named for what the code tells a script. `NOT_A_PROGRAM` is shared with
+    typer's usage errors on purpose: a parse error and a bad flag both say
+    "this is not a program". A transform error is the interpreter failing while
+    running the program, and exits `FAILED` as a run-time failure does.
+    """
+
+    UNREADABLE = 1
+    NOT_A_PROGRAM = 2
+    REFUSED = 3
+    FAILED = 4
 
 
 class PoopError(Exception):
@@ -21,6 +37,9 @@ class PoopError(Exception):
     UTF-8 bytes, which is what `_caret_column` converts from.
     """
 
+    # What the CLI exits with. A subclass inherits its parent's code, so an error
+    # with no code of its own still exits as a failure.
+    exit_code: ClassVar[ExitCode] = ExitCode.FAILED
     lineno: int | None = None
     col_offset: int | None = None
     # The exception chain under a run-time failure, one sentence per link;
@@ -51,6 +70,8 @@ class PoopError(Exception):
 class ParseError(PoopError):
     """Raised when the source is not Python at all."""
 
+    exit_code = ExitCode.NOT_A_PROGRAM
+
     @classmethod
     def from_syntax_error(cls, exc: SyntaxError) -> ParseError:
         """The parser's failure, keeping the position CPython already found.
@@ -72,6 +93,8 @@ class ParseError(PoopError):
 class ValidationError(PoopError):
     """Raised when a validator rejects the AST."""
 
+    exit_code = ExitCode.REFUSED
+
     # Narrower than `PoopError`'s `int | None` on purpose: a parse error may
     # have no position, but a validator always has a node, so this class
     # guarantees one. ty reads a narrowed writable attribute as unsound; here
@@ -92,6 +115,8 @@ class ValidationError(PoopError):
 class TransformError(PoopError):
     """Raised when a transformer fails while rewriting the AST."""
 
+    exit_code = ExitCode.FAILED
+
     def __init__(self, message: str, transformer: str) -> None:
         self.transformer = transformer
         super().__init__(message)
@@ -102,6 +127,8 @@ class TransformError(PoopError):
 
 class ExecutionError(PoopError):
     """Raised when exec() raises during evaluation."""
+
+    exit_code = ExitCode.FAILED
 
     def __init__(
         self, message: str, lineno: int | None = None, chain: tuple[str, ...] = ()

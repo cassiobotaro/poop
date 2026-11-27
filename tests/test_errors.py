@@ -4,6 +4,9 @@ import pytest
 
 from poop.errors import (
     ExecutionError,
+    ExitCode,
+    ParseError,
+    PoopError,
     TransformError,
     ValidationError,
     _caret_column,
@@ -234,3 +237,26 @@ def test_report_without_a_location_is_one_red_line() -> None:
     assert "\x1b[" in out
     assert "poop: boom" in out
     assert "|" not in out
+
+
+@pytest.mark.parametrize(
+    ("kind", "code"),
+    [
+        (ParseError, ExitCode.NOT_A_PROGRAM),
+        (ValidationError, ExitCode.REFUSED),
+        (TransformError, ExitCode.FAILED),
+        (ExecutionError, ExitCode.FAILED),
+    ],
+    ids=["parse", "validation", "transform", "execution"],
+)
+def test_an_error_and_its_subclass_carry_the_same_exit_code(
+    kind: type[PoopError], code: ExitCode
+) -> None:
+    # A subclass is never registered anywhere: the code is inherited.
+    sub = type("Sub", (kind,), {})
+    assert kind.exit_code == code
+    assert sub.exit_code == code
+
+
+def test_an_error_of_no_kind_exits_as_a_failure() -> None:
+    assert PoopError("x").exit_code == ExitCode.FAILED
