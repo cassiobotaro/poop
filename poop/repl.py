@@ -286,10 +286,17 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "del": "del x",
     "global": "class C:\n    def m(self):\n        global x",
     "yield": "class C:\n    def m(self):\n        yield x",
-    "async": "class C:\n    async def m(self):\n        pass",
-    # Bare `await x` parses (only compile() rejects it), so this reaches
-    # no_async's Await row instead of being shadowed by the async def one.
+    # Bare `await x` parses; only compile() rejects it.
     "await": "await x",
+    # Every misuse no_misplaced_await words, each listed by `validate_all`.
+    "await_": "x.await_()\n"
+    "class C:\n"
+    "    async def m(self):\n"
+    "        f(lambda: x.await_())\n"
+    "        x.await_(1)\n"
+    "        g = x.await_\n"
+    "    def await_(self):\n"
+    "        pass",
     "walrus": "(x := 1)",
     # A decorator no_decorator refuses — `@staticmethod` and its two siblings
     # are allowed, so a snippet using one would explain nothing.
@@ -310,7 +317,8 @@ _EXPLAIN_SNIPPETS: dict[str, str] = {
     "type_alias": "type X = int",
     "type_params": "class C[T]:\n    pass",
     "class_keyword": "class C(metaclass=M):\n    pass",
-    "dunder_def": "class C:\n    def __getattr__(self, name):\n        pass",
+    "dunder_def": "class C:\n    def __getattr__(self, name):\n        pass\n"
+    "    async def __str__(self):\n        pass",
     "dunder": "x.__dict__",
     "private": "x._value",
     # A bare mention, not `@property`: the decorator is the one position
