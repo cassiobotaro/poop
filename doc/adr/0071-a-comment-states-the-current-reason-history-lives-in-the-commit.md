@@ -22,4 +22,4 @@ Test docstrings in `tests/` are exempt. There the regression is what the test pi
 
 The provenance of a line is no longer visible where the line is. A reader who wants to know what the code used to do, or which bug a guard closed, runs `git log -S` or `git blame`.
 
-Existing code follows through a sweep of `poop/`, the `trim-history-comments` change. `CONTRIBUTING.md` states the rule so that later changes do not bring the pattern back.
+The existing comments and docstrings under `poop/` are rewritten to follow the rule. `CONTRIBUTING.md` states the rule so that later changes do not bring the pattern back.
