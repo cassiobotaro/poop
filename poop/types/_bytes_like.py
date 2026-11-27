@@ -1,9 +1,8 @@
 """What `bytes` and `bytearray` answer alike, written once.
 
-The two wrappers mirror each other message for message, and keeping a mirror
-by hand had already cost twice: the text form was a half-pair, present on
-`bytes` and missing on `bytearray`, and the comparisons had to be fixed in two
-classes, four methods each. CPython shares the same code between the two
+The two wrappers mirror each other message for message, and a mirror kept by
+hand drifts: a message lands on one class and not the other, and a fix has to
+be made in both. CPython shares the same code between the two
 (`bytes_methods.c`); this is that file's place here.
 
 Each concrete class supplies `_rewrap`, which turns a raw result back into its
@@ -67,10 +66,9 @@ def hex_of(
     """`value.hex(sep, bytes_per_sep)`, the separator guarded in POOP's words.
 
     One body for the three receivers that answer `hex`: the two byte wrappers
-    through the mixin, `MemoryView` by calling this. Three copies had drifted —
-    `bytearray` passed no kinds to the guard and then converted a `bytearray`
-    separator, so it accepted what `bytes` refused and what CPython refuses on
-    both (`sep must be str or bytes`).
+    through the mixin, `MemoryView` by calling this, so all three refuse the
+    same separators. The guard admits `str` and `bytes` only, and refuses a
+    `bytearray` one as CPython does (`sep must be str or bytes`).
     """
     if _is_absent(sep):
         return Str(value.hex())
@@ -82,10 +80,10 @@ def _from_hex[B](cls: type[B], native: type[bytes | bytearray], s: object) -> B:
     """`cls` built from `s`'s hex digits, or POOP's refusal.
 
     The one body behind `bytes.fromhex` and `bytearray.fromhex`: each is a
-    class-side message, so it cannot sit on the mixin as an instance one, and
-    the two spelt the same `try` twice. CPython answers `non-hexadecimal
-    number found in fromhex() arg at position 0` — the message spelt as a
-    call, with an argument index for a message that takes exactly one.
+    class-side message, so it cannot sit on the mixin as an instance one.
+    CPython answers `non-hexadecimal number found in fromhex() arg at position
+    0` — the message spelt as a call, with an argument index for a message that
+    takes exactly one.
     """
     try:
         return wrapped_instance(cls, native.fromhex(text_like(s, "fromhex", "a str")))
@@ -134,7 +132,7 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
         return self._rewrap(self._value[py])
 
     # `| Int`: CPython searches for a subsequence *or* a byte value, and the
-    # guard admits both — the annotation used to say only one of them.
+    # guard admits both.
     def includes(self, byte: BytesLike | Int) -> Boolean:
         # `a_needle` admits a byte-like or an int and refuses anything else
         # (List, Set, …) in `includes`'s name, so the internal `_value` never
@@ -167,8 +165,8 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
     def ord(self) -> Int:
         # `no_chr` forbids `ord(x)` and names `x.ord()`. CPython's `ord` takes
         # a one-character `str` **or** a one-byte `bytes` — `ord(b"a")` is 97 —
-        # and only `Str` answered the message. A receiver that is not exactly
-        # one byte long is left to CPython's faithful TypeError.
+        # so the byte wrappers answer the message as `Str` does. A receiver
+        # that is not exactly one byte long gets the TypeError below.
         try:
             return Int(ord(self._value))
         except TypeError:
@@ -346,9 +344,8 @@ class _BytesLikeMixin[B: Object](_Mixin, name="bytes"):
         `bytearray.maketrans(b"a", b"b")` is a `bytes` in CPython — which is
         why it lives here rather than once per class like `fromhex`. Unequal
         lengths keep CPython's `maketrans arguments must have same length`,
-        which names no construct POOP forbids; a `str` argument reached
-        `a bytes-like object is required, not 'str'`, and `bytes_like` words
-        it.
+        which names no construct POOP forbids; a `str` argument would reach
+        `a bytes-like object is required, not 'str'`, so `bytes_like` words it.
         """
         return Bytes(
             bytes.maketrans(bytes_like(frm, "maketrans"), bytes_like(to, "maketrans"))

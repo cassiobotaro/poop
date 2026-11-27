@@ -79,7 +79,7 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
         step: Index | NoneClass | None = None,
     ) -> MemoryView:
         # `mv[0:2]` is a `memoryview` in CPython and `no_subscript` names
-        # `.slice(...)` as the substitute — every other sequence answered it.
+        # `.slice(...)` as the substitute, which every sequence answers.
         return MemoryView(self._value[_resolve_py_slice(start_or_slice, stop, step)])
 
     def includes(self, byte: Int) -> Boolean:
@@ -87,9 +87,8 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
         # `col.includes(x)`. Unwrapped through `_searched`, as `Range` does:
         # a foreign argument (List, Set, …) reaches CPython whole and is
         # answered by its equality scan, and a `Boolean` — which carries no
-        # `_value` — folds to its int, since a memoryview holds raw ints too
-        # and `includes(True)` answered `False` on `b"\x01"` where every
-        # sibling answers `True`.
+        # `_value` — folds to its int, since a memoryview holds raw ints too:
+        # `includes(True)` on `b"\x01"` answers `True`, as every sibling does.
         return to_boolean(_searched(byte) in self._value)
 
     def __contains__(self, item: object) -> bool:
@@ -108,13 +107,12 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
         start: Int | NoneClass | None = None,
         stop: Index | NoneClass | None = None,
     ) -> Int:
-        # `includes` is the substitute `no_in` names, and this receiver was the
-        # one sequence in the family that could be told an element is there and
-        # not asked where — `List`, `Tuple`, `Range`, `Bytes` and `ByteArray`
-        # all answer both. The failure routes through `no_element_equal_to` for
-        # the reason it exists: CPython says `memoryview.index(x): x not found`,
-        # the message written as a call with a placeholder where the value the
-        # reader passed belongs.
+        # `includes` is the substitute `no_in` names, and a sequence that can be
+        # told an element is there can be asked where — `List`, `Tuple`,
+        # `Range`, `Bytes` and `ByteArray` all answer both. The failure routes
+        # through `no_element_equal_to` for the reason it exists: CPython says
+        # `memoryview.index(x): x not found`, the message written as a call with
+        # a placeholder where the value the reader passed belongs.
         try:
             return Int(
                 self._value.index(
@@ -142,8 +140,8 @@ class MemoryView(_ValueEqMixin, _IterableMixin[Int], Object, name="memoryview"):
         return MemoryViewIterator(self)
 
     def reversed(self) -> MemoryView:
-        # `reversed(memoryview(b"ab"))` works in CPython, so `no_reversed`
-        # bans a construct this receiver had no substitute for. A `MemoryView`
+        # `reversed(memoryview(b"ab"))` works in CPython and `no_reversed`
+        # bans it — this is the substitute it points at. A `MemoryView`
         # rather than an iterator of `Int`s: every receiver answers its own
         # kind, and the reversed native view is O(1) — it copies nothing.
         return MemoryView(self._value[::-1])

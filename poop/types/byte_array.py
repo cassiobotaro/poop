@@ -66,7 +66,7 @@ class ByteArray(
         # integers or slices, not str`).
         # The value first, by its own name: `indexing` reads every
         # `TypeError` as a wrong *index*, and CPython raises one for a wrong
-        # value too, so `at_put(0, "x")` blamed the index it was not given.
+        # value too, which checked inside it would be blamed on the index.
         raw = an_int(byte, "at_put", "byte")
         with indexing(self, self._value, index, "at_put"):
             self._value[index] = raw
@@ -76,10 +76,9 @@ class ByteArray(
     def fromhex(cls, s: Str) -> ByteArray:
         """The writable twin of `Bytes.fromhex`, which CPython has too.
 
-        `Bytes` and `ByteArray` mirror each other message for message — `hex`
-        is right above — and this was the one half-pair: `bytes.fromhex(…)`
-        answered while `bytearray.fromhex(…)` answered `bytearray does not
-        understand #fromhex`, for a spelling CPython supports.
+        `Bytes` and `ByteArray` mirror each other message for message, the
+        class-side ones included: CPython spells `bytearray.fromhex(…)` as it
+        spells `bytes.fromhex(…)`.
         """
         return _from_hex(cls, bytearray, s)
 
@@ -132,8 +131,8 @@ class ByteArray(
         source = a_collection(iterable, "extend")
         raw = _faithful(source)
         # Bytes are already bytes; anything else is a collection whose every
-        # element must be one, and CPython answered for the first that was not
-        # with `expected iterable of integers; got: 'str'`.
+        # element must be one, checked in `extend`'s name — CPython answers for
+        # the first that is not with `expected iterable of integers; got: 'str'`.
         if isinstance(raw, (bytes, bytearray, memoryview)):
             self._value.extend(raw)
         else:

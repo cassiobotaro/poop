@@ -1,17 +1,17 @@
 """What `encode` and `decode` accept, checked before CPython's codec table.
 
-`Str.encode` handed the codec name straight to CPython, whose failure advertised
-a module POOP does not have and could not import:
+A codec name handed straight to CPython gets a failure that advertises a module
+POOP does not have and cannot import:
 
     "a".encode("rot13")
       ->  LookupError: 'rot13' is not a text encoding; use codecs.encode()
           to handle arbitrary codecs
 
 The advice is unfollowable — `import` is forbidden and `_ALLOWED_BUILTINS` has
-no route to a module — so the message sent the reader somewhere POOP cannot go.
+no route to a module — so the message sends the reader somewhere POOP cannot go.
 `poop/types/exceptions.py` argues in its own docstring that "a language with no
 I/O and no codecs cannot reach the `OSError` subtree or the `Unicode*` family";
-the codec *table* was still reachable through this one argument.
+the codec *table* is reachable through this one argument, so it is guarded here.
 
 So the surface is named rather than inherited. Four text encodings and the
 three codec-independent error handlers — `backslashreplace`, `namereplace` and
@@ -49,7 +49,7 @@ def encoding_name(name: object, selector: str) -> str:
     """The canonical name behind `name`, or a POOP refusal.
 
     Guarded before the lookup, not after: the table is read by lowercasing the
-    argument, so a non-text one answered `'int' object has no attribute
+    argument, so a non-text one would answer `'int' object has no attribute
     'lower'` — the wrapper naming the Python method it happens to call, which
     is the leak `_argument.py` exists to close everywhere else. `selector` is
     the message the reader sent (`encode` or `decode`), so the refusal names
@@ -75,7 +75,7 @@ def handler_name(name: object, selector: str) -> str:
 
     Two failures, two classes, as `byte_order` has them: a non-string is a
     `TypeError` about the argument's kind, a misspelt one a `ValueError` about
-    its value. Without the first, `"a".encode("utf-8", 1)` reported an
+    its value. Without the first, `"a".encode("utf-8", 1)` would report an
     *unknown handler* named `1`, describing a wrong-typed argument as a
     wrong-valued one.
     """
@@ -96,12 +96,12 @@ def _refusal(
     1: ordinal not in range(128)`, under a class no POOP program can spell
     (`UnicodeEncodeError`). Both halves are the surface this module exists to
     close: `codec` sends the reader to a module POOP cannot import, and the
-    class is outside the mirrored hierarchy, so a handler was told the kind
-    was `ValueError` while the uncaught report printed `UnicodeEncodeError` —
-    one failure under two names.
+    class is outside the mirrored hierarchy, so left as it is, a handler is
+    told the kind is `ValueError` while the uncaught report prints
+    `UnicodeEncodeError` — one failure under two names.
 
     A `ValueError`, which is what `UnicodeError` is in CPython's tree too, so
-    `except_(ValueError, …)` catches exactly what it caught before.
+    `except_(ValueError, …)` catches it as it would catch CPython's.
     """
     start = exc.start
     subject = exc.object[start : start + 1]
