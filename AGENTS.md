@@ -53,9 +53,6 @@ order. Subjects follow `type(scope): ...`, e.g. `feat(types): ...`,
 - Update `README.md` and `MIGRATION.md` in the same commit as the code, and
   write an ADR in `doc/adr/` for any decision it makes. An accepted ADR is
   never edited. A changed decision is a new ADR that supersedes it.
-- Run the `unslop` skill on every new ADR and on the prose you add to a doc,
-  before you commit it. Invoke the skill itself, and have a subagent that
-  writes an ADR or a doc invoke it too.
 - Run every snippet you add to a doc. `tests/test_doc_counts.py` reads the
   validator count out of `README.md` and the example count and list out of
   `examples/README.md`; keep those sentences in shape.

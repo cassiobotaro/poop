@@ -1,10 +1,8 @@
 # Tasks
 
-Every code task runs the `code-comments` skill over its diff before the commit.
-
 ## 1. Decision
 
-- [ ] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated the day it is written, status Accepted. It records that the exception classes and their terminal rendering live in separate modules, so that raising or catching an error does not load `rich`, and that the renderer does not merge into `console.py`. Run the `unslop` skill on it. Verify: the filename carries the next number, and the record cites no change name.
+- [ ] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated the day it is written, status Accepted. It records that the exception classes and their terminal rendering live in separate modules, so that raising or catching an error does not load `rich`, and that the renderer does not merge into `console.py`. Verify: the filename carries the next number, and the record cites no change name.
 
 ## 2. The move
 
