@@ -49,6 +49,7 @@ from poop.validators.no_map import NoMapValidator
 from poop.validators.no_match import NoMatchValidator
 from poop.validators.no_max import NoMaxValidator
 from poop.validators.no_min import NoMinValidator
+from poop.validators.no_misplaced_await import NoMisplacedAwaitValidator
 from poop.validators.no_namespace_shadow import NoNamespaceShadowValidator
 from poop.validators.no_not import NoNotValidator
 from poop.validators.no_open import NoOpenValidator
@@ -75,11 +76,8 @@ from poop.validators.no_yield import NoYieldValidator
 
 DEFAULT_VALIDATORS: tuple[Validator, ...] = (
     NoIfValidator(),
-    # Ahead of the async-flavoured symptom checks (no_loops' AsyncFor,
-    # no_with's AsyncWith, no_free_functions' async branch) so the root
-    # cause wins: fixing an `async for` inside a method that is itself
-    # about to be rejected is wasted effort.
     NoAsyncValidator(),
+    NoMisplacedAwaitValidator(),
     NoLoopsValidator(),
     NoComprehensionValidator(),
     NoFreeFunctionsValidator(),

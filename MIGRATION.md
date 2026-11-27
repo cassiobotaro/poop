@@ -308,6 +308,10 @@ This table lists every construct a validator refuses and what to write instead. 
 | `ast.BoolOp` with `ast.And` | `x.and_(lambda: y)` | `no_and_or` |
 | `ast.BoolOp` with `ast.Or` | `x.or_(lambda: y)` | `no_and_or` |
 | `ast.Await` | `x.await_()`, inside an async method | `no_async` |
+| `x.await_()` (nearest enclosing function is not an `async def`) | send it directly inside an async method; a block answers the coroutine and the method awaits that answer | `no_misplaced_await` |
+| `x.await_(arg)` | `x.await_()` takes no arguments | `no_misplaced_await` |
+| `x.await_` (read, not sent) | `x.await_()` | `no_misplaced_await` |
+| `def await_(self)` | name the method something else; `await_` is reserved | `no_misplaced_await` |
 | `ast.UnaryOp` with `ast.Not` | `x.not_()` | `no_not` |
 | `ast.UnaryOp` with `ast.USub` (operand is not `ast.Constant`) | `x.negated()` | `no_unary_minus` |
 | `ast.UnaryOp` with `ast.UAdd` | `+x` is semantically a no-op and has no message-send equivalent — write the value directly | `no_unary_plus` |

@@ -12,7 +12,7 @@ In POOP there is no `if`, no `for`, no `print()`. Every literal is an object, an
 "Hello, World!".print()
 ```
 
-POOP runs 73 validators on every program, and each one that refuses tells you what to write instead:
+POOP runs 74 validators on every program, and each one that refuses tells you what to write instead:
 
 ```console
 $ poop loop.py
