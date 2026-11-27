@@ -12,8 +12,8 @@ _ALLOWED = frozenset({"__init__"})
 
 # Named substitutes, so the message teaches rather than only refuses. The rule
 # below is not a list, though: anything dunder-shaped is rejected, named here
-# or not. An enumerated ban was tried on paper and is already incomplete —
-# `x.__class__.__name__` answers a raw `str` and would have slipped through.
+# or not. An enumerated ban is always one name short — `x.__class__.__name__`
+# answers a raw `str`, and a list that missed `__name__` would let it through.
 _SUBSTITUTES = {
     "__abs__": "n.abs()",
     "__bases__": "Klass.superclass()",
@@ -47,17 +47,17 @@ def dunder_message(
     beyond any validator's reach — so the two halves of one ban must say one
     thing. `no_dunder_name` reads it too, with `dotted=False`: a dunder
     *global* (`__builtins__`) is the same ban one node type over. `scope` is
-    what an undotted name is — the sentence said `dunder globals` of every
-    bare name, and a class-body `__slots__ = ("a",)` is a class attribute,
-    not a global.
+    what an undotted name is, so the sentence calls a class-body
+    `__slots__ = ("a",)` a class attribute, not a global.
 
-    `allow_init` controls the `__init__` carve-out, which used to ride on
-    `dotted` — one flag standing for two unrelated questions ("how do I spell
-    the label?" and "is this the `super().__init__(...)` syntax?"). `get_attr`
-    is dotted-shaped but is not that syntax, and it inherited the exemption:
-    `s.get_attr("__init__")("ZAP")` re-ran the constructor on a live `Str`, so
-    every immutable wrapper was mutable and a `Dict` keyed on one lost the
-    entry. It defaults to `dotted`, keeping both AST validators unchanged.
+    `allow_init` controls the `__init__` carve-out apart from `dotted`,
+    because the two answer unrelated questions ("how do I spell the label?"
+    and "is this the `super().__init__(...)` syntax?"). `get_attr` is
+    dotted-shaped but is not that syntax, and exempting it would let
+    `s.get_attr("__init__")("ZAP")` re-run the constructor on a live `Str`,
+    making every immutable wrapper mutable and losing the entry of a `Dict`
+    keyed on one. It defaults to `dotted`. See
+    `doc/adr/0033-dunder-access-is-banned-by-rule-at-runtime-too-init-only-on-a-super-receiver.md`.
     """
     if not is_dunder(name):
         return None
@@ -80,12 +80,12 @@ def dunder_message(
 def _is_super_call(node: ast.expr) -> bool:
     """Is `node` the `super()` in `super().__init__(...)`?
 
-    The carve-out was written for that syntax and applied to the *name*, so it
-    covered any receiver: `s.__init__("zap")` re-ran the constructor on a live
+    The carve-out is for that syntax, not for the *name*: on any other
+    receiver `s.__init__("zap")` would re-run the constructor on a live
     value, leaving `Str`, `Int` and `Tuple` all mutable and a `Dict` keyed on
     one holding an entry reachable under neither the old spelling nor the new.
-    That is the hazard `_reject_dunder` already describes word for word
-    — it closed the `get_attr` path and left this, the shorter one, open.
+    It is the hazard `_reject_dunder` describes for the `get_attr` path, by
+    the shorter spelling.
     """
     match node:
         case ast.Call(func=ast.Name(id="super")):

@@ -23,7 +23,7 @@ class _Visitor(ErrorCollector):
         # like a reference does. A bare `lambda _poop_x: 1` never mentions
         # the name in its body, so visit_Name alone would miss it. Then on
         # into the annotation: `x: _poop_int` is a reference like any other,
-        # and without the descent it was the one position left unchecked.
+        # and without the descent it would go unchecked.
         self._reject(node.arg, node)
         self.generic_visit(node)
 

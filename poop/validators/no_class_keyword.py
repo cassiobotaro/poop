@@ -12,10 +12,11 @@ class _Visitor(ErrorCollector):
     """Refuses every keyword in a `class` statement.
 
     A keyword here is CPython's class-creation machinery — `metaclass=`, or an
-    argument for `__init_subclass__` — and each spelling answered CPython:
-    `class X(foo=1)` read `X.__init_subclass__() takes no keyword arguments`,
-    `class X(Object, metaclass=Object)` read `metaclass conflict`. Only
-    `metaclass=type` was refused, and by `no_type` banning the name. An
+    argument for `__init_subclass__` — and left to CPython each spelling
+    answers in its vocabulary: `class X(foo=1)` reads
+    `X.__init_subclass__() takes no keyword arguments`,
+    `class X(Object, metaclass=Object)` reads `metaclass conflict`.
+    `no_type` refuses `metaclass=type` only by banning the name. An
     `ast.keyword` also hangs off every call, so this is not a `NodeValidator`
     row: the position is what is refused, not the node.
     """

@@ -7,9 +7,9 @@ class _NoFreeFunctionsVisitor(ErrorCollector):
     def __init__(self) -> None:
         super().__init__()
         # A function is a method only when it is a *direct* statement of a class
-        # body. Counting class nesting was not enough: a `def` nested inside a
-        # method sits at `class_depth > 0` yet its parent is the method, not the
-        # class, so it slipped through as a receiver-less named local function.
+        # body. Counting class nesting is not enough: a `def` nested inside a
+        # method sits at class depth > 0 yet its parent is the method, not the
+        # class, so it is a receiver-less named local function.
         # Smalltalk has blocks (lambdas), not named local functions — so anything
         # whose direct parent is not a ClassDef is rejected, module level and
         # method-nested alike.

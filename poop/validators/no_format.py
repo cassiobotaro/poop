@@ -9,14 +9,14 @@ string does not have, and `str.format` discards extra positional arguments:
     (2.5).format(".2f")  # '2.50'
     "ab".format(">6")    # 'ab'      — unchanged, silently
 
-A reader who followed the old wording got their string back, three times out of
-three, with no way to tell it had not worked. CPython refuses two of those three
-outright, so even the faithful behaviour would have been louder.
+A message naming only `obj.format(spec)` would hand a `str` reader their string
+back unchanged, with no way to tell it had not worked.
 
 The two meanings cannot both live on one selector without deciding by
 inspection — "a value whose class and contents disagree", which POOP refuses
 elsewhere — so the template keeps `Str.format` and the ban points a
-`Str` at the spelling that actually works.
+`Str` at the spelling that actually works
+(`doc/adr/0022-str-format-is-the-only-template-surface.md`).
 """
 
 from poop.validators._call_name import CallNameValidator

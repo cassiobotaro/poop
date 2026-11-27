@@ -21,10 +21,10 @@ class _Visitor(ErrorCollector):
 
     A type parameter is not a `NodeValidator` row because its sentence names
     the parameter as written — `[T]`, `[*Ts]`, `[**P]` — so a reader sees
-    what to drop. Left unvalidated, `class X[T]:` reached CPython's generic
+    what to drop. Left unvalidated, `class X[T]:` reaches CPython's generic
     intrinsic, which imports `typing` through a builtin the allow-list
-    withholds and died with `KeyError: '__import__'`, and `def m[T](self):`
-    handed the method a raw `typing.TypeVar`.
+    withholds and dies with `KeyError: '__import__'`, and `def m[T](self):`
+    hands the method a raw `typing.TypeVar`.
     """
 
     def visit_TypeAlias(self, node: ast.TypeAlias) -> None:

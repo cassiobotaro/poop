@@ -4,10 +4,8 @@ from poop.validators.base import CollectingValidator, ErrorCollector
 
 # The three ADR 18 reasons about and allows
 # (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`):
-# "class-definition
-# decorators, not runtime operations on values". They are also exactly the
-# three non-machinery entries in `_ALLOWED_BUILTINS`, so the intended surface
-# was already written down twice — and checked nowhere.
+# "class-definition decorators, not runtime operations on values". They are
+# also exactly the three non-machinery entries in `_ALLOWED_BUILTINS`.
 ALLOWED = ("staticmethod", "classmethod", "property")
 
 
@@ -29,8 +27,8 @@ class _NoDecoratorVisitor(ErrorCollector):
 
     `@` applies an arbitrary expression, which is a function call written as
     syntax rather than sent as a message — the shape `no_subscript`,
-    `no_fstring` and `no_if` exist to remove. Nothing enforced the boundary,
-    so a plain block silently replaced a method:
+    `no_fstring` and `no_if` exist to remove. Without this check a plain
+    block silently replaces a method:
 
         twice = lambda f: (lambda: 2)
 

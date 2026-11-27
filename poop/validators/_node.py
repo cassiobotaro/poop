@@ -20,7 +20,7 @@ class _Visitor(ErrorCollector):
             self.report(message, node)
         # Descend into the rejected node rather than stopping there: an `if`
         # nested in an `if` is two rewrites, and reporting only the outer one
-        # restores the fix-one/rerun loop this exists to end.
+        # leaves the reader to fix one, rerun, and only then meet the other.
         self.generic_visit(node)
 
 

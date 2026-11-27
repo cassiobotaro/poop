@@ -36,9 +36,9 @@ class _Visitor(ErrorCollector):
     """Refuses a `def` of a lookup, creation or descriptor dunder in a class body.
 
     `no_dunder_attribute` bans *reading* a dunder and `no_dunder_name` a bare
-    dunder name, but a class body could still *define* `__getattribute__` and
-    rewire every message sent to its instances, or `__set_name__` and be handed
-    a raw `str` by CPython, with no validator looking. The operator and
+    dunder name, but neither stops a class body from *defining*
+    `__getattribute__` and rewiring every message sent to its instances, or
+    `__set_name__` and being handed a raw `str` by CPython. The operator and
     protocol slots stay legal: ADR 17 lists them as the ones a class may
     define, and `PoopMeta.__new__` adapts the five CPython reads itself.
     """

@@ -14,8 +14,7 @@ class ErrorCollector(ast.NodeVisitor):
     """NodeVisitor that records rejections instead of raising them.
 
     Raising aborts the walk at the first hit — right for running a program,
-    wrong for `--validators-only`, whose help promises to report all errors:
-    three `if`s used to answer exactly one.
+    wrong for `--validators-only`, whose help promises to report all errors.
     """
 
     def __init__(self) -> None:

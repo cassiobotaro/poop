@@ -36,14 +36,14 @@ class _Visitor(ErrorCollector):
     (`doc/adr/0018-class-machinery-is-accepted-only-where-it-was-argued-for.md`)
     scopes each one: `super` so
     inheritance works, the other three as decorators — "class-definition
-    decorators, not runtime operations on values". `no_decorator` made the
-    decorator half real. Everywhere else they stayed reachable as plain names,
-    answering Python rather than POOP:
+    decorators, not runtime operations on values". `no_decorator` enforces the
+    decorator half. Everywhere else a plain name would answer Python rather
+    than POOP:
 
         property.print()   ->  AttributeError: type object 'property'
                                has no attribute 'print'
 
-    which is the naked-native symptom the allow-list was introduced to end.
+    which is the naked-native symptom the allow-list exists to end.
     One position stays open per name, and it is the one the allowance was
     granted for: a `decorator_list` entry for the three, the callee of a
     `Call` for `super`. The split is ADR 18's own: `@property(...)` is refused
@@ -54,11 +54,11 @@ class _Visitor(ErrorCollector):
 
     Two positions are refused by what *encloses* them, read off a stack of
     the functions being descended. `super()` under a `lambda` has no class
-    cell — a lambda owns none — and CPython answered `RuntimeError: super():
+    cell — a lambda owns none — and CPython answers `RuntimeError: super():
     no arguments` at run time, about a cell the block cannot be given. A
-    `return` with a value directly in an `__init__` body answered
+    `return` with a value directly in an `__init__` body answers
     `TypeError: __init__() should return None, not 'int'`; the return
-    transformer skips `__init__` for that reason, so nothing else looked.
+    transformer skips `__init__` for that reason, so this is the only check.
     """
 
     def __init__(self) -> None:

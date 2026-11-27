@@ -12,9 +12,9 @@ from poop.validators._shadow import ShadowValidator
 # Three spellings are easy to miss. `object` and `Object` both rewrite to
 # `_poop_object` in every position, so `object = 5` clobbers the root class
 # itself and the next `class Foo` implicitly inherits an Int. `Ellipsis` is
-# the named spelling of `...`, so `Ellipsis = 5` made the *literal* `...`
+# the named spelling of `...`, so `Ellipsis = 5` would make the *literal* `...`
 # answer 5 for the rest of the program. The exception mirrors are rewritten
-# the same way, so `ValueError = 5` clobbered the mirror globally.
+# the same way, so `ValueError = 5` would clobber the mirror globally.
 #
 # Derived from the rewriters (`RESERVED_NAMES`), not tabulated here: a table
 # is a second list, and a new rewriter must not be addable without its

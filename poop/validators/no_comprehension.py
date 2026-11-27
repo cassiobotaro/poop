@@ -2,8 +2,8 @@ import ast
 
 from poop.validators._node import NodeValidator
 
-# One tail for the four rows: they differed only in the first words, and a
-# substitute reworded in one of them would have left the other three behind.
+# One tail for the four rows: they differ only in the first words, and a
+# substitute reworded in one of them must not leave the other three behind.
 _SUBSTITUTE = "use col.map(block) or col.filter(block) instead"
 
 

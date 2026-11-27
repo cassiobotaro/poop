@@ -64,10 +64,10 @@ class ShadowValidator(CollectingValidator):
     Every position that binds a name is checked — an assignment target, a
     parameter of a def or a lambda, a class name, a def outside a class body
     — because a rebinding in any of them retargets whatever the name stood
-    for. The fourth shared shape beside `CallNameValidator`, `NodeValidator`
-    and `OpValidator`: `no_builtin_shadow` and `no_namespace_shadow` wrote
-    the same visitor, constructor and `collect` and differed in the two
-    attributes below.
+    for. A shared shape beside `CallNameValidator`, `NodeValidator` and
+    `OpValidator`: `no_builtin_shadow` and `no_namespace_shadow` share the
+    visitor, constructor and `collect`, and differ in the two attributes
+    below.
 
     A subclass sets `protected` and `message`; `{name}` in the message is the
     name that was rebound.

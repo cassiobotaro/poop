@@ -1,12 +1,13 @@
 from poop.validators._call_name import CallNameValidator
 
 
-# `obj.id()` used to be the substitute named here, and it answered CPython's
-# address: a number describing the process rather than the program, recycled
-# under a live object, and identical to `obj.hash()` for anything that does not
-# hash by value. `is_identical` answers the comparison `id()` exists to enable
-# without materialising a number at all; keying a Dict by identity is the only
-# thing it does not cover, and nothing in POOP asks for that.
+# Not `obj.id()` as the substitute: it would answer CPython's address, a number
+# describing the process rather than the program, recycled under a live object,
+# and identical to `obj.hash()` for anything that does not hash by value.
+# `is_identical` answers the comparison `id()` exists to enable without
+# materialising a number at all; keying a Dict by identity is the only thing it
+# does not cover, and nothing in POOP asks for that. See
+# `doc/adr/0020-no-id-identity-is-a-question.md`.
 class NoIdValidator(CallNameValidator):
     forbidden = frozenset({"id"})
     message = "id() is forbidden — use a.is_identical(b) to compare identity"

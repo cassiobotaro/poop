@@ -17,12 +17,13 @@ def _is_slice(node: ast.expr) -> bool:
 class _NoSubscriptVisitor(ErrorCollector):
     """Refuses `obj[key]`, naming the substitute for what the program *did*.
 
-    Both messages named a reader, whatever the context. `xs[0] = 9` and
-    `d["a"] = 1` were answered with "use obj.at(key) instead" — advice that
-    reads where the program wrote, so a reader who follows it gets a value
-    back, or a `KeyError`, for a program that was trying to store. The
-    context is right there on the node: an `ast.Store` target is an
-    assignment, and `at_put` is the message it wants.
+    A reader's substitute is wrong for a write: answering `xs[0] = 9` or
+    `d["a"] = 1` with "use obj.at(key) instead" is advice that reads where
+    the program wrote, so a reader who follows it gets a value back, or a
+    `KeyError`, for a program that was trying to store. The context is right
+    there on the node: an `ast.Store` target is an assignment, and `at_put`
+    is the message it wants. See
+    `doc/adr/0024-str-and-dict-join-the-iterable-mixin-subscripts-follow-the-ast-context.md`.
     """
 
     def visit_Subscript(self, node: ast.Subscript) -> None:

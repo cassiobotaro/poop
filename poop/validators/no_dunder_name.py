@@ -10,10 +10,9 @@ if TYPE_CHECKING:
 class _Visitor(ErrorCollector):
     """Reports every bare dunder name, labelled by the scope it stands in.
 
-    The label used to read `dunder globals` wherever the name sat, so a
-    class-body `__slots__ = ("a",)` was refused as a global. The scope is
-    the innermost `class` or `def` the name is under: a class body makes it
-    a class attribute, a function body a local, and the module a global.
+    The scope is the innermost `class` or `def` the name is under: a class
+    body makes it a class attribute (`__slots__ = ("a",)` is not a global), a
+    function body a local, and the module a global.
     """
 
     def __init__(self) -> None:
@@ -46,7 +45,7 @@ class _Visitor(ErrorCollector):
 class NoDunderNameValidator(CollectingValidator):
     """Closes the `ast.Name` half of the dunder ban.
 
-    `no_dunder_attribute` guards `x.__class__`; nothing guarded a bare
+    `no_dunder_attribute` guards `x.__class__`; this guards a bare
     `__builtins__`. Every dunder global CPython injects into an `exec`
     namespace is a naked Python native — and `__builtins__` is mutable, so
     `__builtins__.clear()` corrupts the interpreter. Stripping the namespace

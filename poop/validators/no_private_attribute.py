@@ -1,29 +1,23 @@
 """`obj._value` is reaching into an object; only `self` and `cls` may.
 
-The two *guarded* spellings of reaching into an object were already closed.
-The third — the one a reader would actually type — was open, and what it
-answered was a naked Python primitive:
+The guarded spelling, `"abc".get_attr("_value")`, is refused at runtime with
+"_value is private — POOP objects do not expose their internals". This refuses
+the one a reader would actually type, which left alone would answer a naked
+Python primitive:
 
-    "abc".get_attr("_value")   # _value is private — POOP objects do not expose
-                               #   their internals
     "abc"._value               # 'abc', a Python str
     "abc"._value.print()       # 'str' object has no attribute 'print'
 
 That contradicts the language's first principle twice over. ADR 2 and ADR 3
 (`doc/adr/`) say "no naked Python primitive ever reaches runtime" and "Python native types
-must not leak into POOP code"; the second line hands one out on request. And
+must not leak into POOP code"; the first line would hand one out on request. And
 the object that comes back answers nothing, in CPython's vocabulary — `'str'
 object has no attribute 'print'` is precisely the sentence
 `does_not_understand` exists to replace, reachable from a two-token expression.
-
-The blind spot was visible in the code that worked around it.
-`_selectors.is_message` explains that the REPL completer used to offer
-`x._value` and calls that "the encapsulation leak taught by the tool meant to
-teach the language" — the completer stopped *offering* the spelling, and the
-spelling still worked. And `examples/patterns/memento.py` opens by showing
-`saved = editor._content` as the procedural Python that POOP exists to prevent
-(`# poking at internals`, in the example's own comment). The language taught
-the rule in an example and did not enforce it.
+`examples/patterns/memento.py` shows `saved = editor._content` as the
+procedural Python that POOP exists to prevent (`# poking at internals`, in the
+example's own comment). See
+`doc/adr/0015-single-underscore-internals-are-unreachable.md`.
 
 `no_dunder_attribute` is the shape of the answer and shows it is enforceable
 syntactically: it refuses `.__class__` at parse time on any receiver, and names
@@ -46,10 +40,8 @@ if TYPE_CHECKING:
 #
 # `cls` for a `classmethod`, and the enclosing class by its own name for a
 # `@staticmethod`, which has neither `self` nor `cls` to write. That last is
-# not hypothetical: it is one site, `Transaction._commit` in
-# `examples/patterns/execute_around.py`. A sweep over `examples/` reports that
-# single case and nothing else, so the rule costs one allowance and no
-# rewrites.
+# not hypothetical: `Transaction._commit` in
+# `examples/patterns/execute_around.py` needs it.
 _OWN = frozenset({"self", "cls"})
 
 
@@ -57,10 +49,10 @@ def private_message(name: str, receiver: str) -> str:
     """The rejection for a private attribute read or written by name.
 
     `receiver` is the expression the attribute was read off, as written, so
-    the sentence names what to send a message to. It used to point at
-    `obj.get_attr(name)` — the substitute `_reject_private` refuses for a
-    private name, by design, with the sentence quoted in this module's
-    docstring: a validator sending the reader to a refusal.
+    the sentence names what to send a message to. Not `obj.get_attr(name)`:
+    `_reject_private` refuses that for a private name, by design, with the
+    sentence quoted in this module's docstring, so the validator would send
+    the reader to a refusal.
     """
     return (
         f".{name} is forbidden — a leading underscore is an object's own "
