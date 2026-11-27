@@ -1,5 +1,5 @@
 from inspect import isawaitable
-from typing import TYPE_CHECKING, cast, final
+from typing import TYPE_CHECKING, final
 
 from poop.types import mirrors
 from poop.types._message import describe_operand
@@ -63,6 +63,22 @@ class AsyncWith(Object, name="AsyncWith"):
         return "AsyncWith"
 
 
+def _slot(cm: object, slot: str, answer: object) -> Awaitable[object]:
+    """What the manager's `slot` answered, refused unless it can be awaited.
+
+    Left to `await`, the refusal is `'Res' object can't be awaited`, which
+    names neither the slot nor the remedy. CPython's `async with` sentence
+    names both as dunders, `__aenter__` and `__await__`.
+    """
+    if not isawaitable(answer):
+        raise mirrors.TypeError(
+            f"{type(cm).__name__}'s asynchronous {slot} answered "
+            f"{describe_operand(answer)}, which cannot be awaited — write it as "
+            "async def"
+        )
+    return answer
+
+
 async def _entered(
     cm_block: Callable[[], object], body_block: Callable[[object], object]
 ) -> object:
@@ -70,7 +86,7 @@ async def _entered(
     enter, exit_ = protocol_of(
         cm, ("__aenter__", "__aexit__"), "asynchronous context manager"
     )
-    value = await cast("Awaitable[object]", enter(cm))
+    value = await _slot(cm, "enter", enter(cm))
     answer: object = none
     result: object = none
     try:
@@ -78,14 +94,12 @@ async def _entered(
         if isawaitable(answer):
             result = await answer
     except BaseException as e:
-        handled = await cast(
-            "Awaitable[object]", exit_(cm, poop_class_of(e), Error(e), none)
-        )
+        handled = await _slot(cm, "exit", exit_(cm, poop_class_of(e), Error(e), none))
         if not handled:
             raise
         # As in `With`: a swallowed failure leaves no value to answer.
         return none
-    await cast("Awaitable[object]", exit_(cm, none, none, none))
+    await _slot(cm, "exit", exit_(cm, none, none, none))
     if not isawaitable(answer):
         # After the exit, as `With` refuses a coroutine body: the manager was
         # entered, so it is left the way a body that finished would leave it.

@@ -20,8 +20,8 @@ Each numbered group is one commit, a `fix(types): ...` with its tests and docs.
 
 ## 3. A manager slot that cannot be awaited is refused in POOP's words
 
-- [ ] 3.1 In `tests/test_types/test_async_with.py`, add tests for both scenarios of the `async-with-type` delta, asserting the quoted sentence and, for the enter case, that the body did not run. Add the synchronous-enter program to the samples in `tests/test_no_python_wording.py`. Verify: the new tests fail on `main` with `'Res' object can't be awaited`.
-- [ ] 3.2 In `poop/types/async_with.py`, check what each `enter(cm)` and `exit_(cm, …)` answers before awaiting it, in all three places `_entered` awaits a slot, and raise `mirrors.TypeError(f"{type(cm).__name__}'s asynchronous {slot} answered {describe_operand(answer)}, which cannot be awaited — write it as async def")`. Verify: the 3.1 tests pass, and so does the gate.
+- [x] 3.1 In `tests/test_types/test_async_with.py`, add tests for both scenarios of the `async-with-type` delta, asserting the quoted sentence and, for the enter case, that the body did not run. Add the synchronous-enter program to the samples in `tests/test_no_python_wording.py`. Verify: the new tests fail on `main` with `'Res' object can't be awaited`.
+- [x] 3.2 In `poop/types/async_with.py`, check what each `enter(cm)` and `exit_(cm, …)` answers before awaiting it, in all three places `_entered` awaits a slot, and raise `mirrors.TypeError(f"{type(cm).__name__}'s asynchronous {slot} answered {describe_operand(answer)}, which cannot be awaited — write it as async def")`. Verify: the 3.1 tests pass, and so does the gate.
 
 ## 4. Close
 

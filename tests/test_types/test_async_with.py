@@ -111,6 +111,52 @@ def test_a_synchronous_manager_is_refused() -> None:
     )
 
 
+_SYNC_ENTER = """
+class Res(Object):
+    def __aenter__(self):
+        return self
+
+    async def __aexit__(self, kind, error, traceback):
+        "exit".print()
+"""
+
+_SYNC_EXIT = """
+class Res(Object):
+    async def __aenter__(self):
+        return self
+
+    def __aexit__(self, kind, error, traceback):
+        return False
+"""
+
+
+def test_a_synchronous_enter_is_refused_before_the_body(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    body = "AsyncWith(lambda: Res()).do(lambda r: self.body(r)).await_()"
+    assert (
+        "TypeError: Res's asynchronous enter answered a Res, which cannot be "
+        "awaited — write it as async def"
+    ) in _refusal(_SYNC_ENTER + _in_main(body))
+    assert capsys.readouterr().out == ""
+
+
+def test_a_synchronous_exit_is_refused() -> None:
+    body = 'AsyncWith(lambda: Res()).do(lambda r: self.body("r")).await_()'
+    assert (
+        "TypeError: Res's asynchronous exit answered a bool, which cannot be "
+        "awaited — write it as async def"
+    ) in _refusal(_SYNC_EXIT + _in_main(body))
+
+
+def test_a_synchronous_exit_is_refused_after_a_failure() -> None:
+    body = "AsyncWith(lambda: Res()).do(lambda r: self.fails(r)).await_()"
+    assert (
+        "TypeError: Res's asynchronous exit answered a bool, which cannot be "
+        "awaited — write it as async def"
+    ) in _refusal(_SYNC_EXIT + _in_main(body))
+
+
 def test_a_body_that_does_not_await_is_refused_after_the_exit(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

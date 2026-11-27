@@ -256,6 +256,13 @@ _FAILING = [
     "With(lambda: 5).do(lambda x: x)",
     "class C(Object):\n    def __enter__(self):\n        return 1\n"
     "With(lambda: C()).do(lambda x: x)",
+    # An asynchronous enter that answers what cannot be awaited: CPython names
+    # `__aenter__` and `__await__`.
+    "class C(Object):\n    def __aenter__(self):\n        return 1\n"
+    "    async def __aexit__(self, kind, error, traceback):\n        pass\n"
+    "    async def main(self):\n"
+    "        AsyncWith(lambda: self).do(lambda x: Async.sleep(0)).await_()\n"
+    "Async.run(C().main())",
 ]
 
 
