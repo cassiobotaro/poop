@@ -15,8 +15,8 @@ docs. "The gate" in a task below means all of these pass:
 
 ## 2. A block that answers a Try that has not run
 
-- [ ] 2.1 Add tests for the `try-type` scenarios (`run`, `finally_`) in `tests/test_types/test_try_.py` and the `with-type` scenario in `tests/test_types/test_with_.py`, the last one asserting `exit` is printed. Verify: the three fail on `main` with `answered a coroutine`.
-- [ ] 2.2 Give `refuse_awaitable` the owner, and raise the `Try`-not-run sentence for an awaitable that is not a `Coroutine`. Pass `the Try block` from both `_execute` callers in `poop/types/try_.py` and `the With body` from `poop/types/with_.py`. Verify: the 2.1 tests pass, the existing coroutine-refusal tests still pass, and so does the gate.
+- [x] 2.1 Add tests for the `try-type` scenarios (`run`, `finally_`) in `tests/test_types/test_try_.py` and the `with-type` scenario in `tests/test_types/test_with_.py`, the last one asserting `exit` is printed. Verify: the three fail on `main` with `answered a coroutine`.
+- [x] 2.2 Give `refuse_awaitable` the owner, and raise the `Try`-not-run sentence for an awaitable that is not a `Coroutine`. Pass `the Try block` from both `_execute` callers in `poop/types/try_.py` and `the With body` from `poop/types/with_.py`. Verify: the 2.1 tests pass, the existing coroutine-refusal tests still pass, and so does the gate.
 
 ## 3. Async.run and Async.gather accept an awaited Try
 

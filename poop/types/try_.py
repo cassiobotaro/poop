@@ -182,6 +182,7 @@ class Try(Object, name="Try"):
             # for `TypeError`.
             refuse_awaitable(
                 result,
+                "the Try block",
                 "the Try block answered a coroutine, which raises only when "
                 f"awaited — {if_awaitable}",
             )

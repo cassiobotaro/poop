@@ -47,14 +47,20 @@ def discard(value: object) -> None:
         value._raw.close()
 
 
-def refuse_awaitable(value: object, sentence: str) -> None:
+def refuse_awaitable(value: object, owner: str, sentence: str) -> None:
     """Refuse `value` with `sentence` when it can be awaited, after
     discarding it.
 
     For the synchronous forms, `Try.run` and `With.do`, whose guard would be
-    over before the coroutine ran.
+    over before the coroutine ran. `owner` names the block for the other
+    awaitable a program can hold, a `Try` that has not run, which is not a
+    coroutine and is most often a forgotten `run`.
     """
     if not isawaitable(value):
         return
+    if not isinstance(value, Coroutine):
+        raise mirrors.TypeError(
+            f"{owner} answered a Try that has not run — send #run to it"
+        )
     discard(value)
     raise mirrors.TypeError(sentence)

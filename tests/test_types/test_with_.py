@@ -313,3 +313,22 @@ def test_with_refuses_a_body_answering_a_coroutine_after_exiting(
         "TypeError: the With body answered a coroutine, which would run after the "
         "manager exits — use AsyncWith with an asynchronous context manager"
     ) in str(info.value)
+
+
+def test_with_names_a_body_answering_a_try_that_has_not_run(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = (
+        "class Cm(Object):\n"
+        "    def __enter__(self):\n"
+        "        return self\n"
+        "    def __exit__(self, kind, error, traceback):\n"
+        '        "exit".print()\n'
+        "With(lambda: Cm()).do(lambda r: Try(lambda: 1))\n"
+    )
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(source)
+    assert capsys.readouterr().out == "exit\n"
+    assert (
+        "TypeError: the With body answered a Try that has not run — send #run to it"
+    ) in str(info.value)

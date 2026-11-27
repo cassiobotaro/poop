@@ -422,6 +422,21 @@ def test_a_synchronous_try_refuses_a_block_answering_a_coroutine(
     ) in str(info.value)
 
 
+@pytest.mark.parametrize(
+    "terminal", [".run()", ".finally_(lambda: 1)"], ids=["run", "finally_"]
+)
+def test_a_synchronous_try_names_a_block_answering_a_try_that_has_not_run(
+    terminal: str,
+) -> None:
+    # A `Try` can be awaited, so it is refused as a coroutine is, but it is
+    # named for what it is: a `Try` whose `run` was forgotten.
+    with pytest.raises(PoopError) as info:
+        Interpreter().run_source(f"Try(lambda: Try(lambda: 1)){terminal}\n")
+    assert (
+        "TypeError: the Try block answered a Try that has not run — send #run to it"
+    ) in str(info.value)
+
+
 def test_the_refusal_is_not_caught_by_the_try_s_own_handler(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

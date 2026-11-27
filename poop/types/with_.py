@@ -135,6 +135,7 @@ class With(Object, name="With"):
             exit_(cm, none, none, none)
         refuse_awaitable(
             result,
+            "the With body",
             "the With body answered a coroutine, which would run after the "
             "manager exits — use AsyncWith with an asynchronous context manager",
         )
