@@ -6,6 +6,8 @@ Date: 2026-04-22
 
 Accepted
 
+Amended by [75. Async def is a method and await is the message await_](0075-async-def-is-a-method-and-await-is-the-message-await.md)
+
 ## Context
 
 A validator refuses a Python construct (ADR 6). Blocking without offering an alternative only breaks code without teaching anything.

@@ -168,22 +168,19 @@ def test_a_load_still_names_the_reader() -> None:
         Interpreter().run_source("x = [1, 2, 3]\ny = x[1:2]")
 
 
-def test_async_method_inside_class_raises() -> None:
-    with pytest.raises(ValidationError, match="async def is forbidden"):
-        Interpreter().run_source(
-            "class Foo:\n    async def bar(self):\n        return 1\nFoo()\n"
-        )
+def test_async_method_inside_class_passes_validation() -> None:
+    Interpreter().run_source(
+        "class Foo:\n    async def bar(self):\n        return 1\nFoo()\n"
+    )
 
 
 def test_free_async_function_raises() -> None:
-    with pytest.raises(ValidationError, match="async def is forbidden"):
+    with pytest.raises(ValidationError, match="free async functions are forbidden"):
         Interpreter().run_source("async def foo():\n    return 1\n")
 
 
-def test_async_for_reports_the_async_def_root_cause() -> None:
-    # no_async runs ahead of no_loops on purpose: fixing the `async for`
-    # would only surface the async def ban on the next run.
-    with pytest.raises(ValidationError, match="async def is forbidden"):
+def test_async_for_in_an_async_method_reports_the_loop() -> None:
+    with pytest.raises(ValidationError, match="async for loops are forbidden"):
         Interpreter().run_source(
             "class Foo:\n"
             "    async def bar(self):\n"
@@ -192,8 +189,8 @@ def test_async_for_reports_the_async_def_root_cause() -> None:
         )
 
 
-def test_async_with_reports_the_async_def_root_cause() -> None:
-    with pytest.raises(ValidationError, match="async def is forbidden"):
+def test_async_with_in_an_async_method_reports_the_with() -> None:
+    with pytest.raises(ValidationError, match="async with is forbidden"):
         Interpreter().run_source(
             "class Foo:\n"
             "    async def bar(self):\n"
@@ -203,23 +200,22 @@ def test_async_with_reports_the_async_def_root_cause() -> None:
 
 
 def test_async_generator_raises() -> None:
-    with pytest.raises(ValidationError, match="async def is forbidden"):
+    with pytest.raises(ValidationError, match="yield"):
         Interpreter().run_source(
             "class Foo:\n    async def bar(self):\n        yield 1\n"
         )
 
 
-def test_validators_only_still_reports_the_specific_async_construct() -> None:
-    # The async rows in no_loops / no_with / no_free_functions stay useful:
-    # validate_all collects every error, not just the first.
+def test_validators_only_reports_await_and_async_for_together() -> None:
     errors = Interpreter().validate_all(
         "class Foo:\n"
         "    async def bar(self):\n"
+        "        await self.x()\n"
         "        async for x in self.items():\n"
         "            x\n"
     )
     messages = [str(e) for e in errors]
-    assert any("async def is forbidden" in m for m in messages)
+    assert any("await is forbidden" in m for m in messages)
     assert any("async for" in m for m in messages)
 
 

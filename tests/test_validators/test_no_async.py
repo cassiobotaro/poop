@@ -11,31 +11,21 @@ def test_valid_code_passes() -> None:
     NoAsyncValidator().validate(tree)
 
 
-def test_async_method_raises() -> None:
+def test_async_method_passes() -> None:
     tree = ast.parse("class Foo:\n    async def bar(self):\n        return 1")
-    with pytest.raises(ValidationError, match="async def is forbidden"):
-        NoAsyncValidator().validate(tree)
+    NoAsyncValidator().validate(tree)
 
 
-def test_free_async_function_raises() -> None:
-    tree = ast.parse("async def foo():\n    return 1")
-    with pytest.raises(ValidationError, match="async def is forbidden"):
-        NoAsyncValidator().validate(tree)
+def test_free_async_function_is_left_to_no_free_functions() -> None:
+    NoAsyncValidator().validate(ast.parse("async def foo():\n    return 1"))
 
 
-def test_message_explains_why() -> None:
-    tree = ast.parse("async def foo():\n    return 1")
-    with pytest.raises(ValidationError, match="no way to drive a coroutine"):
-        NoAsyncValidator().validate(tree)
-
-
-def test_error_carries_line_number() -> None:
-    tree = ast.parse(
-        "class Foo:\n    def a(self):\n        pass\n    async def b(self):\n        pass"
-    )
+def test_await_in_an_async_method_names_its_substitute() -> None:
+    tree = ast.parse("class Foo:\n    async def bar(self):\n        await self.x()")
     with pytest.raises(ValidationError) as exc_info:
         NoAsyncValidator().validate(tree)
-    assert exc_info.value.lineno == 4
+    assert exc_info.value.message == "await is forbidden — use x.await_() instead"
+    assert exc_info.value.lineno == 3
 
 
 def test_module_level_await_raises() -> None:

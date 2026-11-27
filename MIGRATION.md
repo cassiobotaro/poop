@@ -278,7 +278,6 @@ Some Python has no POOP translation at all, and looking for one is the wrong mov
 |---|---|
 | `open(...)`, `pathlib`, `io` | POOP has no file I/O. A program's only channels are `"prompt".input()` and `obj.print()`. |
 | `import anything` | POOP is the language, not the library — it mirrors no stdlib module. The only injected names are `Try` and `With`. |
-| `async def` / `await` | Nothing can drive a coroutine. |
 | `exec` / `eval` / `compile`, `globals` / `locals` / `vars`, `breakpoint`, `exit` | Interpreter escape hatches. |
 | `class X[T]`, `def m[T]()`, `type X = int` | POOP has no static types. Drop the parameter; the runtime types are POOP's own. |
 | `class X(metaclass=M)`, `class X(foo=1)` | A class is built from its bases alone. A parent that must configure its subclasses answers a class-side message instead. |
@@ -308,8 +307,7 @@ This table lists every construct a validator refuses and what to write instead. 
 | `ast.AsyncWith` | none — a definitive ban | `no_with` |
 | `ast.BoolOp` with `ast.And` | `x.and_(lambda: y)` | `no_and_or` |
 | `ast.BoolOp` with `ast.Or` | `x.or_(lambda: y)` | `no_and_or` |
-| `ast.AsyncFunctionDef` | POOP has no way to drive a coroutine | `no_async` |
-| `ast.Await` | POOP has no way to drive a coroutine | `no_async` |
+| `ast.Await` | `x.await_()`, inside an async method | `no_async` |
 | `ast.UnaryOp` with `ast.Not` | `x.not_()` | `no_not` |
 | `ast.UnaryOp` with `ast.USub` (operand is not `ast.Constant`) | `x.negated()` | `no_unary_minus` |
 | `ast.UnaryOp` with `ast.UAdd` | `+x` is semantically a no-op and has no message-send equivalent — write the value directly | `no_unary_plus` |
