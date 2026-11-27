@@ -2,7 +2,7 @@
 
 ## 1. Decision
 
-- [ ] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated the day it is written, status Accepted. It records that the default validators, transformers and namespace are immutable (tuples and a `MappingProxyType`), and that an interpreter holds and hands out an immutable copy of what it was given. Verify: the filename carries the next number, and the record cites no change name.
+- [x] 1.1 Write the ADR with the `adr` skill: the next number in `doc/adr/`, dated the day it is written, status Accepted. It records that the default validators, transformers and namespace are immutable (tuples and a `MappingProxyType`), and that an interpreter holds and hands out an immutable copy of what it was given. Verify: the filename carries the next number, and the record cites no change name.
 
 ## 2. Implementation
 
