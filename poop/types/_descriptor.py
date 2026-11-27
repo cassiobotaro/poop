@@ -1,21 +1,19 @@
 """A message as a descriptor: a method read off an object answers a block.
 
-`Object.__getattribute__` used to do this — one Python frame on *every*
-attribute read in the language, including the library's own `self._value`,
-to wrap the few reads that were a public bound method. Measured on 3.15, the
-frame doubled the cost of a slot read (401 ns against 192) and was a third of
-a message send. The hook is gone; each public method is a `message` instead,
-a non-data descriptor installed where the class is built (`PoopMeta.__new__`,
-and `_Mixin.__init_subclass__` for the shared mixins, which are not `PoopMeta`
-classes). A `_`-name or a dunder is never a message and now resolves at C
-speed; a public read binds through the original entry and wraps the result
-in a `_MethodBlock` whenever it is a method: a bound method (an instance
-method off an instance, a `classmethod` off either side) or a `staticmethod`'s
-function off either side. The one read left raw is a plain instance method
-off the class, which `PoopMeta.__getattribute__` refuses by testing for a
-`FunctionType` — the hook left `staticmethod`s raw too, so `str.maketrans.print()`
-answered CPython's `'function' object has no attribute 'print'` while
-`str.get_attr("maketrans")` answered `<block>`.
+A descriptor, not an `Object.__getattribute__`, which would put a Python frame
+on *every* attribute read in the language, including the library's own
+`self._value`, to wrap the few reads that are a public bound method
+(`doc/adr/0041-a-method-is-a-block-read-through-a-message-descriptor.md`).
+Each public method is a `message`, a non-data descriptor installed where the
+class is built (`PoopMeta.__new__`, and `_Mixin.__init_subclass__` for the
+shared mixins, which are not `PoopMeta` classes). A `_`-name or a dunder is
+never a message and resolves at C speed; a public read binds through the
+original entry and wraps the result in a `_MethodBlock` whenever it is a
+method: a bound method (an instance method off an instance, a `classmethod`
+off either side) or a `staticmethod`'s function off either side, so
+`str.maketrans.print()` answers `<block>` as `str.get_attr("maketrans")` does.
+The one read left raw is a plain instance method off the class, which
+`PoopMeta.__getattribute__` refuses by testing for a `FunctionType`.
 
 Non-data on purpose, like `Block.__get__`: consulted for a class attribute,
 skipped for a name found in an instance's `__dict__`, so a block a user class

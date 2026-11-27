@@ -25,9 +25,9 @@ from poop.types._message import article
 # receiver has it, or a `(spelling, needs)` pair for a selector whose twin is
 # not one message — `first` is `.at(0)`, `timesRepeat:` is a `range` loop —
 # shown as written, when the receiver answers `needs` (or always, for
-# `None`). The table stopped at seventeen rows and the most common
-# collection selectors (`first`, `isEmpty`, `detect:ifNone:`) fell through to
-# difflib, which answered `[1].as_set()` with `did you mean #assert_?`.
+# `None`). The common collection selectors (`first`, `isEmpty`,
+# `detect:ifNone:`) have rows too: a selector left out falls through to
+# difflib, which can answer one with something like `did you mean #assert_?`.
 type SelectorRow = str | tuple[str, str | None]
 
 SMALLTALK_SELECTORS: dict[str, SelectorRow] = {
@@ -140,8 +140,8 @@ CROSS_LANGUAGE_HINTS: dict[tuple[str, str], str] = {
     ),
     # The lazy views: `map`, `filter`, `zip` and `enumerate` answer the
     # consuming messages (`do`, `sum`, `find`, `sorted`, …) and not the
-    # sequence ones, and `xs.map(f).len()` answered `try :methods` — true
-    # and useless. One sentence names what to do.
+    # sequence ones, and without a row `xs.map(f).len()` would answer `try
+    # :methods` — true and useless. One sentence names what to do.
     **{
         (
             view,
@@ -160,10 +160,10 @@ def is_message(name: str) -> bool:
     them), the mangled `_poop_*` bindings, and the single-underscore internals
     `_reject_private` refuses at runtime. Four surfaces answer the same
     question — `dir()`, `:methods`, the near-miss hint below, and the REPL's
-    tab-completion — and three of them had their own copy of the rule. The
-    fourth, the completer, spelt it `not name.startswith("__")` and so offered
-    `x._value`, the raw Python value behind the wrapper, as a completion: the
-    encapsulation leak taught by the tool meant to teach the language.
+    tab-completion — and all four ask this one. A copy spelt `not
+    name.startswith("__")` would offer `x._value`, the raw Python value behind
+    the wrapper, as a completion: the encapsulation leak taught by the tool
+    meant to teach the language.
     """
     return not name.startswith("_")
 
@@ -172,7 +172,7 @@ def is_dunder(name: str) -> bool:
     """`__name__`-shaped — Python's protocol, never POOP's message surface.
 
     The one copy of the test the dunder ban, the private ban and the two
-    `__getattr__` hooks all ask. It was spelt inline at each of them.
+    `__getattr__` hooks all ask.
     """
     return name.startswith("__") and name.endswith("__")
 
@@ -181,8 +181,8 @@ def receiver_label(obj: object) -> str:
     """How a receiver names itself in a message about it.
 
     A class answers its own name — `type(cls)` says `PoopMeta`, an internal no
-    program can write. Shared with `:methods`, whose header read `PoopExcMeta
-    understands 30 messages` for `ValueError`.
+    program can write. Shared with `:methods`, whose header would otherwise
+    read `PoopExcMeta understands … messages` for `ValueError`.
     """
     return obj.__name__ if isinstance(obj, type) else type(obj).__name__
 

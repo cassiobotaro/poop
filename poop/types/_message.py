@@ -1,7 +1,7 @@
 """CPython's operator wording, rewritten as message passing.
 
-Every other leak in this family was fixed where the operation lives, because a
-wrapper intercepts the call and owns the message. The operator path is the one
+Every other leak in this family is reworded where the operation lives, because
+a wrapper intercepts the call and owns the message. The operator path is the one
 that cannot be: `"a" + 1` runs `Str.__add__`, which answers `NotImplemented`,
 then `Int.__radd__`, which answers `NotImplemented` too, and only then does
 CPython compose a sentence out of the two refusals. No wrapper ever sees the
@@ -18,7 +18,7 @@ message, which is the whole distinction POOP exists to make.
 another language's message text is a dependency on its internals: Python 3.14
 already rewrote the unhashable-key error, and it can rewrite these. Two shapes
 are recognised, nothing else, and anything unmatched passes through unchanged —
-so a rewording upstream degrades to the old behaviour rather than to a crash.
+so a rewording upstream degrades to CPython's own text rather than to a crash.
 `tests/test_message.py` pins both shapes against real CPython operations, so an
 upgrade that changes them fails loudly instead of silently regressing.
 """
@@ -33,7 +33,7 @@ lazy from poop.transformers import RESERVED_NAMES
 lazy from poop.types import mirrors
 
 # A tuple, not the string "aeiou": `"" in "aeiou"` is True, so a nameless type
-# answered `an ` — the empty string is a substring of every string.
+# would answer `an ` — the empty string is a substring of every string.
 _VOWELS = ("a", "e", "i", "o", "u")
 
 # `unsupported operand type(s) for +: 'str' and 'int'` — arithmetic and the
@@ -63,17 +63,18 @@ def article(name: str) -> str:
     return f"an {name}" if name[:1].lower() in _VOWELS else f"a {name}"
 
 
-# `unhashable type: 'list'` — CPython's bare sentence, which `Object.hash` let
-# through while the two storage sites answered a richer one.
+# `unhashable type: 'list'` — CPython's bare sentence, which `Object.hash`
+# rewords to match the richer one the two storage sites answer.
 _UNHASHABLE = re.compile(r"^unhashable type: '(.+?)'$")
 
 # `'str' object has no attribute 'x' and no __dict__ for setting new
 # attributes` — what CPython says for `"abc".x = 5`, every wrapper declaring
 # `__slots__`. It names a dunder `no_dunder_attribute` bans and advises about
-# a `__dict__` the reader cannot inspect. `Object.__setattr__` used to catch
-# it, a Python frame on every object construction in the language (every
-# wrapper writes its payload in `__init__`); the sentence is reworded here
-# instead, where `executor._describe` and `Error.message()` both read.
+# a `__dict__` the reader cannot inspect. Reworded here, where
+# `executor._describe` and `Error.message()` both read, rather than in an
+# `Object.__setattr__`, which would add a Python frame to every object
+# construction in the language (every wrapper writes its payload in
+# `__init__`).
 _NO_STATE = re.compile(
     r"^'(.+?)' object has no attribute '.+?' and no __dict__ for setting new attributes$"
 )
@@ -94,18 +95,18 @@ def holds_no_state(class_name: str) -> str:
 def cannot_be_hashed(exc: TypeError) -> str | None:
     """POOP's wording for `unhashable type: 'list'`, or `None` if unmatched.
 
-    `no_hash` bans `hash(x)` and names `obj.hash()`, and the substitute answered
-    CPython's sentence on nine receivers while the two places that reach the
-    *same* condition answered one that says where the value was going:
+    `no_hash` bans `hash(x)` and names `obj.hash()`, so the substitute answers
+    as the two places that reach the *same* condition do, saying where the
+    value was going:
 
         {[1]}                # cannot use 'list' as a set element (…)
         {}.at_put([1], 2)    # cannot use 'list' as a dict key (…)
-        [1, 2].hash()        # unhashable type: 'list'
+        [1, 2].hash()        # list cannot be hashed — … (unhashable type: …)
 
-    The bare form says "type" where POOP says class, quotes the class the
+    CPython's bare form says "type" where POOP says class, quotes the class the
     CPython way, and — the part a reader needs — says neither why nor what to do
     instead. It also carries no call, no dunder and no operator, which is why
-    the wording sweep ran over all nine and passed.
+    the wording sweep cannot see it.
 
     CPython's own text is kept in parentheses for the reason `_cloak`'s
     docstring gives for the storage sites keeping it: Python 3.14 put both
@@ -155,10 +156,10 @@ def no_format_spec(kind: str) -> str:
     """The refusal for a receiver that takes no format spec at all.
 
     Shared by POOP's two formatting spellings, which is the point: `Object.
-    format` composed this from `type(self).__name__` while the template path let
-    CPython's `unsupported format string passed to list.__format__` through —
-    naming a dunder `no_dunder_attribute` will not let a program spell, from a
-    construct the reader wrote with braces.
+    format` and the template path answer the same sentence, where CPython's
+    `unsupported format string passed to list.__format__` names a dunder
+    `no_dunder_attribute` will not let a program spell, from a construct the
+    reader wrote with braces.
     """
     return f"{kind} takes no format spec — only a number, a string or bytes does"
 
@@ -196,8 +197,7 @@ def answered[T](
     completes the protocol CPython would: when both sides decline, CPython
     composes `unsupported operand type(s)` and `poop_message` rewords it into
     `binary_refusal`'s sentence. The message has no CPython to fall back on,
-    so it raises the same sentence itself — five receivers did, each with the
-    same four lines.
+    so it raises the same sentence itself.
     """
     if result is NotImplemented:
         raise mirrors.TypeError(
@@ -209,13 +209,11 @@ def answered[T](
 def withheld_builtin(name: str) -> str | None:
     """POOP's sentence for a Python builtin the allow-list keeps out, or None.
 
-    `copyright`, `NotImplemented`, `OSError` and the rest answered `name
-    'copyright' is not defined` — the sentence a misspelt variable gets, with
-    nothing to say that POOP *chose* not to offer the name. Python 3.15 made
-    two such names ones a programmer reaches for on purpose (`frozendict` and
-    `sentinel`, both since wrapped), which is when the silence started to
-    cost. Derived from `builtins` minus the allow-list rather than tabulated:
-    the hand-kept topic list in the REPL fell behind once already.
+    Left alone, `copyright`, `NotImplemented`, `OSError` and the rest would
+    answer `name 'copyright' is not defined` — the sentence a misspelt
+    variable gets, with nothing to say that POOP *chose* not to offer the
+    name. Derived from `builtins` minus the allow-list rather than tabulated,
+    so it cannot fall behind as a hand-kept list does.
 
     Only the names a program can reach this way are reworded. A name a
     validator bans never gets here — `len` is refused at parse time — so the

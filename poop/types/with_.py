@@ -27,9 +27,9 @@ def _protocol(cm: object) -> tuple[Callable[..., object], Callable[..., object]]
     """`cm`'s `__enter__` / `__exit__`, or CPython's own refusal.
 
     Both slots are resolved before either is called, as Python's `with` does.
-    Entering first and reaching for `__exit__` only afterwards ran the
+    Entering first and reaching for `__exit__` only afterwards would run the
     acquisition of a manager that can never release it — the entry side effect
-    happened, and nothing was ever going to undo it.
+    happens, and nothing is ever going to undo it.
 
     Looked up on the type, not the instance: that is where Python's protocol
     reads them from, so a `does_not_understand` hook cannot forge a context
@@ -53,14 +53,13 @@ class With(Object, name="With"):
     exception types.
 
     That leak is the *protocol*, not the values passed through it. `__exit__`
-    used to receive `type(e)`, `e` and `e.__traceback__`: the native class
-    rather than the mirror `except_` matches, the bare exception rather than
-    the `Error` a handler is given, and a traceback object — a whole
-    introspection surface, reached through a dunder `no_dunder_attribute`
-    will not let a program spell. On the success path all three were Python's
-    `None`, so the first thing an `__exit__` asks (`kind.is_none()`) failed
-    there too. It now receives what `Try` hands a handler, and `none` for the
-    traceback POOP does not have.
+    receives what `Try` hands a handler: the mirror class `except_` matches,
+    not `type(e)`; the `Error` a handler is given, not the bare exception; and
+    `none` for the traceback POOP does not have, not `e.__traceback__` — a
+    whole introspection surface, reached through a dunder
+    `no_dunder_attribute` will not let a program spell. On the success path
+    all three are `none`, not Python's `None`, so the first thing an
+    `__exit__` asks (`kind.is_none()`) works there too.
 
     Usage:
         With(lambda: open('file.txt')).do(lambda f: f.read().print())
@@ -73,11 +72,10 @@ class With(Object, name="With"):
         self, cm_block: Callable[[], object] | MISSING = MISSING, /, *extra: object
     ) -> None:
         # Counted here, in POOP's words, as every builtin constructor counts
-        # through its converter: `With` is bound as a class, so `With()` and
-        # `With(a, b)` reached CPython's call machinery and answered
-        # `With.__init__() missing 1 required positional argument` — a dunder
-        # and a phrase the wording sweep bans, from the one construct a
-        # program is invited to spell.
+        # through its converter: `With` is bound as a class, so a wrong count
+        # left to CPython's call machinery would answer `With.__init__()
+        # missing 1 required positional argument`, a dunder and a phrase POOP
+        # bans, from the one construct a program is invited to spell.
         if cm_block is MISSING or extra:
             given = "nothing" if cm_block is MISSING else f"{len(extra) + 1} arguments"
             raise mirrors.TypeError(
@@ -91,12 +89,12 @@ class With(Object, name="With"):
     def do(self, body_block: Callable[[object], object]) -> object:
         # First, before the manager block runs. `_require_block` exists for
         # this construct above all — its docstring names `With` as "the one
-        # worth optimizing for" — and `__init__` applied it to the manager
-        # while `do` left the body to the deferred call, which answered the
-        # very sentence quoted there as the thing being avoided: `'int' object
-        # is not callable`. Worse, it answered it *after* `enter(cm)`, so the
-        # manager was acquired and released for a program that was never going
-        # to use it — the ordering `_protocol` argues for one step up.
+        # worth optimizing for". Left to the deferred call, the body would
+        # answer the very sentence quoted there as the thing being avoided,
+        # `'int' object is not callable`, and answer it *after* `enter(cm)`, so
+        # the manager would be acquired and released for a program that is
+        # never going to use it — the ordering `_protocol` argues for one step
+        # up.
         _require_block(body_block, "the body argument", "write .do(lambda resource: …)")
         if self._done:
             raise mirrors.RuntimeError(
@@ -104,8 +102,8 @@ class With(Object, name="With"):
             )
         self._done = True
         cm = self._cm_block()
-        # Single-use: drop the context-manager block so the executed With no
-        # longer pins whatever its closure captured (re-running raises).
+        # Single-use: drop the context-manager block so the executed With
+        # does not pin whatever its closure captured (re-running raises).
         # `del` plus the flag, as `Try` spells it: the slot keeps its type
         # instead of admitting a `None` the guard above makes unreachable.
         del self._cm_block

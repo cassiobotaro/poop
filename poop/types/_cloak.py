@@ -1,33 +1,31 @@
 """The one place a wrapper's Python identity is rewritten.
 
 Every wrapper answers to the name of the builtin it replaces: `Int` reads back
-as `int`, `Block` as `function`, `ListIterator` as `list_iterator`. That cloak
-was three separate assignments repeated down the tail of every module, and it
-covered `__name__` and `__module__` but not `__qualname__` — which CPython
-prefers in several of its own messages. Python 3.14's unhashable-key error put
-both spellings in one sentence:
+as `int`, `Block` as `function`, `ListIterator` as `list_iterator`. The cloak
+covers `__qualname__` as well as `__name__` and `__module__`, because CPython
+prefers it in several of its own messages, and Python 3.14's unhashable-key
+error puts both spellings in one sentence:
 
-    {[1]: 2}  ->  cannot use 'List' as a dict key (unhashable type: 'list')
+    {[1]: 2}  ->  cannot use 'list' as a dict key (unhashable type: 'list')
 
-Setting the three together makes that unrepresentable rather than merely
-tested: there is no way to patch one and forget the others.
+Setting the three together makes a mismatch there unrepresentable rather than
+merely tested: there is no way to patch one and forget the others.
 
-Three, though, was still only the class's own identity. CPython composes a
+Three, though, is still only the class's own identity. CPython composes a
 *call-signature* error from the **function's** `__qualname__`, frozen when the
-class body ran and never touched by the cloak — so every wrong-arity message in
-the language answered in POOP's internal vocabulary, names user code cannot
-even write:
+class body runs and not touched by renaming the class — so `cloak` renames the
+functions a class owns too, and a wrong-arity message answers in the names a
+program writes:
 
-    "abc".upper(1)   ->  TypeError: Str.upper() takes 1 positional argument ...
-    [1].append()     ->  TypeError: List.append() missing 1 required ...
-    [1, 2].map()     ->  TypeError: _IterableMixin.map() missing 1 required ...
+    "abc".upper(1)   ->  TypeError: str.upper() takes 1 positional argument ...
+    [1].append()     ->  TypeError: list.append() missing 1 required ...
 
-The last is the sharpest: `_IterableMixin` is exactly what `_reject_private`
-refuses to hand out ("POOP objects do not expose their internals"). `cloak` now
-renames the functions a class owns, and `cloak_callable` does the same for a
-bare function — the `_poop_*` rewriter helpers, whose leaked spelling is one
-`no_poop_prefix` *reserves*, so the interpreter was naming something it would
-then refuse.
+Left alone, those would read `Str.upper()` and `List.append()`, and a mixin's
+method `_IterableMixin.map()` — exactly what `_reject_private` refuses to hand
+out ("POOP objects do not expose their internals"). `cloak_callable` does the
+same for a bare function: the `_poop_*` rewriter helpers, whose spelling is one
+`no_poop_prefix` *reserves*, so the interpreter would otherwise name something
+it then refuses.
 """
 
 from types import FunctionType
@@ -81,7 +79,7 @@ def cloak(cls: type, name: str) -> None:
     """Hide `cls`'s Python identity behind the name it answers to.
 
     `name` is the builtin's spelling. `Try` and `With` pass their own: both
-    are legitimate user-facing names, and only `poop.types.try_` leaked.
+    are legitimate user-facing names, and only their module would leak.
     Applied by `Object.__init_subclass__` from the `name=` class keyword;
     called directly only for the classes built by hand.
     """

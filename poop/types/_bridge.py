@@ -1,11 +1,11 @@
 """The two directions between a POOP value and the Python value it wraps.
 
-One registered function per type, dispatched on the argument's class. Two
-`isinstance` ladders did this before, and depended on rung order in a way
-nothing stated — `bool` had to be tested before `int`, being a subclass — while
-a new wrapper had to be slotted in at the right height of both. Dispatch follows
-the MRO, so the most specific registration wins without anyone ordering it, and
-each type's two halves sit next to each other.
+One registered function per type, dispatched on the argument's class, rather
+than two `isinstance` ladders, which would depend on rung order in a way nothing
+states — `bool` has to be tested before `int`, being a subclass — and need a new
+wrapper slotted in at the right height of both. Dispatch follows the MRO, so the
+most specific registration wins without anyone ordering it, and each type's two
+halves sit next to each other.
 
 Anything unregistered passes through unchanged in both directions.
 
@@ -18,9 +18,9 @@ declared over a private dispatcher, one overload per registered native:
 
 The container overloads take `Any` parameters on purpose. `dict`, `list`,
 `set` and `frozendict` are invariant in their type parameters, so an overload
-over `dict[object, object]` matched no `dict[int, int]` a caller could hold:
-every typed container fell through to the `object -> object` overload and the
-first caller to notice (`Str.maketrans`) needed a `cast`. The classes stay
+over `dict[object, object]` would match no `dict[int, int]` a caller can hold:
+every typed container would fall through to the `object -> object` overload and
+need a `cast` (`Str.maketrans` is one such caller). The classes stay
 concrete because the dispatcher converts exactly those — a `Mapping` or a
 `Sequence` would promise a `List` for a `str` or a `range` it never builds.
 `tests/test_bridge_types.py` holds the `assert_type`s that keep this true.
@@ -114,9 +114,9 @@ def _(value: bool) -> Boolean:
     return to_boolean(value)
 
 
-# `Complex` belongs with the other scalar rungs: left wrapped it reached
+# `Complex` belongs with the other scalar rungs: left wrapped it would reach
 # `str.format` as a POOP object, and `object.__format__` refuses every non-empty
-# spec — so `"{:.2f}".format(complex(1, 2))` failed where CPython answers
+# spec — so `"{:.2f}".format(complex(1, 2))` would fail where CPython answers
 # `1.00+2.00j`, naming `complex.__format__` on the way out.
 @to_python.register(Int)
 @to_python.register(Float)

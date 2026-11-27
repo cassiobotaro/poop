@@ -1,13 +1,12 @@
 """Argument refusals worded as POOP, for the arguments many messages share.
 
-The wrappers reworded the failures they *raise*; the ones CPython raises on
-their behalf, about an argument it was handed, were left alone — and those name
-the banned builtin as a call (`isinstance() arg 2 must be a type`), or
-subscripting and a dunder in one breath (`slice indices must be integers or
-None or have an __index__ method`). The mechanical sweep in
-`tests/test_no_python_wording.py` found 47 of them across 114 sites, in a
-handful of families, which is why the wording lives here rather than being
-written out once per receiver.
+The wrappers word the failures they *raise*. The ones CPython raises on their
+behalf, about an argument it was handed, name the banned builtin as a call
+(`isinstance() arg 2 must be a type`), or subscripting and a dunder in one
+breath (`slice indices must be integers or None or have an __index__ method`).
+They fall into a handful of families shared by many receivers, which is why the
+wording lives here rather than being written out once per receiver; the
+mechanical sweep in `tests/test_no_python_wording.py` is what finds them.
 """
 
 import operator
@@ -62,9 +61,9 @@ def a_class(value: object, selector: str) -> type | tuple[type, ...]:
     """`value` when it can stand for a class, else POOP's refusal.
 
     `no_isinstance` bans `isinstance(x, T)` and names `x.is_instance(T)`, and
-    the substitute's own failure then said `isinstance() arg 2 must be a type,
-    a tuple of types, or a union` — the builtin it replaces, spelt as the call
-    it replaces. `issubclass` said the same about itself.
+    left to CPython the substitute's own failure would say `isinstance() arg 2
+    must be a type, a tuple of types, or a union` — the builtin it replaces,
+    spelt as the call it replaces. `issubclass` says the same about itself.
     """
     if isinstance(value, (type, tuple)):
         return value
@@ -77,16 +76,17 @@ def a_bound(value: object, selector: str, role: str) -> int | None:
     """The raw `start`/`end` behind `value`, or POOP's refusal.
 
     The `start` / `end` of `find`, `index`, `count`, `startswith` and their
-    `r`-prefixed twins are positions, and a wrong one reached CPython's
-    sequence machinery: `slice indices must be integers or None or have an
+    `r`-prefixed twins are positions, and a wrong one left to CPython's
+    sequence machinery would answer `slice indices must be integers or None or have an
     __index__ method` names subscripting (which `no_subscript` bans) and a
     dunder (which `no_dunder_attribute` bans) in a single sentence, about a
     `slice` the program never wrote. `_resolve_py_slice` guards the real
     `slice` message for the same reason; this is the same guard for the
     messages that carry bounds without one.
 
-    Unwraps as well as guards, so a call site spells one helper where it used
-    to spell `_unwrap(start, None)`. An optional `an_int`: absent is `None`.
+    Unwraps as well as guards, so a call site spells one helper rather than
+    `_unwrap(start, None)` beside a guard. An optional `an_int`: absent is
+    `None`.
     """
     return an_int(value, selector, role, None)
 
@@ -110,8 +110,7 @@ def text_like[T](
     CPython answers `center() argument 2 must be a byte string of length 1,
     not int` and `replace() argument 1 must be str, not int` — the message
     spelt as a call, every time. `a_needle` makes the same move for the block
-    case; this covers the rest of the family and the receivers that had no
-    guard at all.
+    case; this covers the rest of the family.
 
     `kinds` narrows what counts as text for the caller that needs it: an
     encoding name and a byte order are `str` and nothing else, so accepting
@@ -155,9 +154,9 @@ def a_needle[T](
     as a call, and `function`, which POOP prints as `<block>`.
 
     The block refusal names the class the message was sent to, read from
-    `receiver`. It used to be parsed out of `expected`, the phrase describing
-    the *argument*, so `b"abc".count(block)` blamed "an int" — the last thing
-    the argument may be, not the receiver.
+    `receiver` rather than parsed out of `expected`, the phrase describing the
+    *argument*: from there `b"abc".count(block)` would blame "an int" — the
+    last thing the argument may be, not the receiver.
 
     The byte receivers accept an integer as well as a subsequence, which is
     CPython's rule (`b"ab".count(97)` is 1), so `expected` carries what this
@@ -197,8 +196,7 @@ def a_fill[T: Sized](
     of them POOP's: `The fill character must be a unicode character, not int`,
     `The fill character must be exactly one character long`, and on the byte
     twins `center(): argument 2 must be a byte string of length 1, not a bytes
-    object of length 2` — the message spelt as a call. `Str` reached all of
-    them unguarded, and the byte twins guarded the type but not the length.
+    object of length 2` — the message spelt as a call.
     """
     if _is_absent(value):
         return None
@@ -222,11 +220,10 @@ def bytes_like(
 ) -> bytes | bytearray | memoryview | None:
     """The raw bytes behind an argument, or POOP's refusal.
 
-    The byte twins of everything `text_like` already guards on `Str`. CPython
-    answered `a bytes-like object is required, not 'str'` for eleven messages
-    on both byte wrappers — a sentence with no receiver, no message and no
-    substitute, and one the wording sweep could not see: it carries no call, no
-    dunder and no operator.
+    The byte twins of everything `text_like` guards on `Str`. CPython answers
+    `a bytes-like object is required, not 'str'` on both byte wrappers — a
+    sentence with no receiver, no message and no substitute, and one the
+    wording sweep cannot see: it carries no call, no dunder and no operator.
     """
     # `optional` for the strip family, whose argument is genuinely absent by
     # default — CPython's own `strip arg must be None or str` names that case.
@@ -269,22 +266,21 @@ def a_block(
     as one — so a message's answer keeps the block's own type through the
     guard; anything else comes back as the bare callable it was found to be.
 
-    `_require_block`'s call-site twin for the ~40 messages that take a block and
-    reached the deferred call instead. Its docstring already made the argument:
-    "resolve what you need before running anything, so the failure lands where
-    the mistake was written rather than after a deferred block has had side
-    effects." Two proposals applied that to `Try` and `With`; nothing carried it
-    to the collection protocol, where blocks are what POOP replaced every
-    control structure *with*.
+    `_require_block`'s call-site twin for the messages that take a block. Its
+    docstring makes the argument: "resolve what you need before running
+    anything, so the failure lands where the mistake was written rather than
+    after a deferred block has had side effects." `Try` and `With` apply it,
+    and so does the collection protocol, where blocks are what POOP replaced
+    every control structure *with*.
 
-    Sending a non-block split three ways, and all three were wrong: seventeen
-    messages leaked `'int' object is not callable` — true of every POOP object,
-    and silent about what was expected; five **accepted in silence**, because
-    `map`, `filter` and `filter_false` answer a view and call nothing until it
-    is walked; and the `if_*` family reported or not depending on the
-    *receiver's value*, so `True.if_true(5)` refused while `True.if_false(5)`
-    said nothing. A program could ship a mistake that only reports on the branch
-    it does not usually take.
+    Left to the deferred call, a non-block would go wrong three ways: most
+    messages would leak `'int' object is not callable` — true of every POOP
+    object, and silent about what was expected; `map`, `filter` and
+    `filter_false` would **accept it in silence**, because they answer a view
+    and call nothing until it is walked; and the `if_*` family would report or
+    not depending on the *receiver's value*, `True.if_true(5)` refusing while
+    `True.if_false(5)` says nothing. A program could ship a mistake that only
+    reports on the branch it does not usually take.
     """
     if callable(value):
         return value
@@ -295,12 +291,12 @@ def a_block(
     if spelt is None:
         spelt = f"lambda {param}: …" if param else "lambda: …"
     # `nothing` for an argument that was never passed. Without it, a missing
-    # block fell through to CPython's call machinery, which builds its sentence
-    # from the *function's* qualname — and the mixins are cloaked as `object`,
-    # since no single builtin name is true for every wrapper that inherits
-    # them. So `[1, 2].map()` blamed `object.map()`: a name a program can
-    # write, for a class that does not answer `#map`, checkable in one line and
-    # the opposite of what the refusal just said.
+    # block would fall through to CPython's call machinery, which builds its
+    # sentence from the *function's* qualname — and the mixins are cloaked as
+    # `object`, since no single builtin name is true for every wrapper that
+    # inherits them. So `[1, 2].map()` would blame `object.map()`: a name a
+    # program can write, for a class that does not answer `#map`, checkable in
+    # one line and the opposite of what the refusal just said.
     got = "nothing" if value is MISSING else article(type(value).__name__)
     raise mirrors.TypeError(
         f"#{selector} expects {role}, got {got} — write .{selector}({spelt})"
@@ -310,11 +306,10 @@ def a_block(
 def a_text(value: object, selector: str, role: str, default: str) -> str:
     """The raw `str` behind an optional text keyword, or POOP's refusal.
 
-    `print`'s `end` and `sep` went to `builtins.print` through `_unwrap`,
-    which passes anything through, so a wrong one answered CPython's `end
-    must be None or a string, not int` — no receiver, no message, from the
-    most-sent message in the language. The wording sweep could not see it:
-    `print` was listed as unsendable. Worded as `an_int` words its roles.
+    `print`'s `end` and `sep` go to `builtins.print`. Through `_unwrap`, which
+    passes anything through, a wrong one would answer CPython's `end must be
+    None or a string, not int` — no receiver, no message, from the most-sent
+    message in the language. Worded as `an_int` words its roles.
     """
     if _is_absent(value):
         return default
@@ -330,10 +325,10 @@ def a_boolean(value: object, selector: str) -> Boolean:
     """`value` as the `Boolean` a boolean-algebra message takes, or a refusal.
 
     `xor` and `eqv` are the two Smalltalk messages on `Boolean` that take a
-    value rather than a block, and the only two that guarded nothing:
-    `False.xor(5)` answered `5` — an int from a boolean message — and
-    `True.eqv("abc")` answered `abc`. Folding through truthiness was the
-    alternative, and would have accepted silently what `and_`/`or_` refuse.
+    value rather than a block, so no block guard covers them: unguarded,
+    `False.xor(5)` would answer `5` — an int from a boolean message — and
+    `True.eqv("abc")` would answer `abc`. Folding through truthiness is the
+    alternative, and would accept silently what `and_`/`or_` refuse.
     """
     if isinstance(value, Boolean):
         return value
@@ -346,7 +341,7 @@ def a_key(value: object, selector: str) -> Callable[..., object]:
     """The optional `key` of `sorted` / `sort` / `min` / `max`, or a refusal.
 
     Absent by default, unlike every other block slot, so it cannot go through
-    `a_block` — and it is the one that answered CPython's `'int' object is not
+    `a_block` — and unguarded it would answer CPython's `'int' object is not
     callable` from inside the sort rather than at the call the reader wrote.
 
     Absence is the caller's to handle and is already handled there: `_minmax`
@@ -365,10 +360,11 @@ def a_key(value: object, selector: str) -> Callable[..., object]:
 def byte_order(value: object, selector: str) -> Literal["big", "little"]:
     """`"big"` / `"little"`, or POOP's refusal.
 
-    `to_bytes` and `from_bytes` handed the argument to CPython, which answered
-    `to_bytes() argument 'byteorder' must be str, not int` — the message spelt
-    as a call. The two valid spellings are named here rather than left to the
-    conversion, so a typo (`"Big"`) is refused by the message that takes it.
+    Handed to CPython, the argument of `to_bytes` and `from_bytes` would
+    answer `to_bytes() argument 'byteorder' must be str, not int` — the
+    message spelt as a call. The two valid spellings are named here rather
+    than left to the conversion, so a typo (`"Big"`) is refused by the message
+    that takes it.
     """
     if _is_absent(value):
         return "big"
@@ -384,7 +380,7 @@ def byte_order(value: object, selector: str) -> Literal["big", "little"]:
 def max_split(value: object, selector: str) -> int:
     """The raw `maxsplit` of `split` / `rsplit`, or POOP's refusal.
 
-    CPython answered `'str' object cannot be interpreted as an integer` — no
+    CPython answers `'str' object cannot be interpreted as an integer` — no
     message, no argument, and "interpreted as" naming a conversion the program
     never asked for. `a_bound` already words the same mistake for positions;
     an absent one is CPython's `-1`, every split there is.
@@ -402,10 +398,10 @@ def an_int[D](
     """The raw integer behind `value`, or POOP's refusal.
 
     `a_bound` for the integers that are not positions: a width, a length, a
-    digit count, an index, a byte. CPython answered `'str' object cannot be
+    digit count, an index, a byte. CPython answers `'str' object cannot be
     interpreted as an integer` for all of them — the sentence `max_split`
-    replaces, on 29 more receiver/message sites the wording sweep could not
-    see, since it carries no call, no dunder and no operator.
+    replaces, and one the wording sweep cannot see, since it carries no call,
+    no dunder and no operator.
 
     `default` is what an absent argument stands for. Without one the argument
     is mandatory, and `none` is refused like any other non-integer.
@@ -488,7 +484,7 @@ def translation_table(value: object, selector: str) -> TranslationTable:
 
     CPython looks each character's ordinal up in whatever `table` is, so a
     mapping and a sequence (`"abc".translate(["x", "y"])` reads positions) both
-    serve, and anything else answered `'int' object is not subscriptable` —
+    serve, and anything else would answer `'int' object is not subscriptable` —
     the protocol `no_subscript` bans, about an argument the program never
     subscripted. A `Str` is a sequence too, and crosses as its own text.
 
@@ -512,8 +508,8 @@ def a_collection(value: object, selector: str) -> Iterable[Object]:
     """`value` when it can be walked, else POOP's refusal.
 
     `zip`, the set algebra, `join`, `extend`, `update` and `fromkeys` take
-    anything with elements, and a scalar reached CPython: `'int' object is not
-    iterable`, on 33 receiver/message sites. "Iterable" is the protocol
+    anything with elements, and left to CPython a scalar would answer `'int'
+    object is not iterable`. "Iterable" is the protocol
     `no_iter` bans, and POOP has no such word — what it has is "a collection",
     the word a spread into a literal already refuses with.
     """
@@ -528,8 +524,8 @@ def a_pair(value: object, selector: str) -> Iterable[Object]:
     """One entry of a collection of key/value pairs, or POOP's refusal.
 
     `d.update([1])` passes `a_collection` — it was handed one — and CPython
-    then answered `object is not iterable` about the element, with no subject
-    at all.
+    would then answer `object is not iterable` about the element, with no
+    subject at all.
     """
     if isinstance(value, Iterable):
         return value
@@ -543,9 +539,9 @@ def byte_source(value: object, selector: str) -> bytes | bytearray | memoryview:
     """What `from_bytes` reads its bytes from, or POOP's refusal.
 
     `bytes_like` for a message that also takes any iterable of ints, as
-    `int.from_bytes([1, 2])` does. Anything else reached CPython, which
-    answered `cannot convert 'int' object to bytes` — and a collection of the
-    wrong things answered about an element, in the same words `max_split`
+    `int.from_bytes([1, 2])` does. Left to CPython, anything else would answer
+    `cannot convert 'int' object to bytes` — and a collection of the wrong
+    things would answer about an element, in the same words `max_split`
     replaces.
     """
     raw = _faithful(value)

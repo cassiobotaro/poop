@@ -2,8 +2,8 @@
 
 `get_attr` / `has_attr` / `set_attr` / `del_attr` live on `Object` and again,
 class-side, on `PoopMeta`, and both refuse the same names for the same reasons.
-Each side used to carry its own copy of the guard, and the copies drifted: the
-class side kept the `__init__` carve-out the instance side had closed.
+Both share this one copy of the guard, so a carve-out closed on one side is
+closed on the other.
 
 Imported at the top of `object.py` and `meta.py`, which sit under everything
 else in `poop.types` — so this module imports nothing from the package at load
@@ -36,12 +36,11 @@ def _reject_dunder(name: str) -> None:
 
     `allow_init=False`: the validator's `__init__` carve-out exists for
     `super().__init__(...)`, a *syntax*, and these messages are not it. With
-    the exemption inherited, `get_attr("__init__")` answered a callable that
-    re-initialized the receiver in place — `Str`, `Int` and `Tuple` all
+    the exemption inherited, `get_attr("__init__")` would answer a callable
+    that re-initializes the receiver in place — `Str`, `Int` and `Tuple` all
     mutable, and a `Dict` keyed on one left holding an entry reachable under
-    neither the old spelling nor the new. The class side kept its own copy of
-    this guard and the exemption with it, so `str.get_attr("__init__")(s, "x")`
-    did exactly that until both receivers shared this one.
+    neither the old spelling nor the new. The class side shares this guard, so
+    `str.get_attr("__init__")(s, "x")` is refused as well.
     """
     message = dunder_message(name, allow_init=False)
     if message is not None:
@@ -70,8 +69,8 @@ def _checked_name(name: object) -> str:
 
     Every reflective accessor — on an instance and on a class — needs the same
     three steps, and `_attr_name` is what keeps a non-`Str` name from leaking
-    `#_value` out of the substitute `no_getattr` points at. One copy, because
-    two had already drifted apart (see `_reject_dunder`).
+    `#_value` out of the substitute `no_getattr` points at. One copy, so the
+    instance and class sides cannot drift apart (see `_reject_dunder`).
     """
     raw = _attr_name(name)
     _reject_dunder(raw)

@@ -12,10 +12,10 @@ if TYPE_CHECKING:
 class _BlockView[S: Object, T: Object](_LazyView[T], name="object"):
     """Base for the views that send a block to each element: `map`, `filter`.
 
-    The two differed in one line — what the block's answer does with the
-    element — and spelt the slots, the constructor, the hand-off in
-    `_generate` and the guarded call to the block twice. Each view now
-    supplies only `_gen`, the generator built from `(source, block)`.
+    The two differ in one line — what the block's answer does with the
+    element — so the slots, the constructor, the hand-off in `_generate` and
+    the guarded call to the block live here, and each view supplies only
+    `_gen`, the generator built from `(source, block)`.
 
     Generic over the source's element `S` and the view's own `T`: a `Map`
     yields what its block answers, a `Filter` what its source yields.

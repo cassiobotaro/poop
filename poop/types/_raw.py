@@ -2,7 +2,7 @@
 
 A leaf module, importing nothing from the package, so every guard can name it
 at the top: `_argument.py` sits below `_unwrap.py` in the import graph and
-used to spell the same expression inline instead.
+reads it from here rather than spelling the same expression inline.
 """
 
 from typing import Protocol, overload

@@ -1,25 +1,26 @@
 """What a bare builtin *name* answers to, as opposed to a builtin call.
 
 Every converter transformer has two rewrites: `visit_Call` sends `list(x)` to
-the converter, and `visit_Name` sends a bare `list` to the wrapper class. The
-two do different things — `_arity.py`'s docstring is entirely about that gap
-("one name meant 'convert' at one arity and 'build from these elements' at
-another, and only the first matches Python") — and it closed the gap for the
-direct call only. Bind the name first and the call goes to the class:
+the converter, and `visit_Name` sends a bare `list` to a class. The converter
+and the wrapper class do different things — `_arity.py`'s docstring is
+entirely about that gap ("one name meant 'convert' at one arity and 'build
+from these elements' at another, and only the first matches Python") — and
+`_arity.py` keeps them apart for the direct call. Bind the name first and the
+call goes to the class, so that class has to convert as well:
 
     x = int
-    x(4.9)          # an `int` holding 4.9, which then answers
-                    # `float does not understand #+ with an int`
+    x(4.9)          # 4, where the wrapper would hold 4.9
     x = list
-    x([1, 2])       # [[1, 2]]
+    x([1, 2])       # [1, 2], where the wrapper would answer [[1, 2]]
     x = tuple
-    x([1, 2])       # ([1, 2],)
+    x([1, 2])       # (1, 2), where the wrapper would answer ([1, 2],)
 
-The first two rows are silent: nothing raises, and the program carries on with
-a value whose class and contents disagree. A constructor is an object in POOP,
-so this is not an exotic spelling — `[list, set].at(0)([1, 2])` and
-`lambda c: c([1, 2])` are the same bug, and passing a converter as a block is
-ordinary in a language whose iteration is `map`/`filter`.
+The wrapper's answers would be silent in the first two rows: nothing raises,
+and the program carries on with a value whose class and contents disagree. A
+constructor is an object in POOP, so this is not an exotic spelling —
+`[list, set].at(0)([1, 2])` and `lambda c: c([1, 2])` are the same call, and
+passing a converter as a block is ordinary in a language whose iteration is
+`map`/`filter`.
 
 The class cannot simply *be* the converter: `poop/types/` builds its values by
 calling these classes directly (`Str(self._value.upper())`, `List(*elements)`),
@@ -32,21 +33,16 @@ name is otherwise used for:
     class Stack(list): ...      # a base
     int.name()                  # a class-side receiver
 
-Only `__call__` is intercepted. The obvious companion — an `__instancecheck__`
-delegating to the wrapped class, as `PoopExcMeta` does for the mirrors — does
-not work here and is worth recording: the alias *is* a subclass of the wrapper,
-and while `PoopMeta` derived from `ABCMeta`, `ABCMeta.__subclasscheck__` walked
-`List.__subclasses__()`, reached the alias, and asked it the same question,
-which delegated back. It recursed until the stack gave out. The type-argument case is answered one level up instead, by
-`unalias` below, which the two `is_instance`/`is_subclass` pairs call.
+Only `__call__` is intercepted, not `__instancecheck__` as `PoopExcMeta` does
+for the mirrors (`doc/adr/0051-a-bare-builtin-name-is-the-converter-alias.md`).
+The type-argument case is answered one level up instead, by `unalias` below,
+which the two `is_instance`/`is_subclass` pairs call.
 
-`__call__` covers the subclasses too. It used to read `cls.__dict__` and stop
-there, which left the whole gap above open one level down — for the very
-spelling this docstring calls a legal use of the name: `Stack([1, 2])` answered
-a `Stack` holding one list, `N(4.9)` an `int` holding 4.9, and six of the
-thirteen refused in Python's words. `_AliasMeta` now converts and rebuilds the
-answer as the subclass. What the `__dict__` read was protecting is kept
-explicitly: a subclass that declares its own `__init__` is built by it.
+`__call__` covers the subclasses too, for the very spelling this docstring
+calls a legal use of the name: `Stack([1, 2])` answers a `Stack` holding two
+elements and `N(4.9)` an `N` holding 4. `_AliasMeta` converts and rebuilds the
+answer as the subclass, except that a subclass which declares its own
+`__init__` is built by it.
 """
 
 from copy import copy
@@ -109,10 +105,10 @@ def _endow(
     arguments, so `class N(int)` whose `__init__` ignores them still answers
     `4` for `N(4.9)`; `list.__new__` ignores them and hands `__init__` an
     empty list, so `class Pair(list)` with a signature of its own is an
-    ordinary empty list carrying whatever state it set. POOP wrote the payload
-    in `__init__` alone, so a subclass that never passed it up came back with
-    no payload at all, and the first message answered `#_value` — the internal
-    slot name.
+    ordinary empty list carrying whatever state it set. Writing the payload in
+    `__init__` alone would leave a subclass that never passes it up with no
+    payload at all, and its first message would answer `#_value` — the
+    internal slot name.
 
     One positional argument and no keywords is the shape every converter
     takes, so it converts. Otherwise the arguments are the subclass's own and
@@ -138,21 +134,18 @@ def _endow(
 class _AliasMeta(PoopMeta):
     """Makes a class answer a call the way its converter does.
 
-    Subclasses included. Reading `_converter` from `cls.__dict__` meant the
-    whole "convert" / "build from these elements" gap this module closes was
-    left open one level down — for the exact spelling the docstring above
-    names as a legal use of a bare name (`class Stack(list)`). Every one of
-    the thirteen constructors disagreed with itself there: `Stack([1, 2])`
-    answered a `Stack` holding one list where `list([1, 2])` holds two
-    elements, `N(4.9)` answered an `int` holding 4.9, and six refused
-    outright, each naming a Python dunder, arity or slot.
+    Subclasses included. The converter is looked up along the MRO, not read
+    from `cls.__dict__`, which would leave the "convert" / "build from these
+    elements" gap this module closes open one level down — for the exact
+    spelling the docstring above names as a legal use of a bare name (`class
+    Stack(list)`), where `Stack([1, 2])` would answer a `Stack` holding one
+    list while `list([1, 2])` holds two elements.
 
-    So the converter is looked up along the MRO, and the answer is rebuilt as
-    `cls` — a subclass has the wrapper's slots, being a subclass. Two things
-    keep their old meaning: a subclass declaring its own `__init__` is built
-    by it (that is what the `__dict__` read was protecting), and a wrapper
-    with no payload at all — `Boolean`, whose values are two singletons —
-    cannot be rebuilt, so its converter's answer is passed through.
+    The answer is rebuilt as `cls` — a subclass has the wrapper's slots, being
+    a subclass. Two exceptions: a subclass declaring its own `__init__` is
+    built by it, and a wrapper with no payload at all — `Boolean`, whose
+    values are two singletons — cannot be rebuilt, so its converter's answer
+    is passed through.
     """
 
     # A type variable rather than `Self`, which ty refuses in a metaclass.
@@ -168,12 +161,10 @@ class _AliasMeta(PoopMeta):
 
         `bool` is the one wrapper whose values are singletons with no payload,
         and CPython refuses it as a base outright (`type 'bool' is not an
-        acceptable base type`). POOP let the class be defined and failed at
-        the first instance, with `Can't instantiate abstract class Flag
-        without an implementation for abstract methods '__bool__', '__str__',
-        …` — a dozen dunders in one sentence, from a program that spelled
-        none. Refusing where CPython refuses says the same thing in POOP's
-        words, and at the line that made the decision.
+        acceptable base type`). Defining the class and failing at the first
+        instance would answer a dozen dunders in one sentence, from a program
+        that spelled none. Refusing where CPython refuses says the same thing in
+        POOP's words, and at the line that made the decision.
         """
         for base in bases:
             wrapped = base.__dict__.get("_wrapped")
@@ -229,14 +220,11 @@ def wrapped_instance[T](cls: type[T], *args: object) -> T:
 
     For POOP's own class-side constructors — `bytes.fromhex`, `int.from_bytes`,
     `float.fromhex` — which hold a finished *Python* value and need it wrapped.
-    They used to spell that `cls(...)`, and `cls` is whatever the program
-    named: under a bare builtin name it is the alias, whose call is the
-    converter, and a converter takes what a program writes rather than a raw
-    value. So the three broke in the only spelling a reader would use, while
-    the same message sent to an instance worked:
-
-        bytes.fromhex("6162")   # 'int' object has no attribute '_value'
-        b"".fromhex("6162")     # b'ab'
+    Not `cls(...)`: `cls` is whatever the program named, and under a bare
+    builtin name it is the alias, whose call is the converter, and a converter
+    takes what a program writes rather than a raw value. `cls(...)` would
+    break `bytes.fromhex("6162")`, the only spelling a reader would use, while
+    `b"".fromhex("6162")` sent to an instance works.
 
     Three receivers, three answers. The alias answers the wrapper's own
     instance; a plain wrapper builds itself; a program's subclass is built
@@ -260,7 +248,7 @@ def unalias(type_: object) -> object: ...
 def unalias(type_: object) -> object:
     """The wrapper behind a bare builtin name, for a type-*argument* position.
 
-    `(5).is_instance(int)` hands over whatever `int` resolves to, which is now
+    `(5).is_instance(int)` hands over whatever `int` resolves to, which is
     the alias — and an `Int` is not an instance of it, the alias being the
     subclass. Reading `_wrapped` restores the question the program asked.
 
@@ -287,13 +275,13 @@ def builtin_alias(wrapped: type, converter: Callable[..., object], name: str) ->
     def __init__(self: object, *args: object, **kwargs: object) -> None:  # noqa: N807 — installed as the alias's
         """`super().__init__(...)` from a subclass — and it converts.
 
-        The third and last home of the convert/build gap. `no_dunder_attribute`
+        The convert/build gap at the constructor. `no_dunder_attribute`
         carves out exactly one dunder call, `__init__`, *for* this spelling, so
-        it is the constructor a program is invited to write — and it reached
-        the wrapper's variadic `__init__`, which means "build from these
-        elements": `class S(list)` calling `super().__init__(xs)` answered a
-        list holding one list, and `super().__init__(*xs)` was the spelling
-        that worked, with nothing to say so.
+        it is the constructor a program is invited to write — and the
+        wrapper's variadic `__init__` means "build from these elements":
+        reaching it, `class S(list)` calling `super().__init__(xs)` would
+        answer a list holding one list, and only `super().__init__(*xs)` would
+        work, with nothing to say so.
 
         The alias sits between the subclass and the wrapper in the MRO
         (`S.__mro__` is `(S, <alias>, List, …)`), which is exactly where

@@ -28,16 +28,15 @@ def _exception_kind(
 ) -> type[BaseException] | tuple[type[BaseException], ...]:
     """The kind `except_` will match on, checked where it was written.
 
-    `except_` guarded its handler at the boundary and left the kind to
-    `isinstance` inside `_execute`, so a quoted class name answered
-    `isinstance() arg 2 must be a type, a tuple of types, or a union` — the
-    banned builtin spelt as the call replacing it, which the wording sweep
-    closed on all 15 receivers — and answered it only when the protected block *raised*.
-    The same mistake reported or said nothing depending on something else
-    entirely, and saying nothing means the handler was never installed.
+    Checked when `except_` is sent, not left to `isinstance` inside
+    `_execute`: there a quoted class name would answer `isinstance() arg 2
+    must be a type, a tuple of types, or a union`, the banned builtin spelt as
+    the call replacing it, and only when the protected block *raised*. The
+    same mistake would report or say nothing depending on something else
+    entirely, and saying nothing means the handler is never installed.
 
     A POOP `Tuple` unwraps to the native one `isinstance` needs, so Python's
-    own "catch either" spelling works rather than merely failing better; and a
+    own "catch either" spelling works; and a
     class that is no exception is refused, as CPython refuses `except int`,
     because a handler that can never fire is a mistake worth naming.
     """
@@ -73,11 +72,10 @@ class Try(Object, name="Try"):
         self, block: Callable[[], object] | MISSING = MISSING, /, *extra: object
     ) -> None:
         # Counted here, in POOP's words, as every builtin constructor counts
-        # through its converter: `Try` is bound as a class, so `Try()` and
-        # `Try(a, b)` reached CPython's call machinery and answered
-        # `Try.__init__() missing 1 required positional argument` — a dunder
-        # and a phrase the wording sweep bans, from the one construct a
-        # program is invited to spell.
+        # through its converter: `Try` is bound as a class, so a wrong count
+        # left to CPython's call machinery would answer `Try.__init__()
+        # missing 1 required positional argument`, a dunder and a phrase POOP
+        # bans, from the one construct a program is invited to spell.
         if block is MISSING or extra:
             given = "nothing" if block is MISSING else f"{len(extra) + 1} arguments"
             raise mirrors.TypeError(
@@ -101,9 +99,8 @@ class Try(Object, name="Try"):
         exc_type: type[BaseException],
         handler: Callable[[Error], object],
     ) -> Try:
-        # Both arguments checked here, where each has a name — the kind used to
-        # be stored untouched and first looked at by `isinstance`, inside
-        # `_execute`. See `_exception_kind`.
+        # Both arguments checked here, where each has a name, not first looked
+        # at inside `_execute`. See `_exception_kind`.
         kind = _exception_kind(exc_type)
         _require_block(
             handler, "the handler", "write .except_(ValueError, lambda e: …)"
@@ -141,10 +138,9 @@ class Try(Object, name="Try"):
         return self
 
     def finally_(self, block: Callable[[], object] | None = None) -> object:
-        # The one block argument on `Try` that was not routed through
-        # `_require_block`: `.finally_(5)` reached the deferred call and
-        # answered `'int' object is not callable`, while `.except_(E, 5)` — one
-        # method up, in the same class — named the handler.
+        # Through `_require_block`, as `.except_`'s handler is: left to the
+        # deferred call, `.finally_(5)` would answer `'int' object is not
+        # callable` instead of naming the cleanup.
         if block is not None:
             _require_block(block, "the cleanup", "write .finally_(lambda: …)")
         # Store the cleanup closure only while the Try can still run it; a
@@ -184,7 +180,7 @@ class Try(Object, name="Try"):
             if self._finally_block is not None:
                 self._finally_block()
             # Single-use: drop the block/handler closures so the executed
-            # Try no longer pins whatever they captured (re-running raises).
+            # Try does not pin whatever they captured (re-running raises).
             # `del` for the block, as the lazy views release theirs: the slot
             # keeps its type instead of admitting a `None` the guard above
             # makes unreachable.

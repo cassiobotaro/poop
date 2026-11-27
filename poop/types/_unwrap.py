@@ -42,9 +42,9 @@ def _attr_name(name: object) -> str:
 
     The `get_attr` / `has_attr` / `set_attr` / `del_attr` family is what
     `no_getattr` offers in place of `getattr`, and it lives on `Object`, so
-    every value in the language carries it. Reading `name._value` answered
+    every value in the language carries it. Reading `name._value` would answer
     `list does not understand #_value` for a non-`Str` name — a POOP internal,
-    from the substitute for the very builtin whose leak it was meant to close.
+    from the substitute for the very builtin whose leak it is meant to close.
     `getattr(obj, 5)` says `attribute name must be string, not 'int'`; so does
     this, POOP's class names making it read the same way.
     """
