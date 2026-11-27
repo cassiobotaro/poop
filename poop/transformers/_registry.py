@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from poop.transformers._collection import spread as _spread
 from poop.transformers.async_ import NAMESPACE as _ASYNC_NAMESPACE
+from poop.transformers.async_with import NAMESPACE as _ASYNC_WITH_NAMESPACE
 from poop.transformers.await_ import AwaitTransformer
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
@@ -99,8 +100,8 @@ DEFAULT_TRANSFORMERS: tuple[Transformer, ...] = tuple(
 
 # Bindings sourced from class-based transformers (PascalCase types
 # rewritten into POOP equivalents at parse time) and from
-# namespace-only modules (`Try`, `With` and `Async`, the three names user
-# code can spell, injected with no AST rewrite). The build below walks both kinds in declaration
+# namespace-only modules (`Try`, `With`, `Async` and `AsyncWith`, the four
+# names user code can spell, injected with no AST rewrite). The build below walks both kinds in declaration
 # order and refuses duplicate keys so a new transformer can't
 # silently overwrite a binding from an earlier one.
 # One binding shared by four literal forms rather than declared on whichever
@@ -114,6 +115,7 @@ _BINDING_SOURCES: list[dict[str, object]] = [
     _TRY_NAMESPACE,
     _WITH_NAMESPACE,
     _ASYNC_NAMESPACE,
+    _ASYNC_WITH_NAMESPACE,
     _spread_namespace,
 ]
 
