@@ -80,6 +80,20 @@ _NO_STATE = re.compile(
 )
 
 
+# `'int' object can't be awaited` — what CPython says for `x.await_()`, which
+# `AwaitTransformer` rewrites to a bare `await`. Reworded here for the reason
+# `_NO_STATE` is: checking at the await would cost a call on every await that
+# succeeds. The remedy is `#await_`, since a message names no call.
+_UNAWAITABLE = re.compile(r"^'(.+?)' object can't be awaited$")
+
+
+def cannot_be_awaited(class_name: str) -> str:
+    return (
+        f"{class_name} cannot be awaited — send #await_ to a coroutine, "
+        "the value an async method answers"
+    )
+
+
 def holds_no_state(class_name: str) -> str:
     """The refusal for attaching state to a value.
 
@@ -233,7 +247,8 @@ def withheld_builtin(name: str) -> str | None:
 
 
 def poop_message(exc: BaseException) -> str:
-    """`str(exc)`, with the two CPython operator shapes reworded."""
+    """`str(exc)`, with the CPython sentences that name a construct POOP
+    forbids, or offer no remedy, reworded."""
     if isinstance(exc, NameError) and exc.name is not None:
         withheld = withheld_builtin(exc.name)
         if withheld is not None:
@@ -243,6 +258,10 @@ def poop_message(exc: BaseException) -> str:
         stateless = _NO_STATE.prefixmatch(text)
         if stateless is not None:
             return holds_no_state(stateless.group(1))
+    if isinstance(exc, TypeError):
+        unawaitable = _UNAWAITABLE.prefixmatch(text)
+        if unawaitable is not None:
+            return cannot_be_awaited(unawaitable.group(1))
     # Both patterns capture (selector, left, right) in that order, which is
     # why one unpacking serves them.
     match = _ARITHMETIC.prefixmatch(text) or _COMPARISON.prefixmatch(text)

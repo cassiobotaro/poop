@@ -66,9 +66,9 @@ class AsyncWith(Object, name="AsyncWith"):
 def _slot(cm: object, slot: str, answer: object) -> Awaitable[object]:
     """What the manager's `slot` answered, refused unless it can be awaited.
 
-    Left to `await`, the refusal is `'Res' object can't be awaited`, which
-    names neither the slot nor the remedy. CPython's `async with` sentence
-    names both as dunders, `__aenter__` and `__await__`.
+    Left to `await`, the refusal would name the class alone, not the slot.
+    CPython's `async with` sentence names both as dunders, `__aenter__` and
+    `__await__`.
     """
     if not isawaitable(answer):
         raise mirrors.TypeError(

@@ -9,9 +9,9 @@ docs. "The gate" in a task below means all of these pass:
 
 ## 1. await_ on a value that cannot be awaited
 
-- [ ] 1.1 Add tests for both `await-transformer` scenarios next to the existing `await_` tests (find them with `grep -rln "await_" tests/test_transformers`). Add the "Awaiting an int" program to `_FAILING` in `tests/test_no_python_wording.py`. Verify: the scenario tests fail on `main` with `'int' object can't be awaited`.
-- [ ] 1.2 Add `_UNAWAITABLE` to `poop/types/_message.py` and reword it in `poop_message`, and update `poop_message`'s docstring, which counts the shapes it rewords. Update the `_slot` docstring in `poop/types/async_with.py`, which quotes the old sentence. Verify: the 1.1 tests pass, and so does the gate.
-- [ ] 1.3 In `MIGRATION.md`, add the sentence to the `x.await_()` notes under *Async methods* if they list failures; otherwise leave the doc unchanged and say so in the commit body. Run any snippet added. Verify: the commit body or `git diff MIGRATION.md` shows which.
+- [x] 1.1 Add tests for both `await-transformer` scenarios next to the existing `await_` tests (find them with `grep -rln "await_" tests/test_transformers`). Add the "Awaiting an int" program to `_FAILING` in `tests/test_no_python_wording.py`. Verify: the scenario tests fail on `main` with `'int' object can't be awaited`.
+- [x] 1.2 Add `_UNAWAITABLE` to `poop/types/_message.py` and reword it in `poop_message`, and update `poop_message`'s docstring, which counts the shapes it rewords. Update the `_slot` docstring in `poop/types/async_with.py`, which quotes the old sentence. Verify: the 1.1 tests pass, and so does the gate.
+- [x] 1.3 In `MIGRATION.md`, add the sentence to the `x.await_()` notes under *Async methods* if they list failures; otherwise leave the doc unchanged and say so in the commit body. Run any snippet added. Verify: the commit body or `git diff MIGRATION.md` shows which.
 
 ## 2. A block that answers a Try that has not run
 

@@ -263,6 +263,11 @@ _FAILING = [
     "    async def main(self):\n"
     "        AsyncWith(lambda: self).do(lambda x: Async.sleep(0)).await_()\n"
     "Async.run(C().main())",
+    # Awaiting what a synchronous send answered: CPython's sentence names no
+    # remedy.
+    "class C(Object):\n    def sync(self):\n        return 1\n"
+    "    async def main(self):\n        return self.sync().await_()\n"
+    "Async.run(C().main())",
 ]
 
 

@@ -1,9 +1,11 @@
 import asyncio
+import re
 from functools import partial
 from typing import Any
 
 import pytest
 
+from poop.errors import PoopError
 from poop.executor import execute
 from poop.interpreter import Interpreter
 from poop.transformers.await_ import AwaitTransformer
@@ -74,3 +76,35 @@ def test_await_answers_the_awaited_value(
     method: str, args: tuple[object, ...], expected: str
 ) -> None:
     assert str(asyncio.run(getattr(_page(), method)(*args))) == expected
+
+
+_UNAWAITABLE = """
+class Page(Object):
+    def sync(self):
+        return 1
+
+    async def bad(self):
+        return self.sync().await_()
+
+    async def caught(self):
+        return Try(lambda: self.bad()).except_(
+            TypeError, lambda e: e.message()
+        ).await_()
+"""
+
+_SENTENCE = (
+    "int cannot be awaited — send #await_ to a coroutine, the value an async "
+    "method answers"
+)
+
+
+def test_a_receiver_that_cannot_be_awaited_is_refused_in_poop_s_words() -> None:
+    with pytest.raises(PoopError, match=f"TypeError: {re.escape(_SENTENCE)}"):
+        Interpreter().run_source(f"{_UNAWAITABLE}Async.run(Page().bad())\n")
+
+
+def test_the_refusal_reads_the_same_when_caught(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    Interpreter().run_source(f"{_UNAWAITABLE}Async.run(Page().caught()).print()\n")
+    assert capsys.readouterr().out == f"{_SENTENCE}\n"
