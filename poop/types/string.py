@@ -56,12 +56,12 @@ if TYPE_CHECKING:
 
 # `Unknown format code 'd' for object of type 'str'`.
 _UNKNOWN_CODE = re.compile(r"^Unknown format code '(.+?)' for object of type '(.+?)'$")
-# The sibling shape, which no path worded: a spec CPython cannot parse at all,
-# rather than one it parsed and the receiver would not take.
+# The sibling shape: a spec CPython cannot parse at all, rather than one it
+# parsed and the receiver would not take.
 _BAD_SPEC = re.compile(r"^Invalid format specifier '(.*?)' for object of type '(.+?)'$")
-# The `TypeError` half, leaking the other way. `Object.format` catches this one
-# and composes POOP's sentence; the template path let it through, naming a
-# dunder `no_dunder_attribute` will not let a program spell.
+# The `TypeError` half, which names a dunder `no_dunder_attribute` will not let
+# a program spell. `Object.format` and the template path both word it through
+# `no_format_spec`.
 _NO_SPEC = re.compile(r"^unsupported format string passed to (.+?)\.__format__$")
 
 
@@ -69,11 +69,11 @@ def _reject_field_access(template: str) -> None:
     """Refuse `{0.attr}` / `{0[key]}` — a format field is not an escape hatch.
 
     `str.format` reads attributes and items at *runtime*, from inside a string
-    literal no validator can read, so `"{0.__class__}".format(5)` printed
-    `<class 'int'>` — reopening exactly what `no_dunder_attribute` closes, and
-    `{0[0]}` what `no_subscript` closes. This is the third half of the same
-    ban, alongside `_reject_dunder`: both guard a spelling that reaches
-    the runtime as data.
+    literal no validator can read, so without this `"{0.__class__}".format(5)`
+    would print `<class 'int'>` — reopening exactly what `no_dunder_attribute`
+    closes, and `{0[0]}` what `no_subscript` closes. This belongs to the same
+    ban as `_reject_dunder`: both guard a spelling that reaches the runtime as
+    data.
 
     Only the field *name* is inspected — a format spec may legitimately carry a
     dot (`{:.2f}`), and `Formatter.parse` already splits the two. The recursion
@@ -110,18 +110,16 @@ def _template_refusal(exc: ValueError | TypeError) -> Exception:
     everywhere else. The brace errors are the template parser's own and say
     `format string`, which is Python's name for what POOP calls a template.
 
-    Shared by both spellings POOP offers. `Str.format` is the template surface
-    and reached this; `Object.format` is the substitute `no_format` *names*, and
-    it reached CPython — so `"{0:d}".format(2.5)` answered `a float cannot be
-    formatted with 'd'` while `(2.5).format("d")` answered `Unknown format code
-    'd' for object of type 'float'`. Same value, same code, same failure, and
-    the leaking half was the one a validator sends the reader to.
+    Shared by both spellings POOP offers: `Str.format`, the template surface,
+    and `Object.format`, the substitute `no_format` *names*. So
+    `"{0:d}".format(2.5)` and `(2.5).format("d")` both answer `a float cannot
+    be formatted with 'd'`: same value, same code, same failure, and the
+    spelling a validator sends the reader to answers in POOP's terms too.
 
-    `Invalid format specifier` leaked on *both*, because the fallback below only
-    rewrites `format string` and that sentence contains neither brace wording
-    nor a format code. The `TypeError` leaked the other way — `Object.format`
-    worded it and the template path did not — so the shared sentence lives in
-    `no_format_spec` and both call sites compose it from there.
+    `Invalid format specifier` needs its own pattern, because the fallback
+    below only rewrites `format string` and that sentence contains neither
+    brace wording nor a format code. The `TypeError` sentence lives in
+    `no_format_spec`, and both call sites compose it from there.
     """
     # POOP's own refusal — `_reject_field_access`'s — passes through
     # untouched, on the test `reword_if_native` uses for the same reason.
@@ -160,10 +158,10 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
     """A string, and a collection like any other.
 
     `no_map`, `no_filter`, `no_all`, `no_any` and `no_loops` each name a
-    message on the collection as the substitute, `_IterableMixin` supplies
-    them, and a `Str` did not inherit it: the most-written receiver in the
-    language answered `str does not understand #do`, leaving iteration to be
-    driven by hand through the cursor. The three string-specific messages
+    message on the collection as the substitute, and `_IterableMixin` supplies
+    them, so a `Str`, the most-written receiver in the language, inherits it
+    and answers `#do` without iteration driven by hand through the cursor. The
+    three string-specific messages
     (`find`, `count`, `index`, which search for a substring rather than for a
     match) override the mixin's below, and `sum` refuses.
     """
@@ -197,8 +195,8 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         except EOFError:
             # `EOF when reading a line` names CPython's own end-of-file
             # condition and the *line* the reader never asked for. A pipe
-            # rather than a terminal is enough to reach it — it is what
-            # `examples/basics/greet.py` answered when its stdin was closed.
+            # rather than a terminal is enough to reach it, as
+            # `examples/basics/greet.py` does when its stdin is closed.
             raise mirrors.EOFError("there is no more input to read") from None
 
     def at(self, index: Index) -> Str:
@@ -228,9 +226,9 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         )
 
     def includes(self, char: Str) -> Boolean:
-        # `includes` is the substitute `no_in` points at, and its own refusal
-        # quoted the banned operator in its Python spelling: `'in <string>'
-        # requires string as left operand, not int`.
+        # `includes` is the substitute `no_in` points at, so its refusal must
+        # not quote the banned operator in its Python spelling, as CPython's
+        # `'in <string>' requires string as left operand, not int` does.
         return to_boolean(text_like(char, "includes", "a str", (str,)) in self._value)
 
     def __contains__(self, item: object) -> bool:
@@ -241,8 +239,8 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
     def reversed(self) -> Str:
         # A `Str`, as `slice` and `at` on this receiver already answer one:
         # every other collection answers its own kind from `reversed`, so a
-        # `List` of one-character `Str`s made this the single message on a
-        # string that changes the type, and broke `s.reversed().upper()`.
+        # `List` of one-character `Str`s would make this the single message on
+        # a string that changes the type, and would break `s.reversed().upper()`.
         # The list spelling stays reachable as `list(s.reversed())`.
         return Str(self._value[::-1])
 
@@ -299,12 +297,11 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         )
 
     def join(self, parts: List) -> Str:
-        # Each piece through `text_like`, as the byte twins' `join` already
-        # does: a non-`Str` part answered CPython's `sequence item 0: expected
-        # str instance, int found` — a position in a Python sequence, for a
-        # message POOP spells `#join` — where `b"-".join([b"a", "x"])` named
-        # the message. Nothing is stringified on the way: a refusal, never
-        # `str(p)`.
+        # Each piece through `text_like`, as the byte twins' `join` does: a
+        # non-`Str` part would otherwise answer CPython's `sequence item 0:
+        # expected str instance, int found` — a position in a Python sequence,
+        # for a message POOP spells `#join`. Nothing is stringified on the way:
+        # a refusal, never `str(p)`.
         pieces = [
             text_like(p, "join", "a str", (str,)) for p in a_collection(parts, "join")
         ]
@@ -354,7 +351,7 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
             return Str(fill())
         except KeyError as exc:
             # A bare repr with nothing to say a lookup failed — the shape
-            # `_at.py` was written to close for a missing dict key.
+            # `_at.py` closes for a missing dict key.
             raise mirrors.KeyError(
                 f"the template asks for {exc.args[0]!r}, "
                 f"which no argument named{_offered(named)}"
@@ -372,11 +369,11 @@ class Str(_OrderedMixin, _ValueEqMixin, _IterableMixin["Str"], Object, name="str
         except TypeError as exc:
             # The `TypeError` half, and the one that leaks *out* of the
             # template rather than into it: a receiver that takes no spec at
-            # all answered `unsupported format string passed to
+            # all raises `unsupported format string passed to
             # list.__format__` — a dunder `no_dunder_attribute` will not let a
             # program spell, from a construct the reader wrote with braces.
-            # `Object.format` has composed POOP's sentence for this since it
-            # was written; both now compose it from `no_format_spec`.
+            # `_template_refusal` words it from `no_format_spec`, as
+            # `Object.format` does.
             raise _template_refusal(exc) from None
 
     @staticmethod

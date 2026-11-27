@@ -53,10 +53,9 @@ def _as_block(value: object) -> object:
     """A raw Python callable answered by `get_attr`, wrapped as a `Block`.
 
     An attribute holding state already answers a POOP object; one holding a
-    *method* answered CPython's bound method, which understands no message —
-    `"abc".get_attr("upper").print()` raised Python's own `AttributeError`
-    instead of `does not understand #print`, the last member of the
-    `getattr`-substitute family still handing back a native. `Block` is what
+    *method* would answer CPython's bound method, which understands no
+    message, so `"abc".get_attr("upper").print()` would raise Python's own
+    `AttributeError` instead of `does not understand #print`. `Block` is what
     every lambda is already wrapped in, so a method fetched by name reads back
     as the same kind of object a block literal does, callable included.
 
@@ -104,10 +103,10 @@ class Block[**P, R](Object, name="function"):
             # a calling convention a block does not have.
             #
             # The two failures are separated before rewording. Folding them
-            # together — `len(args) + len(kwargs)` — reported a keyword the
-            # block cannot take as a *count* mismatch whose count matched, so
-            # `.do(item=x)` answered `block expects 1 argument, got 1`. The
-            # count message now sees `len(args)` alone, which makes that
+            # together — `len(args) + len(kwargs)` — would report a keyword
+            # the block cannot take as a *count* mismatch whose count matches,
+            # so `.do(item=x)` would answer `block expects 1 argument, got 1`.
+            # The count message sees `len(args)` alone, which makes that
             # sentence unrepresentable.
             keyword_fault = self._keyword_message(args, kwargs)
             if keyword_fault is not None:
@@ -121,17 +120,17 @@ class Block[**P, R](Object, name="function"):
 
         `set_attr` on a class is sanctioned — it is refused only for POOP's
         own builtins, precisely so a program can extend the classes it
-        defines — and the one thing a reader reaches for it with did not work:
-        `C.set_attr("greet", lambda self: "hi")` then `C().greet()` answered
-        `block expects 1 argument, got 0`, because the block was handed back
-        untouched and the receiver never passed. The refusal was the worst
-        part: the reader wrote a one-argument block and was told it got none.
+        defines — and what a reader reaches for it with is a method:
+        `C.set_attr("greet", lambda self: "hi")` then `C().greet()` answers
+        `"hi"`. Handed back untouched, the block would never receive the
+        receiver and would answer `block expects 1 argument, got 0`, telling
+        the reader who wrote a one-argument block that it got none.
 
         Defining only `__get__` makes this a *non-data* descriptor, which is
         exactly Python's own split and needs no special case: consulted for a
         class attribute, skipped for one found in the instance's `__dict__`.
         So a `Block` held as *state* (`self.callback = lambda: …`) still reads
-        back as itself — that half already worked and must keep working.
+        back as itself.
 
         Answers `self` when read off the class (`C.greet`), as a function does.
 
@@ -139,10 +138,10 @@ class Block[**P, R](Object, name="function"):
         call then fails inside `__call__` above and is worded from the block
         the program actually wrote (`block expects 0 arguments, got 1` for a
         zero-argument block installed on a class, which is the mistake Python
-        reports too). Binding `_fn` directly hid that — `signature` refuses an
-        over-bound `partial`, so `_accepted` answered nothing and the refusal
-        degraded to `block does not accept 0 arguments`, about a call that
-        passed none.
+        reports too). Binding `_fn` directly would hide that: `signature`
+        refuses an over-bound `partial`, so `_accepted` would answer nothing and
+        the refusal would degrade to `block does not accept 0 arguments`, about
+        a call that passed none.
         """
         if instance is None:
             return self
@@ -158,8 +157,8 @@ class Block[**P, R](Object, name="function"):
 
         `FORWARDREF` because, since PEP 649 (Python 3.14), `signature`
         evaluates the callee's annotations, and `poop/types/` declares most of
-        its own under `TYPE_CHECKING` — so a block made from a wrapper's
-        classmethod (`int.get_attr("from_bytes")`) leaked
+        its own under `TYPE_CHECKING` — so with the default format a block made
+        from a wrapper's classmethod (`int.get_attr("from_bytes")`) would leak
         `NameError: name 'Bytes' is not defined` from the arity check in place
         of the arity sentence. Only `kind`, `default` and `name` are read here,
         never the annotation, and a forward reference costs nothing.
@@ -191,21 +190,19 @@ class Block[**P, R](Object, name="function"):
     ) -> str | None:
         """The refusal for a *keyword* failure, or `None` if the count is at fault.
 
-        `__call__` used to hand `_arity_message` `len(args) + len(kwargs)`, so
-        every keyword mistake was reported as a count mismatch — and the count
-        came out right:
+        Each keyword mistake gets a sentence naming its fault:
 
-            (lambda x: x)(nope=1)        # block expects 1 argument, got 1
-            (lambda x: x)(1, x=2)        # block expects 1 argument, got 1
-            (lambda x, *, k: x)(1)       # block expects 1 argument, got 1
+            (lambda x: x)(nope=1)    # block does not take a keyword argument 'nope'
+            (lambda x: x)(1, x=2)    # block already got 'x' as a positional argument
+            (lambda x, *, k: x)(1)   # block needs a keyword argument 'k'
 
-        A sentence stating two equal numbers and refusing anyway teaches
-        nothing, and none of the three mentioned the actual fault. CPython names
-        all three (`got an unexpected keyword argument 'nope'`, `got multiple
-        values for argument 'x'`, `missing 1 required keyword-only argument:
-        'k'`), which POOP is right to reword — `<lambda>` and "positional
-        argument" are both banned by the wording sweep — and was wrong to
-        collapse into one number.
+        Counted as `len(args) + len(kwargs)`, all three would read `block
+        expects 1 argument, got 1`: two equal numbers and a refusal anyway,
+        naming none of the faults. CPython names all three (`got an unexpected
+        keyword argument 'nope'`, `got multiple values for argument 'x'`,
+        `missing 1 required keyword-only argument: 'k'`), which POOP rewords —
+        `<lambda>` and "positional argument" are both banned by the wording
+        sweep — without collapsing them into one number.
 
         Answers `None` when the signature cannot be read, which is the case
         `_accepted` degrades on too, and when nothing about the keywords is
@@ -291,7 +288,7 @@ def _cpython_name(method: Renamable, read_off: type | None) -> str:
     CPython names the class that *defines* the method: `object` for one
     inherited from `object`, `list` for `class Stack(list)`'s `append`,
     `bytearray` and `frozendict` for their own, and the class a class-side
-    method was read off (`int.mro()`). The cloak froze the definer's name,
+    method was read off (`int.mro()`). The cloak freezes the definer's name,
     which is right only where POOP's definer is one CPython would name — a
     shared mixin is cloaked as `object`, `ByteArray` reuses `Bytes`'s
     functions and `FrozenDict` `Dict`'s, and a class-side function is shared
@@ -335,8 +332,8 @@ class _MethodBlock[**P, R](Block[P, R], name="function"):
 
     `Object.__getattribute__` hands one of these back for `"abc".upper`, so a
     method read by writing it reads back as the same kind of object one
-    fetched by name does — `_as_block`'s rule, which had only been wired into
-    `get_attr`, the spelling almost nobody writes.
+    fetched by name does — `_as_block`'s rule, applied to the spelling
+    programs write and not only to `get_attr`.
 
     It answers everything a `Block` answers and calls like a *method*: the
     arity refusal stays CPython's (`str.upper() takes 1 positional argument
@@ -345,12 +342,12 @@ class _MethodBlock[**P, R](Block[P, R], name="function"):
     a signature without evaluating its annotations, so the rewording would be
     safe here too, and is declined on wording alone.
 
-    What it does change is the *class* in that sentence, to the one CPython
-    would name (`_cpython_name`): `[1].map(1, 2)` blamed `object.map()`, a
-    class that does not answer `#map`, and `int.hash(1)` blamed a bare
-    `hash()`. Only a binding failure is renamed — one raised before the
-    method's body runs, so no frame lies below this one — and a `TypeError`
-    the body raises passes through untouched, whatever its text.
+    What it does change is the *class* in that sentence, to the one CPython would name
+    (`_cpython_name`): `[1].map(1, 2)` names `list.map()`, not `object.map()`, a class
+    that does not answer `#map`, and `int.hash(1)` names `int.hash()`, not a bare
+    `hash()`. Only a binding failure is renamed — one raised before the method's body
+    runs, so no frame lies below this one — and a `TypeError` the body raises passes
+    through untouched, whatever its text.
     """
 
     __slots__ = ("_read_off",)
@@ -383,10 +380,11 @@ class _MethodBlock[**P, R](Block[P, R], name="function"):
     # this the same callback?".
     #
     # `Object` compares by identity, and `__getattribute__` builds a fresh
-    # wrapper on every read, so `s.upper == s.upper` was false — as were
-    # `.hash()` and every registry built on either. The shape a reader hits is
-    # storing `obj.on_change` and later asking whether it is already
-    # registered: the answer was no, every time, and nothing warned.
+    # wrapper on every read, so without this `s.upper == s.upper` would be
+    # false, as would `.hash()` and every registry built on either. The shape
+    # a reader hits is storing `obj.on_change` and later asking whether it is
+    # already registered, where the answer would be no, every time, with
+    # nothing to warn.
     #
     # `Block` itself keeps identity deliberately. It wraps a lambda, and two
     # lambdas with the same body are different blocks in Smalltalk as in

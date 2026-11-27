@@ -1,13 +1,12 @@
 """The mirrors under their own names.
 
-`raise MIRRORS["TypeError"](…)` was how a POOP diagnostic was raised, 120
-times: a string key into a module-level dict, which is how a registry is
-read, not how an exception is raised. The key was a `Literal` the checker
-verified but a reader could not complete, and `exceptions.py` itself had to
-cast its own class names to write into the table. The mirrors are classes
+A call site reads `raise mirrors.TypeError(…)`, not
+`raise MIRRORS["TypeError"](…)`: a string key into a module-level dict is how a
+registry is read, not how an exception is raised, and its `Literal` key is one
+the checker verifies but a reader cannot complete. The mirrors are classes
 with fixed names, built once at import, and nothing about them is dynamic
 after that — so each is bound here under its own name, once `exceptions` has
-built the table, and a call site reads `raise mirrors.TypeError(…)`.
+built the table.
 
 Every name below *is* POOP's `TypeError`, `ValueError` and so on: the
 builtin's name, shadowed on purpose, which is why `A001` is off for this one

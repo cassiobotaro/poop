@@ -16,8 +16,9 @@ class NoneClass(Object, name="NoneType"):
     __slots__ = ()
 
     # CPython's answer: `type(None)() is None`. `class_()` hands the class
-    # out and a class is callable, so without this `None.class_()()` built a
-    # second None — printing `None`, neither identical nor equal to the first.
+    # out and a class is callable, so without this `None.class_()()` would
+    # build a second None — printing `None`, neither identical nor equal to
+    # the first.
     def __new__(cls, *args: object, **kwargs: object) -> NoneClass:
         no_arguments(cls, args, kwargs)
         return none

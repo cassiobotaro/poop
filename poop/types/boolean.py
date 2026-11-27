@@ -45,10 +45,10 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
     __slots__ = ()
 
     # Two booleans exist and no constructor builds a third. `class_()` hands
-    # each class out, so `True.class_()()` built a second `True` that was not
-    # identical to the first, and the base itself answered CPython's abstract-
-    # class sentence: a dozen dunders and private names from a program that
-    # spelt none. `bool()` is `False` in CPython, so the base answers `false`
+    # each class out, so without this `True.class_()()` would build a second
+    # `True` not identical to the first, and the base would answer CPython's
+    # abstract-class sentence, full of dunders and private names a program
+    # never spelt. `bool()` is `False` in CPython, so the base answers `false`
     # and each subclass answers its own instance — never `Self`, which is the
     # point.
     def __new__(cls, *args: object, **kwargs: object) -> Boolean:  # noqa: PYI034
@@ -60,8 +60,9 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
         # `type(self)`, which is `_TrueClass` or `_FalseClass` — two classes
         # both called `bool`, neither equal to the bare name, with a second
         # `bool` rung on the ladder above each. `PoopMeta.__eq__`'s own
-        # argument applies: `True.class_() == bool` was `False` for a program
-        # that is right, about two objects that both call themselves `bool`.
+        # argument applies: `True.class_() == bool` must be true, since a
+        # program asking it is right about two objects that both call
+        # themselves `bool`.
         # CPython's `type(True) is bool`; `Boolean()` answers `false` as
         # `bool()` does, so `True.class_()()` stays consistent with it.
         return Boolean
@@ -122,7 +123,7 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
     def __index__(self) -> int:
         # Same reason `_order_value` folds to 1/0: `bool` is an `int` subclass,
         # so CPython indexes with it — `[1, 2][True]` is 2, `"ab"[True]` is
-        # "b". Without this the whole Boolean rung was unusable as an index.
+        # "b". Without this no Boolean can serve as an index.
         return 1 if self else 0
 
     # Ordering (__lt__/__le__/__gt__/__ge__) and equality (__eq__) against
@@ -141,12 +142,11 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
         return Int(1) if self else Int(0)
 
     # The int-side *messages*, delegated through the same fold the operators
-    # use. Everything that makes `bool` an `int` in CPython was re-supplied by
-    # hand — arithmetic, reflected arithmetic, comparison across the tower,
-    # `__index__` — and the messages were not, so a program told to stop
-    # writing `abs(flag)` had nowhere to go: `no_abs` names `x.abs()`,
-    # `no_divmod` names `a.divmod(b)`, `no_bin` names `x.bin()`, and none of
-    # them existed here. Each answers what CPython answers, which is an `Int`
+    # use. Arithmetic, comparison and `__index__` make a Boolean an `int` for
+    # the operators; these make it one for the substitutes the validators
+    # name, so a program told to stop writing `abs(flag)` has somewhere to go:
+    # `no_abs` names `x.abs()`, `no_divmod` names `a.divmod(b)`, `no_bin`
+    # names `x.bin()`. Each answers what CPython answers, which is an `Int`
     # (`abs(True)` is `1`, not `True`) — answering a `Boolean` would be a quiet
     # type error. Written out rather than generated: a loop over a name list
     # would be shorter but would defeat `ty`, `dir()` and `:methods`.
@@ -234,13 +234,11 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
         *,
         signed: Boolean | NoneClass | None = None,
     ) -> Boolean:
-        """`to_bytes` read back, the half of the pair that was missing.
+        """`to_bytes` read back, the other half of the pair.
 
         The only int-side message with no instance to fold, so it cannot go
         through `_as_int` like the rest of the family — it delegates to
-        `Int.from_bytes` and folds the answer. Its absence was sharper than a
-        plain gap: the near-miss hint pointed at `#to_bytes`, telling the
-        reader that the message they did not want is the one that exists.
+        `Int.from_bytes` and folds the answer.
 
         A `Boolean` and not an `Int`, unlike `abs` and its neighbours: CPython
         runs this one through `cls`, so `bool.from_bytes(b"\\x05", "big")` is
@@ -250,23 +248,22 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
 
     # `bool(self)`, not `_as_int()`, unlike every message around it:
     # `format(True, "")` is `'True'` and `format(1, "")` is `'1'`, so
-    # folding first would change `True.format()` — the one spelling that
-    # worked — from `True` to `1`. `Object.format` reads `_value`, which a
-    # Boolean has no slot for, so it fell through to `object.__format__`
-    # and refused every non-empty spec while `"{:>6}".format(True)`, which
-    # routes through `to_python`, answered `'     1'`.
+    # folding first would turn `True.format()` into `1`. The override exists
+    # because `Object.format` reads `_value`, which a Boolean has no slot for,
+    # and would fall through to `object.__format__`, refusing every non-empty
+    # spec; formatting the `bool` answers what `"{:>6}".format(True)`, routed
+    # through `to_python`, answers: `'     1'`.
     def format(self, spec: Str | NoneClass | None = None) -> Str:
         # Through `text_like` for the reason `Object.format` does it: a
-        # non-`Str` spec answered `format() argument 2 must be str, not int`.
+        # non-`Str` spec would answer `format() argument 2 must be str, not
+        # int`.
         raw = "" if _is_absent(spec) else text_like(spec, "format", "a str", (str,))
         try:
             return Str(builtins.format(bool(self), raw))
         except ValueError as exc:
-            # The same reword `Object.format` applies. This override exists for
-            # the `bool(self)` above, and inherited the leak with the rest of
-            # the body: a rejected spec answered `Unknown format code 's' for
-            # object of type 'bool'` while the template spelling answered
-            # POOP's sentence.
+            # The same reword `Object.format` applies, so a rejected spec
+            # answers POOP's sentence, as the template spelling does, and not
+            # `Unknown format code 's' for object of type 'bool'`.
             raise _template_refusal(exc) from None
 
     def as_integer_ratio(self) -> Tuple:
@@ -391,9 +388,9 @@ class Boolean(_NumericCompareMixin, Object, name="bool"):
 
     # Shifts, unlike the three above, have no boolean-algebra reading — there
     # is no Boolean answer to give, so they fold to `Int` whatever the other
-    # operand is, as CPython does (`True << True` is `2`). Without them the
-    # mixed cases still worked, because `Int` answers them from its own side
-    # (`__rlshift__` says so), and only `Boolean << Boolean` reached neither.
+    # operand is, as CPython does (`True << True` is `2`). `Int` also answers
+    # the mixed cases from its own side (`__rlshift__` says so); only
+    # `Boolean << Boolean` depends on these alone.
     def __lshift__(self, other: object) -> Int:
         return self._as_int().__lshift__(self._num(other))
 
@@ -476,8 +473,8 @@ class _FalseClass(Boolean, name="bool"):
 
     def if_true[T](self, block: Callable[[], T] | MISSING = MISSING) -> NoneClass:
         # Guarded on the branch that does *not* run, which is the whole point:
-        # `False.if_true(5)` used to say nothing at all, so whether a wrong
-        # argument was reported depended on the receiver's value.
+        # `False.if_true(5)` refuses as `True.if_true(5)` does, so whether a
+        # wrong argument is reported never depends on the receiver's value.
         a_block(block, "if_true", param="")
         return none
 

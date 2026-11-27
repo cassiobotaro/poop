@@ -47,8 +47,8 @@ def _holds_no_state(receiver: object) -> Exception:
 
     The plain assignment (`"abc".x = 5`) answers the same sentence through
     `poop_message`, which rewords the native `no __dict__` report where the
-    executor and `Error.message()` read; a `__setattr__` on `Object` used to
-    do it and ran on every object construction in the language.
+    executor and `Error.message()` read. A `__setattr__` on `Object` could
+    do it too, but would run on every object construction in the language.
     """
     return mirrors.AttributeError(holds_no_state(type(receiver).__name__))
 
@@ -65,12 +65,11 @@ class Object(metaclass=PoopMeta):
         """Cloak a wrapper under the builtin name it answers to.
 
         The cloak is part of a class's declaration — the name it answers to —
-        so it is a class keyword: `class Int(_NumericCompareMixin, Object,
-        name="int")`. It used to be a statement after the class, 43 times,
-        which is also 43 chances to define a wrapper and forget the line. A
-        class a program defines passes no keyword and keeps its own name.
-        `cloak` stays a function for the classes built by hand —
-        `builtin_alias` and the exception mirrors.
+        so it is a class keyword: `class Int(_NumericCompareMixin, Object, name="int")`,
+        not a statement after the class that every new wrapper could forget. A class a
+        program defines passes no keyword and keeps its own name. `cloak` stays a
+        function for the classes built by hand — `builtin_alias` and the exception
+        mirrors.
         """
         super().__init_subclass__(**kwargs)
         if name is not None:
@@ -100,9 +99,8 @@ class Object(metaclass=PoopMeta):
             if is_dunder(name):
                 raise AttributeError(name)
             # A `Str`, not the raw name CPython handed over: the hook is the
-            # one documented place a program receives a selector, and a hook
-            # that answered the name it was asked answered `'str' object has
-            # no attribute 'print'` — a native from the sanctioned override.
+            # one documented place a program receives a selector, so it
+            # answers in POOP's terms.
             return self.does_not_understand(Str(name))
 
     def does_not_understand(self, name: Str) -> object:
@@ -116,9 +114,9 @@ class Object(metaclass=PoopMeta):
         raise MessageNotUnderstood(explain(self, raw), name=raw, obj=self)
 
     def if_none(self, block: Callable[[], object] | MISSING = MISSING) -> Object:
-        # Guarded on the receiver that does *not* run it: `(5).if_none(5)` said
-        # nothing while `None.if_none(5)` leaked, so whether a wrong argument
-        # was reported depended on the value in hand.
+        # Guarded on the receiver that does *not* run it, so whether a wrong
+        # argument is reported never depends on the value in hand:
+        # `(5).if_none(5)` is refused as `None.if_none(5)` is.
         a_block(block, "if_none", param="")
         return self
 
@@ -128,8 +126,8 @@ class Object(metaclass=PoopMeta):
     # Smalltalk's `ifNil:ifNotNil:`, the paired form `Boolean` already has as
     # `if_true_if_false`. Not expressible by chaining: `x.if_not_none(…)
     # .if_none(…)` sends the second message to the first block's *answer*, so
-    # a present value whose block legitimately answers `none` ran the absent
-    # branch too. Both blocks are checked on every receiver, for the reason
+    # a present value whose block legitimately answers `none` would run the
+    # absent branch too. Both blocks are checked on every receiver, for the reason
     # `if_none` gives.
     def if_none_if_not_none[T](
         self,
@@ -180,11 +178,10 @@ class Object(metaclass=PoopMeta):
         try:
             return Int(hash(self))
         except TypeError as exc:
-            # The substitute `no_hash` names, answering CPython's bare sentence
-            # on nine receivers while `{[1]}` and `{}.at_put([1], 2)` — the same
-            # condition, one level in — answered one that says where the value
-            # was going. Unmatched text passes through, on the rule `_message`'s
-            # module docstring sets for every rewrite here.
+            # The substitute `no_hash` names answers what `{[1]}` and `{}.at_put([1],
+            # 2)` answer for the same condition one level in, not CPython's bare
+            # sentence. Unmatched text passes through, on the rule `_message`'s module
+            # docstring sets for every rewrite here.
             reworded = cannot_be_hashed(exc)
             if reworded is None:
                 raise
@@ -217,9 +214,9 @@ class Object(metaclass=PoopMeta):
         return List(*(Str(name) for name in builtins.dir(self) if is_message(name)))
 
     def format(self, spec: Str | NoneClass | None = None) -> Str:
-        # Two leaks in one method. A non-`Str` spec answered `format()
-        # argument 2 must be str, not int` — the builtin `no_format` bans,
-        # spelt as the call this message replaces...
+        # A non-`Str` spec is refused here: left to the builtin, it answers
+        # `format() argument 2 must be str, not int` — the builtin `no_format`
+        # bans, spelt as the call this message replaces.
         spec_value = (
             "" if _is_absent(spec) else text_like(spec, "format", "a str", (str,))
         )
@@ -227,20 +224,17 @@ class Object(metaclass=PoopMeta):
         try:
             return Str(builtins.format(target, spec_value))
         except ValueError as exc:
-            # The third leak, and the one a validator pointed at. `no_format`
-            # bans `format(x, spec)` and names `x.format(spec)`, and this method
-            # already caught the `TypeError` beside this clause and composed
-            # POOP's sentence for it — while the `ValueError` CPython raises
-            # from the same call passed straight through. So the template
-            # spelling answered `a float cannot be formatted with 'd'` and the
-            # message spelling answered `Unknown format code 'd' for object of
-            # type 'float'`: one failure, two vocabularies, chosen by which
-            # spelling the reader used. `_template_refusal` is receiver-
-            # independent — it reads the class name out of CPython's text — so
-            # both spellings now compose the same sentence.
+            # `no_format` bans `format(x, spec)` and names `x.format(spec)`, so
+            # the message spelling answers what the template spelling does —
+            # `a float cannot be formatted with 'd'`, not CPython's `Unknown
+            # format code 'd' for object of type 'float'`: one failure, one
+            # vocabulary, whichever spelling the reader used.
+            # `_template_refusal` is receiver-independent — it reads the class
+            # name out of CPython's text — so both spellings compose the same
+            # sentence.
             raise _template_refusal(exc) from None
         except TypeError:
-            # ...and a receiver with no `_value` fell through to
+            # A receiver with no `_value` falls through to
             # `object.__format__`, which refuses every non-empty spec by
             # naming the dunder: `unsupported format string passed to
             # list.__format__`. CPython refuses these too — only the sentence
@@ -250,8 +244,8 @@ class Object(metaclass=PoopMeta):
     def get_attr(self, name: Str, default: object = MISSING) -> object:
         # Guarded before the default is consulted: a forbidden name is refused,
         # not quietly answered with a fallback. One optional default, as
-        # `getattr` takes one: `*default` forwarded a third argument to the
-        # builtin, which refused it in its own words (`getattr expected at
+        # `getattr` takes one: `*default` would forward a third argument to
+        # the builtin, which refuses it in its own words (`getattr expected at
         # most 3 arguments, got 4`), naming the call `no_getattr` bans.
         raw = _checked_name(name)
         if default is MISSING:
@@ -270,7 +264,7 @@ class Object(metaclass=PoopMeta):
         except AttributeError:
             # A value declares `__slots__` and holds no attached state;
             # `set_attr` composes the sentence itself, as `del_attr` does,
-            # since no `__setattr__` on `Object` rewords it any more.
+            # since `Object` defines no `__setattr__` to reword it.
             raise _holds_no_state(self) from None
         return none
 
@@ -318,15 +312,16 @@ class Object(metaclass=PoopMeta):
         # The one `__ne__`: a POOP `==` answers a `Boolean`, so Python's
         # derived `__ne__` (a raw `bool`) cannot be used — but every rule for
         # equality lives in an `__eq__`, and restating each one here with the
-        # answer flipped meant keeping two copies in step by hand.
+        # answer flipped would mean keeping two copies in step by hand.
         return to_boolean(not bool(self == other))
 
     def __hash__(self) -> int:
         # Python's own identity hash, not `id(self)`. Defining __eq__ clears
         # __hash__, so this has to exist for Dict and Set to key on a plain
-        # object at all — but answering the address exactly made `x.hash()`
-        # print the raw pointer POOP otherwise never admits exists, and made
-        # it indistinguishable from the `id` message that used to sit here.
+        # object at all — but answering the address exactly would make
+        # `x.hash()` print the raw pointer POOP otherwise never admits exists,
+        # an `id` under another name
+        # (`doc/adr/0020-no-id-identity-is-a-question.md`).
         return object.__hash__(self)
 
 

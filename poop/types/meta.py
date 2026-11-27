@@ -2,8 +2,8 @@
 
 Smalltalk's "everything is an object" includes classes: `Foo name`, `Foo
 superclass` are ordinary messages to an ordinary object. Without this, POOP's
-thesis held for instances only, and `Foo.print()` answered a Python binding
-failure — `Object.print() missing 1 required positional argument: 'self'`.
+thesis would hold for instances only, and `Foo.print()` would answer a Python
+binding failure —`Object.print() missing 1 required positional argument: 'self'`.
 """
 
 import builtins
@@ -92,8 +92,8 @@ class class_side[C, **P, R]:  # noqa: N801 — read as a word at `@class_side`
         # renames the functions in `vars(cls)` and unwraps `classmethod` /
         # `staticmethod` through `__func__`, but a `class_side` descriptor
         # keeps its function in `_fn` and `PoopMeta` is never cloaked at all —
-        # so the class side, a documented user-facing surface, still composed
-        # its wrong-arity errors from POOP's internal vocabulary:
+        # so without this the class side, a documented user-facing surface,
+        # would compose its wrong-arity errors from POOP's internal vocabulary:
         # `PoopMeta.name() takes 1 positional argument but 2 were given`, a
         # name a program cannot write and cannot reach. `Foo.print()` cannot be
         # named here, since one function is shared by every class and
@@ -115,21 +115,21 @@ class class_side[C, **P, R]:  # noqa: N801 — read as a word at `@class_side`
         if getattr(cls, "__mro__", None) is None:
             return method
         # A `_MethodBlock`, the shape `Object.__getattribute__` answers for the
-        # instance side: a `functools.partial` here leaked as
-        # `'functools.partial' object has no attribute 'print'` for
-        # `int.name.print()`, and two reads of `Foo.name` compared unequal.
+        # instance side: a `functools.partial` here would answer
+        # `'functools.partial' object has no attribute 'print'` to
+        # `int.name.print()`, and two reads of `Foo.name` would compare unequal.
         return _MethodBlock(method)
 
     def __set__(self, cls: type, value: object) -> None:
-        # A sentence, not the bare name: `AttributeError: name` read as if the
+        # A sentence, not the bare name: `AttributeError: name` reads as if the
         # *word* `name` were the problem, and both spellings of the mistake —
-        # `Foo.name = 5` and the sanctioned `Foo.set_attr("name", 5)` — landed
-        # on it. `_reject_private` (`_attr_guard.py`) is the model.
+        # `Foo.name = 5` and the sanctioned `Foo.set_attr("name", 5)` — land
+        # here. `_reject_private` (`_attr_guard.py`) is the model.
         raise _rebound(self._name)
 
     def __delete__(self, cls: type) -> None:
         # The same sentence: without this, `type.__delattr__` on a data
-        # descriptor with no `__delete__` answered the bare slot name
+        # descriptor with no `__delete__` answers the bare slot name
         # (`AttributeError: __delete__`) to `Foo.del_attr("name")`.
         raise _rebound(self._name)
 
@@ -172,7 +172,7 @@ def _own_entry(cls: type, name: str) -> object | None:
     Read off the dicts rather than through `getattr`, which is what the
     `__getattribute__` below intercepts and what a refusing descriptor
     answers by raising. First in the MRO wins, as attribute lookup itself
-    resolves. Three readers asked this one question with three loops.
+    resolves.
     """
     for klass in type.__getattribute__(cls, "__mro__"):
         if name in vars(klass):
@@ -183,8 +183,7 @@ def _own_entry(cls: type, name: str) -> object | None:
 def class_side_named(metacls: type, name: str) -> class_side | None:
     """The `class_side` descriptor answering `name` down the metaclass MRO.
 
-    A refusing descriptor raises when asked through `getattr`, which is the
-    very lookup that lost the refusal in the first place, and would look
+    A refusing descriptor raises when asked through `getattr`, and would look
     identical to a message otherwise; `_own_entry` reads the dicts.
     """
     entry = _own_entry(metacls, name)
@@ -212,12 +211,12 @@ def _reject_builtin(cls: type) -> None:
     """Refuse a write to a class POOP defines rather than the program.
 
     `__slots__` is what keeps state off the instance side, and every wrapper
-    declares one — `Object.set_attr` even has a sentence for that refusal. The
-    class side had no equivalent, and `class_()` hands the class out, so
-    `"abc".class_().del_attr("upper")` removed `upper` from every string in
-    the program and `(5).class_().set_attr("bit_length", block)` replaced a
-    message on `int`. The only names that happened to be safe were the
-    `class_side` descriptors, whose `__set__` refuses.
+    declares one — `Object.set_attr` even has a sentence for that refusal.
+    `class_()` hands the class out, so without the same guard on the class
+    side `"abc".class_().del_attr("upper")` would remove `upper` from every
+    string in the program and `(5).class_().set_attr("bit_length", block)`
+    would replace a message on `int`. The `class_side` descriptors refuse
+    through their own `__set__`; this covers every other name.
 
     `__module__` is the discriminator already in place: `cloak` puts every
     wrapper and every mirror in `builtins`, while a class a POOP program
@@ -256,7 +255,7 @@ def _instance_only(cls: type, name: str) -> bool:
     Read off the MRO's dicts rather than through `getattr`, which is what
     `__getattribute__` below has already intercepted. A `classmethod`,
     `staticmethod`, `property` or `class_side` descriptor is not a
-    `FunctionType` here, so each keeps answering class-side as before.
+    `FunctionType` here, so each keeps answering class-side.
     """
     entry = _own_entry(cls, name)
     return entry is not None and instance_only(entry)
@@ -269,7 +268,7 @@ def _reflected(cls: type, name: str) -> object:
     names, and asking a class for one of its methods by name is a different
     act from writing the message: the answer is the unbound function, which
     takes its receiver explicitly exactly as it does in Python. `getattr`
-    itself now goes through `__getattribute__` and would be refused, so these
+    itself goes through `__getattribute__` and would be refused, so these
     two read past it. Raises `AttributeError` when there is nothing there, as
     `getattr` does, but never consults `__getattr__` — the callers decide what
     a missing name means.
@@ -290,16 +289,13 @@ def _reflected(cls: type, name: str) -> object:
 def _refuse_instance_side(cls: type, name: str) -> Never:
     """Refuse a method the *instance* answers, reached through the class.
 
-    `class_side` exists to remove one failure — ADR 37,
-    `doc/adr/0037-the-class-side-is-data-descriptors-on-a-type-metaclass-and-refuses-instance-messages.md`:
-    "the bans
-    contradicted themselves: `hash(Foo)` answers 'use `obj.hash()` instead'
-    while `Foo.hash()` answered a binding error, naming a substitute that did
-    not exist on that receiver". It removed it for `Object`'s protocol; the
-    wrapper's own messages were left, so `str.upper()` answered `str.upper()
-    missing 1 required positional argument: 'self'` — naming `self`, a
-    receiver POOP never spells, and "positional argument", which the wording
-    sweep bans outright. 64 of the 90 names `str.dir()` listed answered that.
+    Left to CPython, `str.upper()` answers `str.upper() missing 1 required
+    positional argument: 'self'` — naming `self`, a receiver POOP never
+    spells, and "positional argument", which the wording sweep bans outright.
+    It is the binding error `class_side` removes for `Object`'s protocol (ADR
+    37,
+    `doc/adr/0037-the-class-side-is-data-descriptors-on-a-type-metaclass-and-refuses-instance-messages.md`),
+    here refused for the wrapper's own messages.
 
     The sentence is the shape `_refuse` and `_refuse_native` already use, so
     the whole family reads like `class_` instead of like a binding failure.
@@ -336,13 +332,14 @@ def _refuse_native(cls: type, name: str, instead: str) -> Never:
 
 # The protocol slots CPython reads directly, with the native each one must
 # answer and the POOP type a program can actually build. A POOP method can
-# only return a POOP value, so every one of these was unsatisfiable from
-# inside the language: `def __str__(self): return "P!"` answered `TypeError:
-# __str__ returned non-string (type str)` — a sentence that names `str` as the
-# thing that is not a `str`, because `_cloak` renamed the wrapper to the
-# builtin it stands for. `__bool__` was worse (`should return bool, returned
-# bool`), and `__hash__` printed `__poop__.P`, the marker `_reject_builtin`
-# uses to tell a user's class from a builtin.
+# only return a POOP value, so unadapted every one of these is unsatisfiable
+# from inside the language: `def __str__(self): return "P!"` would answer
+# `TypeError: __str__ returned non-string (type str)` — a sentence that names
+# `str` as the thing that is not a `str`, because `_cloak` renames the wrapper
+# to the builtin it stands for. `__bool__` is worse (`should return bool,
+# returned bool`), and `__hash__` would print `__poop__.P`, the marker
+# `_reject_builtin` uses to tell a user's class from a builtin
+# (`doc/adr/0052-native-demanding-protocol-slots-are-adapted-at-class-build.md`).
 _PROTOCOL_SLOTS: dict[str, tuple[type, str]] = {
     "__str__": (str, "text"),
     "__repr__": (str, "repr"),
@@ -377,7 +374,7 @@ def _adapted(slot: str, method: Callable[..., object]) -> Callable[..., object]:
 
         # Named by the role, never by the slot: a message spelling `__str__`
         # names the construct `no_dunder_attribute` bans — and CPython's own
-        # sentence for this was `__str__ returned non-string (type str)`,
+        # sentence for this is `__str__ returned non-string (type str)`,
         # which calls `str` the thing that is not a `str`.
         raise mirrors.TypeError(
             f"{type(self).__name__}'s {role} must be "
@@ -391,10 +388,10 @@ def _adapted(slot: str, method: Callable[..., object]) -> Callable[..., object]:
 # is a receiver like any other, so `int + 1` must refuse under its own name —
 # left to CPython, `type` composes `unsupported operand type(s) for +:
 # '_AliasMeta' and 'int'`, naming the metaclass, a word no program can write,
-# and `poop_message` rewrote that faithfully into `_AliasMeta does not
+# and `poop_message` would rewrite that faithfully into `_AliasMeta does not
 # understand #+ with an int`. `|` is the one `type` answers itself, with a
 # `typing.Union` — a value for annotations, which POOP does not write, and a
-# naked native had it reached a program. It is refused with the rest; the
+# naked native were it to reach a program. It is refused with the rest; the
 # package spells its own runtime unions as tuples.
 _CLASS_SIDE_OPERATORS: dict[str, str] = {
     "__add__": "+",
@@ -448,11 +445,11 @@ def _length_message(self: Sized) -> Int:
 class PoopMeta(type):
     """Metaclass giving every POOP class the class-side protocol.
 
-    Derives from `type`, not `ABCMeta`. It used to be `ABCMeta` so that
-    `Boolean(Object, ABC)` would not fail with a metaclass conflict — one
-    abstract class, with two `@final` subclasses in the same module — and every
-    `isinstance` against a POOP class paid for it in
-    `ABCMeta.__instancecheck__`: about a quarter of a loop-heavy program's run.
+    Derives from `type`, not `ABCMeta`. `ABCMeta` would only spare
+    `Boolean(Object, ABC)` a metaclass conflict — one abstract class, with two
+    `@final` subclasses in the same module — and every `isinstance` against a
+    POOP class would pay for it in `ABCMeta.__instancecheck__`: about a
+    quarter of a loop-heavy program's run.
     It propagates for free — `ClassTransformer` already routes every user class
     through `Object`, and a metaclass is inherited.
 
@@ -475,8 +472,8 @@ class PoopMeta(type):
         A POOP program may define `__str__`, `__repr__`, `__bool__`,
         `__hash__` and `__len__` — that is how an object says how it prints,
         compares or measures — but it can only *return* POOP values, and
-        CPython reads these slots itself and demands a native. Every one of
-        them was therefore impossible to satisfy from inside the language.
+        CPython reads these slots itself and demands a native. Unadapted,
+        every one of them is impossible to satisfy from inside the language.
         The answer is unwrapped here, once, where the class is built.
 
         A class that declares `__len__` and no `len` also gets the message
@@ -485,12 +482,11 @@ class PoopMeta(type):
         is the quiet member of the same family.
 
         Only a *program's* class is adapted. The library's own wrappers are
-        written in Python and already answer natives, which the adapter used
-        to find out at run time, class by class, call by call: every
-        `hash(x)`, `str(x)`, `len(x)` or `bool(x)` on a POOP value paid a
-        Python frame, an `isinstance` and a `functools.wraps` indirection to
-        learn the answer was native all along — and `hash` is on the path of
-        every `Dict` and `Set` operation. The two populations are told apart
+        written in Python and already answer natives; adapting them would
+        make every `hash(x)`, `str(x)`, `len(x)` or `bool(x)` on a POOP value
+        pay a Python frame, an `isinstance` and a `functools.wraps`
+        indirection to learn the answer is native — and `hash` is on the path
+        of every `Dict` and `Set` operation. The two populations are told apart
         where the class is built: the executor binds `__name__` to
         `"__poop__"`, so a class a program defines arrives with that as its
         `__module__`, and a library class with `poop.types.…`.
@@ -525,12 +521,12 @@ class PoopMeta(type):
         if first is None:
             return none
         # An alias's one base is the wrapper it stands for, and both are
-        # cloaked under the builtin's name — so climbing from a bare builtin
-        # name met a rung that is not there: `int.superclass()` answered a
-        # class calling itself `int`, which `is_identical(int)` then denied,
-        # and `object` was two steps up instead of one. The pair is one class
-        # as far as a program can tell, which is the decision `__eq__` below
-        # already makes; the ladder says the same thing by stepping over it.
+        # cloaked under the builtin's name — so climbing from a bare builtin name would
+        # meet a rung that is not there: `int.superclass()` would answer a class calling
+        # itself `int`, which `is_identical(int)` denies, and `object` would be two
+        # steps up instead of one. The pair is one class as far as a program can tell,
+        # which is the decision `__eq__` below already makes; the ladder says the same
+        # thing by stepping over it.
         if first is unalias(cls):
             return first.superclass()
         return first
@@ -539,18 +535,18 @@ class PoopMeta(type):
         """Compare two classes, answering a `Boolean` like every other `==`.
 
         `Object.__eq__` answers a POOP object, but a *class* is compared by
-        its metaclass, and nothing here defined the message — so `int == int`
-        fell through to `type.__eq__` and handed a raw Python `bool` back to
-        user code, which then answered `'bool' object has no attribute
-        'print'`: CPython's vocabulary for the thing POOP calls a message,
-        reached by the shortest program that compares two classes.
+        its metaclass — so without this `int == int` would fall through to
+        `type.__eq__` and hand a raw Python `bool` back to user code, which
+        then answers `'bool' object has no attribute 'print'`: CPython's
+        vocabulary for the thing POOP calls a message, reached by the
+        shortest program that compares two classes.
 
-        `unalias` on both sides, so the two spellings of one class are one
-        class. `class_()` answers the wrapper while a bare builtin name
-        answers the `_alias.py` subclass of it, so `(5).class_() == int` was
-        `False` for a program that is right — silently, and about two objects
-        that both call themselves `int`. `is_identical` deliberately does not
-        follow: it asks identity, and those really are two objects.
+        `unalias` on both sides, so the two spellings of one class are one class.
+        `class_()` answers the wrapper while a bare builtin name answers the `_alias.py`
+        subclass of it, so `(5).class_() == int` would otherwise be `False` for a
+        program that is right — silently, and about two objects that both call
+        themselves `int`. `is_identical` deliberately does not follow: it asks identity,
+        and those really are two objects.
         """
         return to_boolean(unalias(cls) is unalias(other))
 
@@ -570,11 +566,11 @@ class PoopMeta(type):
     def mro(cls) -> list[type]:
         """Refuse `type.mro` — `superclass` is the question POOP answers.
 
-        Inherited from the metaclass, it answered a raw Python list of raw
+        Inherited from the metaclass, it answers a raw Python list of raw
         classes: `__mro__` under a spelling `no_dunder_attribute` cannot see,
         holding the Python `object` that `superclass` stops short of on
-        purpose. `dir()` never listed it either, so it was unreachable by
-        reading and reachable by typing.
+        purpose. `dir()` does not list it either, so unrefused it would be
+        unreachable by reading and reachable by typing.
 
         CPython calls this method to *compute* a new class's MRO — `mro_invoke`
         consults the metaclass whenever it is not plain `type` — so refusing
@@ -591,12 +587,11 @@ class PoopMeta(type):
         """Refuse `raise_` on a class that is not an error.
 
         The message itself lives on `PoopExcMeta`, so every mirror and every
-        user class descending from one answers it — and nothing else does.
-        Without this twin the non-exception case reported the *constructor* of
-        a class the program never asked to build: `A.raise_("x")` answered
-        `A() takes no arguments`, which the parse-time rewrite produced for any
-        capitalized receiver it saw. Positional-only like its twin, so a
-        keyword named `cls` is refused with this sentence too.
+        user class descending from one answers it — and nothing else does. Without this
+        twin the non-exception case would report the *constructor* of a class the
+        program never asked to build: `A.raise_("x")` would answer `A() takes no
+        arguments`. Positional-only like its twin, so a keyword named `cls` is refused
+        with this sentence too.
         """
         raise MessageNotUnderstood(
             f"{cls.__name__} cannot be raised — "
@@ -618,7 +613,7 @@ class PoopMeta(type):
     # a metaclass cannot inherit these into class-side lookup, which is the
     # whole reason `class_side` exists. Without them the bans contradict
     # themselves — `hash(Foo)` answers "use obj.hash() instead" while
-    # `Foo.hash()` answered a binding error.
+    # `Foo.hash()` would answer a binding error.
 
     @class_side
     def hash(cls) -> Int:
@@ -666,13 +661,13 @@ class PoopMeta(type):
             """A method the instance answers is refused, not bound and handed out.
 
             `type.__getattribute__` hands a plain function back unbound, so
-            every wrapper message reached through the class answered CPython's
-            binding error — `str.upper() missing 1 required positional
-            argument: 'self'`. See `_refuse_instance_side`. Narrow on purpose:
-            only a plain `FunctionType` found on the class's own MRO, so
-            `super().m()`, `classmethod`, `staticmethod`, `property`,
-            `class_side` and the metaclass's own messages all resolve exactly
-            as before. `_`-prefixed names are left alone, as `is_message`
+            every wrapper message reached through the class would answer
+            CPython's binding error — `str.upper() missing 1 required
+            positional argument: 'self'`. See `_refuse_instance_side`. Narrow
+            on purpose: only a plain `FunctionType` found on the class's own
+            MRO, so `super().m()`, `classmethod`, `staticmethod`, `property`,
+            `class_side` and the metaclass's own messages all resolve as
+            `type` resolves them. `_`-prefixed names are left alone, as `is_message`
             already draws that boundary and the interpreter reads `__mro__`,
             `__slots__` and the rest through it.
             """
@@ -680,7 +675,7 @@ class PoopMeta(type):
             # Two tests, cheapest first. `FunctionType` alone is not enough:
             # `staticmethod.__get__` answers the *wrapped function*, so a
             # `@staticmethod` — the one shape `no_class_machinery` leaves open
-            # and `examples/patterns/execute_around.py` is built on — looked
+            # and `examples/patterns/execute_around.py` is built on — looks
             # exactly like an instance method here. `_instance_only` reads the
             # MRO's dicts, where the wrapper is still visible.
             if (
@@ -694,26 +689,22 @@ class PoopMeta(type):
     def __setattr__(cls, name: str, value: object) -> None:
         """The undotted twin of `set_attr`, refused on the same terms.
 
-        Commit 385f48b closed one spelling of this and says what for:
-        "`class_()` hands the class out — so `"abc".class_().del_attr("upper")`
-        removed `upper` from every string in the program". `_reject_builtin`
-        was called from `set_attr` and `del_attr` and from nowhere else, so the
-        plain assignment walked straight past it:
+        `class_()` hands the class out, which is why `_reject_builtin` guards
+        `set_attr` and `del_attr`; without this override the plain assignment
+        would walk straight past it. One intent, two spellings, one answer:
 
             "abc".class_().set_attr("shout", block)   # refused
-            Object.shout = lambda self: self.repr()   # accepted
-            (5).shout().print()                       # 5!
+            Object.shout = lambda self: self.repr()   # refused
 
-        One intent, two spellings, and the refused one was the sanctioned one.
-        The root is reachable by name on purpose, so `Object.foo = 5` wrote on
-        the real root and every object in the language answered `#foo` from
-        then on — exactly the encapsulation the `__slots__` decision exists to
-        hold.
+        The root is reachable by name on purpose, so `Object.foo = 5` would
+        write on the real root and every object in the language would answer
+        `#foo` from then on — exactly the encapsulation the `__slots__`
+        decision exists to hold.
 
-        The other receivers were polluted rather than hijacked, which is worse
-        rather than better: a bare builtin name binds the *alias*, so `str.upper
-        = …` was accepted, stuck to `_poop_str_cls`, and did nothing at all.
-        The reader was neither obeyed nor told why.
+        The other receivers would be polluted rather than hijacked, which is
+        worse rather than better: a bare builtin name binds the *alias*, so
+        `str.upper = …` would stick to `_poop_str_cls` and do nothing at all,
+        the reader neither obeyed nor told why.
 
         A class a program wrote is untouched — `C.foo = 5` is how a class holds
         shared state, and `__module__` is `__poop__` there. `del` needs no twin:
@@ -727,8 +718,9 @@ class PoopMeta(type):
         boundary of the message surface, and which is also what makes this
         usable at all: `cloak` writes `__module__`, `__name__` and
         `__qualname__` while the type tree is being built — before `exceptions`
-        has finished importing the table this refusal would come from. A program cannot reach those
-        spellings anyway; `no_dunder_attribute` refuses them at parse time.
+        has finished importing the table this refusal would come from. A
+        program cannot reach those spellings anyway; `no_dunder_attribute`
+        refuses them at parse time.
         """
         # `class_side.__set__` first, where it owns the name: it is a data
         # descriptor, so `type.__setattr__` would consult it anyway, and this
@@ -741,22 +733,23 @@ class PoopMeta(type):
         """Merge the class side into `dir(cls)`, minus the refusals.
 
         CPython's `type.__dir__` walks the class's *own* MRO only, so none of
-        the messages that live on the metaclass appeared in any discovery
-        surface: `Foo.dir()` answered no `name` and no `superclass`, and
+        the messages that live on the metaclass would appear in any discovery
+        surface: `Foo.dir()` would answer no `name` and no `superclass`, and
         `ValueError.dir()` no `raise_` — a documented protocol reachable only
-        by typing it. The other class-side messages were already listed, but
-        for the instance-side reason: `Object` happens to spell them the same.
+        by typing it. The other class-side messages would be listed anyway,
+        but for the instance-side reason: `Object` happens to spell them the
+        same.
 
         Answered here rather than in `dir` below, because `dir` is not the only
         reader: `:methods`, the REPL completer and the near-miss hint all call
-        Python's `dir`, and each would have needed its own copy of the merge.
+        Python's `dir`, and each would need its own copy of the merge.
 
         A refusing descriptor is left out — offering a name that answers "that
         is Python's, use #superclass" teaches worse than not offering it at
-        all. The same rule now covers the instance-only half: this list used to
-        merge two receivers' messages under a header claiming one, so
-        `:methods str` said `str understands 90 messages` and 64 of them
-        answered a binding error. `class_` and `class_name` go with them —
+        all. The same rule covers the instance-only half: a list that merged
+        two receivers' messages under a header claiming one would have
+        `:methods str` advertise names that answer a binding error. `class_`
+        and `class_name` go with them —
         `Object` answers both, but the class refuses them, and this is a list
         of what *this* receiver understands.
         """
@@ -771,22 +764,21 @@ class PoopMeta(type):
         merged = {name for name, answered in answers.items() if answered}
         own = {name for name in super().__dir__() if not _instance_only(cls, name)}
         # Subtracted, not merely left unmerged. `merged` only *adds*, so a
-        # refusal could drop a name only when the metaclass was its sole
-        # source: `mro` qualified, and the names an exception
-        # mirror inherits from `BaseException` did not — `type.__dir__` walks
-        # `cls.__mro__` and finds `args` on the native base, so `:methods
-        # ValueError` advertised three names the class now refuses and the
-        # near-miss hint answered "did you mean #args?" to someone who had just
-        # written `args`.
+        # refusal could drop a name only when the metaclass is its sole
+        # source: `mro` qualifies, and the names an exception mirror inherits
+        # from `BaseException` do not — `type.__dir__` walks `cls.__mro__` and
+        # finds `args` on the native base, so unsubtracted, `:methods
+        # ValueError` would advertise names the class refuses and the
+        # near-miss hint would answer "did you mean #args?" to someone who has
+        # just written `args`.
         refused = {name for name, answered in answers.items() if not answered}
-        # A set: the builtin `dir` sorts what it is handed but does not dedupe
-        # — `type.__dir__` does that internally, and this merge reaches past
-        # it, so every name `Object` also spells (`print`, `hash`, …) came back
-        # twice and `:methods` counted 51 messages on a class that has 30.
-        # The union is what puts those back: `print` is a plain method on
-        # `Object` *and* a `class_side` message, so it is dropped by the filter
-        # and restored by the merge, which is exactly the two-receiver
-        # distinction the filter exists to draw.
+        # A set: the builtin `dir` sorts what it is handed but does not dedupe —
+        # `type.__dir__` does that internally, and this merge reaches past it, so as a
+        # list every name `Object` also spells (`print`, `hash`, …) would come back
+        # twice and `:methods` would overcount. The union is what puts those back:
+        # `print` is a plain method on `Object` *and* a `class_side` message, so it is
+        # dropped by the filter and restored by the merge, which is exactly the
+        # two-receiver distinction the filter exists to draw.
         return sorted((own | merged) - refused)
 
     @class_side
@@ -798,10 +790,11 @@ class PoopMeta(type):
 
     @class_side
     def format(cls, spec: Str | NoneClass | None = None) -> Str:
-        # As `Object.format` guards both: a non-`Str` spec answered `format()
-        # argument 2 must be str, not int` — the builtin `no_format` bans,
-        # spelt as a call — and an unknown code `Unknown format code 'd' for
-        # object of type 'str'`, naming a type the program never wrote.
+        # As `Object.format` guards both: left to the builtin, a non-`Str` spec
+        # answers `format() argument 2 must be str, not int` — the builtin
+        # `no_format` bans, spelt as a call — and an unknown code `Unknown
+        # format code 'd' for object of type 'str'`, naming a type the program
+        # never wrote.
         spec_value = (
             "" if _is_absent(spec) else text_like(spec, "format", "a str", (str,))
         )
@@ -827,9 +820,9 @@ class PoopMeta(type):
     # The rest of `Object`'s protocol, each the substitute for a construct
     # banned on a class too: `Foo is Bar` (no_is), `isinstance(Foo, T)`
     # (no_isinstance), `getattr`/`setattr`/`delattr` (no_getattr/…),
-    # `assert Foo` (no_assert). Without them the ban named a substitute that
-    # did not exist on the receiver — the contradiction the class side was
-    # first given these for, which its first pass measured short by nine.
+    # `assert Foo` (no_assert). Without them the ban would name a substitute
+    # that does not exist on the receiver — the contradiction the class side
+    # exists to remove.
 
     @class_side
     def is_identical(cls, other: object) -> Boolean:
@@ -883,11 +876,10 @@ class PoopMeta(type):
 
     @class_side
     def get_attr(cls, name: Str, default: object = MISSING) -> object:
-        # Same wrap as the instance side: a class-side method answered a raw
-        # Python function, which understands no message. One optional
-        # default, as on the instance side: `*default` silently ignored a
-        # third argument here while the instance side leaked `getattr`'s
-        # refusal of it.
+        # Same wrap as the instance side: unwrapped, a class-side method is a
+        # raw Python function, which understands no message. One optional
+        # default, as on the instance side: `*default` would silently ignore a
+        # third argument here.
         raw = _checked_name(name)
         try:
             return _as_block(_reflected(cls, raw))

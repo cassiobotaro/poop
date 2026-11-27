@@ -1,12 +1,12 @@
 """POOP's exception hierarchy — the class side of `Try` and `raise_`.
 
-`Try.except_(ValueError, handler)` and `ValueError.raise_("msg")` used to take a
-native CPython class, the last raw primitive in POOP's own substitutes for two
-forbidden constructs. It was justified with "mirroring Python's full hierarchy
-(~100+ classes) is impractical"; Python 3.15 has 72 builtin
+`Try.except_(ValueError, handler)` and `ValueError.raise_("msg")` take a POOP
+class, not a native CPython one, so POOP's own substitutes for two forbidden
+constructs hand a program no raw primitive. Python 3.15 has 72 builtin
 exceptions, and a language with no files and no modules cannot reach the
 `OSError` subtree, nor `ImportCycleError`, the one 3.15 added under
-`ImportError`. What it can reach is the table below.
+`ImportError`. What it can reach is the table below
+(`doc/adr/0034-only-the-exceptions-poop-can-reach-are-mirrored.md`).
 
 The `Unicode*` family is reachable — `encode`/`decode` can fail on the text
 they are handed — and is deliberately *not* mirrored: `_codec.py` rewords both
@@ -20,10 +20,9 @@ code, never a Python `except` clause — so a metaclass `__instancecheck__` is
 enough for a POOP class to match its native twin. The mirrors subclass that twin
 so they stay raisable, which is what `raise_` depends on.
 
-The mirrors are also how POOP raises its *own* diagnostics. A wrapper
-composing a POOP message used to carry it on a native class — POOP's advice
-labelled with Python's vocabulary — and nothing stopped the next one from doing
-the same. The rule is now one line: inside `poop/types/` and
+The mirrors are also how POOP raises its *own* diagnostics. A POOP message
+carried on a native class is POOP's advice labelled with Python's vocabulary,
+so the rule is one line: inside `poop/types/` and
 `poop/transformers/`, a failure a program can reach is raised as
 `mirrors.TypeError(...)` — each mirror under its own name in `mirrors.py` —
 never as the bare builtin. Subclassing keeps it catchable by anything that
@@ -56,20 +55,17 @@ class PoopExcMeta(PoopMeta):
     def raise_(cls, /, *args: object, **kwargs: object) -> Never:  # noqa: N805 — a class-side message
         """Signal this error — POOP's substitute for the `raise` statement.
 
-        A real class-side message, not a parse-time rewrite. `RaiseTransformer`
-        matched a literal uppercase `ast.Name` followed by `.raise_(...)`, so
-        every other way of naming the same class failed — and failed by saying
-        something untrue about the object: a class bound to a lowercase name,
-        one read out of a collection, and `e.kind()` inside a handler all
-        answered `ValueError does not understand #raise_`. The last made a
-        *re-raise* inexpressible, since `Try` swallows a matched exception and
-        `raise` is banned. Nothing defined `raise_` anywhere either, so `dir()`
-        did not list it and `:methods` could not show the substitute
-        `no_raise` names.
+        A real class-side message, not a parse-time rewrite. A rewrite that
+        matches a literal uppercase `ast.Name` followed by `.raise_(...)` misses
+        every other way of naming the same class — a class bound to a lowercase
+        name, one read out of a collection, `e.kind()` inside a handler — and
+        each would answer `ValueError does not understand #raise_`, which is
+        untrue. As a message it is also listed by `dir()`, so `:methods` shows
+        the substitute `no_raise` names
+        (`doc/adr/0049-raise-is-a-class-side-message-raise-from-an-instance-one.md`).
 
-        Everything the rewrite bought is kept: this is an expression, so it
-        still works inside a `lambda`, and `**kwargs` still ride along to an
-        exception whose fields arrive by keyword. The receiver is
+        This is an expression, so it works inside a `lambda`, and `**kwargs`
+        ride along to an exception whose fields arrive by keyword. The receiver is
         positional-only so that every keyword is the exception's, a field
         named `cls` included.
         """
@@ -91,9 +87,10 @@ class PoopExcMeta(PoopMeta):
 
 # The keys `MIRRORS` answers, spelt out so a type checker can hold them: the
 # table-shaped readers (`poop_class_of`, the `_at.py` helpers) look a mirror up
-# by name, and as a `dict[str, …]` a mistyped key passed every check and failed
-# as a `KeyError` on the error path itself — the least-exercised code there is. `test_mirror_names_match_the_hierarchy` keeps
-# this from becoming a second list to keep in step with `_HIERARCHY` by hand.
+# by name, and in a `dict[str, …]` a mistyped key would pass every check and
+# fail as a `KeyError` on the error path itself — the least-exercised code there
+# is. `test_mirror_names_match_the_hierarchy` keeps this from becoming a second
+# list to keep in step with `_HIERARCHY` by hand.
 type MirrorName = Literal[
     "Exception",
     "ArithmeticError",
@@ -137,11 +134,10 @@ _HIERARCHY: tuple[tuple[type[BaseException], MirrorName | None], ...] = (
     (AssertionError, "Exception"),
     (StopIteration, "Exception"),
     # `Str.input` is the one message that reads from outside the program, and
-    # end-of-input is the one failure it has. Without a mirror a program could
-    # not name what it was catching: `except_(EOFError, …)` answered `name
-    # 'EOFError' is not defined`, and `except_(Exception, …)` reported the
-    # kind as `Exception`, so the only I/O POOP has was also the only failure
-    # it could not handle by name.
+    # end-of-input is the one failure it has. The mirror is what lets a
+    # program name what it catches: unmirrored, `EOFError` is not a name a
+    # program can write, and `except_(Exception, …)` would report the kind as
+    # `Exception`.
     (EOFError, "Exception"),
 )
 
@@ -152,8 +148,8 @@ if TYPE_CHECKING:
     from poop.types.none import NoneClass
 
     # The shape of a mirror, for the checker alone: an exception class whose
-    # metaclass is `PoopExcMeta`. Every POOP diagnostic is raised through the
-    # table (`raise MIRRORS["TypeError"](...)`), so the values have to be
+    # metaclass is `PoopExcMeta`. Every POOP diagnostic is raised as a mirror
+    # (`raise mirrors.TypeError(...)`), so the values have to be
     # raisable, and `e.kind().name()` sends a class-side message to one, so
     # they have to answer the class side too. `_build` makes each one from
     # the metaclass by hand, which is why the shape is stated here rather than
@@ -168,15 +164,15 @@ NATIVE_TO_POOP: dict[type[BaseException], type[Mirror]] = {}
 # Names a mirror inherits from `BaseException` that POOP never designed, mapped
 # to the message a reader wanted instead — `None` where there is none.
 #
-# `PoopMeta` already refuses `type.mro` for exactly this reason: it was
+# `PoopMeta` refuses `type.mro` for the same reason: unrefused, it is
 # unreachable by reading and reachable by typing (ADR 33,
 # `doc/adr/0033-dunder-access-is-banned-by-rule-at-runtime-too-init-only-on-a-super-receiver.md`).
-# These are worse: `dir` *did* list them, so `:methods
-# ValueError` advertised them, and what they answered said they were not POOP's
-# — `args` a raw Python tuple, `with_traceback` a raw method descriptor, and
-# `add_note` a refusal naming `BaseException` and a `'str' object` no program
-# mentioned. The instance side already refused all of them, so the class
-# advertised names the caught error would not answer.
+# These need it more: `dir` would list them, so `:methods ValueError` would
+# advertise them, and what they answer says they are not POOP's — `args` a raw
+# Python tuple, `with_traceback` a raw method descriptor, and `add_note` a
+# refusal naming `BaseException` and a `'str' object` no program mentioned. The
+# instance side refuses all of them too, so the class does not advertise names
+# the caught error will not answer.
 #
 # Every one of them is an attribute of an exception *instance* in CPython, which
 # is why none means anything on the class — including `obj` and `value`, which
@@ -279,12 +275,12 @@ def describe_chain(exc: BaseException) -> list[str]:
 
 # The instance side of the root mirror. An exception a program *built* —
 # `ValueError("x")`, or an instance of its own `class Field(Exception)` — is a
-# POOP object by descent and answered none of what a *caught* `Error` answers:
-# no `message`, no `kind`, and `raise_()` refused as a class-side message, so
-# a pre-built exception could not be raised at all. Meanwhile `args`,
-# `add_note` and `with_traceback` resolved through `BaseException` and
-# answered natives, the refusals in `_PYTHON_ATTRIBUTES` being installed on
-# the metaclass, which instance lookup never consults.
+# POOP object by descent, and answers what a *caught* `Error` answers:
+# `message`, `kind`, and an instance-side `raise_()`, which is how a pre-built
+# exception is raised. `args`, `add_note` and `with_traceback` are refused here
+# too: they resolve through `BaseException`, and the refusals in
+# `_PYTHON_ATTRIBUTES` sit on the metaclass, which instance lookup never
+# consults (`doc/adr/0063-built-exceptions-have-a-poop-instance-side.md`).
 #
 # `__str__` is left to `Exception.__str__` on purpose: it is what
 # `poop_message` reads, what CPython's own traceback prints, and what a
@@ -332,8 +328,8 @@ def _cause_of(causes: tuple[object, ...]) -> BaseException | None:
 def _raise_from(self: BaseException, *causes: object) -> Never:
     """`raise X from Y`, sent to `X`: signal this exception with a cause.
 
-    A keyword on the class-side `raise_` was the alternative, and it would
-    have taken a name away from the keywords that carry a program's own
+    A keyword on the class-side `raise_` is the alternative, and it would
+    take a name away from the keywords that carry a program's own
     exception fields (`Field.raise_(code=7)`). Sent to the instance, it
     reads in Python's order.
     """
@@ -388,7 +384,7 @@ def _getattr(self: BaseException, name: str) -> object:
 
 def _dir(self: BaseException) -> list[str]:
     # What `Object.dir` lists, minus the names the guard above refuses:
-    # advertising `args` and then refusing it was the class side's bug.
+    # a listing must not advertise `args` and then refuse it, on either side.
     return [
         name
         for name in object.__dir__(self)
@@ -416,8 +412,7 @@ for _key, _fn in _INSTANCE_SIDE.items():
 
 def _build(native: type[BaseException], parent: MirrorName | None) -> None:
     # The root also inherits Object, so a user's `class MyError(Exception)`
-    # lands inside the Object tree and answers print()/class_name() — before
-    # this it sat outside it entirely.
+    # lands inside the Object tree and answers print()/class_name().
     bases: tuple[type, ...] = (
         (MIRRORS[parent], native) if parent is not None else (Exception, Object)
     )
@@ -435,7 +430,7 @@ def _build(native: type[BaseException], parent: MirrorName | None) -> None:
                 "__slots__": (),
                 # A no-op for every mirror but `KeyError`, whose `__str__`
                 # answers `repr(args[0])` — so a POOP sentence handed to it
-                # came back wrapped in Python's quotes: `"dict has no key
+                # would come back wrapped in Python's quotes: `"dict has no key
                 # 'b'"`. The missing key's own repr is the message's to
                 # compose, not the exception class's to add.
                 "__str__": Exception.__str__,
