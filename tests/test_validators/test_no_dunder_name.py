@@ -29,9 +29,10 @@ def test_dunder_globals_are_rejected(name: str) -> None:
         ("def f():\n    __slots__ = 1", "local"),
         ("f = lambda: __slots__", "local"),
         ("class X:\n    def m(self):\n        __slots__ = 1", "local"),
+        ("class X:\n    async def m(self):\n        __slots__ = 1", "local"),
         ("__slots__ = 1", "global"),
     ],
-    ids=["class-body", "function", "lambda", "method", "module"],
+    ids=["class-body", "function", "lambda", "method", "async-method", "module"],
 )
 def test_the_label_follows_the_scope(source: str, scope: str) -> None:
     # `__slots__ = ("a",)` in a class body used to be refused as a *global*.

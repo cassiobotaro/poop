@@ -27,8 +27,10 @@ class _Visitor(ErrorCollector):
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self._under("class attribute", node)
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+    def _visit_def(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         self._under("local", node)
+
+    visit_FunctionDef = visit_AsyncFunctionDef = _visit_def
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
         self._under("local", node)
