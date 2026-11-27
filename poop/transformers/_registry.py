@@ -12,6 +12,7 @@ from types import FunctionType, MappingProxyType
 from typing import TYPE_CHECKING
 
 from poop.transformers._collection import spread as _spread
+from poop.transformers.await_ import AwaitTransformer
 from poop.transformers.block import BlockTransformer
 from poop.transformers.boolean import BooleanTransformer
 from poop.transformers.byte_array import ByteArrayTransformer
@@ -55,6 +56,10 @@ if TYPE_CHECKING:
 # order and the binding merge below, so a new transformer can never be
 # wired into one and forgotten in the other.
 _TRANSFORMER_CLASSES: tuple[type[BaseTransformer], ...] = (
+    # First: the rewrite reads the call the program wrote, before any other
+    # transformer has rewritten it, and the rest still descend into the
+    # `Await` it leaves.
+    AwaitTransformer,
     BooleanTransformer,
     NoneTransformer,
     EllipsisTransformer,

@@ -26,7 +26,7 @@
 
 ## 5. await_
 
-- [ ] 5.1 Add `poop/transformers/await_.py` and put `AwaitTransformer` first in `_TRANSFORMER_CLASSES` (design, decision 3). Test every scenario of the `await-transformer` spec. Verify: `uv run pytest tests/ -k await` exits 0.
+- [x] 5.1 Add `poop/transformers/await_.py` and put `AwaitTransformer` first in `_TRANSFORMER_CLASSES` (design, decision 3). Test every scenario of the `await-transformer` spec. Verify: `uv run pytest tests/ -k await` exits 0.
 
 ## 6. Async
 
