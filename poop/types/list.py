@@ -60,10 +60,10 @@ class List(
     def at_put(self, index: Index, obj: Object) -> List:
         """Replace the element at `index` — the write half of `at`.
 
-        `no_subscript` refuses `xs[0] = 9` and names a substitute; there was
-        none. `at` reads, `Dict.at_put` and `ByteArray.at_put` write, and the
-        one collection between them that is indexable, mutable and ordered had
-        no way to replace an element at all: `xs.pop(i)` followed by
+        `no_subscript` refuses `xs[0] = 9` and names this as the substitute.
+        `at` reads, `Dict.at_put` and `ByteArray.at_put` write, and the one
+        collection between them that is indexable, mutable and ordered needs a
+        way to replace an element too: `xs.pop(i)` followed by
         `xs.insert(i, v)` is two messages for one assignment, and the list is
         short an element in between.
 
@@ -185,8 +185,8 @@ class List(
     ) -> NoneClass:
         return self._print_items(sep, end, flush)
 
-    # A list can hold itself, and printing one used to recurse until the stack
-    # gave out — a `RecursionError` about POOP's own internals, raised by a
+    # A list can hold itself, and printing one unguarded recurses until the
+    # stack gives out — a `RecursionError` about POOP's own internals, raised by a
     # program that only asked to see its data. CPython prints the ellipsis
     # every container prints for a cycle; `recursive_repr` is how it is spelled
     # for a Python-level `__repr__`, and the fill value is the one `list` uses.

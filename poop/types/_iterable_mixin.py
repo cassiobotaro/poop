@@ -21,12 +21,11 @@ lazy from poop.types.enumerate import Enumerate
 # circular: filter imports _iterable_mixin
 lazy from poop.types.filter import Filter
 
-# `no_sorted` forbids `sorted(col)` and names `col.sorted()`, and the
-# message existed on `List` and `Tuple` only — so `{2, 1}.sorted()`,
-# the ordinary way to look at an unordered collection in order, was
-# banned with nowhere to go. A `List`, as CPython's `sorted` always
-# answers a `list` whatever it was handed; `Tuple` overrides to keep
-# its own type, which can hold an order.
+# `no_sorted` forbids `sorted(col)` and names `col.sorted()`, so every
+# collection answers it: `{2, 1}.sorted()` is the ordinary way to look at
+# an unordered collection in order. A `List`, as CPython's `sorted` always
+# answers a `list` whatever it was handed; `Tuple` overrides to keep its
+# own type, which can hold an order.
 # circular: list imports _iterable_mixin
 lazy from poop.types.list import List
 
@@ -58,9 +57,9 @@ def _sorted[T](
     overload, so the kwarg is omitted when there is no key.
 
     Absent is `_is_absent`, the same test every other optional argument in the
-    language uses: POOP's `None` is a `NoneClass` instance, so `is None` let it
-    through as a comparison block and `xs.sorted(key=None)` answered
-    `'NoneType' object is not callable`.
+    language uses: POOP's `None` is a `NoneClass` instance, so an `is None`
+    test would let it through as a comparison block and `xs.sorted(key=None)`
+    would fail with `'NoneType' object is not callable`.
     """
     # Gradual on purpose: typeshed's key-less `sorted` demands elements it can
     # prove comparable, and POOP's are compared when the sort runs — a
@@ -68,8 +67,8 @@ def _sorted[T](
     kwargs: dict[str, Any] = {"reverse": bool(reverse)}
     if not _is_absent(key):
         # The one place every `sorted`/`sort` key passes through, as `_minmax`
-        # is for `min`/`max`. A non-block reached CPython's sort and answered
-        # `'int' object is not callable`.
+        # is for `min`/`max`. Unchecked, a non-block reaches CPython's sort and
+        # fails with `'int' object is not callable`.
         kwargs["key"] = a_key(key, selector)
     return builtins.sorted(iterable, **kwargs)
 
@@ -105,9 +104,9 @@ class _IterableMixin[T: Object](_Mixin):
         return none
 
     def map[R: Object](self, block: Callable[[T], R] | MISSING = MISSING) -> Map[T, R]:
-        # Eagerly, though the view is lazy: this is the half no wording change
-        # reaches. A `Map` built over a non-block simply fails later, somewhere
-        # else entirely — or never, if the view is never walked.
+        # Eagerly, though the view is lazy: a `Map` built over a non-block
+        # would fail later, somewhere else entirely — or never, if the view is
+        # never walked.
         return Map(self, a_block(block, "map"))
 
     def filter(self, block: Callable[[T], object] | MISSING = MISSING) -> Filter[T]:
@@ -135,7 +134,7 @@ class _IterableMixin[T: Object](_Mixin):
     ) -> T | D | NoneClass:
         # Smalltalk's `detect:ifNone:`, in the shape `next`, `min` and `max`
         # already take: without a default a miss and a match that *is* `none`
-        # were the same answer. Keyword-only, as theirs is; a second
+        # are the same answer. Keyword-only, as theirs is; a second
         # positional argument is refused by name rather than read as the
         # block's wrong arity.
         if extra:
@@ -173,8 +172,8 @@ class _IterableMixin[T: Object](_Mixin):
         # follow, so the sum is added up the way `builtins.sum` adds.
         total: Any = next(items, Int(0)) if start is MISSING else start
         # The binary `+`, never `+=`: an in-place add on a `List` extends it,
-        # so `[a, b].sum()` answered `a` itself and left it holding `b`'s
-        # elements, and `xs.sum(acc)` grew `acc`. `builtins.sum` adds with
+        # so `[a, b].sum()` would answer `a` itself, holding `b`'s elements,
+        # and `xs.sum(acc)` would grow `acc`. `builtins.sum` adds with
         # `PyNumber_Add` and leaves its operands alone; so does this.
         # Bound to `Any` as `total` is: returned directly, the `Object` this
         # method answers is what a checker solves `reduce` for, and
@@ -192,9 +191,9 @@ class _IterableMixin[T: Object](_Mixin):
     def min[D](self, *, key: Key[T] = None, default: D) -> T | D: ...
     def min[D](self, *, key: Key[T] = None, default: D | MISSING = MISSING) -> T | D:
         # Keyword-only, as CPython spells `min(iterable, *, key, default)` and
-        # for the reason the scalar rungs settled: positionally a block is
+        # as the scalar rungs take them: positionally a block is
         # indistinguishable from a value, and `xs.min(0)` — the plain reading
-        # of "the smallest, or 0 if empty" — handed `0` to the key slot.
+        # of "the smallest, or 0 if empty" — would hand `0` to the key slot.
         return _minmax(builtins.min, "#min", self._iter_items(), key, default)
 
     @overload

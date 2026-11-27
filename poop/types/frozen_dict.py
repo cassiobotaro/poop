@@ -49,7 +49,7 @@ class FrozenDict(_MappingMixin, name="frozendict"):
         # CPython's own `unhashable type: 'list'` — the sentence `Object.hash`
         # and the error report reword.
         # Each value hashed by name here, not left to `Object.hash`'s
-        # rewording: that one said the *value* "has no place as a set element
+        # rewording: that one says the *value* "has no place as a set element
         # or a dict key", and a frozendict value is a legal place for a list.
         hashed = []
         for key, value in self._data.items():

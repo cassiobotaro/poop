@@ -31,9 +31,10 @@ def _elements(other: object, selector: str) -> Iterable[Object]:
 def probed[T](obj: T) -> T | FrozenSet:
     """`obj` as something a set can be *asked* about.
 
-    A `Set` is unhashable, so `s.includes({1})`, `s.discard({1})` and
-    `s.remove({1})` all answered `cannot use 'set' as a set element` — a
-    refusal about *storing*, for three messages that only look. CPython draws
+    A `Set` is unhashable, so probing with one as it stands answers
+    `cannot use 'set' as a set element` to `s.includes({1})`, `s.discard({1})`
+    and `s.remove({1})` — a refusal about *storing*, for three messages that
+    only look. CPython draws
     the line the other way: `set.__contains__`, `discard` and `remove` probe
     with a temporary `frozenset`, so `{1} in s` is an ordinary question with
     an ordinary answer (and `s.remove({1})` reaches its `KeyError`), while
@@ -56,8 +57,7 @@ def _other_set(other: object) -> AbstractSet[Object] | None:
 
     Recognised as a ``_SetAlgebraMixin`` — the class both ``Set`` and
     ``FrozenSet`` inherit the operators from, defined below in this same
-    module, so no import cycle is in play — rather than by the duck-typed
-    marker it used to carry. Returns ``None`` for anything else.
+    module, so no import cycle is in play. Returns ``None`` for anything else.
     """
     if isinstance(other, _SetAlgebraMixin):
         return other._data
@@ -74,8 +74,8 @@ class _SetAlgebraMixin(_Mixin):
 
     The builtin's, not ``type(self)``: on a user subclass ``type(self)`` is the
     class built on the ``builtin_alias``, whose call *converts* its argument —
-    so ``Bag() | {1}`` read ``Bag(1)`` as "convert ``1`` to a set" and answered
-    ``cannot convert int to set``. CPython answers ``set`` from an operator on a
+    so ``Bag() | {1}`` would read ``Bag(1)`` as "convert ``1`` to a set" and
+    answer ``cannot convert int to set``. CPython answers ``set`` from an operator on a
     ``set`` subclass, and so does POOP; ``_BytesLikeMixin._rewrap`` states the
     same rule for the bytes pair.
 

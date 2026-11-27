@@ -115,14 +115,14 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object, name="dict"):
     def items(self) -> DictItems:
         return DictItems(self)
 
-    # `do` is deliberately *not* overridden here. It used to yield `(key,
-    # value)` pairs while `map`, `filter`, `sorted`, `min`, `max` and `iter`
-    # on the same receiver all yielded keys — one receiver with two answers to
-    # "what is an element of a dict", and the odd one out was the message
-    # `no_loops` names as the substitute for `for k in d`, which walks the
-    # keys in Python. The mixin's `do` walks `__iter__` like its five
-    # siblings, and carries the same mutation guard, worded from the receiver.
-    # `d.items().do(...)` is the pair spelling, and answers `Tuple`s already.
+    # `do` is deliberately *not* overridden here. An element of a dict is its
+    # key, for `do` as for `map`, `filter`, `sorted`, `min`, `max` and `iter`
+    # on the same receiver: a `do` over `(key, value)` pairs would give one
+    # receiver two answers to "what is an element of a dict", and `do` is the
+    # message `no_loops` names as the substitute for `for k in d`, which walks
+    # the keys in Python. The mixin's `do` walks `__iter__` like its siblings,
+    # and carries the same mutation guard, worded from the receiver.
+    # `d.items().do(...)` is the pair spelling, and answers `Tuple`s.
 
     def len(self) -> Int:
         return Int(len(self._data))
@@ -138,8 +138,8 @@ class _MappingMixin(_ValueEqMixin, _IterableMixin[Object], Object, name="dict"):
 
     def reversed(self) -> DictReverseKeyIterator:
         # `reversed(d)` yields the keys in reverse in CPython, which is what
-        # `d.keys().reversed()` already answered — the receiver `no_reversed`
-        # names had no substitute of its own.
+        # `d.keys().reversed()` answers — and the receiver `no_reversed` names
+        # gets a substitute of its own.
         return self.keys().reversed()
 
     def __contains__(self, item: object) -> bool:

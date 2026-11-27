@@ -29,12 +29,11 @@ def _mapping_data(other: object) -> dict[Object, Object] | None:
     """The raw dict behind a mapping operand, or `None` when it is not one.
 
     A `MappingProxy` stands for the mapping it wraps; a `Dict` or `FrozenDict`
-    is one. Six sites asked the two questions in a row — the two `__eq__`s,
-    `Dict.__ior__`, `Dict.update`, `FrozenDict.__or__` and the proxy's own
-    merge — and a seventh would have been the one to leave the proxy out.
-    Without the `None` an `else` branch reached `other._data` on any operand,
-    so `proxy | 5` answered `int does not understand #_data`, a POOP internal,
-    where CPython answers `unsupported operand type(s)`.
+    is one. Every site that takes a mapping operand asks both questions here,
+    so none of them leaves the proxy out. The `None` is what lets a caller
+    decline: reading `other._data` off any operand would make `proxy | 5`
+    answer `int does not understand #_data`, a POOP internal, where CPython
+    answers `unsupported operand type(s)`.
     """
     if isinstance(other, MappingProxy):
         other = other._dict

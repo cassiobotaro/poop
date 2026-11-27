@@ -5,12 +5,11 @@ driven by `while_true`:
 
     (lambda: cursor.has_next()).while_true(lambda: cursor.next().print())
 
-but that `cursor` was a hand-written class in the example. No built-in iterator
-answered `has_next`, so the protocol POOP held up as idiomatic was the one thing
-`[1, 2].iter()` could not do, and driving a built-in with `while_true` ran it
-off the end. The alternatives were both unsatisfying: `next(default)` conflates
-an exhausted iterator with one answering `none`, and a `Try` is a heavy spelling
-for "am I done?".
+and every built-in iterator answers it, so `[1, 2].iter()` is a `cursor` like any
+other (`doc/adr/0030-every-iterator-answers-has-next-by-buffering-one-element.md`).
+The alternatives are both unsatisfying: `next(default)` conflates an exhausted
+iterator with one answering `none`, and a `Try` is a heavy spelling for "am I
+done?".
 
 **The cost is real and was chosen, not discovered.** A one-shot Python iterator
 cannot be peeked, so `has_next` means buffering one element — and for `Map` and
@@ -52,9 +51,9 @@ class _PeekMixin[T: Object](_Mixin):
 
     # What the mutation refusal calls the collection being walked. `_mutated`
     # exists so that refusal names its receiver (`dict changed while it was
-    # being iterated`), and the cursor was the one place passing a literal —
-    # so `d.do(...)` and `d.iter().next()` reported the same fact in two
-    # vocabularies. `_IteratorBase` derives this from the CPython iterator
+    # being iterated`), and the cursor names it too, so `d.do(...)` and
+    # `d.iter().next()` report the same fact in one vocabulary.
+    # `_IteratorBase` derives this from the CPython iterator
     # name each concrete iterator already declares; the lazy views (`Map`,
     # `Filter`, `Zip`, `Enumerate`) keep the default, which is honest: the
     # mutated collection is the one behind them, and they cannot name it.
@@ -73,9 +72,9 @@ class _PeekMixin[T: Object](_Mixin):
     def _pull(self) -> T:
         """The next element, with CPython's mutation sentence reworded.
 
-        The one place `has_next`, `next` and `__next__` pull from. A dict
-        mutated mid-walk answered `dictionary changed size during iteration`
-        — a word POOP does not use for a `dict`, describing a `for` loop the
+        The one place `has_next`, `next` and `__next__` pull from. CPython
+        answers a dict mutated mid-walk with `dictionary changed size during
+        iteration` — a word POOP does not use for a `dict`, describing a `for` loop the
         program did not write. POOP's own RuntimeErrors pass through
         untouched; `StopIteration` is not one, and reaches each caller.
         """
@@ -112,7 +111,7 @@ class _PeekMixin[T: Object](_Mixin):
                 return default
             # Still a mirrored StopIteration — it is in `_HIERARCHY` precisely
             # so a Try can catch it — but with a sentence. The native carries
-            # no message at all, so the error degraded to a bare class name:
+            # no message at all, so the error would print as a bare class name:
             # a word naming the CPython protocol that drives `for`, the loop
             # POOP forbids, with nothing to say what went wrong.
             raise self._exhausted() from None

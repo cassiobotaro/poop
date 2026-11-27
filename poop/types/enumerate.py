@@ -19,8 +19,8 @@ class Enumerate(_LazyView[Tuple], name="enumerate"):
     def __init__(self, source: object, start: Int | NoneClass | None = None) -> None:
         super().__init__()
         self._source: Iterable[Object] = a_collection(source, "enumerate")
-        # Guarded here, not on the first walk: a wrong `start` used to be
-        # wrapped in an `Int` as is and refused by CPython only when walked.
+        # Guarded here, not on the first walk: unchecked, a wrong `start` would
+        # be wrapped in an `Int` as is and refused by CPython only when walked.
         self._start: Int = Int(an_int(start, "enumerate", "start", 0))
 
     @staticmethod

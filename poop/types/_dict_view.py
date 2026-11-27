@@ -45,8 +45,8 @@ def _operand(other: object) -> set[Object] | None:
     ``isdisjoint`` is a message and refuses a scalar through ``a_collection``.
     An operator handed one answers ``NotImplemented`` instead, so the refusal
     is the sentence every other operator in the language gives —
-    ``dict_keys does not understand #| with an int`` — where ``set(5)``
-    answered ``'int' object is not iterable``.
+    ``dict_keys does not understand #| with an int`` — rather than the
+    ``'int' object is not iterable`` that ``set(5)`` raises.
     """
     if isinstance(other, Iterable):
         return _elements(other)
@@ -107,12 +107,11 @@ class _DictView[T: Object](_IterableMixin[T], Object, name="object"):
 class _SetLikeView[T: Object](_DictView[T], name="object"):
     """The set algebra and comparisons `dict_keys` and `dict_items` share.
 
-    The two views differed only in what their own side is — the keys view
-    itself, or a set of `Tuple` pairs — and spelled every operator twice over
-    that difference. `_own` is that difference; everything else is written
-    once. `isdisjoint` keeps a one-line `def` on each class — it is a message,
-    and a wrong-arity report names the function's owner — over the one body
-    `_isdisjoint` holds here.
+    The two views differ only in what their own side is — the keys view
+    itself, or a set of `Tuple` pairs. `_own` is that difference; everything
+    else is written once. `isdisjoint` keeps a one-line `def` on each class —
+    it is a message, and a wrong-arity report names the function's owner —
+    over the one body `_isdisjoint` holds here.
     """
 
     __slots__ = ()

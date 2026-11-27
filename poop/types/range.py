@@ -33,7 +33,7 @@ class Range(_IterableMixin[Int], Object, name="range"):
         # `_index` rather than `._value`: it takes the whole index rung of the
         # tower (`range(True, 5)` is `range(1, 5)` in CPython) and answers
         # CPython's own TypeError for anything else, where reading the slot
-        # leaked `#_value`.
+        # would leak `#_value`.
         first, last = _index(start), _index(stop)
         sign = 1 if first <= last else -1
         raw_step = sign if _is_absent(step) else _index(step)
@@ -75,25 +75,25 @@ class Range(_IterableMixin[Int], Object, name="range"):
     ) -> Range:
         py = _resolve_py_slice(start_or_slice, stop, step)
         # A Range answers a Range, as `range(10)[1:3]` answers `range(1, 3)`
-        # and as `reversed()` right below already does. Wrapping the selected
-        # elements in a List instead allocated one Int per member of the
-        # result: `range(1000000000000).slice(0, 3)` is three elements in
-        # CPython and was a materialized trillion here.
+        # and as `reversed()` right below does. Wrapping the selected elements
+        # in a List instead would allocate one Int per member of the result:
+        # `range(1000000000000).slice(0, 3)` is three elements in CPython and
+        # would be a materialized trillion here.
         return Range._from_native(self._range()[py])
 
     # The three searches unwrap through `_searched`, not `_faithful`, and the
     # difference matters. A `Range` holds raw Python ints — it is the only
     # receiver that does — so a searched value is compared by equality against
-    # a native `int`, and a `Boolean` carries no `_value` for
-    # `_faithful` to read. It crossed intact, `_num_value` had no branch for the
-    # raw `int` on the other side, and both directions declined: `includes(True)`
-    # answered false on a range starting at 1, while `includes(1)` answered true
-    # and `True == 1` answered true. `__init__` and `at` never had the bug
-    # because they route through `_index`, which names both rungs of the tower.
+    # a native `int`, and a `Boolean` carries no `_value` for `_faithful` to
+    # read. It would cross intact, `_num_value` has no branch for the raw `int`
+    # on the other side, and both directions would decline: `includes(True)`
+    # would answer false on a range starting at 1, while `includes(1)` and
+    # `True == 1` answer true. `__init__` and `at` route through `_index`,
+    # which names both rungs of the tower.
     # `Object`, not `Int`, on all three — the same parameter `List` and `Tuple`
     # declare. A search answers for whatever it is handed (`false`, `0`, or a
-    # refusal naming the value), so `Int` never described what these accept, and
-    # it excluded the other rung of the index tower the fold below now folds.
+    # refusal naming the value), so `Int` does not describe what these accept,
+    # and it excludes the other rung of the index tower that `_searched` folds.
     def includes(self, item: Object) -> Boolean:
         # A foreign value (List, Set, …) reaches `range.__contains__` whole
         # and is answered by its equality scan, as in Python, instead of
@@ -115,7 +115,7 @@ class Range(_IterableMixin[Int], Object, name="range"):
     def index(self, value: Object) -> Int:
         # `self`, not `self._range()`, as the receiver: the name in the message
         # is the one the reader wrote, which is why `at` passes the POOP Range
-        # too. CPython answered `range.index(x): x not in range` — the method
+        # too. CPython answers `range.index(x): x not in range` — the method
         # as a call, with a placeholder where the value belongs.
         needle = _searched(value)
         try:
@@ -134,9 +134,9 @@ class Range(_IterableMixin[Int], Object, name="range"):
         Not the `_stop` slot. The inclusive upper bound is how a `Range` stores
         a sequence (`__eq__` calls it "an internal encoding" for the same
         reason), and `_range()` is the one place that encoding is undone.
-        Answering the slot published it: `range(3).stop()` said `2`, while
-        `Slice.stop()` — handed its bound rather than encoding one — said what
-        Python says. One selector, two meanings, decided by the receiver.
+        Answering the slot would publish it: `range(3).stop()` would say `2`,
+        while `Slice.stop()` — handed its bound rather than encoding one — says
+        what Python says, and one selector would have two meanings.
         """
         return Int(self._range().stop)
 
@@ -160,8 +160,8 @@ class Range(_IterableMixin[Int], Object, name="range"):
         return Int(len(self._range()))
 
     # The two protocol slots every other collection wires. Without `__len__`
-    # the `Object` default held and `range(0)` was truthy — `range(0).not_()`
-    # answered `False` and `assert_` passed on it — where `[]`, `""`, `set()`
+    # the `Object` default holds and `range(0)` is truthy — `range(0).not_()`
+    # would answer `False` and `assert_` pass on it — where `[]`, `""`, `set()`
     # and `b""` all read as empty. `__contains__` is what CPython's `in`
     # reads and what `includes` answers, folding a `Boolean` as the searches
     # above do.
@@ -188,7 +188,7 @@ class Range(_IterableMixin[Int], Object, name="range"):
 
     def __str__(self) -> str:
         # Through the materialized range, like `stop()`: printing the raw slots
-        # showed `range(0, 2)` for `range(3)` — a spelling that, read back as
+        # would show `range(0, 2)` for `range(3)` — a spelling that, read back as
         # POOP source, is a *different* sequence. A displayed range has to be
         # the range it describes, and that is the exclusive form.
         native = self._range()

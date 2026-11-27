@@ -12,26 +12,23 @@ def _repeat_count(other: object) -> int | NOT_A_COUNT:
     ``Boolean`` has no ``_value`` slot, so ``_faithful`` hands it over whole and
     its ``__index__`` folds it to 1/0 below, with every other index.
 
-    The other half used to unwrap anything at all and hand it to the wrapped
-    sequence's ``__mul__``, "so [it] raises CPython's faithful ``can't multiply
-    sequence by non-int`` ``TypeError``". Faithful to CPython is exactly what
-    the wording sweep overturned, and that sentence names "sequence" —
-    a Python protocol, not a receiver — quotes the class the CPython way, and
-    describes the operator as a type-level protocol rather than a message, which
-    the wording sweep bans under `operator-as-protocol`:
+    Anything else answers the sentinel, and the wrapper's ``__mul__`` answers
+    ``NotImplemented``, the path ``__add__`` takes for a foreign operand:
+    CPython raises ``unsupported operand type(s)``, and ``poop_message``
+    rewrites that shape into ``binary_refusal``'s sentence:
 
         ([1, 2] + "a")   # list does not understand #+ with a str
-        ([1, 2] * "a")   # can't multiply sequence by non-int of type 'str'
+        ([1, 2] * "a")   # list does not understand #* with a str
 
-    ``__add__`` shows the machinery was already there: it answers
-    ``NotImplemented`` for a foreign operand, CPython raises ``unsupported
-    operand type(s) for +``, and ``poop_message`` rewrites that shape into
-    ``binary_refusal``'s sentence. ``*`` never reached it, because the *inner*
-    multiplication raised a shape ``poop_message`` does not match. Answering the
-    sentinel here puts ``*`` on the same path, with no new wording.
+    Handing the operand to the wrapped sequence's own ``__mul__`` instead
+    raises ``can't multiply sequence by non-int of type 'str'``, a shape
+    ``poop_message`` does not match. That sentence names "sequence" — a Python
+    protocol, not a receiver — quotes the class the CPython way, and describes
+    the operator as a type-level protocol rather than a message, which
+    ``tests/test_no_python_wording.py`` forbids as `operator-as-protocol`.
 
-    Five wrappers answer ``*`` (``Str``, ``List``, ``Tuple``, ``Bytes``,
-    ``ByteArray``) against fourteen operand kinds — 95 sites, one operator.
+    ``Str``, ``List``, ``Tuple``, ``Bytes`` and ``ByteArray`` answer ``*``
+    through here.
     """
     raw = _faithful(other)
     # `__index__`, not `isinstance(raw, int)`: CPython repeats a sequence by

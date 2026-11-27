@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class _Cursor[T: Object](_PeekMixin[T], _IterableMixin[T], Object, name="object"):
     """What every one-shot iterator and lazy view answers alike.
 
-    `_IteratorBase` and `_LazyView` restated all of it: `__iter__`, `iter` and
+    `_IteratorBase` and `_LazyView` share all of it: `__iter__`, `iter` and
     the `<name>` repr, which reads the CPython name the `name=` class keyword
     cloaked the class under. They differ only in where the Python iterator
     comes from — handed in, or built on first use — which is what each keeps.
@@ -31,19 +31,16 @@ class _Cursor[T: Object](_PeekMixin[T], _IterableMixin[T], Object, name="object"
         `_IterableMixin` gives every iterator the collection protocol (ADR 30,
         `doc/adr/0030-every-iterator-answers-has-next-by-buffering-one-element.md`)
         — `do`, `map`, `filter`, `find`, `reduce`, `sum`, `min`, `max`, `all`,
-        `any`, `enumerate`, `zip` — and `iter` was the one message of it defined per class instead of on
-        a shared base, so the concrete iterators were the half of the family
-        that never got one. `Map`, `Filter`, `Enumerate` and `Zip` answer it
-        already, and answer `self`, which is the mirror of `iter(zip(...)) is
-        zip(...)` recorded there. The other fifteen refused it:
+        `any`, `enumerate`, `zip` — and `iter` lives on this shared base so
+        every iterator and lazy view answers it, and answers `self`, the mirror
+        of `iter(zip(...)) is zip(...)` recorded there. One family gives one
+        answer to `no_iter`'s substitute column (`col.iter()`), whichever
+        iterator the receiver hands back — and the concrete ones are reached by
+        ordinary chaining, since `Dict.reversed()` and the three view
+        `reversed()`s all answer one:
 
-            [1, 2].iter().iter()          # list_iterator does not understand
-            d.keys().reversed().iter()    # #iter — did you mean #filter?
-
-        One family, two answers to `no_iter`'s substitute column (`col.iter()`),
-        decided by which iterator the receiver happened to hand back — and the
-        refusing half is reached by ordinary chaining, since `Dict.reversed()`
-        and the three view `reversed()`s all answer a concrete iterator.
+            [1, 2].iter().iter()          # the same list_iterator
+            d.keys().reversed().iter()    # the same dict_reversekeyiterator
         """
         return self
 

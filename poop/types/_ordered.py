@@ -1,9 +1,9 @@
 """`<`, `<=`, `>` and `>=` for the wrappers that order by their payload.
 
-`Str`, `Bytes`, `ByteArray`, `List` and `Tuple` each wrote the four out in full,
-and the four differed by one character. The duplication cost more than lines:
+`Str`, `Bytes`, `ByteArray`, `List` and `Tuple` share the four, which differ by
+one character. Written once, they also hold the cross-type rule in one place:
 ordering `bytes` against `bytearray` — which CPython allows in both directions,
-like `==` and `+` — had to be fixed in two classes, four methods each.
+like `==` and `+` — is a group both classes declare, not four methods in each.
 
 The payload is the one `_ValueEqMixin` already compares (`_eq_attr`). The
 comparable set is narrower than equality's, though, so it is its own group:

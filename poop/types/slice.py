@@ -41,15 +41,15 @@ class Slice(Object, name="slice"):
     def _py_slice(self) -> slice:
         # The components go in as they are: `slice` takes any object, and the
         # sequence being sliced resolves each through `__index__`, which Int
-        # answers. Reading `._value` here refused a Boolean component and
-        # leaked `#_value` for anything else.
+        # answers. Reading `._value` here would refuse a Boolean component and
+        # leak `#_value` for anything else.
         return slice(self._start, self._stop, self._step)
 
     def indices(self, length: Index) -> Tuple:
-        # Through the checked slice: CPython's `indices` answered `slice
+        # Through the checked slice: CPython's `indices` answers `slice
         # indices must be integers or None or have an __index__ method` for a
-        # non-int bound, the exact sentence `_resolve_py_slice` was written to
-        # replace one message over.
+        # non-int bound, the exact sentence `_resolve_py_slice` replaces one
+        # message over.
         start, stop, step = self._checked_py_slice().indices(
             an_int(length, "indices", "length")
         )
@@ -102,12 +102,12 @@ def _resolve_py_slice(
 
     A Slice argument is used directly; the Int form is routed through Slice so
     a POOP `none` stop/step (from a `None` literal) means open-ended, like
-    Python's obj[2:]. Shared by List, Tuple, Str, Bytes, ByteArray and Range,
-    whose `slice` methods otherwise repeated this branch verbatim.
+    Python's obj[2:]. Shared by the `slice` messages of List, Tuple, Str,
+    Bytes, ByteArray and Range.
     """
     if isinstance(start_or_slice, Slice):
-        # Refused, not ignored: `xs.slice(slice(1, 3), 4)` used to answer the
-        # slice alone, dropping the `4` without a word.
+        # Refused, not ignored: answering the slice alone would drop the `4`
+        # of `xs.slice(slice(1, 3), 4)` without a word.
         if not (_is_absent(stop) and _is_absent(step)):
             raise mirrors.TypeError(
                 "#slice takes a slice or bounds, not both — "
@@ -127,10 +127,10 @@ def _field_str(value: Index | None) -> str:
     `__init__` takes its components as they are (`_py_slice` says why: `slice`
     accepts any object, and the sequence being sliced resolves each one), so a
     non-`Int` component is constructible and only refused on use. Reading it
-    with `str` displayed `slice(None, "a", None)` as `slice(None, a, None)` —
-    the *name* `a`, read back as source — and `slice(None, "", None)` as
+    with `str` would display `slice(None, "a", None)` as `slice(None, a, None)`
+    — the *name* `a`, read back as source — and `slice(None, "", None)` as
     `slice(None, , None)`, which is not source at all. `List`, `Tuple` and
     `Dict` all build their displayed form from `repr` of each element; for the
-    integers the two spellings agree, which is why this only ever showed here.
+    integers the two spellings agree.
     """
     return "None" if value is None else repr(value)

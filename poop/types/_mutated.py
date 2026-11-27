@@ -21,7 +21,7 @@ def reword_if_native(exc: RuntimeError, label: str) -> Exception:
     The test is on `type(exc)`, not `isinstance`: `PoopExcMeta` makes a mirror
     match its native twin on purpose — that is how `except_(RuntimeError, h)`
     catches a raw one — so `isinstance(exc, mirrors.RuntimeError)` is true
-    of *every* RuntimeError and would have reworded POOP's own messages.
+    of *every* RuntimeError and would reword POOP's own messages.
     """
     if isinstance(type(exc), PoopExcMeta):
         return exc

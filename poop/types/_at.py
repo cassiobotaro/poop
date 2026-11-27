@@ -1,8 +1,7 @@
 """`at`'s failures, worded as POOP rather than as Python.
 
-`at` is POOP's substitute for subscripting, and every wrapper implemented it by
-handing the index straight to CPython — so the failure a learner read was
-Python's, about the construct POOP forbids:
+`at` is POOP's substitute for subscripting. A wrapper that hands the index
+straight to CPython answers Python's failure, about the construct POOP forbids:
 
     "abc".at(10)     ->  IndexError: string index out of range
     [1, 2].at("x")   ->  TypeError: list indices must be integers or slices, not str
@@ -10,8 +9,7 @@ Python's, about the construct POOP forbids:
 
 `list indices` and `string index` describe subscripting, which `no_subscript`
 bans; the third is a bare `repr` with no sentence at all. The wording belongs to
-whoever owns the operation, and nine wrappers own the same one, so it lives here
-instead of being written out nine times.
+whoever owns the operation, and many wrappers own the same one, so it lives here.
 """
 
 from contextlib import contextmanager
@@ -61,7 +59,7 @@ def no_element_equal_to(
 ) -> Exception:
     """The mirrored `ValueError` for a value the receiver does not hold.
 
-    CPython spelled this as `list.index(x): x not in list` — the method written
+    CPython spells this as `list.index(x): x not in list` — the method written
     as a Python call rather than sent as a message, and the placeholder `x`
     where the value the reader passed belongs.
 
@@ -99,10 +97,10 @@ def indexing(
 ) -> Generator[None]:
     """POOP's wording for the two ways indexing `items` at `index` can fail.
 
-    One `with` around the read or the write: `at_index`, `List.at_put` and
-    `ByteArray.at_put` each spelt the same two `except` clauses, differing in
-    the selector the sentence names. A `from None` raised inside the generator
-    propagates out of `__exit__` exactly as the inline clauses did.
+    One `with` around the read or the write, shared by `at_index`, `List.at_put`
+    and `ByteArray.at_put`, which differ only in the selector the sentence
+    names. A `from None` raised inside the generator propagates out of
+    `__exit__` exactly as it would from an inline `except` clause.
 
     `receiver` is the POOP object the message was sent to — the same thing as
     `items` for most wrappers, but a `Range` materializes its sequence first,

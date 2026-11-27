@@ -1,6 +1,6 @@
 """What `List` and `Tuple` answer alike.
 
-The two classes spelled thirteen members identically except for the
+The two classes would spell these members identically except for the
 constructor name. The dunders live here outright and build their results
 through `_rewrap`, the hook `_BytesLikeMixin` and `_SetAlgebraMixin` use for
 the same reason: the builtin answers its own kind from a method sent to a
@@ -69,9 +69,9 @@ class _SequenceMixin(_Mixin):
         start: Index | NoneClass | None,
         stop: Index | NoneClass | None,
     ) -> Int:
-        # No branching on which bound was given: `stop` alone was dropped on
-        # the floor by the first branch, so `xs.index(3, stop=1)` answered a
-        # match from outside the bound it was handed. `len` rather than `None`
+        # No branching on which bound was given: a branch for `start` alone
+        # drops a lone `stop`, and `xs.index(3, stop=1)` would answer a match
+        # from outside the bound it was handed. `len` rather than `None`
         # for the missing `stop`, because `list.index` — unlike `str.index` —
         # takes no `None` bound.
         try:

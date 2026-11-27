@@ -50,7 +50,7 @@ class Dict(_MappingMixin, name="dict"):
         # Dict, so returning NotImplemented would hand the operation to
         # MappingProxy's reflected ``__ror__``, rebind the name to a fresh
         # Dict, and silently leave any alias pointing at the unchanged
-        # original. Unwrap the proxy here, as ``__eq__`` already does.
+        # original. Unwrap the proxy here, as ``__eq__`` does.
         other_data = _mapping_data(other)
         if other_data is None:
             return NotImplemented
@@ -90,14 +90,11 @@ class Dict(_MappingMixin, name="dict"):
         # read-only MappingProxy) or an iterable of key/value pairs, e.g.
         # ``d.update([(k1, v1), (k2, v2)])`` — not just another dict.
         #
-        # Both halves of `dict.update([E], **F)` are optional there, and this
-        # mirrored neither: `d.update()` — a no-op in CPython — answered
-        # `missing 1 required positional argument`, and `d.update(b=2)` an
-        # `unexpected keyword argument`, though the *constructor* one line of
-        # POOP away takes exactly that (`dict(b=2)`). One signature, two
-        # answers, decided by which spelling the reader reached for. An absent
-        # mapping is `_is_absent`, the test every other optional argument in
-        # the language uses.
+        # Both halves of `dict.update([E], **F)` are optional there, and here:
+        # `d.update()` is a no-op, and `d.update(b=2)` takes the keyword pair
+        # exactly as the *constructor* one line of POOP away does (`dict(b=2)`).
+        # An absent mapping is `_is_absent`, the test every other optional
+        # argument in the language uses.
         other_data = _mapping_data(other)
         if other_data is not None:
             self._data.update(other_data)
